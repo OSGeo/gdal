@@ -34,7 +34,6 @@
 #include "ogr_srs_api.h"
 #include "timedelta.hpp"
 
-
 CPL_C_START
 #include "EnvisatFile.h"
 #include "records.h"
@@ -45,12 +44,12 @@ CPL_C_END
 /*                        MerisL2FlagBand                         */
 /* ==================================================================== */
 /************************************************************************/
-class MerisL2FlagBand final: public GDALPamRasterBand
+class MerisL2FlagBand final : public GDALPamRasterBand
 {
   public:
-    MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
+    MerisL2FlagBand(GDALDataset *, int, VSILFILE *, vsi_l_offset, int);
     ~MerisL2FlagBand() override;
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 
   private:
     vsi_l_offset nImgOffset;
@@ -65,16 +64,11 @@ class MerisL2FlagBand final: public GDALPamRasterBand
 /************************************************************************/
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
-MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
-                                  VSILFILE* fpImageIn,
-                                  vsi_l_offset nImgOffsetIn,
-                                  int nPrefixBytesIn ) :
-    nImgOffset(nImgOffsetIn),
-    nPrefixBytes(nPrefixBytesIn),
-    nBytePerPixel(3),
-    nRecordSize(0),
-    nDataSize(0),
-    pReadBuf(nullptr)
+MerisL2FlagBand::MerisL2FlagBand(GDALDataset *poDSIn, int nBandIn,
+                                 VSILFILE *fpImageIn, vsi_l_offset nImgOffsetIn,
+                                 int nPrefixBytesIn)
+    : nImgOffset(nImgOffsetIn), nPrefixBytes(nPrefixBytesIn), nBytePerPixel(3),
+      nRecordSize(0), nDataSize(0), pReadBuf(nullptr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -95,53 +89,51 @@ MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
 /************************************************************************/
 MerisL2FlagBand::~MerisL2FlagBand()
 {
-    CPLFree( pReadBuf );
+    CPLFree(pReadBuf);
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
-                                    int nBlockYOff,
-                                    void * pImage )
+CPLErr MerisL2FlagBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                   void *pImage)
 {
-    CPLAssert( nBlockXOff == 0 );
-    CPLAssert( pReadBuf != nullptr );
+    CPLAssert(nBlockXOff == 0);
+    CPLAssert(pReadBuf != nullptr);
 
-    vsi_l_offset nOffset = nImgOffset + nPrefixBytes +
-                    nBlockYOff * nBlockYSize * nRecordSize;
+    vsi_l_offset nOffset =
+        nImgOffset + nPrefixBytes + nBlockYOff * nBlockYSize * nRecordSize;
 
-    if ( VSIFSeekL( fpImage, nOffset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(fpImage, nOffset, SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Seek to %d for scanline %d failed.\n",
-                  (int)nOffset, nBlockYOff );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Seek to %d for scanline %d failed.\n", (int)nOffset,
+                 nBlockYOff);
         return CE_Failure;
     }
 
-    if ( VSIFReadL( pReadBuf, 1, nDataSize, fpImage ) != nDataSize )
+    if (VSIFReadL(pReadBuf, 1, nDataSize, fpImage) != nDataSize)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Read of %d bytes for scanline %d failed.\n",
-                  (int)nDataSize, nBlockYOff );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Read of %d bytes for scanline %d failed.\n", (int)nDataSize,
+                 nBlockYOff);
         return CE_Failure;
     }
 
     const unsigned int nUInt32Size = 4;
-    for( unsigned iImg = 0, iBuf = 0;
-         iImg < nBlockXSize * nUInt32Size;
-         iImg += nUInt32Size, iBuf += (unsigned)nBytePerPixel )
+    for (unsigned iImg = 0, iBuf = 0; iImg < nBlockXSize * nUInt32Size;
+         iImg += nUInt32Size, iBuf += (unsigned)nBytePerPixel)
     {
 #ifdef CPL_LSB
-        ((GByte*) pImage)[iImg] = pReadBuf[iBuf + 2];
-        ((GByte*) pImage)[iImg + 1] = pReadBuf[iBuf + 1];
-        ((GByte*) pImage)[iImg + 2] = pReadBuf[iBuf];
-        ((GByte*) pImage)[iImg + 3] = 0;
+        ((GByte *)pImage)[iImg] = pReadBuf[iBuf + 2];
+        ((GByte *)pImage)[iImg + 1] = pReadBuf[iBuf + 1];
+        ((GByte *)pImage)[iImg + 2] = pReadBuf[iBuf];
+        ((GByte *)pImage)[iImg + 3] = 0;
 #else
-        ((GByte*) pImage)[iImg] = 0;
-        ((GByte*) pImage)[iImg + 1] = pReadBuf[iBuf];
-        ((GByte*) pImage)[iImg + 2] = pReadBuf[iBuf + 1];
-        ((GByte*) pImage)[iImg + 3] = pReadBuf[iBuf + 2];
+        ((GByte *)pImage)[iImg] = 0;
+        ((GByte *)pImage)[iImg + 1] = pReadBuf[iBuf];
+        ((GByte *)pImage)[iImg + 2] = pReadBuf[iBuf + 1];
+        ((GByte *)pImage)[iImg + 3] = pReadBuf[iBuf + 2];
 #endif
     }
 
@@ -154,37 +146,37 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 
-class EnvisatDataset final: public RawDataset
+class EnvisatDataset final : public RawDataset
 {
     EnvisatFile *hEnvisatFile;
-    VSILFILE    *fpImage;
+    VSILFILE *fpImage;
 
     OGRSpatialReference m_oGCPSRS{};
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
+    int nGCPCount;
+    GDAL_GCP *pasGCPList;
 
-    char        **papszTempMD;
+    char **papszTempMD;
 
-    void        ScanForGCPs_ASAR();
-    void        ScanForGCPs_MERIS();
+    void ScanForGCPs_ASAR();
+    void ScanForGCPs_MERIS();
 
-    void        UnwrapGCPs();
+    void UnwrapGCPs();
 
-    void        CollectMetadata( EnvisatFile_HeaderFlag );
-    void        CollectDSDMetadata();
-    void        CollectADSMetadata();
+    void CollectMetadata(EnvisatFile_HeaderFlag);
+    void CollectDSDMetadata();
+    void CollectADSMetadata();
 
   public:
-                EnvisatDataset();
+    EnvisatDataset();
     virtual ~EnvisatDataset();
 
-    virtual int    GetGCPCount() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override;
+    virtual int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual char      **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char * pszDomain ) override;
+    virtual char **GetMetadataDomainList() override;
+    virtual char **GetMetadata(const char *pszDomain) override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -197,12 +189,9 @@ class EnvisatDataset final: public RawDataset
 /*                            EnvisatDataset()                          */
 /************************************************************************/
 
-EnvisatDataset::EnvisatDataset() :
-    hEnvisatFile(nullptr),
-    fpImage(nullptr),
-    nGCPCount(0),
-    pasGCPList(nullptr),
-    papszTempMD(nullptr)
+EnvisatDataset::EnvisatDataset()
+    : hEnvisatFile(nullptr), fpImage(nullptr), nGCPCount(0),
+      pasGCPList(nullptr), papszTempMD(nullptr)
 {
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
@@ -217,19 +206,19 @@ EnvisatDataset::~EnvisatDataset()
 {
     FlushCache(true);
 
-    if( hEnvisatFile != nullptr )
-        EnvisatFile_Close( hEnvisatFile );
+    if (hEnvisatFile != nullptr)
+        EnvisatFile_Close(hEnvisatFile);
 
-    if( fpImage != nullptr )
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
+    if (fpImage != nullptr)
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
 
-    if( nGCPCount > 0 )
+    if (nGCPCount > 0)
     {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
     }
 
-    CSLDestroy( papszTempMD );
+    CSLDestroy(papszTempMD);
 }
 
 /************************************************************************/
@@ -249,7 +238,7 @@ int EnvisatDataset::GetGCPCount()
 const OGRSpatialReference *EnvisatDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 )
+    if (nGCPCount > 0)
         return &m_oGCPSRS;
 
     return nullptr;
@@ -270,11 +259,11 @@ const GDAL_GCP *EnvisatDataset::GetGCPs()
 /************************************************************************/
 
 /* external C++ implementation of the in-place unwrapper */
-void EnvisatUnwrapGCPs( int nGCPCount, GDAL_GCP *pasGCPList ) ;
+void EnvisatUnwrapGCPs(int nGCPCount, GDAL_GCP *pasGCPList);
 
-void  EnvisatDataset::UnwrapGCPs()
+void EnvisatDataset::UnwrapGCPs()
 {
-    EnvisatUnwrapGCPs( nGCPCount, pasGCPList ) ;
+    EnvisatUnwrapGCPs(nGCPCount, pasGCPList);
 }
 
 /************************************************************************/
@@ -284,69 +273,72 @@ void  EnvisatDataset::UnwrapGCPs()
 void EnvisatDataset::ScanForGCPs_ASAR()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do we have a meaningful geolocation grid?                       */
-/* -------------------------------------------------------------------- */
-    int nDatasetIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile,
-                                                     "GEOLOCATION GRID ADS" );
-    if( nDatasetIndex == -1 )
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a meaningful geolocation grid?                       */
+    /* -------------------------------------------------------------------- */
+    int nDatasetIndex =
+        EnvisatFile_GetDatasetIndex(hEnvisatFile, "GEOLOCATION GRID ADS");
+    if (nDatasetIndex == -1)
         return;
 
     int nNumDSR, nDSRSize;
-    if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nDatasetIndex,
-                                    nullptr, nullptr, nullptr, nullptr, nullptr,
-                                    &nNumDSR, &nDSRSize ) != SUCCESS )
+    if (EnvisatFile_GetDatasetInfo(hEnvisatFile, nDatasetIndex, nullptr,
+                                   nullptr, nullptr, nullptr, nullptr, &nNumDSR,
+                                   &nDSRSize) != SUCCESS)
         return;
 
-    if( nNumDSR == 0 || nDSRSize != 521 )
+    if (nNumDSR == 0 || nDSRSize != 521)
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Collect the first GCP set from each record.                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect the first GCP set from each record.                     */
+    /* -------------------------------------------------------------------- */
     GByte abyRecord[521];
     int nRange = 0;
     int nRangeOffset = 0;
     GUInt32 unValue;
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),(nNumDSR+1) * 11);
+    pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), (nNumDSR + 1) * 11);
 
-    for( int iRecord = 0; iRecord < nNumDSR; iRecord++ )
+    for (int iRecord = 0; iRecord < nNumDSR; iRecord++)
     {
-        if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDatasetIndex,
-                                           iRecord, abyRecord ) != SUCCESS )
+        if (EnvisatFile_ReadDatasetRecord(hEnvisatFile, nDatasetIndex, iRecord,
+                                          abyRecord) != SUCCESS)
             continue;
 
-        memcpy( &unValue, abyRecord + 13, 4 );
-        nRange = CPL_MSBWORD32( unValue ) + nRangeOffset;
+        memcpy(&unValue, abyRecord + 13, 4);
+        nRange = CPL_MSBWORD32(unValue) + nRangeOffset;
 
-        if((iRecord>1) && (int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) > nRange))
+        if ((iRecord > 1) &&
+            (int(pasGCPList[nGCPCount - 1].dfGCPLine + 0.5) > nRange))
         {
-            int delta = (int) (pasGCPList[nGCPCount-1].dfGCPLine -
-                               pasGCPList[nGCPCount-12].dfGCPLine);
-            nRange = int(pasGCPList[nGCPCount-1].dfGCPLine+0.5) + delta;
-            nRangeOffset = nRange-1;
+            int delta = (int)(pasGCPList[nGCPCount - 1].dfGCPLine -
+                              pasGCPList[nGCPCount - 12].dfGCPLine);
+            nRange = int(pasGCPList[nGCPCount - 1].dfGCPLine + 0.5) + delta;
+            nRangeOffset = nRange - 1;
         }
 
-        for( int iGCP = 0; iGCP < 11; iGCP++ )
+        for (int iGCP = 0; iGCP < 11; iGCP++)
         {
-            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+            GDALInitGCPs(1, pasGCPList + nGCPCount);
 
-            CPLFree( pasGCPList[nGCPCount].pszId );
+            CPLFree(pasGCPList[nGCPCount].pszId);
 
             char szId[128];
-            snprintf( szId, sizeof(szId), "%d", nGCPCount+1 );
-            pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+            snprintf(szId, sizeof(szId), "%d", nGCPCount + 1);
+            pasGCPList[nGCPCount].pszId = CPLStrdup(szId);
 
-            memcpy( &unValue, abyRecord + 25 + iGCP*4, 4 );
+            memcpy(&unValue, abyRecord + 25 + iGCP * 4, 4);
             int nSample = CPL_MSBWORD32(unValue);
 
-            memcpy( &unValue, abyRecord + 25 + 176 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPX = ((int)CPL_MSBWORD32(unValue))*0.000001;
+            memcpy(&unValue, abyRecord + 25 + 176 + iGCP * 4, 4);
+            pasGCPList[nGCPCount].dfGCPX =
+                ((int)CPL_MSBWORD32(unValue)) * 0.000001;
 
-            memcpy( &unValue, abyRecord + 25 + 132 + iGCP*4, 4 );
-            pasGCPList[nGCPCount].dfGCPY = ((int)CPL_MSBWORD32(unValue))*0.000001;
+            memcpy(&unValue, abyRecord + 25 + 132 + iGCP * 4, 4);
+            pasGCPList[nGCPCount].dfGCPY =
+                ((int)CPL_MSBWORD32(unValue)) * 0.000001;
 
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
@@ -357,30 +349,30 @@ void EnvisatDataset::ScanForGCPs_ASAR()
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      We also collect the bottom GCPs from the last granule.          */
-/* -------------------------------------------------------------------- */
-    memcpy( &unValue, abyRecord + 17, 4 );
-    nRange = nRange + CPL_MSBWORD32( unValue ) - 1;
+    /* -------------------------------------------------------------------- */
+    /*      We also collect the bottom GCPs from the last granule.          */
+    /* -------------------------------------------------------------------- */
+    memcpy(&unValue, abyRecord + 17, 4);
+    nRange = nRange + CPL_MSBWORD32(unValue) - 1;
 
-    for( int iGCP = 0; iGCP < 11; iGCP++ )
+    for (int iGCP = 0; iGCP < 11; iGCP++)
     {
-        GDALInitGCPs( 1, pasGCPList + nGCPCount );
+        GDALInitGCPs(1, pasGCPList + nGCPCount);
 
-        CPLFree( pasGCPList[nGCPCount].pszId );
+        CPLFree(pasGCPList[nGCPCount].pszId);
 
         char szId[128];
-        snprintf( szId, sizeof(szId), "%d", nGCPCount+1 );
-        pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+        snprintf(szId, sizeof(szId), "%d", nGCPCount + 1);
+        pasGCPList[nGCPCount].pszId = CPLStrdup(szId);
 
-        memcpy( &unValue, abyRecord + 279 + iGCP*4, 4 );
+        memcpy(&unValue, abyRecord + 279 + iGCP * 4, 4);
         int nSample = CPL_MSBWORD32(unValue);
 
-        memcpy( &unValue, abyRecord + 279 + 176 + iGCP*4, 4 );
-        pasGCPList[nGCPCount].dfGCPX = ((int)CPL_MSBWORD32(unValue))*0.000001;
+        memcpy(&unValue, abyRecord + 279 + 176 + iGCP * 4, 4);
+        pasGCPList[nGCPCount].dfGCPX = ((int)CPL_MSBWORD32(unValue)) * 0.000001;
 
-        memcpy( &unValue, abyRecord + 279 + 132 + iGCP*4, 4 );
-        pasGCPList[nGCPCount].dfGCPY = ((int)CPL_MSBWORD32(unValue))*0.000001;
+        memcpy(&unValue, abyRecord + 279 + 132 + iGCP * 4, 4);
+        pasGCPList[nGCPCount].dfGCPY = ((int)CPL_MSBWORD32(unValue)) * 0.000001;
 
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
@@ -398,177 +390,185 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 void EnvisatDataset::ScanForGCPs_MERIS()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do we have a meaningful geolocation grid?  Search for a         */
-/*      DS_TYPE=A and a name containing "geolocation" or "tie           */
-/*      points".                                                        */
-/* -------------------------------------------------------------------- */
-    int nDatasetIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile,
-                                                     "Tie points ADS" );
-    if( nDatasetIndex == -1 )
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a meaningful geolocation grid?  Search for a         */
+    /*      DS_TYPE=A and a name containing "geolocation" or "tie           */
+    /*      points".                                                        */
+    /* -------------------------------------------------------------------- */
+    int nDatasetIndex =
+        EnvisatFile_GetDatasetIndex(hEnvisatFile, "Tie points ADS");
+    if (nDatasetIndex == -1)
         return;
 
     int nNumDSR, nDSRSize;
-    if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nDatasetIndex,
-                                    nullptr, nullptr, nullptr, nullptr, nullptr,
-                                    &nNumDSR, &nDSRSize ) != SUCCESS )
+    if (EnvisatFile_GetDatasetInfo(hEnvisatFile, nDatasetIndex, nullptr,
+                                   nullptr, nullptr, nullptr, nullptr, &nNumDSR,
+                                   &nDSRSize) != SUCCESS)
         return;
 
-    if( nNumDSR == 0 )
+    if (nNumDSR == 0)
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Figure out the tiepoint space, and how many we have.            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Figure out the tiepoint space, and how many we have.            */
+    /* -------------------------------------------------------------------- */
     int nLinesPerTiePoint =
-        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
-                                      "LINES_PER_TIE_PT", 0 );
-    int nSamplesPerTiePoint =
-        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
-                                      "SAMPLES_PER_TIE_PT", 0 );
+        EnvisatFile_GetKeyValueAsInt(hEnvisatFile, SPH, "LINES_PER_TIE_PT", 0);
+    int nSamplesPerTiePoint = EnvisatFile_GetKeyValueAsInt(
+        hEnvisatFile, SPH, "SAMPLES_PER_TIE_PT", 0);
 
-    if( nLinesPerTiePoint == 0 || nSamplesPerTiePoint == 0 )
+    if (nLinesPerTiePoint == 0 || nSamplesPerTiePoint == 0)
         return;
 
     int nTPPerColumn = nNumDSR;
-    int nTPPerLine = (GetRasterXSize() + nSamplesPerTiePoint - 1)
-        / nSamplesPerTiePoint;
+    int nTPPerLine =
+        (GetRasterXSize() + nSamplesPerTiePoint - 1) / nSamplesPerTiePoint;
 
-/* -------------------------------------------------------------------- */
-/*      Find a measurement type dataset to use as a reference raster    */
-/*      band.                                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Find a measurement type dataset to use as a reference raster    */
+    /*      band.                                                           */
+    /* -------------------------------------------------------------------- */
 
     int nMDSIndex = 0;
 
-    for( ; true; nMDSIndex++ )
+    for (; true; nMDSIndex++)
     {
         const char *pszDSType = nullptr;
-        if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDSIndex,
-            nullptr, &pszDSType, nullptr, nullptr, nullptr, nullptr, nullptr ) == FAILURE )
+        if (EnvisatFile_GetDatasetInfo(hEnvisatFile, nMDSIndex, nullptr,
+                                       &pszDSType, nullptr, nullptr, nullptr,
+                                       nullptr, nullptr) == FAILURE)
         {
-            CPLDebug("EnvisatDataset",
-                            "Unable to find MDS in Envisat file.") ;
-            return ;
-    }
-        if( EQUAL(pszDSType,"M") ) break;
+            CPLDebug("EnvisatDataset", "Unable to find MDS in Envisat file.");
+            return;
+        }
+        if (EQUAL(pszDSType, "M"))
+            break;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Get subset of TP ADS records matching the MDS records           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Get subset of TP ADS records matching the MDS records           */
+    /* -------------------------------------------------------------------- */
 
     /* get the MDS line sampling time interval */
-    TimeDelta tdMDSSamplingInterval( 0 , 0 ,
-        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
-                                      "LINE_TIME_INTERVAL", 0  ) );
+    TimeDelta tdMDSSamplingInterval(
+        0, 0,
+        EnvisatFile_GetKeyValueAsInt(hEnvisatFile, SPH, "LINE_TIME_INTERVAL",
+                                     0));
 
     /* get range of TiePoint ADS records matching the measurements */
-    ADSRangeLastAfter arTP( *hEnvisatFile , nDatasetIndex,
-        nMDSIndex , tdMDSSamplingInterval ) ;
+    ADSRangeLastAfter arTP(*hEnvisatFile, nDatasetIndex, nMDSIndex,
+                           tdMDSSamplingInterval);
 
     /* check if there are any TPs to be used */
-    if ( arTP.getDSRCount() <= 0 )
+    if (arTP.getDSRCount() <= 0)
     {
-        CPLDebug( "EnvisatDataset" , "No tiepoint covering "
-            "the measurement records." ) ;
+        CPLDebug("EnvisatDataset", "No tiepoint covering "
+                                   "the measurement records.");
         return; /* No TPs - no extraction. */
     }
 
     /* check if TPs cover the whole range of MDSRs */
-    if(( arTP.getFirstOffset() < 0 )||( arTP.getLastOffset() < 0 ))
+    if ((arTP.getFirstOffset() < 0) || (arTP.getLastOffset() < 0))
     {
-        CPLDebug( "EnvisatDataset" , "The tiepoints do not cover "
-            "whole range of measurement records." ) ;
+        CPLDebug("EnvisatDataset", "The tiepoints do not cover "
+                                   "whole range of measurement records.");
         /* Not good but we can still extract some of the TPS, can we? */
     }
 
     /* Check TP record spacing */
-    if ((1+(arTP.getFirstOffset()+arTP.getLastOffset()+GetRasterYSize()-1)
-           / nLinesPerTiePoint ) != arTP.getDSRCount() )
+    if ((1 +
+         (arTP.getFirstOffset() + arTP.getLastOffset() + GetRasterYSize() - 1) /
+             nLinesPerTiePoint) != arTP.getDSRCount())
     {
-        CPLDebug( "EnvisatDataset", "Not enough tiepoints per column! "
-                  "received=%d expected=%d", nTPPerColumn ,
-                  1 + (arTP.getFirstOffset()+arTP.getLastOffset()+
-                       GetRasterYSize()-1) / nLinesPerTiePoint ) ;
+        CPLDebug("EnvisatDataset",
+                 "Not enough tiepoints per column! "
+                 "received=%d expected=%d",
+                 nTPPerColumn,
+                 1 + (arTP.getFirstOffset() + arTP.getLastOffset() +
+                      GetRasterYSize() - 1) /
+                         nLinesPerTiePoint);
         return;  // That is far more serious - we risk misplacing TPs.
     }
 
     bool isBrowseProduct;
-    if ( 50*nTPPerLine + 13 == nDSRSize ) /* regular product */
+    if (50 * nTPPerLine + 13 == nDSRSize) /* regular product */
     {
-        isBrowseProduct = false ;
+        isBrowseProduct = false;
     }
-    else if ( 8*nTPPerLine + 13 == nDSRSize ) /* browse product */
+    else if (8 * nTPPerLine + 13 == nDSRSize) /* browse product */
     {
         /* although BPs are rare there is no reason not to support them */
-        isBrowseProduct = true ;
+        isBrowseProduct = true;
     }
     else
     {
-        CPLDebug( "EnvisatDataset", "Unexpected size of 'Tie points ADS' !"
-                " received=%d expected=%d or %d" , nDSRSize ,
-                50*nTPPerLine+13, 8*nTPPerLine+13 ) ;
+        CPLDebug("EnvisatDataset",
+                 "Unexpected size of 'Tie points ADS' !"
+                 " received=%d expected=%d or %d",
+                 nDSRSize, 50 * nTPPerLine + 13, 8 * nTPPerLine + 13);
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect the first GCP set from each record.                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect the first GCP set from each record.                     */
+    /* -------------------------------------------------------------------- */
 
-    GByte *pabyRecord = (GByte *) CPLMalloc(nDSRSize-13);
+    GByte *pabyRecord = (GByte *)CPLMalloc(nDSRSize - 13);
 
-    GUInt32 *tpLat = ((GUInt32*)pabyRecord) + nTPPerLine*0 ; /* latitude */
-    GUInt32 *tpLon = ((GUInt32*)pabyRecord) + nTPPerLine*1 ; /* longitude */
-    GUInt32 *tpLtc = ((GUInt32*)pabyRecord) + nTPPerLine*4 ; /* lat. DEM correction */
-    GUInt32 *tpLnc = ((GUInt32*)pabyRecord) + nTPPerLine*5 ; /* lon. DEM correction */
+    GUInt32 *tpLat = ((GUInt32 *)pabyRecord) + nTPPerLine * 0; /* latitude */
+    GUInt32 *tpLon = ((GUInt32 *)pabyRecord) + nTPPerLine * 1; /* longitude */
+    GUInt32 *tpLtc =
+        ((GUInt32 *)pabyRecord) + nTPPerLine * 4; /* lat. DEM correction */
+    GUInt32 *tpLnc =
+        ((GUInt32 *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *) CPLCalloc( sizeof(GDAL_GCP),
-                                        arTP.getDSRCount() * nTPPerLine );
+    pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP),
+                                       arTP.getDSRCount() * nTPPerLine);
 
-    for( int ir = 0 ; ir < arTP.getDSRCount() ; ir++ )
+    for (int ir = 0; ir < arTP.getDSRCount(); ir++)
     {
-        int iRecord = ir + arTP.getFirstIndex() ;
+        int iRecord = ir + arTP.getFirstIndex();
 
-        double dfGCPLine = 0.5 +
-            ( iRecord*nLinesPerTiePoint - arTP.getFirstOffset() ) ;
+        double dfGCPLine =
+            0.5 + (iRecord * nLinesPerTiePoint - arTP.getFirstOffset());
 
-        if( EnvisatFile_ReadDatasetRecordChunk( hEnvisatFile, nDatasetIndex,
-                    iRecord , pabyRecord, 13 , -1 ) != SUCCESS )
+        if (EnvisatFile_ReadDatasetRecordChunk(hEnvisatFile, nDatasetIndex,
+                                               iRecord, pabyRecord, 13,
+                                               -1) != SUCCESS)
             continue;
 
-        for( int iGCP = 0; iGCP < nTPPerLine; iGCP++ )
+        for (int iGCP = 0; iGCP < nTPPerLine; iGCP++)
         {
-            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+            GDALInitGCPs(1, pasGCPList + nGCPCount);
 
-            CPLFree( pasGCPList[nGCPCount].pszId );
+            CPLFree(pasGCPList[nGCPCount].pszId);
 
             char szId[128];
-            snprintf( szId, sizeof(szId), "%d", nGCPCount+1 );
-            pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+            snprintf(szId, sizeof(szId), "%d", nGCPCount + 1);
+            pasGCPList[nGCPCount].pszId = CPLStrdup(szId);
 
-            #define INT32(x)    ((GInt32)CPL_MSBWORD32(x))
+#define INT32(x) ((GInt32)CPL_MSBWORD32(x))
 
-            pasGCPList[nGCPCount].dfGCPX = 1e-6*INT32(tpLon[iGCP]) ;
-            pasGCPList[nGCPCount].dfGCPY = 1e-6*INT32(tpLat[iGCP]) ;
+            pasGCPList[nGCPCount].dfGCPX = 1e-6 * INT32(tpLon[iGCP]);
+            pasGCPList[nGCPCount].dfGCPY = 1e-6 * INT32(tpLat[iGCP]);
             pasGCPList[nGCPCount].dfGCPZ = 0.0;
 
-            if( !isBrowseProduct ) /* add DEM corrections */
+            if (!isBrowseProduct) /* add DEM corrections */
             {
-                pasGCPList[nGCPCount].dfGCPX += 1e-6*INT32(tpLnc[iGCP]) ;
-                pasGCPList[nGCPCount].dfGCPY += 1e-6*INT32(tpLtc[iGCP]) ;
+                pasGCPList[nGCPCount].dfGCPX += 1e-6 * INT32(tpLnc[iGCP]);
+                pasGCPList[nGCPCount].dfGCPY += 1e-6 * INT32(tpLtc[iGCP]);
             }
 
-            #undef INT32
+#undef INT32
 
-            pasGCPList[nGCPCount].dfGCPLine = dfGCPLine ;
-            pasGCPList[nGCPCount].dfGCPPixel = iGCP*nSamplesPerTiePoint + 0.5;
+            pasGCPList[nGCPCount].dfGCPLine = dfGCPLine;
+            pasGCPList[nGCPCount].dfGCPPixel = iGCP * nSamplesPerTiePoint + 0.5;
 
             nGCPCount++;
         }
     }
-    CPLFree( pabyRecord );
+    CPLFree(pabyRecord);
 }
 
 /************************************************************************/
@@ -584,77 +584,77 @@ char **EnvisatDataset::GetMetadataDomainList()
 /*                            GetMetadata()                             */
 /************************************************************************/
 
-char **EnvisatDataset::GetMetadata( const char * pszDomain )
+char **EnvisatDataset::GetMetadata(const char *pszDomain)
 
 {
-    if( pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "envisat-ds-") )
-        return GDALDataset::GetMetadata( pszDomain );
+    if (pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "envisat-ds-"))
+        return GDALDataset::GetMetadata(pszDomain);
 
-/* -------------------------------------------------------------------- */
-/*      Get the dataset name and record number.                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Get the dataset name and record number.                         */
+    /* -------------------------------------------------------------------- */
     char szDSName[128];
-    strncpy( szDSName, pszDomain+11, sizeof(szDSName) );
-    szDSName[sizeof(szDSName)-1] = 0;
+    strncpy(szDSName, pszDomain + 11, sizeof(szDSName));
+    szDSName[sizeof(szDSName) - 1] = 0;
 
     int nRecord = -1;
-    for( int i = 0; i < (int) sizeof(szDSName)-1; i++ )
+    for (int i = 0; i < (int)sizeof(szDSName) - 1; i++)
     {
-        if( szDSName[i] == '-' )
+        if (szDSName[i] == '-')
         {
             szDSName[i] = '\0';
-            nRecord = atoi(szDSName+1);
+            nRecord = atoi(szDSName + 1);
             break;
         }
     }
 
-    if( nRecord == -1 )
+    if (nRecord == -1)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Get the dataset index and info.                                 */
-/* -------------------------------------------------------------------- */
-    int nDSIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile, szDSName );
-    if( nDSIndex == -1 )
+    /* -------------------------------------------------------------------- */
+    /*      Get the dataset index and info.                                 */
+    /* -------------------------------------------------------------------- */
+    int nDSIndex = EnvisatFile_GetDatasetIndex(hEnvisatFile, szDSName);
+    if (nDSIndex == -1)
         return nullptr;
 
     int nDSRSize, nNumDSR;
-    EnvisatFile_GetDatasetInfo( hEnvisatFile, nDSIndex, nullptr, nullptr, nullptr,
-                                nullptr, nullptr, &nNumDSR, &nDSRSize );
+    EnvisatFile_GetDatasetInfo(hEnvisatFile, nDSIndex, nullptr, nullptr,
+                               nullptr, nullptr, nullptr, &nNumDSR, &nDSRSize);
 
-    if( nDSRSize == -1 || nRecord < 0 || nRecord >= nNumDSR )
+    if (nDSRSize == -1 || nRecord < 0 || nRecord >= nNumDSR)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Read the requested record.                                      */
-/* -------------------------------------------------------------------- */
-    char  *pszRecord = (char *) CPLMalloc(nDSRSize+1);
+    /* -------------------------------------------------------------------- */
+    /*      Read the requested record.                                      */
+    /* -------------------------------------------------------------------- */
+    char *pszRecord = (char *)CPLMalloc(nDSRSize + 1);
 
-    if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDSIndex, nRecord,
-                                       pszRecord ) == FAILURE )
+    if (EnvisatFile_ReadDatasetRecord(hEnvisatFile, nDSIndex, nRecord,
+                                      pszRecord) == FAILURE)
     {
-        CPLFree( pszRecord );
+        CPLFree(pszRecord);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Massage the data into a safe textual format.  For now we        */
-/*      just turn zero bytes into spaces.                               */
-/* -------------------------------------------------------------------- */
-    CSLDestroy( papszTempMD );
+    /* -------------------------------------------------------------------- */
+    /*      Massage the data into a safe textual format.  For now we        */
+    /*      just turn zero bytes into spaces.                               */
+    /* -------------------------------------------------------------------- */
+    CSLDestroy(papszTempMD);
 
-    char *pszEscapedRecord
-        = CPLEscapeString( pszRecord, nDSRSize, CPLES_BackslashQuotable );
-    papszTempMD = CSLSetNameValue( nullptr, "EscapedRecord", pszEscapedRecord );
-    CPLFree( pszEscapedRecord );
+    char *pszEscapedRecord =
+        CPLEscapeString(pszRecord, nDSRSize, CPLES_BackslashQuotable);
+    papszTempMD = CSLSetNameValue(nullptr, "EscapedRecord", pszEscapedRecord);
+    CPLFree(pszEscapedRecord);
 
-    for( int i = 0; i < nDSRSize; i++ )
-        if( pszRecord[i] == '\0' )
+    for (int i = 0; i < nDSRSize; i++)
+        if (pszRecord[i] == '\0')
             pszRecord[i] = ' ';
 
-    papszTempMD = CSLSetNameValue( papszTempMD, "RawRecord", pszRecord );
+    papszTempMD = CSLSetNameValue(papszTempMD, "RawRecord", pszRecord);
 
-    CPLFree( pszRecord );
+    CPLFree(pszRecord);
 
     return papszTempMD;
 }
@@ -672,15 +672,15 @@ void EnvisatDataset::CollectDSDMetadata()
     const char *pszDSName;
     const char *pszFilename;
 
-    for( int iDSD = 0;
-         EnvisatFile_GetDatasetInfo( hEnvisatFile, iDSD, &pszDSName, nullptr,
-                             &pszFilename, nullptr, nullptr, nullptr, nullptr ) == SUCCESS;
-         iDSD++ )
+    for (int iDSD = 0;
+         EnvisatFile_GetDatasetInfo(hEnvisatFile, iDSD, &pszDSName, nullptr,
+                                    &pszFilename, nullptr, nullptr, nullptr,
+                                    nullptr) == SUCCESS;
+         iDSD++)
     {
-        if( pszFilename == nullptr
-            || strlen(pszFilename) == 0
-            || STARTS_WITH_CI(pszFilename, "NOT USED")
-            || STARTS_WITH_CI(pszFilename, "        "))
+        if (pszFilename == nullptr || strlen(pszFilename) == 0 ||
+            STARTS_WITH_CI(pszFilename, "NOT USED") ||
+            STARTS_WITH_CI(pszFilename, "        "))
             continue;
 
         std::string osKey("DS_");
@@ -688,14 +688,14 @@ void EnvisatDataset::CollectDSDMetadata()
         // strip trailing spaces.
         {
             const auto nPos = osKey.rfind(' ');
-            if( nPos != std::string::npos )
+            if (nPos != std::string::npos)
                 osKey.resize(nPos);
         }
 
         // convert spaces into underscores.
-        for( char& ch: osKey )
+        for (char &ch : osKey)
         {
-            if( ch == ' ' )
+            if (ch == ' ')
                 ch = '_';
         }
 
@@ -704,11 +704,11 @@ void EnvisatDataset::CollectDSDMetadata()
         std::string osTrimmedName(pszFilename);
         {
             const auto nPos = osTrimmedName.rfind(' ');
-            if( nPos != std::string::npos )
+            if (nPos != std::string::npos)
                 osTrimmedName.resize(nPos);
         }
 
-        SetMetadataItem( osKey.c_str(), osTrimmedName.c_str() );
+        SetMetadataItem(osKey.c_str(), osTrimmedName.c_str());
     }
 }
 
@@ -725,68 +725,67 @@ void EnvisatDataset::CollectADSMetadata()
     const char *pszDSType;
     const char *pszDSFilename;
 
-    const char *pszProduct
-        = EnvisatFile_GetKeyValueAsString( hEnvisatFile, MPH,
-                                           "PRODUCT", "" );
+    const char *pszProduct =
+        EnvisatFile_GetKeyValueAsString(hEnvisatFile, MPH, "PRODUCT", "");
 
-    for( int nDSIndex = 0;
-         EnvisatFile_GetDatasetInfo( hEnvisatFile, nDSIndex,
-                                     &pszDSName,
-                                     &pszDSType,
-                                     &pszDSFilename,
-                                     nullptr, nullptr,
-                                     &nNumDsr, &nDSRSize ) == SUCCESS;
-         ++nDSIndex )
+    for (int nDSIndex = 0;
+         EnvisatFile_GetDatasetInfo(hEnvisatFile, nDSIndex, &pszDSName,
+                                    &pszDSType, &pszDSFilename, nullptr,
+                                    nullptr, &nNumDsr, &nDSRSize) == SUCCESS;
+         ++nDSIndex)
     {
-        if( STARTS_WITH_CI(pszDSFilename, "NOT USED") || (nNumDsr <= 0) )
+        if (STARTS_WITH_CI(pszDSFilename, "NOT USED") || (nNumDsr <= 0))
             continue;
-        if( !EQUAL(pszDSType,"A") && !EQUAL(pszDSType,"G") )
+        if (!EQUAL(pszDSType, "A") && !EQUAL(pszDSType, "G"))
             continue;
 
-        for ( int nRecord = 0; nRecord < nNumDsr; ++nRecord )
+        for (int nRecord = 0; nRecord < nNumDsr; ++nRecord)
         {
             char szPrefix[128];
-            strncpy( szPrefix, pszDSName, sizeof(szPrefix) - 1);
+            strncpy(szPrefix, pszDSName, sizeof(szPrefix) - 1);
             szPrefix[sizeof(szPrefix) - 1] = '\0';
 
             // strip trailing spaces
-            for( int i = static_cast<int>(strlen(szPrefix))-1; i && szPrefix[i] == ' '; --i )
+            for (int i = static_cast<int>(strlen(szPrefix)) - 1;
+                 i && szPrefix[i] == ' '; --i)
                 szPrefix[i] = '\0';
 
             // convert spaces into underscores
-            for( int i = 0; szPrefix[i] != '\0'; i++ )
+            for (int i = 0; szPrefix[i] != '\0'; i++)
             {
-                if( szPrefix[i] == ' ' )
+                if (szPrefix[i] == ' ')
                     szPrefix[i] = '_';
             }
 
-            char *pszRecord = (char *) CPLMalloc(nDSRSize+1);
+            char *pszRecord = (char *)CPLMalloc(nDSRSize + 1);
 
-            if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDSIndex, nRecord,
-                                               pszRecord ) == FAILURE )
+            if (EnvisatFile_ReadDatasetRecord(hEnvisatFile, nDSIndex, nRecord,
+                                              pszRecord) == FAILURE)
             {
-                CPLFree( pszRecord );
+                CPLFree(pszRecord);
                 return;
             }
 
-            const EnvisatRecordDescr *pRecordDescr
-                = EnvisatFile_GetRecordDescriptor(pszProduct, pszDSName);
+            const EnvisatRecordDescr *pRecordDescr =
+                EnvisatFile_GetRecordDescriptor(pszProduct, pszDSName);
             if (pRecordDescr)
             {
                 const EnvisatFieldDescr *pField = pRecordDescr->pFields;
-                while ( pField && pField->szName )
+                while (pField && pField->szName)
                 {
                     char szValue[1024];
-                    if ( CE_None == EnvisatFile_GetFieldAsString(pszRecord, nDSRSize,
-                                                                 pField, szValue, sizeof(szValue)) )
+                    if (CE_None == EnvisatFile_GetFieldAsString(
+                                       pszRecord, nDSRSize, pField, szValue,
+                                       sizeof(szValue)))
                     {
                         char szKey[256];
                         if (nNumDsr == 1)
-                            snprintf( szKey, sizeof(szKey), "%s_%s", szPrefix, pField->szName);
+                            snprintf(szKey, sizeof(szKey), "%s_%s", szPrefix,
+                                     pField->szName);
                         else
                             // sprintf(szKey, "%s_%02d_%s", szPrefix, nRecord,
-                            snprintf( szKey, sizeof(szKey), "%s_%d_%s", szPrefix, nRecord,
-                                    pField->szName);
+                            snprintf(szKey, sizeof(szKey), "%s_%d_%s", szPrefix,
+                                     nRecord, pField->szName);
                         SetMetadataItem(szKey, szValue, "RECORDS");
                     }
                     // silently ignore conversion errors
@@ -794,7 +793,7 @@ void EnvisatDataset::CollectADSMetadata()
                     ++pField;
                 }
             }
-            CPLFree( pszRecord );
+            CPLFree(pszRecord);
         }
     }
 }
@@ -805,38 +804,35 @@ void EnvisatDataset::CollectADSMetadata()
 /*      Collect metadata from the SPH or MPH header fields.             */
 /************************************************************************/
 
-void EnvisatDataset::CollectMetadata( EnvisatFile_HeaderFlag  eMPHOrSPH )
+void EnvisatDataset::CollectMetadata(EnvisatFile_HeaderFlag eMPHOrSPH)
 
 {
-    for( int iKey = 0; true; iKey++ )
+    for (int iKey = 0; true; iKey++)
     {
-        const char *pszKey
-            = EnvisatFile_GetKeyByIndex(hEnvisatFile, eMPHOrSPH, iKey);
-        if( pszKey == nullptr )
+        const char *pszKey =
+            EnvisatFile_GetKeyByIndex(hEnvisatFile, eMPHOrSPH, iKey);
+        if (pszKey == nullptr)
             break;
 
-        const char *pszValue
-            = EnvisatFile_GetKeyValueAsString( hEnvisatFile, eMPHOrSPH,
-                                               pszKey, nullptr );
+        const char *pszValue = EnvisatFile_GetKeyValueAsString(
+            hEnvisatFile, eMPHOrSPH, pszKey, nullptr);
 
-        if( pszValue == nullptr )
+        if (pszValue == nullptr)
             continue;
 
         // skip some uninteresting structural information.
-        if( EQUAL(pszKey,"TOT_SIZE")
-            || EQUAL(pszKey,"SPH_SIZE")
-            || EQUAL(pszKey,"NUM_DSD")
-            || EQUAL(pszKey,"DSD_SIZE")
-            || EQUAL(pszKey,"NUM_DATA_SETS") )
+        if (EQUAL(pszKey, "TOT_SIZE") || EQUAL(pszKey, "SPH_SIZE") ||
+            EQUAL(pszKey, "NUM_DSD") || EQUAL(pszKey, "DSD_SIZE") ||
+            EQUAL(pszKey, "NUM_DATA_SETS"))
             continue;
 
         char szHeaderKey[128];
-        if( eMPHOrSPH == MPH )
-            snprintf( szHeaderKey, sizeof(szHeaderKey), "MPH_%s", pszKey );
+        if (eMPHOrSPH == MPH)
+            snprintf(szHeaderKey, sizeof(szHeaderKey), "MPH_%s", pszKey);
         else
-            snprintf( szHeaderKey, sizeof(szHeaderKey), "SPH_%s", pszKey );
+            snprintf(szHeaderKey, sizeof(szHeaderKey), "SPH_%s", pszKey);
 
-        SetMetadataItem( szHeaderKey, pszValue );
+        SetMetadataItem(szHeaderKey, pszValue);
     }
 }
 
@@ -844,120 +840,118 @@ void EnvisatDataset::CollectMetadata( EnvisatFile_HeaderFlag  eMPHOrSPH )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Check the header.                                               */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 8 || poOpenInfo->fpL == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Check the header.                                               */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->nHeaderBytes < 8 || poOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PRODUCT=") )
+    if (!STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "PRODUCT="))
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Try opening the dataset.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try opening the dataset.                                        */
+    /* -------------------------------------------------------------------- */
     EnvisatFile *hEnvisatFile = nullptr;
-    if( EnvisatFile_Open( &hEnvisatFile, poOpenInfo->pszFilename, "r" )
-        == FAILURE )
+    if (EnvisatFile_Open(&hEnvisatFile, poOpenInfo->pszFilename, "r") ==
+        FAILURE)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Find a measurement type dataset to use as our reference          */
-/*      raster band.                                                    */
-/* -------------------------------------------------------------------- */
-    int         dsr_size, num_dsr, ds_offset;
+    /* -------------------------------------------------------------------- */
+    /*      Find a measurement type dataset to use as our reference          */
+    /*      raster band.                                                    */
+    /* -------------------------------------------------------------------- */
+    int dsr_size, num_dsr, ds_offset;
     const char *pszDSType = nullptr;
 
     int ds_index = 0;
-    for( ; true; ds_index++ )
+    for (; true; ds_index++)
     {
-        if( EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index,
-                                        nullptr, &pszDSType, nullptr,
-                                        &ds_offset, nullptr,
-                                        &num_dsr, &dsr_size ) == FAILURE )
+        if (EnvisatFile_GetDatasetInfo(hEnvisatFile, ds_index, nullptr,
+                                       &pszDSType, nullptr, &ds_offset, nullptr,
+                                       &num_dsr, &dsr_size) == FAILURE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to find \"MDS1\" measurement dataset in "
-                      "Envisat file." );
-            EnvisatFile_Close( hEnvisatFile );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to find \"MDS1\" measurement dataset in "
+                     "Envisat file.");
+            EnvisatFile_Close(hEnvisatFile);
             return nullptr;
         }
 
         /* Have we found what we are looking for?  A Measurement ds. */
-        if( EQUAL(pszDSType,"M") )
+        if (EQUAL(pszDSType, "M"))
             break;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the requested access is supported.                      */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->eAccess == GA_Update)
     {
-        EnvisatFile_Close( hEnvisatFile );
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The ENVISAT driver does not support update access to existing"
-                  " datasets.\n" );
+        EnvisatFile_Close(hEnvisatFile);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The ENVISAT driver does not support update access to existing"
+                 " datasets.\n");
         return nullptr;
     }
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
     EnvisatDataset *poDS = new EnvisatDataset();
 
     poDS->hEnvisatFile = hEnvisatFile;
 
-/* -------------------------------------------------------------------- */
-/*      Setup image definition.                                         */
-/* -------------------------------------------------------------------- */
-    EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index,
-                                nullptr, nullptr, nullptr, &ds_offset, nullptr,
-                                &num_dsr, &dsr_size );
+    /* -------------------------------------------------------------------- */
+    /*      Setup image definition.                                         */
+    /* -------------------------------------------------------------------- */
+    EnvisatFile_GetDatasetInfo(hEnvisatFile, ds_index, nullptr, nullptr,
+                               nullptr, &ds_offset, nullptr, &num_dsr,
+                               &dsr_size);
 
-    poDS->nRasterXSize = EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
-                                                       "LINE_LENGTH", 0 );
+    poDS->nRasterXSize =
+        EnvisatFile_GetKeyValueAsInt(hEnvisatFile, SPH, "LINE_LENGTH", 0);
     poDS->nRasterYSize = num_dsr;
     poDS->eAccess = GA_ReadOnly;
 
-    const char *pszProduct
-        = EnvisatFile_GetKeyValueAsString( hEnvisatFile, MPH, "PRODUCT", "" );
-    const char *pszDataType
-        = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, "DATA_TYPE",
-                                           "" );
-    const char *pszSampleType
-        = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, "SAMPLE_TYPE",
-                                           "" );
+    const char *pszProduct =
+        EnvisatFile_GetKeyValueAsString(hEnvisatFile, MPH, "PRODUCT", "");
+    const char *pszDataType =
+        EnvisatFile_GetKeyValueAsString(hEnvisatFile, SPH, "DATA_TYPE", "");
+    const char *pszSampleType =
+        EnvisatFile_GetKeyValueAsString(hEnvisatFile, SPH, "SAMPLE_TYPE", "");
 
     GDALDataType eDataType;
-    if( EQUAL(pszDataType,"FLT32") && STARTS_WITH_CI(pszSampleType, "COMPLEX"))
+    if (EQUAL(pszDataType, "FLT32") && STARTS_WITH_CI(pszSampleType, "COMPLEX"))
         eDataType = GDT_CFloat32;
-    else if( EQUAL(pszDataType,"FLT32") )
+    else if (EQUAL(pszDataType, "FLT32"))
         eDataType = GDT_Float32;
-    else if( EQUAL(pszDataType,"UWORD") )
+    else if (EQUAL(pszDataType, "UWORD"))
         eDataType = GDT_UInt16;
-    else if( EQUAL(pszDataType,"SWORD") && STARTS_WITH_CI(pszSampleType, "COMPLEX") )
+    else if (EQUAL(pszDataType, "SWORD") &&
+             STARTS_WITH_CI(pszSampleType, "COMPLEX"))
         eDataType = GDT_CInt16;
-    else if( EQUAL(pszDataType,"SWORD") )
+    else if (EQUAL(pszDataType, "SWORD"))
         eDataType = GDT_Int16;
-    else if( STARTS_WITH_CI(pszProduct,"ATS_TOA_1") )
+    else if (STARTS_WITH_CI(pszProduct, "ATS_TOA_1"))
     {
         /* all 16bit data, no line length provided */
         eDataType = GDT_Int16;
         poDS->nRasterXSize = (dsr_size - 20) / 2;
     }
-    else if( poDS->nRasterXSize == 0 )
+    else if (poDS->nRasterXSize == 0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Envisat product format not recognised.  Assuming 8bit\n"
-                  "with no per-record prefix data.  Results may be useless!" );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Envisat product format not recognised.  Assuming 8bit\n"
+                 "with no per-record prefix data.  Results may be useless!");
         eDataType = GDT_Byte;
         poDS->nRasterXSize = dsr_size;
     }
     else
     {
-        if( dsr_size >= 2 * poDS->nRasterXSize )
+        if (dsr_size >= 2 * poDS->nRasterXSize)
             eDataType = GDT_UInt16;
         else
             eDataType = GDT_Byte;
@@ -965,24 +959,24 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const int bNative =
 #ifdef CPL_LSB
-    FALSE
+        FALSE
 #else
-    TRUE
+        TRUE
 #endif
         ;
 
-    int nPrefixBytes = dsr_size -
-        ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
+    int nPrefixBytes =
+        dsr_size - ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
 
-/* -------------------------------------------------------------------- */
-/*      Fail out if we didn't get non-zero sizes.                       */
-/* -------------------------------------------------------------------- */
-    if( poDS->nRasterXSize < 1 || poDS->nRasterYSize < 1 )
+    /* -------------------------------------------------------------------- */
+    /*      Fail out if we didn't get non-zero sizes.                       */
+    /* -------------------------------------------------------------------- */
+    if (poDS->nRasterXSize < 1 || poDS->nRasterYSize < 1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to determine organization of dataset.  It would\n"
-                  "appear this is an Envisat dataset, but an unsupported\n"
-                  "data product.  Unable to utilize." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to determine organization of dataset.  It would\n"
+                 "appear this is an Envisat dataset, but an unsupported\n"
+                 "data product.  Unable to utilize.");
         delete poDS;
         return nullptr;
     }
@@ -990,97 +984,98 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Try to collect GCPs.                                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try to collect GCPs.                                            */
+    /* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- */
-/*      Scan for all datasets matching the reference dataset.           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Scan for all datasets matching the reference dataset.           */
+    /* -------------------------------------------------------------------- */
     int num_dsr2, dsr_size2, iBand = 0;
     const char *pszDSName = nullptr;
     char szBandName[128];
     bool bMiltiChannel;
 
-    for( ds_index = 0;
-         EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index,
-                                     &pszDSName, nullptr, nullptr,
-                                     &ds_offset, nullptr,
-                                     &num_dsr2, &dsr_size2 ) == SUCCESS;
-         ds_index++ )
+    for (ds_index = 0;
+         EnvisatFile_GetDatasetInfo(hEnvisatFile, ds_index, &pszDSName, nullptr,
+                                    nullptr, &ds_offset, nullptr, &num_dsr2,
+                                    &dsr_size2) == SUCCESS;
+         ds_index++)
     {
-        if( !EQUAL(pszDSType,"M") || num_dsr2 != num_dsr )
+        if (!EQUAL(pszDSType, "M") || num_dsr2 != num_dsr)
             continue;
 
-        if( STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2') &&
-            ( (strstr(pszDSName, "MDS(16)") != nullptr) ||
-              (strstr(pszDSName, "MDS(19)") != nullptr)) )
+        if (STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2') &&
+            ((strstr(pszDSName, "MDS(16)") != nullptr) ||
+             (strstr(pszDSName, "MDS(19)") != nullptr)))
             bMiltiChannel = true;
         else
             bMiltiChannel = false;
 
-        if( (dsr_size2 == dsr_size) && !bMiltiChannel )
+        if ((dsr_size2 == dsr_size) && !bMiltiChannel)
         {
-            poDS->SetBand( iBand+1,
-                       new RawRasterBand( poDS, iBand+1, poDS->fpImage,
-                                          ds_offset + nPrefixBytes,
-                                          GDALGetDataTypeSize(eDataType) / 8,
-                                          dsr_size,
-                                          eDataType, bNative,
-                                          RawRasterBand::OwnFP::NO ) );
+            poDS->SetBand(iBand + 1,
+                          new RawRasterBand(poDS, iBand + 1, poDS->fpImage,
+                                            ds_offset + nPrefixBytes,
+                                            GDALGetDataTypeSize(eDataType) / 8,
+                                            dsr_size, eDataType, bNative,
+                                            RawRasterBand::OwnFP::NO));
             iBand++;
 
-            poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+            poDS->GetRasterBand(iBand)->SetDescription(pszDSName);
         }
-/* -------------------------------------------------------------------- */
-/*       Handle MERIS Level 2 datasets with data type different from    */
-/*       the one declared in the SPH                                    */
-/* -------------------------------------------------------------------- */
-        else if( STARTS_WITH_CI(pszProduct, "MER") &&
-                 (strstr(pszDSName, "Flags") != nullptr) )
+        /* --------------------------------------------------------------------
+         */
+        /*       Handle MERIS Level 2 datasets with data type different from */
+        /*       the one declared in the SPH */
+        /* --------------------------------------------------------------------
+         */
+        else if (STARTS_WITH_CI(pszProduct, "MER") &&
+                 (strstr(pszDSName, "Flags") != nullptr))
         {
             if (pszProduct[8] == '1')
             {
                 // Flags
-                poDS->SetBand( iBand+1,
-                           new RawRasterBand( poDS, iBand+1, poDS->fpImage,
-                                              ds_offset + nPrefixBytes, 3,
-                                              dsr_size, GDT_Byte, bNative,
-                                              RawRasterBand::OwnFP::NO ) );
+                poDS->SetBand(iBand + 1,
+                              new RawRasterBand(poDS, iBand + 1, poDS->fpImage,
+                                                ds_offset + nPrefixBytes, 3,
+                                                dsr_size, GDT_Byte, bNative,
+                                                RawRasterBand::OwnFP::NO));
                 iBand++;
 
-                poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+                poDS->GetRasterBand(iBand)->SetDescription(pszDSName);
 
                 // Detector indices
-                poDS->SetBand( iBand+1,
-                           new RawRasterBand( poDS, iBand+1, poDS->fpImage,
-                                              ds_offset + nPrefixBytes + 1,
-                                              3, dsr_size, GDT_Int16,
-                                              bNative,
-                                              RawRasterBand::OwnFP::NO ) );
+                poDS->SetBand(iBand + 1,
+                              new RawRasterBand(poDS, iBand + 1, poDS->fpImage,
+                                                ds_offset + nPrefixBytes + 1, 3,
+                                                dsr_size, GDT_Int16, bNative,
+                                                RawRasterBand::OwnFP::NO));
                 iBand++;
 
-                const char *pszSuffix = strstr( pszDSName, "MDS" );
-                if ( pszSuffix != nullptr)
-                    snprintf( szBandName, sizeof(szBandName), "Detector index %s", pszSuffix );
+                const char *pszSuffix = strstr(pszDSName, "MDS");
+                if (pszSuffix != nullptr)
+                    snprintf(szBandName, sizeof(szBandName),
+                             "Detector index %s", pszSuffix);
                 else
-                    snprintf( szBandName, sizeof(szBandName), "%s", "Detector index" );
-                poDS->GetRasterBand(iBand)->SetDescription( szBandName );
+                    snprintf(szBandName, sizeof(szBandName), "%s",
+                             "Detector index");
+                poDS->GetRasterBand(iBand)->SetDescription(szBandName);
             }
-            else if ( (pszProduct[8] == '2') &&
-                      (dsr_size2 >= 3 * poDS->nRasterXSize ) )
+            else if ((pszProduct[8] == '2') &&
+                     (dsr_size2 >= 3 * poDS->nRasterXSize))
             {
                 int nFlagPrefixBytes = dsr_size2 - 3 * poDS->nRasterXSize;
 
-                poDS->SetBand( iBand+1,
-                       new MerisL2FlagBand( poDS, iBand+1, poDS->fpImage,
-                                            ds_offset, nFlagPrefixBytes ) );
+                poDS->SetBand(iBand + 1, new MerisL2FlagBand(
+                                             poDS, iBand + 1, poDS->fpImage,
+                                             ds_offset, nFlagPrefixBytes));
                 iBand++;
 
-                poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+                poDS->GetRasterBand(iBand)->SetDescription(pszDSName);
             }
         }
-        else if( STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2') )
+        else if (STARTS_WITH_CI(pszProduct, "MER") && (pszProduct[8] == '2'))
         {
             int nPrefixBytes2, nSubBands, nSubBandIdx, nSubBandOffset;
 
@@ -1088,44 +1083,45 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
             GDALDataType eDataType2 = GDT_Byte;
 
             nSubBands = dsr_size2 / poDS->nRasterXSize;
-            if( (nSubBands < 1) || (nSubBands > 3) )
+            if ((nSubBands < 1) || (nSubBands > 3))
                 nSubBands = 0;
 
-            nPrefixBytes2 = dsr_size2 -
-                (nSubBands * nPixelSize * poDS->nRasterXSize);
+            nPrefixBytes2 =
+                dsr_size2 - (nSubBands * nPixelSize * poDS->nRasterXSize);
 
             for (nSubBandIdx = 0; nSubBandIdx < nSubBands; ++nSubBandIdx)
             {
                 nSubBandOffset =
                     ds_offset + nPrefixBytes2 + nSubBandIdx * nPixelSize;
-                poDS->SetBand( iBand+1,
-                        new RawRasterBand( poDS, iBand+1, poDS->fpImage,
-                                           nSubBandOffset,
-                                           nPixelSize * nSubBands,
-                                           dsr_size2, eDataType2, bNative,
-                                           RawRasterBand::OwnFP::NO ) );
+                poDS->SetBand(iBand + 1,
+                              new RawRasterBand(poDS, iBand + 1, poDS->fpImage,
+                                                nSubBandOffset,
+                                                nPixelSize * nSubBands,
+                                                dsr_size2, eDataType2, bNative,
+                                                RawRasterBand::OwnFP::NO));
                 iBand++;
 
                 if (nSubBands > 1)
                 {
-                    snprintf( szBandName, sizeof(szBandName), "%s (%d)", pszDSName, nSubBandIdx );
-                    poDS->GetRasterBand(iBand)->SetDescription( szBandName );
+                    snprintf(szBandName, sizeof(szBandName), "%s (%d)",
+                             pszDSName, nSubBandIdx);
+                    poDS->GetRasterBand(iBand)->SetDescription(szBandName);
                 }
                 else
-                    poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+                    poDS->GetRasterBand(iBand)->SetDescription(pszDSName);
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect metadata.                                               */
-/* -------------------------------------------------------------------- */
-    poDS->CollectMetadata( MPH );
-    poDS->CollectMetadata( SPH );
+    /* -------------------------------------------------------------------- */
+    /*      Collect metadata.                                               */
+    /* -------------------------------------------------------------------- */
+    poDS->CollectMetadata(MPH);
+    poDS->CollectMetadata(SPH);
     poDS->CollectDSDMetadata();
     poDS->CollectADSMetadata();
 
-    if( STARTS_WITH_CI(pszProduct, "MER") )
+    if (STARTS_WITH_CI(pszProduct, "MER"))
         poDS->ScanForGCPs_MERIS();
     else
         poDS->ScanForGCPs_ASAR();
@@ -1133,16 +1129,16 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     /* unwrap GCPs for products crossing date border */
     poDS->UnwrapGCPs();
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -1154,20 +1150,19 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_Envisat()
 
 {
-    if( GDALGetDriverByName( "ESAT" ) != nullptr )
+    if (GDALGetDriverByName("ESAT") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "ESAT" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Envisat Image Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drivers/raster/esat.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("ESAT");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Envisat Image Format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/esat.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "n1");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = EnvisatDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

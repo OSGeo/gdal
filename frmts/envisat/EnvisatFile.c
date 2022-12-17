@@ -31,62 +31,65 @@
 #include "cpl_string.h"
 
 #ifndef APP_BUILD
-#  define GDAL_BUILD
-#  include "cpl_conv.h"
-#  include "EnvisatFile.h"
-
+#define GDAL_BUILD
+#include "cpl_conv.h"
+#include "EnvisatFile.h"
 
 #else
-#  include "APP/app.h"
-#  include "util/Files/EnvisatFile.h"
+#include "APP/app.h"
+#include "util/Files/EnvisatFile.h"
 #endif
 
-CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
-CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
+{
+}
+CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused)
+{
+}
 
 typedef struct
 {
-    char	*ds_name;
-    char	*ds_type;
-    char	*filename;
-    int		ds_offset;
-    int		ds_size;
-    int		num_dsr;
-    int		dsr_size;
+    char *ds_name;
+    char *ds_type;
+    char *filename;
+    int ds_offset;
+    int ds_size;
+    int num_dsr;
+    int dsr_size;
 } EnvisatDatasetInfo;
 
 typedef struct
 {
-    char	*key;
-    char	*value;
-    size_t      value_len;
-    char	*units;
-    char	*literal_line;
-    int         value_offset;
+    char *key;
+    char *value;
+    size_t value_len;
+    char *units;
+    char *literal_line;
+    int value_offset;
 } EnvisatNameValue;
 
 struct EnvisatFile_tag
 {
-    VSILFILE	*fp;
-    char        *filename;
-    int		updatable;
-    int         header_dirty;
-    int		dsd_offset;
+    VSILFILE *fp;
+    char *filename;
+    int updatable;
+    int header_dirty;
+    int dsd_offset;
 
-    int		mph_count;
+    int mph_count;
     EnvisatNameValue **mph_entries;
 
-    int		sph_count;
+    int sph_count;
     EnvisatNameValue **sph_entries;
 
-    int		ds_count;
+    int ds_count;
     EnvisatDatasetInfo **ds_info;
 };
 
 #ifdef GDAL_BUILD
-#  define SUCCESS 0
-#  define FAILURE 1
-#  define SendError( text )   CPLError( CE_Failure, CPLE_AppDefined, "%s", text )
+#define SUCCESS 0
+#define FAILURE 1
+#define SendError(text) CPLError(CE_Failure, CPLE_AppDefined, "%s", text)
 #endif
 
 #define MPH_SIZE 1247
@@ -94,29 +97,21 @@ struct EnvisatFile_tag
 /*
  * API For handling name/value lists.
  */
-int S_NameValueList_Parse( const char *text, int text_offset,
-                           int *entry_count,
-                           EnvisatNameValue ***entries );
-void S_NameValueList_Destroy( int *entry_count,
-                             EnvisatNameValue ***entries );
-int S_NameValueList_FindKey( const char *key,
-                             int entry_count,
-                             EnvisatNameValue **entries );
-const char *S_NameValueList_FindValue( const char *key,
-                                       int entry_count,
-                                       EnvisatNameValue **entries,
-                                       const char * default_value );
+int S_NameValueList_Parse(const char *text, int text_offset, int *entry_count,
+                          EnvisatNameValue ***entries);
+void S_NameValueList_Destroy(int *entry_count, EnvisatNameValue ***entries);
+int S_NameValueList_FindKey(const char *key, int entry_count,
+                            EnvisatNameValue **entries);
+const char *S_NameValueList_FindValue(const char *key, int entry_count,
+                                      EnvisatNameValue **entries,
+                                      const char *default_value);
 
-int S_NameValueList_Rewrite( VSILFILE *fp, int entry_count,
-                             EnvisatNameValue **entries );
+int S_NameValueList_Rewrite(VSILFILE *fp, int entry_count,
+                            EnvisatNameValue **entries);
 
-EnvisatNameValue *
-    S_EnivsatFile_FindNameValue( EnvisatFile *self,
-                                 EnvisatFile_HeaderFlag mph_or_sph,
-                                 const char * key );
-
-
-
+EnvisatNameValue *S_EnivsatFile_FindNameValue(EnvisatFile *self,
+                                              EnvisatFile_HeaderFlag mph_or_sph,
+                                              const char *key);
 
 /*-----------------------------------------------------------------------------
 
@@ -139,50 +134,51 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-static int EnvisatFile_SetupLevel0( EnvisatFile *self )
+static int EnvisatFile_SetupLevel0(EnvisatFile *self)
 
 {
-    int	file_length;
+    int file_length;
     unsigned char header[68];
     EnvisatDatasetInfo *ds_info;
 
     self->dsd_offset = 0;
     self->ds_count = 1;
-    self->ds_info = (EnvisatDatasetInfo **)
-        CPLCalloc(sizeof(EnvisatDatasetInfo*),self->ds_count);
+    self->ds_info = (EnvisatDatasetInfo **)CPLCalloc(
+        sizeof(EnvisatDatasetInfo *), self->ds_count);
 
-    if( self->ds_info == NULL )
+    if (self->ds_info == NULL)
         return FAILURE;
 
     /*
      * Figure out how long the file is.
      */
 
-    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( self->fp, 0, SEEK_END ));
-    file_length = (int) VSIFTellL( self->fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL(self->fp, 0, SEEK_END));
+    file_length = (int)VSIFTellL(self->fp);
 
     /*
      * Read the first record header, and verify the well known values.
      */
-    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( self->fp, 3203, SEEK_SET ));
-    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( header, 68, 1, self->fp ));
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL(self->fp, 3203, SEEK_SET));
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(header, 68, 1, self->fp));
 
-    if( header[38] != 0 || header[39] != 0x1d
-        || header[40] != 0 || header[41] != 0x54 )
+    if (header[38] != 0 || header[39] != 0x1d || header[40] != 0 ||
+        header[41] != 0x54)
     {
-        SendError( "Didn't get expected Data Field Header Length, or Mode ID\n"
-                   "values for the first data record." );
+        SendError("Didn't get expected Data Field Header Length, or Mode ID\n"
+                  "values for the first data record.");
         return FAILURE;
     }
 
     /*
      * Then build the dataset into structure from that.
      */
-    ds_info = (EnvisatDatasetInfo *) CPLCalloc(sizeof(EnvisatDatasetInfo),1);
+    ds_info = (EnvisatDatasetInfo *)CPLCalloc(sizeof(EnvisatDatasetInfo), 1);
 
-    ds_info->ds_name = CPLStrdup( "ASAR SOURCE PACKETS         " );
+    ds_info->ds_name = CPLStrdup("ASAR SOURCE PACKETS         ");
     ds_info->ds_type = CPLStrdup("M");
-    ds_info->filename = CPLStrdup("                                                              ");
+    ds_info->filename = CPLStrdup(
+        "                                                              ");
     ds_info->ds_offset = 3203;
     ds_info->dsr_size = -1;
     ds_info->num_dsr = 0;
@@ -215,16 +211,15 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_Open( EnvisatFile **self_ptr,
-                      const char *filename,
-                      const char *mode )
+int EnvisatFile_Open(EnvisatFile **self_ptr, const char *filename,
+                     const char *mode)
 
 {
-    VSILFILE	*fp;
-    EnvisatFile	*self;
-    char	mph_data[1248];
-    char	*sph_data, *ds_data;
-    int		sph_size, num_dsd, dsd_size, i;
+    VSILFILE *fp;
+    EnvisatFile *self;
+    char mph_data[1248];
+    char *sph_data, *ds_data;
+    int sph_size, num_dsd, dsd_size, i;
 
     *self_ptr = NULL;
 
@@ -232,14 +227,14 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
      * Check for legal mode argument.  Force to be binary for correct
      * operation on DOS file systems.
      */
-    if( strcmp(mode,"r") == 0 )
+    if (strcmp(mode, "r") == 0)
         mode = "rb";
-    else if( strcmp(mode,"r+") == 0 )
+    else if (strcmp(mode, "r+") == 0)
         mode = "rb+";
     else
     {
-        SendError( "Illegal mode value used in EnvisatFile_Open(), only "
-                   "\"r\" and \"r+\" are supported." );
+        SendError("Illegal mode value used in EnvisatFile_Open(), only "
+                  "\"r\" and \"r+\" are supported.");
         return FAILURE;
     }
 
@@ -247,62 +242,61 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
      * Try to open the file, and report failure.
      */
 
-    fp = VSIFOpenL( filename, mode );
+    fp = VSIFOpenL(filename, mode);
 
-    if( fp == NULL )
+    if (fp == NULL)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
-                 "Unable to open file \"%s\" in EnvisatFile_Open().",
-                 filename );
+        snprintf(error_buf, sizeof(error_buf),
+                 "Unable to open file \"%s\" in EnvisatFile_Open().", filename);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
     /*
      * Create, and initialize the EnvisatFile structure.
      */
-    self = (EnvisatFile *) CPLCalloc(sizeof(EnvisatFile),1);
-    if( self == NULL )
+    self = (EnvisatFile *)CPLCalloc(sizeof(EnvisatFile), 1);
+    if (self == NULL)
         return FAILURE;
 
     self->fp = fp;
     self->filename = CPLStrdup(filename);
     self->header_dirty = 0;
-    self->updatable = (strcmp(mode,"rb+") == 0);
+    self->updatable = (strcmp(mode, "rb+") == 0);
 
     /*
      * Read the MPH, and process it as a group of name/value pairs.
      */
 
-    if( VSIFReadL( mph_data, 1, MPH_SIZE, fp ) != MPH_SIZE )
+    if (VSIFReadL(mph_data, 1, MPH_SIZE, fp) != MPH_SIZE)
     {
-        EnvisatFile_Close( self );
-        SendError( "VSIFReadL() for mph failed." );
+        EnvisatFile_Close(self);
+        SendError("VSIFReadL() for mph failed.");
         return FAILURE;
     }
 
     mph_data[MPH_SIZE] = '\0';
-    if( S_NameValueList_Parse( mph_data, 0,
-                               &(self->mph_count),
-                               &(self->mph_entries) ) == FAILURE )
+    if (S_NameValueList_Parse(mph_data, 0, &(self->mph_count),
+                              &(self->mph_entries)) == FAILURE)
     {
-        EnvisatFile_Close( self );
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
     /*
      * Is this an incomplete level 0 file?
      */
-    if( EnvisatFile_GetKeyValueAsInt( self, MPH, "SPH_SIZE", -1 ) == 0
-        && STARTS_WITH(EnvisatFile_GetKeyValueAsString( self, MPH, "PRODUCT", ""), "ASA_IM__0P") )
+    if (EnvisatFile_GetKeyValueAsInt(self, MPH, "SPH_SIZE", -1) == 0 &&
+        STARTS_WITH(EnvisatFile_GetKeyValueAsString(self, MPH, "PRODUCT", ""),
+                    "ASA_IM__0P"))
     {
 
-        if( EnvisatFile_SetupLevel0( self ) == FAILURE )
+        if (EnvisatFile_SetupLevel0(self) == FAILURE)
         {
-            EnvisatFile_Close( self );
+            EnvisatFile_Close(self);
             return FAILURE;
         }
         else
@@ -315,126 +309,119 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     /*
      * Read the SPH, and process it as a group of name/value pairs.
      */
-    sph_size = EnvisatFile_GetKeyValueAsInt( self, MPH, "SPH_SIZE", 0 );
+    sph_size = EnvisatFile_GetKeyValueAsInt(self, MPH, "SPH_SIZE", 0);
 
-    if( sph_size == 0 )
+    if (sph_size == 0)
     {
-        SendError( "File does not appear to have SPH,"
-                   " SPH_SIZE not set, or zero." );
-        EnvisatFile_Close( self );
+        SendError("File does not appear to have SPH,"
+                  " SPH_SIZE not set, or zero.");
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
-    sph_data = (char *) CPLMalloc(sph_size + 1 );
-    if( sph_data == NULL )
+    sph_data = (char *)CPLMalloc(sph_size + 1);
+    if (sph_data == NULL)
     {
-        EnvisatFile_Close( self );
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
-    if( (int) VSIFReadL( sph_data, 1, sph_size, fp ) != sph_size )
+    if ((int)VSIFReadL(sph_data, 1, sph_size, fp) != sph_size)
     {
-        CPLFree( sph_data );
-        EnvisatFile_Close( self );
-        SendError( "VSIFReadL() for sph failed." );
+        CPLFree(sph_data);
+        EnvisatFile_Close(self);
+        SendError("VSIFReadL() for sph failed.");
         return FAILURE;
     }
 
     sph_data[sph_size] = '\0';
-    ds_data = strstr(sph_data,"DS_NAME");
-    if( ds_data != NULL )
+    ds_data = strstr(sph_data, "DS_NAME");
+    if (ds_data != NULL)
     {
-        self->dsd_offset = (int) (ds_data - sph_data) + MPH_SIZE;
-        *(ds_data-1) = '\0';
+        self->dsd_offset = (int)(ds_data - sph_data) + MPH_SIZE;
+        *(ds_data - 1) = '\0';
     }
 
-    if( S_NameValueList_Parse( sph_data, MPH_SIZE,
-                               &(self->sph_count),
-                               &(self->sph_entries) ) == FAILURE )
+    if (S_NameValueList_Parse(sph_data, MPH_SIZE, &(self->sph_count),
+                              &(self->sph_entries)) == FAILURE)
     {
-        CPLFree( sph_data );
-        EnvisatFile_Close( self );
+        CPLFree(sph_data);
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
     /*
      * Parse the Dataset Definitions.
      */
-    num_dsd = EnvisatFile_GetKeyValueAsInt( self, MPH, "NUM_DSD", 0 );
-    dsd_size = EnvisatFile_GetKeyValueAsInt( self, MPH, "DSD_SIZE", 0 );
+    num_dsd = EnvisatFile_GetKeyValueAsInt(self, MPH, "NUM_DSD", 0);
+    dsd_size = EnvisatFile_GetKeyValueAsInt(self, MPH, "DSD_SIZE", 0);
 
-    if( num_dsd > 0 && ds_data == NULL )
+    if (num_dsd > 0 && ds_data == NULL)
     {
-        CPLFree( sph_data );
-        SendError( "DSDs indicated in MPH, but not found in SPH." );
-        EnvisatFile_Close( self );
+        CPLFree(sph_data);
+        SendError("DSDs indicated in MPH, but not found in SPH.");
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
-    self->ds_info = (EnvisatDatasetInfo **)
-        CPLCalloc(sizeof(EnvisatDatasetInfo*),num_dsd);
-    if( self->ds_info == NULL )
+    self->ds_info =
+        (EnvisatDatasetInfo **)CPLCalloc(sizeof(EnvisatDatasetInfo *), num_dsd);
+    if (self->ds_info == NULL)
     {
-        CPLFree( sph_data );
-        EnvisatFile_Close( self );
+        CPLFree(sph_data);
+        EnvisatFile_Close(self);
         return FAILURE;
     }
 
-    for( i = 0; i < num_dsd; i++ )
+    for (i = 0; i < num_dsd; i++)
     {
-        int	dsdh_count = 0;
+        int dsdh_count = 0;
         EnvisatNameValue **dsdh_entries = NULL;
-        char	*dsd_data;
+        char *dsd_data;
         EnvisatDatasetInfo *ds_info;
 
         /*
          * We parse each DSD grouping into a name/value list.
          */
         dsd_data = ds_data + i * dsd_size;
-        dsd_data[dsd_size-1] = '\0';
+        dsd_data[dsd_size - 1] = '\0';
 
-        if( S_NameValueList_Parse( dsd_data, 0,
-                                   &dsdh_count, &dsdh_entries ) == FAILURE )
+        if (S_NameValueList_Parse(dsd_data, 0, &dsdh_count, &dsdh_entries) ==
+            FAILURE)
         {
-            CPLFree( sph_data );
-            EnvisatFile_Close( self );
+            CPLFree(sph_data);
+            EnvisatFile_Close(self);
             return FAILURE;
         }
 
         /*
          * Then build the dataset into structure from that.
          */
-        ds_info = (EnvisatDatasetInfo *) CPLCalloc(sizeof(EnvisatDatasetInfo),1);
+        ds_info =
+            (EnvisatDatasetInfo *)CPLCalloc(sizeof(EnvisatDatasetInfo), 1);
 
         ds_info->ds_name = CPLStrdup(
-            S_NameValueList_FindValue( "DS_NAME",
-                                       dsdh_count, dsdh_entries, "" ));
+            S_NameValueList_FindValue("DS_NAME", dsdh_count, dsdh_entries, ""));
         ds_info->ds_type = CPLStrdup(
-            S_NameValueList_FindValue( "DS_TYPE",
-                                       dsdh_count, dsdh_entries, "" ));
-        ds_info->filename = CPLStrdup(
-            S_NameValueList_FindValue( "FILENAME",
-                                       dsdh_count, dsdh_entries, "" ));
-        ds_info->ds_offset = atoi(
-            S_NameValueList_FindValue( "DS_OFFSET",
-                                       dsdh_count, dsdh_entries, "0" ));
-        ds_info->ds_size = atoi(
-            S_NameValueList_FindValue( "DS_SIZE",
-                                       dsdh_count, dsdh_entries, "0" ));
-        ds_info->num_dsr = atoi(
-            S_NameValueList_FindValue( "NUM_DSR",
-                                       dsdh_count, dsdh_entries, "0" ));
-        ds_info->dsr_size = atoi(
-            S_NameValueList_FindValue( "DSR_SIZE",
-                                       dsdh_count, dsdh_entries, "0" ));
+            S_NameValueList_FindValue("DS_TYPE", dsdh_count, dsdh_entries, ""));
+        ds_info->filename = CPLStrdup(S_NameValueList_FindValue(
+            "FILENAME", dsdh_count, dsdh_entries, ""));
+        ds_info->ds_offset = atoi(S_NameValueList_FindValue(
+            "DS_OFFSET", dsdh_count, dsdh_entries, "0"));
+        ds_info->ds_size = atoi(S_NameValueList_FindValue("DS_SIZE", dsdh_count,
+                                                          dsdh_entries, "0"));
+        ds_info->num_dsr = atoi(S_NameValueList_FindValue("NUM_DSR", dsdh_count,
+                                                          dsdh_entries, "0"));
+        ds_info->dsr_size = atoi(S_NameValueList_FindValue(
+            "DSR_SIZE", dsdh_count, dsdh_entries, "0"));
 
-        S_NameValueList_Destroy( &dsdh_count, &dsdh_entries );
+        S_NameValueList_Destroy(&dsdh_count, &dsdh_entries);
 
         self->ds_info[i] = ds_info;
         self->ds_count++;
     }
 
-    CPLFree( sph_data );
+    CPLFree(sph_data);
 
     /*
      * Return successfully.
@@ -466,69 +453,68 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_Create( EnvisatFile **self_ptr,
-                        const char *filename,
-                        const char *template_file )
+int EnvisatFile_Create(EnvisatFile **self_ptr, const char *filename,
+                       const char *template_file)
 
 {
-    int		template_size;
-    char	*template_data;
-    VSILFILE	*fp;
+    int template_size;
+    char *template_data;
+    VSILFILE *fp;
 
     /*
      * Try to open the template file, and read it into memory.
      */
 
-    fp = VSIFOpenL( template_file, "rb" );
+    fp = VSIFOpenL(template_file, "rb");
 
-    if( fp == NULL )
+    if (fp == NULL)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
+        snprintf(error_buf, sizeof(error_buf),
                  "Unable to open file \"%s\" in EnvisatFile_Create().",
-                 template_file );
+                 template_file);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
-    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( fp, 0, SEEK_END ));
-    template_size = (int) VSIFTellL( fp );
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL(fp, 0, SEEK_END));
+    template_size = (int)VSIFTellL(fp);
 
-    template_data = (char *) CPLMalloc(template_size);
+    template_data = (char *)CPLMalloc(template_size);
 
-    CPL_IGNORE_RET_VAL_INT(VSIFSeekL( fp, 0, SEEK_SET ));
-    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL( template_data, template_size, 1, fp ));
-    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
+    CPL_IGNORE_RET_VAL_INT(VSIFSeekL(fp, 0, SEEK_SET));
+    CPL_IGNORE_RET_VAL_SIZET(VSIFReadL(template_data, template_size, 1, fp));
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
 
     /*
      * Try to write the template out to the new filename.
      */
 
-    fp = VSIFOpenL( filename, "wb" );
-    if( fp == NULL )
+    fp = VSIFOpenL(filename, "wb");
+    if (fp == NULL)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
+        snprintf(error_buf, sizeof(error_buf),
                  "Unable to open file \"%s\" in EnvisatFile_Create().",
-                 filename );
+                 filename);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
-    CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL( template_data, template_size, 1, fp ));
-    CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
+    CPL_IGNORE_RET_VAL_SIZET(VSIFWriteL(template_data, template_size, 1, fp));
+    CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
 
-    CPLFree( template_data );
+    CPLFree(template_data);
 
     /*
      * Now just open the file normally.
      */
 
-    return EnvisatFile_Open( self_ptr, filename, "r+" );
+    return EnvisatFile_Open(self_ptr, filename, "r+");
 }
 
 /*-----------------------------------------------------------------------------
@@ -553,24 +539,22 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_GetCurrentLength( EnvisatFile *self )
+int EnvisatFile_GetCurrentLength(EnvisatFile *self)
 
 {
-    int		length;
-    int		ds;
-    int		ds_offset;
-    int         ds_size;
+    int length;
+    int ds;
+    int ds_offset;
+    int ds_size;
 
-    length = MPH_SIZE
-        + EnvisatFile_GetKeyValueAsInt( self, MPH, "SPH_SIZE", 0 );
+    length = MPH_SIZE + EnvisatFile_GetKeyValueAsInt(self, MPH, "SPH_SIZE", 0);
 
-    for( ds = 0;
-         EnvisatFile_GetDatasetInfo( self, ds, NULL, NULL, NULL,
-                                     &ds_offset, &ds_size, NULL, NULL )
-             != FAILURE;
-         ds++ )
+    for (ds = 0;
+         EnvisatFile_GetDatasetInfo(self, ds, NULL, NULL, NULL, &ds_offset,
+                                    &ds_size, NULL, NULL) != FAILURE;
+         ds++)
     {
-        if( ds_offset != 0 && (ds_offset+ds_size) > length )
+        if (ds_offset != 0 && (ds_offset + ds_size) > length)
             length = ds_offset + ds_size;
     }
 
@@ -597,89 +581,89 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-static int EnvisatFile_RewriteHeader( EnvisatFile *self )
+static int EnvisatFile_RewriteHeader(EnvisatFile *self)
 
 {
-    int		dsd, dsd_size;
+    int dsd, dsd_size;
 
     /*
      * Rewrite MPH and SPH headers.
      */
-    if( S_NameValueList_Rewrite( self->fp,
-                        self->mph_count, self->mph_entries ) == FAILURE )
+    if (S_NameValueList_Rewrite(self->fp, self->mph_count, self->mph_entries) ==
+        FAILURE)
         return FAILURE;
 
-    if( S_NameValueList_Rewrite( self->fp,
-                        self->sph_count, self->sph_entries ) == FAILURE )
+    if (S_NameValueList_Rewrite(self->fp, self->sph_count, self->sph_entries) ==
+        FAILURE)
         return FAILURE;
 
     /*
      * Rewrite DSDs.  We actually have to read each, and reparse to set
      * the individual parameters properly.
      */
-    dsd_size = EnvisatFile_GetKeyValueAsInt( self, MPH, "DSD_SIZE", 0 );
-    if( dsd_size == 0 )
+    dsd_size = EnvisatFile_GetKeyValueAsInt(self, MPH, "DSD_SIZE", 0);
+    if (dsd_size == 0)
         return FAILURE;
 
-    for( dsd = 0; dsd < self->ds_count; dsd++ )
+    for (dsd = 0; dsd < self->ds_count; dsd++)
     {
-        char	*dsd_text;
-        int	dsdh_count = 0, key_index;
+        char *dsd_text;
+        int dsdh_count = 0, key_index;
         EnvisatNameValue **dsdh_entries = NULL;
 
-        dsd_text = (char *) CPLCalloc(1,dsd_size+1);
-        if( VSIFSeekL( self->fp, self->dsd_offset + dsd * dsd_size,
-                   SEEK_SET ) != 0 )
+        dsd_text = (char *)CPLCalloc(1, dsd_size + 1);
+        if (VSIFSeekL(self->fp, self->dsd_offset + dsd * dsd_size, SEEK_SET) !=
+            0)
         {
-            SendError( "VSIFSeekL() failed in EnvisatFile_RewriteHeader()" );
+            SendError("VSIFSeekL() failed in EnvisatFile_RewriteHeader()");
             CPLFree(dsd_text);
             return FAILURE;
         }
 
-        if( (int) VSIFReadL( dsd_text, 1, dsd_size, self->fp ) != dsd_size )
+        if ((int)VSIFReadL(dsd_text, 1, dsd_size, self->fp) != dsd_size)
         {
-            SendError( "VSIFReadL() failed in EnvisatFile_RewriteHeader()" );
+            SendError("VSIFReadL() failed in EnvisatFile_RewriteHeader()");
             return FAILURE;
         }
 
-        if( S_NameValueList_Parse( dsd_text, self->dsd_offset + dsd*dsd_size,
-                                   &dsdh_count, &dsdh_entries ) == FAILURE )
+        if (S_NameValueList_Parse(dsd_text, self->dsd_offset + dsd * dsd_size,
+                                  &dsdh_count, &dsdh_entries) == FAILURE)
             return FAILURE;
 
-        CPLFree( dsd_text );
+        CPLFree(dsd_text);
 
-        key_index = S_NameValueList_FindKey( "DS_OFFSET",
-                                             dsdh_count, dsdh_entries );
-        if( key_index == -1 )
+        key_index =
+            S_NameValueList_FindKey("DS_OFFSET", dsdh_count, dsdh_entries);
+        if (key_index == -1)
             continue;
 
-        snprintf( dsdh_entries[key_index]->value,
-                  dsdh_entries[key_index]->value_len, "%+021d",
-                 self->ds_info[dsd]->ds_offset );
+        snprintf(dsdh_entries[key_index]->value,
+                 dsdh_entries[key_index]->value_len, "%+021d",
+                 self->ds_info[dsd]->ds_offset);
 
-        key_index = S_NameValueList_FindKey( "DS_SIZE",
-                                             dsdh_count, dsdh_entries );
-        snprintf( dsdh_entries[key_index]->value,
-                  dsdh_entries[key_index]->value_len, "%+021d",
-                 self->ds_info[dsd]->ds_size );
+        key_index =
+            S_NameValueList_FindKey("DS_SIZE", dsdh_count, dsdh_entries);
+        snprintf(dsdh_entries[key_index]->value,
+                 dsdh_entries[key_index]->value_len, "%+021d",
+                 self->ds_info[dsd]->ds_size);
 
-        key_index = S_NameValueList_FindKey( "NUM_DSR",
-                                             dsdh_count, dsdh_entries );
-        snprintf( dsdh_entries[key_index]->value,
-                  dsdh_entries[key_index]->value_len, "%+011d",
-                 self->ds_info[dsd]->num_dsr );
+        key_index =
+            S_NameValueList_FindKey("NUM_DSR", dsdh_count, dsdh_entries);
+        snprintf(dsdh_entries[key_index]->value,
+                 dsdh_entries[key_index]->value_len, "%+011d",
+                 self->ds_info[dsd]->num_dsr);
 
-        key_index = S_NameValueList_FindKey( "DSR_SIZE",
-                                             dsdh_count, dsdh_entries );
-        snprintf( dsdh_entries[key_index]->value,
-                  dsdh_entries[key_index]->value_len, "%+011d",
-                 self->ds_info[dsd]->dsr_size );
+        key_index =
+            S_NameValueList_FindKey("DSR_SIZE", dsdh_count, dsdh_entries);
+        snprintf(dsdh_entries[key_index]->value,
+                 dsdh_entries[key_index]->value_len, "%+011d",
+                 self->ds_info[dsd]->dsr_size);
 
-        if( S_NameValueList_Rewrite( self->fp, dsdh_count, dsdh_entries )
-            == FAILURE )
+        if (S_NameValueList_Rewrite(self->fp, dsdh_count, dsdh_entries) ==
+            FAILURE)
             return FAILURE;
 
-        S_NameValueList_Destroy( &dsdh_count, &dsdh_entries );
+        S_NameValueList_Destroy(&dsdh_count, &dsdh_entries);
     }
 
     self->header_dirty = 0;
@@ -707,45 +691,45 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-void EnvisatFile_Close( EnvisatFile *self )
+void EnvisatFile_Close(EnvisatFile *self)
 
 {
-    int		i;
+    int i;
 
     /*
      * Do we need to write out the header information?
      */
-    if( self->header_dirty )
-        EnvisatFile_RewriteHeader( self );
+    if (self->header_dirty)
+        EnvisatFile_RewriteHeader(self);
 
     /*
      * Close file.
      */
-    if( self->fp != NULL )
-        CPL_IGNORE_RET_VAL_INT(VSIFCloseL( self->fp ));
+    if (self->fp != NULL)
+        CPL_IGNORE_RET_VAL_INT(VSIFCloseL(self->fp));
 
     /*
      * Clean up data structures.
      */
-    S_NameValueList_Destroy( &(self->mph_count), &(self->mph_entries) );
-    S_NameValueList_Destroy( &(self->sph_count), &(self->sph_entries) );
+    S_NameValueList_Destroy(&(self->mph_count), &(self->mph_entries));
+    S_NameValueList_Destroy(&(self->sph_count), &(self->sph_entries));
 
-    for( i = 0; i < self->ds_count; i++ )
+    for (i = 0; i < self->ds_count; i++)
     {
-        if( self->ds_info != NULL && self->ds_info[i] != NULL )
+        if (self->ds_info != NULL && self->ds_info[i] != NULL)
         {
-            CPLFree( self->ds_info[i]->ds_name );
-            CPLFree( self->ds_info[i]->ds_type );
-            CPLFree( self->ds_info[i]->filename );
-            CPLFree( self->ds_info[i] );
+            CPLFree(self->ds_info[i]->ds_name);
+            CPLFree(self->ds_info[i]->ds_type);
+            CPLFree(self->ds_info[i]->filename);
+            CPLFree(self->ds_info[i]);
         }
     }
-    if( self->ds_info != NULL )
-        CPLFree( self->ds_info );
-    if( self->filename != NULL )
-        CPLFree( self->filename );
+    if (self->ds_info != NULL)
+        CPLFree(self->ds_info);
+    if (self->filename != NULL)
+        CPLFree(self->filename);
 
-    CPLFree( self );
+    CPLFree(self);
 }
 
 /*-----------------------------------------------------------------------------
@@ -769,7 +753,7 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-const char *EnvisatFile_GetFilename( EnvisatFile *self )
+const char *EnvisatFile_GetFilename(EnvisatFile *self)
 
 {
     return self->filename;
@@ -800,18 +784,18 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-const char *EnvisatFile_GetKeyByIndex( EnvisatFile *self,
-                                       EnvisatFile_HeaderFlag mph_or_sph,
-                                       int key_index )
+const char *EnvisatFile_GetKeyByIndex(EnvisatFile *self,
+                                      EnvisatFile_HeaderFlag mph_or_sph,
+                                      int key_index)
 
 {
-    int	entry_count;
+    int entry_count;
     EnvisatNameValue **entries;
 
     /*
      * Select source list.
      */
-    if( mph_or_sph == MPH )
+    if (mph_or_sph == MPH)
     {
         entry_count = self->mph_count;
         entries = self->mph_entries;
@@ -822,7 +806,7 @@ const char *EnvisatFile_GetKeyByIndex( EnvisatFile *self,
         entries = self->sph_entries;
     }
 
-    if( key_index < 0 || key_index >= entry_count )
+    if (key_index < 0 || key_index >= entry_count)
         return NULL;
     else
         return entries[key_index]->key;
@@ -851,19 +835,19 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-const char *EnvisatFile_GetKeyValueAsString( EnvisatFile *self,
-                                             EnvisatFile_HeaderFlag mph_or_sph,
-                                             const char *key,
-                                             const char *default_value )
+const char *EnvisatFile_GetKeyValueAsString(EnvisatFile *self,
+                                            EnvisatFile_HeaderFlag mph_or_sph,
+                                            const char *key,
+                                            const char *default_value)
 
 {
-    int	entry_count, key_index;
+    int entry_count, key_index;
     EnvisatNameValue **entries;
 
     /*
      * Select source list.
      */
-    if( mph_or_sph == MPH )
+    if (mph_or_sph == MPH)
     {
         entry_count = self->mph_count;
         entries = self->mph_entries;
@@ -877,8 +861,8 @@ const char *EnvisatFile_GetKeyValueAsString( EnvisatFile *self,
     /*
      * Find and return the value.
      */
-    key_index = S_NameValueList_FindKey( key, entry_count, entries );
-    if( key_index == -1 )
+    key_index = S_NameValueList_FindKey(key, entry_count, entries);
+    if (key_index == -1)
         return default_value;
     else
         return entries[key_index]->value;
@@ -907,27 +891,26 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_SetKeyValueAsString( EnvisatFile *self,
-                                     EnvisatFile_HeaderFlag mph_or_sph,
-                                     const char *key,
-                                     const char *value )
+int EnvisatFile_SetKeyValueAsString(EnvisatFile *self,
+                                    EnvisatFile_HeaderFlag mph_or_sph,
+                                    const char *key, const char *value)
 
 {
-    int	entry_count, key_index;
+    int entry_count, key_index;
     EnvisatNameValue **entries;
     size_t nValueLen;
     size_t nEntryValueLen;
 
-    if( !self->updatable )
+    if (!self->updatable)
     {
-        SendError( "File not opened for update access." );
+        SendError("File not opened for update access.");
         return FAILURE;
     }
 
     /*
      * Select source list.
      */
-    if( mph_or_sph == MPH )
+    if (mph_or_sph == MPH)
     {
         entry_count = self->mph_count;
         entries = self->mph_entries;
@@ -941,30 +924,30 @@ int EnvisatFile_SetKeyValueAsString( EnvisatFile *self,
     /*
      * Find and return the value.
      */
-    key_index = S_NameValueList_FindKey( key, entry_count, entries );
-    if( key_index == -1 )
+    key_index = S_NameValueList_FindKey(key, entry_count, entries);
+    if (key_index == -1)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
-                 "Unable to set header field \"%s\", field not found.",
-                 key );
+        snprintf(error_buf, sizeof(error_buf),
+                 "Unable to set header field \"%s\", field not found.", key);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
     self->header_dirty = 1;
     nValueLen = strlen(value);
     nEntryValueLen = strlen(entries[key_index]->value);
-    if( nValueLen >= nEntryValueLen )
+    if (nValueLen >= nEntryValueLen)
     {
-        memcpy( entries[key_index]->value, value, nEntryValueLen );
+        memcpy(entries[key_index]->value, value, nEntryValueLen);
     }
     else
     {
-        memcpy( entries[key_index]->value, value, nValueLen );
-        memset( entries[key_index]->value + nValueLen, ' ', nEntryValueLen - nValueLen );
+        memcpy(entries[key_index]->value, value, nValueLen);
+        memset(entries[key_index]->value + nValueLen, ' ',
+               nEntryValueLen - nValueLen);
     }
 
     return SUCCESS;
@@ -993,19 +976,18 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_GetKeyValueAsInt( EnvisatFile *self,
-                                  EnvisatFile_HeaderFlag mph_or_sph,
-                                  const char *key,
-                                  int default_value )
+int EnvisatFile_GetKeyValueAsInt(EnvisatFile *self,
+                                 EnvisatFile_HeaderFlag mph_or_sph,
+                                 const char *key, int default_value)
 
 {
-    int	entry_count, key_index;
+    int entry_count, key_index;
     EnvisatNameValue **entries;
 
     /*
      * Select source list.
      */
-    if( mph_or_sph == MPH )
+    if (mph_or_sph == MPH)
     {
         entry_count = self->mph_count;
         entries = self->mph_entries;
@@ -1019,8 +1001,8 @@ int EnvisatFile_GetKeyValueAsInt( EnvisatFile *self,
     /*
      * Find and return the value.
      */
-    key_index = S_NameValueList_FindKey( key, entry_count, entries );
-    if( key_index == -1 )
+    key_index = S_NameValueList_FindKey(key, entry_count, entries);
+    if (key_index == -1)
         return default_value;
     else
         return atoi(entries[key_index]->value);
@@ -1049,33 +1031,31 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_SetKeyValueAsInt( EnvisatFile *self,
-                                  EnvisatFile_HeaderFlag mph_or_sph,
-                                  const char *key,
-                                  int value )
+int EnvisatFile_SetKeyValueAsInt(EnvisatFile *self,
+                                 EnvisatFile_HeaderFlag mph_or_sph,
+                                 const char *key, int value)
 
 {
     char format[32], string_value[128];
     const char *prototype_value;
 
-
-    prototype_value = EnvisatFile_GetKeyValueAsString( self, mph_or_sph, key, NULL);
-    if( prototype_value == NULL )
+    prototype_value =
+        EnvisatFile_GetKeyValueAsString(self, mph_or_sph, key, NULL);
+    if (prototype_value == NULL)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
-                 "Unable to set header field \"%s\", field not found.",
-                 key );
+        snprintf(error_buf, sizeof(error_buf),
+                 "Unable to set header field \"%s\", field not found.", key);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
-    snprintf( format, sizeof(format), "%%+0%dd", (int) strlen(prototype_value) );
-    snprintf( string_value, sizeof(string_value), format, value );
+    snprintf(format, sizeof(format), "%%+0%dd", (int)strlen(prototype_value));
+    snprintf(string_value, sizeof(string_value), format, value);
 
-    return EnvisatFile_SetKeyValueAsString( self, mph_or_sph, key, string_value );
+    return EnvisatFile_SetKeyValueAsString(self, mph_or_sph, key, string_value);
 }
 
 /*-----------------------------------------------------------------------------
@@ -1101,19 +1081,18 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-double EnvisatFile_GetKeyValueAsDouble( EnvisatFile *self,
-                                        EnvisatFile_HeaderFlag mph_or_sph,
-                                        const char *key,
-                                        double default_value )
+double EnvisatFile_GetKeyValueAsDouble(EnvisatFile *self,
+                                       EnvisatFile_HeaderFlag mph_or_sph,
+                                       const char *key, double default_value)
 
 {
-    int	entry_count, key_index;
+    int entry_count, key_index;
     EnvisatNameValue **entries;
 
     /*
      * Select source list.
      */
-    if( mph_or_sph == MPH )
+    if (mph_or_sph == MPH)
     {
         entry_count = self->mph_count;
         entries = self->mph_entries;
@@ -1127,8 +1106,8 @@ double EnvisatFile_GetKeyValueAsDouble( EnvisatFile *self,
     /*
      * Find and return the value.
      */
-    key_index = S_NameValueList_FindKey( key, entry_count, entries );
-    if( key_index == -1 )
+    key_index = S_NameValueList_FindKey(key, entry_count, entries);
+    if (key_index == -1)
         return default_value;
     else
         return atof(entries[key_index]->value);
@@ -1162,54 +1141,53 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
-                                     EnvisatFile_HeaderFlag mph_or_sph,
-                                     const char *key,
-                                     double value )
+int EnvisatFile_SetKeyValueAsDouble(EnvisatFile *self,
+                                    EnvisatFile_HeaderFlag mph_or_sph,
+                                    const char *key, double value)
 
 {
     char format[32], string_value[128];
     const char *prototype_value;
-    int		length;
+    int length;
 
-    prototype_value = EnvisatFile_GetKeyValueAsString( self, mph_or_sph, key, NULL);
-    if( prototype_value == NULL )
+    prototype_value =
+        EnvisatFile_GetKeyValueAsString(self, mph_or_sph, key, NULL);
+    if (prototype_value == NULL)
     {
-        char	error_buf[2048];
+        char error_buf[2048];
 
-        snprintf( error_buf, sizeof(error_buf),
-                 "Unable to set header field \"%s\", field not found.",
-                 key );
+        snprintf(error_buf, sizeof(error_buf),
+                 "Unable to set header field \"%s\", field not found.", key);
 
-        SendError( error_buf );
+        SendError(error_buf);
         return FAILURE;
     }
 
     length = (int)strlen(prototype_value);
-    if( prototype_value[length-4] == 'E' )
+    if (prototype_value[length - 4] == 'E')
     {
-        snprintf( format, sizeof(format), "%%+%dE", length-4 );
-        snprintf( string_value, sizeof(string_value), format, value );
+        snprintf(format, sizeof(format), "%%+%dE", length - 4);
+        snprintf(string_value, sizeof(string_value), format, value);
     }
     else
     {
-        int	decimals = 0, i;
-        for( i = length-1; i > 0; i-- )
+        int decimals = 0, i;
+        for (i = length - 1; i > 0; i--)
         {
-            if( prototype_value[i] == '.' )
+            if (prototype_value[i] == '.')
                 break;
 
             decimals++;
         }
 
-        snprintf( format, sizeof(format), "%%+0%d.%df", length, decimals );
-        CPLsnprintf( string_value, sizeof(string_value), format, value );
+        snprintf(format, sizeof(format), "%%+0%d.%df", length, decimals);
+        CPLsnprintf(string_value, sizeof(string_value), format, value);
 
-        if( (int)strlen(string_value) > length )
+        if ((int)strlen(string_value) > length)
             string_value[length] = '\0';
     }
 
-    return EnvisatFile_SetKeyValueAsString( self, mph_or_sph, key, string_value );
+    return EnvisatFile_SetKeyValueAsString(self, mph_or_sph, key, string_value);
 }
 
 /*-----------------------------------------------------------------------------
@@ -1235,20 +1213,21 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
+int EnvisatFile_GetDatasetIndex(EnvisatFile *self, const char *ds_name)
 
 {
-    int		i;
-    char	padded_ds_name[100];
+    int i;
+    char padded_ds_name[100];
 
     /*
      * Padd the name.  While the normal product spec says the DS_NAME will
      * be 28 characters, I try to pad more than this in case the specification
      * is changed.
      */
-    strncpy( padded_ds_name, ds_name, sizeof(padded_ds_name) );
-    padded_ds_name[sizeof(padded_ds_name)-1] = 0;
-    for( i = (int)strlen(padded_ds_name); (size_t)i < sizeof(padded_ds_name)-1; i++ )
+    strncpy(padded_ds_name, ds_name, sizeof(padded_ds_name));
+    padded_ds_name[sizeof(padded_ds_name) - 1] = 0;
+    for (i = (int)strlen(padded_ds_name);
+         (size_t)i < sizeof(padded_ds_name) - 1; i++)
     {
         padded_ds_name[i] = ' ';
     }
@@ -1257,10 +1236,11 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
     /*
      * Compare only for the full length of DS_NAME we have saved.
      */
-    for( i = 0; i < self->ds_count; i++ )
+    for (i = 0; i < self->ds_count; i++)
     {
-        if( strncmp( padded_ds_name, self->ds_info[i]->ds_name,
-                     strlen(self->ds_info[i]->ds_name) ) == 0 )        {
+        if (strncmp(padded_ds_name, self->ds_info[i]->ds_name,
+                    strlen(self->ds_info[i]->ds_name)) == 0)
+        {
             return i;
         }
     }
@@ -1301,33 +1281,28 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_GetDatasetInfo( EnvisatFile *self,
-                                int ds_index,
-                                const char **ds_name,
-                                const char **ds_type,
-                                const char **filename,
-                                int  *ds_offset,
-                                int  *ds_size,
-                                int  *num_dsr,
-                                int  *dsr_size )
+int EnvisatFile_GetDatasetInfo(EnvisatFile *self, int ds_index,
+                               const char **ds_name, const char **ds_type,
+                               const char **filename, int *ds_offset,
+                               int *ds_size, int *num_dsr, int *dsr_size)
 
 {
-    if( ds_index < 0 || ds_index >= self->ds_count )
+    if (ds_index < 0 || ds_index >= self->ds_count)
         return FAILURE;
 
-    if( ds_name != NULL )
+    if (ds_name != NULL)
         *ds_name = self->ds_info[ds_index]->ds_name;
-    if( ds_type != NULL )
+    if (ds_type != NULL)
         *ds_type = self->ds_info[ds_index]->ds_type;
-    if( filename != NULL )
+    if (filename != NULL)
         *filename = self->ds_info[ds_index]->filename;
-    if( ds_offset != NULL )
+    if (ds_offset != NULL)
         *ds_offset = self->ds_info[ds_index]->ds_offset;
-    if( ds_size != NULL )
+    if (ds_size != NULL)
         *ds_size = self->ds_info[ds_index]->ds_size;
-    if( num_dsr != NULL )
+    if (num_dsr != NULL)
         *num_dsr = self->ds_info[ds_index]->num_dsr;
-    if( dsr_size != NULL )
+    if (dsr_size != NULL)
         *dsr_size = self->ds_info[ds_index]->dsr_size;
 
     return SUCCESS;
@@ -1360,15 +1335,11 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_SetDatasetInfo( EnvisatFile *self,
-                                int ds_index,
-                                int ds_offset,
-                                int ds_size,
-                                int num_dsr,
-                                int dsr_size )
+int EnvisatFile_SetDatasetInfo(EnvisatFile *self, int ds_index, int ds_offset,
+                               int ds_size, int num_dsr, int dsr_size)
 
 {
-    if( ds_index < 0 || ds_index >= self->ds_count )
+    if (ds_index < 0 || ds_index >= self->ds_count)
         return FAILURE;
 
     self->ds_info[ds_index]->ds_offset = ds_offset;
@@ -1379,7 +1350,6 @@ int EnvisatFile_SetDatasetInfo( EnvisatFile *self,
 
     return SUCCESS;
 }
-
 
 /*-----------------------------------------------------------------------------
 
@@ -1408,38 +1378,34 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_ReadDatasetChunk( EnvisatFile *self,
-                                  int ds_index,
-                                  int offset,
-                                  int size,
-                                  void * buffer )
+int EnvisatFile_ReadDatasetChunk(EnvisatFile *self, int ds_index, int offset,
+                                 int size, void *buffer)
 
 {
-    if( ds_index < 0 || ds_index >= self->ds_count )
+    if (ds_index < 0 || ds_index >= self->ds_count)
     {
-        SendError( "Attempt to read non-existent dataset in "
-                   "EnvisatFile_ReadDatasetChunk()" );
+        SendError("Attempt to read non-existent dataset in "
+                  "EnvisatFile_ReadDatasetChunk()");
         return FAILURE;
     }
 
-    if( offset < 0
-        || offset + size > self->ds_info[ds_index]->ds_size )
+    if (offset < 0 || offset + size > self->ds_info[ds_index]->ds_size)
     {
-        SendError( "Attempt to read beyond end of dataset in "
-                   "EnvisatFile_ReadDatasetChunk()" );
+        SendError("Attempt to read beyond end of dataset in "
+                  "EnvisatFile_ReadDatasetChunk()");
         return FAILURE;
     }
 
-    if( VSIFSeekL( self->fp, self->ds_info[ds_index]->ds_offset+offset, SEEK_SET )
-        != 0 )
+    if (VSIFSeekL(self->fp, self->ds_info[ds_index]->ds_offset + offset,
+                  SEEK_SET) != 0)
     {
-        SendError( "seek failed in EnvisatFile_ReadChunk()" );
+        SendError("seek failed in EnvisatFile_ReadChunk()");
         return FAILURE;
     }
 
-    if( (int) VSIFReadL( buffer, 1, size, self->fp ) != size )
+    if ((int)VSIFReadL(buffer, 1, size, self->fp) != size)
     {
-        SendError( "read failed in EnvisatFile_ReadChunk()" );
+        SendError("read failed in EnvisatFile_ReadChunk()");
         return FAILURE;
     }
 
@@ -1471,43 +1437,41 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_WriteDatasetRecord( EnvisatFile *self,
-                                    int ds_index,
-                                    int record_index,
-                                    void *buffer )
+int EnvisatFile_WriteDatasetRecord(EnvisatFile *self, int ds_index,
+                                   int record_index, void *buffer)
 
 {
-    int		absolute_offset;
-    int         result;
+    int absolute_offset;
+    int result;
 
-    if( ds_index < 0 || ds_index >= self->ds_count )
+    if (ds_index < 0 || ds_index >= self->ds_count)
     {
-        SendError( "Attempt to write non-existent dataset in "
-                   "EnvisatFile_WriteDatasetRecord()" );
+        SendError("Attempt to write non-existent dataset in "
+                  "EnvisatFile_WriteDatasetRecord()");
         return FAILURE;
     }
 
-    if( record_index < 0
-        || record_index >=  self->ds_info[ds_index]->num_dsr )
+    if (record_index < 0 || record_index >= self->ds_info[ds_index]->num_dsr)
     {
-        SendError( "Attempt to write beyond end of dataset in "
-                   "EnvisatFile_WriteDatasetRecord()" );
+        SendError("Attempt to write beyond end of dataset in "
+                  "EnvisatFile_WriteDatasetRecord()");
         return FAILURE;
     }
 
-    absolute_offset = self->ds_info[ds_index]->ds_offset
-        + record_index * self->ds_info[ds_index]->dsr_size;
+    absolute_offset = self->ds_info[ds_index]->ds_offset +
+                      record_index * self->ds_info[ds_index]->dsr_size;
 
-    if( VSIFSeekL( self->fp, absolute_offset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(self->fp, absolute_offset, SEEK_SET) != 0)
     {
-        SendError( "seek failed in EnvisatFile_WriteDatasetRecord()" );
+        SendError("seek failed in EnvisatFile_WriteDatasetRecord()");
         return FAILURE;
     }
 
-    result = (int)VSIFWriteL( buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp );
-    if( result != self->ds_info[ds_index]->dsr_size )
+    result =
+        (int)VSIFWriteL(buffer, 1, self->ds_info[ds_index]->dsr_size, self->fp);
+    if (result != self->ds_info[ds_index]->dsr_size)
     {
-        SendError( "write failed in EnvisatFile_WriteDatasetRecord()" );
+        SendError("write failed in EnvisatFile_WriteDatasetRecord()");
         return FAILURE;
     }
 
@@ -1539,15 +1503,14 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_ReadDatasetRecordChunk(EnvisatFile*,int,int,void*,int,int);
+int EnvisatFile_ReadDatasetRecordChunk(EnvisatFile *, int, int, void *, int,
+                                       int);
 
-int EnvisatFile_ReadDatasetRecord( EnvisatFile *self,
-                                    int ds_index,
-                                    int record_index,
-                                    void *buffer )
+int EnvisatFile_ReadDatasetRecord(EnvisatFile *self, int ds_index,
+                                  int record_index, void *buffer)
 {
-    return EnvisatFile_ReadDatasetRecordChunk( self,
-                ds_index, record_index, buffer, 0 , -1 ) ;
+    return EnvisatFile_ReadDatasetRecordChunk(self, ds_index, record_index,
+                                              buffer, 0, -1);
 }
 
 /*-----------------------------------------------------------------------------
@@ -1577,61 +1540,58 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self,
-                                    int ds_index,
-                                    int record_index,
-                                    void *buffer,
-                                    int offset, int size )
+int EnvisatFile_ReadDatasetRecordChunk(EnvisatFile *self, int ds_index,
+                                       int record_index, void *buffer,
+                                       int offset, int size)
 {
-    int		absolute_offset;
-    int         result;
-    int     dsr_size = self->ds_info[ds_index]->dsr_size ;
+    int absolute_offset;
+    int result;
+    int dsr_size = self->ds_info[ds_index]->dsr_size;
 
-    if (( offset < 0 )||(offset > dsr_size))
+    if ((offset < 0) || (offset > dsr_size))
     {
-        SendError( "Invalid chunk offset in "
-                   "EnvisatFile_ReadDatasetRecordChunk()" );
+        SendError("Invalid chunk offset in "
+                  "EnvisatFile_ReadDatasetRecordChunk()");
         return FAILURE;
     }
 
-    if ( size < 0 )
-        size = dsr_size - offset ;
+    if (size < 0)
+        size = dsr_size - offset;
 
-    if( ds_index < 0 || ds_index >= self->ds_count )
+    if (ds_index < 0 || ds_index >= self->ds_count)
     {
-        SendError( "Attempt to read non-existent dataset in "
-                   "EnvisatFile_ReadDatasetRecordChunk()" );
+        SendError("Attempt to read non-existent dataset in "
+                  "EnvisatFile_ReadDatasetRecordChunk()");
         return FAILURE;
     }
 
-    if( record_index < 0
-        || record_index >=  self->ds_info[ds_index]->num_dsr )
+    if (record_index < 0 || record_index >= self->ds_info[ds_index]->num_dsr)
     {
-        SendError( "Attempt to read beyond end of dataset in "
-                   "EnvisatFile_ReadDatasetRecordChunk()" );
+        SendError("Attempt to read beyond end of dataset in "
+                  "EnvisatFile_ReadDatasetRecordChunk()");
         return FAILURE;
     }
 
-    if( (offset + size) > dsr_size )
+    if ((offset + size) > dsr_size)
     {
-        SendError( "Attempt to read beyond the record's boundary"
-                   "EnvisatFile_ReadDatasetRecord()" );
+        SendError("Attempt to read beyond the record's boundary"
+                  "EnvisatFile_ReadDatasetRecord()");
         return FAILURE;
     }
 
-    absolute_offset = self->ds_info[ds_index]->ds_offset
-        + record_index * dsr_size + offset ;
+    absolute_offset =
+        self->ds_info[ds_index]->ds_offset + record_index * dsr_size + offset;
 
-    if( VSIFSeekL( self->fp, absolute_offset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(self->fp, absolute_offset, SEEK_SET) != 0)
     {
-        SendError( "seek failed in EnvisatFile_ReadDatasetRecordChunk()" );
+        SendError("seek failed in EnvisatFile_ReadDatasetRecordChunk()");
         return FAILURE;
     }
 
-    result = (int)VSIFReadL( buffer, 1, size, self->fp );
-    if( result != size )
+    result = (int)VSIFReadL(buffer, 1, size, self->fp);
+    if (result != size)
     {
-        SendError( "read failed in EnvisatFile_ReadDatasetRecord()" );
+        SendError("read failed in EnvisatFile_ReadDatasetRecord()");
         return FAILURE;
     }
 
@@ -1662,16 +1622,15 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int S_NameValueList_FindKey( const char *key,
-                             int entry_count,
-                             EnvisatNameValue **entries )
+int S_NameValueList_FindKey(const char *key, int entry_count,
+                            EnvisatNameValue **entries)
 
 {
-    int		i;
+    int i;
 
-    for( i = 0; i < entry_count; i++ )
+    for (i = 0; i < entry_count; i++)
     {
-        if( strcmp(entries[i]->key,key) == 0 )
+        if (strcmp(entries[i]->key, key) == 0)
             return i;
     }
 
@@ -1702,16 +1661,15 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-const char *S_NameValueList_FindValue( const char *key,
-                                       int entry_count,
-                                       EnvisatNameValue **entries,
-                                       const char *default_value )
+const char *S_NameValueList_FindValue(const char *key, int entry_count,
+                                      EnvisatNameValue **entries,
+                                      const char *default_value)
 
 {
-    int		i;
+    int i;
 
-    i = S_NameValueList_FindKey( key, entry_count, entries );
-    if( i == -1 )
+    i = S_NameValueList_FindKey(key, entry_count, entries);
+    if (i == -1)
         return default_value;
     else
         return entries[i]->value;
@@ -1743,42 +1701,41 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int S_NameValueList_Parse( const char *text, int text_offset,
-                           int *entry_count,
-                           EnvisatNameValue ***entries )
+int S_NameValueList_Parse(const char *text, int text_offset, int *entry_count,
+                          EnvisatNameValue ***entries)
 
 {
-    const char  *next_text = text;
+    const char *next_text = text;
 
     /*
      * Loop over each input line in the text block.
      */
-    while( *next_text != '\0' )
+    while (*next_text != '\0')
     {
-        char	line[1024];
-        int     line_len = 0;
-        int     equal_index = 0;
-        int     src_char = 0;
-        int     line_offset = 0;
+        char line[1024];
+        int line_len = 0;
+        int equal_index = 0;
+        int src_char = 0;
+        int line_offset = 0;
         EnvisatNameValue *entry = NULL;
         /* workaround cppcheck false positive by using a pointer */
-        char* pszLine = line;
+        char *pszLine = line;
 
         /*
          * Extract one line of text into the "line" buffer, and remove the
          * newline character.  Eat leading spaces.
          */
-        while( *next_text == ' ' )
+        while (*next_text == ' ')
         {
             next_text++;
         }
-        line_offset = (int) (next_text - text) + text_offset;
-        while( *next_text != '\0' && *next_text != '\n' )
+        line_offset = (int)(next_text - text) + text_offset;
+        while (*next_text != '\0' && *next_text != '\n')
         {
-          if( line_len > ((int)sizeof(line) - 2) )
+            if (line_len > ((int)sizeof(line) - 2))
             {
-                SendError( "S_NameValueList_Parse(): "
-                           "Corrupt line, longer than 1024 characters." );
+                SendError("S_NameValueList_Parse(): "
+                          "Corrupt line, longer than 1024 characters.");
                 return FAILURE;
             }
 
@@ -1786,7 +1743,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         }
 
         pszLine[line_len] = '\0';
-        if( *next_text == '\n' )
+        if (*next_text == '\n')
             next_text++;
 
         /*
@@ -1794,13 +1751,13 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          * that doesn't have an equal sign, under the assumption it is
          * white space.
          */
-        if( strstr( line, "=") == NULL )
+        if (strstr(line, "=") == NULL)
             continue;
 
         /*
          * Create the name/value info structure.
          */
-        entry = (EnvisatNameValue *) CPLCalloc(sizeof(EnvisatNameValue),1);
+        entry = (EnvisatNameValue *)CPLCalloc(sizeof(EnvisatNameValue), 1);
         entry->literal_line = CPLStrdup(line);
 
         /*
@@ -1809,8 +1766,8 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          * key.
          */
         equal_index = (int)(strstr(line, "=") - line);
-        entry->key = (char *) CPLMalloc(equal_index+1);
-        strncpy( entry->key, line, equal_index );
+        entry->key = (char *)CPLMalloc(equal_index + 1);
+        strncpy(entry->key, line, equal_index);
         entry->key[equal_index] = '\0';
         entry->value_offset = line_offset + equal_index + 1;
 
@@ -1818,15 +1775,16 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          * If the next character after the equal sign is a double quote, then
          * the value is a string.  Suck out the text between the double quotes.
          */
-        if( line[equal_index+1] == '"' )
+        if (line[equal_index + 1] == '"')
         {
-            for( src_char = equal_index + 2;
-                 line[src_char] != '\0' && line[src_char] != '"';
-                 src_char++ ) {}
+            for (src_char = equal_index + 2;
+                 line[src_char] != '\0' && line[src_char] != '"'; src_char++)
+            {
+            }
 
             line[src_char] = '\0';
             entry->value = CPLStrdup(line + equal_index + 2);
-            entry->value_len = strlen(entry->value)+1;
+            entry->value_len = strlen(entry->value) + 1;
             entry->value_offset += 1;
         }
 
@@ -1835,44 +1793,48 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          */
         else
         {
-            for( src_char = equal_index + 1;
-                 line[src_char] != '\0' && line[src_char] != '<'
-                     && line[src_char] != ' ';
-                 src_char++ ) {}
+            for (src_char = equal_index + 1;
+                 line[src_char] != '\0' && line[src_char] != '<' &&
+                 line[src_char] != ' ';
+                 src_char++)
+            {
+            }
 
             /* capture units */
-            if( line[src_char] == '<' )
+            if (line[src_char] == '<')
             {
                 int dst_char;
 
-                for( dst_char = src_char+1;
+                for (dst_char = src_char + 1;
                      line[dst_char] != '>' && line[dst_char] != '\0';
-                     dst_char++ ) {}
+                     dst_char++)
+                {
+                }
 
                 line[dst_char] = '\0';
-                entry->units = CPLStrdup( line + src_char + 1 );
+                entry->units = CPLStrdup(line + src_char + 1);
             }
 
             line[src_char] = '\0';
-            entry->value = CPLStrdup( line + equal_index + 1 );
-            entry->value_len = strlen(entry->value)+1;
+            entry->value = CPLStrdup(line + equal_index + 1);
+            entry->value_len = strlen(entry->value) + 1;
         }
 
         /*
          * Add the entry to the name/value list.
          */
         (*entry_count)++;
-        *entries = (EnvisatNameValue **)
-            CPLRealloc( *entries, *entry_count * sizeof(EnvisatNameValue*) );
+        *entries = (EnvisatNameValue **)CPLRealloc(
+            *entries, *entry_count * sizeof(EnvisatNameValue *));
 
-        if( *entries == NULL )
+        if (*entries == NULL)
         {
             *entry_count = 0;
             CPLFree(entry);
             return FAILURE;
         }
 
-        (*entries)[*entry_count-1] = entry;
+        (*entries)[*entry_count - 1] = entry;
     }
 
     return SUCCESS;
@@ -1899,33 +1861,32 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-int S_NameValueList_Rewrite( VSILFILE * fp, int entry_count,
-                              EnvisatNameValue **entries )
+int S_NameValueList_Rewrite(VSILFILE *fp, int entry_count,
+                            EnvisatNameValue **entries)
 
 {
-    int		i;
+    int i;
 
-    for( i = 0; i < entry_count; i++ )
+    for (i = 0; i < entry_count; i++)
     {
-        EnvisatNameValue	*entry = entries[i];
+        EnvisatNameValue *entry = entries[i];
 
-        if( VSIFSeekL( fp, entry->value_offset, SEEK_SET ) != 0 )
+        if (VSIFSeekL(fp, entry->value_offset, SEEK_SET) != 0)
         {
-            SendError( "VSIFSeekL() failed writing name/value list." );
+            SendError("VSIFSeekL() failed writing name/value list.");
             return FAILURE;
         }
 
-        if( VSIFWriteL( entry->value, 1, strlen(entry->value), fp ) !=
-            strlen(entry->value) )
+        if (VSIFWriteL(entry->value, 1, strlen(entry->value), fp) !=
+            strlen(entry->value))
         {
-            SendError( "VSIFWriteL() failed writing name/value list." );
+            SendError("VSIFWriteL() failed writing name/value list.");
             return FAILURE;
         }
     }
 
     return SUCCESS;
 }
-
 
 /*-----------------------------------------------------------------------------
 
@@ -1952,22 +1913,21 @@ Returns:
 
 -----------------------------------------------------------------------------*/
 
-void S_NameValueList_Destroy( int *entry_count,
-                              EnvisatNameValue ***entries )
+void S_NameValueList_Destroy(int *entry_count, EnvisatNameValue ***entries)
 
 {
-    int		i;
+    int i;
 
-    for( i = 0; i < *entry_count; i++ )
+    for (i = 0; i < *entry_count; i++)
     {
-        CPLFree( (*entries)[i]->key );
-        CPLFree( (*entries)[i]->value );
-        CPLFree( (*entries)[i]->units );
-        CPLFree( (*entries)[i]->literal_line );
-        CPLFree( (*entries)[i] );
+        CPLFree((*entries)[i]->key);
+        CPLFree((*entries)[i]->value);
+        CPLFree((*entries)[i]->units);
+        CPLFree((*entries)[i]->literal_line);
+        CPLFree((*entries)[i]);
     }
 
-    CPLFree( *entries );
+    CPLFree(*entries);
 
     *entry_count = 0;
     *entries = NULL;
