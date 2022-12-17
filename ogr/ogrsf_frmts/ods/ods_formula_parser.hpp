@@ -35,10 +35,10 @@
    are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_ODS_FORMULA_ODS_FORMULA_PARSER_HPP_INCLUDED
-# define YY_ODS_FORMULA_ODS_FORMULA_PARSER_HPP_INCLUDED
+#define YY_ODS_FORMULA_ODS_FORMULA_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int ods_formuladebug;
@@ -46,9 +46,9 @@ extern int ods_formuladebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
+#define YYTOKENTYPE
+enum yytokentype
+{
     ODST_NUMBER = 258,
     ODST_STRING = 259,
     ODST_IDENTIFIER = 260,
@@ -63,18 +63,16 @@ extern int ods_formuladebug;
     ODST_AND = 269,
     ODST_IF = 270,
     ODST_UMINUS = 271
-  };
+};
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+#define YYSTYPE_IS_TRIVIAL 1
+#define YYSTYPE_IS_DECLARED 1
 #endif
 
-
-
-int ods_formulaparse (ods_formula_parse_context *context);
+int ods_formulaparse(ods_formula_parse_context *context);
 
 #endif /* !YY_ODS_FORMULA_ODS_FORMULA_PARSER_HPP_INCLUDED  */
