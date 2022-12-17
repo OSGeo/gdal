@@ -32,12 +32,11 @@
 #include "gdal_utils_priv.h"
 #include "gdal_priv.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
@@ -48,9 +47,9 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "                             [-subset <subset_spec>]* \n"
         "                             [-scaleaxes <scaleaxes_spec>] \n"
         "                             [-oo NAME=VALUE]*\n"
-        "                             <src_filename> <dst_filename>\n" );
+        "                             <src_filename> <dst_filename>\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
     exit(1);
 }
@@ -62,22 +61,22 @@ static void Usage(const char* pszErrorMsg = nullptr)
 MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if (!GDAL_CHECK_VERSION(argv[0]))
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
 
-/* -------------------------------------------------------------------- */
-/*      Generic arg processing.                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Generic arg processing.                                         */
+    /* -------------------------------------------------------------------- */
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
-    if( argc < 1 )
-        exit( -argc );
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; i < argc; i++ )
+    for (int i = 0; i < argc; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
             printf("%s was compiled against GDAL %s and "
                    "is running against GDAL %s\n",
@@ -85,7 +84,7 @@ MAIN_START(argc, argv)
             CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i], "--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
@@ -97,58 +96,54 @@ MAIN_START(argc, argv)
         GDALMultiDimTranslateOptionsNew(argv + 1, &sOptionsForBinary);
     CSLDestroy(argv);
 
-    if( psOptions == nullptr )
+    if (psOptions == nullptr)
     {
         Usage();
     }
 
-    if( !(sOptionsForBinary.bQuiet) )
+    if (!(sOptionsForBinary.bQuiet))
     {
-        GDALMultiDimTranslateOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
+        GDALMultiDimTranslateOptionsSetProgress(psOptions, GDALTermProgress,
+                                                nullptr);
     }
 
-    if( sOptionsForBinary.osSource.empty() )
+    if (sOptionsForBinary.osSource.empty())
         Usage("No input file specified.");
 
-    if( sOptionsForBinary.osDest.empty() )
+    if (sOptionsForBinary.osDest.empty())
         Usage("No output file specified.");
 
-/* -------------------------------------------------------------------- */
-/*      Open input file.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open input file.                                                */
+    /* -------------------------------------------------------------------- */
     GDALDatasetH hInDS = GDALOpenEx(
         sOptionsForBinary.osSource.c_str(),
         GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
         sOptionsForBinary.aosAllowInputDrivers.List(),
-        sOptionsForBinary.aosOpenOptions.List(),
-        nullptr);
+        sOptionsForBinary.aosOpenOptions.List(), nullptr);
 
-    if( hInDS == nullptr )
+    if (hInDS == nullptr)
         exit(1);
 
-/* -------------------------------------------------------------------- */
-/*      Open output file if in update mode.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open output file if in update mode.                             */
+    /* -------------------------------------------------------------------- */
     GDALDatasetH hDstDS = nullptr;
-    if( sOptionsForBinary.bUpdate )
+    if (sOptionsForBinary.bUpdate)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        hDstDS = GDALOpenEx(
-            sOptionsForBinary.osDest.c_str(),
-            GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-            nullptr,
-            nullptr,
-            nullptr );
+        hDstDS = GDALOpenEx(sOptionsForBinary.osDest.c_str(),
+                            GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER |
+                                GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+                            nullptr, nullptr, nullptr);
         CPLPopErrorHandler();
     }
 
     int bUsageError = FALSE;
-    GDALDatasetH hRetDS = GDALMultiDimTranslate(
-                                        sOptionsForBinary.osDest.c_str(),
-                                        hDstDS,
-                                        1, &hInDS,
-                                        psOptions, &bUsageError);
-    if(bUsageError == TRUE)
+    GDALDatasetH hRetDS =
+        GDALMultiDimTranslate(sOptionsForBinary.osDest.c_str(), hDstDS, 1,
+                              &hInDS, psOptions, &bUsageError);
+    if (bUsageError == TRUE)
         Usage();
     const int nRetCode = hRetDS ? 0 : 1;
 

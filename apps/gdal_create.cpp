@@ -37,22 +37,23 @@
 #include <memory>
 #include <vector>
 
-
 static void Usage()
 
 {
-    printf( "Usage: gdal_create [--help-general]\n"
-            "       [-of format]\n"
-            "       [-outsize xsize ysize]\n"
-            "       [-bands count]\n"
-            "       [-burn value]*\n"
-            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
-            "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-            "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
-            "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
-            "       [-co \"NAME=VALUE\"]*\n"
-            "       [-if input_dataset]\n"
-            "       out_dataset\n" );
+    printf(
+        "Usage: gdal_create [--help-general]\n"
+        "       [-of format]\n"
+        "       [-outsize xsize ysize]\n"
+        "       [-bands count]\n"
+        "       [-burn value]*\n"
+        "       [-ot "
+        "{Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
+        "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
+        "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
+        "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
+        "       [-co \"NAME=VALUE\"]*\n"
+        "       [-if input_dataset]\n"
+        "       out_dataset\n");
 
     exit(1);
 }
@@ -61,10 +62,10 @@ static void Usage()
 /*                            ArgIsNumeric()                            */
 /************************************************************************/
 
-static bool ArgIsNumeric( const char *pszArg )
+static bool ArgIsNumeric(const char *pszArg)
 
 {
-    char* pszEnd = nullptr;
+    char *pszEnd = nullptr;
     CPLStrtod(pszArg, &pszEnd);
     return pszEnd != nullptr && pszEnd[0] == '\0';
 }
@@ -77,22 +78,22 @@ MAIN_START(argc, argv)
 
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if (!GDAL_CHECK_VERSION(argv[0]))
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
 
-/* -------------------------------------------------------------------- */
-/*      Register standard GDAL drivers, and process generic GDAL        */
-/*      command options.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Register standard GDAL drivers, and process generic GDAL        */
+    /*      command options.                                                */
+    /* -------------------------------------------------------------------- */
     GDALAllRegister();
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    const char* pszFormat = nullptr;
-    const char* pszFilename = nullptr;
+    const char *pszFormat = nullptr;
+    const char *pszFilename = nullptr;
     CPLStringList aosCreateOptions;
     int nPixels = 0;
     int nLines = 0;
@@ -103,75 +104,78 @@ MAIN_START(argc, argv)
     double dfLRX = 0;
     double dfLRY = 0;
     bool bGeoTransform = false;
-    const char* pszOutputSRS = nullptr;
+    const char *pszOutputSRS = nullptr;
     CPLStringList aosMetadata;
     std::vector<double> adfBurnValues;
     bool bQuiet = false;
     int bSetNoData = false;
     std::string osNoData;
-    const char* pszInputFile = nullptr;
-    for( int i = 1; argv != nullptr && argv[i] != nullptr; i++ )
+    const char *pszInputFile = nullptr;
+    for (int i = 1; argv != nullptr && argv[i] != nullptr; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
-        else if( i < argc-1 && (EQUAL(argv[i],"-of") || EQUAL(argv[i],"-f")) )
+        else if (i < argc - 1 &&
+                 (EQUAL(argv[i], "-of") || EQUAL(argv[i], "-f")))
         {
             ++i;
             pszFormat = argv[i];
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-co"))
+        else if (i < argc - 1 && EQUAL(argv[i], "-co"))
         {
             ++i;
             aosCreateOptions.AddString(argv[i]);
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-mo"))
+        else if (i < argc - 1 && EQUAL(argv[i], "-mo"))
         {
             ++i;
             aosMetadata.AddString(argv[i]);
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-bands"))
+        else if (i < argc - 1 && EQUAL(argv[i], "-bands"))
         {
             ++i;
             nBandCount = atoi(argv[i]);
         }
-        else if( i+2 < argc && EQUAL(argv[i],"-outsize") )
+        else if (i + 2 < argc && EQUAL(argv[i], "-outsize"))
         {
             ++i;
             nPixels = atoi(argv[i]);
             ++i;
             nLines = atoi(argv[i]);
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-ot") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-ot"))
         {
             ++i;
-            for( int iType = 1; iType < GDT_TypeCount; iType++ )
+            for (int iType = 1; iType < GDT_TypeCount; iType++)
             {
-                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
-                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
-                             argv[i]) )
+                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
+                        nullptr &&
+                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
+                          argv[i]))
                 {
                     eDT = static_cast<GDALDataType>(iType);
                 }
             }
 
-            if( eDT == GDT_Unknown )
+            if (eDT == GDT_Unknown)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unknown output pixel type: %s.", argv[i] );
-                CSLDestroy( argv );
+                         "Unknown output pixel type: %s.", argv[i]);
+                CSLDestroy(argv);
                 exit(1);
             }
         }
-        else if( i+4 < argc && EQUAL(argv[i],"-a_ullr") )
+        else if (i + 4 < argc && EQUAL(argv[i], "-a_ullr"))
         {
             bGeoTransform = true;
             // coverity[tainted_data]
@@ -183,12 +187,12 @@ MAIN_START(argc, argv)
             // coverity[tainted_data]
             dfLRY = CPLAtofM(argv[++i]);
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-a_srs") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-a_srs"))
         {
             ++i;
             pszOutputSRS = argv[i];
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-a_nodata") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-a_nodata"))
         {
             bSetNoData = true;
             ++i;
@@ -196,13 +200,13 @@ MAIN_START(argc, argv)
             osNoData = argv[i];
         }
 
-        else if( i < argc-1 && EQUAL(argv[i],"-burn") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-burn"))
         {
-            if (strchr(argv[i+1], ' '))
+            if (strchr(argv[i + 1], ' '))
             {
                 ++i;
-                CPLStringList aosTokens( CSLTokenizeString( argv[i] ) );
-                for( int j = 0; j < aosTokens.size(); j++)
+                CPLStringList aosTokens(CSLTokenizeString(argv[i]));
+                for (int j = 0; j < aosTokens.size(); j++)
                 {
                     adfBurnValues.push_back(CPLAtof(aosTokens[j]));
                 }
@@ -210,7 +214,7 @@ MAIN_START(argc, argv)
             else
             {
                 // coverity[tainted_data]
-                while(i < argc-1 && ArgIsNumeric(argv[i+1]))
+                while (i < argc - 1 && ArgIsNumeric(argv[i + 1]))
                 {
                     ++i;
                     // coverity[tainted_data]
@@ -218,23 +222,23 @@ MAIN_START(argc, argv)
                 }
             }
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-if") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-if"))
         {
             ++i;
             pszInputFile = argv[i];
         }
-        else if( EQUAL(argv[i], "-q") )
+        else if (EQUAL(argv[i], "-q"))
         {
             bQuiet = true;
         }
-        else if( argv[i][0] == '-' )
+        else if (argv[i][0] == '-')
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unknown option name '%s'", argv[i]);
-            CSLDestroy( argv );
+            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
+                     argv[i]);
+            CSLDestroy(argv);
             Usage();
         }
-        else if( pszFilename == nullptr )
+        else if (pszFilename == nullptr)
         {
             pszFilename = argv[i];
         }
@@ -242,18 +246,18 @@ MAIN_START(argc, argv)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many command options '%s'", argv[i]);
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             Usage();
         }
     }
-    if( pszFilename == nullptr )
+    if (pszFilename == nullptr)
     {
-        CSLDestroy( argv );
+        CSLDestroy(argv);
         Usage();
     }
 
     double adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
-    if( bGeoTransform && nPixels > 0 && nLines > 0 )
+    if (bGeoTransform && nPixels > 0 && nLines > 0)
     {
         adfGeoTransform[0] = dfULX;
         adfGeoTransform[1] = (dfLRX - dfULX) / nPixels;
@@ -264,208 +268,217 @@ MAIN_START(argc, argv)
     }
 
     std::unique_ptr<GDALDataset> poInputDS;
-    if( pszInputFile )
+    if (pszInputFile)
     {
-        poInputDS.reset(GDALDataset::Open(pszInputFile, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
-        if( poInputDS == nullptr )
+        poInputDS.reset(GDALDataset::Open(
+            pszInputFile, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+        if (poInputDS == nullptr)
         {
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
-        if( nPixels == 0 )
+        if (nPixels == 0)
         {
             nPixels = poInputDS->GetRasterXSize();
             nLines = poInputDS->GetRasterYSize();
         }
-        if( nBandCount < 0 )
+        if (nBandCount < 0)
         {
             nBandCount = poInputDS->GetRasterCount();
         }
-        if( eDT == GDT_Unknown && poInputDS->GetRasterCount() > 0 )
+        if (eDT == GDT_Unknown && poInputDS->GetRasterCount() > 0)
         {
             eDT = poInputDS->GetRasterBand(1)->GetRasterDataType();
         }
-        if( pszOutputSRS == nullptr )
+        if (pszOutputSRS == nullptr)
         {
             pszOutputSRS = poInputDS->GetProjectionRef();
         }
-        if( ! (bGeoTransform && nPixels > 0 && nLines > 0) )
+        if (!(bGeoTransform && nPixels > 0 && nLines > 0))
         {
-            if( poInputDS->GetGeoTransform(adfGeoTransform) == CE_None )
+            if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
             {
                 bGeoTransform = true;
             }
         }
-        if( !bSetNoData && poInputDS->GetRasterCount() > 0 )
+        if (!bSetNoData && poInputDS->GetRasterCount() > 0)
         {
-            if( eDT == GDT_Int64 )
+            if (eDT == GDT_Int64)
             {
-                const auto nNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValueAsInt64(&bSetNoData);
-                if( bSetNoData )
-                    osNoData = CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nNoDataValue));
+                const auto nNoDataValue =
+                    poInputDS->GetRasterBand(1)->GetNoDataValueAsInt64(
+                        &bSetNoData);
+                if (bSetNoData)
+                    osNoData = CPLSPrintf(CPL_FRMT_GIB,
+                                          static_cast<GIntBig>(nNoDataValue));
             }
-            else if( eDT == GDT_UInt64 )
+            else if (eDT == GDT_UInt64)
             {
-                const auto nNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValueAsUInt64(&bSetNoData);
-                if( bSetNoData )
-                    osNoData = CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoDataValue));
+                const auto nNoDataValue =
+                    poInputDS->GetRasterBand(1)->GetNoDataValueAsUInt64(
+                        &bSetNoData);
+                if (bSetNoData)
+                    osNoData = CPLSPrintf(CPL_FRMT_GUIB,
+                                          static_cast<GUIntBig>(nNoDataValue));
             }
             else
             {
-                const double dfNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValue(&bSetNoData);
-                if( bSetNoData )
+                const double dfNoDataValue =
+                    poInputDS->GetRasterBand(1)->GetNoDataValue(&bSetNoData);
+                if (bSetNoData)
                     osNoData = CPLSPrintf("%.18g", dfNoDataValue);
             }
         }
     }
 
     GDALDriverH hDriver = GDALGetDriverByName(
-        pszFormat ? pszFormat : GetOutputDriverForRaster( pszFilename ).c_str());
-    if ( hDriver == nullptr )
+        pszFormat ? pszFormat : GetOutputDriverForRaster(pszFilename).c_str());
+    if (hDriver == nullptr)
     {
-        fprintf( stderr, "Output driver not found.\n");
-        CSLDestroy( argv );
+        fprintf(stderr, "Output driver not found.\n");
+        CSLDestroy(argv);
         GDALDestroyDriverManager();
-        exit( 1 );
+        exit(1);
     }
     const bool bHasCreate =
-        GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr;
-    if( !bHasCreate &&
-        GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) == nullptr)
+        GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) != nullptr;
+    if (!bHasCreate &&
+        GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) == nullptr)
     {
-        fprintf( stderr, "This driver has no creation capabilities.\n");
-        CSLDestroy( argv );
+        fprintf(stderr, "This driver has no creation capabilities.\n");
+        CSLDestroy(argv);
         GDALDestroyDriverManager();
-        exit( 1 );
+        exit(1);
     }
     GDALDriverH hTmpDriver = GDALGetDriverByName("MEM");
-    if( !bHasCreate && hTmpDriver == nullptr )
+    if (!bHasCreate && hTmpDriver == nullptr)
     {
-        fprintf( stderr, "MEM driver not available.\n");
-        CSLDestroy( argv );
+        fprintf(stderr, "MEM driver not available.\n");
+        CSLDestroy(argv);
         GDALDestroyDriverManager();
-        exit( 1 );
+        exit(1);
     }
 
-    if( nPixels != 0 && eDT == GDT_Unknown )
+    if (nPixels != 0 && eDT == GDT_Unknown)
     {
         eDT = GDT_Byte;
     }
-    if( nBandCount < 0 )
+    if (nBandCount < 0)
     {
         nBandCount = eDT == GDT_Unknown ? 0 : 1;
     }
-    GDALDatasetH hDS = GDALCreate( bHasCreate ? hDriver : hTmpDriver,
-                                   pszFilename, nPixels, nLines,
-                                   nBandCount, eDT,
-                                   bHasCreate ? aosCreateOptions.List() : nullptr );
+    GDALDatasetH hDS = GDALCreate(
+        bHasCreate ? hDriver : hTmpDriver, pszFilename, nPixels, nLines,
+        nBandCount, eDT, bHasCreate ? aosCreateOptions.List() : nullptr);
 
-    if( hDS == nullptr )
+    if (hDS == nullptr)
     {
         GDALDestroyDriverManager();
-        CSLDestroy( argv );
-        exit( 1 );
+        CSLDestroy(argv);
+        exit(1);
     }
 
-    if( pszOutputSRS && pszOutputSRS[0] != '\0' && !EQUAL(pszOutputSRS, "NONE") )
+    if (pszOutputSRS && pszOutputSRS[0] != '\0' && !EQUAL(pszOutputSRS, "NONE"))
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        if( oSRS.SetFromUserInput( pszOutputSRS ) != OGRERR_NONE )
+        if (oSRS.SetFromUserInput(pszOutputSRS) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
-                      pszOutputSRS );
-            CSLDestroy( argv );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to process SRS definition: %s", pszOutputSRS);
+            CSLDestroy(argv);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
 
-        char* pszSRS = nullptr;
-        oSRS.exportToWkt( &pszSRS );
+        char *pszSRS = nullptr;
+        oSRS.exportToWkt(&pszSRS);
 
-        if( GDALSetProjection(hDS, pszSRS) != CE_None )
+        if (GDALSetProjection(hDS, pszSRS) != CE_None)
         {
             CPLFree(pszSRS);
             GDALClose(hDS);
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
         CPLFree(pszSRS);
     }
-    if( bGeoTransform )
+    if (bGeoTransform)
     {
-        if( nPixels == 0 )
+        if (nPixels == 0)
         {
-            fprintf( stderr, "-outsize must be specified when -a_ullr is used.\n");
+            fprintf(stderr,
+                    "-outsize must be specified when -a_ullr is used.\n");
             GDALClose(hDS);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
-        if( GDALSetGeoTransform(hDS, adfGeoTransform) != CE_None )
+        if (GDALSetGeoTransform(hDS, adfGeoTransform) != CE_None)
         {
             GDALClose(hDS);
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
     }
-    if( !aosMetadata.empty() )
+    if (!aosMetadata.empty())
     {
-        GDALSetMetadata(hDS, aosMetadata.List(), nullptr );
+        GDALSetMetadata(hDS, aosMetadata.List(), nullptr);
     }
     const int nBands = GDALGetRasterCount(hDS);
-    if( bSetNoData )
+    if (bSetNoData)
     {
-        for( int i = 0; i < nBands; i++ )
+        for (int i = 0; i < nBands; i++)
         {
-            auto hBand = GDALGetRasterBand(hDS, i+1);
-            if( eDT == GDT_Int64 )
+            auto hBand = GDALGetRasterBand(hDS, i + 1);
+            if (eDT == GDT_Int64)
             {
-                GDALSetRasterNoDataValueAsInt64(hBand,
-                    static_cast<int64_t>(std::strtoll(osNoData.c_str(), nullptr, 10)));
+                GDALSetRasterNoDataValueAsInt64(
+                    hBand, static_cast<int64_t>(
+                               std::strtoll(osNoData.c_str(), nullptr, 10)));
             }
-            else if( eDT == GDT_UInt64 )
+            else if (eDT == GDT_UInt64)
             {
-                GDALSetRasterNoDataValueAsUInt64(hBand,
-                    static_cast<uint64_t>(std::strtoull(osNoData.c_str(), nullptr, 10)));
+                GDALSetRasterNoDataValueAsUInt64(
+                    hBand, static_cast<uint64_t>(
+                               std::strtoull(osNoData.c_str(), nullptr, 10)));
             }
             else
             {
-                GDALSetRasterNoDataValue(hBand,
-                                         CPLAtofM(osNoData.c_str()));
+                GDALSetRasterNoDataValue(hBand, CPLAtofM(osNoData.c_str()));
             }
         }
     }
-    if( !adfBurnValues.empty() )
+    if (!adfBurnValues.empty())
     {
-        for( int i = 0; i < nBands; i++ )
+        for (int i = 0; i < nBands; i++)
         {
-            GDALFillRaster(GDALGetRasterBand(hDS, i+1),
-                           i < static_cast<int>(adfBurnValues.size()) ?
-                                adfBurnValues[i] : adfBurnValues.back(),
+            GDALFillRaster(GDALGetRasterBand(hDS, i + 1),
+                           i < static_cast<int>(adfBurnValues.size())
+                               ? adfBurnValues[i]
+                               : adfBurnValues.back(),
                            0);
         }
     }
 
     bool bHasGotErr = false;
-    if( !bHasCreate )
+    if (!bHasCreate)
     {
         GDALDatasetH hOutDS = GDALCreateCopy(
-            hDriver, pszFilename, hDS, false,
-            aosCreateOptions.List(),
-            bQuiet ? GDALDummyProgress : GDALTermProgress, nullptr );
-        if( hOutDS == nullptr )
+            hDriver, pszFilename, hDS, false, aosCreateOptions.List(),
+            bQuiet ? GDALDummyProgress : GDALTermProgress, nullptr);
+        if (hOutDS == nullptr)
         {
             GDALClose(hDS);
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             GDALDestroyDriverManager();
-            exit( 1 );
+            exit(1);
         }
         const bool bWasFailureBefore = (CPLGetLastErrorType() == CE_Failure);
-        GDALFlushCache( hOutDS );
+        GDALFlushCache(hOutDS);
         if (!bWasFailureBefore && CPLGetLastErrorType() == CE_Failure)
         {
             bHasGotErr = true;
@@ -480,7 +493,7 @@ MAIN_START(argc, argv)
         bHasGotErr = true;
     }
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
     return bHasGotErr ? 1 : 0;
 }
 MAIN_END

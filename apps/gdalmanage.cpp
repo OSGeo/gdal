@@ -34,7 +34,6 @@
 #include "gdal.h"
 #include "commonutils.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -42,54 +41,50 @@
 static void Usage()
 
 {
-    printf( "Usage: gdalmanage identify [-r|-fr] [-u] files*\n"
-            "    or gdalmanage copy [-f driver] oldname newname\n"
-            "    or gdalmanage rename [-f driver] oldname newname\n"
-            "    or gdalmanage delete [-f driver] datasetname\n" );
-    exit( 1 );
+    printf("Usage: gdalmanage identify [-r|-fr] [-u] files*\n"
+           "    or gdalmanage copy [-f driver] oldname newname\n"
+           "    or gdalmanage rename [-f driver] oldname newname\n"
+           "    or gdalmanage delete [-f driver] datasetname\n");
+    exit(1);
 }
 
 /************************************************************************/
 /*                       ProcessIdentifyTarget()                        */
 /************************************************************************/
 
-static void ProcessIdentifyTarget( const char *pszTarget,
-                                   char **papszSiblingList,
-                                   bool bRecursive,
-                                   bool bReportFailures,
-                                   bool bForceRecurse )
+static void ProcessIdentifyTarget(const char *pszTarget,
+                                  char **papszSiblingList, bool bRecursive,
+                                  bool bReportFailures, bool bForceRecurse)
 
 {
     GDALDriverH hDriver;
     VSIStatBufL sStatBuf;
     int i;
 
-    hDriver = GDALIdentifyDriver( pszTarget, papszSiblingList );
+    hDriver = GDALIdentifyDriver(pszTarget, papszSiblingList);
 
-    if( hDriver != nullptr )
-        printf( "%s: %s\n", pszTarget, GDALGetDriverShortName( hDriver ) );
-    else if( bReportFailures )
-        printf( "%s: unrecognized\n", pszTarget );
+    if (hDriver != nullptr)
+        printf("%s: %s\n", pszTarget, GDALGetDriverShortName(hDriver));
+    else if (bReportFailures)
+        printf("%s: unrecognized\n", pszTarget);
 
-    if( !bForceRecurse && (!bRecursive || hDriver != nullptr) )
+    if (!bForceRecurse && (!bRecursive || hDriver != nullptr))
         return;
 
-    if( VSIStatL( pszTarget, &sStatBuf ) != 0
-        || !VSI_ISDIR( sStatBuf.st_mode ) )
+    if (VSIStatL(pszTarget, &sStatBuf) != 0 || !VSI_ISDIR(sStatBuf.st_mode))
         return;
 
-    papszSiblingList = VSIReadDir( pszTarget );
-    for( i = 0; papszSiblingList && papszSiblingList[i]; i++ )
+    papszSiblingList = VSIReadDir(pszTarget);
+    for (i = 0; papszSiblingList && papszSiblingList[i]; i++)
     {
-        if( EQUAL(papszSiblingList[i],"..")
-            || EQUAL(papszSiblingList[i],".") )
+        if (EQUAL(papszSiblingList[i], "..") || EQUAL(papszSiblingList[i], "."))
             continue;
 
         CPLString osSubTarget =
-            CPLFormFilename( pszTarget, papszSiblingList[i], nullptr );
+            CPLFormFilename(pszTarget, papszSiblingList[i], nullptr);
 
-        ProcessIdentifyTarget( osSubTarget, papszSiblingList,
-                               bRecursive, bReportFailures, bForceRecurse );
+        ProcessIdentifyTarget(osSubTarget, papszSiblingList, bRecursive,
+                              bReportFailures, bForceRecurse);
     }
     CSLDestroy(papszSiblingList);
 }
@@ -98,26 +93,26 @@ static void ProcessIdentifyTarget( const char *pszTarget,
 /*                              Identify()                              */
 /************************************************************************/
 
-static void Identify( int nArgc, char **papszArgv )
+static void Identify(int nArgc, char **papszArgv)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Scan for command line switches                                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Scan for command line switches                                   */
+    /* -------------------------------------------------------------------- */
     bool bRecursive = false;
     bool bForceRecurse = false;
     bool bReportFailures = false;
 
-    while( nArgc > 0 && papszArgv[0][0] == '-' )
+    while (nArgc > 0 && papszArgv[0][0] == '-')
     {
-        if( EQUAL(papszArgv[0],"-r") )
+        if (EQUAL(papszArgv[0], "-r"))
             bRecursive = true;
-        else if( EQUAL(papszArgv[0],"-fr") )
+        else if (EQUAL(papszArgv[0], "-fr"))
         {
             bForceRecurse = true;
             bRecursive = true;
         }
-        else if( EQUAL(papszArgv[0],"-u") )
+        else if (EQUAL(papszArgv[0], "-u"))
             bReportFailures = true;
         else
             Usage();
@@ -126,13 +121,13 @@ static void Identify( int nArgc, char **papszArgv )
         nArgc--;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Process given files.                                            */
-/* -------------------------------------------------------------------- */
-    while( nArgc > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Process given files.                                            */
+    /* -------------------------------------------------------------------- */
+    while (nArgc > 0)
     {
-        ProcessIdentifyTarget( papszArgv[0], nullptr,
-                               bRecursive, bReportFailures, bForceRecurse );
+        ProcessIdentifyTarget(papszArgv[0], nullptr, bRecursive,
+                              bReportFailures, bForceRecurse);
         nArgc--;
         papszArgv++;
     }
@@ -142,30 +137,30 @@ static void Identify( int nArgc, char **papszArgv )
 /*                               Delete()                               */
 /************************************************************************/
 
-static void Delete( GDALDriverH hDriver, int nArgc, char **papszArgv )
+static void Delete(GDALDriverH hDriver, int nArgc, char **papszArgv)
 
 {
-    if( nArgc != 1 )
+    if (nArgc != 1)
         Usage();
 
-    GDALDeleteDataset( hDriver, papszArgv[0] );
+    GDALDeleteDataset(hDriver, papszArgv[0]);
 }
 
 /************************************************************************/
 /*                                Copy()                                */
 /************************************************************************/
 
-static void Copy( GDALDriverH hDriver, int nArgc, char **papszArgv,
-                  const char *pszOperation )
+static void Copy(GDALDriverH hDriver, int nArgc, char **papszArgv,
+                 const char *pszOperation)
 
 {
-    if( nArgc != 2 )
+    if (nArgc != 2)
         Usage();
 
-    if( EQUAL(pszOperation,"copy") )
-        GDALCopyDatasetFiles( hDriver, papszArgv[1], papszArgv[0] );
+    if (EQUAL(pszOperation, "copy"))
+        GDALCopyDatasetFiles(hDriver, papszArgv[1], papszArgv[0]);
     else
-        GDALRenameDataset( hDriver, papszArgv[1], papszArgv[0] );
+        GDALRenameDataset(hDriver, papszArgv[1], papszArgv[0]);
 }
 
 /************************************************************************/
@@ -179,78 +174,81 @@ MAIN_START(argc, argv)
     GDALDriverH hDriver = nullptr;
 
     /* Check that we are running against at least GDAL 1.5 */
-    /* Note to developers : if we use newer API, please change the requirement */
+    /* Note to developers : if we use newer API, please change the requirement
+     */
     if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
     {
-        fprintf(stderr, "At least, GDAL >= 1.5.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        fprintf(stderr,
+                "At least, GDAL >= 1.5.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n",
+                argv[0], GDAL_RELEASE_NAME);
         exit(1);
     }
 
     GDALAllRegister();
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    if( argc < 3 )
+    if (argc < 3)
         Usage();
 
-    if( EQUAL(argv[1], "--utility_version") )
+    if (EQUAL(argv[1], "--utility_version"))
     {
-        printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+        printf(
+            "%s was compiled against GDAL %s and is running against GDAL %s\n",
+            argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
         return 0;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a driver specifier?                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a driver specifier?                                  */
+    /* -------------------------------------------------------------------- */
     char **papszRemainingArgv = argv + 2;
-    int  nRemainingArgc = argc - 2;
+    int nRemainingArgc = argc - 2;
 
-    if( EQUAL(papszRemainingArgv[0],"-f") && nRemainingArgc > 1 )
+    if (EQUAL(papszRemainingArgv[0], "-f") && nRemainingArgc > 1)
     {
         pszDriver = papszRemainingArgv[1];
         papszRemainingArgv += 2;
         nRemainingArgc -= 2;
     }
 
-    if( pszDriver != nullptr )
+    if (pszDriver != nullptr)
     {
-        hDriver = GDALGetDriverByName( pszDriver );
-        if( hDriver == nullptr )
+        hDriver = GDALGetDriverByName(pszDriver);
+        if (hDriver == nullptr)
         {
-            fprintf( stderr, "Unable to find driver named '%s'.\n",
-                     pszDriver );
-            exit( 1 );
+            fprintf(stderr, "Unable to find driver named '%s'.\n", pszDriver);
+            exit(1);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Split out based on operation.                                   */
-/* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(argv[1],"ident" /* identify" */ ) )
-        Identify( nRemainingArgc, papszRemainingArgv );
+    /* -------------------------------------------------------------------- */
+    /*      Split out based on operation.                                   */
+    /* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(argv[1], "ident" /* identify" */))
+        Identify(nRemainingArgc, papszRemainingArgv);
 
-    else if( EQUAL(argv[1],"copy") )
-        Copy( hDriver, nRemainingArgc, papszRemainingArgv, "copy" );
+    else if (EQUAL(argv[1], "copy"))
+        Copy(hDriver, nRemainingArgc, papszRemainingArgv, "copy");
 
-    else if( EQUAL(argv[1],"rename") )
-        Copy( hDriver, nRemainingArgc, papszRemainingArgv, "rename" );
+    else if (EQUAL(argv[1], "rename"))
+        Copy(hDriver, nRemainingArgc, papszRemainingArgv, "rename");
 
-    else if( EQUAL(argv[1],"delete") )
-        Delete( hDriver, nRemainingArgc, papszRemainingArgv );
+    else if (EQUAL(argv[1], "delete"))
+        Delete(hDriver, nRemainingArgc, papszRemainingArgv);
 
     else
         Usage();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CSLDestroy( argv );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    CSLDestroy(argv);
     GDALDestroyDriverManager();
 
-    exit( 0 );
+    exit(0);
 }
 MAIN_END
