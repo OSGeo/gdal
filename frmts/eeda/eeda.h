@@ -41,7 +41,7 @@
 #include <vector>
 #include <map>
 
-CPLHTTPResult* EEDAHTTPFetch(const char* pszURL, char** papszOptions);
+CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, char **papszOptions);
 
 /************************************************************************/
 /*                             EEDAIBandDesc                            */
@@ -49,49 +49,52 @@ CPLHTTPResult* EEDAHTTPFetch(const char* pszURL, char** papszOptions);
 
 class EEDAIBandDesc
 {
-public:
+  public:
     CPLString osName{};
     CPLString osWKT{};
     GDALDataType eDT{GDT_Unknown};
-    bool      bSignedByte{false};
-    std::vector<double> adfGeoTransform{0.0,1.0,0.0,0.0,0.0,1.0};
-    int       nWidth{0};
-    int       nHeight{0};
+    bool bSignedByte{false};
+    std::vector<double> adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    int nWidth{0};
+    int nHeight{0};
 
     /* Check if it similar enough for being considered as a compatible */
     /* GDAL band in the same dataset */
-    bool IsSimilar(const EEDAIBandDesc& oOther) const
+    bool IsSimilar(const EEDAIBandDesc &oOther) const
     {
         return osWKT == oOther.osWKT &&
                adfGeoTransform == oOther.adfGeoTransform &&
-               nWidth == oOther.nWidth &&
-               nHeight == oOther.nHeight;
+               nWidth == oOther.nWidth && nHeight == oOther.nHeight;
     }
 };
 
-std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
-                                std::map<CPLString, CPLString>& oMapCodeToWKT);
+std::vector<EEDAIBandDesc>
+BuildBandDescArray(json_object *poBands,
+                   std::map<CPLString, CPLString> &oMapCodeToWKT);
 
 /************************************************************************/
 /*                      GDALEEDABaseDataset                             */
 /************************************************************************/
 
-class GDALEEDABaseDataset CPL_NON_FINAL: public GDALDataset
+class GDALEEDABaseDataset CPL_NON_FINAL : public GDALDataset
 {
-    protected:
-            bool        m_bMustCleanPersistent;
-            CPLString   m_osBaseURL{};
-            CPLString   m_osBearer{};
-            GIntBig     m_nExpirationTime;
+  protected:
+    bool m_bMustCleanPersistent;
+    CPLString m_osBaseURL{};
+    CPLString m_osBearer{};
+    GIntBig m_nExpirationTime;
 
-            char      **GetBaseHTTPOptions();
-            static CPLString ConvertPathToName(const CPLString& path);
+    char **GetBaseHTTPOptions();
+    static CPLString ConvertPathToName(const CPLString &path);
 
-    public:
-                GDALEEDABaseDataset();
-                virtual ~GDALEEDABaseDataset();
+  public:
+    GDALEEDABaseDataset();
+    virtual ~GDALEEDABaseDataset();
 
-                const CPLString& GetBaseURL() const { return m_osBaseURL; }
+    const CPLString &GetBaseURL() const
+    {
+        return m_osBaseURL;
+    }
 };
 
-#endif //  EEDA_H_INCLUDED
+#endif  //  EEDA_H_INCLUDED
