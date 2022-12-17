@@ -20,19 +20,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-// Adapted from FcUcs4ToUtf8 and FcUtf8ToUcs4() from https://github.com/freedesktop/fontconfig/blob/master/src/fcstr.c
+// Adapted from FcUcs4ToUtf8 and FcUtf8ToUcs4() from
+// https://github.com/freedesktop/fontconfig/blob/master/src/fcstr.c
 
-namespace {
-
-inline int
-FcUtf8ToUcs4 (const uint8_t *src_orig,
-              uint32_t      *dst,
-              size_t         len)
+namespace
 {
-    const uint8_t   *src = src_orig;
-    uint8_t          s;
-    size_t           extra;
-    uint32_t         result;
+
+inline int FcUtf8ToUcs4(const uint8_t *src_orig, uint32_t *dst, size_t len)
+{
+    const uint8_t *src = src_orig;
+    uint8_t s;
+    size_t extra;
+    uint32_t result;
 
     if (len == 0)
         return 0;
@@ -69,7 +68,7 @@ FcUtf8ToUcs4 (const uint8_t *src_orig,
         result = s & 0x03;
         extra = 4;
     }
-    else if ( ! (s & 0x02))
+    else if (!(s & 0x02))
     {
         result = s & 0x01;
         extra = 5;
@@ -96,25 +95,49 @@ FcUtf8ToUcs4 (const uint8_t *src_orig,
     return static_cast<int>(src - src_orig);
 }
 
-inline int
-FcUcs4ToUtf8 (uint32_t ucs4,
-              uint8_t* dest)
+inline int FcUcs4ToUtf8(uint32_t ucs4, uint8_t *dest)
 {
-    int      bits;
+    int bits;
     uint8_t *d = dest;
 
-    if      (ucs4 <       0x80) {  *d++= static_cast<uint8_t>(ucs4);                          bits= -6; }
-    else if (ucs4 <      0x800) {  *d++= static_cast<uint8_t>(((ucs4 >>  6) & 0x1F) | 0xC0);  bits=  0; }
-    else if (ucs4 <    0x10000) {  *d++= static_cast<uint8_t>(((ucs4 >> 12) & 0x0F) | 0xE0);  bits=  6; }
-    else if (ucs4 <   0x200000) {  *d++= static_cast<uint8_t>(((ucs4 >> 18) & 0x07) | 0xF0);  bits= 12; }
-    else if (ucs4 <  0x4000000) {  *d++= static_cast<uint8_t>(((ucs4 >> 24) & 0x03) | 0xF8);  bits= 18; }
-    else if (ucs4 < 0x80000000) {  *d++= static_cast<uint8_t>(((ucs4 >> 30) & 0x01) | 0xFC);  bits= 24; }
-    else return 0;
+    if (ucs4 < 0x80)
+    {
+        *d++ = static_cast<uint8_t>(ucs4);
+        bits = -6;
+    }
+    else if (ucs4 < 0x800)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> 6) & 0x1F) | 0xC0);
+        bits = 0;
+    }
+    else if (ucs4 < 0x10000)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> 12) & 0x0F) | 0xE0);
+        bits = 6;
+    }
+    else if (ucs4 < 0x200000)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> 18) & 0x07) | 0xF0);
+        bits = 12;
+    }
+    else if (ucs4 < 0x4000000)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> 24) & 0x03) | 0xF8);
+        bits = 18;
+    }
+    else if (ucs4 < 0x80000000)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> 30) & 0x01) | 0xFC);
+        bits = 24;
+    }
+    else
+        return 0;
 
-    for ( ; bits >= 0; bits-= 6) {
-        *d++= static_cast<uint8_t>(((ucs4 >> bits) & 0x3F) | 0x80);
+    for (; bits >= 0; bits -= 6)
+    {
+        *d++ = static_cast<uint8_t>(((ucs4 >> bits) & 0x3F) | 0x80);
     }
     return static_cast<int>(d - dest);
 }
 
-} // namespace
+}  // namespace
