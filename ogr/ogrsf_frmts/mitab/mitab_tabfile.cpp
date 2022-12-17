@@ -56,31 +56,31 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-
 static const char UNSUPPORTED_OP_READ_ONLY[] =
-  "%s : unsupported operation on a read-only datasource.";
+    "%s : unsupported operation on a read-only datasource.";
 
 constexpr const char *DESCRIPTION_KEY = "DESCRIPTION";
 // Tab file allow to store description longer than 255 characters.
 // But only 255 will shown in MapInfo layer list.
 constexpr int MAX_DESCRIPTION_LEN = 254 * 2;
 
-static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = false )
+static char *EscapeString(const char *pszInput,
+                          bool bEscapeDoubleQuotes = false)
 {
-    if( nullptr == pszInput )
+    if (nullptr == pszInput)
     {
         return nullptr;
     }
 
     auto nLength = CPLStrnlen(pszInput, MAX_DESCRIPTION_LEN);
-    char *pszOutput = static_cast<char*>( CPLMalloc( nLength * 2 + 1 ) );
+    char *pszOutput = static_cast<char *>(CPLMalloc(nLength * 2 + 1));
     int iOut = 0;
     int nDoubleQuotesCount = 0;
-    for( int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn )
+    for (int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn)
     {
-        if( pszInput[iIn] == '"')
+        if (pszInput[iIn] == '"')
         {
-            if( bEscapeDoubleQuotes )
+            if (bEscapeDoubleQuotes)
             {
                 pszOutput[iOut++] = '"';
                 pszOutput[iOut++] = '"';
@@ -90,9 +90,8 @@ static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = fals
                 nDoubleQuotesCount++;
                 pszOutput[iOut++] = pszInput[iIn];
             }
-
         }
-        else if( pszInput[iIn] == '\n' || pszInput[iIn] == '\r' )
+        else if (pszInput[iIn] == '\n' || pszInput[iIn] == '\r')
         {
             pszOutput[iOut++] = ' ';
         }
@@ -100,8 +99,9 @@ static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = fals
         {
             if ((pszInput[iIn] & 0xc0) != 0x80)
             {
-                // Stop at the start of the character just beyond the maximum accepted
-                if( iOut >= MAX_DESCRIPTION_LEN - nDoubleQuotesCount )
+                // Stop at the start of the character just beyond the maximum
+                // accepted
+                if (iOut >= MAX_DESCRIPTION_LEN - nDoubleQuotesCount)
                 {
                     break;
                 }
@@ -114,19 +114,19 @@ static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = fals
     return pszOutput;
 }
 
-static char *UnescapeString( const char *pszInput )
+static char *UnescapeString(const char *pszInput)
 {
-    if( nullptr == pszInput )
+    if (nullptr == pszInput)
     {
         return nullptr;
     }
 
     auto nLength = CPLStrnlen(pszInput, MAX_DESCRIPTION_LEN);
-    char *pszOutput = static_cast<char *>( CPLMalloc( nLength * 2 + 1 ) );
+    char *pszOutput = static_cast<char *>(CPLMalloc(nLength * 2 + 1));
     int iOut = 0;
-    for( int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn )
+    for (int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn)
     {
-        if( pszInput[iIn] == '"' && pszInput[iIn+1] == '"' )
+        if (pszInput[iIn] == '"' && pszInput[iIn + 1] == '"')
         {
             ++iIn;
             pszOutput[iOut++] = pszInput[iIn];
@@ -135,8 +135,9 @@ static char *UnescapeString( const char *pszInput )
         {
             if ((pszInput[iIn] & 0xc0) != 0x80)
             {
-                // Stop at the start of the character just beyond the maximum accepted
-                if( iOut >= MAX_DESCRIPTION_LEN )
+                // Stop at the start of the character just beyond the maximum
+                // accepted
+                if (iOut >= MAX_DESCRIPTION_LEN)
                 {
                     break;
                 }
@@ -148,11 +149,11 @@ static char *UnescapeString( const char *pszInput )
     return pszOutput;
 }
 
-static std::string GetTabDescription( const char *pszLine )
+static std::string GetTabDescription(const char *pszLine)
 {
     CPLString osDescriptionLine(pszLine);
     auto nStart = osDescriptionLine.find_first_of('"') + 1;
-    if(nStart != std::string::npos)
+    if (nStart != std::string::npos)
     {
         auto nEnd = osDescriptionLine.find_last_of('"');
         auto nLen = nEnd == std::string::npos ? nEnd : nEnd - nStart;
@@ -170,25 +171,14 @@ static std::string GetTabDescription( const char *pszLine )
  *
  * Constructor.
  **********************************************************************/
-TABFile::TABFile() :
-    m_pszFname(nullptr),
-    m_eAccessMode(TABRead),
-    m_papszTABFile(nullptr),
-    m_nVersion(300),
-    m_panIndexNo(nullptr),
-    m_eTableType(TABTableNative),
-    m_poDATFile(nullptr),
-    m_poMAPFile(nullptr),
-    m_poINDFile(nullptr),
-    m_poDefn(nullptr),
-    m_poSpatialRef(nullptr),
-    bUseSpatialTraversal(FALSE),
-    m_nLastFeatureId(0),
-    m_panMatchingFIDs(nullptr),
-    m_iMatchingFID(0),
-    m_bNeedTABRewrite(FALSE),
-    m_bLastOpWasRead(FALSE),
-    m_bLastOpWasWrite(FALSE)
+TABFile::TABFile()
+    : m_pszFname(nullptr), m_eAccessMode(TABRead), m_papszTABFile(nullptr),
+      m_nVersion(300), m_panIndexNo(nullptr), m_eTableType(TABTableNative),
+      m_poDATFile(nullptr), m_poMAPFile(nullptr), m_poINDFile(nullptr),
+      m_poDefn(nullptr), m_poSpatialRef(nullptr), bUseSpatialTraversal(FALSE),
+      m_nLastFeatureId(0), m_panMatchingFIDs(nullptr), m_iMatchingFID(0),
+      m_bNeedTABRewrite(FALSE), m_bLastOpWasRead(FALSE),
+      m_bLastOpWasWrite(FALSE)
 {
     m_poCurFeature = nullptr;
     m_nCurFeatureId = 0;
@@ -208,11 +198,11 @@ TABFile::~TABFile()
 /*                         GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig TABFile::GetFeatureCount (int bForce)
+GIntBig TABFile::GetFeatureCount(int bForce)
 {
 
-    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr || bForce)
-        return OGRLayer::GetFeatureCount( bForce );
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr || bForce)
+        return OGRLayer::GetFeatureCount(bForce);
     else
         return m_nLastFeatureId;
 }
@@ -227,42 +217,40 @@ void TABFile::ResetReading()
     m_iMatchingFID = 0;
 
     m_nCurFeatureId = 0;
-    if( m_poMAPFile != nullptr )
+    if (m_poMAPFile != nullptr)
         m_poMAPFile->ResetReading();
 
-/* -------------------------------------------------------------------- */
-/*      Decide whether to operate in spatial traversal mode or not,     */
-/*      and ensure the current spatial filter is applied to the map     */
-/*      file object.                                                    */
-/* -------------------------------------------------------------------- */
-    if( m_poMAPFile )
+    /* -------------------------------------------------------------------- */
+    /*      Decide whether to operate in spatial traversal mode or not,     */
+    /*      and ensure the current spatial filter is applied to the map     */
+    /*      file object.                                                    */
+    /* -------------------------------------------------------------------- */
+    if (m_poMAPFile)
     {
         bUseSpatialTraversal = FALSE;
 
         m_poMAPFile->ResetCoordFilter();
 
-        if( m_poFilterGeom != nullptr )
+        if (m_poFilterGeom != nullptr)
         {
             // TABMAPHeaderBlock *poHeader = m_poMAPFile->GetHeaderBlock();
 
-            OGREnvelope  sEnvelope;
-            m_poFilterGeom->getEnvelope( &sEnvelope );
+            OGREnvelope sEnvelope;
+            m_poFilterGeom->getEnvelope(&sEnvelope);
 
             TABVertex sMin;
             TABVertex sMax;
-            m_poMAPFile->GetCoordFilter( sMin, sMax );
+            m_poMAPFile->GetCoordFilter(sMin, sMax);
 
-            if( sEnvelope.MinX > sMin.x
-                || sEnvelope.MinY > sMin.y
-                || sEnvelope.MaxX < sMax.x
-                || sEnvelope.MaxY < sMax.y )
+            if (sEnvelope.MinX > sMin.x || sEnvelope.MinY > sMin.y ||
+                sEnvelope.MaxX < sMax.x || sEnvelope.MaxY < sMax.y)
             {
                 bUseSpatialTraversal = TRUE;
                 sMin.x = sEnvelope.MinX;
                 sMin.y = sEnvelope.MinY;
                 sMax.x = sEnvelope.MaxX;
                 sMax.y = sEnvelope.MaxY;
-                m_poMAPFile->SetCoordFilter( sMin, sMax );
+                m_poMAPFile->SetCoordFilter(sMin, sMax);
             }
         }
     }
@@ -295,9 +283,8 @@ void TABFile::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*=FALSE*/,
-                  int nBlockSizeForCreate,
-                  const char* pszCharset /* = NULL */)
+                  GBool bTestOpenNoError /*=FALSE*/, int nBlockSizeForCreate,
+                  const char *pszCharset /* = NULL */)
 {
     char *pszTmpFname = nullptr;
     int nFnameLen = 0;
@@ -320,14 +307,14 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     m_pszFname = CPLStrdup(pszFname);
     nFnameLen = static_cast<int>(strlen(m_pszFname));
 
-    if (nFnameLen > 4 && (strcmp(m_pszFname+nFnameLen-4, ".TAB")==0 ||
-                     strcmp(m_pszFname+nFnameLen-4, ".MAP")==0 ||
-                     strcmp(m_pszFname+nFnameLen-4, ".DAT")==0 ) )
-        strcpy(m_pszFname+nFnameLen-4, ".TAB");
-    else if (nFnameLen > 4 && (EQUAL(m_pszFname+nFnameLen-4, ".tab") ||
-                               EQUAL(m_pszFname+nFnameLen-4, ".map") ||
-                               EQUAL(m_pszFname+nFnameLen-4, ".dat") ) )
-        strcpy(m_pszFname+nFnameLen-4, ".tab");
+    if (nFnameLen > 4 && (strcmp(m_pszFname + nFnameLen - 4, ".TAB") == 0 ||
+                          strcmp(m_pszFname + nFnameLen - 4, ".MAP") == 0 ||
+                          strcmp(m_pszFname + nFnameLen - 4, ".DAT") == 0))
+        strcpy(m_pszFname + nFnameLen - 4, ".TAB");
+    else if (nFnameLen > 4 && (EQUAL(m_pszFname + nFnameLen - 4, ".tab") ||
+                               EQUAL(m_pszFname + nFnameLen - 4, ".map") ||
+                               EQUAL(m_pszFname + nFnameLen - 4, ".dat")))
+        strcpy(m_pszFname + nFnameLen - 4, ".tab");
     else
     {
         if (!bTestOpenNoError)
@@ -356,7 +343,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     /*-----------------------------------------------------------------
      * Handle .TAB file... depends on access mode.
      *----------------------------------------------------------------*/
-    if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite )
+    if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
         /*-------------------------------------------------------------
          * Open .TAB file... since it is a small text file, we will just load
@@ -367,14 +354,14 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
         {
             if (!bTestOpenNoError)
             {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed opening %s.", m_pszFname);
+                CPLError(CE_Failure, CPLE_FileIO, "Failed opening %s.",
+                         m_pszFname);
             }
             CPLFree(m_pszFname);
             m_pszFname = nullptr;
             CSLDestroy(m_papszTABFile);
             m_papszTABFile = nullptr;
-            CPLFree( pszTmpFname );
+            CPLFree(pszTmpFname);
             return -1;
         }
 
@@ -383,7 +370,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
          * dataset we have (NATIVE, DBF, etc.)... and also to know if
          * it is a supported type.
          *------------------------------------------------------------*/
-        if ( ParseTABFileFirstPass(bTestOpenNoError) != 0 )
+        if (ParseTABFileFirstPass(bTestOpenNoError) != 0)
         {
             // No need to produce an error... it is already been done if
             // necessary... just cleanup and exit.
@@ -392,7 +379,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
             m_pszFname = nullptr;
             CSLDestroy(m_papszTABFile);
             m_papszTABFile = nullptr;
-            CPLFree( pszTmpFname );
+            CPLFree(pszTmpFname);
 
             return -1;
         }
@@ -404,7 +391,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
          * Close() call... we will just set some defaults here.
          *------------------------------------------------------------*/
         m_nVersion = 300;
-        if( pszCharset != nullptr )
+        if (pszCharset != nullptr)
             SetCharset(pszCharset);
         else
             SetCharset("Neutral");
@@ -424,39 +411,39 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     /*-----------------------------------------------------------------
      * Open .DAT file (or .DBF)
      *----------------------------------------------------------------*/
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".TAB")==0)
+    if (nFnameLen > 4 && strcmp(pszTmpFname + nFnameLen - 4, ".TAB") == 0)
     {
         if (m_eTableType == TABTableDBF)
-            strcpy(pszTmpFname+nFnameLen-4, ".DBF");
+            strcpy(pszTmpFname + nFnameLen - 4, ".DBF");
         else  // Default is NATIVE
-            strcpy(pszTmpFname+nFnameLen-4, ".DAT");
+            strcpy(pszTmpFname + nFnameLen - 4, ".DAT");
     }
     else
     {
         if (m_eTableType == TABTableDBF)
-            strcpy(pszTmpFname+nFnameLen-4, ".dbf");
+            strcpy(pszTmpFname + nFnameLen - 4, ".dbf");
         else  // Default is NATIVE
-            strcpy(pszTmpFname+nFnameLen-4, ".dat");
+            strcpy(pszTmpFname + nFnameLen - 4, ".dat");
     }
 
 #ifndef _WIN32
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    CPLString   oEncoding;
+    CPLString oEncoding;
 
-    if(eAccess == TABRead || eAccess == TABReadWrite)
+    if (eAccess == TABRead || eAccess == TABReadWrite)
     {
         oEncoding = CharsetToEncoding(GetCharset());
     }
-    else if(eAccess == TABWrite)
+    else if (eAccess == TABWrite)
     {
         oEncoding = CharsetToEncoding(pszCharset);
     }
 
-    m_poDATFile = new TABDATFile( oEncoding );
+    m_poDATFile = new TABDATFile(oEncoding);
 
-    if ( m_poDATFile->Open(pszTmpFname, eAccess, m_eTableType) != 0)
+    if (m_poDATFile->Open(pszTmpFname, eAccess, m_eTableType) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -472,7 +459,8 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     /*-----------------------------------------------------------------
      * Parse .TAB file field defs and build FeatureDefn (only in read access)
      *----------------------------------------------------------------*/
-    if ( (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) && ParseTABFileFields() != 0)
+    if ((m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) &&
+        ParseTABFileFields() != 0)
     {
         // Failed... an error has already been reported, just return.
         CPLFree(pszTmpFname);
@@ -490,19 +478,19 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
      * with NONE geometry.
      *----------------------------------------------------------------*/
     bool bUpperCase = false;
-    if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".DAT")==0)
+    if (nFnameLen > 4 && strcmp(pszTmpFname + nFnameLen - 4, ".DAT") == 0)
     {
         bUpperCase = true;
-        strcpy(pszTmpFname+nFnameLen-4, ".MAP");
+        strcpy(pszTmpFname + nFnameLen - 4, ".MAP");
     }
     else
-        strcpy(pszTmpFname+nFnameLen-4, ".map");
+        strcpy(pszTmpFname + nFnameLen - 4, ".map");
 
 #ifndef _WIN32
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    m_poMAPFile = new TABMAPFile( oEncoding );
+    m_poMAPFile = new TABMAPFile(oEncoding);
     if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
         /*-------------------------------------------------------------
@@ -514,8 +502,8 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
             // File exists, but Open Failed...
             // we have to produce an error message
             if (!bTestOpenNoError)
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Open() failed for %s", pszTmpFname);
+                CPLError(CE_Failure, CPLE_FileIO, "Open() failed for %s",
+                         pszTmpFname);
             else
                 CPLErrorReset();
 
@@ -527,24 +515,27 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
         /*-------------------------------------------------------------
          * Set geometry type if the geometry objects are uniform.
          *------------------------------------------------------------*/
-        int numPoints=0, numRegions=0, numTexts=0, numLines=0;
+        int numPoints = 0, numRegions = 0, numTexts = 0, numLines = 0;
 
-        GetFeatureCountByType( numPoints, numLines, numRegions, numTexts);
+        GetFeatureCountByType(numPoints, numLines, numRegions, numTexts);
 
-        if( numPoints >= 0 && numTexts >= 0 && numPoints < INT_MAX - numTexts )
+        if (numPoints >= 0 && numTexts >= 0 && numPoints < INT_MAX - numTexts)
             numPoints += numTexts;
-        if( numPoints > 0 && numLines == 0 && numRegions == 0 )
-            m_poDefn->SetGeomType( wkbPoint );
-        else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
-            m_poDefn->SetGeomType( wkbLineString );
-        else if( m_eAccessMode == TABRead && numPoints == 0 && numLines == 0 && numRegions == 0 )
+        if (numPoints > 0 && numLines == 0 && numRegions == 0)
+            m_poDefn->SetGeomType(wkbPoint);
+        else if (numPoints == 0 && numLines > 0 && numRegions == 0)
+            m_poDefn->SetGeomType(wkbLineString);
+        else if (m_eAccessMode == TABRead && numPoints == 0 && numLines == 0 &&
+                 numRegions == 0)
             /* No geometries present; this is an aspatial dataset */
-            m_poDefn->SetGeomType( wkbNone );
-        else {
+            m_poDefn->SetGeomType(wkbNone);
+        else
+        {
             /* we leave it unknown indicating a mixture */
         }
     }
-    else if (m_poMAPFile->Open(pszTmpFname, eAccess, FALSE, nBlockSizeForCreate) != 0)
+    else if (m_poMAPFile->Open(pszTmpFname, eAccess, FALSE,
+                               nBlockSizeForCreate) != 0)
     {
         // Open Failed for write...
         // an error has already been reported, just return.
@@ -566,54 +557,61 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
      *----------------------------------------------------------------*/
     bool bHasIndex = false;
 
-    CPLXMLNode *psRoot = CPLCreateXMLNode( nullptr, CXT_Element, "OGRMILayerAttrIndex" );
+    CPLXMLNode *psRoot =
+        CPLCreateXMLNode(nullptr, CXT_Element, "OGRMILayerAttrIndex");
     OGRFeatureDefn *poLayerDefn = GetLayerDefn();
-    for( int iField = 0; iField < poLayerDefn->GetFieldCount(); iField++ )
+    for (int iField = 0; iField < poLayerDefn->GetFieldCount(); iField++)
     {
         int iIndexIndex = GetFieldIndexNumber(iField);
         if (iIndexIndex > 0)
         {
-            if( !bHasIndex )
+            if (!bHasIndex)
             {
-                const char* pszIndFilename = CPLFormCIFilename(
-                                                    CPLGetPath(pszFname),
-                                                    CPLGetBasename(pszFname),
-                                                    (bUpperCase) ? "IND" : "ind" );
+                const char *pszIndFilename = CPLFormCIFilename(
+                    CPLGetPath(pszFname), CPLGetBasename(pszFname),
+                    (bUpperCase) ? "IND" : "ind");
                 VSIStatBufL sStat;
-                if( VSIStatL( pszIndFilename, &sStat) == 0 )
+                if (VSIStatL(pszIndFilename, &sStat) == 0)
                 {
-                    CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", pszIndFilename );
+                    CPLCreateXMLElementAndValue(psRoot, "MIIDFilename",
+                                                pszIndFilename);
                 }
                 else
                 {
-                    CPLDebug("MITAB", "At least one field is supposed to be indexed, "
-                         "but index file is missing");
+                    CPLDebug("MITAB",
+                             "At least one field is supposed to be indexed, "
+                             "but index file is missing");
                     break;
                 }
             }
 
-            CPLXMLNode *psIndex = CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
-            CPLCreateXMLElementAndValue( psIndex, "FieldIndex", CPLSPrintf( "%d", iField ) );
-            CPLCreateXMLElementAndValue( psIndex, "FieldName",
-                                     poLayerDefn->GetFieldDefn(iField)->GetNameRef() );
-            CPLCreateXMLElementAndValue( psIndex, "IndexIndex", CPLSPrintf( "%d", iIndexIndex ) );
+            CPLXMLNode *psIndex =
+                CPLCreateXMLNode(psRoot, CXT_Element, "OGRMIAttrIndex");
+            CPLCreateXMLElementAndValue(psIndex, "FieldIndex",
+                                        CPLSPrintf("%d", iField));
+            CPLCreateXMLElementAndValue(
+                psIndex, "FieldName",
+                poLayerDefn->GetFieldDefn(iField)->GetNameRef());
+            CPLCreateXMLElementAndValue(psIndex, "IndexIndex",
+                                        CPLSPrintf("%d", iIndexIndex));
             bHasIndex = true;
         }
     }
 
     if (bHasIndex)
     {
-        char *pszRawXML = CPLSerializeXMLTree( psRoot );
-        InitializeIndexSupport( pszRawXML );
-        CPLFree( pszRawXML );
+        char *pszRawXML = CPLSerializeXMLTree(psRoot);
+        InitializeIndexSupport(pszRawXML);
+        CPLFree(pszRawXML);
     }
 
-    CPLDestroyXMLNode( psRoot );
+    CPLDestroyXMLNode(psRoot);
 
     CPLFree(pszTmpFname);
     pszTmpFname = nullptr;
 
-    if( m_poDefn != nullptr && m_eAccessMode != TABWrite && m_poDefn->GetGeomFieldCount() != 0 )
+    if (m_poDefn != nullptr && m_eAccessMode != TABWrite &&
+        m_poDefn->GetGeomFieldCount() != 0)
         m_poDefn->GetGeomFieldDefn(0)->SetSpatialRef(GetSpatialRef());
 
     return 0;
@@ -631,9 +629,9 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
  **********************************************************************/
 int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
 {
-    int         iLine, numLines, numFields = 0;
-    char        **papszTok=nullptr;
-    GBool       bInsideTableDef = FALSE, bFoundTableFields=FALSE;
+    int iLine, numLines, numFields = 0;
+    char **papszTok = nullptr;
+    GBool bInsideTableDef = FALSE, bFoundTableFields = FALSE;
 
     if (m_eAccessMode == TABWrite)
     {
@@ -644,7 +642,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
 
     numLines = CSLCount(m_papszTABFile);
 
-    for(iLine=0; iLine<numLines; iLine++)
+    for (iLine = 0; iLine < numLines; iLine++)
     {
         /*-------------------------------------------------------------
          * Tokenize the next .TAB line, and check first keyword
@@ -653,7 +651,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
         papszTok = CSLTokenizeStringComplex(m_papszTABFile[iLine], " \t(),;",
                                             TRUE, FALSE);
         if (CSLCount(papszTok) < 2)
-            continue;   // All interesting lines have at least 2 tokens
+            continue;  // All interesting lines have at least 2 tokens
 
         if (EQUAL(papszTok[0], "!version"))
         {
@@ -680,12 +678,12 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
             SetCharset(papszTok[1]);
         }
         else if (EQUAL(papszTok[0], "Definition") &&
-                 EQUAL(papszTok[1], "Table") )
+                 EQUAL(papszTok[1], "Table"))
         {
             bInsideTableDef = TRUE;
         }
         else if (bInsideTableDef && !bFoundTableFields &&
-                 (EQUAL(papszTok[0], "Type") || EQUAL(papszTok[0],"FORMAT:")) )
+                 (EQUAL(papszTok[0], "Type") || EQUAL(papszTok[0], "FORMAT:")))
         {
             if (EQUAL(papszTok[1], "NATIVE") || EQUAL(papszTok[1], "LINKED"))
                 m_eTableType = TABTableNative;
@@ -697,41 +695,44 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
                 if (!bTestOpenNoError)
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Unsupported table type '%s' in file %s.  "
-                      "This type of .TAB file cannot be read by this library.",
+                             "This type of .TAB file cannot be read by this "
+                             "library.",
                              papszTok[1], m_pszFname);
                 CSLDestroy(papszTok);
                 return -1;
             }
         }
         else if (bInsideTableDef && !bFoundTableFields &&
-                 EQUAL(papszTok[0], "Description") )
+                 EQUAL(papszTok[0], "Description"))
         {
-            auto osDescription = GetTabDescription( m_papszTABFile[iLine] );
-            if( !osDescription.empty() )
+            auto osDescription = GetTabDescription(m_papszTABFile[iLine]);
+            if (!osDescription.empty())
             {
                 const char *pszEncoding = GetEncoding();
                 if (pszEncoding == nullptr || EQUAL(pszEncoding, ""))
                 {
                     std::shared_ptr<char> oUnescapedDescription(
-                            UnescapeString( osDescription.c_str() ), CPLFree);
-                    IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
-                                                oUnescapedDescription.get() );
+                        UnescapeString(osDescription.c_str()), CPLFree);
+                    IMapInfoFile::SetMetadataItem(DESCRIPTION_KEY,
+                                                  oUnescapedDescription.get());
                 }
                 else
                 {
                     std::shared_ptr<char> oEncodedDescription(
                         CPLRecode(osDescription.c_str(), pszEncoding,
-                        CPL_ENC_UTF8), CPLFree);
+                                  CPL_ENC_UTF8),
+                        CPLFree);
 
                     std::shared_ptr<char> oUnescapedDescription(
-                            UnescapeString( oEncodedDescription.get() ), CPLFree);
-                    IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
-                                                   oUnescapedDescription.get() );
+                        UnescapeString(oEncodedDescription.get()), CPLFree);
+                    IMapInfoFile::SetMetadataItem(DESCRIPTION_KEY,
+                                                  oUnescapedDescription.get());
                 }
             }
         }
         else if (bInsideTableDef && !bFoundTableFields &&
-                 (EQUAL(papszTok[0],"Fields") || EQUAL(papszTok[0],"FIELDS:")))
+                 (EQUAL(papszTok[0], "Fields") ||
+                  EQUAL(papszTok[0], "FIELDS:")))
         {
             /*---------------------------------------------------------
              * We found the list of table fields
@@ -741,19 +742,21 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
             bFoundTableFields = TRUE;
             numFields = atoi(papszTok[1]);
 
-            if (numFields < 1 || numFields>2048 || iLine+numFields >= numLines)
+            if (numFields < 1 || numFields > 2048 ||
+                iLine + numFields >= numLines)
             {
                 if (!bTestOpenNoError)
-                    CPLError(CE_Failure, CPLE_FileIO,
-                         "Invalid number of fields (%s) at line %d in file %s",
-                             papszTok[1], iLine+1, m_pszFname);
+                    CPLError(
+                        CE_Failure, CPLE_FileIO,
+                        "Invalid number of fields (%s) at line %d in file %s",
+                        papszTok[1], iLine + 1, m_pszFname);
 
                 CSLDestroy(papszTok);
                 return -1;
             }
 
             bInsideTableDef = FALSE;
-        }/* end of fields section*/
+        } /* end of fields section*/
         else
         {
             // Simply Ignore unrecognized lines
@@ -813,13 +816,13 @@ int TABFile::ParseTABFileFields()
     char **papszTok = nullptr;
 
     const int numLines = CSLCount(m_papszTABFile);
-    for( int iLine=0; iLine<numLines; iLine++ )
+    for (int iLine = 0; iLine < numLines; iLine++)
     {
         /*-------------------------------------------------------------
          * Tokenize the next .TAB line, and check first keyword
          *------------------------------------------------------------*/
         const char *pszStr = m_papszTABFile[iLine];
-        while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
+        while (*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
             pszStr++;
 
         if (STARTS_WITH_CI(pszStr, "Fields") && CPLStrnlen(pszStr, 7) >= 7)
@@ -828,23 +831,24 @@ int TABFile::ParseTABFileFields()
              * We found the list of table fields
              *--------------------------------------------------------*/
             int iField = 0;
-            int numFields = atoi(pszStr+7);
+            int numFields = atoi(pszStr + 7);
             if (numFields < 1 || numFields > 2048 ||
-                iLine+numFields >= numLines)
+                iLine + numFields >= numLines)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Invalid number of fields (%s) at line %d in file %s",
-                         pszStr+7, iLine+1, m_pszFname);
+                         pszStr + 7, iLine + 1, m_pszFname);
                 CSLDestroy(papszTok);
                 return -1;
             }
 
             // Alloc the array to keep track of indexed fields
-            m_panIndexNo = static_cast<int *>(CPLCalloc(numFields, sizeof(int)));
+            m_panIndexNo =
+                static_cast<int *>(CPLCalloc(numFields, sizeof(int)));
 
             iLine++;
             poFieldDefn = nullptr;
-            for(iField=0; iField<numFields; iField++, iLine++)
+            for (iField = 0; iField < numFields; iField++, iLine++)
             {
                 /*-----------------------------------------------------
                  * For each field definition found in the .TAB:
@@ -857,19 +861,18 @@ int TABFile::ParseTABFileFields()
                  *----------------------------------------------------*/
                 CSLDestroy(papszTok);
                 papszTok = CSLTokenizeStringComplex(m_papszTABFile[iLine],
-                                                    " \t(),;",
-                                                    TRUE, FALSE);
+                                                    " \t(),;", TRUE, FALSE);
                 const int numTok = CSLCount(papszTok);
 
                 CPLAssert(m_poDefn);
                 poFieldDefn = nullptr;
 
-                CPLString   osFieldName;
-                if( numTok > 0 )
+                CPLString osFieldName;
+                if (numTok > 0)
                 {
                     osFieldName = papszTok[0];
-                    if( strlen( GetEncoding() ) > 0 )
-                        osFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
+                    if (strlen(GetEncoding()) > 0)
+                        osFieldName.Recode(GetEncoding(), CPL_ENC_UTF8);
                 }
 
                 int nStatus = -1;
@@ -878,11 +881,8 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * CHAR type
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFChar,
-                                                            atoi(papszTok[2]),
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFChar, atoi(papszTok[2]), 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTString);
                     poFieldDefn->SetWidth(atoi(papszTok[2]));
                 }
@@ -891,39 +891,31 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * INTEGER type
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFInteger,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFInteger, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger);
-                    if( numTok > 2 && atoi(papszTok[2]) > 0 )
-                        poFieldDefn->SetWidth( atoi(papszTok[2]) );
+                    if (numTok > 2 && atoi(papszTok[2]) > 0)
+                        poFieldDefn->SetWidth(atoi(papszTok[2]));
                 }
                 else if (numTok >= 2 && EQUAL(papszTok[1], "smallint"))
                 {
                     /*-------------------------------------------------
                      * SMALLINT type
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFSmallInt,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFSmallInt, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger);
-                    if( numTok > 2 && atoi(papszTok[2]) > 0 )
-                        poFieldDefn->SetWidth( atoi(papszTok[2]) );
+                    if (numTok > 2 && atoi(papszTok[2]) > 0)
+                        poFieldDefn->SetWidth(atoi(papszTok[2]));
                 }
                 else if (numTok >= 4 && EQUAL(papszTok[1], "decimal"))
                 {
                     /*-------------------------------------------------
                      * DECIMAL type
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFDecimal,
-                                                           atoi(papszTok[2]),
-                                                           atoi(papszTok[3]));
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFDecimal, atoi(papszTok[2]),
+                        atoi(papszTok[3]));
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTReal);
                     poFieldDefn->SetWidth(atoi(papszTok[2]));
                     poFieldDefn->SetPrecision(atoi(papszTok[3]));
@@ -933,10 +925,8 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * FLOAT type
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFFloat,
-                                                               0, 0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFFloat, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTReal);
                 }
                 else if (numTok >= 2 && EQUAL(papszTok[1], "date"))
@@ -944,11 +934,8 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * DATE type (returned as a string: "DD/MM/YYYY")
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFDate,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFDate, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
@@ -962,11 +949,8 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * TIME type (returned as a string: "HH:MM:SS")
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFTime,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFTime, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
@@ -978,13 +962,11 @@ int TABFile::ParseTABFileFields()
                 else if (numTok >= 2 && EQUAL(papszTok[1], "datetime"))
                 {
                     /*-------------------------------------------------
-                     * DATETIME type (returned as a string: "DD/MM/YYYY HH:MM:SS")
+                     * DATETIME type (returned as a string: "DD/MM/YYYY
+                     *HH:MM:SS")
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFDateTime,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFDateTime, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
@@ -998,11 +980,8 @@ int TABFile::ParseTABFileFields()
                     /*-------------------------------------------------
                      * LOGICAL type (value "T" or "F")
                      *------------------------------------------------*/
-                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               osFieldName,
-                                                               TABFLogical,
-                                                               0,
-                                                               0);
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFLogical, 0, 0);
                     poFieldDefn = new OGRFieldDefn(osFieldName, OFTString);
                     poFieldDefn->SetWidth(1);
                 }
@@ -1014,8 +993,9 @@ int TABFile::ParseTABFileFields()
                 if (nStatus != 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed to parse field definition at line %d in file %s",
-                             iLine+1, m_pszFname);
+                             "Failed to parse field definition at line %d in "
+                             "file %s",
+                             iLine + 1, m_pszFname);
                     CSLDestroy(papszTok);
                     delete poFieldDefn;
                     return -1;
@@ -1023,9 +1003,9 @@ int TABFile::ParseTABFileFields()
                 /*-----------------------------------------------------
                  * Keep track of index number if present
                  *----------------------------------------------------*/
-                if (numTok >= 4 && EQUAL(papszTok[numTok-2], "index"))
+                if (numTok >= 4 && EQUAL(papszTok[numTok - 2], "index"))
                 {
-                    m_panIndexNo[iField] = atoi(papszTok[numTok-1]);
+                    m_panIndexNo[iField] = atoi(papszTok[numTok - 1]);
                 }
                 else
                 {
@@ -1037,7 +1017,8 @@ int TABFile::ParseTABFileFields()
                  * the next one.
                  *----------------------------------------------------*/
                 m_poDefn->AddFieldDefn(poFieldDefn);
-                m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
+                m_oSetFields.insert(
+                    CPLString(poFieldDefn->GetNameRef()).toupper());
                 // AddFieldDenf() takes a copy, so we delete the original
                 delete poFieldDefn;
                 poFieldDefn = nullptr;
@@ -1047,7 +1028,7 @@ int TABFile::ParseTABFileFields()
              * OK, we're done... end the loop now.
              *--------------------------------------------------------*/
             break;
-        }/* end of fields section*/
+        } /* end of fields section*/
         else
         {
             // Simply Ignore unrecognized lines
@@ -1078,7 +1059,7 @@ int TABFile::ParseTABFileFields()
  **********************************************************************/
 int TABFile::WriteTABFile()
 {
-    if (!m_bNeedTABRewrite )
+    if (!m_bNeedTABRewrite)
     {
         return 0;
     }
@@ -1095,7 +1076,7 @@ int TABFile::WriteTABFile()
     m_nVersion = std::max(m_nVersion, nMapObjVersion);
 
     VSILFILE *fp = VSIFOpenL(m_pszFname, "wt");
-    if( fp != nullptr )
+    if (fp != nullptr)
     {
         VSIFPrintfL(fp, "!table\n");
         VSIFPrintfL(fp, "!version %d\n", m_nVersion);
@@ -1110,93 +1091,96 @@ int TABFile::WriteTABFile()
             if (nullptr != pszDescription)
             {
                 std::shared_ptr<char> oEscapedDescription(
-                    EscapeString( pszDescription, true ), CPLFree);
+                    EscapeString(pszDescription, true), CPLFree);
                 const char *pszEncoding = GetEncoding();
                 if (nullptr == pszEncoding || EQUAL(pszEncoding, ""))
                 {
-                    VSIFPrintfL(fp, "  Description \"%s\"\n", oEscapedDescription.get());
+                    VSIFPrintfL(fp, "  Description \"%s\"\n",
+                                oEscapedDescription.get());
                 }
                 else
                 {
                     std::shared_ptr<char> oEncodedDescription(
                         CPLRecode(oEscapedDescription.get(), CPL_ENC_UTF8,
-                                  pszEncoding), CPLFree);
-                    VSIFPrintfL(fp, "  Description \"%s\"\n", oEncodedDescription.get());
+                                  pszEncoding),
+                        CPLFree);
+                    VSIFPrintfL(fp, "  Description \"%s\"\n",
+                                oEncodedDescription.get());
                 }
             }
             VSIFPrintfL(fp, "  Fields %d\n", m_poDefn->GetFieldCount());
 
-            for( int iField = 0; iField < m_poDefn->GetFieldCount(); iField++ )
+            for (int iField = 0; iField < m_poDefn->GetFieldCount(); iField++)
             {
                 const char *pszFieldType = nullptr;
                 OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
-                switch(GetNativeFieldType(iField))
+                switch (GetNativeFieldType(iField))
                 {
-                  case TABFChar:
-                    pszFieldType = CPLSPrintf("Char (%d)",
-                                              poFieldDefn->GetWidth());
-                    break;
-                  case TABFDecimal:
-                    pszFieldType = CPLSPrintf("Decimal (%d,%d)",
-                                              poFieldDefn->GetWidth(),
-                                              poFieldDefn->GetPrecision());
-                    break;
-                  case TABFInteger:
-                    if( poFieldDefn->GetWidth() == 0 )
-                        pszFieldType = "Integer";
-                    else
-                        pszFieldType = CPLSPrintf("Integer (%d)",
-                                                  poFieldDefn->GetWidth());
-                    break;
-                  case TABFSmallInt:
-                    if( poFieldDefn->GetWidth() == 0 )
-                        pszFieldType = "SmallInt";
-                    else
-                        pszFieldType = CPLSPrintf("SmallInt (%d)",
-                                                  poFieldDefn->GetWidth());
-                    break;
-                  case TABFFloat:
-                    pszFieldType = "Float";
-                    break;
-                  case TABFLogical:
-                    pszFieldType = "Logical";
-                    break;
-                  case TABFDate:
-                    pszFieldType = "Date";
-                    break;
-                  case TABFTime:
-                    pszFieldType = "Time";
-                    break;
-                  case TABFDateTime:
-                    pszFieldType = "DateTime";
-                    break;
-                  default:
-                    // Unsupported field type!!!  This should never happen.
-                    CPLError(CE_Failure, CPLE_AssertionFailed,
-                             "WriteTABFile(): Unsupported field type");
-                    VSIFCloseL(fp);
-                    return -1;
+                    case TABFChar:
+                        pszFieldType =
+                            CPLSPrintf("Char (%d)", poFieldDefn->GetWidth());
+                        break;
+                    case TABFDecimal:
+                        pszFieldType = CPLSPrintf("Decimal (%d,%d)",
+                                                  poFieldDefn->GetWidth(),
+                                                  poFieldDefn->GetPrecision());
+                        break;
+                    case TABFInteger:
+                        if (poFieldDefn->GetWidth() == 0)
+                            pszFieldType = "Integer";
+                        else
+                            pszFieldType = CPLSPrintf("Integer (%d)",
+                                                      poFieldDefn->GetWidth());
+                        break;
+                    case TABFSmallInt:
+                        if (poFieldDefn->GetWidth() == 0)
+                            pszFieldType = "SmallInt";
+                        else
+                            pszFieldType = CPLSPrintf("SmallInt (%d)",
+                                                      poFieldDefn->GetWidth());
+                        break;
+                    case TABFFloat:
+                        pszFieldType = "Float";
+                        break;
+                    case TABFLogical:
+                        pszFieldType = "Logical";
+                        break;
+                    case TABFDate:
+                        pszFieldType = "Date";
+                        break;
+                    case TABFTime:
+                        pszFieldType = "Time";
+                        break;
+                    case TABFDateTime:
+                        pszFieldType = "DateTime";
+                        break;
+                    default:
+                        // Unsupported field type!!!  This should never happen.
+                        CPLError(CE_Failure, CPLE_AssertionFailed,
+                                 "WriteTABFile(): Unsupported field type");
+                        VSIFCloseL(fp);
+                        return -1;
                 }
 
-                CPLString   osFieldName( poFieldDefn->GetNameRef() );
+                CPLString osFieldName(poFieldDefn->GetNameRef());
 
-                if( strlen( GetEncoding() ) > 0 )
-                    osFieldName.Recode( CPL_ENC_UTF8, GetEncoding() );
+                if (strlen(GetEncoding()) > 0)
+                    osFieldName.Recode(CPL_ENC_UTF8, GetEncoding());
 
-                char* pszCleanName = TABCleanFieldName( osFieldName );
+                char *pszCleanName = TABCleanFieldName(osFieldName);
                 osFieldName = pszCleanName;
-                CPLFree( pszCleanName );
+                CPLFree(pszCleanName);
 
                 if (GetFieldIndexNumber(iField) == 0)
                 {
                     VSIFPrintfL(fp, "    %s %s ;\n", osFieldName.c_str(),
-                            pszFieldType );
+                                pszFieldType);
                 }
                 else
                 {
                     VSIFPrintfL(fp, "    %s %s Index %d ;\n",
-                            osFieldName.c_str(), pszFieldType,
-                            GetFieldIndexNumber(iField) );
+                                osFieldName.c_str(), pszFieldType,
+                                GetFieldIndexNumber(iField));
                 }
             }
         }
@@ -1205,7 +1189,7 @@ int TABFile::WriteTABFile()
             VSIFPrintfL(fp, "Definition Table\n");
             VSIFPrintfL(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
             VSIFPrintfL(fp, "  Fields 1\n");
-            VSIFPrintfL(fp, "    FID Integer ;\n" );
+            VSIFPrintfL(fp, "    FID Integer ;\n");
         }
 
         VSIFCloseL(fp);
@@ -1214,8 +1198,8 @@ int TABFile::WriteTABFile()
     }
     else
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed to create file `%s'", m_pszFname);
+        CPLError(CE_Failure, CPLE_FileIO, "Failed to create file `%s'",
+                 m_pszFname);
         return -1;
     }
 
@@ -1268,7 +1252,7 @@ int TABFile::Close()
         m_poCurFeature = nullptr;
     }
 
-    if (m_poDefn )
+    if (m_poDefn)
         m_poDefn->Release();
     m_poDefn = nullptr;
 
@@ -1311,12 +1295,13 @@ int TABFile::Close()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
+int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite || m_poMAPFile == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "SetQuickSpatialIndexMode() failed: file not opened for write access.");
+                 "SetQuickSpatialIndexMode() failed: file not opened for write "
+                 "access.");
         return -1;
     }
 
@@ -1331,33 +1316,33 @@ int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
  **********************************************************************/
 GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
 {
-    if( m_bLastOpWasWrite )
+    if (m_bLastOpWasWrite)
         ResetReading();
     m_bLastOpWasRead = TRUE;
 
-    if( !CPL_INT64_FITS_ON_INT32(nPrevId) )
+    if (!CPL_INT64_FITS_ON_INT32(nPrevId))
         return -1;
 
     /*-----------------------------------------------------------------
      * Are we using spatial rather than .ID based traversal?
      *----------------------------------------------------------------*/
-    if( bUseSpatialTraversal )
-        return m_poMAPFile->GetNextFeatureId( static_cast<int>(nPrevId) );
+    if (bUseSpatialTraversal)
+        return m_poMAPFile->GetNextFeatureId(static_cast<int>(nPrevId));
 
     /*-----------------------------------------------------------------
      * Should we use an attribute index traversal?
      *----------------------------------------------------------------*/
-    if( m_poAttrQuery != nullptr)
+    if (m_poAttrQuery != nullptr)
     {
-        if( m_panMatchingFIDs == nullptr )
+        if (m_panMatchingFIDs == nullptr)
         {
             m_iMatchingFID = 0;
-            m_panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
-                                                                 nullptr );
+            m_panMatchingFIDs =
+                m_poAttrQuery->EvaluateAgainstIndices(this, nullptr);
         }
-        if( m_panMatchingFIDs != nullptr )
+        if (m_panMatchingFIDs != nullptr)
         {
-            if( m_panMatchingFIDs[m_iMatchingFID] == OGRNullFID )
+            if (m_panMatchingFIDs[m_iMatchingFID] == OGRNullFID)
                 return OGRNullFID;
 
             return m_panMatchingFIDs[m_iMatchingFID++] + 1;
@@ -1370,7 +1355,7 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
     int nFeatureId = -1;
 
     if (nPrevId <= 0 && m_nLastFeatureId > 0)
-        nFeatureId = 1;       // Feature Ids start at 1
+        nFeatureId = 1;  // Feature Ids start at 1
     else if (nPrevId > 0 && nPrevId < m_nLastFeatureId)
         nFeatureId = static_cast<int>(nPrevId) + 1;
     else
@@ -1382,19 +1367,20 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
     /*-----------------------------------------------------------------
      * Skip any feature with NONE geometry and a deleted attribute record
      *----------------------------------------------------------------*/
-    while(nFeatureId <= m_nLastFeatureId)
+    while (nFeatureId <= m_nLastFeatureId)
     {
-        if ( m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
-             m_poDATFile->GetRecordBlock(nFeatureId) == nullptr )
+        if (m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
+            m_poDATFile->GetRecordBlock(nFeatureId) == nullptr)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "GetNextFeatureId() failed: unable to set read pointer "
-                     "to feature id %d",  nFeatureId);
+                     "to feature id %d",
+                     nFeatureId);
             return -1;
         }
 
-// __TODO__ Add a test here to check if object is deleted,
-// i.e. 0x40 set on object_id in object block
+        // __TODO__ Add a test here to check if object is deleted,
+        // i.e. 0x40 set on object_id in object block
         if (m_poMAPFile->GetCurObjType() != TAB_GEOM_NONE ||
             m_poDATFile->IsCurrentRecordDeleted() == FALSE)
         {
@@ -1423,19 +1409,21 @@ int TABFile::GetNextFeatureId_Spatial(int nPrevId)
 {
     if (m_eAccessMode != TABRead)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
             "GetNextFeatureId_Spatial() can be used only with Read access.");
         return -1;
     }
 
-    if( m_poMAPFile == nullptr )
+    if (m_poMAPFile == nullptr)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-            "GetNextFeatureId_Spatial() requires availability of .MAP file." );
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GetNextFeatureId_Spatial() requires availability of .MAP file.");
         return -1;
     }
 
-    return m_poMAPFile->GetNextFeatureId( nPrevId );
+    return m_poMAPFile->GetNextFeatureId(nPrevId);
 }
 
 /**********************************************************************
@@ -1472,13 +1460,13 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
         return nullptr;
     }
 
-    if( m_bLastOpWasWrite )
+    if (m_bLastOpWasWrite)
         ResetReading();
     m_bLastOpWasRead = TRUE;
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
         m_poMAPFile->MoveToObjId(static_cast<int>(nFeatureId)) != 0 ||
-        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
+        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr)
     {
         //     CPLError(CE_Failure, CPLE_IllegalArg,
         //    "GetFeatureRef() failed: invalid feature id %d",
@@ -1486,13 +1474,15 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
         return nullptr;
     }
 
-    if( m_poDATFile->IsCurrentRecordDeleted() )
+    if (m_poDATFile->IsCurrentRecordDeleted())
     {
-        if( m_poMAPFile->GetCurObjType() != TAB_GEOM_NONE )
+        if (m_poMAPFile->GetCurObjType() != TAB_GEOM_NONE)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Valid .MAP record " CPL_FRMT_GIB " found, but .DAT is marked as deleted. File likely corrupt",
-                    nFeatureId);
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Valid .MAP record " CPL_FRMT_GIB
+                " found, but .DAT is marked as deleted. File likely corrupt",
+                nFeatureId);
         }
         return nullptr;
     }
@@ -1512,8 +1502,8 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
      * Unsupported object types are returned as raw TABFeature (i.e. NONE
      * geometry)
      *----------------------------------------------------------------*/
-    m_poCurFeature = TABFeature::CreateFromMapInfoType(m_poMAPFile->GetCurObjType(),
-                                                       m_poDefn);
+    m_poCurFeature = TABFeature::CreateFromMapInfoType(
+        m_poMAPFile->GetCurObjType(), m_poDefn);
 
     /*-----------------------------------------------------------------
      * Read fields from the .DAT file
@@ -1530,9 +1520,8 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
      * Read geometry from the .MAP file
      * MoveToObjId() has already been called above...
      *----------------------------------------------------------------*/
-    TABMAPObjHdr *poObjHdr =
-        TABMAPObjHdr::NewObj(m_poMAPFile->GetCurObjType(),
-                             m_poMAPFile->GetCurObjId());
+    TABMAPObjHdr *poObjHdr = TABMAPObjHdr::NewObj(m_poMAPFile->GetCurObjType(),
+                                                  m_poMAPFile->GetCurObjId());
     // Note that poObjHdr==NULL is a valid case if geometry type is NONE
 
     if ((poObjHdr && poObjHdr->ReadObj(m_poMAPFile->GetCurObjBlock()) != 0) ||
@@ -1544,7 +1533,7 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
             delete poObjHdr;
         return nullptr;
     }
-    if (poObjHdr)       // May be NULL if feature geometry type is NONE
+    if (poObjHdr)  // May be NULL if feature geometry type is NONE
         delete poObjHdr;
 
     m_nCurFeatureId = nFeatureId;
@@ -1581,12 +1570,12 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         return OGRERR_FAILURE;
     }
 
-    if( m_bLastOpWasWrite )
+    if (m_bLastOpWasWrite)
         ResetReading();
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
         m_poMAPFile->MoveToObjId(static_cast<int>(nFeatureId)) != 0 ||
-        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
+        m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "DeleteFeature() failed: invalid feature id " CPL_FRMT_GIB,
@@ -1594,7 +1583,7 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
-    if( m_poDATFile->IsCurrentRecordDeleted() )
+    if (m_poDATFile->IsCurrentRecordDeleted())
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "DeleteFeature() failed: record is already deleted!");*/
@@ -1607,8 +1596,7 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         m_poCurFeature = nullptr;
     }
 
-    if( m_poMAPFile->MarkAsDeleted() != 0 ||
-        m_poDATFile->MarkAsDeleted() != 0 )
+    if (m_poMAPFile->MarkAsDeleted() != 0 || m_poDATFile->MarkAsDeleted() != 0)
     {
         return OGRERR_FAILURE;
     }
@@ -1641,7 +1629,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
     }
 
     int nFeatureId = 0;
-    if ( poFeature->GetFID() >= 0 )
+    if (poFeature->GetFID() >= 0)
     {
         nFeatureId = static_cast<int>(poFeature->GetFID());
     }
@@ -1651,12 +1639,13 @@ int TABFile::WriteFeature(TABFeature *poFeature)
          * Special hack to write out at least one field if none are in
          * OGRFeatureDefn.
          *------------------------------------------------------------*/
-        if( m_poDATFile->GetNumFields() == 0 )
+        if (m_poDATFile->GetNumFields() == 0)
         {
             CPLError(CE_Warning, CPLE_IllegalArg,
-                     "MapInfo tables must contain at least 1 column, adding dummy FID column.");
+                     "MapInfo tables must contain at least 1 column, adding "
+                     "dummy FID column.");
             CPLErrorReset();
-            m_poDATFile->AddField("FID", TABFInteger, 10, 0 );
+            m_poDATFile->AddField("FID", TABFInteger, 10, 0);
         }
 
         nFeatureId = 1;
@@ -1673,7 +1662,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      *----------------------------------------------------------------*/
     if (m_poDATFile->GetRecordBlock(nFeatureId) == nullptr ||
         poFeature->WriteRecordToDATFile(m_poDATFile, m_poINDFile,
-                                        m_panIndexNo) != 0 )
+                                        m_panIndexNo) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing attributes for feature id %d in %s",
@@ -1685,15 +1674,14 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * Write geometry to the .MAP file
      * The call to PrepareNewObj() takes care of the .ID file.
      *----------------------------------------------------------------*/
-    std::unique_ptr<TABMAPObjHdr> poObjHdr(
-        TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
-                             nFeatureId));
+    std::unique_ptr<TABMAPObjHdr> poObjHdr(TABMAPObjHdr::NewObj(
+        poFeature->ValidateMapInfoType(m_poMAPFile), nFeatureId));
 
-    if ( poObjHdr == nullptr )
+    if (poObjHdr == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed writing geometry for feature id %d in %s",
-                 nFeatureId, m_pszFname);
+                 "Failed writing geometry for feature id %d in %s", nFeatureId,
+                 m_pszFname);
         return -1;
     }
 
@@ -1703,11 +1691,11 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * case and return the error.
      *----------------------------------------------------------------*/
     if (poObjHdr->m_nType == TAB_GEOM_NONE &&
-        poFeature->GetFeatureClass() != TABFCNoGeomFeature )
+        poFeature->GetFeatureClass() != TABFCNoGeomFeature)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Invalid geometry for feature id %d in %s",
-                 nFeatureId, m_pszFname);
+                 "Invalid geometry for feature id %d in %s", nFeatureId,
+                 m_pszFname);
         return -1;
     }
 
@@ -1716,26 +1704,26 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * feature's IntMBR. Store that value in the ObjHdr for use by
      * PrepareNewObj() to search the best node to insert the feature.
      *----------------------------------------------------------------*/
-    if ( poObjHdr->m_nType != TAB_GEOM_NONE)
+    if (poObjHdr->m_nType != TAB_GEOM_NONE)
     {
         poFeature->GetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
                              poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
     }
 
-/*
-    if( m_nCurFeatureId < m_nLastFeatureId )
-    {
-        delete GetFeatureRef(m_nLastFeatureId);
-        m_poCurFeature = NULL;
-    }*/
+    /*
+        if( m_nCurFeatureId < m_nLastFeatureId )
+        {
+            delete GetFeatureRef(m_nLastFeatureId);
+            m_poCurFeature = NULL;
+        }*/
 
-    if ( m_poMAPFile->PrepareNewObj(poObjHdr.get()) != 0 ||
-         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr.get()) != 0 ||
-         m_poMAPFile->CommitNewObj(poObjHdr.get()) != 0 )
+    if (m_poMAPFile->PrepareNewObj(poObjHdr.get()) != 0 ||
+        poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr.get()) != 0 ||
+        m_poMAPFile->CommitNewObj(poObjHdr.get()) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed writing geometry for feature id %d in %s",
-                 nFeatureId, m_pszFname);
+                 "Failed writing geometry for feature id %d in %s", nFeatureId,
+                 m_pszFname);
         return -1;
     }
 
@@ -1745,19 +1733,19 @@ int TABFile::WriteFeature(TABFeature *poFeature)
     return 0;
 }
 
-int TABFile::SetCharset(const char* pszCharset)
+int TABFile::SetCharset(const char *pszCharset)
 {
-    if( 0 != IMapInfoFile::SetCharset(pszCharset) )
+    if (0 != IMapInfoFile::SetCharset(pszCharset))
     {
         return -1;
     }
-    if(m_poDATFile != nullptr)
+    if (m_poDATFile != nullptr)
     {
-        m_poDATFile->SetEncoding( CharsetToEncoding( pszCharset ) );
+        m_poDATFile->SetEncoding(CharsetToEncoding(pszCharset));
     }
-    if(m_poMAPFile != nullptr)
+    if (m_poMAPFile != nullptr)
     {
-        m_poMAPFile->SetEncoding( CharsetToEncoding( pszCharset ) );
+        m_poMAPFile->SetEncoding(CharsetToEncoding(pszCharset));
     }
     return 0;
 }
@@ -1784,22 +1772,24 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
     }
 
     GIntBig nFeatureId = poFeature->GetFID();
-    if (nFeatureId != OGRNullFID )
+    if (nFeatureId != OGRNullFID)
     {
-        if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
+        if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "CreateFeature() failed: invalid feature id " CPL_FRMT_GIB,
-                      nFeatureId);
+                     nFeatureId);
             return OGRERR_FAILURE;
         }
 
-        if( m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr ||
-            !m_poDATFile->IsCurrentRecordDeleted() )
+        if (m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) ==
+                nullptr ||
+            !m_poDATFile->IsCurrentRecordDeleted())
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                    "CreateFeature() failed: cannot re-write already existing feature " CPL_FRMT_GIB,
-                    nFeatureId);
+                     "CreateFeature() failed: cannot re-write already existing "
+                     "feature " CPL_FRMT_GIB,
+                     nFeatureId);
             return OGRERR_FAILURE;
         }
     }
@@ -1815,7 +1805,7 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
  *
  * Implementation of OGRLayer's SetFeature()
  **********************************************************************/
-OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
+OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
 
 {
     CPLErrorReset();
@@ -1838,13 +1828,13 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     }
 
     GIntBig nFeatureId = poFeature->GetFID();
-    if (nFeatureId == OGRNullFID )
+    if (nFeatureId == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetFeature() must be used on a feature with a FID.");
         return OGRERR_FAILURE;
     }
-    if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
+    if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                     "SetFeature() failed: invalid feature id " CPL_FRMT_GIB,
@@ -1852,24 +1842,25 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
-    OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if( poGeom != nullptr &&
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    if (poGeom != nullptr &&
         ((wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint) ||
-         (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)) )
+         (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "SetFeature() failed: setting MultiPoint or GeometryCollection not supported");
+                 "SetFeature() failed: setting MultiPoint or "
+                 "GeometryCollection not supported");
         return OGRERR_FAILURE;
     }
 
-    TABFeature* poTABFeature = CreateTABFeature(poFeature);
-    if( poTABFeature == nullptr )
+    TABFeature *poTABFeature = CreateTABFeature(poFeature);
+    if (poTABFeature == nullptr)
         return OGRERR_FAILURE;
 
-    if( m_bLastOpWasWrite )
+    if (m_bLastOpWasWrite)
         ResetReading();
 
-    if (m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr )
+    if (m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "SetFeature() failed: invalid feature id " CPL_FRMT_GIB,
@@ -1879,15 +1870,16 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     }
 
     /* If the object is not already deleted, delete it */
-    if( !(m_poDATFile->IsCurrentRecordDeleted()) )
+    if (!(m_poDATFile->IsCurrentRecordDeleted()))
     {
-        OGRFeature* poOldFeature = GetFeature(nFeatureId);
-        if( poOldFeature != nullptr )
+        OGRFeature *poOldFeature = GetFeature(nFeatureId);
+        if (poOldFeature != nullptr)
         {
             /* Optimization: if old and new features are the same, do nothing */
-            if( poOldFeature->Equal(poFeature) )
+            if (poOldFeature->Equal(poFeature))
             {
-                CPLDebug("MITAB", "Un-modified object " CPL_FRMT_GIB, nFeatureId);
+                CPLDebug("MITAB", "Un-modified object " CPL_FRMT_GIB,
+                         nFeatureId);
                 delete poTABFeature;
                 delete poOldFeature;
                 return OGRERR_NONE;
@@ -1895,23 +1887,28 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
 
             /* Optimization: if old and new geometries are the same, just */
             /* rewrite the attributes */
-            OGRGeometry* poOldGeom = poOldFeature->GetGeometryRef();
-            OGRGeometry* poNewGeom = poFeature->GetGeometryRef();
-            if( (poOldGeom == nullptr && poNewGeom == nullptr ) ||
-                (poOldGeom != nullptr && poNewGeom != nullptr && poOldGeom->Equals(poNewGeom)) )
+            OGRGeometry *poOldGeom = poOldFeature->GetGeometryRef();
+            OGRGeometry *poNewGeom = poFeature->GetGeometryRef();
+            if ((poOldGeom == nullptr && poNewGeom == nullptr) ||
+                (poOldGeom != nullptr && poNewGeom != nullptr &&
+                 poOldGeom->Equals(poNewGeom)))
             {
-                const char* pszOldStyle = poOldFeature->GetStyleString();
-                const char* pszNewStyle = poFeature->GetStyleString();
-                if( (pszOldStyle == nullptr && pszNewStyle == nullptr) ||
-                    (pszOldStyle != nullptr && pszNewStyle != nullptr && EQUAL(pszOldStyle, pszNewStyle)) )
+                const char *pszOldStyle = poOldFeature->GetStyleString();
+                const char *pszNewStyle = poFeature->GetStyleString();
+                if ((pszOldStyle == nullptr && pszNewStyle == nullptr) ||
+                    (pszOldStyle != nullptr && pszNewStyle != nullptr &&
+                     EQUAL(pszOldStyle, pszNewStyle)))
                 {
-                    CPLDebug("MITAB", "Rewrite only attributes for object " CPL_FRMT_GIB, nFeatureId);
-                    if (poTABFeature->WriteRecordToDATFile(m_poDATFile, m_poINDFile,
-                                                        m_panIndexNo) != 0 )
+                    CPLDebug("MITAB",
+                             "Rewrite only attributes for object " CPL_FRMT_GIB,
+                             nFeatureId);
+                    if (poTABFeature->WriteRecordToDATFile(
+                            m_poDATFile, m_poINDFile, m_panIndexNo) != 0)
                     {
                         CPLError(CE_Failure, CPLE_FileIO,
-                                "Failed writing attributes for feature id " CPL_FRMT_GIB " in %s",
-                                nFeatureId, m_pszFname);
+                                 "Failed writing attributes for feature "
+                                 "id " CPL_FRMT_GIB " in %s",
+                                 nFeatureId, m_pszFname);
                         delete poTABFeature;
                         delete poOldFeature;
                         return OGRERR_FAILURE;
@@ -1973,8 +1970,9 @@ OGRFeatureDefn *TABFile::GetLayerDefn()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                         TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
+int TABFile::SetFeatureDefn(
+    OGRFeatureDefn *poFeatureDefn,
+    TABFieldType *paeMapInfoNativeFieldTypes /* =NULL */)
 {
     if (m_eAccessMode != TABWrite)
     {
@@ -1998,7 +1996,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
      * it has been created and that it does not contain any field
      * definition yet.
      *----------------------------------------------------------------*/
-    if (m_poDATFile== nullptr || m_poDATFile->GetNumFields() > 0 )
+    if (m_poDATFile == nullptr || m_poDATFile->GetNumFields() > 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "SetFeatureDefn() can be called only once in a newly "
@@ -2009,7 +2007,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
     const int numFields = poFeatureDefn->GetFieldCount();
     TABFieldType eMapInfoType = TABFUnknown;
     int nStatus = 0;
-    for( int iField = 0; nStatus==0 && iField < numFields; iField++ )
+    for (int iField = 0; nStatus == 0 && iField < numFields; iField++)
     {
         OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
 
@@ -2022,36 +2020,36 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
             /*---------------------------------------------------------
              * Map OGRFieldTypes to MapInfo native types
              *--------------------------------------------------------*/
-            switch(poFieldDefn->GetType())
+            switch (poFieldDefn->GetType())
             {
-              case OFTInteger:
-                eMapInfoType = TABFInteger;
-                break;
-              case OFTReal:
-                if( poFieldDefn->GetWidth()>0 || poFieldDefn->GetPrecision()>0 )
-                    eMapInfoType = TABFDecimal;
-                else
-                    eMapInfoType = TABFFloat;
-                break;
-              case OFTDateTime:
-                eMapInfoType = TABFDateTime;
-                break;
-              case OFTDate:
-                eMapInfoType = TABFDate;
-                break;
-              case OFTTime:
-                eMapInfoType = TABFTime;
-                break;
-              case OFTString:
-              default:
-                eMapInfoType = TABFChar;
+                case OFTInteger:
+                    eMapInfoType = TABFInteger;
+                    break;
+                case OFTReal:
+                    if (poFieldDefn->GetWidth() > 0 ||
+                        poFieldDefn->GetPrecision() > 0)
+                        eMapInfoType = TABFDecimal;
+                    else
+                        eMapInfoType = TABFFloat;
+                    break;
+                case OFTDateTime:
+                    eMapInfoType = TABFDateTime;
+                    break;
+                case OFTDate:
+                    eMapInfoType = TABFDate;
+                    break;
+                case OFTTime:
+                    eMapInfoType = TABFTime;
+                    break;
+                case OFTString:
+                default:
+                    eMapInfoType = TABFChar;
             }
         }
 
-        nStatus = m_poDATFile->AddField(poFieldDefn->GetNameRef(),
-                                            eMapInfoType,
-                                            poFieldDefn->GetWidth(),
-                                            poFieldDefn->GetPrecision());
+        nStatus = m_poDATFile->AddField(poFieldDefn->GetNameRef(), eMapInfoType,
+                                        poFieldDefn->GetWidth(),
+                                        poFieldDefn->GetPrecision());
     }
 
     /*-----------------------------------------------------------------
@@ -2080,7 +2078,8 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
  **********************************************************************/
 int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/, int /*bApproxOK*/)
+                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/,
+                            int /*bApproxOK*/)
 {
     if (m_eAccessMode == TABRead || m_poDATFile == nullptr)
     {
@@ -2098,114 +2097,115 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Invalid size (%d) for field '%s'.  "
-                 "Size must be 254 or less.", nWidth, pszName);
-        nWidth=254;
+                 "Size must be 254 or less.",
+                 nWidth, pszName);
+        nWidth = 254;
     }
 
     /*-----------------------------------------------------------------
      * Map fields with width=0 (variable length in OGR) to a valid default
      *----------------------------------------------------------------*/
     if (eMapInfoType == TABFDecimal && nWidth == 0)
-        nWidth=20;
+        nWidth = 20;
     else if (nWidth == 0)
-        nWidth=254; /* char fields */
+        nWidth = 254; /* char fields */
 
-    CPLString   osName(NormalizeFieldName(pszName));
+    CPLString osName(NormalizeFieldName(pszName));
 
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
      *----------------------------------------------------------------*/
     OGRFieldDefn *poFieldDefn = nullptr;
 
-    switch(eMapInfoType)
+    switch (eMapInfoType)
     {
-      case TABFChar:
-        /*-------------------------------------------------
-         * CHAR type
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
-        poFieldDefn->SetWidth(nWidth);
-        break;
-      case TABFInteger:
-        /*-------------------------------------------------
-         * INTEGER type
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
-        if (nWidth <= 10)
+        case TABFChar:
+            /*-------------------------------------------------
+             * CHAR type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
             poFieldDefn->SetWidth(nWidth);
-        break;
-      case TABFSmallInt:
-        /*-------------------------------------------------
-         * SMALLINT type
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
-        if (nWidth <= 5)
+            break;
+        case TABFInteger:
+            /*-------------------------------------------------
+             * INTEGER type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
+            if (nWidth <= 10)
+                poFieldDefn->SetWidth(nWidth);
+            break;
+        case TABFSmallInt:
+            /*-------------------------------------------------
+             * SMALLINT type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
+            if (nWidth <= 5)
+                poFieldDefn->SetWidth(nWidth);
+            break;
+        case TABFDecimal:
+            /*-------------------------------------------------
+             * DECIMAL type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
             poFieldDefn->SetWidth(nWidth);
-        break;
-      case TABFDecimal:
-        /*-------------------------------------------------
-         * DECIMAL type
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
-        poFieldDefn->SetWidth(nWidth);
-        poFieldDefn->SetPrecision(nPrecision);
-        break;
-      case TABFFloat:
-        /*-------------------------------------------------
-         * FLOAT type
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
-        break;
-      case TABFDate:
-        /*-------------------------------------------------
-         * DATE type (V450, returned as a string: "DD/MM/YYYY")
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(),
+            poFieldDefn->SetPrecision(nPrecision);
+            break;
+        case TABFFloat:
+            /*-------------------------------------------------
+             * FLOAT type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTReal);
+            break;
+        case TABFDate:
+            /*-------------------------------------------------
+             * DATE type (V450, returned as a string: "DD/MM/YYYY")
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
-                                                   OFTDate);
+                                           OFTDate);
 #else
-                                                   OFTString);
+                                           OFTString);
 #endif
-        poFieldDefn->SetWidth(10);
-        m_nVersion = std::max(m_nVersion, 450);
-        break;
-      case TABFTime:
-        /*-------------------------------------------------
-         * TIME type (V900, returned as a string: "HH:MM:SS")
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(),
+            poFieldDefn->SetWidth(10);
+            m_nVersion = std::max(m_nVersion, 450);
+            break;
+        case TABFTime:
+            /*-------------------------------------------------
+             * TIME type (V900, returned as a string: "HH:MM:SS")
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
-                                                   OFTTime);
+                                           OFTTime);
 #else
-                                                   OFTString);
+                                           OFTString);
 #endif
-        poFieldDefn->SetWidth(8);
-        m_nVersion = std::max(m_nVersion, 900);
-        break;
-      case TABFDateTime:
-        /*-------------------------------------------------
-         * DATETIME type (V900, returned as a string: "DD/MM/YYYY HH:MM:SS")
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(),
+            poFieldDefn->SetWidth(8);
+            m_nVersion = std::max(m_nVersion, 900);
+            break;
+        case TABFDateTime:
+            /*-------------------------------------------------
+             * DATETIME type (V900, returned as a string: "DD/MM/YYYY HH:MM:SS")
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(),
 #ifdef MITAB_USE_OFTDATETIME
-                                                   OFTDateTime);
+                                           OFTDateTime);
 #else
-                                                   OFTString);
+                                           OFTString);
 #endif
-        poFieldDefn->SetWidth(19);
-        m_nVersion = std::max(m_nVersion, 900);
-        break;
-      case TABFLogical:
-        /*-------------------------------------------------
-         * LOGICAL type (value "T" or "F")
-         *------------------------------------------------*/
-        poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
-        poFieldDefn->SetWidth(1);
-        break;
-      default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported type for field %s", osName.c_str());
-        return -1;
+            poFieldDefn->SetWidth(19);
+            m_nVersion = std::max(m_nVersion, 900);
+            break;
+        case TABFLogical:
+            /*-------------------------------------------------
+             * LOGICAL type (value "T" or "F")
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
+            poFieldDefn->SetWidth(1);
+            break;
+        default:
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported type for field %s", osName.c_str());
+            return -1;
     }
 
     /*-----------------------------------------------------
@@ -2218,21 +2218,21 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * ... and pass field info to the .DAT file.
      *----------------------------------------------------*/
-    int nStatus = m_poDATFile->AddField(osName.c_str(), eMapInfoType,
-                                        nWidth, nPrecision);
+    int nStatus =
+        m_poDATFile->AddField(osName.c_str(), eMapInfoType, nWidth, nPrecision);
 
     /*-----------------------------------------------------------------
      * Extend the array to keep track of indexed fields (default=NOT indexed)
      *----------------------------------------------------------------*/
-    m_panIndexNo = static_cast<int *>(CPLRealloc(m_panIndexNo,
-                                     m_poDefn->GetFieldCount()*sizeof(int)));
-    m_panIndexNo[m_poDefn->GetFieldCount()-1] = 0;
+    m_panIndexNo = static_cast<int *>(
+        CPLRealloc(m_panIndexNo, m_poDefn->GetFieldCount() * sizeof(int)));
+    m_panIndexNo[m_poDefn->GetFieldCount() - 1] = 0;
 
-     /*-----------------------------------------------------------------
+    /*-----------------------------------------------------------------
      * Index the field if requested
      *----------------------------------------------------------------*/
     if (nStatus == 0 && bIndexed)
-        nStatus = SetFieldIndexed(m_poDefn->GetFieldCount()-1);
+        nStatus = SetFieldIndexed(m_poDefn->GetFieldCount() - 1);
 
     if (nStatus == 0 && m_eAccessMode == TABReadWrite)
         nStatus = WriteTABFile();
@@ -2268,10 +2268,10 @@ TABFieldType TABFile::GetNativeFieldType(int nFieldId)
  * Note that field ids are positive and start at 0
  * and valid index ids are positive and start at 1.
  **********************************************************************/
-int  TABFile::GetFieldIndexNumber(int nFieldId)
+int TABFile::GetFieldIndexNumber(int nFieldId)
 {
-    if (m_panIndexNo == nullptr || nFieldId < 0 ||
-        m_poDATFile== nullptr || nFieldId >= m_poDefn->GetFieldCount())
+    if (m_panIndexNo == nullptr || nFieldId < 0 || m_poDATFile == nullptr ||
+        nFieldId >= m_poDefn->GetFieldCount())
         return 0;  // no index
 
     return m_panIndexNo[nFieldId];
@@ -2287,12 +2287,13 @@ int  TABFile::GetFieldIndexNumber(int nFieldId)
  *
  * Returns 0 on success, -1 on error.
  ************************************************************************/
-int TABFile::SetFieldIndexed( int nFieldId )
+int TABFile::SetFieldIndexed(int nFieldId)
 {
     /*-----------------------------------------------------------------
      * Make sure things are OK
      *----------------------------------------------------------------*/
-    if (m_pszFname == nullptr || m_eAccessMode != TABWrite || m_poDefn == nullptr)
+    if (m_pszFname == nullptr || m_eAccessMode != TABWrite ||
+        m_poDefn == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "SetFieldIndexed() must be called after opening a new "
@@ -2300,8 +2301,8 @@ int TABFile::SetFieldIndexed( int nFieldId )
         return -1;
     }
 
-    if (m_panIndexNo == nullptr || nFieldId < 0 ||
-        m_poDATFile== nullptr || nFieldId >= m_poDefn->GetFieldCount())
+    if (m_panIndexNo == nullptr || nFieldId < 0 || m_poDATFile == nullptr ||
+        nFieldId >= m_poDefn->GetFieldCount())
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Invalid field number in SetFieldIndexed().");
@@ -2324,7 +2325,7 @@ int TABFile::SetFieldIndexed( int nFieldId )
     {
         m_poINDFile = new TABINDFile;
 
-        if ( m_poINDFile->Open(m_pszFname, "w", TRUE) != 0)
+        if (m_poINDFile->Open(m_pszFname, "w", TRUE) != 0)
         {
             // File could not be opened...
             delete m_poINDFile;
@@ -2338,12 +2339,11 @@ int TABFile::SetFieldIndexed( int nFieldId )
      *----------------------------------------------------------------*/
     OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(nFieldId);
 
-    if( poFieldDefn == nullptr )
+    if (poFieldDefn == nullptr)
         return -1;
-    const int nNewIndexNo =
-        m_poINDFile->CreateIndex(GetNativeFieldType(nFieldId),
-                                 poFieldDefn->GetWidth());
-    if( nNewIndexNo < 1 )
+    const int nNewIndexNo = m_poINDFile->CreateIndex(
+        GetNativeFieldType(nFieldId), poFieldDefn->GetWidth());
+    if (nNewIndexNo < 1)
     {
         // Failed... an error has already been reported.
         return -1;
@@ -2359,7 +2359,7 @@ int TABFile::SetFieldIndexed( int nFieldId )
  *
  * Returns TRUE if field is indexed, or FALSE otherwise.
  ************************************************************************/
-GBool TABFile::IsFieldIndexed( int nFieldId )
+GBool TABFile::IsFieldIndexed(int nFieldId)
 {
     return GetFieldIndexNumber(nFieldId) > 0 ? TRUE : FALSE;
 }
@@ -2378,7 +2378,7 @@ GBool TABFile::IsFieldIndexed( int nFieldId )
  * destroy the object.  The object will remain valid for as long as
  * the TABFile will remain open.
  **********************************************************************/
-TABINDFile  *TABFile::GetINDFileRef()
+TABINDFile *TABFile::GetINDFileRef()
 {
     if (m_pszFname == nullptr)
         return nullptr;
@@ -2393,7 +2393,7 @@ TABINDFile  *TABFile::GetINDFileRef()
          *------------------------------------------------------------*/
         m_poINDFile = new TABINDFile;
 
-        if ( m_poINDFile->Open(m_pszFname, "r", TRUE) != 0)
+        if (m_poINDFile->Open(m_pszFname, "r", TRUE) != 0)
         {
             // File could not be opened... probably does not exist
             delete m_poINDFile;
@@ -2404,7 +2404,7 @@ TABINDFile  *TABFile::GetINDFileRef()
             /*---------------------------------------------------------
              * Pass type information for each indexed field.
              *--------------------------------------------------------*/
-            for(int i=0; i<m_poDefn->GetFieldCount(); i++)
+            for (int i = 0; i < m_poDefn->GetFieldCount(); i++)
             {
                 if (m_panIndexNo[i] > 0)
                 {
@@ -2428,8 +2428,7 @@ TABINDFile  *TABFile::GetINDFileRef()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::SetBounds(double dXMin, double dYMin,
-                       double dXMax, double dYMax)
+int TABFile::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
 {
     if (m_eAccessMode != TABWrite)
     {
@@ -2468,29 +2467,26 @@ int TABFile::SetBounds(double dXMin, double dYMin,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::GetBounds(double &dXMin, double &dYMin,
-                       double &dXMax, double &dYMax,
-                       GBool /*bForce = TRUE*/)
+int TABFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
+                       double &dYMax, GBool /*bForce = TRUE*/)
 {
     if (m_poMAPFile)
     {
-        TABMAPHeaderBlock* poHeader =m_poMAPFile->GetHeaderBlock();
-        if( poHeader != nullptr)
+        TABMAPHeaderBlock *poHeader = m_poMAPFile->GetHeaderBlock();
+        if (poHeader != nullptr)
         {
-        /*-------------------------------------------------------------
-         * Projection bounds correspond to the +/- 1e9 integer coord. limits
-         *------------------------------------------------------------*/
+            /*-------------------------------------------------------------
+             * Projection bounds correspond to the +/- 1e9 integer coord. limits
+             *------------------------------------------------------------*/
             double dX0 = 0.0;
             double dX1 = 0.0;
             double dY0 = 0.0;
             double dY1 = 0.0;
-            m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
-                                    dX0, dY0);
-            m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
-                                        dX1, dY1);
-        /*-------------------------------------------------------------
-         * ... and make sure that Min < Max
-            *------------------------------------------------------------*/
+            m_poMAPFile->Int2Coordsys(-1000000000, -1000000000, dX0, dY0);
+            m_poMAPFile->Int2Coordsys(1000000000, 1000000000, dX1, dY1);
+            /*-------------------------------------------------------------
+             * ... and make sure that Min < Max
+             *------------------------------------------------------------*/
             dXMin = std::min(dX0, dX1);
             dXMax = std::max(dX0, dX1);
             dYMin = std::min(dY0, dY1);
@@ -2500,7 +2496,7 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
     }
 
     CPLError(CE_Failure, CPLE_AppDefined,
-            "GetBounds() can be called only after dataset has been opened.");
+             "GetBounds() can be called only after dataset has been opened.");
     return -1;
 }
 
@@ -2514,12 +2510,11 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
-                           CPL_UNUSED int bForce)
+OGRErr TABFile::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce)
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 
-    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != nullptr &&
+    if (m_poMAPFile && (poHeader = m_poMAPFile->GetHeaderBlock()) != nullptr &&
         GetGeomType() != wkbNone)
     {
         double dX0 = 0.0;
@@ -2530,12 +2525,12 @@ OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
          * Fetch extent of the data from the .map header block
          * this value is different from the projection bounds.
          *------------------------------------------------------------*/
-        m_poMAPFile->Int2Coordsys(poHeader->m_nXMin, poHeader->m_nYMin,
-                                  dX0, dY0);
-        m_poMAPFile->Int2Coordsys(poHeader->m_nXMax, poHeader->m_nYMax,
-                                  dX1, dY1);
+        m_poMAPFile->Int2Coordsys(poHeader->m_nXMin, poHeader->m_nYMin, dX0,
+                                  dY0);
+        m_poMAPFile->Int2Coordsys(poHeader->m_nXMax, poHeader->m_nYMax, dX1,
+                                  dY1);
 
-       /*-------------------------------------------------------------
+        /*-------------------------------------------------------------
          * ... and make sure that Min < Max
          *------------------------------------------------------------*/
         psExtent->MinX = std::min(dX0, dX1);
@@ -2566,16 +2561,16 @@ OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
  **********************************************************************/
 int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
                                    int &numRegions, int &numTexts,
-                                   GBool /* bForce = TRUE*/ )
+                                   GBool /* bForce = TRUE*/)
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 
-    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != nullptr)
+    if (m_poMAPFile && (poHeader = m_poMAPFile->GetHeaderBlock()) != nullptr)
     {
-        numPoints  = poHeader->m_numPointObjects;
-        numLines   = poHeader->m_numLineObjects;
+        numPoints = poHeader->m_numPointObjects;
+        numLines = poHeader->m_numLineObjects;
         numRegions = poHeader->m_numRegionObjects;
-        numTexts   = poHeader->m_numTextObjects;
+        numTexts = poHeader->m_numTextObjects;
     }
     else
     {
@@ -2611,7 +2606,7 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
     if (m_poMAPFile && m_nLastFeatureId < 1)
     {
         OGRSpatialReference *poSpatialRef =
-            MITABCoordSys2SpatialRef( pszMIFCoordSys );
+            MITABCoordSys2SpatialRef(pszMIFCoordSys);
 
         if (poSpatialRef)
         {
@@ -2621,9 +2616,8 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
             double dYMax = 0.0;
             if (SetSpatialRef(poSpatialRef) == 0)
             {
-                if( MITABExtractCoordSysBounds(pszMIFCoordSys,
-                                               dXMin, dYMin,
-                                               dXMax, dYMax) )
+                if (MITABExtractCoordSysBounds(pszMIFCoordSys, dXMin, dYMin,
+                                               dXMax, dYMax))
                 {
                     // If the coordsys string contains bounds, then use them
                     if (SetBounds(dXMin, dYMin, dXMax, dYMax) != 0)
@@ -2642,7 +2636,7 @@ int TABFile::SetMIFCoordSys(const char *pszMIFCoordSys)
             }
 
             // Release our handle on poSpatialRef
-            if( poSpatialRef->Dereference() == 0 )
+            if (poSpatialRef->Dereference() == 0)
                 delete poSpatialRef;
         }
     }
@@ -2688,7 +2682,7 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
     double dYMax;
 
     m_bBoundsSet = FALSE;
-    if( MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax) )
+    if (MITABLookupCoordSysBounds(poPI, dXMin, dYMin, dXMax, dYMax))
     {
         SetBounds(dXMin, dYMin, dXMax, dYMax);
     }
@@ -2698,7 +2692,7 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
      *----------------------------------------------------------------*/
     if (m_poMAPFile && m_nLastFeatureId < 1)
     {
-        if (m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ) != 0)
+        if (m_poMAPFile->GetHeaderBlock()->SetProjInfo(poPI) != 0)
             return -1;
     }
     else
@@ -2716,36 +2710,35 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
 /*                            DeleteField()                             */
 /************************************************************************/
 
-OGRErr TABFile::DeleteField( int iField )
+OGRErr TABFile::DeleteField(int iField)
 {
-    if( m_poDATFile == nullptr || !TestCapability(OLCDeleteField) )
+    if (m_poDATFile == nullptr || !TestCapability(OLCDeleteField))
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteField");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "DeleteField");
         return OGRERR_FAILURE;
     }
 
     if (iField < 0 || iField >= m_poDefn->GetFieldCount())
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Invalid field index");
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid field index");
         return OGRERR_FAILURE;
     }
 
-    if ( m_poDATFile->DeleteField( iField ) == 0 )
+    if (m_poDATFile->DeleteField(iField) == 0)
     {
         m_bNeedTABRewrite = TRUE;
-        m_oSetFields.erase(CPLString(m_poDefn->GetFieldDefn(iField)->GetNameRef()).toupper());
+        m_oSetFields.erase(
+            CPLString(m_poDefn->GetFieldDefn(iField)->GetNameRef()).toupper());
 
         /* Delete from the array of indexed fields */
-        if( iField < m_poDefn->GetFieldCount() - 1 )
+        if (iField < m_poDefn->GetFieldCount() - 1)
         {
             memmove(m_panIndexNo + iField, m_panIndexNo + iField + 1,
                     (m_poDefn->GetFieldCount() - 1 - iField) * sizeof(int));
         }
 
-        m_poDefn->DeleteFieldDefn( iField );
+        m_poDefn->DeleteFieldDefn(iField);
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
@@ -2760,13 +2753,12 @@ OGRErr TABFile::DeleteField( int iField )
 /*                           ReorderFields()                            */
 /************************************************************************/
 
-OGRErr TABFile::ReorderFields( int* panMap )
+OGRErr TABFile::ReorderFields(int *panMap)
 {
-    if( m_poDATFile == nullptr || !TestCapability(OLCDeleteField) )
+    if (m_poDATFile == nullptr || !TestCapability(OLCDeleteField))
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ReorderFields");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "ReorderFields");
         return OGRERR_FAILURE;
     }
     if (m_poDefn->GetFieldCount() == 0)
@@ -2776,19 +2768,20 @@ OGRErr TABFile::ReorderFields( int* panMap )
     if (eErr != OGRERR_NONE)
         return eErr;
 
-    if ( m_poDATFile->ReorderFields( panMap ) == 0 )
+    if (m_poDATFile->ReorderFields(panMap) == 0)
     {
         m_bNeedTABRewrite = TRUE;
 
-        int* panNewIndexedField = static_cast<int*>(CPLMalloc(sizeof(int)*m_poDefn->GetFieldCount()));
-        for(int i=0;i<m_poDefn->GetFieldCount();i++)
+        int *panNewIndexedField = static_cast<int *>(
+            CPLMalloc(sizeof(int) * m_poDefn->GetFieldCount()));
+        for (int i = 0; i < m_poDefn->GetFieldCount(); i++)
         {
             panNewIndexedField[i] = m_panIndexNo[panMap[i]];
         }
         CPLFree(m_panIndexNo);
         m_panIndexNo = panNewIndexedField;
 
-        m_poDefn->ReorderFieldDefns( panMap );
+        m_poDefn->ReorderFieldDefns(panMap);
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
@@ -2803,40 +2796,40 @@ OGRErr TABFile::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
+OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                               int nFlagsIn)
 {
-    if( m_poDATFile == nullptr || !TestCapability(OLCDeleteField) )
+    if (m_poDATFile == nullptr || !TestCapability(OLCDeleteField))
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "AlterFieldDefn");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "AlterFieldDefn");
         return OGRERR_FAILURE;
     }
 
     if (iField < 0 || iField >= m_poDefn->GetFieldCount())
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Invalid field index");
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid field index");
         return OGRERR_FAILURE;
     }
 
-    if ( m_poDATFile->AlterFieldDefn( iField, poNewFieldDefn, nFlagsIn ) == 0 )
+    if (m_poDATFile->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn) == 0)
     {
         m_bNeedTABRewrite = TRUE;
 
-        OGRFieldDefn* poFieldDefn = m_poDefn->GetFieldDefn(iField);
+        OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
         if ((nFlagsIn & ALTER_TYPE_FLAG) &&
             poNewFieldDefn->GetType() != poFieldDefn->GetType())
         {
             poFieldDefn->SetType(poNewFieldDefn->GetType());
-            if( (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) == 0 )
+            if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) == 0)
                 poFieldDefn->SetWidth(254);
         }
         if (nFlagsIn & ALTER_NAME_FLAG)
         {
             m_oSetFields.erase(CPLString(poFieldDefn->GetNameRef()).toupper());
             poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
-            m_oSetFields.insert(CPLString(poNewFieldDefn->GetNameRef()).toupper());
+            m_oSetFields.insert(
+                CPLString(poNewFieldDefn->GetNameRef()).toupper());
         }
         if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) &&
             poFieldDefn->GetType() == OFTString)
@@ -2860,21 +2853,22 @@ OGRErr TABFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
 OGRErr TABFile::SyncToDisk()
 {
     /* Silently return */
-    if( m_eAccessMode == TABRead )
+    if (m_eAccessMode == TABRead)
         return OGRERR_NONE;
 
     OGRErr eErr = OGRERR_NONE;
 
-    // This is a hack for Windows and VSIFFlushL() issue. See http://trac.osgeo.org/gdal/ticket/5556
+    // This is a hack for Windows and VSIFFlushL() issue. See
+    // http://trac.osgeo.org/gdal/ticket/5556
     CPLSetConfigOption("VSI_FLUSH", "TRUE");
 
-    if( WriteTABFile() != 0 )
+    if (WriteTABFile() != 0)
         eErr = OGRERR_FAILURE;
 
-    if( m_poMAPFile->SyncToDisk() != 0 )
+    if (m_poMAPFile->SyncToDisk() != 0)
         eErr = OGRERR_FAILURE;
 
-    if( m_poDATFile->SyncToDisk() != 0 )
+    if (m_poDATFile->SyncToDisk() != 0)
         eErr = OGRERR_FAILURE;
 
     CPLSetConfigOption("VSI_FLUSH", nullptr);
@@ -2886,44 +2880,43 @@ OGRErr TABFile::SyncToDisk()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABFile::TestCapability( const char * pszCap )
+int TABFile::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
+    else if (EQUAL(pszCap, OLCSequentialWrite))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCRandomWrite) )
+    else if (EQUAL(pszCap, OLCRandomWrite))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCDeleteFeature) )
+    else if (EQUAL(pszCap, OLCDeleteFeature))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == nullptr
-            && m_poAttrQuery == nullptr;
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    else if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
+    else if (EQUAL(pszCap, OLCCreateField))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCDeleteField) )
+    else if (EQUAL(pszCap, OLCDeleteField))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCReorderFields) )
+    else if (EQUAL(pszCap, OLCReorderFields))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCAlterFieldDefn) )
+    else if (EQUAL(pszCap, OLCAlterFieldDefn))
         return m_eAccessMode != TABRead;
 
-    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TestUtf8Capability();
 
     else
@@ -2954,13 +2947,13 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "Associated TABLE file ...\n\n");
         m_poDATFile->Dump(fpOut);
         fprintf(fpOut, "... end of TABLE file dump.\n\n");
-        if( GetSpatialRef() != nullptr )
+        if (GetSpatialRef() != nullptr)
         {
             char *pszWKT = nullptr;
 
-            GetSpatialRef()->exportToWkt( &pszWKT );
-            fprintf( fpOut, "SRS = %s\n", pszWKT );
-            CPLFree( pszWKT );
+            GetSpatialRef()->exportToWkt(&pszWKT);
+            fprintf(fpOut, "SRS = %s\n", pszWKT);
+            CPLFree(pszWKT);
         }
         fprintf(fpOut, "Associated .MAP file ...\n\n");
         m_poMAPFile->Dump(fpOut);
@@ -2970,26 +2963,27 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-#endif // DEBUG
+#endif  // DEBUG
 
 /*
  * SetMetadataItem()
  */
-CPLErr TABFile::SetMetadataItem( const char * pszName, const char * pszValue,
-                                 const char * pszDomain )
+CPLErr TABFile::SetMetadataItem(const char *pszName, const char *pszValue,
+                                const char *pszDomain)
 {
-    if(EQUAL(DESCRIPTION_KEY, pszName) && EQUAL(pszDomain, ""))
+    if (EQUAL(DESCRIPTION_KEY, pszName) && EQUAL(pszDomain, ""))
     {
-        if(m_eAccessMode == TABRead)
+        if (m_eAccessMode == TABRead)
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "Description will not save in TAB file in readonly mode.");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Description will not save in TAB file in readonly mode.");
         }
 
         m_bNeedTABRewrite = TRUE;
-        std::shared_ptr<char> oEscapedString(EscapeString( pszValue ), CPLFree);
-        auto result = IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
-                                                     oEscapedString.get() );
-        if(oEscapedString)
+        std::shared_ptr<char> oEscapedString(EscapeString(pszValue), CPLFree);
+        auto result = IMapInfoFile::SetMetadataItem(DESCRIPTION_KEY,
+                                                    oEscapedString.get());
+        if (oEscapedString)
         {
             CPLDebug("MITAB", "Set description to '%s'", oEscapedString.get());
         }
