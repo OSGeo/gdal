@@ -39,8 +39,8 @@
 // We could make this function far more robust by doing automatic coercion of
 // types, and/or skipping fields we do not know. But, for our purposes. this
 // works fine.
-static
-bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldSubType* pSubType)
+static bool GDBToOGRFieldType(const std::string &gdbType, OGRFieldType *pOut,
+                              OGRFieldSubType *pSubType)
 {
     /*
     ESRI types
@@ -59,24 +59,25 @@ bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldS
     esriFieldTypeXML = 12
     */
 
-    //OGR Types
+    // OGR Types
 
-    //            Desc                                 Name                GDB->OGR Mapped By Us?
-    /** Simple 32bit integer *///                   OFTInteger = 0,             YES
-    /** List of 32bit integers *///                 OFTIntegerList = 1,         NO
-    /** Double Precision floating point *///        OFTReal = 2,                YES
-    /** List of doubles *///                        OFTRealList = 3,            NO
-    /** String of ASCII chars *///                  OFTString = 4,              YES
-    /** Array of strings *///                       OFTStringList = 5,          NO
-    /** deprecated *///                             OFTWideString = 6,          NO
-    /** deprecated *///                             OFTWideStringList = 7,      NO
-    /** Raw Binary data *///                        OFTBinary = 8,              YES
-    /** Date *///                                   OFTDate = 9,                NO
-    /** Time *///                                   OFTTime = 10,               NO
-    /** Date and Time *///                          OFTDateTime = 11            YES
+    //            Desc                                 Name GDB->OGR Mapped By
+    //            Us?
+    /** Simple 32bit integer */    //                   OFTInteger = 0, YES
+    /** List of 32bit integers */  //                 OFTIntegerList = 1, NO
+    /** Double Precision floating point */  //        OFTReal = 2, YES
+    /** List of doubles */        //                        OFTRealList = 3, NO
+    /** String of ASCII chars */  //                  OFTString = 4, YES
+    /** Array of strings */       //                       OFTStringList = 5, NO
+    /** deprecated */  //                             OFTWideString = 6, NO
+    /** deprecated */  //                             OFTWideStringList = 7, NO
+    /** Raw Binary data */  //                        OFTBinary = 8, YES
+    /** Date */             //                                   OFTDate = 9, NO
+    /** Time */           //                                   OFTTime = 10, NO
+    /** Date and Time */  //                          OFTDateTime = 11 YES
 
     *pSubType = OFSTNone;
-    if (gdbType == "esriFieldTypeSmallInteger" )
+    if (gdbType == "esriFieldTypeSmallInteger")
     {
         *pSubType = OFSTInt16;
         *pOut = OFTInteger;
@@ -87,7 +88,7 @@ bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldS
         *pOut = OFTInteger;
         return true;
     }
-    else if (gdbType == "esriFieldTypeSingle" )
+    else if (gdbType == "esriFieldTypeSingle")
     {
         *pSubType = OFSTFloat32;
         *pOut = OFTReal;
@@ -99,9 +100,8 @@ bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldS
         return true;
     }
     else if (gdbType == "esriFieldTypeGUID" ||
-        gdbType == "esriFieldTypeGlobalID" ||
-        gdbType == "esriFieldTypeXML" ||
-        gdbType == "esriFieldTypeString")
+             gdbType == "esriFieldTypeGlobalID" ||
+             gdbType == "esriFieldTypeXML" || gdbType == "esriFieldTypeString")
     {
         *pOut = OFTString;
         return true;
@@ -123,10 +123,11 @@ bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldS
         esriFieldTypeGeometry
         esriFieldTypeRaster
         */
-        CPLError( CE_Warning, CPLE_AppDefined, "%s", ("Cannot map field " + gdbType).c_str());
+        CPLError(CE_Warning, CPLE_AppDefined, "%s",
+                 ("Cannot map field " + gdbType).c_str());
 
         return false;
     }
 }
 
-#endif // FILEGDB_GDBTOOGRFIELDTYPE_H
+#endif  // FILEGDB_GDBTOOGRFIELDTYPE_H
