@@ -38,7 +38,6 @@ CPL_C_END
 
 #include <cmath>
 
-
 /* -------------------------------------------------------------------- */
 /*
  * data-set descriptor (private helper class)
@@ -47,35 +46,35 @@ CPL_C_END
 class DataSet
 {
   public:
+    EnvisatFile &envfile;
+    int index;
+    int nrec;
 
-    EnvisatFile & envfile ;
-    int index ;
-    int nrec ;
-
-    DataSet( EnvisatFile & envfileIn , int indexIn ) :
-        envfile(envfileIn), index(indexIn), nrec(0)
+    DataSet(EnvisatFile &envfileIn, int indexIn)
+        : envfile(envfileIn), index(indexIn), nrec(0)
     {
-        EnvisatFile_GetDatasetInfo( &envfileIn, indexIn, nullptr, nullptr, nullptr,
-                nullptr , nullptr, &nrec, nullptr ) ;
+        EnvisatFile_GetDatasetInfo(&envfileIn, indexIn, nullptr, nullptr,
+                                   nullptr, nullptr, nullptr, &nrec, nullptr);
     }
 
-    TimeDelta getMJD( int ridx )
+    TimeDelta getMJD(int ridx)
     {
-        if ( ridx < 0 ) ridx += nrec ;
+        if (ridx < 0)
+            ridx += nrec;
 
         GUInt32 mjd[3];
-        EnvisatFile_ReadDatasetRecordChunk(&envfile,index,ridx,mjd,0,12) ;
+        EnvisatFile_ReadDatasetRecordChunk(&envfile, index, ridx, mjd, 0, 12);
 
-        #define INT32(x)    ((GInt32)CPL_MSBWORD32(x))
+#define INT32(x) ((GInt32)CPL_MSBWORD32(x))
 
-        return TimeDelta( INT32(mjd[0]), INT32(mjd[1]), INT32(mjd[2]) ) ;
+        return TimeDelta(INT32(mjd[0]), INT32(mjd[1]), INT32(mjd[2]));
 
-        #undef INT32
+#undef INT32
     }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(DataSet)
-} ;
+};
 
 /* -------------------------------------------------------------------- */
 /*
@@ -83,69 +82,71 @@ class DataSet
  *
  */
 
-ADSRangeLastAfter::ADSRangeLastAfter(
-      EnvisatFile & envfile,
-      int  ads_idx , int mds_idx,
-      const TimeDelta & line_interval )
+ADSRangeLastAfter::ADSRangeLastAfter(EnvisatFile &envfile, int ads_idx,
+                                     int mds_idx,
+                                     const TimeDelta &line_interval)
 {
     /* abs.time tolerance */
-    TimeDelta atol = line_interval * 0.5 ;
+    TimeDelta atol = line_interval * 0.5;
 
     /* MDS and ADS descriptor classes */
-    DataSet mds( envfile, mds_idx ) ;
-    DataSet ads( envfile, ads_idx ) ;
+    DataSet mds(envfile, mds_idx);
+    DataSet ads(envfile, ads_idx);
 
     /* read the times of the first and last measurements */
-    mjd_m_first = mds.getMJD(0) ;  /* MDJ time of the first MDS record */
-    mjd_m_last  = mds.getMJD(-1) ;   /* MDJ time of the last MDS record */
+    mjd_m_first = mds.getMJD(0); /* MDJ time of the first MDS record */
+    mjd_m_last = mds.getMJD(-1); /* MDJ time of the last MDS record */
 
     /* look-up the first applicable ADSR */
 
     int idx = 0;
-    TimeDelta t_mds = mjd_m_first + atol ; /*time of the first MDSR + tolerance */
-    TimeDelta t_ads  = ads.getMJD(0) ;     /*time of the first ADSR */
-    TimeDelta t_ads_prev = t_ads ;         /* holds previous ADSR */
+    TimeDelta t_mds =
+        mjd_m_first + atol;          /*time of the first MDSR + tolerance */
+    TimeDelta t_ads = ads.getMJD(0); /*time of the first ADSR */
+    TimeDelta t_ads_prev = t_ads;    /* holds previous ADSR */
 
-    if ( t_ads < t_mds )
+    if (t_ads < t_mds)
     {
-        for( idx = 1 ; idx < ads.nrec ; ++idx )
+        for (idx = 1; idx < ads.nrec; ++idx)
         {
-            t_ads = ads.getMJD(idx) ;
+            t_ads = ads.getMJD(idx);
 
-            if ( t_ads >= t_mds ) break ;
+            if (t_ads >= t_mds)
+                break;
 
-            t_ads_prev = t_ads ;
+            t_ads_prev = t_ads;
         }
     }
 
     /* store the first applicable ASDR */
-    idx_first = idx - 1 ; /* sets -1 if no match */
-    mjd_first = t_ads_prev ; /* set time of the first rec. if no match */
+    idx_first = idx - 1;    /* sets -1 if no match */
+    mjd_first = t_ads_prev; /* set time of the first rec. if no match */
 
     /* look-up the last applicable ADSR */
 
-    idx   = ads.nrec-2 ;
-    t_mds = mjd_m_last - atol ;  /* time of the last MDSR - tolerance */
-    t_ads  = ads.getMJD(-1) ;    /* time of the first ADSR */
-    t_ads_prev = t_ads ;         /* holds previous ADSR */
+    idx = ads.nrec - 2;
+    t_mds = mjd_m_last - atol; /* time of the last MDSR - tolerance */
+    t_ads = ads.getMJD(-1);    /* time of the first ADSR */
+    t_ads_prev = t_ads;        /* holds previous ADSR */
 
-    if ( t_ads > t_mds )
+    if (t_ads > t_mds)
     {
-        for( idx = ads.nrec-2 ; idx >= 0 ; --idx )
+        for (idx = ads.nrec - 2; idx >= 0; --idx)
         {
-            t_ads = ads.getMJD(idx) ;
+            t_ads = ads.getMJD(idx);
 
-            if ( t_ads <= t_mds ) break ;
+            if (t_ads <= t_mds)
+                break;
 
-            t_ads_prev = t_ads ;
+            t_ads_prev = t_ads;
         }
     }
 
     /* store the last applicable ASDR */
-    idx_last = idx + 1 ; /* sets ads.nrec if no match */
-    mjd_last = t_ads_prev ; /* set time of the last rec. if no match */
+    idx_last = idx + 1;    /* sets ads.nrec if no match */
+    mjd_last = t_ads_prev; /* set time of the last rec. if no match */
 
     /* valuate the line offsets */
-    off_first = (int)floor( 0.5 + ( mjd_m_first - mjd_first ) / line_interval ) ;
-    off_last  = (int)floor( 0.5 + ( mjd_last  - mjd_m_last  ) / line_interval ) ;
+    off_first = (int)floor(0.5 + (mjd_m_first - mjd_first) / line_interval);
+    off_last = (int)floor(0.5 + (mjd_last - mjd_m_last) / line_interval);
 }

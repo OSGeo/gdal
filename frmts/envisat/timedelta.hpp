@@ -39,167 +39,154 @@ class TimeDelta
 {
 
   private:
-
-    int days ;     /* number of days */
-    int secs ;     /* number of seconds since day start */
-    int usecs ;    /* number of micro sec. since second start */
+    int days;  /* number of days */
+    int secs;  /* number of seconds since day start */
+    int usecs; /* number of micro sec. since second start */
 
     /* SETTERS */
 
     /* set object using number of days, seconds and micro-seconds */
-    inline void set( int daysIn , int secsIn , int usecsIn )
+    inline void set(int daysIn, int secsIn, int usecsIn)
     {
-        int tmp0 , tmp1 ;
+        int tmp0, tmp1;
         /* overflow check with proper handling of negative values */
-        /* note that division and modulo for negative values is impl.dependent */
+        /* note that division and modulo for negative values is impl.dependent
+         */
 
-        secsIn += ( tmp0 = usecsIn>=0 ? usecsIn/1000000 : -1-((-usecsIn)/1000000) ) ;
-        daysIn += ( tmp1 = secsIn>=0 ? secsIn/86400 : -1-((-secsIn)/86400) ) ;
+        secsIn += (tmp0 = usecsIn >= 0 ? usecsIn / 1000000
+                                       : -1 - ((-usecsIn) / 1000000));
+        daysIn +=
+            (tmp1 = secsIn >= 0 ? secsIn / 86400 : -1 - ((-secsIn) / 86400));
 
-        this->usecs = usecsIn - 1000000*tmp0 ;
-        this->secs  = secsIn - 86400*tmp1 ;
-        this->days  = daysIn ;
+        this->usecs = usecsIn - 1000000 * tmp0;
+        this->secs = secsIn - 86400 * tmp1;
+        this->days = daysIn;
     }
 
     /* set object from floating point number of seconds */
-    inline void fromSeconds( double secsIn )
+    inline void fromSeconds(double secsIn)
     {
-        int _days = (int)( secsIn / 86400 ) ;
-        int _secs = (int)( secsIn - 86400*_days ) ;
-        int _uscs = (int)(( secsIn - ((int)secsIn) )*1e6) ;
+        int _days = (int)(secsIn / 86400);
+        int _secs = (int)(secsIn - 86400 * _days);
+        int _uscs = (int)((secsIn - ((int)secsIn)) * 1e6);
 
-        this->set( _days , _secs , _uscs ) ;
+        this->set(_days, _secs, _uscs);
     }
 
   public:
-
     /* CONSTRUCTORS */
-    TimeDelta( void ) : days(0), secs(0), usecs(0) {}
+    TimeDelta(void) : days(0), secs(0), usecs(0)
+    {
+    }
 
     /* construct object using number of days, seconds and micro-seconds */
-    TimeDelta( int daysIn , int secsIn , int usecsIn )
+    TimeDelta(int daysIn, int secsIn, int usecsIn)
     {
-        this->set( daysIn, secsIn, usecsIn ) ;
+        this->set(daysIn, secsIn, usecsIn);
     }
 
     /* construct object from floating point number of seconds */
-    explicit TimeDelta( double secsIn )
+    explicit TimeDelta(double secsIn)
     {
-        this->fromSeconds( secsIn ) ;
+        this->fromSeconds(secsIn);
     }
 
     /* GETTERS */
 
-    inline int getDays( void ) const
+    inline int getDays(void) const
     {
-        return this->days ;
+        return this->days;
     }
 
-    inline int getSeconds( void ) const
+    inline int getSeconds(void) const
     {
-        return this->secs ;
+        return this->secs;
     }
 
-    inline int getMicroseconds( void ) const
+    inline int getMicroseconds(void) const
     {
-        return this->usecs ;
+        return this->usecs;
     }
 
     /* convert to seconds - can handle safely at least 250 years dif. */
     /*  ... before losing the microsecond precision */
-    inline operator double( void ) const
+    inline operator double(void) const
     {
-        return (this->days*86400.0) + this->secs + (this->usecs*1e-6) ;
+        return (this->days * 86400.0) + this->secs + (this->usecs * 1e-6);
     }
 
     /* OPERATORS */
 
     /* difference */
-    inline TimeDelta operator -( const TimeDelta & that ) const
+    inline TimeDelta operator-(const TimeDelta &that) const
     {
-        return TimeDelta( this->days - that.days, this->secs - that.secs,
-                                this->usecs - that.usecs ) ;
+        return TimeDelta(this->days - that.days, this->secs - that.secs,
+                         this->usecs - that.usecs);
     }
 
     /* addition */
-    inline TimeDelta operator +( const TimeDelta & that ) const
+    inline TimeDelta operator+(const TimeDelta &that) const
     {
-        return TimeDelta( this->days + that.days, this->secs + that.secs,
-                                this->usecs + that.usecs ) ;
+        return TimeDelta(this->days + that.days, this->secs + that.secs,
+                         this->usecs + that.usecs);
     }
 
     /* division */
-    inline double operator /( const TimeDelta & that ) const
+    inline double operator/(const TimeDelta &that) const
     {
-        return ( (double)*this / (double)that ) ;
+        return ((double)*this / (double)that);
     }
 
     /* integer multiplication */
-    inline TimeDelta operator *( const int i ) const
+    inline TimeDelta operator*(const int i) const
     {
-        return TimeDelta( i*this->days, i*this->secs, i*this->usecs ) ;
+        return TimeDelta(i * this->days, i * this->secs, i * this->usecs);
     }
 
     /* float multiplication */
-    inline TimeDelta operator *( const double f ) const
+    inline TimeDelta operator*(const double f) const
     {
-        return TimeDelta( f * (double)*this ) ;
+        return TimeDelta(f * (double)*this);
     }
 
     /* comparisons operators */
 
-    inline bool operator ==( const TimeDelta & that ) const
+    inline bool operator==(const TimeDelta &that) const
     {
-        return ( (this->usecs == that.usecs)&&(this->secs == that.secs)&&
-                 (this->days == that.days) )  ;
+        return ((this->usecs == that.usecs) && (this->secs == that.secs) &&
+                (this->days == that.days));
     }
 
-
-    inline bool operator >( const TimeDelta & that ) const
+    inline bool operator>(const TimeDelta &that) const
     {
-        return  (this->days > that.days)
-                ||(
-                    (this->days == that.days)
-                    &&(
-                        (this->secs > that.secs)
-                        ||(
-                            (this->secs == that.secs)
-                            &&(this->usecs > that.usecs)
-                        )
-                    )
-                ) ;
+        return (this->days > that.days) ||
+               ((this->days == that.days) &&
+                ((this->secs > that.secs) ||
+                 ((this->secs == that.secs) && (this->usecs > that.usecs))));
     }
 
-    inline bool operator <( const TimeDelta & that ) const
+    inline bool operator<(const TimeDelta &that) const
     {
-        return  (this->days < that.days)
-                ||(
-                    (this->days == that.days)
-                    &&(
-                        (this->secs < that.secs)
-                        ||(
-                            (this->secs == that.secs)
-                            &&(this->usecs < that.usecs)
-                        )
-                    )
-                ) ;
+        return (this->days < that.days) ||
+               ((this->days == that.days) &&
+                ((this->secs < that.secs) ||
+                 ((this->secs == that.secs) && (this->usecs < that.usecs))));
     }
 
-    inline bool operator !=( const TimeDelta & that ) const
+    inline bool operator!=(const TimeDelta &that) const
     {
-        return !( *this == that ) ;
+        return !(*this == that);
     }
 
-    inline bool operator >=( const TimeDelta & that ) const
+    inline bool operator>=(const TimeDelta &that) const
     {
-        return !( *this < that ) ;
+        return !(*this < that);
     }
 
-    inline bool operator <=( const TimeDelta & that ) const
+    inline bool operator<=(const TimeDelta &that) const
     {
-        return !( *this > that ) ;
+        return !(*this > that);
     }
-
 };
 
 /*
