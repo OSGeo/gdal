@@ -36,7 +36,6 @@
 #pragma GCC system_header
 #endif
 
-
 // Key Macros from Makefile:
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support.
@@ -64,42 +63,42 @@
 #include "MrSIDImageReader.h"
 
 #ifdef MRSID_J2K
-#  include "J2KImageReader.h"
+#include "J2KImageReader.h"
 #endif
 
 // It seems that LT_STS_UTIL_TimeUnknown was added in version 6, also
 // the first version with lti_version.h
 #ifdef LT_STS_UTIL_TimeUnknown
-#  include "lti_version.h"
+#include "lti_version.h"
 #endif
 
 // Are we using version 6 or newer?
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 6
-#  define MRSID_POST5
+#define MRSID_POST5
 #endif
 
 #ifdef MRSID_ESDK
-# include "MG3ImageWriter.h"
-# include "MG3WriterParams.h"
-# include "MG2ImageWriter.h"
-# include "MG2WriterParams.h"
-# ifdef MRSID_HAVE_MG4WRITE
-#   include "MG4ImageWriter.h"
-#   include "MG4WriterParams.h"
-# endif
-# ifdef MRSID_J2K
-#   ifdef MRSID_POST5
-#     include "JP2WriterManager.h"
-#     include "JPCWriterParams.h"
-#   else
-#     include "J2KImageWriter.h"
-#     include "J2KWriterParams.h"
-#   endif
-# endif
+#include "MG3ImageWriter.h"
+#include "MG3WriterParams.h"
+#include "MG2ImageWriter.h"
+#include "MG2WriterParams.h"
+#ifdef MRSID_HAVE_MG4WRITE
+#include "MG4ImageWriter.h"
+#include "MG4WriterParams.h"
+#endif
+#ifdef MRSID_J2K
+#ifdef MRSID_POST5
+#include "JP2WriterManager.h"
+#include "JPCWriterParams.h"
+#else
+#include "J2KImageWriter.h"
+#include "J2KWriterParams.h"
+#endif
+#endif
 #endif /* MRSID_ESDK */
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
-#endif // MRSIDDATASET_HEADERS_INCLUDE_H
+#endif  // MRSIDDATASET_HEADERS_INCLUDE_H

@@ -39,4 +39,4 @@
 #include "lt_base.h"
 #include "lt_ioStreamInf.h"
 
-#endif // MRSIDSTREAM_HEADERS_INCLUDE_H
+#endif  // MRSIDSTREAM_HEADERS_INCLUDE_H
