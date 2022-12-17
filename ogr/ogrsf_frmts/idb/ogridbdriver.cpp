@@ -30,7 +30,6 @@
 #include "ogr_idb.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                            ~OGRIDBDriver()                            */
 /************************************************************************/
@@ -54,18 +53,17 @@ const char *OGRIDBDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRIDBDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+OGRDataSource *OGRIDBDriver::Open(const char *pszFilename, int bUpdate)
 
 {
-    OGRIDBDataSource     *poDS;
+    OGRIDBDataSource *poDS;
 
-    if( !STARTS_WITH_CI(pszFilename, "IDB:") )
+    if (!STARTS_WITH_CI(pszFilename, "IDB:"))
         return nullptr;
 
     poDS = new OGRIDBDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if (!poDS->Open(pszFilename, bUpdate, TRUE))
     {
         delete poDS;
         return nullptr;
@@ -78,22 +76,22 @@ OGRDataSource *OGRIDBDriver::Open( const char * pszFilename,
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
-                                              char ** /* papszOptions */ )
+OGRDataSource *OGRIDBDriver::CreateDataSource(const char *pszName,
+                                              char ** /* papszOptions */)
 
 {
-    OGRIDBDataSource     *poDS;
+    OGRIDBDataSource *poDS;
 
-    if( !STARTS_WITH_CI(pszName, "IDB:") )
+    if (!STARTS_WITH_CI(pszName, "IDB:"))
         return nullptr;
 
     poDS = new OGRIDBDataSource();
 
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    if (!poDS->Open(pszName, TRUE, TRUE))
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-         "IDB driver doesn't currently support database creation.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "IDB driver doesn't currently support database creation.");
         return nullptr;
     }
 
@@ -104,10 +102,10 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBDriver::TestCapability( const char * pszCap )
+int OGRIDBDriver::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
+    if (EQUAL(pszCap, ODrCCreateDataSource))
         return TRUE;
     else
         return FALSE;
@@ -120,7 +118,7 @@ int OGRIDBDriver::TestCapability( const char * pszCap )
 void RegisterOGRIDB()
 
 {
-    if( !GDAL_CHECK_VERSION("IDB driver") )
+    if (!GDAL_CHECK_VERSION("IDB driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRIDBDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(new OGRIDBDriver);
 }
