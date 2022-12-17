@@ -28,18 +28,16 @@
 
 #include "ogr_amigocloud.h"
 
-
 /************************************************************************/
 /*                          OGRAmigoCloudResultLayer()                     */
 /************************************************************************/
 
 OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer(
-    OGRAmigoCloudDataSource* poDSIn,
-    const char * pszRawQueryIn ) :
-    OGRAmigoCloudLayer(poDSIn)
+    OGRAmigoCloudDataSource *poDSIn, const char *pszRawQueryIn)
+    : OGRAmigoCloudLayer(poDSIn)
 {
     osBaseSQL = pszRawQueryIn;
-    SetDescription( "result" );
+    SetDescription("result");
     poFirstFeature = nullptr;
 }
 
@@ -57,9 +55,10 @@ OGRAmigoCloudResultLayer::~OGRAmigoCloudResultLayer()
 /*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object* poObjIn)
+OGRFeatureDefn *
+OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object *poObjIn)
 {
-    if( poFeatureDefn != nullptr )
+    if (poFeatureDefn != nullptr)
         return poFeatureDefn;
 
     EstablishLayerDefn("result", poObjIn);
@@ -71,11 +70,11 @@ OGRFeatureDefn * OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object* poO
 /*                           GetNextRawFeature()                        */
 /************************************************************************/
 
-OGRFeature  *OGRAmigoCloudResultLayer::GetNextRawFeature()
+OGRFeature *OGRAmigoCloudResultLayer::GetNextRawFeature()
 {
-    if( poFirstFeature )
+    if (poFirstFeature)
     {
-        OGRFeature* poRet = poFirstFeature;
+        OGRFeature *poRet = poFirstFeature;
         poFirstFeature = nullptr;
         return poRet;
     }
@@ -87,7 +86,7 @@ OGRFeature  *OGRAmigoCloudResultLayer::GetNextRawFeature()
 /*                                IsOK()                                */
 /************************************************************************/
 
-int  OGRAmigoCloudResultLayer::IsOK()
+int OGRAmigoCloudResultLayer::IsOK()
 {
     CPLErrorReset();
     poFirstFeature = GetNextFeature();
@@ -98,21 +97,21 @@ int  OGRAmigoCloudResultLayer::IsOK()
 /*                             GetSRS_SQL()                             */
 /************************************************************************/
 
-CPLString OGRAmigoCloudResultLayer::GetSRS_SQL(const char* pszGeomCol)
+CPLString OGRAmigoCloudResultLayer::GetSRS_SQL(const char *pszGeomCol)
 {
     CPLString osSQL;
     CPLString osLimitedSQL;
 
     size_t nPos = osBaseSQL.ifind(" LIMIT ");
-    if( nPos != std::string::npos )
+    if (nPos != std::string::npos)
     {
         osLimitedSQL = osBaseSQL;
         size_t nSize = osLimitedSQL.size();
-        for(size_t i = nPos + strlen(" LIMIT "); i < nSize; i++)
+        for (size_t i = nPos + strlen(" LIMIT "); i < nSize; i++)
         {
-            if( osLimitedSQL[i] == ' ' && osLimitedSQL[i-1] == '0')
+            if (osLimitedSQL[i] == ' ' && osLimitedSQL[i - 1] == '0')
             {
-                osLimitedSQL[i-1] = '1';
+                osLimitedSQL[i - 1] = '1';
                 break;
             }
             osLimitedSQL[i] = '0';
@@ -124,9 +123,9 @@ CPLString OGRAmigoCloudResultLayer::GetSRS_SQL(const char* pszGeomCol)
     /* Assuming that the SRID of the first non-NULL geometry applies */
     /* to geometries of all rows. */
     osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                "(SELECT ST_SRID(%s) FROM (%s) ogr_subselect)",
-                OGRAMIGOCLOUDEscapeIdentifier(pszGeomCol).c_str(),
-                osLimitedSQL.c_str());
+                 "(SELECT ST_SRID(%s) FROM (%s) ogr_subselect)",
+                 OGRAMIGOCLOUDEscapeIdentifier(pszGeomCol).c_str(),
+                 osLimitedSQL.c_str());
 
     return osSQL;
 }
