@@ -31,12 +31,12 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-int main(int /* argc */, char* /* argv */[])
+int main(int /* argc */, char * /* argv */[])
 {
-    const char* logname = "log_with_âccent.txt";
+    const char *logname = "log_with_âccent.txt";
     CPLSetConfigOption("CPL_LOG", logname);
     CPLError(CE_Failure, CPLE_AppDefined, "test");
-    VSILFILE* fp = VSIFOpenL(logname, "rb");
+    VSILFILE *fp = VSIFOpenL(logname, "rb");
     char szExpected[20 + 1];
     size_t nRead = VSIFReadL(szExpected, 1, 20, fp);
     szExpected[nRead] = 0;
@@ -44,7 +44,7 @@ int main(int /* argc */, char* /* argv */[])
     CPLCleanupErrorMutex();
     VSIUnlink(logname);
 
-    if( strncmp(szExpected, "ERROR 1: test", strlen("ERROR 1: test")) != 0 )
+    if (strncmp(szExpected, "ERROR 1: test", strlen("ERROR 1: test")) != 0)
     {
         fprintf(stderr, "Did not get expected log: '%s'\n", szExpected);
     }

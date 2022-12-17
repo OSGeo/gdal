@@ -26,26 +26,25 @@ namespace util
 /**
  * Escapes non-alphabetical characters in string.
  */
-std::string escape(const std::string& orig)
+std::string escape(const std::string &orig)
 {
     std::string rc;
-    std::string::const_iterator i,e;
+    std::string::const_iterator i, e;
     i = orig.begin();
     e = orig.end();
 
     while (i != e)
     {
-        if ((*i >= 'a' && *i <= 'z') ||
-                (*i >= 'A' && *i <= 'Z') ||
-                (*i >= '0' && *i <= '9') )
+        if ((*i >= 'a' && *i <= 'z') || (*i >= 'A' && *i <= 'Z') ||
+            (*i >= '0' && *i <= '9'))
         {
             rc += *i;
         }
         else
         {
             rc += '\\';
-            rc += ('a'+(((unsigned int)*i) >> 4));
-            rc += ('a'+(((unsigned int)*i) & 0xF));
+            rc += ('a' + (((unsigned int)*i) >> 4));
+            rc += ('a' + (((unsigned int)*i) & 0xF));
         }
 
         ++i;
@@ -56,10 +55,10 @@ std::string escape(const std::string& orig)
 /**
  * Un-escapes string.
  */
-std::string unescape(const std::string& orig)
+std::string unescape(const std::string &orig)
 {
     std::string rc;
-    std::string::const_iterator i,e;
+    std::string::const_iterator i, e;
     i = orig.begin();
     e = orig.end();
 
@@ -94,37 +93,37 @@ std::string unescape(const std::string& orig)
 /**
  * Serialize test_result avoiding interfering with operator <<.
  */
-void serialize(std::ostream& os, const tut::test_result& tr)
+void serialize(std::ostream &os, const tut::test_result &tr)
 {
     os << escape(tr.group) << std::endl;
     os << tr.test << ' ';
-    switch(tr.result)
+    switch (tr.result)
     {
-    case test_result::ok:
-        os << 0;
-        break;
-    case test_result::fail:
-        os << 1;
-        break;
-    case test_result::ex:
-        os << 2;
-        break;
-    case test_result::warn:
-        os << 3;
-        break;
-    case test_result::term:
-        os << 4;
-        break;
-    case test_result::rethrown:
-        os << 5;
-        break;
-    case test_result::ex_ctor:
-        os << 6;
-        break;
-    case test_result::dummy:
-        assert(!"Should never be called");
-    default:
-        throw std::logic_error("operator << : bad result_type");
+        case test_result::ok:
+            os << 0;
+            break;
+        case test_result::fail:
+            os << 1;
+            break;
+        case test_result::ex:
+            os << 2;
+            break;
+        case test_result::warn:
+            os << 3;
+            break;
+        case test_result::term:
+            os << 4;
+            break;
+        case test_result::rethrown:
+            os << 5;
+            break;
+        case test_result::ex_ctor:
+            os << 6;
+            break;
+        case test_result::dummy:
+            assert(!"Should never be called");
+        default:
+            throw std::logic_error("operator << : bad result_type");
     }
     os << ' ' << escape(tr.message) << std::endl;
 }
@@ -132,9 +131,9 @@ void serialize(std::ostream& os, const tut::test_result& tr)
 /**
  * deserialization for test_result
  */
-bool deserialize(std::istream& is, tut::test_result& tr)
+bool deserialize(std::istream &is, tut::test_result &tr)
 {
-    std::getline(is,tr.group);
+    std::getline(is, tr.group);
     if (is.eof())
     {
         return false;
@@ -150,35 +149,35 @@ bool deserialize(std::istream& is, tut::test_result& tr)
 
     int n = -1;
     is >> n;
-    switch(n)
+    switch (n)
     {
-    case 0:
-        tr.result = test_result::ok;
-        break;
-    case 1:
-        tr.result = test_result::fail;
-        break;
-    case 2:
-        tr.result = test_result::ex;
-        break;
-    case 3:
-        tr.result = test_result::warn;
-        break;
-    case 4:
-        tr.result = test_result::term;
-        break;
-    case 5:
-        tr.result = test_result::rethrown;
-        break;
-    case 6:
-        tr.result = test_result::ex_ctor;
-        break;
-    default:
-        throw std::logic_error("operator >> : bad result_type");
+        case 0:
+            tr.result = test_result::ok;
+            break;
+        case 1:
+            tr.result = test_result::fail;
+            break;
+        case 2:
+            tr.result = test_result::ex;
+            break;
+        case 3:
+            tr.result = test_result::warn;
+            break;
+        case 4:
+            tr.result = test_result::term;
+            break;
+        case 5:
+            tr.result = test_result::rethrown;
+            break;
+        case 6:
+            tr.result = test_result::ex_ctor;
+            break;
+        default:
+            throw std::logic_error("operator >> : bad result_type");
     }
 
-    is.ignore(1); // space
-    std::getline(is,tr.message);
+    is.ignore(1);  // space
+    std::getline(is, tr.message);
     tr.message = unescape(tr.message);
     if (!is.good())
     {
@@ -186,28 +185,27 @@ bool deserialize(std::istream& is, tut::test_result& tr)
     }
     return true;
 }
-};
+};  // namespace util
 
 /**
  * Restartable test runner wrapper.
  */
 class restartable_wrapper
 {
-    test_runner& runner_;
+    test_runner &runner_;
     callbacks callbacks_;
 
     std::string dir_;
-    std::string log_; // log file: last test being executed
-    std::string jrn_; // journal file: results of all executed tests
+    std::string log_;  // log file: last test being executed
+    std::string jrn_;  // journal file: results of all executed tests
 
-public:
+  public:
     /**
      * Default constructor.
      * @param dir Directory where to search/put log and journal files
      */
-    restartable_wrapper(const std::string& dir = ".")
-        : runner_(runner.get()),
-          dir_(dir)
+    restartable_wrapper(const std::string &dir = ".")
+        : runner_(runner.get()), dir_(dir)
     {
         // dozen: it works, but it would be better to use system path separator
         jrn_ = dir_ + '/' + "journal.tut";
@@ -217,36 +215,36 @@ public:
     /**
      * Stores another group for getting by name.
      */
-    void register_group(const std::string& name, group_base* gr)
+    void register_group(const std::string &name, group_base *gr)
     {
-        runner_.register_group(name,gr);
+        runner_.register_group(name, gr);
     }
 
     /**
      * Stores callback object.
      */
-    void set_callback(callback* cb)
+    void set_callback(callback *cb)
     {
         callbacks_.clear();
         callbacks_.insert(cb);
     }
 
-    void insert_callback(callback* cb)
+    void insert_callback(callback *cb)
     {
         callbacks_.insert(cb);
     }
 
-    void erase_callback(callback* cb)
+    void erase_callback(callback *cb)
     {
         callbacks_.erase(cb);
     }
 
-    void set_callbacks(const callbacks& cb)
+    void set_callbacks(const callbacks &cb)
     {
         callbacks_ = cb;
     }
 
-    const callbacks& get_callbacks() const
+    const callbacks &get_callbacks() const
     {
         return runner_.get_callbacks();
     }
@@ -267,12 +265,12 @@ public:
         // where last run was failed
         std::string fail_group;
         int fail_test;
-        read_log_(fail_group,fail_test);
+        read_log_(fail_group, fail_test);
         bool fail_group_reached = (fail_group == "");
 
         // iterate over groups
         tut::groupnames gn = list_groups();
-        tut::groupnames::const_iterator gni,gne;
+        tut::groupnames::const_iterator gni, gne;
         gni = gn.begin();
         gne = gn.end();
         while (gni != gne)
@@ -289,14 +287,16 @@ public:
             }
 
             // first or restarted run
-            int test = (*gni == fail_group && fail_test >= 0) ? fail_test + 1 : 1;
-            while(true)
+            int test =
+                (*gni == fail_group && fail_test >= 0) ? fail_test + 1 : 1;
+            while (true)
             {
                 // last executed test pos
-                register_execution_(*gni,test);
+                register_execution_(*gni, test);
 
                 tut::test_result tr;
-                if( !runner_.run_test(*gni,test, tr) || tr.result == test_result::dummy )
+                if (!runner_.run_test(*gni, test, tr) ||
+                    tr.result == test_result::dummy)
                 {
                     break;
                 }
@@ -315,7 +315,7 @@ public:
         truncate_();
     }
 
-private:
+  private:
     /**
      * Shows results from journal file.
      */
@@ -329,7 +329,7 @@ private:
         while (ijournal.good())
         {
             tut::test_result tr;
-            if( !util::deserialize(ijournal,tr) )
+            if (!util::deserialize(ijournal, tr))
             {
                 break;
             }
@@ -342,30 +342,32 @@ private:
     /**
      * Register test into journal.
      */
-    void register_test_(const test_result& tr) const
+    void register_test_(const test_result &tr) const
     {
         std::ofstream ojournal(jrn_.c_str(), std::ios::app);
         util::serialize(ojournal, tr);
         ojournal << std::flush;
         if (!ojournal.good())
         {
-            throw std::runtime_error("unable to register test result in file "
-                + jrn_);
+            throw std::runtime_error("unable to register test result in file " +
+                                     jrn_);
         }
     }
 
     /**
      * Mark the fact test going to be executed
      */
-    void register_execution_(const std::string& grp, int test) const
+    void register_execution_(const std::string &grp, int test) const
     {
         // last executed test pos
         std::ofstream olog(log_.c_str());
-        olog << util::escape(grp) << std::endl << test << std::endl << std::flush;
+        olog << util::escape(grp) << std::endl
+             << test << std::endl
+             << std::flush;
         if (!olog.good())
         {
-            throw std::runtime_error("unable to register execution in file "
-                + log_);
+            throw std::runtime_error("unable to register execution in file " +
+                                     log_);
         }
     }
 
@@ -381,11 +383,11 @@ private:
     /**
      * Read log file
      */
-    void read_log_(std::string& fail_group, int& fail_test) const
+    void read_log_(std::string &fail_group, int &fail_test) const
     {
         // read failure point, if any
         std::ifstream ilog(log_.c_str());
-        std::getline(ilog,fail_group);
+        std::getline(ilog, fail_group);
         fail_group = util::unescape(fail_group);
         ilog >> fail_test;
         if (!ilog.good())
@@ -397,13 +399,13 @@ private:
         else
         {
             // test was terminated...
-            tut::test_result tr(fail_group, fail_test, "", tut::test_result::term);
+            tut::test_result tr(fail_group, fail_test, "",
+                                tut::test_result::term);
             register_test_(tr);
         }
     }
 };
 
-}
+}  // namespace tut
 
 #endif
-
