@@ -30,18 +30,17 @@
 #include "ogr_pgeo.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                     OGRPGeoDriverIdentify()                          */
 /************************************************************************/
 
-static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRPGeoDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
         return TRUE;
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mdb"))
         return FALSE;
 
     // Could potentially be a PGeo or generic ODBC database
@@ -52,7 +51,7 @@ static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                OGRPGeoDriverOpen()                   */
 /************************************************************************/
 
-static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRPGeoDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     // The method might return -1 when it is undecided
@@ -67,7 +66,7 @@ static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
     // Open data source
     OGRPGeoDataSource *poDS = new OGRPGeoDataSource();
 
-    if( !poDS->Open( poOpenInfo ) )
+    if (!poDS->Open(poOpenInfo))
     {
         delete poDS;
         return nullptr;
@@ -83,34 +82,41 @@ static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRPGeo()
 
 {
-    if( GDALGetDriverByName( "PGeo" ) != nullptr )
+    if (GDALGetDriverByName("PGeo") != nullptr)
         return;
 
-    GDALDriver* poDriver = new GDALDriver;
+    GDALDriver *poDriver = new GDALDriver;
 
-    poDriver->SetDescription( "PGeo" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_GEOMETRY_FLAGS, "EquatesMultiAndSingleLineStringDuringWrite EquatesMultiAndSinglePolygonDuringWrite" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
+    poDriver->SetDescription("PGeo");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mdb");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FIELD_DOMAINS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_RELATIONSHIPS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_GEOMETRY_FLAGS,
+                              "EquatesMultiAndSingleLineStringDuringWrite "
+                              "EquatesMultiAndSinglePolygonDuringWrite");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
+                              "NATIVE OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"
-"    <Value>YES</Value>"
-"    <Value>NO</Value>"
-"  </Option>"
-"</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' "
+        "description='Whether all tables, including system and internal tables "
+        "(such as GDB_* tables) should be listed' default='NO'>"
+        "    <Value>YES</Value>"
+        "    <Value>NO</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRPGeoDriverOpen;
     poDriver->pfnIdentify = OGRPGeoDriverIdentify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
