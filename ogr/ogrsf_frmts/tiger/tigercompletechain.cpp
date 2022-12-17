@@ -30,234 +30,214 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-
 static const TigerFieldInfo rt1_2002_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
-  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1},
-  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1},
-  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1},
-  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1},
-  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1},
-  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1},
-  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1},
-  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1},
-  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1},
-  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1},
-  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1},
-  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1},
-  { "FRIADDL",    'L', 'A', OFTString,   103, 103,   1,       1,   1},
-  { "TOIADDL",    'L', 'A', OFTString,   104, 104,   1,       1,   1},
-  { "FRIADDR",    'L', 'A', OFTString,   105, 105,   1,       1,   1},
-  { "TOIADDR",    'L', 'A', OFTString,   106, 106,   1,       1,   1},
-  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1},
-  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1},
-  { "AIANHHFPL",  'L', 'N', OFTInteger,  117, 121,   5,       1,   1},
-  { "AIANHHFPR",  'L', 'N', OFTInteger,  122, 126,   5,       1,   1},
-  { "AIHHTLIL",   'L', 'A', OFTString,   127, 127,   1,       1,   1},
-  { "AIHHTLIR",   'L', 'A', OFTString,   128, 128,   1,       1,   1},
-  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1},
-  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1},
-  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1},
-  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1},
-  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1},
-  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1},
+    // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
+    {"MODULE", ' ', ' ', OFTString, 0, 0, 8, 1, 0},
+    {"TLID", 'R', 'N', OFTInteger, 6, 15, 10, 1, 1},
+    {"SIDE1", 'R', 'N', OFTInteger, 16, 16, 1, 1, 1},
+    {"SOURCE", 'L', 'A', OFTString, 17, 17, 1, 1, 1},
+    {"FEDIRP", 'L', 'A', OFTString, 18, 19, 2, 1, 1},
+    {"FENAME", 'L', 'A', OFTString, 20, 49, 30, 1, 1},
+    {"FETYPE", 'L', 'A', OFTString, 50, 53, 4, 1, 1},
+    {"FEDIRS", 'L', 'A', OFTString, 54, 55, 2, 1, 1},
+    {"CFCC", 'L', 'A', OFTString, 56, 58, 3, 1, 1},
+    {"FRADDL", 'R', 'A', OFTString, 59, 69, 11, 1, 1},
+    {"TOADDL", 'R', 'A', OFTString, 70, 80, 11, 1, 1},
+    {"FRADDR", 'R', 'A', OFTString, 81, 91, 11, 1, 1},
+    {"TOADDR", 'R', 'A', OFTString, 92, 102, 11, 1, 1},
+    {"FRIADDL", 'L', 'A', OFTString, 103, 103, 1, 1, 1},
+    {"TOIADDL", 'L', 'A', OFTString, 104, 104, 1, 1, 1},
+    {"FRIADDR", 'L', 'A', OFTString, 105, 105, 1, 1, 1},
+    {"TOIADDR", 'L', 'A', OFTString, 106, 106, 1, 1, 1},
+    {"ZIPL", 'L', 'N', OFTInteger, 107, 111, 5, 1, 1},
+    {"ZIPR", 'L', 'N', OFTInteger, 112, 116, 5, 1, 1},
+    {"AIANHHFPL", 'L', 'N', OFTInteger, 117, 121, 5, 1, 1},
+    {"AIANHHFPR", 'L', 'N', OFTInteger, 122, 126, 5, 1, 1},
+    {"AIHHTLIL", 'L', 'A', OFTString, 127, 127, 1, 1, 1},
+    {"AIHHTLIR", 'L', 'A', OFTString, 128, 128, 1, 1, 1},
+    {"CENSUS1", 'L', 'A', OFTString, 129, 129, 1, 1, 1},
+    {"CENSUS2", 'L', 'A', OFTString, 130, 130, 1, 1, 1},
+    {"STATEL", 'L', 'N', OFTInteger, 131, 132, 2, 1, 1},
+    {"STATER", 'L', 'N', OFTInteger, 133, 134, 2, 1, 1},
+    {"COUNTYL", 'L', 'N', OFTInteger, 135, 137, 3, 1, 1},
+    {"COUNTYR", 'L', 'N', OFTInteger, 138, 140, 3, 1, 1},
 
-  { "COUSUBL",    'L', 'N', OFTInteger,  141, 145,   5,       1,   1},
-  { "COUSUBR",    'L', 'N', OFTInteger,  146, 150,   5,       1,   1},
-  { "SUBMCDL",    'L', 'N', OFTInteger,  151, 155,   5,       1,   1},
-  { "SUBMCDR",    'L', 'N', OFTInteger,  156, 160,   5,       1,   1},
-  { "PLACEL",     'L', 'N', OFTInteger,  161, 165,   5,       1,   1},
-  { "PLACER",     'L', 'N', OFTInteger,  166, 170,   5,       1,   1},
-  { "TRACTL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1},
-  { "TRACTR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1},
-  { "BLOCKL",     'L', 'N', OFTInteger,  183, 186,   4,       1,   1},
-  { "BLOCKR",     'L', 'N', OFTInteger,  187, 190,   4,       1,   1}
-};
-static const TigerRecordInfo rt1_2002_info =
-  {
-    rt1_2002_fields,
-    sizeof(rt1_2002_fields) / sizeof(TigerFieldInfo),
-    228
-  };
+    {"COUSUBL", 'L', 'N', OFTInteger, 141, 145, 5, 1, 1},
+    {"COUSUBR", 'L', 'N', OFTInteger, 146, 150, 5, 1, 1},
+    {"SUBMCDL", 'L', 'N', OFTInteger, 151, 155, 5, 1, 1},
+    {"SUBMCDR", 'L', 'N', OFTInteger, 156, 160, 5, 1, 1},
+    {"PLACEL", 'L', 'N', OFTInteger, 161, 165, 5, 1, 1},
+    {"PLACER", 'L', 'N', OFTInteger, 166, 170, 5, 1, 1},
+    {"TRACTL", 'L', 'N', OFTInteger, 171, 176, 6, 1, 1},
+    {"TRACTR", 'L', 'N', OFTInteger, 177, 182, 6, 1, 1},
+    {"BLOCKL", 'L', 'N', OFTInteger, 183, 186, 4, 1, 1},
+    {"BLOCKR", 'L', 'N', OFTInteger, 187, 190, 4, 1, 1}};
+static const TigerRecordInfo rt1_2002_info = {
+    rt1_2002_fields, sizeof(rt1_2002_fields) / sizeof(TigerFieldInfo), 228};
 
 static const TigerFieldInfo rt1_fields[] = {
-  // fieldname    fmt  type OFTType      beg  end   len  bDefine bSet
-  { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0},
-  { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1},
-  { "SIDE1",      'R', 'N', OFTInteger,   16,  16,   1,       1,   1},
-  { "SOURCE",     'L', 'A', OFTString,    17,  17,   1,       1,   1},
-  { "FEDIRP",     'L', 'A', OFTString,    18,  19,   2,       1,   1},
-  { "FENAME",     'L', 'A', OFTString,    20,  49,  30,       1,   1},
-  { "FETYPE",     'L', 'A', OFTString,    50,  53,   4,       1,   1},
-  { "FEDIRS",     'L', 'A', OFTString,    54,  55,   2,       1,   1},
-  { "CFCC",       'L', 'A', OFTString,    56,  58,   3,       1,   1},
-  { "FRADDL",     'R', 'A', OFTString,    59,  69,  11,       1,   1},
-  { "TOADDL",     'R', 'A', OFTString,    70,  80,  11,       1,   1},
-  { "FRADDR",     'R', 'A', OFTString,    81,  91,  11,       1,   1},
-  { "TOADDR",     'R', 'A', OFTString,    92, 102,  11,       1,   1},
-  { "FRIADDL",    'L', 'A', OFTInteger,  103, 103,   1,       1,   1},
-  { "TOIADDL",    'L', 'A', OFTInteger,  104, 104,   1,       1,   1},
-  { "FRIADDR",    'L', 'A', OFTInteger,  105, 105,   1,       1,   1},
-  { "TOIADDR",    'L', 'A', OFTInteger,  106, 106,   1,       1,   1},
-  { "ZIPL",       'L', 'N', OFTInteger,  107, 111,   5,       1,   1},
-  { "ZIPR",       'L', 'N', OFTInteger,  112, 116,   5,       1,   1},
-  { "FAIRL",      'L', 'N', OFTInteger,  117, 121,   5,       1,   1},
-  { "FAIRR",      'L', 'N', OFTInteger,  122, 126,   5,       1,   1},
-  { "TRUSTL",     'L', 'A', OFTString,   127, 127,   1,       1,   1},
-  { "TRUSTR",     'L', 'A', OFTString,   128, 128,   1,       1,   1},
-  { "CENSUS1",    'L', 'A', OFTString,   129, 129,   1,       1,   1},
-  { "CENSUS2",    'L', 'A', OFTString,   130, 130,   1,       1,   1},
-  { "STATEL",     'L', 'N', OFTInteger,  131, 132,   2,       1,   1},
-  { "STATER",     'L', 'N', OFTInteger,  133, 134,   2,       1,   1},
-  { "COUNTYL",    'L', 'N', OFTInteger,  135, 137,   3,       1,   1},
-  { "COUNTYR",    'L', 'N', OFTInteger,  138, 140,   3,       1,   1},
+    // fieldname    fmt  type OFTType      beg  end   len  bDefine bSet
+    {"MODULE", ' ', ' ', OFTString, 0, 0, 8, 1, 0},
+    {"TLID", 'R', 'N', OFTInteger, 6, 15, 10, 1, 1},
+    {"SIDE1", 'R', 'N', OFTInteger, 16, 16, 1, 1, 1},
+    {"SOURCE", 'L', 'A', OFTString, 17, 17, 1, 1, 1},
+    {"FEDIRP", 'L', 'A', OFTString, 18, 19, 2, 1, 1},
+    {"FENAME", 'L', 'A', OFTString, 20, 49, 30, 1, 1},
+    {"FETYPE", 'L', 'A', OFTString, 50, 53, 4, 1, 1},
+    {"FEDIRS", 'L', 'A', OFTString, 54, 55, 2, 1, 1},
+    {"CFCC", 'L', 'A', OFTString, 56, 58, 3, 1, 1},
+    {"FRADDL", 'R', 'A', OFTString, 59, 69, 11, 1, 1},
+    {"TOADDL", 'R', 'A', OFTString, 70, 80, 11, 1, 1},
+    {"FRADDR", 'R', 'A', OFTString, 81, 91, 11, 1, 1},
+    {"TOADDR", 'R', 'A', OFTString, 92, 102, 11, 1, 1},
+    {"FRIADDL", 'L', 'A', OFTInteger, 103, 103, 1, 1, 1},
+    {"TOIADDL", 'L', 'A', OFTInteger, 104, 104, 1, 1, 1},
+    {"FRIADDR", 'L', 'A', OFTInteger, 105, 105, 1, 1, 1},
+    {"TOIADDR", 'L', 'A', OFTInteger, 106, 106, 1, 1, 1},
+    {"ZIPL", 'L', 'N', OFTInteger, 107, 111, 5, 1, 1},
+    {"ZIPR", 'L', 'N', OFTInteger, 112, 116, 5, 1, 1},
+    {"FAIRL", 'L', 'N', OFTInteger, 117, 121, 5, 1, 1},
+    {"FAIRR", 'L', 'N', OFTInteger, 122, 126, 5, 1, 1},
+    {"TRUSTL", 'L', 'A', OFTString, 127, 127, 1, 1, 1},
+    {"TRUSTR", 'L', 'A', OFTString, 128, 128, 1, 1, 1},
+    {"CENSUS1", 'L', 'A', OFTString, 129, 129, 1, 1, 1},
+    {"CENSUS2", 'L', 'A', OFTString, 130, 130, 1, 1, 1},
+    {"STATEL", 'L', 'N', OFTInteger, 131, 132, 2, 1, 1},
+    {"STATER", 'L', 'N', OFTInteger, 133, 134, 2, 1, 1},
+    {"COUNTYL", 'L', 'N', OFTInteger, 135, 137, 3, 1, 1},
+    {"COUNTYR", 'L', 'N', OFTInteger, 138, 140, 3, 1, 1},
 
-  { "FMCDL",      'L', 'N', OFTInteger,  141, 145,   5,       1,   1},
-  { "FMCDR",      'L', 'N', OFTInteger,  146, 150,   5,       1,   1},
-  { "FSMCDL",     'L', 'N', OFTInteger,  151, 155,   5,       1,   1},
-  { "FSMCDR",     'L', 'N', OFTInteger,  156, 160,   5,       1,   1},
-  { "FPLL",       'L', 'N', OFTInteger,  161, 165,   5,       1,   1},
-  { "FPLR",       'L', 'N', OFTInteger,  166, 170,   5,       1,   1},
-  { "CTBNAL",     'L', 'N', OFTInteger,  171, 176,   6,       1,   1},
-  { "CTBNAR",     'L', 'N', OFTInteger,  177, 182,   6,       1,   1},
-  { "BLKL",       'L', 'N', OFTString,   183, 186,   4,       1,   1},
-  { "BLKR",       'L', 'N', OFTString,   187, 190,   4,       1,   1}
+    {"FMCDL", 'L', 'N', OFTInteger, 141, 145, 5, 1, 1},
+    {"FMCDR", 'L', 'N', OFTInteger, 146, 150, 5, 1, 1},
+    {"FSMCDL", 'L', 'N', OFTInteger, 151, 155, 5, 1, 1},
+    {"FSMCDR", 'L', 'N', OFTInteger, 156, 160, 5, 1, 1},
+    {"FPLL", 'L', 'N', OFTInteger, 161, 165, 5, 1, 1},
+    {"FPLR", 'L', 'N', OFTInteger, 166, 170, 5, 1, 1},
+    {"CTBNAL", 'L', 'N', OFTInteger, 171, 176, 6, 1, 1},
+    {"CTBNAR", 'L', 'N', OFTInteger, 177, 182, 6, 1, 1},
+    {"BLKL", 'L', 'N', OFTString, 183, 186, 4, 1, 1},
+    {"BLKR", 'L', 'N', OFTString, 187, 190, 4, 1, 1}};
+static const TigerRecordInfo rt1_info = {
+    rt1_fields, sizeof(rt1_fields) / sizeof(TigerFieldInfo), 228};
+
+static const TigerRecordInfo rt2_info = {
+    nullptr,  // RT2 is handled specially in the code below; the only
+    0,        // thing from this structure that is used is:
+    208       // <--- nRecordLength
 };
-static const TigerRecordInfo rt1_info =
-  {
-    rt1_fields,
-    sizeof(rt1_fields) / sizeof(TigerFieldInfo),
-    228
-  };
-
-static const TigerRecordInfo rt2_info =
-  {
-    nullptr,       // RT2 is handled specially in the code below; the only
-    0,          // thing from this structure that is used is:
-    208         // <--- nRecordLength
-  };
 
 static const TigerFieldInfo rt3_2000_Redistricting_fields[] = {
-  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
-  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0},
-  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1},
-  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1},
-  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1},
-  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1},
-  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1},
-  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1},
-  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1},
-  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1},
-  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1},
-  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1},
-  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1},
-  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1},
-  { "TRUST90L",   'L', 'A', OFTString,     66,  66,   1,       1,   1},
-  { "TRUST90R",   'L', 'A', OFTString,     67,  67,   1,       1,   1},
-  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1},
-  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1},
-  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1},
-  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1},
+    // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
+    {"TLID", 'R', 'N', OFTInteger, 6, 15, 10, 0, 0},
+    {"STATE90L", 'L', 'N', OFTInteger, 16, 17, 2, 1, 1},
+    {"STATE90R", 'L', 'N', OFTInteger, 18, 19, 2, 1, 1},
+    {"COUN90L", 'L', 'N', OFTInteger, 20, 22, 3, 1, 1},
+    {"COUN90R", 'L', 'N', OFTInteger, 23, 25, 3, 1, 1},
+    {"FMCD90L", 'L', 'N', OFTInteger, 26, 30, 5, 1, 1},
+    {"FMCD90R", 'L', 'N', OFTInteger, 31, 35, 5, 1, 1},
+    {"FPL90L", 'L', 'N', OFTInteger, 36, 40, 5, 1, 1},
+    {"FPL90R", 'L', 'N', OFTInteger, 41, 45, 5, 1, 1},
+    {"CTBNA90L", 'L', 'N', OFTInteger, 46, 51, 6, 1, 1},
+    {"CTBNA90R", 'L', 'N', OFTInteger, 52, 57, 6, 1, 1},
+    {"AIR90L", 'L', 'N', OFTInteger, 58, 61, 4, 1, 1},
+    {"AIR90R", 'L', 'N', OFTInteger, 62, 65, 4, 1, 1},
+    {"TRUST90L", 'L', 'A', OFTString, 66, 66, 1, 1, 1},
+    {"TRUST90R", 'L', 'A', OFTString, 67, 67, 1, 1, 1},
+    {"BLK90L", 'L', 'A', OFTString, 70, 73, 4, 1, 1},
+    {"BLK90R", 'L', 'A', OFTString, 74, 77, 4, 1, 1},
+    {"AIRL", 'L', 'N', OFTInteger, 78, 81, 4, 1, 1},
+    {"AIRR", 'L', 'N', OFTInteger, 82, 85, 4, 1, 1},
 
-  { "ANRCL",      'L', 'N', OFTInteger,    86,  90,   5,       1,   1},
-  { "ANRCR",      'L', 'N', OFTInteger,    91,  95,   5,       1,   1},
-  { "AITSCEL",    'L', 'N', OFTInteger,    96,  98,   3,       1,   1},
-  { "AITSCER",    'L', 'N', OFTInteger,    99, 101,   3,       1,   1},
-  { "AITSL",      'L', 'N', OFTInteger,   102, 106,   5 ,      1,   1},
-  { "AITSR",      'L', 'N', OFTInteger,   107, 111,   5,       1,   1 }
-};
-static const TigerRecordInfo rt3_2000_Redistricting_info  =
-  {
+    {"ANRCL", 'L', 'N', OFTInteger, 86, 90, 5, 1, 1},
+    {"ANRCR", 'L', 'N', OFTInteger, 91, 95, 5, 1, 1},
+    {"AITSCEL", 'L', 'N', OFTInteger, 96, 98, 3, 1, 1},
+    {"AITSCER", 'L', 'N', OFTInteger, 99, 101, 3, 1, 1},
+    {"AITSL", 'L', 'N', OFTInteger, 102, 106, 5, 1, 1},
+    {"AITSR", 'L', 'N', OFTInteger, 107, 111, 5, 1, 1}};
+static const TigerRecordInfo rt3_2000_Redistricting_info = {
     rt3_2000_Redistricting_fields,
-    sizeof(rt3_2000_Redistricting_fields) / sizeof(TigerFieldInfo),
-    111
-  };
+    sizeof(rt3_2000_Redistricting_fields) / sizeof(TigerFieldInfo), 111};
 
 static const TigerFieldInfo rt3_fields[] = {
-  // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
-  { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0},
-  { "STATE90L",   'L', 'N', OFTInteger,    16,  17,   2,       1,   1},
-  { "STATE90R",   'L', 'N', OFTInteger,    18,  19,   2,       1,   1},
-  { "COUN90L",    'L', 'N', OFTInteger,    20,  22,   3,       1,   1},
-  { "COUN90R",    'L', 'N', OFTInteger,    23,  25,   3,       1,   1},
-  { "FMCD90L",    'L', 'N', OFTInteger,    26,  30,   5,       1,   1},
-  { "FMCD90R",    'L', 'N', OFTInteger,    31,  35,   5,       1,   1},
-  { "FPL90L",     'L', 'N', OFTInteger,    36,  40,   5,       1,   1},
-  { "FPL90R",     'L', 'N', OFTInteger,    41,  45,   5,       1,   1},
-  { "CTBNA90L",   'L', 'N', OFTInteger,    46,  51,   6,       1,   1},
-  { "CTBNA90R",   'L', 'N', OFTInteger,    52,  57,   6,       1,   1},
-  { "AIR90L",     'L', 'N', OFTInteger,    58,  61,   4,       1,   1},
-  { "AIR90R",     'L', 'N', OFTInteger,    62,  65,   4,       1,   1},
-  { "TRUST90L",   'L', 'A', OFTInteger,    66,  66,   1,       1,   1},
-  { "TRUST90R",   'L', 'A', OFTInteger,    67,  67,   1,       1,   1},
-  { "BLK90L",     'L', 'A', OFTString,     70,  73,   4,       1,   1},
-  { "BLK90R",     'L', 'A', OFTString,     74,  77,   4,       1,   1},
-  { "AIRL",       'L', 'N', OFTInteger,    78,  81,   4,       1,   1},
-  { "AIRR",       'L', 'N', OFTInteger,    82,  85,   4,       1,   1},
+    // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet
+    {"TLID", 'R', 'N', OFTInteger, 6, 15, 10, 0, 0},
+    {"STATE90L", 'L', 'N', OFTInteger, 16, 17, 2, 1, 1},
+    {"STATE90R", 'L', 'N', OFTInteger, 18, 19, 2, 1, 1},
+    {"COUN90L", 'L', 'N', OFTInteger, 20, 22, 3, 1, 1},
+    {"COUN90R", 'L', 'N', OFTInteger, 23, 25, 3, 1, 1},
+    {"FMCD90L", 'L', 'N', OFTInteger, 26, 30, 5, 1, 1},
+    {"FMCD90R", 'L', 'N', OFTInteger, 31, 35, 5, 1, 1},
+    {"FPL90L", 'L', 'N', OFTInteger, 36, 40, 5, 1, 1},
+    {"FPL90R", 'L', 'N', OFTInteger, 41, 45, 5, 1, 1},
+    {"CTBNA90L", 'L', 'N', OFTInteger, 46, 51, 6, 1, 1},
+    {"CTBNA90R", 'L', 'N', OFTInteger, 52, 57, 6, 1, 1},
+    {"AIR90L", 'L', 'N', OFTInteger, 58, 61, 4, 1, 1},
+    {"AIR90R", 'L', 'N', OFTInteger, 62, 65, 4, 1, 1},
+    {"TRUST90L", 'L', 'A', OFTInteger, 66, 66, 1, 1, 1},
+    {"TRUST90R", 'L', 'A', OFTInteger, 67, 67, 1, 1, 1},
+    {"BLK90L", 'L', 'A', OFTString, 70, 73, 4, 1, 1},
+    {"BLK90R", 'L', 'A', OFTString, 74, 77, 4, 1, 1},
+    {"AIRL", 'L', 'N', OFTInteger, 78, 81, 4, 1, 1},
+    {"AIRR", 'L', 'N', OFTInteger, 82, 85, 4, 1, 1},
 
-  { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1},
-  { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1}
-};
+    {"VTDL", 'L', 'A', OFTString, 104, 107, 4, 1, 1},
+    {"VTDR", 'L', 'A', OFTString, 108, 111, 4, 1, 1}};
 
-static const TigerRecordInfo rt3_info =
-  {
-    rt3_fields,
-    sizeof(rt3_fields) / sizeof(TigerFieldInfo),
-    111
-  };
+static const TigerRecordInfo rt3_info = {
+    rt3_fields, sizeof(rt3_fields) / sizeof(TigerFieldInfo), 111};
 
 /************************************************************************/
 /*                         TigerCompleteChain()                         */
 /************************************************************************/
 
-TigerCompleteChain::TigerCompleteChain(
-    OGRTigerDataSource * poDSIn,
-    const char * /* pszPrototypeModule */ ) :
-    fpShape(nullptr),
-    panShapeRecordId(nullptr),
-    fpRT3(nullptr),
-    bUsingRT3(false),
-    psRT1Info(nullptr),
-    psRT2Info(nullptr),
-    psRT3Info(nullptr)
+TigerCompleteChain::TigerCompleteChain(OGRTigerDataSource *poDSIn,
+                                       const char * /* pszPrototypeModule */)
+    : fpShape(nullptr), panShapeRecordId(nullptr), fpRT3(nullptr),
+      bUsingRT3(false), psRT1Info(nullptr), psRT2Info(nullptr),
+      psRT3Info(nullptr)
 {
     poDS = poDSIn;
-    poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
+    poFeatureDefn = new OGRFeatureDefn("CompleteChain");
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( wkbLineString );
+    poFeatureDefn->SetGeomType(wkbLineString);
 
-    if (poDS->GetVersion() >= TIGER_2002) {
-      psRT1Info = &rt1_2002_info;
-      // bUsingRT3 = false;
-    } else {
-      psRT1Info = &rt1_info;
-      bUsingRT3 = true;
+    if (poDS->GetVersion() >= TIGER_2002)
+    {
+        psRT1Info = &rt1_2002_info;
+        // bUsingRT3 = false;
+    }
+    else
+    {
+        psRT1Info = &rt1_info;
+        bUsingRT3 = true;
     }
 
     psRT2Info = &rt2_info;
 
     nRT1RecOffset = 0;
 
-    if (poDS->GetVersion() >= TIGER_2000_Redistricting) {
-      psRT3Info = &rt3_2000_Redistricting_info;
-    } else {
-      psRT3Info = &rt3_info;
+    if (poDS->GetVersion() >= TIGER_2000_Redistricting)
+    {
+        psRT3Info = &rt3_2000_Redistricting_info;
+    }
+    else
+    {
+        psRT3Info = &rt3_info;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Fields from type 1 record.                                      */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRT1Info, poFeatureDefn );
+    AddFieldDefns(psRT1Info, poFeatureDefn);
 
     /* -------------------------------------------------------------------- */
     /*      Fields from type 3 record.  Eventually we should verify that    */
     /*      a .RT3 file is available before adding these fields.            */
     /* -------------------------------------------------------------------- */
-    if( bUsingRT3 )
+    if (bUsingRT3)
     {
-      AddFieldDefns( psRT3Info, poFeatureDefn );
+        AddFieldDefns(psRT3Info, poFeatureDefn);
     }
 }
 
@@ -268,101 +248,103 @@ TigerCompleteChain::TigerCompleteChain(
 TigerCompleteChain::~TigerCompleteChain()
 
 {
-    CPLFree( panShapeRecordId );
+    CPLFree(panShapeRecordId);
 
-    if( fpRT3 != nullptr )
-        VSIFCloseL( fpRT3 );
+    if (fpRT3 != nullptr)
+        VSIFCloseL(fpRT3);
 
-    if( fpShape != nullptr )
-        VSIFCloseL( fpShape );
+    if (fpShape != nullptr)
+        VSIFCloseL(fpShape);
 }
 
 /************************************************************************/
 /*                             SetModule()                              */
 /************************************************************************/
 
-bool TigerCompleteChain::SetModule( const char * pszModuleIn )
+bool TigerCompleteChain::SetModule(const char *pszModuleIn)
 
 {
-    if( !OpenFile( pszModuleIn, "1" ) )
+    if (!OpenFile(pszModuleIn, "1"))
         return false;
 
     EstablishFeatureCount();
 
-/* -------------------------------------------------------------------- */
-/*      Is this a copyright record inserted at the beginning of the     */
-/*      RT1 file by the folks at GDT?  If so, setup to ignore the       */
-/*      first record.                                                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Is this a copyright record inserted at the beginning of the     */
+    /*      RT1 file by the folks at GDT?  If so, setup to ignore the       */
+    /*      first record.                                                   */
+    /* -------------------------------------------------------------------- */
     nRT1RecOffset = 0;
-    if( pszModuleIn )
+    if (pszModuleIn)
     {
         char achHeader[10];
 
-        VSIFSeekL( fpPrimary, 0, SEEK_SET );
-        VSIFReadL( achHeader, sizeof(achHeader), 1, fpPrimary );
+        VSIFSeekL(fpPrimary, 0, SEEK_SET);
+        VSIFReadL(achHeader, sizeof(achHeader), 1, fpPrimary);
 
-        if( STARTS_WITH_CI(achHeader,"Copyright") )
+        if (STARTS_WITH_CI(achHeader, "Copyright"))
         {
             nRT1RecOffset = 1;
             nFeatures--;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open the RT3 file                                               */
-/* -------------------------------------------------------------------- */
-    if( bUsingRT3 )
+    /* -------------------------------------------------------------------- */
+    /*      Open the RT3 file                                               */
+    /* -------------------------------------------------------------------- */
+    if (bUsingRT3)
     {
-        if( fpRT3 != nullptr )
+        if (fpRT3 != nullptr)
         {
-            VSIFCloseL( fpRT3 );
+            VSIFCloseL(fpRT3);
             fpRT3 = nullptr;
         }
 
-        if( pszModuleIn )
+        if (pszModuleIn)
         {
-            char *pszFilename = poDS->BuildFilename( pszModuleIn, "3" );
+            char *pszFilename = poDS->BuildFilename(pszModuleIn, "3");
 
-            fpRT3 = VSIFOpenL( pszFilename, "rb" );
+            fpRT3 = VSIFOpenL(pszFilename, "rb");
 
-            CPLFree( pszFilename );
+            CPLFree(pszFilename);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Close the shape point file, if open and free the list of        */
-/*      record ids.                                                     */
-/* -------------------------------------------------------------------- */
-    if( fpShape != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Close the shape point file, if open and free the list of        */
+    /*      record ids.                                                     */
+    /* -------------------------------------------------------------------- */
+    if (fpShape != nullptr)
     {
-        VSIFCloseL( fpShape );
+        VSIFCloseL(fpShape);
         fpShape = nullptr;
     }
 
-    CPLFree( panShapeRecordId );
+    CPLFree(panShapeRecordId);
     panShapeRecordId = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Try to open the RT2 file corresponding to this RT1 file.        */
-/* -------------------------------------------------------------------- */
-    if( pszModuleIn != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Try to open the RT2 file corresponding to this RT1 file.        */
+    /* -------------------------------------------------------------------- */
+    if (pszModuleIn != nullptr)
     {
-        char *pszFilename = poDS->BuildFilename( pszModuleIn, "2" );
+        char *pszFilename = poDS->BuildFilename(pszModuleIn, "2");
 
-        fpShape = VSIFOpenL( pszFilename, "rb" );
+        fpShape = VSIFOpenL(pszFilename, "rb");
 
-        if( fpShape == nullptr )
+        if (fpShape == nullptr)
         {
-            if( nRT1RecOffset == 0 )
-                CPLError( CE_Warning, CPLE_OpenFailed,
-                          "Failed to open %s, intermediate shape arcs will not be available.\n",
-                          pszFilename );
+            if (nRT1RecOffset == 0)
+                CPLError(CE_Warning, CPLE_OpenFailed,
+                         "Failed to open %s, intermediate shape arcs will not "
+                         "be available.\n",
+                         pszFilename);
         }
         else
-            panShapeRecordId = (int *)CPLCalloc(sizeof(int),(size_t)GetFeatureCount());
+            panShapeRecordId =
+                (int *)CPLCalloc(sizeof(int), (size_t)GetFeatureCount());
 
-        CPLFree( pszFilename );
+        CPLFree(pszFilename);
     }
 
     return true;
@@ -372,42 +354,41 @@ bool TigerCompleteChain::SetModule( const char * pszModuleIn )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
+OGRFeature *TigerCompleteChain::GetFeature(int nRecordId)
 
 {
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
+    char achRecord[OGR_TIGER_RECBUF_LEN];
 
-    if( nRecordId < 0 || nRecordId >= nFeatures )
+    if (nRecordId < 0 || nRecordId >= nFeatures)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s1",
-                  nRecordId, pszModule );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Request for out-of-range feature %d of %s1", nRecordId,
+                 pszModule);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Read the raw record data from the file.                         */
+    /* -------------------------------------------------------------------- */
+    if (fpPrimary == nullptr)
         return nullptr;
 
-    if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength,
-                  SEEK_SET ) != 0 )
+    if (VSIFSeekL(fpPrimary, (nRecordId + nRT1RecOffset) * nRecordLength,
+                  SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s1",
-                  nRecordId * nRecordLength, pszModule );
+        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s1",
+                 nRecordId * nRecordLength, pszModule);
         return nullptr;
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
     // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
-    if( VSIFReadL( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
+    if (VSIFReadL(achRecord, psRT1Info->nRecordLength, 1, fpPrimary) != 1)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes of record %d of %s1 at offset %d",
-                  psRT1Info->nRecordLength, nRecordId, pszModule,
-                  (nRecordId+nRT1RecOffset) * nRecordLength );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to read %d bytes of record %d of %s1 at offset %d",
+                 psRT1Info->nRecordLength, nRecordId, pszModule,
+                 (nRecordId + nRT1RecOffset) * nRecordLength);
         return nullptr;
     }
 
@@ -415,53 +396,51 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     /*      Set fields.                                                     */
     /* -------------------------------------------------------------------- */
 
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
-    SetFields( psRT1Info, poFeature, achRecord );
+    SetFields(psRT1Info, poFeature, achRecord);
 
     /* -------------------------------------------------------------------- */
     /*      Read RT3 record, and apply fields.                              */
     /* -------------------------------------------------------------------- */
 
-    if( fpRT3 != nullptr )
+    if (fpRT3 != nullptr)
     {
-        char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
-        int     nRT3RecLen = psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
+        char achRT3Rec[OGR_TIGER_RECBUF_LEN];
+        int nRT3RecLen =
+            psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-        if( VSIFSeekL( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
+        if (VSIFSeekL(fpRT3, nRecordId * nRT3RecLen, SEEK_SET) != 0)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s3",
-                      nRecordId * nRT3RecLen, pszModule );
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s3",
+                     nRecordId * nRT3RecLen, pszModule);
             delete poFeature;
             return nullptr;
         }
 
         // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
         // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
-        if( VSIFReadL( achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3 ) != 1 )
+        if (VSIFReadL(achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3) != 1)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read record %d of %s3",
-                      nRecordId, pszModule );
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to read record %d of %s3",
+                     nRecordId, pszModule);
             delete poFeature;
             return nullptr;
         }
 
-        SetFields( psRT3Info, poFeature, achRT3Rec );
+        SetFields(psRT3Info, poFeature, achRT3Rec);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set geometry                                                    */
-/* -------------------------------------------------------------------- */
-    OGRLineString       *poLine = new OGRLineString();
+    /* -------------------------------------------------------------------- */
+    /*      Set geometry                                                    */
+    /* -------------------------------------------------------------------- */
+    OGRLineString *poLine = new OGRLineString();
 
-    poLine->setPoint(0,
-                     atoi(GetField(achRecord, 191, 200)) / 1000000.0,
-                     atoi(GetField(achRecord, 201, 209)) / 1000000.0 );
+    poLine->setPoint(0, atoi(GetField(achRecord, 191, 200)) / 1000000.0,
+                     atoi(GetField(achRecord, 201, 209)) / 1000000.0);
 
-    if( !AddShapePoints( poFeature->GetFieldAsInteger("TLID"), nRecordId,
-                         poLine, 0 ) )
+    if (!AddShapePoints(poFeature->GetFieldAsInteger("TLID"), nRecordId, poLine,
+                        0))
     {
         delete poFeature;
         delete poLine;
@@ -469,9 +448,9 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     }
 
     poLine->addPoint(atoi(GetField(achRecord, 210, 219)) / 1000000.0,
-                     atoi(GetField(achRecord, 220, 228)) / 1000000.0 );
+                     atoi(GetField(achRecord, 220, 228)) / 1000000.0);
 
-    poFeature->SetGeometryDirectly( poLine );
+    poFeature->SetGeometryDirectly(poLine);
 
     return poFeature;
 }
@@ -483,85 +462,87 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
 /*      and add the points to the passed line geometry.                 */
 /************************************************************************/
 
-bool TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
-                                        OGRLineString * poLine,
-                                        CPL_UNUSED int nSeqNum )
+bool TigerCompleteChain::AddShapePoints(int nTLID, int nRecordId,
+                                        OGRLineString *poLine,
+                                        CPL_UNUSED int nSeqNum)
 {
-    int nShapeRecId = GetShapeRecordId( nRecordId, nTLID );
+    int nShapeRecId = GetShapeRecordId(nRecordId, nTLID);
 
     // -2 means an error occurred.
-    if( nShapeRecId == -2 )
+    if (nShapeRecId == -2)
         return false;
 
     // -1 means there are no extra shape vertices, but things worked fine.
-    if( nShapeRecId == -1 )
+    if (nShapeRecId == -1)
         return true;
 
-/* -------------------------------------------------------------------- */
-/*      Read all the sequential records with the same TLID.             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read all the sequential records with the same TLID.             */
+    /* -------------------------------------------------------------------- */
     char achShapeRec[OGR_TIGER_RECBUF_LEN];
     const int nShapeRecLen =
         psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-    for( ; true; nShapeRecId++ )
+    for (; true; nShapeRecId++)
     {
-        int  nBytesRead = 0;
+        int nBytesRead = 0;
 
-        if( VSIFSeekL( fpShape, (nShapeRecId-1) * nShapeRecLen,
-                      SEEK_SET ) != 0 )
+        if (VSIFSeekL(fpShape, (nShapeRecId - 1) * nShapeRecLen, SEEK_SET) != 0)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s2",
-                      (nShapeRecId-1) * nShapeRecLen, pszModule );
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s2",
+                     (nShapeRecId - 1) * nShapeRecLen, pszModule);
             return false;
         }
 
-        nBytesRead = static_cast<int>(VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength,
-                                fpShape ));
+        nBytesRead = static_cast<int>(
+            VSIFReadL(achShapeRec, 1, psRT2Info->nRecordLength, fpShape));
 
         /*
         ** Handle case where the last record in the file is full.  We will
         ** try to read another record but not find it.  We require that we
         ** have found at least one shape record for this case though.
         */
-        if( nBytesRead <= 0 && VSIFEofL( fpShape )
-            && poLine->getNumPoints() > 0 )
+        if (nBytesRead <= 0 && VSIFEofL(fpShape) && poLine->getNumPoints() > 0)
             break;
 
-        if( nBytesRead != psRT2Info->nRecordLength )
+        if (nBytesRead != psRT2Info->nRecordLength)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to read %d bytes of record %d of %s2 at offset %d",
-                      psRT2Info->nRecordLength, nShapeRecId, pszModule,
-                      (nShapeRecId-1) * nShapeRecLen );
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to read %d bytes of record %d of %s2 at offset %d",
+                     psRT2Info->nRecordLength, nShapeRecId, pszModule,
+                     (nShapeRecId - 1) * nShapeRecLen);
             return false;
         }
 
-        if( atoi(GetField(achShapeRec,6,15)) != nTLID )
+        if (atoi(GetField(achShapeRec, 6, 15)) != nTLID)
             break;
 
-/* -------------------------------------------------------------------- */
-/*      Translate the locations into OGRLineString vertices.            */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Translate the locations into OGRLineString vertices. */
+        /* --------------------------------------------------------------------
+         */
         int iVertex = 0;  // Used after for.
 
-        for( ; iVertex < 10; iVertex++ )
+        for (; iVertex < 10; iVertex++)
         {
-            const int iStart = 19 + 19*iVertex;
-            const int nX = atoi(GetField(achShapeRec,iStart,iStart+9));
-            const int nY = atoi(GetField(achShapeRec,iStart+10,iStart+18));
+            const int iStart = 19 + 19 * iVertex;
+            const int nX = atoi(GetField(achShapeRec, iStart, iStart + 9));
+            const int nY =
+                atoi(GetField(achShapeRec, iStart + 10, iStart + 18));
 
-            if( nX == 0 && nY == 0 )
+            if (nX == 0 && nY == 0)
                 break;
 
-            poLine->addPoint( nX / 1000000.0, nY / 1000000.0 );
+            poLine->addPoint(nX / 1000000.0, nY / 1000000.0);
         }
 
-/* -------------------------------------------------------------------- */
-/*      Don't get another record if this one was incomplete.            */
-/* -------------------------------------------------------------------- */
-        if( iVertex < 10 )
+        /* --------------------------------------------------------------------
+         */
+        /*      Don't get another record if this one was incomplete. */
+        /* --------------------------------------------------------------------
+         */
+        if (iVertex < 10)
             break;
     }
 
@@ -575,95 +556,96 @@ bool TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
 /*      the provided TLID (complete chain).                             */
 /************************************************************************/
 
-int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
+int TigerCompleteChain::GetShapeRecordId(int nChainId, int nTLID)
 
 {
-    CPLAssert( nChainId >= 0 && nChainId < GetFeatureCount() );
+    CPLAssert(nChainId >= 0 && nChainId < GetFeatureCount());
 
-    if( fpShape == nullptr || panShapeRecordId == nullptr )
+    if (fpShape == nullptr || panShapeRecordId == nullptr)
         return -1;
 
-/* -------------------------------------------------------------------- */
-/*      Do we already have the answer?                                  */
-/* -------------------------------------------------------------------- */
-    if( panShapeRecordId[nChainId] != 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Do we already have the answer?                                  */
+    /* -------------------------------------------------------------------- */
+    if (panShapeRecordId[nChainId] != 0)
         return panShapeRecordId[nChainId];
 
-/* -------------------------------------------------------------------- */
-/*      If we don't already have this value, then search from the       */
-/*      previous known record.                                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If we don't already have this value, then search from the       */
+    /*      previous known record.                                          */
+    /* -------------------------------------------------------------------- */
     int iTestChain, nWorkingRecId;
 
-    for( iTestChain = nChainId-1;
-         iTestChain >= 0 && panShapeRecordId[iTestChain] <= 0;
-         iTestChain-- ) {}
+    for (iTestChain = nChainId - 1;
+         iTestChain >= 0 && panShapeRecordId[iTestChain] <= 0; iTestChain--)
+    {
+    }
 
-    if( iTestChain < 0 )
+    if (iTestChain < 0)
     {
         iTestChain = -1;
         nWorkingRecId = 1;
     }
     else
     {
-        nWorkingRecId = panShapeRecordId[iTestChain]+1;
+        nWorkingRecId = panShapeRecordId[iTestChain] + 1;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we have non existent records following (-1's) we can         */
-/*      narrow our search a bit.                                        */
-/* -------------------------------------------------------------------- */
-    while( panShapeRecordId[iTestChain+1] == -1 )
+    /* -------------------------------------------------------------------- */
+    /*      If we have non existent records following (-1's) we can         */
+    /*      narrow our search a bit.                                        */
+    /* -------------------------------------------------------------------- */
+    while (panShapeRecordId[iTestChain + 1] == -1)
     {
         iTestChain++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read records up to the maximum distance that is possibly        */
-/*      required, looking for our target TLID.                          */
-/* -------------------------------------------------------------------- */
-    int         nMaxChainToRead = nChainId - iTestChain;
-    int         nChainsRead = 0;
-    char        achShapeRec[OGR_TIGER_RECBUF_LEN];
-    int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
+    /* -------------------------------------------------------------------- */
+    /*      Read records up to the maximum distance that is possibly        */
+    /*      required, looking for our target TLID.                          */
+    /* -------------------------------------------------------------------- */
+    int nMaxChainToRead = nChainId - iTestChain;
+    int nChainsRead = 0;
+    char achShapeRec[OGR_TIGER_RECBUF_LEN];
+    int nShapeRecLen =
+        psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-    if( nShapeRecLen <= 0 )
+    if (nShapeRecLen <= 0)
     {
         return -2;
     }
 
-    while( nChainsRead < nMaxChainToRead )
+    while (nChainsRead < nMaxChainToRead)
     {
-        if( VSIFSeekL( fpShape, (nWorkingRecId-1) * nShapeRecLen,
-                      SEEK_SET ) != 0 )
+        if (VSIFSeekL(fpShape, (nWorkingRecId - 1) * nShapeRecLen, SEEK_SET) !=
+            0)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failed to seek to %d of %s2",
-                      (nWorkingRecId-1) * nShapeRecLen, pszModule );
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s2",
+                     (nWorkingRecId - 1) * nShapeRecLen, pszModule);
             return -2;
         }
 
-        if( VSIFReadL( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
+        if (VSIFReadL(achShapeRec, psRT2Info->nRecordLength, 1, fpShape) != 1)
         {
-            if( !VSIFEofL( fpShape ) )
+            if (!VSIFEofL(fpShape))
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to read record %d of %s2",
-                          nWorkingRecId-1, pszModule );
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Failed to read record %d of %s2", nWorkingRecId - 1,
+                         pszModule);
                 return -2;
             }
             else
                 return -1;
         }
 
-        if( atoi(GetField(achShapeRec,6,15)) == nTLID )
+        if (atoi(GetField(achShapeRec, 6, 15)) == nTLID)
         {
             panShapeRecordId[nChainId] = nWorkingRecId;
 
             return nWorkingRecId;
         }
 
-        if( atoi(GetField(achShapeRec,16,18)) == 1 )
+        if (atoi(GetField(achShapeRec, 16, 18)) == 1)
         {
             nChainsRead++;
         }
