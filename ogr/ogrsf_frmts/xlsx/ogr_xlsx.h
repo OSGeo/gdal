@@ -40,7 +40,8 @@
 #include <string>
 #include <map>
 
-namespace OGRXLSX {
+namespace OGRXLSX
+{
 
 /************************************************************************/
 /*                             OGRXLSXLayer                             */
@@ -48,72 +49,119 @@ namespace OGRXLSX {
 
 class OGRXLSXDataSource;
 
-class OGRXLSXLayer final: public OGRMemLayer
+class OGRXLSXLayer final : public OGRMemLayer
 {
     friend class OGRXLSXDataSource;
 
-    bool               bInit;
-    OGRXLSXDataSource* poDS;
-    CPLString          osFilename;
-    void               Init();
-    bool               bUpdated;
-    bool               bHasHeaderLine;
-    std::set<int>      oSetFieldsOfUnknownType{};
+    bool bInit;
+    OGRXLSXDataSource *poDS;
+    CPLString osFilename;
+    void Init();
+    bool bUpdated;
+    bool bHasHeaderLine;
+    std::set<int> oSetFieldsOfUnknownType{};
 
   public:
-        OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
-                      const char * pszFilename,
-                      const char * pszName,
-                      int bUpdateIn = FALSE);
+    OGRXLSXLayer(OGRXLSXDataSource *poDSIn, const char *pszFilename,
+                 const char *pszName, int bUpdateIn = FALSE);
 
-    bool                HasBeenUpdated() const { return bUpdated; }
-    void                SetUpdated( bool bUpdatedIn = true );
+    bool HasBeenUpdated() const
+    {
+        return bUpdated;
+    }
+    void SetUpdated(bool bUpdatedIn = true);
 
-    bool                GetHasHeaderLine() const { return bHasHeaderLine; }
-    void                SetHasHeaderLine( bool bIn ) { bHasHeaderLine = bIn; }
+    bool GetHasHeaderLine() const
+    {
+        return bHasHeaderLine;
+    }
+    void SetHasHeaderLine(bool bIn)
+    {
+        bHasHeaderLine = bIn;
+    }
 
-    const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); }
-    OGRwkbGeometryType  GetGeomType() override { return wkbNone; }
-    virtual OGRSpatialReference *GetSpatialRef() override { return nullptr; }
+    const char *GetName() override
+    {
+        return OGRMemLayer::GetLayerDefn()->GetName();
+    }
+    OGRwkbGeometryType GetGeomType() override
+    {
+        return wkbNone;
+    }
+    virtual OGRSpatialReference *GetSpatialRef() override
+    {
+        return nullptr;
+    }
 
-    void                ResetReading() override
-    { Init(); OGRMemLayer::ResetReading(); }
+    void ResetReading() override
+    {
+        Init();
+        OGRMemLayer::ResetReading();
+    }
 
-    const CPLString&    GetFilename() const { return osFilename; }
+    const CPLString &GetFilename() const
+    {
+        return osFilename;
+    }
 
     /* For external usage. Mess with FID */
-    virtual OGRFeature *        GetNextFeature() override;
-    virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
-    virtual OGRErr              ISetFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr              DeleteFeature( GIntBig nFID ) override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override
-    { Init(); return OGRMemLayer::SetNextByIndex(nIndex); }
+    virtual OGRErr SetNextByIndex(GIntBig nIndex) override
+    {
+        Init();
+        return OGRMemLayer::SetNextByIndex(nIndex);
+    }
 
-    virtual OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    OGRFeatureDefn *    GetLayerDefn() override
-    { Init(); return OGRMemLayer::GetLayerDefn(); }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        Init();
+        return OGRMemLayer::GetLayerDefn();
+    }
 
-    GIntBig                 GetFeatureCount( int bForce ) override
-    { Init(); return OGRMemLayer::GetFeatureCount(bForce); }
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        Init();
+        return OGRMemLayer::GetFeatureCount(bForce);
+    }
 
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr CreateField(OGRFieldDefn *poField,
+                               int bApproxOK = TRUE) override;
 
-    virtual OGRErr      DeleteField( int iField ) override
-    { Init(); SetUpdated(); return OGRMemLayer::DeleteField(iField); }
+    virtual OGRErr DeleteField(int iField) override
+    {
+        Init();
+        SetUpdated();
+        return OGRMemLayer::DeleteField(iField);
+    }
 
-    virtual OGRErr      ReorderFields( int* panMap ) override
-    { Init(); SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
+    virtual OGRErr ReorderFields(int *panMap) override
+    {
+        Init();
+        SetUpdated();
+        return OGRMemLayer::ReorderFields(panMap);
+    }
 
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn ) override
-    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn); }
+    virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                                  int nFlagsIn) override
+    {
+        Init();
+        SetUpdated();
+        return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+    }
 
-    int                 TestCapability( const char * pszCap ) override
-    { Init(); return OGRMemLayer::TestCapability(pszCap); }
+    int TestCapability(const char *pszCap) override
+    {
+        Init();
+        return OGRMemLayer::TestCapability(pszCap);
+    }
 
-    virtual OGRErr      SyncToDisk() override;
+    virtual OGRErr SyncToDisk() override;
 };
 
 /************************************************************************/
@@ -138,137 +186,139 @@ typedef enum
 
 typedef struct
 {
-    HandlerStateEnum  eVal;
-    int               nBeginDepth;
+    HandlerStateEnum eVal;
+    int nBeginDepth;
 } HandlerState;
 
 class XLSXFieldTypeExtended
 {
-public:
-    OGRFieldType      eType;
-    bool              bHasMS;
+  public:
+    OGRFieldType eType;
+    bool bHasMS;
 
-                    XLSXFieldTypeExtended() :
-                        eType(OFTMaxType),
-                        bHasMS(false) {}
-                    explicit XLSXFieldTypeExtended(OGRFieldType eTypeIn,
-                                          bool bHasMSIn = false) :
-                                    eType(eTypeIn), bHasMS(bHasMSIn) {}
+    XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(false)
+    {
+    }
+    explicit XLSXFieldTypeExtended(OGRFieldType eTypeIn, bool bHasMSIn = false)
+        : eType(eTypeIn), bHasMS(bHasMSIn)
+    {
+    }
 };
 
-class OGRXLSXDataSource final: public GDALDataset
+class OGRXLSXDataSource final : public GDALDataset
 {
-    char*               pszName;
-    CPLString           osPrefixedFilename;
-    bool                bUpdatable;
-    bool                bUpdated;
+    char *pszName;
+    CPLString osPrefixedFilename;
+    bool bUpdatable;
+    bool bUpdated;
 
-    int                 nLayers;
-    OGRLayer          **papoLayers;
+    int nLayers;
+    OGRLayer **papoLayers;
     std::map<CPLString, CPLString> oMapRelsIdToTarget;
     std::set<std::string> m_oSetSheetId;
 
-    void                AnalyseSharedStrings(VSILFILE* fpSharedStrings);
-    void                AnalyseWorkbook(VSILFILE* fpWorkbook);
-    void                AnalyseWorkbookRels(VSILFILE* fpWorkbookRels);
-    void                AnalyseStyles(VSILFILE* fpStyles);
+    void AnalyseSharedStrings(VSILFILE *fpSharedStrings);
+    void AnalyseWorkbook(VSILFILE *fpWorkbook);
+    void AnalyseWorkbookRels(VSILFILE *fpWorkbookRels);
+    void AnalyseStyles(VSILFILE *fpStyles);
 
-    std::vector<std::string>  apoSharedStrings;
-    std::string         osCurrentString;
+    std::vector<std::string> apoSharedStrings;
+    std::string osCurrentString;
 
-    bool                bFirstLineIsHeaders;
-    int                 bAutodetectTypes;
+    bool bFirstLineIsHeaders;
+    int bAutodetectTypes;
 
-    XML_Parser          oParser;
-    bool                bStopParsing;
-    int                 nWithoutEventCounter;
-    int                 nDataHandlerCounter;
-    int                 nCurLine;
-    int                 nCurCol;
+    XML_Parser oParser;
+    bool bStopParsing;
+    int nWithoutEventCounter;
+    int nDataHandlerCounter;
+    int nCurLine;
+    int nCurCol;
 
-    OGRXLSXLayer       *poCurLayer;
+    OGRXLSXLayer *poCurLayer;
 
-    int                 nStackDepth;
-    int                 nDepth;
-    HandlerState        stateStack[STACK_SIZE];
+    int nStackDepth;
+    int nDepth;
+    HandlerState stateStack[STACK_SIZE];
 
-    CPLString           osValueType;
-    CPLString           osValue;
+    CPLString osValueType;
+    CPLString osValue;
 
-    std::vector<std::string>  apoFirstLineValues;
-    std::vector<std::string>  apoFirstLineTypes;
-    std::vector<std::string>  apoCurLineValues;
-    std::vector<std::string>  apoCurLineTypes;
+    std::vector<std::string> apoFirstLineValues;
+    std::vector<std::string> apoFirstLineTypes;
+    std::vector<std::string> apoCurLineValues;
+    std::vector<std::string> apoCurLineTypes;
 
-    bool                bInCellXFS;
-    std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;
-    std::vector<XLSXFieldTypeExtended>  apoStyles;
+    bool bInCellXFS;
+    std::map<int, XLSXFieldTypeExtended> apoMapStyleFormats;
+    std::vector<XLSXFieldTypeExtended> apoStyles;
 
-    void                PushState(HandlerStateEnum eVal);
-    void                startElementDefault(const char *pszName, const char **ppszAttr);
-    void                startElementTable(const char *pszName, const char **ppszAttr);
-    void                endElementTable(const char *pszName);
-    void                startElementRow(const char *pszName, const char **ppszAttr);
-    void                endElementRow(const char *pszName);
-    void                startElementCell(const char *pszName, const char **ppszAttr);
-    void                endElementCell(const char *pszName);
-    void                dataHandlerTextV(const char *data, int nLen);
+    void PushState(HandlerStateEnum eVal);
+    void startElementDefault(const char *pszName, const char **ppszAttr);
+    void startElementTable(const char *pszName, const char **ppszAttr);
+    void endElementTable(const char *pszName);
+    void startElementRow(const char *pszName, const char **ppszAttr);
+    void endElementRow(const char *pszName);
+    void startElementCell(const char *pszName, const char **ppszAttr);
+    void endElementCell(const char *pszName);
+    void dataHandlerTextV(const char *data, int nLen);
 
-    void                DetectHeaderLine();
+    void DetectHeaderLine();
 
-    OGRFieldType        GetOGRFieldType(const char* pszValue,
-                                        const char* pszValueType,
-                                        OGRFieldSubType& eSubType);
+    OGRFieldType GetOGRFieldType(const char *pszValue, const char *pszValueType,
+                                 OGRFieldSubType &eSubType);
 
-    void                DeleteLayer( const char *pszLayerName );
+    void DeleteLayer(const char *pszLayerName);
 
   public:
-                        OGRXLSXDataSource();
-                        virtual ~OGRXLSXDataSource();
+    OGRXLSXDataSource();
+    virtual ~OGRXLSXDataSource();
 
-    int                 Open( const char * pszFilename,
-                              const char * pszPrefixedFilename,
-                              VSILFILE* fpWorkbook,
-                              VSILFILE* fpWorkbookRels,
-                              VSILFILE* fpSharedStrings,
-                              VSILFILE* fpStyles,
-                              int bUpdate );
-    int                 Create( const char * pszName, char **papszOptions );
+    int Open(const char *pszFilename, const char *pszPrefixedFilename,
+             VSILFILE *fpWorkbook, VSILFILE *fpWorkbookRels,
+             VSILFILE *fpSharedStrings, VSILFILE *fpStyles, int bUpdate);
+    int Create(const char *pszName, char **papszOptions);
 
-    virtual int                 GetLayerCount() override;
-    virtual OGRLayer*           GetLayer( int ) override;
+    virtual int GetLayerCount() override;
+    virtual OGRLayer *GetLayer(int) override;
 
-    virtual int                 TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer* ICreateLayer( const char * pszLayerName,
-                                OGRSpatialReference *poSRS,
-                                OGRwkbGeometryType eType,
-                                char ** papszOptions ) override;
-    virtual OGRErr      DeleteLayer(int iLayer) override;
+    virtual OGRLayer *ICreateLayer(const char *pszLayerName,
+                                   OGRSpatialReference *poSRS,
+                                   OGRwkbGeometryType eType,
+                                   char **papszOptions) override;
+    virtual OGRErr DeleteLayer(int iLayer) override;
 
-    virtual void        FlushCache(bool bAtClosing) override;
+    virtual void FlushCache(bool bAtClosing) override;
 
-    void                startElementCbk(const char *pszName, const char **ppszAttr);
-    void                endElementCbk(const char *pszName);
-    void                dataHandlerCbk(const char *data, int nLen);
+    void startElementCbk(const char *pszName, const char **ppszAttr);
+    void endElementCbk(const char *pszName);
+    void dataHandlerCbk(const char *data, int nLen);
 
-    void                startElementSSCbk(const char *pszName, const char **ppszAttr);
-    void                endElementSSCbk(const char *pszName);
-    void                dataHandlerSSCbk(const char *data, int nLen);
+    void startElementSSCbk(const char *pszName, const char **ppszAttr);
+    void endElementSSCbk(const char *pszName);
+    void dataHandlerSSCbk(const char *data, int nLen);
 
-    void                startElementWBRelsCbk(const char *pszName, const char **ppszAttr);
+    void startElementWBRelsCbk(const char *pszName, const char **ppszAttr);
 
-    void                startElementWBCbk(const char *pszName, const char **ppszAttr);
+    void startElementWBCbk(const char *pszName, const char **ppszAttr);
 
-    void                startElementStylesCbk(const char *pszName, const char **ppszAttr);
-    void                endElementStylesCbk(const char *pszName);
+    void startElementStylesCbk(const char *pszName, const char **ppszAttr);
+    void endElementStylesCbk(const char *pszName);
 
-    void                BuildLayer(OGRXLSXLayer* poLayer);
+    void BuildLayer(OGRXLSXLayer *poLayer);
 
-    bool                GetUpdatable() { return bUpdatable; }
-    void                SetUpdated() { bUpdated = true; }
+    bool GetUpdatable()
+    {
+        return bUpdatable;
+    }
+    void SetUpdated()
+    {
+        bUpdated = true;
+    }
 };
 
-} /* end of OGRXLSX namespace */
+}  // namespace OGRXLSX
 
 #endif /* ndef OGR_XLSX_H_INCLUDED */
