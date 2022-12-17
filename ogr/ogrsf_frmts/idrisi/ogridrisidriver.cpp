@@ -31,14 +31,17 @@
 #include "ogr_idrisi.h"
 #include "ogrsf_frmts.h"
 
-
-// g++ ogr/ogrsf_frmts/idrisi/*.cpp -Wall -g -fPIC -shared -o ogr_Idrisi.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/idrisi -Iogr/ogrsf_frmts -Ifrmts/idrisi
+// g++ ogr/ogrsf_frmts/idrisi/*.cpp -Wall -g -fPIC -shared -o ogr_Idrisi.so
+// -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/idrisi -Iogr/ogrsf_frmts
+// -Ifrmts/idrisi
 
 /************************************************************************/
 /*                       ~OGRIdrisiDriver()                         */
 /************************************************************************/
 
-OGRIdrisiDriver::~OGRIdrisiDriver() {}
+OGRIdrisiDriver::~OGRIdrisiDriver()
+{
+}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -54,7 +57,7 @@ const char *OGRIdrisiDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
+OGRDataSource *OGRIdrisiDriver::Open(const char *pszFilename, int bUpdate)
 
 {
     if (bUpdate)
@@ -62,15 +65,15 @@ OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
         return nullptr;
     }
 
-// --------------------------------------------------------------------
-//      Does this appear to be a .vct file?
-// --------------------------------------------------------------------
-    if ( !EQUAL(CPLGetExtension(pszFilename), "vct") )
+    // --------------------------------------------------------------------
+    //      Does this appear to be a .vct file?
+    // --------------------------------------------------------------------
+    if (!EQUAL(CPLGetExtension(pszFilename), "vct"))
         return nullptr;
 
     OGRIdrisiDataSource *poDS = new OGRIdrisiDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if (!poDS->Open(pszFilename))
     {
         delete poDS;
         poDS = nullptr;
@@ -83,7 +86,7 @@ OGRDataSource *OGRIdrisiDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiDriver::TestCapability( const char * /* pszCap */ )
+int OGRIdrisiDriver::TestCapability(const char * /* pszCap */)
 {
     return FALSE;
 }
@@ -95,12 +98,12 @@ int OGRIdrisiDriver::TestCapability( const char * /* pszCap */ )
 void RegisterOGRIdrisi()
 
 {
-    if( GDALGetDriverByName( "Idrisi" ) != nullptr )
+    if (GDALGetDriverByName("Idrisi") != nullptr)
         return;
 
-    OGRSFDriver* poDriver = new OGRIdrisiDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vct" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    OGRSFDriver *poDriver = new OGRIdrisiDriver;
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "vct");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
