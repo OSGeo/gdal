@@ -41,36 +41,43 @@ class OGRGeoconceptDataSource : public OGRDataSource
 {
   private:
     OGRGeoconceptLayer **_papoLayers;
-    int                  _nLayers;
+    int _nLayers;
 
-    char                *_pszGCT;
-    char                *_pszName;
-    char                *_pszDirectory;
-    char                *_pszExt;
-    char               **_papszOptions;
-    bool                 _bSingleNewFile;
-    bool                 _bUpdate;
-    GCExportFileH       *_hGXT;
+    char *_pszGCT;
+    char *_pszName;
+    char *_pszDirectory;
+    char *_pszExt;
+    char **_papszOptions;
+    bool _bSingleNewFile;
+    bool _bUpdate;
+    GCExportFileH *_hGXT;
 
   public:
-                   OGRGeoconceptDataSource();
-                  ~OGRGeoconceptDataSource();
+    OGRGeoconceptDataSource();
+    ~OGRGeoconceptDataSource();
 
-    int            Open( const char* pszName, bool bTestOpen, bool bUpdate );
-    int            Create( const char* pszName, char** papszOptions );
+    int Open(const char *pszName, bool bTestOpen, bool bUpdate);
+    int Create(const char *pszName, char **papszOptions);
 
-    const char*    GetName() override { return _pszName; }
-    int            GetLayerCount() override { return _nLayers; }
-    OGRLayer*      GetLayer( int iLayer ) override;
-//    OGRErr         DeleteLayer( int iLayer );
-    int            TestCapability( const char* pszCap ) override;
+    const char *GetName() override
+    {
+        return _pszName;
+    }
+    int GetLayerCount() override
+    {
+        return _nLayers;
+    }
+    OGRLayer *GetLayer(int iLayer) override;
+    //    OGRErr         DeleteLayer( int iLayer );
+    int TestCapability(const char *pszCap) override;
 
-    OGRLayer*      ICreateLayer( const char* pszName,
-                                OGRSpatialReference* poSpatialRef = nullptr,
-                                OGRwkbGeometryType eGType = wkbUnknown,
-                                char** papszOptions = nullptr ) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           OGRSpatialReference *poSpatialRef = nullptr,
+                           OGRwkbGeometryType eGType = wkbUnknown,
+                           char **papszOptions = nullptr) override;
+
   private:
-    int            LoadFile( const char * );
+    int LoadFile(const char *);
 };
 
 #endif /* GEOCONCEPT_OGR_DATASOURCE_H_INCLUDED_ */
