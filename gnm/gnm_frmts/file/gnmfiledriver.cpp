@@ -32,17 +32,16 @@
 #include "gnm_frmts.h"
 #include "gnm_priv.h"
 
-
-static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int GNMFileDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !poOpenInfo->bIsDirectory )
+    if (!poOpenInfo->bIsDirectory)
         return FALSE;
-    if( (poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0 )
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_GNM) == 0)
         return FALSE;
 
-    char **papszFiles = VSIReadDir( poOpenInfo->pszFilename );
-    if( CSLCount(papszFiles) == 0 )
+    char **papszFiles = VSIReadDir(poOpenInfo->pszFilename);
+    if (CSLCount(papszFiles) == 0)
     {
         return FALSE;
     }
@@ -50,57 +49,36 @@ static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
     bool bHasMeta(false), bHasGraph(false), bHasFeatures(false);
 
     // search for base GNM files
-    for( int i = 0; papszFiles[i] != nullptr; i++ )
+    for (int i = 0; papszFiles[i] != nullptr; i++)
     {
-        if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
+        if (EQUAL(papszFiles[i], ".") || EQUAL(papszFiles[i], ".."))
             continue;
 
-        if( EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_META) )
+        if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_META))
             bHasMeta = true;
-        else if( EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_GRAPH) )
+        else if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_GRAPH))
             bHasGraph = true;
-        else if( EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_FEATURES) )
+        else if (EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_FEATURES))
             bHasFeatures = true;
 
-        if(bHasMeta && bHasGraph && bHasFeatures)
+        if (bHasMeta && bHasGraph && bHasFeatures)
             break;
     }
 
-    CSLDestroy( papszFiles );
+    CSLDestroy(papszFiles);
 
     return bHasMeta && bHasGraph && bHasFeatures;
 }
 
-static GDALDataset *GNMFileDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *GNMFileDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !GNMFileDriverIdentify(poOpenInfo) )
+    if (!GNMFileDriverIdentify(poOpenInfo))
         return nullptr;
-
-    GNMFileNetwork* poFN = new GNMFileNetwork();
-
-    if( poFN->Open( poOpenInfo ) != CE_None)
-    {
-        delete poFN;
-        poFN = nullptr;
-    }
-
-    return poFN;
-}
-
-static GDALDataset *GNMFileDriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
-                                        char **papszOptions )
-{
-    CPLAssert( nullptr != pszName );
-    CPLDebug( "GNM", "Attempt to create network at: %s", pszName );
 
     GNMFileNetwork *poFN = new GNMFileNetwork();
 
-    if( poFN->Create( pszName, papszOptions ) != CE_None )
+    if (poFN->Open(poOpenInfo) != CE_None)
     {
         delete poFN;
         poFN = nullptr;
@@ -109,13 +87,32 @@ static GDALDataset *GNMFileDriverCreate( const char * pszName,
     return poFN;
 }
 
-static CPLErr GNMFileDriverDelete( const char *pszDataSource )
+static GDALDataset *
+GNMFileDriverCreate(const char *pszName, CPL_UNUSED int nBands,
+                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                    CPL_UNUSED GDALDataType eDT, char **papszOptions)
+{
+    CPLAssert(nullptr != pszName);
+    CPLDebug("GNM", "Attempt to create network at: %s", pszName);
+
+    GNMFileNetwork *poFN = new GNMFileNetwork();
+
+    if (poFN->Create(pszName, papszOptions) != CE_None)
+    {
+        delete poFN;
+        poFN = nullptr;
+    }
+
+    return poFN;
+}
+
+static CPLErr GNMFileDriverDelete(const char *pszDataSource)
 
 {
     GDALOpenInfo oOpenInfo(pszDataSource, GA_Update);
     GNMFileNetwork oFN;
 
-    if( oFN.Open( &oOpenInfo ) != CE_None)
+    if (oFN.Open(&oOpenInfo) != CE_None)
     {
         return CE_Failure;
     }
@@ -125,33 +122,43 @@ static CPLErr GNMFileDriverDelete( const char *pszDataSource )
 
 void RegisterGNMFile()
 {
-    if( GDALGetDriverByName( "GNMFile" ) == nullptr )
+    if (GDALGetDriverByName("GNMFile") == nullptr)
     {
-        GDALDriver  *poDriver = new GDALDriver();
+        GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "GNMFile" );
-        poDriver->SetMetadataItem( GDAL_DCAP_GNM, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Geographic Network generic file based "
-                                   "model" );
+        poDriver->SetDescription("GNMFile");
+        poDriver->SetMetadataItem(GDAL_DCAP_GNM, "YES");
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                                  "Geographic Network generic file based "
+                                  "model");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, CPLSPrintf(
-"<CreationOptionList>"
-"  <Option name='%s' type='string' description='The network name. Also it will be a folder name, so the limits for folder name distribute on network name'/>"
-"  <Option name='%s' type='string' description='The network description. Any text describes the network'/>"
-"  <Option name='%s' type='string' description='The network Spatial reference. All network features will reproject to this spatial reference. May be a WKT text or EPSG code'/>"
-"  <Option name='FORMAT' type='string' description='The OGR format to store network data.' default='%s'/>"
-"  <Option name='OVERWRITE' type='boolean' description='Overwrite exist network or not' default='NO'/>"
-"</CreationOptionList>", GNM_MD_NAME, GNM_MD_DESCR, GNM_MD_SRS,
-                                       GNM_MD_DEFAULT_FILE_FORMAT) );
+        poDriver->SetMetadataItem(
+            GDAL_DMD_CREATIONOPTIONLIST,
+            CPLSPrintf(
+                "<CreationOptionList>"
+                "  <Option name='%s' type='string' description='The network "
+                "name. Also it will be a folder name, so the limits for folder "
+                "name distribute on network name'/>"
+                "  <Option name='%s' type='string' description='The network "
+                "description. Any text describes the network'/>"
+                "  <Option name='%s' type='string' description='The network "
+                "Spatial reference. All network features will reproject to "
+                "this spatial reference. May be a WKT text or EPSG code'/>"
+                "  <Option name='FORMAT' type='string' description='The OGR "
+                "format to store network data.' default='%s'/>"
+                "  <Option name='OVERWRITE' type='boolean' "
+                "description='Overwrite exist network or not' default='NO'/>"
+                "</CreationOptionList>",
+                GNM_MD_NAME, GNM_MD_DESCR, GNM_MD_SRS,
+                GNM_MD_DEFAULT_FILE_FORMAT));
 
-        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-                                   "<LayerCreationOptionList/>" );
+        poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                                  "<LayerCreationOptionList/>");
         poDriver->pfnOpen = GNMFileDriverOpen;
         poDriver->pfnIdentify = GNMFileDriverIdentify;
         poDriver->pfnCreate = GNMFileDriverCreate;
         poDriver->pfnDelete = GNMFileDriverDelete;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
+        GetGDALDriverManager()->RegisterDriver(poDriver);
     }
 }
