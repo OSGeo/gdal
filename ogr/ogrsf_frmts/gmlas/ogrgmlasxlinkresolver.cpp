@@ -34,16 +34,15 @@
 
 #include <time.h>
 
-
 /************************************************************************/
 /*                         GMLASXLinkResolver()                         */
 /************************************************************************/
 
-GMLASXLinkResolver::GMLASXLinkResolver() :
-    m_nGlobalResolutionTime(0),
-    m_nMaxRAMCacheSize(atoi(CPLGetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE",
-                                               "10000000"))),
-    m_nCurrentRAMCacheSize(0)
+GMLASXLinkResolver::GMLASXLinkResolver()
+    : m_nGlobalResolutionTime(0),
+      m_nMaxRAMCacheSize(
+          atoi(CPLGetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE", "10000000"))),
+      m_nCurrentRAMCacheSize(0)
 {
 }
 
@@ -51,7 +50,7 @@ GMLASXLinkResolver::GMLASXLinkResolver() :
 /*                             SetConf()                                */
 /************************************************************************/
 
-void GMLASXLinkResolver::SetConf( const GMLASXLinkResolutionConf& oConf )
+void GMLASXLinkResolver::SetConf(const GMLASXLinkResolutionConf &oConf)
 {
     m_oConf = oConf;
     SetCacheDirectory(m_oConf.m_osCacheDirectory);
@@ -61,81 +60,80 @@ void GMLASXLinkResolver::SetConf( const GMLASXLinkResolutionConf& oConf )
 /*                          FetchRawContent()                           */
 /************************************************************************/
 
-CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
-                                              const char* pszHeaders)
+CPLString GMLASXLinkResolver::FetchRawContent(const CPLString &osURL,
+                                              const char *pszHeaders)
 {
-    char** papszOptions = nullptr;
-    if( m_oConf.m_nMaxGlobalResolutionTime > 0 &&
-        m_nGlobalResolutionTime > m_oConf.m_nMaxGlobalResolutionTime )
+    char **papszOptions = nullptr;
+    if (m_oConf.m_nMaxGlobalResolutionTime > 0 &&
+        m_nGlobalResolutionTime > m_oConf.m_nMaxGlobalResolutionTime)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Maximum global resolution time has been reached. "
                  "No remote resource will be fetched");
         return CPLString();
     }
-    if( m_oConf.m_nTimeOut > 0 || m_oConf.m_nMaxGlobalResolutionTime > 0 )
+    if (m_oConf.m_nTimeOut > 0 || m_oConf.m_nMaxGlobalResolutionTime > 0)
     {
         int nTimeout = m_oConf.m_nTimeOut;
-        if( m_oConf.m_nTimeOut > 0 && m_oConf.m_nMaxGlobalResolutionTime > 0 )
+        if (m_oConf.m_nTimeOut > 0 && m_oConf.m_nMaxGlobalResolutionTime > 0)
         {
             // Select the minimum between the individual timeout and the
             // remaining time granted by the max global resolution time.
-            int nRemaining = m_oConf.m_nMaxGlobalResolutionTime -
-                             m_nGlobalResolutionTime;
-            if( nRemaining < nTimeout )
+            int nRemaining =
+                m_oConf.m_nMaxGlobalResolutionTime - m_nGlobalResolutionTime;
+            if (nRemaining < nTimeout)
                 nTimeout = nRemaining;
         }
-        else if( m_oConf.m_nMaxGlobalResolutionTime > 0 )
+        else if (m_oConf.m_nMaxGlobalResolutionTime > 0)
         {
-            nTimeout = m_oConf.m_nMaxGlobalResolutionTime -
-                       m_nGlobalResolutionTime;
+            nTimeout =
+                m_oConf.m_nMaxGlobalResolutionTime - m_nGlobalResolutionTime;
         }
         papszOptions = CSLSetNameValue(papszOptions, "TIMEOUT",
                                        CPLSPrintf("%d", nTimeout));
     }
-    if( m_oConf.m_nMaxFileSize > 0 )
+    if (m_oConf.m_nMaxFileSize > 0)
     {
-        papszOptions = CSLSetNameValue(papszOptions, "MAX_FILE_SIZE",
-                                       CPLSPrintf("%d", m_oConf.m_nMaxFileSize));
+        papszOptions =
+            CSLSetNameValue(papszOptions, "MAX_FILE_SIZE",
+                            CPLSPrintf("%d", m_oConf.m_nMaxFileSize));
     }
-    if( !m_oConf.m_osProxyServerPort.empty() )
+    if (!m_oConf.m_osProxyServerPort.empty())
     {
-        papszOptions = CSLSetNameValue(papszOptions, "PROXY",
-                                       m_oConf.m_osProxyServerPort);
+        papszOptions =
+            CSLSetNameValue(papszOptions, "PROXY", m_oConf.m_osProxyServerPort);
     }
-    if( !m_oConf.m_osProxyUserPassword.empty() )
+    if (!m_oConf.m_osProxyUserPassword.empty())
     {
         papszOptions = CSLSetNameValue(papszOptions, "PROXYUSERPWD",
                                        m_oConf.m_osProxyUserPassword);
     }
-    if( !m_oConf.m_osProxyAuth.empty() )
+    if (!m_oConf.m_osProxyAuth.empty())
     {
-        papszOptions = CSLSetNameValue(papszOptions, "PROXYAUTH",
-                                       m_oConf.m_osProxyAuth);
+        papszOptions =
+            CSLSetNameValue(papszOptions, "PROXYAUTH", m_oConf.m_osProxyAuth);
     }
-    if( pszHeaders != nullptr )
+    if (pszHeaders != nullptr)
     {
-        papszOptions = CSLSetNameValue(papszOptions, "HEADERS",
-                                       pszHeaders);
+        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", pszHeaders);
     }
     time_t nTimeStart = time(nullptr);
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
+    CPLHTTPResult *psResult = CPLHTTPFetch(osURL, papszOptions);
     time_t nTimeStop = time(nullptr);
     m_nGlobalResolutionTime += static_cast<int>(nTimeStop - nTimeStart);
     CSLDestroy(papszOptions);
-    if( psResult == nullptr )
+    if (psResult == nullptr)
         return CPLString();
 
-    if( psResult->nStatus != 0 ||
-        psResult->pabyData == nullptr )
+    if (psResult->nStatus != 0 || psResult->pabyData == nullptr)
     {
         CPLHTTPDestroyResult(psResult);
         return CPLString();
     }
 
     CPLString osResult;
-    osResult.assign( reinterpret_cast<char*>(psResult->pabyData),
-                     psResult->nDataLen );
+    osResult.assign(reinterpret_cast<char *>(psResult->pabyData),
+                    psResult->nDataLen);
     CPLHTTPDestroyResult(psResult);
     return osResult;
 }
@@ -144,43 +142,41 @@ CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
 /*                           GetRawContent()                            */
 /************************************************************************/
 
-CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
-                                            const char* pszHeaders,
+CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL,
+                                            const char *pszHeaders,
                                             bool bAllowRemoteDownload,
                                             bool bCacheResults)
 {
     bool bDiskCacheAvailable = false;
-    if( !m_osCacheDirectory.empty() &&
-        RecursivelyCreateDirectoryIfNeeded() )
+    if (!m_osCacheDirectory.empty() && RecursivelyCreateDirectoryIfNeeded())
     {
         bDiskCacheAvailable = true;
 
         CPLString osCachedFileName(GetCachedFilename(osURL));
-        VSILFILE* fp = nullptr;
-        if( !m_bRefresh ||
-            m_aoSetRefreshedFiles.find(osCachedFileName) !=
-                                            m_aoSetRefreshedFiles.end() )
+        VSILFILE *fp = nullptr;
+        if (!m_bRefresh || m_aoSetRefreshedFiles.find(osCachedFileName) !=
+                               m_aoSetRefreshedFiles.end())
         {
-            fp = VSIFOpenL( osCachedFileName, "rb");
+            fp = VSIFOpenL(osCachedFileName, "rb");
         }
-        if( fp != nullptr )
+        if (fp != nullptr)
         {
             CPLDebug("GMLAS", "Use cached %s", osCachedFileName.c_str());
-            GByte* pabyRet = nullptr;
+            GByte *pabyRet = nullptr;
             vsi_l_offset nSize = 0;
             CPLString osContent;
-            if( VSIIngestFile( fp, nullptr, &pabyRet, &nSize, -1 ) )
+            if (VSIIngestFile(fp, nullptr, &pabyRet, &nSize, -1))
             {
-                osContent.assign( reinterpret_cast<const char*>(pabyRet),
-                                  static_cast<size_t>(nSize) );
+                osContent.assign(reinterpret_cast<const char *>(pabyRet),
+                                 static_cast<size_t>(nSize));
             }
             VSIFree(pabyRet);
             VSIFCloseL(fp);
             return osContent;
         }
-        else if( bAllowRemoteDownload )
+        else if (bAllowRemoteDownload)
         {
-            if( m_bRefresh )
+            if (m_bRefresh)
                 m_aoSetRefreshedFiles.insert(osCachedFileName);
         }
         else
@@ -196,42 +192,41 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
     // Check memory cache first
     {
         const auto oIter = m_oMapURLToContent.find(osURL);
-        if( oIter != m_oMapURLToContent.end() )
+        if (oIter != m_oMapURLToContent.end())
             return oIter->second;
     }
 
     const CPLString osContent(FetchRawContent(osURL, pszHeaders));
     // Cache to disk if possible
-    if( bDiskCacheAvailable && bCacheResults && !osContent.empty() )
+    if (bDiskCacheAvailable && bCacheResults && !osContent.empty())
     {
         CPLString osCachedFileName(GetCachedFilename(osURL));
-        CPLString osTmpfilename( osCachedFileName + ".tmp" );
-        VSILFILE* fpTemp = VSIFOpenL( osTmpfilename, "wb" );
-        if( fpTemp != nullptr )
+        CPLString osTmpfilename(osCachedFileName + ".tmp");
+        VSILFILE *fpTemp = VSIFOpenL(osTmpfilename, "wb");
+        if (fpTemp != nullptr)
         {
-            const bool bSuccess = VSIFWriteL( osContent.data(),
-                                              osContent.size(), 1,
-                                              fpTemp ) == 1;
+            const bool bSuccess =
+                VSIFWriteL(osContent.data(), osContent.size(), 1, fpTemp) == 1;
             VSIFCloseL(fpTemp);
-            if( bSuccess )
-                VSIRename( osTmpfilename, osCachedFileName );
+            if (bSuccess)
+                VSIRename(osTmpfilename, osCachedFileName);
         }
     }
     // Otherwise to RAM
-    else if( !osContent.empty() && osContent.size() < m_nMaxRAMCacheSize )
+    else if (!osContent.empty() && osContent.size() < m_nMaxRAMCacheSize)
     {
         // If cache is going to be saturated, evict larger objects first
-        while( osContent.size() + m_nCurrentRAMCacheSize > m_nMaxRAMCacheSize )
+        while (osContent.size() + m_nCurrentRAMCacheSize > m_nMaxRAMCacheSize)
         {
-            std::map<size_t, std::vector<CPLString> >::reverse_iterator oIter =
+            std::map<size_t, std::vector<CPLString>>::reverse_iterator oIter =
                 m_oMapFileSizeToURLs.rbegin();
             const size_t nSizeToEvict = oIter->first;
             m_nCurrentRAMCacheSize -= nSizeToEvict;
             const CPLString osURLToEvict(oIter->second.front());
             m_oMapURLToContent.erase(osURLToEvict);
             oIter->second.erase(oIter->second.begin());
-            if( oIter->second.empty() )
-                m_oMapFileSizeToURLs.erase( nSizeToEvict );
+            if (oIter->second.empty())
+                m_oMapFileSizeToURLs.erase(nSizeToEvict);
         }
         m_oMapURLToContent[osURL] = osContent;
         m_oMapFileSizeToURLs[osContent.size()].push_back(osURL);
@@ -248,20 +243,20 @@ bool GMLASXLinkResolver::IsRawContentResolutionEnabled() const
 {
     return m_oConf.m_bDefaultResolutionEnabled &&
            m_oConf.m_eDefaultResolutionMode ==
-                                        GMLASXLinkResolutionConf::RawContent;
+               GMLASXLinkResolutionConf::RawContent;
 }
 
 /************************************************************************/
 /*                      GetMatchingResolutionRule()                      */
 /************************************************************************/
 
-int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString& osURL) const
+int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString &osURL) const
 {
-    for(size_t i = 0; i < m_oConf.m_aoURLSpecificRules.size(); ++i )
+    for (size_t i = 0; i < m_oConf.m_aoURLSpecificRules.size(); ++i)
     {
-        if( osURL.compare(0,
+        if (osURL.compare(0,
                           m_oConf.m_aoURLSpecificRules[i].m_osURLPrefix.size(),
-                          m_oConf.m_aoURLSpecificRules[i].m_osURLPrefix) == 0 )
+                          m_oConf.m_aoURLSpecificRules[i].m_osURLPrefix) == 0)
         {
             return static_cast<int>(i);
         }
@@ -275,11 +270,9 @@ int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString& osURL) const
 /*                           GetRawContent()                            */
 /************************************************************************/
 
-CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL)
+CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL)
 {
-    return GetRawContent(osURL,
-                         nullptr,
-                         m_oConf.m_bDefaultAllowRemoteDownload,
+    return GetRawContent(osURL, nullptr, m_oConf.m_bDefaultAllowRemoteDownload,
                          m_oConf.m_bDefaultCacheResults);
 }
 
@@ -287,23 +280,21 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL)
 /*                         GetRawContentForRule()                       */
 /************************************************************************/
 
-CPLString GMLASXLinkResolver::GetRawContentForRule(const CPLString& osURL,
+CPLString GMLASXLinkResolver::GetRawContentForRule(const CPLString &osURL,
                                                    int nIdxRule)
 {
-    const GMLASXLinkResolutionConf::URLSpecificResolution& oRule(
-                                    m_oConf.m_aoURLSpecificRules[nIdxRule] );
+    const GMLASXLinkResolutionConf::URLSpecificResolution &oRule(
+        m_oConf.m_aoURLSpecificRules[nIdxRule]);
 
     CPLString osHeaders;
-    for( size_t i=0; i< oRule.m_aosNameValueHTTPHeaders.size(); ++i )
+    for (size_t i = 0; i < oRule.m_aosNameValueHTTPHeaders.size(); ++i)
     {
-        if( !osHeaders.empty() )
+        if (!osHeaders.empty())
             osHeaders += "\r\n";
         osHeaders += oRule.m_aosNameValueHTTPHeaders[i].first;
         osHeaders += ": ";
         osHeaders += oRule.m_aosNameValueHTTPHeaders[i].second;
     }
-    return GetRawContent(osURL,
-                         osHeaders.empty() ? nullptr : osHeaders.c_str(),
-                         oRule.m_bAllowRemoteDownload,
-                         oRule.m_bCacheResults);
+    return GetRawContent(osURL, osHeaders.empty() ? nullptr : osHeaders.c_str(),
+                         oRule.m_bAllowRemoteDownload, oRule.m_bCacheResults);
 }
