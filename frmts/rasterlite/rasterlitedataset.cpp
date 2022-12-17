@@ -132,8 +132,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
     {
-        printf("nBlockXOff = %d, nBlockYOff = %d, nBlockXSize = %d, "
-               "nBlockYSize = %d\n" /*ok*/
+        printf("nBlockXOff = %d, nBlockYOff = %d, nBlockXSize = %d, " /*ok*/
+               "nBlockYSize = %d\n"
                "minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n",
                nBlockXOff, nBlockYOff, nBlockXSize, nBlockYSize, minx, miny,
                maxx, maxy);
@@ -167,9 +167,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
     {
-        printf("nTiles = %d\n",
-               static_cast<int>(/*ok*/
-                                OGR_L_GetFeatureCount(hSQLLyr, TRUE)));
+        printf("nTiles = %d\n", /*ok*/
+               static_cast<int>(OGR_L_GetFeatureCount(hSQLLyr, TRUE)));
     }
 #endif
 
@@ -266,13 +265,14 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 #ifdef RASTERLITE_DEBUG
         if (nBand == 1)
         {
-            printf(
-                "id = %d, minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n" /*ok*/
-                "nDstXOff = %d, nDstYOff = %d, nSrcXOff = %d, nSrcYOff = %d, "
-                "nReqXSize=%d, nReqYSize=%d\n",
-                nTileId, oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX,
-                oEnvelope.MaxY, nDstXOff, nDstYOff, nSrcXOff, nSrcYOff,
-                nReqXSize, nReqYSize);
+            printf(/*ok*/
+                   "id = %d, minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n"
+                   "nDstXOff = %d, nDstYOff = %d, nSrcXOff = %d, nSrcYOff = "
+                   "%d, "
+                   "nReqXSize=%d, nReqYSize=%d\n",
+                   nTileId, oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX,
+                   oEnvelope.MaxY, nDstXOff, nDstYOff, nSrcXOff, nSrcYOff,
+                   nReqXSize, nReqYSize);
         }
 #endif
 

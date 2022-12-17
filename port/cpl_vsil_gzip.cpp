@@ -1509,8 +1509,8 @@ void VSIGZipWriteHandleMT::CRCCompute(void *inData)
 #ifdef DEBUG_VERBOSE
 void VSIGZipWriteHandleMT::DumpState()
 {
-    fprintf(stderr, "Finished jobs (expected = %d):\n",
-            nSeqNumberExpected_);  // ok
+    fprintf(stderr, "Finished jobs (expected = %d):\n",  // ok
+            nSeqNumberExpected_);
     for (const auto *psJob : apoFinishedJobs_)
     {
         fprintf(stderr, "seq number=%d, bInCRCComputation = %d\n",  // ok

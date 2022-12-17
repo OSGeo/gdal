@@ -102,8 +102,9 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList(GDALRasterBlock *poBlock)
     {
 #ifdef DEBUG_VERBOSE_ABBC
         CPLAtomicInc(&nAllBandsKeptAlivedBlocks);
-        fprintf(stderr, "AddBlockToFreeList(): nAllBandsKeptAlivedBlocks=%d\n",
-                nAllBandsKeptAlivedBlocks); /*ok*/
+        fprintf(/*ok*/ stderr,
+                "AddBlockToFreeList(): nAllBandsKeptAlivedBlocks=%d\n",
+                nAllBandsKeptAlivedBlocks);
 #endif
         CPLLockHolderOptionalLockD(hSpinLock);
         poBlock->poNext = psListBlocksToFree;
@@ -156,8 +157,9 @@ void GDALAbstractBandBlockCache::FreeDanglingBlocks()
     {
 #ifdef DEBUG_VERBOSE_ABBC
         CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
-        fprintf(stderr, "FreeDanglingBlocks(): nAllBandsKeptAlivedBlocks=%d\n",
-                nAllBandsKeptAlivedBlocks); /*ok*/
+        fprintf(/*ok*/ stderr,
+                "FreeDanglingBlocks(): nAllBandsKeptAlivedBlocks=%d\n",
+                nAllBandsKeptAlivedBlocks);
 #endif
         GDALRasterBlock *poNext = poList->poNext;
         poList->poNext = nullptr;
@@ -181,8 +183,9 @@ GDALRasterBlock *GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
         {
 #ifdef DEBUG_VERBOSE_ABBC
             CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
-            fprintf(stderr, "CreateBlock(): nAllBandsKeptAlivedBlocks=%d\n",
-                    nAllBandsKeptAlivedBlocks); /*ok*/
+            fprintf(/*ok*/ stderr,
+                    "CreateBlock(): nAllBandsKeptAlivedBlocks=%d\n",
+                    nAllBandsKeptAlivedBlocks);
 #endif
             psListBlocksToFree = poBlock->poNext;
         }

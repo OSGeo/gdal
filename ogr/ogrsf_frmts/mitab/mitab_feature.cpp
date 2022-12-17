@@ -3389,9 +3389,9 @@ int TABRegion::WriteGeometryToMAPFile(
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
 #ifdef TABDUMP
-        printf(
-            "TABRegion::WriteGeometryToMAPFile(): ComprOrgX,Y= (%d,%d)\n", /*ok*/
-            m_nComprOrgX, m_nComprOrgY);
+        printf(/*ok*/
+               "TABRegion::WriteGeometryToMAPFile(): ComprOrgX,Y= (%d,%d)\n",
+               m_nComprOrgX, m_nComprOrgY);
 #endif
         /*-------------------------------------------------------------
          * Fetch total number of rings and build array of coord

@@ -161,32 +161,32 @@ bool perform_type_size_check(void)
     bool success = true;
     if (sizeof(MAIN_PROD_HEADER) != 3674)
     {
-        fprintf(stderr, "MAIN_PROD_HEADER size not 3674 (%lu)\n",
-                (unsigned long)sizeof(MAIN_PROD_HEADER)); /*ok*/
+        fprintf(stderr, "MAIN_PROD_HEADER size not 3674 (%lu)\n", /*ok*/
+                (unsigned long)sizeof(MAIN_PROD_HEADER));
         success = false;
     }
     if (sizeof(SECONDARY_PROD_HEADER) != 1120)
     {
-        fprintf(stderr, "SECONDARY_PROD_HEADER size not 1120 (%lu)\n",
-                (unsigned long)sizeof(SECONDARY_PROD_HEADER)); /*ok*/
+        fprintf(stderr, "SECONDARY_PROD_HEADER size not 1120 (%lu)\n", /*ok*/
+                (unsigned long)sizeof(SECONDARY_PROD_HEADER));
         success = false;
     }
     if (sizeof(SUB_VISIRLINE) != 27)
     {
-        fprintf(stderr, "SUB_VISIRLINE size not 17 (%lu)\n",
-                (unsigned long)sizeof(SUB_VISIRLINE)); /*ok*/
+        fprintf(stderr, "SUB_VISIRLINE size not 17 (%lu)\n", /*ok*/
+                (unsigned long)sizeof(SUB_VISIRLINE));
         success = false;
     }
     if (sizeof(GP_PK_HEADER) != 22)
     {
-        fprintf(stderr, "GP_PK_HEADER size not 22 (%lu)\n",
-                (unsigned long)sizeof(GP_PK_HEADER)); /*ok*/
+        fprintf(stderr, "GP_PK_HEADER size not 22 (%lu)\n", /*ok*/
+                (unsigned long)sizeof(GP_PK_HEADER));
         success = false;
     }
     if (sizeof(GP_PK_SH1) != 16)
     {
-        fprintf(stderr, "GP_PK_SH1 size not 16 (%lu)\n",
-                (unsigned long)sizeof(GP_PK_SH1)); /*ok*/
+        fprintf(stderr, "GP_PK_SH1 size not 16 (%lu)\n", /*ok*/
+                (unsigned long)sizeof(GP_PK_SH1));
         success = false;
     }
     return success;

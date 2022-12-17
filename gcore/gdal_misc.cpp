@@ -3304,9 +3304,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             }
 
             printf("Format Details:\n"); /*ok*/
-            printf("  Short Name: %s\n",
-                   GDALGetDriverShortName(hDriver));                     /*ok*/
-            printf("  Long Name: %s\n", GDALGetDriverLongName(hDriver)); /*ok*/
+            printf(/*ok*/ "  Short Name: %s\n",
+                   GDALGetDriverShortName(hDriver));
+            printf(/*ok*/ "  Long Name: %s\n", GDALGetDriverLongName(hDriver));
 
             papszMD = GDALGetMetadata(hDriver, nullptr);
             if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
@@ -3321,9 +3321,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             const char *pszExt =
                 CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSIONS);
             if (pszExt != nullptr)
-                printf("  Extension%s: %s\n",
-                       (strchr(pszExt, ' ') ? "s" : ""), /*ok*/
-                       pszExt);
+                printf("  Extension%s: %s\n", /*ok*/
+                       (strchr(pszExt, ' ') ? "s" : ""), pszExt);
 
             if (CSLFetchNameValue(papszMD, GDAL_DMD_MIMETYPE))
                 printf("  Mime Type: %s\n", /*ok*/
@@ -3337,14 +3336,15 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
                 printf("  Supports: Open() - Open existing dataset.\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
-                printf(
-                    "  Supports: Create() - Create writable dataset.\n"); /*ok*/
+                printf(/*ok*/
+                       "  Supports: Create() - Create writable dataset.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE_MULTIDIMENSIONAL, false))
-                printf("  Supports: CreateMultiDimensional() - Create "
-                       "multidimensional dataset.\n"); /*ok*/
+                printf(/*ok*/ "  Supports: CreateMultiDimensional() - Create "
+                              "multidimensional dataset.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
-                printf("  Supports: CreateCopy() - Create dataset by copying "
-                       "another.\n"); /*ok*/
+                printf(/*ok*/ "  Supports: CreateCopy() - Create dataset by "
+                              "copying "
+                              "another.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
                 printf("  Supports: Virtual IO - eg. /vsimem/\n"); /*ok*/
             if (CSLFetchNameValue(papszMD, GDAL_DMD_CREATIONDATATYPES))
@@ -3359,17 +3359,18 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                        CSLFetchNameValue(papszMD,
                                          GDAL_DMD_CREATIONFIELDDATASUBTYPES));
             if (CPLFetchBool(papszMD, GDAL_DCAP_NOTNULL_FIELDS, false))
-                printf("  Supports: Creating fields with NOT NULL "
-                       "constraint.\n"); /*ok*/
+                printf(/*ok*/ "  Supports: Creating fields with NOT NULL "
+                              "constraint.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_UNIQUE_FIELDS, false))
-                printf(
-                    "  Supports: Creating fields with UNIQUE constraint.\n"); /*ok*/
+                printf(/*ok*/
+                       "  Supports: Creating fields with UNIQUE constraint.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_DEFAULT_FIELDS, false))
-                printf(
-                    "  Supports: Creating fields with DEFAULT values.\n"); /*ok*/
+                printf(/*ok*/
+                       "  Supports: Creating fields with DEFAULT values.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, false))
-                printf("  Supports: Creating geometry fields with NOT NULL "
-                       "constraint.\n"); /*ok*/
+                /*ok*/ printf(
+                    "  Supports: Creating geometry fields with NOT NULL "
+                    "constraint.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_NONSPATIAL, false))
                 printf("  No support for geometries.\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_FEATURE_STYLES, false))
@@ -3459,23 +3460,26 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         {
             printf("Generic GDAL utility command options:\n");       /*ok*/
             printf("  --version: report version of GDAL in use.\n"); /*ok*/
-            printf("  --build: report detailed information about GDAL in "
-                   "use.\n");                                   /*ok*/
+            /*ok*/ printf(
+                "  --build: report detailed information about GDAL in "
+                "use.\n");
             printf("  --license: report GDAL license info.\n"); /*ok*/
-            printf(
-                "  --formats: report all configured format drivers.\n"); /*ok*/
-            printf("  --format [format]: details of one format.\n");     /*ok*/
-            printf("  --optfile filename: expand an option file into the "
-                   "argument list.\n"); /*ok*/
-            printf(
-                "  --config key value: set system configuration option.\n"); /*ok*/
+            printf(                                             /*ok*/
+                   "  --formats: report all configured format drivers.\n"); /*ok*/
+            printf("  --format [format]: details of one format.\n"); /*ok*/
+            /*ok*/ printf(
+                "  --optfile filename: expand an option file into the "
+                "argument list.\n");
+            printf(/*ok*/
+                   "  --config key value: set system configuration option.\n"); /*ok*/
             printf("  --debug [on/off/value]: set debug level.\n"); /*ok*/
-            printf(
-                "  --pause: wait for user input, time to attach debugger\n"); /*ok*/
+            /*ok*/ printf(                                          /*ok*/
+                          "  --pause: wait for user input, time to attach "
+                          "debugger\n");
             printf("  --locale [locale]: install locale for debugging " /*ok*/
                    "(i.e. en_US.UTF-8)\n");
-            printf("  --help-general: report detailed help on general "
-                   "options.\n"); /*ok*/
+            printf("  --help-general: report detailed help on general " /*ok*/
+                   "options.\n");
             CSLDestroy(papszReturn);
             return 0;
         }
