@@ -29,7 +29,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -48,17 +47,17 @@ OGRCurve::~OGRCurve() = default;
 /*                       OGRCurve( const OGRCurve& )                    */
 /************************************************************************/
 
-OGRCurve::OGRCurve( const OGRCurve& ) = default;
+OGRCurve::OGRCurve(const OGRCurve &) = default;
 
 /************************************************************************/
 /*                       operator=( const OGRCurve& )                   */
 /************************************************************************/
 
-OGRCurve& OGRCurve::operator=( const OGRCurve& other )
+OGRCurve &OGRCurve::operator=(const OGRCurve &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
-        OGRGeometry::operator=( other );
+        OGRGeometry::operator=(other);
     }
     return *this;
 }
@@ -95,16 +94,17 @@ int OGRCurve::get_IsClosed() const
 
 {
     OGRPoint oStartPoint;
-    StartPoint( &oStartPoint );
+    StartPoint(&oStartPoint);
 
     OGRPoint oEndPoint;
-    EndPoint( &oEndPoint );
+    EndPoint(&oEndPoint);
 
     if (oStartPoint.Is3D() && oEndPoint.Is3D())
     {
         // XYZ type
-        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
-            && oStartPoint.getZ() == oEndPoint.getZ())
+        if (oStartPoint.getX() == oEndPoint.getX() &&
+            oStartPoint.getY() == oEndPoint.getY() &&
+            oStartPoint.getZ() == oEndPoint.getZ())
         {
             return TRUE;
         }
@@ -122,7 +122,8 @@ int OGRCurve::get_IsClosed() const
     else
     {
         // XY type
-        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY() )
+        if (oStartPoint.getX() == oEndPoint.getX() &&
+            oStartPoint.getY() == oEndPoint.getY())
             return TRUE;
         else
             return FALSE;
@@ -181,7 +182,8 @@ int OGRCurve::get_IsClosed() const
  *
  * \brief Return a linestring from a curve geometry.
  *
- * The returned geometry is a new instance whose ownership belongs to the caller.
+ * The returned geometry is a new instance whose ownership belongs to the
+ * caller.
  *
  * If the dfMaxAngleStepSizeDegrees is zero, then a default value will be
  * used.  This is currently 4 degrees unless the user has overridden the
@@ -275,19 +277,18 @@ int OGRCurve::get_IsClosed() const
 OGRBoolean OGRCurve::IsConvex() const
 {
     bool bRet = true;
-    OGRPointIterator* poPointIter = getPointIterator();
+    OGRPointIterator *poPointIter = getPointIterator();
     OGRPoint p1;
     OGRPoint p2;
-    if( poPointIter->getNextPoint(&p1) &&
-        poPointIter->getNextPoint(&p2) )
+    if (poPointIter->getNextPoint(&p1) && poPointIter->getNextPoint(&p2))
     {
         OGRPoint p3;
-        while( poPointIter->getNextPoint(&p3) )
+        while (poPointIter->getNextPoint(&p3))
         {
             const double crossproduct =
                 (p2.getX() - p1.getX()) * (p3.getY() - p2.getY()) -
                 (p2.getY() - p1.getY()) * (p3.getX() - p2.getX());
-            if( crossproduct > 0 )
+            if (crossproduct > 0)
             {
                 bRet = false;
                 break;
@@ -318,12 +319,12 @@ OGRBoolean OGRCurve::IsConvex() const
  * @since GDAL 2.0
  */
 
-OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
+OGRCompoundCurve *OGRCurve::CastToCompoundCurve(OGRCurve *poCurve)
 {
-    OGRCompoundCurve* poCC = new OGRCompoundCurve();
-    if( wkbFlatten(poCurve->getGeometryType()) == wkbLineString )
+    OGRCompoundCurve *poCC = new OGRCompoundCurve();
+    if (wkbFlatten(poCurve->getGeometryType()) == wkbLineString)
         poCurve = CastToLineString(poCurve);
-    if( !poCurve->IsEmpty() && poCC->addCurveDirectly(poCurve) != OGRERR_NONE )
+    if (!poCurve->IsEmpty() && poCC->addCurveDirectly(poCurve) != OGRERR_NONE)
     {
         delete poCC;
         delete poCurve;
@@ -349,7 +350,7 @@ OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
  * @since GDAL 2.0
  */
 
-OGRLineString* OGRCurve::CastToLineString( OGRCurve* poCurve )
+OGRLineString *OGRCurve::CastToLineString(OGRCurve *poCurve)
 {
     OGRCurveCasterToLineString pfn = poCurve->GetCasterToLineString();
     return pfn(poCurve);
@@ -371,7 +372,7 @@ OGRLineString* OGRCurve::CastToLineString( OGRCurve* poCurve )
  * @since GDAL 2.0
  */
 
-OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
+OGRLinearRing *OGRCurve::CastToLinearRing(OGRCurve *poCurve)
 {
     OGRCurveCasterToLinearRing pfn = poCurve->GetCasterToLinearRing();
     return pfn(poCurve);
@@ -392,7 +393,7 @@ OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
  * @since GDAL 2.0
  */
 
-int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
+int OGRCurve::ContainsPoint(CPL_UNUSED const OGRPoint *p) const
 {
     return -1;
 }
@@ -412,7 +413,7 @@ int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
  * @since GDAL 2.3
  */
 
-int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
+int OGRCurve::IntersectsPoint(CPL_UNUSED const OGRPoint *p) const
 {
     return -1;
 }
@@ -444,7 +445,7 @@ OGRPointIterator::~OGRPointIterator() = default;
  *
  * @since GDAL 2.0
  */
-void OGRPointIterator::destroy( OGRPointIterator* poIter )
+void OGRPointIterator::destroy(OGRPointIterator *poIter)
 {
     delete poIter;
 }
@@ -453,13 +454,29 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 /*                     OGRSimpleCurve::Iterator                         */
 /************************************************************************/
 
-void OGRIteratedPoint::setX( double xIn ) { OGRPoint::setX(xIn); m_poCurve->setPoint(m_nPos, xIn, getY()); }
+void OGRIteratedPoint::setX(double xIn)
+{
+    OGRPoint::setX(xIn);
+    m_poCurve->setPoint(m_nPos, xIn, getY());
+}
 
-void OGRIteratedPoint::setY( double yIn ) { OGRPoint::setY(yIn); m_poCurve->setPoint(m_nPos, getX(), yIn); }
+void OGRIteratedPoint::setY(double yIn)
+{
+    OGRPoint::setY(yIn);
+    m_poCurve->setPoint(m_nPos, getX(), yIn);
+}
 
-void OGRIteratedPoint::setZ( double zIn ) { OGRPoint::setZ(zIn); m_poCurve->setZ(m_nPos, zIn); }
+void OGRIteratedPoint::setZ(double zIn)
+{
+    OGRPoint::setZ(zIn);
+    m_poCurve->setZ(m_nPos, zIn);
+}
 
-void OGRIteratedPoint::setM( double mIn ) { OGRPoint::setM(mIn); m_poCurve->setM(m_nPos, mIn); }
+void OGRIteratedPoint::setM(double mIn)
+{
+    OGRPoint::setM(mIn);
+    m_poCurve->setM(m_nPos, mIn);
+}
 
 struct OGRSimpleCurve::Iterator::Private
 {
@@ -472,25 +489,26 @@ struct OGRSimpleCurve::Iterator::Private
 
 void OGRSimpleCurve::Iterator::update()
 {
-    if( !m_poPrivate->m_bUpdateChecked )
+    if (!m_poPrivate->m_bUpdateChecked)
     {
         OGRPoint oPointBefore;
-        m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &oPointBefore);
-        if( oPointBefore != m_poPrivate->m_oPoint )
+        m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos,
+                                                  &oPointBefore);
+        if (oPointBefore != m_poPrivate->m_oPoint)
         {
-            if( m_poPrivate->m_oPoint.Is3D() )
+            if (m_poPrivate->m_oPoint.Is3D())
                 m_poPrivate->m_oPoint.m_poCurve->set3D(true);
-            if( m_poPrivate->m_oPoint.IsMeasured() )
+            if (m_poPrivate->m_oPoint.IsMeasured())
                 m_poPrivate->m_oPoint.m_poCurve->setMeasured(true);
-            m_poPrivate->m_oPoint.m_poCurve->setPoint(m_poPrivate->m_oPoint.m_nPos,
-                                                      &m_poPrivate->m_oPoint);
+            m_poPrivate->m_oPoint.m_poCurve->setPoint(
+                m_poPrivate->m_oPoint.m_nPos, &m_poPrivate->m_oPoint);
         }
         m_poPrivate->m_bUpdateChecked = true;
     }
 }
 
-OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
-    m_poPrivate(new Private())
+OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve *poSelf, int nPos)
+    : m_poPrivate(new Private())
 {
     m_poPrivate->m_oPoint.m_poCurve = poSelf;
     m_poPrivate->m_oPoint.m_nPos = nPos;
@@ -501,22 +519,23 @@ OGRSimpleCurve::Iterator::~Iterator()
     update();
 }
 
-OGRIteratedPoint& OGRSimpleCurve::Iterator::operator*()
+OGRIteratedPoint &OGRSimpleCurve::Iterator::operator*()
 {
     update();
-    m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos,
+                                              &m_poPrivate->m_oPoint);
     m_poPrivate->m_bUpdateChecked = false;
     return m_poPrivate->m_oPoint;
 }
 
-OGRSimpleCurve::Iterator& OGRSimpleCurve::Iterator::operator++()
+OGRSimpleCurve::Iterator &OGRSimpleCurve::Iterator::operator++()
 {
     update();
     ++m_poPrivate->m_oPoint.m_nPos;
     return *this;
 }
 
-bool OGRSimpleCurve::Iterator::operator!=(const Iterator& it) const
+bool OGRSimpleCurve::Iterator::operator!=(const Iterator &it) const
 {
     return m_poPrivate->m_oPoint.m_nPos != it.m_poPrivate->m_oPoint.m_nPos;
 }
@@ -541,12 +560,13 @@ struct OGRSimpleCurve::ConstIterator::Private
     Private() = default;
 
     mutable OGRIteratedPoint m_oPoint{};
-    const OGRSimpleCurve* m_poSelf = nullptr;
+    const OGRSimpleCurve *m_poSelf = nullptr;
     int m_nPos = 0;
 };
 
-OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int nPos):
-    m_poPrivate(new Private())
+OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve *poSelf,
+                                             int nPos)
+    : m_poPrivate(new Private())
 {
     m_poPrivate->m_poSelf = poSelf;
     m_poPrivate->m_nPos = nPos;
@@ -554,19 +574,20 @@ OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int n
 
 OGRSimpleCurve::ConstIterator::~ConstIterator() = default;
 
-const OGRPoint& OGRSimpleCurve::ConstIterator::operator*() const
+const OGRPoint &OGRSimpleCurve::ConstIterator::operator*() const
 {
-    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos,
+                                    &m_poPrivate->m_oPoint);
     return m_poPrivate->m_oPoint;
 }
 
-OGRSimpleCurve::ConstIterator& OGRSimpleCurve::ConstIterator::operator++()
+OGRSimpleCurve::ConstIterator &OGRSimpleCurve::ConstIterator::operator++()
 {
     ++m_poPrivate->m_nPos;
     return *this;
 }
 
-bool OGRSimpleCurve::ConstIterator::operator!=(const ConstIterator& it) const
+bool OGRSimpleCurve::ConstIterator::operator!=(const ConstIterator &it) const
 {
     return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
 }
@@ -589,30 +610,31 @@ struct OGRCurve::ConstIterator::Private
 {
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
-    Private(Private&&) = delete;
-    Private& operator=(Private&&) = default;
+    Private(Private &&) = delete;
+    Private &operator=(Private &&) = default;
 
     OGRPoint m_oPoint{};
     std::unique_ptr<OGRPointIterator> m_poIterator{};
 };
 
-OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
-    m_poPrivate(new Private())
+OGRCurve::ConstIterator::ConstIterator(const OGRCurve *poSelf, bool bStart)
+    : m_poPrivate(new Private())
 {
-    if( bStart )
+    if (bStart)
     {
         m_poPrivate->m_poIterator.reset(poSelf->getPointIterator());
-        if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+        if (!m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint))
             m_poPrivate->m_poIterator.reset();
     }
 }
 
-OGRCurve::ConstIterator::ConstIterator(ConstIterator&& oOther) noexcept:
-    m_poPrivate(std::move(oOther.m_poPrivate))
+OGRCurve::ConstIterator::ConstIterator(ConstIterator &&oOther) noexcept
+    : m_poPrivate(std::move(oOther.m_poPrivate))
 {
 }
 
-OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator=(ConstIterator&& oOther)
+OGRCurve::ConstIterator &
+OGRCurve::ConstIterator::operator=(ConstIterator &&oOther)
 {
     m_poPrivate = std::move(oOther.m_poPrivate);
     return *this;
@@ -620,21 +642,22 @@ OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator=(ConstIterator&& oOth
 
 OGRCurve::ConstIterator::~ConstIterator() = default;
 
-const OGRPoint& OGRCurve::ConstIterator::operator*() const
+const OGRPoint &OGRCurve::ConstIterator::operator*() const
 {
     return m_poPrivate->m_oPoint;
 }
 
-OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator++()
+OGRCurve::ConstIterator &OGRCurve::ConstIterator::operator++()
 {
-    if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+    if (!m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint))
         m_poPrivate->m_poIterator.reset();
     return *this;
 }
 
-bool OGRCurve::ConstIterator::operator!=(const ConstIterator& it) const
+bool OGRCurve::ConstIterator::operator!=(const ConstIterator &it) const
 {
-    return m_poPrivate->m_poIterator.get() != it.m_poPrivate->m_poIterator.get();
+    return m_poPrivate->m_poIterator.get() !=
+           it.m_poPrivate->m_poIterator.get();
 }
 
 OGRCurve::ConstIterator OGRCurve::begin() const
@@ -674,7 +697,7 @@ int OGRCurve::isClockwise() const
 
 {
     const int nPointCount = getNumPoints();
-    if( nPointCount < 3 )
+    if (nPointCount < 3)
         return TRUE;
 
     bool bUseFallback = false;
@@ -689,18 +712,18 @@ int OGRCurve::isClockwise() const
     bool bNextPointIsNextSel = false;
     int v = 0;
 
-    for( int i = 1; i < nPointCount - 1; i++ )
+    for (int i = 1; i < nPointCount - 1; i++)
     {
-         ++oIter;
+        ++oIter;
         OGRPoint oPointCur = *oIter;
-        if( bNextPointIsNextSel )
+        if (bNextPointIsNextSel)
         {
             oPointNextSel = oPointCur;
             bNextPointIsNextSel = false;
         }
-        if( oPointCur.getY() < oPointSel.getY() ||
-            ( oPointCur.getY() == oPointSel.getY() &&
-              oPointCur.getX() > oPointSel.getX() ) )
+        if (oPointCur.getY() < oPointSel.getY() ||
+            (oPointCur.getY() == oPointSel.getY() &&
+             oPointCur.getX() > oPointSel.getX()))
         {
             v = i;
             oPointBeforeSel = oPointBefore;
@@ -708,8 +731,8 @@ int OGRCurve::isClockwise() const
             bUseFallback = false;
             bNextPointIsNextSel = true;
         }
-        else if( oPointCur.getY() == oPointSel.getY() &&
-                oPointCur.getX() == oPointSel.getX() )
+        else if (oPointCur.getY() == oPointSel.getY() &&
+                 oPointCur.getX() == oPointSel.getX())
         {
             // Two vertex with same coordinates are the lowest rightmost
             // vertex.  Cannot use that point as the pivot (#5342).
@@ -719,19 +742,19 @@ int OGRCurve::isClockwise() const
     }
     const OGRPoint oPointN_m2 = *oIter;
 
-    if( bNextPointIsNextSel )
+    if (bNextPointIsNextSel)
     {
         oPointNextSel = oPointN_m2;
     }
 
     // Previous.
-    if( v == 0 )
+    if (v == 0)
     {
         oPointBeforeSel = oPointN_m2;
     }
 
-    if( epsilonEqual(oPointBeforeSel.getX(), oPointSel.getX(), EPSILON) &&
-        epsilonEqual(oPointBeforeSel.getY(), oPointSel.getY(), EPSILON) )
+    if (epsilonEqual(oPointBeforeSel.getX(), oPointSel.getX(), EPSILON) &&
+        epsilonEqual(oPointBeforeSel.getY(), oPointSel.getY(), EPSILON))
     {
         // Don't try to be too clever by retrying with a next point.
         // This can lead to false results as in the case of #3356.
@@ -742,13 +765,13 @@ int OGRCurve::isClockwise() const
     const double dy0 = oPointBeforeSel.getY() - oPointSel.getY();
 
     // Following.
-    if( v + 1 >= nPointCount - 1 )
+    if (v + 1 >= nPointCount - 1)
     {
         oPointNextSel = oStartPoint;
     }
 
-    if( epsilonEqual(oPointNextSel.getX(), oPointSel.getX(), EPSILON) &&
-        epsilonEqual(oPointNextSel.getY(), oPointSel.getY(), EPSILON) )
+    if (epsilonEqual(oPointNextSel.getX(), oPointSel.getX(), EPSILON) &&
+        epsilonEqual(oPointNextSel.getY(), oPointSel.getY(), EPSILON))
     {
         // Don't try to be too clever by retrying with a next point.
         // This can lead to false results as in the case of #3356.
@@ -760,11 +783,11 @@ int OGRCurve::isClockwise() const
 
     const double crossproduct = dx1 * dy0 - dx0 * dy1;
 
-    if( !bUseFallback )
+    if (!bUseFallback)
     {
-        if( crossproduct > 0 )       // CCW
+        if (crossproduct > 0)  // CCW
             return FALSE;
-        else if( crossproduct < 0 )  // CW
+        else if (crossproduct < 0)  // CW
             return TRUE;
     }
 
@@ -778,7 +801,7 @@ int OGRCurve::isClockwise() const
     auto oPointCur = *oIter;
     double dfSum = oStartPoint.getX() * (oPointCur.getY() - oStartPoint.getY());
 
-    for( int i = 1; i < nPointCount-1; i++ )
+    for (int i = 1; i < nPointCount - 1; i++)
     {
         ++oIter;
         auto oPointNext = *oIter;

@@ -40,7 +40,6 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                            OGR_SRSNode()                             */
 /************************************************************************/
@@ -53,12 +52,11 @@
  * with a value of "".  Newly created OGR_SRSNodes have no children.
  */
 
-OGR_SRSNode::OGR_SRSNode( const char * pszValueIn ) :
-    pszValue(CPLStrdup(pszValueIn)),
-    papoChildNodes(nullptr),
-    poParent(nullptr),
-    nChildren(0)
-{}
+OGR_SRSNode::OGR_SRSNode(const char *pszValueIn)
+    : pszValue(CPLStrdup(pszValueIn)), papoChildNodes(nullptr),
+      poParent(nullptr), nChildren(0)
+{
+}
 
 /************************************************************************/
 /*                            ~OGR_SRSNode()                            */
@@ -67,7 +65,7 @@ OGR_SRSNode::OGR_SRSNode( const char * pszValueIn ) :
 OGR_SRSNode::~OGR_SRSNode()
 
 {
-    CPLFree( pszValue );
+    CPLFree(pszValue);
 
     ClearChildren();
 }
@@ -82,7 +80,7 @@ OGR_SRSNode::Listener::~Listener() = default;
 /*                           RegisterListener()                         */
 /************************************************************************/
 
-void OGR_SRSNode::RegisterListener(const std::shared_ptr<Listener>& listener)
+void OGR_SRSNode::RegisterListener(const std::shared_ptr<Listener> &listener)
 {
     m_listener = listener;
 }
@@ -94,7 +92,7 @@ void OGR_SRSNode::RegisterListener(const std::shared_ptr<Listener>& listener)
 void OGR_SRSNode::notifyChange()
 {
     auto locked = m_listener.lock();
-    if( locked )
+    if (locked)
     {
         locked->notifyChange(this);
     }
@@ -109,12 +107,12 @@ void OGR_SRSNode::notifyChange()
 void OGR_SRSNode::ClearChildren()
 
 {
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
         delete papoChildNodes[i];
     }
 
-    CPLFree( papoChildNodes );
+    CPLFree(papoChildNodes);
 
     papoChildNodes = nullptr;
     nChildren = 0;
@@ -146,10 +144,10 @@ void OGR_SRSNode::ClearChildren()
  * child.
  */
 
-OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
+OGR_SRSNode *OGR_SRSNode::GetChild(int iChild)
 
 {
-    if( iChild < 0 || iChild >= nChildren )
+    if (iChild < 0 || iChild >= nChildren)
         return nullptr;
 
     return papoChildNodes[iChild];
@@ -165,10 +163,10 @@ OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
  * child.
  */
 
-const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
+const OGR_SRSNode *OGR_SRSNode::GetChild(int iChild) const
 
 {
-    if( iChild < 0 || iChild >= nChildren )
+    if (iChild < 0 || iChild >= nChildren)
         return nullptr;
 
     return papoChildNodes[iChild];
@@ -195,30 +193,30 @@ const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
  * @return a pointer to the node found, or NULL if none.
  */
 
-OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
+OGR_SRSNode *OGR_SRSNode::GetNode(const char *pszName)
 
 {
-    if( nChildren > 0 && EQUAL(pszName, pszValue) )
+    if (nChildren > 0 && EQUAL(pszName, pszValue))
         return this;
 
-/* -------------------------------------------------------------------- */
-/*      First we check the immediate children so we will get an         */
-/*      immediate child in preference to a subchild.                    */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nChildren; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      First we check the immediate children so we will get an         */
+    /*      immediate child in preference to a subchild.                    */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < nChildren; i++)
     {
-        if( EQUAL(papoChildNodes[i]->pszValue, pszName)
-            && papoChildNodes[i]->nChildren > 0 )
+        if (EQUAL(papoChildNodes[i]->pszValue, pszName) &&
+            papoChildNodes[i]->nChildren > 0)
             return papoChildNodes[i];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Then get each child to check their children.                    */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nChildren; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Then get each child to check their children.                    */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < nChildren; i++)
     {
-        OGR_SRSNode *poNode = papoChildNodes[i]->GetNode( pszName );
-        if( poNode != nullptr )
+        OGR_SRSNode *poNode = papoChildNodes[i]->GetNode(pszName);
+        if (poNode != nullptr)
             return poNode;
     }
 
@@ -242,10 +240,10 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
  * @return a pointer to the node found, or NULL if none.
  */
 
-const OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName ) const
+const OGR_SRSNode *OGR_SRSNode::GetNode(const char *pszName) const
 
 {
-    return const_cast<OGR_SRSNode *>(this)->GetNode( pszName );
+    return const_cast<OGR_SRSNode *>(this)->GetNode(pszName);
 }
 
 /************************************************************************/
@@ -262,10 +260,10 @@ const OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName ) const
  * @param poNew the node to add as a child.
  */
 
-void OGR_SRSNode::AddChild( OGR_SRSNode * poNew )
+void OGR_SRSNode::AddChild(OGR_SRSNode *poNew)
 
 {
-    InsertChild( poNew, nChildren );
+    InsertChild(poNew, nChildren);
 }
 
 /************************************************************************/
@@ -285,18 +283,18 @@ void OGR_SRSNode::AddChild( OGR_SRSNode * poNew )
  * @param iChild position to insert, use 0 to insert at the beginning.
  */
 
-void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
+void OGR_SRSNode::InsertChild(OGR_SRSNode *poNew, int iChild)
 
 {
-    if( iChild > nChildren )
+    if (iChild > nChildren)
         iChild = nChildren;
 
     nChildren++;
     papoChildNodes = static_cast<OGR_SRSNode **>(
-        CPLRealloc( papoChildNodes, sizeof(void*) * nChildren ) );
+        CPLRealloc(papoChildNodes, sizeof(void *) * nChildren));
 
-    memmove( papoChildNodes + iChild + 1, papoChildNodes + iChild,
-             sizeof(void*) * (nChildren - iChild - 1) );
+    memmove(papoChildNodes + iChild + 1, papoChildNodes + iChild,
+            sizeof(void *) * (nChildren - iChild - 1));
 
     papoChildNodes[iChild] = poNew;
     poNew->poParent = this;
@@ -318,16 +316,16 @@ void OGR_SRSNode::InsertChild( OGR_SRSNode * poNew, int iChild )
  * @param iChild the index of the child.
  */
 
-void OGR_SRSNode::DestroyChild( int iChild )
+void OGR_SRSNode::DestroyChild(int iChild)
 
 {
-    if( iChild < 0 || iChild >= nChildren )
+    if (iChild < 0 || iChild >= nChildren)
         return;
 
     delete papoChildNodes[iChild];
-    while( iChild < nChildren-1 )
+    while (iChild < nChildren - 1)
     {
-        papoChildNodes[iChild] = papoChildNodes[iChild+1];
+        papoChildNodes[iChild] = papoChildNodes[iChild + 1];
         iChild++;
     }
 
@@ -350,12 +348,12 @@ void OGR_SRSNode::DestroyChild( int iChild )
  * @return the child index, or -1 on failure.
  */
 
-int OGR_SRSNode::FindChild( const char * pszValueIn ) const
+int OGR_SRSNode::FindChild(const char *pszValueIn) const
 
 {
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        if( EQUAL(papoChildNodes[i]->pszValue, pszValueIn) )
+        if (EQUAL(papoChildNodes[i]->pszValue, pszValueIn))
             return i;
     }
 
@@ -386,11 +384,11 @@ int OGR_SRSNode::FindChild( const char * pszValueIn ) const
  * string is duplicated and remains the responsibility of the caller.
  */
 
-void OGR_SRSNode::SetValue( const char * pszNewValue )
+void OGR_SRSNode::SetValue(const char *pszNewValue)
 
 {
-    CPLFree( pszValue );
-    pszValue = CPLStrdup( pszNewValue );
+    CPLFree(pszValue);
+    pszValue = CPLStrdup(pszNewValue);
     notifyChange();
 }
 
@@ -407,11 +405,11 @@ void OGR_SRSNode::SetValue( const char * pszNewValue )
 OGR_SRSNode *OGR_SRSNode::Clone() const
 
 {
-    OGR_SRSNode *poNew = new OGR_SRSNode( pszValue );
+    OGR_SRSNode *poNew = new OGR_SRSNode(pszValue);
 
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        poNew->AddChild( papoChildNodes[i]->Clone() );
+        poNew->AddChild(papoChildNodes[i]->Clone());
     }
     poNew->m_listener = m_listener;
 
@@ -428,37 +426,36 @@ int OGR_SRSNode::NeedsQuoting() const
 
 {
     // Non-terminals are never quoted.
-    if( GetChildCount() != 0 )
+    if (GetChildCount() != 0)
         return FALSE;
 
     // As per bugzilla bug 201, the OGC spec says the authority code
     // needs to be quoted even though it appears well behaved.
-    if( poParent != nullptr && EQUAL(poParent->GetValue(), "AUTHORITY") )
+    if (poParent != nullptr && EQUAL(poParent->GetValue(), "AUTHORITY"))
         return TRUE;
 
     // As per bugzilla bug 294, the OGC spec says the direction
     // values for the AXIS keywords should *not* be quoted.
-    if( poParent != nullptr && EQUAL(poParent->GetValue(), "AXIS")
-        && this != poParent->GetChild(0) )
+    if (poParent != nullptr && EQUAL(poParent->GetValue(), "AXIS") &&
+        this != poParent->GetChild(0))
         return FALSE;
 
-    if( poParent != nullptr && EQUAL(poParent->GetValue(), "CS")
-        && this == poParent->GetChild(0) )
+    if (poParent != nullptr && EQUAL(poParent->GetValue(), "CS") &&
+        this == poParent->GetChild(0))
         return FALSE;
 
     // Strings starting with e or E are not valid numeric values, so they
     // need quoting, like in AXIS["E",EAST]
-    if( (pszValue[0] == 'e' || pszValue[0] == 'E') )
+    if ((pszValue[0] == 'e' || pszValue[0] == 'E'))
         return TRUE;
 
     // Non-numeric tokens are generally quoted while clean numeric values
     // are generally not.
-    for( int i = 0; pszValue[i] != '\0'; i++ )
+    for (int i = 0; pszValue[i] != '\0'; i++)
     {
-        if( (pszValue[i] < '0' || pszValue[i] > '9')
-            && pszValue[i] != '.'
-            && pszValue[i] != '-' && pszValue[i] != '+'
-            && pszValue[i] != 'e' && pszValue[i] != 'E' )
+        if ((pszValue[i] < '0' || pszValue[i] > '9') && pszValue[i] != '.' &&
+            pszValue[i] != '-' && pszValue[i] != '+' && pszValue[i] != 'e' &&
+            pszValue[i] != 'E')
             return TRUE;
     }
 
@@ -481,58 +478,58 @@ int OGR_SRSNode::NeedsQuoting() const
  * is possible error conditions will develop.
  */
 
-OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
+OGRErr OGR_SRSNode::exportToWkt(char **ppszResult) const
 
 {
-/* -------------------------------------------------------------------- */
-/*      Build a list of the WKT format for the children.                */
-/* -------------------------------------------------------------------- */
-    char **papszChildrenWkt = static_cast<char **>(
-        CPLCalloc(sizeof(char*), nChildren + 1) );
+    /* -------------------------------------------------------------------- */
+    /*      Build a list of the WKT format for the children.                */
+    /* -------------------------------------------------------------------- */
+    char **papszChildrenWkt =
+        static_cast<char **>(CPLCalloc(sizeof(char *), nChildren + 1));
     size_t nLength = strlen(pszValue) + 4;
 
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        papoChildNodes[i]->exportToWkt( papszChildrenWkt + i );
+        papoChildNodes[i]->exportToWkt(papszChildrenWkt + i);
         nLength += strlen(papszChildrenWkt[i]) + 1;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate the result string.                                     */
-/* -------------------------------------------------------------------- */
-    *ppszResult = static_cast<char *>( CPLMalloc(nLength) );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate the result string.                                     */
+    /* -------------------------------------------------------------------- */
+    *ppszResult = static_cast<char *>(CPLMalloc(nLength));
     *ppszResult[0] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      Capture this nodes value.  We put it in double quotes if        */
-/*      this is a leaf node, otherwise we assume it is a well formed    */
-/*      node name.                                                      */
-/* -------------------------------------------------------------------- */
-    if( NeedsQuoting() )
+    /* -------------------------------------------------------------------- */
+    /*      Capture this nodes value.  We put it in double quotes if        */
+    /*      this is a leaf node, otherwise we assume it is a well formed    */
+    /*      node name.                                                      */
+    /* -------------------------------------------------------------------- */
+    if (NeedsQuoting())
     {
-        strcat( *ppszResult, "\"" );
-        strcat( *ppszResult, pszValue );  // Should we do quoting?
-        strcat( *ppszResult, "\"" );
+        strcat(*ppszResult, "\"");
+        strcat(*ppszResult, pszValue);  // Should we do quoting?
+        strcat(*ppszResult, "\"");
     }
     else
-        strcat( *ppszResult, pszValue );
+        strcat(*ppszResult, pszValue);
 
-/* -------------------------------------------------------------------- */
-/*      Add the children strings with appropriate brackets and commas.  */
-/* -------------------------------------------------------------------- */
-    if( nChildren > 0 )
-        strcat( *ppszResult, "[" );
+    /* -------------------------------------------------------------------- */
+    /*      Add the children strings with appropriate brackets and commas.  */
+    /* -------------------------------------------------------------------- */
+    if (nChildren > 0)
+        strcat(*ppszResult, "[");
 
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        strcat( *ppszResult, papszChildrenWkt[i] );
-        if( i == nChildren - 1 )
-            strcat( *ppszResult, "]" );
+        strcat(*ppszResult, papszChildrenWkt[i]);
+        if (i == nChildren - 1)
+            strcat(*ppszResult, "]");
         else
-            strcat( *ppszResult, "," );
+            strcat(*ppszResult, ",");
     }
 
-    CSLDestroy( papszChildrenWkt );
+    CSLDestroy(papszChildrenWkt);
 
     return OGRERR_NONE;
 }
@@ -555,73 +552,72 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
  * is possible error conditions will develop.
  */
 
-OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
+OGRErr OGR_SRSNode::exportToPrettyWkt(char **ppszResult, int nDepth) const
 
 {
-/* -------------------------------------------------------------------- */
-/*      Build a list of the WKT format for the children.                */
-/* -------------------------------------------------------------------- */
-    char **papszChildrenWkt = static_cast<char **>(
-        CPLCalloc(sizeof(char*), nChildren + 1) );
+    /* -------------------------------------------------------------------- */
+    /*      Build a list of the WKT format for the children.                */
+    /* -------------------------------------------------------------------- */
+    char **papszChildrenWkt =
+        static_cast<char **>(CPLCalloc(sizeof(char *), nChildren + 1));
     size_t nLength = strlen(pszValue) + 4;
 
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        papoChildNodes[i]->exportToPrettyWkt( papszChildrenWkt + i,
-                                              nDepth + 1);
-        nLength += strlen(papszChildrenWkt[i]) + 2 + nDepth*4;
+        papoChildNodes[i]->exportToPrettyWkt(papszChildrenWkt + i, nDepth + 1);
+        nLength += strlen(papszChildrenWkt[i]) + 2 + nDepth * 4;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate the result string.                                     */
-/* -------------------------------------------------------------------- */
-    *ppszResult = static_cast<char *>( CPLMalloc(nLength) );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate the result string.                                     */
+    /* -------------------------------------------------------------------- */
+    *ppszResult = static_cast<char *>(CPLMalloc(nLength));
     *ppszResult[0] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      Capture this nodes value.  We put it in double quotes if        */
-/*      this is a leaf node, otherwise we assume it is a well formed    */
-/*      node name.                                                      */
-/* -------------------------------------------------------------------- */
-    if( NeedsQuoting() )
+    /* -------------------------------------------------------------------- */
+    /*      Capture this nodes value.  We put it in double quotes if        */
+    /*      this is a leaf node, otherwise we assume it is a well formed    */
+    /*      node name.                                                      */
+    /* -------------------------------------------------------------------- */
+    if (NeedsQuoting())
     {
-        strcat( *ppszResult, "\"" );
-        strcat( *ppszResult, pszValue );  // Should we do quoting?
-        strcat( *ppszResult, "\"" );
+        strcat(*ppszResult, "\"");
+        strcat(*ppszResult, pszValue);  // Should we do quoting?
+        strcat(*ppszResult, "\"");
     }
     else
     {
-        strcat( *ppszResult, pszValue );
+        strcat(*ppszResult, pszValue);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Add the children strings with appropriate brackets and commas.  */
-/* -------------------------------------------------------------------- */
-    if( nChildren > 0 )
-        strcat( *ppszResult, "[" );
+    /* -------------------------------------------------------------------- */
+    /*      Add the children strings with appropriate brackets and commas.  */
+    /* -------------------------------------------------------------------- */
+    if (nChildren > 0)
+        strcat(*ppszResult, "[");
 
-    for( int i = 0; i < nChildren; i++ )
+    for (int i = 0; i < nChildren; i++)
     {
-        if( papoChildNodes[i]->GetChildCount() > 0 )
+        if (papoChildNodes[i]->GetChildCount() > 0)
         {
-            strcat( *ppszResult, "\n" );
-            for( int j = 0; j < 4*nDepth; j++ )
-                strcat( *ppszResult, " " );
+            strcat(*ppszResult, "\n");
+            for (int j = 0; j < 4 * nDepth; j++)
+                strcat(*ppszResult, " ");
         }
-        strcat( *ppszResult, papszChildrenWkt[i] );
-        if( i < nChildren-1 )
-            strcat( *ppszResult, "," );
+        strcat(*ppszResult, papszChildrenWkt[i]);
+        if (i < nChildren - 1)
+            strcat(*ppszResult, ",");
     }
 
-    if( nChildren > 0 )
+    if (nChildren > 0)
     {
-        if( (*ppszResult)[strlen(*ppszResult)-1] == ',' )
-            (*ppszResult)[strlen(*ppszResult)-1] = '\0';
+        if ((*ppszResult)[strlen(*ppszResult) - 1] == ',')
+            (*ppszResult)[strlen(*ppszResult) - 1] = '\0';
 
-        strcat( *ppszResult, "]" );
+        strcat(*ppszResult, "]");
     }
 
-    CSLDestroy( papszChildrenWkt );
+    CSLDestroy(papszChildrenWkt);
 
     return OGRERR_NONE;
 }
@@ -647,11 +643,11 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
  * @deprecated GDAL 2.3. Use importFromWkt(const char**) instead.
  */
 
-OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
+OGRErr OGR_SRSNode::importFromWkt(char **ppszInput)
 
 {
     int nNodes = 0;
-    return importFromWkt( const_cast<const char**>(ppszInput), 0, &nNodes );
+    return importFromWkt(const_cast<const char **>(ppszInput), 0, &nNodes);
 }
 
 /**
@@ -672,23 +668,23 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
  * @since GDAL 2.3
  */
 
-OGRErr OGR_SRSNode::importFromWkt( const char ** ppszInput )
+OGRErr OGR_SRSNode::importFromWkt(const char **ppszInput)
 
 {
     int nNodes = 0;
-    return importFromWkt( ppszInput, 0, &nNodes );
+    return importFromWkt(ppszInput, 0, &nNodes);
 }
 
-OGRErr OGR_SRSNode::importFromWkt( const char **ppszInput, int nRecLevel,
-                                   int* pnNodes )
+OGRErr OGR_SRSNode::importFromWkt(const char **ppszInput, int nRecLevel,
+                                  int *pnNodes)
 
 {
     // Sanity checks.
-    if( nRecLevel == 10 )
+    if (nRecLevel == 10)
     {
         return OGRERR_CORRUPT_DATA;
     }
-    if( *pnNodes == 1000 )
+    if (*pnNodes == 1000)
     {
         return OGRERR_CORRUPT_DATA;
     }
@@ -696,35 +692,35 @@ OGRErr OGR_SRSNode::importFromWkt( const char **ppszInput, int nRecLevel,
     const char *pszInput = *ppszInput;
     bool bInQuotedString = false;
 
-/* -------------------------------------------------------------------- */
-/*      Clear any existing children of this node.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Clear any existing children of this node.                       */
+    /* -------------------------------------------------------------------- */
     ClearChildren();
 
-/* -------------------------------------------------------------------- */
-/*      Read the ``value'' for this node.                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the ``value'' for this node.                               */
+    /* -------------------------------------------------------------------- */
     {
-        char szToken[512]; // do not initialize whole buffer. significant overhead
+        char szToken[512];  // do not initialize whole buffer. significant
+                            // overhead
         size_t nTokenLen = 0;
         szToken[0] = '\0';
 
-        while( *pszInput != '\0' &&
-               nTokenLen + 1 < sizeof(szToken) )
+        while (*pszInput != '\0' && nTokenLen + 1 < sizeof(szToken))
         {
-            if( *pszInput == '"' )
+            if (*pszInput == '"')
             {
                 bInQuotedString = !bInQuotedString;
             }
-            else if( !bInQuotedString
-                  && (*pszInput == '[' || *pszInput == ']' || *pszInput == ','
-                      || *pszInput == '(' || *pszInput == ')' ) )
+            else if (!bInQuotedString &&
+                     (*pszInput == '[' || *pszInput == ']' ||
+                      *pszInput == ',' || *pszInput == '(' || *pszInput == ')'))
             {
                 break;
             }
-            else if( !bInQuotedString
-                     && (*pszInput == ' ' || *pszInput == '\t'
-                         || *pszInput == 10 || *pszInput == 13) )
+            else if (!bInQuotedString &&
+                     (*pszInput == ' ' || *pszInput == '\t' ||
+                      *pszInput == 10 || *pszInput == 13))
             {
                 // Skip over whitespace.
             }
@@ -736,44 +732,42 @@ OGRErr OGR_SRSNode::importFromWkt( const char **ppszInput, int nRecLevel,
             pszInput++;
         }
 
-        if( *pszInput == '\0' || nTokenLen == sizeof(szToken) - 1 )
+        if (*pszInput == '\0' || nTokenLen == sizeof(szToken) - 1)
             return OGRERR_CORRUPT_DATA;
 
         szToken[nTokenLen++] = '\0';
-        SetValue( szToken );
+        SetValue(szToken);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read children, if we have a sublist.                            */
-/* -------------------------------------------------------------------- */
-    if( *pszInput == '[' || *pszInput == '(' )
+    /* -------------------------------------------------------------------- */
+    /*      Read children, if we have a sublist.                            */
+    /* -------------------------------------------------------------------- */
+    if (*pszInput == '[' || *pszInput == '(')
     {
         do
         {
-            pszInput++; // Skip bracket or comma.
+            pszInput++;  // Skip bracket or comma.
 
             OGR_SRSNode *poNewChild = new OGR_SRSNode();
             poNewChild->m_listener = m_listener;
 
             (*pnNodes)++;
             const OGRErr eErr =
-                poNewChild->importFromWkt(
-                    &pszInput,
-                    nRecLevel + 1, pnNodes );
-            if( eErr != OGRERR_NONE )
+                poNewChild->importFromWkt(&pszInput, nRecLevel + 1, pnNodes);
+            if (eErr != OGRERR_NONE)
             {
                 delete poNewChild;
                 return eErr;
             }
 
-            AddChild( poNewChild );
+            AddChild(poNewChild);
 
             // Swallow whitespace.
-            while( isspace(*pszInput) )
+            while (isspace(*pszInput))
                 pszInput++;
-        } while( *pszInput == ',' );
+        } while (*pszInput == ',');
 
-        if( *pszInput != ')' && *pszInput != ']' )
+        if (*pszInput != ')' && *pszInput != ']')
             return OGRERR_CORRUPT_DATA;
 
         pszInput++;
@@ -798,49 +792,49 @@ OGRErr OGR_SRSNode::importFromWkt( const char **ppszInput, int nRecLevel,
 void OGR_SRSNode::MakeValueSafe()
 
 {
-/* -------------------------------------------------------------------- */
-/*      First process subnodes.                                         */
-/* -------------------------------------------------------------------- */
-    for( int iChild = 0; iChild < GetChildCount(); iChild++ )
+    /* -------------------------------------------------------------------- */
+    /*      First process subnodes.                                         */
+    /* -------------------------------------------------------------------- */
+    for (int iChild = 0; iChild < GetChildCount(); iChild++)
     {
         GetChild(iChild)->MakeValueSafe();
     }
 
-/* -------------------------------------------------------------------- */
-/*      Skip numeric nodes.                                             */
-/* -------------------------------------------------------------------- */
-    if( (pszValue[0] >= '0' && pszValue[0] <= '9') || pszValue[0] != '.' )
+    /* -------------------------------------------------------------------- */
+    /*      Skip numeric nodes.                                             */
+    /* -------------------------------------------------------------------- */
+    if ((pszValue[0] >= '0' && pszValue[0] <= '9') || pszValue[0] != '.')
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Translate non-alphanumeric values to underscores.               */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; pszValue[i] != '\0'; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Translate non-alphanumeric values to underscores.               */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; pszValue[i] != '\0'; i++)
     {
-        if( !(pszValue[i] >= 'A' && pszValue[i] <= 'Z')
-            && !(pszValue[i] >= 'a' && pszValue[i] <= 'z')
-            && !(pszValue[i] >= '0' && pszValue[i] <= '9') )
+        if (!(pszValue[i] >= 'A' && pszValue[i] <= 'Z') &&
+            !(pszValue[i] >= 'a' && pszValue[i] <= 'z') &&
+            !(pszValue[i] >= '0' && pszValue[i] <= '9'))
         {
             pszValue[i] = '_';
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Remove repeated and trailing underscores.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Remove repeated and trailing underscores.                       */
+    /* -------------------------------------------------------------------- */
     int j = 0;
-    for( int i = 1; pszValue[i] != '\0'; i++ )
+    for (int i = 1; pszValue[i] != '\0'; i++)
     {
-        if( pszValue[j] == '_' && pszValue[i] == '_' )
+        if (pszValue[j] == '_' && pszValue[i] == '_')
             continue;
 
         pszValue[++j] = pszValue[i];
     }
 
-    if( pszValue[j] == '_' )
+    if (pszValue[j] == '_')
         pszValue[j] = '\0';
     else
-        pszValue[j+1] = '\0';
+        pszValue[j + 1] = '\0';
 }
 
 /************************************************************************/
@@ -856,18 +850,18 @@ void OGR_SRSNode::MakeValueSafe()
  * @param pszName the name for nodes that should be removed.
  */
 
-void OGR_SRSNode::StripNodes( const char * pszName )
+void OGR_SRSNode::StripNodes(const char *pszName)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Strip any children matching this name.                          */
-/* -------------------------------------------------------------------- */
-    while( FindChild( pszName ) >= 0 )
-        DestroyChild( FindChild( pszName ) );
+    /* -------------------------------------------------------------------- */
+    /*      Strip any children matching this name.                          */
+    /* -------------------------------------------------------------------- */
+    while (FindChild(pszName) >= 0)
+        DestroyChild(FindChild(pszName));
 
-/* -------------------------------------------------------------------- */
-/*      Recurse                                                         */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < GetChildCount(); i++ )
-        GetChild(i)->StripNodes( pszName );
+    /* -------------------------------------------------------------------- */
+    /*      Recurse                                                         */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < GetChildCount(); i++)
+        GetChild(i)->StripNodes(pszName);
 }

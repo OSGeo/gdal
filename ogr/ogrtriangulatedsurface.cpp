@@ -32,7 +32,6 @@
 #include "ogr_p.h"
 #include "ogr_api.h"
 
-
 /************************************************************************/
 /*                        OGRTriangulatedSurface()                      */
 /************************************************************************/
@@ -54,8 +53,8 @@ OGRTriangulatedSurface::OGRTriangulatedSurface() = default;
  */
 
 OGRTriangulatedSurface::OGRTriangulatedSurface(
-                                        const OGRTriangulatedSurface& other ) :
-    OGRPolyhedralSurface()
+    const OGRTriangulatedSurface &other)
+    : OGRPolyhedralSurface()
 {
     *this = other;
 }
@@ -80,22 +79,22 @@ OGRTriangulatedSurface::~OGRTriangulatedSurface() = default;
  *
  */
 
-OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
-                                        const OGRTriangulatedSurface& other )
+OGRTriangulatedSurface &
+OGRTriangulatedSurface::operator=(const OGRTriangulatedSurface &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
         // We need to do it manually. We cannot rely on the = operator
         // of OGRPolyhedralSurface since it will be confused by a multipolygon
         // of triangles.
-        OGRSurface::operator=( other );
+        OGRSurface::operator=(other);
         empty();
-        set3D( other.Is3D() );
-        setMeasured( other.IsMeasured() );
-        assignSpatialReference( other.getSpatialReference() );
-        for(int i=0;i<other.oMP.nGeomCount;i++)
+        set3D(other.Is3D());
+        setMeasured(other.IsMeasured());
+        assignSpatialReference(other.getSpatialReference());
+        for (int i = 0; i < other.oMP.nGeomCount; i++)
         {
-            OGRTriangulatedSurface::addGeometry( other.oMP.getGeometryRef(i) );
+            OGRTriangulatedSurface::addGeometry(other.oMP.getGeometryRef(i));
         }
     }
     return *this;
@@ -122,9 +121,9 @@ OGRTriangulatedSurface *OGRTriangulatedSurface::clone() const
  *
  */
 
-const char* OGRTriangulatedSurface::getGeometryName() const
+const char *OGRTriangulatedSurface::getGeometryName() const
 {
-    return "TIN" ;
+    return "TIN";
 }
 
 /************************************************************************/
@@ -138,11 +137,11 @@ const char* OGRTriangulatedSurface::getGeometryName() const
 
 OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbTINZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if (flags & OGR_G_MEASURED)
         return wkbTINM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbTINZ;
     else
         return wkbTIN;
@@ -153,10 +152,10 @@ OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRBoolean OGRTriangulatedSurface::isCompatibleSubType(
-                                        OGRwkbGeometryType eSubType ) const
+OGRBoolean
+OGRTriangulatedSurface::isCompatibleSubType(OGRwkbGeometryType eSubType) const
 {
-    return wkbFlatten( eSubType ) == wkbTriangle;
+    return wkbFlatten(eSubType) == wkbTriangle;
 }
 //! @endcond
 
@@ -165,7 +164,7 @@ OGRBoolean OGRTriangulatedSurface::isCompatibleSubType(
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-const char* OGRTriangulatedSurface::getSubGeometryName() const
+const char *OGRTriangulatedSurface::getSubGeometryName() const
 {
     return "TRIANGLE";
 }
@@ -186,19 +185,19 @@ OGRwkbGeometryType OGRTriangulatedSurface::getSubGeometryType() const
 /*                            addGeometry()                             */
 /************************************************************************/
 
-OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
+OGRErr OGRTriangulatedSurface::addGeometry(const OGRGeometry *poNewGeom)
 {
     // If the geometry is a polygon, check if it can be cast as a triangle
-    if( EQUAL(poNewGeom->getGeometryName(),"POLYGON") )
+    if (EQUAL(poNewGeom->getGeometryName(), "POLYGON"))
     {
         OGRErr eErr = OGRERR_FAILURE;
-        OGRTriangle *poTriangle = new OGRTriangle(
-                    *(poNewGeom->toPolygon()), eErr);
+        OGRTriangle *poTriangle =
+            new OGRTriangle(*(poNewGeom->toPolygon()), eErr);
         if (poTriangle != nullptr && eErr == OGRERR_NONE)
         {
             eErr = addGeometryDirectly(poTriangle);
 
-            if( eErr != OGRERR_NONE )
+            if (eErr != OGRERR_NONE)
                 delete poTriangle;
 
             return eErr;
@@ -219,7 +218,7 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
 
 //! @cond Doxygen_Suppress
 OGRPolyhedralSurfaceCastToMultiPolygon
-                        OGRTriangulatedSurface::GetCasterToMultiPolygon() const
+OGRTriangulatedSurface::GetCasterToMultiPolygon() const
 {
     return OGRTriangulatedSurface::CastToMultiPolygonImpl;
 }
@@ -228,13 +227,13 @@ OGRPolyhedralSurfaceCastToMultiPolygon
 /*                         CastToMultiPolygon()                         */
 /************************************************************************/
 
-OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygonImpl(
-                                                    OGRPolyhedralSurface* poTS)
+OGRMultiPolygon *
+OGRTriangulatedSurface::CastToMultiPolygonImpl(OGRPolyhedralSurface *poTS)
 {
     OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon();
     poMultiPolygon->assignSpatialReference(poTS->getSpatialReference());
 
-    for( auto&& poSubGeom: *poTS )
+    for (auto &&poSubGeom : *poTS)
     {
         OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poMultiPolygon->addGeometryDirectly(poPolygon);
@@ -260,13 +259,12 @@ OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygonImpl(
  * @return new geometry.
  */
 
-
-OGRPolyhedralSurface* OGRTriangulatedSurface::CastToPolyhedralSurface(
-                                                OGRTriangulatedSurface* poTS)
+OGRPolyhedralSurface *
+OGRTriangulatedSurface::CastToPolyhedralSurface(OGRTriangulatedSurface *poTS)
 {
-    OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+    OGRPolyhedralSurface *poPS = new OGRPolyhedralSurface();
     poPS->assignSpatialReference(poTS->getSpatialReference());
-    for( auto&& poSubGeom: *poTS )
+    for (auto &&poSubGeom : *poTS)
     {
         OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poPS->oMP.addGeometryDirectly(poPolygon);

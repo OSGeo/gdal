@@ -46,7 +46,6 @@
 
 //! @cond Doxygen_Suppress
 
-
 /************************************************************************/
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
@@ -60,10 +59,9 @@ const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] = {
 /*                          OGRFeatureQuery()                           */
 /************************************************************************/
 
-OGRFeatureQuery::OGRFeatureQuery() :
-    poTargetDefn(nullptr),
-    pSWQExpr(nullptr)
-{}
+OGRFeatureQuery::OGRFeatureQuery() : poTargetDefn(nullptr), pSWQExpr(nullptr)
+{
+}
 
 /************************************************************************/
 /*                          ~OGRFeatureQuery()                          */
@@ -80,14 +78,13 @@ OGRFeatureQuery::~OGRFeatureQuery()
 /************************************************************************/
 
 OGRErr
-OGRFeatureQuery::Compile( OGRLayer *poLayer,
-                          const char * pszExpression,
-                          int bCheck,
-                          swq_custom_func_registrar *poCustomFuncRegistrar )
+OGRFeatureQuery::Compile(OGRLayer *poLayer, const char *pszExpression,
+                         int bCheck,
+                         swq_custom_func_registrar *poCustomFuncRegistrar)
 
 {
-    return Compile(poLayer, poLayer->GetLayerDefn(),
-                   pszExpression, bCheck, poCustomFuncRegistrar);
+    return Compile(poLayer, poLayer->GetLayerDefn(), pszExpression, bCheck,
+                   poCustomFuncRegistrar);
 }
 
 /************************************************************************/
@@ -95,13 +92,13 @@ OGRFeatureQuery::Compile( OGRLayer *poLayer,
 /************************************************************************/
 
 OGRErr
-OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
-                          const char * pszExpression,
-                          int bCheck,
-                          swq_custom_func_registrar *poCustomFuncRegistrar )
+OGRFeatureQuery::Compile(OGRFeatureDefn *poDefn, const char *pszExpression,
+                         int bCheck,
+                         swq_custom_func_registrar *poCustomFuncRegistrar)
 
 {
-    return Compile(nullptr, poDefn, pszExpression, bCheck, poCustomFuncRegistrar);
+    return Compile(nullptr, poDefn, pszExpression, bCheck,
+                   poCustomFuncRegistrar);
 }
 
 /************************************************************************/
@@ -109,27 +106,25 @@ OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /************************************************************************/
 
 OGRErr
-OGRFeatureQuery::Compile( OGRLayer *poLayer,
-                          OGRFeatureDefn *poDefn,
-                          const char * pszExpression,
-                          int bCheck,
-                          swq_custom_func_registrar *poCustomFuncRegistrar )
+OGRFeatureQuery::Compile(OGRLayer *poLayer, OGRFeatureDefn *poDefn,
+                         const char *pszExpression, int bCheck,
+                         swq_custom_func_registrar *poCustomFuncRegistrar)
 {
     // Clear any existing expression.
-    if( pSWQExpr != nullptr )
+    if (pSWQExpr != nullptr)
     {
         delete static_cast<swq_expr_node *>(pSWQExpr);
         pSWQExpr = nullptr;
     }
 
-    const char* pszFIDColumn = nullptr;
+    const char *pszFIDColumn = nullptr;
     bool bMustAddFID = false;
-    if( poLayer != nullptr )
+    if (poLayer != nullptr)
     {
         pszFIDColumn = poLayer->GetFIDColumn();
-        if( pszFIDColumn != nullptr )
+        if (pszFIDColumn != nullptr)
         {
-            if( !EQUAL(pszFIDColumn, "") && !EQUAL(pszFIDColumn, "FID") )
+            if (!EQUAL(pszFIDColumn, "") && !EQUAL(pszFIDColumn, "FID"))
             {
                 bMustAddFID = true;
             }
@@ -137,63 +132,62 @@ OGRFeatureQuery::Compile( OGRLayer *poLayer,
     }
 
     // Build list of fields.
-    const int nFieldCount =
-        poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
-        poDefn->GetGeomFieldCount() + (bMustAddFID ? 1 : 0);
+    const int nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
+                            poDefn->GetGeomFieldCount() + (bMustAddFID ? 1 : 0);
 
-    char **papszFieldNames = static_cast<char **>(
-        CPLMalloc(sizeof(char *) * nFieldCount ));
+    char **papszFieldNames =
+        static_cast<char **>(CPLMalloc(sizeof(char *) * nFieldCount));
     swq_field_type *paeFieldTypes = static_cast<swq_field_type *>(
         CPLMalloc(sizeof(swq_field_type) * nFieldCount));
 
-    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    for (int iField = 0; iField < poDefn->GetFieldCount(); iField++)
     {
         OGRFieldDefn *poField = poDefn->GetFieldDefn(iField);
 
         papszFieldNames[iField] = const_cast<char *>(poField->GetNameRef());
 
-        switch( poField->GetType() )
+        switch (poField->GetType())
         {
-          case OFTInteger:
-          {
-              if( poField->GetSubType() == OFSTBoolean )
-                  paeFieldTypes[iField] = SWQ_BOOLEAN;
-              else
-                  paeFieldTypes[iField] = SWQ_INTEGER;
-              break;
-          }
+            case OFTInteger:
+            {
+                if (poField->GetSubType() == OFSTBoolean)
+                    paeFieldTypes[iField] = SWQ_BOOLEAN;
+                else
+                    paeFieldTypes[iField] = SWQ_INTEGER;
+                break;
+            }
 
-          case OFTInteger64:
-          {
-              if( poField->GetSubType() == OFSTBoolean )
-                  paeFieldTypes[iField] = SWQ_BOOLEAN;
-              else
-                  paeFieldTypes[iField] = SWQ_INTEGER64;
-              break;
-          }
+            case OFTInteger64:
+            {
+                if (poField->GetSubType() == OFSTBoolean)
+                    paeFieldTypes[iField] = SWQ_BOOLEAN;
+                else
+                    paeFieldTypes[iField] = SWQ_INTEGER64;
+                break;
+            }
 
-          case OFTReal:
-            paeFieldTypes[iField] = SWQ_FLOAT;
-            break;
+            case OFTReal:
+                paeFieldTypes[iField] = SWQ_FLOAT;
+                break;
 
-          case OFTString:
-            paeFieldTypes[iField] = SWQ_STRING;
-            break;
+            case OFTString:
+                paeFieldTypes[iField] = SWQ_STRING;
+                break;
 
-          case OFTDate:
-          case OFTTime:
-          case OFTDateTime:
-            paeFieldTypes[iField] = SWQ_TIMESTAMP;
-            break;
+            case OFTDate:
+            case OFTTime:
+            case OFTDateTime:
+                paeFieldTypes[iField] = SWQ_TIMESTAMP;
+                break;
 
-          default:
-            paeFieldTypes[iField] = SWQ_OTHER;
-            break;
+            default:
+                paeFieldTypes[iField] = SWQ_OTHER;
+                break;
         }
     }
 
     int iField = 0;
-    while( iField < SPECIAL_FIELD_COUNT )
+    while (iField < SPECIAL_FIELD_COUNT)
     {
         papszFieldNames[poDefn->GetFieldCount() + iField] =
             const_cast<char *>(SpecialFieldNames[iField]);
@@ -202,41 +196,38 @@ OGRFeatureQuery::Compile( OGRLayer *poLayer,
         ++iField;
     }
 
-    for( iField = 0; iField < poDefn->GetGeomFieldCount(); iField++ )
+    for (iField = 0; iField < poDefn->GetGeomFieldCount(); iField++)
     {
         OGRGeomFieldDefn *poField = poDefn->GetGeomFieldDefn(iField);
         const int iDstField =
             poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT + iField;
 
         papszFieldNames[iDstField] = const_cast<char *>(poField->GetNameRef());
-        if( *papszFieldNames[iDstField] == '\0' )
+        if (*papszFieldNames[iDstField] == '\0')
             papszFieldNames[iDstField] =
                 const_cast<char *>(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
         paeFieldTypes[iDstField] = SWQ_GEOMETRY;
     }
 
-    if( bMustAddFID )
+    if (bMustAddFID)
     {
-        papszFieldNames[nFieldCount-1] =
-            const_cast<char*>(pszFIDColumn);
-        paeFieldTypes[nFieldCount-1] =
+        papszFieldNames[nFieldCount - 1] = const_cast<char *>(pszFIDColumn);
+        paeFieldTypes[nFieldCount - 1] =
             (poLayer != nullptr &&
              poLayer->GetMetadataItem(OLMD_FID64) != nullptr &&
-             EQUAL(poLayer->GetMetadataItem(OLMD_FID64), "YES")) ?
-            SWQ_INTEGER64 : SWQ_INTEGER;
+             EQUAL(poLayer->GetMetadataItem(OLMD_FID64), "YES"))
+                ? SWQ_INTEGER64
+                : SWQ_INTEGER;
     }
 
     // Try to parse.
     poTargetDefn = poDefn;
-    const CPLErr eCPLErr =
-        swq_expr_compile(pszExpression, nFieldCount,
-                         papszFieldNames, paeFieldTypes,
-                         bCheck,
-                         poCustomFuncRegistrar,
-                         reinterpret_cast<swq_expr_node **>(&pSWQExpr));
+    const CPLErr eCPLErr = swq_expr_compile(
+        pszExpression, nFieldCount, papszFieldNames, paeFieldTypes, bCheck,
+        poCustomFuncRegistrar, reinterpret_cast<swq_expr_node **>(&pSWQExpr));
 
     OGRErr eErr = OGRERR_NONE;
-    if( eCPLErr != CE_None )
+    if (eCPLErr != CE_None)
     {
         eErr = OGRERR_CORRUPT_DATA;
         pSWQExpr = nullptr;
@@ -252,12 +243,12 @@ OGRFeatureQuery::Compile( OGRLayer *poLayer,
 /*                    OGRFeatureFetcherFixFieldIndex()                  */
 /************************************************************************/
 
-static int OGRFeatureFetcherFixFieldIndex( OGRFeatureDefn* poFDefn, int nIdx )
+static int OGRFeatureFetcherFixFieldIndex(OGRFeatureDefn *poFDefn, int nIdx)
 {
     /* Nastry trick: if we inserted the FID column as an extra column, it is */
     /* after regular fields, special fields and geometry fields */
-    if( nIdx == poFDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
-                poFDefn->GetGeomFieldCount() )
+    if (nIdx == poFDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
+                    poFDefn->GetGeomFieldCount())
     {
         return poFDefn->GetFieldCount() + SPF_FID;
     }
@@ -268,16 +259,15 @@ static int OGRFeatureFetcherFixFieldIndex( OGRFeatureDefn* poFDefn, int nIdx )
 /*                         OGRFeatureFetcher()                          */
 /************************************************************************/
 
-static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
+static swq_expr_node *OGRFeatureFetcher(swq_expr_node *op, void *pFeatureIn)
 
 {
     OGRFeature *poFeature = static_cast<OGRFeature *>(pFeatureIn);
 
-    if( op->field_type == SWQ_GEOMETRY )
+    if (op->field_type == SWQ_GEOMETRY)
     {
-        const int iField =
-            op->field_index -
-            (poFeature->GetFieldCount() + SPECIAL_FIELD_COUNT);
+        const int iField = op->field_index -
+                           (poFeature->GetFieldCount() + SPECIAL_FIELD_COUNT);
         swq_expr_node *poRetNode =
             new swq_expr_node(poFeature->GetGeomFieldRef(iField));
         return poRetNode;
@@ -287,34 +277,29 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
                                                    op->field_index);
 
     swq_expr_node *poRetNode = nullptr;
-    switch( op->field_type )
+    switch (op->field_type)
     {
-      case SWQ_INTEGER:
-      case SWQ_BOOLEAN:
-        poRetNode = new swq_expr_node(
-            poFeature->GetFieldAsInteger(idx) );
-        break;
+        case SWQ_INTEGER:
+        case SWQ_BOOLEAN:
+            poRetNode = new swq_expr_node(poFeature->GetFieldAsInteger(idx));
+            break;
 
-      case SWQ_INTEGER64:
-        poRetNode = new swq_expr_node(
-            poFeature->GetFieldAsInteger64(idx) );
-        break;
+        case SWQ_INTEGER64:
+            poRetNode = new swq_expr_node(poFeature->GetFieldAsInteger64(idx));
+            break;
 
-      case SWQ_FLOAT:
-        poRetNode = new swq_expr_node(
-            poFeature->GetFieldAsDouble(idx) );
-        break;
+        case SWQ_FLOAT:
+            poRetNode = new swq_expr_node(poFeature->GetFieldAsDouble(idx));
+            break;
 
-      case SWQ_TIMESTAMP:
-        poRetNode = new swq_expr_node(
-            poFeature->GetFieldAsString(idx) );
-        poRetNode->MarkAsTimestamp();
-        break;
+        case SWQ_TIMESTAMP:
+            poRetNode = new swq_expr_node(poFeature->GetFieldAsString(idx));
+            poRetNode->MarkAsTimestamp();
+            break;
 
-      default:
-        poRetNode = new swq_expr_node(
-            poFeature->GetFieldAsString(idx) );
-        break;
+        default:
+            poRetNode = new swq_expr_node(poFeature->GetFieldAsString(idx));
+            break;
     }
 
     poRetNode->is_null = !(poFeature->IsFieldSetAndNotNull(idx));
@@ -326,23 +311,22 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
 /*                              Evaluate()                              */
 /************************************************************************/
 
-int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
+int OGRFeatureQuery::Evaluate(OGRFeature *poFeature)
 
 {
-    if( pSWQExpr == nullptr )
+    if (pSWQExpr == nullptr)
         return FALSE;
 
-    swq_expr_node *poResult =
-        static_cast<swq_expr_node *>(pSWQExpr)->
-            Evaluate(OGRFeatureFetcher, poFeature);
+    swq_expr_node *poResult = static_cast<swq_expr_node *>(pSWQExpr)->Evaluate(
+        OGRFeatureFetcher, poFeature);
 
-    if( poResult == nullptr )
+    if (poResult == nullptr)
         return FALSE;
 
     bool bLogicalResult = false;
-    if( poResult->field_type == SWQ_INTEGER ||
+    if (poResult->field_type == SWQ_INTEGER ||
         poResult->field_type == SWQ_INTEGER64 ||
-        poResult->field_type == SWQ_BOOLEAN )
+        poResult->field_type == SWQ_BOOLEAN)
         bLogicalResult = CPL_TO_BOOL(static_cast<int>(poResult->int_value));
 
     delete poResult;
@@ -354,47 +338,44 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
 /*                            CanUseIndex()                             */
 /************************************************************************/
 
-int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
+int OGRFeatureQuery::CanUseIndex(OGRLayer *poLayer)
 {
     swq_expr_node *psExpr = static_cast<swq_expr_node *>(pSWQExpr);
 
     // Do we have an index on the targeted layer?
-    if( poLayer->GetIndex() == nullptr )
+    if (poLayer->GetIndex() == nullptr)
         return FALSE;
 
     return CanUseIndex(psExpr, poLayer);
 }
 
-int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
-                                  OGRLayer *poLayer )
+int OGRFeatureQuery::CanUseIndex(swq_expr_node *psExpr, OGRLayer *poLayer)
 {
     // Does the expression meet our requirements?
-    if( psExpr == nullptr || psExpr->eNodeType != SNT_OPERATION )
+    if (psExpr == nullptr || psExpr->eNodeType != SNT_OPERATION)
         return FALSE;
 
-    if( (psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
-         psExpr->nSubExprCount == 2 )
+    if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
+        psExpr->nSubExprCount == 2)
     {
         return CanUseIndex(psExpr->papoSubExpr[0], poLayer) &&
                CanUseIndex(psExpr->papoSubExpr[1], poLayer);
     }
 
-    if( !(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN)
-        || psExpr->nSubExprCount < 2 )
+    if (!(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN) ||
+        psExpr->nSubExprCount < 2)
         return FALSE;
 
     swq_expr_node *poColumn = psExpr->papoSubExpr[0];
     swq_expr_node *poValue = psExpr->papoSubExpr[1];
 
-    if( poColumn->eNodeType != SNT_COLUMN
-        || poValue->eNodeType != SNT_CONSTANT )
+    if (poColumn->eNodeType != SNT_COLUMN || poValue->eNodeType != SNT_CONSTANT)
         return FALSE;
 
     OGRAttrIndex *poIndex =
-        poLayer->GetIndex()->GetFieldIndex(
-            OGRFeatureFetcherFixFieldIndex(poLayer->GetLayerDefn(),
-                                           poColumn->field_index));
-    if( poIndex == nullptr )
+        poLayer->GetIndex()->GetFieldIndex(OGRFeatureFetcherFixFieldIndex(
+            poLayer->GetLayerDefn(), poColumn->field_index));
+    if (poIndex == nullptr)
         return FALSE;
 
     // Have an index.
@@ -415,29 +396,29 @@ int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
-static int CompareGIntBig( const void *pa, const void *pb )
+static int CompareGIntBig(const void *pa, const void *pb)
 {
     const GIntBig a = *(reinterpret_cast<const GIntBig *>(pa));
     const GIntBig b = *(reinterpret_cast<const GIntBig *>(pb));
-    if( a < b )
+    if (a < b)
         return -1;
-    else if( a > b )
+    else if (a > b)
         return 1;
     else
         return 0;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
-                                                  OGRErr *peErr )
+GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
+                                                 OGRErr *peErr)
 
 {
     swq_expr_node *psExpr = static_cast<swq_expr_node *>(pSWQExpr);
 
-    if( peErr != nullptr )
+    if (peErr != nullptr)
         *peErr = OGRERR_NONE;
 
     // Do we have an index on the targeted layer?
-    if( poLayer->GetIndex() == nullptr )
+    if (poLayer->GetIndex() == nullptr)
         return nullptr;
 
     GIntBig nFIDCount = 0;
@@ -445,25 +426,24 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
 }
 
 // The input arrays must be sorted.
-static
-GIntBig* OGRORGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
-                            GIntBig panFIDList2[], GIntBig nFIDCount2,
-                            GIntBig& nFIDCount )
+static GIntBig *OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
+                                  GIntBig panFIDList2[], GIntBig nFIDCount2,
+                                  GIntBig &nFIDCount)
 {
     const GIntBig nMaxCount = nFIDCount1 + nFIDCount2;
-    GIntBig* panFIDList = static_cast<GIntBig *>(
+    GIntBig *panFIDList = static_cast<GIntBig *>(
         CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(GIntBig)));
     nFIDCount = 0;
 
-    for( GIntBig i1 = 0, i2 = 0; i1<nFIDCount1 || i2<nFIDCount2; )
+    for (GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 || i2 < nFIDCount2;)
     {
-        if( i1 < nFIDCount1 && i2 < nFIDCount2 )
+        if (i1 < nFIDCount1 && i2 < nFIDCount2)
         {
             const GIntBig nVal1 = panFIDList1[i1];
             const GIntBig nVal2 = panFIDList2[i2];
-            if( nVal1 < nVal2 )
+            if (nVal1 < nVal2)
             {
-                if( i1 + 1 < nFIDCount1 && panFIDList1[i1+1] <= nVal2 )
+                if (i1 + 1 < nFIDCount1 && panFIDList1[i1 + 1] <= nVal2)
                 {
                     panFIDList[nFIDCount++] = nVal1;
                     i1++;
@@ -476,7 +456,7 @@ GIntBig* OGRORGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
                     i2++;
                 }
             }
-            else if( nVal1 == nVal2 )
+            else if (nVal1 == nVal2)
             {
                 panFIDList[nFIDCount++] = nVal1;
                 i1++;
@@ -484,7 +464,7 @@ GIntBig* OGRORGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
             }
             else
             {
-                if( i2 + 1 < nFIDCount2 && panFIDList2[i2+1] <= nVal1 )
+                if (i2 + 1 < nFIDCount2 && panFIDList2[i2 + 1] <= nVal1)
                 {
                     panFIDList[nFIDCount++] = nVal2;
                     i2++;
@@ -498,13 +478,13 @@ GIntBig* OGRORGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
                 }
             }
         }
-        else if( i1 < nFIDCount1 )
+        else if (i1 < nFIDCount1)
         {
             const GIntBig nVal1 = panFIDList1[i1];
             panFIDList[nFIDCount++] = nVal1;
             i1++;
         }
-        else if( i2 < nFIDCount2 )
+        else if (i2 < nFIDCount2)
         {
             const GIntBig nVal2 = panFIDList2[i2];
             panFIDList[nFIDCount++] = nVal2;
@@ -518,23 +498,22 @@ GIntBig* OGRORGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
 }
 
 // The input arrays must be sorted.
-static
-GIntBig* OGRANDGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
-                             GIntBig panFIDList2[], GIntBig nFIDCount2,
-                             GIntBig& nFIDCount )
+static GIntBig *OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
+                                   GIntBig panFIDList2[], GIntBig nFIDCount2,
+                                   GIntBig &nFIDCount)
 {
     GIntBig nMaxCount = std::max(nFIDCount1, nFIDCount2);
-    GIntBig* panFIDList = static_cast<GIntBig *>(
+    GIntBig *panFIDList = static_cast<GIntBig *>(
         CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(GIntBig)));
     nFIDCount = 0;
 
-    for( GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2; )
+    for (GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2;)
     {
         const GIntBig nVal1 = panFIDList1[i1];
         const GIntBig nVal2 = panFIDList2[i2];
-        if( nVal1 < nVal2 )
+        if (nVal1 < nVal2)
         {
-            if( i1+1 < nFIDCount1 && panFIDList1[i1+1] <= nVal2 )
+            if (i1 + 1 < nFIDCount1 && panFIDList1[i1 + 1] <= nVal2)
             {
                 i1++;
             }
@@ -544,7 +523,7 @@ GIntBig* OGRANDGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
                 i2++;
             }
         }
-        else if( nVal1 == nVal2 )
+        else if (nVal1 == nVal2)
         {
             panFIDList[nFIDCount++] = nVal1;
             i1++;
@@ -552,7 +531,7 @@ GIntBig* OGRANDGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
         }
         else
         {
-            if( i2 + 1 < nFIDCount2 && panFIDList2[i2+1] <= nVal1 )
+            if (i2 + 1 < nFIDCount2 && panFIDList2[i2 + 1] <= nVal1)
             {
                 i2++;
             }
@@ -569,161 +548,161 @@ GIntBig* OGRANDGIntBigArray( GIntBig panFIDList1[], GIntBig nFIDCount1,
     return panFIDList;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
-                                                  OGRLayer *poLayer,
-                                                  GIntBig& nFIDCount )
+GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(swq_expr_node *psExpr,
+                                                 OGRLayer *poLayer,
+                                                 GIntBig &nFIDCount)
 {
     // Does the expression meet our requirements?
-    if( psExpr == nullptr ||
-        psExpr->eNodeType != SNT_OPERATION )
+    if (psExpr == nullptr || psExpr->eNodeType != SNT_OPERATION)
         return nullptr;
 
-    if( (psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
-         psExpr->nSubExprCount == 2 )
+    if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
+        psExpr->nSubExprCount == 2)
     {
         GIntBig nFIDCount1 = 0;
         GIntBig nFIDCount2 = 0;
-        GIntBig* panFIDList1 =
+        GIntBig *panFIDList1 =
             EvaluateAgainstIndices(psExpr->papoSubExpr[0], poLayer, nFIDCount1);
-        GIntBig* panFIDList2 =
-            panFIDList1 == nullptr ? nullptr :
-            EvaluateAgainstIndices(psExpr->papoSubExpr[1], poLayer, nFIDCount2);
-        GIntBig* panFIDList = nullptr;
-        if( panFIDList1 != nullptr && panFIDList2 != nullptr )
+        GIntBig *panFIDList2 =
+            panFIDList1 == nullptr
+                ? nullptr
+                : EvaluateAgainstIndices(psExpr->papoSubExpr[1], poLayer,
+                                         nFIDCount2);
+        GIntBig *panFIDList = nullptr;
+        if (panFIDList1 != nullptr && panFIDList2 != nullptr)
         {
-            if( psExpr->nOperation == SWQ_OR )
-                panFIDList = OGRORGIntBigArray(panFIDList1, nFIDCount1,
-                                            panFIDList2, nFIDCount2, nFIDCount);
-            else if( psExpr->nOperation == SWQ_AND )
-                panFIDList = OGRANDGIntBigArray(panFIDList1, nFIDCount1,
-                                            panFIDList2, nFIDCount2, nFIDCount);
+            if (psExpr->nOperation == SWQ_OR)
+                panFIDList =
+                    OGRORGIntBigArray(panFIDList1, nFIDCount1, panFIDList2,
+                                      nFIDCount2, nFIDCount);
+            else if (psExpr->nOperation == SWQ_AND)
+                panFIDList =
+                    OGRANDGIntBigArray(panFIDList1, nFIDCount1, panFIDList2,
+                                       nFIDCount2, nFIDCount);
         }
         CPLFree(panFIDList1);
         CPLFree(panFIDList2);
         return panFIDList;
     }
 
-    if( !(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN)
-        || psExpr->nSubExprCount < 2 )
+    if (!(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN) ||
+        psExpr->nSubExprCount < 2)
         return nullptr;
 
     swq_expr_node *poColumn = psExpr->papoSubExpr[0];
     swq_expr_node *poValue = psExpr->papoSubExpr[1];
 
-    if( poColumn->eNodeType != SNT_COLUMN
-        || poValue->eNodeType != SNT_CONSTANT )
+    if (poColumn->eNodeType != SNT_COLUMN || poValue->eNodeType != SNT_CONSTANT)
         return nullptr;
 
-    const int nIdx = OGRFeatureFetcherFixFieldIndex(
-        poLayer->GetLayerDefn(), poColumn->field_index);
+    const int nIdx = OGRFeatureFetcherFixFieldIndex(poLayer->GetLayerDefn(),
+                                                    poColumn->field_index);
 
-    OGRAttrIndex *poIndex =
-        poLayer->GetIndex()->GetFieldIndex(nIdx);
-    if( poIndex == nullptr )
+    OGRAttrIndex *poIndex = poLayer->GetIndex()->GetFieldIndex(nIdx);
+    if (poIndex == nullptr)
         return nullptr;
 
     // Have an index, now we need to query it.
     OGRField sValue;
-    OGRFieldDefn *poFieldDefn =
-        poLayer->GetLayerDefn()->GetFieldDefn(nIdx);
+    OGRFieldDefn *poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nIdx);
 
     // Handle the case of an IN operation.
-    if( psExpr->nOperation == SWQ_IN )
+    if (psExpr->nOperation == SWQ_IN)
     {
         int nLength = 0;
         GIntBig *panFIDs = nullptr;
         nFIDCount = 0;
 
-        for( int iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
+        for (int iIN = 1; iIN < psExpr->nSubExprCount; iIN++)
         {
-            switch( poFieldDefn->GetType() )
+            switch (poFieldDefn->GetType())
             {
-              case OFTInteger:
-                if( psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT )
-                    sValue.Integer =
-                        static_cast<int>(psExpr->papoSubExpr[iIN]->float_value);
-                else
-                    sValue.Integer =
-                        static_cast<int>(psExpr->papoSubExpr[iIN]->int_value);
-                break;
+                case OFTInteger:
+                    if (psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT)
+                        sValue.Integer = static_cast<int>(
+                            psExpr->papoSubExpr[iIN]->float_value);
+                    else
+                        sValue.Integer = static_cast<int>(
+                            psExpr->papoSubExpr[iIN]->int_value);
+                    break;
 
-              case OFTInteger64:
-                if( psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT )
-                    sValue.Integer64 = static_cast<GIntBig>(
-                        psExpr->papoSubExpr[iIN]->float_value);
-                else
-                    sValue.Integer64 = psExpr->papoSubExpr[iIN]->int_value;
-                break;
+                case OFTInteger64:
+                    if (psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT)
+                        sValue.Integer64 = static_cast<GIntBig>(
+                            psExpr->papoSubExpr[iIN]->float_value);
+                    else
+                        sValue.Integer64 = psExpr->papoSubExpr[iIN]->int_value;
+                    break;
 
-              case OFTReal:
-                sValue.Real = psExpr->papoSubExpr[iIN]->float_value;
-                break;
+                case OFTReal:
+                    sValue.Real = psExpr->papoSubExpr[iIN]->float_value;
+                    break;
 
-              case OFTString:
-                sValue.String = psExpr->papoSubExpr[iIN]->string_value;
-                break;
+                case OFTString:
+                    sValue.String = psExpr->papoSubExpr[iIN]->string_value;
+                    break;
 
-              default:
-                CPLAssert(false);
-                return nullptr;
+                default:
+                    CPLAssert(false);
+                    return nullptr;
             }
 
             int nFIDCount32 = static_cast<int>(nFIDCount);
-            panFIDs = poIndex->GetAllMatches(&sValue, panFIDs,
-                                             &nFIDCount32, &nLength);
+            panFIDs = poIndex->GetAllMatches(&sValue, panFIDs, &nFIDCount32,
+                                             &nLength);
             nFIDCount = nFIDCount32;
         }
 
-        if( nFIDCount > 1 )
+        if (nFIDCount > 1)
         {
             // The returned FIDs are expected to be in sorted order.
-            qsort(panFIDs, static_cast<size_t>(nFIDCount),
-                  sizeof(GIntBig), CompareGIntBig);
+            qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
+                  CompareGIntBig);
         }
         return panFIDs;
     }
 
     // Handle equality test.
-    switch( poFieldDefn->GetType() )
+    switch (poFieldDefn->GetType())
     {
-      case OFTInteger:
-        if( poValue->field_type == SWQ_FLOAT )
-            sValue.Integer = static_cast<int>(poValue->float_value);
-        else
-            sValue.Integer = static_cast<int>(poValue->int_value);
-        break;
+        case OFTInteger:
+            if (poValue->field_type == SWQ_FLOAT)
+                sValue.Integer = static_cast<int>(poValue->float_value);
+            else
+                sValue.Integer = static_cast<int>(poValue->int_value);
+            break;
 
-      case OFTInteger64:
-        if( poValue->field_type == SWQ_FLOAT )
-            sValue.Integer64 = static_cast<GIntBig>(poValue->float_value);
-        else
-            sValue.Integer64 = poValue->int_value;
-        break;
+        case OFTInteger64:
+            if (poValue->field_type == SWQ_FLOAT)
+                sValue.Integer64 = static_cast<GIntBig>(poValue->float_value);
+            else
+                sValue.Integer64 = poValue->int_value;
+            break;
 
-      case OFTReal:
-        sValue.Real = poValue->float_value;
-        break;
+        case OFTReal:
+            sValue.Real = poValue->float_value;
+            break;
 
-      case OFTString:
-        sValue.String = poValue->string_value;
-        break;
+        case OFTString:
+            sValue.String = poValue->string_value;
+            break;
 
-      default:
-        CPLAssert(false);
-        return nullptr;
+        default:
+            CPLAssert(false);
+            return nullptr;
     }
 
     int nLength = 0;
     int nFIDCount32 = 0;
-    GIntBig* panFIDs =
+    GIntBig *panFIDs =
         poIndex->GetAllMatches(&sValue, nullptr, &nFIDCount32, &nLength);
     nFIDCount = nFIDCount32;
-    if( nFIDCount > 1 )
+    if (nFIDCount > 1)
     {
         // The returned FIDs are expected to be sorted.
         // TODO(schwehr): Use std::sort.
-        qsort(panFIDs, static_cast<size_t>(nFIDCount),
-              sizeof(GIntBig), CompareGIntBig);
+        qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
+              CompareGIntBig);
     }
     return panFIDs;
 }
@@ -735,40 +714,35 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
 /*      GetUsedFields().                                                */
 /************************************************************************/
 
-char **OGRFeatureQuery::FieldCollector( void *pBareOp,
-                                        char **papszList )
+char **OGRFeatureQuery::FieldCollector(void *pBareOp, char **papszList)
 
 {
     swq_expr_node *op = static_cast<swq_expr_node *>(pBareOp);
 
     // References to tables other than the primarily are currently unsupported.
     // Error out.
-    if( op->eNodeType == SNT_COLUMN )
+    if (op->eNodeType == SNT_COLUMN)
     {
-        if( op->table_index != 0 )
+        if (op->table_index != 0)
         {
-            CSLDestroy( papszList );
+            CSLDestroy(papszList);
             return nullptr;
         }
 
         // Add the field name into our list if it is not already there.
         const char *pszFieldName = nullptr;
-        const int nIdx = OGRFeatureFetcherFixFieldIndex(poTargetDefn,
-                                                        op->field_index);
+        const int nIdx =
+            OGRFeatureFetcherFixFieldIndex(poTargetDefn, op->field_index);
 
-        if( nIdx >= poTargetDefn->GetFieldCount()
-            && nIdx <
-            poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT )
+        if (nIdx >= poTargetDefn->GetFieldCount() &&
+            nIdx < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT)
         {
             pszFieldName =
-                SpecialFieldNames[nIdx -
-                                  poTargetDefn->GetFieldCount()];
+                SpecialFieldNames[nIdx - poTargetDefn->GetFieldCount()];
         }
-        else if( nIdx >= 0
-                 && nIdx < poTargetDefn->GetFieldCount() )
+        else if (nIdx >= 0 && nIdx < poTargetDefn->GetFieldCount())
         {
-            pszFieldName =
-                poTargetDefn->GetFieldDefn(nIdx)->GetNameRef();
+            pszFieldName = poTargetDefn->GetFieldDefn(nIdx)->GetNameRef();
         }
         else
         {
@@ -776,14 +750,14 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
             return nullptr;
         }
 
-        if( CSLFindString(papszList, pszFieldName) == -1 )
+        if (CSLFindString(papszList, pszFieldName) == -1)
             papszList = CSLAddString(papszList, pszFieldName);
     }
 
     // Add in fields from subexpressions.
-    if( op->eNodeType == SNT_OPERATION )
+    if (op->eNodeType == SNT_OPERATION)
     {
-        for( int iSubExpr = 0; iSubExpr < op->nSubExprCount; iSubExpr++ )
+        for (int iSubExpr = 0; iSubExpr < op->nSubExprCount; iSubExpr++)
         {
             papszList = FieldCollector(op->papoSubExpr[iSubExpr], papszList);
         }
@@ -813,13 +787,13 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
  * required.
  */
 
-char **OGRFeatureQuery::GetUsedFields( )
+char **OGRFeatureQuery::GetUsedFields()
 
 {
-    if( pSWQExpr == nullptr )
+    if (pSWQExpr == nullptr)
         return nullptr;
 
-    return FieldCollector( pSWQExpr, nullptr );
+    return FieldCollector(pSWQExpr, nullptr);
 }
 
 //! @endcond

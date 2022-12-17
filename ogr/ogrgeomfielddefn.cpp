@@ -40,7 +40,6 @@
 #include "ogr_srs_api.h"
 #include "ograpispy.h"
 
-
 /************************************************************************/
 /*                         OGRGeomFieldDefn()                           */
 /************************************************************************/
@@ -54,11 +53,11 @@
  * @since GDAL 1.11
  */
 
-OGRGeomFieldDefn::OGRGeomFieldDefn( const char * pszNameIn,
-                                    OGRwkbGeometryType eGeomTypeIn )
+OGRGeomFieldDefn::OGRGeomFieldDefn(const char *pszNameIn,
+                                   OGRwkbGeometryType eGeomTypeIn)
 
 {
-    Initialize( pszNameIn, eGeomTypeIn );
+    Initialize(pszNameIn, eGeomTypeIn);
 }
 
 /************************************************************************/
@@ -75,18 +74,18 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( const char * pszNameIn,
  * @since GDAL 1.11
  */
 
-OGRGeomFieldDefn::OGRGeomFieldDefn( const OGRGeomFieldDefn *poPrototype )
+OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
 
 {
-    Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
+    Initialize(poPrototype->GetNameRef(), poPrototype->GetType());
     auto l_poSRS = poPrototype->GetSpatialRef();
-    if( l_poSRS )
+    if (l_poSRS)
     {
         l_poSRS = l_poSRS->Clone();
-        SetSpatialRef( l_poSRS );
+        SetSpatialRef(l_poSRS);
         l_poSRS->Release();
     }
-    SetNullable( poPrototype->IsNullable() );
+    SetNullable(poPrototype->IsNullable());
 }
 
 /************************************************************************/
@@ -105,12 +104,10 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( const OGRGeomFieldDefn *poPrototype )
  * @since GDAL 1.11
  */
 
-OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
-                                   OGRwkbGeometryType eType )
+OGRGeomFieldDefnH OGR_GFld_Create(const char *pszName, OGRwkbGeometryType eType)
 
 {
-  return
-      OGRGeomFieldDefn::ToHandle(new OGRGeomFieldDefn(pszName, eType));
+    return OGRGeomFieldDefn::ToHandle(new OGRGeomFieldDefn(pszName, eType));
 }
 
 /************************************************************************/
@@ -118,11 +115,11 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
-                                   OGRwkbGeometryType eTypeIn )
+void OGRGeomFieldDefn::Initialize(const char *pszNameIn,
+                                  OGRwkbGeometryType eTypeIn)
 
 {
-    pszName = CPLStrdup( pszNameIn );
+    pszName = CPLStrdup(pszNameIn);
     eGeomType = eTypeIn;
 }
 //! @endcond
@@ -134,9 +131,9 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
 OGRGeomFieldDefn::~OGRGeomFieldDefn()
 
 {
-    CPLFree( pszName );
+    CPLFree(pszName);
 
-    if( nullptr != poSRS )
+    if (nullptr != poSRS)
         poSRS->Release();
 }
 
@@ -151,10 +148,10 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
  * @since GDAL 1.11
  */
 
-void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
+void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
 
 {
-    VALIDATE_POINTER0( hDefn, "OGR_GFld_Destroy" );
+    VALIDATE_POINTER0(hDefn, "OGR_GFld_Destroy");
 
     delete OGRGeomFieldDefn::FromHandle(hDefn);
 }
@@ -173,13 +170,13 @@ void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
  * @since GDAL 1.11
  */
 
-void OGRGeomFieldDefn::SetName( const char * pszNameIn )
+void OGRGeomFieldDefn::SetName(const char *pszNameIn)
 
 {
-    if( pszName != pszNameIn )
+    if (pszName != pszNameIn)
     {
-        CPLFree( pszName );
-        pszName = CPLStrdup( pszNameIn );
+        CPLFree(pszName);
+        pszName = CPLStrdup(pszNameIn);
     }
 }
 
@@ -198,10 +195,10 @@ void OGRGeomFieldDefn::SetName( const char * pszNameIn )
  * @since GDAL 1.11
  */
 
-void OGR_GFld_SetName( OGRGeomFieldDefnH hDefn, const char *pszName )
+void OGR_GFld_SetName(OGRGeomFieldDefnH hDefn, const char *pszName)
 
 {
-    VALIDATE_POINTER0( hDefn, "OGR_GFld_SetName" );
+    VALIDATE_POINTER0(hDefn, "OGR_GFld_SetName");
 
     OGRGeomFieldDefn::FromHandle(hDefn)->SetName(pszName);
 }
@@ -237,13 +234,13 @@ void OGR_GFld_SetName( OGRGeomFieldDefnH hDefn, const char *pszName )
  * @since GDAL 1.11
  */
 
-const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
+const char *OGR_GFld_GetNameRef(OGRGeomFieldDefnH hDefn)
 
 {
-    VALIDATE_POINTER1( hDefn, "OGR_GFld_GetNameRef", "" );
+    VALIDATE_POINTER1(hDefn, "OGR_GFld_GetNameRef", "");
 
 #ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
+    if (bOGRAPISpyEnabled)
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetNameRef");
 #endif
 
@@ -280,19 +277,18 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
  * @since GDAL 1.11
  */
 
-OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
+OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
 
 {
-    VALIDATE_POINTER1( hDefn, "OGR_GFld_GetType", wkbUnknown );
+    VALIDATE_POINTER1(hDefn, "OGR_GFld_GetType", wkbUnknown);
 
 #ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
+    if (bOGRAPISpyEnabled)
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetType");
 #endif
 
-    OGRwkbGeometryType eType =
-        OGRGeomFieldDefn::FromHandle(hDefn)->GetType();
-    if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
+    OGRwkbGeometryType eType = OGRGeomFieldDefn::FromHandle(hDefn)->GetType();
+    if (OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag())
     {
         eType = OGR_GT_GetLinear(eType);
     }
@@ -315,7 +311,7 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
  * @since GDAL 1.11
  */
 
-void OGRGeomFieldDefn::SetType( OGRwkbGeometryType eTypeIn )
+void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
 
 {
     eGeomType = eTypeIn;
@@ -337,10 +333,10 @@ void OGRGeomFieldDefn::SetType( OGRwkbGeometryType eTypeIn )
  * @since GDAL 1.11
  */
 
-void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
+void OGR_GFld_SetType(OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType)
 
 {
-    VALIDATE_POINTER0( hDefn, "OGR_GFld_SetType" );
+    VALIDATE_POINTER0(hDefn, "OGR_GFld_SetType");
 
     OGRGeomFieldDefn::FromHandle(hDefn)->SetType(eType);
 }
@@ -376,9 +372,9 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
  * @since GDAL 1.11
  */
 
-int OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn )
+int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
 {
-    VALIDATE_POINTER1( hDefn, "OGR_GFld_IsIgnored", FALSE );
+    VALIDATE_POINTER1(hDefn, "OGR_GFld_IsIgnored", FALSE);
 
     return OGRGeomFieldDefn::FromHandle(hDefn)->IsIgnored();
 }
@@ -414,9 +410,9 @@ int OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn )
  * @since GDAL 1.11
  */
 
-void OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int ignore )
+void OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int ignore)
 {
-    VALIDATE_POINTER0( hDefn, "OGR_GFld_SetIgnored" );
+    VALIDATE_POINTER0(hDefn, "OGR_GFld_SetIgnored");
 
     OGRGeomFieldDefn::FromHandle(hDefn)->SetIgnored(ignore);
 }
@@ -434,7 +430,7 @@ void OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int ignore )
  * @since GDAL 1.11
  */
 
-OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef() const
+OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
 {
     return poSRS;
 }
@@ -456,12 +452,12 @@ OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef() const
  * @since GDAL 1.11
  */
 
-OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
+OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
 {
-    VALIDATE_POINTER1( hDefn, "OGR_GFld_GetSpatialRef", nullptr );
+    VALIDATE_POINTER1(hDefn, "OGR_GFld_GetSpatialRef", nullptr);
 
 #ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
+    if (bOGRAPISpyEnabled)
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetSpatialRef");
 #endif
 
@@ -485,12 +481,12 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
  *
  * @since GDAL 1.11
  */
-void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference* poSRSIn)
+void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference *poSRSIn)
 {
-    if( poSRS != nullptr )
+    if (poSRS != nullptr)
         poSRS->Release();
     poSRS = poSRSIn;
-    if( poSRS != nullptr )
+    if (poSRS != nullptr)
         poSRS->Reference();
 }
 
@@ -513,13 +509,12 @@ void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference* poSRSIn)
  * @since GDAL 1.11
  */
 
-void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn,
-                             OGRSpatialReferenceH hSRS )
+void OGR_GFld_SetSpatialRef(OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS)
 {
-    VALIDATE_POINTER0( hDefn, "OGR_GFld_SetSpatialRef" );
+    VALIDATE_POINTER0(hDefn, "OGR_GFld_SetSpatialRef");
 
-    OGRGeomFieldDefn::FromHandle(hDefn)->
-        SetSpatialRef(reinterpret_cast<OGRSpatialReference *>(hSRS));
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetSpatialRef(
+        reinterpret_cast<OGRSpatialReference *>(hSRS));
 }
 
 /************************************************************************/
@@ -535,14 +530,14 @@ void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn,
  * @since GDAL 1.11
  */
 
-int OGRGeomFieldDefn::IsSame( const OGRGeomFieldDefn * poOtherFieldDefn ) const
+int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
 {
-    if( !(strcmp(GetNameRef(), poOtherFieldDefn->GetNameRef()) == 0 &&
-                 GetType() == poOtherFieldDefn->GetType() &&
-                 IsNullable() == poOtherFieldDefn->IsNullable()) )
+    if (!(strcmp(GetNameRef(), poOtherFieldDefn->GetNameRef()) == 0 &&
+          GetType() == poOtherFieldDefn->GetType() &&
+          IsNullable() == poOtherFieldDefn->IsNullable()))
         return FALSE;
-    OGRSpatialReference* poMySRS = GetSpatialRef();
-    OGRSpatialReference* poOtherSRS = poOtherFieldDefn->GetSpatialRef();
+    OGRSpatialReference *poMySRS = GetSpatialRef();
+    OGRSpatialReference *poOtherSRS = poOtherFieldDefn->GetSpatialRef();
     return ((poMySRS == poOtherSRS) ||
             (poMySRS != nullptr && poOtherSRS != nullptr &&
              poMySRS->IsSame(poOtherSRS)));
@@ -595,7 +590,7 @@ int OGRGeomFieldDefn::IsSame( const OGRGeomFieldDefn * poOtherFieldDefn ) const
  * @since GDAL 2.0
  */
 
-int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
+int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
 {
     return OGRGeomFieldDefn::FromHandle(hDefn)->IsNullable();
 }
@@ -641,7 +636,7 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
  * @since GDAL 2.0
  */
 
-void OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int bNullableIn )
+void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
 {
     OGRGeomFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
 }
