@@ -39,7 +39,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              GSAGDataset                             */
@@ -48,7 +47,7 @@
 
 class GSAGRasterBand;
 
-class GSAGDataset final: public GDALPamDataset
+class GSAGDataset final : public GDALPamDataset
 {
     friend class GSAGRasterBand;
 
@@ -56,28 +55,29 @@ class GSAGDataset final: public GDALPamDataset
     static const int nFIELD_PRECISION;
     static const size_t nMAX_HEADER_SIZE;
 
-    static CPLErr ShiftFileContents( VSILFILE *, vsi_l_offset, int, const char * );
+    static CPLErr ShiftFileContents(VSILFILE *, vsi_l_offset, int,
+                                    const char *);
 
-    VSILFILE    *fp;
-    size_t       nMinMaxZOffset;
-    char         szEOL[3];
+    VSILFILE *fp;
+    size_t nMinMaxZOffset;
+    char szEOL[3];
 
     CPLErr UpdateHeader();
 
   public:
-    explicit     GSAGDataset( const char *pszEOL = "\x0D\x0A" );
-                ~GSAGDataset();
+    explicit GSAGDataset(const char *pszEOL = "\x0D\x0A");
+    ~GSAGDataset();
 
-    static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char *pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char **papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void *pProgressData );
+    static int Identify(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 
-    CPLErr GetGeoTransform( double *padfGeoTransform ) override;
-    CPLErr SetGeoTransform( double *padfGeoTransform ) override;
+    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr SetGeoTransform(double *padfGeoTransform) override;
 };
 
 /* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
@@ -92,7 +92,7 @@ const size_t GSAGDataset::nMAX_HEADER_SIZE = 200;
 /* ==================================================================== */
 /************************************************************************/
 
-class GSAGRasterBand final: public GDALPamRasterBand
+class GSAGRasterBand final : public GDALPamRasterBand
 {
     friend class GSAGDataset;
 
@@ -115,16 +115,15 @@ class GSAGRasterBand final: public GDALPamRasterBand
     CPLErr ScanForMinMaxZ();
 
   public:
+    GSAGRasterBand(GSAGDataset *, int, vsi_l_offset);
+    ~GSAGRasterBand();
 
-                GSAGRasterBand( GSAGDataset *, int, vsi_l_offset );
-                ~GSAGRasterBand();
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    CPLErr IReadBlock( int, int, void * ) override;
-    CPLErr IWriteBlock( int, int, void * ) override;
-
-    double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    double GetMinimum( int *pbSuccess = nullptr ) override;
-    double GetMaximum( int *pbSuccess = nullptr ) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
 };
 
 /************************************************************************/
@@ -134,35 +133,26 @@ class GSAGRasterBand final: public GDALPamRasterBand
 /* See http://gcc.gnu.org/ml/gcc/2003-08/msg01195.html for some         */
 /* explanation.                                                         */
 /************************************************************************/
-    
-static bool AlmostEqual( double dfVal1, double dfVal2 )
+
+static bool AlmostEqual(double dfVal1, double dfVal2)
 
 {
     const double dfTOLERANCE = 0.0000000001;
-    if( dfVal1 == 0.0 || dfVal2 == 0.0 )
+    if (dfVal1 == 0.0 || dfVal2 == 0.0)
         return fabs(dfVal1 - dfVal2) < dfTOLERANCE;
-    return fabs((dfVal1 - dfVal2)/dfVal1) < dfTOLERANCE;
+    return fabs((dfVal1 - dfVal2) / dfVal1) < dfTOLERANCE;
 }
 
 /************************************************************************/
 /*                           GSAGRasterBand()                           */
 /************************************************************************/
 
-GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
-                                vsi_l_offset nDataStart ) :
-    dfMinX(0.0),
-    dfMaxX(0.0),
-    dfMinY(0.0),
-    dfMaxY(0.0),
-    dfMinZ(0.0),
-    dfMaxZ(0.0),
-    panLineOffset(nullptr),
-    nLastReadLine(poDSIn->nRasterYSize),
-    nMaxLineSize(128),
-    padfRowMinZ(nullptr),
-    padfRowMaxZ(nullptr),
-    nMinZRow(-1),
-    nMaxZRow(-1)
+GSAGRasterBand::GSAGRasterBand(GSAGDataset *poDSIn, int nBandIn,
+                               vsi_l_offset nDataStart)
+    : dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
+      dfMaxZ(0.0), panLineOffset(nullptr), nLastReadLine(poDSIn->nRasterYSize),
+      nMaxLineSize(128), padfRowMinZ(nullptr), padfRowMaxZ(nullptr),
+      nMinZRow(-1), nMaxZRow(-1)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -172,20 +162,20 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    if( poDSIn->nRasterYSize > 1000000 )
+    if (poDSIn->nRasterYSize > 1000000)
     {
         // Sanity check to avoid excessive memory allocations
-        VSIFSeekL( poDSIn->fp, 0, SEEK_END );
+        VSIFSeekL(poDSIn->fp, 0, SEEK_END);
         vsi_l_offset nFileSize = VSIFTellL(poDSIn->fp);
-        if( static_cast<vsi_l_offset>(poDSIn->nRasterYSize) > nFileSize )
+        if (static_cast<vsi_l_offset>(poDSIn->nRasterYSize) > nFileSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Truncated file");
             return;
         }
     }
     panLineOffset = static_cast<vsi_l_offset *>(
-        VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) ));
-    if( panLineOffset == nullptr )
+        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize + 1, sizeof(vsi_l_offset)));
+    if (panLineOffset == nullptr)
     {
         return;
     }
@@ -199,9 +189,9 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
 
 GSAGRasterBand::~GSAGRasterBand()
 {
-    CPLFree( panLineOffset );
-    CPLFree( padfRowMinZ );
-    CPLFree( padfRowMaxZ );
+    CPLFree(panLineOffset);
+    CPLFree(padfRowMinZ);
+    CPLFree(padfRowMaxZ);
 }
 
 /************************************************************************/
@@ -211,8 +201,9 @@ GSAGRasterBand::~GSAGRasterBand()
 CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
 {
-    double *padfRowValues = (double *)VSI_MALLOC2_VERBOSE( nBlockXSize, sizeof(double) );
-    if( padfRowValues == nullptr )
+    double *padfRowValues =
+        (double *)VSI_MALLOC2_VERBOSE(nBlockXSize, sizeof(double));
+    if (padfRowValues == nullptr)
     {
         return CE_Failure;
     }
@@ -226,26 +217,26 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
     double dfSum = 0.0;
     double dfSum2 = 0.0;
     unsigned long nValuesRead = 0;
-    for( int iRow=0; iRow<nRasterYSize; iRow++ )
+    for (int iRow = 0; iRow < nRasterYSize; iRow++)
     {
-        CPLErr eErr = IReadBlock( 0, iRow, padfRowValues );
-        if( eErr != CE_None )
+        CPLErr eErr = IReadBlock(0, iRow, padfRowValues);
+        if (eErr != CE_None)
         {
-            VSIFree( padfRowValues );
+            VSIFree(padfRowValues);
             return eErr;
         }
 
         padfRowMinZ[iRow] = std::numeric_limits<double>::max();
         padfRowMaxZ[iRow] = std::numeric_limits<double>::lowest();
-        for( int iCell=0; iCell<nRasterXSize; iCell++ )
+        for (int iCell = 0; iCell < nRasterXSize; iCell++)
         {
-            if( AlmostEqual(padfRowValues[iCell], GSAGDataset::dfNODATA_VALUE) )
+            if (AlmostEqual(padfRowValues[iCell], GSAGDataset::dfNODATA_VALUE))
                 continue;
 
-            if( padfRowValues[iCell] < padfRowMinZ[iRow] )
+            if (padfRowValues[iCell] < padfRowMinZ[iRow])
                 padfRowMinZ[iRow] = padfRowValues[iCell];
 
-            if( padfRowValues[iCell] > padfRowMaxZ[iRow] )
+            if (padfRowValues[iCell] > padfRowMaxZ[iRow])
                 padfRowMaxZ[iRow] = padfRowValues[iCell];
 
             dfSum += padfRowValues[iCell];
@@ -253,22 +244,22 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
             nValuesRead++;
         }
 
-        if( padfRowMinZ[iRow] < dfNewMinZ )
+        if (padfRowMinZ[iRow] < dfNewMinZ)
         {
             dfNewMinZ = padfRowMinZ[iRow];
             nNewMinZRow = iRow;
         }
 
-        if( padfRowMaxZ[iRow] > dfNewMaxZ )
+        if (padfRowMaxZ[iRow] > dfNewMaxZ)
         {
             dfNewMaxZ = padfRowMaxZ[iRow];
             nNewMaxZRow = iRow;
         }
     }
 
-    VSIFree( padfRowValues );
+    VSIFree(padfRowValues);
 
-    if( nValuesRead == 0 )
+    if (nValuesRead == 0)
     {
         dfMinZ = 0.0;
         dfMaxZ = 0.0;
@@ -284,7 +275,7 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
     double dfMean = dfSum / nValuesRead;
     double dfStdDev = sqrt((dfSum2 / nValuesRead) - (dfMean * dfMean));
-    SetStatistics( dfMinZ, dfMaxZ, dfMean, dfStdDev );
+    SetStatistics(dfMinZ, dfMaxZ, dfMean, dfStdDev);
 
     return CE_None;
 }
@@ -293,59 +284,59 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert( poGDS != nullptr );
+    assert(poGDS != nullptr);
 
     double *pdfImage = (double *)pImage;
 
-    if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
+    if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    if( panLineOffset[nBlockYOff] == 0 )
+    if (panLineOffset[nBlockYOff] == 0)
     {
         // Discover the last read block
-        for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
+        for (int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff;
+             iFoundLine--)
         {
-            if( IReadBlock( nBlockXOff, iFoundLine, nullptr) != CE_None )
+            if (IReadBlock(nBlockXOff, iFoundLine, nullptr) != CE_None)
                 return CE_Failure;
         }
     }
 
-    if( panLineOffset[nBlockYOff] == 0 )
+    if (panLineOffset[nBlockYOff] == 0)
         return CE_Failure;
-    if( VSIFSeekL( poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    if (VSIFSeekL(poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %ld to read grid row %d.",
-                  (long) panLineOffset[nBlockYOff], nBlockYOff );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Can't seek to offset %ld to read grid row %d.",
+                 (long)panLineOffset[nBlockYOff], nBlockYOff);
         return CE_Failure;
     }
 
     size_t nLineBufSize = nMaxLineSize;
     /* If we know the offsets, we can just read line directly */
-    if( (nBlockYOff > 0) && ( panLineOffset[nBlockYOff-1] != 0 ) )
+    if ((nBlockYOff > 0) && (panLineOffset[nBlockYOff - 1] != 0))
     {
-        assert(panLineOffset[nBlockYOff-1] > panLineOffset[nBlockYOff]);
-        nLineBufSize = (size_t) (panLineOffset[nBlockYOff-1]
-                                 - panLineOffset[nBlockYOff] + 1);
+        assert(panLineOffset[nBlockYOff - 1] > panLineOffset[nBlockYOff]);
+        nLineBufSize = (size_t)(panLineOffset[nBlockYOff - 1] -
+                                panLineOffset[nBlockYOff] + 1);
     }
 
-    char *szLineBuf = (char *)VSI_MALLOC_VERBOSE( nLineBufSize );
-    if( szLineBuf == nullptr )
+    char *szLineBuf = (char *)VSI_MALLOC_VERBOSE(nLineBufSize);
+    if (szLineBuf == nullptr)
     {
         return CE_Failure;
     }
 
-    size_t nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
-    if( nCharsRead == 0 )
+    size_t nCharsRead = VSIFReadL(szLineBuf, 1, nLineBufSize - 1, poGDS->fp);
+    if (nCharsRead == 0)
     {
-        VSIFree( szLineBuf );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't read grid row %d at offset %ld.\n",
-                  nBlockYOff, (long) panLineOffset[nBlockYOff] );
+        VSIFree(szLineBuf);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Can't read grid row %d at offset %ld.\n", nBlockYOff,
+                 (long)panLineOffset[nBlockYOff]);
         return CE_Failure;
     }
     szLineBuf[nCharsRead] = '\0';
@@ -353,22 +344,22 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     size_t nCharsExamined = 0;
     char *szStart = szLineBuf;
     char *szEnd = szStart;
-    for( int iCell=0; iCell<nBlockXSize; szStart = szEnd )
+    for (int iCell = 0; iCell < nBlockXSize; szStart = szEnd)
     {
-        while( isspace( (unsigned char)*szStart ) )
+        while (isspace((unsigned char)*szStart))
             szStart++;
 
-        double dfValue = CPLStrtod( szStart, &szEnd );
-        if( szStart == szEnd )
+        double dfValue = CPLStrtod(szStart, &szEnd);
+        if (szStart == szEnd)
         {
             /* No number found */
-            if( *szStart == '.' )
+            if (*szStart == '.')
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unexpected value in grid row %d (expected floating "
-                          "point value, found \"%s\").\n",
-                          nBlockYOff, szStart );
-                VSIFree( szLineBuf );
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unexpected value in grid row %d (expected floating "
+                         "point value, found \"%s\").\n",
+                         nBlockYOff, szStart);
+                VSIFree(szLineBuf);
                 return CE_Failure;
             }
 
@@ -376,56 +367,52 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             /* Found sign at end of input, seek back to re-read it */
             bool bOnlySign = false;
-            if ( (*szStart == '-' || *szStart == '+') &&
-                 static_cast<size_t>(szStart + 1 - szLineBuf) == nCharsRead )
+            if ((*szStart == '-' || *szStart == '+') &&
+                static_cast<size_t>(szStart + 1 - szLineBuf) == nCharsRead)
             {
-                if( VSIFSeekL( poGDS->fp,
-                               VSIFTellL( poGDS->fp)-1,
-                               SEEK_SET ) != 0 )
+                if (VSIFSeekL(poGDS->fp, VSIFTellL(poGDS->fp) - 1, SEEK_SET) !=
+                    0)
                 {
-                    VSIFree( szLineBuf );
-                    CPLError( CE_Failure, CPLE_FileIO,
-                              "Unable to seek in grid row %d "
-                              "(offset %ld, seek %d).\n",
-                              nBlockYOff,
-                              (long) VSIFTellL(poGDS->fp),
-                              -1 );
+                    VSIFree(szLineBuf);
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Unable to seek in grid row %d "
+                             "(offset %ld, seek %d).\n",
+                             nBlockYOff, (long)VSIFTellL(poGDS->fp), -1);
 
                     return CE_Failure;
                 }
                 bOnlySign = true;
             }
-            else if( *szStart != '\0' )
+            else if (*szStart != '\0')
             {
                 szEnd = szStart;
-                while( !isspace( (unsigned char)*szEnd ) && *szEnd != '\0' )
+                while (!isspace((unsigned char)*szEnd) && *szEnd != '\0')
                     szEnd++;
                 char cOldEnd = *szEnd;
                 *szEnd = '\0';
 
-                CPLError( CE_Warning, CPLE_FileIO,
-                          "Unexpected value in grid row %d (expected floating "
-                          "point value, found \"%s\").\n",
-                          nBlockYOff, szStart );
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Unexpected value in grid row %d (expected floating "
+                         "point value, found \"%s\").\n",
+                         nBlockYOff, szStart);
 
                 *szEnd = cOldEnd;
 
                 szEnd = szStart;
-                while( !isdigit( *szEnd ) && *szEnd != '.' && *szEnd != '\0' )
+                while (!isdigit(*szEnd) && *szEnd != '.' && *szEnd != '\0')
                     szEnd++;
 
                 continue;
             }
-            else if( static_cast<size_t>(szStart - szLineBuf) != nCharsRead )
+            else if (static_cast<size_t>(szStart - szLineBuf) != nCharsRead)
             {
-                CPLError( CE_Warning, CPLE_FileIO,
-                          "Unexpected ASCII null-character in grid row %d at "
-                          "offset %ld.\n",
-                          nBlockYOff,
-                          (long) (szStart - szLineBuf) );
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Unexpected ASCII null-character in grid row %d at "
+                         "offset %ld.\n",
+                         nBlockYOff, (long)(szStart - szLineBuf));
 
-                while( *szStart == '\0' &&
-                       static_cast<size_t>(szStart - szLineBuf) < nCharsRead )
+                while (*szStart == '\0' &&
+                       static_cast<size_t>(szStart - szLineBuf) < nCharsRead)
                     szStart++;
 
                 szEnd = szStart;
@@ -433,74 +420,76 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
 
             nCharsExamined += szStart - szLineBuf;
-            nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
-            if( nCharsRead == 0 || (bOnlySign && nCharsRead == 1) )
+            nCharsRead = VSIFReadL(szLineBuf, 1, nLineBufSize - 1, poGDS->fp);
+            if (nCharsRead == 0 || (bOnlySign && nCharsRead == 1))
             {
-                VSIFree( szLineBuf );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Can't read portion of grid row %d at offset %ld.",
-                          nBlockYOff, (long) panLineOffset[nBlockYOff] );
+                VSIFree(szLineBuf);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Can't read portion of grid row %d at offset %ld.",
+                         nBlockYOff, (long)panLineOffset[nBlockYOff]);
                 return CE_Failure;
             }
             szLineBuf[nCharsRead] = '\0';
             szEnd = szLineBuf;
             continue;
         }
-        else if( *szEnd == '\0'
-                 || (*szEnd == '.' && *(szEnd+1) == '\0')
-                 || (*szEnd == '-' && *(szEnd+1) == '\0')
-                 || (*szEnd == '+' && *(szEnd+1) == '\0')
-                 || (*szEnd == 'E' && *(szEnd+1) == '\0')
-                 || (*szEnd == 'E' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
-                 || (*szEnd == 'E' && *(szEnd+1) == '+' && *(szEnd+2) == '\0')
-                 || (*szEnd == 'e' && *(szEnd+1) == '\0')
-                 || (*szEnd == 'e' && *(szEnd+1) == '-' && *(szEnd+2) == '\0')
-                 || (*szEnd == 'e' && *(szEnd+1) == '+' && *(szEnd+2) == '\0'))
+        else if (*szEnd == '\0' || (*szEnd == '.' && *(szEnd + 1) == '\0') ||
+                 (*szEnd == '-' && *(szEnd + 1) == '\0') ||
+                 (*szEnd == '+' && *(szEnd + 1) == '\0') ||
+                 (*szEnd == 'E' && *(szEnd + 1) == '\0') ||
+                 (*szEnd == 'E' && *(szEnd + 1) == '-' &&
+                  *(szEnd + 2) == '\0') ||
+                 (*szEnd == 'E' && *(szEnd + 1) == '+' &&
+                  *(szEnd + 2) == '\0') ||
+                 (*szEnd == 'e' && *(szEnd + 1) == '\0') ||
+                 (*szEnd == 'e' && *(szEnd + 1) == '-' &&
+                  *(szEnd + 2) == '\0') ||
+                 (*szEnd == 'e' && *(szEnd + 1) == '+' && *(szEnd + 2) == '\0'))
         {
             /* Number was interrupted by a nul character */
-            while( *szEnd != '\0' )
+            while (*szEnd != '\0')
                 szEnd++;
 
-            if( static_cast<size_t>(szEnd - szLineBuf) != nCharsRead )
+            if (static_cast<size_t>(szEnd - szLineBuf) != nCharsRead)
             {
-                CPLError( CE_Warning, CPLE_FileIO,
-                          "Unexpected ASCII null-character in grid row %d at "
-                          "offset %ld.\n",
-                          nBlockYOff,
-                          (long) (szEnd - szLineBuf) );
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Unexpected ASCII null-character in grid row %d at "
+                         "offset %ld.\n",
+                         nBlockYOff, (long)(szEnd - szLineBuf));
 
-                while( *szEnd == '\0' &&
-                       static_cast<size_t>(szEnd - szLineBuf) < nCharsRead )
+                while (*szEnd == '\0' &&
+                       static_cast<size_t>(szEnd - szLineBuf) < nCharsRead)
                     szEnd++;
 
                 continue;
             }
 
             /* End of buffer, could be interrupting a number */
-            if( VSIFSeekL( poGDS->fp, VSIFTellL(poGDS->fp) + szStart - szEnd, SEEK_SET ) != 0 )
+            if (VSIFSeekL(poGDS->fp, VSIFTellL(poGDS->fp) + szStart - szEnd,
+                          SEEK_SET) != 0)
             {
-                VSIFree( szLineBuf );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to seek in grid row %d (offset %ld, seek %d)"
-                          ".\n", nBlockYOff,
-                          (long) VSIFTellL(poGDS->fp),
-                          (int) (szStart - szEnd) );
+                VSIFree(szLineBuf);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unable to seek in grid row %d (offset %ld, seek %d)"
+                         ".\n",
+                         nBlockYOff, (long)VSIFTellL(poGDS->fp),
+                         (int)(szStart - szEnd));
 
                 return CE_Failure;
             }
             nCharsExamined += szStart - szLineBuf;
-            nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
+            nCharsRead = VSIFReadL(szLineBuf, 1, nLineBufSize - 1, poGDS->fp);
             szLineBuf[nCharsRead] = '\0';
 
-            if( nCharsRead == 0 )
+            if (nCharsRead == 0)
             {
-                VSIFree( szLineBuf );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Can't read portion of grid row %d at offset %ld.",
-                          nBlockYOff, (long) panLineOffset[nBlockYOff] );
+                VSIFree(szLineBuf);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Can't read portion of grid row %d at offset %ld.",
+                         nBlockYOff, (long)panLineOffset[nBlockYOff]);
                 return CE_Failure;
             }
-            else if( nCharsRead > static_cast<size_t>(szEnd - szStart) )
+            else if (nCharsRead > static_cast<size_t>(szEnd - szStart))
             {
                 /* Read new data, this was not really the end */
                 szEnd = szLineBuf;
@@ -511,50 +500,51 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             szEnd = szLineBuf + nCharsRead;
         }
 
-        if( pdfImage != nullptr )
+        if (pdfImage != nullptr)
         {
-            *(pdfImage+iCell) = dfValue;
+            *(pdfImage + iCell) = dfValue;
         }
 
         iCell++;
     }
 
-    while( *szEnd == ' ' )
+    while (*szEnd == ' ')
         szEnd++;
 
-    if( *szEnd != '\0' && *szEnd != poGDS->szEOL[0] )
-        CPLDebug( "GSAG", "Grid row %d does not end with a newline.  "
-                  "Possible skew.\n", nBlockYOff );
+    if (*szEnd != '\0' && *szEnd != poGDS->szEOL[0])
+        CPLDebug("GSAG",
+                 "Grid row %d does not end with a newline.  "
+                 "Possible skew.\n",
+                 nBlockYOff);
 
-    while( isspace( (unsigned char)*szEnd ) )
+    while (isspace((unsigned char)*szEnd))
         szEnd++;
 
     nCharsExamined += szEnd - szLineBuf;
 
-    if( nCharsExamined >= nMaxLineSize )
+    if (nCharsExamined >= nMaxLineSize)
         nMaxLineSize = nCharsExamined + 1;
 
-    if( nBlockYOff > 0 )
+    if (nBlockYOff > 0)
     {
-        vsi_l_offset nNewOffset =
-            panLineOffset[nBlockYOff] + nCharsExamined;
-        if( panLineOffset[nBlockYOff - 1] == 0 )
+        vsi_l_offset nNewOffset = panLineOffset[nBlockYOff] + nCharsExamined;
+        if (panLineOffset[nBlockYOff - 1] == 0)
         {
             panLineOffset[nBlockYOff - 1] = nNewOffset;
         }
-        else if( panLineOffset[nBlockYOff - 1] != nNewOffset )
+        else if (panLineOffset[nBlockYOff - 1] != nNewOffset)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Coding error: previous offset for line %d was "
-                     CPL_FRMT_GUIB ", new offset would be " CPL_FRMT_GUIB,
-                     nBlockYOff - 1,
-                     panLineOffset[nBlockYOff - 1], nNewOffset );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Coding error: previous offset for line %d was " CPL_FRMT_GUIB
+                ", new offset would be " CPL_FRMT_GUIB,
+                nBlockYOff - 1, panLineOffset[nBlockYOff - 1], nNewOffset);
         }
     }
 
     nLastReadLine = nBlockYOff;
 
-    VSIFree( szLineBuf );
+    VSIFree(szLineBuf);
 
     return CE_None;
 }
@@ -563,68 +553,69 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+CPLErr GSAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    if( eAccess == GA_ReadOnly )
+    if (eAccess == GA_ReadOnly)
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess,
-                  "Unable to write block, dataset opened read only.\n" );
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "Unable to write block, dataset opened read only.\n");
         return CE_Failure;
     }
 
-    if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
+    if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert( poGDS != nullptr );
+    assert(poGDS != nullptr);
 
-    if( padfRowMinZ == nullptr || padfRowMaxZ == nullptr
-        || nMinZRow < 0 || nMaxZRow < 0 )
+    if (padfRowMinZ == nullptr || padfRowMaxZ == nullptr || nMinZRow < 0 ||
+        nMaxZRow < 0)
     {
-        padfRowMinZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
-        if( padfRowMinZ == nullptr )
+        padfRowMinZ =
+            (double *)VSI_MALLOC2_VERBOSE(nRasterYSize, sizeof(double));
+        if (padfRowMinZ == nullptr)
         {
             return CE_Failure;
         }
 
-        padfRowMaxZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
-        if( padfRowMaxZ == nullptr )
+        padfRowMaxZ =
+            (double *)VSI_MALLOC2_VERBOSE(nRasterYSize, sizeof(double));
+        if (padfRowMaxZ == nullptr)
         {
-            VSIFree( padfRowMinZ );
+            VSIFree(padfRowMinZ);
             padfRowMinZ = nullptr;
             return CE_Failure;
         }
 
         CPLErr eErr = ScanForMinMaxZ();
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return eErr;
     }
 
-    if( panLineOffset[nBlockYOff+1] == 0 )
-        IReadBlock( nBlockXOff, nBlockYOff, nullptr );
+    if (panLineOffset[nBlockYOff + 1] == 0)
+        IReadBlock(nBlockXOff, nBlockYOff, nullptr);
 
-    if( panLineOffset[nBlockYOff+1] == 0 || panLineOffset[nBlockYOff] == 0 )
+    if (panLineOffset[nBlockYOff + 1] == 0 || panLineOffset[nBlockYOff] == 0)
         return CE_Failure;
 
     std::ostringstream ssOutBuf;
-    ssOutBuf.precision( GSAGDataset::nFIELD_PRECISION );
-    ssOutBuf.setf( std::ios::uppercase );
+    ssOutBuf.precision(GSAGDataset::nFIELD_PRECISION);
+    ssOutBuf.setf(std::ios::uppercase);
 
     double *pdfImage = (double *)pImage;
     padfRowMinZ[nBlockYOff] = std::numeric_limits<double>::max();
     padfRowMaxZ[nBlockYOff] = std::numeric_limits<double>::lowest();
-    for( int iCell=0; iCell<nBlockXSize; )
+    for (int iCell = 0; iCell < nBlockXSize;)
     {
-        for( int iCol=0; iCol<10 && iCell<nBlockXSize; iCol++, iCell++ )
+        for (int iCol = 0; iCol < 10 && iCell < nBlockXSize; iCol++, iCell++)
         {
-            if( AlmostEqual( pdfImage[iCell], GSAGDataset::dfNODATA_VALUE ) )
+            if (AlmostEqual(pdfImage[iCell], GSAGDataset::dfNODATA_VALUE))
             {
-                if( pdfImage[iCell] < padfRowMinZ[nBlockYOff] )
+                if (pdfImage[iCell] < padfRowMinZ[nBlockYOff])
                     padfRowMinZ[nBlockYOff] = pdfImage[iCell];
 
-                if( pdfImage[iCell] > padfRowMaxZ[nBlockYOff] )
+                if (pdfImage[iCell] > padfRowMaxZ[nBlockYOff])
                     padfRowMaxZ[nBlockYOff] = pdfImage[iCell];
             }
 
@@ -635,90 +626,90 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     ssOutBuf << poGDS->szEOL;
 
     CPLString sOut = ssOutBuf.str();
-    if( sOut.length() != panLineOffset[nBlockYOff+1]-panLineOffset[nBlockYOff] )
+    if (sOut.length() !=
+        panLineOffset[nBlockYOff + 1] - panLineOffset[nBlockYOff])
     {
-        int nShiftSize = (int) (sOut.length() - (panLineOffset[nBlockYOff+1]
-                                                 - panLineOffset[nBlockYOff]));
-        if( nBlockYOff != poGDS->nRasterYSize
-            && GSAGDataset::ShiftFileContents( poGDS->fp,
-                                               panLineOffset[nBlockYOff+1],
-                                               nShiftSize,
-                                               poGDS->szEOL ) != CE_None )
+        int nShiftSize = (int)(sOut.length() - (panLineOffset[nBlockYOff + 1] -
+                                                panLineOffset[nBlockYOff]));
+        if (nBlockYOff != poGDS->nRasterYSize &&
+            GSAGDataset::ShiftFileContents(poGDS->fp,
+                                           panLineOffset[nBlockYOff + 1],
+                                           nShiftSize, poGDS->szEOL) != CE_None)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Failure writing block, "
-                      "unable to shift file contents.\n" );
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failure writing block, "
+                     "unable to shift file contents.\n");
             return CE_Failure;
         }
 
-        for( size_t iLine=nBlockYOff+1;
-             iLine < static_cast<unsigned>(poGDS->nRasterYSize+1)
-                && panLineOffset[iLine] != 0; iLine++ )
+        for (size_t iLine = nBlockYOff + 1;
+             iLine < static_cast<unsigned>(poGDS->nRasterYSize + 1) &&
+             panLineOffset[iLine] != 0;
+             iLine++)
             panLineOffset[iLine] += nShiftSize;
     }
 
-    if( VSIFSeekL( poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET ) != 0 )
+    if (VSIFSeekL(poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to seek to grid line.\n" );
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to seek to grid line.\n");
         return CE_Failure;
     }
 
-    if( VSIFWriteL( sOut.c_str(), 1, sOut.length(),
-                    poGDS->fp ) != sOut.length() )
+    if (VSIFWriteL(sOut.c_str(), 1, sOut.length(), poGDS->fp) != sOut.length())
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to write grid block.\n" );
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write grid block.\n");
         return CE_Failure;
     }
 
     /* Update header as needed */
     bool bHeaderNeedsUpdate = false;
-    if( nMinZRow == nBlockYOff && padfRowMinZ[nBlockYOff] > dfMinZ )
+    if (nMinZRow == nBlockYOff && padfRowMinZ[nBlockYOff] > dfMinZ)
     {
         double dfNewMinZ = std::numeric_limits<double>::lowest();
-        for( int iRow=0; iRow<nRasterYSize; iRow++ )
+        for (int iRow = 0; iRow < nRasterYSize; iRow++)
         {
-            if( padfRowMinZ[iRow] < dfNewMinZ )
+            if (padfRowMinZ[iRow] < dfNewMinZ)
             {
                 dfNewMinZ = padfRowMinZ[iRow];
                 nMinZRow = iRow;
             }
         }
 
-        if( dfNewMinZ != dfMinZ )
+        if (dfNewMinZ != dfMinZ)
         {
             dfMinZ = dfNewMinZ;
             bHeaderNeedsUpdate = true;
         }
     }
 
-    if( nMaxZRow == nBlockYOff && padfRowMaxZ[nBlockYOff] < dfMaxZ )
+    if (nMaxZRow == nBlockYOff && padfRowMaxZ[nBlockYOff] < dfMaxZ)
     {
         double dfNewMaxZ = std::numeric_limits<double>::lowest();
-        for( int iRow=0; iRow<nRasterYSize; iRow++ )
+        for (int iRow = 0; iRow < nRasterYSize; iRow++)
         {
-            if( padfRowMaxZ[iRow] > dfNewMaxZ )
+            if (padfRowMaxZ[iRow] > dfNewMaxZ)
             {
                 dfNewMaxZ = padfRowMaxZ[iRow];
                 nMaxZRow = iRow;
             }
         }
 
-        if( dfNewMaxZ != dfMaxZ )
+        if (dfNewMaxZ != dfMaxZ)
         {
             dfMaxZ = dfNewMaxZ;
             bHeaderNeedsUpdate = true;
         }
     }
 
-    if( padfRowMinZ[nBlockYOff] < dfMinZ || padfRowMaxZ[nBlockYOff] > dfMaxZ )
+    if (padfRowMinZ[nBlockYOff] < dfMinZ || padfRowMaxZ[nBlockYOff] > dfMaxZ)
     {
-        if( padfRowMinZ[nBlockYOff] < dfMinZ )
+        if (padfRowMinZ[nBlockYOff] < dfMinZ)
         {
             dfMinZ = padfRowMinZ[nBlockYOff];
             nMinZRow = nBlockYOff;
         }
 
-        if( padfRowMaxZ[nBlockYOff] > dfMaxZ )
+        if (padfRowMaxZ[nBlockYOff] > dfMaxZ)
         {
             dfMaxZ = padfRowMaxZ[nBlockYOff];
             nMaxZRow = nBlockYOff;
@@ -727,7 +718,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         bHeaderNeedsUpdate = true;
     }
 
-    if( bHeaderNeedsUpdate && dfMaxZ > dfMinZ )
+    if (bHeaderNeedsUpdate && dfMaxZ > dfMinZ)
     {
         CPLErr eErr = poGDS->UpdateHeader();
         return eErr;
@@ -740,9 +731,9 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double GSAGRasterBand::GetNoDataValue( int * pbSuccess )
+double GSAGRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = TRUE;
 
     return GSAGDataset::dfNODATA_VALUE;
@@ -752,9 +743,9 @@ double GSAGRasterBand::GetNoDataValue( int * pbSuccess )
 /*                             GetMinimum()                             */
 /************************************************************************/
 
-double GSAGRasterBand::GetMinimum( int *pbSuccess )
+double GSAGRasterBand::GetMinimum(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = TRUE;
 
     return dfMinZ;
@@ -764,9 +755,9 @@ double GSAGRasterBand::GetMinimum( int *pbSuccess )
 /*                             GetMaximum()                             */
 /************************************************************************/
 
-double GSAGRasterBand::GetMaximum( int *pbSuccess )
+double GSAGRasterBand::GetMaximum(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = TRUE;
 
     return dfMaxZ;
@@ -782,13 +773,11 @@ double GSAGRasterBand::GetMaximum( int *pbSuccess )
 /*                             GSAGDataset()                            */
 /************************************************************************/
 
-GSAGDataset::GSAGDataset( const char *pszEOL ) :
-    fp(nullptr),
-    nMinMaxZOffset(0)
+GSAGDataset::GSAGDataset(const char *pszEOL) : fp(nullptr), nMinMaxZOffset(0)
 {
-    if( pszEOL == nullptr || EQUAL(pszEOL, "") )
+    if (pszEOL == nullptr || EQUAL(pszEOL, ""))
     {
-        CPLDebug( "GSAG", "GSAGDataset() created with invalid EOL string.\n" );
+        CPLDebug("GSAG", "GSAGDataset() created with invalid EOL string.\n");
         szEOL[0] = '\x0D';
         szEOL[1] = '\x0A';
         szEOL[2] = '\0';
@@ -806,22 +795,22 @@ GSAGDataset::~GSAGDataset()
 
 {
     FlushCache(true);
-    if( fp != nullptr )
-        VSIFCloseL( fp );
+    if (fp != nullptr)
+        VSIFCloseL(fp);
 }
 
 /************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
-int GSAGDataset::Identify( GDALOpenInfo * poOpenInfo )
+int GSAGDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
     /* Check for signature */
-    if( poOpenInfo->nHeaderBytes < 5
-        || !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "DSAA")
-        || ( poOpenInfo->pabyHeader[4] != '\x0D'
-            && poOpenInfo->pabyHeader[4] != '\x0A' ))
+    if (poOpenInfo->nHeaderBytes < 5 ||
+        !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "DSAA") ||
+        (poOpenInfo->pabyHeader[4] != '\x0D' &&
+         poOpenInfo->pabyHeader[4] != '\x0A'))
     {
         return FALSE;
     }
@@ -832,10 +821,10 @@ int GSAGDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *GSAGDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
     {
         return nullptr;
     }
@@ -846,37 +835,37 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szEOL[0] = poOpenInfo->pabyHeader[4];
     szEOL[1] = poOpenInfo->pabyHeader[5];
     szEOL[2] = '\0';
-    if( szEOL[1] != '\x0D' && szEOL[1] != '\x0A' )
+    if (szEOL[1] != '\x0D' && szEOL[1] != '\x0A')
         szEOL[1] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
-    GSAGDataset *poDS = new GSAGDataset( szEOL );
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
+    GSAGDataset *poDS = new GSAGDataset(szEOL);
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Read the header.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the header.                                                */
+    /* -------------------------------------------------------------------- */
     char *pabyHeader = nullptr;
     bool bMustFreeHeader = false;
-    if( poOpenInfo->nHeaderBytes >= static_cast<int>(nMAX_HEADER_SIZE) )
+    if (poOpenInfo->nHeaderBytes >= static_cast<int>(nMAX_HEADER_SIZE))
     {
         pabyHeader = (char *)poOpenInfo->pabyHeader;
     }
     else
     {
         bMustFreeHeader = true;
-        pabyHeader = (char *)VSI_MALLOC_VERBOSE( nMAX_HEADER_SIZE );
-        if( pabyHeader == nullptr )
+        pabyHeader = (char *)VSI_MALLOC_VERBOSE(nMAX_HEADER_SIZE);
+        if (pabyHeader == nullptr)
         {
             delete poDS;
             return nullptr;
         }
 
-        size_t nRead = VSIFReadL( pabyHeader, 1, nMAX_HEADER_SIZE-1, poDS->fp );
+        size_t nRead = VSIFReadL(pabyHeader, 1, nMAX_HEADER_SIZE - 1, poDS->fp);
         pabyHeader[nRead] = '\0';
     }
 
@@ -886,21 +875,22 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfTemp;
 
     /* Parse number of X axis grid rows */
-    long nTemp = strtol( szStart, &szEnd, 10 );
-    if( szStart == szEnd || nTemp < 0l )
+    long nTemp = strtol(szStart, &szEnd, 10);
+    if (szStart == szEnd || nTemp < 0l)
     {
         szErrorMsg = "Unable to parse the number of X axis grid columns.\n";
         goto error;
     }
-    else if( nTemp > std::numeric_limits<int>::max() )
+    else if (nTemp > std::numeric_limits<int>::max())
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Number of X axis grid columns not representable.\n" );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Number of X axis grid columns not representable.\n");
         poDS->nRasterXSize = std::numeric_limits<int>::max();
     }
-    else if ( nTemp == 0 )
+    else if (nTemp == 0)
     {
-        szErrorMsg = "Number of X axis grid columns is zero, which is invalid.\n";
+        szErrorMsg =
+            "Number of X axis grid columns is zero, which is invalid.\n";
         goto error;
     }
     else
@@ -910,19 +900,19 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse number of Y axis grid rows */
-    nTemp = strtol( szStart, &szEnd, 10 );
-    if( szStart == szEnd || nTemp < 0l )
+    nTemp = strtol(szStart, &szEnd, 10);
+    if (szStart == szEnd || nTemp < 0l)
     {
         szErrorMsg = "Unable to parse the number of Y axis grid rows.\n";
         goto error;
     }
-    else if( nTemp > std::numeric_limits<int>::max() - 1 )
+    else if (nTemp > std::numeric_limits<int>::max() - 1)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Number of Y axis grid rows not representable.\n" );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Number of Y axis grid rows not representable.\n");
         poDS->nRasterYSize = std::numeric_limits<int>::max() - 1;
     }
-    else if ( nTemp == 0)
+    else if (nTemp == 0)
     {
         szErrorMsg = "Number of Y axis grid rows is zero, which is invalid.\n";
         goto error;
@@ -935,8 +925,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Parse the minimum X value of the grid */
     double dfMinX;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the minimum X value.\n";
         goto error;
@@ -949,8 +939,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Parse the maximum X value of the grid */
     double dfMaxX;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the maximum X value.\n";
         goto error;
@@ -963,8 +953,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Parse the minimum Y value of the grid */
     double dfMinY;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the minimum Y value.\n";
         goto error;
@@ -977,8 +967,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Parse the maximum Y value of the grid */
     double dfMaxY;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the maximum Y value.\n";
         goto error;
@@ -990,13 +980,13 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     szStart = szEnd;
 
     /* Parse the minimum Z value of the grid */
-    while( isspace( (unsigned char)*szStart ) )
+    while (isspace((unsigned char)*szStart))
         szStart++;
     poDS->nMinMaxZOffset = szStart - pabyHeader;
 
     double dfMinZ;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the minimum Z value.\n";
         goto error;
@@ -1009,8 +999,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Parse the maximum Z value of the grid */
     double dfMaxZ;
-    dfTemp = CPLStrtod( szStart, &szEnd );
-    if( szStart == szEnd )
+    dfTemp = CPLStrtod(szStart, &szEnd);
+    if (szStart == szEnd)
     {
         szErrorMsg = "Unable to parse the maximum Z value.\n";
         goto error;
@@ -1020,58 +1010,60 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
         dfMaxZ = dfTemp;
     }
 
-    while( isspace((unsigned char)*szEnd) )
-            szEnd++;
+    while (isspace((unsigned char)*szEnd))
+        szEnd++;
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
     {
-    GSAGRasterBand *poBand = new GSAGRasterBand( poDS, 1, szEnd-pabyHeader );
-    if( poBand->panLineOffset == nullptr )
-    {
-        delete poBand;
-        goto error;
+        GSAGRasterBand *poBand =
+            new GSAGRasterBand(poDS, 1, szEnd - pabyHeader);
+        if (poBand->panLineOffset == nullptr)
+        {
+            delete poBand;
+            goto error;
+        }
+
+        poBand->dfMinX = dfMinX;
+        poBand->dfMaxX = dfMaxX;
+        poBand->dfMinY = dfMinY;
+        poBand->dfMaxY = dfMaxY;
+        poBand->dfMinZ = dfMinZ;
+        poBand->dfMaxZ = dfMaxZ;
+
+        poDS->SetBand(1, poBand);
     }
 
-    poBand->dfMinX = dfMinX;
-    poBand->dfMaxX = dfMaxX;
-    poBand->dfMinY = dfMinY;
-    poBand->dfMaxY = dfMaxY;
-    poBand->dfMinZ = dfMinZ;
-    poBand->dfMaxZ = dfMaxZ;
-
-    poDS->SetBand( 1, poBand );
-    }
-
-    if( bMustFreeHeader )
+    if (bMustFreeHeader)
     {
-        CPLFree( pabyHeader );
+        CPLFree(pabyHeader);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for external overviews.                                   */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    /* -------------------------------------------------------------------- */
+    /*      Check for external overviews.                                   */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
+                                poOpenInfo->GetSiblingFiles());
 
     return poDS;
 
 error:
-    if ( bMustFreeHeader )
+    if (bMustFreeHeader)
     {
-        CPLFree( pabyHeader );
+        CPLFree(pabyHeader);
     }
 
     delete poDS;
 
     if (szErrorMsg)
-        CPLError( CE_Failure, CPLE_AppDefined, "%s", szErrorMsg );
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", szErrorMsg);
     return nullptr;
 }
 
@@ -1079,7 +1071,7 @@ error:
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
+CPLErr GSAGDataset::GetGeoTransform(double *padfGeoTransform)
 {
     padfGeoTransform[0] = 0;
     padfGeoTransform[1] = 1;
@@ -1088,27 +1080,27 @@ CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
     padfGeoTransform[4] = 0;
     padfGeoTransform[5] = 1;
 
-    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand( 1 );
+    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand(1);
 
-    if( poGRB == nullptr )
+    if (poGRB == nullptr)
     {
         return CE_Failure;
     }
 
     /* check if we have a PAM GeoTransform stored */
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    CPLErr eErr = GDALPamDataset::GetGeoTransform( padfGeoTransform );
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    CPLErr eErr = GDALPamDataset::GetGeoTransform(padfGeoTransform);
     CPLPopErrorHandler();
 
-    if( eErr == CE_None )
+    if (eErr == CE_None)
         return CE_None;
 
-    if( nRasterXSize == 1 || nRasterYSize == 1 )
+    if (nRasterXSize == 1 || nRasterYSize == 1)
         return CE_Failure;
 
     /* calculate pixel size first */
-    padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
-    padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY)/(nRasterYSize - 1);
+    padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX) / (nRasterXSize - 1);
+    padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY) / (nRasterYSize - 1);
 
     /* then calculate image origin */
     padfGeoTransform[0] = poGRB->dfMinX - padfGeoTransform[1] / 2;
@@ -1125,18 +1117,18 @@ CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
+CPLErr GSAGDataset::SetGeoTransform(double *padfGeoTransform)
 {
-    if( eAccess == GA_ReadOnly )
+    if (eAccess == GA_ReadOnly)
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess,
-                  "Unable to set GeoTransform, dataset opened read only.\n" );
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "Unable to set GeoTransform, dataset opened read only.\n");
         return CE_Failure;
     }
 
-    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand( 1 );
+    GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand(1);
 
-    if( poGRB == nullptr || padfGeoTransform == nullptr)
+    if (poGRB == nullptr || padfGeoTransform == nullptr)
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
@@ -1160,7 +1152,7 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 
     CPLErr eErr = UpdateHeader();
 
-    if( eErr != CE_None )
+    if (eErr != CE_None)
     {
         poGRB->dfMinX = dfOldMinX;
         poGRB->dfMaxX = dfOldMaxX;
@@ -1174,52 +1166,53 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 /************************************************************************/
 /*                         ShiftFileContents()                          */
 /************************************************************************/
-CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
-                                       int nShiftSize, const char *pszEOL )
+CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
+                                      int nShiftSize, const char *pszEOL)
 {
     /* nothing to do for zero-shift */
-    if( nShiftSize == 0 )
+    if (nShiftSize == 0)
         return CE_None;
 
     /* make sure start location is sane */
-/* Tautology is always false.  nShiftStart is unsigned. */
-    if( /* nShiftStart < 0
-           || */ (nShiftSize < 0
-            && nShiftStart < static_cast<vsi_l_offset>(-nShiftSize)) )
-        nShiftStart = /*(nShiftSize > 0) ? 0 :*/  -nShiftSize;
+    /* Tautology is always false.  nShiftStart is unsigned. */
+    if (/* nShiftStart < 0
+           || */
+        (nShiftSize < 0 &&
+         nShiftStart < static_cast<vsi_l_offset>(-nShiftSize)))
+        nShiftStart = /*(nShiftSize > 0) ? 0 :*/ -nShiftSize;
 
     /* get offset at end of file */
-    if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
+    if (VSIFSeekL(fp, 0, SEEK_END) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to seek to end of grid file.\n" );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to seek to end of grid file.\n");
         return CE_Failure;
     }
 
-    vsi_l_offset nOldEnd = VSIFTellL( fp );
+    vsi_l_offset nOldEnd = VSIFTellL(fp);
 
     /* If shifting past end, just zero-pad as necessary */
-    if( nShiftStart >= nOldEnd )
+    if (nShiftStart >= nOldEnd)
     {
-        if( nShiftSize < 0 )
+        if (nShiftSize < 0)
         {
-            if( nShiftStart + nShiftSize >= nOldEnd )
+            if (nShiftStart + nShiftSize >= nOldEnd)
                 return CE_None;
 
-            VSIFTruncateL( fp, nShiftStart + nShiftSize );
+            VSIFTruncateL(fp, nShiftStart + nShiftSize);
 
             return CE_None;
         }
         else
         {
-            for( vsi_l_offset nPos = nOldEnd;
-                 nPos < nShiftStart + nShiftSize; nPos++ )
+            for (vsi_l_offset nPos = nOldEnd; nPos < nShiftStart + nShiftSize;
+                 nPos++)
             {
-                if( VSIFWriteL( (void *)" ", 1, 1, fp ) != 1 )
+                if (VSIFWriteL((void *)" ", 1, 1, fp) != 1)
                 {
-                    CPLError( CE_Failure, CPLE_FileIO,
-                              "Unable to write padding to grid file "
-                              "(Out of space?).\n" );
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Unable to write padding to grid file "
+                             "(Out of space?).\n");
                     return CE_Failure;
                 }
             }
@@ -1228,139 +1221,140 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
     }
 
     /* prepare buffer for real shifting */
-    size_t nBufferSize = (1024 >= abs(nShiftSize)*2) ? 1024 : abs(nShiftSize)*2;
-    char *pabyBuffer = (char *)VSI_MALLOC_VERBOSE( nBufferSize );
-    if( pabyBuffer == nullptr)
+    size_t nBufferSize =
+        (1024 >= abs(nShiftSize) * 2) ? 1024 : abs(nShiftSize) * 2;
+    char *pabyBuffer = (char *)VSI_MALLOC_VERBOSE(nBufferSize);
+    if (pabyBuffer == nullptr)
     {
         return CE_Failure;
     }
 
-    if( VSIFSeekL( fp, nShiftStart, SEEK_SET ) != 0 )
+    if (VSIFSeekL(fp, nShiftStart, SEEK_SET) != 0)
     {
-        VSIFree( pabyBuffer );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to seek to start of shift in grid file.\n" );
+        VSIFree(pabyBuffer);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to seek to start of shift in grid file.\n");
         return CE_Failure;
     }
 
     size_t nRead;
     size_t nOverlap = (nShiftSize > 0) ? nShiftSize : 0;
     /* If there is overlap, fill buffer with the overlap to start */
-    if( nOverlap > 0)
+    if (nOverlap > 0)
     {
-        nRead = VSIFReadL( (void *)pabyBuffer, 1, nOverlap, fp );
-        if( nRead < nOverlap && !VSIFEofL( fp ) )
+        nRead = VSIFReadL((void *)pabyBuffer, 1, nOverlap, fp);
+        if (nRead < nOverlap && !VSIFEofL(fp))
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Error reading grid file.\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO, "Error reading grid file.\n");
             return CE_Failure;
         }
 
         /* overwrite the new space with ' ' */
-        if( VSIFSeekL( fp, nShiftStart, SEEK_SET ) != 0 )
+        if (VSIFSeekL(fp, nShiftStart, SEEK_SET) != 0)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to seek to start of shift in grid file.\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to seek to start of shift in grid file.\n");
             return CE_Failure;
         }
 
-        for( int iFill=0; iFill<nShiftSize; iFill++ )
+        for (int iFill = 0; iFill < nShiftSize; iFill++)
         {
-            if( VSIFWriteL( (void *)" ", 1, 1, fp ) != 1 )
+            if (VSIFWriteL((void *)" ", 1, 1, fp) != 1)
             {
-                VSIFree( pabyBuffer );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to write padding to grid file "
-                          "(Out of space?).\n" );
+                VSIFree(pabyBuffer);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unable to write padding to grid file "
+                         "(Out of space?).\n");
                 return CE_Failure;
             }
         }
 
         /* if we have already read the entire file, finish it off */
-        if( VSIFTellL( fp ) >= nOldEnd )
+        if (VSIFTellL(fp) >= nOldEnd)
         {
-            if( VSIFWriteL( (void *)pabyBuffer, 1, nRead, fp ) != nRead )
+            if (VSIFWriteL((void *)pabyBuffer, 1, nRead, fp) != nRead)
             {
-                VSIFree( pabyBuffer );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to write to grid file (Out of space?).\n" );
+                VSIFree(pabyBuffer);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unable to write to grid file (Out of space?).\n");
                 return CE_Failure;
             }
 
-            VSIFree( pabyBuffer );
+            VSIFree(pabyBuffer);
             return CE_None;
         }
     }
 
     /* iterate over the remainder of the file and shift as requested */
     bool bEOF = false;
-    while( !bEOF )
+    while (!bEOF)
     {
-        nRead = VSIFReadL( (void *)(pabyBuffer+nOverlap), 1,
-                           nBufferSize - nOverlap, fp );
+        nRead = VSIFReadL((void *)(pabyBuffer + nOverlap), 1,
+                          nBufferSize - nOverlap, fp);
 
-        if( VSIFEofL( fp ) )
+        if (VSIFEofL(fp))
             bEOF = true;
         else
             bEOF = false;
 
-        if( nRead == 0 && !bEOF )
+        if (nRead == 0 && !bEOF)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to read from grid file (possible corruption).\n");
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to read from grid file (possible corruption).\n");
             return CE_Failure;
         }
 
         /* FIXME:  Should use SEEK_CUR, review integer promotions... */
-        vsi_l_offset nNewPos = (nShiftSize >= 0 ) ?
-            VSIFTellL(fp)+nShiftSize-nRead-nOverlap :
-            VSIFTellL(fp) - (-nShiftSize) -nRead-nOverlap;
-        if( VSIFSeekL( fp, nNewPos, SEEK_SET ) != 0 )
+        vsi_l_offset nNewPos =
+            (nShiftSize >= 0)
+                ? VSIFTellL(fp) + nShiftSize - nRead - nOverlap
+                : VSIFTellL(fp) - (-nShiftSize) - nRead - nOverlap;
+        if (VSIFSeekL(fp, nNewPos, SEEK_SET) != 0)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to seek in grid file (possible corruption).\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to seek in grid file (possible corruption).\n");
             return CE_Failure;
         }
 
-        size_t nWritten = VSIFWriteL( (void *)pabyBuffer, 1, nRead, fp );
-        if( nWritten != nRead )
+        size_t nWritten = VSIFWriteL((void *)pabyBuffer, 1, nRead, fp);
+        if (nWritten != nRead)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to write to grid file (out of space?).\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to write to grid file (out of space?).\n");
             return CE_Failure;
         }
 
         /* shift overlapped contents to the front of the buffer if necessary */
-        if( nOverlap > 0)
-            memmove(pabyBuffer, pabyBuffer+nRead, nOverlap);
+        if (nOverlap > 0)
+            memmove(pabyBuffer, pabyBuffer + nRead, nOverlap);
     }
 
     /* write the remainder of the buffer or overwrite leftovers and finish */
-    if( nShiftSize > 0 )
+    if (nShiftSize > 0)
     {
         size_t nTailSize = nOverlap;
-        while( nTailSize > 0 && isspace( (unsigned char)pabyBuffer[nTailSize-1] ) )
+        while (nTailSize > 0 &&
+               isspace((unsigned char)pabyBuffer[nTailSize - 1]))
             nTailSize--;
 
-        if( VSIFWriteL( (void *)pabyBuffer, 1, nTailSize, fp ) != nTailSize )
+        if (VSIFWriteL((void *)pabyBuffer, 1, nTailSize, fp) != nTailSize)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to write to grid file (out of space?).\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to write to grid file (out of space?).\n");
             return CE_Failure;
         }
 
-        if( VSIFWriteL( (void *)pszEOL, 1, strlen(pszEOL), fp )
-            != strlen(pszEOL) )
+        if (VSIFWriteL((void *)pszEOL, 1, strlen(pszEOL), fp) != strlen(pszEOL))
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to write to grid file (out of space?).\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to write to grid file (out of space?).\n");
             return CE_Failure;
         }
     }
@@ -1368,36 +1362,34 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
     {
         /* FIXME: ftruncate()? */
         /* FIXME:  Should use SEEK_CUR, review integer promotions... */
-        if( VSIFSeekL( fp, VSIFTellL(fp)-strlen(pszEOL), SEEK_SET ) != 0 )
+        if (VSIFSeekL(fp, VSIFTellL(fp) - strlen(pszEOL), SEEK_SET) != 0)
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to seek in grid file.\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to seek in grid file.\n");
             return CE_Failure;
         }
 
-        for( int iPadding=0; iPadding<-nShiftSize; iPadding++ )
+        for (int iPadding = 0; iPadding < -nShiftSize; iPadding++)
         {
-            if( VSIFWriteL( (void *)" ", 1, 1, fp ) != 1 )
+            if (VSIFWriteL((void *)" ", 1, 1, fp) != 1)
             {
-                VSIFree( pabyBuffer );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Error writing to grid file.\n" );
+                VSIFree(pabyBuffer);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Error writing to grid file.\n");
                 return CE_Failure;
             }
         }
 
-        if( VSIFWriteL( (void *)pszEOL, 1, strlen(pszEOL), fp )
-            != strlen(pszEOL) )
+        if (VSIFWriteL((void *)pszEOL, 1, strlen(pszEOL), fp) != strlen(pszEOL))
         {
-            VSIFree( pabyBuffer );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to write to grid file (out of space?).\n" );
+            VSIFree(pabyBuffer);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to write to grid file (out of space?).\n");
             return CE_Failure;
         }
     }
 
-    VSIFree( pabyBuffer );
+    VSIFree(pabyBuffer);
     return CE_None;
 }
 
@@ -1408,16 +1400,16 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
 CPLErr GSAGDataset::UpdateHeader()
 
 {
-    GSAGRasterBand *poBand = (GSAGRasterBand *)GetRasterBand( 1 );
-    if( poBand == nullptr )
+    GSAGRasterBand *poBand = (GSAGRasterBand *)GetRasterBand(1);
+    if (poBand == nullptr)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Unable to open raster band.\n" );
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to open raster band.\n");
         return CE_Failure;
     }
 
     std::ostringstream ssOutBuf;
-    ssOutBuf.precision( nFIELD_PRECISION );
-    ssOutBuf.setf( std::ios::uppercase );
+    ssOutBuf.precision(nFIELD_PRECISION);
+    ssOutBuf.setf(std::ios::uppercase);
 
     /* signature */
     ssOutBuf << "DSAA" << szEOL;
@@ -1435,36 +1427,36 @@ CPLErr GSAGDataset::UpdateHeader()
     ssOutBuf << poBand->dfMinZ << " " << poBand->dfMaxZ << szEOL;
 
     CPLString sOut = ssOutBuf.str();
-    if( sOut.length() != poBand->panLineOffset[0] )
+    if (sOut.length() != poBand->panLineOffset[0])
     {
-        int nShiftSize = (int) (sOut.length() - poBand->panLineOffset[0]);
-        if( ShiftFileContents( fp, poBand->panLineOffset[0], nShiftSize,
-                               szEOL ) != CE_None )
+        int nShiftSize = (int)(sOut.length() - poBand->panLineOffset[0]);
+        if (ShiftFileContents(fp, poBand->panLineOffset[0], nShiftSize,
+                              szEOL) != CE_None)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to update grid header, "
-                      "failure shifting file contents.\n" );
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to update grid header, "
+                     "failure shifting file contents.\n");
             return CE_Failure;
         }
 
-        for( size_t iLine=0;
-             iLine < static_cast<unsigned>(nRasterYSize+1)
-                && poBand->panLineOffset[iLine] != 0;
-             iLine++ )
+        for (size_t iLine = 0;
+             iLine < static_cast<unsigned>(nRasterYSize + 1) &&
+             poBand->panLineOffset[iLine] != 0;
+             iLine++)
             poBand->panLineOffset[iLine] += nShiftSize;
     }
 
-    if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
+    if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to seek to start of grid file.\n" );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to seek to start of grid file.\n");
         return CE_Failure;
     }
 
-    if( VSIFWriteL( sOut.c_str(), 1, sOut.length(), fp ) != sOut.length() )
+    if (VSIFWriteL(sOut.c_str(), 1, sOut.length(), fp) != sOut.length())
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to update file header.  Disk full?\n" );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to update file header.  Disk full?\n");
         return CE_Failure;
     }
 
@@ -1475,51 +1467,50 @@ CPLErr GSAGDataset::UpdateHeader()
 /*                             CreateCopy()                             */
 /************************************************************************/
 
-GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
-                                      GDALDataset *poSrcDS,
-                                      int bStrict,
-                                      CPL_UNUSED char **papszOptions,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData )
+GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
+                                     GDALDataset *poSrcDS, int bStrict,
+                                     CPL_UNUSED char **papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData)
 {
-    if( pfnProgress == nullptr )
+    if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
 
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "GSAG driver does not support source dataset with zero band.\n");
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "GSAG driver does not support source dataset with zero band.\n");
         return nullptr;
     }
     else if (nBands > 1)
     {
-        if( bStrict )
+        if (bStrict)
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "Unable to create copy, Golden Software ASCII Grid "
-                      "format only supports one raster band.\n" );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unable to create copy, Golden Software ASCII Grid "
+                     "format only supports one raster band.\n");
             return nullptr;
         }
         else
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "Golden Software ASCII Grid format only supports one "
-                      "raster band, first band will be copied.\n" );
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Golden Software ASCII Grid format only supports one "
+                     "raster band, first band will be copied.\n");
     }
 
-    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
+    if (!pfnProgress(0.0, nullptr, pProgressData))
     {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated\n" );
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated\n");
         return nullptr;
     }
 
-    VSILFILE *fp = VSIFOpenL( pszFilename, "w+b" );
+    VSILFILE *fp = VSIFOpenL(pszFilename, "w+b");
 
-    if( fp == nullptr )
+    if (fp == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file '%s' failed.\n",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file '%s' failed.\n", pszFilename);
         return nullptr;
     }
 
@@ -1527,11 +1518,11 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     const int nYSize = poSrcDS->GetRasterYSize();
     double adfGeoTransform[6];
 
-    poSrcDS->GetGeoTransform( adfGeoTransform );
+    poSrcDS->GetGeoTransform(adfGeoTransform);
 
     std::ostringstream ssHeader;
-    ssHeader.precision( nFIELD_PRECISION );
-    ssHeader.setf( std::ios::uppercase );
+    ssHeader.precision(nFIELD_PRECISION);
+    ssHeader.setf(std::ios::uppercase);
 
     ssHeader << "DSAA\x0D\x0A";
 
@@ -1542,171 +1533,167 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
              << "\x0D\x0A";
 
     ssHeader << adfGeoTransform[5] * (nYSize - 0.5) + adfGeoTransform[3] << " "
-             << adfGeoTransform[3] + adfGeoTransform[5] / 2
-             << "\x0D\x0A";
+             << adfGeoTransform[3] + adfGeoTransform[5] / 2 << "\x0D\x0A";
 
-    if( VSIFWriteL( (void *)ssHeader.str().c_str(), 1, ssHeader.str().length(),
-                    fp ) != ssHeader.str().length() )
+    if (VSIFWriteL((void *)ssHeader.str().c_str(), 1, ssHeader.str().length(),
+                   fp) != ssHeader.str().length())
     {
-        VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to create copy, writing header failed.\n" );
+        VSIFCloseL(fp);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to create copy, writing header failed.\n");
         return nullptr;
     }
 
     /* Save the location and write placeholders for the min/max Z value */
-    vsi_l_offset nRangeStart = VSIFTellL( fp );
+    vsi_l_offset nRangeStart = VSIFTellL(fp);
     const char *szDummyRange = "0.0000000000001 0.0000000000001\x0D\x0A";
-    size_t nDummyRangeLen = strlen( szDummyRange );
-    if( VSIFWriteL( (void *)szDummyRange, 1, nDummyRangeLen,
-                    fp ) != nDummyRangeLen )
+    size_t nDummyRangeLen = strlen(szDummyRange);
+    if (VSIFWriteL((void *)szDummyRange, 1, nDummyRangeLen, fp) !=
+        nDummyRangeLen)
     {
-        VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to create copy, writing header failed.\n" );
+        VSIFCloseL(fp);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to create copy, writing header failed.\n");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Copy band data.                                                 */
-/* -------------------------------------------------------------------- */
-    double *pdfData = (double *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( double ) );
-    if( pdfData == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Copy band data.                                                 */
+    /* -------------------------------------------------------------------- */
+    double *pdfData = (double *)VSI_MALLOC2_VERBOSE(nXSize, sizeof(double));
+    if (pdfData == nullptr)
     {
-        VSIFCloseL( fp );
+        VSIFCloseL(fp);
         return nullptr;
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
     int bSrcHasNDValue;
-    double dfSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
+    double dfSrcNoDataValue = poSrcBand->GetNoDataValue(&bSrcHasNDValue);
     double dfMin = std::numeric_limits<double>::max();
     double dfMax = std::numeric_limits<double>::lowest();
-    for( int iRow=0; iRow<nYSize; iRow++ )
+    for (int iRow = 0; iRow < nYSize; iRow++)
     {
-        CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, nYSize-iRow-1,
-                                           nXSize, 1, pdfData,
-                                           nXSize, 1, GDT_Float64, 0, 0, nullptr );
+        CPLErr eErr =
+            poSrcBand->RasterIO(GF_Read, 0, nYSize - iRow - 1, nXSize, 1,
+                                pdfData, nXSize, 1, GDT_Float64, 0, 0, nullptr);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
         {
-            VSIFCloseL( fp );
-            VSIFree( pdfData );
+            VSIFCloseL(fp);
+            VSIFree(pdfData);
             return nullptr;
         }
 
-        for( int iCol=0; iCol<nXSize; )
+        for (int iCol = 0; iCol < nXSize;)
         {
-            for( int iCount=0;
-                 iCount<10 && iCol<nXSize;
-                 iCount++, iCol++ )
+            for (int iCount = 0; iCount < 10 && iCol < nXSize; iCount++, iCol++)
             {
                 double dfValue = pdfData[iCol];
 
-                if( bSrcHasNDValue && AlmostEqual( dfValue, dfSrcNoDataValue ) )
+                if (bSrcHasNDValue && AlmostEqual(dfValue, dfSrcNoDataValue))
                 {
                     dfValue = dfNODATA_VALUE;
                 }
                 else
                 {
-                    if( dfValue > dfMax )
+                    if (dfValue > dfMax)
                         dfMax = dfValue;
 
-                    if( dfValue < dfMin )
+                    if (dfValue < dfMin)
                         dfMin = dfValue;
                 }
 
                 std::ostringstream ssOut;
                 ssOut.precision(nFIELD_PRECISION);
-                ssOut.setf( std::ios::uppercase );
+                ssOut.setf(std::ios::uppercase);
                 ssOut << dfValue << " ";
                 CPLString sOut = ssOut.str();
 
-                if( VSIFWriteL( sOut.c_str(), 1, sOut.length(), fp )
-                    != sOut.length() )
+                if (VSIFWriteL(sOut.c_str(), 1, sOut.length(), fp) !=
+                    sOut.length())
                 {
-                    VSIFCloseL( fp );
-                    VSIFree( pdfData );
-                    CPLError( CE_Failure, CPLE_FileIO,
-                              "Unable to write grid cell.  Disk full?\n" );
+                    VSIFCloseL(fp);
+                    VSIFree(pdfData);
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Unable to write grid cell.  Disk full?\n");
                     return nullptr;
                 }
             }
 
-            if( VSIFWriteL( (void *)"\x0D\x0A", 1, 2, fp ) != 2 )
+            if (VSIFWriteL((void *)"\x0D\x0A", 1, 2, fp) != 2)
             {
-                VSIFCloseL( fp );
-                VSIFree( pdfData );
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to finish write of grid line. Disk full?\n" );
+                VSIFCloseL(fp);
+                VSIFree(pdfData);
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unable to finish write of grid line. Disk full?\n");
                 return nullptr;
             }
         }
 
-        if( VSIFWriteL( (void *)"\x0D\x0A", 1, 2, fp ) != 2 )
+        if (VSIFWriteL((void *)"\x0D\x0A", 1, 2, fp) != 2)
         {
-            VSIFCloseL( fp );
-            VSIFree( pdfData );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to finish write of grid row. Disk full?\n" );
+            VSIFCloseL(fp);
+            VSIFree(pdfData);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to finish write of grid row. Disk full?\n");
             return nullptr;
         }
 
-        if( !pfnProgress( static_cast<double>(iRow + 1)/nYSize,
-                          nullptr, pProgressData ) )
+        if (!pfnProgress(static_cast<double>(iRow + 1) / nYSize, nullptr,
+                         pProgressData))
         {
-            VSIFCloseL( fp );
-            VSIFree( pdfData );
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            VSIFCloseL(fp);
+            VSIFree(pdfData);
+            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             return nullptr;
         }
     }
 
-    VSIFree( pdfData );
+    VSIFree(pdfData);
 
     /* write out the min and max values */
     std::ostringstream ssRange;
-    ssRange.precision( nFIELD_PRECISION );
-    ssRange.setf( std::ios::uppercase );
+    ssRange.precision(nFIELD_PRECISION);
+    ssRange.setf(std::ios::uppercase);
     ssRange << dfMin << " " << dfMax << "\x0D\x0A";
-    if( ssRange.str().length() != nDummyRangeLen )
+    if (ssRange.str().length() != nDummyRangeLen)
     {
         int nShiftSize = static_cast<int>(ssRange.str().length()) -
                          static_cast<int>(nDummyRangeLen);
-        if( ShiftFileContents( fp, nRangeStart + nDummyRangeLen,
-                               nShiftSize, "\x0D\x0A" ) != CE_None )
+        if (ShiftFileContents(fp, nRangeStart + nDummyRangeLen, nShiftSize,
+                              "\x0D\x0A") != CE_None)
         {
-            VSIFCloseL( fp );
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to shift file contents.\n" );
+            VSIFCloseL(fp);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Unable to shift file contents.\n");
             return nullptr;
         }
     }
 
-    if( VSIFSeekL( fp, nRangeStart, SEEK_SET ) != 0 )
+    if (VSIFSeekL(fp, nRangeStart, SEEK_SET) != 0)
     {
-        VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to seek to start of grid file copy.\n" );
+        VSIFCloseL(fp);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to seek to start of grid file copy.\n");
         return nullptr;
     }
 
-    if( VSIFWriteL( (void *)ssRange.str().c_str(), 1, ssRange.str().length(),
-                    fp ) != ssRange.str().length() )
+    if (VSIFWriteL((void *)ssRange.str().c_str(), 1, ssRange.str().length(),
+                   fp) != ssRange.str().length())
     {
-        VSIFCloseL( fp );
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Unable to write range information.\n" );
+        VSIFCloseL(fp);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unable to write range information.\n");
         return nullptr;
     }
 
-    VSIFCloseL( fp );
+    VSIFCloseL(fp);
 
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen( pszFilename,
-                                                GA_Update );
+    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_Update);
     if (poDS)
     {
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
     }
     return poDS;
 }
@@ -1718,25 +1705,25 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_GSAG()
 
 {
-    if( GDALGetDriverByName( "GSAG" ) != nullptr )
+    if (GDALGetDriverByName("GSAG") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GSAG" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Golden Software ASCII Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/gsag.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 "
-                               "Float32 Float64" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("GSAG");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Golden Software ASCII Grid (.grd)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gsag.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "grd");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                              "Byte Int16 UInt16 Int32 UInt32 "
+                              "Float32 Float64");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnIdentify = GSAGDataset::Identify;
     poDriver->pfnOpen = GSAGDataset::Open;
     poDriver->pfnCreateCopy = GSAGDataset::CreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
