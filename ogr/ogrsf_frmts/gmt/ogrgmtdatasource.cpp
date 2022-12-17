@@ -30,17 +30,14 @@
 #include "cpl_string.h"
 #include "ogr_gmt.h"
 
-
 /************************************************************************/
 /*                          OGRGmtDataSource()                          */
 /************************************************************************/
 
-OGRGmtDataSource::OGRGmtDataSource() :
-    papoLayers(nullptr),
-    nLayers(0),
-    pszName(nullptr),
-    bUpdate(false)
-{}
+OGRGmtDataSource::OGRGmtDataSource()
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr), bUpdate(false)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRGmtDataSource()                          */
@@ -49,38 +46,36 @@ OGRGmtDataSource::OGRGmtDataSource() :
 OGRGmtDataSource::~OGRGmtDataSource()
 
 {
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
-    CPLFree( papoLayers );
-    CPLFree( pszName );
+    CPLFree(papoLayers);
+    CPLFree(pszName);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGmtDataSource::Open( const char *pszFilename,
-                            VSILFILE* fp,
-                            const OGRSpatialReference* poSRS,
-                            int bUpdateIn )
+int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
+                           const OGRSpatialReference *poSRS, int bUpdateIn)
 
 {
-    bUpdate = CPL_TO_BOOL( bUpdateIn );
+    bUpdate = CPL_TO_BOOL(bUpdateIn);
 
-    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, fp, poSRS, bUpdate );
-    if( !poLayer->bValidFile )
+    OGRGmtLayer *poLayer = new OGRGmtLayer(pszFilename, fp, poSRS, bUpdate);
+    if (!poLayer->bValidFile)
     {
         delete poLayer;
         return FALSE;
     }
 
-    papoLayers = static_cast<OGRGmtLayer **>( CPLRealloc( papoLayers,
-                                        (nLayers + 1) *sizeof(OGRGmtLayer*)) );
+    papoLayers = static_cast<OGRGmtLayer **>(
+        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRGmtLayer *)));
     papoLayers[nLayers] = poLayer;
-    nLayers ++;
+    nLayers++;
 
-    CPLFree (pszName);
-    pszName = CPLStrdup( pszFilename );
+    CPLFree(pszName);
+    pszName = CPLStrdup(pszFilename);
 
     return TRUE;
 }
@@ -92,10 +87,10 @@ int OGRGmtDataSource::Open( const char *pszFilename,
 /*      currently but save the name.                                    */
 /************************************************************************/
 
-int OGRGmtDataSource::Create( const char *pszDSName, char ** /* papszOptions */)
+int OGRGmtDataSource::Create(const char *pszDSName, char ** /* papszOptions */)
 
 {
-    pszName = CPLStrdup( pszDSName );
+    pszName = CPLStrdup(pszDSName);
 
     return TRUE;
 }
@@ -104,123 +99,120 @@ int OGRGmtDataSource::Create( const char *pszDSName, char ** /* papszOptions */)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *
-OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
-                                OGRSpatialReference *poSRS,
-                                OGRwkbGeometryType eType,
-                                CPL_UNUSED char ** papszOptions )
+OGRLayer *OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
+                                         OGRSpatialReference *poSRS,
+                                         OGRwkbGeometryType eType,
+                                         CPL_UNUSED char **papszOptions)
 {
-    if( nLayers != 0 )
+    if (nLayers != 0)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Establish the geometry type.  Note this logic                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Establish the geometry type.  Note this logic                   */
+    /* -------------------------------------------------------------------- */
     const char *pszGeom = nullptr;
 
-    switch( wkbFlatten(eType) )
+    switch (wkbFlatten(eType))
     {
-      case wkbPoint:
-        pszGeom = " @GPOINT";
-        break;
-      case wkbLineString:
-        pszGeom = " @GLINESTRING";
-        break;
-      case wkbPolygon:
-        pszGeom = " @GPOLYGON";
-        break;
-      case wkbMultiPoint:
-        pszGeom = " @GMULTIPOINT";
-        break;
-      case wkbMultiLineString:
-        pszGeom = " @GMULTILINESTRING";
-        break;
-      case wkbMultiPolygon:
-        pszGeom = " @GMULTIPOLYGON";
-        break;
-      default:
-        pszGeom = "";
-        break;
+        case wkbPoint:
+            pszGeom = " @GPOINT";
+            break;
+        case wkbLineString:
+            pszGeom = " @GLINESTRING";
+            break;
+        case wkbPolygon:
+            pszGeom = " @GPOLYGON";
+            break;
+        case wkbMultiPoint:
+            pszGeom = " @GMULTIPOINT";
+            break;
+        case wkbMultiLineString:
+            pszGeom = " @GMULTILINESTRING";
+            break;
+        case wkbMultiPolygon:
+            pszGeom = " @GMULTIPOLYGON";
+            break;
+        default:
+            pszGeom = "";
+            break;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If this is the first layer for this datasource, and if the      */
-/*      datasource name ends in .gmt we will override the provided      */
-/*      layer name with the name from the gmt.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If this is the first layer for this datasource, and if the      */
+    /*      datasource name ends in .gmt we will override the provided      */
+    /*      layer name with the name from the gmt.                          */
+    /* -------------------------------------------------------------------- */
 
-    CPLString osPath = CPLGetPath( pszName );
+    CPLString osPath = CPLGetPath(pszName);
     CPLString osFilename(pszName);
-    const char* pszFlags = "wb+";
+    const char *pszFlags = "wb+";
 
-    if( osFilename == "/dev/stdout" )
+    if (osFilename == "/dev/stdout")
         osFilename = "/vsistdout";
 
-    if( STARTS_WITH(osFilename, "/vsistdout") )
+    if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
-    else if( !EQUAL(CPLGetExtension(pszName),"gmt") )
-        osFilename = CPLFormFilename( osPath, pszLayerName, "gmt" );
+    else if (!EQUAL(CPLGetExtension(pszName), "gmt"))
+        osFilename = CPLFormFilename(osPath, pszLayerName, "gmt");
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( osFilename, pszFlags );
-    if( fp == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Open the file.                                                  */
+    /* -------------------------------------------------------------------- */
+    VSILFILE *fp = VSIFOpenL(osFilename, pszFlags);
+    if (fp == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "open(%s) failed: %s",
-                  osFilename.c_str(), VSIStrerror(errno) );
+        CPLError(CE_Failure, CPLE_OpenFailed, "open(%s) failed: %s",
+                 osFilename.c_str(), VSIStrerror(errno));
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write out header.                                               */
-/* -------------------------------------------------------------------- */
-    VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
-    if( !STARTS_WITH(osFilename, "/vsistdout") )
+    /* -------------------------------------------------------------------- */
+    /*      Write out header.                                               */
+    /* -------------------------------------------------------------------- */
+    VSIFPrintfL(fp, "# @VGMT1.0%s\n", pszGeom);
+    if (!STARTS_WITH(osFilename, "/vsistdout"))
     {
-        VSIFPrintfL( fp, "# REGION_STUB                                      "
-                     "                       \n" );
+        VSIFPrintfL(fp, "# REGION_STUB                                      "
+                        "                       \n");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write the projection, if possible.                              */
-/* -------------------------------------------------------------------- */
-    if( poSRS != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Write the projection, if possible.                              */
+    /* -------------------------------------------------------------------- */
+    if (poSRS != nullptr)
     {
-        if( poSRS->GetAuthorityName(nullptr)
-            && EQUAL(poSRS->GetAuthorityName(nullptr),"EPSG") )
+        if (poSRS->GetAuthorityName(nullptr) &&
+            EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
         {
-            VSIFPrintfL( fp, "# @Je%s\n",
-                         poSRS->GetAuthorityCode(nullptr) );
+            VSIFPrintfL(fp, "# @Je%s\n", poSRS->GetAuthorityCode(nullptr));
         }
 
         char *pszValue = nullptr;
-        if( poSRS->exportToProj4( &pszValue ) == OGRERR_NONE )
+        if (poSRS->exportToProj4(&pszValue) == OGRERR_NONE)
         {
-            VSIFPrintfL( fp, "# @Jp\"%s\"\n", pszValue );
+            VSIFPrintfL(fp, "# @Jp\"%s\"\n", pszValue);
         }
-        CPLFree( pszValue );
+        CPLFree(pszValue);
         pszValue = nullptr;
 
-        if( poSRS->exportToWkt( &pszValue ) == OGRERR_NONE )
+        if (poSRS->exportToWkt(&pszValue) == OGRERR_NONE)
         {
-            char *pszEscapedWkt = CPLEscapeString( pszValue, -1,
-                                                   CPLES_BackslashQuotable );
+            char *pszEscapedWkt =
+                CPLEscapeString(pszValue, -1, CPLES_BackslashQuotable);
 
-            VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
-            CPLFree( pszEscapedWkt );
+            VSIFPrintfL(fp, "# @Jw\"%s\"\n", pszEscapedWkt);
+            CPLFree(pszEscapedWkt);
         }
-        CPLFree( pszValue );
+        CPLFree(pszValue);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Return open layer handle.                                       */
-/* -------------------------------------------------------------------- */
-    if( Open( osFilename, fp, poSRS, TRUE ) )
+    /* -------------------------------------------------------------------- */
+    /*      Return open layer handle.                                       */
+    /* -------------------------------------------------------------------- */
+    if (Open(osFilename, fp, poSRS, TRUE))
     {
-        auto poLayer = papoLayers[nLayers-1];
-        if( strcmp(pszGeom, "") != 0 )
+        auto poLayer = papoLayers[nLayers - 1];
+        if (strcmp(pszGeom, "") != 0)
         {
             poLayer->GetLayerDefn()->SetGeomType(wkbFlatten(eType));
         }
@@ -235,12 +227,12 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGmtDataSource::TestCapability( const char * pszCap )
+int OGRGmtDataSource::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;
-    else if( EQUAL(pszCap, ODsCZGeometries) )
+    else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
 
     return FALSE;
@@ -250,10 +242,10 @@ int OGRGmtDataSource::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGmtDataSource::GetLayer( int iLayer )
+OGRLayer *OGRGmtDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
 
     return papoLayers[iLayer];
