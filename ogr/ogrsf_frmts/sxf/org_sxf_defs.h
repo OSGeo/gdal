@@ -41,7 +41,8 @@
  *         - The certificate of the object (the geometry)
  *             - sub-objects
  *             - The graphic description of object
- *             - The description of the vector of the tying of the 3d- model of object
+ *             - The description of the vector of the tying of the 3d- model of
+ *object
  *         - Semantics of object
  *
  * Notes  :
@@ -57,8 +58,8 @@
  * Note 3.  Flag of the presence of real coordinates (2 bits):
  * xxx00xxx - entire certificate of objects is represented in the conditional
  *                                 system of coordinates (in the samples);
- * xxx11xxx - entire certificate of objects is represented in the real coordinates
- *            in the locality in accordance with the specifications of sheet
+ * xxx11xxx - entire certificate of objects is represented in the real
+ *coordinates in the locality in accordance with the specifications of sheet
  *            (projection, the coordinate system, unit of measurement),
  *            the data about the scale and the discretion of digitization bear
  *            reference nature.
@@ -67,13 +68,14 @@
  * x00xxxxx - the classification codes of objects and semantic characteristics
  *          are represented by the decimal numbers, recorded in the binary
  *          form (for example: the code of the object "32100000" will be written
- *          down in the form 0x01E9CEA0, the code of semantics "253" - in the form 0x00FD).
+ *          down in the form 0x01E9CEA0, the code of semantics "253" - in the
+ *form 0x00FD).
  *
  * Note 5. Table of generalization (1 bit):
- * 0xxxxxxx - the level of generalization is assigned according to the table of the
- *           general maps (it is described in Table 2.4);
- * 1xxxxxxx - noload condition the level of generalization is assigned according to
- *           the table of the large-scale maps (it is described in Table 2.5).
+ * 0xxxxxxx - the level of generalization is assigned according to the table of
+ *the general maps (it is described in Table 2.4); 1xxxxxxx - noload condition
+ *the level of generalization is assigned according to the table of the
+ *large-scale maps (it is described in Table 2.5).
  *
  * Note 6.  Flag of coding the texts of the Texts objects (1 bytes):
  * 0- in the coding ASCIIZ (Dos);
@@ -82,9 +84,10 @@
  *
  * Note 7.  Flag of the accuracy of coordinates (1 bytes):
  * 0 - are not established;
- * 1 - the increased accuracy of storage of coordinates (meters, radians or degrees);
- * 2 - of coordinate are recorded with an accuracy to centimeter (meters, 2 signs after comma);
- * 3 - coordinates are recorded with an accuracy to millimeter (meters, 3 sign after comma).
+ * 1 - the increased accuracy of storage of coordinates (meters, radians or
+ *degrees); 2 - of coordinate are recorded with an accuracy to centimeter
+ *(meters, 2 signs after comma); 3 - coordinates are recorded with an accuracy
+ *to millimeter (meters, 3 sign after comma).
  *
  * Note 8. Form of the framework (1 byte):
  * -1- it is not established;
@@ -119,20 +122,20 @@
  * xx1xxxxx - the arbitrary symbol of object is scaled during the mapping.
  *
  * Note 13. Sign of the construction of spline on the certificate (2 bits):
- * 00xxxxxx - the construction of spline with the visualization is not carried out;
- * 01xxxxxx - smoothing out spline (cutting angles);
- * 10xxxxxx - enveloping spline (it penetrates all points of certificate).
+ * 00xxxxxx - the construction of spline with the visualization is not carried
+ *out; 01xxxxxx - smoothing out spline (cutting angles); 10xxxxxx - enveloping
+ *spline (it penetrates all points of certificate).
  ****************************************************************************/
 
 #ifndef SXF_DEFS_H
 #define SXF_DEFS_H
 
-#define IDSXF          0x00465853     /* SXF  */
+#define IDSXF 0x00465853 /* SXF  */
 
-#define IDSXFDATA      0x00544144     /* DAT  */
-#define IDSXFOBJ       0X7FFF7FFF     /* Object */
-#define IDSXFGRAPH     0X7FFF7FFE     /* graphics section */
-#define IDSXFVECT3D    0X7FFF7FFD     /* 3D vector section */
+#define IDSXFDATA 0x00544144   /* DAT  */
+#define IDSXFOBJ 0X7FFF7FFF    /* Object */
+#define IDSXFGRAPH 0X7FFF7FFE  /* graphics section */
+#define IDSXFVECT3D 0X7FFF7FFD /* 3D vector section */
 
 #include <map>
 
@@ -151,7 +154,8 @@ enum SXFCodingType /* Flag of the semantics coding type (Note 4) */
     SXF_SEM_TXT = 2
 };
 
-enum SXFGeneralizationType /* Flag of the source for generalization data (Note 5) */
+enum SXFGeneralizationType /* Flag of the source for generalization data (Note
+                              5) */
 {
     SXF_GT_SMALL_SCALE = 0,
     SXF_GT_LARGE_SCALE = 1
@@ -168,22 +172,27 @@ enum SXFTextEncoding /* Flag of text encoding (Note 6) */
 enum SXFCoordinatesAccuracy /* Flag of coordinate storing accuracy (Note 7) */
 {
     SXF_COORD_ACC_UNDEFINED = 0,
-    SXF_COORD_ACC_HIGH = 1, //meters, radians or degree
-    SXF_COORD_ACC_CM = 2,   //cantimeters
-    SXF_COORD_ACC_MM = 3,   //millimeters
-    SXF_COORD_ACC_DM = 4    //decimeters
+    SXF_COORD_ACC_HIGH = 1,  // meters, radians or degree
+    SXF_COORD_ACC_CM = 2,    // cantimeters
+    SXF_COORD_ACC_MM = 3,    // millimeters
+    SXF_COORD_ACC_DM = 4     // decimeters
 #define SXF_COORD_ACC_LAST SXF_COORD_ACC_DM
 };
 
 typedef struct
 {
-//    SXFDataState   stDataState;         /* Flag of the state of the data (Note 1) may be will be needed in future*/
-    bool bProjectionDataCompliance;     /* Flag of the correspondence to the projection (Note 2) */
-    bool bRealCoordinatesCompliance;    /* Flag of the presence of the real coordinates (Note 3) */
-    SXFCodingType stCodingType;         /* Flag of the semantics coding type (Note 4) */
-    SXFGeneralizationType stGenType;    /* Flag of the source for generalization data (Note 5) */
-    SXFTextEncoding stEnc;              /* Flag of text encoding (Note 6) */
-    SXFCoordinatesAccuracy stCoordAcc;  /* Flag of coordinate storing accuracy (Note 7) */
+    //    SXFDataState   stDataState;         /* Flag of the state of the data
+    //    (Note 1) may be will be needed in future*/
+    bool bProjectionDataCompliance;  /* Flag of the correspondence to the
+                                        projection (Note 2) */
+    bool bRealCoordinatesCompliance; /* Flag of the presence of the real
+                                        coordinates (Note 3) */
+    SXFCodingType stCodingType; /* Flag of the semantics coding type (Note 4) */
+    SXFGeneralizationType
+        stGenType; /* Flag of the source for generalization data (Note 5) */
+    SXFTextEncoding stEnc; /* Flag of text encoding (Note 6) */
+    SXFCoordinatesAccuracy
+        stCoordAcc; /* Flag of coordinate storing accuracy (Note 7) */
     bool bSort;
 } SXFInformationFlags;
 
@@ -195,11 +204,12 @@ enum SXFCoordinateMeasUnit
     SXF_COORD_MU_MILLIMETRE,
     SXF_COORD_MU_DEGREE,
     SXF_COORD_MU_RADIAN
-} ;
+};
 
 struct SXFMapDescription
 {
-    double stProjCoords[8]; //X(0) & Y(1) South West, X(2) & Y(3) North West, X(4) & Y(5) North East, X(6) & Y(7) South East
+    double stProjCoords[8];  // X(0) & Y(1) South West, X(2) & Y(3) North West,
+                             // X(4) & Y(5) North East, X(6) & Y(7) South East
     double stGeoCoords[8];
     double stFrameCoords[8];
     OGREnvelope Env{};
@@ -220,7 +230,6 @@ struct SXFMapDescription
         memset(stGeoCoords, 0, sizeof(stProjCoords));
         memset(stFrameCoords, 0, sizeof(stFrameCoords));
     }
-
 };
 
 enum SXFCoordinateType
@@ -235,73 +244,76 @@ enum SXFCoordinateType
 enum SXFGeometryType
 {
     SXF_GT_Unknown = -1,
-    SXF_GT_Line    = 0,     /* MultiLineString geometric object                  */
-    SXF_GT_Polygon = 1,     /* Polygon geometric object                          */
-    SXF_GT_Point = 2,       /* MultiPoint geometric object                       */
-    SXF_GT_Text = 3,        /* LineString geometric object with associated label */
-    SXF_GT_Vector = 4,      /* Vector geometric object with associated label */
+    SXF_GT_Line = 0,    /* MultiLineString geometric object                  */
+    SXF_GT_Polygon = 1, /* Polygon geometric object                          */
+    SXF_GT_Point = 2,   /* MultiPoint geometric object                       */
+    SXF_GT_Text = 3,    /* LineString geometric object with associated label */
+    SXF_GT_Vector = 4,  /* Vector geometric object with associated label */
     SXF_GT_TextTemplate = 5, /* Text template */
-    SXF_GT_VectorAngle = 21,       /* Rotated symbol */
-    SXF_GT_VectorScaled = 22       /* Scaled symbol */
+    SXF_GT_VectorAngle = 21, /* Rotated symbol */
+    SXF_GT_VectorScaled = 22 /* Scaled symbol */
 };
 
 enum SXFValueType
 {
-    SXF_VT_SHORT = 0,     /* 2 byte integer */
-    SXF_VT_FLOAT = 1,   /* 2 byte float */
-    SXF_VT_INT = 2,    /* 4 byte integer*/
-    SXF_VT_DOUBLE = 3  /* 8 byte float */
+    SXF_VT_SHORT = 0, /* 2 byte integer */
+    SXF_VT_FLOAT = 1, /* 2 byte float */
+    SXF_VT_INT = 2,   /* 4 byte integer*/
+    SXF_VT_DOUBLE = 3 /* 8 byte float */
 };
 
 typedef struct
 {
     SXFGeometryType eGeomType;  // Geometry type (Note 1)
     SXFValueType eValType;      // size of values (Note 3)
-    int bFormat;                 // Has 3D vector (Note 4) /* Format of the certificate (0- linear size, 1-vector format ) */
-    GByte bDim;                 // Dimensionality of the idea (0- 2D, 1- 3D) (Note 6)
-    bool bHasTextSign;           // Sign of certificate with the text (Note 8)
-    GUInt32 nPointCount;        // Point count
-    GUInt16 nSubObjectCount;    // The sub object count
+    int bFormat;  // Has 3D vector (Note 4) /* Format of the certificate (0-
+                  // linear size, 1-vector format ) */
+    GByte bDim;   // Dimensionality of the idea (0- 2D, 1- 3D) (Note 6)
+    bool bHasTextSign;        // Sign of certificate with the text (Note 8)
+    GUInt32 nPointCount;      // Point count
+    GUInt16 nSubObjectCount;  // The sub object count
 
 } SXFRecordDescription;
 
-typedef struct{
-    GUInt32 nID;                /* Identifier of the beginning of record (0x7FFF7FFF) */
-    GUInt32 nFullLength;        /* The overall length of record (with the title) */
-    GUInt32 nGeometryLength;    /* Length of certificate (in bytes) */
-    GUInt32 nClassifyCode;      /* Classification code */
-    GUInt16 anGroup[2];         /* 0 - group no, 1 - no in group */
-    GByte   nRef[3];            /* Reference data */
-    GByte   byPadding;
-    GUInt32 nPointCount;        /* Point count */
-    GUInt16 nSubObjectCount;    /* The sub object count */
-    GUInt16 nPointCountSmall;   /* Point count in small geometries */
+typedef struct
+{
+    GUInt32 nID; /* Identifier of the beginning of record (0x7FFF7FFF) */
+    GUInt32 nFullLength;     /* The overall length of record (with the title) */
+    GUInt32 nGeometryLength; /* Length of certificate (in bytes) */
+    GUInt32 nClassifyCode;   /* Classification code */
+    GUInt16 anGroup[2];      /* 0 - group no, 1 - no in group */
+    GByte nRef[3];           /* Reference data */
+    GByte byPadding;
+    GUInt32 nPointCount;      /* Point count */
+    GUInt16 nSubObjectCount;  /* The sub object count */
+    GUInt16 nPointCountSmall; /* Point count in small geometries */
 } SXFRecordHeader;
 
 typedef struct
 {
-    GUInt16 nCode;       //type
-    char   nType;
-    char   nScale;
+    GUInt16 nCode;  // type
+    char nType;
+    char nScale;
 } SXFRecordAttributeInfo;
 
 enum SXFRecordAttributeType
 {
-    SXF_RAT_ASCIIZ_DOS = 0, //text in DOS encoding
-    SXF_RAT_ONEBYTE = 1,    //number 1 byte
-    SXF_RAT_TWOBYTE = 2,    //number 2 byte
-    SXF_RAT_FOURBYTE = 4,   //number 4 byte
-    SXF_RAT_EIGHTBYTE = 8,  //float point number 8 byte
-    SXF_RAT_ANSI_WIN = 126, //text in Win encoding
-    SXF_RAT_UNICODE = 127,  //text in unicode
-    SXF_RAT_BIGTEXT = 128   //text more than 255 chars
+    SXF_RAT_ASCIIZ_DOS = 0,  // text in DOS encoding
+    SXF_RAT_ONEBYTE = 1,     // number 1 byte
+    SXF_RAT_TWOBYTE = 2,     // number 2 byte
+    SXF_RAT_FOURBYTE = 4,    // number 4 byte
+    SXF_RAT_EIGHTBYTE = 8,   // float point number 8 byte
+    SXF_RAT_ANSI_WIN = 126,  // text in Win encoding
+    SXF_RAT_UNICODE = 127,   // text in unicode
+    SXF_RAT_BIGTEXT = 128    // text more than 255 chars
 };
 
 /************************************************************************/
 /*                         SXFPassport                                  */
 /************************************************************************/
 
-struct SXFDate{
+struct SXFDate
+{
     GUInt16 nYear = 0, nMonth = 0, nDay = 0;
 };
 
@@ -318,11 +330,11 @@ struct SXFPassport
 
 typedef struct
 {
-    char szID[4]; //the file ID should be "SXF"
-    GUInt32 nHeaderLength; //the Header length
-    GByte nFormatVersion[4]; //the format version (e.g. 4)
-    GUInt32 nCheckSum; //check sum
-}  SXFHeader;
+    char szID[4];             // the file ID should be "SXF"
+    GUInt32 nHeaderLength;    // the Header length
+    GByte nFormatVersion[4];  // the format version (e.g. 4)
+    GUInt32 nCheckSum;        // check sum
+} SXFHeader;
 
 /************************************************************************/
 /*                         RSCInfo                                      */
@@ -331,23 +343,26 @@ typedef struct
 /*
     RSC File record
 */
-typedef struct  {
-    GUInt32 nOffset;      //RSC Section offset in bytes from the beginning of the RSC file
-    GUInt32 nLength;      //RSC Section record length
-    GUInt32 nRecordCount; //count of records in the section
+typedef struct
+{
+    GUInt32 nOffset;  // RSC Section offset in bytes from the beginning of the
+                      // RSC file
+    GUInt32 nLength;  // RSC Section record length
+    GUInt32 nRecordCount;  // count of records in the section
 } RSCSection;
 
 /*
     RSC File header
 */
-typedef struct{
+typedef struct
+{
     char szID[4];
     GUInt32 nFileLength;
     GUInt32 nVersion;
     GUInt32 nEncoding;
     GUInt32 nFileState;
     GUInt32 nFileModState;
-    GUInt32 nLang;                  //1 - en, 2 - rus
+    GUInt32 nLang;  // 1 - en, 2 - rus
     GUInt32 nNextID;
     GByte date[8];
     char szMapType[32];
@@ -376,4 +391,4 @@ typedef struct{
     GUInt32 nColorsInPalette;
 } RSCHeader;
 
-#endif  /* SXF_DEFS_H */
+#endif /* SXF_DEFS_H */
