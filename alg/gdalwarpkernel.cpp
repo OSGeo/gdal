@@ -7768,9 +7768,9 @@ static void GWKSumPreservingThread(void *pData)
                     }
                     if (fabs(dfWeight - dfWeightGEOS) > 1e-5 * dfWeightGEOS)
                     {
-                        printf("dfWeight=%f dfWeightGEOS=%f\n", dfWeight,
-                               dfWeightGEOS);  // ok
-                        printf("xy2: ");       // ok
+                        /* ok */ printf("dfWeight=%f dfWeightGEOS=%f\n",
+                                        dfWeight, dfWeightGEOS);
+                        printf("xy2: ");  // ok
                         for (const auto &xy : xy2)
                             printf("[%f, %f], ", xy.first, xy.second);  // ok
                         printf("\n");                                   // ok

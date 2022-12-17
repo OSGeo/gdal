@@ -5450,8 +5450,8 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
     printf("----------------------------\n");             /*ok*/
     printf("Curve beginning at offset i = %d\n", i);      /*ok*/
     printf("Initial alpha ratio = %u\n", nAlphaRatioRef); /*ok*/
-    printf("Initial R = %.16g, cx = %.16g, cy = %.16g\n", R_1, cx_1,
-           cy_1);                        /*ok*/
+    /*ok*/ printf("Initial R = %.16g, cx = %.16g, cy = %.16g\n", R_1, cx_1,
+                  cy_1);
     printf("dfScale = %f\n", dfScale);   /*ok*/
     printf("bInitialConstantStep = %d, " /*ok*/
            "fabs(dfDeltaAlpha10 - dfDeltaAlpha21)=%.8g, "
@@ -5594,10 +5594,10 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
                             dfLastValidAlpha -= dfMaxDeltaAlpha;
                             j--;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf(
-                                "--> corrected as fabs(dfLastValidAlpha - " /*ok*/
-                                "alpha0_1)=%f, j=%d\n",
-                                fabs(dfLastValidAlpha - alpha0_1), j);
+                            printf(/*ok*/
+                                   "--> corrected as fabs(dfLastValidAlpha - "
+                                   "alpha0_1)=%f, j=%d\n",
+                                   fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
                         }
                     }
@@ -5610,10 +5610,10 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
                             dfLastValidAlpha += dfMaxDeltaAlpha;
                             j--;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf(
-                                "--> corrected as fabs(dfLastValidAlpha - " /*ok*/
-                                "alpha0_1)=%f, j=%d\n",
-                                fabs(dfLastValidAlpha - alpha0_1), j);
+                            printf(/*ok*/
+                                   "--> corrected as fabs(dfLastValidAlpha - "
+                                   "alpha0_1)=%f, j=%d\n",
+                                   fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
                         }
                     }

@@ -210,8 +210,8 @@ void ppmWrite(const char *fname, const char *data, const ILSize &sz)
             fwrite(data, sz.x, sz.y, fp);
             break;
         default:
-            fprintf(stderr, "Can't write ppm file with %d bands\n",
-                    sz.c); /*ok*/
+            fprintf(stderr, "Can't write ppm file with %d bands\n", /*ok*/
+                    sz.c);
     }
     fclose(fp);
     return;

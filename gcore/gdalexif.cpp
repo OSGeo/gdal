@@ -1645,8 +1645,9 @@ int main()
     {
         if (exiftags[i].datatype == TIFF_NOTYPE)
             continue;
-        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</"
-               "td></tr>\n", /* ok */
+        printf(/* ok */ "<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</"
+                        "td><td>%s</"
+                        "td></tr>\n",
                exiftags[i].name, exiftags[i].tag,
                exiftags[i].datatype == TIFF_BYTE        ? "BYTE"
                : exiftags[i].datatype == TIFF_ASCII     ? "ASCII"
@@ -1672,8 +1673,9 @@ int main()
     {
         if (gpstags[i].datatype == TIFF_NOTYPE)
             continue;
-        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</"
-               "td></tr>\n", /* ok */
+        printf(/* ok */
+               "<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</"
+               "td></tr>\n",
                gpstags[i].name, gpstags[i].tag,
                gpstags[i].datatype == TIFF_BYTE        ? "BYTE"
                : gpstags[i].datatype == TIFF_ASCII     ? "ASCII"

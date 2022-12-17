@@ -275,15 +275,17 @@ void Msg_reader_core::read_metadata_block(VSILFILE *fin)
     {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4)
         {
-            printf("Warning: calibration slope (%f) out of nominal range. MSG "
-                   "reader probably broken\n",
-                   _calibration[i].cal_slope); /*ok*/
+            printf(/*ok*/ "Warning: calibration slope (%f) out of nominal "
+                          "range. MSG "
+                          "reader probably broken\n",
+                   _calibration[i].cal_slope);
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20)
         {
-            printf("Warning: calibration offset (%f) out of nominal range. MSG "
-                   "reader probably broken\n",
-                   /*ok*/ _calibration[i].cal_offset);
+            printf(/*ok*/ "Warning: calibration offset (%f) out of nominal "
+                          "range. MSG "
+                          "reader probably broken\n",
+                   _calibration[i].cal_offset);
         }
     }
 #endif
