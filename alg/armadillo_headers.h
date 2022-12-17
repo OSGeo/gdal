@@ -38,4 +38,4 @@
 
 #include "armadillo"
 
-#endif // ARMADILLO_HEADERS_H
+#endif  // ARMADILLO_HEADERS_H

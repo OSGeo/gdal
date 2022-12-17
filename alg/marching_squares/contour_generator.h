@@ -44,34 +44,32 @@ namespace marching_squares
 template <typename ContourWriter, typename LevelGenerator>
 class ContourGenerator
 {
-public:
-    ContourGenerator( size_t width, size_t height,
-                      bool hasNoData, double noDataValue,
-                      ContourWriter& writer, LevelGenerator& levelGenerator )
-        : width_( width )
-        , height_( height )
-        , hasNoData_( hasNoData )
-        , noDataValue_( noDataValue )
-        , previousLine_()
-        , writer_( writer )
-        , levelGenerator_( levelGenerator )
+  public:
+    ContourGenerator(size_t width, size_t height, bool hasNoData,
+                     double noDataValue, ContourWriter &writer,
+                     LevelGenerator &levelGenerator)
+        : width_(width), height_(height), hasNoData_(hasNoData),
+          noDataValue_(noDataValue), previousLine_(), writer_(writer),
+          levelGenerator_(levelGenerator)
     {
-        previousLine_.resize( width_ );
-        std::fill( previousLine_.begin(), previousLine_.end(), NaN );
+        previousLine_.resize(width_);
+        std::fill(previousLine_.begin(), previousLine_.end(), NaN);
     }
-    CPLErr feedLine( const double* line )
+    CPLErr feedLine(const double *line)
     {
-        if ( lineIdx_ <= height_ )
+        if (lineIdx_ <= height_)
         {
-            feedLine_( line );
-            if ( lineIdx_ == height_ ) {
+            feedLine_(line);
+            if (lineIdx_ == height_)
+            {
                 // last line
-                feedLine_( nullptr );
+                feedLine_(nullptr);
             }
         }
         return CE_None;
     }
-private:
+
+  private:
     size_t width_;
     size_t height_;
     bool hasNoData_;
@@ -81,53 +79,60 @@ private:
 
     std::vector<double> previousLine_;
 
-    ContourWriter& writer_;
-    LevelGenerator& levelGenerator_;
+    ContourWriter &writer_;
+    LevelGenerator &levelGenerator_;
 
     class ExtendedLine
     {
-    public:
-        ExtendedLine( const double* line, size_t size, bool hasNoData, double noDataValue )
-            : line_( line )
-            , size_( size )
-            , hasNoData_( hasNoData )
-            , noDataValue_( noDataValue )
-        {}
-
-        double value( int idx ) const
+      public:
+        ExtendedLine(const double *line, size_t size, bool hasNoData,
+                     double noDataValue)
+            : line_(line), size_(size), hasNoData_(hasNoData),
+              noDataValue_(noDataValue)
         {
-            if ( line_ == nullptr )
+        }
+
+        double value(int idx) const
+        {
+            if (line_ == nullptr)
                 return NaN;
-            if ( idx < 0 || idx >= int(size_) )
+            if (idx < 0 || idx >= int(size_))
                 return NaN;
             double v = line_[idx];
-            if ( hasNoData_ && v == noDataValue_ )
+            if (hasNoData_ && v == noDataValue_)
                 return NaN;
             return v;
         }
-    private:
-        const double* line_;
+
+      private:
+        const double *line_;
         size_t size_;
         bool hasNoData_;
         double noDataValue_;
     };
-    void feedLine_( const double* line )
+    void feedLine_(const double *line)
     {
         writer_.beginningOfLine();
 
-        ExtendedLine previous( &previousLine_[0], width_, hasNoData_, noDataValue_ );
-        ExtendedLine current( line, width_, hasNoData_, noDataValue_ );
-        for ( int colIdx = -1; colIdx < int(width_); colIdx++ )
+        ExtendedLine previous(&previousLine_[0], width_, hasNoData_,
+                              noDataValue_);
+        ExtendedLine current(line, width_, hasNoData_, noDataValue_);
+        for (int colIdx = -1; colIdx < int(width_); colIdx++)
         {
-            const ValuedPoint upperLeft(colIdx + 1 - .5, lineIdx_ - .5, previous.value( colIdx ));
-            const ValuedPoint upperRight(colIdx + 1 + .5, lineIdx_ - .5, previous.value( colIdx+1 ));
-            const ValuedPoint lowerLeft(colIdx + 1 - .5, lineIdx_ + .5, current.value( colIdx ));
-            const ValuedPoint lowerRight(colIdx + 1 + .5, lineIdx_ + .5, current.value( colIdx+1 ));
+            const ValuedPoint upperLeft(colIdx + 1 - .5, lineIdx_ - .5,
+                                        previous.value(colIdx));
+            const ValuedPoint upperRight(colIdx + 1 + .5, lineIdx_ - .5,
+                                         previous.value(colIdx + 1));
+            const ValuedPoint lowerLeft(colIdx + 1 - .5, lineIdx_ + .5,
+                                        current.value(colIdx));
+            const ValuedPoint lowerRight(colIdx + 1 + .5, lineIdx_ + .5,
+                                         current.value(colIdx + 1));
 
-            Square(upperLeft, upperRight, lowerLeft, lowerRight).process(levelGenerator_, writer_);
+            Square(upperLeft, upperRight, lowerLeft, lowerRight)
+                .process(levelGenerator_, writer_);
         }
-        if ( line != nullptr )
-            std::copy( line, line + width_, previousLine_.begin() );
+        if (line != nullptr)
+            std::copy(line, line + width_, previousLine_.begin());
         lineIdx_++;
 
         writer_.endOfLine();
@@ -135,61 +140,69 @@ private:
 };
 
 template <typename ContourWriter, typename LevelGenerator>
-inline
-ContourGenerator<ContourWriter, LevelGenerator>* newContourGenerator( size_t width, size_t height,
-                                                                      bool hasNoData, double noDataValue,
-                                                                      ContourWriter& writer, LevelGenerator& levelGenerator )
+inline ContourGenerator<ContourWriter, LevelGenerator> *
+newContourGenerator(size_t width, size_t height, bool hasNoData,
+                    double noDataValue, ContourWriter &writer,
+                    LevelGenerator &levelGenerator)
 {
-    return new ContourGenerator<ContourWriter, LevelGenerator>( width, height, hasNoData, noDataValue, writer, levelGenerator );
+    return new ContourGenerator<ContourWriter, LevelGenerator>(
+        width, height, hasNoData, noDataValue, writer, levelGenerator);
 }
 
 template <typename ContourWriter, typename LevelGenerator>
-class ContourGeneratorFromRaster : public ContourGenerator<ContourWriter, LevelGenerator>
+class ContourGeneratorFromRaster
+    : public ContourGenerator<ContourWriter, LevelGenerator>
 {
-public:
-    ContourGeneratorFromRaster( const GDALRasterBandH band,
-                                bool hasNoData, double noDataValue,
-                                ContourWriter& writer, LevelGenerator& levelGenerator )
-        : ContourGenerator<ContourWriter, LevelGenerator>( GDALGetRasterBandXSize( band ),
-                                                           GDALGetRasterBandYSize( band ),
-                                                           hasNoData, noDataValue,
-                                                           writer, levelGenerator )
-        , band_( band )
+  public:
+    ContourGeneratorFromRaster(const GDALRasterBandH band, bool hasNoData,
+                               double noDataValue, ContourWriter &writer,
+                               LevelGenerator &levelGenerator)
+        : ContourGenerator<ContourWriter, LevelGenerator>(
+              GDALGetRasterBandXSize(band), GDALGetRasterBandYSize(band),
+              hasNoData, noDataValue, writer, levelGenerator),
+          band_(band)
     {
     }
 
-    bool process( GDALProgressFunc progressFunc = nullptr, void* progressData = nullptr )
+    bool process(GDALProgressFunc progressFunc = nullptr,
+                 void *progressData = nullptr)
     {
-        size_t width = GDALGetRasterBandXSize( band_ );
-        size_t height = GDALGetRasterBandYSize( band_ );
+        size_t width = GDALGetRasterBandXSize(band_);
+        size_t height = GDALGetRasterBandYSize(band_);
         std::vector<double> line;
-        line.resize( width );
+        line.resize(width);
 
-        for ( size_t lineIdx = 0; lineIdx < height; lineIdx++ )
+        for (size_t lineIdx = 0; lineIdx < height; lineIdx++)
         {
-            if ( progressFunc && progressFunc( double(lineIdx) / height, "Processing line", progressData ) == FALSE )
+            if (progressFunc &&
+                progressFunc(double(lineIdx) / height, "Processing line",
+                             progressData) == FALSE)
                 return false;
-            
-            CPLErr error = GDALRasterIO(band_, GF_Read, 0, int(lineIdx), int(width),
-                                        1, &line[0], int(width), 1, GDT_Float64, 0, 0);
+
+            CPLErr error =
+                GDALRasterIO(band_, GF_Read, 0, int(lineIdx), int(width), 1,
+                             &line[0], int(width), 1, GDT_Float64, 0, 0);
             if (error != CE_None)
             {
-                CPLDebug("CONTOUR", "failed fetch %d %d", int(lineIdx), int(width));
+                CPLDebug("CONTOUR", "failed fetch %d %d", int(lineIdx),
+                         int(width));
                 return false;
             }
-            this->feedLine( &line[0] );
+            this->feedLine(&line[0]);
         }
-        if ( progressFunc)
-            progressFunc( 1.0, "", progressData );
+        if (progressFunc)
+            progressFunc(1.0, "", progressData);
         return true;
     }
-private:
+
+  private:
     const GDALRasterBandH band_;
 
-    ContourGeneratorFromRaster( const ContourGeneratorFromRaster& ) = delete;
-    ContourGeneratorFromRaster& operator=( const ContourGeneratorFromRaster& ) = delete;
+    ContourGeneratorFromRaster(const ContourGeneratorFromRaster &) = delete;
+    ContourGeneratorFromRaster &
+    operator=(const ContourGeneratorFromRaster &) = delete;
 };
 
-}
+}  // namespace marching_squares
 
 #endif

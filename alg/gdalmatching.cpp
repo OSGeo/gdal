@@ -95,31 +95,28 @@ CPL_CVSID("$Id$")
  */
 
 static std::vector<GDALFeaturePoint> *
-GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
-                     int nOctaveStart, int nOctaveEnd, double dfThreshold )
+GatherFeaturePoints(GDALDataset *poDataset, int *panBands, int nOctaveStart,
+                    int nOctaveEnd, double dfThreshold)
 {
-    if( poDataset == nullptr )
+    if (poDataset == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALDataset isn't specified");
         return nullptr;
     }
 
-    if( panBands == nullptr )
+    if (panBands == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Raster bands are not specified");
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster bands are not specified");
         return nullptr;
     }
 
-    if( nOctaveStart <= 0 || nOctaveEnd < 0 ||
-        nOctaveStart > nOctaveEnd )
+    if (nOctaveStart <= 0 || nOctaveEnd < 0 || nOctaveStart > nOctaveEnd)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Octave numbers are invalid");
+        CPLError(CE_Failure, CPLE_AppDefined, "Octave numbers are invalid");
         return nullptr;
     }
 
-    if( dfThreshold < 0 )
+    if (dfThreshold < 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Threshold have to be greater than zero");
@@ -133,7 +130,7 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
     const int nWidth = poRstRedBand->GetXSize();
     const int nHeight = poRstRedBand->GetYSize();
 
-    if( nWidth == 0 || nHeight == 0 )
+    if (nWidth == 0 || nHeight == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Must have non-zero width and height.");
@@ -141,25 +138,25 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
     }
 
     // Allocate memory for grayscale image.
-    double **padfImg = new double*[nHeight];
-    for( int i = 0; ; )
+    double **padfImg = new double *[nHeight];
+    for (int i = 0;;)
     {
         padfImg[i] = new double[nWidth];
-        for( int j = 0; j < nWidth; ++j )
-          padfImg[i][j] = 0.0;
+        for (int j = 0; j < nWidth; ++j)
+            padfImg[i][j] = 0.0;
         ++i;
-        if( i == nHeight )
+        if (i == nHeight)
             break;
     }
 
     // Create grayscale image.
-    GDALSimpleSURF::ConvertRGBToLuminosity(
-        poRstRedBand, poRstGreenBand, poRstBlueBand, nWidth, nHeight,
-        padfImg, nHeight, nWidth);
+    GDALSimpleSURF::ConvertRGBToLuminosity(poRstRedBand, poRstGreenBand,
+                                           poRstBlueBand, nWidth, nHeight,
+                                           padfImg, nHeight, nWidth);
 
     // Prepare integral image.
     GDALIntegralImage *poImg = new GDALIntegralImage();
-    poImg->Initialize(const_cast<const double**>(padfImg), nHeight, nWidth);
+    poImg->Initialize(const_cast<const double **>(padfImg), nHeight, nWidth);
 
     // Get feature points.
     GDALSimpleSURF *poSurf = new GDALSimpleSURF(nOctaveStart, nOctaveEnd);
@@ -171,7 +168,7 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
     delete poImg;
     delete poSurf;
 
-    for( int i = 0; i < nHeight; ++i )
+    for (int i = 0; i < nHeight; ++i)
         delete[] padfImg[i];
 
     delete[] padfImg;
@@ -184,77 +181,74 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
 /************************************************************************/
 
 /** GDALComputeMatchingPoints. TODO document */
-GDAL_GCP CPL_DLL *
-GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
-                           GDALDatasetH hSecondImage,
-                           char **papszOptions,
-                           int *pnGCPCount )
+GDAL_GCP CPL_DLL *GDALComputeMatchingPoints(GDALDatasetH hFirstImage,
+                                            GDALDatasetH hSecondImage,
+                                            char **papszOptions,
+                                            int *pnGCPCount)
 {
     *pnGCPCount = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Override default algorithm parameters.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Override default algorithm parameters.                          */
+    /* -------------------------------------------------------------------- */
     int nOctaveStart, nOctaveEnd;
     double dfSURFThreshold;
 
-    nOctaveStart =atoi(CSLFetchNameValueDef(papszOptions, "OCTAVE_START", "2"));
+    nOctaveStart =
+        atoi(CSLFetchNameValueDef(papszOptions, "OCTAVE_START", "2"));
     nOctaveEnd = atoi(CSLFetchNameValueDef(papszOptions, "OCTAVE_END", "2"));
 
-    dfSURFThreshold = CPLAtof(
-        CSLFetchNameValueDef(papszOptions, "SURF_THRESHOLD", "0.001"));
+    dfSURFThreshold =
+        CPLAtof(CSLFetchNameValueDef(papszOptions, "SURF_THRESHOLD", "0.001"));
     const double dfMatchingThreshold = CPLAtof(
         CSLFetchNameValueDef(papszOptions, "MATCHING_THRESHOLD", "0.015"));
 
-/* -------------------------------------------------------------------- */
-/*      Identify the bands to use.  For now we are effectively          */
-/*      limited to using RGB input so if we have one band only treat    */
-/*      it as red=green=blue=band 1.  Disallow non eightbit imagery.    */
-/* -------------------------------------------------------------------- */
-    int anBandMap1[3] = { 1, 1, 1 };
-    if( GDALGetRasterCount(hFirstImage) >= 3 )
+    /* -------------------------------------------------------------------- */
+    /*      Identify the bands to use.  For now we are effectively          */
+    /*      limited to using RGB input so if we have one band only treat    */
+    /*      it as red=green=blue=band 1.  Disallow non eightbit imagery.    */
+    /* -------------------------------------------------------------------- */
+    int anBandMap1[3] = {1, 1, 1};
+    if (GDALGetRasterCount(hFirstImage) >= 3)
     {
         anBandMap1[1] = 2;
         anBandMap1[2] = 3;
     }
 
-    int anBandMap2[3] = { 1, 1, 1 };
-    if( GDALGetRasterCount(hSecondImage) >= 3 )
+    int anBandMap2[3] = {1, 1, 1};
+    if (GDALGetRasterCount(hSecondImage) >= 3)
     {
         anBandMap2[1] = 2;
         anBandMap2[2] = 3;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect reference points on each image.                         */
-/* -------------------------------------------------------------------- */
-    std::vector<GDALFeaturePoint> *poFPCollection1 =
-        GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hFirstImage),
-                            anBandMap1,
-                            nOctaveStart, nOctaveEnd, dfSURFThreshold);
-    if( poFPCollection1 == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Collect reference points on each image.                         */
+    /* -------------------------------------------------------------------- */
+    std::vector<GDALFeaturePoint> *poFPCollection1 = GatherFeaturePoints(
+        reinterpret_cast<GDALDataset *>(hFirstImage), anBandMap1, nOctaveStart,
+        nOctaveEnd, dfSURFThreshold);
+    if (poFPCollection1 == nullptr)
         return nullptr;
 
-    std::vector<GDALFeaturePoint> *poFPCollection2 =
-        GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hSecondImage),
-                            anBandMap2,
-                            nOctaveStart, nOctaveEnd,
-                            dfSURFThreshold);
+    std::vector<GDALFeaturePoint> *poFPCollection2 = GatherFeaturePoints(
+        reinterpret_cast<GDALDataset *>(hSecondImage), anBandMap2, nOctaveStart,
+        nOctaveEnd, dfSURFThreshold);
 
-    if( poFPCollection2 == nullptr )
+    if (poFPCollection2 == nullptr)
     {
         delete poFPCollection1;
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to find corresponding locations.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try to find corresponding locations.                            */
+    /* -------------------------------------------------------------------- */
     std::vector<GDALFeaturePoint *> oMatchPairs;
 
-    if( CE_None != GDALSimpleSURF::MatchFeaturePoints(
-        &oMatchPairs, poFPCollection1, poFPCollection2,
-        dfMatchingThreshold ))
+    if (CE_None != GDALSimpleSURF::MatchFeaturePoints(
+                       &oMatchPairs, poFPCollection1, poFPCollection2,
+                       dfMatchingThreshold))
     {
         delete poFPCollection1;
         delete poFPCollection2;
@@ -263,19 +257,19 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 
     *pnGCPCount = static_cast<int>(oMatchPairs.size()) / 2;
 
-/* -------------------------------------------------------------------- */
-/*      Translate these into GCPs - but with the output coordinate      */
-/*      system being pixel/line on the second image.                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Translate these into GCPs - but with the output coordinate      */
+    /*      system being pixel/line on the second image.                    */
+    /* -------------------------------------------------------------------- */
     GDAL_GCP *pasGCPList =
-        static_cast<GDAL_GCP*>(CPLCalloc(*pnGCPCount, sizeof(GDAL_GCP)));
+        static_cast<GDAL_GCP *>(CPLCalloc(*pnGCPCount, sizeof(GDAL_GCP)));
 
     GDALInitGCPs(*pnGCPCount, pasGCPList);
 
-    for( int i=0; i < *pnGCPCount; i++ )
+    for (int i = 0; i < *pnGCPCount; i++)
     {
-        GDALFeaturePoint *poPoint1 = oMatchPairs[i*2  ];
-        GDALFeaturePoint *poPoint2 = oMatchPairs[i*2+1];
+        GDALFeaturePoint *poPoint1 = oMatchPairs[i * 2];
+        GDALFeaturePoint *poPoint2 = oMatchPairs[i * 2 + 1];
 
         pasGCPList[i].dfGCPPixel = poPoint1->GetX() + 0.5;
         pasGCPList[i].dfGCPLine = poPoint1->GetY() + 0.5;
@@ -289,25 +283,23 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
     delete poFPCollection1;
     delete poFPCollection2;
 
-/* -------------------------------------------------------------------- */
-/*      Optionally transform into the georef coordinates of the         */
-/*      output image.                                                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Optionally transform into the georef coordinates of the         */
+    /*      output image.                                                   */
+    /* -------------------------------------------------------------------- */
     const bool bGeorefOutput =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOREF", "NO"));
 
-    if( bGeorefOutput )
+    if (bGeorefOutput)
     {
         double adfGeoTransform[6] = {};
 
-        GDALGetGeoTransform( hSecondImage, adfGeoTransform );
+        GDALGetGeoTransform(hSecondImage, adfGeoTransform);
 
-        for( int i=0; i < *pnGCPCount; i++ )
+        for (int i = 0; i < *pnGCPCount; i++)
         {
-            GDALApplyGeoTransform(adfGeoTransform,
-                                  pasGCPList[i].dfGCPX,
-                                  pasGCPList[i].dfGCPY,
-                                  &(pasGCPList[i].dfGCPX),
+            GDALApplyGeoTransform(adfGeoTransform, pasGCPList[i].dfGCPX,
+                                  pasGCPList[i].dfGCPY, &(pasGCPList[i].dfGCPX),
                                   &(pasGCPList[i].dfGCPY));
         }
     }
