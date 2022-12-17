@@ -32,24 +32,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  **********************************************************************/
- #include "postgisraster.h"
+#include "postgisraster.h"
 
-
- /**********************************************************************
+/**********************************************************************
  * \brief Replace the quotes by single quotes in the input string
  *
  * Needed in the 'where' part of the input string
  **********************************************************************/
-char * ReplaceQuotes(const char * pszInput, int nLength) {
+char *ReplaceQuotes(const char *pszInput, int nLength)
+{
     int i;
-    char * pszOutput = nullptr;
+    char *pszOutput = nullptr;
 
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
 
-    pszOutput = static_cast<char*>(CPLCalloc(nLength + 1, sizeof (char)));
+    pszOutput = static_cast<char *>(CPLCalloc(nLength + 1, sizeof(char)));
 
-    for (i = 0; i < nLength; i++) {
+    for (i = 0; i < nLength; i++)
+    {
         if (pszInput[i] == '"')
             pszOutput[i] = '\'';
         else
@@ -64,14 +65,15 @@ char * ReplaceQuotes(const char * pszInput, int nLength) {
  *
  * Needed before tokenize function
  *************************************************************/
-char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
+char *ReplaceSingleQuotes(const char *pszInput, int nLength)
+{
     int i;
-    char* pszOutput = nullptr;
+    char *pszOutput = nullptr;
 
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
 
-    pszOutput = static_cast<char*>(CPLCalloc(nLength + 1, sizeof (char)));
+    pszOutput = static_cast<char *>(CPLCalloc(nLength + 1, sizeof(char)));
 
     for (i = 0; i < nLength; i++)
     {
@@ -92,17 +94,18 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
  *
  * The returned list must be freed with CSLDestroy when no longer needed
  **********************************************************************/
-char** ParseConnectionString(const char * pszConnectionString) {
+char **ParseConnectionString(const char *pszConnectionString)
+{
 
     /* Escape string following SQL scheme */
-    char* pszEscapedConnectionString =
+    char *pszEscapedConnectionString =
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
-    char* pszStartPos = strstr(pszEscapedConnectionString, ":") + 1;
+    char *pszStartPos = strstr(pszEscapedConnectionString, ":") + 1;
 
     /* Tokenize */
-    char** papszParams =
+    char **papszParams =
         CSLTokenizeString2(pszStartPos, " ", CSLT_HONOURSTRINGS);
 
     /* Free */
@@ -115,9 +118,10 @@ char** ParseConnectionString(const char * pszConnectionString) {
  * \brief Translate a PostGIS Raster datatype string in a valid
  * GDALDataType object.
  **********************************************************************/
-GBool TranslateDataType(const char * pszDataType,
-        GDALDataType * poDataType = nullptr, int * pnBitsDepth = nullptr,
-        GBool * pbSignedByte = nullptr)
+GBool TranslateDataType(const char *pszDataType,
+                        GDALDataType *poDataType = nullptr,
+                        int *pnBitsDepth = nullptr,
+                        GBool *pbSignedByte = nullptr)
 {
     if (!pszDataType)
         return false;
@@ -125,35 +129,40 @@ GBool TranslateDataType(const char * pszDataType,
     if (pbSignedByte)
         *pbSignedByte = false;
 
-    if (EQUAL(pszDataType, "1BB")) {
+    if (EQUAL(pszDataType, "1BB"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 1;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUAL(pszDataType, "2BUI")) {
+    else if (EQUAL(pszDataType, "2BUI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 2;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUAL(pszDataType, "4BUI")) {
+    else if (EQUAL(pszDataType, "4BUI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 4;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUAL(pszDataType, "8BUI")) {
+    else if (EQUAL(pszDataType, "8BUI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
             *poDataType = GDT_Byte;
     }
 
-    else if (EQUAL(pszDataType, "8BSI")) {
+    else if (EQUAL(pszDataType, "8BSI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 8;
         if (poDataType)
@@ -167,49 +176,56 @@ GBool TranslateDataType(const char * pszDataType,
         if (pbSignedByte)
             *pbSignedByte = true;
     }
-    else if (EQUAL(pszDataType, "16BSI")) {
+    else if (EQUAL(pszDataType, "16BSI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_Int16;
     }
 
-    else if (EQUAL(pszDataType, "16BUI")) {
+    else if (EQUAL(pszDataType, "16BUI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 16;
         if (poDataType)
             *poDataType = GDT_UInt16;
     }
 
-    else if (EQUAL(pszDataType, "32BSI")) {
+    else if (EQUAL(pszDataType, "32BSI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Int32;
     }
 
-    else if (EQUAL(pszDataType, "32BUI")) {
+    else if (EQUAL(pszDataType, "32BUI"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_UInt32;
     }
 
-    else if (EQUAL(pszDataType, "32BF")) {
+    else if (EQUAL(pszDataType, "32BF"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 32;
         if (poDataType)
             *poDataType = GDT_Float32;
     }
 
-    else if (EQUAL(pszDataType, "64BF")) {
+    else if (EQUAL(pszDataType, "64BF"))
+    {
         if (pnBitsDepth)
             *pnBitsDepth = 64;
         if (poDataType)
             *poDataType = GDT_Float64;
     }
 
-    else {
+    else
+    {
         if (pnBitsDepth)
             *pnBitsDepth = -1;
         if (poDataType)

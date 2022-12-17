@@ -34,14 +34,12 @@
 #include "postgisraster.h"
 #include <memory>
 
-
 /************************
  * \brief Constructor
  ************************/
 PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
-    PostGISRasterTileDataset * poRTDSIn, int nBandIn,
-    GDALDataType eDataTypeIn) :
-    poSource(nullptr)
+    PostGISRasterTileDataset *poRTDSIn, int nBandIn, GDALDataType eDataTypeIn)
+    : poSource(nullptr)
 {
     // Basic properties.
     poDS = poRTDSIn;
@@ -75,8 +73,9 @@ PostGISRasterTileRasterBand::~PostGISRasterTileRasterBand()
  **********************************************************************/
 GBool PostGISRasterTileRasterBand::IsCached()
 {
-    GDALRasterBlock * poBlock = TryGetLockedBlockRef(0, 0);
-    if (poBlock != nullptr) {
+    GDALRasterBlock *poBlock = TryGetLockedBlockRef(0, 0);
+    if (poBlock != nullptr)
+    {
         poBlock->DropLock();
         return true;
     }
@@ -88,20 +87,21 @@ GBool PostGISRasterTileRasterBand::IsCached()
  * \brief Read a natural block of raster band data
  *****************************************************/
 CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
-                                               int /*nBlockYOff*/,
-                                               void * pImage)
+                                               int /*nBlockYOff*/, void *pImage)
 {
     CPLString osCommand;
-    PGresult * poResult = nullptr;
+    PGresult *poResult = nullptr;
     int nWKBLength = 0;
 
     const int nPixelSize = GDALGetDataTypeSizeBytes(eDataType);
 
-    PostGISRasterTileDataset * poRTDS =
+    PostGISRasterTileDataset *poRTDS =
         cpl::down_cast<PostGISRasterTileDataset *>(poDS);
 
-    const double dfTileUpperLeftX = poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
-    const double dfTileUpperLeftY = poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
+    const double dfTileUpperLeftX =
+        poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_X];
+    const double dfTileUpperLeftY =
+        poRTDS->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
     const double dfTileResX = poRTDS->adfGeoTransform[1];
     const double dfTileResY = poRTDS->adfGeoTransform[5];
     const int nTileXSize = nBlockXSize;
@@ -112,100 +112,104 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
     CPLString osColumnI(CPLQuotedSQLIdentifier(poRTDS->poRDS->pszColumn));
 
     CPLString osRasterToFetch;
-    osRasterToFetch.Printf("ST_Band(%s, %d)",
-                           osColumnI.c_str(), nBand);
+    osRasterToFetch.Printf("ST_Band(%s, %d)", osColumnI.c_str(), nBand);
     // We don't honour CLIENT_SIDE_IF_POSSIBLE since it would be likely too
     // costly in that context.
-    if( poRTDS->poRDS->eOutDBResolution != OutDBResolution::CLIENT_SIDE )
+    if (poRTDS->poRDS->eOutDBResolution != OutDBResolution::CLIENT_SIDE)
     {
-        osRasterToFetch = "encode(ST_AsBinary(" + osRasterToFetch + ",TRUE),'hex')";
+        osRasterToFetch =
+            "encode(ST_AsBinary(" + osRasterToFetch + ",TRUE),'hex')";
     }
 
-    osCommand.Printf("SELECT %s FROM %s.%s WHERE ",
-        osRasterToFetch.c_str(), osSchemaI.c_str(), osTableI.c_str());
+    osCommand.Printf("SELECT %s FROM %s.%s WHERE ", osRasterToFetch.c_str(),
+                     osSchemaI.c_str(), osTableI.c_str());
 
     // Get by PKID
     if (poRTDS->poRDS->pszPrimaryKeyName)
     {
-        CPLString osPrimaryKeyNameI(CPLQuotedSQLIdentifier(poRTDS->poRDS->pszPrimaryKeyName));
-        osCommand += CPLSPrintf("%s = '%s'",
-                        osPrimaryKeyNameI.c_str(), poRTDS->pszPKID);
+        CPLString osPrimaryKeyNameI(
+            CPLQuotedSQLIdentifier(poRTDS->poRDS->pszPrimaryKeyName));
+        osCommand +=
+            CPLSPrintf("%s = '%s'", osPrimaryKeyNameI.c_str(), poRTDS->pszPKID);
     }
 
     // Get by upperleft
-    else {
-        osCommand += CPLSPrintf(
-            "abs(ST_UpperLeftX(%s) - %.8f) < 1e-8 and abs(ST_UpperLeftY(%s) - %.8f) < 1e-8",
-            osColumnI.c_str(),
-            dfTileUpperLeftX,
-            osColumnI.c_str(),
-            dfTileUpperLeftY);
+    else
+    {
+        osCommand += CPLSPrintf("abs(ST_UpperLeftX(%s) - %.8f) < 1e-8 and "
+                                "abs(ST_UpperLeftY(%s) - %.8f) < 1e-8",
+                                osColumnI.c_str(), dfTileUpperLeftX,
+                                osColumnI.c_str(), dfTileUpperLeftY);
     }
 
     poResult = PQexec(poRTDS->poRDS->poConn, osCommand.c_str());
 
 #ifdef DEBUG_QUERY
-    CPLDebug("PostGIS_Raster", "PostGISRasterTileRasterBand::IReadBlock(): "
+    CPLDebug("PostGIS_Raster",
+             "PostGISRasterTileRasterBand::IReadBlock(): "
              "Query = \"%s\" --> number of rows = %d",
-             osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
+             osCommand.c_str(), poResult ? PQntuples(poResult) : 0);
 #endif
 
-    if (poResult == nullptr ||
-        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-        PQntuples(poResult) <= 0) {
+    if (poResult == nullptr || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+        PQntuples(poResult) <= 0)
+    {
 
         CPLString osError;
-        if( PQresultStatus(poResult) == PGRES_FATAL_ERROR )
+        if (PQresultStatus(poResult) == PGRES_FATAL_ERROR)
         {
-            const char *pszError = PQerrorMessage( poRTDS->poRDS->poConn );
-            if( pszError )
+            const char *pszError = PQerrorMessage(poRTDS->poRDS->poConn);
+            if (pszError)
                 osError = pszError;
         }
         if (poResult)
             PQclear(poResult);
 
         ReportError(CE_Failure, CPLE_AppDefined,
-            "Error getting block of data (upperpixel = %f, %f): %s",
-                dfTileUpperLeftX,
-                dfTileUpperLeftY,
-                osError.c_str());
+                    "Error getting block of data (upperpixel = %f, %f): %s",
+                    dfTileUpperLeftX, dfTileUpperLeftY, osError.c_str());
 
         return CE_Failure;
     }
 
     /* Copy only data size, without payload */
-    int nExpectedDataSize =
-        nBlockXSize * nBlockYSize * nPixelSize;
+    int nExpectedDataSize = nBlockXSize * nBlockYSize * nPixelSize;
 
-    struct CPLFreer { void operator() (GByte* x) const { CPLFree(x); } };
+    struct CPLFreer
+    {
+        void operator()(GByte *x) const
+        {
+            CPLFree(x);
+        }
+    };
     std::unique_ptr<GByte, CPLFreer> pbyDataAutoFreed(
         CPLHexToBinary(PQgetvalue(poResult, 0, 0), &nWKBLength));
-    GByte* pbyData = pbyDataAutoFreed.get();
+    GByte *pbyData = pbyDataAutoFreed.get();
     PQclear(poResult);
 
     const int nMinimumWKBLength = RASTER_HEADER_SIZE + BAND_SIZE(1, nPixelSize);
-    if( nWKBLength < nMinimumWKBLength )
+    if (nWKBLength < nMinimumWKBLength)
     {
-        CPLDebug("PostGIS_Raster", "nWKBLength=%d. too short. Expected at least %d",
-                 nWKBLength, nMinimumWKBLength );
+        CPLDebug("PostGIS_Raster",
+                 "nWKBLength=%d. too short. Expected at least %d", nWKBLength,
+                 nMinimumWKBLength);
         return CE_Failure;
     }
 
     // Is it indb-raster ?
-    if( (pbyData[RASTER_HEADER_SIZE] & 0x80) == 0 )
+    if ((pbyData[RASTER_HEADER_SIZE] & 0x80) == 0)
     {
-        int nExpectedWKBLength = RASTER_HEADER_SIZE +
-                                 BAND_SIZE(nPixelSize, nExpectedDataSize);
-        if( nWKBLength != nExpectedWKBLength )
+        int nExpectedWKBLength =
+            RASTER_HEADER_SIZE + BAND_SIZE(nPixelSize, nExpectedDataSize);
+        if (nWKBLength != nExpectedWKBLength)
         {
-            CPLDebug("PostGIS_Raster",
-                     "nWKBLength=%d, nExpectedWKBLength=%d",
-                     nWKBLength, nExpectedWKBLength );
+            CPLDebug("PostGIS_Raster", "nWKBLength=%d, nExpectedWKBLength=%d",
+                     nWKBLength, nExpectedWKBLength);
             return CE_Failure;
         }
 
-        GByte * pbyDataToRead = GET_BAND_DATA(pbyData,1,
-                                              nPixelSize,nExpectedDataSize);
+        GByte *pbyDataToRead =
+            GET_BAND_DATA(pbyData, 1, nPixelSize, nExpectedDataSize);
 
         // Do byte-swapping if necessary */
         const bool bIsLittleEndian = (pbyData[0] == 1);
@@ -215,11 +219,10 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
         const bool bSwap = bIsLittleEndian;
 #endif
 
-        if( bSwap && nPixelSize > 1 )
+        if (bSwap && nPixelSize > 1)
         {
-            GDALSwapWords( pbyDataToRead, nPixelSize,
-                           nBlockXSize * nBlockYSize,
-                           nPixelSize );
+            GDALSwapWords(pbyDataToRead, nPixelSize, nBlockXSize * nBlockYSize,
+                          nPixelSize);
         }
 
         memcpy(pImage, pbyDataToRead, nExpectedDataSize);
@@ -227,21 +230,14 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
     else
     {
         int nCurOffset = RASTER_HEADER_SIZE;
-        if( !poRTDS->poRDS->LoadOutdbRaster(nCurOffset, eDataType, nBand,
-                                             pbyData,
-                                             nWKBLength,
-                                             pImage,
-                                             dfTileUpperLeftX,
-                                             dfTileUpperLeftY,
-                                             dfTileResX,
-                                             dfTileResY,
-                                             nTileXSize,
-                                             nTileYSize) )
+        if (!poRTDS->poRDS->LoadOutdbRaster(
+                nCurOffset, eDataType, nBand, pbyData, nWKBLength, pImage,
+                dfTileUpperLeftX, dfTileUpperLeftY, dfTileResX, dfTileResY,
+                nTileXSize, nTileYSize))
         {
             return CE_Failure;
         }
     }
-
 
     return CE_None;
 }
