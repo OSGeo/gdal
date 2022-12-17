@@ -7,17 +7,18 @@ RFC 69: C/C++ Code Formatting
 This document proposes and describes desired code formatting style used
 across C and C++ source code in GDAL.
 
-======== ======================================
-Author:  Kurt Schwehr
-Contact: schwehr@google.com / schwehr@gmail.com
-Started: 2017-May-04
-Status:  *Work-In-Progress*
-======== ======================================
+=========== ======================================
+Author:     Kurt Schwehr
+Contact:    schwehr@google.com / schwehr@gmail.com
+Co-Author:  Alessandro Pasotti
+Contact:    elpaso@itopen.it
+Started:    2017-May-04
+Status:     Adpoted, implemented
+=========== ======================================
 
 This RFC is based on `GEOS RFC
 4 <https://trac.osgeo.org/geos/wiki/RFC4>`__ by Mateusz Łoskot.
 
-**TODO:** Give examples of formatting.
 
 Summary
 -------
@@ -76,18 +77,15 @@ development workflow as standalone tool or as one of many editor
 integrations or other bespoke utilities (eg. ``git cl format``
 [Chromium]).
 
-No automation of code reformatting is proposed. It would be treating the
-symptoms, no cause: developers not following the code formatting
-standard.
+A new pre-commit hook will be added to the current configuration in
+``.pre-commit-config.yaml`` to run [clang-format pre-commit].
 
-Although no means to enforce the default formatting style are proposed,
-currently used CI services (eg. Travis CI) may be employed as a
-post-commit safety valve - a clang-format lint failure as a compile
-break (e.g.
-`clang_format.py <https://github.com/mongodb/mongo/blob/master/buildscripts/clang_format.py>`__
-build script used by MongoDB). Alternatively, a gatekeeper may be
-installed in SVN/Git, rejecting commits with code not conforming to the
-code formatting style.
+To enforce the code formatting, a gatekeeper will be installed in CI,
+rejecting commits with code not conforming to the code formatting style
+and a brief textual hint to install or update the pre-commit hooks
+will be added to failure message.
+
+
 
 Code Formatting Rules
 ---------------------
@@ -159,30 +157,32 @@ Partial application of the code formatting rules would create more work
 without delivering the full benefit [MongoDB] leading to codebase with
 different styles mixed.
 
+To skip the "big reformat" commit from ``git blame``, git offers a mechanism
+to [git_blame_ignore] , a pre-configured ignore file ``.git-blame-ignore-revs``
+will be provided in the source tree with the "big reformat" commit 
+hash in it.
+
+The ignore file can be specified on the command line with 
+``git blame --ignore-revs-file .git-blame-ignore-revs`` or it can be set 
+permanently with ``git config blame.ignoreRevsFile .git-blame-ignore-revs``.
+
+The a.m. instructions will be added to the `developers documentation <https://gdal.org/development/dev_practices.html>`__.
+
+
 Branches
 ^^^^^^^^
 
 Branches to run the big reformat in are:
 
--  ``trunk``
--  [STRIKEOUT:``branches/2.2``]
--  [STRIKEOUT:``branches/2.1``]
--  [STRIKEOUT:``branches/2.0``]
+-  ``master``
+-  current stable version (to make backports easier)
 
 After Big Reformat
 ------------------
 
-How to work against the natural entropy in a codebase:
-
--  It is highly recommended to use ``clang-format`` integration while
-   writing a code.
--  Format changed code before committing or opening pull requests.
--  If you have to commit change in code formatting, do it in separate
-   commit. Avoid commits with a mixture of code and formatting changes.
-
-   -  There is downside of history clutter in repository, but this
-      proposal states that a codebase with different styles across is
-      even worse.
+The pre-commit hook will automatically take care of formatting
+the code before every commit, the CI test will reject not formatted
+code.
 
 *"After all, every moment of time wasted on code formatting or
 discussion thereof is eliminated."* ~[MongoDB]
@@ -190,30 +190,26 @@ discussion thereof is eliminated."* ~[MongoDB]
 Implementation
 --------------
 
-Set up Travis CI "style safety valve" build dedicated to run
-clang-format lint based on the approach used in ``​clang_format.py``
-script by MongoDB.
+1. add clang-format to pre-commit configuration file
+2. Set up GitHub workflow [clang-format-check]
 
-Miscellaneous
--------------
+A draft of the implementation is avaliable at `this branch <https://github.com/elpaso/gdal/tree/rfc69_cplusplus_formatting_revival>`__.
 
-Those who build GDAL with GCC 6+ may appreciate consistent code format
-style as it will help to avoid some dozens of the `new compiler
-warnings <https://developers.redhat.com/blog/2016/02/26/gcc-6-wmisleading-indentation-vs-goto-fail/>`__:
+The relevant files are:
 
-::
+- `pre-commit <https://github.com/elpaso/gdal/blob/rfc69_cplusplus_formatting_revival/.pre-commit-config.yaml#L30>`__
+- `.clang-format style <https://github.com/elpaso/gdal/blob/rfc69_cplusplus_formatting_revival/.clang-format>`__
+- `GH workflow <https://github.com/elpaso/gdal/blob/rfc69_cplusplus_formatting_revival/.github/workflows/clang-format-check.yml>`__
+- `clang-format script <https://github.com/elpaso/gdal/blob/rfc69_cplusplus_formatting_revival/scripts/clang-format.sh>`__
 
-   src/geom/Polygon.cpp: In member function ‘virtual int geos::geom::Polygon::getCoordinateDimension() const’:
-   src/geom/Polygon.cpp:154:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
-        if( shell != NULL )
-        ^~
-   src/geom/Polygon.cpp:157:2: note: ...this statement, but the latter is misleadingly indented as if it is guarded by the ‘if’
-     size_t nholes=holes->size();
-     ^~~~~~
+
+
 
 References
 ----------
 
+- [clang-format pre-commit] `Clang-Format Pre-Commit <https://github.com/pre-commit/mirrors-clang-format>`__
+- [clang-format-check] `Clang-Format Check Workflow <https://github.com/marketplace/actions/clang-format-check>`__
 -  [MongoDB] Succeeding With ClangFormat: `Part
    1 <https://engineering.mongodb.com/post/succeeding-with-clangformat-part-1-pitfalls-and-planning/>`__,
    `Part
@@ -226,3 +222,9 @@ References
    ``clang-format`` interactive guide and builder
 -  `https://zed0.co.uk/clang-format-configurator/ <https://zed0.co.uk/clang-format-configurator/>`__
 -  `https://trac.osgeo.org/geos/wiki/RFC4 <https://trac.osgeo.org/geos/wiki/RFC4>`__
+- [git_blame_ignore] `Ignore Commits in Blame View` <Git https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view>`__
+
+Voting history
+------------------
+
++1 from PSC members KurtS and EvenR
