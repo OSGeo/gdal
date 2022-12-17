@@ -28,7 +28,6 @@
 
 #include "sdts_al.h"
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             SDTSAttrRecord                           */
@@ -39,10 +38,9 @@
 /*                           SDTSAttrRecord()                           */
 /************************************************************************/
 
-SDTSAttrRecord::SDTSAttrRecord() :
-    poWholeRecord(nullptr),
-    poATTR(nullptr)
-{}
+SDTSAttrRecord::SDTSAttrRecord() : poWholeRecord(nullptr), poATTR(nullptr)
+{
+}
 
 /************************************************************************/
 /*                          ~SDTSAttrRecord()                           */
@@ -51,7 +49,7 @@ SDTSAttrRecord::SDTSAttrRecord() :
 SDTSAttrRecord::~SDTSAttrRecord()
 
 {
-    if( poWholeRecord != nullptr )
+    if (poWholeRecord != nullptr)
         delete poWholeRecord;
 }
 
@@ -59,11 +57,11 @@ SDTSAttrRecord::~SDTSAttrRecord()
 /*                                Dump()                                */
 /************************************************************************/
 
-void SDTSAttrRecord::Dump( FILE * fp )
+void SDTSAttrRecord::Dump(FILE *fp)
 
 {
-    if( poATTR != nullptr )
-        poATTR->Dump( fp );
+    if (poATTR != nullptr)
+        poATTR->Dump(fp);
 }
 
 /************************************************************************/
@@ -78,9 +76,9 @@ void SDTSAttrRecord::Dump( FILE * fp )
 /*                           SDTSAttrReader()                           */
 /************************************************************************/
 
-SDTSAttrReader::SDTSAttrReader() :
-    bIsSecondary(FALSE)
-{}
+SDTSAttrReader::SDTSAttrReader() : bIsSecondary(FALSE)
+{
+}
 
 /************************************************************************/
 /*                          ~SDTSAttrReader()                           */
@@ -109,12 +107,12 @@ void SDTSAttrReader::Close()
 /*      data records.                                                   */
 /************************************************************************/
 
-int SDTSAttrReader::Open( const char *pszFilename )
+int SDTSAttrReader::Open(const char *pszFilename)
 
 {
-    bool bSuccess = CPL_TO_BOOL(oDDFModule.Open( pszFilename ));
+    bool bSuccess = CPL_TO_BOOL(oDDFModule.Open(pszFilename));
 
-    if( bSuccess )
+    if (bSuccess)
         bIsSecondary = (oDDFModule.FindFieldDefn("ATTS") != nullptr);
 
     return bSuccess;
@@ -124,62 +122,61 @@ int SDTSAttrReader::Open( const char *pszFilename )
 /*                           GetNextRecord()                            */
 /************************************************************************/
 
-DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
-                                         DDFRecord ** ppoRecord,
-                                         int bDuplicate )
+DDFField *SDTSAttrReader::GetNextRecord(SDTSModId *poModId,
+                                        DDFRecord **ppoRecord, int bDuplicate)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Fetch a record.                                                 */
-/* -------------------------------------------------------------------- */
-    if( ppoRecord != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Fetch a record.                                                 */
+    /* -------------------------------------------------------------------- */
+    if (ppoRecord != nullptr)
         *ppoRecord = nullptr;
 
-    if( oDDFModule.GetFP() == nullptr )
+    if (oDDFModule.GetFP() == nullptr)
         return nullptr;
 
     DDFRecord *poRecord = oDDFModule.ReadRecord();
 
-    if( poRecord == nullptr )
+    if (poRecord == nullptr)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Make a copy of the record for persistent use if requested by    */
-/*      the caller.                                                     */
-/* -------------------------------------------------------------------- */
-    if( bDuplicate )
+    /* -------------------------------------------------------------------- */
+    /*      Make a copy of the record for persistent use if requested by    */
+    /*      the caller.                                                     */
+    /* -------------------------------------------------------------------- */
+    if (bDuplicate)
         poRecord = poRecord->Clone();
 
-/* -------------------------------------------------------------------- */
-/*      Find the ATTP field.                                            */
-/* -------------------------------------------------------------------- */
-    DDFField *poATTP = poRecord->FindField( "ATTP", 0 );
-    if( poATTP == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Find the ATTP field.                                            */
+    /* -------------------------------------------------------------------- */
+    DDFField *poATTP = poRecord->FindField("ATTP", 0);
+    if (poATTP == nullptr)
     {
-        poATTP = poRecord->FindField( "ATTS", 0 );
+        poATTP = poRecord->FindField("ATTS", 0);
     }
 
-    if( poATTP == nullptr )
+    if (poATTP == nullptr)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Update the module ID if required.                               */
-/* -------------------------------------------------------------------- */
-    if( poModId != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Update the module ID if required.                               */
+    /* -------------------------------------------------------------------- */
+    if (poModId != nullptr)
     {
-        DDFField *poATPR = poRecord->FindField( "ATPR" );
+        DDFField *poATPR = poRecord->FindField("ATPR");
 
-        if( poATPR == nullptr )
-            poATPR = poRecord->FindField( "ATSC" );
+        if (poATPR == nullptr)
+            poATPR = poRecord->FindField("ATSC");
 
-        if( poATPR != nullptr )
-            poModId->Set( poATPR );
+        if (poATPR != nullptr)
+            poModId->Set(poATPR);
     }
 
-/* -------------------------------------------------------------------- */
-/*      return proper answer.                                           */
-/* -------------------------------------------------------------------- */
-    if( ppoRecord != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      return proper answer.                                           */
+    /* -------------------------------------------------------------------- */
+    if (ppoRecord != nullptr)
         *ppoRecord = poRecord;
 
     return poATTP;
@@ -192,19 +189,19 @@ DDFField *SDTSAttrReader::GetNextRecord( SDTSModId * poModId,
 SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
 
 {
-    SDTSModId   oModId;
-    DDFRecord   *poRawRecord = nullptr;
+    SDTSModId oModId;
+    DDFRecord *poRawRecord = nullptr;
 
-    DDFField *poATTRField = GetNextRecord( &oModId, &poRawRecord, TRUE );
+    DDFField *poATTRField = GetNextRecord(&oModId, &poRawRecord, TRUE);
 
-    if( poATTRField == nullptr )
+    if (poATTRField == nullptr)
         return nullptr;
 
     SDTSAttrRecord *poAttrRecord = new SDTSAttrRecord();
 
     poAttrRecord->poWholeRecord = poRawRecord;
     poAttrRecord->poATTR = poATTRField;
-    memcpy( &(poAttrRecord->oModId), &oModId, sizeof(SDTSModId) );
+    memcpy(&(poAttrRecord->oModId), &oModId, sizeof(SDTSModId));
 
     return poAttrRecord;
 }
