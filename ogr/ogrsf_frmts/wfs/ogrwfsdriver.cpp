@@ -29,8 +29,9 @@
 #include "ogr_wfs.h"
 #include "cpl_conv.h"
 
-// g++ -fPIC -g -Wall ogr/ogrsf_frmts/wfs/*.cpp -shared -o ogr_WFS.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iogr/ogrsf_frmts/wfs -L. -lgdal
-
+// g++ -fPIC -g -Wall ogr/ogrsf_frmts/wfs/*.cpp -shared -o ogr_WFS.so -Iport
+// -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iogr/ogrsf_frmts/wfs
+// -L. -lgdal
 
 extern "C" void RegisterOGRWFS();
 
@@ -38,16 +39,19 @@ extern "C" void RegisterOGRWFS();
 /*                             Identify()                               */
 /************************************************************************/
 
-static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRWFSDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS:") )
+    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS:"))
     {
-        if( poOpenInfo->fpL == nullptr )
+        if (poOpenInfo->fpL == nullptr)
             return FALSE;
-        if( !STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "<OGRWFSDataSource>") &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == nullptr &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == nullptr)
+        if (!STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
+                            "<OGRWFSDataSource>") &&
+            strstr((const char *)poOpenInfo->pabyHeader, "<WFS_Capabilities") ==
+                nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader,
+                   "<wfs:WFS_Capabilities") == nullptr)
         {
             return FALSE;
         }
@@ -59,17 +63,16 @@ static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRWFSDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !OGRWFSDriverIdentify(poOpenInfo) )
+    if (!OGRWFSDriverIdentify(poOpenInfo))
         return nullptr;
 
-    OGRWFSDataSource   *poDS = new OGRWFSDataSource();
+    OGRWFSDataSource *poDS = new OGRWFSDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename,
-                     poOpenInfo->eAccess == GA_Update,
-                     poOpenInfo->papszOpenOptions ) )
+    if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
+                    poOpenInfo->papszOpenOptions))
     {
         delete poDS;
         poDS = nullptr;
@@ -85,38 +88,49 @@ static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRWFS()
 
 {
-    if( GDALGetDriverByName( "WFS" ) != nullptr )
+    if (GDALGetDriverByName("WFS") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "WFS" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "OGC WFS (Web Feature Service)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/wfs.html" );
+    poDriver->SetDescription("WFS");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "OGC WFS (Web Feature Service)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/wfs.html");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "WFS:");
 
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionList>"
-"  <Option name='URL' type='string' description='URL to the WFS server endpoint' required='true'/>"
-"  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
-"  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
-"  <Option name='INVERT_AXIS_ORDER_IF_LAT_LONG' type='boolean' description='Whether to present SRS and coordinate ordering in traditional GIS order' default='YES'/>"
-"  <Option name='CONSIDER_EPSG_AS_URN' type='string-select' description='Whether to consider srsName like EPSG:XXXX as respecting EPSG axis order' default='AUTO'>"
-"    <Value>AUTO</Value>"
-"    <Value>YES</Value>"
-"    <Value>NO</Value>"
-"  </Option>"
-"  <Option name='EXPOSE_GML_ID' type='boolean' description='Whether to make feature gml:id as a gml_id attribute.' default='YES'/>"
-"</OpenOptionList>" );
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='URL' type='string' description='URL to the WFS server "
+        "endpoint' required='true'/>"
+        "  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' "
+        "description='Whether to trust layer bounds declared in "
+        "GetCapabilities response' default='NO'/>"
+        "  <Option name='EMPTY_AS_NULL' type='boolean' description='Force "
+        "empty fields to be reported as NULL. Set to NO so that not-nullable "
+        "fields can be exposed' default='YES'/>"
+        "  <Option name='INVERT_AXIS_ORDER_IF_LAT_LONG' type='boolean' "
+        "description='Whether to present SRS and coordinate ordering in "
+        "traditional GIS order' default='YES'/>"
+        "  <Option name='CONSIDER_EPSG_AS_URN' type='string-select' "
+        "description='Whether to consider srsName like EPSG:XXXX as respecting "
+        "EPSG axis order' default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>YES</Value>"
+        "    <Value>NO</Value>"
+        "  </Option>"
+        "  <Option name='EXPOSE_GML_ID' type='boolean' description='Whether to "
+        "make feature gml:id as a gml_id attribute.' default='YES'/>"
+        "</OpenOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->pfnIdentify = OGRWFSDriverIdentify;
     poDriver->pfnOpen = OGRWFSDriverOpen;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
