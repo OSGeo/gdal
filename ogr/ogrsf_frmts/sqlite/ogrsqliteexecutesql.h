@@ -34,10 +34,9 @@
 #include "ogrsf_frmts.h"
 #include <set>
 
-OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
-                                const char *pszStatement,
-                                OGRGeometry *poSpatialFilter,
-                                const char *pszDialect );
+OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
+                              OGRGeometry *poSpatialFilter,
+                              const char *pszDialect);
 
 /************************************************************************/
 /*                               LayerDesc                              */
@@ -45,19 +44,18 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
 class LayerDesc
 {
-    public:
-        bool operator < ( const LayerDesc& other ) const
-        {
-            return osOriginalStr < other.osOriginalStr;
-        }
+  public:
+    bool operator<(const LayerDesc &other) const
+    {
+        return osOriginalStr < other.osOriginalStr;
+    }
 
-        CPLString osOriginalStr{};
-        CPLString osSubstitutedName{};
-        CPLString osDSName{};
-        CPLString osLayerName{};
+    CPLString osOriginalStr{};
+    CPLString osSubstitutedName{};
+    CPLString osDSName{};
+    CPLString osLayerName{};
 };
 
-std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement);
+std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char *pszStatement);
 
 #endif /* ndef OGR_SQLITE_EXECUTE_SQL_H_INCLUDED */
-

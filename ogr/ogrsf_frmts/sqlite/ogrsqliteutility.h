@@ -40,45 +40,53 @@
 
 class SQLResult
 {
-    public:
-        SQLResult(char** result, int nRow, int nCol);
-        ~SQLResult ();
+  public:
+    SQLResult(char **result, int nRow, int nCol);
+    ~SQLResult();
 
-        int         RowCount() const { return nRowCount; }
-        int         ColCount() const { return nColCount; }
-        void        LimitRowCount(int nLimit);
+    int RowCount() const
+    {
+        return nRowCount;
+    }
+    int ColCount() const
+    {
+        return nColCount;
+    }
+    void LimitRowCount(int nLimit);
 
-        const char* GetValue(int iColumnNum, int iRowNum) const;
-        int         GetValueAsInteger(int iColNum, int iRowNum) const;
+    const char *GetValue(int iColumnNum, int iRowNum) const;
+    int GetValueAsInteger(int iColNum, int iRowNum) const;
 
-    private:
-        char** papszResult = nullptr;
-        int nRowCount = 0;
-        int nColCount = 0;
+  private:
+    char **papszResult = nullptr;
+    int nRowCount = 0;
+    int nColCount = 0;
 
-        CPL_DISALLOW_COPY_ASSIGN(SQLResult)
+    CPL_DISALLOW_COPY_ASSIGN(SQLResult)
 };
 
+OGRErr SQLCommand(sqlite3 *poDb, const char *pszSQL);
+int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
+GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
 
-OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
-int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
-GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
+std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL);
 
-std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char * pszSQL);
+int SQLiteFieldFromOGR(OGRFieldType eType);
 
-int                 SQLiteFieldFromOGR(OGRFieldType eType);
+/* To escape literals. The returned string doesn't contain the surrounding
+ * single quotes */
+CPLString SQLEscapeLiteral(const char *pszLiteral);
 
-/* To escape literals. The returned string doesn't contain the surrounding single quotes */
-CPLString           SQLEscapeLiteral( const char *pszLiteral );
+/* To escape table or field names. The returned string doesn't contain the
+ * surrounding double quotes */
+CPLString SQLEscapeName(const char *pszName);
 
-/* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
-CPLString           SQLEscapeName( const char* pszName );
+/* Remove leading ' or " and unescape in that case. Or return string unmodified
+ */
+CPLString SQLUnescape(const char *pszVal);
 
-/* Remove leading ' or " and unescape in that case. Or return string unmodified */
-CPLString           SQLUnescape(const char* pszVal);
+char **SQLTokenize(const char *pszSQL);
 
-char**              SQLTokenize( const char* pszSQL );
-
-std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
-                                                     const char* pszTableName);
-#endif // OGR_SQLITEUTILITY_H_INCLUDED
+std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
+                                                     const char *pszTableName);
+#endif  // OGR_SQLITEUTILITY_H_INCLUDED
