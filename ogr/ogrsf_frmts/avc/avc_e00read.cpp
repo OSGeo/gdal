@@ -129,12 +129,12 @@
 #include "avc.h"
 
 #ifdef WIN32
-#  include <direct.h>   /* getcwd() */
+#include <direct.h> /* getcwd() */
 #else
-#  include <unistd.h>   /* getcwd() */
+#include <unistd.h> /* getcwd() */
 #endif
 
-#include <ctype.h>      /* toupper() */
+#include <ctype.h> /* toupper() */
 
 // Should be 80 but let's be laxer
 constexpr int knMAX_CHARS_PER_LINE = 1024;
@@ -143,7 +143,6 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead);
 static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
                                      char **papszCoverDir);
 static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir);
-
 
 /**********************************************************************
  *                          AVCE00ReadOpen()
@@ -165,12 +164,12 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir);
  *
  * The handle will eventually have to be released with AVCE00ReadClose().
  **********************************************************************/
-AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
+AVCE00ReadPtr AVCE00ReadOpen(const char *pszCoverPath)
 {
-    AVCE00ReadPtr   psInfo;
-    int             i, nLen, nCoverPrecision;
-    VSIStatBufL     sStatBuf;
-    char            **papszCoverDir = nullptr;
+    AVCE00ReadPtr psInfo;
+    int i, nLen, nCoverPrecision;
+    VSIStatBufL sStatBuf;
+    char **papszCoverDir = nullptr;
 
     CPLErrorReset();
 
@@ -181,9 +180,8 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
     if (pszCoverPath == nullptr || strlen(pszCoverPath) == 0 ||
         VSIStatL(pszCoverPath, &sStatBuf) == -1)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Invalid coverage path: %s.",
-                 pszCoverPath?pszCoverPath:"(nullptr)");
+        CPLError(CE_Failure, CPLE_OpenFailed, "Invalid coverage path: %s.",
+                 pszCoverPath ? pszCoverPath : "(nullptr)");
         return nullptr;
     }
 
@@ -209,14 +207,14 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          *------------------------------------------------------------*/
         nLen = (int)strlen(pszCoverPath);
 
-        if (pszCoverPath[nLen-1] == '/' || pszCoverPath[nLen-1] == '\\')
+        if (pszCoverPath[nLen - 1] == '/' || pszCoverPath[nLen - 1] == '\\')
             psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
         else
         {
 #ifdef WIN32
-            psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\",pszCoverPath));
+            psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\", pszCoverPath));
 #else
-            psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/",pszCoverPath));
+            psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/", pszCoverPath));
 #endif
         }
     }
@@ -229,14 +227,15 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          *------------------------------------------------------------*/
         psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
 
-        for( i = (int)strlen(psInfo->pszCoverPath)-1;
+        for (i = (int)strlen(psInfo->pszCoverPath) - 1;
              i > 0 && psInfo->pszCoverPath[i] != '/' &&
-                 psInfo->pszCoverPath[i] != '\\';
-             i-- ) {}
+             psInfo->pszCoverPath[i] != '\\';
+             i--)
+        {
+        }
 
-        psInfo->pszCoverPath[i+1] = '\0';
+        psInfo->pszCoverPath[i + 1] = '\0';
     }
-
 
     /*-----------------------------------------------------------------
      * Extract the coverage name from the coverage path.  Note that
@@ -246,25 +245,26 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      * but for now we'll just produce an error if this happens.
      *----------------------------------------------------------------*/
     nLen = 0;
-    for( i = (int)strlen(psInfo->pszCoverPath)-1;
-        i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
-                psInfo->pszCoverPath[i-1] != '\\'&&
-                psInfo->pszCoverPath[i-1] != ':';
-        i-- )
+    for (i = (int)strlen(psInfo->pszCoverPath) - 1;
+         i > 0 && psInfo->pszCoverPath[i - 1] != '/' &&
+         psInfo->pszCoverPath[i - 1] != '\\' &&
+         psInfo->pszCoverPath[i - 1] != ':';
+         i--)
     {
         nLen++;
     }
 
     if (nLen > 0)
     {
-        psInfo->pszCoverName = CPLStrdup(psInfo->pszCoverPath+i);
+        psInfo->pszCoverName = CPLStrdup(psInfo->pszCoverPath + i);
         psInfo->pszCoverName[nLen] = '\0';
     }
     else
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Invalid coverage path (%s): "
-                 "coverage name must be included in path.", pszCoverPath);
+                 "coverage name must be included in path.",
+                 pszCoverPath);
 
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo);
@@ -278,11 +278,12 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
 
     psInfo->eCoverType = _AVCE00ReadFindCoverType(papszCoverDir);
 
-    if (psInfo->eCoverType == AVCCoverTypeUnknown  )
+    if (psInfo->eCoverType == AVCCoverTypeUnknown)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Invalid coverage (%s): directory does not appear to "
-                 "contain any supported vector coverage file.",  pszCoverPath);
+                 "contain any supported vector coverage file.",
+                 pszCoverPath);
         CPLFree(psInfo->pszCoverName);
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo->pszInfoPath);
@@ -305,15 +306,15 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
          * Lazy way to build the INFO path: simply add "../info/"...
          * this could probably be improved!
          *------------------------------------------------------------*/
-        size_t nInfoPathLen = strlen(psInfo->pszCoverPath)+9;
-        psInfo->pszInfoPath =(char*)CPLMalloc(nInfoPathLen);
+        size_t nInfoPathLen = strlen(psInfo->pszCoverPath) + 9;
+        psInfo->pszInfoPath = (char *)CPLMalloc(nInfoPathLen);
 #ifdef WIN32
-#  define AVC_INFOPATH "..\\info\\"
+#define AVC_INFOPATH "..\\info\\"
 #else
-#  define AVC_INFOPATH "../info/"
+#define AVC_INFOPATH "../info/"
 #endif
-        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s", psInfo->pszCoverPath,
-                                             AVC_INFOPATH);
+        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s",
+                 psInfo->pszCoverPath, AVC_INFOPATH);
 
         AVCAdjustCaseSensitiveFilename(psInfo->pszInfoPath);
     }
@@ -327,13 +328,14 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      *----------------------------------------------------------------*/
     if (((psInfo->eCoverType == AVCCoverV7 ||
           psInfo->eCoverType == AVCCoverV7Tables) &&
-         ! AVCFileExists(psInfo->pszInfoPath, "arc.dir") ) ||
-         (psInfo->eCoverType == AVCCoverWeird &&
-         ! AVCFileExists(psInfo->pszInfoPath, "arcdr9") ) )
+         !AVCFileExists(psInfo->pszInfoPath, "arc.dir")) ||
+        (psInfo->eCoverType == AVCCoverWeird &&
+         !AVCFileExists(psInfo->pszInfoPath, "arcdr9")))
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-             "Invalid coverage (%s): 'info' directory not found or invalid.",
-                                              pszCoverPath);
+        CPLError(
+            CE_Failure, CPLE_OpenFailed,
+            "Invalid coverage (%s): 'info' directory not found or invalid.",
+            pszCoverPath);
         CPLFree(psInfo->pszCoverName);
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo->pszInfoPath);
@@ -407,10 +409,10 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
 AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
 {
     AVCE00ReadE00Ptr psRead;
-    VSIStatBufL      sStatBuf;
-    VSILFILE        *fp;
-    char             *p;
-    char             szHeader[10];
+    VSIStatBufL sStatBuf;
+    VSILFILE *fp;
+    char *p;
+    char szHeader[10];
 
     CPLErrorReset();
 
@@ -422,9 +424,8 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
         VSIStatL(pszE00FileName, &sStatBuf) == -1 ||
         VSI_ISDIR(sStatBuf.st_mode))
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Invalid E00 file path: %s.",
-                 pszE00FileName?pszE00FileName:"(nullptr)");
+        CPLError(CE_Failure, CPLE_OpenFailed, "Invalid E00 file path: %s.",
+                 pszE00FileName ? pszE00FileName : "(nullptr)");
         return nullptr;
     }
 
@@ -435,11 +436,11 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
      * Make sure the file starts with a "EXP  0" or "EXP  1" header
      *----------------------------------------------------------------*/
     memset(szHeader, 0, sizeof(szHeader));
-    if (VSIFReadL(szHeader, 5, 1, fp) == 0 || !STARTS_WITH_CI(szHeader, "EXP ") )
+    if (VSIFReadL(szHeader, 5, 1, fp) == 0 || !STARTS_WITH_CI(szHeader, "EXP "))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "This does not look like a E00 file: does not start with "
-                 "a EXP header." );
+                 "a EXP header.");
         VSIFCloseL(fp);
         return nullptr;
     }
@@ -448,8 +449,7 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
     /*-----------------------------------------------------------------
      * Alloc the AVCE00ReadE00Ptr handle
      *----------------------------------------------------------------*/
-    psRead = (AVCE00ReadE00Ptr)CPLCalloc(1,
-            sizeof(struct AVCE00ReadInfoE00_t));
+    psRead = (AVCE00ReadE00Ptr)CPLCalloc(1, sizeof(struct AVCE00ReadInfoE00_t));
 
     psRead->hFile = fp;
     psRead->pszCoverPath = CPLStrdup(pszE00FileName);
@@ -543,7 +543,7 @@ void AVCE00ReadClose(AVCE00ReadPtr psInfo)
     if (psInfo->pasSections)
     {
         int i;
-        for(i=0; i<psInfo->numSections; i++)
+        for (i = 0; i < psInfo->numSections; i++)
         {
             CPLFree(psInfo->pasSections[i].pszName);
             CPLFree(psInfo->pasSections[i].pszFilename);
@@ -579,7 +579,7 @@ void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead)
     if (psRead->pasSections)
     {
         int i;
-        for(i=0; i<psRead->numSections; i++)
+        for (i = 0; i < psRead->numSections; i++)
         {
             CPLFree(psRead->pasSections[i].pszName);
             CPLFree(psRead->pasSections[i].pszFilename);
@@ -594,7 +594,6 @@ void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead)
     CPLFree(psRead);
 }
 
-
 /**********************************************************************
  *                          _AVCIncreaseSectionsArray()
  *
@@ -605,21 +604,20 @@ void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead)
  * The value of *pnumItems will be updated to reflect the new array size.
  **********************************************************************/
 static int _AVCIncreaseSectionsArray(AVCE00Section **pasArray, int *pnumItems,
-                                    int numToAdd)
+                                     int numToAdd)
 {
     int i;
 
-    *pasArray = (AVCE00Section*)CPLRealloc(*pasArray,
-                                           (*pnumItems+numToAdd)*
-                                                    sizeof(AVCE00Section));
+    *pasArray = (AVCE00Section *)CPLRealloc(
+        *pasArray, (*pnumItems + numToAdd) * sizeof(AVCE00Section));
 
-    for(i=0; i<numToAdd; i++)
+    for (i = 0; i < numToAdd; i++)
     {
-        (*pasArray)[*pnumItems+i].eType = AVCFileUnknown;
-        (*pasArray)[*pnumItems+i].pszName = nullptr;
-        (*pasArray)[*pnumItems+i].pszFilename = nullptr;
-        (*pasArray)[*pnumItems+i].nLineNum = 0;
-        (*pasArray)[*pnumItems+i].nFeatureCount = -1;
+        (*pasArray)[*pnumItems + i].eType = AVCFileUnknown;
+        (*pasArray)[*pnumItems + i].pszName = nullptr;
+        (*pasArray)[*pnumItems + i].pszFilename = nullptr;
+        (*pasArray)[*pnumItems + i].nLineNum = 0;
+        (*pasArray)[*pnumItems + i].nFeatureCount = -1;
     }
 
     i = *pnumItems;
@@ -643,23 +641,22 @@ static int _AVCIncreaseSectionsArray(AVCE00Section **pasArray, int *pnumItems,
  **********************************************************************/
 static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
 {
-    int         i, nLen;
-    GBool       bFoundAdfFile=FALSE, bFoundArcFile=FALSE,
-                bFoundTableFile=FALSE, bFoundDbfFile=FALSE,
-                bFoundArcDirFile=FALSE;
+    int i, nLen;
+    GBool bFoundAdfFile = FALSE, bFoundArcFile = FALSE, bFoundTableFile = FALSE,
+          bFoundDbfFile = FALSE, bFoundArcDirFile = FALSE;
 
     /*-----------------------------------------------------------------
      * Scan the list of files, looking for well known filenames.
      * Start with the funky types first...
      *----------------------------------------------------------------*/
-    for(i=0; papszCoverDir && papszCoverDir[i]; i++)
+    for (i = 0; papszCoverDir && papszCoverDir[i]; i++)
     {
         nLen = (int)strlen(papszCoverDir[i]);
-        if (nLen > 4 && EQUAL(papszCoverDir[i]+nLen-4, ".adf") )
+        if (nLen > 4 && EQUAL(papszCoverDir[i] + nLen - 4, ".adf"))
         {
             bFoundAdfFile = TRUE;
         }
-        else if (nLen > 4 && EQUAL(papszCoverDir[i]+nLen-4, ".dbf") )
+        else if (nLen > 4 && EQUAL(papszCoverDir[i] + nLen - 4, ".dbf"))
         {
             bFoundDbfFile = TRUE;
         }
@@ -668,22 +665,21 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
                  EQUAL(papszCoverDir[i], "pal") ||
                  EQUAL(papszCoverDir[i], "lab") ||
                  EQUAL(papszCoverDir[i], "prj") ||
-                 EQUAL(papszCoverDir[i], "tol") )
+                 EQUAL(papszCoverDir[i], "tol"))
         {
             bFoundArcFile = TRUE;
         }
         else if (EQUAL(papszCoverDir[i], "aat") ||
                  EQUAL(papszCoverDir[i], "pat") ||
                  EQUAL(papszCoverDir[i], "bnd") ||
-                 EQUAL(papszCoverDir[i], "tic") )
+                 EQUAL(papszCoverDir[i], "tic"))
         {
             bFoundTableFile = TRUE;
         }
-        else if (EQUAL(papszCoverDir[i], "arc.dir") )
+        else if (EQUAL(papszCoverDir[i], "arc.dir"))
         {
             bFoundArcDirFile = TRUE;
         }
-
     }
 
     /*-----------------------------------------------------------------
@@ -732,7 +728,6 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
     return AVCCoverTypeUnknown;
 }
 
-
 /**********************************************************************
  *                         _AVCE00ReadAddJabberwockySection()
  *
@@ -741,16 +736,13 @@ static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
  *
  * Returns Updated Coverage precision
  **********************************************************************/
-static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
-                                            AVCFileType   eFileType,
-                                            const char   *pszSectionName,
-                                            int           nCoverPrecision,
-                                            const char   *pszFileExtension,
-                                            char        **papszCoverDir )
+static int _AVCE00ReadAddJabberwockySection(
+    AVCE00ReadPtr psInfo, AVCFileType eFileType, const char *pszSectionName,
+    int nCoverPrecision, const char *pszFileExtension, char **papszCoverDir)
 {
-    int         iSect, iDirEntry, nLen, nExtLen;
-    GBool       bFoundFiles = FALSE;
-    AVCBinFile *psFile=nullptr;
+    int iSect, iDirEntry, nLen, nExtLen;
+    GBool bFoundFiles = FALSE;
+    AVCBinFile *psFile = nullptr;
 
     nExtLen = (int)strlen(pszFileExtension);
 
@@ -758,16 +750,16 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
      * Scan the directory for files with a ".txt" extension.
      *----------------------------------------------------------------*/
 
-    for (iDirEntry=0; papszCoverDir && papszCoverDir[iDirEntry]; iDirEntry++)
+    for (iDirEntry = 0; papszCoverDir && papszCoverDir[iDirEntry]; iDirEntry++)
     {
         nLen = (int)strlen(papszCoverDir[iDirEntry]);
 
-        if (nLen > nExtLen && EQUAL(papszCoverDir[iDirEntry] + nLen-nExtLen,
-                                    pszFileExtension) &&
-            (psFile = AVCBinReadOpen(psInfo->pszCoverPath,
-                                     papszCoverDir[iDirEntry],
-                                     psInfo->eCoverType, eFileType,
-                                     psInfo->psDBCSInfo)) != nullptr)
+        if (nLen > nExtLen &&
+            EQUAL(papszCoverDir[iDirEntry] + nLen - nExtLen,
+                  pszFileExtension) &&
+            (psFile = AVCBinReadOpen(
+                 psInfo->pszCoverPath, papszCoverDir[iDirEntry],
+                 psInfo->eCoverType, eFileType, psInfo->psDBCSInfo)) != nullptr)
         {
             if (nCoverPrecision == AVC_DEFAULT_PREC)
                 nCoverPrecision = psFile->nPrecision;
@@ -781,9 +773,9 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
                                                   &(psInfo->numSections), 1);
                 psInfo->pasSections[iSect].eType = AVCFileUnknown;
 
-                psInfo->pasSections[iSect].pszName =
-                            CPLStrdup(CPLSPrintf("%s  %c", pszSectionName,
-                                  (nCoverPrecision==AVC_DOUBLE_PREC)?'3':'2'));
+                psInfo->pasSections[iSect].pszName = CPLStrdup(CPLSPrintf(
+                    "%s  %c", pszSectionName,
+                    (nCoverPrecision == AVC_DOUBLE_PREC) ? '3' : '2'));
 
                 bFoundFiles = TRUE;
             }
@@ -794,14 +786,14 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
                                               &(psInfo->numSections), 1);
 
             psInfo->pasSections[iSect].eType = eFileType;
-            psInfo->pasSections[iSect].pszFilename=
-                                   CPLStrdup(papszCoverDir[iDirEntry]);
+            psInfo->pasSections[iSect].pszFilename =
+                CPLStrdup(papszCoverDir[iDirEntry]);
 
             /* pszName will contain only the classname without the file
              * extension */
             psInfo->pasSections[iSect].pszName =
-                                   CPLStrdup(papszCoverDir[iDirEntry]);
-            psInfo->pasSections[iSect].pszName[nLen-nExtLen] = '\0';
+                CPLStrdup(papszCoverDir[iDirEntry]);
+            psInfo->pasSections[iSect].pszName[nLen - nExtLen] = '\0';
         }
     }
 
@@ -827,7 +819,7 @@ static int _AVCE00ReadAddJabberwockySection(AVCE00ReadPtr psInfo,
  * Returns the next object from the E00 file, or nullptr.
  **********************************************************************/
 static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
-        const char *pszLine)
+                                    const char *pszLine)
 {
     /* int nStatus = 0; */
     void *psObj = nullptr;
@@ -872,15 +864,13 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
         /*-------------------------------------------------------------
          * First check for a supersection header (TX6, RXP, IFO, ...)
          *------------------------------------------------------------*/
-        if ( AVCE00ParseSuperSectionHeader(psInfo,
-                                           pszLine) == AVCFileUnknown )
+        if (AVCE00ParseSuperSectionHeader(psInfo, pszLine) == AVCFileUnknown)
         {
             /*---------------------------------------------------------
              * This was not a supersection header... check if it is a simple
              * section header
              *--------------------------------------------------------*/
-            psRead->eCurFileType = AVCE00ParseSectionHeader(psInfo,
-                    pszLine);
+            psRead->eCurFileType = AVCE00ParseSectionHeader(psInfo, pszLine);
         }
         else
         {
@@ -902,8 +892,7 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
              *--------------------------------------------------------*/
         }
     }
-    else if (psRead->eCurFileType == AVCFileTABLE &&
-             ! psInfo->bTableHdrComplete )
+    else if (psRead->eCurFileType == AVCFileTABLE && !psInfo->bTableHdrComplete)
     {
         /*-------------------------------------------------------------
          * We're reading a TABLE header... continue reading lines
@@ -969,16 +958,15 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
  * The function returns the coverage precision that it will read from one
  * of the file headers.
  **********************************************************************/
-static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
-                                     char **papszCoverDir)
+static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
 {
-    int         iTable, numTables, iFile, nLen;
-    char      **papszTables, **papszFiles, szCWD[75]="", *pcTmp;
-    char       *pszEXPPath=nullptr;
-    int         nCoverPrecision = AVC_DEFAULT_PREC;
-    char        cPrecisionCode = '2';
+    int iTable, numTables, iFile, nLen;
+    char **papszTables, **papszFiles, szCWD[75] = "", *pcTmp;
+    char *pszEXPPath = nullptr;
+    int nCoverPrecision = AVC_DEFAULT_PREC;
+    char cPrecisionCode = '2';
     const char *szFname = nullptr;
-    AVCBinFile *psFile=nullptr;
+    AVCBinFile *psFile = nullptr;
 
     psInfo->numSections = 0;
     psInfo->pasSections = nullptr;
@@ -1000,35 +988,35 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
 #endif
     {
         if (getcwd(szCWD, 74) == nullptr)
-            szCWD[0] = '\0';    /* Failed: buffer may be too small */
+            szCWD[0] = '\0'; /* Failed: buffer may be too small */
 
         nLen = (int)strlen(szCWD);
 
 #ifdef WIN32
-        if (nLen > 0 && szCWD[nLen -1] != '\\')
+        if (nLen > 0 && szCWD[nLen - 1] != '\\')
             strcat(szCWD, "\\");
 #else
-        if (nLen > 0 && szCWD[nLen -1] != '/')
+        if (nLen > 0 && szCWD[nLen - 1] != '/')
             strcat(szCWD, "/");
 #endif
     }
 
     CPLString osCoverPathTruncated(psInfo->pszCoverPath);
-    osCoverPathTruncated.resize(osCoverPathTruncated.size()-1);
-    pszEXPPath = CPLStrdup(CPLSPrintf("EXP  0 %s%s.E00", szCWD,
-                                      osCoverPathTruncated.c_str()));
+    osCoverPathTruncated.resize(osCoverPathTruncated.size() - 1);
+    pszEXPPath = CPLStrdup(
+        CPLSPrintf("EXP  0 %s%s.E00", szCWD, osCoverPathTruncated.c_str()));
     pcTmp = pszEXPPath;
-    for( ; *pcTmp != '\0'; pcTmp++)
-        *pcTmp = (char) toupper(*pcTmp);
+    for (; *pcTmp != '\0'; pcTmp++)
+        *pcTmp = (char)toupper(*pcTmp);
 
     /*-----------------------------------------------------------------
      * EXP Header
      *----------------------------------------------------------------*/
     {
-    const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                  &(psInfo->numSections), 1);
-    psInfo->pasSections[iSect].eType = AVCFileUnknown;
-    psInfo->pasSections[iSect].pszName = pszEXPPath;
+        const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
+                                                    &(psInfo->numSections), 1);
+        psInfo->pasSections[iSect].eType = AVCFileUnknown;
+        psInfo->pasSections[iSect].pszName = pszEXPPath;
     }
 
     /*-----------------------------------------------------------------
@@ -1042,145 +1030,166 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
     /*-----------------------------------------------------------------
      * ARC section (arc.adf)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "arc.adf": "arc";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileARC,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "arc.adf"
+            : "arc";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileARC, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileARC;
         psInfo->pasSections[iSect].pszName = CPLStrdup("ARC");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
      * CNT section (cnt.adf)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "cnt.adf": "cnt";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileCNT,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "cnt.adf"
+            : "cnt";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileCNT, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileCNT;
         psInfo->pasSections[iSect].pszName = CPLStrdup("CNT");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
      * LAB section (lab.adf)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "lab.adf": "lab";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileLAB,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "lab.adf"
+            : "lab";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileLAB, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileLAB;
         psInfo->pasSections[iSect].pszName = CPLStrdup("LAB");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
      * PAL section (pal.adf)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "pal.adf": "pal";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFilePAL,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "pal.adf"
+            : "pal";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFilePAL, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFilePAL;
         psInfo->pasSections[iSect].pszName = CPLStrdup("PAL");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
      * TOL section (tol.adf for single precision, par.adf for double)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "tol.adf": "tol";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileTOL,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "tol.adf"
+            : "tol";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileTOL, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileTOL;
         psInfo->pasSections[iSect].pszName = CPLStrdup("TOL");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "par.adf": "par";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileTOL,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "par.adf"
+            : "par";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileTOL, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileTOL;
         psInfo->pasSections[iSect].pszName = CPLStrdup("TOL");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
      * TXT section (txt.adf)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "txt.adf": "txt";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 &&
-         (psFile = AVCBinReadOpen(psInfo->pszCoverPath, szFname,
-                                  psInfo->eCoverType, AVCFileTXT,
-                                  psInfo->psDBCSInfo)) != nullptr)
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "txt.adf"
+            : "txt";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1 &&
+        (psFile =
+             AVCBinReadOpen(psInfo->pszCoverPath, szFname, psInfo->eCoverType,
+                            AVCFileTXT, psInfo->psDBCSInfo)) != nullptr)
     {
         if (nCoverPrecision == AVC_DEFAULT_PREC)
             nCoverPrecision = psFile->nPrecision;
         AVCBinReadClose(psFile);
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFileTXT;
         psInfo->pasSections[iSect].pszName = CPLStrdup("TXT");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
@@ -1190,17 +1199,11 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
      * In weird coverages, the filename ends with "txt" but there is no "."
      *----------------------------------------------------------------*/
     if (psInfo->eCoverType == AVCCoverV7)
-        nCoverPrecision = _AVCE00ReadAddJabberwockySection(psInfo, AVCFileTX6,
-                                                           "TX6",
-                                                           nCoverPrecision,
-                                                           ".txt",
-                                                           papszCoverDir);
+        nCoverPrecision = _AVCE00ReadAddJabberwockySection(
+            psInfo, AVCFileTX6, "TX6", nCoverPrecision, ".txt", papszCoverDir);
     else if (psInfo->eCoverType == AVCCoverWeird)
-        nCoverPrecision = _AVCE00ReadAddJabberwockySection(psInfo, AVCFileTX6,
-                                                           "TX6",
-                                                           nCoverPrecision,
-                                                           "txt",
-                                                           papszCoverDir);
+        nCoverPrecision = _AVCE00ReadAddJabberwockySection(
+            psInfo, AVCFileTX6, "TX6", nCoverPrecision, "txt", papszCoverDir);
 
     /*-----------------------------------------------------------------
      * At this point, we should have read the coverage precision... and if
@@ -1216,14 +1219,14 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
      * SIN  2/3 and EOX lines ... ???
      *----------------------------------------------------------------*/
     {
-    int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                  &(psInfo->numSections), 2);
-    psInfo->pasSections[iSect].eType = AVCFileUnknown;
-    psInfo->pasSections[iSect].pszName = CPLStrdup("SIN  X");
-    psInfo->pasSections[iSect].pszName[5] = cPrecisionCode;
-    iSect++;
-    psInfo->pasSections[iSect].eType = AVCFileUnknown;
-    psInfo->pasSections[iSect].pszName = CPLStrdup("EOX");
+        int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
+                                              &(psInfo->numSections), 2);
+        psInfo->pasSections[iSect].eType = AVCFileUnknown;
+        psInfo->pasSections[iSect].pszName = CPLStrdup("SIN  X");
+        psInfo->pasSections[iSect].pszName[5] = cPrecisionCode;
+        iSect++;
+        psInfo->pasSections[iSect].eType = AVCFileUnknown;
+        psInfo->pasSections[iSect].pszName = CPLStrdup("EOX");
     }
 
     /*-----------------------------------------------------------------
@@ -1233,16 +1236,19 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
     /*-----------------------------------------------------------------
      * PRJ section (prj.adf) (ends with EOP)
      *----------------------------------------------------------------*/
-    szFname = (psInfo->eCoverType==AVCCoverV7 ||
-               psInfo->eCoverType==AVCCoverPC2 ) ? "prj.adf": "prj";
-    if ( (iFile=CSLFindString(papszCoverDir, szFname)) != -1 )
+    szFname =
+        (psInfo->eCoverType == AVCCoverV7 || psInfo->eCoverType == AVCCoverPC2)
+            ? "prj.adf"
+            : "prj";
+    if ((iFile = CSLFindString(papszCoverDir, szFname)) != -1)
     {
         const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), 1);
+                                                    &(psInfo->numSections), 1);
 
         psInfo->pasSections[iSect].eType = AVCFilePRJ;
         psInfo->pasSections[iSect].pszName = CPLStrdup("PRJ");
-        psInfo->pasSections[iSect].pszFilename=CPLStrdup(papszCoverDir[iFile]);
+        psInfo->pasSections[iSect].pszFilename =
+            CPLStrdup(papszCoverDir[iFile]);
     }
 
     /*-----------------------------------------------------------------
@@ -1250,23 +1256,22 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
      * Scan the directory for files with a ".rxp" extension.
      *----------------------------------------------------------------*/
     if (psInfo->eCoverType == AVCCoverV7)
-        _AVCE00ReadAddJabberwockySection(psInfo, AVCFileRXP, "RXP",
-                                         nCoverPrecision,".rxp",papszCoverDir);
+        _AVCE00ReadAddJabberwockySection(
+            psInfo, AVCFileRXP, "RXP", nCoverPrecision, ".rxp", papszCoverDir);
     else if (psInfo->eCoverType == AVCCoverWeird)
         _AVCE00ReadAddJabberwockySection(psInfo, AVCFileRXP, "RXP",
-                                         nCoverPrecision,"rxp",papszCoverDir);
-
+                                         nCoverPrecision, "rxp", papszCoverDir);
 
     /*-----------------------------------------------------------------
      * RPL section (*.pal)
      * Scan the directory for files with a ".rpl" extension.
      *----------------------------------------------------------------*/
     if (psInfo->eCoverType == AVCCoverV7)
-        _AVCE00ReadAddJabberwockySection(psInfo, AVCFileRPL, "RPL",
-                                         nCoverPrecision,".pal",papszCoverDir);
+        _AVCE00ReadAddJabberwockySection(
+            psInfo, AVCFileRPL, "RPL", nCoverPrecision, ".pal", papszCoverDir);
     else if (psInfo->eCoverType == AVCCoverWeird)
         _AVCE00ReadAddJabberwockySection(psInfo, AVCFileRPL, "RPL",
-                                         nCoverPrecision,"rpl",papszCoverDir);
+                                         nCoverPrecision, "rpl", papszCoverDir);
 
     /*-----------------------------------------------------------------
      * IFO section (tables)
@@ -1280,10 +1285,9 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
          * Unix coverages: get tables from the ../info/arc.dir
          * Weird coverages: the arc.dir is similar but called "arcdr9"
          *------------------------------------------------------------*/
-        papszTables = AVCBinReadListTables(psInfo->pszInfoPath,
-                                           psInfo->pszCoverName,
-                                           &papszFiles, psInfo->eCoverType,
-                                           psInfo->psDBCSInfo);
+        papszTables = AVCBinReadListTables(
+            psInfo->pszInfoPath, psInfo->pszCoverName, &papszFiles,
+            psInfo->eCoverType, psInfo->psDBCSInfo);
     }
     else if (psInfo->eCoverType == AVCCoverPC ||
              psInfo->eCoverType == AVCCoverPC2)
@@ -1294,16 +1298,16 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
          *               as the table basename, and the dbf file basename
          *               as the table extension.
          *------------------------------------------------------------*/
-        for(iFile=0; papszCoverDir && papszCoverDir[iFile]; iFile++)
+        for (iFile = 0; papszCoverDir && papszCoverDir[iFile]; iFile++)
         {
             if ((nLen = (int)strlen(papszCoverDir[iFile])) == 7 &&
-                EQUAL(papszCoverDir[iFile] + nLen -4, ".dbf"))
+                EQUAL(papszCoverDir[iFile] + nLen - 4, ".dbf"))
             {
                 papszCoverDir[iFile][nLen - 4] = '\0';
                 szFname = CPLSPrintf("%s.%s", psInfo->pszCoverName,
-                                              papszCoverDir[iFile]);
-                pcTmp = (char*)szFname;
-                for( ; *pcTmp != '\0'; pcTmp++)
+                                     papszCoverDir[iFile]);
+                pcTmp = (char *)szFname;
+                for (; *pcTmp != '\0'; pcTmp++)
                     *pcTmp = (char)toupper(*pcTmp);
                 papszCoverDir[iFile][nLen - 4] = '.';
 
@@ -1315,29 +1319,28 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
 
     if (papszTables != nullptr && (numTables = CSLCount(papszTables)) > 0)
     {
-        int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                      &(psInfo->numSections), numTables+2);
+        int iSect = _AVCIncreaseSectionsArray(
+            &(psInfo->pasSections), &(psInfo->numSections), numTables + 2);
 
         psInfo->pasSections[iSect].eType = AVCFileUnknown;
         psInfo->pasSections[iSect].pszName = CPLStrdup("IFO  X");
         psInfo->pasSections[iSect].pszName[5] = cPrecisionCode;
         iSect++;
 
-        for(iTable=0; iTable<numTables; iTable++)
+        for (iTable = 0; iTable < numTables; iTable++)
         {
             psInfo->pasSections[iSect].eType = AVCFileTABLE;
-            psInfo->pasSections[iSect].pszName=CPLStrdup(papszTables[iTable]);
+            psInfo->pasSections[iSect].pszName = CPLStrdup(papszTables[iTable]);
             if (papszFiles)
             {
-                psInfo->pasSections[iSect].pszFilename=
-                                              CPLStrdup(papszFiles[iTable]);
+                psInfo->pasSections[iSect].pszFilename =
+                    CPLStrdup(papszFiles[iTable]);
             }
             iSect++;
         }
 
         psInfo->pasSections[iSect].eType = AVCFileUnknown;
         psInfo->pasSections[iSect].pszName = CPLStrdup("EOI");
-
     }
     CSLDestroy(papszTables);
     CSLDestroy(papszFiles);
@@ -1346,14 +1349,12 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo,
      * File ends with EOS
      *----------------------------------------------------------------*/
     const int iSect = _AVCIncreaseSectionsArray(&(psInfo->pasSections),
-                                  &(psInfo->numSections), 1);
+                                                &(psInfo->numSections), 1);
     psInfo->pasSections[iSect].eType = AVCFileUnknown;
     psInfo->pasSections[iSect].pszName = CPLStrdup("EOS");
 
-
     return nCoverPrecision;
 }
-
 
 /**********************************************************************
  *                     _AVCE00ReadScanE00()
@@ -1366,12 +1367,13 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
 
     const char *pszLine;
     const char *pszName = nullptr;
-    void       *obj;
-    int        iSect = 0;
-    GBool      bFirstLine = TRUE;
+    void *obj;
+    int iSect = 0;
+    GBool bFirstLine = TRUE;
 
     while (CPLGetLastErrorNo() == 0 &&
-            (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE, nullptr) ) != nullptr )
+           (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE,
+                                    nullptr)) != nullptr)
     {
         if (bFirstLine)
         {
@@ -1382,9 +1384,9 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
              */
             int nLen = (int)strlen(pszLine);
             if (nLen == 0 || STARTS_WITH_CI(pszLine, "EXP "))
-                continue;  /* Skip empty and EXP header lines */
-            else if ( (nLen == 79 || nLen == 80) &&
-                      strchr(pszLine, '~') != nullptr )
+                continue; /* Skip empty and EXP header lines */
+            else if ((nLen == 79 || nLen == 80) &&
+                     strchr(pszLine, '~') != nullptr)
             {
                 /* Looks like a compressed file. Just log an error and return.
                  * The caller should reject the file because it contains 0
@@ -1394,7 +1396,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
                          "This looks like a compressed E00 file and cannot be "
                          "processed directly. You may need to uncompress it "
                          "first using the E00compr library or the e00conv "
-                         "program." );
+                         "program.");
                 return;
             }
 
@@ -1410,57 +1412,60 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
             pszName = nullptr;
             switch (psInfo->eFileType)
             {
-            case AVCFileARC:
-                pszName = "ARC";
-                break;
+                case AVCFileARC:
+                    pszName = "ARC";
+                    break;
 
-            case AVCFilePAL:
-                pszName = "PAL";
-                break;
+                case AVCFilePAL:
+                    pszName = "PAL";
+                    break;
 
-            case AVCFileCNT:
-                pszName = "CNT";
-                break;
+                case AVCFileCNT:
+                    pszName = "CNT";
+                    break;
 
-            case AVCFileLAB:
-                pszName = "LAB";
-                break;
+                case AVCFileLAB:
+                    pszName = "LAB";
+                    break;
 
-            case AVCFileRPL:
-                pszName = "RPL";
-                break;
+                case AVCFileRPL:
+                    pszName = "RPL";
+                    break;
 
-            case AVCFileTXT:
-                pszName = "TXT";
-                break;
+                case AVCFileTXT:
+                    pszName = "TXT";
+                    break;
 
-            case AVCFileTX6:
-                pszName = "TX6";
-                break;
+                case AVCFileTX6:
+                    pszName = "TX6";
+                    break;
 
-            case AVCFilePRJ:
-                pszName = "PRJ";
-                break;
+                case AVCFilePRJ:
+                    pszName = "PRJ";
+                    break;
 
-            case AVCFileTABLE:
-                pszName = psInfo->hdr.psTableDef->szTableName;
-                break;
+                case AVCFileTABLE:
+                    pszName = psInfo->hdr.psTableDef->szTableName;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
             }
 
-            if (pszName && (psRead->numSections == 0 ||
-                    psRead->pasSections[iSect].eType != psInfo->eFileType ||
-                    !EQUAL(pszName, psRead->pasSections[iSect].pszName)))
+            if (pszName &&
+                (psRead->numSections == 0 ||
+                 psRead->pasSections[iSect].eType != psInfo->eFileType ||
+                 !EQUAL(pszName, psRead->pasSections[iSect].pszName)))
             {
                 iSect = _AVCIncreaseSectionsArray(&(psRead->pasSections),
-                                      &(psRead->numSections), 1);
+                                                  &(psRead->numSections), 1);
 
                 psRead->pasSections[iSect].eType = psInfo->eFileType;
-                /* psRead->pasSections[iSect].pszName = CPLStrdup(psRead->pszCoverName); */
+                /* psRead->pasSections[iSect].pszName =
+                 * CPLStrdup(psRead->pszCoverName); */
                 psRead->pasSections[iSect].pszName = CPLStrdup(pszName);
-                psRead->pasSections[iSect].pszFilename = CPLStrdup(psRead->pszCoverPath);
+                psRead->pasSections[iSect].pszFilename =
+                    CPLStrdup(psRead->pszCoverPath);
                 psRead->pasSections[iSect].nLineNum = psInfo->nStartLineNum;
                 psRead->pasSections[iSect].nFeatureCount = 0;
             }
@@ -1504,11 +1509,11 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
              * Arc/Info table name (for E00 header)
              *--------------------------------------------------------*/
             char *pszFname;
-            pszFname = CPLStrdup(CPLSPrintf("%s%s", psInfo->pszInfoPath,
-                                                    psSect->pszFilename ));
-            psInfo->hFile = AVCBinReadOpen(pszFname, psSect->pszName,
-                                           psInfo->eCoverType, psSect->eType,
-                                           psInfo->psDBCSInfo);
+            pszFname = CPLStrdup(
+                CPLSPrintf("%s%s", psInfo->pszInfoPath, psSect->pszFilename));
+            psInfo->hFile =
+                AVCBinReadOpen(pszFname, psSect->pszName, psInfo->eCoverType,
+                               psSect->eType, psInfo->psDBCSInfo);
             CPLFree(pszFname);
         }
         else
@@ -1518,12 +1523,10 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
              * We pass the INFO dir's path, and the Arc/Info table name
              * will be searched in the arc.dir
              *--------------------------------------------------------*/
-            psInfo->hFile = AVCBinReadOpen(psInfo->pszInfoPath,
-                                           psSect->pszName,
+            psInfo->hFile = AVCBinReadOpen(psInfo->pszInfoPath, psSect->pszName,
                                            psInfo->eCoverType, psSect->eType,
                                            psInfo->psDBCSInfo);
         }
-
 
         /* For some reason the file could not be opened... abort now.
          * An error message should have already been produced by
@@ -1535,19 +1538,16 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
         psInfo->iCurStep = AVC_GEN_TABLEHEADER;
 
         pszLine = AVCE00GenTableHdr(psInfo->hGenInfo,
-                                    psInfo->hFile->hdr.psTableDef,
-                                    FALSE);
+                                    psInfo->hFile->hdr.psTableDef, FALSE);
     }
 
-    if (pszLine == nullptr &&
-        psInfo->iCurStep == AVC_GEN_TABLEHEADER)
+    if (pszLine == nullptr && psInfo->iCurStep == AVC_GEN_TABLEHEADER)
     {
         /*---------------------------------------------------------
          * Continue table header
          *--------------------------------------------------------*/
         pszLine = AVCE00GenTableHdr(psInfo->hGenInfo,
-                                    psInfo->hFile->hdr.psTableDef,
-                                    TRUE);
+                                    psInfo->hFile->hdr.psTableDef, TRUE);
 
         if (pszLine == nullptr)
         {
@@ -1560,11 +1560,9 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
             AVCE00GenReset(psInfo->hGenInfo);
             psInfo->iCurStep = AVC_GEN_TABLEDATA;
         }
-
     }
 
-    if (pszLine == nullptr &&
-        psInfo->iCurStep == AVC_GEN_TABLEDATA)
+    if (pszLine == nullptr && psInfo->iCurStep == AVC_GEN_TABLEDATA)
     {
         /*---------------------------------------------------------
          * Continue with records of data
@@ -1573,8 +1571,7 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
         pszLine = AVCE00GenTableRec(psInfo->hGenInfo,
                                     psInfo->hFile->hdr.psTableDef->numFields,
                                     psInfo->hFile->hdr.psTableDef->pasFieldDef,
-                                    psInfo->hFile->cur.pasFields,
-                                    TRUE);
+                                    psInfo->hFile->cur.pasFields, TRUE);
 
         if (pszLine == nullptr)
         {
@@ -1583,11 +1580,10 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
              */
             if (AVCBinReadNextObject(psInfo->hFile) != nullptr)
             {
-                pszLine = AVCE00GenTableRec(psInfo->hGenInfo,
-                                    psInfo->hFile->hdr.psTableDef->numFields,
-                                    psInfo->hFile->hdr.psTableDef->pasFieldDef,
-                                    psInfo->hFile->cur.pasFields,
-                                    FALSE);
+                pszLine = AVCE00GenTableRec(
+                    psInfo->hGenInfo, psInfo->hFile->hdr.psTableDef->numFields,
+                    psInfo->hFile->hdr.psTableDef->pasFieldDef,
+                    psInfo->hFile->cur.pasFields, FALSE);
             }
         }
     }
@@ -1625,7 +1621,6 @@ static const char *_AVCE00ReadNextTableLine(AVCE00ReadPtr psInfo)
 
     return pszLine;
 }
-
 
 /**********************************************************************
  *                          AVCE00ReadNextLine()
@@ -1669,11 +1664,11 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
 
     if (psSect->eType == AVCFileUnknown)
     {
-    /*-----------------------------------------------------------------
-     * Section not attached to any file, used to hold header lines
-     * or section separators, etc... just return the line directly and
-     * move pointer to the next section.
-     *----------------------------------------------------------------*/
+        /*-----------------------------------------------------------------
+         * Section not attached to any file, used to hold header lines
+         * or section separators, etc... just return the line directly and
+         * move pointer to the next section.
+         *----------------------------------------------------------------*/
         pszLine = psSect->pszName;
         if (psInfo->bReadAllSections)
             psInfo->iCurSection++;
@@ -1685,26 +1680,21 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
      *              ARC, PAL, CNT, LAB, TOL and TXT
      *================================================================*/
     else if (psInfo->iCurStep == AVC_GEN_NOTSTARTED &&
-             (psSect->eType == AVCFileARC ||
-              psSect->eType == AVCFilePAL ||
-              psSect->eType == AVCFileRPL ||
-              psSect->eType == AVCFileCNT ||
-              psSect->eType == AVCFileLAB ||
-              psSect->eType == AVCFileTOL ||
-              psSect->eType == AVCFileTXT ||
-              psSect->eType == AVCFileTX6 ||
-              psSect->eType == AVCFileRXP   ) )
+             (psSect->eType == AVCFileARC || psSect->eType == AVCFilePAL ||
+              psSect->eType == AVCFileRPL || psSect->eType == AVCFileCNT ||
+              psSect->eType == AVCFileLAB || psSect->eType == AVCFileTOL ||
+              psSect->eType == AVCFileTXT || psSect->eType == AVCFileTX6 ||
+              psSect->eType == AVCFileRXP))
     {
-    /*-----------------------------------------------------------------
-     * Start processing of an ARC, PAL, CNT, LAB or TOL section:
-     *   Open the file, get ready to read the first object from the
-     *   file, and return the header line.
-     *  If the file fails to open then we will return nullptr.
-     *----------------------------------------------------------------*/
+        /*-----------------------------------------------------------------
+         * Start processing of an ARC, PAL, CNT, LAB or TOL section:
+         *   Open the file, get ready to read the first object from the
+         *   file, and return the header line.
+         *  If the file fails to open then we will return nullptr.
+         *----------------------------------------------------------------*/
         psInfo->hFile = AVCBinReadOpen(psInfo->pszCoverPath,
-                                       psSect->pszFilename,
-                                       psInfo->eCoverType, psSect->eType,
-                                       psInfo->psDBCSInfo);
+                                       psSect->pszFilename, psInfo->eCoverType,
+                                       psSect->eType, psInfo->psDBCSInfo);
 
         /*-------------------------------------------------------------
          * For some reason the file could not be opened... abort now.
@@ -1714,8 +1704,8 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
         if (psInfo->hFile == nullptr)
             return nullptr;
 
-        pszLine = AVCE00GenStartSection(psInfo->hGenInfo,
-                                        psSect->eType, psSect->pszName);
+        pszLine = AVCE00GenStartSection(psInfo->hGenInfo, psSect->eType,
+                                        psSect->pszName);
 
         /*-------------------------------------------------------------
          * Reset the AVCE00GenInfo struct. so that it returns nullptr,
@@ -1726,33 +1716,29 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
         psInfo->iCurStep = AVC_GEN_DATA;
     }
     else if (psInfo->iCurStep == AVC_GEN_DATA &&
-             (psSect->eType == AVCFileARC ||
-              psSect->eType == AVCFilePAL ||
-              psSect->eType == AVCFileRPL ||
-              psSect->eType == AVCFileCNT ||
-              psSect->eType == AVCFileLAB ||
-              psSect->eType == AVCFileTOL ||
-              psSect->eType == AVCFileTXT ||
-              psSect->eType == AVCFileTX6 ||
-              psSect->eType == AVCFileRXP    ) )
+             (psSect->eType == AVCFileARC || psSect->eType == AVCFilePAL ||
+              psSect->eType == AVCFileRPL || psSect->eType == AVCFileCNT ||
+              psSect->eType == AVCFileLAB || psSect->eType == AVCFileTOL ||
+              psSect->eType == AVCFileTXT || psSect->eType == AVCFileTX6 ||
+              psSect->eType == AVCFileRXP))
     {
-    /*-----------------------------------------------------------------
-     * Return the next line of an ARC/PAL/CNT/TOL/TXT object...
-     * if necessary, read the next object from the binary file.
-     *----------------------------------------------------------------*/
-        pszLine = AVCE00GenObject(psInfo->hGenInfo,
-                                  psSect->eType,
-                  (psSect->eType==AVCFileARC?(void*)(psInfo->hFile->cur.psArc):
-                   psSect->eType==AVCFilePAL?(void*)(psInfo->hFile->cur.psPal):
-                   psSect->eType==AVCFileRPL?(void*)(psInfo->hFile->cur.psPal):
-                   psSect->eType==AVCFileCNT?(void*)(psInfo->hFile->cur.psCnt):
-                   psSect->eType==AVCFileLAB?(void*)(psInfo->hFile->cur.psLab):
-                   psSect->eType==AVCFileTOL?(void*)(psInfo->hFile->cur.psTol):
-                   psSect->eType==AVCFileTXT?(void*)(psInfo->hFile->cur.psTxt):
-                   psSect->eType==AVCFileTX6?(void*)(psInfo->hFile->cur.psTxt):
-                   psSect->eType==AVCFileRXP?(void*)(psInfo->hFile->cur.psRxp):
-                   nullptr),
-                                  TRUE);
+        /*-----------------------------------------------------------------
+         * Return the next line of an ARC/PAL/CNT/TOL/TXT object...
+         * if necessary, read the next object from the binary file.
+         *----------------------------------------------------------------*/
+        pszLine = AVCE00GenObject(
+            psInfo->hGenInfo, psSect->eType,
+            (psSect->eType == AVCFileARC   ? (void *)(psInfo->hFile->cur.psArc)
+             : psSect->eType == AVCFilePAL ? (void *)(psInfo->hFile->cur.psPal)
+             : psSect->eType == AVCFileRPL ? (void *)(psInfo->hFile->cur.psPal)
+             : psSect->eType == AVCFileCNT ? (void *)(psInfo->hFile->cur.psCnt)
+             : psSect->eType == AVCFileLAB ? (void *)(psInfo->hFile->cur.psLab)
+             : psSect->eType == AVCFileTOL ? (void *)(psInfo->hFile->cur.psTol)
+             : psSect->eType == AVCFileTXT ? (void *)(psInfo->hFile->cur.psTxt)
+             : psSect->eType == AVCFileTX6 ? (void *)(psInfo->hFile->cur.psTxt)
+             : psSect->eType == AVCFileRXP ? (void *)(psInfo->hFile->cur.psRxp)
+                                           : nullptr),
+            TRUE);
         if (pszLine == nullptr)
         {
             /*---------------------------------------------------------
@@ -1761,19 +1747,28 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
              *--------------------------------------------------------*/
             if (AVCBinReadNextObject(psInfo->hFile) != nullptr)
             {
-                pszLine = AVCE00GenObject(psInfo->hGenInfo,
-                                          psSect->eType,
-                  (psSect->eType==AVCFileARC?(void*)(psInfo->hFile->cur.psArc):
-                   psSect->eType==AVCFilePAL?(void*)(psInfo->hFile->cur.psPal):
-                   psSect->eType==AVCFileRPL?(void*)(psInfo->hFile->cur.psPal):
-                   psSect->eType==AVCFileCNT?(void*)(psInfo->hFile->cur.psCnt):
-                   psSect->eType==AVCFileLAB?(void*)(psInfo->hFile->cur.psLab):
-                   psSect->eType==AVCFileTOL?(void*)(psInfo->hFile->cur.psTol):
-                   psSect->eType==AVCFileTXT?(void*)(psInfo->hFile->cur.psTxt):
-                   psSect->eType==AVCFileTX6?(void*)(psInfo->hFile->cur.psTxt):
-                   psSect->eType==AVCFileRXP?(void*)(psInfo->hFile->cur.psRxp):
-                   nullptr),
-                                          FALSE);
+                pszLine =
+                    AVCE00GenObject(psInfo->hGenInfo, psSect->eType,
+                                    (psSect->eType == AVCFileARC
+                                         ? (void *)(psInfo->hFile->cur.psArc)
+                                     : psSect->eType == AVCFilePAL
+                                         ? (void *)(psInfo->hFile->cur.psPal)
+                                     : psSect->eType == AVCFileRPL
+                                         ? (void *)(psInfo->hFile->cur.psPal)
+                                     : psSect->eType == AVCFileCNT
+                                         ? (void *)(psInfo->hFile->cur.psCnt)
+                                     : psSect->eType == AVCFileLAB
+                                         ? (void *)(psInfo->hFile->cur.psLab)
+                                     : psSect->eType == AVCFileTOL
+                                         ? (void *)(psInfo->hFile->cur.psTol)
+                                     : psSect->eType == AVCFileTXT
+                                         ? (void *)(psInfo->hFile->cur.psTxt)
+                                     : psSect->eType == AVCFileTX6
+                                         ? (void *)(psInfo->hFile->cur.psTxt)
+                                     : psSect->eType == AVCFileRXP
+                                         ? (void *)(psInfo->hFile->cur.psRxp)
+                                         : nullptr),
+                                    FALSE);
             }
         }
         if (pszLine == nullptr)
@@ -1785,27 +1780,26 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
             AVCBinReadClose(psInfo->hFile);
             psInfo->hFile = nullptr;
             psInfo->iCurStep = AVC_GEN_ENDSECTION;
-            pszLine = AVCE00GenEndSection(psInfo->hGenInfo, psSect->eType,
-                                          FALSE);
+            pszLine =
+                AVCE00GenEndSection(psInfo->hGenInfo, psSect->eType, FALSE);
         }
     }
     /*=================================================================
      *                          PRJ
      *================================================================*/
     else if (psInfo->iCurStep == AVC_GEN_NOTSTARTED &&
-              psSect->eType == AVCFilePRJ   )
+             psSect->eType == AVCFilePRJ)
     {
         /*-------------------------------------------------------------
          * Start processing of PRJ section... return first header line.
          *------------------------------------------------------------*/
-        pszLine = AVCE00GenStartSection(psInfo->hGenInfo,
-                                        psSect->eType, nullptr);
+        pszLine =
+            AVCE00GenStartSection(psInfo->hGenInfo, psSect->eType, nullptr);
 
         psInfo->hFile = nullptr;
         psInfo->iCurStep = AVC_GEN_DATA;
     }
-    else if (psInfo->iCurStep == AVC_GEN_DATA &&
-             psSect->eType == AVCFilePRJ  )
+    else if (psInfo->iCurStep == AVC_GEN_DATA && psSect->eType == AVCFilePRJ)
     {
         /*-------------------------------------------------------------
          * Return the next line of a PRJ section
@@ -1816,10 +1810,9 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
              * File has not been read yet...
              * Read the PRJ file, and return the first PRJ line.
              *--------------------------------------------------------*/
-            psInfo->hFile = AVCBinReadOpen(psInfo->pszCoverPath,
-                                           psSect->pszFilename,
-                                           psInfo->eCoverType, psSect->eType,
-                                           psInfo->psDBCSInfo);
+            psInfo->hFile = AVCBinReadOpen(
+                psInfo->pszCoverPath, psSect->pszFilename, psInfo->eCoverType,
+                psSect->eType, psInfo->psDBCSInfo);
 
             /* For some reason the file could not be opened... abort now.
              * An error message should have already been produced by
@@ -1850,8 +1843,8 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
             AVCBinReadClose(psInfo->hFile);
             psInfo->hFile = nullptr;
             psInfo->iCurStep = AVC_GEN_ENDSECTION;
-            pszLine = AVCE00GenEndSection(psInfo->hGenInfo, psSect->eType,
-                                          FALSE);
+            pszLine =
+                AVCE00GenEndSection(psInfo->hGenInfo, psSect->eType, FALSE);
         }
     }
     else if (psInfo->iCurStep != AVC_GEN_ENDSECTION)
@@ -1859,7 +1852,6 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
         /* We should never get here! */
         CPLAssert(FALSE);
     }
-
 
     /*=================================================================
      *                End of section, for all files
@@ -1895,8 +1887,6 @@ const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo)
 
     return pszLine;
 }
-
-
 
 /**********************************************************************
  *                         AVCE00ReadSectionsList()
@@ -1948,15 +1938,15 @@ AVCE00Section *AVCE00ReadSectionsList(AVCE00ReadPtr psInfo, int *numSect)
 int AVCE00ReadGotoSection(AVCE00ReadPtr psInfo, AVCE00Section *psSect,
                           GBool bContinue)
 {
-    int     iSect;
-    GBool   bFound = FALSE;
+    int iSect;
+    GBool bFound = FALSE;
 
     CPLErrorReset();
 
     /*-----------------------------------------------------------------
      * Locate the requested section in the array.
      *----------------------------------------------------------------*/
-    for(iSect=0; iSect<psInfo->numSections; iSect++)
+    for (iSect = 0; iSect < psInfo->numSections; iSect++)
     {
         if (psInfo->pasSections[iSect].eType == psSect->eType &&
             EQUAL(psInfo->pasSections[iSect].pszName, psSect->pszName))
@@ -2001,7 +1991,7 @@ int AVCE00ReadGotoSection(AVCE00ReadPtr psInfo, AVCE00Section *psSect,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int  AVCE00ReadRewind(AVCE00ReadPtr psInfo)
+int AVCE00ReadRewind(AVCE00ReadPtr psInfo)
 {
     CPLErrorReset();
 
@@ -2016,7 +2006,7 @@ int  AVCE00ReadRewind(AVCE00ReadPtr psInfo)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int  AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead)
+int AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead)
 {
     CPLErrorReset();
 
@@ -2043,29 +2033,28 @@ int  AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
-        int nWhence)
+static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset, int nWhence)
 {
     const char *pszLine;
     /* void       *obj; */
 
     switch (nWhence)
     {
-    case SEEK_CUR:
-        break;
+        case SEEK_CUR:
+            break;
 
-    case SEEK_SET:
-        AVCE00ReadRewindE00(psRead);
-        break;
+        case SEEK_SET:
+            AVCE00ReadRewindE00(psRead);
+            break;
 
-    default:
-        CPLAssert(nWhence == SEEK_CUR || nWhence == SEEK_SET);
-        break;
+        default:
+            CPLAssert(nWhence == SEEK_CUR || nWhence == SEEK_SET);
+            break;
     }
 
-    while (nOffset-- &&
-            CPLGetLastErrorNo() == 0 &&
-            (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE, nullptr) ) != nullptr )
+    while (nOffset-- && CPLGetLastErrorNo() == 0 &&
+           (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE,
+                                    nullptr)) != nullptr)
     {
         /* obj = */
         /* coverity[tainted_data] */
@@ -2091,7 +2080,7 @@ static int _AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead, int nOffset,
 void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead)
 {
     const char *pszLine;
-    void       *obj = nullptr;
+    void *obj = nullptr;
 
     do
     {
@@ -2100,11 +2089,10 @@ void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead)
             break;
         /* coverity[tainted_data] */
         obj = _AVCE00ReadNextLineE00(psRead, pszLine);
-    }
-    while (obj == nullptr &&
-            (psRead->bReadAllSections ||
-             psRead->eCurFileType != AVCFileUnknown) &&
-            CPLGetLastErrorNo() == 0);
+    } while (
+        obj == nullptr &&
+        (psRead->bReadAllSections || psRead->eCurFileType != AVCFileUnknown) &&
+        CPLGetLastErrorNo() == 0);
     return obj;
 }
 
@@ -2123,8 +2111,7 @@ void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead)
  * MODIFIED OR FREED BY THE CALLER... its contents will be valid
  * for as long as the coverage will remain open.
  **********************************************************************/
-AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead,
-        int *numSect)
+AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect)
 {
     CPLErrorReset();
 
@@ -2147,18 +2134,18 @@ AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead,
  *
  * This function returns 0 on success or -1 on error.
  **********************************************************************/
-int AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead,
-        AVCE00Section *psSect, GBool bContinue)
+int AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead, AVCE00Section *psSect,
+                             GBool bContinue)
 {
-    int     iSect;
-    GBool   bFound = FALSE;
+    int iSect;
+    GBool bFound = FALSE;
 
     CPLErrorReset();
 
     /*-----------------------------------------------------------------
      * Locate the requested section in the array.
      *----------------------------------------------------------------*/
-    for(iSect=0; iSect<psRead->numSections; iSect++)
+    for (iSect = 0; iSect < psRead->numSections; iSect++)
     {
         if (psRead->pasSections[iSect].eType == psSect->eType &&
             EQUAL(psRead->pasSections[iSect].pszName, psSect->pszName))
