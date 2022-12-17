@@ -60,13 +60,13 @@
 #define GDAL_FILENAME MEM_FILENAME
 #endif
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
 {
-    const char* exe_path = (*argv)[0];
-    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    const char *exe_path = (*argv)[0];
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr)
     {
         CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     }
@@ -78,7 +78,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
-    CPLSetConfigOption("GDAL_CACHEMAX", "1000"); // Limit to 1 GB
+    CPLSetConfigOption("GDAL_CACHEMAX", "1000");  // Limit to 1 GB
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
@@ -91,10 +91,10 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     return 0;
 }
 
-static void ExploreAttributes(const GDALIHasAttribute* attributeHolder)
+static void ExploreAttributes(const GDALIHasAttribute *attributeHolder)
 {
     const auto attributes = attributeHolder->GetAttributes();
-    for( const auto& attribute: attributes )
+    for (const auto &attribute : attributes)
     {
         attribute->ReadAsRaw();
     }
@@ -102,8 +102,8 @@ static void ExploreAttributes(const GDALIHasAttribute* attributeHolder)
     attributeHolder->GetAttribute("i_do_not_exist");
 }
 
-static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray,
-                         const char* pszDriverName)
+static void ExploreArray(const std::shared_ptr<GDALMDArray> &poArray,
+                         const char *pszDriverName)
 {
     ExploreAttributes(poArray.get());
 
@@ -119,12 +119,12 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray,
     const auto nDimCount = poArray->GetDimensionCount();
     bool bRead = true;
     constexpr size_t MAX_ALLOC = 1000 * 1000 * 1000U;
-    if( pszDriverName && EQUAL(pszDriverName, "GRIB") )
+    if (pszDriverName && EQUAL(pszDriverName, "GRIB"))
     {
         const auto poDims = poArray->GetDimensions();
-        if( nDimCount >= 2 &&
-            poDims[nDimCount-2]->GetSize() > MAX_ALLOC /
-                            sizeof(double) / poDims[nDimCount-1]->GetSize() )
+        if (nDimCount >= 2 &&
+            poDims[nDimCount - 2]->GetSize() >
+                MAX_ALLOC / sizeof(double) / poDims[nDimCount - 1]->GetSize())
         {
             bRead = false;
         }
@@ -133,13 +133,13 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray,
     {
         const auto anBlockSize = poArray->GetBlockSize();
         size_t nBlockSize = poArray->GetDataType().GetSize();
-        for( const auto nDimBlockSize: anBlockSize )
+        for (const auto nDimBlockSize : anBlockSize)
         {
-            if( nDimBlockSize == 0 )
+            if (nDimBlockSize == 0)
             {
                 break;
             }
-            if( nBlockSize > MAX_ALLOC / nDimBlockSize )
+            if (nBlockSize > MAX_ALLOC / nDimBlockSize)
             {
                 bRead = false;
                 break;
@@ -148,43 +148,39 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray,
         }
     }
 
-    if( bRead &&
-        poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+    if (bRead && poArray->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         std::vector<GUInt64> anArrayStartIdx(nDimCount);
         std::vector<size_t> anCount(nDimCount, 1);
         std::vector<GInt64> anArrayStep(nDimCount);
         std::vector<GPtrDiff_t> anBufferStride(nDimCount);
-        std::vector<GByte> abyData( poArray->GetDataType().GetSize() );
-        poArray->Read(anArrayStartIdx.data(),
-                      anCount.data(),
-                      anArrayStep.data(),
-                      anBufferStride.data(),
-                      poArray->GetDataType(),
-                      &abyData[0]);
+        std::vector<GByte> abyData(poArray->GetDataType().GetSize());
+        poArray->Read(anArrayStartIdx.data(), anCount.data(),
+                      anArrayStep.data(), anBufferStride.data(),
+                      poArray->GetDataType(), &abyData[0]);
     }
 }
 
-static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
-                         const char* pszDriverName)
+static void ExploreGroup(const std::shared_ptr<GDALGroup> &poGroup,
+                         const char *pszDriverName)
 {
     ExploreAttributes(poGroup.get());
 
     const auto groupNames = poGroup->GetGroupNames();
     poGroup->OpenGroup("i_do_not_exist");
-    for( const auto& name: groupNames )
+    for (const auto &name : groupNames)
     {
         auto poSubGroup = poGroup->OpenGroup(name);
-        if( poSubGroup )
+        if (poSubGroup)
             ExploreGroup(poSubGroup, pszDriverName);
     }
 
     const auto arrayNames = poGroup->GetMDArrayNames();
     poGroup->OpenMDArray("i_do_not_exist");
-    for( const auto& name: arrayNames )
+    for (const auto &name : arrayNames)
     {
         auto poArray = poGroup->OpenMDArray(name);
-        if( poArray )
+        if (poArray)
         {
             ExploreArray(poArray, pszDriverName);
         }
@@ -195,54 +191,54 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
 #ifdef USE_FILESYSTEM
     char szTempFilename[64];
-    snprintf(szTempFilename, sizeof(szTempFilename),
-             "/tmp/gdal_fuzzer_%d.%s",
+    snprintf(szTempFilename, sizeof(szTempFilename), "/tmp/gdal_fuzzer_%d.%s",
              (int)getpid(), EXTENSION);
-    VSILFILE* fp = VSIFOpenL(szTempFilename, "wb");
-    if( !fp )
+    VSILFILE *fp = VSIFOpenL(szTempFilename, "wb");
+    if (!fp)
     {
         fprintf(stderr, "Cannot create %s\n", szTempFilename);
         return 1;
     }
-    VSIFWriteL( buf, 1, len, fp );
+    VSIFWriteL(buf, 1, len, fp);
 #else
-    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        MEM_FILENAME, reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)),
+        len, FALSE);
 #endif
     VSIFCloseL(fp);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
-    const char* pszGDALFilename = szTempFilename;
+    const char *pszGDALFilename = szTempFilename;
 #else
-    const char* pszGDALFilename = GDAL_FILENAME;
+    const char *pszGDALFilename = GDAL_FILENAME;
 #endif
-    GDALDatasetH hDS = GDALOpen( pszGDALFilename, GA_ReadOnly );
-    if( hDS )
+    GDALDatasetH hDS = GDALOpen(pszGDALFilename, GA_ReadOnly);
+    if (hDS)
     {
         const int nTotalBands = GDALGetRasterCount(hDS);
         const int nBands = std::min(10, nTotalBands);
         bool bDoCheckSum = true;
         int nXSizeToRead = std::min(1024, GDALGetRasterXSize(hDS));
         int nYSizeToRead = std::min(1024, GDALGetRasterYSize(hDS));
-        if( nBands > 0 )
+        if (nBands > 0)
         {
-            const char* pszInterleave =
-                GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
+            const char *pszInterleave =
+                GDALGetMetadataItem(hDS, "INTERLEAVE", "IMAGE_STRUCTURE");
             int nSimultaneousBands =
-                (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
-                            nTotalBands : 1;
+                (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ? nTotalBands
+                                                                 : 1;
 
             // When using the RGBA interface in pixel-interleaved mode, take
             // into account the raw number of bands to compute memory
             // requirements
-            if( nBands == 4 && nSimultaneousBands != 1 &&
-                GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
+            if (nBands == 4 && nSimultaneousBands != 1 &&
+                GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff"))
             {
                 GDALDatasetH hRawDS = GDALOpen(
-                    (CPLString("GTIFF_RAW:")+pszGDALFilename).c_str(),
-                    GA_ReadOnly );
-                if( hRawDS )
+                    (CPLString("GTIFF_RAW:") + pszGDALFilename).c_str(),
+                    GA_ReadOnly);
+                if (hRawDS)
                 {
                     nSimultaneousBands = GDALGetRasterCount(hRawDS);
                     GDALClose(hRawDS);
@@ -253,28 +249,28 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             // given the block size and interleaving mode, do not read
             // pixels to avoid out of memory conditions by ASAN
             GIntBig nPixels = 0;
-            for( int i = 0; i < nBands; i++ )
+            for (int i = 0; i < nBands; i++)
             {
                 int nBXSize = 0, nBYSize = 0;
-                GDALGetBlockSize( GDALGetRasterBand(hDS, i+1), &nBXSize,
-                                  &nBYSize );
-                if( nBXSize == 0 || nBYSize == 0 ||
-                    nBXSize > INT_MAX / nBYSize )
+                GDALGetBlockSize(GDALGetRasterBand(hDS, i + 1), &nBXSize,
+                                 &nBYSize);
+                if (nBXSize == 0 || nBYSize == 0 || nBXSize > INT_MAX / nBYSize)
                 {
                     bDoCheckSum = false;
                     break;
                 }
 
                 // Limit to 1000 blocks read for each band.
-                while( (nXSizeToRead > 1 || nYSizeToRead > 1) &&
+                while ((nXSizeToRead > 1 || nYSizeToRead > 1) &&
                        (DIV_ROUND_UP(nXSizeToRead, nBXSize) *
-                        DIV_ROUND_UP(nYSizeToRead, nBYSize) > 1000) )
+                            DIV_ROUND_UP(nYSizeToRead, nBYSize) >
+                        1000))
                 {
-                    if( nXSizeToRead > 1 &&
+                    if (nXSizeToRead > 1 &&
                         DIV_ROUND_UP(nXSizeToRead, nBXSize) >
-                            DIV_ROUND_UP(nYSizeToRead, nBYSize) )
+                            DIV_ROUND_UP(nYSizeToRead, nBYSize))
                         nXSizeToRead /= 2;
-                    else if( nYSizeToRead > 1 )
+                    else if (nYSizeToRead > 1)
                         nYSizeToRead /= 2;
                     else
                         nXSizeToRead /= 2;
@@ -286,36 +282,45 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // GTiffSplitBand
                 // Could probably be fixed for the CHUNKY_STRIP_READ_SUPPORT
                 // mode.
-                // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
-                const char* pszCompress =
+                // Workaround
+                // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
+                const char *pszCompress =
                     GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
-                if( pszCompress != nullptr &&
+                if (pszCompress != nullptr &&
                     ((nBYSize == 1 && GDALGetRasterYSize(hDS) > 1 &&
                       GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
-                                        "BLOCK_OFFSET_0_1", "TIFF") == nullptr) ||
+                                          "BLOCK_OFFSET_0_1",
+                                          "TIFF") == nullptr) ||
                      nBXSize != GDALGetRasterXSize(hDS)) &&
-                    GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
+                    GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff"))
                 {
-                    if( EQUAL(pszCompress, "PIXARLOG") &&
-                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
-                            static_cast<int>(sizeof(GUInt16)) /
-                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
+                    if (EQUAL(pszCompress, "PIXARLOG") &&
+                        GDALGetRasterYSize(hDS) >
+                            (INT_MAX / 2) / static_cast<int>(sizeof(GUInt16)) /
+                                nSimultaneousBands / GDALGetRasterXSize(hDS))
                     {
                         bDoCheckSum = false;
                     }
                     // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2874
-                    else if( EQUAL(pszCompress, "SGILOG24") &&
-                        GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
-                            static_cast<int>(sizeof(GUInt32)) /
-                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
+                    else if (EQUAL(pszCompress, "SGILOG24") &&
+                             GDALGetRasterYSize(hDS) >
+                                 (INT_MAX / 2) /
+                                     static_cast<int>(sizeof(GUInt32)) /
+                                     nSimultaneousBands /
+                                     GDALGetRasterXSize(hDS))
                     {
                         bDoCheckSum = false;
                     }
                     // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38051
-                    else if( STARTS_WITH_CI(pszCompress, "LERC") &&
-                        (GDALGetRasterYSize(hDS) > (INT_MAX / 2) /
-                                nSimultaneousBands / GDALGetRasterXSize(hDS) ||
-                         static_cast<int64_t>(GDALGetRasterYSize(hDS)) * nSimultaneousBands * GDALGetRasterXSize(hDS) * 4 / 3 + 100 > (INT_MAX / 2)) )
+                    else if (STARTS_WITH_CI(pszCompress, "LERC") &&
+                             (GDALGetRasterYSize(hDS) >
+                                  (INT_MAX / 2) / nSimultaneousBands /
+                                      GDALGetRasterXSize(hDS) ||
+                              static_cast<int64_t>(GDALGetRasterYSize(hDS)) *
+                                          nSimultaneousBands *
+                                          GDALGetRasterXSize(hDS) * 4 / 3 +
+                                      100 >
+                                  (INT_MAX / 2)))
                     {
                         bDoCheckSum = false;
                     }
@@ -324,27 +329,27 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 GIntBig nNewPixels = static_cast<GIntBig>(nBXSize) * nBYSize;
                 nNewPixels *= DIV_ROUND_UP(nXSizeToRead, nBXSize);
                 nNewPixels *= DIV_ROUND_UP(nYSizeToRead, nBYSize);
-                if( nNewPixels > nPixels )
+                if (nNewPixels > nPixels)
                     nPixels = nNewPixels;
             }
-            if( bDoCheckSum )
+            if (bDoCheckSum)
             {
                 const GDALDataType eDT =
-                    GDALGetRasterDataType( GDALGetRasterBand(hDS, 1) );
+                    GDALGetRasterDataType(GDALGetRasterBand(hDS, 1));
                 const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-                if( nPixels > 10 * 1024 * 1024 / nDTSize / nSimultaneousBands )
+                if (nPixels > 10 * 1024 * 1024 / nDTSize / nSimultaneousBands)
                 {
                     bDoCheckSum = false;
                 }
             }
         }
-        if( bDoCheckSum )
+        if (bDoCheckSum)
         {
-            for( int i = 0; i < nBands; i++ )
+            for (int i = 0; i < nBands; i++)
             {
-                GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
-                CPLDebug("FUZZER", "Checksum band %d: %d,%d,%d,%d",
-                         i+1,0, 0, nXSizeToRead, nYSizeToRead);
+                GDALRasterBandH hBand = GDALGetRasterBand(hDS, i + 1);
+                CPLDebug("FUZZER", "Checksum band %d: %d,%d,%d,%d", i + 1, 0, 0,
+                         nXSizeToRead, nYSizeToRead);
                 GDALChecksumImage(hBand, 0, 0, nXSizeToRead, nYSizeToRead);
             }
         }
@@ -360,7 +365,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALGetMetadata(hDS, nullptr);
         GDALGetMetadataItem(hDS, "foo", nullptr);
         CSLDestroy(GDALGetFileList(hDS));
-        if( nBands > 0 )
+        if (nBands > 0)
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
 
@@ -375,23 +380,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             int nFlags = GDALGetMaskFlags(hBand);
             GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
             GDALGetRasterBandXSize(hMaskBand);
-            if( bDoCheckSum && nFlags == GMF_PER_DATASET )
+            if (bDoCheckSum && nFlags == GMF_PER_DATASET)
             {
                 int nBXSize = 0, nBYSize = 0;
-                GDALGetBlockSize( hMaskBand, &nBXSize, &nBYSize );
-                if( nBXSize == 0 || nBYSize == 0 ||
-                    nBXSize > INT_MAX / 2 / nBYSize )
+                GDALGetBlockSize(hMaskBand, &nBXSize, &nBYSize);
+                if (nBXSize == 0 || nBYSize == 0 ||
+                    nBXSize > INT_MAX / 2 / nBYSize)
                 {
                     // do nothing
                 }
                 else
                 {
-                    GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+                    GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead,
+                                      nYSizeToRead);
                 }
             }
 
             int nOverviewCount = GDALGetOverviewCount(hBand);
-            for( int i = 0; i < nOverviewCount; i++ )
+            for (int i = 0; i < nOverviewCount; i++)
             {
                 GDALGetOverview(hBand, i);
             }
@@ -401,24 +407,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open( pszGDALFilename, GDAL_OF_MULTIDIM_RASTER ));
-    if( poDS )
+        GDALDataset::Open(pszGDALFilename, GDAL_OF_MULTIDIM_RASTER));
+    if (poDS)
     {
         auto poDriver = poDS->GetDriver();
-        const char* pszDriverName = nullptr;
-        if( poDriver )
+        const char *pszDriverName = nullptr;
+        if (poDriver)
             pszDriverName = poDriver->GetDescription();
         auto poRootGroup = poDS->GetRootGroup();
         poDS.reset();
-        if( poRootGroup )
+        if (poRootGroup)
             ExploreGroup(poRootGroup, pszDriverName);
     }
 
     CPLPopErrorHandler();
 #ifdef USE_FILESYSTEM
-    VSIUnlink( szTempFilename );
+    VSIUnlink(szTempFilename);
 #else
-    VSIUnlink( MEM_FILENAME );
+    VSIUnlink(MEM_FILENAME);
 #endif
     return 0;
 }

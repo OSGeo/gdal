@@ -33,9 +33,9 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
@@ -48,31 +48,31 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
 
-    char* pszStr = static_cast<char*>(CPLMalloc( len + 1 ));
+    char *pszStr = static_cast<char *>(CPLMalloc(len + 1));
     memcpy(pszStr, buf, len);
     pszStr[len] = '\0';
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGRErr eErr = OSRSetFromUserInput( hSRS, pszStr );
+    OGRErr eErr = OSRSetFromUserInput(hSRS, pszStr);
 
     CPLFree(pszStr);
 
-    if( eErr == OGRERR_NONE )
+    if (eErr == OGRERR_NONE)
     {
-        OGRSpatialReferenceH hSRSClone = OSRClone( hSRS );
-        OSRMorphFromESRI( hSRSClone );
-        OSRDestroySpatialReference( hSRSClone );
+        OGRSpatialReferenceH hSRSClone = OSRClone(hSRS);
+        OSRMorphFromESRI(hSRSClone);
+        OSRDestroySpatialReference(hSRSClone);
     }
 
-    if( eErr == OGRERR_NONE )
+    if (eErr == OGRERR_NONE)
     {
-        OGRSpatialReferenceH hSRSClone = OSRClone( hSRS );
-        OSRMorphToESRI( hSRSClone );
-        OSRDestroySpatialReference( hSRSClone );
+        OGRSpatialReferenceH hSRSClone = OSRClone(hSRS);
+        OSRMorphToESRI(hSRSClone);
+        OSRDestroySpatialReference(hSRSClone);
     }
     CPLPopErrorHandler();
 
-    OSRDestroySpatialReference( hSRS );
+    OSRDestroySpatialReference(hSRS);
 
     return 0;
 }
