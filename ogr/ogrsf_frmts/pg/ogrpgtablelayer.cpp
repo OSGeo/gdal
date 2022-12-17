@@ -1447,10 +1447,9 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
         else
             bNeedComma = TRUE;
 
-        osCommand = osCommand +
-                    OGRPGEscapeColumnName(
-                        poFeatureDefn->GetFieldDefn(i)->GetNameRef()) +
-                    " = ";
+        osCommand +=
+            OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osCommand += " = ";
 
         if (poFeature->IsFieldNull(i))
         {
