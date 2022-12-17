@@ -34,67 +34,60 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-
 /*!
   \brief Set VFK property (null)
 */
-VFKProperty::VFKProperty() :
-    m_bIsNull(true),
-    m_iValue(0),
-    m_dValue(0.0)
-{}
+VFKProperty::VFKProperty() : m_bIsNull(true), m_iValue(0), m_dValue(0.0)
+{
+}
 
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty( int iValue ) :
-    m_bIsNull(false),
-    m_iValue(iValue),
-    m_dValue(0.0)
-{}
+VFKProperty::VFKProperty(int iValue)
+    : m_bIsNull(false), m_iValue(iValue), m_dValue(0.0)
+{
+}
 
 /*!
   \brief Set VFK property (big integer)
 */
-VFKProperty::VFKProperty( GIntBig iValue ) :
-    m_bIsNull(false),
-    m_iValue(iValue),
-    m_dValue(0.0)
-{}
+VFKProperty::VFKProperty(GIntBig iValue)
+    : m_bIsNull(false), m_iValue(iValue), m_dValue(0.0)
+{
+}
 
 /*!
   \brief Set VFK property (double)
 */
-VFKProperty::VFKProperty( double dValue ) :
-    m_bIsNull(false),
-    m_iValue(0),
-    m_dValue(dValue)
-{}
+VFKProperty::VFKProperty(double dValue)
+    : m_bIsNull(false), m_iValue(0), m_dValue(dValue)
+{
+}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty( const char *pszValue ) :
-    m_bIsNull(false),
-    m_iValue(0),
-    m_dValue(0.0),
-    m_strValue(nullptr != pszValue ? pszValue : "")
-{}
+VFKProperty::VFKProperty(const char *pszValue)
+    : m_bIsNull(false), m_iValue(0), m_dValue(0.0),
+      m_strValue(nullptr != pszValue ? pszValue : "")
+{
+}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty( CPLString const& strValue ) :
-    m_bIsNull(false),
-    m_iValue(0),
-    m_dValue(0.0),
-    m_strValue(strValue)
-{}
+VFKProperty::VFKProperty(CPLString const &strValue)
+    : m_bIsNull(false), m_iValue(0), m_dValue(0.0), m_strValue(strValue)
+{
+}
 
 /*!
   \brief VFK property destructor
 */
-VFKProperty::~VFKProperty() {}
+VFKProperty::~VFKProperty()
+{
+}
 
 /*!
   \brief Get string property
@@ -103,14 +96,15 @@ VFKProperty::~VFKProperty() {}
 
   \return string buffer
 */
-const char *VFKProperty::GetValueS( bool escape ) const
+const char *VFKProperty::GetValueS(bool escape) const
 {
-    if( !escape )
+    if (!escape)
         return m_strValue.c_str();
 
     CPLString strValue(m_strValue);
     size_t ipos = 0;
-    while (std::string::npos != (ipos = strValue.find("'", ipos))) {
+    while (std::string::npos != (ipos = strValue.find("'", ipos)))
+    {
         strValue.replace(ipos, 1, "\'\'", 2);
         ipos += 2;
     }

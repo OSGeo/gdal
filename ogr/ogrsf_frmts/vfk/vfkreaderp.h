@@ -47,52 +47,73 @@ class VFKReader;
 /************************************************************************/
 class VFKReader : public IVFKReader
 {
-private:
-    const char    *m_pszEncoding;
+  private:
+    const char *m_pszEncoding;
 
-    VSILFILE      *m_poFD;
-    char          *ReadLine();
+    VSILFILE *m_poFD;
+    char *ReadLine();
 
-    void          AddInfo(const char *) override;
+    void AddInfo(const char *) override;
 
     CPL_DISALLOW_COPY_ASSIGN(VFKReader)
 
-protected:
-    char           *m_pszFilename;
-    VSIStatBufL    *m_poFStat;
-    bool            m_bAmendment;
-    bool            m_bFileField;
-    int             m_nDataBlockCount;
+  protected:
+    char *m_pszFilename;
+    VSIStatBufL *m_poFStat;
+    bool m_bAmendment;
+    bool m_bFileField;
+    int m_nDataBlockCount;
     IVFKDataBlock **m_papoDataBlock;
 
-    IVFKDataBlock  *CreateDataBlock(const char *) override;
-    void            AddDataBlock(IVFKDataBlock *, const char *) override;
-    virtual OGRErr  AddFeature(IVFKDataBlock *, VFKFeature *) override;
-    void            ReadEncoding();
+    IVFKDataBlock *CreateDataBlock(const char *) override;
+    void AddDataBlock(IVFKDataBlock *, const char *) override;
+    virtual OGRErr AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    void ReadEncoding();
 
     // Metadata.
     std::map<CPLString, CPLString> poInfo;
 
-public:
-    explicit VFKReader( const GDALOpenInfo* );
+  public:
+    explicit VFKReader(const GDALOpenInfo *);
     virtual ~VFKReader();
 
-    const char    *GetFilename() const override { return m_pszFilename; }
+    const char *GetFilename() const override
+    {
+        return m_pszFilename;
+    }
 
-    const char    *GetEncoding() const override { return m_pszEncoding; }
-    bool           IsSpatial() const override { return false; }
-    bool           IsPreProcessed() const override { return false; }
-    bool           IsValid() const override { return true; }
-    bool           HasFileField() const override { return m_bFileField; }
-    int            ReadDataBlocks(bool = false) override;
-    int            ReadDataRecords(IVFKDataBlock * = nullptr) override;
-    int            LoadGeometry() override;
+    const char *GetEncoding() const override
+    {
+        return m_pszEncoding;
+    }
+    bool IsSpatial() const override
+    {
+        return false;
+    }
+    bool IsPreProcessed() const override
+    {
+        return false;
+    }
+    bool IsValid() const override
+    {
+        return true;
+    }
+    bool HasFileField() const override
+    {
+        return m_bFileField;
+    }
+    int ReadDataBlocks(bool = false) override;
+    int ReadDataRecords(IVFKDataBlock * = nullptr) override;
+    int LoadGeometry() override;
 
-    int            GetDataBlockCount() const override { return m_nDataBlockCount; }
+    int GetDataBlockCount() const override
+    {
+        return m_nDataBlockCount;
+    }
     IVFKDataBlock *GetDataBlock(int) const override;
     IVFKDataBlock *GetDataBlock(const char *) const override;
 
-    const char    *GetInfo(const char *) override;
+    const char *GetInfo(const char *) override;
 };
 
 /************************************************************************/
@@ -101,36 +122,46 @@ public:
 
 class VFKReaderSQLite : public VFKReader
 {
-private:
-    char          *m_pszDBname;
-    sqlite3       *m_poDB;
-    bool           m_bSpatial;
-    bool           m_bNewDb;
-    bool           m_bDbSource;
+  private:
+    char *m_pszDBname;
+    sqlite3 *m_poDB;
+    bool m_bSpatial;
+    bool m_bNewDb;
+    bool m_bDbSource;
 
     IVFKDataBlock *CreateDataBlock(const char *) override;
-    void           AddDataBlock(IVFKDataBlock *, const char *) override;
-    OGRErr         AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    void AddDataBlock(IVFKDataBlock *, const char *) override;
+    OGRErr AddFeature(IVFKDataBlock *, VFKFeature *) override;
 
-    void           StoreInfo2DB();
+    void StoreInfo2DB();
 
-    void           CreateIndex(const char *, const char *, const char *, bool = true);
-    void           CreateIndices();
+    void CreateIndex(const char *, const char *, const char *, bool = true);
+    void CreateIndices();
 
-    friend class   VFKFeatureSQLite;
-public:
-    explicit VFKReaderSQLite( const GDALOpenInfo * );
+    friend class VFKFeatureSQLite;
+
+  public:
+    explicit VFKReaderSQLite(const GDALOpenInfo *);
     virtual ~VFKReaderSQLite();
 
-    bool          IsSpatial() const override { return m_bSpatial; }
-    bool          IsPreProcessed() const override { return !m_bNewDb; }
-    bool          IsValid() const override { return m_poDB != nullptr; }
-    int           ReadDataBlocks(bool = false) override;
-    int           ReadDataRecords(IVFKDataBlock * = nullptr) override;
+    bool IsSpatial() const override
+    {
+        return m_bSpatial;
+    }
+    bool IsPreProcessed() const override
+    {
+        return !m_bNewDb;
+    }
+    bool IsValid() const override
+    {
+        return m_poDB != nullptr;
+    }
+    int ReadDataBlocks(bool = false) override;
+    int ReadDataRecords(IVFKDataBlock * = nullptr) override;
 
     sqlite3_stmt *PrepareStatement(const char *);
-    OGRErr        ExecuteSQL(const char *, CPLErr = CE_Failure);
-    OGRErr        ExecuteSQL(sqlite3_stmt *&);
+    OGRErr ExecuteSQL(const char *, CPLErr = CE_Failure);
+    OGRErr ExecuteSQL(sqlite3_stmt *&);
 };
 
-#endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
+#endif  // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
