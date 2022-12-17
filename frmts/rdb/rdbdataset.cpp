@@ -62,12 +62,15 @@ template <typename T> struct CPLMallocGuard
         : pData(static_cast<T *>(CPLMalloc(sizeof(T) * count)))
     {
     }
-    ~CPLMallocGuard() { CPLFree(pData); }
+    ~CPLMallocGuard()
+    {
+        CPLFree(pData);
+    }
 };
 
 template <typename T> class RDBRasterBandInternal;
 
-template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
+template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
 {
     std::vector<std::unique_ptr<RDBRasterBandInternal<T>>> aoOverviewBands;
     std::vector<VRTSourcedRasterBand *> aoVRTRasterBand;
@@ -97,18 +100,21 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
         nBlockYSize = 256;
     }
 
-    ~RDBRasterBandInternal() {}
+    ~RDBRasterBandInternal()
+    {
+    }
     RDBRasterBandInternal(
         RDBDataset *poDSIn, const std::string &osAttributeNameIn,
         const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
-        int nBandIn, GDALDataType eDataTypeIn, int nLevelIn, int nNumberOfLayers)
+        int nBandIn, GDALDataType eDataTypeIn, int nLevelIn,
+        int nNumberOfLayers)
         : RDBRasterBandInternal(poDSIn, osAttributeNameIn, oPointAttributeIn,
                                 nBandIn, eDataTypeIn, nLevelIn)
     {
         aoOverviewBands.resize(nNumberOfLayers);
         poDSIn->apoVRTDataset.resize(nNumberOfLayers);
 
-        for(int i = nNumberOfLayers - 2; i >= 0; i--)
+        for (int i = nNumberOfLayers - 2; i >= 0; i--)
         {
             aoOverviewBands[i].reset(new RDBRasterBandInternal<T>(
                 poDSIn, osAttributeNameIn, oPointAttributeIn, nBandIn,
@@ -121,7 +127,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
             int nDatasetYSize = static_cast<int>(std::round(
                 (poDSIn->dfYMax - poDSIn->dfYMin) / oRDBOverview.dfPixelSize));
 
-            if(!poDSIn->apoVRTDataset[i])
+            if (!poDSIn->apoVRTDataset[i])
             {
                 poDSIn->apoVRTDataset[i].reset(
                     new VRTDataset(nDatasetXSize, nDatasetYSize));
@@ -135,7 +141,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
             int bSuccess = FALSE;
             double dfNoDataValue =
                 RDBRasterBandInternal::GetNoDataValue(&bSuccess);
-            if(bSuccess == FALSE)
+            if (bSuccess == FALSE)
             {
                 dfNoDataValue = VRT_NODATA_UNSET;
             }
@@ -168,24 +174,24 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
     {
         double dfInvalidValue = RDBRasterBand::GetNoDataValue(pbSuccess);
 
-        if(pbSuccess != nullptr && *pbSuccess == TRUE)
+        if (pbSuccess != nullptr && *pbSuccess == TRUE)
         {
             return dfInvalidValue;
         }
         else
         {
-            if(oPointAttribute.maximumValue < std::numeric_limits<T>::max())
+            if (oPointAttribute.maximumValue < std::numeric_limits<T>::max())
             {
-                if(pbSuccess != nullptr)
+                if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
                 return std::numeric_limits<T>::max();
             }
-            else if(oPointAttribute.minimumValue >
-                    std::numeric_limits<T>::lowest())
+            else if (oPointAttribute.minimumValue >
+                     std::numeric_limits<T>::lowest())
             {
-                if(pbSuccess != nullptr)
+                if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
@@ -197,7 +203,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
 
             // Using always the maximum or minimum value in such cases might be
             // at least consistent across multiple files.
-            if(pbSuccess != nullptr)
+            if (pbSuccess != nullptr)
             {
                 *pbSuccess = FALSE;
             }
@@ -210,13 +216,13 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
         T *pImage = reinterpret_cast<T *>(pImageIn);
 
         constexpr std::size_t nTileSize = 256 * 256;
-        if(std::isnan(oPointAttribute.invalidValue))
+        if (std::isnan(oPointAttribute.invalidValue))
         {
             memset(pImageIn, 0, sizeof(T) * nTileSize);
         }
         else
         {
-            for(std::size_t i = 0; i < nTileSize; i++)
+            for (std::size_t i = 0; i < nTileSize; i++)
             {
                 pImage[i] = static_cast<T>(oPointAttribute.invalidValue);
             }
@@ -225,19 +231,20 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
         try
         {
             RDBDataset *poRDBDs = dynamic_cast<RDBDataset *>(poDS);
-            if(poRDBDs != nullptr)
+            if (poRDBDs != nullptr)
             {
                 auto &oRDBOverview = poRDBDs->aoRDBOverviews[nLevel];
                 auto &aoRDBNodes = oRDBOverview.aoRDBNodes;
 
                 auto pIt = std::find_if(
                     aoRDBNodes.begin(), aoRDBNodes.end(),
-                    [&](const RDBNode &poRDBNode) {
+                    [&](const RDBNode &poRDBNode)
+                    {
                         return poRDBNode.nXBlockCoordinates == nBlockXOff &&
                                poRDBNode.nYBlockCoordinates == nBlockYOff;
                     });
 
-                if(pIt != aoRDBNodes.end())
+                if (pIt != aoRDBNodes.end())
                 {
                     using type = RDBCoordinatesPlusData<T>;
                     CPLMallocGuard<type> oData(pIt->nPointCount);
@@ -262,7 +269,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
                         nPointsReturned = oSelectQuery.next(pIt->nPointCount);
                     }
 
-                    if(nPointsReturned > 0)
+                    if (nPointsReturned > 0)
                     {
                         double dfHalvePixel = oRDBOverview.dfPixelSize * 0.5;
 
@@ -277,7 +284,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
                              nBlockYOff) *
                             oRDBOverview.dfTileSize;
 
-                        for(uint32_t i = 0; i < nPointsReturned; i++)
+                        for (uint32_t i = 0; i < nPointsReturned; i++)
                         {
                             int dfPixelX = static_cast<int>(
                                 std::floor((oData.pData[i].adfCoordinates[0] +
@@ -296,19 +303,19 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
                 }
             }
         }
-        catch(const riegl::rdb::Error &oException)
+        catch (const riegl::rdb::Error &oException)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "RDB error: %s, %s",
                      oException.what(), oException.details());
             return CE_Failure;
         }
-        catch(const std::exception &oException)
+        catch (const std::exception &oException)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Error: %s",
                      oException.what());
             return CE_Failure;
         }
-        catch(...)
+        catch (...)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unknown error in IReadBlock.");
@@ -320,7 +327,7 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
     virtual int GetOverviewCount() override
     {
         RDBDataset *poRDBDs = dynamic_cast<RDBDataset *>(poDS);
-        if(poRDBDs == nullptr)
+        if (poRDBDs == nullptr)
         {
             return 0;
         }
@@ -332,7 +339,9 @@ template <typename T> class RDBRasterBandInternal final: public RDBRasterBand
     }
 };
 
-RDBDataset::~RDBDataset() {}
+RDBDataset::~RDBDataset()
+{
+}
 
 void RDBDataset::SetBandInternal(
     RDBDataset *poDs, const std::string &osAttributeName,
@@ -342,54 +351,54 @@ void RDBDataset::SetBandInternal(
 {
     RDBRasterBand *poBand = nullptr;
     // map riegl rdb datatype to gdal data type
-    switch(eRDBDataType)
+    switch (eRDBDataType)
     {
-    case riegl::rdb::pointcloud::DataType::UINT8:
-    // Should I do ignore the other type?
-    case riegl::rdb::pointcloud::DataType::INT8:
-        poBand = new RDBRasterBandInternal<std::uint8_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Byte,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::UINT16:
-        poBand = new RDBRasterBandInternal<std::uint16_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt16,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::INT16:
-        poBand = new RDBRasterBandInternal<std::int16_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int16,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::UINT32:
-        poBand = new RDBRasterBandInternal<std::uint32_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt32,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::INT32:
-        poBand = new RDBRasterBandInternal<std::int32_t>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int32,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::FLOAT32:
-        poBand = new RDBRasterBandInternal<float>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float32,
-            nLevel, nNumberOfLayers);
-        break;
-    case riegl::rdb::pointcloud::DataType::FLOAT64:
-        poBand = new RDBRasterBandInternal<double>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
-            nLevel, nNumberOfLayers);
-        break;
-    default:
-        // for all reamining use double. e.g. u/int64_t
-        // an alternate option would be to check the data in the rdb and use the
-        // minimum required data type. could be a problem when working with
-        // multiple files.
-        poBand = new RDBRasterBandInternal<double>(
-            poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
-            nLevel, nNumberOfLayers);
-        break;
+        case riegl::rdb::pointcloud::DataType::UINT8:
+        // Should I do ignore the other type?
+        case riegl::rdb::pointcloud::DataType::INT8:
+            poBand = new RDBRasterBandInternal<std::uint8_t>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Byte,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::UINT16:
+            poBand = new RDBRasterBandInternal<std::uint16_t>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt16,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::INT16:
+            poBand = new RDBRasterBandInternal<std::int16_t>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int16,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::UINT32:
+            poBand = new RDBRasterBandInternal<std::uint32_t>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_UInt32,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::INT32:
+            poBand = new RDBRasterBandInternal<std::int32_t>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Int32,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::FLOAT32:
+            poBand = new RDBRasterBandInternal<float>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float32,
+                nLevel, nNumberOfLayers);
+            break;
+        case riegl::rdb::pointcloud::DataType::FLOAT64:
+            poBand = new RDBRasterBandInternal<double>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
+                nLevel, nNumberOfLayers);
+            break;
+        default:
+            // for all reamining use double. e.g. u/int64_t
+            // an alternate option would be to check the data in the rdb and use
+            // the minimum required data type. could be a problem when working
+            // with multiple files.
+            poBand = new RDBRasterBandInternal<double>(
+                poDs, osAttributeName, oPointAttribute, nBandIndex, GDT_Float64,
+                nLevel, nNumberOfLayers);
+            break;
     }
 
     poDs->SetBand(nBandIndex, poBand);
@@ -430,7 +439,7 @@ void RDBDataset::addRDBNode(const riegl::rdb::pointcloud::GraphNode &oNode,
         dfYNodeMin - static_cast<int>(std::floor(
                          (dfYMin + dfSizeOfPixel * 0.5) / dfTileSize));
 
-    if(aoRDBOverviews.size() <= nLevel)
+    if (aoRDBOverviews.size() <= nLevel)
     {
         aoRDBOverviews.resize(nLevel + 1);
     }
@@ -444,7 +453,7 @@ double
 RDBDataset::traverseRDBNodes(const riegl::rdb::pointcloud::GraphNode &oNode,
                              std::size_t nLevel)
 {
-    if(oNode.children.size() == 0)
+    if (oNode.children.size() == 0)
     {
         addRDBNode(oNode, dfSizeOfTile, nLevel);
         return dfSizeOfTile;
@@ -452,11 +461,11 @@ RDBDataset::traverseRDBNodes(const riegl::rdb::pointcloud::GraphNode &oNode,
     else
     {
         double dfSizeOfChildTile = 0.0;
-        for(auto &&oChild : oNode.children)
+        for (auto &&oChild : oNode.children)
         {
             dfSizeOfChildTile = traverseRDBNodes(oChild, nLevel + 1);
         }
-        if(dfSizeOfChildTile >= dfSizeOfTile && oNode.pointCountNode > 0)
+        if (dfSizeOfChildTile >= dfSizeOfTile && oNode.pointCountNode > 0)
         {
             double dfTileSizeCurrentLevel = dfSizeOfChildTile * 2.0;
 
@@ -491,7 +500,7 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
     std::string oPixelInfo = oPointcloud.metaData().get("riegl.pixel_info");
 
     json_object *poObj = nullptr;
-    if(!OGRJSonParse(oPixelInfo.c_str(), &poObj, true))
+    if (!OGRJSonParse(oPixelInfo.c_str(), &poObj, true))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "riegl.pixel_info is invalid JSon: %s", oPixelInfo.c_str());
@@ -500,10 +509,10 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
     json_object *poPixelSize = CPL_json_object_object_get(poObj, "size");
 
-    if(poPixelSize != nullptr)
+    if (poPixelSize != nullptr)
     {
         json_object *poSize0 = json_object_array_get_idx(poPixelSize, 0);
-        if(poSize0 != nullptr)
+        if (poSize0 != nullptr)
         {
             dfSizeOfPixel = json_object_get_double(poSize0);
         }
@@ -531,9 +540,8 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
     aoRDBOverviews.erase(
         std::remove_if(aoRDBOverviews.begin(), aoRDBOverviews.end(),
-                       [](const RDBOverview &oRDBOverView) {
-                           return oRDBOverView.aoRDBNodes.empty();
-                       }),
+                       [](const RDBOverview &oRDBOverView)
+                       { return oRDBOverView.aoRDBNodes.empty(); }),
         aoRDBOverviews.end());
 
     double dfLevelFactor = std::pow(2, aoRDBOverviews.size());
@@ -551,16 +559,16 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
     int nNumberOfLevels = static_cast<int>(aoRDBOverviews.size());
     std::vector<std::string> aoExistingPointAttributes = oPointAttribute.list();
 
-    for(auto &&osAttributeName : aoExistingPointAttributes)
+    for (auto &&osAttributeName : aoExistingPointAttributes)
     {
         riegl::rdb::pointcloud::PointAttribute oAttribute =
             oPointAttribute.get(osAttributeName);
 
-        if(osAttributeName == oPointAttribute.primaryAttributeName())
+        if (osAttributeName == oPointAttribute.primaryAttributeName())
         {
             continue;
         }
-        if(oAttribute.length == 1)
+        if (oAttribute.length == 1)
         {
             SetBandInternal(this, osAttributeName, oAttribute,
                             oAttribute.dataType(), nNumberOfLevels - 1,
@@ -568,7 +576,7 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
         }
         else
         {
-            for(uint32_t i = 0; i < oAttribute.length; i++)
+            for (uint32_t i = 0; i < oAttribute.length; i++)
             {
                 std::ostringstream oOss;
                 oOss << osAttributeName << '[' << i << ']';
@@ -582,12 +590,12 @@ RDBDataset::RDBDataset(GDALOpenInfo *poOpenInfo) : oPointcloud(oContext)
 
 GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if(!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo))
     {
         return nullptr;
     }
 
-    if(poOpenInfo->eAccess == GA_Update)
+    if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The RDB driver does not support update access to existing "
@@ -595,7 +603,7 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if(poOpenInfo->fpL == nullptr)
+    if (poOpenInfo->fpL == nullptr)
     {
         return nullptr;
     }
@@ -609,19 +617,19 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
 
         return poDS.release();
     }
-    catch(const riegl::rdb::Error &oException)
+    catch (const riegl::rdb::Error &oException)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "RDB error: %s, %s",
                  oException.what(), oException.details());
         return nullptr;
     }
 
-    catch(const std::exception &oException)
+    catch (const std::exception &oException)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Error: %s", oException.what());
         return nullptr;
     }
-    catch(...)
+    catch (...)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Unknown error in Open.");
         return nullptr;
@@ -632,7 +640,7 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
 int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-    if(poOpenInfo->nHeaderBytes < 32)
+    if (poOpenInfo->nHeaderBytes < 32)
     {
         return FALSE;
     }
@@ -641,7 +649,7 @@ int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
     constexpr char szRDBHeaderIdentifier[kSizeOfRDBHeaderIdentifier] =
         "RIEGL LMS RDB 2 POINTCLOUD FILE";
 
-    if(strncmp(psHeader, szRDBHeaderIdentifier, kSizeOfRDBHeaderIdentifier))
+    if (strncmp(psHeader, szRDBHeaderIdentifier, kSizeOfRDBHeaderIdentifier))
     {
         // A more comprehensive test could be done by the library.
         // Should file -> library incompatibilities handled in Identify or
@@ -671,7 +679,7 @@ const OGRSpatialReference *RDBDataset::GetSpatialRef() const
 
 void RDBDataset::ReadGeoreferencing()
 {
-    if(osWktString.empty())
+    if (osWktString.empty())
     {
         try
         {
@@ -679,7 +687,7 @@ void RDBDataset::ReadGeoreferencing()
                 oPointcloud.metaData().get("riegl.geo_tag");
 
             json_object *poObj = nullptr;
-            if(!OGRJSonParse(oPixelInfo.c_str(), &poObj, true))
+            if (!OGRJSonParse(oPixelInfo.c_str(), &poObj, true))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "riegl.geo_tag is invalid JSon: %s",
@@ -689,11 +697,11 @@ void RDBDataset::ReadGeoreferencing()
 
             json_object *poCrs = CPL_json_object_object_get(poObj, "crs");
 
-            if(poCrs != nullptr)
+            if (poCrs != nullptr)
             {
                 json_object *poWkt = CPL_json_object_object_get(poCrs, "wkt");
 
-                if(poWkt != nullptr)
+                if (poWkt != nullptr)
                 {
                     osWktString = json_object_get_string(poWkt);
                     oSpatialReference.importFromWkt(osWktString.c_str());
@@ -702,17 +710,17 @@ void RDBDataset::ReadGeoreferencing()
                 }
             }
         }
-        catch(const riegl::rdb::Error &oException)
+        catch (const riegl::rdb::Error &oException)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "RDB error: %s, %s",
                      oException.what(), oException.details());
         }
-        catch(const std::exception &oException)
+        catch (const std::exception &oException)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Error: %s",
                      oException.what());
         }
-        catch(...)
+        catch (...)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unknown error in IReadBlock.");
@@ -744,9 +752,9 @@ RDBRasterBand::RDBRasterBand(
 
 double RDBRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    if(!std::isnan(oPointAttribute.invalidValue))
+    if (!std::isnan(oPointAttribute.invalidValue))
     {
-        if(pbSuccess != nullptr)
+        if (pbSuccess != nullptr)
         {
             *pbSuccess = TRUE;
         }
@@ -754,7 +762,7 @@ double RDBRasterBand::GetNoDataValue(int *pbSuccess)
     }
     else
     {
-        if(pbSuccess != nullptr)
+        if (pbSuccess != nullptr)
         {
             *pbSuccess = FALSE;
         }
@@ -770,16 +778,15 @@ const char *RDBRasterBand::GetDescription() const
 }  // namespace rdb
 void GDALRegister_RDB()
 {
-    if(!GDAL_CHECK_VERSION("RDB"))
+    if (!GDAL_CHECK_VERSION("RDB"))
         return;
-    if(GDALGetDriverByName("RDB") != NULL)
+    if (GDALGetDriverByName("RDB") != NULL)
         return;
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("RDB");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "RIEGL RDB Map Pixel (.mpx)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/rdb.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/rdb.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mpx");
     poDriver->pfnOpen = rdb::RDBDataset::Open;
     poDriver->pfnIdentify = rdb::RDBDataset::Identify;
