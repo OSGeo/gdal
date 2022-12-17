@@ -31,7 +31,8 @@
 
 #include "gtest_include.h"
 
-namespace {
+namespace
+{
 
 // ---------------------------------------------------------------------------
 
@@ -46,4 +47,4 @@ TEST(testdestroy, test)
     GDALDestroy();
 }
 
-} // namespace
+}  // namespace

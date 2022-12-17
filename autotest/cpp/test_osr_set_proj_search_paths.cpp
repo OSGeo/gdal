@@ -39,39 +39,40 @@
 #include "test_data.h"
 #include "gtest_include.h"
 
-namespace {
+namespace
+{
 
 // ---------------------------------------------------------------------------
 
-static void func1(void*)
+static void func1(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
     CPLPushErrorHandler(CPLQuietErrorHandler);
     auto ret = OSRImportFromEPSG(hSRS, 32631);
     CPLPopErrorHandler();
-    EXPECT_NE(ret, OGRERR_NONE );
+    EXPECT_NE(ret, OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
-static void func2(void*)
+static void func2(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    EXPECT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
-static void func3(void*)
+static void func3(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    EXPECT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
 
     // Test cleanup effect
     OSRCleanup();
 
-    for(int epsg = 32601; epsg <= 32661; epsg++ )
+    for (int epsg = 32601; epsg <= 32661; epsg++)
     {
-        EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE );
-        EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg+100), OGRERR_NONE );
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE);
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE);
     }
     OSRDestroySpatialReference(hSRS);
 }
@@ -83,7 +84,7 @@ static void func4()
     // database structure change.
     //
     // See PR https://github.com/OSGeo/gdal/pull/3590
-    const char* apszAux0[] = {TUT_ROOT_DATA_DIR "/test_aux.db", nullptr};
+    const char *apszAux0[] = {TUT_ROOT_DATA_DIR "/test_aux.db", nullptr};
     OSRSetPROJAuxDbPaths(apszAux0);
 
     CPLStringList aosAux1(OSRGetPROJAuxDbPaths());
@@ -111,7 +112,7 @@ TEST(test_osr_set_proj_search_paths, test)
     CPLJoinThread(t1);
 
     {
-        const char* const apszDummyPaths[] = { "/i/am/dummy", nullptr };
+        const char *const apszDummyPaths[] = {"/i/am/dummy", nullptr};
         OSRSetPROJSearchPaths(apszDummyPaths);
         auto tokens2 = OSRGetPROJSearchPaths();
         EXPECT_STREQ(tokens2[0], "/i/am/dummy");
@@ -132,12 +133,12 @@ TEST(test_osr_set_proj_search_paths, test)
     OSRCleanup();
 
     // Test fix for #2744
-    CPLJoinableThread* ahThreads[4];
-    for( int i = 0; i< 4; i++ )
+    CPLJoinableThread *ahThreads[4];
+    for (int i = 0; i < 4; i++)
     {
         ahThreads[i] = CPLCreateJoinableThread(func3, nullptr);
     }
-    for( int i = 0; i< 4; i++ )
+    for (int i = 0; i < 4; i++)
     {
         CPLJoinThread(ahThreads[i]);
     }
@@ -145,4 +146,4 @@ TEST(test_osr_set_proj_search_paths, test)
     func4();
 }
 
-} // namespace
+}  // namespace

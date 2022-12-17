@@ -28,7 +28,7 @@
 
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 #include "gdal_unit_test.h"
 
@@ -47,107 +47,122 @@
 
 namespace tut
 {
-    // Common test data path
-    std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
-    std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
+// Common test data path
+std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
+std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
 
-    ::testing::AssertionResult CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
+::testing::AssertionResult
+CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
+{
+    // Test raw pointers
+    if (nullptr == lhs)
     {
-        // Test raw pointers
-        if(nullptr == lhs)
-        {
-            return ::testing::AssertionFailure() << "lhs is null";
-        }
-        if(nullptr == rhs)
-        {
-            return ::testing::AssertionFailure() << "rhs is null";
-        }
+        return ::testing::AssertionFailure() << "lhs is null";
+    }
+    if (nullptr == rhs)
+    {
+        return ::testing::AssertionFailure() << "rhs is null";
+    }
 
-        // Test basic properties
-        if( strcmp(OGR_G_GetGeometryName(lhs), OGR_G_GetGeometryName(rhs)) != 0 )
-        {
-            return ::testing::AssertionFailure() << "OGR_G_GetGeometryName(lhs) = " << OGR_G_GetGeometryName(lhs) << ". OGR_G_GetGeometryName(rhs) = " << OGR_G_GetGeometryName(rhs);
-        }
+    // Test basic properties
+    if (strcmp(OGR_G_GetGeometryName(lhs), OGR_G_GetGeometryName(rhs)) != 0)
+    {
+        return ::testing::AssertionFailure()
+               << "OGR_G_GetGeometryName(lhs) = " << OGR_G_GetGeometryName(lhs)
+               << ". OGR_G_GetGeometryName(rhs) = "
+               << OGR_G_GetGeometryName(rhs);
+    }
 
-        if( OGR_G_GetGeometryCount(lhs) != OGR_G_GetGeometryCount(rhs) )
-        {
-            return ::testing::AssertionFailure() << "OGR_G_GetGeometryCount(lhs) = " << OGR_G_GetGeometryCount(lhs) << ". OGR_G_GetGeometryCount(rhs) = " << OGR_G_GetGeometryCount(rhs);
-        }
+    if (OGR_G_GetGeometryCount(lhs) != OGR_G_GetGeometryCount(rhs))
+    {
+        return ::testing::AssertionFailure()
+               << "OGR_G_GetGeometryCount(lhs) = "
+               << OGR_G_GetGeometryCount(lhs)
+               << ". OGR_G_GetGeometryCount(rhs) = "
+               << OGR_G_GetGeometryCount(rhs);
+    }
 
-        if( OGR_G_GetPointCount(lhs) != OGR_G_GetPointCount(rhs) )
-        {
-            return ::testing::AssertionFailure() << "OGR_G_GetPointCount(lhs) = " << OGR_G_GetPointCount(lhs) << ". OGR_G_GetPointCount(rhs) = " << OGR_G_GetPointCount(rhs);
-        }
+    if (OGR_G_GetPointCount(lhs) != OGR_G_GetPointCount(rhs))
+    {
+        return ::testing::AssertionFailure()
+               << "OGR_G_GetPointCount(lhs) = " << OGR_G_GetPointCount(lhs)
+               << ". OGR_G_GetPointCount(rhs) = " << OGR_G_GetPointCount(rhs);
+    }
 
-        if (OGR_G_GetGeometryCount(lhs) > 0)
+    if (OGR_G_GetGeometryCount(lhs) > 0)
+    {
+        // Test sub-geometries recursively
+        const int count = OGR_G_GetGeometryCount(lhs);
+        for (int i = 0; i < count; ++i)
         {
-            // Test sub-geometries recursively
-            const int count = OGR_G_GetGeometryCount(lhs);
-            for (int i = 0; i < count; ++i)
-            {
-                auto res = CheckEqualGeometries(OGR_G_GetGeometryRef(lhs, i),
-                                            OGR_G_GetGeometryRef(rhs, i),
-                                            tolerance);
-                if( !res )
-                    return res;
-            }
+            auto res =
+                CheckEqualGeometries(OGR_G_GetGeometryRef(lhs, i),
+                                     OGR_G_GetGeometryRef(rhs, i), tolerance);
+            if (!res)
+                return res;
+        }
+    }
+    else
+    {
+        std::unique_ptr<OGRGeometry> lhs_normalized_cpp;
+        std::unique_ptr<OGRGeometry> rhs_normalized_cpp;
+        if (EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING"))
+        {
+            // Normalize() doesn't work with LinearRing
+            OGRLineString lhs_as_ls(
+                *OGRGeometry::FromHandle(lhs)->toLineString());
+            lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
+            OGRLineString rhs_as_ls(
+                *OGRGeometry::FromHandle(rhs)->toLineString());
+            rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
         }
         else
         {
-            std::unique_ptr<OGRGeometry> lhs_normalized_cpp;
-            std::unique_ptr<OGRGeometry> rhs_normalized_cpp;
-            if( EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING") )
+            lhs_normalized_cpp.reset(
+                OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
+            rhs_normalized_cpp.reset(
+                OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+        }
+        auto lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
+        auto rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
+
+        // Test geometry points
+        const std::size_t csize = 3;
+        double a[csize] = {0};
+        double b[csize] = {0};
+        double d[csize] = {0};
+        double dmax = 0;
+
+        const int count = OGR_G_GetPointCount(lhs_normalized);
+        for (int i = 0; i < count; ++i)
+        {
+            OGR_G_GetPoint(lhs_normalized, i, &a[0], &a[1], &a[2]);
+            OGR_G_GetPoint(rhs_normalized, i, &b[0], &b[1], &b[2]);
+
+            // Test vertices
+            for (std::size_t c = 0; c < csize; ++c)
             {
-                // Normalize() doesn't work with LinearRing
-                OGRLineString lhs_as_ls(*OGRGeometry::FromHandle(lhs)->toLineString());
-                lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
-                OGRLineString rhs_as_ls(*OGRGeometry::FromHandle(rhs)->toLineString());
-                rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+                d[c] = std::fabs(a[c] - b[c]);
             }
-            else
+
+            const double *pos = std::max_element(d, d + csize);
+            dmax = *pos;
+
+            if (dmax > tolerance)
             {
-                lhs_normalized_cpp.reset(OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
-                rhs_normalized_cpp.reset(OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
-            }
-            auto lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
-            auto rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
-
-            // Test geometry points
-            const std::size_t csize = 3;
-            double a[csize] = { 0 };
-            double b[csize] = { 0 };
-            double d[csize] = { 0 };
-            double dmax = 0;
-
-            const int count = OGR_G_GetPointCount(lhs_normalized);
-            for (int i = 0; i < count; ++i)
-            {
-                OGR_G_GetPoint(lhs_normalized, i, &a[0], &a[1], &a[2]);
-                OGR_G_GetPoint(rhs_normalized, i, &b[0], &b[1], &b[2]);
-
-                // Test vertices
-                for (std::size_t c = 0; c < csize; ++c)
-                {
-                    d[c] = std::fabs(a[c] - b[c]);
-                }
-
-                const double* pos = std::max_element(d, d + csize);
-                dmax = *pos;
-
-                if( dmax > tolerance )
-                {
-                    return ::testing::AssertionFailure() <<
-                        "dmax = " << dmax << " is > tolerance = " << tolerance << " on vertex " << i;
-                }
+                return ::testing::AssertionFailure()
+                       << "dmax = " << dmax << " is > tolerance = " << tolerance
+                       << " on vertex " << i;
             }
         }
-
-        return ::testing::AssertionSuccess();
     }
 
-} // namespace tut
+    return ::testing::AssertionSuccess();
+}
 
-int main(int argc, char* argv[])
+}  // namespace tut
+
+int main(int argc, char *argv[])
 {
     // Register GDAL/OGR drivers
     ::GDALAllRegister();
@@ -158,7 +173,7 @@ int main(int argc, char* argv[])
         << " (" << ::GDALVersionInfo("--version") << ")"
         << "\n---------------------------------------------------------\n";
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
     int nRetCode;
     try
@@ -167,12 +182,12 @@ int main(int argc, char* argv[])
 
         nRetCode = RUN_ALL_TESTS();
     }
-    catch( const std::exception& e )
+    catch (const std::exception &e)
     {
         nRetCode = 1;
         fprintf(stderr, "Caught exception %s\n", e.what());
     }
-    catch( ... )
+    catch (...)
     {
         nRetCode = 1;
         fprintf(stderr, "Caught exception of unknown type\n");
@@ -186,7 +201,7 @@ int main(int argc, char* argv[])
 
     OGRCleanupAll();
 
-    CPLDumpSharedList( nullptr );
+    CPLDumpSharedList(nullptr);
     CPLCleanupTLS();
 
     return nRetCode;

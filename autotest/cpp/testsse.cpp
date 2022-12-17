@@ -2,7 +2,15 @@
 
 #include "gdalsse_priv.h"
 
-#define MY_ASSERT(x)   do { if (!(x)) { printf("test at line %d failed !\n", __LINE__); exit(1); } } while(0)
+#define MY_ASSERT(x)                                                           \
+    do                                                                         \
+    {                                                                          \
+        if (!(x))                                                              \
+        {                                                                      \
+            printf("test at line %d failed !\n", __LINE__);                    \
+            exit(1);                                                           \
+        }                                                                      \
+    } while (0)
 
 int main()
 {
@@ -18,7 +26,7 @@ int main()
     }
 
     {
-        unsigned char input[] = { 1, 2, 3, 4 };
+        unsigned char input[] = {1, 2, 3, 4};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         double res[4];
         reg.Store4Val(res);
@@ -36,7 +44,7 @@ int main()
     }
 
     {
-        unsigned short input[] = { 1, 65535, 3, 65534 };
+        unsigned short input[] = {1, 65535, 3, 65534};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         double res[4];
         reg.Store4Val(res);
@@ -54,7 +62,7 @@ int main()
     }
 
     {
-        short input[] = { 1, 32767, 3, -32768 };
+        short input[] = {1, 32767, 3, -32768};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         double res[4];
         reg.Store4Val(res);
@@ -65,7 +73,7 @@ int main()
     }
 
     {
-        float input[] = { 1.0f, 2.0f, 3.0f, 4.0f };
+        float input[] = {1.0f, 2.0f, 3.0f, 4.0f};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         double res[4];
         reg.Store4Val(res);
@@ -83,7 +91,7 @@ int main()
     }
 
     {
-        double input[] = { 1.0, 2.0, 3.0, 4.0 };
+        double input[] = {1.0, 2.0, 3.0, 4.0};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         double res[4];
         reg.Store4Val(res);
@@ -92,10 +100,11 @@ int main()
         MY_ASSERT(res[2] == input[2]);
         MY_ASSERT(res[3] == input[3]);
 
-        MY_ASSERT(reg.GetHorizSum() == input[0] + input[1] + input[2] + input[3]);
+        MY_ASSERT(reg.GetHorizSum() ==
+                  input[0] + input[1] + input[2] + input[3]);
 
-        double input2[] = { 100.0, 200.0 };
-        reg.AddToLow( XMMReg2Double::Load2Val(input2) );
+        double input2[] = {100.0, 200.0};
+        reg.AddToLow(XMMReg2Double::Load2Val(input2));
         reg.Store4Val(res);
         MY_ASSERT(res[0] == input[0] + input2[0]);
         MY_ASSERT(res[1] == input[1] + input2[1]);
@@ -104,8 +113,8 @@ int main()
     }
 
     {
-        double input[] = { 1.0, 2.0, 3.0, 4.0 };
-        double input2[] = { 10.0, 9.0, 8.0, 7.0 };
+        double input[] = {1.0, 2.0, 3.0, 4.0};
+        double input2[] = {10.0, 9.0, 8.0, 7.0};
         XMMReg4Double reg = XMMReg4Double::Load4Val(input);
         XMMReg4Double reg2 = XMMReg4Double::Load4Val(input2);
 
@@ -178,14 +187,16 @@ int main()
         MY_ASSERT(mask[16] == 0);
         MY_ASSERT(mask[24] == 0);
 
-        double diff[] = { 1.5, -1.5, -0.5, 0.5 };
-        XMMReg4Double::Greater(reg, reg + XMMReg4Double::Load4Val(diff)).StoreMask(mask);
+        double diff[] = {1.5, -1.5, -0.5, 0.5};
+        XMMReg4Double::Greater(reg, reg + XMMReg4Double::Load4Val(diff))
+            .StoreMask(mask);
         MY_ASSERT(mask[0] == 0);
         MY_ASSERT(mask[8] == 0xFF);
         MY_ASSERT(mask[16] == 0xFF);
         MY_ASSERT(mask[24] == 0);
 
-        XMMReg4Double::Min(reg, reg + XMMReg4Double::Load4Val(diff)).Store4Val(res);
+        XMMReg4Double::Min(reg, reg + XMMReg4Double::Load4Val(diff))
+            .Store4Val(res);
         MY_ASSERT(res[0] == input[0]);
         MY_ASSERT(res[1] == input[1] + diff[1]);
         MY_ASSERT(res[2] == input[2] + diff[2]);
@@ -193,7 +204,9 @@ int main()
 
         reg = XMMReg4Double::Load4Val(input);
         XMMReg4Double reg_diff = XMMReg4Double::Load4Val(diff);
-        XMMReg4Double::Ternary(XMMReg4Double::Greater(reg, reg + reg_diff), reg, reg_diff).Store4Val(res);
+        XMMReg4Double::Ternary(XMMReg4Double::Greater(reg, reg + reg_diff), reg,
+                               reg_diff)
+            .Store4Val(res);
         MY_ASSERT(res[0] == diff[0]);
         MY_ASSERT(res[1] == input[1]);
         MY_ASSERT(res[2] == input[2]);
@@ -202,7 +215,7 @@ int main()
 
 #ifndef USE_SSE2_EMULATION
     {
-        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f };
+        float input[] = {-1.3f, 1.5f, 40000.3f, 65537.0f};
         GUInt16 output[4];
         GDALCopy4Words(input, output);
         MY_ASSERT(output[0] == 0);
@@ -212,10 +225,10 @@ int main()
     }
 #endif
 
-
 #ifndef USE_SSE2_EMULATION
     {
-        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f, 40000.3f, 1.3f, 65537.0f, -1.3f };
+        float input[] = {-1.3f,    1.5f, 40000.3f, 65537.0f,
+                         40000.3f, 1.3f, 65537.0f, -1.3f};
         GUInt16 output[8];
         GDALCopy8Words(input, output);
         MY_ASSERT(output[0] == 0);
@@ -229,7 +242,8 @@ int main()
     }
 
     {
-        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f, 40000.3f, 1.3f, 65537.0f, -1.3f };
+        float input[] = {-1.3f,    1.5f, 40000.3f, 65537.0f,
+                         40000.3f, 1.3f, 65537.0f, -1.3f};
         unsigned char output[8];
         GDALCopy8Words<float, unsigned char>(input, output);
         MY_ASSERT(output[0] == 0);

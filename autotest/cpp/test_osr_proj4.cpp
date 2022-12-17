@@ -42,66 +42,68 @@
 namespace
 {
 
-    // Common fixture with test data
-    struct test_osr_proj4 : public ::testing::Test
+// Common fixture with test data
+struct test_osr_proj4 : public ::testing::Test
+{
+    OGRErr err_ = OGRERR_NONE;
+    OGRSpatialReferenceH srs_ = nullptr;
+
+    void SetUp() override
     {
-        OGRErr err_ = OGRERR_NONE;
-        OGRSpatialReferenceH srs_ = nullptr;
-
-        void SetUp() override
-        {
-            srs_ = OSRNewSpatialReference(nullptr);
-            ASSERT_TRUE(nullptr != srs_);
-            OSRSetAxisMappingStrategy(srs_, OAMS_TRADITIONAL_GIS_ORDER);
-        }
-
-        void TearDown() override
-        {
-            OSRDestroySpatialReference(srs_);
-            srs_ = nullptr;
-        }
-    };
-
-    // Test the +k_0 flag works as well as +k when
-    // consuming PROJ.4 format
-    TEST_F(test_osr_proj4, k_0)
-    {
-        std::string wkt("+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 "
-              "+k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 "
-              "+a=6377340.189000 +rf=299.324965 +towgs84=482.530,"
-              "-130.596,564.557,-1.042,-0.214,-0.631,8.15");
-
-        err_ = OSRImportFromProj4(srs_, wkt.c_str());
-        ASSERT_EQ(err_, OGRERR_NONE);
-
-        // TODO: Check max error value
-        const double maxError = 0.00005; // 0.0000005
-        double val = 0;
-
-        val = OSRGetProjParm(srs_, SRS_PP_SCALE_FACTOR, -1111, &err_);
-        ASSERT_EQ(err_, OGRERR_NONE);
-
-        EXPECT_NEAR(val, 1.000035, maxError);
+        srs_ = OSRNewSpatialReference(nullptr);
+        ASSERT_TRUE(nullptr != srs_);
+        OSRSetAxisMappingStrategy(srs_, OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    // Verify that we can import strings with parameter values
-    // that are exponents and contain a plus sign
-    TEST_F(test_osr_proj4, proj_strings_with_exponents)
+    void TearDown() override
     {
-        std::string wkt("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 "
-            "+lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n "
-            "+a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat");
-
-        err_ = OSRImportFromProj4(srs_, wkt.c_str());
-        ASSERT_EQ(err_, OGRERR_NONE);
-
-        const double maxError = 0.0005;
-        double val = 0;
-
-        val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
-        ASSERT_EQ(err_, OGRERR_NONE);
-
-        EXPECT_NEAR(val, 609601.219, maxError);
+        OSRDestroySpatialReference(srs_);
+        srs_ = nullptr;
     }
+};
 
-} // namespace
+// Test the +k_0 flag works as well as +k when
+// consuming PROJ.4 format
+TEST_F(test_osr_proj4, k_0)
+{
+    std::string wkt(
+        "+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000 "
+        "+k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000 "
+        "+a=6377340.189000 +rf=299.324965 +towgs84=482.530,"
+        "-130.596,564.557,-1.042,-0.214,-0.631,8.15");
+
+    err_ = OSRImportFromProj4(srs_, wkt.c_str());
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    // TODO: Check max error value
+    const double maxError = 0.00005;  // 0.0000005
+    double val = 0;
+
+    val = OSRGetProjParm(srs_, SRS_PP_SCALE_FACTOR, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    EXPECT_NEAR(val, 1.000035, maxError);
+}
+
+// Verify that we can import strings with parameter values
+// that are exponents and contain a plus sign
+TEST_F(test_osr_proj4, proj_strings_with_exponents)
+{
+    std::string wkt(
+        "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 "
+        "+lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n "
+        "+a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat");
+
+    err_ = OSRImportFromProj4(srs_, wkt.c_str());
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    const double maxError = 0.0005;
+    double val = 0;
+
+    val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    EXPECT_NEAR(val, 609601.219, maxError);
+}
+
+}  // namespace
