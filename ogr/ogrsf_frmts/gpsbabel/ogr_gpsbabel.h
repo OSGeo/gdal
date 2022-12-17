@@ -38,66 +38,75 @@
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelDataSource final: public OGRDataSource
+class OGRGPSBabelDataSource final : public OGRDataSource
 {
-    int                 nLayers = 0;
-    std::array<OGRLayer*, 5>  apoLayers{{nullptr,nullptr,nullptr,nullptr,nullptr}};
-    char               *pszName = nullptr;
-    char               *pszGPSBabelDriverName = nullptr;
-    char               *pszFilename = nullptr;
-    CPLString           osTmpFileName{};
-    GDALDataset        *poGPXDS = nullptr;
+    int nLayers = 0;
+    std::array<OGRLayer *, 5> apoLayers{
+        {nullptr, nullptr, nullptr, nullptr, nullptr}};
+    char *pszName = nullptr;
+    char *pszGPSBabelDriverName = nullptr;
+    char *pszFilename = nullptr;
+    CPLString osTmpFileName{};
+    GDALDataset *poGPXDS = nullptr;
 
   public:
-                        OGRGPSBabelDataSource();
-                        virtual ~OGRGPSBabelDataSource();
+    OGRGPSBabelDataSource();
+    virtual ~OGRGPSBabelDataSource();
 
-    virtual int         CloseDependentDatasets() override;
+    virtual int CloseDependentDatasets() override;
 
-    virtual const char  *GetName() override { return pszName; }
-    virtual int         GetLayerCount() override { return nLayers; }
-    virtual OGRLayer   *GetLayer( int ) override;
+    virtual const char *GetName() override
+    {
+        return pszName;
+    }
+    virtual int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    virtual OGRLayer *GetLayer(int) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    int                 Open ( const char* pszFilename,
-                               const char* pszGPSBabelDriverNameIn,
-                               char** papszOpenOptions );
+    int Open(const char *pszFilename, const char *pszGPSBabelDriverNameIn,
+             char **papszOpenOptions);
 
-    static bool         IsSpecialFile( const char* pszFilename );
-    static bool         IsValidDriverName( const char* pszGPSBabelDriverName );
+    static bool IsSpecialFile(const char *pszFilename);
+    static bool IsValidDriverName(const char *pszGPSBabelDriverName);
 };
 
 /************************************************************************/
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelWriteDataSource final: public OGRDataSource
+class OGRGPSBabelWriteDataSource final : public OGRDataSource
 {
-    char               *pszName;
-    char               *pszGPSBabelDriverName;
-    char               *pszFilename;
-    CPLString           osTmpFileName;
-    GDALDataset        *poGPXDS;
+    char *pszName;
+    char *pszGPSBabelDriverName;
+    char *pszFilename;
+    CPLString osTmpFileName;
+    GDALDataset *poGPXDS;
 
-    bool                Convert();
+    bool Convert();
 
   public:
-                        OGRGPSBabelWriteDataSource();
-                        virtual ~OGRGPSBabelWriteDataSource();
+    OGRGPSBabelWriteDataSource();
+    virtual ~OGRGPSBabelWriteDataSource();
 
-    virtual const char  *GetName() override { return pszName; }
-    virtual int         GetLayerCount() override;
-    virtual OGRLayer   *GetLayer( int ) override;
+    virtual const char *GetName() override
+    {
+        return pszName;
+    }
+    virtual int GetLayerCount() override;
+    virtual OGRLayer *GetLayer(int) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer   *ICreateLayer( const char * pszLayerName,
-                                     OGRSpatialReference *poSRS,
-                                     OGRwkbGeometryType eType,
-                                     char ** papszOptions ) override;
+    virtual OGRLayer *ICreateLayer(const char *pszLayerName,
+                                   OGRSpatialReference *poSRS,
+                                   OGRwkbGeometryType eType,
+                                   char **papszOptions) override;
 
-    int                 Create ( const char* pszFilename, char **papszOptions );
+    int Create(const char *pszFilename, char **papszOptions);
 };
 
 #endif /* ndef OGR_GPSBABEL_H_INCLUDED */
