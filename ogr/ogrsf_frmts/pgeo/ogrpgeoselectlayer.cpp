@@ -31,14 +31,13 @@
 #include "cpl_conv.h"
 #include "ogr_pgeo.h"
 
-
 /************************************************************************/
 /*                          OGRPGeoSelectLayer()                        */
 /************************************************************************/
 
-OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn ) :
-    pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
+OGRPGeoSelectLayer::OGRPGeoSelectLayer(OGRPGeoDataSource *poDSIn,
+                                       CPLODBCStatement *poStmtIn)
+    : pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
 {
     poDS = poDSIn;
 
@@ -50,20 +49,20 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
 
     // Just to make test_ogrsf happy, but would/could need be extended to
     // other cases.
-    if( STARTS_WITH_CI(pszBaseStatement, "SELECT * FROM ") )
+    if (STARTS_WITH_CI(pszBaseStatement, "SELECT * FROM "))
     {
 
-        OGRLayer* poBaseLayer =
+        OGRLayer *poBaseLayer =
             poDSIn->GetLayerByName(pszBaseStatement + strlen("SELECT * FROM "));
-        if( poBaseLayer != nullptr )
+        if (poBaseLayer != nullptr)
         {
             poSRS = poBaseLayer->GetSpatialRef();
-            if( poSRS != nullptr )
+            if (poSRS != nullptr)
                 poSRS->Reference();
         }
     }
 
-    BuildFeatureDefn( "SELECT", poStmt );
+    BuildFeatureDefn("SELECT", poStmt);
 }
 
 /************************************************************************/
@@ -84,7 +83,7 @@ OGRPGeoSelectLayer::~OGRPGeoSelectLayer()
 void OGRPGeoSelectLayer::ClearStatement()
 
 {
-    if( poStmt != nullptr )
+    if (poStmt != nullptr)
     {
         delete poStmt;
         poStmt = nullptr;
@@ -98,7 +97,7 @@ void OGRPGeoSelectLayer::ClearStatement()
 CPLODBCStatement *OGRPGeoSelectLayer::GetStatement()
 
 {
-    if( poStmt == nullptr )
+    if (poStmt == nullptr)
         ResetStatement();
 
     return poStmt;
@@ -115,11 +114,11 @@ OGRErr OGRPGeoSelectLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    CPLDebug( "ODBC", "Recreating statement." );
-    poStmt = new CPLODBCStatement( poDS->GetSession(), m_nStatementFlags );
-    poStmt->Append( pszBaseStatement );
+    CPLDebug("ODBC", "Recreating statement.");
+    poStmt = new CPLODBCStatement(poDS->GetSession(), m_nStatementFlags);
+    poStmt->Append(pszBaseStatement);
 
-    if( poStmt->ExecuteSQL() )
+    if (poStmt->ExecuteSQL())
         return OGRERR_NONE;
     else
     {
@@ -136,7 +135,7 @@ OGRErr OGRPGeoSelectLayer::ResetStatement()
 void OGRPGeoSelectLayer::ResetReading()
 
 {
-    if( iNextShapeId != 0 )
+    if (iNextShapeId != 0)
         ClearStatement();
 
     OGRPGeoLayer::ResetReading();
@@ -146,20 +145,20 @@ void OGRPGeoSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGeoSelectLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRPGeoSelectLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    return OGRPGeoLayer::GetFeature( nFeatureId );
+    return OGRPGeoLayer::GetFeature(nFeatureId);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoSelectLayer::TestCapability( const char * pszCap )
+int OGRPGeoSelectLayer::TestCapability(const char *pszCap)
 
 {
-    return OGRPGeoLayer::TestCapability( pszCap );
+    return OGRPGeoLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -171,8 +170,8 @@ int OGRPGeoSelectLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRPGeoSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRPGeoSelectLayer::GetFeatureCount(int bForce)
 
 {
-    return OGRPGeoLayer::GetFeatureCount( bForce );
+    return OGRPGeoLayer::GetFeatureCount(bForce);
 }
