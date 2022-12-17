@@ -32,7 +32,6 @@
 
 #include <cassert>
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -48,10 +47,10 @@ static void Usage()
 /*                              TortureDS()                             */
 /************************************************************************/
 
-static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
-                         int nRecurse )
+static void TortureBand(GDALRasterBandH hBand, int /* bReadWriteOperations */,
+                        int nRecurse)
 {
-    if( nRecurse > 5 )
+    if (nRecurse > 5)
         return;
 
     GDALGetRasterDataType(hBand);
@@ -73,13 +72,13 @@ static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
     // GDALSetRasterColorInterpretation
     GDALGetRasterColorTable(hBand);
     // GDALSetRasterColorTable
-    GDALHasArbitraryOverviews (hBand);
+    GDALHasArbitraryOverviews(hBand);
 
     const int nOverviewCount = GDALGetOverviewCount(hBand);
-    for(int iOverview=0;iOverview<nOverviewCount;iOverview++)
+    for (int iOverview = 0; iOverview < nOverviewCount; iOverview++)
     {
         GDALRasterBandH hOverviewBand = GDALGetOverview(hBand, iOverview);
-        if( hOverviewBand )
+        if (hOverviewBand)
             TortureBand(hOverviewBand, false, nRecurse + 1);
     }
 
@@ -92,8 +91,8 @@ static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
     GDALGetRasterMinimum(hBand, &bSuccess);
     GDALGetRasterMaximum(hBand, &bSuccess);
     double dfMin, dfMax, dfMean, dfStdDev;
-    GDALGetRasterStatistics(hBand, TRUE, FALSE, &dfMin, &dfMax,
-                            &dfMean, &dfStdDev);
+    GDALGetRasterStatistics(hBand, TRUE, FALSE, &dfMin, &dfMax, &dfMean,
+                            &dfStdDev);
     // GDALComputeRasterStatistics
     // GDALSetRasterStatistics
     GDALGetRasterUnitType(hBand);
@@ -113,7 +112,7 @@ static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
     //     int nBuckets, int *panHistogram);
     float afSampleBuf;
     GDALGetRandomRasterSample(hBand, 1, &afSampleBuf);
-    GDALGetRasterSampleOverview(hBand, 0); // returns a hBand
+    GDALGetRasterSampleOverview(hBand, 0);  // returns a hBand
     // GDALFillRaster
     // GDALComputeBandStats
     // GDALOverviewMagnitudeCorrection
@@ -121,7 +120,7 @@ static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
     // GDALSetDefaultRAT
     // GDALAddDerivedBandPixelFunc
     GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
-    if( hMaskBand != hBand )
+    if (hMaskBand != hBand)
         TortureBand(hMaskBand, false, nRecurse + 1);
     GDALGetMaskFlags(hBand);
     // GDALCreateMaskBand
@@ -131,13 +130,13 @@ static void TortureBand( GDALRasterBandH hBand, int /* bReadWriteOperations */,
 /*                              TortureDS()                             */
 /************************************************************************/
 
-static void TortureDS( const char *pszTarget, bool bReadWriteOperations )
+static void TortureDS(const char *pszTarget, bool bReadWriteOperations)
 {
     // hDS = GDALOpen(pszTarget, GA_Update);
     // GDALClose(hDS);
 
     GDALDatasetH hDS = GDALOpen(pszTarget, GA_ReadOnly);
-    if( hDS == nullptr )
+    if (hDS == nullptr)
         return;
 
     // GDALGetMetadata(GDALMajorObjectH, const char *);
@@ -146,7 +145,7 @@ static void TortureDS( const char *pszTarget, bool bReadWriteOperations )
     // GDALSetMetadataItem(GDALMajorObjectH, const char *, const char *,
     //                     const char *);
     GDALGetDescription(hDS);
-    //GDALSetDescription
+    // GDALSetDescription
     GDALGetDatasetDriver(hDS);
     char **papszFileList = GDALGetFileList(hDS);
     CSLDestroy(papszFileList);
@@ -175,10 +174,10 @@ static void TortureDS( const char *pszTarget, bool bReadWriteOperations )
     // GDALCreateDatasetMaskBand
     // GDALDatasetCopyWholeRaster
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for (int iBand = 0; iBand < nBands; iBand++)
     {
         GDALRasterBandH hBand = GDALGetRasterBand(hDS, iBand + 1);
-        if( hBand == nullptr )
+        if (hBand == nullptr)
             continue;
 
         TortureBand(hBand, bReadWriteOperations, 0);
@@ -191,43 +190,40 @@ static void TortureDS( const char *pszTarget, bool bReadWriteOperations )
 /*                       ProcessTortureTarget()                         */
 /************************************************************************/
 
-static void ProcessTortureTarget( const char *pszTarget,
-                                  char **papszSiblingList,
-                                  bool bRecursive, bool bReportFailures,
-                                  bool bReadWriteOperations )
+static void ProcessTortureTarget(const char *pszTarget, char **papszSiblingList,
+                                 bool bRecursive, bool bReportFailures,
+                                 bool bReadWriteOperations)
 {
     GDALDriverH hDriver = GDALIdentifyDriver(pszTarget, papszSiblingList);
 
-    if( hDriver != nullptr )
+    if (hDriver != nullptr)
     {
         printf("%s: %s\n", pszTarget, GDALGetDriverShortName(hDriver));
         TortureDS(pszTarget, bReadWriteOperations);
     }
-    else if( bReportFailures )
+    else if (bReportFailures)
     {
         printf("%s: unrecognized\n", pszTarget);
     }
 
-    if( !bRecursive || hDriver != nullptr )
+    if (!bRecursive || hDriver != nullptr)
         return;
 
     VSIStatBufL sStatBuf;
-    if( VSIStatL(pszTarget, &sStatBuf) != 0 ||
-        !VSI_ISDIR(sStatBuf.st_mode) )
+    if (VSIStatL(pszTarget, &sStatBuf) != 0 || !VSI_ISDIR(sStatBuf.st_mode))
         return;
 
     papszSiblingList = VSIReadDir(pszTarget);
-    for( int i = 0; papszSiblingList && papszSiblingList[i]; i++ )
+    for (int i = 0; papszSiblingList && papszSiblingList[i]; i++)
     {
-        if( EQUAL(papszSiblingList[i],"..") ||
-            EQUAL(papszSiblingList[i],".") )
+        if (EQUAL(papszSiblingList[i], "..") || EQUAL(papszSiblingList[i], "."))
             continue;
 
         const CPLString osSubTarget =
             CPLFormFilename(pszTarget, papszSiblingList[i], nullptr);
 
-        ProcessTortureTarget(osSubTarget, papszSiblingList,
-                             bRecursive, bReportFailures, bReadWriteOperations);
+        ProcessTortureTarget(osSubTarget, papszSiblingList, bRecursive,
+                             bReportFailures, bReadWriteOperations);
     }
     CSLDestroy(papszSiblingList);
 }
@@ -236,34 +232,34 @@ static void ProcessTortureTarget( const char *pszTarget,
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 {
     GDALAllRegister();
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
-    if( argc < 1 )
+    if (argc < 1)
         exit(-argc);
 
-    if( argc < 2 )
+    if (argc < 2)
         Usage();
 
-/* -------------------------------------------------------------------- */
-/*      Scan for command line switches                                   */
-/* -------------------------------------------------------------------- */
-    char** papszArgv = argv + 1;
+    /* -------------------------------------------------------------------- */
+    /*      Scan for command line switches                                   */
+    /* -------------------------------------------------------------------- */
+    char **papszArgv = argv + 1;
     argc--;
 
     bool bRecursive = false;
     bool bReportFailures = false;
     bool bReadWriteOperations = false;
 
-    while( argc > 0 && papszArgv[0][0] == '-' )
+    while (argc > 0 && papszArgv[0][0] == '-')
     {
-        if( EQUAL(papszArgv[0], "-r") )
+        if (EQUAL(papszArgv[0], "-r"))
             bRecursive = true;
-        else if( EQUAL(papszArgv[0], "-u") )
+        else if (EQUAL(papszArgv[0], "-u"))
             bReportFailures = true;
-        else if( EQUAL(papszArgv[0], "-rw") )
+        else if (EQUAL(papszArgv[0], "-rw"))
             bReadWriteOperations = true;
         else
             Usage();
@@ -272,20 +268,20 @@ int main( int argc, char **argv )
         argc--;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Process given files.                                            */
-/* -------------------------------------------------------------------- */
-    while( argc > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Process given files.                                            */
+    /* -------------------------------------------------------------------- */
+    while (argc > 0)
     {
-        ProcessTortureTarget(papszArgv[0], nullptr,
-                             bRecursive, bReportFailures, bReadWriteOperations);
+        ProcessTortureTarget(papszArgv[0], nullptr, bRecursive, bReportFailures,
+                             bReadWriteOperations);
         argc--;
         papszArgv++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
     CSLDestroy(argv);
     GDALDestroyDriverManager();
 

@@ -37,22 +37,21 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-
 /* -------------------------------------------------------------------- */
 /*                   DoesDriverHandleExtension()                        */
 /* -------------------------------------------------------------------- */
 
-static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
+static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
 {
     bool bRet = false;
-    const char* pszDriverExtensions =
-        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, nullptr );
-    if( pszDriverExtensions )
+    const char *pszDriverExtensions =
+        GDALGetMetadataItem(hDriver, GDAL_DMD_EXTENSIONS, nullptr);
+    if (pszDriverExtensions)
     {
-        char** papszTokens = CSLTokenizeString( pszDriverExtensions );
-        for( int j = 0; papszTokens[j]; j++ )
+        char **papszTokens = CSLTokenizeString(pszDriverExtensions);
+        for (int j = 0; papszTokens[j]; j++)
         {
-            if( EQUAL(pszExt, papszTokens[j]) )
+            if (EQUAL(pszExt, papszTokens[j]))
             {
                 bRet = true;
                 break;
@@ -67,40 +66,44 @@ static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
 /*                         GetOutputDriversFor()                        */
 /* -------------------------------------------------------------------- */
 
-std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
+std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
                                            int nFlagRasterVector)
 {
     std::vector<CPLString> aoDriverList;
 
     CPLString osExt = CPLGetExtension(pszDestFilename);
-    if( EQUAL(osExt, "zip") &&
-            (CPLString(pszDestFilename).endsWith(".shp.zip") ||
-             CPLString(pszDestFilename).endsWith(".SHP.ZIP")) )
+    if (EQUAL(osExt, "zip") &&
+        (CPLString(pszDestFilename).endsWith(".shp.zip") ||
+         CPLString(pszDestFilename).endsWith(".SHP.ZIP")))
     {
         osExt = "shp.zip";
     }
     const int nDriverCount = GDALGetDriverCount();
-    for( int i = 0; i < nDriverCount; i++ )
+    for (int i = 0; i < nDriverCount; i++)
     {
         GDALDriverH hDriver = GDALGetDriver(i);
-        if( (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr ||
-             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr ) &&
+        if ((GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
+                 nullptr ||
+             GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
+                 nullptr) &&
             (((nFlagRasterVector & GDAL_OF_RASTER) &&
-                GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr ) != nullptr) ||
-            ((nFlagRasterVector & GDAL_OF_VECTOR) &&
-                GDALGetMetadataItem( hDriver, GDAL_DCAP_VECTOR, nullptr ) != nullptr)) )
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) !=
+                  nullptr) ||
+             ((nFlagRasterVector & GDAL_OF_VECTOR) &&
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR, nullptr) !=
+                  nullptr)))
         {
-            if( !osExt.empty() && DoesDriverHandleExtension(hDriver, osExt) )
+            if (!osExt.empty() && DoesDriverHandleExtension(hDriver, osExt))
             {
-                aoDriverList.push_back( GDALGetDriverShortName(hDriver) );
+                aoDriverList.push_back(GDALGetDriverShortName(hDriver));
             }
             else
             {
-                const char* pszPrefix = GDALGetMetadataItem(hDriver,
-                    GDAL_DMD_CONNECTION_PREFIX, nullptr);
-                if( pszPrefix && STARTS_WITH_CI(pszDestFilename, pszPrefix) )
+                const char *pszPrefix = GDALGetMetadataItem(
+                    hDriver, GDAL_DMD_CONNECTION_PREFIX, nullptr);
+                if (pszPrefix && STARTS_WITH_CI(pszDestFilename, pszPrefix))
                 {
-                    aoDriverList.push_back( GDALGetDriverShortName(hDriver) );
+                    aoDriverList.push_back(GDALGetDriverShortName(hDriver));
                 }
             }
         }
@@ -108,8 +111,8 @@ std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
 
     // GMT is registered before netCDF for opening reasons, but we want
     // netCDF to be used by default for output.
-    if( EQUAL(osExt, "nc") && aoDriverList.size() == 2 &&
-        EQUAL(aoDriverList[0], "GMT") && EQUAL(aoDriverList[1], "NETCDF") )
+    if (EQUAL(osExt, "nc") && aoDriverList.size() == 2 &&
+        EQUAL(aoDriverList[0], "GMT") && EQUAL(aoDriverList[1], "NETCDF"))
     {
         aoDriverList.clear();
         aoDriverList.push_back("NETCDF");
@@ -123,34 +126,33 @@ std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
 /*                      GetOutputDriverForRaster()                      */
 /* -------------------------------------------------------------------- */
 
-CPLString GetOutputDriverForRaster(const char* pszDestFilename)
+CPLString GetOutputDriverForRaster(const char *pszDestFilename)
 {
     CPLString osFormat;
     std::vector<CPLString> aoDrivers =
         GetOutputDriversFor(pszDestFilename, GDAL_OF_RASTER);
     CPLString osExt(CPLGetExtension(pszDestFilename));
-    if( aoDrivers.empty() )
+    if (aoDrivers.empty())
     {
-        if( osExt.empty() )
+        if (osExt.empty())
         {
             osFormat = "GTiff";
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Cannot guess driver for %s", pszDestFilename);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot guess driver for %s",
+                     pszDestFilename);
             return "";
         }
     }
     else
     {
-        if( aoDrivers.size() > 1 &&
-            !(aoDrivers[0] == "GTiff" && aoDrivers[1] == "COG") )
+        if (aoDrivers.size() > 1 &&
+            !(aoDrivers[0] == "GTiff" && aoDrivers[1] == "COG"))
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Several drivers matching %s extension. Using %s",
-                      osExt.c_str(),
-                      aoDrivers[0].c_str() );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Several drivers matching %s extension. Using %s",
+                     osExt.c_str(), aoDrivers[0].c_str());
         }
         osFormat = aoDrivers[0];
     }
@@ -162,23 +164,23 @@ CPLString GetOutputDriverForRaster(const char* pszDestFilename)
 /*                        EarlySetConfigOptions()                       */
 /* -------------------------------------------------------------------- */
 
-void EarlySetConfigOptions( int argc, char ** argv )
+void EarlySetConfigOptions(int argc, char **argv)
 {
     // Must process some config options before GDALAllRegister() or
     // OGRRegisterAll(), but we can't call GDALGeneralCmdLineProcessor() or
     // OGRGeneralCmdLineProcessor(), because it needs the drivers to be
     // registered for the --format or --formats options.
-    for( int i = 1; i < argc; i++ )
+    for (int i = 1; i < argc; i++)
     {
-        if( EQUAL(argv[i],"--config") && i + 2 < argc )
+        if (EQUAL(argv[i], "--config") && i + 2 < argc)
         {
-            CPLSetConfigOption( argv[i+1], argv[i+2] );
+            CPLSetConfigOption(argv[i + 1], argv[i + 2]);
 
             i += 2;
         }
-        else if( EQUAL(argv[i],"--debug") && i + 1 < argc )
+        else if (EQUAL(argv[i], "--debug") && i + 1 < argc)
         {
-            CPLSetConfigOption( "CPL_DEBUG", argv[i+1] );
+            CPLSetConfigOption("CPL_DEBUG", argv[i + 1]);
             i += 1;
         }
     }
