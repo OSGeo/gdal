@@ -29,79 +29,66 @@
 #include "ogr_svg.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                            OGRSVGLayer()                             */
 /************************************************************************/
 
-OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
-                          const char* pszLayerName,
-                          SVGGeometryType svgGeomTypeIn,
+OGRSVGLayer::OGRSVGLayer(const char *pszFilename, const char *pszLayerName,
+                         SVGGeometryType svgGeomTypeIn,
 #ifndef HAVE_EXPAT
-                          CPL_UNUSED
+                         CPL_UNUSED
 #endif
-                          OGRSVGDataSource* poDSIn ) :
-    poFeatureDefn(nullptr),
-    poSRS(nullptr),
+                             OGRSVGDataSource *poDSIn)
+    : poFeatureDefn(nullptr), poSRS(nullptr),
 #ifdef HAVE_EXPAT
-    poDS(poDSIn),
+      poDS(poDSIn),
 #endif
-    osLayerName(pszLayerName),
-    svgGeomType(svgGeomTypeIn),
-    nTotalFeatures(0),
-    nNextFID(0),
-    fpSVG(nullptr),
+      osLayerName(pszLayerName), svgGeomType(svgGeomTypeIn), nTotalFeatures(0),
+      nNextFID(0), fpSVG(nullptr),
 #ifdef HAVE_EXPAT
-    oParser(nullptr),
-    oSchemaParser(nullptr),
+      oParser(nullptr), oSchemaParser(nullptr),
 #endif
-    pszSubElementValue(nullptr),
-    nSubElementValueLen(0),
-    iCurrentField(0),
-    poFeature(nullptr),
-    ppoFeatureTab(nullptr),
-    nFeatureTabLength(0),
-    nFeatureTabIndex(0),
-    depthLevel(0),
-    interestingDepthLevel(0),
-    inInterestingElement(false),
-    bStopParsing(false)
+      pszSubElementValue(nullptr), nSubElementValueLen(0), iCurrentField(0),
+      poFeature(nullptr), ppoFeatureTab(nullptr), nFeatureTabLength(0),
+      nFeatureTabIndex(0), depthLevel(0), interestingDepthLevel(0),
+      inInterestingElement(false), bStopParsing(false)
 #ifdef HAVE_EXPAT
-        ,
-    nWithoutEventCounter(0),
-    nDataHandlerCounter(0),
-    poCurLayer(nullptr)
+      ,
+      nWithoutEventCounter(0), nDataHandlerCounter(0), poCurLayer(nullptr)
 #endif
 
 {
-    SetDescription( pszLayerName );
+    SetDescription(pszLayerName);
 
-    poSRS = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\","
-    "GEOGCS[\"WGS 84\","
-    "    DATUM[\"WGS_1984\","
-    "        SPHEROID[\"WGS 84\",6378137,298.257223563,"
-    "            AUTHORITY[\"EPSG\",\"7030\"]],"
-    "        AUTHORITY[\"EPSG\",\"6326\"]],"
-    "    PRIMEM[\"Greenwich\",0,"
-    "        AUTHORITY[\"EPSG\",\"8901\"]],"
-    "    UNIT[\"degree\",0.0174532925199433,"
-    "        AUTHORITY[\"EPSG\",\"9122\"]],"
-    "    AUTHORITY[\"EPSG\",\"4326\"]],"
-    "UNIT[\"metre\",1,"
-    "    AUTHORITY[\"EPSG\",\"9001\"]],"
-    "PROJECTION[\"Mercator_1SP\"],"
-    "PARAMETER[\"central_meridian\",0],"
-    "PARAMETER[\"scale_factor\",1],"
-    "PARAMETER[\"false_easting\",0],"
-    "PARAMETER[\"false_northing\",0],"
-    "EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],"
-    "AUTHORITY[\"EPSG\",\"3857\"],"
-    "AXIS[\"X\",EAST],"
-    "AXIS[\"Y\",NORTH]]");
+    poSRS = new OGRSpatialReference(
+        "PROJCS[\"WGS 84 / Pseudo-Mercator\","
+        "GEOGCS[\"WGS 84\","
+        "    DATUM[\"WGS_1984\","
+        "        SPHEROID[\"WGS 84\",6378137,298.257223563,"
+        "            AUTHORITY[\"EPSG\",\"7030\"]],"
+        "        AUTHORITY[\"EPSG\",\"6326\"]],"
+        "    PRIMEM[\"Greenwich\",0,"
+        "        AUTHORITY[\"EPSG\",\"8901\"]],"
+        "    UNIT[\"degree\",0.0174532925199433,"
+        "        AUTHORITY[\"EPSG\",\"9122\"]],"
+        "    AUTHORITY[\"EPSG\",\"4326\"]],"
+        "UNIT[\"metre\",1,"
+        "    AUTHORITY[\"EPSG\",\"9001\"]],"
+        "PROJECTION[\"Mercator_1SP\"],"
+        "PARAMETER[\"central_meridian\",0],"
+        "PARAMETER[\"scale_factor\",1],"
+        "PARAMETER[\"false_easting\",0],"
+        "PARAMETER[\"false_northing\",0],"
+        "EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
+        "+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  "
+        "+no_defs\"],"
+        "AUTHORITY[\"EPSG\",\"3857\"],"
+        "AXIS[\"X\",EAST],"
+        "AXIS[\"Y\",NORTH]]");
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    fpSVG = VSIFOpenL( pszFilename, "r" );
-    if( fpSVG == nullptr )
+    fpSVG = VSIFOpenL(pszFilename, "r");
+    if (fpSVG == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
         return;
@@ -124,12 +111,12 @@ OGRSVGLayer::~OGRSVGLayer()
     if (poFeatureDefn)
         poFeatureDefn->Release();
 
-    if( poSRS != nullptr )
+    if (poSRS != nullptr)
         poSRS->Release();
 
     CPLFree(pszSubElementValue);
 
-    for( int i = nFeatureTabIndex;i<nFeatureTabLength; i++ )
+    for (int i = nFeatureTabIndex; i < nFeatureTabLength; i++)
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
 
@@ -137,25 +124,25 @@ OGRSVGLayer::~OGRSVGLayer()
         delete poFeature;
 
     if (fpSVG)
-        VSIFCloseL( fpSVG );
+        VSIFCloseL(fpSVG);
 }
 
 #ifdef HAVE_EXPAT
 
-static void XMLCALL startElementCbk(void *pUserData,
-                                    const char *pszName, const char **ppszAttr)
+static void XMLCALL startElementCbk(void *pUserData, const char *pszName,
+                                    const char **ppszAttr)
 {
-    ((OGRSVGLayer*)pUserData)->startElementCbk(pszName, ppszAttr);
+    ((OGRSVGLayer *)pUserData)->startElementCbk(pszName, ppszAttr);
 }
 
 static void XMLCALL endElementCbk(void *pUserData, const char *pszName)
 {
-    ((OGRSVGLayer*)pUserData)->endElementCbk(pszName);
+    ((OGRSVGLayer *)pUserData)->endElementCbk(pszName);
 }
 
 static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
 {
-    ((OGRSVGLayer*)pUserData)->dataHandlerCbk(data, nLen);
+    ((OGRSVGLayer *)pUserData)->dataHandlerCbk(data, nLen);
 }
 
 #endif
@@ -170,7 +157,7 @@ void OGRSVGLayer::ResetReading()
     nNextFID = 0;
     if (fpSVG)
     {
-        VSIFSeekL( fpSVG, 0, SEEK_SET );
+        VSIFSeekL(fpSVG, 0, SEEK_SET);
 #ifdef HAVE_EXPAT
         if (oParser)
             XML_ParserFree(oParser);
@@ -187,7 +174,7 @@ void OGRSVGLayer::ResetReading()
     nSubElementValueLen = 0;
     iCurrentField = -1;
 
-    for( int i = nFeatureTabIndex; i < nFeatureTabLength; i++ )
+    for (int i = nFeatureTabIndex; i < nFeatureTabLength; i++)
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
@@ -208,10 +195,10 @@ void OGRSVGLayer::ResetReading()
 /*                         OGRSVGGetClass()                             */
 /************************************************************************/
 
-static const char* OGRSVGGetClass(const char **ppszAttr)
+static const char *OGRSVGGetClass(const char **ppszAttr)
 {
-    const char** ppszIter = ppszAttr;
-    while(*ppszIter)
+    const char **ppszIter = ppszAttr;
+    while (*ppszIter)
     {
         if (strcmp(ppszIter[0], "class") == 0)
             return ppszIter[1];
@@ -224,20 +211,20 @@ static const char* OGRSVGGetClass(const char **ppszAttr)
 /*                          OGRSVGParseD()                              */
 /************************************************************************/
 
-static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
+static void OGRSVGParseD(OGRLineString *poLS, const char *pszD)
 {
     char szBuffer[32];
     int iBuffer = 0;
-    const char* pszIter = pszD;
+    const char *pszIter = pszD;
     int iNumber = 0;
     double dfPrevNumber = 0.0;
     bool bRelativeLineto = false;
     double dfX = 0.0;
     double dfY = 0.0;
     int nPointCount = 0;
-    while( true )
+    while (true)
     {
-        const char ch = *(pszIter ++);
+        const char ch = *(pszIter++);
 
         if (ch == 'M' || ch == 'm')
         {
@@ -273,7 +260,7 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
                 CPLDebug("SVG", "Too big number");
                 return;
             }
-            szBuffer[iBuffer ++] = ch;
+            szBuffer[iBuffer++] = ch;
         }
         else if (ch == ' ' || ch == 0)
         {
@@ -285,7 +272,7 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
                     // Cloudmade --> negate y.
                     const double dfNumber = -CPLAtof(szBuffer);
 
-                    if( bRelativeLineto )
+                    if (bRelativeLineto)
                     {
                         dfX += dfPrevNumber;
                         dfY += dfNumber;
@@ -296,7 +283,7 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
                         dfY = dfNumber;
                     }
                     poLS->addPoint(dfX, dfY);
-                    nPointCount ++;
+                    nPointCount++;
 
                     iNumber = 0;
                 }
@@ -320,19 +307,19 @@ static void OGRSVGParseD(OGRLineString* poLS, const char* pszD)
 
 void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
     nWithoutEventCounter = 0;
 
-    if (svgGeomType == SVG_POINTS &&
-        strcmp(pszName, "circle") == 0 &&
+    if (svgGeomType == SVG_POINTS && strcmp(pszName, "circle") == 0 &&
         strcmp(OGRSVGGetClass(ppszAttr), "point") == 0)
     {
         bool bHasFoundX = false;
         bool bHasFoundY = false;
         double dfX = 0.0;
         double dfY = 0.0;
-        for( int i = 0; ppszAttr[i]; i += 2 )
+        for (int i = 0; ppszAttr[i]; i += 2)
         {
             if (strcmp(ppszAttr[i], "cx") == 0)
             {
@@ -343,7 +330,7 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 bHasFoundY = true;
                 /* Cloudmade --> negate y */
-                dfY = - CPLAtof(ppszAttr[i + 1]);
+                dfY = -CPLAtof(ppszAttr[i + 1]);
             }
         }
         if (bHasFoundX && bHasFoundY)
@@ -354,20 +341,19 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             if (poFeature)
                 delete poFeature;
 
-            poFeature = new OGRFeature( poFeatureDefn );
+            poFeature = new OGRFeature(poFeatureDefn);
 
-            poFeature->SetFID( nNextFID++ );
-            OGRPoint* poPoint = new OGRPoint( dfX, dfY );
+            poFeature->SetFID(nNextFID++);
+            OGRPoint *poPoint = new OGRPoint(dfX, dfY);
             poPoint->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly( poPoint );
+            poFeature->SetGeometryDirectly(poPoint);
         }
     }
-    else if (svgGeomType == SVG_LINES &&
-             strcmp(pszName, "path") == 0 &&
+    else if (svgGeomType == SVG_LINES && strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "line") == 0)
     {
-        const char* pszD = nullptr;
-        for( int i = 0; ppszAttr[i]; i += 2 )
+        const char *pszD = nullptr;
+        for (int i = 0; ppszAttr[i]; i += 2)
         {
             if (strcmp(ppszAttr[i], "d") == 0)
             {
@@ -383,21 +369,20 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             if (poFeature)
                 delete poFeature;
 
-            poFeature = new OGRFeature( poFeatureDefn );
+            poFeature = new OGRFeature(poFeatureDefn);
 
-            poFeature->SetFID( nNextFID++ );
-            OGRLineString* poLS = new OGRLineString();
+            poFeature->SetFID(nNextFID++);
+            OGRLineString *poLS = new OGRLineString();
             OGRSVGParseD(poLS, pszD);
             poLS->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly( poLS );
+            poFeature->SetGeometryDirectly(poLS);
         }
     }
-    else if (svgGeomType == SVG_POLYGONS &&
-             strcmp(pszName, "path") == 0 &&
+    else if (svgGeomType == SVG_POLYGONS && strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "polygon") == 0)
     {
-        const char* pszD = nullptr;
-        for( int i = 0; ppszAttr[i]; i += 2 )
+        const char *pszD = nullptr;
+        for (int i = 0; ppszAttr[i]; i += 2)
         {
             if (strcmp(ppszAttr[i], "d") == 0)
             {
@@ -413,20 +398,19 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             if (poFeature)
                 delete poFeature;
 
-            poFeature = new OGRFeature( poFeatureDefn );
+            poFeature = new OGRFeature(poFeatureDefn);
 
-            poFeature->SetFID( nNextFID++ );
-            OGRPolygon* poPolygon = new OGRPolygon();
-            OGRLinearRing* poLS = new OGRLinearRing();
+            poFeature->SetFID(nNextFID++);
+            OGRPolygon *poPolygon = new OGRPolygon();
+            OGRLinearRing *poLS = new OGRLinearRing();
             OGRSVGParseD(poLS, pszD);
             poPolygon->addRingDirectly(poLS);
             poPolygon->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly( poPolygon );
+            poFeature->SetGeometryDirectly(poPolygon);
         }
     }
-    else if( inInterestingElement &&
-             depthLevel == interestingDepthLevel + 1 &&
-             STARTS_WITH(pszName, "cm:") )
+    else if (inInterestingElement && depthLevel == interestingDepthLevel + 1 &&
+             STARTS_WITH(pszName, "cm:"))
     {
         iCurrentField = poFeatureDefn->GetFieldIndex(pszName + 3);
     }
@@ -440,26 +424,27 @@ void OGRSVGLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
 void OGRSVGLayer::endElementCbk(CPL_UNUSED const char *pszName)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
     nWithoutEventCounter = 0;
 
     depthLevel--;
 
-    if( inInterestingElement )
+    if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel)
         {
             inInterestingElement = false;
 
-            if( (m_poFilterGeom == nullptr
-                    || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == nullptr
-                    || m_poAttrQuery->Evaluate( poFeature )) )
+            if ((m_poFilterGeom == nullptr ||
+                 FilterGeometry(poFeature->GetGeometryRef())) &&
+                (m_poAttrQuery == nullptr ||
+                 m_poAttrQuery->Evaluate(poFeature)))
             {
-                ppoFeatureTab = (OGRFeature**)
-                        CPLRealloc(ppoFeatureTab,
-                                    sizeof(OGRFeature*) * (nFeatureTabLength + 1));
+                ppoFeatureTab = (OGRFeature **)CPLRealloc(
+                    ppoFeatureTab,
+                    sizeof(OGRFeature *) * (nFeatureTabLength + 1));
                 ppoFeatureTab[nFeatureTabLength] = poFeature;
                 nFeatureTabLength++;
             }
@@ -474,7 +459,7 @@ void OGRSVGLayer::endElementCbk(CPL_UNUSED const char *pszName)
             if (poFeature && iCurrentField >= 0 && nSubElementValueLen)
             {
                 pszSubElementValue[nSubElementValueLen] = 0;
-                poFeature->SetField( iCurrentField, pszSubElementValue);
+                poFeature->SetField(iCurrentField, pszSubElementValue);
             }
 
             CPLFree(pszSubElementValue);
@@ -491,9 +476,10 @@ void OGRSVGLayer::endElementCbk(CPL_UNUSED const char *pszName)
 
 void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
-    nDataHandlerCounter ++;
+    nDataHandlerCounter++;
     if (nDataHandlerCounter >= BUFSIZ)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -507,8 +493,8 @@ void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
 
     if (iCurrentField >= 0)
     {
-        char* pszNewSubElementValue = (char*) VSI_REALLOC_VERBOSE(pszSubElementValue,
-                                           nSubElementValueLen + nLen + 1);
+        char *pszNewSubElementValue = (char *)VSI_REALLOC_VERBOSE(
+            pszSubElementValue, nSubElementValueLen + nLen + 1);
         if (pszNewSubElementValue == nullptr)
         {
             XML_StopParser(oParser, XML_FALSE);
@@ -520,8 +506,9 @@ void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
         nSubElementValueLen += nLen;
         if (nSubElementValueLen > 100000)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Too much data inside one element. File probably corrupted");
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Too much data inside one element. File probably corrupted");
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = true;
         }
@@ -540,7 +527,7 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     if (fpSVG == nullptr)
         return nullptr;
 
-    if( bStopParsing )
+    if (bStopParsing)
         return nullptr;
 
 #ifdef HAVE_EXPAT
@@ -565,22 +552,23 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     do
     {
         nDataHandlerCounter = 0;
-        unsigned int nLen = (unsigned int)
-                    VSIFReadL( aBuf, 1, sizeof(aBuf), fpSVG );
+        unsigned int nLen =
+            (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fpSVG);
         nDone = VSIFEofL(fpSVG);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of SVG file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "XML parsing of SVG file failed : %s at line %d, column %d",
+                XML_ErrorString(XML_GetErrorCode(oParser)),
+                (int)XML_GetCurrentLineNumber(oParser),
+                (int)XML_GetCurrentColumnNumber(oParser));
             bStopParsing = true;
             break;
         }
-        nWithoutEventCounter ++;
-    } while( !nDone && nFeatureTabLength == 0 && !bStopParsing &&
-             nWithoutEventCounter < 1000 );
+        nWithoutEventCounter++;
+    } while (!nDone && nFeatureTabLength == 0 && !bStopParsing &&
+             nWithoutEventCounter < 1000);
 
     if (nWithoutEventCounter == 1000)
     {
@@ -599,14 +587,14 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSVGLayer::TestCapability( const char * pszCap )
+int OGRSVGLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr &&
                nTotalFeatures > 0;
 
-    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
     else
@@ -623,18 +611,19 @@ static void XMLCALL startElementLoadSchemaCbk(void *pUserData,
                                               const char *pszName,
                                               const char **ppszAttr)
 {
-    ((OGRSVGLayer*)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
+    ((OGRSVGLayer *)pUserData)->startElementLoadSchemaCbk(pszName, ppszAttr);
 }
 
-static void XMLCALL endElementLoadSchemaCbk(void *pUserData, const char *pszName)
+static void XMLCALL endElementLoadSchemaCbk(void *pUserData,
+                                            const char *pszName)
 {
-    ((OGRSVGLayer*)pUserData)->endElementLoadSchemaCbk(pszName);
+    ((OGRSVGLayer *)pUserData)->endElementLoadSchemaCbk(pszName);
 }
 
-static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData,
-                                             const char *data, int nLen)
+static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data,
+                                             int nLen)
 {
-    ((OGRSVGLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
+    ((OGRSVGLayer *)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
 
 /** This function parses the whole file to build the schema */
@@ -642,25 +631,26 @@ void OGRSVGLayer::LoadSchema()
 {
     CPLAssert(poFeatureDefn == nullptr);
 
-    for(int i=0;i<poDS->GetLayerCount();i++)
+    for (int i = 0; i < poDS->GetLayerCount(); i++)
     {
-        OGRSVGLayer* poLayer = (OGRSVGLayer*)poDS->GetLayer(i);
-        poLayer->poFeatureDefn = new OGRFeatureDefn( poLayer->osLayerName );
+        OGRSVGLayer *poLayer = (OGRSVGLayer *)poDS->GetLayer(i);
+        poLayer->poFeatureDefn = new OGRFeatureDefn(poLayer->osLayerName);
         poLayer->poFeatureDefn->Reference();
         poLayer->poFeatureDefn->SetGeomType(poLayer->GetGeomType());
-        poLayer->poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poLayer->poSRS);
+        poLayer->poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
+            poLayer->poSRS);
     }
 
     oSchemaParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oSchemaParser, ::startElementLoadSchemaCbk,
-                                         ::endElementLoadSchemaCbk);
+                          ::endElementLoadSchemaCbk);
     XML_SetCharacterDataHandler(oSchemaParser, ::dataHandlerLoadSchemaCbk);
     XML_SetUserData(oSchemaParser, this);
 
     if (fpSVG == nullptr)
         return;
 
-    VSIFSeekL( fpSVG, 0, SEEK_SET );
+    VSIFSeekL(fpSVG, 0, SEEK_SET);
 
     inInterestingElement = false;
     depthLevel = 0;
@@ -673,20 +663,21 @@ void OGRSVGLayer::LoadSchema()
     {
         nDataHandlerCounter = 0;
         unsigned int nLen =
-            (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpSVG );
+            (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fpSVG);
         nDone = VSIFEofL(fpSVG);
         if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of SVG file failed : %s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oSchemaParser)),
-                     (int)XML_GetCurrentLineNumber(oSchemaParser),
-                     (int)XML_GetCurrentColumnNumber(oSchemaParser));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "XML parsing of SVG file failed : %s at line %d, column %d",
+                XML_ErrorString(XML_GetErrorCode(oSchemaParser)),
+                (int)XML_GetCurrentLineNumber(oSchemaParser),
+                (int)XML_GetCurrentColumnNumber(oSchemaParser));
             bStopParsing = true;
             break;
         }
-        nWithoutEventCounter ++;
-    } while( !nDone && !bStopParsing && nWithoutEventCounter < 1000 );
+        nWithoutEventCounter++;
+    } while (!nDone && !bStopParsing && nWithoutEventCounter < 1000);
 
     if (nWithoutEventCounter == 1000)
     {
@@ -698,7 +689,7 @@ void OGRSVGLayer::LoadSchema()
     XML_ParserFree(oSchemaParser);
     oSchemaParser = nullptr;
 
-    VSIFSeekL( fpSVG, 0, SEEK_SET );
+    VSIFSeekL(fpSVG, 0, SEEK_SET);
 }
 
 /************************************************************************/
@@ -708,35 +699,36 @@ void OGRSVGLayer::LoadSchema()
 void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
                                             const char **ppszAttr)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
     nWithoutEventCounter = 0;
 
     if (strcmp(pszName, "circle") == 0 &&
         strcmp(OGRSVGGetClass(ppszAttr), "point") == 0)
     {
-        poCurLayer = (OGRSVGLayer*)poDS->GetLayer(0);
-        poCurLayer->nTotalFeatures ++;
+        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(0);
+        poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
     }
     else if (strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "line") == 0)
     {
-        poCurLayer = (OGRSVGLayer*)poDS->GetLayer(1);
-        poCurLayer->nTotalFeatures ++;
+        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(1);
+        poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
     }
     else if (strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "polygon") == 0)
     {
-        poCurLayer = (OGRSVGLayer*)poDS->GetLayer(2);
-        poCurLayer->nTotalFeatures ++;
+        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(2);
+        poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
     }
-    else if( inInterestingElement )
+    else if (inInterestingElement)
     {
         if (depthLevel == interestingDepthLevel + 1 &&
             STARTS_WITH(pszName, "cm:"))
@@ -766,14 +758,14 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
 
 void OGRSVGLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
     nWithoutEventCounter = 0;
 
     depthLevel--;
 
-    if( inInterestingElement &&
-        depthLevel == interestingDepthLevel )
+    if (inInterestingElement && depthLevel == interestingDepthLevel)
     {
         inInterestingElement = false;
     }
@@ -786,9 +778,10 @@ void OGRSVGLayer::endElementLoadSchemaCbk(CPL_UNUSED const char *pszName)
 void OGRSVGLayer::dataHandlerLoadSchemaCbk(CPL_UNUSED const char *data,
                                            CPL_UNUSED int nLen)
 {
-    if( bStopParsing ) return;
+    if (bStopParsing)
+        return;
 
-    nDataHandlerCounter ++;
+    nDataHandlerCounter++;
     if (nDataHandlerCounter >= BUFSIZ)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -810,7 +803,7 @@ void OGRSVGLayer::LoadSchema()
 /*                          GetLayerDefn()                              */
 /************************************************************************/
 
-OGRFeatureDefn * OGRSVGLayer::GetLayerDefn()
+OGRFeatureDefn *OGRSVGLayer::GetLayerDefn()
 {
     if (poFeatureDefn == nullptr)
     {
@@ -838,7 +831,7 @@ OGRwkbGeometryType OGRSVGLayer::GetGeomType()
 /*                           GetGeomType()                              */
 /************************************************************************/
 
-GIntBig OGRSVGLayer::GetFeatureCount( int bForce )
+GIntBig OGRSVGLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
