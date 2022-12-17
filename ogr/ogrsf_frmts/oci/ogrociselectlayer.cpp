@@ -31,22 +31,21 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                          OGROCISelectLayer()                         */
 /************************************************************************/
 
-OGROCISelectLayer::OGROCISelectLayer( OGROCIDataSource *poDSIn,
-                                      const char * pszQuery,
-                                      OGROCIStatement *poDescribedCommand )
+OGROCISelectLayer::OGROCISelectLayer(OGROCIDataSource *poDSIn,
+                                     const char *pszQuery,
+                                     OGROCIStatement *poDescribedCommand)
 
 {
     poDS = poDSIn;
 
     iNextShapeId = 0;
 
-    poFeatureDefn = ReadTableDefinition( poDescribedCommand );
-    SetDescription( poFeatureDefn->GetName() );
+    poFeatureDefn = ReadTableDefinition(poDescribedCommand);
+    SetDescription(poFeatureDefn->GetName());
 
     pszQueryStatement = CPLStrdup(pszQuery);
 
@@ -70,72 +69,70 @@ OGROCISelectLayer::~OGROCISelectLayer()
 /************************************************************************/
 
 OGRFeatureDefn *
-OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
+OGROCISelectLayer::ReadTableDefinition(OGROCIStatement *poCommand)
 
 {
-    OGROCISession      *poSession = poDS->GetSession();
+    OGROCISession *poSession = poDS->GetSession();
 
-/* -------------------------------------------------------------------- */
-/*      Parse the returned table information.                           */
-/* -------------------------------------------------------------------- */
-    for( int iParam = 0; true; iParam++ )
+    /* -------------------------------------------------------------------- */
+    /*      Parse the returned table information.                           */
+    /* -------------------------------------------------------------------- */
+    for (int iParam = 0; true; iParam++)
     {
-        OGRFieldDefn oField( "", OFTString );
-        int          nStatus;
-        OCIParam     *hParamDesc;
-        ub2          nOCIType;
-        ub4          nOCILen;
+        OGRFieldDefn oField("", OFTString);
+        int nStatus;
+        OCIParam *hParamDesc;
+        ub2 nOCIType;
+        ub4 nOCILen;
 
-        nStatus =
-            OCIParamGet( poCommand->GetStatement(), OCI_HTYPE_STMT,
-                         poSession->hError, (dvoid**)&hParamDesc,
-                         (ub4) iParam+1 );
+        nStatus = OCIParamGet(poCommand->GetStatement(), OCI_HTYPE_STMT,
+                              poSession->hError, (dvoid **)&hParamDesc,
+                              (ub4)iParam + 1);
 
-        if( nStatus == OCI_ERROR )
+        if (nStatus == OCI_ERROR)
             break;
 
-        if( poSession->GetParamInfo( hParamDesc, &oField, &nOCIType, &nOCILen )
-            != CE_None )
+        if (poSession->GetParamInfo(hParamDesc, &oField, &nOCIType, &nOCILen) !=
+            CE_None)
             break;
 
-        if( oField.GetType() == OFTBinary && nOCIType == 108 )
+        if (oField.GetType() == OFTBinary && nOCIType == 108)
         {
-            CPLFree( pszGeomName );
-            pszGeomName = CPLStrdup( oField.GetNameRef() );
+            CPLFree(pszGeomName);
+            pszGeomName = CPLStrdup(oField.GetNameRef());
             iGeomColumn = iParam;
             break;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Use the schema off the statement.                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Use the schema off the statement.                               */
+    /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn;
 
     poDefn = poCommand->GetResultDefn();
-    if( iGeomColumn >= 0 )
+    if (iGeomColumn >= 0)
         poDefn->SetGeomType(wkbUnknown);
     poDefn->Reference();
 
-/* -------------------------------------------------------------------- */
-/*      Do we have an FID?                                              */
-/* -------------------------------------------------------------------- */
-    const char *pszExpectedFIDName =
-        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
-    if( poDefn->GetFieldIndex(pszExpectedFIDName) > -1 )
+    /* -------------------------------------------------------------------- */
+    /*      Do we have an FID?                                              */
+    /* -------------------------------------------------------------------- */
+    const char *pszExpectedFIDName = CPLGetConfigOption("OCI_FID", "OGR_FID");
+    if (poDefn->GetFieldIndex(pszExpectedFIDName) > -1)
     {
         iFIDColumn = poDefn->GetFieldIndex(pszExpectedFIDName);
         pszFIDName = CPLStrdup(poDefn->GetFieldDefn(iFIDColumn)->GetNameRef());
     }
 
-    if( EQUAL(pszExpectedFIDName, "OGR_FID") && pszFIDName )
+    if (EQUAL(pszExpectedFIDName, "OGR_FID") && pszFIDName)
     {
-        for(int i=0;i<poDefn->GetFieldCount();i++)
+        for (int i = 0; i < poDefn->GetFieldCount(); i++)
         {
-            // This is presumably a Integer since we always create Integer64 with a
-            // defined precision
-            if( poDefn->GetFieldDefn(i)->GetType() == OFTInteger64 &&
-                poDefn->GetFieldDefn(i)->GetWidth() == 0 )
+            // This is presumably a Integer since we always create Integer64
+            // with a defined precision
+            if (poDefn->GetFieldDefn(i)->GetType() == OFTInteger64 &&
+                poDefn->GetFieldDefn(i)->GetWidth() == 0)
             {
                 poDefn->GetFieldDefn(i)->SetType(OFTInteger);
             }
