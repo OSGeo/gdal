@@ -43,52 +43,58 @@
 
 class OGRPGeoDataSource;
 
-constexpr const char* pszRelationshipTypeUUID = "{B606A7E1-FA5B-439C-849C6E9C2481537B}";
+constexpr const char *pszRelationshipTypeUUID =
+    "{B606A7E1-FA5B-439C-849C6E9C2481537B}";
 
-class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
+class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
-    int                 m_nStatementFlags = 0;
+    int m_nStatementFlags = 0;
 
-    CPLODBCStatement   *poStmt;
+    CPLODBCStatement *poStmt;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
-    int                 nSRSId;
+    int nSRSId;
 
-    GIntBig             iNextShapeId;
+    GIntBig iNextShapeId;
 
-    OGRPGeoDataSource    *poDS;
+    OGRPGeoDataSource *poDS;
 
-    char                *pszGeomColumn;
-    char                *pszFIDColumn;
+    char *pszGeomColumn;
+    char *pszFIDColumn;
 
-    int                *panFieldOrdinals;
+    int *panFieldOrdinals;
 
-    bool                m_bEOF = false;
+    bool m_bEOF = false;
 
-    CPLErr              BuildFeatureDefn( const char *pszLayerName,
-                                          CPLODBCStatement *poStmt );
+    CPLErr BuildFeatureDefn(const char *pszLayerName, CPLODBCStatement *poStmt);
 
-    virtual CPLODBCStatement *  GetStatement() { return poStmt; }
+    virtual CPLODBCStatement *GetStatement()
+    {
+        return poStmt;
+    }
 
-    void                LookupSRID( int );
+    void LookupSRID(int);
 
   public:
-                        OGRPGeoLayer();
-    virtual             ~OGRPGeoLayer();
+    OGRPGeoLayer();
+    virtual ~OGRPGeoLayer();
 
-    virtual void        ResetReading() override;
+    virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
@@ -98,136 +104,152 @@ class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
 /*                           OGRPGeoTableLayer                            */
 /************************************************************************/
 
-class OGRPGeoTableLayer final: public OGRPGeoLayer
+class OGRPGeoTableLayer final : public OGRPGeoLayer
 {
-    char                *pszQuery;
+    char *pszQuery;
 
-    void                ClearStatement();
-    OGRErr              ResetStatement();
+    void ClearStatement();
+    OGRErr ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement() override;
+    virtual CPLODBCStatement *GetStatement() override;
 
-    OGREnvelope         sExtent;
-    std::string         m_osDefinition;
-    std::string         m_osDocumentation;
+    OGREnvelope sExtent;
+    std::string m_osDefinition;
+    std::string m_osDocumentation;
 
   public:
-    explicit            OGRPGeoTableLayer( OGRPGeoDataSource *,int );
-                        virtual ~OGRPGeoTableLayer();
+    explicit OGRPGeoTableLayer(OGRPGeoDataSource *, int);
+    virtual ~OGRPGeoTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName,
-                                    const char *pszGeomCol,
-                                    int nShapeType,
-                                    double dfExtentLeft,
-                                    double dfExtentRight,
-                                    double dfExtentBottom,
-                                    double dfExtentTop,
-                                    int nSRID,
-                                    int bHasZ,
-                                    int nHasM );
+    CPLErr Initialize(const char *pszTableName, const char *pszGeomCol,
+                      int nShapeType, double dfExtentLeft, double dfExtentRight,
+                      double dfExtentBottom, double dfExtentTop, int nSRID,
+                      int bHasZ, int nHasM);
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRErr SetAttributeFilter(const char *) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    const std::string&  GetXMLDefinition() { return m_osDefinition; }
-    const std::string&  GetXMLDocumentation() { return m_osDocumentation; }
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+    const std::string &GetXMLDefinition()
+    {
+        return m_osDefinition;
+    }
+    const std::string &GetXMLDocumentation()
+    {
+        return m_osDocumentation;
+    }
 };
 
 /************************************************************************/
 /*                          OGRPGeoSelectLayer                          */
 /************************************************************************/
 
-class OGRPGeoSelectLayer final: public OGRPGeoLayer
+class OGRPGeoSelectLayer final : public OGRPGeoLayer
 {
-    char                *pszBaseStatement;
+    char *pszBaseStatement;
 
-    void                ClearStatement();
-    OGRErr              ResetStatement();
+    void ClearStatement();
+    OGRErr ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement() override;
+    virtual CPLODBCStatement *GetStatement() override;
 
   public:
-                        OGRPGeoSelectLayer( OGRPGeoDataSource *,
-                                           CPLODBCStatement * );
-                        virtual ~OGRPGeoSelectLayer();
+    OGRPGeoSelectLayer(OGRPGeoDataSource *, CPLODBCStatement *);
+    virtual ~OGRPGeoSelectLayer();
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                           OGRPGeoDataSource                            */
 /************************************************************************/
 
-class OGRPGeoDataSource final: public OGRDataSource
+class OGRPGeoDataSource final : public OGRDataSource
 {
-    OGRPGeoLayer        **papoLayers;
-    int                 nLayers;
+    OGRPGeoLayer **papoLayers;
+    int nLayers;
 
-    char               *pszName;
+    char *pszName;
 
     mutable CPLODBCSession oSession;
 
-    std::unordered_set< std::string > m_aosAllLCTableNames;
-    bool                m_bHasGdbItemsTable = false;
+    std::unordered_set<std::string> m_aosAllLCTableNames;
+    bool m_bHasGdbItemsTable = false;
 
     std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers;
 
-    std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+    std::map<std::string, std::unique_ptr<GDALRelationship>>
+        m_osMapRelationships{};
 
 #ifndef _WIN32
-    mutable bool        m_COUNT_STAR_state_known = false;
-    mutable bool        m_COUNT_STAR_working = false;
+    mutable bool m_COUNT_STAR_state_known = false;
+    mutable bool m_COUNT_STAR_working = false;
 #endif
 
-    int                 m_nStatementFlags = 0;
+    int m_nStatementFlags = 0;
 
-    static bool         IsPrivateLayerName( const CPLString& osName );
+    static bool IsPrivateLayerName(const CPLString &osName);
+
   public:
-                        OGRPGeoDataSource();
-                        virtual ~OGRPGeoDataSource();
+    OGRPGeoDataSource();
+    virtual ~OGRPGeoDataSource();
 
-    int                 Open( GDALOpenInfo* poOpenInfo );
-    int                 OpenTable( const char *pszTableName,
-                                   const char *pszGeomCol,
-                                   int bUpdate );
+    int Open(GDALOpenInfo *poOpenInfo);
+    int OpenTable(const char *pszTableName, const char *pszGeomCol,
+                  int bUpdate);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
-    OGRLayer            *GetLayerByName( const char* ) override;
-    bool                IsLayerPrivate( int ) const override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
+    OGRLayer *GetLayerByName(const char *) override;
+    bool IsLayerPrivate(int) const override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect ) override;
-    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+    std::vector<std::string>
+    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
 
-    const GDALRelationship* GetRelationship(const std::string& name) const override;
+    const GDALRelationship *
+    GetRelationship(const std::string &name) const override;
 
     // Internal use
-    CPLODBCSession     *GetSession() { return &oSession; }
+    CPLODBCSession *GetSession()
+    {
+        return &oSession;
+    }
 
     bool CountStarWorking() const;
 
-    bool HasGdbItemsTable() const { return m_bHasGdbItemsTable; }
+    bool HasGdbItemsTable() const
+    {
+        return m_bHasGdbItemsTable;
+    }
 };
-
 
 #endif /* ndef _OGR_PGeo_H_INCLUDED */
