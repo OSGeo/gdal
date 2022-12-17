@@ -50,20 +50,18 @@ using namespace WCSUtils;
 /*                                                                      */
 /************************************************************************/
 
-std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
-                                             int nXSize, int nYSize,
-                                             CPL_UNUSED int, CPL_UNUSED int)
+std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff, int nXSize,
+                                             int nYSize, CPL_UNUSED int,
+                                             CPL_UNUSED int)
 {
     std::vector<double> extent;
     // WCS 1.0 extents are the outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff) * adfGeoTransform[1]);
+    extent.push_back(adfGeoTransform[0] + (nXOff)*adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff + nYSize) * adfGeoTransform[5]);
     extent.push_back(adfGeoTransform[0] +
                      (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff) * adfGeoTransform[5]);
+    extent.push_back(adfGeoTransform[3] + (nYOff)*adfGeoTransform[5]);
     return extent;
 }
 
@@ -72,84 +70,89 @@ std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
 /*                                                                      */
 /************************************************************************/
 
-CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
-                                             int nBufXSize, int nBufYSize,
-                                             const std::vector<double> &extent,
-                                             CPLString osBandList )
+CPLString WCSDataset100::GetCoverageRequest(CPL_UNUSED bool scaled,
+                                            int nBufXSize, int nBufYSize,
+                                            const std::vector<double> &extent,
+                                            CPLString osBandList)
 {
 
-/* -------------------------------------------------------------------- */
-/*      URL encode strings that could have questionable characters.     */
-/* -------------------------------------------------------------------- */
-    CPLString osCoverage = CPLGetXMLValue( psService, "CoverageName", "" );
+    /* -------------------------------------------------------------------- */
+    /*      URL encode strings that could have questionable characters.     */
+    /* -------------------------------------------------------------------- */
+    CPLString osCoverage = CPLGetXMLValue(psService, "CoverageName", "");
 
-    char *pszEncoded = CPLEscapeString( osCoverage, -1, CPLES_URL );
+    char *pszEncoded = CPLEscapeString(osCoverage, -1, CPLES_URL);
     osCoverage = pszEncoded;
-    CPLFree( pszEncoded );
+    CPLFree(pszEncoded);
 
-    CPLString osFormat = CPLGetXMLValue( psService, "PreferredFormat", "" );
+    CPLString osFormat = CPLGetXMLValue(psService, "PreferredFormat", "");
 
-    pszEncoded = CPLEscapeString( osFormat, -1, CPLES_URL );
+    pszEncoded = CPLEscapeString(osFormat, -1, CPLES_URL);
     osFormat = pszEncoded;
-    CPLFree( pszEncoded );
+    CPLFree(pszEncoded);
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a time we want to use?                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a time we want to use?                               */
+    /* -------------------------------------------------------------------- */
     CPLString osTime;
 
-    osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
+    osTime = CSLFetchNameValueDef(papszSDSModifiers, "time", osDefaultTime);
 
-/* -------------------------------------------------------------------- */
-/*      Construct a "simple" GetCoverage request (WCS 1.0).             */
-/* -------------------------------------------------------------------- */
-    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    /* -------------------------------------------------------------------- */
+    /*      Construct a "simple" GetCoverage request (WCS 1.0).             */
+    /* -------------------------------------------------------------------- */
+    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
     request = CPLURLAddKVP(request, "SERVICE", "WCS");
     request = CPLURLAddKVP(request, "REQUEST", "GetCoverage");
-    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.0.0" ));
+    request = CPLURLAddKVP(request, "VERSION",
+                           CPLGetXMLValue(psService, "Version", "1.0.0"));
     request = CPLURLAddKVP(request, "COVERAGE", osCoverage.c_str());
     request = CPLURLAddKVP(request, "FORMAT", osFormat.c_str());
-    request += CPLString().Printf("&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
-                                  extent[0], extent[1], extent[2], extent[3],
-                                  nBufXSize, nBufYSize,
-                                  osCRS.c_str() );
+    request += CPLString().Printf(
+        "&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s", extent[0],
+        extent[1], extent[2], extent[3], nBufXSize, nBufYSize, osCRS.c_str());
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
-    if (extra != "") {
+    if (extra != "")
+    {
         std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
+        for (unsigned int i = 0; i < pairs.size(); ++i)
+        {
             std::vector<CPLString> pair = Split(pairs[i], "=");
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
     extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
-    if (extra != "") {
+    if (extra != "")
+    {
         std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
+        for (unsigned int i = 0; i < pairs.size(); ++i)
+        {
             std::vector<CPLString> pair = Split(pairs[i], "=");
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
 
-    CPLString interpolation = CPLGetXMLValue( psService, "Interpolation", "" );
-    if (interpolation == "") {
+    CPLString interpolation = CPLGetXMLValue(psService, "Interpolation", "");
+    if (interpolation == "")
+    {
         // old undocumented key for interpolation in service
-        interpolation = CPLGetXMLValue( psService, "Resample", "" );
+        interpolation = CPLGetXMLValue(psService, "Resample", "");
     }
-    if (interpolation != "") {
+    if (interpolation != "")
+    {
         request += "&INTERPOLATION=" + interpolation;
     }
 
-    if( osTime != "" )
+    if (osTime != "")
     {
         request += "&time=";
         request += osTime;
     }
 
-    if( osBandList != "" )
+    if (osBandList != "")
     {
-        request += CPLString().Printf( "&%s=%s",
-                                       osBandIdentifier.c_str(),
-                                       osBandList.c_str() );
+        request += CPLString().Printf("&%s=%s", osBandIdentifier.c_str(),
+                                      osBandList.c_str());
     }
     return request;
 }
@@ -161,23 +164,29 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
 
 CPLString WCSDataset100::DescribeCoverageRequest()
 {
-    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
     request = CPLURLAddKVP(request, "SERVICE", "WCS");
     request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
-    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.0.0" ));
-    request = CPLURLAddKVP(request, "COVERAGE", CPLGetXMLValue( psService, "CoverageName", "" ));
+    request = CPLURLAddKVP(request, "VERSION",
+                           CPLGetXMLValue(psService, "Version", "1.0.0"));
+    request = CPLURLAddKVP(request, "COVERAGE",
+                           CPLGetXMLValue(psService, "CoverageName", ""));
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
-    if (extra != "") {
+    if (extra != "")
+    {
         std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
+        for (unsigned int i = 0; i < pairs.size(); ++i)
+        {
             std::vector<CPLString> pair = Split(pairs[i], "=");
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
     extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
-    if (extra != "") {
+    if (extra != "")
+    {
         std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
+        for (unsigned int i = 0; i < pairs.size(); ++i)
+        {
             std::vector<CPLString> pair = Split(pairs[i], "=");
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
@@ -192,7 +201,7 @@ CPLString WCSDataset100::DescribeCoverageRequest()
 
 CPLXMLNode *WCSDataset100::CoverageOffering(CPLXMLNode *psDC)
 {
-    return CPLGetXMLNode( psDC, "=CoverageDescription.CoverageOffering" );
+    return CPLGetXMLNode(psDC, "=CoverageDescription.CoverageOffering");
 }
 
 /************************************************************************/
@@ -205,319 +214,324 @@ CPLXMLNode *WCSDataset100::CoverageOffering(CPLXMLNode *psDC)
 bool WCSDataset100::ExtractGridInfo()
 
 {
-    CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
+    CPLXMLNode *psCO = CPLGetXMLNode(psService, "CoverageOffering");
 
-    if( psCO == nullptr )
+    if (psCO == nullptr)
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      We need to strip off name spaces so it is easier to             */
-/*      searchfor plain gml names.                                      */
-/* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psCO, nullptr, TRUE );
+    /* -------------------------------------------------------------------- */
+    /*      We need to strip off name spaces so it is easier to             */
+    /*      searchfor plain gml names.                                      */
+    /* -------------------------------------------------------------------- */
+    CPLStripXMLNamespace(psCO, nullptr, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Verify we have a Rectified Grid.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Verify we have a Rectified Grid.                                */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psRG =
-        CPLGetXMLNode( psCO, "domainSet.spatialDomain.RectifiedGrid" );
+        CPLGetXMLNode(psCO, "domainSet.spatialDomain.RectifiedGrid");
 
-    if( psRG == nullptr )
+    if (psRG == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find RectifiedGrid in CoverageOffering,\n"
-                  "unable to process WCS Coverage." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to find RectifiedGrid in CoverageOffering,\n"
+                 "unable to process WCS Coverage.");
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Extract size, geotransform and coordinate system.               */
-/*      Projection is, if it is, from Point.srsName                     */
-/* -------------------------------------------------------------------- */
-    char* pszProjection = nullptr;
-    if( WCSParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
-                             adfGeoTransform, &pszProjection ) != CE_None )
+    /* -------------------------------------------------------------------- */
+    /*      Extract size, geotransform and coordinate system.               */
+    /*      Projection is, if it is, from Point.srsName                     */
+    /* -------------------------------------------------------------------- */
+    char *pszProjection = nullptr;
+    if (WCSParseGMLCoverage(psRG, &nRasterXSize, &nRasterYSize, adfGeoTransform,
+                            &pszProjection) != CE_None)
     {
         CPLFree(pszProjection);
         return FALSE;
     }
-    if( pszProjection )
-        m_oSRS.SetFromUserInput(pszProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+    if (pszProjection)
+        m_oSRS.SetFromUserInput(
+            pszProjection,
+            OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     CPLFree(pszProjection);
 
     // MapServer have origin at pixel boundary
-    if (CPLGetXMLBoolean(psService, "OriginAtBoundary")) {
-        adfGeoTransform[0] += adfGeoTransform[1]*0.5;
-        adfGeoTransform[0] += adfGeoTransform[2]*0.5;
-        adfGeoTransform[3] += adfGeoTransform[4]*0.5;
-        adfGeoTransform[3] += adfGeoTransform[5]*0.5;
+    if (CPLGetXMLBoolean(psService, "OriginAtBoundary"))
+    {
+        adfGeoTransform[0] += adfGeoTransform[1] * 0.5;
+        adfGeoTransform[0] += adfGeoTransform[2] * 0.5;
+        adfGeoTransform[3] += adfGeoTransform[4] * 0.5;
+        adfGeoTransform[3] += adfGeoTransform[5] * 0.5;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Fallback to nativeCRSs declaration.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Fallback to nativeCRSs declaration.                             */
+    /* -------------------------------------------------------------------- */
     const char *pszNativeCRSs =
-        CPLGetXMLValue( psCO, "supportedCRSs.nativeCRSs", nullptr );
+        CPLGetXMLValue(psCO, "supportedCRSs.nativeCRSs", nullptr);
 
-    if( pszNativeCRSs == nullptr )
+    if (pszNativeCRSs == nullptr)
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestResponseCRSs", nullptr );
+            CPLGetXMLValue(psCO, "supportedCRSs.requestResponseCRSs", nullptr);
 
-    if( pszNativeCRSs == nullptr )
+    if (pszNativeCRSs == nullptr)
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestCRSs", nullptr );
+            CPLGetXMLValue(psCO, "supportedCRSs.requestCRSs", nullptr);
 
-    if( pszNativeCRSs == nullptr )
+    if (pszNativeCRSs == nullptr)
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.responseCRSs", nullptr );
+            CPLGetXMLValue(psCO, "supportedCRSs.responseCRSs", nullptr);
 
-    if( pszNativeCRSs != nullptr && m_oSRS.IsEmpty() )
+    if (pszNativeCRSs != nullptr && m_oSRS.IsEmpty())
     {
-        if( m_oSRS.SetFromUserInput( pszNativeCRSs, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+        if (m_oSRS.SetFromUserInput(
+                pszNativeCRSs,
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+            OGRERR_NONE)
         {
-            CPLDebug( "WCS",
-                      "<nativeCRSs> element contents not parsable:\n%s",
-                      pszNativeCRSs );
+            CPLDebug("WCS", "<nativeCRSs> element contents not parsable:\n%s",
+                     pszNativeCRSs);
         }
     }
 
     // We should try to use the services name for the CRS if possible.
-    if( pszNativeCRSs != nullptr
-        && ( STARTS_WITH_CI(pszNativeCRSs, "EPSG:")
-             || STARTS_WITH_CI(pszNativeCRSs, "AUTO:")
-             || STARTS_WITH_CI(pszNativeCRSs, "Image ")
-             || STARTS_WITH_CI(pszNativeCRSs, "Engineering ")
-             || STARTS_WITH_CI(pszNativeCRSs, "OGC:") ) )
+    if (pszNativeCRSs != nullptr &&
+        (STARTS_WITH_CI(pszNativeCRSs, "EPSG:") ||
+         STARTS_WITH_CI(pszNativeCRSs, "AUTO:") ||
+         STARTS_WITH_CI(pszNativeCRSs, "Image ") ||
+         STARTS_WITH_CI(pszNativeCRSs, "Engineering ") ||
+         STARTS_WITH_CI(pszNativeCRSs, "OGC:")))
     {
         osCRS = pszNativeCRSs;
 
-        size_t nDivider = osCRS.find( " " );
+        size_t nDivider = osCRS.find(" ");
 
-        if( nDivider != std::string::npos )
-            osCRS.resize( nDivider-1 );
+        if (nDivider != std::string::npos)
+            osCRS.resize(nDivider - 1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a coordinate system override?                        */
-/* -------------------------------------------------------------------- */
-    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", nullptr );
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a coordinate system override?                        */
+    /* -------------------------------------------------------------------- */
+    const char *pszProjOverride = CPLGetXMLValue(psService, "SRS", nullptr);
 
-    if( pszProjOverride )
+    if (pszProjOverride)
     {
-        if( m_oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+        if (m_oSRS.SetFromUserInput(
+                pszProjOverride,
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+            OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "<SRS> element contents not parsable:\n%s",
-                      pszProjOverride );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "<SRS> element contents not parsable:\n%s",
+                     pszProjOverride);
             return FALSE;
         }
 
-        if( STARTS_WITH_CI(pszProjOverride, "EPSG:")
-            || STARTS_WITH_CI(pszProjOverride, "AUTO:")
-            || STARTS_WITH_CI(pszProjOverride, "OGC:")
-            || STARTS_WITH_CI(pszProjOverride, "Image ")
-            || STARTS_WITH_CI(pszProjOverride, "Engineering ") )
+        if (STARTS_WITH_CI(pszProjOverride, "EPSG:") ||
+            STARTS_WITH_CI(pszProjOverride, "AUTO:") ||
+            STARTS_WITH_CI(pszProjOverride, "OGC:") ||
+            STARTS_WITH_CI(pszProjOverride, "Image ") ||
+            STARTS_WITH_CI(pszProjOverride, "Engineering "))
             osCRS = pszProjOverride;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Build CRS name to use.                                          */
-/* -------------------------------------------------------------------- */
-    if( !m_oSRS.IsEmpty() && osCRS == "" )
+    /* -------------------------------------------------------------------- */
+    /*      Build CRS name to use.                                          */
+    /* -------------------------------------------------------------------- */
+    if (!m_oSRS.IsEmpty() && osCRS == "")
     {
         const char *pszAuth = m_oSRS.GetAuthorityName(nullptr);
-        if( pszAuth != nullptr && EQUAL(pszAuth,"EPSG") )
+        if (pszAuth != nullptr && EQUAL(pszAuth, "EPSG"))
         {
             pszAuth = m_oSRS.GetAuthorityCode(nullptr);
-            if( pszAuth )
+            if (pszAuth)
             {
                 osCRS = "EPSG:";
                 osCRS += pszAuth;
             }
             else
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Unable to define CRS to use." );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to define CRS to use.");
                 return FALSE;
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Pick a format type if we don't already have one selected.       */
-/*                                                                      */
-/*      We will prefer anything that sounds like TIFF, otherwise        */
-/*      falling back to the first supported format.  Should we          */
-/*      consider preferring the nativeFormat if available?              */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "PreferredFormat", nullptr ) == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Pick a format type if we don't already have one selected.       */
+    /*                                                                      */
+    /*      We will prefer anything that sounds like TIFF, otherwise        */
+    /*      falling back to the first supported format.  Should we          */
+    /*      consider preferring the nativeFormat if available?              */
+    /* -------------------------------------------------------------------- */
+    if (CPLGetXMLValue(psService, "PreferredFormat", nullptr) == nullptr)
     {
-        CPLXMLNode *psSF = CPLGetXMLNode( psCO, "supportedFormats" );
+        CPLXMLNode *psSF = CPLGetXMLNode(psCO, "supportedFormats");
         CPLXMLNode *psNode;
         char **papszFormatList = nullptr;
         CPLString osPreferredFormat;
         int iFormat;
 
-        if( psSF == nullptr )
+        if (psSF == nullptr)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "No <PreferredFormat> tag in service definition file, and no\n"
-                      "<supportedFormats> in coverageOffering." );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "No <PreferredFormat> tag in service definition file, and no\n"
+                "<supportedFormats> in coverageOffering.");
             return FALSE;
         }
 
-        for( psNode = psSF->psChild; psNode != nullptr; psNode = psNode->psNext )
+        for (psNode = psSF->psChild; psNode != nullptr; psNode = psNode->psNext)
         {
-            if( psNode->eType == CXT_Element
-                && EQUAL(psNode->pszValue,"formats")
-                && psNode->psChild != nullptr
-                && psNode->psChild->eType == CXT_Text )
+            if (psNode->eType == CXT_Element &&
+                EQUAL(psNode->pszValue, "formats") &&
+                psNode->psChild != nullptr &&
+                psNode->psChild->eType == CXT_Text)
             {
                 // This check is looking for deprecated WCS 1.0 capabilities
                 // with multiple formats space delimited in a single <formats>
                 // element per GDAL ticket 1748 (done by MapServer 4.10 and
                 // earlier for instance).
-                if( papszFormatList == nullptr
-                    && psNode->psNext == nullptr
-                    && strstr(psNode->psChild->pszValue," ") != nullptr
-                    && strstr(psNode->psChild->pszValue,";") == nullptr )
+                if (papszFormatList == nullptr && psNode->psNext == nullptr &&
+                    strstr(psNode->psChild->pszValue, " ") != nullptr &&
+                    strstr(psNode->psChild->pszValue, ";") == nullptr)
                 {
                     char **papszSubList =
-                        CSLTokenizeString( psNode->psChild->pszValue );
-                    papszFormatList = CSLInsertStrings( papszFormatList,
-                                                        -1, papszSubList );
-                    CSLDestroy( papszSubList );
+                        CSLTokenizeString(psNode->psChild->pszValue);
+                    papszFormatList =
+                        CSLInsertStrings(papszFormatList, -1, papszSubList);
+                    CSLDestroy(papszSubList);
                 }
                 else
                 {
-                    papszFormatList = CSLAddString( papszFormatList,
-                                                    psNode->psChild->pszValue);
+                    papszFormatList = CSLAddString(papszFormatList,
+                                                   psNode->psChild->pszValue);
                 }
             }
         }
 
-        for( iFormat = 0;
+        for (iFormat = 0;
              papszFormatList != nullptr && papszFormatList[iFormat] != nullptr;
-             iFormat++ )
+             iFormat++)
         {
-            if( osPreferredFormat.empty() )
+            if (osPreferredFormat.empty())
                 osPreferredFormat = papszFormatList[iFormat];
 
-            if( strstr(papszFormatList[iFormat],"tiff") != nullptr
-                    || strstr(papszFormatList[iFormat],"TIFF") != nullptr
-                    || strstr(papszFormatList[iFormat],"Tiff") != nullptr )
+            if (strstr(papszFormatList[iFormat], "tiff") != nullptr ||
+                strstr(papszFormatList[iFormat], "TIFF") != nullptr ||
+                strstr(papszFormatList[iFormat], "Tiff") != nullptr)
             {
                 osPreferredFormat = papszFormatList[iFormat];
                 break;
             }
         }
 
-        CSLDestroy( papszFormatList );
+        CSLDestroy(papszFormatList);
 
-        if( !osPreferredFormat.empty() )
+        if (!osPreferredFormat.empty())
         {
             bServiceDirty = true;
-            CPLCreateXMLElementAndValue( psService, "PreferredFormat",
-                                         osPreferredFormat );
+            CPLCreateXMLElementAndValue(psService, "PreferredFormat",
+                                        osPreferredFormat);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to identify a nodata value.  For now we only support the    */
-/*      singleValue mechanism.                                          */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "NoDataValue", nullptr ) == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Try to identify a nodata value.  For now we only support the    */
+    /*      singleValue mechanism.                                          */
+    /* -------------------------------------------------------------------- */
+    if (CPLGetXMLValue(psService, "NoDataValue", nullptr) == nullptr)
     {
-        const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", nullptr );
+        const char *pszSV = CPLGetXMLValue(
+            psCO, "rangeSet.RangeSet.nullValues.singleValue", nullptr);
 
-        if( pszSV != nullptr && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
+        if (pszSV != nullptr && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO))
         {
             bServiceDirty = true;
-            CPLCreateXMLElementAndValue( psService, "NoDataValue",
-                                         pszSV );
+            CPLCreateXMLElementAndValue(psService, "NoDataValue", pszSV);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a Band range type.  For now we look for a fairly     */
-/*      specific configuration.  The rangeset my have one axis named    */
-/*      "Band", with a set of ascending numerical values.               */
-/* -------------------------------------------------------------------- */
-    osBandIdentifier = CPLGetXMLValue( psService, "BandIdentifier", "" );
-    CPLXMLNode * psAD = CPLGetXMLNode( psService,
-      "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription" );
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a Band range type.  For now we look for a fairly     */
+    /*      specific configuration.  The rangeset my have one axis named    */
+    /*      "Band", with a set of ascending numerical values.               */
+    /* -------------------------------------------------------------------- */
+    osBandIdentifier = CPLGetXMLValue(psService, "BandIdentifier", "");
+    CPLXMLNode *psAD = CPLGetXMLNode(
+        psService,
+        "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription");
     CPLXMLNode *psValues;
 
-    if( osBandIdentifier.empty()
-        && psAD != nullptr
-        && (EQUAL(CPLGetXMLValue(psAD,"name",""),"Band")
-            || EQUAL(CPLGetXMLValue(psAD,"name",""),"Bands"))
-        && ( (psValues = CPLGetXMLNode( psAD, "values" )) != nullptr ) )
+    if (osBandIdentifier.empty() && psAD != nullptr &&
+        (EQUAL(CPLGetXMLValue(psAD, "name", ""), "Band") ||
+         EQUAL(CPLGetXMLValue(psAD, "name", ""), "Bands")) &&
+        ((psValues = CPLGetXMLNode(psAD, "values")) != nullptr))
     {
         CPLXMLNode *psSV;
         int iBand;
 
-        osBandIdentifier = CPLGetXMLValue(psAD,"name","");
+        osBandIdentifier = CPLGetXMLValue(psAD, "name", "");
 
-        for( psSV = psValues->psChild, iBand = 1;
-             psSV != nullptr;
-             psSV = psSV->psNext, iBand++ )
+        for (psSV = psValues->psChild, iBand = 1; psSV != nullptr;
+             psSV = psSV->psNext, iBand++)
         {
-            if( psSV->eType != CXT_Element
-                || !EQUAL(psSV->pszValue,"singleValue")
-                || psSV->psChild == nullptr
-                || psSV->psChild->eType != CXT_Text
-                || atoi(psSV->psChild->pszValue) != iBand )
+            if (psSV->eType != CXT_Element ||
+                !EQUAL(psSV->pszValue, "singleValue") ||
+                psSV->psChild == nullptr || psSV->psChild->eType != CXT_Text ||
+                atoi(psSV->psChild->pszValue) != iBand)
             {
                 osBandIdentifier = "";
                 break;
             }
         }
 
-        if( !osBandIdentifier.empty() )
+        if (!osBandIdentifier.empty())
         {
             bServiceDirty = true;
-            CPLSetXMLValue( psService, "BandIdentifier",
-                            osBandIdentifier );
+            CPLSetXMLValue(psService, "BandIdentifier", osBandIdentifier);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a temporal domain?  If so, try to identify a         */
-/*      default time value.                                             */
-/* -------------------------------------------------------------------- */
-    osDefaultTime = CPLGetXMLValue( psService, "DefaultTime", "" );
-    CPLXMLNode * psTD =
-        CPLGetXMLNode( psService, "CoverageOffering.domainSet.temporalDomain" );
-    CPLString osServiceURL = CPLGetXMLValue( psService, "ServiceURL", "" );
-    CPLString osCoverageExtra = CPLGetXMLValue( psService, "GetCoverageExtra", "" );
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a temporal domain?  If so, try to identify a         */
+    /*      default time value.                                             */
+    /* -------------------------------------------------------------------- */
+    osDefaultTime = CPLGetXMLValue(psService, "DefaultTime", "");
+    CPLXMLNode *psTD =
+        CPLGetXMLNode(psService, "CoverageOffering.domainSet.temporalDomain");
+    CPLString osServiceURL = CPLGetXMLValue(psService, "ServiceURL", "");
+    CPLString osCoverageExtra =
+        CPLGetXMLValue(psService, "GetCoverageExtra", "");
 
-    if( psTD != nullptr )
+    if (psTD != nullptr)
     {
         CPLXMLNode *psTime;
 
         // collect all the allowed time positions.
 
-        for( psTime = psTD->psChild; psTime != nullptr; psTime = psTime->psNext )
+        for (psTime = psTD->psChild; psTime != nullptr; psTime = psTime->psNext)
         {
-            if( psTime->eType == CXT_Element
-                && EQUAL(psTime->pszValue,"timePosition")
-                && psTime->psChild != nullptr
-                && psTime->psChild->eType == CXT_Text )
-                aosTimePositions.push_back( psTime->psChild->pszValue );
+            if (psTime->eType == CXT_Element &&
+                EQUAL(psTime->pszValue, "timePosition") &&
+                psTime->psChild != nullptr &&
+                psTime->psChild->eType == CXT_Text)
+                aosTimePositions.push_back(psTime->psChild->pszValue);
         }
 
         // we will default to the last - likely the most recent - entry.
 
-        if( !aosTimePositions.empty()
-            && osDefaultTime.empty()
-            && osServiceURL.ifind("time=") == std::string::npos
-            && osCoverageExtra.ifind("time=") == std::string::npos )
+        if (!aosTimePositions.empty() && osDefaultTime.empty() &&
+            osServiceURL.ifind("time=") == std::string::npos &&
+            osCoverageExtra.ifind("time=") == std::string::npos)
         {
             osDefaultTime = aosTimePositions.back();
             bServiceDirty = true;
-            CPLCreateXMLElementAndValue( psService, "DefaultTime",
-                                         osDefaultTime );
+            CPLCreateXMLElementAndValue(psService, "DefaultTime",
+                                        osDefaultTime);
         }
     }
 
@@ -528,14 +542,16 @@ bool WCSDataset100::ExtractGridInfo()
 /*                      ParseCapabilities()                             */
 /************************************************************************/
 
-CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED CPLString url )
+CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
+                                        CPL_UNUSED CPLString url)
 {
 
     CPLStripXMLNamespace(Capabilities, nullptr, TRUE);
 
-    if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0) {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error in capabilities document.\n" );
+    if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error in capabilities document.\n");
         return CE_Failure;
     }
 
@@ -545,10 +561,11 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     CPLString key = path + "version";
     metadata = CSLSetNameValue(metadata, key, Version());
 
-    for( CPLXMLNode *node = Capabilities->psChild; node != nullptr; node = node->psNext)
+    for (CPLXMLNode *node = Capabilities->psChild; node != nullptr;
+         node = node->psNext)
     {
         const char *attr = node->pszValue;
-        if( node->eType == CXT_Attribute && EQUAL(attr, "updateSequence") )
+        if (node->eType == CXT_Attribute && EQUAL(attr, "updateSequence"))
         {
             key = path + "updateSequence";
             CPLString value = CPLGetXMLValue(node, nullptr, "");
@@ -564,21 +581,26 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     keys2.push_back("label");
     keys2.push_back("fees");
     keys2.push_back("accessConstraints");
-    CPLXMLNode *service = AddSimpleMetaData(&metadata, Capabilities, path2, "Service", keys2);
-    if (service) {
+    CPLXMLNode *service =
+        AddSimpleMetaData(&metadata, Capabilities, path2, "Service", keys2);
+    if (service)
+    {
         CPLString path3 = path2;
         std::vector<CPLString> keys3;
         keys3.push_back("individualName");
         keys3.push_back("organisationName");
         keys3.push_back("positionName");
         CPLString kw = GetKeywords(service, "keywords", "keyword");
-        if (kw != "") {
+        if (kw != "")
+        {
             CPLString name = path + "keywords";
             metadata = CSLSetNameValue(metadata, name, kw);
         }
-        CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3, "responsibleParty", keys3);
+        CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3,
+                                              "responsibleParty", keys3);
         CPLXMLNode *info = CPLGetXMLNode(party, "contactInfo");
-        if (party && info) {
+        if (party && info)
+        {
             CPLString path4 = path3 + "contactInfo.";
             std::vector<CPLString> keys4;
             keys4.push_back("deliveryPoint");
@@ -603,88 +625,103 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
         CPLGetXMLNode(
             CPLGetXMLNode(
                 CPLSearchXMLNode(
-                    CPLSearchXMLNode(Capabilities, "DescribeCoverage"),
-                    "Get"),
+                    CPLSearchXMLNode(Capabilities, "DescribeCoverage"), "Get"),
                 "OnlineResource"),
-            "href"), nullptr, "");
-    // if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
+            "href"),
+        nullptr, "");
+    // if DescribeCoverageURL looks wrong (i.e. has localhost) should we change
+    // it?
 
-    this->SetMetadata( metadata, "" );
-    CSLDestroy( metadata );
+    this->SetMetadata(metadata, "");
+    CSLDestroy(metadata);
     metadata = nullptr;
 
-    if( CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "ContentMetadata") )
+    if (CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "ContentMetadata"))
     {
         int index = 1;
-        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
+        for (CPLXMLNode *summary = contents->psChild; summary != nullptr;
+             summary = summary->psNext)
         {
-            if( summary->eType != CXT_Element
-                || !EQUAL(summary->pszValue, "CoverageOfferingBrief") )
+            if (summary->eType != CXT_Element ||
+                !EQUAL(summary->pszValue, "CoverageOfferingBrief"))
             {
                 continue;
             }
             CPLString path3;
-            path3.Printf( "SUBDATASET_%d_", index);
+            path3.Printf("SUBDATASET_%d_", index);
             index += 1;
 
             // the name and description of the subdataset:
             // GDAL Data Model:
-            // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
+            // The value of the _NAME is a string that can be passed to
+            // GDALOpen() to access the file.
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "name");
-            if (node) {
+            if (node)
+            {
                 CPLString key2 = path3 + "NAME";
                 CPLString name = CPLGetXMLValue(node, nullptr, "");
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
                 value = CPLURLAddKVP(value, "COVERAGE", name);
                 metadata = CSLSetNameValue(metadata, key2, value);
-            } else {
-                CSLDestroy( metadata );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Error in capabilities document.\n" );
+            }
+            else
+            {
+                CSLDestroy(metadata);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error in capabilities document.\n");
                 return CE_Failure;
             }
 
             node = CPLGetXMLNode(summary, "label");
-            if (node) {
+            if (node)
+            {
                 CPLString key2 = path3 + "DESC";
-                metadata = CSLSetNameValue(metadata, key2, CPLGetXMLValue(node, nullptr, ""));
-            } else {
-                CSLDestroy( metadata );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Error in capabilities document.\n" );
+                metadata = CSLSetNameValue(metadata, key2,
+                                           CPLGetXMLValue(node, nullptr, ""));
+            }
+            else
+            {
+                CSLDestroy(metadata);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error in capabilities document.\n");
                 return CE_Failure;
             }
 
             // todo: compose global bounding box from lonLatEnvelope
 
-            // further subdataset (coverage) parameters are parsed in ParseCoverageCapabilities
-
+            // further subdataset (coverage) parameters are parsed in
+            // ParseCoverageCapabilities
         }
     }
-    this->SetMetadata( metadata, "SUBDATASETS" );
-    CSLDestroy( metadata );
+    this->SetMetadata(metadata, "SUBDATASETS");
+    CSLDestroy(metadata);
     return CE_None;
 }
 
-void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CPLString &coverage, CPLXMLNode *metadata)
+void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities,
+                                              const CPLString &coverage,
+                                              CPLXMLNode *metadata)
 {
     CPLStripXMLNamespace(capabilities, nullptr, TRUE);
-    if( CPLXMLNode *contents = CPLGetXMLNode(capabilities, "ContentMetadata") )
+    if (CPLXMLNode *contents = CPLGetXMLNode(capabilities, "ContentMetadata"))
     {
-        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
+        for (CPLXMLNode *summary = contents->psChild; summary != nullptr;
+             summary = summary->psNext)
         {
-            if( summary->eType != CXT_Element
-                || !EQUAL(summary->pszValue, "CoverageOfferingBrief") )
+            if (summary->eType != CXT_Element ||
+                !EQUAL(summary->pszValue, "CoverageOfferingBrief"))
             {
                 continue;
             }
 
             CPLXMLNode *node = CPLGetXMLNode(summary, "name");
-            if (node) {
+            if (node)
+            {
                 CPLString name = CPLGetXMLValue(node, nullptr, "");
-                if (name != coverage) {
+                if (name != coverage)
+                {
                     continue;
                 }
             }
@@ -694,10 +731,10 @@ void WCSDataset100::ParseCoverageCapabilities(CPLXMLNode *capabilities, const CP
 
             CPLString kw = GetKeywords(summary, "keywords", "keyword");
             CPLAddXMLAttributeAndValue(
-                CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key", "keywords");
+                CPLCreateXMLElementAndValue(metadata, "MDI", kw), "key",
+                "keywords");
 
             // skip metadataLink
-
         }
     }
 }

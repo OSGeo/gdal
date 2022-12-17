@@ -39,75 +39,73 @@
 /*                           WCSRasterBand()                            */
 /************************************************************************/
 
-WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
-                              int iOverviewIn ) :
-    iOverview(iOverviewIn),
-    nResFactor(1 << (iOverviewIn+1)), // iOverview == -1 is base layer
-    poODS(poDSIn),
-    nOverviewCount(0),
-    papoOverviews(nullptr)
+WCSRasterBand::WCSRasterBand(WCSDataset *poDSIn, int nBandIn, int iOverviewIn)
+    : iOverview(iOverviewIn),
+      nResFactor(1 << (iOverviewIn + 1)),  // iOverview == -1 is base layer
+      poODS(poDSIn), nOverviewCount(0), papoOverviews(nullptr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
 
     eDataType = GDALGetDataTypeByName(
-        CPLGetXMLValue( poDSIn->psService, "BandType", "Byte" ) );
+        CPLGetXMLValue(poDSIn->psService, "BandType", "Byte"));
 
-/* -------------------------------------------------------------------- */
-/*      Establish resolution reduction for this overview level.         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Establish resolution reduction for this overview level.         */
+    /* -------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------- */
-/*      Establish block size.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Establish block size.                                           */
+    /* -------------------------------------------------------------------- */
     nRasterXSize = poDS->GetRasterXSize() / nResFactor;
     nRasterYSize = poDS->GetRasterYSize() / nResFactor;
 
-    nBlockXSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockXSize", "0" ) );
-    nBlockYSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockYSize", "0" ) );
+    nBlockXSize = atoi(CPLGetXMLValue(poDSIn->psService, "BlockXSize", "0"));
+    nBlockYSize = atoi(CPLGetXMLValue(poDSIn->psService, "BlockYSize", "0"));
 
-    if( nBlockXSize < 1 )
+    if (nBlockXSize < 1)
     {
-        if( nRasterXSize > 1800 )
+        if (nRasterXSize > 1800)
             nBlockXSize = 1024;
         else
             nBlockXSize = nRasterXSize;
     }
 
-    if( nBlockYSize < 1 )
+    if (nBlockYSize < 1)
     {
-        if( nRasterYSize > 900 )
+        if (nRasterYSize > 900)
             nBlockYSize = 512;
         else
             nBlockYSize = nRasterYSize;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If this is the base layer, create the overview layers.          */
-/* -------------------------------------------------------------------- */
-    if( iOverview == -1 )
+    /* -------------------------------------------------------------------- */
+    /*      If this is the base layer, create the overview layers.          */
+    /* -------------------------------------------------------------------- */
+    if (iOverview == -1)
     {
-        nOverviewCount = atoi(CPLGetXMLValue(poODS->psService,"OverviewCount",
-                                             "-1"));
-        if( nOverviewCount < 0 )
+        nOverviewCount =
+            atoi(CPLGetXMLValue(poODS->psService, "OverviewCount", "-1"));
+        if (nOverviewCount < 0)
         {
-            for( nOverviewCount = 0;
-                 (std::max(nRasterXSize, nRasterYSize) /
-                  (1 << nOverviewCount)) > 900;
-                 nOverviewCount++ ) {}
+            for (nOverviewCount = 0; (std::max(nRasterXSize, nRasterYSize) /
+                                      (1 << nOverviewCount)) > 900;
+                 nOverviewCount++)
+            {
+            }
         }
-        else if( nOverviewCount > 30 )
+        else if (nOverviewCount > 30)
         {
             /* There's no reason to have more than 30 overviews, because */
             /* 2^(30+1) overflows a int32 */
             nOverviewCount = 30;
         }
 
-        papoOverviews = (WCSRasterBand **)
-            CPLCalloc( nOverviewCount, sizeof(void*) );
+        papoOverviews =
+            (WCSRasterBand **)CPLCalloc(nOverviewCount, sizeof(void *));
 
-        for( int i = 0; i < nOverviewCount; i++ )
-            papoOverviews[i] = new WCSRasterBand( poODS, nBand, i );
+        for (int i = 0; i < nOverviewCount; i++)
+            papoOverviews[i] = new WCSRasterBand(poODS, nBand, i);
     }
 }
 
@@ -120,12 +118,12 @@ WCSRasterBand::~WCSRasterBand()
 {
     FlushCache(true);
 
-    if( nOverviewCount > 0 )
+    if (nOverviewCount > 0)
     {
-        for( int i = 0; i < nOverviewCount; i++ )
+        for (int i = 0; i < nOverviewCount; i++)
             delete papoOverviews[i];
 
-        CPLFree( papoOverviews );
+        CPLFree(papoOverviews);
     }
 }
 
@@ -133,8 +131,7 @@ WCSRasterBand::~WCSRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
     CPLErr eErr;
@@ -146,99 +143,103 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     // todo: in 2.0.1 the band list in this dataset may be user-defined
 
     int band_count = 1;
-    if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL")) {
+    if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL"))
+    {
         band_count = 0;
     }
 
-    eErr = poODS->GetCoverage( nBlockXOff * nBlockXSize * nResFactor,
-                               nBlockYOff * nBlockYSize * nResFactor,
-                               nBlockXSize * nResFactor,
-                               nBlockYSize * nResFactor,
-                               nBlockXSize, nBlockYSize,
-                               band_count, &nBand, nullptr, &psResult );
-    if( eErr != CE_None )
+    eErr = poODS->GetCoverage(
+        nBlockXOff * nBlockXSize * nResFactor,
+        nBlockYOff * nBlockYSize * nResFactor, nBlockXSize * nResFactor,
+        nBlockYSize * nResFactor, nBlockXSize, nBlockYSize, band_count, &nBand,
+        nullptr, &psResult);
+    if (eErr != CE_None)
         return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Try and open result as a dataset.                               */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poTileDS = poODS->GDALOpenResult( psResult );
+    /* -------------------------------------------------------------------- */
+    /*      Try and open result as a dataset.                               */
+    /* -------------------------------------------------------------------- */
+    GDALDataset *poTileDS = poODS->GDALOpenResult(psResult);
 
-    if( poTileDS == nullptr )
+    if (poTileDS == nullptr)
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      Verify configuration.                                           */
-/* -------------------------------------------------------------------- */
-    if( poTileDS->GetRasterXSize() != nBlockXSize
-        || poTileDS->GetRasterYSize() != nBlockYSize )
+    /* -------------------------------------------------------------------- */
+    /*      Verify configuration.                                           */
+    /* -------------------------------------------------------------------- */
+    if (poTileDS->GetRasterXSize() != nBlockXSize ||
+        poTileDS->GetRasterYSize() != nBlockYSize)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Returned tile does not match expected configuration.\n"
-                  "Got %dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBlockXSize, nBlockYSize );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Returned tile does not match expected configuration.\n"
+                 "Got %dx%d instead of %dx%d.",
+                 poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
+                 nBlockXSize, nBlockYSize);
         delete poTileDS;
         return CE_Failure;
     }
 
-    if( band_count == 1
-        && ((strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
-            || (!strlen(poODS->osBandIdentifier)
-                && poTileDS->GetRasterCount() != poODS->GetRasterCount())) )
+    if (band_count == 1 &&
+        ((strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1) ||
+         (!strlen(poODS->osBandIdentifier) &&
+          poTileDS->GetRasterCount() != poODS->GetRasterCount())))
     {
         CPLString msg;
         if (strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
         {
-            msg.Printf("Got %d bands instead of one although the coverage has band range type.\n",
+            msg.Printf("Got %d bands instead of one although the coverage has "
+                       "band range type.\n",
                        poTileDS->GetRasterCount());
-        } else {
-            msg.Printf("Response has %d bands while this dataset has %d bands.\n",
-                       poTileDS->GetRasterCount(), poODS->GetRasterCount());
         }
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Returned tile does not match expected band configuration.\n%s", msg.c_str());
+        else
+        {
+            msg.Printf(
+                "Response has %d bands while this dataset has %d bands.\n",
+                poTileDS->GetRasterCount(), poODS->GetRasterCount());
+        }
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Returned tile does not match expected band configuration.\n%s",
+            msg.c_str());
         delete poTileDS;
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Process all bands of memory result, copying into pBuffer, or    */
-/*      pushing into cache for other bands.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Process all bands of memory result, copying into pBuffer, or    */
+    /*      pushing into cache for other bands.                             */
+    /* -------------------------------------------------------------------- */
     int iBand;
     eErr = CE_None;
 
-    for( iBand = 0;
-         iBand < poTileDS->GetRasterCount() && eErr == CE_None;
-         iBand++ )
+    for (iBand = 0; iBand < poTileDS->GetRasterCount() && eErr == CE_None;
+         iBand++)
     {
-        GDALRasterBand *poTileBand = poTileDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poTileBand = poTileDS->GetRasterBand(iBand + 1);
 
-        if( iBand+1 == GetBand() || (band_count == 1 && strlen(poODS->osBandIdentifier)) )
+        if (iBand + 1 == GetBand() ||
+            (band_count == 1 && strlen(poODS->osBandIdentifier)))
         {
-            eErr = poTileBand->RasterIO( GF_Read,
-                                         0, 0, nBlockXSize, nBlockYSize,
-                                         pImage, nBlockXSize, nBlockYSize,
-                                         eDataType, 0, 0, nullptr );
+            eErr = poTileBand->RasterIO(GF_Read, 0, 0, nBlockXSize, nBlockYSize,
+                                        pImage, nBlockXSize, nBlockYSize,
+                                        eDataType, 0, 0, nullptr);
         }
         else
         {
-            GDALRasterBand *poTargBand = poODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poTargBand = poODS->GetRasterBand(iBand + 1);
 
-            if( iOverview != -1 )
-                poTargBand = poTargBand->GetOverview( iOverview );
+            if (iOverview != -1)
+                poTargBand = poTargBand->GetOverview(iOverview);
 
-            GDALRasterBlock *poBlock = poTargBand->GetLockedBlockRef(
-                nBlockXOff, nBlockYOff, TRUE );
+            GDALRasterBlock *poBlock =
+                poTargBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
 
-            if( poBlock != nullptr )
+            if (poBlock != nullptr)
             {
-                eErr = poTileBand->RasterIO( GF_Read,
-                                            0, 0, nBlockXSize, nBlockYSize,
-                                            poBlock->GetDataRef(),
-                                            nBlockXSize, nBlockYSize,
-                                            eDataType, 0, 0, nullptr );
+                eErr = poTileBand->RasterIO(GF_Read, 0, 0, nBlockXSize,
+                                            nBlockYSize, poBlock->GetDataRef(),
+                                            nBlockXSize, nBlockYSize, eDataType,
+                                            0, 0, nullptr);
                 poBlock->DropLock();
             }
             else
@@ -246,9 +247,9 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
     delete poTileDS;
 
     poODS->FlushMemoryResult();
@@ -260,47 +261,46 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg* psExtraArg)
+CPLErr WCSRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                int nXSize, int nYSize, void *pData,
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType, GSpacing nPixelSpace,
+                                GSpacing nLineSpace,
+                                GDALRasterIOExtraArg *psExtraArg)
 
 {
-    if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
-        ||  (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize) )
+    if ((poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize) ||
+        (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize))
         return CE_Failure;
 
-    if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
-                               nBufXSize,nBufYSize ) )
+    if (poODS->TestUseBlockIO(nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                              nBufYSize))
         return GDALPamRasterBand::IRasterIO(
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType,
-            nPixelSpace, nLineSpace, psExtraArg );
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg);
     else
-        return poODS->DirectRasterIO(
-            eRWFlag,
-            nXOff * nResFactor, nYOff * nResFactor,
-            nXSize * nResFactor, nYSize * nResFactor,
-            pData, nBufXSize, nBufYSize, eBufType,
-            1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg );
+        return poODS->DirectRasterIO(eRWFlag, nXOff * nResFactor,
+                                     nYOff * nResFactor, nXSize * nResFactor,
+                                     nYSize * nResFactor, pData, nBufXSize,
+                                     nBufYSize, eBufType, 1, &nBand,
+                                     nPixelSpace, nLineSpace, 0, psExtraArg);
 }
 
 /************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double WCSRasterBand::GetNoDataValue( int *pbSuccess )
+double WCSRasterBand::GetNoDataValue(int *pbSuccess)
 
 {
-    const char *pszSV = CPLGetXMLValue( poODS->psService, "NoDataValue", nullptr);
+    const char *pszSV =
+        CPLGetXMLValue(poODS->psService, "NoDataValue", nullptr);
 
-    if( pszSV == nullptr )
-        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
+    if (pszSV == nullptr)
+        return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     else
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = TRUE;
         return CPLAtof(pszSV);
     }
@@ -320,10 +320,10 @@ int WCSRasterBand::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
+GDALRasterBand *WCSRasterBand::GetOverview(int iOverviewIn)
 
 {
-    if( iOverviewIn < 0 || iOverviewIn >= nOverviewCount )
+    if (iOverviewIn < 0 || iOverviewIn >= nOverviewCount)
         return nullptr;
     else
         return papoOverviews[iOverviewIn];

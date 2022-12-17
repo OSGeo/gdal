@@ -33,32 +33,31 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class WCSRasterBand final: public GDALPamRasterBand
+class WCSRasterBand final : public GDALPamRasterBand
 {
     friend class WCSDataset;
 
-    int            iOverview;
-    int            nResFactor;
+    int iOverview;
+    int nResFactor;
 
-    WCSDataset    *poODS;
+    WCSDataset *poODS;
 
-    int            nOverviewCount;
+    int nOverviewCount;
     WCSRasterBand **papoOverviews;
 
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing nPixelSpace,
+                             GSpacing nLineSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
-
-                   WCSRasterBand( WCSDataset *, int nBand, int iOverview );
+    WCSRasterBand(WCSDataset *, int nBand, int iOverview);
     virtual ~WCSRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
 
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };
