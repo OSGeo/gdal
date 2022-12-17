@@ -16,7 +16,8 @@
 #include <cpl_vsi_error.h>
 #include <cpl_vsi.h>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     printf("%s\n", GDALVersionInfo("RELEASE_NAME"));
-    return(0);
+    return (0);
 }
