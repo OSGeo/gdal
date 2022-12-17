@@ -56,8 +56,7 @@
 
 #include "proj.h"
 
-
-extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
+extern void OGRsnPrintDouble(char *pszStrBuf, size_t size, double dfValue);
 
 /************************************************************************/
 /*                         OSRGetEllipsoidInfo()                        */
@@ -84,34 +83,27 @@ extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
  * @return OGRERR_NONE on success or an error code in case of failure.
  **/
 
-OGRErr
-OSRGetEllipsoidInfo( int nCode, char ** ppszName,
-                     double * pdfSemiMajor, double * pdfInvFlattening )
+OGRErr OSRGetEllipsoidInfo(int nCode, char **ppszName, double *pdfSemiMajor,
+                           double *pdfInvFlattening)
 
 {
     CPLString osCode;
     osCode.Printf("%d", nCode);
-    auto ellipsoid = proj_create_from_database(OSRGetProjTLSContext(),
-                                             "EPSG",
-                                             osCode.c_str(),
-                                             PJ_CATEGORY_ELLIPSOID,
-                                             false,
-                                             nullptr);
-    if( !ellipsoid )
+    auto ellipsoid = proj_create_from_database(
+        OSRGetProjTLSContext(), "EPSG", osCode.c_str(), PJ_CATEGORY_ELLIPSOID,
+        false, nullptr);
+    if (!ellipsoid)
     {
         return OGRERR_UNSUPPORTED_SRS;
     }
 
-    if( ppszName )
+    if (ppszName)
     {
         *ppszName = CPLStrdup(proj_get_name(ellipsoid));
     }
-    proj_ellipsoid_get_parameters(OSRGetProjTLSContext(),
-                                      ellipsoid,
-                                      pdfSemiMajor,
-                                      nullptr,
-                                      nullptr,
-                                      pdfInvFlattening);
+    proj_ellipsoid_get_parameters(OSRGetProjTLSContext(), ellipsoid,
+                                  pdfSemiMajor, nullptr, nullptr,
+                                  pdfInvFlattening);
     proj_destroy(ellipsoid);
 
     return OGRERR_NONE;
@@ -147,95 +139,93 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
  * due to the EPSG tables not being accessible.
  */
 
-OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
-                                           const char *pszOverrideUnitName,
-                                           double dfOverrideUnit )
+OGRErr OGRSpatialReference::SetStatePlane(int nZone, int bNAD83,
+                                          const char *pszOverrideUnitName,
+                                          double dfOverrideUnit)
 
 {
 
-/* -------------------------------------------------------------------- */
-/*      Get the index id from stateplane.csv.                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Get the index id from stateplane.csv.                           */
+    /* -------------------------------------------------------------------- */
 
-    if( !bNAD83 && nZone > INT_MAX - 10000 )
+    if (!bNAD83 && nZone > INT_MAX - 10000)
         return OGRERR_FAILURE;
 
     const int nAdjustedId = bNAD83 ? nZone : nZone + 10000;
 
-/* -------------------------------------------------------------------- */
-/*      Turn this into a PCS code.  We assume there will only be one    */
-/*      PCS corresponding to each Proj_ code since the proj code        */
-/*      already effectively indicates NAD27 or NAD83.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Turn this into a PCS code.  We assume there will only be one    */
+    /*      PCS corresponding to each Proj_ code since the proj code        */
+    /*      already effectively indicates NAD27 or NAD83.                   */
+    /* -------------------------------------------------------------------- */
     char szID[32] = {};
-    snprintf( szID, sizeof(szID), "%d", nAdjustedId );
-    const int nPCSCode =
-        atoi( CSVGetField( CSVFilename( "stateplane.csv" ),
-                           "ID", szID, CC_Integer,
-                           "EPSG_PCS_CODE" ) );
-    if( nPCSCode < 1 )
+    snprintf(szID, sizeof(szID), "%d", nAdjustedId);
+    const int nPCSCode = atoi(CSVGetField(CSVFilename("stateplane.csv"), "ID",
+                                          szID, CC_Integer, "EPSG_PCS_CODE"));
+    if (nPCSCode < 1)
     {
         static bool bFailureReported = false;
 
-        if( !bFailureReported )
+        if (!bFailureReported)
         {
             bFailureReported = true;
-            CPLError( CE_Warning, CPLE_OpenFailed,
-                      "Unable to find state plane zone in stateplane.csv, "
-                      "likely because the GDAL data files cannot be found.  "
-                      "Using incomplete definition of state plane zone." );
+            CPLError(CE_Warning, CPLE_OpenFailed,
+                     "Unable to find state plane zone in stateplane.csv, "
+                     "likely because the GDAL data files cannot be found.  "
+                     "Using incomplete definition of state plane zone.");
         }
 
         Clear();
-        if( bNAD83 )
+        if (bNAD83)
         {
             char szName[128] = {};
-            snprintf( szName, sizeof(szName),
-                      "State Plane Zone %d / NAD83", nZone );
-            SetLocalCS( szName );
-            SetLinearUnits( SRS_UL_METER, 1.0 );
+            snprintf(szName, sizeof(szName), "State Plane Zone %d / NAD83",
+                     nZone);
+            SetLocalCS(szName);
+            SetLinearUnits(SRS_UL_METER, 1.0);
         }
         else
         {
             char szName[128] = {};
-            snprintf( szName, sizeof(szName),
-                      "State Plane Zone %d / NAD27", nZone );
-            SetLocalCS( szName );
-            SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
+            snprintf(szName, sizeof(szName), "State Plane Zone %d / NAD27",
+                     nZone);
+            SetLocalCS(szName);
+            SetLinearUnits(SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV));
         }
 
         return OGRERR_FAILURE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Define based on a full EPSG definition of the zone.             */
-/* -------------------------------------------------------------------- */
-    OGRErr eErr = importFromEPSG( nPCSCode );
+    /* -------------------------------------------------------------------- */
+    /*      Define based on a full EPSG definition of the zone.             */
+    /* -------------------------------------------------------------------- */
+    OGRErr eErr = importFromEPSG(nPCSCode);
 
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Apply units override if required.                               */
-/*                                                                      */
-/*      We will need to adjust the linear projection parameter to       */
-/*      match the provided units, and clear the authority code.         */
-/* -------------------------------------------------------------------- */
-    if( pszOverrideUnitName != nullptr && dfOverrideUnit != 0.0
-        && fabs(dfOverrideUnit - GetLinearUnits()) > 0.0000000001 )
+    /* -------------------------------------------------------------------- */
+    /*      Apply units override if required.                               */
+    /*                                                                      */
+    /*      We will need to adjust the linear projection parameter to       */
+    /*      match the provided units, and clear the authority code.         */
+    /* -------------------------------------------------------------------- */
+    if (pszOverrideUnitName != nullptr && dfOverrideUnit != 0.0 &&
+        fabs(dfOverrideUnit - GetLinearUnits()) > 0.0000000001)
     {
-        const double dfFalseEasting = GetNormProjParm( SRS_PP_FALSE_EASTING );
-        const double dfFalseNorthing = GetNormProjParm( SRS_PP_FALSE_NORTHING);
+        const double dfFalseEasting = GetNormProjParm(SRS_PP_FALSE_EASTING);
+        const double dfFalseNorthing = GetNormProjParm(SRS_PP_FALSE_NORTHING);
 
-        SetLinearUnits( pszOverrideUnitName, dfOverrideUnit );
+        SetLinearUnits(pszOverrideUnitName, dfOverrideUnit);
 
-        SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
-        SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+        SetNormProjParm(SRS_PP_FALSE_EASTING, dfFalseEasting);
+        SetNormProjParm(SRS_PP_FALSE_NORTHING, dfFalseNorthing);
 
-        OGR_SRSNode * const poPROJCS = GetAttrNode( "PROJCS" );
-        if( poPROJCS != nullptr && poPROJCS->FindChild( "AUTHORITY" ) != -1 )
+        OGR_SRSNode *const poPROJCS = GetAttrNode("PROJCS");
+        if (poPROJCS != nullptr && poPROJCS->FindChild("AUTHORITY") != -1)
         {
-            poPROJCS->DestroyChild( poPROJCS->FindChild( "AUTHORITY" ) );
+            poPROJCS->DestroyChild(poPROJCS->FindChild("AUTHORITY"));
         }
     }
 
@@ -252,13 +242,13 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
  * This function is the same as OGRSpatialReference::SetStatePlane().
  */
 
-OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
+OGRErr OSRSetStatePlane(OGRSpatialReferenceH hSRS, int nZone, int bNAD83)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetStatePlane", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRSetStatePlane", OGRERR_FAILURE);
 
-    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
-        SetStatePlane( nZone, bNAD83 );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetStatePlane(nZone,
+                                                                        bNAD83);
 }
 
 /************************************************************************/
@@ -271,18 +261,15 @@ OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
  * This function is the same as OGRSpatialReference::SetStatePlane().
  */
 
-OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
-                                  int nZone, int bNAD83,
-                                  const char *pszOverrideUnitName,
-                                  double dfOverrideUnit )
+OGRErr OSRSetStatePlaneWithUnits(OGRSpatialReferenceH hSRS, int nZone,
+                                 int bNAD83, const char *pszOverrideUnitName,
+                                 double dfOverrideUnit)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetStatePlaneWithUnits", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRSetStatePlaneWithUnits", OGRERR_FAILURE);
 
-    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
-        SetStatePlane( nZone, bNAD83,
-                       pszOverrideUnitName,
-                       dfOverrideUnit );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetStatePlane(
+        nZone, bNAD83, pszOverrideUnitName, dfOverrideUnit);
 }
 
 /************************************************************************/
@@ -318,100 +305,104 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do we have a GEOGCS node, but no authority?  If so, try         */
-/*      guessing it.                                                    */
-/* -------------------------------------------------------------------- */
-    if( (IsProjected() || IsGeographic())
-        && GetAuthorityCode( "GEOGCS" ) == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a GEOGCS node, but no authority?  If so, try         */
+    /*      guessing it.                                                    */
+    /* -------------------------------------------------------------------- */
+    if ((IsProjected() || IsGeographic()) &&
+        GetAuthorityCode("GEOGCS") == nullptr)
     {
         const int nGCS = GetEPSGGeogCS();
-        if( nGCS != -1 )
-            SetAuthority( "GEOGCS", "EPSG", nGCS );
+        if (nGCS != -1)
+            SetAuthority("GEOGCS", "EPSG", nGCS);
     }
 
-    if( IsProjected() && GetAuthorityCode( "PROJCS") == nullptr )
+    if (IsProjected() && GetAuthorityCode("PROJCS") == nullptr)
     {
-        const char *pszProjection = GetAttrValue( "PROJECTION" );
+        const char *pszProjection = GetAttrValue("PROJECTION");
 
-/* -------------------------------------------------------------------- */
-/*      Is this a UTM coordinate system with a common GEOGCS?           */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Is this a UTM coordinate system with a common GEOGCS? */
+        /* --------------------------------------------------------------------
+         */
         int nZone = 0;
         int bNorth = FALSE;
-        if( (nZone = GetUTMZone( &bNorth )) != 0 )
+        if ((nZone = GetUTMZone(&bNorth)) != 0)
         {
-            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
-            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+            const char *pszAuthName = GetAuthorityName("PROJCS|GEOGCS");
+            const char *pszAuthCode = GetAuthorityCode("PROJCS|GEOGCS");
 
-            if( pszAuthName == nullptr || pszAuthCode == nullptr )
+            if (pszAuthName == nullptr || pszAuthCode == nullptr)
             {
                 // Don't exactly recognise datum.
             }
-            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+            else if (EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326)
             {
                 // WGS84
-                if( bNorth )
-                    SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
+                if (bNorth)
+                    SetAuthority("PROJCS", "EPSG", 32600 + nZone);
                 else
-                    SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
+                    SetAuthority("PROJCS", "EPSG", 32700 + nZone);
             }
-            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
-                    && nZone >= 3 && nZone <= 22 && bNorth )
+            else if (EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267 &&
+                     nZone >= 3 && nZone <= 22 && bNorth)
             {
-                SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
+                SetAuthority("PROJCS", "EPSG", 26700 + nZone);  // NAD27
             }
-            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
-                    && nZone >= 3 && nZone <= 23 && bNorth )
+            else if (EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269 &&
+                     nZone >= 3 && nZone <= 23 && bNorth)
             {
-                SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
+                SetAuthority("PROJCS", "EPSG", 26900 + nZone);  // NAD83
             }
-            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
-            { // WGS72
-                if( bNorth )
-                    SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
+            else if (EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322)
+            {  // WGS72
+                if (bNorth)
+                    SetAuthority("PROJCS", "EPSG", 32200 + nZone);
                 else
-                    SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+                    SetAuthority("PROJCS", "EPSG", 32300 + nZone);
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Is this a Polar Stereographic system on WGS 84 ?                */
-/* -------------------------------------------------------------------- */
-        else if ( pszProjection != nullptr &&
-                  EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Is this a Polar Stereographic system on WGS 84 ? */
+        /* --------------------------------------------------------------------
+         */
+        else if (pszProjection != nullptr &&
+                 EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
         {
-            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
-            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
-            const double dfLatOrigin = GetNormProjParm(
-                                            SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+            const char *pszAuthName = GetAuthorityName("PROJCS|GEOGCS");
+            const char *pszAuthCode = GetAuthorityCode("PROJCS|GEOGCS");
+            const double dfLatOrigin =
+                GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
 
-            if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
+            if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
                 pszAuthCode != nullptr && atoi(pszAuthCode) == 4326 &&
-                fabs( fabs(dfLatOrigin ) - 71.0 ) < 1e-15 &&
-                fabs(GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 )) < 1e-15 &&
-                fabs(GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) - 1.0) < 1e-15 &&
-                fabs(GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 )) < 1e-15 &&
-                fabs(GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 )) < 1e-15 &&
-                fabs(GetLinearUnits() - 1.0) < 1e-15 )
+                fabs(fabs(dfLatOrigin) - 71.0) < 1e-15 &&
+                fabs(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) < 1e-15 &&
+                fabs(GetProjParm(SRS_PP_SCALE_FACTOR, 1.0) - 1.0) < 1e-15 &&
+                fabs(GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0)) < 1e-15 &&
+                fabs(GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0)) < 1e-15 &&
+                fabs(GetLinearUnits() - 1.0) < 1e-15)
             {
-                if( dfLatOrigin > 0 )
+                if (dfLatOrigin > 0)
                     // Arctic Polar Stereographic
-                    SetAuthority( "PROJCS", "EPSG", 3995 );
+                    SetAuthority("PROJCS", "EPSG", 3995);
                 else
                     // Antarctic Polar Stereographic
-                    SetAuthority( "PROJCS", "EPSG", 3031 );
+                    SetAuthority("PROJCS", "EPSG", 3031);
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Return.                                                         */
-/* -------------------------------------------------------------------- */
-    if( IsProjected() && GetAuthorityCode("PROJCS") != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Return.                                                         */
+    /* -------------------------------------------------------------------- */
+    if (IsProjected() && GetAuthorityCode("PROJCS") != nullptr)
         return OGRERR_NONE;
 
-    if( IsGeographic() && GetAuthorityCode("GEOGCS") != nullptr )
+    if (IsGeographic() && GetAuthorityCode("GEOGCS") != nullptr)
         return OGRERR_NONE;
 
     return OGRERR_UNSUPPORTED_SRS;
@@ -431,11 +422,10 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
  *
  */
 
-OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
+OGRErr OSRAutoIdentifyEPSG(OGRSpatialReferenceH hSRS)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRAutoIdentifyEPSG", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRAutoIdentifyEPSG", OGRERR_FAILURE);
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->AutoIdentifyEPSG();
 }
-

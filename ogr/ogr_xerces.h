@@ -44,21 +44,21 @@
 bool CPL_DLL OGRInitializeXerces(void);
 void CPL_DLL OGRDeinitializeXerces(void);
 
-InputSource CPL_DLL* OGRCreateXercesInputSource(VSILFILE* fp);
-void CPL_DLL OGRDestroyXercesInputSource(InputSource* is);
+InputSource CPL_DLL *OGRCreateXercesInputSource(VSILFILE *fp);
+void CPL_DLL OGRDestroyXercesInputSource(InputSource *is);
 
 void CPL_DLL OGRStartXercesLimitsForThisThread(size_t nMaxMemAlloc,
-                                               const char* pszMsgMaxMemAlloc,
+                                               const char *pszMsgMaxMemAlloc,
                                                double dfTimeoutSecond,
-                                               const char* pszMsgTimeout);
+                                               const char *pszMsgTimeout);
 void CPL_DLL OGRStopXercesLimitsForThisThread();
 
 namespace OGR
 {
-CPLString CPL_DLL transcode( const XMLCh *panXMLString, int nLimitingChars = -1 );
-CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet,
-                              int nLimitingChars = -1 );
-}
+CPLString CPL_DLL transcode(const XMLCh *panXMLString, int nLimitingChars = -1);
+CPLString CPL_DLL &transcode(const XMLCh *panXMLString, CPLString &osRet,
+                             int nLimitingChars = -1);
+}  // namespace OGR
 
 #ifndef OGR_USING
 using OGR::transcode;

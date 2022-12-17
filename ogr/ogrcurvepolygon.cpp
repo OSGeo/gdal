@@ -39,7 +39,6 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-
 /************************************************************************/
 /*                            OGRCurvePolygon()                         */
 /************************************************************************/
@@ -63,7 +62,7 @@ OGRCurvePolygon::OGRCurvePolygon() = default;
  * @since GDAL 2.1
  */
 
-OGRCurvePolygon::OGRCurvePolygon( const OGRCurvePolygon& ) = default;
+OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
 
 /************************************************************************/
 /*                           ~OGRCurvePolygon()                         */
@@ -84,11 +83,11 @@ OGRCurvePolygon::~OGRCurvePolygon() = default;
  * @since GDAL 2.1
  */
 
-OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
+OGRCurvePolygon &OGRCurvePolygon::operator=(const OGRCurvePolygon &other)
 {
-    if( this != &other )
+    if (this != &other)
     {
-        OGRSurface::operator=( other );
+        OGRSurface::operator=(other);
 
         oCC = other.oCC;
     }
@@ -122,11 +121,11 @@ void OGRCurvePolygon::empty()
 OGRwkbGeometryType OGRCurvePolygon::getGeometryType() const
 
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbCurvePolygonZM;
-    else if( flags & OGR_G_MEASURED )
+    else if (flags & OGR_G_MEASURED)
         return wkbCurvePolygonM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbCurvePolygonZ;
     else
         return wkbCurvePolygon;
@@ -156,7 +155,7 @@ void OGRCurvePolygon::flattenTo2D()
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRCurvePolygon::getGeometryName() const
+const char *OGRCurvePolygon::getGeometryName() const
 
 {
     return "CURVEPOLYGON";
@@ -222,8 +221,8 @@ const OGRCurve *OGRCurvePolygon::getExteriorRingCurve() const
 int OGRCurvePolygon::getNumInteriorRings() const
 
 {
-    if( oCC.nCurveCount > 0 )
-        return oCC.nCurveCount-1;
+    if (oCC.nCurveCount > 0)
+        return oCC.nCurveCount - 1;
     else
         return 0;
 }
@@ -247,7 +246,7 @@ int OGRCurvePolygon::getNumInteriorRings() const
  * @return pointer to interior ring.  May be NULL.
  */
 
-OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing )
+OGRCurve *OGRCurvePolygon::getInteriorRingCurve(int iRing)
 
 {
     return oCC.getCurve(iRing + 1);
@@ -268,7 +267,7 @@ OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing )
  * @return pointer to interior ring.  May be NULL.
  */
 
-const OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing ) const
+const OGRCurve *OGRCurvePolygon::getInteriorRingCurve(int iRing) const
 
 {
     return oCC.getCurve(iRing + 1);
@@ -290,7 +289,7 @@ const OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing ) const
 
 OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
 {
-    if( oCC.nCurveCount == 0 )
+    if (oCC.nCurveCount == 0)
         return nullptr;
     OGRCurve *poRet = oCC.papoCurves[0];
     oCC.papoCurves[0] = nullptr;
@@ -320,7 +319,7 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
  * out of range.
  */
 
-OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
+OGRErr OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
 {
     return oCC.removeCurve(iIndex, bDelete);
 }
@@ -343,12 +342,12 @@ OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
  * @return OGRERR_NONE in case of success
  */
 
-OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
+OGRErr OGRCurvePolygon::addRing(OGRCurve *poNewRing)
 
 {
-    OGRCurve* poNewRingCloned = poNewRing->clone();
+    OGRCurve *poNewRingCloned = poNewRing->clone();
     OGRErr eErr = addRingDirectly(poNewRingCloned);
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         delete poNewRingCloned;
     return eErr;
 }
@@ -357,13 +356,15 @@ OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 /*                            checkRing()                               */
 /************************************************************************/
 
-int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
+int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
 {
-    if( !poNewRing->IsEmpty() && !poNewRing->get_IsClosed() )
+    if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
-        // This configuration option name must be the same as in OGRPolygon::checkRing()
-        const char* pszEnvVar = CPLGetConfigOption("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", nullptr);
-        if( pszEnvVar != nullptr && !CPLTestBool(pszEnvVar) )
+        // This configuration option name must be the same as in
+        // OGRPolygon::checkRing()
+        const char *pszEnvVar =
+            CPLGetConfigOption("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", nullptr);
+        if (pszEnvVar != nullptr && !CPLTestBool(pszEnvVar))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Non closed ring detected.");
             return FALSE;
@@ -371,21 +372,22 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Non closed ring detected.%s",
-                     pszEnvVar == nullptr ?
-                         " To avoid accepting it, set the "
-                         "OGR_GEOMETRY_ACCEPT_UNCLOSED_RING configuration "
-                         "option to NO" : "");
+                     pszEnvVar == nullptr
+                         ? " To avoid accepting it, set the "
+                           "OGR_GEOMETRY_ACCEPT_UNCLOSED_RING configuration "
+                           "option to NO"
+                         : "");
         }
     }
 
-    if( wkbFlatten(poNewRing->getGeometryType()) == wkbLineString )
+    if (wkbFlatten(poNewRing->getGeometryType()) == wkbLineString)
     {
-        if( poNewRing->getNumPoints() < 4 )
+        if (poNewRing->getNumPoints() < 4)
         {
             return FALSE;
         }
 
-        if( EQUAL(poNewRing->getGeometryName(), "LINEARRING") )
+        if (EQUAL(poNewRing->getGeometryName(), "LINEARRING"))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
             return FALSE;
@@ -413,15 +415,15 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
  * @return OGRERR_NONE in case of success
  */
 
-OGRErr OGRCurvePolygon::addRingDirectly( OGRCurve * poNewRing )
+OGRErr OGRCurvePolygon::addRingDirectly(OGRCurve *poNewRing)
 {
-    return addRingDirectlyInternal( poNewRing, TRUE );
+    return addRingDirectlyInternal(poNewRing, TRUE);
 }
 
-OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,
-                                                 int bNeedRealloc )
+OGRErr OGRCurvePolygon::addRingDirectlyInternal(OGRCurve *poNewRing,
+                                                int bNeedRealloc)
 {
-    if( !checkRing(poNewRing) )
+    if (!checkRing(poNewRing))
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     HomogenizeDimensionalityWith(poNewRing);
@@ -446,11 +448,11 @@ size_t OGRCurvePolygon::WkbSize() const
 /*                       addCurveDirectlyFromWkb()                      */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
-                                                 OGRCurve* poCurve )
+OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb(OGRGeometry *poSelf,
+                                                OGRCurve *poCurve)
 {
-    OGRCurvePolygon* poCP = poSelf->toCurvePolygon();
-    return poCP->addRingDirectlyInternal( poCurve, FALSE );
+    OGRCurvePolygon *poCP = poSelf->toCurvePolygon();
+    return poCP->addRingDirectlyInternal(poCurve, FALSE);
 }
 
 /************************************************************************/
@@ -460,10 +462,9 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
-                                       size_t nSize,
-                                       OGRwkbVariant eWkbVariant,
-                                       size_t& nBytesConsumedOut )
+OGRErr OGRCurvePolygon::importFromWkb(const unsigned char *pabyData,
+                                      size_t nSize, OGRwkbVariant eWkbVariant,
+                                      size_t &nBytesConsumedOut)
 
 {
     nBytesConsumedOut = 0;
@@ -471,16 +472,15 @@ OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
     size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
-                                             eByteOrder, 9, eWkbVariant);
-    if( eErr != OGRERR_NONE )
+                                            eByteOrder, 9, eWkbVariant);
+    if (eErr != OGRERR_NONE)
         return eErr;
 
     eErr = oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
                                  true,  // bAcceptCompoundCurve
-                                 addCurveDirectlyFromWkb,
-                                 eWkbVariant,
-                                 nBytesConsumedOut );
-    if( eErr == OGRERR_NONE )
+                                 addCurveDirectlyFromWkb, eWkbVariant,
+                                 nBytesConsumedOut);
+    if (eErr == OGRERR_NONE)
         nBytesConsumedOut += nDataOffset;
     return eErr;
 }
@@ -491,12 +491,12 @@ OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                     unsigned char * pabyData,
-                                     OGRwkbVariant eWkbVariant ) const
+OGRErr OGRCurvePolygon::exportToWkb(OGRwkbByteOrder eByteOrder,
+                                    unsigned char *pabyData,
+                                    OGRwkbVariant eWkbVariant) const
 
 {
-    if( eWkbVariant == wkbVariantOldOgc )
+    if (eWkbVariant == wkbVariantOldOgc)
         // Does not make sense for new geometries, so patch it.
         eWkbVariant = wkbVariantIso;
     return oCC.exportToWkb(this, eByteOrder, pabyData, eWkbVariant);
@@ -506,8 +506,8 @@ OGRErr OGRCurvePolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*                       addCurveDirectlyFromWkt()                      */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
-                                                 OGRCurve* poCurve )
+OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt(OGRGeometry *poSelf,
+                                                OGRCurve *poCurve)
 {
     OGRCurvePolygon *poCP = poSelf->toCurvePolygon();
     return poCP->addRingDirectly(poCurve);
@@ -519,22 +519,23 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::importFromWkt( const char ** ppszInput )
+OGRErr OGRCurvePolygon::importFromWkt(const char **ppszInput)
 
 {
-    return importCurveCollectionFromWkt( ppszInput,
-                                         FALSE,  // bAllowEmptyComponent
-                                         TRUE,  // bAllowLineString
-                                         TRUE,  // bAllowCurve
-                                         TRUE,  // bAllowCompoundCurve
-                                         addCurveDirectlyFromWkt );
+    return importCurveCollectionFromWkt(ppszInput,
+                                        FALSE,  // bAllowEmptyComponent
+                                        TRUE,   // bAllowLineString
+                                        TRUE,   // bAllowCurve
+                                        TRUE,   // bAllowCompoundCurve
+                                        addCurveDirectlyFromWkt);
 }
 
 /************************************************************************/
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
+std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions &opts,
+                                         OGRErr *err) const
 {
     return oCC.exportToWkt(this, opts, err);
 }
@@ -562,18 +563,18 @@ std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions& opts, OGRErr *err)
  */
 
 OGRPolygon *
-OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
-                                  const char* const* papszOptions ) const
+OGRCurvePolygon::CurvePolyToPoly(double dfMaxAngleStepSizeDegrees,
+                                 const char *const *papszOptions) const
 {
-    OGRPolygon* poPoly = new OGRPolygon();
+    OGRPolygon *poPoly = new OGRPolygon();
     poPoly->assignSpatialReference(getSpatialReference());
-    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    for (int iRing = 0; iRing < oCC.nCurveCount; iRing++)
     {
-        OGRLineString* poLS =
-            oCC.papoCurves[iRing]->CurveToLine(dfMaxAngleStepSizeDegrees,
-                                               papszOptions);
-        OGRLinearRing* poRing = OGRCurve::CastToLinearRing(poLS);
-        if( poRing == nullptr ) {
+        OGRLineString *poLS = oCC.papoCurves[iRing]->CurveToLine(
+            dfMaxAngleStepSizeDegrees, papszOptions);
+        OGRLinearRing *poRing = OGRCurve::CastToLinearRing(poLS);
+        if (poRing == nullptr)
+        {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "OGRCurve::CastToLinearRing failed");
             break;
@@ -587,9 +588,9 @@ OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::hasCurveGeometry( int bLookForNonLinear ) const
+OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
 {
-    if( bLookForNonLinear )
+    if (bLookForNonLinear)
     {
         return oCC.hasCurveGeometry(bLookForNonLinear);
     }
@@ -602,8 +603,8 @@ OGRBoolean OGRCurvePolygon::hasCurveGeometry( int bLookForNonLinear ) const
 /************************************************************************/
 
 OGRGeometry *
-OGRCurvePolygon::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
-                                    const char* const* papszOptions ) const
+OGRCurvePolygon::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
+                                   const char *const *papszOptions) const
 {
     return CurvePolyToPoly(dfMaxAngleStepSizeDegrees, papszOptions);
 }
@@ -612,7 +613,7 @@ OGRCurvePolygon::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRCurvePolygon::getEnvelope( OGREnvelope * psEnvelope ) const
+void OGRCurvePolygon::getEnvelope(OGREnvelope *psEnvelope) const
 
 {
     oCC.getEnvelope(psEnvelope);
@@ -622,7 +623,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
+void OGRCurvePolygon::getEnvelope(OGREnvelope3D *psEnvelope) const
 
 {
     oCC.getEnvelope(psEnvelope);
@@ -632,26 +633,26 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Equals( const OGRGeometry * poOther ) const
+OGRBoolean OGRCurvePolygon::Equals(const OGRGeometry *poOther) const
 
 {
-    if( poOther == this )
+    if (poOther == this)
         return TRUE;
 
-    if( poOther->getGeometryType() != getGeometryType() )
+    if (poOther->getGeometryType() != getGeometryType())
         return FALSE;
 
-    if( IsEmpty() && poOther->IsEmpty() )
+    if (IsEmpty() && poOther->IsEmpty())
         return TRUE;
 
-    return oCC.Equals( &(poOther->toCurvePolygon()->oCC) );
+    return oCC.Equals(&(poOther->toCurvePolygon()->oCC));
 }
 
 /************************************************************************/
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::transform( OGRCoordinateTransformation *poCT )
+OGRErr OGRCurvePolygon::transform(OGRCoordinateTransformation *poCT)
 
 {
     return oCC.transform(this, poCT);
@@ -664,12 +665,12 @@ OGRErr OGRCurvePolygon::transform( OGRCoordinateTransformation *poCT )
 double OGRCurvePolygon::get_Area() const
 
 {
-    if( getExteriorRingCurve() == nullptr )
+    if (getExteriorRingCurve() == nullptr)
         return 0.0;
 
     double dfArea = getExteriorRingCurve()->get_Area();
 
-    for( int iRing = 0; iRing < getNumInteriorRings(); iRing++ )
+    for (int iRing = 0; iRing < getNumInteriorRings(); iRing++)
     {
         dfArea -= getInteriorRingCurve(iRing)->get_Area();
     }
@@ -681,29 +682,29 @@ double OGRCurvePolygon::get_Area() const
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRCurvePolygon::setCoordinateDimension( int nNewDimension )
+void OGRCurvePolygon::setCoordinateDimension(int nNewDimension)
 
 {
     oCC.setCoordinateDimension(this, nNewDimension);
 }
 
-void OGRCurvePolygon::set3D( OGRBoolean bIs3D )
+void OGRCurvePolygon::set3D(OGRBoolean bIs3D)
 {
-    oCC.set3D( this, bIs3D );
+    oCC.set3D(this, bIs3D);
 }
 
-void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
+void OGRCurvePolygon::setMeasured(OGRBoolean bIsMeasured)
 {
-    oCC.setMeasured( this, bIsMeasured );
+    oCC.setMeasured(this, bIsMeasured);
 }
 
 /************************************************************************/
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 
-void OGRCurvePolygon::assignSpatialReference( OGRSpatialReference * poSR )
+void OGRCurvePolygon::assignSpatialReference(OGRSpatialReference *poSR)
 {
-    oCC.assignSpatialReference( this, poSR );
+    oCC.assignSpatialReference(this, poSR);
 }
 
 /************************************************************************/
@@ -719,11 +720,12 @@ OGRBoolean OGRCurvePolygon::IsEmpty() const
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCurvePolygon::segmentize( double dfMaxLength )
+void OGRCurvePolygon::segmentize(double dfMaxLength)
 {
     if (EQUAL(getGeometryName(), "TRIANGLE"))
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "segmentize() is not valid for Triangle");
         return;
     }
     oCC.segmentize(dfMaxLength);
@@ -742,13 +744,12 @@ void OGRCurvePolygon::swapXY()
 /*                           ContainsPoint()                             */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
+OGRBoolean OGRCurvePolygon::ContainsPoint(const OGRPoint *p) const
 {
-    if( getExteriorRingCurve() != nullptr &&
-        getNumInteriorRings() == 0 )
+    if (getExteriorRingCurve() != nullptr && getNumInteriorRings() == 0)
     {
         const int nRet = getExteriorRingCurve()->ContainsPoint(p);
-        if( nRet >= 0 )
+        if (nRet >= 0)
             return nRet;
     }
 
@@ -759,13 +760,12 @@ OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
 /*                          IntersectsPoint()                           */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::IntersectsPoint( const OGRPoint* p ) const
+OGRBoolean OGRCurvePolygon::IntersectsPoint(const OGRPoint *p) const
 {
-    if( getExteriorRingCurve() != nullptr &&
-        getNumInteriorRings() == 0 )
+    if (getExteriorRingCurve() != nullptr && getNumInteriorRings() == 0)
     {
         const int nRet = getExteriorRingCurve()->IntersectsPoint(p);
-        if( nRet >= 0 )
+        if (nRet >= 0)
             return nRet;
     }
 
@@ -776,11 +776,11 @@ OGRBoolean OGRCurvePolygon::IntersectsPoint( const OGRPoint* p ) const
 /*                               Contains()                             */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
+OGRBoolean OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
 
 {
-    if( !IsEmpty() && poOtherGeom != nullptr &&
-        wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
+    if (!IsEmpty() && poOtherGeom != nullptr &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint)
     {
         return ContainsPoint(poOtherGeom->toPoint());
     }
@@ -792,11 +792,11 @@ OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
 /*                              Intersects()                            */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
+OGRBoolean OGRCurvePolygon::Intersects(const OGRGeometry *poOtherGeom) const
 
 {
-    if( !IsEmpty() && poOtherGeom != nullptr &&
-        wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
+    if (!IsEmpty() && poOtherGeom != nullptr &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint)
     {
         return IntersectsPoint(poOtherGeom->toPoint());
     }
@@ -823,19 +823,19 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
  * @return new geometry.
  */
 
-OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
+OGRPolygon *OGRCurvePolygon::CastToPolygon(OGRCurvePolygon *poCP)
 {
-    for( int i = 0; i < poCP->oCC.nCurveCount; i++ )
+    for (int i = 0; i < poCP->oCC.nCurveCount; i++)
     {
         poCP->oCC.papoCurves[i] =
             OGRCurve::CastToLinearRing(poCP->oCC.papoCurves[i]);
-        if( poCP->oCC.papoCurves[i] == nullptr )
+        if (poCP->oCC.papoCurves[i] == nullptr)
         {
             delete poCP;
             return nullptr;
         }
     }
-    OGRPolygon* poPoly = new OGRPolygon();
+    OGRPolygon *poPoly = new OGRPolygon();
     poPoly->setCoordinateDimension(poCP->getCoordinateDimension());
     poPoly->assignSpatialReference(poCP->getSpatialReference());
     poPoly->oCC.nCurveCount = poCP->oCC.nCurveCount;
@@ -851,9 +851,9 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
-OGRPolygon* OGRCurvePolygon::CasterToPolygon(OGRSurface* poSurface)
+OGRPolygon *OGRCurvePolygon::CasterToPolygon(OGRSurface *poSurface)
 {
-    OGRCurvePolygon* poCurvePoly = poSurface->toCurvePolygon();
+    OGRCurvePolygon *poCurvePoly = poSurface->toCurvePolygon();
     return OGRCurvePolygon::CastToPolygon(poCurvePoly);
 }
 
@@ -866,7 +866,7 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const
 /*                      GetCasterToCurvePolygon()                       */
 /************************************************************************/
 
-static OGRCurvePolygon* CasterToCurvePolygon(OGRSurface* poSurface)
+static OGRCurvePolygon *CasterToCurvePolygon(OGRSurface *poSurface)
 {
     return poSurface->toCurvePolygon();
 }

@@ -49,7 +49,9 @@ double OGR_GreatCircle_InitialHeading(double dfLatA_deg, double dfLonA_deg,
 
 /* such as ExtendPosition(A, Distance(A,B), InitialHeading(A,B)) ~= B */
 int CPL_DLL OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
-                                   double dfDistance, double dfHeadingInA,
-                                   double* pdfLatB_deg, double* pdfLonB_deg);
+                                           double dfDistance,
+                                           double dfHeadingInA,
+                                           double *pdfLatB_deg,
+                                           double *pdfLonB_deg);
 
 #endif /* ndef OGR_GEO_UTILS_H_INCLUDED */

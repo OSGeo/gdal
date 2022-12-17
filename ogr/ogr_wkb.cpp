@@ -52,11 +52,11 @@ static inline bool OGRWKBNeedSwap(GByte b)
 /*                        OGRWKBReadUInt32()                            */
 /************************************************************************/
 
-static inline uint32_t OGRWKBReadUInt32(const GByte* pabyWkb, bool bNeedSwap)
+static inline uint32_t OGRWKBReadUInt32(const GByte *pabyWkb, bool bNeedSwap)
 {
     uint32_t nVal;
     memcpy(&nVal, pabyWkb, sizeof(nVal));
-    if( bNeedSwap )
+    if (bNeedSwap)
         CPL_SWAP32PTR(&nVal);
     return nVal;
 }
@@ -65,11 +65,11 @@ static inline uint32_t OGRWKBReadUInt32(const GByte* pabyWkb, bool bNeedSwap)
 /*                        OGRWKBReadFloat64()                           */
 /************************************************************************/
 
-static inline double OGRWKBReadFloat64(const GByte* pabyWkb, bool bNeedSwap)
+static inline double OGRWKBReadFloat64(const GByte *pabyWkb, bool bNeedSwap)
 {
     double dfVal;
     memcpy(&dfVal, pabyWkb, sizeof(dfVal));
-    if( bNeedSwap )
+    if (bNeedSwap)
         CPL_SWAP64PTR(&dfVal);
     return dfVal;
 }
@@ -78,12 +78,12 @@ static inline double OGRWKBReadFloat64(const GByte* pabyWkb, bool bNeedSwap)
 /*                        OGRWKBRingGetArea()                           */
 /************************************************************************/
 
-static bool OGRWKBRingGetArea(const GByte*& pabyWkb, size_t& nWKBSize,
-                              int nDim, bool bNeedSwap, double& dfArea)
+static bool OGRWKBRingGetArea(const GByte *&pabyWkb, size_t &nWKBSize, int nDim,
+                              bool bNeedSwap, double &dfArea)
 {
     const uint32_t nPoints = OGRWKBReadUInt32(pabyWkb, bNeedSwap);
-    if( nPoints >= 4 &&
-        (nWKBSize - sizeof(uint32_t)) / (nDim * sizeof(double)) >= nPoints )
+    if (nPoints >= 4 &&
+        (nWKBSize - sizeof(uint32_t)) / (nDim * sizeof(double)) >= nPoints)
     {
         nWKBSize -= sizeof(uint32_t) + nDim * sizeof(double);
         pabyWkb += sizeof(uint32_t);
@@ -94,10 +94,11 @@ static bool OGRWKBRingGetArea(const GByte*& pabyWkb, size_t& nWKBSize,
         double y_m2 = y_m1;
         dfArea = 0;
         pabyWkb += nDim * sizeof(double);
-        for( uint32_t i = 1; i < nPoints; ++i )
+        for (uint32_t i = 1; i < nPoints; ++i)
         {
             const double x = OGRWKBReadFloat64(pabyWkb, bNeedSwap);
-            const double y = OGRWKBReadFloat64(pabyWkb + sizeof(double), bNeedSwap);
+            const double y =
+                OGRWKBReadFloat64(pabyWkb + sizeof(double), bNeedSwap);
             pabyWkb += nDim * sizeof(double);
             dfArea += x_m1 * (y - y_m2);
             y_m2 = y_m1;
@@ -115,10 +116,10 @@ static bool OGRWKBRingGetArea(const GByte*& pabyWkb, size_t& nWKBSize,
 /*                         OGRWKBGetGeomType()                          */
 /************************************************************************/
 
-bool OGRWKBGetGeomType(const GByte* pabyWkb, size_t nWKBSize,
-                       bool& bNeedSwap, uint32_t& nType)
+bool OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize, bool &bNeedSwap,
+                       uint32_t &nType)
 {
-    if( nWKBSize >= 5 )
+    if (nWKBSize >= 5)
     {
         bNeedSwap = OGRWKBNeedSwap(pabyWkb[0]);
         nType = OGRWKBReadUInt32(pabyWkb + 1, bNeedSwap);
@@ -131,25 +132,25 @@ bool OGRWKBGetGeomType(const GByte* pabyWkb, size_t nWKBSize,
 /*                        OGRWKBPolygonGetArea()                        */
 /************************************************************************/
 
-bool OGRWKBPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea)
+bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                          double &dfArea)
 {
     bool bNeedSwap;
     uint32_t nType;
-    if( nWKBSize < 9 || !OGRWKBGetGeomType(pabyWkb, nWKBSize, bNeedSwap, nType) )
+    if (nWKBSize < 9 || !OGRWKBGetGeomType(pabyWkb, nWKBSize, bNeedSwap, nType))
         return false;
 
     int nDims = 2;
-    if( nType == wkbPolygon )
+    if (nType == wkbPolygon)
     {
         // do nothing
     }
-    else if( nType == wkbPolygon + 1000 ||  // wkbPolygonZ
-             nType == wkbPolygon25D ||
-             nType == wkbPolygonM )
+    else if (nType == wkbPolygon + 1000 ||  // wkbPolygonZ
+             nType == wkbPolygon25D || nType == wkbPolygonM)
     {
         nDims = 3;
     }
-    else if( nType == wkbPolygonZM )
+    else if (nType == wkbPolygonZM)
     {
         nDims = 4;
     }
@@ -159,19 +160,20 @@ bool OGRWKBPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfAre
     }
 
     const uint32_t nRings = OGRWKBReadUInt32(pabyWkb + 5, bNeedSwap);
-    if( (nWKBSize - 9) / sizeof(uint32_t) >= nRings )
+    if ((nWKBSize - 9) / sizeof(uint32_t) >= nRings)
     {
         pabyWkb += 9;
         nWKBSize -= 9;
         dfArea = 0;
-        if( nRings > 0 )
+        if (nRings > 0)
         {
-            if( !OGRWKBRingGetArea(pabyWkb, nWKBSize, nDims, bNeedSwap, dfArea) )
+            if (!OGRWKBRingGetArea(pabyWkb, nWKBSize, nDims, bNeedSwap, dfArea))
                 return false;
-            for( uint32_t i = 1; i < nRings; ++i )
+            for (uint32_t i = 1; i < nRings; ++i)
             {
                 double dfRingArea;
-                if( !OGRWKBRingGetArea(pabyWkb, nWKBSize, nDims, bNeedSwap, dfRingArea) )
+                if (!OGRWKBRingGetArea(pabyWkb, nWKBSize, nDims, bNeedSwap,
+                                       dfRingArea))
                     return false;
                 dfArea -= dfRingArea;
             }
@@ -185,22 +187,23 @@ bool OGRWKBPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfAre
 /*                    OGRWKBMultiPolygonGetArea()                       */
 /************************************************************************/
 
-bool OGRWKBMultiPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea)
+bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                               double &dfArea)
 {
-    if( nWKBSize < 9 )
+    if (nWKBSize < 9)
         return false;
 
     const bool bNeedSwap = OGRWKBNeedSwap(pabyWkb[0]);
     const uint32_t nPolys = OGRWKBReadUInt32(pabyWkb + 5, bNeedSwap);
-    if( (nWKBSize - 9) / 9 >= nPolys )
+    if ((nWKBSize - 9) / 9 >= nPolys)
     {
         pabyWkb += 9;
         nWKBSize -= 9;
         dfArea = 0;
-        for( uint32_t i = 0; i < nPolys; ++i )
+        for (uint32_t i = 0; i < nPolys; ++i)
         {
             double dfPolyArea;
-            if( !OGRWKBPolygonGetArea(pabyWkb, nWKBSize, dfPolyArea) )
+            if (!OGRWKBPolygonGetArea(pabyWkb, nWKBSize, dfPolyArea))
                 return false;
             dfArea += dfPolyArea;
         }
@@ -213,37 +216,38 @@ bool OGRWKBMultiPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& 
 /*                            WKBFromEWKB()                             */
 /************************************************************************/
 
-const GByte* WKBFromEWKB( GByte *pabyEWKB, size_t nEWKBSize,
-                          size_t& nWKBSizeOut, int* pnSRIDOut )
+const GByte *WKBFromEWKB(GByte *pabyEWKB, size_t nEWKBSize, size_t &nWKBSizeOut,
+                         int *pnSRIDOut)
 {
-    if( nEWKBSize < 5U )
+    if (nEWKBSize < 5U)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid EWKB content : %u bytes", static_cast<unsigned>(nEWKBSize) );
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid EWKB content : %u bytes",
+                 static_cast<unsigned>(nEWKBSize));
         return nullptr;
     }
 
-    const GByte* pabyWKB = pabyEWKB;
+    const GByte *pabyWKB = pabyEWKB;
 
-/* -------------------------------------------------------------------- */
-/*      PostGIS EWKB format includes an SRID, but this won't be         */
-/*      understood by OGR, so if the SRID flag is set, we remove the    */
-/*      SRID (bytes at offset 5 to 8).                                  */
-/* -------------------------------------------------------------------- */
-    if( nEWKBSize > 9 &&
-        ((pabyEWKB[0] == 0 /* big endian */ && (pabyEWKB[1] & 0x20) )
-        || (pabyEWKB[0] != 0 /* little endian */ && (pabyEWKB[4] & 0x20))) )
+    /* -------------------------------------------------------------------- */
+    /*      PostGIS EWKB format includes an SRID, but this won't be         */
+    /*      understood by OGR, so if the SRID flag is set, we remove the    */
+    /*      SRID (bytes at offset 5 to 8).                                  */
+    /* -------------------------------------------------------------------- */
+    if (nEWKBSize > 9 &&
+        ((pabyEWKB[0] == 0 /* big endian */ && (pabyEWKB[1] & 0x20)) ||
+         (pabyEWKB[0] != 0 /* little endian */ && (pabyEWKB[4] & 0x20))))
     {
-        if( pnSRIDOut )
+        if (pnSRIDOut)
         {
-            memcpy(pnSRIDOut, pabyEWKB+5, 4);
-            const OGRwkbByteOrder eByteOrder = (pabyEWKB[0] == 0 ? wkbXDR : wkbNDR);
-            if( OGR_SWAP( eByteOrder ) )
+            memcpy(pnSRIDOut, pabyEWKB + 5, 4);
+            const OGRwkbByteOrder eByteOrder =
+                (pabyEWKB[0] == 0 ? wkbXDR : wkbNDR);
+            if (OGR_SWAP(eByteOrder))
                 *pnSRIDOut = CPL_SWAP32(*pnSRIDOut);
         }
 
         // Drop the SRID flag
-        if( pabyEWKB[0] == 0 )
+        if (pabyEWKB[0] == 0)
             pabyEWKB[1] &= (~0x20);
         else
             pabyEWKB[4] &= (~0x20);
@@ -257,7 +261,7 @@ const GByte* WKBFromEWKB( GByte *pabyEWKB, size_t nEWKBSize,
     }
     else
     {
-        if( pnSRIDOut )
+        if (pnSRIDOut)
         {
             *pnSRIDOut = INT_MIN;
         }
