@@ -35,33 +35,27 @@
 #include "ogr_p.h"
 #include "ogr_api.h"
 
-
 /************************************************************************/
 /*                           OGRGMLLayer()                              */
 /************************************************************************/
 
-OGRGMLLayer::OGRGMLLayer( const char * pszName,
-                          bool bWriterIn,
-                          OGRGMLDataSource *poDSIn ) :
-    poFeatureDefn(new OGRFeatureDefn(
-        pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
-    iNextGMLId(0),
-    bInvalidFIDFound(false),
-    pszFIDPrefix(nullptr),
-    bWriter(bWriterIn),
-    bSameSRS(false),
-    poDS(poDSIn),
-    poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) :  nullptr),
-    // Reader's should get the corresponding GMLFeatureClass and cache it.
-    hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
-    // Compatibility option. Not advertized, because hopefully won't be needed.
-    // Just put here in case.
-    bUseOldFIDFormat(CPLTestBool(
-        CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"))),
-    // Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer()
-    // and GMLReader::GMLReader().
-    bFaceHoleNegative(CPLTestBool(
-        CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")))
+OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
+                         OGRGMLDataSource *poDSIn)
+    : poFeatureDefn(new OGRFeatureDefn(
+          pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
+      iNextGMLId(0), bInvalidFIDFound(false), pszFIDPrefix(nullptr),
+      bWriter(bWriterIn), bSameSRS(false), poDS(poDSIn),
+      poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
+      // Reader's should get the corresponding GMLFeatureClass and cache it.
+      hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
+      // Compatibility option. Not advertized, because hopefully won't be
+      // needed. Just put here in case.
+      bUseOldFIDFormat(
+          CPLTestBool(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"))),
+      // Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer()
+      // and GMLReader::GMLReader().
+      bFaceHoleNegative(
+          CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")))
 {
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
@@ -77,7 +71,7 @@ OGRGMLLayer::~OGRGMLLayer()
 {
     CPLFree(pszFIDPrefix);
 
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 
     GML_BuildOGRGeometryFromList_DestroyCache(hCacheSRS);
@@ -109,11 +103,11 @@ void OGRGMLLayer::ResetReading()
     iNextGMLId = 0;
     poDS->GetReader()->ResetReading();
     CPLDebug("GML", "ResetReading()");
-    if ( poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD )
+    if (poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD)
     {
         const char *pszElementName = poFClass->GetElementName();
         const char *pszLastPipe = strrchr(pszElementName, '|');
-        if ( pszLastPipe != nullptr )
+        if (pszLastPipe != nullptr)
             pszElementName = pszLastPipe + 1;
         poDS->GetReader()->SetFilteredClassName(pszElementName);
     }
@@ -125,7 +119,7 @@ void OGRGMLLayer::ResetReading()
 
 static GIntBig Increment(GIntBig nVal)
 {
-    if( nVal <= GINTBIG_MAX - 1)
+    if (nVal <= GINTBIG_MAX - 1)
         return nVal + 1;
     return nVal;
 }
@@ -144,18 +138,18 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         return nullptr;
     }
 
-    if( poDS->GetLastReadLayer() != this )
+    if (poDS->GetLastReadLayer() != this)
     {
-        if( poDS->GetReadMode() != INTERLEAVED_LAYERS )
+        if (poDS->GetReadMode() != INTERLEAVED_LAYERS)
             ResetReading();
         poDS->SetLastReadLayer(this);
     }
 
-/* ==================================================================== */
-/*      Loop till we find and translate a feature meeting all our       */
-/*      requirements.                                                   */
-/* ==================================================================== */
-    while( true )
+    /* ==================================================================== */
+    /*      Loop till we find and translate a feature meeting all our       */
+    /*      requirements.                                                   */
+    /* ==================================================================== */
+    while (true)
     {
         GMLFeature *poGMLFeature = poDS->PeekStoredGMLFeature();
         if (poGMLFeature != nullptr)
@@ -165,7 +159,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else
         {
             poGMLFeature = poDS->GetReader()->NextFeature();
-            if( poGMLFeature == nullptr )
+            if (poGMLFeature == nullptr)
                 return nullptr;
 
             // We count reading low level GML features as a feature read for
@@ -174,14 +168,16 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             m_nFeaturesRead++;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Is it of the proper feature class?                              */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Is it of the proper feature class? */
+        /* --------------------------------------------------------------------
+         */
 
-        if( poGMLFeature->GetClass() != poFClass )
+        if (poGMLFeature->GetClass() != poFClass)
         {
-            if( poDS->GetReadMode() == INTERLEAVED_LAYERS ||
-                (poDS->GetReadMode() == SEQUENTIAL_LAYERS && iNextGMLId != 0) )
+            if (poDS->GetReadMode() == INTERLEAVED_LAYERS ||
+                (poDS->GetReadMode() == SEQUENTIAL_LAYERS && iNextGMLId != 0))
             {
                 CPLAssert(poDS->PeekStoredGMLFeature() == nullptr);
                 poDS->SetStoredGMLFeature(poGMLFeature);
@@ -194,39 +190,42 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Extract the fid:                                                */
-/*      -Assumes the fids are non-negative integers with an optional    */
-/*       prefix                                                         */
-/*      -If a prefix differs from the prefix of the first feature from  */
-/*       the poDS then the fids from the poDS are ignored and are       */
-/*       assigned serially thereafter                                   */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Extract the fid: */
+        /*      -Assumes the fids are non-negative integers with an optional */
+        /*       prefix */
+        /*      -If a prefix differs from the prefix of the first feature from
+         */
+        /*       the poDS then the fids from the poDS are ignored and are */
+        /*       assigned serially thereafter */
+        /* --------------------------------------------------------------------
+         */
         GIntBig nFID = -1;
         const char *pszGML_FID = poGMLFeature->GetFID();
-        if( bInvalidFIDFound )
+        if (bInvalidFIDFound)
         {
             nFID = iNextGMLId;
             iNextGMLId = Increment(iNextGMLId);
         }
-        else if( pszGML_FID == nullptr )
+        else if (pszGML_FID == nullptr)
         {
             bInvalidFIDFound = true;
             nFID = iNextGMLId;
             iNextGMLId = Increment(iNextGMLId);
         }
-        else if( iNextGMLId == 0 )
+        else if (iNextGMLId == 0)
         {
             int j = 0;
             int i = static_cast<int>(strlen(pszGML_FID)) - 1;
-            while( i >= 0 && pszGML_FID[i] >= '0'
-                          && pszGML_FID[i] <= '9' && j < 20)
+            while (i >= 0 && pszGML_FID[i] >= '0' && pszGML_FID[i] <= '9' &&
+                   j < 20)
             {
                 i--;
                 j++;
             }
             // i points the last character of the fid.
-            if( i >= 0 && j < 20 && pszFIDPrefix == nullptr)
+            if (i >= 0 && j < 20 && pszFIDPrefix == nullptr)
             {
                 pszFIDPrefix = static_cast<char *>(CPLMalloc(i + 2));
                 pszFIDPrefix[i + 1] = '\0';
@@ -234,9 +233,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
             // pszFIDPrefix now contains the prefix or NULL if no prefix is
             // found.
-            if( j < 20 && sscanf(pszGML_FID + i + 1, CPL_FRMT_GIB, &nFID) == 1)
+            if (j < 20 && sscanf(pszGML_FID + i + 1, CPL_FRMT_GIB, &nFID) == 1)
             {
-                if( iNextGMLId <= nFID )
+                if (iNextGMLId <= nFID)
                     iNextGMLId = Increment(nFID);
             }
             else
@@ -249,15 +248,16 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else  // if( iNextGMLId != 0 ).
         {
             const char *pszFIDPrefix_notnull = pszFIDPrefix;
-            if (pszFIDPrefix_notnull == nullptr) pszFIDPrefix_notnull = "";
+            if (pszFIDPrefix_notnull == nullptr)
+                pszFIDPrefix_notnull = "";
             int nLenPrefix = static_cast<int>(strlen(pszFIDPrefix_notnull));
 
-            if( strncmp(pszGML_FID, pszFIDPrefix_notnull, nLenPrefix) == 0 &&
+            if (strncmp(pszGML_FID, pszFIDPrefix_notnull, nLenPrefix) == 0 &&
                 strlen(pszGML_FID + nLenPrefix) < 20 &&
-                sscanf(pszGML_FID + nLenPrefix, CPL_FRMT_GIB, &nFID) == 1 )
+                sscanf(pszGML_FID + nLenPrefix, CPL_FRMT_GIB, &nFID) == 1)
             {
                 // fid with the prefix. Using its numerical part.
-                if( iNextGMLId < nFID )
+                if (iNextGMLId < nFID)
                     iNextGMLId = Increment(nFID);
             }
             else
@@ -270,24 +270,26 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Does it satisfy the spatial query, if there is one?             */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Does it satisfy the spatial query, if there is one? */
+        /* --------------------------------------------------------------------
+         */
 
         OGRGeometry **papoGeometries = nullptr;
         const CPLXMLNode *const *papsGeometry = poGMLFeature->GetGeometryList();
 
         OGRGeometry *poGeom = nullptr;
 
-        if( poFeatureDefn->GetGeomFieldCount() > 1 )
+        if (poFeatureDefn->GetGeomFieldCount() > 1)
         {
             papoGeometries = static_cast<OGRGeometry **>(CPLCalloc(
                 poFeatureDefn->GetGeomFieldCount(), sizeof(OGRGeometry *)));
             const char *pszSRSName = poDS->GetGlobalSRSName();
-            for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+            for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
                 const CPLXMLNode *psGeom = poGMLFeature->GetGeometryRef(i);
-                if( psGeom != nullptr )
+                if (psGeom != nullptr)
                 {
                     const CPLXMLNode *myGeometryList[2] = {psGeom, nullptr};
                     poGeom = GML_BuildOGRGeometryFromList(
@@ -311,8 +313,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     {
                         // We assume the createFromGML() function would have
                         // already reported the error.
-                        for(int j = 0; j < poFeatureDefn->GetGeomFieldCount();
-                            j++)
+                        for (int j = 0; j < poFeatureDefn->GetGeomFieldCount();
+                             j++)
                         {
                             delete papoGeometries[j];
                         }
@@ -323,13 +325,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 }
             }
 
-            if( m_poFilterGeom != nullptr &&
-                m_iGeomFieldFilter >= 0 &&
+            if (m_poFilterGeom != nullptr && m_iGeomFieldFilter >= 0 &&
                 m_iGeomFieldFilter < poFeatureDefn->GetGeomFieldCount() &&
                 papoGeometries[m_iGeomFieldFilter] &&
-                !FilterGeometry( papoGeometries[m_iGeomFieldFilter] ) )
+                !FilterGeometry(papoGeometries[m_iGeomFieldFilter]))
             {
-                for( int j = 0; j < poFeatureDefn->GetGeomFieldCount(); j++ )
+                for (int j = 0; j < poFeatureDefn->GetGeomFieldCount(); j++)
                 {
                     delete papoGeometries[j];
                 }
@@ -343,14 +344,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             const char *pszSRSName = poDS->GetGlobalSRSName();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             poGeom = GML_BuildOGRGeometryFromList(
-                papsGeometry, true,
-                poDS->GetInvertAxisOrderIfLatLong(),
-                pszSRSName,
-                poDS->GetConsiderEPSGAsURN(),
-                poDS->GetSwapCoordinates(),
-                poDS->GetSecondaryGeometryOption(),
-                hCacheSRS,
-                bFaceHoleNegative);
+                papsGeometry, true, poDS->GetInvertAxisOrderIfLatLong(),
+                pszSRSName, poDS->GetConsiderEPSGAsURN(),
+                poDS->GetSwapCoordinates(), poDS->GetSecondaryGeometryOption(),
+                hCacheSRS, bFaceHoleNegative);
             CPLPopErrorHandler();
 
             // Do geometry type changes if needed to match layer geometry type.
@@ -365,22 +362,23 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 const bool bGoOn = CPLTestBool(
                     CPLGetConfigOption("GML_SKIP_CORRUPTED_FEATURES", "NO"));
 
-                CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
-                         "Geometry of feature " CPL_FRMT_GIB
-                         " %scannot be parsed: %s%s",
-                         nFID, pszGML_FID ? CPLSPrintf("%s ", pszGML_FID) : "",
-                         osLastErrorMsg.c_str(),
-                         bGoOn ? ". Skipping to next feature.":
-                         ". You may set the GML_SKIP_CORRUPTED_FEATURES "
-                         "configuration option to YES to skip to the next "
-                         "feature");
+                CPLError(
+                    bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                    "Geometry of feature " CPL_FRMT_GIB
+                    " %scannot be parsed: %s%s",
+                    nFID, pszGML_FID ? CPLSPrintf("%s ", pszGML_FID) : "",
+                    osLastErrorMsg.c_str(),
+                    bGoOn ? ". Skipping to next feature."
+                          : ". You may set the GML_SKIP_CORRUPTED_FEATURES "
+                            "configuration option to YES to skip to the next "
+                            "feature");
                 delete poGMLFeature;
-                if( bGoOn )
+                if (bGoOn)
                     continue;
                 return nullptr;
             }
 
-            if( m_poFilterGeom != nullptr && !FilterGeometry(poGeom) )
+            if (m_poFilterGeom != nullptr && !FilterGeometry(poGeom))
             {
                 delete poGMLFeature;
                 delete poGeom;
@@ -388,9 +386,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Convert the whole feature into an OGRFeature.                   */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Convert the whole feature into an OGRFeature. */
+        /* --------------------------------------------------------------------
+         */
         int iDstField = 0;
         OGRFeature *poOGRFeature = new OGRFeature(poFeatureDefn);
 
@@ -403,128 +403,129 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
 
         const int nPropertyCount = poFClass->GetPropertyCount();
-        for( int iField = 0; iField < nPropertyCount; iField++, iDstField++ )
+        for (int iField = 0; iField < nPropertyCount; iField++, iDstField++)
         {
             const GMLProperty *psGMLProperty =
                 poGMLFeature->GetProperty(iField);
-            if( psGMLProperty == nullptr || psGMLProperty->nSubProperties == 0 )
+            if (psGMLProperty == nullptr || psGMLProperty->nSubProperties == 0)
                 continue;
 
-            if( EQUAL(psGMLProperty->papszSubProperties[0], OGR_GML_NULL) )
+            if (EQUAL(psGMLProperty->papszSubProperties[0], OGR_GML_NULL))
             {
-                poOGRFeature->SetFieldNull( iDstField );
+                poOGRFeature->SetFieldNull(iDstField);
                 continue;
             }
 
-            switch( poFClass->GetProperty(iField)->GetType() )
+            switch (poFClass->GetProperty(iField)->GetType())
             {
-              case GMLPT_Real:
-              {
-                  poOGRFeature->SetField(
-                      iDstField, CPLAtof(psGMLProperty->papszSubProperties[0]));
-              }
-              break;
+                case GMLPT_Real:
+                {
+                    poOGRFeature->SetField(
+                        iDstField,
+                        CPLAtof(psGMLProperty->papszSubProperties[0]));
+                }
+                break;
 
-              case GMLPT_IntegerList:
-              {
-                  const int nCount = psGMLProperty->nSubProperties;
-                  int *panIntList =
-                      static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
+                case GMLPT_IntegerList:
+                {
+                    const int nCount = psGMLProperty->nSubProperties;
+                    int *panIntList =
+                        static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
 
-                  for( int i = 0; i < nCount; i++ )
-                      panIntList[i] =
-                          atoi(psGMLProperty->papszSubProperties[i]);
+                    for (int i = 0; i < nCount; i++)
+                        panIntList[i] =
+                            atoi(psGMLProperty->papszSubProperties[i]);
 
-                  poOGRFeature->SetField(iDstField, nCount, panIntList);
-                  CPLFree(panIntList);
-              }
-              break;
+                    poOGRFeature->SetField(iDstField, nCount, panIntList);
+                    CPLFree(panIntList);
+                }
+                break;
 
-              case GMLPT_Integer64List:
-              {
-                  const int nCount = psGMLProperty->nSubProperties;
-                  GIntBig *panIntList = static_cast<GIntBig *>(
-                      CPLMalloc(sizeof(GIntBig) * nCount));
+                case GMLPT_Integer64List:
+                {
+                    const int nCount = psGMLProperty->nSubProperties;
+                    GIntBig *panIntList = static_cast<GIntBig *>(
+                        CPLMalloc(sizeof(GIntBig) * nCount));
 
-                  for( int i = 0; i < nCount; i++ )
-                      panIntList[i] =
-                          CPLAtoGIntBig(psGMLProperty->papszSubProperties[i]);
+                    for (int i = 0; i < nCount; i++)
+                        panIntList[i] =
+                            CPLAtoGIntBig(psGMLProperty->papszSubProperties[i]);
 
-                  poOGRFeature->SetField(iDstField, nCount, panIntList);
-                  CPLFree(panIntList);
-              }
-              break;
+                    poOGRFeature->SetField(iDstField, nCount, panIntList);
+                    CPLFree(panIntList);
+                }
+                break;
 
-              case GMLPT_RealList:
-              {
-                  const int nCount = psGMLProperty->nSubProperties;
-                  double *padfList = static_cast<double *>(
-                      CPLMalloc(sizeof(double) * nCount));
+                case GMLPT_RealList:
+                {
+                    const int nCount = psGMLProperty->nSubProperties;
+                    double *padfList = static_cast<double *>(
+                        CPLMalloc(sizeof(double) * nCount));
 
-                  for( int i = 0; i < nCount; i++ )
-                      padfList[i] =
-                          CPLAtof(psGMLProperty->papszSubProperties[i]);
+                    for (int i = 0; i < nCount; i++)
+                        padfList[i] =
+                            CPLAtof(psGMLProperty->papszSubProperties[i]);
 
-                  poOGRFeature->SetField(iDstField, nCount, padfList);
-                  CPLFree(padfList);
-              }
-              break;
+                    poOGRFeature->SetField(iDstField, nCount, padfList);
+                    CPLFree(padfList);
+                }
+                break;
 
-              case GMLPT_StringList:
-              case GMLPT_FeaturePropertyList:
-              {
-                  poOGRFeature->SetField(iDstField,
-                                         psGMLProperty->papszSubProperties);
-              }
-              break;
+                case GMLPT_StringList:
+                case GMLPT_FeaturePropertyList:
+                {
+                    poOGRFeature->SetField(iDstField,
+                                           psGMLProperty->papszSubProperties);
+                }
+                break;
 
-              case GMLPT_Boolean:
-              {
-                  if( strcmp(psGMLProperty->papszSubProperties[0],
-                             "true") == 0 ||
-                      strcmp(psGMLProperty->papszSubProperties[0], "1") == 0 )
-                  {
-                      poOGRFeature->SetField(iDstField, 1);
-                  }
-                  else if( strcmp(psGMLProperty->papszSubProperties[0],
-                                  "false") == 0 ||
-                           strcmp(psGMLProperty->papszSubProperties[0],
-                                  "0") == 0 )
-                  {
-                      poOGRFeature->SetField(iDstField, 0);
-                  }
-                  else
-                  {
-                      poOGRFeature->SetField(
-                          iDstField, psGMLProperty->papszSubProperties[0]);
-                  }
-                  break;
-              }
+                case GMLPT_Boolean:
+                {
+                    if (strcmp(psGMLProperty->papszSubProperties[0], "true") ==
+                            0 ||
+                        strcmp(psGMLProperty->papszSubProperties[0], "1") == 0)
+                    {
+                        poOGRFeature->SetField(iDstField, 1);
+                    }
+                    else if (strcmp(psGMLProperty->papszSubProperties[0],
+                                    "false") == 0 ||
+                             strcmp(psGMLProperty->papszSubProperties[0],
+                                    "0") == 0)
+                    {
+                        poOGRFeature->SetField(iDstField, 0);
+                    }
+                    else
+                    {
+                        poOGRFeature->SetField(
+                            iDstField, psGMLProperty->papszSubProperties[0]);
+                    }
+                    break;
+                }
 
-              case GMLPT_BooleanList:
-              {
-                  const int nCount = psGMLProperty->nSubProperties;
-                  int *panIntList =
-                      static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
+                case GMLPT_BooleanList:
+                {
+                    const int nCount = psGMLProperty->nSubProperties;
+                    int *panIntList =
+                        static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
 
-                  for( int i = 0; i < nCount; i++ )
-                  {
-                      panIntList[i] = (
-                          strcmp(psGMLProperty->papszSubProperties[i],
-                                 "true") == 0 ||
-                          strcmp(psGMLProperty->papszSubProperties[i],
-                                 "1") == 0 );
-                  }
+                    for (int i = 0; i < nCount; i++)
+                    {
+                        panIntList[i] =
+                            (strcmp(psGMLProperty->papszSubProperties[i],
+                                    "true") == 0 ||
+                             strcmp(psGMLProperty->papszSubProperties[i],
+                                    "1") == 0);
+                    }
 
-                  poOGRFeature->SetField(iDstField, nCount, panIntList);
-                  CPLFree(panIntList);
-                  break;
-              }
+                    poOGRFeature->SetField(iDstField, nCount, panIntList);
+                    CPLFree(panIntList);
+                    break;
+                }
 
-              default:
-                  poOGRFeature->SetField(iDstField,
-                                         psGMLProperty->papszSubProperties[0]);
-                  break;
+                default:
+                    poOGRFeature->SetField(
+                        iDstField, psGMLProperty->papszSubProperties[0]);
+                    break;
             }
         }
 
@@ -533,9 +534,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
         // Assign the geometry before the attribute filter because
         // the attribute filter may use a special field like OGR_GEOMETRY.
-        if( papoGeometries != nullptr )
+        if (papoGeometries != nullptr)
         {
-            for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+            for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
                 poOGRFeature->SetGeomFieldDirectly(i, papoGeometries[i]);
             }
@@ -548,10 +549,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         }
 
         // Assign SRS.
-        for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+        for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
         {
             poGeom = poOGRFeature->GetGeomFieldRef(i);
-            if( poGeom != nullptr )
+            if (poGeom != nullptr)
             {
                 OGRSpatialReference *poSRS =
                     poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
@@ -560,10 +561,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Test against the attribute query.                               */
-/* -------------------------------------------------------------------- */
-        if( m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poOGRFeature) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Test against the attribute query. */
+        /* --------------------------------------------------------------------
+         */
+        if (m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poOGRFeature))
         {
             delete poOGRFeature;
             continue;
@@ -580,13 +583,13 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRGMLLayer::GetFeatureCount( int bForce )
+GIntBig OGRGMLLayer::GetFeatureCount(int bForce)
 
 {
-    if( poFClass == nullptr )
+    if (poFClass == nullptr)
         return 0;
 
-    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
 
     // If the schema is read from a .xsd file, we haven't read
@@ -605,18 +608,18 @@ GIntBig OGRGMLLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
+OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
-    if( GetGeomType() == wkbNone )
+    if (GetGeomType() == wkbNone)
         return OGRERR_FAILURE;
 
     double dfXMin = 0.0;
     double dfXMax = 0.0;
     double dfYMin = 0.0;
     double dfYMax = 0.0;
-    if( poFClass != nullptr &&
-        poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+    if (poFClass != nullptr &&
+        poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax))
     {
         psExtent->MinX = dfXMin;
         psExtent->MaxX = dfXMax;
@@ -633,39 +636,32 @@ OGRErr OGRGMLLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-static void GMLWriteField(OGRGMLDataSource *poDS,
-                          VSILFILE *fp,
-                          bool bWriteSpaceIndentation,
-                          const char *pszPrefix,
-                          bool bRemoveAppPrefix,
-                          OGRFieldDefn *poFieldDefn,
-                          const char *pszVal )
+static void GMLWriteField(OGRGMLDataSource *poDS, VSILFILE *fp,
+                          bool bWriteSpaceIndentation, const char *pszPrefix,
+                          bool bRemoveAppPrefix, OGRFieldDefn *poFieldDefn,
+                          const char *pszVal)
 
 {
     const char *pszFieldName = poFieldDefn->GetNameRef();
 
-    while( *pszVal == ' ' )
+    while (*pszVal == ' ')
         pszVal++;
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "      ");
 
-    if( bRemoveAppPrefix )
+    if (bRemoveAppPrefix)
         poDS->PrintLine(fp, "<%s>%s</%s>", pszFieldName, pszVal, pszFieldName);
     else
-        poDS->PrintLine(fp, "<%s:%s>%s</%s:%s>",
-                        pszPrefix,
-                        pszFieldName,
-                        pszVal,
-                        pszPrefix,
-                        pszFieldName);
+        poDS->PrintLine(fp, "<%s:%s>%s</%s:%s>", pszPrefix, pszFieldName,
+                        pszVal, pszPrefix, pszFieldName);
 }
 
 /************************************************************************/
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
     const bool bIsGML3Output = poDS->IsGML3Output();
@@ -675,20 +671,20 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     const bool bRemoveAppPrefix = poDS->RemoveAppPrefix();
     const bool bGMLFeatureCollection = poDS->GMLFeatureCollection();
 
-    if( !bWriter )
+    if (!bWriter)
         return OGRERR_FAILURE;
 
     poFeature->FillUnsetWithDefault(TRUE, nullptr);
-    if( !poFeature->Validate(OGR_F_VAL_ALL & ~OGR_F_VAL_GEOM_TYPE &
+    if (!poFeature->Validate(OGR_F_VAL_ALL & ~OGR_F_VAL_GEOM_TYPE &
                                  ~OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT,
-                             TRUE) )
+                             TRUE))
         return OGRERR_FAILURE;
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "  ");
     if (bIsGML3Output && !bGMLFeatureCollection)
     {
-        if( bRemoveAppPrefix )
+        if (bRemoveAppPrefix)
             poDS->PrintLine(fp, "<featureMember>");
         else
             poDS->PrintLine(fp, "<%s:featureMember>", pszPrefix);
@@ -698,55 +694,52 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         poDS->PrintLine(fp, "<gml:featureMember>");
     }
 
-    if( iNextGMLId == 0 )
+    if (iNextGMLId == 0)
     {
         bSameSRS = true;
-        for( int iGeomField = 1;
-             iGeomField < poFeatureDefn->GetGeomFieldCount();
-             iGeomField++ )
+        for (int iGeomField = 1;
+             iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++)
         {
             OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
             OGRGeomFieldDefn *poFieldDefn =
                 poFeatureDefn->GetGeomFieldDefn(iGeomField);
             OGRSpatialReference *poSRS0 = poFieldDefn0->GetSpatialRef();
             OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
-            if( poSRS0 != nullptr && poSRS == nullptr )
+            if (poSRS0 != nullptr && poSRS == nullptr)
             {
                 bSameSRS = false;
             }
-            else if( poSRS0 == nullptr && poSRS != nullptr )
+            else if (poSRS0 == nullptr && poSRS != nullptr)
             {
                 bSameSRS = false;
             }
-            else if( poSRS0 != nullptr && poSRS != nullptr &&
-                     poSRS0 != poSRS && !poSRS0->IsSame(poSRS) )
+            else if (poSRS0 != nullptr && poSRS != nullptr && poSRS0 != poSRS &&
+                     !poSRS0->IsSame(poSRS))
             {
                 bSameSRS = false;
             }
         }
     }
 
-    if( poFeature->GetFID() == OGRNullFID )
+    if (poFeature->GetFID() == OGRNullFID)
         poFeature->SetFID(iNextGMLId++);
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "    ");
     VSIFPrintfL(fp, "<");
-    if( !bRemoveAppPrefix )
+    if (!bRemoveAppPrefix)
         VSIFPrintfL(fp, "%s:", pszPrefix);
 
     int nGMLIdIndex = -1;
     if (bIsGML3Output)
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("gml_id");
-        if (nGMLIdIndex >= 0 && poFeature->IsFieldSetAndNotNull(nGMLIdIndex) )
-            poDS->PrintLine(fp, "%s gml:id=\"%s\">",
-                            poFeatureDefn->GetName(),
+        if (nGMLIdIndex >= 0 && poFeature->IsFieldSetAndNotNull(nGMLIdIndex))
+            poDS->PrintLine(fp, "%s gml:id=\"%s\">", poFeatureDefn->GetName(),
                             poFeature->GetFieldAsString(nGMLIdIndex));
         else
             poDS->PrintLine(fp, "%s gml:id=\"%s." CPL_FRMT_GIB "\">",
-                            poFeatureDefn->GetName(),
-                            poFeatureDefn->GetName(),
+                            poFeatureDefn->GetName(), poFeatureDefn->GetName(),
                             poFeature->GetFID());
     }
     else
@@ -755,26 +748,24 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         if (bUseOldFIDFormat)
         {
             poDS->PrintLine(fp, "%s fid=\"F" CPL_FRMT_GIB "\">",
-                            poFeatureDefn->GetName(),
-                            poFeature->GetFID());
+                            poFeatureDefn->GetName(), poFeature->GetFID());
         }
-        else if (nGMLIdIndex >= 0 && poFeature->IsFieldSetAndNotNull( nGMLIdIndex ) )
+        else if (nGMLIdIndex >= 0 &&
+                 poFeature->IsFieldSetAndNotNull(nGMLIdIndex))
         {
-            poDS->PrintLine(fp, "%s fid=\"%s\">",
-                            poFeatureDefn->GetName(),
+            poDS->PrintLine(fp, "%s fid=\"%s\">", poFeatureDefn->GetName(),
                             poFeature->GetFieldAsString(nGMLIdIndex));
         }
         else
         {
             poDS->PrintLine(fp, "%s fid=\"%s." CPL_FRMT_GIB "\">",
-                            poFeatureDefn->GetName(),
-                            poFeatureDefn->GetName(),
+                            poFeatureDefn->GetName(), poFeatureDefn->GetName(),
                             poFeature->GetFID());
         }
     }
 
-    for( int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount();
-         iGeomField++ )
+    for (int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount();
+         iGeomField++)
     {
         OGRGeomFieldDefn *poFieldDefn =
             poFeatureDefn->GetGeomFieldDefn(iGeomField);
@@ -782,14 +773,14 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         // Write out Geometry - for now it isn't indented properly.
         // GML geometries don't like very much the concept of empty geometry.
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iGeomField);
-        if( poGeom != nullptr && !poGeom->IsEmpty())
+        if (poGeom != nullptr && !poGeom->IsEmpty())
         {
             OGREnvelope3D sGeomBounds;
 
             const int nCoordDimension = poGeom->getCoordinateDimension();
 
             poGeom->getEnvelope(&sGeomBounds);
-            if( bSameSRS )
+            if (bSameSRS)
                 poDS->GrowExtents(&sGeomBounds, nCoordDimension);
 
             if (poGeom->getSpatialReference() == nullptr &&
@@ -836,43 +827,40 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             }
 
             char **papszOptions = nullptr;
-            if( bIsGML3Output )
+            if (bIsGML3Output)
             {
                 papszOptions = CSLAddString(papszOptions, "FORMAT=GML3");
-                if( poDS->GetSRSNameFormat() == SRSNAME_SHORT )
+                if (poDS->GetSRSNameFormat() == SRSNAME_SHORT)
                     papszOptions =
                         CSLAddString(papszOptions, "SRSNAME_FORMAT=SHORT");
-                else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URN )
+                else if (poDS->GetSRSNameFormat() == SRSNAME_OGC_URN)
                     papszOptions =
                         CSLAddString(papszOptions, "SRSNAME_FORMAT=OGC_URN");
-                else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URL )
+                else if (poDS->GetSRSNameFormat() == SRSNAME_OGC_URL)
                     papszOptions =
                         CSLAddString(papszOptions, "SRSNAME_FORMAT=OGC_URL");
             }
             const char *pszSRSDimensionLoc = poDS->GetSRSDimensionLoc();
-            if( pszSRSDimensionLoc != nullptr )
+            if (pszSRSDimensionLoc != nullptr)
                 papszOptions = CSLSetNameValue(papszOptions, "SRSDIMENSION_LOC",
                                                pszSRSDimensionLoc);
             if (poDS->IsGML32Output())
             {
-                if( poFeatureDefn->GetGeomFieldCount() > 1 )
+                if (poFeatureDefn->GetGeomFieldCount() > 1)
                     papszOptions = CSLAddString(
-                        papszOptions,
-                        CPLSPrintf("GMLID=%s.%s." CPL_FRMT_GIB,
-                                   poFeatureDefn->GetName(),
-                                   poFieldDefn->GetNameRef(),
-                                   poFeature->GetFID()));
+                        papszOptions, CPLSPrintf("GMLID=%s.%s." CPL_FRMT_GIB,
+                                                 poFeatureDefn->GetName(),
+                                                 poFieldDefn->GetNameRef(),
+                                                 poFeature->GetFID()));
                 else
                     papszOptions = CSLAddString(
-                        papszOptions,
-                        CPLSPrintf("GMLID=%s.geom." CPL_FRMT_GIB,
-                                   poFeatureDefn->GetName(),
-                                   poFeature->GetFID()));
+                        papszOptions, CPLSPrintf("GMLID=%s.geom." CPL_FRMT_GIB,
+                                                 poFeatureDefn->GetName(),
+                                                 poFeature->GetFID()));
             }
 
             char *pszGeometry = nullptr;
-            if( !bIsGML3Output &&
-                OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+            if (!bIsGML3Output && OGR_GT_IsNonLinear(poGeom->getGeometryType()))
             {
                 OGRGeometry *poGeomTmp = OGRGeometryFactory::forceTo(
                     poGeom->clone(),
@@ -882,7 +870,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else
             {
-                if( wkbFlatten(poGeom->getGeometryType()) == wkbTriangle )
+                if (wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
                 {
                     pszGeometry = poGeom->exportToGML(papszOptions);
 
@@ -905,20 +893,18 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 }
             }
             CSLDestroy(papszOptions);
-            if( pszGeometry )
+            if (pszGeometry)
             {
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL(fp, "      ");
-                if( bRemoveAppPrefix )
-                    poDS->PrintLine( fp, "<%s>%s</%s>",
-                                    poFieldDefn->GetNameRef(),
-                                    pszGeometry,
-                                    poFieldDefn->GetNameRef() );
+                if (bRemoveAppPrefix)
+                    poDS->PrintLine(fp, "<%s>%s</%s>",
+                                    poFieldDefn->GetNameRef(), pszGeometry,
+                                    poFieldDefn->GetNameRef());
                 else
-                    poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
-                                     pszPrefix, poFieldDefn->GetNameRef(),
-                                     pszGeometry,
-                                     pszPrefix, poFieldDefn->GetNameRef() );
+                    poDS->PrintLine(fp, "<%s:%s>%s</%s:%s>", pszPrefix,
+                                    poFieldDefn->GetNameRef(), pszGeometry,
+                                    pszPrefix, poFieldDefn->GetNameRef());
             }
             else
             {
@@ -930,34 +916,32 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     // Write all "set" fields.
-    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
     {
-        if( iField == nGMLIdIndex )
+        if (iField == nGMLIdIndex)
             continue;
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
+        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
 
-        if( poFeature->IsFieldNull( iField ) )
+        if (poFeature->IsFieldNull(iField))
         {
-            const char* pszFieldName = poFieldDefn->GetNameRef();
+            const char *pszFieldName = poFieldDefn->GetNameRef();
 
             if (bWriteSpaceIndentation)
                 VSIFPrintfL(fp, "      ");
 
-            if( bRemoveAppPrefix )
-                poDS->PrintLine( fp, "<%s xsi:nil=\"true\"/>",
-                                pszFieldName);
+            if (bRemoveAppPrefix)
+                poDS->PrintLine(fp, "<%s xsi:nil=\"true\"/>", pszFieldName);
             else
-                poDS->PrintLine( fp, "<%s:%s xsi:nil=\"true\"/>",
-                                pszPrefix,
+                poDS->PrintLine(fp, "<%s:%s xsi:nil=\"true\"/>", pszPrefix,
                                 pszFieldName);
         }
-        else if( poFeature->IsFieldSet( iField ) )
+        else if (poFeature->IsFieldSet(iField))
         {
             OGRFieldType eType = poFieldDefn->GetType();
-            if (eType == OFTStringList )
+            if (eType == OFTStringList)
             {
                 char **papszIter = poFeature->GetFieldAsStringList(iField);
-                while( papszIter != nullptr && *papszIter != nullptr )
+                while (papszIter != nullptr && *papszIter != nullptr)
                 {
                     char *pszEscaped = OGRGetXML_UTF8_EscapedString(*papszIter);
                     GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
@@ -967,14 +951,14 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     papszIter++;
                 }
             }
-            else if (eType == OFTIntegerList )
+            else if (eType == OFTIntegerList)
             {
                 int nCount = 0;
                 const int *panVals =
                     poFeature->GetFieldAsIntegerList(iField, &nCount);
-                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
-                    for(int i = 0; i < nCount; i++)
+                    for (int i = 0; i < nCount; i++)
                     {
                         // 0 and 1 are OK, but the canonical representation is
                         // false and true.
@@ -985,7 +969,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 }
                 else
                 {
-                    for(int i = 0; i < nCount; i++)
+                    for (int i = 0; i < nCount; i++)
                     {
                         GMLWriteField(poDS, fp, bWriteSpaceIndentation,
                                       pszPrefix, bRemoveAppPrefix, poFieldDefn,
@@ -993,14 +977,14 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     }
                 }
             }
-            else if (eType == OFTInteger64List )
+            else if (eType == OFTInteger64List)
             {
                 int nCount = 0;
                 const GIntBig *panVals =
                     poFeature->GetFieldAsInteger64List(iField, &nCount);
-                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
-                    for(int i = 0; i < nCount; i++)
+                    for (int i = 0; i < nCount; i++)
                     {
                         // 0 and 1 are OK, but the canonical representation is
                         // false and true.
@@ -1011,7 +995,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 }
                 else
                 {
-                    for(int i = 0; i < nCount; i++)
+                    for (int i = 0; i < nCount; i++)
                     {
                         GMLWriteField(poDS, fp, bWriteSpaceIndentation,
                                       pszPrefix, bRemoveAppPrefix, poFieldDefn,
@@ -1019,12 +1003,12 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     }
                 }
             }
-            else if (eType == OFTRealList )
+            else if (eType == OFTRealList)
             {
                 int nCount = 0;
                 const double *padfVals =
                     poFeature->GetFieldAsDoubleList(iField, &nCount);
-                for(int i = 0; i < nCount; i++)
+                for (int i = 0; i < nCount; i++)
                 {
                     char szBuffer[80] = {};
                     CPLsnprintf(szBuffer, sizeof(szBuffer), "%.15g",
@@ -1034,7 +1018,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 }
             }
             else if ((eType == OFTInteger || eType == OFTInteger64) &&
-                     poFieldDefn->GetSubType() == OFSTBoolean )
+                     poFieldDefn->GetSubType() == OFSTBoolean)
             {
                 // 0 and 1 are OK, but the canonical representation is false and
                 // true.
@@ -1043,19 +1027,19 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                               (poFeature->GetFieldAsInteger(iField)) ? "true"
                                                                      : "false");
             }
-            else if ( eType == OFTDate )
+            else if (eType == OFTDate)
             {
-                const OGRField* poField = poFeature->GetRawFieldRef(iField);
-                const char* pszXML = CPLSPrintf("%04d-%02d-%02d",
-                                                poField->Date.Year,
-                                                poField->Date.Month,
-                                                poField->Date.Day);
+                const OGRField *poField = poFeature->GetRawFieldRef(iField);
+                const char *pszXML =
+                    CPLSPrintf("%04d-%02d-%02d", poField->Date.Year,
+                               poField->Date.Month, poField->Date.Day);
                 GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
                               bRemoveAppPrefix, poFieldDefn, pszXML);
             }
-            else if ( eType == OFTDateTime )
+            else if (eType == OFTDateTime)
             {
-                char* pszXML = OGRGetXMLDateTime(poFeature->GetRawFieldRef(iField));
+                char *pszXML =
+                    OGRGetXMLDateTime(poFeature->GetRawFieldRef(iField));
                 GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
                               bRemoveAppPrefix, poFieldDefn, pszXML);
                 CPLFree(pszXML);
@@ -1075,7 +1059,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "    ");
-    if( bRemoveAppPrefix )
+    if (bRemoveAppPrefix)
         poDS->PrintLine(fp, "</%s>", poFeatureDefn->GetName());
     else
         poDS->PrintLine(fp, "</%s:%s>", pszPrefix, poFeatureDefn->GetName());
@@ -1083,7 +1067,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         VSIFPrintfL(fp, "  ");
     if (bIsGML3Output && !bGMLFeatureCollection)
     {
-        if( bRemoveAppPrefix )
+        if (bRemoveAppPrefix)
             poDS->PrintLine(fp, "</featureMember>");
         else
             poDS->PrintLine(fp, "</%s:featureMember>", pszPrefix);
@@ -1100,21 +1084,21 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLLayer::TestCapability( const char * pszCap )
+int OGRGMLLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap, OLCSequentialWrite) )
+    if (EQUAL(pszCap, OLCSequentialWrite))
         return bWriter;
 
-    else if( EQUAL(pszCap, OLCCreateField) )
+    else if (EQUAL(pszCap, OLCCreateField))
         return bWriter && iNextGMLId == 0;
 
-    else if( EQUAL(pszCap, OLCCreateGeomField) )
+    else if (EQUAL(pszCap, OLCCreateGeomField))
         return bWriter && iNextGMLId == 0;
 
-    else if( EQUAL(pszCap, OLCFastGetExtent) )
+    else if (EQUAL(pszCap, OLCFastGetExtent))
     {
-        if( poFClass == nullptr )
+        if (poFClass == nullptr)
             return FALSE;
 
         double dfXMin = 0.0;
@@ -1125,23 +1109,22 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
         return poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax);
     }
 
-    else if( EQUAL(pszCap, OLCFastFeatureCount) )
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
     {
-        if( poFClass == nullptr ||
-            m_poFilterGeom != nullptr ||
-            m_poAttrQuery != nullptr )
+        if (poFClass == nullptr || m_poFilterGeom != nullptr ||
+            m_poAttrQuery != nullptr)
             return FALSE;
 
         return poFClass->GetFeatureCount() != -1;
     }
 
-    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
-    else if( EQUAL(pszCap, OLCCurveGeometries) )
+    else if (EQUAL(pszCap, OLCCurveGeometries))
         return poDS->IsGML3Output();
 
-    else if( EQUAL(pszCap, OLCZGeometries) )
+    else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
 
     else
@@ -1152,22 +1135,22 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+OGRErr OGRGMLLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 
 {
-    if( !bWriter || iNextGMLId != 0 )
+    if (!bWriter || iNextGMLId != 0)
         return OGRERR_FAILURE;
 
-/* -------------------------------------------------------------------- */
-/*      Enforce XML naming semantics on element name.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Enforce XML naming semantics on element name.                   */
+    /* -------------------------------------------------------------------- */
     OGRFieldDefn oCleanCopy(poField);
     char *pszName = CPLStrdup(poField->GetNameRef());
     CPLCleanXMLElementName(pszName);
 
-    if( strcmp(pszName, poField->GetNameRef()) != 0 )
+    if (strcmp(pszName, poField->GetNameRef()) != 0)
     {
-        if( !bApproxOK )
+        if (!bApproxOK)
         {
             CPLFree(pszName);
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1195,26 +1178,27 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
+OGRErr OGRGMLLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
 
 {
-    if( !bWriter || iNextGMLId != 0 )
+    if (!bWriter || iNextGMLId != 0)
         return OGRERR_FAILURE;
 
-/* -------------------------------------------------------------------- */
-/*      Enforce XML naming semantics on element name.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Enforce XML naming semantics on element name.                   */
+    /* -------------------------------------------------------------------- */
     OGRGeomFieldDefn oCleanCopy(poField);
-    if( oCleanCopy.GetSpatialRef() )
+    if (oCleanCopy.GetSpatialRef())
     {
-        oCleanCopy.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oCleanCopy.GetSpatialRef()->SetAxisMappingStrategy(
+            OAMS_TRADITIONAL_GIS_ORDER);
     }
     char *pszName = CPLStrdup(poField->GetNameRef());
     CPLCleanXMLElementName(pszName);
 
-    if( strcmp(pszName, poField->GetNameRef()) != 0 )
+    if (strcmp(pszName, poField->GetNameRef()) != 0)
     {
-        if( !bApproxOK )
+        if (!bApproxOK)
         {
             CPLFree(pszName);
             CPLError(CE_Failure, CPLE_AppDefined,
