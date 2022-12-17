@@ -34,25 +34,18 @@
 
 #include <set>
 
-
 //! @cond Doxygen_Suppress
-GNMGenericNetwork::GNMGenericNetwork() :
-    GNMNetwork(),
-    m_nVersion(0),
-    m_nGID(0),
-    m_nVirtualConnectionGID(-1),
-    m_poMetadataLayer(nullptr),
-    m_poGraphLayer(nullptr),
-    m_poFeaturesLayer(nullptr),
-    m_poLayerDriver(nullptr),
-    m_bIsRulesChanged(false),
-    m_bIsGraphLoaded(false)
+GNMGenericNetwork::GNMGenericNetwork()
+    : GNMNetwork(), m_nVersion(0), m_nGID(0), m_nVirtualConnectionGID(-1),
+      m_poMetadataLayer(nullptr), m_poGraphLayer(nullptr),
+      m_poFeaturesLayer(nullptr), m_poLayerDriver(nullptr),
+      m_bIsRulesChanged(false), m_bIsGraphLoaded(false)
 {
 }
 
 GNMGenericNetwork::~GNMGenericNetwork()
 {
-    for(size_t i = 0; i < m_apoLayers.size(); i++)
+    for (size_t i = 0; i < m_apoLayers.size(); i++)
         delete m_apoLayers[i];
 }
 
@@ -63,17 +56,17 @@ int GNMGenericNetwork::GetLayerCount()
 
 OGRLayer *GNMGenericNetwork::GetLayer(int nIndex)
 {
-    if(nIndex < 0 || nIndex >= (int)m_apoLayers.size())
+    if (nIndex < 0 || nIndex >= (int)m_apoLayers.size())
         return nullptr;
     return m_apoLayers[nIndex];
 }
 
 OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
 {
-    if(nIndex < 0 || nIndex >= (int)m_apoLayers.size())
+    if (nIndex < 0 || nIndex >= (int)m_apoLayers.size())
         return OGRERR_FAILURE;
 
-    const char* pszLayerName = m_apoLayers[nIndex]->GetName();
+    const char *pszLayerName = m_apoLayers[nIndex]->GetName();
     OGRFeature *poFeature;
 
     std::set<GNMGFID> anGFIDs;
@@ -83,13 +76,14 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
     m_poFeaturesLayer->ResetReading();
     while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != nullptr)
     {
-        const char *pFeatureClass = poFeature->GetFieldAsString(
-                    GNM_SYSFIELD_LAYERNAME);
+        const char *pFeatureClass =
+            poFeature->GetFieldAsString(GNM_SYSFIELD_LAYERNAME);
 
-        if(EQUAL(pFeatureClass, pszLayerName))
+        if (EQUAL(pFeatureClass, pszLayerName))
         {
             anGFIDs.insert(poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID));
-            CPL_IGNORE_RET_VAL(m_poFeaturesLayer->DeleteFeature(poFeature->GetFID()));
+            CPL_IGNORE_RET_VAL(
+                m_poFeaturesLayer->DeleteFeature(poFeature->GetFID()));
         }
         OGRFeature::DestroyFeature(poFeature);
     }
@@ -101,27 +95,30 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
     {
         GNMGFID nGFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_SOURCE);
         it = anGFIDs.find(nGFID);
-        if( it != anGFIDs.end())
+        if (it != anGFIDs.end())
         {
-            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
+            CPL_IGNORE_RET_VAL(
+                m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
 
         nGFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_TARGET);
         it = anGFIDs.find(nGFID);
-        if( it != anGFIDs.end())
+        if (it != anGFIDs.end())
         {
-            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
+            CPL_IGNORE_RET_VAL(
+                m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
 
         nGFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_CONNECTOR);
         it = anGFIDs.find(nGFID);
-        if( it != anGFIDs.end())
+        if (it != anGFIDs.end())
         {
-            CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
+            CPL_IGNORE_RET_VAL(
+                m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
             OGRFeature::DestroyFeature(poFeature);
             continue;
         }
@@ -130,19 +127,19 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
     }
 
     // remove connected rules
-    for(size_t i = m_asRules.size(); i > 0; --i)
+    for (size_t i = m_asRules.size(); i > 0; --i)
     {
-        if(EQUAL(m_asRules[i - 1].GetSourceLayerName(), pszLayerName))
+        if (EQUAL(m_asRules[i - 1].GetSourceLayerName(), pszLayerName))
         {
             m_asRules.erase(m_asRules.begin() + i - 1);
             m_bIsRulesChanged = true;
         }
-        else if(EQUAL(m_asRules[i - 1].GetTargetLayerName(), pszLayerName))
+        else if (EQUAL(m_asRules[i - 1].GetTargetLayerName(), pszLayerName))
         {
             m_asRules.erase(m_asRules.begin() + i - 1);
             m_bIsRulesChanged = true;
         }
-        else if(EQUAL(m_asRules[i - 1].GetConnectorLayerName(), pszLayerName))
+        else if (EQUAL(m_asRules[i - 1].GetConnectorLayerName(), pszLayerName))
         {
             m_asRules.erase(m_asRules.begin() + i - 1);
             m_bIsRulesChanged = true;
@@ -151,20 +148,20 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
 
     delete m_apoLayers[nIndex];
     // remove from array
-    m_apoLayers.erase (m_apoLayers.begin() + nIndex);
+    m_apoLayers.erase(m_apoLayers.begin() + nIndex);
     return OGRERR_NONE;
 }
 
 CPLErr GNMGenericNetwork::Delete()
 {
     CPLErr eResult = DeleteNetworkLayers();
-    if(eResult != CE_None)
+    if (eResult != CE_None)
         return eResult;
     eResult = DeleteMetadataLayer();
-    if(eResult != CE_None)
+    if (eResult != CE_None)
         return eResult;
     eResult = DeleteGraphLayer();
-    if(eResult != CE_None)
+    if (eResult != CE_None)
         return eResult;
 
     return DeleteFeaturesLayer();
@@ -183,23 +180,23 @@ GIntBig GNMGenericNetwork::GetNewGlobalFID()
 CPLString GNMGenericNetwork::GetAlgorithmName(GNMDirection eAlgorithm,
                                               bool bShortName)
 {
-    switch(eAlgorithm)
+    switch (eAlgorithm)
     {
-    case GATDijkstraShortestPath:
-        if(bShortName)
-            return CPLString("Dijkstra");
-        else
-            return CPLString("Dijkstra shortest path");
-    case GATKShortestPath:
-        if(bShortName)
-            return CPLString("Yens");
-        else
-            return CPLString("Yens shortest paths");
-    case GATConnectedComponents:
-        if(bShortName)
-            return CPLString("Connected");
-        else
-            return CPLString("Connected components");
+        case GATDijkstraShortestPath:
+            if (bShortName)
+                return CPLString("Dijkstra");
+            else
+                return CPLString("Dijkstra shortest path");
+        case GATKShortestPath:
+            if (bShortName)
+                return CPLString("Yens");
+            else
+                return CPLString("Yens shortest paths");
+        case GATConnectedComponents:
+            if (bShortName)
+                return CPLString("Connected");
+            else
+                return CPLString("Connected components");
     }
 
     return CPLString("Invalid");
@@ -208,19 +205,19 @@ CPLString GNMGenericNetwork::GetAlgorithmName(GNMDirection eAlgorithm,
 CPLErr GNMGenericNetwork::AddFeatureGlobalFID(GNMGFID nFID,
                                               const char *pszLayerName)
 {
-    OGRFeature *poFeature = OGRFeature::CreateFeature(
-                m_poFeaturesLayer->GetLayerDefn() );
-    poFeature->SetField( GNM_SYSFIELD_GFID, nFID );
-    poFeature->SetField( GNM_SYSFIELD_LAYERNAME, pszLayerName );
+    OGRFeature *poFeature =
+        OGRFeature::CreateFeature(m_poFeaturesLayer->GetLayerDefn());
+    poFeature->SetField(GNM_SYSFIELD_GFID, nFID);
+    poFeature->SetField(GNM_SYSFIELD_LAYERNAME, pszLayerName);
 
-    if( m_poFeaturesLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+    if (m_poFeaturesLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to create feature." );
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create feature.");
         return CE_Failure;
     }
 
-    OGRFeature::DestroyFeature( poFeature );
+    OGRFeature::DestroyFeature(poFeature);
 
     return CE_None;
 }
@@ -229,22 +226,22 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
                                           GNMGFID nConGFID, double dfCost,
                                           double dfInvCost, GNMDirection eDir)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
 
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
-    if(poFeature != nullptr)
+    if (poFeature != nullptr)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "The connection already created" );
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "The connection already created");
         return CE_Failure;
     }
 
-    if(m_asRules.empty())
+    if (m_asRules.empty())
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "The connection forbidden" );
+        CPLError(CE_Failure, CPLE_AppDefined, "The connection forbidden");
         return CE_Failure;
     }
     else
@@ -252,42 +249,43 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
         CPLString soSrcLayerName = m_moFeatureFIDMap[nSrcGFID];
         CPLString soTgtLayerName = m_moFeatureFIDMap[nTgtGFID];
         CPLString soConnLayerName = m_moFeatureFIDMap[nConGFID];
-        for(size_t i = 0; i < m_asRules.size(); ++i)
+        for (size_t i = 0; i < m_asRules.size(); ++i)
         {
-            if(!m_asRules[i].CanConnect(soSrcLayerName, soTgtLayerName,
-                                        soConnLayerName))
+            if (!m_asRules[i].CanConnect(soSrcLayerName, soTgtLayerName,
+                                         soConnLayerName))
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "The connection forbidden" );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "The connection forbidden");
                 return CE_Failure;
             }
         }
     }
 
     // we support both vertices and edge to be virtual
-    if(nConGFID == -1)
-       nConGFID = GetNewVirtualFID();
-    if(nSrcGFID == -1)
-       nSrcGFID = GetNewVirtualFID();
-    if(nTgtGFID == -1)
-       nTgtGFID = GetNewVirtualFID();
+    if (nConGFID == -1)
+        nConGFID = GetNewVirtualFID();
+    if (nSrcGFID == -1)
+        nSrcGFID = GetNewVirtualFID();
+    if (nTgtGFID == -1)
+        nTgtGFID = GetNewVirtualFID();
 
-    poFeature = OGRFeature::CreateFeature( m_poGraphLayer->GetLayerDefn() );
-    poFeature->SetField( GNM_SYSFIELD_SOURCE, nSrcGFID );
-    poFeature->SetField( GNM_SYSFIELD_TARGET, nTgtGFID );
-    poFeature->SetField( GNM_SYSFIELD_CONNECTOR, nConGFID );
-    poFeature->SetField( GNM_SYSFIELD_COST, dfCost );
-    poFeature->SetField( GNM_SYSFIELD_INVCOST, dfInvCost );
-    poFeature->SetField( GNM_SYSFIELD_DIRECTION, eDir );
-    poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE );
+    poFeature = OGRFeature::CreateFeature(m_poGraphLayer->GetLayerDefn());
+    poFeature->SetField(GNM_SYSFIELD_SOURCE, nSrcGFID);
+    poFeature->SetField(GNM_SYSFIELD_TARGET, nTgtGFID);
+    poFeature->SetField(GNM_SYSFIELD_CONNECTOR, nConGFID);
+    poFeature->SetField(GNM_SYSFIELD_COST, dfCost);
+    poFeature->SetField(GNM_SYSFIELD_INVCOST, dfInvCost);
+    poFeature->SetField(GNM_SYSFIELD_DIRECTION, eDir);
+    poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE);
 
-    if( m_poGraphLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+    if (m_poGraphLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to create feature." );
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create feature.");
         return CE_Failure;
     }
 
-    OGRFeature::DestroyFeature( poFeature );
+    OGRFeature::DestroyFeature(poFeature);
 
     // update graph
 
@@ -300,7 +298,7 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
 CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
                                              GNMGFID nConGFID)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
@@ -308,7 +306,7 @@ CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
     if (poFeature == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "The connection not exist" );
+        CPLError(CE_Failure, CPLE_AppDefined, "The connection not exist");
         return CE_Failure;
     }
 
@@ -329,32 +327,32 @@ CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
 
 CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
 
     CPLString soFilter;
-    soFilter.Printf("%s = " GNMGFIDFormat " or %s = " GNMGFIDFormat " or %s = " GNMGFIDFormat,
-                    GNM_SYSFIELD_SOURCE, nFID,
-                    GNM_SYSFIELD_TARGET, nFID,
+    soFilter.Printf("%s = " GNMGFIDFormat " or %s = " GNMGFIDFormat
+                    " or %s = " GNMGFIDFormat,
+                    GNM_SYSFIELD_SOURCE, nFID, GNM_SYSFIELD_TARGET, nFID,
                     GNM_SYSFIELD_CONNECTOR, nFID);
 
     CPLDebug("GNM", "Set attribute filter: %s", soFilter.c_str());
 
     m_poGraphLayer->SetAttributeFilter(soFilter);
     m_poGraphLayer->ResetReading();
-    OGRFeature* poFeature;
+    OGRFeature *poFeature;
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
-        if(m_poGraphLayer->DeleteFeature(poFeature->GetFID()) != CE_None)
+        if (m_poGraphLayer->DeleteFeature(poFeature->GetFID()) != CE_None)
         {
-            OGRFeature::DestroyFeature( poFeature );
-            CPLError( CE_Failure, CPLE_AppDefined,
-                                       "Failed to remove feature connection." );
+            OGRFeature::DestroyFeature(poFeature);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to remove feature connection.");
             return CE_Failure;
         }
-        OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature(poFeature);
     }
 
     m_poGraphLayer->SetAttributeFilter(nullptr);
@@ -369,7 +367,7 @@ CPLErr GNMGenericNetwork::ReconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
                                             GNMGFID nConGFID, double dfCost,
                                             double dfInvCost, GNMDirection eDir)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
@@ -377,22 +375,22 @@ CPLErr GNMGenericNetwork::ReconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
     if (poFeature == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "The connection not exist" );
+        CPLError(CE_Failure, CPLE_AppDefined, "The connection not exist");
         return CE_Failure;
     }
 
-    poFeature->SetField( GNM_SYSFIELD_COST, dfCost );
-    poFeature->SetField( GNM_SYSFIELD_INVCOST, dfInvCost );
-    poFeature->SetField( GNM_SYSFIELD_DIRECTION, eDir );
+    poFeature->SetField(GNM_SYSFIELD_COST, dfCost);
+    poFeature->SetField(GNM_SYSFIELD_INVCOST, dfInvCost);
+    poFeature->SetField(GNM_SYSFIELD_DIRECTION, eDir);
 
-    if( m_poGraphLayer->SetFeature( poFeature ) != OGRERR_NONE )
+    if (m_poGraphLayer->SetFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to update feature." );
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to update feature.");
         return CE_Failure;
     }
 
-    OGRFeature::DestroyFeature( poFeature );
+    OGRFeature::DestroyFeature(poFeature);
 
     // update graph
 
@@ -403,7 +401,7 @@ CPLErr GNMGenericNetwork::ReconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
 
 CPLErr GNMGenericNetwork::DisconnectAll()
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
@@ -414,7 +412,7 @@ CPLErr GNMGenericNetwork::DisconnectAll()
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
-        OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature(poFeature);
     }
 
     m_oGraph.Clear();
@@ -425,9 +423,9 @@ CPLErr GNMGenericNetwork::DisconnectAll()
 OGRFeature *GNMGenericNetwork::GetFeatureByGlobalFID(GNMGFID nFID)
 {
     CPLString soLayerName = m_moFeatureFIDMap[nFID];
-    for(size_t i = 0; i < m_apoLayers.size(); ++i)
+    for (size_t i = 0; i < m_apoLayers.size(); ++i)
     {
-        if(EQUAL(soLayerName, m_apoLayers[i]->GetName()))
+        if (EQUAL(soLayerName, m_apoLayers[i]->GetName()))
             return m_apoLayers[i]->GetFeature(nFID);
     }
     return nullptr;
@@ -437,45 +435,49 @@ CPLErr GNMGenericNetwork::CreateRule(const char *pszRuleStr)
 {
     CPLDebug("GNM", "Try to create rule '%s'", pszRuleStr);
     GNMRule oRule(pszRuleStr);
-    if(!oRule.IsValid())
+    if (!oRule.IsValid())
     {
         return CE_Failure;
     }
 
-    if(!oRule.IsAcceptAny())
+    if (!oRule.IsAcceptAny())
     {
         bool bSrcExist = false;
         bool bTgtExist = false;
         bool bConnExist = false;
         // check layers exist
-        for(size_t i = 0; i < m_apoLayers.size(); ++i)
+        for (size_t i = 0; i < m_apoLayers.size(); ++i)
         {
-            if(EQUAL(oRule.GetSourceLayerName(), m_apoLayers[i]->GetName()))
+            if (EQUAL(oRule.GetSourceLayerName(), m_apoLayers[i]->GetName()))
             {
                 bSrcExist = true;
             }
-            else if(EQUAL(oRule.GetTargetLayerName(), m_apoLayers[i]->GetName()))
+            else if (EQUAL(oRule.GetTargetLayerName(),
+                           m_apoLayers[i]->GetName()))
             {
                 bTgtExist = true;
             }
-            else if(EQUAL(oRule.GetConnectorLayerName(), m_apoLayers[i]->GetName()))
+            else if (EQUAL(oRule.GetConnectorLayerName(),
+                           m_apoLayers[i]->GetName()))
             {
                 bConnExist = true;
             }
         }
 
-        if(!bSrcExist || !bTgtExist)
+        if (!bSrcExist || !bTgtExist)
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, "Layers '%s' or '%s' not exist",
-                      oRule.GetSourceLayerName().c_str(),
-                      oRule.GetTargetLayerName().c_str());
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Layers '%s' or '%s' not exist",
+                     oRule.GetSourceLayerName().c_str(),
+                     oRule.GetTargetLayerName().c_str());
             return CE_Failure;
         }
 
-        if(!bConnExist && !oRule.GetConnectorLayerName().empty())
+        if (!bConnExist && !oRule.GetConnectorLayerName().empty())
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, "Connector layer '%s' not exist",
-                      oRule.GetConnectorLayerName().c_str());
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Connector layer '%s' not exist",
+                     oRule.GetConnectorLayerName().c_str());
             return CE_Failure;
         }
     }
@@ -495,14 +497,14 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
     m_poMetadataLayer->ResetReading();
     OGRFeature *poFeature;
     std::vector<GIntBig> aFIDs;
-    while((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
+    while ((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
     {
         aFIDs.push_back(poFeature->GetFID());
         OGRFeature::DestroyFeature(poFeature);
     }
 
     m_poMetadataLayer->SetAttributeFilter(nullptr);
-    for(size_t i = 0; i < aFIDs.size(); ++i)
+    for (size_t i = 0; i < aFIDs.size(); ++i)
     {
         CPL_IGNORE_RET_VAL(m_poMetadataLayer->DeleteFeature(aFIDs[i]));
     }
@@ -512,9 +514,9 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
 
 CPLErr GNMGenericNetwork::DeleteRule(const char *pszRuleStr)
 {
-    for(size_t i = 0; i < m_asRules.size(); ++i)
+    for (size_t i = 0; i < m_asRules.size(); ++i)
     {
-        if(EQUAL(pszRuleStr, m_asRules[i]))
+        if (EQUAL(pszRuleStr, m_asRules[i]))
         {
             m_asRules.erase(m_asRules.begin() + i);
             m_bIsRulesChanged = true;
@@ -527,8 +529,8 @@ CPLErr GNMGenericNetwork::DeleteRule(const char *pszRuleStr)
 
 char **GNMGenericNetwork::GetRules() const
 {
-    char** papszRules = nullptr;
-    for(size_t i = 0; i < m_asRules.size(); ++i)
+    char **papszRules = nullptr;
+    for (size_t i = 0; i < m_asRules.size(); ++i)
     {
         papszRules = CSLAddString(papszRules, m_asRules[i]);
     }
@@ -536,73 +538,76 @@ char **GNMGenericNetwork::GetRules() const
 }
 
 CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
-                                               double dfTolerance, double dfCost,
-                                               double dfInvCost, GNMDirection eDir)
+                                               double dfTolerance,
+                                               double dfCost, double dfInvCost,
+                                               GNMDirection eDir)
 {
-    if( CSLCount(papszLayerList) < 2 )
+    if (CSLCount(papszLayerList) < 2)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "Minimum 2 layers needed to connect" );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Minimum 2 layers needed to connect");
         return CE_Failure;
     }
 
-    std::vector<OGRLayer*> paLineLayers;
-    std::vector<OGRLayer*> paPointLayers;
+    std::vector<OGRLayer *> paLineLayers;
+    std::vector<OGRLayer *> paPointLayers;
     int eType;
     int iLayer;
-    OGRLayer* poLayer;
+    OGRLayer *poLayer;
 
-    for(iLayer = 0; papszLayerList[iLayer] != nullptr; ++iLayer)
+    for (iLayer = 0; papszLayerList[iLayer] != nullptr; ++iLayer)
     {
         poLayer = GetLayerByName(papszLayerList[iLayer]);
-        if(nullptr == poLayer)
+        if (nullptr == poLayer)
             continue;
 
         eType = wkbFlatten(poLayer->GetGeomType());
-        if(eType == wkbLineString || eType == wkbMultiLineString)
+        if (eType == wkbLineString || eType == wkbMultiLineString)
         {
             paLineLayers.push_back(poLayer);
         }
-        else if(eType == wkbPoint)
+        else if (eType == wkbPoint)
         {
             paPointLayers.push_back(poLayer);
         }
     }
 
-    if (paLineLayers.empty() || paPointLayers.empty() )
+    if (paLineLayers.empty() || paPointLayers.empty())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "Need at least one line (or "
-                            "multiline) layer and one point layer to connect" );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Need at least one line (or "
+                 "multiline) layer and one point layer to connect");
         return CE_Failure;
     }
 
     // now walk through all lines and find nearest points for line start and end
-    OGRFeature* poFeature;
-    for(size_t i = 0; i < paLineLayers.size(); ++i)
+    OGRFeature *poFeature;
+    for (size_t i = 0; i < paLineLayers.size(); ++i)
     {
         poLayer = paLineLayers[i];
 
         poLayer->ResetReading();
-        while((poFeature = poLayer->GetNextFeature()) != nullptr)
+        while ((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
-            const OGRGeometry* poGeom = poFeature->GetGeometryRef();
-            if(nullptr != poGeom)
+            const OGRGeometry *poGeom = poFeature->GetGeometryRef();
+            if (nullptr != poGeom)
             {
                 eType = wkbFlatten(poGeom->getGeometryType());
-                if(eType == wkbLineString)
+                if (eType == wkbLineString)
                 {
-                    const OGRLineString* poLineString =
-                                                  (const OGRLineString*) poGeom;
+                    const OGRLineString *poLineString =
+                        (const OGRLineString *)poGeom;
                     ConnectPointsByLine(poFeature->GetFID(), poLineString,
                                         paPointLayers, dfTolerance, dfCost,
                                         dfInvCost, eDir);
                 }
-                else if( eType == wkbMultiLineString)
+                else if (eType == wkbMultiLineString)
                 {
-                    const OGRMultiLineString* poMultiLineString =
-                                             (const OGRMultiLineString*) poGeom;
-                    ConnectPointsByMultiline(poFeature->GetFID(), poMultiLineString,
-                                             paPointLayers, dfTolerance, dfCost,
-                                             dfInvCost, eDir);
+                    const OGRMultiLineString *poMultiLineString =
+                        (const OGRMultiLineString *)poGeom;
+                    ConnectPointsByMultiline(
+                        poFeature->GetFID(), poMultiLineString, paPointLayers,
+                        dfTolerance, dfCost, dfInvCost, eDir);
                 }
             }
             OGRFeature::DestroyFeature(poFeature);
@@ -614,45 +619,45 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
 
 CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
 
     // change block state in layer
-    OGRLayer* poLayer = GetLayerByName(m_moFeatureFIDMap[nFID]);
-    if(nullptr == poLayer)
+    OGRLayer *poLayer = GetLayerByName(m_moFeatureFIDMap[nFID]);
+    if (nullptr == poLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to get layer '%s'.",
-                  m_moFeatureFIDMap[nFID].c_str() );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get layer '%s'.",
+                 m_moFeatureFIDMap[nFID].c_str());
         return CE_Failure;
     }
 
-    OGRFeature* poFeature = poLayer->GetFeature(nFID);
-    if(nullptr == poFeature)
+    OGRFeature *poFeature = poLayer->GetFeature(nFID);
+    if (nullptr == poFeature)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to get feature '"
-                  GNMGFIDFormat"'.", nFID );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to get feature '" GNMGFIDFormat "'.", nFID);
         return CE_Failure;
     }
 
-    if(bIsBlock)
+    if (bIsBlock)
     {
-        poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL );
+        poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL);
     }
     else
     {
-        poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE );
+        poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE);
     }
 
-    if( poLayer->SetFeature( poFeature ) != OGRERR_NONE )
+    if (poLayer->SetFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to update feature." );
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to update feature.");
         return CE_Failure;
     }
 
-    OGRFeature::DestroyFeature( poFeature );
+    OGRFeature::DestroyFeature(poFeature);
 
     GNMGFID nSrcFID, nTgtFID, nConFID;
 
@@ -665,37 +670,37 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
         nConFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_CONNECTOR);
         int nBlockState = poFeature->GetFieldAsInteger(GNM_SYSFIELD_BLOCKED);
 
-        if(bIsBlock)
+        if (bIsBlock)
         {
-            if(nSrcFID == nFID)
+            if (nSrcFID == nFID)
                 nBlockState |= GNM_BLOCK_SRC;
-            else if(nTgtFID == nFID)
+            else if (nTgtFID == nFID)
                 nBlockState |= GNM_BLOCK_TGT;
-            else if(nConFID == nFID)
+            else if (nConFID == nFID)
                 nBlockState |= GNM_BLOCK_CONN;
 
-            poFeature->SetField( GNM_SYSFIELD_BLOCKED, nBlockState );
+            poFeature->SetField(GNM_SYSFIELD_BLOCKED, nBlockState);
         }
         else
         {
-            if(nSrcFID == nFID)
+            if (nSrcFID == nFID)
                 nBlockState &= ~GNM_BLOCK_SRC;
-            else if(nTgtFID == nFID)
+            else if (nTgtFID == nFID)
                 nBlockState &= ~GNM_BLOCK_TGT;
-            else if(nConFID == nFID)
+            else if (nConFID == nFID)
                 nBlockState &= ~GNM_BLOCK_CONN;
 
-            poFeature->SetField( GNM_SYSFIELD_BLOCKED, nBlockState );
+            poFeature->SetField(GNM_SYSFIELD_BLOCKED, nBlockState);
         }
 
-        if( m_poGraphLayer->SetFeature( poFeature ) != OGRERR_NONE )
+        if (m_poGraphLayer->SetFeature(poFeature) != OGRERR_NONE)
         {
-            OGRFeature::DestroyFeature( poFeature );
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to update feature." );
+            OGRFeature::DestroyFeature(poFeature);
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to update feature.");
             return CE_Failure;
         }
 
-        OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature(poFeature);
     }
 
     // change block state in graph
@@ -706,7 +711,7 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
 
 CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
 {
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return CE_Failure;
     }
@@ -715,51 +720,52 @@ CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
     m_poGraphLayer->ResetReading();
     while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
-        if(bIsBlock)
+        if (bIsBlock)
         {
-            poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL );
+            poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL);
         }
         else
         {
-            poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE );
+            poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE);
         }
 
-        if( m_poGraphLayer->SetFeature( poFeature ) != OGRERR_NONE )
+        if (m_poGraphLayer->SetFeature(poFeature) != OGRERR_NONE)
         {
-            OGRFeature::DestroyFeature( poFeature );
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to update feature." );
+            OGRFeature::DestroyFeature(poFeature);
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to update feature.");
             return CE_Failure;
         }
 
-        OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature(poFeature);
     }
 
     // change all network layers
 
-    for(size_t i = 0; i < m_apoLayers.size(); ++i)
+    for (size_t i = 0; i < m_apoLayers.size(); ++i)
     {
-        OGRLayer* poLayer = m_apoLayers[i];
-        if(nullptr == poLayer)
+        OGRLayer *poLayer = m_apoLayers[i];
+        if (nullptr == poLayer)
             continue;
         while ((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
-            if(bIsBlock)
+            if (bIsBlock)
             {
-                poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL );
+                poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_ALL);
             }
             else
             {
-                poFeature->SetField( GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE );
+                poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE);
             }
 
-            if( poLayer->SetFeature( poFeature ) != OGRERR_NONE )
+            if (poLayer->SetFeature(poFeature) != OGRERR_NONE)
             {
-                OGRFeature::DestroyFeature( poFeature );
-                CPLError( CE_Failure, CPLE_AppDefined, "Failed to update feature." );
+                OGRFeature::DestroyFeature(poFeature);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to update feature.");
                 return CE_Failure;
             }
 
-            OGRFeature::DestroyFeature( poFeature );
+            OGRFeature::DestroyFeature(poFeature);
         }
     }
 
@@ -769,37 +775,41 @@ CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
 }
 
 OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
-                          GNMGraphAlgorithmType eAlgorithm, char **papszOptions)
+                                     GNMGraphAlgorithmType eAlgorithm,
+                                     char **papszOptions)
 {
 
-    if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
+    if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
         return nullptr;
     }
 
-    GDALDriver* poMEMDrv =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+    GDALDriver *poMEMDrv =
+        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
     if (poMEMDrv == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
         return nullptr;
     }
 
-    GDALDataset* poMEMDS =
-            poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, nullptr);
+    GDALDataset *poMEMDS =
+        poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, nullptr);
     OGRSpatialReference oDstSpaRef(GetProjectionRef());
-    OGRLayer* poMEMLayer = poMEMDS->CreateLayer(GetAlgorithmName(eAlgorithm,
-                               true), &oDstSpaRef, wkbGeometryCollection, nullptr);
+    OGRLayer *poMEMLayer =
+        poMEMDS->CreateLayer(GetAlgorithmName(eAlgorithm, true), &oDstSpaRef,
+                             wkbGeometryCollection, nullptr);
 
-    OGRGNMWrappedResultLayer* poResLayer =
-                              new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
+    OGRGNMWrappedResultLayer *poResLayer =
+        new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
 
-    const bool bReturnEdges = CPLFetchBool(papszOptions, GNM_MD_FETCHEDGES, true);
-    const bool bReturnVertices = CPLFetchBool(papszOptions, GNM_MD_FETCHVERTEX, true);
+    const bool bReturnEdges =
+        CPLFetchBool(papszOptions, GNM_MD_FETCHEDGES, true);
+    const bool bReturnVertices =
+        CPLFetchBool(papszOptions, GNM_MD_FETCHVERTEX, true);
 
     switch (eAlgorithm)
     {
-    case GATDijkstraShortestPath:
+        case GATDijkstraShortestPath:
         {
             GNMPATH path = m_oGraph.DijkstraShortestPath(nStartFID, nEndFID);
 
@@ -807,31 +817,32 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
             FillResultLayer(poResLayer, path, 1, bReturnVertices, bReturnEdges);
         }
         break;
-    case GATKShortestPath:
+        case GATKShortestPath:
         {
-            int nK = atoi(CSLFetchNameValueDef(papszOptions, GNM_MD_NUM_PATHS,
-                                               "1"));
+            int nK =
+                atoi(CSLFetchNameValueDef(papszOptions, GNM_MD_NUM_PATHS, "1"));
 
             CPLDebug("GNM", "Search %d path(s)", nK);
 
-            std::vector<GNMPATH> paths = m_oGraph.KShortestPaths(nStartFID,
-                                                                 nEndFID, nK);
+            std::vector<GNMPATH> paths =
+                m_oGraph.KShortestPaths(nStartFID, nEndFID, nK);
 
             // fill features in result layer
-            for(size_t i = 0; i < paths.size(); ++i)
+            for (size_t i = 0; i < paths.size(); ++i)
             {
-                FillResultLayer(poResLayer, paths[i], static_cast<int>(i + 1), bReturnVertices,
-                                bReturnEdges);
+                FillResultLayer(poResLayer, paths[i], static_cast<int>(i + 1),
+                                bReturnVertices, bReturnEdges);
             }
         }
         break;
-    case GATConnectedComponents:
+        case GATConnectedComponents:
         {
             GNMVECTOR anEmitters;
-            if(nullptr != papszOptions)
+            if (nullptr != papszOptions)
             {
-                char** papszEmitter = CSLFetchNameValueMultiple(papszOptions, GNM_MD_EMITTER);
-                for(int i = 0; papszEmitter[i] != nullptr; ++i)
+                char **papszEmitter =
+                    CSLFetchNameValueMultiple(papszOptions, GNM_MD_EMITTER);
+                for (int i = 0; papszEmitter[i] != nullptr; ++i)
                 {
                     GNMGFID nEmitter = atol(papszEmitter[i]);
                     anEmitters.push_back(nEmitter);
@@ -839,12 +850,12 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
                 CSLDestroy(papszEmitter);
             }
 
-            if(nStartFID != -1)
+            if (nStartFID != -1)
             {
                 anEmitters.push_back(nStartFID);
             }
 
-            if(nStartFID != -1)
+            if (nStartFID != -1)
             {
                 anEmitters.push_back(nEndFID);
             }
@@ -860,26 +871,24 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     return poResLayer;
 }
 
-void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
-                                    const OGRMultiLineString* poMultiLineString,
-                                    const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost,
-                                    double dfInvCost, GNMDirection eDir)
+void GNMGenericNetwork::ConnectPointsByMultiline(
+    GIntBig nFID, const OGRMultiLineString *poMultiLineString,
+    const std::vector<OGRLayer *> &paPointLayers, double dfTolerance,
+    double dfCost, double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poMultiLineString,
-                                 "GNMGenericNetwork::ConnectPointsByMultiline");
-    for(auto&& poLineString: poMultiLineString)
+                      "GNMGenericNetwork::ConnectPointsByMultiline");
+    for (auto &&poLineString : poMultiLineString)
     {
         ConnectPointsByLine(nFID, poLineString, paPointLayers, dfTolerance,
                             dfCost, dfInvCost, eDir);
     }
 }
 
-void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
-                                    const OGRLineString* poLineString,
-                                    const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance, double dfCost,
-                                    double dfInvCost, GNMDirection eDir)
+void GNMGenericNetwork::ConnectPointsByLine(
+    GIntBig nFID, const OGRLineString *poLineString,
+    const std::vector<OGRLayer *> &paPointLayers, double dfTolerance,
+    double dfCost, double dfInvCost, GNMDirection eDir)
 {
     VALIDATE_POINTER0(poLineString, "GNMGenericNetwork::ConnectPointsByLine");
     OGRPoint oStartPoint, oEndPoint;
@@ -887,19 +896,21 @@ void GNMGenericNetwork::ConnectPointsByLine(GIntBig nFID,
     poLineString->EndPoint(&oEndPoint);
     double dfHalfTolerance = dfTolerance / 2;
 
-    GNMGFID nSrcFID = FindNearestPoint(&oStartPoint, paPointLayers, dfHalfTolerance);
-    GNMGFID nTgtFID = FindNearestPoint(&oEndPoint, paPointLayers, dfHalfTolerance);
+    GNMGFID nSrcFID =
+        FindNearestPoint(&oStartPoint, paPointLayers, dfHalfTolerance);
+    GNMGFID nTgtFID =
+        FindNearestPoint(&oEndPoint, paPointLayers, dfHalfTolerance);
 
-    if(nSrcFID == -1 || nTgtFID == -1)
+    if (nSrcFID == -1 || nTgtFID == -1)
         return;
 
     // connect nSrcFID with nTgtFID via nFID
     ConnectFeatures(nSrcFID, nTgtFID, (GNMGFID)nFID, dfCost, dfInvCost, eDir);
 }
 
-GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
-                                    const std::vector<OGRLayer*>& paPointLayers,
-                                    double dfTolerance)
+GNMGFID GNMGenericNetwork::FindNearestPoint(
+    const OGRPoint *poPoint, const std::vector<OGRLayer *> &paPointLayers,
+    double dfTolerance)
 {
     VALIDATE_POINTER1(poPoint, "GNMGenericNetwork::FindNearestPoint", -1);
     double dfMinX = poPoint->getX() - dfTolerance;
@@ -909,14 +920,13 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
 
     OGRFeature *poFeature;
 
-    for(size_t i = 0; i < paPointLayers.size(); ++i)
+    for (size_t i = 0; i < paPointLayers.size(); ++i)
     {
         OGRLayer *poLayer = paPointLayers[i];
 
-        poLayer->SetSpatialFilterRect(dfMinX, dfMinY,
-                                      dfMaxX, dfMaxY);
+        poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
         poLayer->ResetReading();
-        while((poFeature = poLayer->GetNextFeature()) != nullptr)
+        while ((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
             GNMGFID nRetFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
             OGRFeature::DestroyFeature(poFeature);
@@ -932,9 +942,9 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
 {
 
     CPLString soFilter;
-    soFilter.Printf("%s = " GNMGFIDFormat " and %s = " GNMGFIDFormat " and %s = " GNMGFIDFormat,
-                    GNM_SYSFIELD_SOURCE, nSrcFID,
-                    GNM_SYSFIELD_TARGET, nTgtFID,
+    soFilter.Printf("%s = " GNMGFIDFormat " and %s = " GNMGFIDFormat
+                    " and %s = " GNMGFIDFormat,
+                    GNM_SYSFIELD_SOURCE, nSrcFID, GNM_SYSFIELD_TARGET, nTgtFID,
                     GNM_SYSFIELD_CONNECTOR, nConFID);
 
     CPLDebug("GNM", "Set attribute filter: %s", soFilter.c_str());
@@ -948,25 +958,26 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
 
 void GNMGenericNetwork::SaveRules()
 {
-    if(!m_bIsRulesChanged)
+    if (!m_bIsRulesChanged)
         return;
 
-    if(DeleteAllRules() != CE_None)
+    if (DeleteAllRules() != CE_None)
         return;
 
     OGRFeature *poFeature;
-    for(int i = 0; i < (int)m_asRules.size(); ++i)
+    for (int i = 0; i < (int)m_asRules.size(); ++i)
     {
-        poFeature = OGRFeature::CreateFeature(m_poMetadataLayer->GetLayerDefn());
-        poFeature->SetField(GNM_SYSFIELD_PARAMNAME, CPLSPrintf("%s%d",
-                                                            GNM_MD_RULE, i + 1));
+        poFeature =
+            OGRFeature::CreateFeature(m_poMetadataLayer->GetLayerDefn());
+        poFeature->SetField(GNM_SYSFIELD_PARAMNAME,
+                            CPLSPrintf("%s%d", GNM_MD_RULE, i + 1));
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_asRules[i]);
-        if(m_poMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+        if (m_poMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
-                      m_asRules[i].c_str());
+            CPLError(CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
+                     m_asRules[i].c_str());
             // TODO: do we need interrupt here?
-            //OGRFeature::DestroyFeature( poFeature );
+            // OGRFeature::DestroyFeature( poFeature );
             // return CE_Failure;
         }
         OGRFeature::DestroyFeature(poFeature);
@@ -982,9 +993,9 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
                                         const GNMPATH &path, int nNoOfPath,
                                         bool bReturnVertices, bool bReturnEdges)
 {
-    for(size_t i = 0; i < path.size(); ++i)
+    for (size_t i = 0; i < path.size(); ++i)
     {
-        if(bReturnVertices)
+        if (bReturnVertices)
         {
             GNMGFID nGFID = path[i].first;
 
@@ -992,8 +1003,8 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
             // if(nGFID < -1) {...}
 
             CPLString soLayerName = m_moFeatureFIDMap[nGFID];
-            OGRFeature* poFeature = GetFeatureByGlobalFID(nGFID);
-            if(nullptr != poFeature)
+            OGRFeature *poFeature = GetFeatureByGlobalFID(nGFID);
+            if (nullptr != poFeature)
             {
                 poResLayer->InsertFeature(poFeature, soLayerName, nNoOfPath,
                                           false);
@@ -1002,7 +1013,7 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
             }
         }
 
-        if(bReturnEdges)
+        if (bReturnEdges)
         {
             GNMGFID nGFID = path[i].second;
 
@@ -1010,8 +1021,8 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
             // if(nGFID < -1) {...}
 
             CPLString soLayerName = m_moFeatureFIDMap[nGFID];
-            OGRFeature* poFeature = GetFeatureByGlobalFID(nGFID);
-            if(nullptr != poFeature)
+            OGRFeature *poFeature = GetFeatureByGlobalFID(nGFID);
+            if (nullptr != poFeature)
             {
                 poResLayer->InsertFeature(poFeature, soLayerName, nNoOfPath,
                                           true);
@@ -1021,42 +1032,43 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
     }
 }
 
-CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
-                                        char **papszOptions)
+CPLErr GNMGenericNetwork::CheckLayerDriver(const char *pszDefaultDriverName,
+                                           char **papszOptions)
 {
-    if(nullptr == m_poLayerDriver)
+    if (nullptr == m_poLayerDriver)
     {
-        const char* pszDriverName = CSLFetchNameValueDef(papszOptions,
-                                                         GNM_MD_FORMAT,
-                                                         pszDefaultDriverName);
+        const char *pszDriverName = CSLFetchNameValueDef(
+            papszOptions, GNM_MD_FORMAT, pszDefaultDriverName);
 
-        if(!CheckStorageDriverSupport(pszDriverName))
+        if (!CheckStorageDriverSupport(pszDriverName))
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, "%s driver not supported as network storage",
-                      pszDriverName );
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "%s driver not supported as network storage",
+                     pszDriverName);
             return CE_Failure;
         }
 
-        m_poLayerDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
-        if(nullptr == m_poLayerDriver)
+        m_poLayerDriver =
+            GetGDALDriverManager()->GetDriverByName(pszDriverName);
+        if (nullptr == m_poLayerDriver)
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, "%s driver not available",
-                      pszDriverName );
+            CPLError(CE_Failure, CPLE_IllegalArg, "%s driver not available",
+                     pszDriverName);
             return CE_Failure;
         }
     }
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVersion,
-                                           size_t nFieldSize)
+CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset *const pDS,
+                                              int nVersion, size_t nFieldSize)
 {
-    OGRLayer* pMetadataLayer = pDS->CreateLayer(GNM_SYSLAYER_META, nullptr, wkbNone,
-                                                nullptr);
+    OGRLayer *pMetadataLayer =
+        pDS->CreateLayer(GNM_SYSLAYER_META, nullptr, wkbNone, nullptr);
     if (nullptr == pMetadataLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
-                  GNM_SYSLAYER_META );
+        CPLError(CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
+                 GNM_SYSLAYER_META);
         return CE_Failure;
     }
 
@@ -1065,11 +1077,11 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     OGRFieldDefn oFieldValue(GNM_SYSFIELD_PARAMVALUE, OFTString);
     oFieldValue.SetWidth(static_cast<int>(nFieldSize));
 
-    if(pMetadataLayer->CreateField(&oFieldKey) != OGRERR_NONE ||
-       pMetadataLayer->CreateField(&oFieldValue) != OGRERR_NONE)
+    if (pMetadataLayer->CreateField(&oFieldKey) != OGRERR_NONE ||
+        pMetadataLayer->CreateField(&oFieldValue) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of layer '%s' fields failed",
-                  GNM_SYSLAYER_META );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Creation of layer '%s' fields failed", GNM_SYSLAYER_META);
         return CE_Failure;
     }
 
@@ -1079,10 +1091,10 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
     poFeature->SetField(GNM_SYSFIELD_PARAMNAME, GNM_MD_NAME);
     poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_soName);
-    if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+    if (pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Write GNM name failed");
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Write GNM name failed");
         return CE_Failure;
     }
     OGRFeature::DestroyFeature(poFeature);
@@ -1091,51 +1103,53 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
     poFeature->SetField(GNM_SYSFIELD_PARAMNAME, GNM_MD_VERSION);
     poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, CPLSPrintf("%d", nVersion));
-    if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+    if (pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poFeature );
-        CPLError( CE_Failure, CPLE_AppDefined, "Write GNM version failed");
+        OGRFeature::DestroyFeature(poFeature);
+        CPLError(CE_Failure, CPLE_AppDefined, "Write GNM version failed");
         return CE_Failure;
     }
     OGRFeature::DestroyFeature(poFeature);
 
     // write description
-    if(!sDescription.empty())
+    if (!sDescription.empty())
     {
         poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
         poFeature->SetField(GNM_SYSFIELD_PARAMNAME, GNM_MD_DESCR);
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, sDescription);
-        if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+        if (pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
         {
-            OGRFeature::DestroyFeature( poFeature );
-            CPLError( CE_Failure, CPLE_AppDefined, "Write GNM description failed");
+            OGRFeature::DestroyFeature(poFeature);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Write GNM description failed");
             return CE_Failure;
         }
         OGRFeature::DestroyFeature(poFeature);
     }
 
     // write srs if < 254 or create file
-    if(!m_oSRS.IsEmpty())
+    if (!m_oSRS.IsEmpty())
     {
-        char* pszWKT = nullptr;
+        char *pszWKT = nullptr;
         m_oSRS.exportToWkt(&pszWKT);
         const std::string soSRS = pszWKT ? pszWKT : "";
         CPLFree(pszWKT);
-        if(soSRS.size() >= nFieldSize)
+        if (soSRS.size() >= nFieldSize)
         {
             // cppcheck-suppress knownConditionTrueFalse
-            if(StoreNetworkSrs() != CE_None)
+            if (StoreNetworkSrs() != CE_None)
                 return CE_Failure;
         }
         else
         {
-            poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
+            poFeature =
+                OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
             poFeature->SetField(GNM_SYSFIELD_PARAMNAME, GNM_MD_SRS);
             poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, soSRS.c_str());
-            if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
+            if (pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
             {
-                OGRFeature::DestroyFeature( poFeature );
-                CPLError( CE_Failure, CPLE_AppDefined, "Write GNM SRS failed");
+                OGRFeature::DestroyFeature(poFeature);
+                CPLError(CE_Failure, CPLE_AppDefined, "Write GNM SRS failed");
                 return CE_Failure;
             }
             OGRFeature::DestroyFeature(poFeature);
@@ -1160,13 +1174,14 @@ CPLErr GNMGenericNetwork::LoadNetworkSrs()
     return CE_Failure;
 }
 
-CPLErr GNMGenericNetwork::CreateGraphLayer(GDALDataset * const pDS)
+CPLErr GNMGenericNetwork::CreateGraphLayer(GDALDataset *const pDS)
 {
-    m_poGraphLayer = pDS->CreateLayer(GNM_SYSLAYER_GRAPH, nullptr, wkbNone, nullptr);
+    m_poGraphLayer =
+        pDS->CreateLayer(GNM_SYSLAYER_GRAPH, nullptr, wkbNone, nullptr);
     if (nullptr == m_poGraphLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
-                  GNM_SYSLAYER_GRAPH );
+        CPLError(CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
+                 GNM_SYSLAYER_GRAPH);
         return CE_Failure;
     }
 
@@ -1178,29 +1193,30 @@ CPLErr GNMGenericNetwork::CreateGraphLayer(GDALDataset * const pDS)
     OGRFieldDefn oFieldDir(GNM_SYSFIELD_DIRECTION, OFTInteger);
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
 
-    if(m_poGraphLayer->CreateField(&oFieldSrc) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldDst) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldConnector) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldCost) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldInvCost) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldDir) != OGRERR_NONE ||
-       m_poGraphLayer->CreateField(&oFieldBlock) != OGRERR_NONE)
+    if (m_poGraphLayer->CreateField(&oFieldSrc) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldDst) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldConnector) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldCost) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldInvCost) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldDir) != OGRERR_NONE ||
+        m_poGraphLayer->CreateField(&oFieldBlock) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of layer '%s' fields failed",
-                  GNM_SYSLAYER_GRAPH );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Creation of layer '%s' fields failed", GNM_SYSLAYER_GRAPH);
         return CE_Failure;
     }
 
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::CreateFeaturesLayer(GDALDataset * const pDS)
+CPLErr GNMGenericNetwork::CreateFeaturesLayer(GDALDataset *const pDS)
 {
-    m_poFeaturesLayer = pDS->CreateLayer(GNM_SYSLAYER_FEATURES, nullptr, wkbNone, nullptr);
+    m_poFeaturesLayer =
+        pDS->CreateLayer(GNM_SYSLAYER_FEATURES, nullptr, wkbNone, nullptr);
     if (nullptr == m_poFeaturesLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
-                  GNM_SYSLAYER_FEATURES );
+        CPLError(CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
+                 GNM_SYSLAYER_FEATURES);
         return CE_Failure;
     }
 
@@ -1208,25 +1224,25 @@ CPLErr GNMGenericNetwork::CreateFeaturesLayer(GDALDataset * const pDS)
     OGRFieldDefn oFieldLayerName(GNM_SYSFIELD_LAYERNAME, OFTString);
     oFieldLayerName.SetWidth(254);
 
-    if(m_poFeaturesLayer->CreateField(&oFieldGID) != OGRERR_NONE ||
-       m_poFeaturesLayer->CreateField(&oFieldLayerName) != OGRERR_NONE)
+    if (m_poFeaturesLayer->CreateField(&oFieldGID) != OGRERR_NONE ||
+        m_poFeaturesLayer->CreateField(&oFieldLayerName) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Creation of layer '%s' fields failed",
-                  GNM_SYSLAYER_FEATURES );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Creation of layer '%s' fields failed", GNM_SYSLAYER_FEATURES);
         return CE_Failure;
     }
 
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
+CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset *const pDS)
 {
     // read version, description, SRS, classes, rules
     m_poMetadataLayer = pDS->GetLayerByName(GNM_SYSLAYER_META);
-    if(nullptr == m_poMetadataLayer)
+    if (nullptr == m_poMetadataLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
-                  GNM_SYSLAYER_META );
+        CPLError(CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
+                 GNM_SYSLAYER_META);
         return CE_Failure;
     }
 
@@ -1237,27 +1253,28 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
     while ((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
     {
         const char *pKey = poFeature->GetFieldAsString(GNM_SYSFIELD_PARAMNAME);
-        const char *pValue = poFeature->GetFieldAsString(GNM_SYSFIELD_PARAMVALUE);
+        const char *pValue =
+            poFeature->GetFieldAsString(GNM_SYSFIELD_PARAMVALUE);
 
         CPLDebug("GNM", "Load metadata. Key: %s, value %s", pKey, pValue);
 
-        if(EQUAL(pKey, GNM_MD_NAME))
+        if (EQUAL(pKey, GNM_MD_NAME))
         {
             m_soName = pValue;
         }
-        else if(EQUAL(pKey, GNM_MD_DESCR))
+        else if (EQUAL(pKey, GNM_MD_DESCR))
         {
             sDescription = pValue;
         }
-        else if(EQUAL(pKey, GNM_MD_SRS))
+        else if (EQUAL(pKey, GNM_MD_SRS))
         {
             m_oSRS.importFromWkt(pValue);
         }
-        else if(EQUAL(pKey, GNM_MD_VERSION))
+        else if (EQUAL(pKey, GNM_MD_VERSION))
         {
             m_nVersion = atoi(pValue);
         }
-        else if(EQUALN(pKey, GNM_MD_RULE, nRulePrefixLen))
+        else if (EQUALN(pKey, GNM_MD_RULE, nRulePrefixLen))
         {
             moRules[atoi(pKey + nRulePrefixLen)] = GNMRule(pValue);
         }
@@ -1265,30 +1282,30 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
         OGRFeature::DestroyFeature(poFeature);
     }
 
-    for(std::map<int, GNMRule>::iterator it =  moRules.begin();
-        it != moRules.end(); ++it)
+    for (std::map<int, GNMRule>::iterator it = moRules.begin();
+         it != moRules.end(); ++it)
     {
-        if(it->second.IsValid())
+        if (it->second.IsValid())
             m_asRules.push_back(it->second);
     }
 
-    if(!m_oSRS.IsEmpty())
+    if (!m_oSRS.IsEmpty())
     {
         // cppcheck-suppress knownConditionTrueFalse
-        if(LoadNetworkSrs() != CE_None)
+        if (LoadNetworkSrs() != CE_None)
             return CE_Failure;
     }
 
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::LoadGraphLayer(GDALDataset * const pDS)
+CPLErr GNMGenericNetwork::LoadGraphLayer(GDALDataset *const pDS)
 {
     m_poGraphLayer = pDS->GetLayerByName(GNM_SYSLAYER_GRAPH);
-    if(nullptr == m_poGraphLayer)
+    if (nullptr == m_poGraphLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
-                  GNM_SYSLAYER_GRAPH );
+        CPLError(CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
+                 GNM_SYSLAYER_GRAPH);
         return CE_Failure;
     }
 
@@ -1297,12 +1314,12 @@ CPLErr GNMGenericNetwork::LoadGraphLayer(GDALDataset * const pDS)
 
 CPLErr GNMGenericNetwork::LoadGraph()
 {
-    if(m_bIsGraphLoaded)
+    if (m_bIsGraphLoaded)
         return CE_None;
 
-    if(nullptr == m_poGraphLayer)
+    if (nullptr == m_poGraphLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Loading of graph data failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "Loading of graph data failed");
         return CE_Failure;
     }
 
@@ -1317,7 +1334,8 @@ CPLErr GNMGenericNetwork::LoadGraph()
         nConFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_CONNECTOR);
         dfCost = poFeature->GetFieldAsDouble(GNM_SYSFIELD_COST);
         dfInvCost = poFeature->GetFieldAsDouble(GNM_SYSFIELD_INVCOST);
-        GNMDirection eDir = poFeature->GetFieldAsInteger(GNM_SYSFIELD_DIRECTION);
+        GNMDirection eDir =
+            poFeature->GetFieldAsInteger(GNM_SYSFIELD_DIRECTION);
 
         int nBlockState = poFeature->GetFieldAsInteger(GNM_SYSFIELD_BLOCKED);
 
@@ -1326,17 +1344,17 @@ CPLErr GNMGenericNetwork::LoadGraph()
         m_oGraph.AddEdge(nConFID, nSrcFID, nTgtFID, eDir == GNM_EDGE_DIR_BOTH,
                          dfCost, dfInvCost);
 
-        if(bIsBlock)
+        if (bIsBlock)
         {
-            if(nBlockState & GNM_BLOCK_SRC)
+            if (nBlockState & GNM_BLOCK_SRC)
                 m_oGraph.ChangeBlockState(nSrcFID, bIsBlock);
-            if(nBlockState & GNM_BLOCK_TGT)
+            if (nBlockState & GNM_BLOCK_TGT)
                 m_oGraph.ChangeBlockState(nTgtFID, bIsBlock);
-            if(nBlockState & GNM_BLOCK_CONN)
+            if (nBlockState & GNM_BLOCK_CONN)
                 m_oGraph.ChangeBlockState(nConFID, bIsBlock);
         }
 
-        if(nConFID < m_nVirtualConnectionGID)
+        if (nConFID < m_nVirtualConnectionGID)
             m_nVirtualConnectionGID = nConFID;
 
         OGRFeature::DestroyFeature(poFeature);
@@ -1346,13 +1364,13 @@ CPLErr GNMGenericNetwork::LoadGraph()
     return CE_None;
 }
 
-CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset * const pDS)
+CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset *const pDS)
 {
     m_poFeaturesLayer = pDS->GetLayerByName(GNM_SYSLAYER_FEATURES);
-    if(nullptr == m_poFeaturesLayer)
+    if (nullptr == m_poFeaturesLayer)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
-                  GNM_SYSLAYER_FEATURES );
+        CPLError(CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
+                 GNM_SYSLAYER_FEATURES);
         return CE_Failure;
     }
 
@@ -1361,15 +1379,16 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset * const pDS)
     while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != nullptr)
     {
         GNMGFID nFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
-        const char *pFeatureClass = poFeature->GetFieldAsString(
-                    GNM_SYSFIELD_LAYERNAME);
+        const char *pFeatureClass =
+            poFeature->GetFieldAsString(GNM_SYSFIELD_LAYERNAME);
 
-        if(nFID >= m_nGID)
+        if (nFID >= m_nGID)
             m_nGID = nFID + 1;
 
         m_moFeatureFIDMap[nFID] = pFeatureClass;
 
-        // Load network layer. No error handling as we want to load whole network
+        // Load network layer. No error handling as we want to load whole
+        // network
         LoadNetworkLayer(pFeatureClass);
 
         OGRFeature::DestroyFeature(poFeature);
@@ -1377,19 +1396,20 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset * const pDS)
     return CE_None;
 }
 
-int GNMGenericNetwork::TestCapability( const char * pszCap )
+int GNMGenericNetwork::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap, ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;
-    else if( EQUAL(pszCap, ODsCDeleteLayer) )
+    else if (EQUAL(pszCap, ODsCDeleteLayer))
         return TRUE;
     else
         return FALSE;
 }
 
 OGRLayer *GNMGenericNetwork::CopyLayer(OGRLayer *poSrcLayer,
-                                       const char *pszNewName, char **papszOptions)
+                                       const char *pszNewName,
+                                       char **papszOptions)
 {
     CPLStringList aosOptions(CSLDuplicate(papszOptions));
     aosOptions.SetNameValue("DST_SRSWKT", GetProjectionRef());
@@ -1399,7 +1419,7 @@ OGRLayer *GNMGenericNetwork::CopyLayer(OGRLayer *poSrcLayer,
 int GNMGenericNetwork::CloseDependentDatasets()
 {
     size_t nCount = m_apoLayers.size();
-    for(size_t i = 0; i < nCount; ++i)
+    for (size_t i = 0; i < nCount; ++i)
     {
         delete m_apoLayers[i];
     }
@@ -1419,103 +1439,100 @@ void GNMGenericNetwork::FlushCache(bool bAtClosing)
 
 //--- C API --------------------------------------------------------------------
 
-CPLErr CPL_STDCALL GNMConnectFeatures (GNMGenericNetworkH hNet,
-                                GNMGFID nSrcFID, GNMGFID nTgtFID,
-                                GNMGFID nConFID, double dfCost,
-                                double dfInvCost,
-                                GNMDirection eDir)
+CPLErr CPL_STDCALL GNMConnectFeatures(GNMGenericNetworkH hNet, GNMGFID nSrcFID,
+                                      GNMGFID nTgtFID, GNMGFID nConFID,
+                                      double dfCost, double dfInvCost,
+                                      GNMDirection eDir)
 {
-    VALIDATE_POINTER1( hNet, "GNMConnectFeatures", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMConnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->ConnectFeatures(nSrcFID, nTgtFID,
-                                                          nConFID, dfCost,
-                                                          dfInvCost, eDir);
+    return ((GNMGenericNetwork *)hNet)
+        ->ConnectFeatures(nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
 }
 
-CPLErr CPL_STDCALL GNMDisconnectFeatures (GNMGenericNetworkH hNet, GNMGFID nSrcFID,
-                                          GNMGFID nTgtFID, GNMGFID nConFID)
+CPLErr CPL_STDCALL GNMDisconnectFeatures(GNMGenericNetworkH hNet,
+                                         GNMGFID nSrcFID, GNMGFID nTgtFID,
+                                         GNMGFID nConFID)
 {
-    VALIDATE_POINTER1( hNet, "GNMDisconnectFeatures", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMDisconnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->DisconnectFeatures(nSrcFID, nTgtFID,
-                                                          nConFID);
+    return ((GNMGenericNetwork *)hNet)
+        ->DisconnectFeatures(nSrcFID, nTgtFID, nConFID);
 }
 
 CPLErr CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
                                                GNMGFID nFID)
 {
-    VALIDATE_POINTER1( hNet, "GNMDisconnectFeaturesWithId", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMDisconnectFeaturesWithId", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->DisconnectFeaturesWithId(nFID);
+    return ((GNMGenericNetwork *)hNet)->DisconnectFeaturesWithId(nFID);
 }
 
-CPLErr CPL_STDCALL GNMReconnectFeatures (GNMGenericNetworkH hNet,
-                                         GNMGFID nSrcFID, GNMGFID nTgtFID,
-                                         GNMGFID nConFID, double dfCost,
-                                         double dfInvCost, GNMDirection eDir)
+CPLErr CPL_STDCALL GNMReconnectFeatures(GNMGenericNetworkH hNet,
+                                        GNMGFID nSrcFID, GNMGFID nTgtFID,
+                                        GNMGFID nConFID, double dfCost,
+                                        double dfInvCost, GNMDirection eDir)
 {
-    VALIDATE_POINTER1( hNet, "GNMReconnectFeatures", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMReconnectFeatures", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->ReconnectFeatures(nSrcFID, nTgtFID,
-                                        nConFID, dfCost, dfInvCost, eDir);
+    return ((GNMGenericNetwork *)hNet)
+        ->ReconnectFeatures(nSrcFID, nTgtFID, nConFID, dfCost, dfInvCost, eDir);
 }
 
-CPLErr CPL_STDCALL GNMCreateRule (GNMGenericNetworkH hNet, const char *pszRuleStr)
+CPLErr CPL_STDCALL GNMCreateRule(GNMGenericNetworkH hNet,
+                                 const char *pszRuleStr)
 {
-    VALIDATE_POINTER1( hNet, "GNMCreateRule", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMCreateRule", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->CreateRule(pszRuleStr);
+    return ((GNMGenericNetwork *)hNet)->CreateRule(pszRuleStr);
 }
 
 CPLErr CPL_STDCALL GNMDeleteAllRules(GNMGenericNetworkH hNet)
 {
-    VALIDATE_POINTER1( hNet, "GNMDeleteAllRules", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMDeleteAllRules", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->DeleteAllRules();
+    return ((GNMGenericNetwork *)hNet)->DeleteAllRules();
 }
 
-CPLErr CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet, const char *pszRuleStr)
+CPLErr CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet,
+                                 const char *pszRuleStr)
 {
-    VALIDATE_POINTER1( hNet, "GNMDeleteRule", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMDeleteRule", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->DeleteRule(pszRuleStr);
+    return ((GNMGenericNetwork *)hNet)->DeleteRule(pszRuleStr);
 }
 
-char** CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet)
+char **CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet)
 {
-    VALIDATE_POINTER1( hNet, "GNMDeleteRule", nullptr );
+    VALIDATE_POINTER1(hNet, "GNMDeleteRule", nullptr);
 
-    return ((GNMGenericNetwork*)hNet)->GetRules();
+    return ((GNMGenericNetwork *)hNet)->GetRules();
 }
 
-CPLErr CPL_STDCALL GNMConnectPointsByLines (GNMGenericNetworkH hNet,
-                                            char **papszLayerList,
-                                            double dfTolerance,
-                                            double dfCost,
-                                            double dfInvCost,
-                                            GNMDirection eDir)
+CPLErr CPL_STDCALL GNMConnectPointsByLines(GNMGenericNetworkH hNet,
+                                           char **papszLayerList,
+                                           double dfTolerance, double dfCost,
+                                           double dfInvCost, GNMDirection eDir)
 {
-    VALIDATE_POINTER1( hNet, "GNMConnectPointsByLines", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMConnectPointsByLines", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->ConnectPointsByLines(papszLayerList,
-                                                            dfTolerance,
-                                                            dfCost,
-                                                            dfInvCost, eDir);
+    return ((GNMGenericNetwork *)hNet)
+        ->ConnectPointsByLines(papszLayerList, dfTolerance, dfCost, dfInvCost,
+                               eDir);
 }
 
-CPLErr CPL_STDCALL GNMChangeBlockState (GNMGenericNetworkH hNet,
-                                        GNMGFID nFID, bool bIsBlock)
+CPLErr CPL_STDCALL GNMChangeBlockState(GNMGenericNetworkH hNet, GNMGFID nFID,
+                                       bool bIsBlock)
 {
-    VALIDATE_POINTER1( hNet, "GNMChangeBlockState", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMChangeBlockState", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->ChangeBlockState(nFID, bIsBlock);
+    return ((GNMGenericNetwork *)hNet)->ChangeBlockState(nFID, bIsBlock);
 }
 
-CPLErr CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
-                                           int bIsBlock)
+CPLErr CPL_STDCALL GNMChangeAllBlockState(GNMGenericNetworkH hNet, int bIsBlock)
 {
-    VALIDATE_POINTER1( hNet, "GNMChangeAllBlockState", CE_Failure );
+    VALIDATE_POINTER1(hNet, "GNMChangeAllBlockState", CE_Failure);
 
-    return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
+    return ((GNMGenericNetwork *)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
 //! @endcond

@@ -30,34 +30,31 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-
 /*! @cond Doxygen_Suppress */
 GNMRule::GNMRule() = default;
 
-GNMRule::GNMRule(const std::string &oRule) :
-    m_soRuleString( oRule )
+GNMRule::GNMRule(const std::string &oRule) : m_soRuleString(oRule)
 {
     m_bValid = GNMRule::ParseRuleString();
 }
 
-GNMRule::GNMRule(const char *pszRule) :
-    m_soRuleString( pszRule )
+GNMRule::GNMRule(const char *pszRule) : m_soRuleString(pszRule)
 {
     m_bValid = GNMRule::ParseRuleString();
 }
 
-GNMRule::GNMRule(const GNMRule &oRule) :
-    m_soSrcLayerName ( oRule.m_soSrcLayerName ),
-    m_soTgtLayerName ( oRule.m_soTgtLayerName ),
-    m_soConnLayerName ( oRule.m_soConnLayerName ),
-    m_bAllow ( oRule.m_bAllow ),
-    m_bValid ( oRule.m_bValid ),
-    m_bAny ( oRule.m_bAny ),
-    m_soRuleString ( oRule.m_soRuleString )
+GNMRule::GNMRule(const GNMRule &oRule)
+    : m_soSrcLayerName(oRule.m_soSrcLayerName),
+      m_soTgtLayerName(oRule.m_soTgtLayerName),
+      m_soConnLayerName(oRule.m_soConnLayerName), m_bAllow(oRule.m_bAllow),
+      m_bValid(oRule.m_bValid), m_bAny(oRule.m_bAny),
+      m_soRuleString(oRule.m_soRuleString)
 {
 }
 
-GNMRule::~GNMRule() {}
+GNMRule::~GNMRule()
+{
+}
 
 bool GNMRule::IsValid() const
 {
@@ -78,13 +75,13 @@ bool GNMRule::CanConnect(const CPLString &soSrcLayerName,
                          const CPLString &soTgtLayerName,
                          const CPLString &soConnLayerName)
 {
-    if(IsAcceptAny())
+    if (IsAcceptAny())
         return m_bAllow;
 
-    if(m_soSrcLayerName == soSrcLayerName &&
-       m_soTgtLayerName == soTgtLayerName)
+    if (m_soSrcLayerName == soSrcLayerName &&
+        m_soTgtLayerName == soTgtLayerName)
     {
-        if(soConnLayerName.empty())
+        if (soConnLayerName.empty())
             return m_bAllow;
         else
             return m_bAllow && m_soConnLayerName == soConnLayerName;
@@ -120,57 +117,63 @@ GNMRule::operator const char *() const
 
 bool GNMRule::ParseRuleString()
 {
-    CPLStringList aTokens (CSLTokenizeString2(m_soRuleString.c_str(), " ", CSLT_STRIPLEADSPACES |
-                                            CSLT_STRIPENDSPACES));
+    CPLStringList aTokens(
+        CSLTokenizeString2(m_soRuleString.c_str(), " ",
+                           CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
     // the minimum rule consist 3 tokens
     int nTokenCount = aTokens.Count();
-    if(nTokenCount < 3)
+    if (nTokenCount < 3)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "Need more than %d tokens. Failed to parse rule: %s",
-                  nTokenCount, m_soRuleString.c_str() );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Need more than %d tokens. Failed to parse rule: %s",
+                 nTokenCount, m_soRuleString.c_str());
         return false;
     }
 
-    if(EQUAL(aTokens[0], GNM_RULEKW_ALLOW))
+    if (EQUAL(aTokens[0], GNM_RULEKW_ALLOW))
         m_bAllow = true;
-    else if(EQUAL(aTokens[0], GNM_RULEKW_DENY))
+    else if (EQUAL(aTokens[0], GNM_RULEKW_DENY))
         m_bAllow = false;
     else
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "First token is invalid. Failed to parse rule: %s",
-                  m_soRuleString.c_str() );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "First token is invalid. Failed to parse rule: %s",
+                 m_soRuleString.c_str());
         return false;
     }
 
     // now just test if the value == connects
     // in future should set rule type
 
-    if(!EQUAL(aTokens[1], GNM_RULEKW_CONNECTS))
+    if (!EQUAL(aTokens[1], GNM_RULEKW_CONNECTS))
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "Not a CONNECTS rule. Failed to parse rule: %s",
-                  m_soRuleString.c_str() );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Not a CONNECTS rule. Failed to parse rule: %s",
+                 m_soRuleString.c_str());
         return false;
     }
 
-    if(EQUAL(aTokens[2], GNM_RULEKW_ANY))
+    if (EQUAL(aTokens[2], GNM_RULEKW_ANY))
     {
         m_bAny = true;
         return true;
     }
     else
     {
-        if(nTokenCount < 5)
+        if (nTokenCount < 5)
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, "Not an ANY rule, but have only %d tokens. Failed to parse rule: %s",
-                      nTokenCount, m_soRuleString.c_str() );
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Not an ANY rule, but have only %d tokens. Failed to "
+                     "parse rule: %s",
+                     nTokenCount, m_soRuleString.c_str());
             return false;
         }
         m_soSrcLayerName = aTokens[2];
         m_soTgtLayerName = aTokens[4];
     }
 
-    if(nTokenCount < 7) // skip 5 and 6 parameters
+    if (nTokenCount < 7)  // skip 5 and 6 parameters
         return true;
     else
         m_soConnLayerName = aTokens[6];
