@@ -1,32 +1,32 @@
 /******************************************************************************
-* $Id$
-*
-* Project:  OpenGIS Simple Features Reference Implementation
-* Purpose:  Standard includes and class definitions ArcObjects OGR driver.
-* Author:   Ragi Yaser Burhum, ragi@burhum.com
-*
-******************************************************************************
-* Copyright (c) 2009, Ragi Yaser Burhum
+ * $Id$
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  Standard includes and class definitions ArcObjects OGR driver.
+ * Author:   Ragi Yaser Burhum, ragi@burhum.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2009, Ragi Yaser Burhum
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-****************************************************************************/
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 
 #ifndef OGR_FGDB_H_INCLUDED
 #define OGR_FGDB_H_INCLUDED
@@ -51,13 +51,14 @@
 #endif
 
 /************************************************************************
-* Default layer creation options
-*/
+ * Default layer creation options
+ */
 
 #define FGDB_FEATURE_DATASET "";
 #define FGDB_GEOMETRY_NAME "SHAPE"
 #define FGDB_OID_NAME "OBJECTID"
-constexpr const char* pszRelationshipTypeUUID = "{B606A7E1-FA5B-439C-849C-6E9C2481537B}";
+constexpr const char *pszRelationshipTypeUUID =
+    "{B606A7E1-FA5B-439C-849C-6E9C2481537B}";
 
 /* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
@@ -68,31 +69,33 @@ class FGdbDriver;
 /*                           FGdbBaseLayer                              */
 /************************************************************************/
 
-class FGdbBaseLayer CPL_NON_FINAL: public OGRLayer
+class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
 {
-protected:
+  protected:
+    FGdbBaseLayer();
+    virtual ~FGdbBaseLayer();
 
-  FGdbBaseLayer();
-  virtual ~FGdbBaseLayer();
+    OGRFeatureDefn *m_pFeatureDefn;
+    OGRSpatialReference *m_pSRS;
 
-  OGRFeatureDefn* m_pFeatureDefn;
-  OGRSpatialReference* m_pSRS;
+    EnumRows *m_pEnumRows;
 
-  EnumRows*    m_pEnumRows;
+    std::vector<std::wstring>
+        m_vOGRFieldToESRIField;  // OGR Field Index to ESRI Field Name Mapping
+    std::vector<std::string>
+        m_vOGRFieldToESRIFieldType;  // OGR Field Index to ESRI Field Type
+                                     // Mapping
 
-  std::vector<std::wstring> m_vOGRFieldToESRIField; //OGR Field Index to ESRI Field Name Mapping
-  std::vector<std::string> m_vOGRFieldToESRIFieldType; //OGR Field Index to ESRI Field Type Mapping
+    bool m_suppressColumnMappingError;
+    bool m_forceMulti;
+    bool m_bTimeInUTC = false;
 
-  bool  m_suppressColumnMappingError;
-  bool  m_forceMulti;
-  bool  m_bTimeInUTC = false;
+    bool OGRFeatureFromGdbRow(Row *pRow, OGRFeature **ppFeature);
 
-  bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
+    virtual void CloseGDBObjects();
 
-  virtual void       CloseGDBObjects();
-
-public:
-          virtual OGRFeature* GetNextFeature() override;
+  public:
+    virtual OGRFeature *GetNextFeature() override;
 };
 
 /************************************************************************/
@@ -101,175 +104,204 @@ public:
 
 class FGdbDataSource;
 
-class FGdbLayer final: public FGdbBaseLayer
+class FGdbLayer final : public FGdbBaseLayer
 {
-  friend class FGdbDataSource;
+    friend class FGdbDataSource;
 
-  bool                m_bWorkaroundCrashOnCDFWithBinaryField = false;
+    bool m_bWorkaroundCrashOnCDFWithBinaryField = false;
 
-  int                 m_bBulkLoadAllowed;
-  int                 m_bBulkLoadInProgress;
+    int m_bBulkLoadAllowed;
+    int m_bBulkLoadInProgress;
 
-  virtual void        CloseGDBObjects() override;
-  int                 EditIndexesForFIDHack(const char* pszRadixTablename);
-  int                 EditGDBTablX(const CPLString& osGDBTablX,
-                                   const CPLString& osNewGDBTablX);
-  int                 EditATXOrSPX(const CPLString& osIndex);
-  int                 EditATXOrSPX( VSILFILE* fp,
-                                    int nThisPage,
-                                    int& nLastPageVisited,
-                                    int nDepth,
-                                    int nSizeIndexedValue,
-                                    GByte* pabyLastIndexedValue,
-                                    int& bIndexedValueIsValid,
-                                    int& nFirstIndexAtThisValue,
-                                    std::vector<int>& anPagesAtThisValue,
-                                    int& bSortThisValue,
-                                    int& bInvalidateIndex );
+    virtual void CloseGDBObjects() override;
+    int EditIndexesForFIDHack(const char *pszRadixTablename);
+    int EditGDBTablX(const CPLString &osGDBTablX,
+                     const CPLString &osNewGDBTablX);
+    int EditATXOrSPX(const CPLString &osIndex);
+    int EditATXOrSPX(VSILFILE *fp, int nThisPage, int &nLastPageVisited,
+                     int nDepth, int nSizeIndexedValue,
+                     GByte *pabyLastIndexedValue, int &bIndexedValueIsValid,
+                     int &nFirstIndexAtThisValue,
+                     std::vector<int> &anPagesAtThisValue, int &bSortThisValue,
+                     int &bInvalidateIndex);
 
-  void                StartBulkLoad();
-  void                EndBulkLoad();
+    void StartBulkLoad();
+    void EndBulkLoad();
 
 #ifdef EXTENT_WORKAROUND
-  bool                m_bLayerJustCreated;
-  OGREnvelope         sLayerEnvelope;
-  bool                m_bLayerEnvelopeValid;
-  void                WorkAroundExtentProblem();
-  bool                UpdateRowWithGeometry(Row& row, OGRGeometry* poGeom);
+    bool m_bLayerJustCreated;
+    OGREnvelope sLayerEnvelope;
+    bool m_bLayerEnvelopeValid;
+    void WorkAroundExtentProblem();
+    bool UpdateRowWithGeometry(Row &row, OGRGeometry *poGeom);
 #endif
 
-  std::vector<ByteArray*> m_apoByteArrays;
-  OGRErr              PopulateRowWithFeature( Row& row, OGRFeature *poFeature );
-  OGRErr              GetRow( EnumRows& enumRows, Row& row, GIntBig nFID );
+    std::vector<ByteArray *> m_apoByteArrays;
+    OGRErr PopulateRowWithFeature(Row &row, OGRFeature *poFeature);
+    OGRErr GetRow(EnumRows &enumRows, Row &row, GIntBig nFID);
 
-  char              **m_papszOptions;
+    char **m_papszOptions;
 
-  int                 m_bCreateMultipatch;
+    int m_bCreateMultipatch;
 
-  std::map<int,int>   m_oMapOGRFIDToFGDBFID;
-  std::map<int,int>   m_oMapFGDBFIDToOGRFID;
-  int                 m_nResyncThreshold;
-  void                ResyncIDs();
+    std::map<int, int> m_oMapOGRFIDToFGDBFID;
+    std::map<int, int> m_oMapFGDBFIDToOGRFID;
+    int m_nResyncThreshold;
+    void ResyncIDs();
 
-  int                 m_bSymlinkFlag;
-  int                 CreateRealCopy();
+    int m_bSymlinkFlag;
+    int CreateRealCopy();
 
-  char*               CreateFieldDefn(OGRFieldDefn& oField,
-                                      int bApproxOK,
-                                      std::string& fieldname_clean,
-                                      std::string& gdbFieldType);
+    char *CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
+                          std::string &fieldname_clean,
+                          std::string &gdbFieldType);
 
-public:
+  public:
+    FGdbLayer();
+    virtual ~FGdbLayer();
 
-  FGdbLayer();
-  virtual ~FGdbLayer();
+    // Internal used by FGDB driver */
+    bool Initialize(FGdbDataSource *pParentDataSource, Table *pTable,
+                    const std::wstring &wstrTablePath,
+                    const std::wstring &wstrType);
+    bool Create(FGdbDataSource *pParentDataSource, const char *pszLayerName,
+                OGRSpatialReference *poSRS, OGRwkbGeometryType eType,
+                char **papszOptions);
+    static bool CreateFeatureDataset(FGdbDataSource *pParentDataSource,
+                                     const std::string &feature_dataset_name,
+                                     OGRSpatialReference *poSRS,
+                                     char **papszOptions);
 
-  // Internal used by FGDB driver */
-  bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, const std::wstring& wstrTablePath, const std::wstring& wstrType);
-  bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
-  static bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, const std::string& feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
+    // virtual const char *GetName();
+    virtual const char *GetFIDColumn() override
+    {
+        return m_strOIDFieldName.c_str();
+    }
 
-  // virtual const char *GetName();
-  virtual const char* GetFIDColumn() override { return m_strOIDFieldName.c_str(); }
+    virtual void ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-  virtual void        ResetReading() override;
-  virtual OGRFeature* GetNextFeature() override;
-  virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
+    Table *GetTable()
+    {
+        return m_pTable;
+    }
 
-  Table* GetTable() { return m_pTable; }
+    std::wstring GetTablePath() const
+    {
+        return m_wstrTablePath;
+    }
+    std::wstring GetType() const
+    {
+        return m_wstrType;
+    }
 
-  std::wstring GetTablePath() const { return m_wstrTablePath; }
-  std::wstring GetType() const { return m_wstrType; }
-
-  virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
-  virtual OGRErr      DeleteField( int iFieldToDelete ) override;
+    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr DeleteField(int iFieldToDelete) override;
 #ifdef AlterFieldDefn_implemented_but_not_working
-  virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    virtual OGRErr AlterFieldDefn(int iFieldToAlter,
+                                  OGRFieldDefn *poNewFieldDefn, int nFlags);
 #endif
 
-  virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
-  virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
-  virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
-  virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
-  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 
-  virtual GIntBig     GetFeatureCount( int bForce ) override;
-  virtual OGRErr      SetAttributeFilter( const char *pszQuery ) override;
+    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-  virtual void        SetSpatialFilter( OGRGeometry * ) override;
-  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+    virtual void SetSpatialFilter(OGRGeometry *) override;
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
 
-//  virtual OGRErr        StartTransaction( );
-//  virtual OGRErr        CommitTransaction( );
-//  virtual OGRErr        RollbackTransaction( );
+    //  virtual OGRErr        StartTransaction( );
+    //  virtual OGRErr        CommitTransaction( );
+    //  virtual OGRErr        RollbackTransaction( );
 
-  OGRFeatureDefn *    GetLayerDefn() override { return m_pFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return m_pFeatureDefn;
+    }
 
-  virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-  // Access the XML directly. The 2 following methods are not currently used by the driver, but
-  // can be used by external code for specific purposes.
-  OGRErr              GetLayerXML ( char **poXml );
-  OGRErr              GetLayerMetadataXML ( char **poXmlMeta );
+    // Access the XML directly. The 2 following methods are not currently used
+    // by the driver, but can be used by external code for specific purposes.
+    OGRErr GetLayerXML(char **poXml);
+    OGRErr GetLayerMetadataXML(char **poXmlMeta);
 
-  void                SetSymlinkFlag() { m_bSymlinkFlag = TRUE; }
+    void SetSymlinkFlag()
+    {
+        m_bSymlinkFlag = TRUE;
+    }
 
-  virtual const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain) override;
 
-  virtual OGRErr      Rename(const char* pszNewName) override;
+    virtual OGRErr Rename(const char *pszNewName) override;
 
-protected:
+  protected:
+    bool GDBToOGRFields(CPLXMLNode *psFields);
+    bool ParseGeometryDef(CPLXMLNode *psGeometryDef);
 
-  bool GDBToOGRFields(CPLXMLNode* psFields);
-  bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
+    static bool ParseSpatialReference(CPLXMLNode *psSpatialRefNode,
+                                      std::string *pOutWkt,
+                                      std::string *pOutWKID,
+                                      std::string *pOutLatestWKID);
 
-  static
-  bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt,
-                             std::string* pOutWKID, std::string* pOutLatestWKID);
+    FGdbDataSource *m_pDS;
+    Table *m_pTable;
 
-  FGdbDataSource* m_pDS;
-  Table* m_pTable;
+    std::string
+        m_strName;  // contains underlying FGDB table name (not catalog name)
 
-  std::string m_strName; //contains underlying FGDB table name (not catalog name)
+    std::string m_strOIDFieldName;
+    std::string m_strShapeFieldName;
 
-  std::string m_strOIDFieldName;
-  std::string m_strShapeFieldName;
+    std::wstring m_wstrTablePath;
+    std::wstring m_wstrType;  // the type: "Table" or "Feature Class"
 
-  std::wstring m_wstrTablePath;
-  std::wstring m_wstrType; // the type: "Table" or "Feature Class"
+    std::wstring m_wstrSubfields;
+    std::wstring m_wstrWhereClause;
 
-  std::wstring m_wstrSubfields;
-  std::wstring m_wstrWhereClause;
+    bool m_bFilterDirty;  // optimization to avoid multiple calls to search
+                          // until necessary
 
-  bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
-
-  bool  m_bLaunderReservedKeywords;
+    bool m_bLaunderReservedKeywords;
 };
 
 /************************************************************************/
 /*                         FGdbResultLayer                              */
 /************************************************************************/
 
-class FGdbResultLayer final: public FGdbBaseLayer
+class FGdbResultLayer final : public FGdbBaseLayer
 {
-public:
+  public:
+    FGdbResultLayer(FGdbDataSource *pParentDataSource, const char *pszStatement,
+                    EnumRows *pEnumRows);
+    virtual ~FGdbResultLayer();
 
-  FGdbResultLayer(FGdbDataSource* pParentDataSource, const char* pszStatement, EnumRows* pEnumRows);
-  virtual ~FGdbResultLayer();
+    virtual void ResetReading() override;
 
-  virtual void        ResetReading() override;
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return m_pFeatureDefn;
+    }
 
-  OGRFeatureDefn *    GetLayerDefn() override { return m_pFeatureDefn; }
+    virtual int TestCapability(const char *) override;
 
-  virtual int         TestCapability( const char * ) override;
-
-protected:
-
-  FGdbDataSource* m_pDS;
-  CPLString       osSQL;
+  protected:
+    FGdbDataSource *m_pDS;
+    CPLString osSQL;
 };
 
 /************************************************************************/
@@ -279,93 +311,129 @@ protected:
 class FGdbDatabaseConnection;
 class OGRFileGDBGroup;
 
-class FGdbDataSource final: public OGRDataSource
+class FGdbDataSource final : public OGRDataSource
 {
-  CPLString             m_osFSName;
-  CPLString             m_osPublicName;
-  std::set<OGRLayer*>   m_oSetSelectLayers;
-  std::shared_ptr<GDALGroup>     m_poRootGroup{};
-  std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+    CPLString m_osFSName;
+    CPLString m_osPublicName;
+    std::set<OGRLayer *> m_oSetSelectLayers;
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
+    std::map<std::string, std::unique_ptr<GDALRelationship>>
+        m_osMapRelationships{};
 
-  int        FixIndexes();
-  int        bPerLayerCopyingForTransaction;
+    int FixIndexes();
+    int bPerLayerCopyingForTransaction;
 
-public:
-  FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection* pConnection);
-  virtual ~FGdbDataSource();
+  public:
+    FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection);
+    virtual ~FGdbDataSource();
 
-  int         Open(const char* pszFSName, int bUpdate,
-                   const char* pszPublicName);
+    int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
 
-  const char* GetName() override { return m_osPublicName.c_str(); }
-  const char* GetFSName() { return m_osFSName.c_str(); }
+    const char *GetName() override
+    {
+        return m_osPublicName.c_str();
+    }
+    const char *GetFSName()
+    {
+        return m_osFSName.c_str();
+    }
 
-  int         GetLayerCount() override { return static_cast<int>(m_layers.size()); }
+    int GetLayerCount() override
+    {
+        return static_cast<int>(m_layers.size());
+    }
 
-  OGRLayer*   GetLayer( int ) override;
+    OGRLayer *GetLayer(int) override;
 
-  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = nullptr, OGRwkbGeometryType = wkbUnknown, char** = nullptr ) override;
+    virtual OGRLayer *ICreateLayer(const char *,
+                                   OGRSpatialReference * = nullptr,
+                                   OGRwkbGeometryType = wkbUnknown,
+                                   char ** = nullptr) override;
 
-  virtual OGRErr DeleteLayer( int ) override;
+    virtual OGRErr DeleteLayer(int) override;
 
-  virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                  OGRGeometry *poSpatialFilter,
-                                  const char *pszDialect ) override;
-  virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-  int TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-  const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
-  std::vector<std::string> GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
+    const OGRFieldDomain *
+    GetFieldDomain(const std::string &name) const override;
+    std::vector<std::string>
+    GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
 
-  bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
-                             std::string& failureReason) override;
+    bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                        std::string &failureReason) override;
 
-  bool        DeleteFieldDomain(const std::string& name,
-                                std::string& failureReason) override;
+    bool DeleteFieldDomain(const std::string &name,
+                           std::string &failureReason) override;
 
-  bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
-                                std::string& failureReason) override;
+    bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                           std::string &failureReason) override;
 
-  std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+    std::vector<std::string>
+    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
 
-  const GDALRelationship* GetRelationship(const std::string& name) const override;
+    const GDALRelationship *
+    GetRelationship(const std::string &name) const override;
 
-  std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poRootGroup;
+    }
 
-  Geodatabase* GetGDB() { return m_pGeodatabase; }
-  bool         GetUpdate() { return m_bUpdate; }
-  FGdbDatabaseConnection* GetConnection() { return m_pConnection; }
+    Geodatabase *GetGDB()
+    {
+        return m_pGeodatabase;
+    }
+    bool GetUpdate()
+    {
+        return m_bUpdate;
+    }
+    FGdbDatabaseConnection *GetConnection()
+    {
+        return m_pConnection;
+    }
 
-  GDALDriver* GetOpenFileGDBDrv() { return m_poOpenFileGDBDrv; }
-  int         HasSelectLayers() { return !m_oSetSelectLayers.empty(); }
+    GDALDriver *GetOpenFileGDBDrv()
+    {
+        return m_poOpenFileGDBDrv;
+    }
+    int HasSelectLayers()
+    {
+        return !m_oSetSelectLayers.empty();
+    }
 
-  int         Close(int bCloseGeodatabase = FALSE);
-  int         ReOpen();
+    int Close(int bCloseGeodatabase = FALSE);
+    int ReOpen();
 
-  int         HasPerLayerCopyingForTransaction();
-  void        SetPerLayerCopyingForTransaction(int bFlag) { bPerLayerCopyingForTransaction = bFlag; }
-  void        SetSymlinkFlagOnAllLayers();
+    int HasPerLayerCopyingForTransaction();
+    void SetPerLayerCopyingForTransaction(int bFlag)
+    {
+        bPerLayerCopyingForTransaction = bFlag;
+    }
+    void SetSymlinkFlagOnAllLayers();
 
-  /*
+    /*
+    protected:
+
+    void EnumerateSpatialTables();
+    void OpenSpatialTable( const char* pszTableName );
+    */
   protected:
+    bool LoadLayers(const std::wstring &parent);
+    bool OpenFGDBTables(OGRFileGDBGroup *group, const std::wstring &type,
+                        const std::vector<std::wstring> &layers);
 
-  void EnumerateSpatialTables();
-  void OpenSpatialTable( const char* pszTableName );
-  */
-protected:
-  bool LoadLayers(const std::wstring & parent);
-  bool OpenFGDBTables(OGRFileGDBGroup* group,
-                      const std::wstring &type,
-                      const std::vector<std::wstring> &layers);
-
-  bool m_bUseDriverMutex = true;
-  FGdbDatabaseConnection* m_pConnection;
-  std::vector <OGRLayer*> m_layers;
-  Geodatabase* m_pGeodatabase;
-  bool m_bUpdate;
-  GDALDriver* m_poOpenFileGDBDrv;
-  std::unique_ptr<GDALDataset> m_poOpenFileGDBDS;
+    bool m_bUseDriverMutex = true;
+    FGdbDatabaseConnection *m_pConnection;
+    std::vector<OGRLayer *> m_layers;
+    Geodatabase *m_pGeodatabase;
+    bool m_bUpdate;
+    GDALDriver *m_poOpenFileGDBDrv;
+    std::unique_ptr<GDALDataset> m_poOpenFileGDBDS;
 };
 
 /************************************************************************/
@@ -374,48 +442,68 @@ protected:
 
 class FGdbDatabaseConnection
 {
-public:
-    FGdbDatabaseConnection(CPLString osName, Geodatabase* pGeodatabase) :
-        m_osName(osName), m_pGeodatabase(pGeodatabase), m_nRefCount(1), m_bLocked(FALSE),
-        m_bFIDHackInProgress(FALSE) {}
+  public:
+    FGdbDatabaseConnection(CPLString osName, Geodatabase *pGeodatabase)
+        : m_osName(osName), m_pGeodatabase(pGeodatabase), m_nRefCount(1),
+          m_bLocked(FALSE), m_bFIDHackInProgress(FALSE)
+    {
+    }
 
-    CPLString    m_osName;
-    Geodatabase* m_pGeodatabase;
-    int          m_nRefCount;
-    int          m_bLocked;
-    int          m_bFIDHackInProgress;
+    CPLString m_osName;
+    Geodatabase *m_pGeodatabase;
+    int m_nRefCount;
+    int m_bLocked;
+    int m_bFIDHackInProgress;
 
-    Geodatabase* GetGDB() { return m_pGeodatabase; }
-    void         SetLocked(int bLockedIn) { m_bLocked = bLockedIn; }
-    int          GetRefCount() const { return m_nRefCount; }
-    int          IsLocked() const { return m_bLocked; }
+    Geodatabase *GetGDB()
+    {
+        return m_pGeodatabase;
+    }
+    void SetLocked(int bLockedIn)
+    {
+        m_bLocked = bLockedIn;
+    }
+    int GetRefCount() const
+    {
+        return m_nRefCount;
+    }
+    int IsLocked() const
+    {
+        return m_bLocked;
+    }
 
-    int          IsFIDHackInProgress() const { return m_bFIDHackInProgress; }
-    void         SetFIDHackInProgress(int bFlag) { m_bFIDHackInProgress = bFlag; }
-    int          OpenGeodatabase(const char* pszOverriddenName);
-    void         CloseGeodatabase();
+    int IsFIDHackInProgress() const
+    {
+        return m_bFIDHackInProgress;
+    }
+    void SetFIDHackInProgress(int bFlag)
+    {
+        m_bFIDHackInProgress = bFlag;
+    }
+    int OpenGeodatabase(const char *pszOverriddenName);
+    void CloseGeodatabase();
 };
 
-
-class FGdbTransactionManager final: public IOGRTransactionBehaviour
+class FGdbTransactionManager final : public IOGRTransactionBehaviour
 {
-public:
-
-  virtual OGRErr StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
-  virtual OGRErr CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
-  virtual OGRErr RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
+  public:
+    virtual OGRErr StartTransaction(OGRDataSource *&poDSInOut,
+                                    int &bOutHasReopenedDS) override;
+    virtual OGRErr CommitTransaction(OGRDataSource *&poDSInOut,
+                                     int &bOutHasReopenedDS) override;
+    virtual OGRErr RollbackTransaction(OGRDataSource *&poDSInOut,
+                                       int &bOutHasReopenedDS) override;
 };
 
-class FGdbDriver final: public GDALDriver
+class FGdbDriver final : public GDALDriver
 {
-public:
+  public:
+    static void Release(const char *pszName);
 
-  static void Release(const char* pszName);
+    static FGdbTransactionManager *GetTransactionManager();
 
-  static FGdbTransactionManager* GetTransactionManager();
-
-  static CPLMutex* hMutex;
-  static FGdbTransactionManager* m_poTransactionManager;
+    static CPLMutex *hMutex;
+    static FGdbTransactionManager *m_poTransactionManager;
 };
 
 CPL_C_START
