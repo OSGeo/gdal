@@ -1,8 +1,8 @@
 /******************************************************************************
  * Project:  GDAL
- * Author:   Raul Alonso Reyes <raul dot alonsoreyes at satcen dot europa dot eu>
- * Author:   Even Rouault, <even dot rouault at spatialys dot com>
- * Purpose:  JPEG-2000 driver based on Lurawave library, driver developed by SatCen
+ * Author:   Raul Alonso Reyes <raul dot alonsoreyes at satcen dot europa dot
+ *eu> Author:   Even Rouault, <even dot rouault at spatialys dot com> Purpose:
+ *JPEG-2000 driver based on Lurawave library, driver developed by SatCen
  *
  ******************************************************************************
  * Copyright (c) 2016, SatCen - European Union Satellite Centre
@@ -40,86 +40,81 @@ JP2LuraMemoryRegistrar::JP2LuraMemoryRegistrar()
 
 JP2LuraMemoryRegistrar::~JP2LuraMemoryRegistrar()
 {
-    CPLDebug("JP2Lura",
-             "JP2LuraMemoryRegistrar: %d block allocated leaked", 
+    CPLDebug("JP2Lura", "JP2LuraMemoryRegistrar: %d block allocated leaked",
              static_cast<int>(oMap.size()));
-    std::map<void*, size_t>::const_iterator oIter = oMap.begin();
-    for( ; oIter != oMap.end(); ++oIter )
+    std::map<void *, size_t>::const_iterator oIter = oMap.begin();
+    for (; oIter != oMap.end(); ++oIter)
     {
-        CPLDebug("JP2Lura", "force freeing %d bytes", 
+        CPLDebug("JP2Lura", "force freeing %d bytes",
                  static_cast<int>(oIter->second));
         VSIFree(oIter->first);
     }
 }
 
-void JP2LuraMemoryRegistrar::Register(size_t nSize, void* ptr)
+void JP2LuraMemoryRegistrar::Register(size_t nSize, void *ptr)
 {
-    CPLAssert( oMap.find(ptr) == oMap.end() );
+    CPLAssert(oMap.find(ptr) == oMap.end());
     oMap[ptr] = nSize;
 }
 
-void JP2LuraMemoryRegistrar::Unregister(void* ptr)
+void JP2LuraMemoryRegistrar::Unregister(void *ptr)
 {
-    CPLAssert( oMap.find(ptr) != oMap.end() );
+    CPLAssert(oMap.find(ptr) != oMap.end());
     oMap.erase(ptr);
 }
-#endif // ENABLE_MEMORY_REGISTRAR
+#endif  // ENABLE_MEMORY_REGISTRAR
 
 /************************************************************************/
 /*                    GDALJP2Lura_Callback_Malloc()                     */
 /************************************************************************/
 
-void *  JP2_Callback_Conv  GDALJP2Lura_Callback_Malloc(size_t size,
-                                            JP2_Callback_Param 
+void *JP2_Callback_Conv GDALJP2Lura_Callback_Malloc(size_t size,
+                                                    JP2_Callback_Param
 #ifdef ENABLE_MEMORY_REGISTRAR
-                                                                lParam
+                                                        lParam
 #endif
-                                                       )
+)
 {
-    void* ptr = VSIMalloc(size);
+    void *ptr = VSIMalloc(size);
 #ifdef ENABLE_MEMORY_REGISTRAR
-    if( lParam && ptr )
+    if (lParam && ptr)
     {
-        ((JP2LuraMemoryRegistrar*)lParam)->Register(size, ptr);
+        ((JP2LuraMemoryRegistrar *)lParam)->Register(size, ptr);
     }
 #endif
     return ptr;
 }
 
-
 /************************************************************************/
 /*                    GDALJP2Lura_Callback_Free()                       */
 /************************************************************************/
 
-JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Free(void *ptr,
-                                            JP2_Callback_Param 
+JP2_Error JP2_Callback_Conv GDALJP2Lura_Callback_Free(void *ptr,
+                                                      JP2_Callback_Param
 #ifdef ENABLE_MEMORY_REGISTRAR
-                                                                lParam
+                                                          lParam
 #endif
-                                                       )
+)
 {
 #ifdef ENABLE_MEMORY_REGISTRAR
-    if( lParam && ptr )
+    if (lParam && ptr)
     {
-        ((JP2LuraMemoryRegistrar*)lParam)->Unregister(ptr);
+        ((JP2LuraMemoryRegistrar *)lParam)->Unregister(ptr);
     }
 #endif
     VSIFree(ptr);
     return cJP2_Error_OK;
 }
 
-
 /************************************************************************/
 /*                  GDALJP2Lura_Callback_Decompress_Read()              */
 /************************************************************************/
 
-unsigned long  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Read(
-                                                    unsigned char  *pucData,
-                                                    unsigned long   ulPos,
-                                                    unsigned long   ulSize,
-                                                    JP2_Callback_Param lParam)
+unsigned long JP2_Callback_Conv GDALJP2Lura_Callback_Decompress_Read(
+    unsigned char *pucData, unsigned long ulPos, unsigned long ulSize,
+    JP2_Callback_Param lParam)
 {
-    VSILFILE* fp = reinterpret_cast<VSILFILE*>(lParam);
+    VSILFILE *fp = reinterpret_cast<VSILFILE *>(lParam);
 
     if (VSIFSeekL(fp, ulPos, SEEK_SET) != 0)
     {
@@ -127,14 +122,15 @@ unsigned long  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Read(
     }
 
     return static_cast<unsigned long>(
-            VSIFReadL(pucData, 1, static_cast<size_t>(ulSize), fp));
+        VSIFReadL(pucData, 1, static_cast<size_t>(ulSize), fp));
 }
 
 /************************************************************************/
 /*                          splitIEEE754Float()                         */
 /************************************************************************/
 
-typedef union {
+typedef union
+{
     float f;
     unsigned int ui;
 } float_uint_union;
@@ -159,7 +155,7 @@ static void splitIEEE754Float(float f, unsigned int *mantissa, int *exponent,
 /*                           setIIIE754Sign()                           */
 /************************************************************************/
 
-static void setIIIE754Sign(float_uint_union* f, unsigned char sign)
+static void setIIIE754Sign(float_uint_union *f, unsigned char sign)
 {
     if (!sign)
         f->ui = (f->ui & 0x7FFFFFFFU);
@@ -171,7 +167,7 @@ static void setIIIE754Sign(float_uint_union* f, unsigned char sign)
 /*                         setIIIE754Exponent()                         */
 /************************************************************************/
 
-static void setIIIE754Exponent(float_uint_union* f, unsigned char exponent)
+static void setIIIE754Exponent(float_uint_union *f, unsigned char exponent)
 {
     f->ui = (f->ui & 0x807fffffU) | (exponent << 23);
 }
@@ -180,7 +176,7 @@ static void setIIIE754Exponent(float_uint_union* f, unsigned char exponent)
 /*                         setIIIE754Mantissa()                         */
 /************************************************************************/
 
-static void setIIIE754Mantissa(float_uint_union* f, unsigned int mantissa)
+static void setIIIE754Mantissa(float_uint_union *f, unsigned int mantissa)
 {
     f->ui = (f->ui & (0xFF800000U)) | mantissa;
 }
@@ -189,32 +185,30 @@ static void setIIIE754Mantissa(float_uint_union* f, unsigned int mantissa)
 /*                 GDALJP2Lura_Callback_Decompress_Write()              */
 /************************************************************************/
 
-JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
-                                    unsigned char*  pucData,
-                                    short           sComponent,
-                                    unsigned long   ulRow,
-                                    unsigned long   ulStart, // starting pixel
-                                    unsigned long   ulNum, // number of pixels
-                                    JP2_Callback_Param   lParam)
+JP2_Error JP2_Callback_Conv GDALJP2Lura_Callback_Decompress_Write(
+    unsigned char *pucData, short sComponent, unsigned long ulRow,
+    unsigned long ulStart,  // starting pixel
+    unsigned long ulNum,    // number of pixels
+    JP2_Callback_Param lParam)
 {
 #ifdef DEBUG_VERBOSE
-    CPLDebug("JP2Lura", "Decompress(%d, %lu, %lu, %lu)",
-             sComponent, ulRow, ulStart, ulNum);
+    CPLDebug("JP2Lura", "Decompress(%d, %lu, %lu, %lu)", sComponent, ulRow,
+             ulStart, ulNum);
 #endif
 
-    GDALJP2Lura_Output_Data* pOutputData =
-                    reinterpret_cast<GDALJP2Lura_Output_Data*>(lParam);
+    GDALJP2Lura_Output_Data *pOutputData =
+        reinterpret_cast<GDALJP2Lura_Output_Data *>(lParam);
 
     CPLAssert(ulRow < static_cast<unsigned long>(pOutputData->nBufYSize));
     CPLAssert(ulStart + ulNum <=
-                        static_cast<unsigned long>(pOutputData->nBufXSize));
+              static_cast<unsigned long>(pOutputData->nBufXSize));
 
     long lBps = 0;
     /****************************************************/
     /*  convert from component index to channel index   */
     /*  i.e. index after expanding any palette samples  */
     /****************************************************/
-    if (pOutputData->lBps==0) //float
+    if (pOutputData->lBps == 0)  // float
     {
         switch (sComponent)
         {
@@ -235,13 +229,13 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
         lBps = pOutputData->lBps;
     }
 
-    unsigned char* pucImageData;  // buffer for decompressed image stripe
+    unsigned char *pucImageData;  // buffer for decompressed image stripe
 
     if (pOutputData->lBps == 0)
         pucImageData = pOutputData->pimage;
     else
     {
-        if( sComponent >= pOutputData->nBands )
+        if (sComponent >= pOutputData->nBands)
         {
             // Ignored component
             return cJP2_Error_OK;
@@ -249,7 +243,6 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
         if (sComponent != pOutputData->nBand - 1)
         {
             pucImageData = pOutputData->pDatacache[sComponent];
-
         }
         else
         {
@@ -257,23 +250,22 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
         }
     }
 
-
     /***********************************/
     /* number of bytes for each sample */
     /***********************************/
 
     unsigned long ulBytesFromLura = ((lBps + 7) >> 3);
     unsigned long ulBytesrequest =
-                            GDALGetDataTypeSizeBytes(pOutputData->eBufType);
+        GDALGetDataTypeSizeBytes(pOutputData->eBufType);
 
     /* distance between samples of the same channel */
 
     unsigned long ulSkip = ulBytesrequest;
 
-    unsigned long ulOffset = (pOutputData->nBufXSize * ulSkip) * ulRow +
-                ulStart * ulSkip;
+    unsigned long ulOffset =
+        (pOutputData->nBufXSize * ulSkip) * ulRow + ulStart * ulSkip;
 
-    unsigned char* pucStart = pucImageData + ulOffset;
+    unsigned char *pucStart = pucImageData + ulOffset;
     if (pOutputData->lBps == 0)
     {
 #ifdef DEBUG_VERBOSE
@@ -282,13 +274,13 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
         const unsigned int nSpaceMantissa = 4;
         for (unsigned long i = 0; i < ulNum; i++)
         {
-            float_uint_union* f = (float_uint_union*)(&pucStart[i*4]);
+            float_uint_union *f = (float_uint_union *)(&pucStart[i * 4]);
             if (sComponent == 0)
             {
 #ifdef DEBUG_VERBOSE
                 osLineValues += CPLSPrintf("%02X ", *pucData);
 #endif
-                setIIIE754Sign(f, (*pucData == 0) ? 0 : 1); 
+                setIIIE754Sign(f, (*pucData == 0) ? 0 : 1);
                 pucData++;
             }
             else if (sComponent == 1)
@@ -301,9 +293,9 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
             }
             else if (sComponent == 2)
             {
-                unsigned int mantissa = *(unsigned int*)pucData;
+                unsigned int mantissa = *(unsigned int *)pucData;
 #ifdef DEBUG_VERBOSE
-                osLineValues += CPLSPrintf("%02X ",mantissa);
+                osLineValues += CPLSPrintf("%02X ", mantissa);
 #endif
                 setIIIE754Mantissa(f, mantissa);
                 pucData += nSpaceMantissa;
@@ -319,26 +311,22 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
         memcpy(pucStart, pucData, ulBytesFromLura * ulNum);
     }
 
-
     return cJP2_Error_OK;
 }
-
 
 /************************************************************************/
 /*                 GDALJP2Lura_Callback_Compress_Write()                */
 /************************************************************************/
 
-JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Write(
-                                        unsigned char           *pucData,
-                                        unsigned long           ulPos,
-                                        unsigned long           ulSize,
-                                        JP2_Callback_Param      lParam)
+JP2_Error JP2_Callback_Conv GDALJP2Lura_Callback_Compress_Write(
+    unsigned char *pucData, unsigned long ulPos, unsigned long ulSize,
+    JP2_Callback_Param lParam)
 {
-    JP2_Gdal_Stream_Data* data =
-                            reinterpret_cast<JP2_Gdal_Stream_Data*>(lParam);
+    JP2_Gdal_Stream_Data *data =
+        reinterpret_cast<JP2_Gdal_Stream_Data *>(lParam);
 
-    if (VSIFSeekL(data->fp, (vsi_l_offset)(ulPos + data->Position),
-                  SEEK_SET) != 0)
+    if (VSIFSeekL(data->fp, (vsi_l_offset)(ulPos + data->Position), SEEK_SET) !=
+        0)
     {
         return cJP2_Error_Failure_Write;
     }
@@ -354,30 +342,27 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Write(
 /*                 GDALJP2Lura_Callback_Compress_Read()                 */
 /************************************************************************/
 
-JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
-                                            unsigned char*      pucData,
-                                            short               sComponent,
-                                            unsigned long       ulRow,
-                                            unsigned long       ulStart,
-                                            unsigned long       ulNum,
-                                            JP2_Callback_Param  lParam)
+JP2_Error JP2_Callback_Conv GDALJP2Lura_Callback_Compress_Read(
+    unsigned char *pucData, short sComponent, unsigned long ulRow,
+    unsigned long ulStart, unsigned long ulNum, JP2_Callback_Param lParam)
 {
-    GDALJP2Lura_Input_Data* idata =
-                            reinterpret_cast<GDALJP2Lura_Input_Data*>(lParam);
-    GDALDataset* poSrcDS = idata->poSrcDS;
-    const int  nBands = poSrcDS->GetRasterCount();
-    const int  nYSize = poSrcDS->GetRasterYSize();
+    GDALJP2Lura_Input_Data *idata =
+        reinterpret_cast<GDALJP2Lura_Input_Data *>(lParam);
+    GDALDataset *poSrcDS = idata->poSrcDS;
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nYSize = poSrcDS->GetRasterYSize();
 
     GDALProgressFunc pfnProgress = idata->pfnProgress;
-    void * pProgressData = idata->pProgressData;
+    void *pProgressData = idata->pProgressData;
 
-    if( ulStart == 0 && pfnProgress &&
-        !pfnProgress(static_cast<double>(ulRow+1)/nYSize, "", pProgressData) )
+    if (ulStart == 0 && pfnProgress &&
+        !pfnProgress(static_cast<double>(ulRow + 1) / nYSize, "",
+                     pProgressData))
     {
         return cJP2_Error_Read_Callback_Undefined;
     }
 
-    GDALRasterBand  *poBand;
+    GDALRasterBand *poBand;
     if (nBands == 1 &&
         poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Float32)
     {
@@ -395,37 +380,37 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
         case GDT_Byte:
         {
             ulBpsRead = 8;
-            //Signed = 0;
+            // Signed = 0;
             break;
         }
         case GDT_UInt16:
         {
             ulBpsRead = 16;
-            //Signed = 0;
+            // Signed = 0;
             break;
         }
         case GDT_Int16:
         {
             ulBpsRead = 16;
-            //Signed = 1;
+            // Signed = 1;
             break;
         }
         case GDT_UInt32:
         {
             ulBpsRead = 32;
-            //Signed = 0;
+            // Signed = 0;
             break;
         }
         case GDT_Int32:
         {
             ulBpsRead = 32;
-            //Signed = 1;
+            // Signed = 1;
             break;
         }
         case GDT_Float32:
         {
             ulBpsRead = 32;
-            //Signed = 1;
+            // Signed = 1;
             break;
         }
 
@@ -437,21 +422,18 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
     unsigned long ulRowBytes = ulBytes * ulNum;
 
     /* malloc of the row*/
-    unsigned char *pucPos = reinterpret_cast<unsigned char*>(
-                                                        VSIMalloc(ulRowBytes));
+    unsigned char *pucPos =
+        reinterpret_cast<unsigned char *>(VSIMalloc(ulRowBytes));
     if (pucPos == nullptr)
     {
         return cJP2_Error_Failure_Malloc;
     }
 
     /* check scanlines already read */
-    CPLErr err = poBand->RasterIO(GF_Read,
-                                  static_cast<int>(ulStart),
-                                  static_cast<int>(ulRow),
-                                  static_cast<int>(ulNum), 1,
-                                  pucPos,
-                                  static_cast<int>(ulNum), 1,
-                                  eDataType, 0, 0, nullptr);
+    CPLErr err = poBand->RasterIO(
+        GF_Read, static_cast<int>(ulStart), static_cast<int>(ulRow),
+        static_cast<int>(ulNum), 1, pucPos, static_cast<int>(ulNum), 1,
+        eDataType, 0, 0, nullptr);
     if (err != CE_None)
     {
         VSIFree(pucPos);
@@ -459,16 +441,16 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
     }
 
     /* deliver the requested pixels to the library */
-    if (nBands == 1 && eDataType == GDT_Float32 )
+    if (nBands == 1 && eDataType == GDT_Float32)
     {
         unsigned int mantissa;
         int exponent;
         int sign;
 
         const unsigned long nSpaceMantissa = 4;
-        for (int i = 0; i < (int) ulNum; i++)
+        for (int i = 0; i < (int)ulNum; i++)
         {
-            float *ptr = (float*)(&pucPos[i * 4]);
+            float *ptr = (float *)(&pucPos[i * 4]);
             splitIEEE754Float(*ptr, &mantissa, &exponent, &sign);
             switch (sComponent)
             {
@@ -484,8 +466,8 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
                 }
                 case 2:
                 {
-                    *reinterpret_cast<unsigned int*>(
-                                pucData + i * nSpaceMantissa) = mantissa;
+                    *reinterpret_cast<unsigned int *>(
+                        pucData + i * nSpaceMantissa) = mantissa;
                     break;
                 }
             }
