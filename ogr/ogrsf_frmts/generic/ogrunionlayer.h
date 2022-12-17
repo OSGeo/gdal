@@ -38,18 +38,18 @@
 /*                      OGRUnionLayerGeomFieldDefn                      */
 /************************************************************************/
 
-class CPL_DLL OGRUnionLayerGeomFieldDefn final: public OGRGeomFieldDefn
+class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
 {
-    public:
+  public:
+    int bGeomTypeSet = false;
+    int bSRSSet = false;
+    OGREnvelope sStaticEnvelope{};
 
-    int             bGeomTypeSet = false;
-    int             bSRSSet = false;
-    OGREnvelope     sStaticEnvelope{};
-
-            OGRUnionLayerGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType);
-   explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn* poSrc);
-   explicit OGRUnionLayerGeomFieldDefn(const OGRUnionLayerGeomFieldDefn* poSrc);
-           ~OGRUnionLayerGeomFieldDefn();
+    OGRUnionLayerGeomFieldDefn(const char *pszName, OGRwkbGeometryType eType);
+    explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn *poSrc);
+    explicit OGRUnionLayerGeomFieldDefn(
+        const OGRUnionLayerGeomFieldDefn *poSrc);
+    ~OGRUnionLayerGeomFieldDefn();
 };
 
 /************************************************************************/
@@ -64,98 +64,106 @@ typedef enum
     FIELD_SPECIFIED,
 } FieldUnionStrategy;
 
-class CPL_DLL OGRUnionLayer final: public OGRLayer
+class CPL_DLL OGRUnionLayer final : public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
 
   protected:
-    CPLString           osName;
-    int                 nSrcLayers;
-    OGRLayer          **papoSrcLayers;
-    int                 bHasLayerOwnership;
+    CPLString osName;
+    int nSrcLayers;
+    OGRLayer **papoSrcLayers;
+    int bHasLayerOwnership;
 
-    OGRFeatureDefn     *poFeatureDefn;
-    int                 nFields;
-    OGRFieldDefn      **papoFields;
-    int                 nGeomFields;
+    OGRFeatureDefn *poFeatureDefn;
+    int nFields;
+    OGRFieldDefn **papoFields;
+    int nGeomFields;
     OGRUnionLayerGeomFieldDefn **papoGeomFields;
     FieldUnionStrategy eFieldStrategy;
-    CPLString           osSourceLayerFieldName{};
+    CPLString osSourceLayerFieldName{};
 
-    int                 bPreserveSrcFID;
+    int bPreserveSrcFID;
 
-    GIntBig             nFeatureCount;
+    GIntBig nFeatureCount;
 
-    int                 iCurLayer;
-    char               *pszAttributeFilter;
-    int                 nNextFID;
-    int                *panMap;
-    char              **papszIgnoredFields;
-    int                 bAttrFilterPassThroughValue;
-    int                *pabModifiedLayers;
-    int                *pabCheckIfAutoWrap;
+    int iCurLayer;
+    char *pszAttributeFilter;
+    int nNextFID;
+    int *panMap;
+    char **papszIgnoredFields;
+    int bAttrFilterPassThroughValue;
+    int *pabModifiedLayers;
+    int *pabCheckIfAutoWrap;
     OGRSpatialReference *poGlobalSRS;
 
-    void                AutoWarpLayerIfNecessary(int iSubLayer);
-    OGRFeature         *TranslateFromSrcLayer(OGRFeature* poSrcFeature);
-    void                ApplyAttributeFilterToSrcLayer(int iSubLayer);
-    int                 GetAttrFilterPassThroughValue();
-    void                ConfigureActiveLayer();
-    void                SetSpatialFilterToSourceLayer(OGRLayer* poSrcLayer);
+    void AutoWarpLayerIfNecessary(int iSubLayer);
+    OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);
+    void ApplyAttributeFilterToSrcLayer(int iSubLayer);
+    int GetAttrFilterPassThroughValue();
+    void ConfigureActiveLayer();
+    void SetSpatialFilterToSourceLayer(OGRLayer *poSrcLayer);
 
   public:
-                        OGRUnionLayer( const char* pszName,
-                                       int nSrcLayers, /* must be >= 1 */
-                                       OGRLayer** papoSrcLayers, /* array itself ownership always transferred, layer ownership depending on bTakeLayerOwnership */
-                                       int bTakeLayerOwnership);
+    OGRUnionLayer(
+        const char *pszName, int nSrcLayers, /* must be >= 1 */
+        OGRLayer *
+            *papoSrcLayers, /* array itself ownership always transferred, layer
+                               ownership depending on bTakeLayerOwnership */
+        int bTakeLayerOwnership);
 
-    virtual             ~OGRUnionLayer();
+    virtual ~OGRUnionLayer();
 
-    /* All the following non virtual methods must be called just after the constructor */
+    /* All the following non virtual methods must be called just after the
+     * constructor */
     /* and before any virtual method */
-    void                SetFields(FieldUnionStrategy eFieldStrategy,
-                                  int nFields,
-                                  OGRFieldDefn** papoFields,  /* duplicated by the method */
-                                  int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
-                                  OGRUnionLayerGeomFieldDefn** papoGeomFields  /* duplicated by the method */);
-    void                SetSourceLayerFieldName(const char* pszSourceLayerFieldName);
-    void                SetPreserveSrcFID(int bPreserveSrcFID);
-    void                SetFeatureCount(int nFeatureCount);
-    virtual const char  *GetName() override { return osName.c_str(); }
+    void SetFields(
+        FieldUnionStrategy eFieldStrategy, int nFields,
+        OGRFieldDefn **papoFields, /* duplicated by the method */
+        int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
+        OGRUnionLayerGeomFieldDefn *
+            *papoGeomFields /* duplicated by the method */);
+    void SetSourceLayerFieldName(const char *pszSourceLayerFieldName);
+    void SetPreserveSrcFID(int bPreserveSrcFID);
+    void SetFeatureCount(int nFeatureCount);
+    virtual const char *GetName() override
+    {
+        return osName.c_str();
+    }
     virtual OGRwkbGeometryType GetGeomType() override;
 
-    virtual void        ResetReading() override;
+    virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature* poFeature ) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature* poFeature ) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr      IUpsertFeature( OGRFeature* poFeature ) override;
+    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRErr SetAttributeFilter(const char *) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce = TRUE) override;
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * poGeomIn ) override;
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * ) override;
+    virtual void SetSpatialFilter(OGRGeometry *poGeomIn) override;
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
 
-    virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
+    virtual OGRErr SetIgnoredFields(const char **papszFields) override;
 
-    virtual OGRErr      SyncToDisk() override;
+    virtual OGRErr SyncToDisk() override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif // OGRUNIONLAYER_H_INCLUDED
+#endif  // OGRUNIONLAYER_H_INCLUDED

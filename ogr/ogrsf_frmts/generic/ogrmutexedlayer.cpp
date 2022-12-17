@@ -31,16 +31,16 @@
 #include "ogrmutexedlayer.h"
 #include "cpl_multiproc.h"
 
-
-OGRMutexedLayer::OGRMutexedLayer( OGRLayer* poDecoratedLayer,
-                                  int bTakeOwnership,
-                                  CPLMutex* hMutex ) :
-    OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
+OGRMutexedLayer::OGRMutexedLayer(OGRLayer *poDecoratedLayer, int bTakeOwnership,
+                                 CPLMutex *hMutex)
+    : OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
 {
-    SetDescription( poDecoratedLayer->GetDescription() );
+    SetDescription(poDecoratedLayer->GetDescription());
 }
 
-OGRMutexedLayer::~OGRMutexedLayer() {}
+OGRMutexedLayer::~OGRMutexedLayer()
+{
+}
 
 OGRGeometry *OGRMutexedLayer::GetSpatialFilter()
 {
@@ -48,39 +48,41 @@ OGRGeometry *OGRMutexedLayer::GetSpatialFilter()
     return OGRLayerDecorator::GetSpatialFilter();
 }
 
-void        OGRMutexedLayer::SetSpatialFilter( OGRGeometry * poGeom )
+void OGRMutexedLayer::SetSpatialFilter(OGRGeometry *poGeom)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     OGRLayerDecorator::SetSpatialFilter(poGeom);
 }
 
-void        OGRMutexedLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                  double dfMaxX, double dfMaxY )
+void OGRMutexedLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
+                                           double dfMaxX, double dfMaxY)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     OGRLayerDecorator::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
-void        OGRMutexedLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeom )
+void OGRMutexedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     OGRLayerDecorator::SetSpatialFilter(iGeomField, poGeom);
 }
 
-void        OGRMutexedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
-                                  double dfMaxX, double dfMaxY )
+void OGRMutexedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
+                                           double dfMinY, double dfMaxX,
+                                           double dfMaxY)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    OGRLayerDecorator::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+    OGRLayerDecorator::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX,
+                                            dfMaxY);
 }
 
-OGRErr      OGRMutexedLayer::SetAttributeFilter( const char * poAttrFilter )
+OGRErr OGRMutexedLayer::SetAttributeFilter(const char *poAttrFilter)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetAttributeFilter(poAttrFilter);
 }
 
-void        OGRMutexedLayer::ResetReading()
+void OGRMutexedLayer::ResetReading()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     OGRLayerDecorator::ResetReading();
@@ -98,44 +100,44 @@ GDALDataset *OGRMutexedLayer::GetDataset()
     return OGRLayerDecorator::GetDataset();
 }
 
-bool OGRMutexedLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+bool OGRMutexedLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
                                      CSLConstList papszOptions)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetArrowStream(out_stream, papszOptions);
 }
 
-OGRErr      OGRMutexedLayer::SetNextByIndex( GIntBig nIndex )
+OGRErr OGRMutexedLayer::SetNextByIndex(GIntBig nIndex)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRMutexedLayer::GetFeature( GIntBig nFID )
+OGRFeature *OGRMutexedLayer::GetFeature(GIntBig nFID)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeature(nFID);
 }
 
-OGRErr      OGRMutexedLayer::ISetFeature( OGRFeature *poFeature )
+OGRErr OGRMutexedLayer::ISetFeature(OGRFeature *poFeature)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::ISetFeature(poFeature);
 }
 
-OGRErr      OGRMutexedLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRMutexedLayer::ICreateFeature(OGRFeature *poFeature)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::ICreateFeature(poFeature);
 }
 
-OGRErr      OGRMutexedLayer::IUpsertFeature( OGRFeature* poFeature )
+OGRErr OGRMutexedLayer::IUpsertFeature(OGRFeature *poFeature)
 {
-   CPLMutexHolderOptionalLockD(m_hMutex);
-   return OGRLayerDecorator::IUpsertFeature(poFeature);
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::IUpsertFeature(poFeature);
 }
 
-OGRErr      OGRMutexedLayer::DeleteFeature( GIntBig nFID )
+OGRErr OGRMutexedLayer::DeleteFeature(GIntBig nFID)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::DeleteFeature(nFID);
@@ -165,62 +167,65 @@ OGRSpatialReference *OGRMutexedLayer::GetSpatialRef()
     return OGRLayerDecorator::GetSpatialRef();
 }
 
-GIntBig         OGRMutexedLayer::GetFeatureCount( int bForce )
+GIntBig OGRMutexedLayer::GetFeatureCount(int bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeatureCount(bForce);
 }
 
-OGRErr      OGRMutexedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+OGRErr OGRMutexedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  int bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetExtent(iGeomField, psExtent, bForce);
 }
 
-OGRErr      OGRMutexedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRMutexedLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetExtent(psExtent, bForce);
 }
 
-int         OGRMutexedLayer::TestCapability( const char * pszCapability )
+int OGRMutexedLayer::TestCapability(const char *pszCapability)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::TestCapability(pszCapability);
 }
 
-OGRErr      OGRMutexedLayer::CreateField( OGRFieldDefn *poField,
-                                            int bApproxOK )
+OGRErr OGRMutexedLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::CreateField(poField, bApproxOK);
 }
 
-OGRErr      OGRMutexedLayer::DeleteField( int iField )
+OGRErr OGRMutexedLayer::DeleteField(int iField)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::DeleteField(iField);
 }
 
-OGRErr      OGRMutexedLayer::ReorderFields( int* panMap )
+OGRErr OGRMutexedLayer::ReorderFields(int *panMap)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::ReorderFields(panMap);
 }
 
-OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn )
+OGRErr OGRMutexedLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                                       int nFlagsIn)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
-OGRErr      OGRMutexedLayer::AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn )
+OGRErr OGRMutexedLayer::AlterGeomFieldDefn(
+    int iGeomField, const OGRGeomFieldDefn *poNewGeomFieldDefn, int nFlagsIn)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
-    return OGRLayerDecorator::AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
+    return OGRLayerDecorator::AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn,
+                                                 nFlagsIn);
 }
 
-OGRErr      OGRMutexedLayer::SyncToDisk()
+OGRErr OGRMutexedLayer::SyncToDisk()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SyncToDisk();
@@ -232,31 +237,31 @@ OGRStyleTable *OGRMutexedLayer::GetStyleTable()
     return OGRLayerDecorator::GetStyleTable();
 }
 
-void        OGRMutexedLayer::SetStyleTableDirectly( OGRStyleTable *poStyleTable )
+void OGRMutexedLayer::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetStyleTableDirectly(poStyleTable);
 }
 
-void        OGRMutexedLayer::SetStyleTable(OGRStyleTable *poStyleTable)
+void OGRMutexedLayer::SetStyleTable(OGRStyleTable *poStyleTable)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetStyleTable(poStyleTable);
 }
 
-OGRErr      OGRMutexedLayer::StartTransaction()
+OGRErr OGRMutexedLayer::StartTransaction()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::StartTransaction();
 }
 
-OGRErr      OGRMutexedLayer::CommitTransaction()
+OGRErr OGRMutexedLayer::CommitTransaction()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::CommitTransaction();
 }
 
-OGRErr      OGRMutexedLayer::RollbackTransaction()
+OGRErr OGRMutexedLayer::RollbackTransaction()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::RollbackTransaction();
@@ -274,41 +279,40 @@ const char *OGRMutexedLayer::GetGeometryColumn()
     return OGRLayerDecorator::GetGeometryColumn();
 }
 
-OGRErr      OGRMutexedLayer::SetIgnoredFields( const char **papszFields )
+OGRErr OGRMutexedLayer::SetIgnoredFields(const char **papszFields)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetIgnoredFields(papszFields);
 }
 
-char      **OGRMutexedLayer::GetMetadata( const char * pszDomain )
+char **OGRMutexedLayer::GetMetadata(const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetMetadata(pszDomain);
 }
 
-CPLErr      OGRMutexedLayer::SetMetadata( char ** papszMetadata,
-                                          const char * pszDomain )
+CPLErr OGRMutexedLayer::SetMetadata(char **papszMetadata, const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetMetadata(papszMetadata, pszDomain);
 }
 
-const char *OGRMutexedLayer::GetMetadataItem( const char * pszName,
-                                              const char * pszDomain )
+const char *OGRMutexedLayer::GetMetadataItem(const char *pszName,
+                                             const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetMetadataItem(pszName, pszDomain);
 }
 
-CPLErr      OGRMutexedLayer::SetMetadataItem( const char * pszName,
-                                              const char * pszValue,
-                                              const char * pszDomain )
+CPLErr OGRMutexedLayer::SetMetadataItem(const char *pszName,
+                                        const char *pszValue,
+                                        const char *pszDomain)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
-OGRErr OGRMutexedLayer::Rename(const char* pszNewName)
+OGRErr OGRMutexedLayer::Rename(const char *pszNewName)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::Rename(pszNewName);
@@ -320,7 +324,7 @@ OGRErr OGRMutexedLayer::Rename(const char* pszNewName)
 void OGRRegisterMutexedLayer();
 void OGRRegisterMutexedLayer()
 {
-    CPLAssert(false); // Never call this function: it will segfault
+    CPLAssert(false);  // Never call this function: it will segfault
     delete new OGRMutexedLayer(NULL, FALSE, NULL);
 }
 #endif
