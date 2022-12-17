@@ -39,94 +39,112 @@ class OGRILI1DataSource;
 /*                           OGRILI1Layer                               */
 /************************************************************************/
 
-class OGRILI1Layer final: public OGRLayer
+class OGRILI1Layer final : public OGRLayer
 {
-private:
+  private:
 #if 0
     OGRSpatialReference *poSRS;
 #endif
-    OGRFeatureDefn      *poFeatureDefn;
-    GeomFieldInfos      oGeomFieldInfos;
+    OGRFeatureDefn *poFeatureDefn;
+    GeomFieldInfos oGeomFieldInfos;
 
-    int                 nFeatures;
-    OGRFeature          **papoFeatures;
-    int                 nFeatureIdx;
+    int nFeatures;
+    OGRFeature **papoFeatures;
+    int nFeatureIdx;
 
-    bool                bGeomsJoined;
+    bool bGeomsJoined;
 
-    OGRILI1DataSource   *poDS;
+    OGRILI1DataSource *poDS;
 
   public:
-                        OGRILI1Layer( OGRFeatureDefn* poFeatureDefn,
-                                      const GeomFieldInfos& oGeomFieldInfos,
-                                      OGRILI1DataSource *poDS );
+    OGRILI1Layer(OGRFeatureDefn *poFeatureDefn,
+                 const GeomFieldInfos &oGeomFieldInfos,
+                 OGRILI1DataSource *poDS);
 
-                       ~OGRILI1Layer();
+    ~OGRILI1Layer();
 
-    OGRErr              AddFeature(OGRFeature *poFeature);
+    OGRErr AddFeature(OGRFeature *poFeature);
 
-    void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
-    OGRFeature *        GetNextFeatureRef();
-    OGRFeature *        GetFeatureRef( GIntBig nFid );
-    OGRFeature *        GetFeatureRef( const char* );
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextFeatureRef();
+    OGRFeature *GetFeatureRef(GIntBig nFid);
+    OGRFeature *GetFeatureRef(const char *);
 
-    GIntBig             GetFeatureCount( int bForce = TRUE ) override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
-    int                 GeometryAppend( OGRGeometry *poGeometry );
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    int GeometryAppend(OGRGeometry *poGeometry);
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
-    GeomFieldInfos      GetGeomFieldInfos() { return oGeomFieldInfos; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
+    GeomFieldInfos GetGeomFieldInfos()
+    {
+        return oGeomFieldInfos;
+    }
 
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
   private:
-    void                JoinGeomLayers();
-    void                JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurfaceFieldIndex );
-    OGRMultiPolygon*    Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines = false );
-    void                PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nAreaFieldIndex, int nPointFieldIndex );
+    void JoinGeomLayers();
+    void JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
+                          int nSurfaceFieldIndex);
+    OGRMultiPolygon *Polygonize(OGRGeometryCollection *poLines,
+                                bool fix_crossing_lines = false);
+    void PolygonizeAreaLayer(OGRILI1Layer *poAreaLineLayer, int nAreaFieldIndex,
+                             int nPointFieldIndex);
 };
 
 /************************************************************************/
 /*                          OGRILI1DataSource                           */
 /************************************************************************/
 
-class OGRILI1DataSource final: public OGRDataSource
+class OGRILI1DataSource final : public OGRDataSource
 {
   private:
-    char       *pszName;
-    ImdReader  *poImdReader;
+    char *pszName;
+    ImdReader *poImdReader;
     IILI1Reader *poReader;
-    VSILFILE   *fpTransfer;
-    char       *pszTopic;
-    int         nLayers;
-    OGRILI1Layer** papoLayers;
+    VSILFILE *fpTransfer;
+    char *pszTopic;
+    int nLayers;
+    OGRILI1Layer **papoLayers;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRILI1DataSource)
 
   public:
-                OGRILI1DataSource();
-               virtual ~OGRILI1DataSource();
+    OGRILI1DataSource();
+    virtual ~OGRILI1DataSource();
 
-    int         Open( const char *, char** papszOpenOptions, int bTestOpen );
-    int         Create( const char *pszFile, char **papszOptions );
+    int Open(const char *, char **papszOpenOptions, int bTestOpen);
+    int Create(const char *pszFile, char **papszOptions);
 
-    const char *GetName() override { return pszName; }
-    int         GetLayerCount() override { return poReader ? poReader->GetLayerCount() : 0; }
-    OGRLayer   *GetLayer( int ) override;
-    OGRILI1Layer *GetLayerByName( const char* ) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return poReader ? poReader->GetLayerCount() : 0;
+    }
+    OGRLayer *GetLayer(int) override;
+    OGRILI1Layer *GetLayerByName(const char *) override;
 
-    VSILFILE   *GetTransferFile() { return fpTransfer; }
+    VSILFILE *GetTransferFile()
+    {
+        return fpTransfer;
+    }
 
-    virtual OGRLayer *ICreateLayer( const char *,
-                                      OGRSpatialReference * = nullptr,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = nullptr ) override;
+    virtual OGRLayer *ICreateLayer(const char *,
+                                   OGRSpatialReference * = nullptr,
+                                   OGRwkbGeometryType = wkbUnknown,
+                                   char ** = nullptr) override;
 
-    int         TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
 #endif /* OGR_ILI1_H_INCLUDED */
