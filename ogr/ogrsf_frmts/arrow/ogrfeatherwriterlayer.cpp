@@ -35,10 +35,10 @@
 /************************************************************************/
 
 OGRFeatherWriterLayer::OGRFeatherWriterLayer(
-            arrow::MemoryPool* poMemoryPool,
-            const std::shared_ptr<arrow::io::OutputStream>& poOutputStream,
-            const char *pszLayerName):
-    OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
+    arrow::MemoryPool *poMemoryPool,
+    const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
+    const char *pszLayerName)
+    : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
 {
     m_bWriteFieldArrowExtensionName = true;
 }
@@ -49,7 +49,7 @@ OGRFeatherWriterLayer::OGRFeatherWriterLayer(
 
 OGRFeatherWriterLayer::~OGRFeatherWriterLayer()
 {
-    if( m_bInitializationOK )
+    if (m_bInitializationOK)
         FinalizeWriting();
 }
 
@@ -57,12 +57,14 @@ OGRFeatherWriterLayer::~OGRFeatherWriterLayer()
 /*                       IsSupportedGeometryType()                      */
 /************************************************************************/
 
-bool OGRFeatherWriterLayer::IsSupportedGeometryType(OGRwkbGeometryType eGType) const
+bool OGRFeatherWriterLayer::IsSupportedGeometryType(
+    OGRwkbGeometryType eGType) const
 {
-    if( eGType != wkbFlatten(eGType) )
+    if (eGType != wkbFlatten(eGType))
     {
-        const auto osConfigOptionName = "OGR_" + GetDriverUCName() + "_ALLOW_ALL_DIMS";
-        if( !CPLTestBool(CPLGetConfigOption(osConfigOptionName.c_str(), "NO")) )
+        const auto osConfigOptionName =
+            "OGR_" + GetDriverUCName() + "_ALLOW_ALL_DIMS";
+        if (!CPLTestBool(CPLGetConfigOption(osConfigOptionName.c_str(), "NO")))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Only 2D geometry types are supported (unless the "
@@ -78,44 +80,47 @@ bool OGRFeatherWriterLayer::IsSupportedGeometryType(OGRwkbGeometryType eGType) c
 /*                           SetOptions()                               */
 /************************************************************************/
 
-bool OGRFeatherWriterLayer::SetOptions(const std::string& osFilename,
+bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
                                        CSLConstList papszOptions,
                                        OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
-    const char* pszDefaultFormat =
+    const char *pszDefaultFormat =
         (EQUAL(CPLGetExtension(osFilename.c_str()), "arrows") ||
-         STARTS_WITH_CI(osFilename.c_str(), "/vsistdout")) ? "STREAM" : "FILE";
-    m_bStreamFormat = EQUAL(
-        CSLFetchNameValueDef(papszOptions, "FORMAT", pszDefaultFormat), "STREAM");
+         STARTS_WITH_CI(osFilename.c_str(), "/vsistdout"))
+            ? "STREAM"
+            : "FILE";
+    m_bStreamFormat =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "FORMAT", pszDefaultFormat),
+              "STREAM");
 
-    const char* pszGeomEncoding = CSLFetchNameValue(papszOptions, "GEOMETRY_ENCODING");
+    const char *pszGeomEncoding =
+        CSLFetchNameValue(papszOptions, "GEOMETRY_ENCODING");
     m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
-    if( pszGeomEncoding )
+    if (pszGeomEncoding)
     {
-        if( EQUAL(pszGeomEncoding, "WKB") )
+        if (EQUAL(pszGeomEncoding, "WKB"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
-        else if( EQUAL(pszGeomEncoding, "WKT") )
+        else if (EQUAL(pszGeomEncoding, "WKT"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
-        else if( EQUAL(pszGeomEncoding, "GEOARROW") )
+        else if (EQUAL(pszGeomEncoding, "GEOARROW"))
             m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unsupported GEOMETRY_ENCODING = %s",
-                     pszGeomEncoding);
+                     "Unsupported GEOMETRY_ENCODING = %s", pszGeomEncoding);
             return false;
         }
     }
 
-    if( eGType != wkbNone )
+    if (eGType != wkbNone)
     {
-        if( !IsSupportedGeometryType(eGType) )
+        if (!IsSupportedGeometryType(eGType))
         {
             return false;
         }
 
-        if( poSpatialRef == nullptr )
+        if (poSpatialRef == nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column should have an associated CRS");
@@ -123,16 +128,16 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string& osFilename,
 
         m_poFeatureDefn->SetGeomType(eGType);
         auto eGeomEncoding = m_eGeomEncoding;
-        if( eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC )
+        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
         {
             eGeomEncoding = GetPreciseArrowGeomEncoding(eGType);
-            if( eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC )
+            if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
                 return false;
         }
         m_aeGeomEncoding.push_back(eGeomEncoding);
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(
             CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry"));
-        if( poSpatialRef )
+        if (poSpatialRef)
         {
             auto poSRS = poSpatialRef->Clone();
             m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
@@ -142,12 +147,11 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string& osFilename,
 
     m_osFIDColumn = CSLFetchNameValueDef(papszOptions, "FID", "");
 
-    const char* pszCompression = CSLFetchNameValue(
-        papszOptions, "COMPRESSION");
-    if( pszCompression == nullptr )
+    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    if (pszCompression == nullptr)
     {
         auto oResult = arrow::util::Codec::GetCompressionType("lz4");
-        if( oResult.ok() && arrow::util::Codec::IsAvailable(*oResult) )
+        if (oResult.ok() && arrow::util::Codec::IsAvailable(*oResult))
         {
             pszCompression = "LZ4";
         }
@@ -157,32 +161,33 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string& osFilename,
         }
     }
 
-    if( EQUAL(pszCompression, "NONE") )
+    if (EQUAL(pszCompression, "NONE"))
         pszCompression = "UNCOMPRESSED";
     auto oResult = arrow::util::Codec::GetCompressionType(
-                        CPLString(pszCompression).tolower());
-    if( !oResult.ok() )
+        CPLString(pszCompression).tolower());
+    if (!oResult.ok())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unrecognized compression method: %s", pszCompression);
         return false;
     }
     m_eCompression = *oResult;
-    if( !arrow::util::Codec::IsAvailable(m_eCompression) )
+    if (!arrow::util::Codec::IsAvailable(m_eCompression))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Compression method %s is known, but libarrow has not "
-                 "been built with support for it", pszCompression);
+                 "been built with support for it",
+                 pszCompression);
         return false;
     }
 
-    const char* pszRowGroupSize = CSLFetchNameValue(papszOptions, "BATCH_SIZE");
-    if( pszRowGroupSize )
+    const char *pszRowGroupSize = CSLFetchNameValue(papszOptions, "BATCH_SIZE");
+    if (pszRowGroupSize)
     {
         auto nRowGroupSize = static_cast<int64_t>(atoll(pszRowGroupSize));
-        if( nRowGroupSize > 0 )
+        if (nRowGroupSize > 0)
         {
-            if( nRowGroupSize > INT_MAX )
+            if (nRowGroupSize > INT_MAX)
                 nRowGroupSize = INT_MAX;
             m_nRowGroupSize = nRowGroupSize;
         }
@@ -199,7 +204,7 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string& osFilename,
 void OGRFeatherWriterLayer::CloseFileWriter()
 {
     auto status = m_poFileWriter->Close();
-    if( !status.ok() )
+    if (!status.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "FileWriter::Close() failed with %s",
@@ -215,8 +220,8 @@ void OGRFeatherWriterLayer::CreateSchema()
 {
     CreateSchemaCommon();
 
-    if( m_poFeatureDefn->GetGeomFieldCount() != 0 &&
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_WRITE_GEO", "YES")) )
+    if (m_poFeatureDefn->GetGeomFieldCount() != 0 &&
+        CPLTestBool(CPLGetConfigOption("OGR_ARROW_WRITE_GEO", "YES")))
     {
         CPLJSONObject oRoot;
         oRoot.Add("schema_version", "0.1.0");
@@ -224,7 +229,7 @@ void OGRFeatherWriterLayer::CreateSchema()
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
         oRoot.Add("columns", oColumns);
-        for( int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i )
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
         {
             const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
             CPLJSONObject oColumn;
@@ -233,18 +238,18 @@ void OGRFeatherWriterLayer::CreateSchema()
                         GetGeomEncodingAsString(m_aeGeomEncoding[i]));
 
             const auto poSRS = poGeomFieldDefn->GetSpatialRef();
-            if( poSRS )
+            if (poSRS)
             {
-                const char* const apszOptions[] = {
-                    "FORMAT=WKT2_2019", "MULTILINE=NO", nullptr };
-                char* pszWKT = nullptr;
+                const char *const apszOptions[] = {"FORMAT=WKT2_2019",
+                                                   "MULTILINE=NO", nullptr};
+                char *pszWKT = nullptr;
                 poSRS->exportToWkt(&pszWKT, apszOptions);
-                if( pszWKT )
+                if (pszWKT)
                     oColumn.Add("crs", pszWKT);
                 CPLFree(pszWKT);
 
                 const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
-                if( dfCoordEpoch > 0 )
+                if (dfCoordEpoch > 0)
                     oColumn.Add("epoch", dfCoordEpoch);
             }
 
@@ -262,35 +267,37 @@ void OGRFeatherWriterLayer::CreateSchema()
             }
 #endif
             const auto eType = poGeomFieldDefn->GetType();
-            if( CPLTestBool(CPLGetConfigOption(
+            if (CPLTestBool(CPLGetConfigOption(
                     "OGR_ARROW_WRITE_GDAL_GEOMETRY_TYPE", "YES")) &&
-                eType == wkbFlatten(eType) )
+                eType == wkbFlatten(eType))
             {
-                // Geometry type, place under a temporary "gdal:geometry_type" property
-                // pending acceptance of proposal at
+                // Geometry type, place under a temporary "gdal:geometry_type"
+                // property pending acceptance of proposal at
                 // https://github.com/opengeospatial/geoparquet/issues/41
-                const char* pszType = "mixed";
-                if( wkbPoint == eType )
+                const char *pszType = "mixed";
+                if (wkbPoint == eType)
                     pszType = "Point";
-                else if( wkbLineString == eType )
-                    pszType =  "LineString";
-                else if( wkbPolygon == eType )
-                    pszType =  "Polygon";
-                else if( wkbMultiPoint == eType )
-                    pszType =  "MultiPoint";
-                else if( wkbMultiLineString == eType )
-                    pszType =  "MultiLineString";
-                else if( wkbMultiPolygon == eType )
-                    pszType =  "MultiPolygon";
-                else if( wkbGeometryCollection == eType )
-                    pszType =  "GeometryCollection";
+                else if (wkbLineString == eType)
+                    pszType = "LineString";
+                else if (wkbPolygon == eType)
+                    pszType = "Polygon";
+                else if (wkbMultiPoint == eType)
+                    pszType = "MultiPoint";
+                else if (wkbMultiLineString == eType)
+                    pszType = "MultiLineString";
+                else if (wkbMultiPolygon == eType)
+                    pszType = "MultiPolygon";
+                else if (wkbGeometryCollection == eType)
+                    pszType = "GeometryCollection";
                 oColumn.Add("gdal:geometry_type", pszType);
             }
         }
 
-        auto kvMetadata = m_poSchema->metadata() ? m_poSchema->metadata()->Copy() :
-                              std::make_shared<arrow::KeyValueMetadata>();
-        kvMetadata->Append("geo", oRoot.Format(CPLJSONObject::PrettyFormat::Plain));
+        auto kvMetadata = m_poSchema->metadata()
+                              ? m_poSchema->metadata()->Copy()
+                              : std::make_shared<arrow::KeyValueMetadata>();
+        kvMetadata->Append("geo",
+                           oRoot.Format(CPLJSONObject::PrettyFormat::Plain));
         m_poSchema = m_poSchema->WithMetadata(kvMetadata);
         CPLAssert(m_poSchema);
     }
@@ -302,9 +309,9 @@ void OGRFeatherWriterLayer::CreateSchema()
 
 void OGRFeatherWriterLayer::CreateWriter()
 {
-    CPLAssert( m_poFileWriter == nullptr );
+    CPLAssert(m_poFileWriter == nullptr);
 
-    if( m_poSchema == nullptr )
+    if (m_poSchema == nullptr)
     {
         CreateSchema();
     }
@@ -318,7 +325,7 @@ void OGRFeatherWriterLayer::CreateWriter()
 
     {
         auto result = arrow::util::Codec::Create(m_eCompression);
-        if( !result.ok() )
+        if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Codec::Create() failed with %s",
@@ -330,12 +337,11 @@ void OGRFeatherWriterLayer::CreateWriter()
         }
     }
 
-    if( m_bStreamFormat )
+    if (m_bStreamFormat)
     {
-        auto result = arrow::ipc::MakeStreamWriter(m_poOutputStream,
-                                                   m_poSchema,
-                                                   options);
-        if( !result.ok() )
+        auto result =
+            arrow::ipc::MakeStreamWriter(m_poOutputStream, m_poSchema, options);
+        if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "arrow::ipc::MakeStreamWriter() failed with %s",
@@ -348,12 +354,11 @@ void OGRFeatherWriterLayer::CreateWriter()
     }
     else
     {
-        m_poFooterKeyValueMetadata = std::make_shared<arrow::KeyValueMetadata>();
-        auto result = arrow::ipc::MakeFileWriter(m_poOutputStream,
-                                                 m_poSchema,
-                                                 options,
-                                                 m_poFooterKeyValueMetadata);
-        if( !result.ok() )
+        m_poFooterKeyValueMetadata =
+            std::make_shared<arrow::KeyValueMetadata>();
+        auto result = arrow::ipc::MakeFileWriter(
+            m_poOutputStream, m_poSchema, options, m_poFooterKeyValueMetadata);
+        if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "arrow::ipc::MakeFileWriter() failed with %s",
@@ -373,16 +378,16 @@ void OGRFeatherWriterLayer::CreateWriter()
 // Add a gdal:geo extension metadata for now, which embeds a bbox
 void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
 {
-    if( m_poFooterKeyValueMetadata &&
+    if (m_poFooterKeyValueMetadata &&
         m_poFeatureDefn->GetGeomFieldCount() != 0 &&
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_WRITE_GDAL_FOOTER", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OGR_ARROW_WRITE_GDAL_FOOTER", "YES")))
     {
         CPLJSONObject oRoot;
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
         oRoot.Add("columns", oColumns);
-        for( int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i )
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
         {
             const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
             CPLJSONObject oColumn;
@@ -391,22 +396,22 @@ void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
                         GetGeomEncodingAsString(m_aeGeomEncoding[i]));
 
             const auto poSRS = poGeomFieldDefn->GetSpatialRef();
-            if( poSRS )
+            if (poSRS)
             {
-                const char* const apszOptions[] = {
-                    "FORMAT=WKT2_2019", "MULTILINE=NO", nullptr };
-                char* pszWKT = nullptr;
+                const char *const apszOptions[] = {"FORMAT=WKT2_2019",
+                                                   "MULTILINE=NO", nullptr};
+                char *pszWKT = nullptr;
                 poSRS->exportToWkt(&pszWKT, apszOptions);
-                if( pszWKT )
+                if (pszWKT)
                     oColumn.Add("crs", pszWKT);
                 CPLFree(pszWKT);
 
                 const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
-                if( dfCoordEpoch > 0 )
+                if (dfCoordEpoch > 0)
                     oColumn.Add("epoch", dfCoordEpoch);
             }
 
-            if( m_aoEnvelopes[i].IsInit() )
+            if (m_aoEnvelopes[i].IsInit())
             {
                 CPLJSONArray oBBOX;
                 oBBOX.Add(m_aoEnvelopes[i].MinX);
@@ -430,23 +435,24 @@ void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
 bool OGRFeatherWriterLayer::FlushGroup()
 {
     std::vector<std::shared_ptr<arrow::Array>> columns;
-    auto ret = WriteArrays([&columns](const std::shared_ptr<arrow::Field>&,
-                                      const std::shared_ptr<arrow::Array>& array) {
-        columns.emplace_back(array);
-        return true;
-    });
+    auto ret = WriteArrays(
+        [&columns](const std::shared_ptr<arrow::Field> &,
+                   const std::shared_ptr<arrow::Array> &array)
+        {
+            columns.emplace_back(array);
+            return true;
+        });
 
-    if( ret )
+    if (ret)
     {
         auto poRecordBatch = arrow::RecordBatch::Make(
-            m_poSchema,
-            !columns.empty() ? columns[0]->length(): 0,
-            columns);
+            m_poSchema, !columns.empty() ? columns[0]->length() : 0, columns);
         auto status = m_poFileWriter->WriteRecordBatch(*poRecordBatch);
-        if( !status.ok() )
+        if (!status.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                 "WriteRecordBatch() failed with %s", status.message().c_str());
+                     "WriteRecordBatch() failed with %s",
+                     status.message().c_str());
             ret = false;
         }
     }
