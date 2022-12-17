@@ -50,42 +50,36 @@
 
 #include "ogr_libkml.h"
 
-void field2kml (
-    OGRFeature * poOgrFeat,
-    OGRLIBKMLLayer * poOgrLayer,
-    kmldom::KmlFactory * poKmlFactory,
-    kmldom::FeaturePtr poKmlPlacemark,
-    int bUseSimpleField );
+void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
+               kmldom::KmlFactory *poKmlFactory,
+               kmldom::FeaturePtr poKmlPlacemark, int bUseSimpleField);
 
 /******************************************************************************
  Function to read kml into ogr fields.
 ******************************************************************************/
 
-void kml2field (
-    OGRFeature * poOgrFeat,
-    kmldom::FeaturePtr poKmlFeature );
+void kml2field(OGRFeature *poOgrFeat, kmldom::FeaturePtr poKmlFeature);
 
 /******************************************************************************
  Function create a simplefield from a FieldDefn.
 ******************************************************************************/
 
-kmldom::SimpleFieldPtr FieldDef2kml (
-    OGRFieldDefn *poOgrFieldDef,
-    kmldom::KmlFactory * poKmlFactory );
+kmldom::SimpleFieldPtr FieldDef2kml(OGRFieldDefn *poOgrFieldDef,
+                                    kmldom::KmlFactory *poKmlFactory);
 
 /******************************************************************************
  Function to add the simpleFields in a schema to a featuredefn.
 ******************************************************************************/
 
-void kml2FeatureDef (
-    kmldom::SchemaPtr poKmlSchema,
-    OGRFeatureDefn *poOgrFeatureDefn );
+void kml2FeatureDef(kmldom::SchemaPtr poKmlSchema,
+                    OGRFeatureDefn *poOgrFeatureDefn);
 
 /*******************************************************************************
  Function to fetch the field config options.
 *******************************************************************************/
 
-struct fieldconfig {
+struct fieldconfig
+{
     const char *namefield;
     const char *descfield;
     const char *tsfield;
@@ -132,7 +126,6 @@ struct fieldconfig {
     const char *imagepyramid_gridorigin_field;
 };
 
-void get_fieldconfig( struct fieldconfig *oFC );
+void get_fieldconfig(struct fieldconfig *oFC);
 
-int kmlAltitudeModeFromString( const char* pszAltitudeMode,
-                               int& isGX );
+int kmlAltitudeModeFromString(const char *pszAltitudeMode, int &isGX);
