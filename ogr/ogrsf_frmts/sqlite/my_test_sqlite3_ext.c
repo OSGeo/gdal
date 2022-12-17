@@ -4,16 +4,18 @@
 
 SQLITE_EXTENSION_INIT1
 
-static void myext(sqlite3_context* pContext, int argc, sqlite3_value** argv)
+static void myext(sqlite3_context *pContext, int argc, sqlite3_value **argv)
 {
     (void)argc;
     (void)argv;
-    sqlite3_result_text( pContext, "this works!", -1, SQLITE_TRANSIENT );
+    sqlite3_result_text(pContext, "this works!", -1, SQLITE_TRANSIENT);
 }
 
-int CPL_DLL sqlite3_extension_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi);
+int CPL_DLL sqlite3_extension_init(sqlite3 *db, char **pzErrMsg,
+                                   const sqlite3_api_routines *pApi);
 
-int sqlite3_extension_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi)
+int sqlite3_extension_init(sqlite3 *db, char **pzErrMsg,
+                           const sqlite3_api_routines *pApi)
 {
     SQLITE_EXTENSION_INIT2(pApi);
     (void)pzErrMsg;
