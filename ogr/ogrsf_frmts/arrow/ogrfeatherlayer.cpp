@@ -47,43 +47,41 @@
 /*                        OGRFeatherLayer()                             */
 /************************************************************************/
 
-OGRFeatherLayer::OGRFeatherLayer(OGRFeatherDataset* poDS,
-                                 const char* pszLayerName,
-                                 std::shared_ptr<arrow::ipc::RecordBatchFileReader>& poRecordBatchFileReader):
-    OGRArrowLayer(poDS, pszLayerName),
-    m_poDS(poDS),
-    m_poRecordBatchFileReader(poRecordBatchFileReader)
+OGRFeatherLayer::OGRFeatherLayer(
+    OGRFeatherDataset *poDS, const char *pszLayerName,
+    std::shared_ptr<arrow::ipc::RecordBatchFileReader> &poRecordBatchFileReader)
+    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
+      m_poRecordBatchFileReader(poRecordBatchFileReader)
 {
     EstablishFeatureDefn();
-    CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+    CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
+              m_poFeatureDefn->GetGeomFieldCount());
 }
 
 /************************************************************************/
 /*                        OGRFeatherLayer()                             */
 /************************************************************************/
 
-OGRFeatherLayer::OGRFeatherLayer(OGRFeatherDataset* poDS,
-                                 const char* pszLayerName,
-                                 std::shared_ptr<arrow::io::RandomAccessFile> poFile,
-                                 bool bSeekable,
-                                 const arrow::ipc::IpcReadOptions& oOptions,
-                                 std::shared_ptr<arrow::ipc::RecordBatchStreamReader>& poRecordBatchStreamReader):
-    OGRArrowLayer(poDS, pszLayerName),
-    m_poDS(poDS),
-    m_poFile(poFile),
-    m_bSeekable(bSeekable),
-    m_oOptions(oOptions),
-    m_poRecordBatchReader(poRecordBatchStreamReader)
+OGRFeatherLayer::OGRFeatherLayer(
+    OGRFeatherDataset *poDS, const char *pszLayerName,
+    std::shared_ptr<arrow::io::RandomAccessFile> poFile, bool bSeekable,
+    const arrow::ipc::IpcReadOptions &oOptions,
+    std::shared_ptr<arrow::ipc::RecordBatchStreamReader>
+        &poRecordBatchStreamReader)
+    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS), m_poFile(poFile),
+      m_bSeekable(bSeekable), m_oOptions(oOptions),
+      m_poRecordBatchReader(poRecordBatchStreamReader)
 {
     EstablishFeatureDefn();
-    CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+    CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
+              m_poFeatureDefn->GetGeomFieldCount());
 }
 
 /************************************************************************/
 /*                           GetDataset()                               */
 /************************************************************************/
 
-GDALDataset* OGRFeatherLayer::GetDataset()
+GDALDataset *OGRFeatherLayer::GetDataset()
 {
     return m_poDS;
 }
@@ -92,29 +90,30 @@ GDALDataset* OGRFeatherLayer::GetDataset()
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
-void OGRFeatherLayer::LoadGeoMetadata(const arrow::KeyValueMetadata* kv_metadata,
-                                      const std::string& key)
+void OGRFeatherLayer::LoadGeoMetadata(
+    const arrow::KeyValueMetadata *kv_metadata, const std::string &key)
 {
-    if( kv_metadata && kv_metadata->Contains(key) )
+    if (kv_metadata && kv_metadata->Contains(key))
     {
         auto geo = kv_metadata->Get(key);
-        if( geo.ok() )
+        if (geo.ok())
         {
             CPLJSONDocument oDoc;
-            if( oDoc.LoadMemory(*geo) )
+            if (oDoc.LoadMemory(*geo))
             {
                 auto oRoot = oDoc.GetRoot();
                 const auto osVersion = oRoot.GetString("schema_version");
-                if( key != GDAL_GEO_FOOTER_KEY && osVersion != "0.1.0" )
+                if (key != GDAL_GEO_FOOTER_KEY && osVersion != "0.1.0")
                 {
                     CPLDebug("FEATHER",
-                             "schema_version = %s not explicitly handled by the driver",
+                             "schema_version = %s not explicitly handled by "
+                             "the driver",
                              osVersion.c_str());
                 }
                 auto oColumns = oRoot.GetObj("columns");
-                if( oColumns.IsValid() )
+                if (oColumns.IsValid())
                 {
-                    for( const auto& oColumn: oColumns.GetChildren() )
+                    for (const auto &oColumn : oColumns.GetChildren())
                     {
                         m_oMapGeometryColumns[oColumn.GetName()] = oColumn;
                     }
@@ -135,26 +134,26 @@ void OGRFeatherLayer::LoadGeoMetadata(const arrow::KeyValueMetadata* kv_metadata
 
 void OGRFeatherLayer::EstablishFeatureDefn()
 {
-    m_poSchema = m_poRecordBatchFileReader ?
-        m_poRecordBatchFileReader->schema() : m_poRecordBatchReader->schema();
-    const auto& kv_metadata = m_poSchema->metadata();
+    m_poSchema = m_poRecordBatchFileReader ? m_poRecordBatchFileReader->schema()
+                                           : m_poRecordBatchReader->schema();
+    const auto &kv_metadata = m_poSchema->metadata();
 
 #ifdef DEBUG
-    if( kv_metadata )
+    if (kv_metadata)
     {
-        for(const auto& keyValue: kv_metadata->sorted_pairs() )
+        for (const auto &keyValue : kv_metadata->sorted_pairs())
         {
-            CPLDebug("FEATHER", "%s = %s",
-                     keyValue.first.c_str(),
+            CPLDebug("FEATHER", "%s = %s", keyValue.first.c_str(),
                      keyValue.second.c_str());
         }
     }
 #endif
 
-    auto poFooterMetadata = m_poRecordBatchFileReader ?
-        m_poRecordBatchFileReader->metadata() : nullptr;
-    if( poFooterMetadata && poFooterMetadata->Contains(GDAL_GEO_FOOTER_KEY) &&
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_READ_GDAL_FOOTER", "YES")) )
+    auto poFooterMetadata = m_poRecordBatchFileReader
+                                ? m_poRecordBatchFileReader->metadata()
+                                : nullptr;
+    if (poFooterMetadata && poFooterMetadata->Contains(GDAL_GEO_FOOTER_KEY) &&
+        CPLTestBool(CPLGetConfigOption("OGR_ARROW_READ_GDAL_FOOTER", "YES")))
     {
         LoadGeoMetadata(poFooterMetadata.get(), GDAL_GEO_FOOTER_KEY);
     }
@@ -162,36 +161,36 @@ void OGRFeatherLayer::EstablishFeatureDefn()
     {
         LoadGeoMetadata(kv_metadata.get(), "geo");
     }
-    const auto oMapFieldNameToGDALSchemaFieldDefn = LoadGDALMetadata(kv_metadata.get());
+    const auto oMapFieldNameToGDALSchemaFieldDefn =
+        LoadGDALMetadata(kv_metadata.get());
 
     const auto fields = m_poSchema->fields();
-    for( int i = 0; i < m_poSchema->num_fields(); ++i )
+    for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
-        const auto& field = fields[i];
-        const auto& fieldName = field->name();
+        const auto &field = fields[i];
+        const auto &fieldName = field->name();
 
-        const auto& field_kv_metadata = field->metadata();
+        const auto &field_kv_metadata = field->metadata();
         std::string osExtensionName;
-        if( field_kv_metadata )
+        if (field_kv_metadata)
         {
-            auto extension_name = field_kv_metadata->Get("ARROW:extension:name");
-            if( extension_name.ok() )
+            auto extension_name =
+                field_kv_metadata->Get("ARROW:extension:name");
+            if (extension_name.ok())
             {
                 osExtensionName = *extension_name;
             }
 #ifdef DEBUG
             CPLDebug("FEATHER", "Metadata field %s:", fieldName.c_str());
-            for(const auto& keyValue: field_kv_metadata->sorted_pairs() )
+            for (const auto &keyValue : field_kv_metadata->sorted_pairs())
             {
-                CPLDebug("FEATHER", "  %s = %s",
-                         keyValue.first.c_str(),
+                CPLDebug("FEATHER", "  %s = %s", keyValue.first.c_str(),
                          keyValue.second.c_str());
             }
 #endif
         }
 
-        if( !m_osFIDColumn.empty() &&
-            fieldName == m_osFIDColumn )
+        if (!m_osFIDColumn.empty() && fieldName == m_osFIDColumn)
         {
             m_iFIDArrowColumn = i;
             continue;
@@ -199,25 +198,25 @@ void OGRFeatherLayer::EstablishFeatureDefn()
 
         bool bRegularField = true;
         auto oIter = m_oMapGeometryColumns.find(fieldName);
-        if( oIter != m_oMapGeometryColumns.end() ||
-            !osExtensionName.empty() )
+        if (oIter != m_oMapGeometryColumns.end() || !osExtensionName.empty())
         {
             CPLJSONObject oJSONDef;
-            if( oIter != m_oMapGeometryColumns.end() )
+            if (oIter != m_oMapGeometryColumns.end())
                 oJSONDef = oIter->second;
             auto osEncoding = oJSONDef.GetString("encoding");
-            if( osEncoding.empty() && !osExtensionName.empty() )
+            if (osEncoding.empty() && !osExtensionName.empty())
                 osEncoding = osExtensionName;
 
             OGRwkbGeometryType eGeomType = wkbUnknown;
             auto eGeomEncoding = OGRArrowGeomEncoding::WKB;
-            if( IsValidGeometryEncoding(field, osEncoding, eGeomType, eGeomEncoding) )
+            if (IsValidGeometryEncoding(field, osEncoding, eGeomType,
+                                        eGeomEncoding))
             {
                 bRegularField = false;
                 OGRGeomFieldDefn oField(fieldName.c_str(), wkbUnknown);
 
                 const auto osWKT = oJSONDef.GetString("crs");
-                if( osWKT.empty() )
+                if (osWKT.empty())
                 {
 #if 0
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -227,13 +226,13 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                 }
                 else
                 {
-                    OGRSpatialReference* poSRS = new OGRSpatialReference();
+                    OGRSpatialReference *poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                    if( poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE )
+                    if (poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE)
                     {
                         const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
-                        if( dfCoordEpoch > 0 )
+                        if (dfCoordEpoch > 0)
                             poSRS->SetCoordinateEpoch(dfCoordEpoch);
 
                         oField.SetSpatialRef(poSRS);
@@ -241,20 +240,21 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                     poSRS->Release();
                 }
 
-                // m_aeGeomEncoding be filled before calling ComputeGeometryColumnType()
+                // m_aeGeomEncoding be filled before calling
+                // ComputeGeometryColumnType()
                 m_aeGeomEncoding.push_back(eGeomEncoding);
-                if( eGeomType == wkbUnknown )
+                if (eGeomType == wkbUnknown)
                 {
                     auto osType = oJSONDef.GetString("geometry_type");
-                    if( osType.empty() )
+                    if (osType.empty())
                         osType = oJSONDef.GetString("gdal:geometry_type");
-                    if( m_bSeekable &&
-                        osType.empty() && CPLTestBool(CPLGetConfigOption(
-                                "OGR_ARROW_COMPUTE_GEOMETRY_TYPE", "YES")) )
+                    if (m_bSeekable && osType.empty() &&
+                        CPLTestBool(CPLGetConfigOption(
+                            "OGR_ARROW_COMPUTE_GEOMETRY_TYPE", "YES")))
                     {
                         eGeomType = ComputeGeometryColumnType(
                             m_poFeatureDefn->GetGeomFieldCount(), i);
-                        if( m_poRecordBatchReader )
+                        if (m_poRecordBatchReader)
                             ResetRecordBatchReader();
                     }
                     else
@@ -268,15 +268,17 @@ void OGRFeatherLayer::EstablishFeatureDefn()
             }
         }
 
-        if( bRegularField )
+        if (bRegularField)
         {
             CreateFieldFromSchema(field, {i},
                                   oMapFieldNameToGDALSchemaFieldDefn);
         }
     }
 
-    CPLAssert( static_cast<int>(m_anMapFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetFieldCount() );
-    CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+    CPLAssert(static_cast<int>(m_anMapFieldIndexToArrowColumn.size()) ==
+              m_poFeatureDefn->GetFieldCount());
+    CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) ==
+              m_poFeatureDefn->GetGeomFieldCount());
 }
 
 /************************************************************************/
@@ -287,8 +289,9 @@ bool OGRFeatherLayer::ResetRecordBatchReader()
 {
     const auto nPos = *(m_poFile->Tell());
     CPL_IGNORE_RET_VAL(m_poFile->Seek(0));
-    auto result = arrow::ipc::RecordBatchStreamReader::Open(m_poFile, m_oOptions);
-    if( !result.ok() )
+    auto result =
+        arrow::ipc::RecordBatchStreamReader::Open(m_poFile, m_oOptions);
+    if (!result.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RecordBatchStreamReader::Open() failed with %s",
@@ -315,44 +318,42 @@ OGRwkbGeometryType OGRFeatherLayer::ComputeGeometryColumnType(int iGeomCol,
 
     OGRwkbGeometryType eGeomType = wkbNone;
 
-    if( m_poRecordBatchReader != nullptr )
+    if (m_poRecordBatchReader != nullptr)
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
-        while( true )
+        while (true)
         {
             auto status = m_poRecordBatchReader->ReadNext(&poBatch);
-            if( !status.ok() )
+            if (!status.ok())
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "ReadNext() failed: %s",
+                CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
                          status.message().c_str());
                 break;
             }
-            else if( !poBatch )
+            else if (!poBatch)
                 break;
-            eGeomType = ComputeGeometryColumnTypeProcessBatch(poBatch,
-                                                              iGeomCol, iCol,
-                                                              eGeomType);
-            if( eGeomType == wkbUnknown )
+            eGeomType = ComputeGeometryColumnTypeProcessBatch(poBatch, iGeomCol,
+                                                              iCol, eGeomType);
+            if (eGeomType == wkbUnknown)
                 break;
         }
     }
     else
     {
-        for(int iBatch = 0; iBatch < m_poRecordBatchFileReader->num_record_batches(); ++iBatch )
+        for (int iBatch = 0;
+             iBatch < m_poRecordBatchFileReader->num_record_batches(); ++iBatch)
         {
             auto result = m_poRecordBatchFileReader->ReadRecordBatch(iBatch);
-            if( !result.ok() )
+            if (!result.ok())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "ReadRecordBatch() failed: %s",
                          result.status().message().c_str());
                 break;
             }
-            eGeomType = ComputeGeometryColumnTypeProcessBatch(*result,
-                                                              iGeomCol, iCol,
-                                                              eGeomType);
-            if( eGeomType == wkbUnknown )
+            eGeomType = ComputeGeometryColumnTypeProcessBatch(*result, iGeomCol,
+                                                              iCol, eGeomType);
+            if (eGeomType == wkbUnknown)
                 break;
         }
     }
@@ -364,30 +365,32 @@ OGRwkbGeometryType OGRFeatherLayer::ComputeGeometryColumnType(int iGeomCol,
 /*                          BuildDomain()                               */
 /************************************************************************/
 
-std::unique_ptr<OGRFieldDomain> OGRFeatherLayer::BuildDomain(const std::string& osDomainName,
-                                                             int iFieldIndex) const
+std::unique_ptr<OGRFieldDomain>
+OGRFeatherLayer::BuildDomain(const std::string &osDomainName,
+                             int iFieldIndex) const
 {
     const int iArrowCol = m_anMapFieldIndexToArrowColumn[iFieldIndex][0];
-    CPLAssert( m_poSchema->fields()[iArrowCol]->type()->id() == arrow::Type::DICTIONARY );
+    CPLAssert(m_poSchema->fields()[iArrowCol]->type()->id() ==
+              arrow::Type::DICTIONARY);
 
-    if( m_poRecordBatchReader )
+    if (m_poRecordBatchReader)
     {
-        if( m_poBatch )
+        if (m_poBatch)
         {
             return BuildDomainFromBatch(osDomainName, m_poBatch, iArrowCol);
         }
     }
-    else if( m_poRecordBatchFileReader )
+    else if (m_poRecordBatchFileReader)
     {
         auto result = m_poRecordBatchFileReader->ReadRecordBatch(0);
-        if( !result.ok() )
+        if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "ReadRecordBatch() failed: %s",
                      result.status().message().c_str());
         }
         auto poBatch = *result;
-        if( poBatch )
+        if (poBatch)
         {
             return BuildDomainFromBatch(osDomainName, poBatch, iArrowCol);
         }
@@ -402,9 +405,9 @@ std::unique_ptr<OGRFieldDomain> OGRFeatherLayer::BuildDomain(const std::string& 
 
 void OGRFeatherLayer::ResetReading()
 {
-    if( m_poRecordBatchReader != nullptr && m_iRecordBatch > 0 )
+    if (m_poRecordBatchReader != nullptr && m_iRecordBatch > 0)
     {
-        if( m_iRecordBatch == 1 && m_poBatchIdx1 )
+        if (m_iRecordBatch == 1 && m_poBatchIdx1)
         {
             // do nothing
         }
@@ -422,7 +425,7 @@ void OGRFeatherLayer::ResetReading()
 
 bool OGRFeatherLayer::ReadNextBatch()
 {
-    if( m_poRecordBatchFileReader == nullptr )
+    if (m_poRecordBatchFileReader == nullptr)
     {
         return ReadNextBatchStream();
     }
@@ -439,9 +442,9 @@ bool OGRFeatherLayer::ReadNextBatch()
 bool OGRFeatherLayer::ReadNextBatchFile()
 {
     ++m_iRecordBatch;
-    if( m_iRecordBatch == m_poRecordBatchFileReader->num_record_batches() )
+    if (m_iRecordBatch == m_poRecordBatchFileReader->num_record_batches())
     {
-        if( m_iRecordBatch == 1 )
+        if (m_iRecordBatch == 1)
             m_iRecordBatch = 0;
         else
             m_poBatch.reset();
@@ -451,10 +454,9 @@ bool OGRFeatherLayer::ReadNextBatchFile()
     m_nIdxInBatch = 0;
 
     auto result = m_poRecordBatchFileReader->ReadRecordBatch(m_iRecordBatch);
-    if( !result.ok() )
+    if (!result.ok())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ReadRecordBatch() failed: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "ReadRecordBatch() failed: %s",
                  result.status().message().c_str());
         m_poBatch.reset();
         return false;
@@ -472,36 +474,36 @@ bool OGRFeatherLayer::ReadNextBatchStream()
 {
     m_nIdxInBatch = 0;
 
-    if( m_iRecordBatch == 0 && m_poBatchIdx0 )
+    if (m_iRecordBatch == 0 && m_poBatchIdx0)
     {
         SetBatch(m_poBatchIdx0);
         m_iRecordBatch = 1;
         return true;
     }
 
-    else if( m_iRecordBatch == 1 && m_poBatchIdx1 )
+    else if (m_iRecordBatch == 1 && m_poBatchIdx1)
     {
         SetBatch(m_poBatchIdx1);
         m_iRecordBatch = 2;
         return true;
     }
 
-    else if( m_bSingleBatch )
+    else if (m_bSingleBatch)
     {
-        CPLAssert( m_iRecordBatch == 0);
-        CPLAssert( m_poBatch != nullptr);
+        CPLAssert(m_iRecordBatch == 0);
+        CPLAssert(m_poBatch != nullptr);
         return false;
     }
 
-    if( m_bResetRecordBatchReaderAsked )
+    if (m_bResetRecordBatchReaderAsked)
     {
-        if( !m_bSeekable )
+        if (!m_bSeekable)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Attempting to rewind non-seekable stream");
             return false;
         }
-        if( !ResetRecordBatchReader() )
+        if (!ResetRecordBatchReader())
             return false;
         m_bResetRecordBatchReaderAsked = false;
     }
@@ -512,16 +514,15 @@ bool OGRFeatherLayer::ReadNextBatchStream()
 
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
     auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-    if( !status.ok() )
+    if (!status.ok())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ReadNext() failed: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
                  status.message().c_str());
         poNextBatch.reset();
     }
-    if( poNextBatch == nullptr )
+    if (poNextBatch == nullptr)
     {
-        if( m_iRecordBatch == 1 )
+        if (m_iRecordBatch == 1)
         {
             m_iRecordBatch = 0;
             m_bSingleBatch = true;
@@ -544,18 +545,18 @@ bool OGRFeatherLayer::ReadNextBatchStream()
 
 void OGRFeatherLayer::TryToCacheFirstTwoBatches()
 {
-    if( m_poRecordBatchReader != nullptr && m_iRecordBatch <= 0 &&
-        !m_bSingleBatch && m_poBatchIdx0 == nullptr )
+    if (m_poRecordBatchReader != nullptr && m_iRecordBatch <= 0 &&
+        !m_bSingleBatch && m_poBatchIdx0 == nullptr)
     {
         ResetReading();
-        if( !m_poBatch )
+        if (!m_poBatch)
         {
             CPL_IGNORE_RET_VAL(ReadNextBatchStream());
         }
-        if( m_poBatch )
+        if (m_poBatch)
         {
             auto poBatchIdx0 = m_poBatch;
-            if( ReadNextBatchStream() )
+            if (ReadNextBatchStream())
             {
                 CPLAssert(m_iRecordBatch == 1);
                 m_poBatchIdx0 = poBatchIdx0;
@@ -574,41 +575,42 @@ void OGRFeatherLayer::TryToCacheFirstTwoBatches()
 
 GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
 {
-    if( m_poRecordBatchFileReader != nullptr &&
-        m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+    if (m_poRecordBatchFileReader != nullptr && m_poAttrQuery == nullptr &&
+        m_poFilterGeom == nullptr)
     {
         auto result = m_poRecordBatchFileReader->CountRows();
-        if( result.ok() )
+        if (result.ok())
             return *result;
     }
-    else if( m_poRecordBatchReader != nullptr )
+    else if (m_poRecordBatchReader != nullptr)
     {
-        if( !m_bSeekable && !bForce )
+        if (!m_bSeekable && !bForce)
         {
-            if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+            if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
             {
                 TryToCacheFirstTwoBatches();
             }
 
-            if( !m_bSingleBatch )
+            if (!m_bSingleBatch)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "GetFeatureCount() cannot be run in non-forced mode on "
-                         "a non-seekable file made of several batches");
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "GetFeatureCount() cannot be run in non-forced mode on "
+                    "a non-seekable file made of several batches");
                 return -1;
             }
         }
 
-        if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+        if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
         {
             GIntBig nFeatures = 0;
             ResetReading();
-            if( !m_poBatch )
+            if (!m_poBatch)
                 ReadNextBatchStream();
-            while( m_poBatch )
+            while (m_poBatch)
             {
                 nFeatures += m_poBatch->num_rows();
-                if( !ReadNextBatchStream() )
+                if (!ReadNextBatchStream())
                     break;
             }
             ResetReading();
@@ -624,10 +626,10 @@ GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
 
 bool OGRFeatherLayer::CanRunNonForcedGetExtent()
 {
-    if( m_bSeekable )
+    if (m_bSeekable)
         return true;
     TryToCacheFirstTwoBatches();
-    if( !m_bSingleBatch )
+    if (!m_bSingleBatch)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GetExtent() cannot be run in non-forced mode on "
@@ -641,27 +643,27 @@ bool OGRFeatherLayer::CanRunNonForcedGetExtent()
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRFeatherLayer::TestCapability(const char* pszCap)
+int OGRFeatherLayer::TestCapability(const char *pszCap)
 {
-    if( EQUAL(pszCap, OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
     {
-        return m_bSeekable &&
-               m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
+        return m_bSeekable && m_poAttrQuery == nullptr &&
+               m_poFilterGeom == nullptr;
     }
 
-    if( EQUAL(pszCap, OLCFastGetExtent) )
+    if (EQUAL(pszCap, OLCFastGetExtent))
     {
-        for(int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++ )
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
         {
             auto oIter = m_oMapGeometryColumns.find(
-            m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef() );
-            if( oIter == m_oMapGeometryColumns.end() )
+                m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+            if (oIter == m_oMapGeometryColumns.end())
             {
                 return false;
             }
-            const auto& oJSONDef = oIter->second;
+            const auto &oJSONDef = oIter->second;
             const auto oBBox = oJSONDef.GetArray("bbox");
-            if( !(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)) )
+            if (!(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)))
             {
                 return false;
             }
@@ -669,9 +671,9 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
         return true;
     }
 
-    if( EQUAL(pszCap, OLCMeasuredGeometries) )
+    if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
-    if( EQUAL(pszCap, OLCZGeometries) )
+    if (EQUAL(pszCap, OLCZGeometries))
         return true;
 
     return OGRArrowLayer::TestCapability(pszCap);
@@ -681,28 +683,30 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
 /*                         GetMetadataItem()                            */
 /************************************************************************/
 
-const char* OGRFeatherLayer::GetMetadataItem( const char* pszName,
-                                              const char* pszDomain )
+const char *OGRFeatherLayer::GetMetadataItem(const char *pszName,
+                                             const char *pszDomain)
 {
     // Mostly for unit test purposes
-    if( pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_") )
+    if (pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_"))
     {
-        if( EQUAL(pszName, "FORMAT") )
+        if (EQUAL(pszName, "FORMAT"))
         {
-            return m_poRecordBatchFileReader ? "FILE": "STREAM";
+            return m_poRecordBatchFileReader ? "FILE" : "STREAM";
         }
-        if( m_poRecordBatchFileReader != nullptr )
+        if (m_poRecordBatchFileReader != nullptr)
         {
             int iBatch = -1;
-            if( EQUAL(pszName, "NUM_RECORD_BATCHES") )
+            if (EQUAL(pszName, "NUM_RECORD_BATCHES"))
             {
-                return CPLSPrintf("%d", m_poRecordBatchFileReader->num_record_batches());
+                return CPLSPrintf(
+                    "%d", m_poRecordBatchFileReader->num_record_batches());
             }
-            else if( sscanf(pszName, "RECORD_BATCHES[%d]", &iBatch) == 1 &&
-                     strstr(pszName, ".NUM_ROWS") )
+            else if (sscanf(pszName, "RECORD_BATCHES[%d]", &iBatch) == 1 &&
+                     strstr(pszName, ".NUM_ROWS"))
             {
-                auto result = m_poRecordBatchFileReader->ReadRecordBatch(iBatch);
-                if( !result.ok() )
+                auto result =
+                    m_poRecordBatchFileReader->ReadRecordBatch(iBatch);
+                if (!result.ok())
                 {
                     return nullptr;
                 }
@@ -711,28 +715,30 @@ const char* OGRFeatherLayer::GetMetadataItem( const char* pszName,
         }
         return nullptr;
     }
-    else if( pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_") )
+    else if (pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_"))
     {
-        const auto kv_metadata = (m_poRecordBatchFileReader ?
-            m_poRecordBatchFileReader->schema() : m_poRecordBatchReader->schema())->metadata();
-        if( kv_metadata && kv_metadata->Contains(pszName) )
+        const auto kv_metadata =
+            (m_poRecordBatchFileReader ? m_poRecordBatchFileReader->schema()
+                                       : m_poRecordBatchReader->schema())
+                ->metadata();
+        if (kv_metadata && kv_metadata->Contains(pszName))
         {
             auto metadataItem = kv_metadata->Get(pszName);
-            if( metadataItem.ok() )
+            if (metadataItem.ok())
             {
                 return CPLSPrintf("%s", metadataItem->c_str());
             }
         }
         return nullptr;
     }
-    else if( m_poRecordBatchFileReader != nullptr &&
-             pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_") )
+    else if (m_poRecordBatchFileReader != nullptr && pszDomain != nullptr &&
+             EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_"))
     {
         const auto kv_metadata = m_poRecordBatchFileReader->metadata();
-        if( kv_metadata && kv_metadata->Contains(pszName) )
+        if (kv_metadata && kv_metadata->Contains(pszName))
         {
             auto metadataItem = kv_metadata->Get(pszName);
-            if( metadataItem.ok() )
+            if (metadataItem.ok())
             {
                 return CPLSPrintf("%s", metadataItem->c_str());
             }
@@ -746,33 +752,37 @@ const char* OGRFeatherLayer::GetMetadataItem( const char* pszName,
 /*                           GetMetadata()                              */
 /************************************************************************/
 
-char** OGRFeatherLayer::GetMetadata( const char* pszDomain )
+char **OGRFeatherLayer::GetMetadata(const char *pszDomain)
 {
     // Mostly for unit test purposes
-    if( pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_") )
+    if (pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_METADATA_"))
     {
         m_aosFeatherMetadata.Clear();
-        const auto kv_metadata = (m_poRecordBatchFileReader ?
-            m_poRecordBatchFileReader->schema() : m_poRecordBatchReader->schema())->metadata();
-        if( kv_metadata )
+        const auto kv_metadata =
+            (m_poRecordBatchFileReader ? m_poRecordBatchFileReader->schema()
+                                       : m_poRecordBatchReader->schema())
+                ->metadata();
+        if (kv_metadata)
         {
-            for( const auto& kv: kv_metadata->sorted_pairs() )
+            for (const auto &kv : kv_metadata->sorted_pairs())
             {
-                m_aosFeatherMetadata.SetNameValue(kv.first.c_str(), kv.second.c_str());
+                m_aosFeatherMetadata.SetNameValue(kv.first.c_str(),
+                                                  kv.second.c_str());
             }
         }
         return m_aosFeatherMetadata.List();
     }
-    if( m_poRecordBatchFileReader != nullptr &&
-        pszDomain != nullptr && EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_") )
+    if (m_poRecordBatchFileReader != nullptr && pszDomain != nullptr &&
+        EQUAL(pszDomain, "_ARROW_FOOTER_METADATA_"))
     {
         m_aosFeatherMetadata.Clear();
         const auto kv_metadata = m_poRecordBatchFileReader->metadata();
-        if( kv_metadata )
+        if (kv_metadata)
         {
-            for( const auto& kv: kv_metadata->sorted_pairs() )
+            for (const auto &kv : kv_metadata->sorted_pairs())
             {
-                m_aosFeatherMetadata.SetNameValue(kv.first.c_str(), kv.second.c_str());
+                m_aosFeatherMetadata.SetNameValue(kv.first.c_str(),
+                                                  kv.second.c_str());
             }
         }
         return m_aosFeatherMetadata.List();

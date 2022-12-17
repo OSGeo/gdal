@@ -38,92 +38,101 @@
 /*                             OGRGmtLayer                              */
 /************************************************************************/
 
-class OGRGmtLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRGmtLayer>
+class OGRGmtLayer final : public OGRLayer,
+                          public OGRGetNextFeatureThroughRaw<OGRGmtLayer>
 {
     OGRSpatialReference *m_poSRS = nullptr;
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
-    int                 iNextFID;
+    int iNextFID;
 
-    bool                bUpdate;
-    bool                bHeaderComplete;
+    bool bUpdate;
+    bool bHeaderComplete;
 
-    bool                bRegionComplete;
-    OGREnvelope         sRegion;
-    vsi_l_offset        nRegionOffset;
+    bool bRegionComplete;
+    OGREnvelope sRegion;
+    vsi_l_offset nRegionOffset;
 
-    VSILFILE           *m_fp = nullptr;
+    VSILFILE *m_fp = nullptr;
 
-    bool                ReadLine();
-    CPLString           osLine;
-    char              **papszKeyedValues;
+    bool ReadLine();
+    CPLString osLine;
+    char **papszKeyedValues;
 
-    bool                ScanAheadForHole();
-    bool                NextIsFeature();
+    bool ScanAheadForHole();
+    bool NextIsFeature();
 
-    OGRFeature         *GetNextRawFeature();
+    OGRFeature *GetNextRawFeature();
 
-    OGRErr              WriteGeometry( OGRGeometryH hGeom, bool bHaveAngle );
-    OGRErr              CompleteHeader( OGRGeometry * );
+    OGRErr WriteGeometry(OGRGeometryH hGeom, bool bHaveAngle);
+    OGRErr CompleteHeader(OGRGeometry *);
 
   public:
-    bool                bValidFile;
+    bool bValidFile;
 
-                        OGRGmtLayer( const char *pszFilename,
-                                     VSILFILE* fp,
-                                     const OGRSpatialReference* poSRS,
-                                     int bUpdate );
-                        virtual ~OGRGmtLayer();
+    OGRGmtLayer(const char *pszFilename, VSILFILE *fp,
+                const OGRSpatialReference *poSRS, int bUpdate);
+    virtual ~OGRGmtLayer();
 
-    void                ResetReading() override;
+    void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGmtLayer)
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr CreateField(OGRFieldDefn *poField,
+                               int bApproxOK = TRUE) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                           OGRGmtDataSource                           */
 /************************************************************************/
 
-class OGRGmtDataSource final: public OGRDataSource
+class OGRGmtDataSource final : public OGRDataSource
 {
-    OGRGmtLayer       **papoLayers;
-    int                 nLayers;
+    OGRGmtLayer **papoLayers;
+    int nLayers;
 
-    char                *pszName;
+    char *pszName;
 
-    bool                bUpdate;
+    bool bUpdate;
 
   public:
-                        OGRGmtDataSource();
-                        virtual ~OGRGmtDataSource();
+    OGRGmtDataSource();
+    virtual ~OGRGmtDataSource();
 
-    int                 Open( const char *pszFilename,
-                              VSILFILE* fp,
-                              const OGRSpatialReference* poSRS,
-                              int bUpdate );
-    int                 Create( const char *pszFilename, char **papszOptions );
+    int Open(const char *pszFilename, VSILFILE *fp,
+             const OGRSpatialReference *poSRS, int bUpdate);
+    int Create(const char *pszFilename, char **papszOptions);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = nullptr,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = nullptr ) override;
-    int                 TestCapability( const char * ) override;
+    virtual OGRLayer *ICreateLayer(const char *,
+                                   OGRSpatialReference * = nullptr,
+                                   OGRwkbGeometryType = wkbUnknown,
+                                   char ** = nullptr) override;
+    int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGRGMT_H_INCLUDED */

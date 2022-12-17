@@ -40,19 +40,23 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage( const char* pszErrorMsg = nullptr )
+static void Usage(const char *pszErrorMsg = nullptr)
 {
-    printf("Usage: ogrinfo [--help-general] [-json] [-ro] [-q] [-where restricted_where|@filename]\n"
-           "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-           "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl]\n"
+    printf("Usage: ogrinfo [--help-general] [-json] [-ro] [-q] [-where "
+           "restricted_where|@filename]\n"
+           "               [-spat xmin ymin xmax ymax] [-geomfield field] "
+           "[-fid fid]\n"
+           "               [-sql statement|@filename] [-dialect sql_dialect] "
+           "[-al] [-rl]\n"
            "               [-so|-features] [-fields={YES/NO}]]\n"
            "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
            "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
-           "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]\n"
+           "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
+           "WKT1|WKT2|...]\n"
            "               [-fielddomain name]\n"
            "               datasource_name [layer [layer ...]]\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit(1);
@@ -66,41 +70,43 @@ MAIN_START(argc, argv)
 
 {
     // Check strict compilation and runtime library version as we use C++ API.
-    if( !GDAL_CHECK_VERSION(argv[0]) )
+    if (!GDAL_CHECK_VERSION(argv[0]))
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
 
     OGRRegisterAll();
 
-    argc = OGRGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = OGRGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; argv != nullptr && argv[i] != nullptr; i++ )
+    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
     }
     argv = CSLAddString(argv, "-stdout");
 
-    auto psOptionsForBinary = cpl::make_unique<GDALVectorInfoOptionsForBinary>();
+    auto psOptionsForBinary =
+        cpl::make_unique<GDALVectorInfoOptionsForBinary>();
 
-    GDALVectorInfoOptions *psOptions
-        = GDALVectorInfoOptionsNew(argv + 1, psOptionsForBinary.get());
-    if( psOptions == nullptr )
+    GDALVectorInfoOptions *psOptions =
+        GDALVectorInfoOptionsNew(argv + 1, psOptionsForBinary.get());
+    if (psOptions == nullptr)
         Usage();
 
-    if( psOptionsForBinary->osFilename.empty() )
+    if (psOptionsForBinary->osFilename.empty())
         Usage("No datasource specified.");
 
 /* -------------------------------------------------------------------- */
@@ -108,83 +114,90 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     int iIter = 0;
-    while (__AFL_LOOP(1000)) {
-        iIter ++;
+    while (__AFL_LOOP(1000))
+    {
+        iIter++;
 #endif
-/* -------------------------------------------------------------------- */
-/*      Open data source.                                               */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poDS = GDALDataset::Open(
-        psOptionsForBinary->osFilename.c_str(),
-        ((psOptionsForBinary->bReadOnly || psOptionsForBinary->osSQLStatement.empty()) &&
-         !psOptionsForBinary->bUpdate ? GDAL_OF_READONLY : GDAL_OF_UPDATE) | GDAL_OF_VECTOR,
-        nullptr, psOptionsForBinary->aosOpenOptions.List(), nullptr);
-    if( poDS == nullptr &&
-        !psOptionsForBinary->bReadOnly &&
-        !psOptionsForBinary->bUpdate &&
-        psOptionsForBinary->osSQLStatement.empty() )
-    {
-        // In some cases (empty geopackage for example), opening in read-only
-        // mode fails, so retry in update mode
-        if( GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(), GDAL_OF_VECTOR,
-                                 nullptr, nullptr) )
-        {
-            poDS = GDALDataset::Open(
-                psOptionsForBinary->osFilename.c_str(),
-                GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
-                psOptionsForBinary->aosOpenOptions.List(), nullptr);
-        }
-    }
-    if( poDS == nullptr && !psOptionsForBinary->bReadOnly && !psOptionsForBinary->bUpdate &&
-        !psOptionsForBinary->osSQLStatement.empty() )
-    {
-        poDS = GDALDataset::Open(
+        /* --------------------------------------------------------------------
+         */
+        /*      Open data source. */
+        /* --------------------------------------------------------------------
+         */
+        GDALDataset *poDS = GDALDataset::Open(
             psOptionsForBinary->osFilename.c_str(),
-            GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
-            psOptionsForBinary->aosOpenOptions.List(), nullptr);
-        if( poDS != nullptr && psOptionsForBinary->bVerbose )
+            ((psOptionsForBinary->bReadOnly ||
+              psOptionsForBinary->osSQLStatement.empty()) &&
+                     !psOptionsForBinary->bUpdate
+                 ? GDAL_OF_READONLY
+                 : GDAL_OF_UPDATE) |
+                GDAL_OF_VECTOR,
+            nullptr, psOptionsForBinary->aosOpenOptions.List(), nullptr);
+        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
+            !psOptionsForBinary->bUpdate &&
+            psOptionsForBinary->osSQLStatement.empty())
         {
-            printf("Had to open data source read-only.\n");
-#ifdef __AFL_HAVE_MANUAL_CONTROL
-            psOptionsForBinary->bReadOnly = true;
-#endif
+            // In some cases (empty geopackage for example), opening in
+            // read-only mode fails, so retry in update mode
+            if (GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(),
+                                     GDAL_OF_VECTOR, nullptr, nullptr))
+            {
+                poDS = GDALDataset::Open(
+                    psOptionsForBinary->osFilename.c_str(),
+                    GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
+                    psOptionsForBinary->aosOpenOptions.List(), nullptr);
+            }
         }
-    }
+        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
+            !psOptionsForBinary->bUpdate &&
+            !psOptionsForBinary->osSQLStatement.empty())
+        {
+            poDS = GDALDataset::Open(psOptionsForBinary->osFilename.c_str(),
+                                     GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
+                                     psOptionsForBinary->aosOpenOptions.List(),
+                                     nullptr);
+            if (poDS != nullptr && psOptionsForBinary->bVerbose)
+            {
+                printf("Had to open data source read-only.\n");
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+                psOptionsForBinary->bReadOnly = true;
+#endif
+            }
+        }
 
-    int nRet = 0;
-    if( poDS == nullptr )
-    {
-        nRet = 1;
-        fprintf( stderr,
-                 "ogrinfo failed - unable to open '%s'.\n",
-                 psOptionsForBinary->osFilename.c_str() );
-    }
-    else
-    {
-        char* pszGDALVectorInfoOutput = GDALVectorInfo( GDALDataset::ToHandle(poDS), psOptions );
+        int nRet = 0;
+        if (poDS == nullptr)
+        {
+            nRet = 1;
+            fprintf(stderr, "ogrinfo failed - unable to open '%s'.\n",
+                    psOptionsForBinary->osFilename.c_str());
+        }
+        else
+        {
+            char *pszGDALVectorInfoOutput =
+                GDALVectorInfo(GDALDataset::ToHandle(poDS), psOptions);
 
-        if( pszGDALVectorInfoOutput )
-            printf( "%s", pszGDALVectorInfoOutput );
+            if (pszGDALVectorInfoOutput)
+                printf("%s", pszGDALVectorInfoOutput);
 
-        CPLFree( pszGDALVectorInfoOutput );
-    }
+            CPLFree(pszGDALVectorInfoOutput);
+        }
 
-    delete poDS;
+        delete poDS;
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     }
 #endif
 
-    GDALVectorInfoOptionsFree( psOptions );
+    GDALVectorInfoOptionsFree(psOptions);
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
 
-    GDALDumpOpenDatasets( stderr );
+    GDALDumpOpenDatasets(stderr);
 
     GDALDestroyDriverManager();
 
-    CPLDumpSharedList( nullptr );
+    CPLDumpSharedList(nullptr);
     GDALDestroy();
 
-    exit( nRet );
+    exit(nRet);
 }
 MAIN_END

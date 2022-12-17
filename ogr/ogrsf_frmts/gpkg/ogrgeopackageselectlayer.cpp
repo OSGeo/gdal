@@ -28,31 +28,31 @@
 
 #include "ogr_geopackage.h"
 
-
 /************************************************************************/
 /*                        OGRGeoPackageSelectLayer()                    */
 /************************************************************************/
 
-OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
-                                            const CPLString& osSQLIn,
-                                            sqlite3_stmt *hStmtIn,
-                                            bool bUseStatementForGetNextFeature,
-                                            bool bEmptyLayer ) :
-    OGRGeoPackageLayer(poDS)
+OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer(
+    GDALGeoPackageDataset *poDS, const CPLString &osSQLIn,
+    sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
+    bool bEmptyLayer)
+    : OGRGeoPackageLayer(poDS)
 {
-    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
-    poBehavior = new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn, bEmptyLayer);
+    // Cannot be moved to initializer list because of use of this, which MSVC
+    // 2008 doesn't like
+    poBehavior = new OGRSQLiteSelectLayerCommonBehaviour(poDS, this, osSQLIn,
+                                                         bEmptyLayer);
 
-    BuildFeatureDefn( "SELECT", hStmtIn );
+    BuildFeatureDefn("SELECT", hStmtIn);
 
-    if( bUseStatementForGetNextFeature )
+    if (bUseStatementForGetNextFeature)
     {
         m_poQueryStatement = hStmtIn;
         bDoStep = false;
     }
     else
     {
-        sqlite3_finalize( hStmtIn );
+        sqlite3_finalize(hStmtIn);
     }
 }
 
@@ -87,7 +87,7 @@ OGRFeature *OGRGeoPackageSelectLayer::GetNextFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-GIntBig OGRGeoPackageSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRGeoPackageSelectLayer::GetFeatureCount(int bForce)
 {
     return poBehavior->GetFeatureCount(bForce);
 }
@@ -105,23 +105,24 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     bDoStep = true;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_GPKG", "prepare_v2(%s)", poBehavior->m_osSQLCurrent.c_str() );
+    CPLDebug("OGR_GPKG", "prepare_v2(%s)", poBehavior->m_osSQLCurrent.c_str());
 #endif
 
     const int rc =
-        sqlite3_prepare_v2( m_poDS->GetDB(), poBehavior->m_osSQLCurrent,
-                         static_cast<int>(poBehavior->m_osSQLCurrent.size()),
-                         &m_poQueryStatement, nullptr );
+        sqlite3_prepare_v2(m_poDS->GetDB(), poBehavior->m_osSQLCurrent,
+                           static_cast<int>(poBehavior->m_osSQLCurrent.size()),
+                           &m_poQueryStatement, nullptr);
 
-    if( rc == SQLITE_OK )
+    if (rc == SQLITE_OK)
     {
         return OGRERR_NONE;
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
-                  poBehavior->m_osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
+                 poBehavior->m_osSQLCurrent.c_str(),
+                 sqlite3_errmsg(m_poDS->GetDB()));
         m_poQueryStatement = nullptr;
         return OGRERR_FAILURE;
     }
@@ -131,7 +132,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter( const char *pszQuery )
+OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter(const char *pszQuery)
 {
     return poBehavior->SetAttributeFilter(pszQuery);
 }
@@ -140,7 +141,8 @@ OGRErr OGRGeoPackageSelectLayer::SetAttributeFilter( const char *pszQuery )
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRGeoPackageSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+void OGRGeoPackageSelectLayer::SetSpatialFilter(int iGeomField,
+                                                OGRGeometry *poGeomIn)
 
 {
     poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
@@ -150,7 +152,7 @@ void OGRGeoPackageSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * p
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoPackageSelectLayer::TestCapability( const char * pszCap )
+int OGRGeoPackageSelectLayer::TestCapability(const char *pszCap)
 {
     return poBehavior->TestCapability(pszCap);
 }
@@ -159,7 +161,8 @@ int OGRGeoPackageSelectLayer::TestCapability( const char * pszCap )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRGeoPackageSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+OGRErr OGRGeoPackageSelectLayer::GetExtent(int iGeomField,
+                                           OGREnvelope *psExtent, int bForce)
 {
     return poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }

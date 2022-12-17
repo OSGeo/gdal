@@ -39,63 +39,63 @@ CPL_C_START
 typedef void *GNMNetworkH;
 typedef void *GNMGenericNetworkH;
 
-const char CPL_DLL * CPL_STDCALL GNMGetName (GNMNetworkH hNet);
+const char CPL_DLL *CPL_STDCALL GNMGetName(GNMNetworkH hNet);
 
 int CPL_DLL CPL_STDCALL GNMGetVersion(GNMNetworkH hNet);
 
-CPLErr CPL_DLL CPL_STDCALL GNMDisconnectAll (GNMNetworkH hNet);
+CPLErr CPL_DLL CPL_STDCALL GNMDisconnectAll(GNMNetworkH hNet);
 
-OGRFeatureH CPL_DLL CPL_STDCALL GNMGetFeatureByGlobalFID (GNMNetworkH hNet, GNMGFID nGFID);
+OGRFeatureH CPL_DLL CPL_STDCALL GNMGetFeatureByGlobalFID(GNMNetworkH hNet,
+                                                         GNMGFID nGFID);
 
-OGRLayerH CPL_DLL CPL_STDCALL GNMGetPath (GNMNetworkH hNet, GNMGFID nStartFID,
-                              GNMGFID nEndFID, GNMGraphAlgorithmType eAlgorithm,
-                              char** papszOptions);
+OGRLayerH CPL_DLL CPL_STDCALL GNMGetPath(GNMNetworkH hNet, GNMGFID nStartFID,
+                                         GNMGFID nEndFID,
+                                         GNMGraphAlgorithmType eAlgorithm,
+                                         char **papszOptions);
 
-CPLErr CPL_DLL CPL_STDCALL GNMConnectFeatures (GNMGenericNetworkH hNet,
-                                               GNMGFID nSrcFID, GNMGFID nTgtFID,
-                                               GNMGFID nConFID, double dfCost,
-                                               double dfInvCost,
-                                               GNMDirection eDir);
+CPLErr CPL_DLL CPL_STDCALL GNMConnectFeatures(GNMGenericNetworkH hNet,
+                                              GNMGFID nSrcFID, GNMGFID nTgtFID,
+                                              GNMGFID nConFID, double dfCost,
+                                              double dfInvCost,
+                                              GNMDirection eDir);
 
-CPLErr CPL_DLL CPL_STDCALL GNMDisconnectFeatures (GNMGenericNetworkH hNet,
-                                                  GNMGFID nSrcFID, GNMGFID nTgtFID,
-                                                  GNMGFID nConFID);
+CPLErr CPL_DLL CPL_STDCALL GNMDisconnectFeatures(GNMGenericNetworkH hNet,
+                                                 GNMGFID nSrcFID,
+                                                 GNMGFID nTgtFID,
+                                                 GNMGFID nConFID);
 
 CPLErr CPL_DLL CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
                                                        GNMGFID nFID);
 
-CPLErr CPL_DLL CPL_STDCALL GNMReconnectFeatures (GNMGenericNetworkH hNet,
-                                                 GNMGFID nSrcFID, GNMGFID nTgtFID,
-                                                 GNMGFID nConFID, double dfCost,
-                                                 double dfInvCost, GNMDirection eDir);
+CPLErr CPL_DLL CPL_STDCALL GNMReconnectFeatures(
+    GNMGenericNetworkH hNet, GNMGFID nSrcFID, GNMGFID nTgtFID, GNMGFID nConFID,
+    double dfCost, double dfInvCost, GNMDirection eDir);
 
-CPLErr CPL_DLL CPL_STDCALL GNMCreateRule (GNMGenericNetworkH hNet,
-                                          const char *pszRuleStr);
+CPLErr CPL_DLL CPL_STDCALL GNMCreateRule(GNMGenericNetworkH hNet,
+                                         const char *pszRuleStr);
 
 CPLErr CPL_DLL CPL_STDCALL GNMDeleteAllRules(GNMGenericNetworkH hNet);
 
 CPLErr CPL_DLL CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet,
                                          const char *pszRuleStr);
 
-char CPL_DLL ** CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet);
+char CPL_DLL **CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet);
 
-CPLErr CPL_DLL CPL_STDCALL GNMConnectPointsByLines (GNMGenericNetworkH hNet,
-                                                    char **papszLayerList,
-                                                    double dfTolerance,
-                                                    double dfCost,
-                                                    double dfInvCost,
-                                                    GNMDirection eDir);
+CPLErr CPL_DLL CPL_STDCALL GNMConnectPointsByLines(
+    GNMGenericNetworkH hNet, char **papszLayerList, double dfTolerance,
+    double dfCost, double dfInvCost, GNMDirection eDir);
 
-CPLErr CPL_DLL CPL_STDCALL GNMChangeBlockState (GNMGenericNetworkH hNet,
-                                                GNMGFID nFID, bool bIsBlock);
+CPLErr CPL_DLL CPL_STDCALL GNMChangeBlockState(GNMGenericNetworkH hNet,
+                                               GNMGFID nFID, bool bIsBlock);
 
-CPLErr CPL_DLL CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
-                                                   int bIsBlock);
+CPLErr CPL_DLL CPL_STDCALL GNMChangeAllBlockState(GNMGenericNetworkH hNet,
+                                                  int bIsBlock);
 
 GNMNetworkH CPL_DLL CPL_STDCALL GNMCastToNetwork(GDALMajorObjectH hBase);
 
-GNMGenericNetworkH CPL_DLL CPL_STDCALL GNMCastToGenericNetwork(GDALMajorObjectH hBase);
+GNMGenericNetworkH CPL_DLL CPL_STDCALL
+GNMCastToGenericNetwork(GDALMajorObjectH hBase);
 
 CPL_C_END
 
-#endif // GNM_API
+#endif  // GNM_API

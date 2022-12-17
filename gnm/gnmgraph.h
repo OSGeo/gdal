@@ -43,17 +43,17 @@
 // Alias for some big data type to store identificators.
 #define GNMGFID GIntBig
 // Graph constants
-#define GNM_EDGE_DIR_BOTH       0   // bidirectional
-#define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
-#define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source
+#define GNM_EDGE_DIR_BOTH 0      // bidirectional
+#define GNM_EDGE_DIR_SRCTOTGT 1  // from source to target
+#define GNM_EDGE_DIR_TGTTOSRC 2  // from target to source
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 // Types declarations.
 typedef std::vector<GNMGFID> GNMVECTOR, *LPGNMVECTOR;
 typedef const std::vector<GNMGFID> GNMCONSTVECTOR;
-typedef const std::vector<GNMGFID>* LPGNMCONSTVECTOR;
-typedef std::pair<GNMGFID,GNMGFID> EDGEVERTEXPAIR;
-typedef std::vector< EDGEVERTEXPAIR > GNMPATH;
+typedef const std::vector<GNMGFID> *LPGNMCONSTVECTOR;
+typedef std::pair<GNMGFID, GNMGFID> EDGEVERTEXPAIR;
+typedef std::vector<EDGEVERTEXPAIR> GNMPATH;
 
 /** Edge */
 struct GNMStdEdge
@@ -63,14 +63,14 @@ struct GNMStdEdge
     bool bIsBidir;         /**< Whether the edge is bidirectonal */
     double dfDirCost;      /**< Direct cost */
     double dfInvCost;      /**< Inverse cost */
-    bool bIsBlocked;        /**< Whether the edge is blocked */
+    bool bIsBlocked;       /**< Whether the edge is blocked */
 };
 
 /** Vertex */
 struct GNMStdVertex
 {
     GNMVECTOR anOutEdgeFIDs; /**< TODO */
-    bool bIsBlocked;          /**< Whether the vertex is blocked */
+    bool bIsBlocked;         /**< Whether the vertex is blocked */
 };
 
 /**
@@ -88,7 +88,7 @@ struct GNMStdVertex
 
 class CPL_DLL GNMGraph
 {
-public:
+  public:
     GNMGraph();
     virtual ~GNMGraph();
 
@@ -141,7 +141,7 @@ public:
      * @param nFID Identificator
      * @param bBlock Block or unblock
      */
-    virtual void ChangeBlockState (GNMGFID nFID, bool bBlock);
+    virtual void ChangeBlockState(GNMGFID nFID, bool bBlock);
 
     /**
      * @brief Check if vertex is blocked
@@ -157,7 +157,7 @@ public:
      *
      * @param bBlock Block or unblock
      */
-    virtual void ChangeAllBlockState (bool bBlock = false);
+    virtual void ChangeAllBlockState(bool bBlock = false);
 
     /**
      * @brief An implementation of Dijkstra shortest path algorithm.
@@ -177,10 +177,11 @@ public:
      * @brief An implementation of KShortest paths algorithm.
      *
      * Calculates several best paths between two points. Method takes in account
-     * the blocking state of features, i.e. the blocked features are the barriers
-     * during the routing process.
+     * the blocking state of features, i.e. the blocked features are the
+     * barriers during the routing process.
      *
-     * @param nStartFID Vertex identificator from which to start paths calculating.
+     * @param nStartFID Vertex identificator from which to start paths
+     * calculating.
      * @param nEndFID Vertex identificator to which the path will be calculated.
      * @param nK How much best paths try to find between start and end points.
      * @return an array of best paths. Each path is an array of pairs, where the
@@ -212,7 +213,8 @@ public:
 
     /** Clear */
     virtual void Clear();
-protected:
+
+  protected:
     /**
      * @brief Method to create best path tree.
      *
@@ -229,24 +231,28 @@ protected:
      * The identificator to the start vertex is -1. If the vertex is isolated
      * the returned map will be empty.
      */
-    virtual void DijkstraShortestPathTree(GNMGFID nFID,
-                                  const std::map<GNMGFID, GNMStdEdge> &mstEdges,
-                                        std::map<GNMGFID, GNMGFID> &mnPathTree);
+    virtual void
+    DijkstraShortestPathTree(GNMGFID nFID,
+                             const std::map<GNMGFID, GNMStdEdge> &mstEdges,
+                             std::map<GNMGFID, GNMGFID> &mnPathTree);
     /** DijkstraShortestPath */
-    virtual GNMPATH DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID,
-                                 const std::map<GNMGFID, GNMStdEdge> &mstEdges);
-//! @cond Doxygen_Suppress
+    virtual GNMPATH
+    DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID,
+                         const std::map<GNMGFID, GNMStdEdge> &mstEdges);
+    //! @cond Doxygen_Suppress
     virtual LPGNMCONSTVECTOR GetOutEdges(GNMGFID nFID) const;
-    virtual GNMGFID GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const;
+    virtual GNMGFID GetOppositVertex(GNMGFID nEdgeFID,
+                                     GNMGFID nVertexFID) const;
     virtual void TraceTargets(std::queue<GNMGFID> &vertexQueue,
-                                std::set<GNMGFID> &markedVertIds,
-                                GNMPATH &connectedIds);
-protected:
+                              std::set<GNMGFID> &markedVertIds,
+                              GNMPATH &connectedIds);
+
+  protected:
     std::map<GNMGFID, GNMStdVertex> m_mstVertices;
-    std::map<GNMGFID, GNMStdEdge>   m_mstEdges;
-//! @endcond
+    std::map<GNMGFID, GNMStdEdge> m_mstEdges;
+    //! @endcond
 };
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
 #endif /* GNMGRAPH_H */

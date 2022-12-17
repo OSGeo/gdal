@@ -53,26 +53,26 @@ CPL_C_START
 /*---------------------------------------------------------------------
  * Supported multibyte codepage numbers
  *--------------------------------------------------------------------*/
-#define AVC_DBCS_JAPANESE       932
+#define AVC_DBCS_JAPANESE 932
 
-#define AVC_CODE_UNKNOWN        0
+#define AVC_CODE_UNKNOWN 0
 
 /*---------------------------------------------------------------------
  * Definitions for Japanese encodings  (AVC_DBCS_JAPANESE)
  *--------------------------------------------------------------------*/
-#define AVC_CODE_JAP_UNKNOWN    0
-#define AVC_CODE_JAP_SHIFTJIS   1
-#define AVC_CODE_JAP_EUC        2
+#define AVC_CODE_JAP_UNKNOWN 0
+#define AVC_CODE_JAP_SHIFTJIS 1
+#define AVC_CODE_JAP_EUC 2
 
 /*---------------------------------------------------------------------
  * We use the following structure to keep track of DBCS info.
  *--------------------------------------------------------------------*/
 typedef struct AVCDBCSInfo_t
 {
-    int         nDBCSCodePage;
-    int         nDBCSEncoding;
+    int nDBCSCodePage;
+    int nDBCSEncoding;
     unsigned char *pszDBCSBuf;
-    int         nDBCSBufSize;
+    int nDBCSBufSize;
 } AVCDBCSInfo;
 
 /*---------------------------------------------------------------------
@@ -84,11 +84,9 @@ void AVCFreeDBCSInfo(AVCDBCSInfo *psInfo);
 int AVCGetDBCSCodePage(void);
 GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine);
 const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
-                                   const GByte *pszLine,
-                                   int nMaxOutputLen);
+                                   const GByte *pszLine, int nMaxOutputLen);
 const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
-                                      const GByte *pszLine,
-                                      int nMaxOutputLen);
+                                      const GByte *pszLine, int nMaxOutputLen);
 
 CPL_C_END
 

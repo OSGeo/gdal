@@ -57,7 +57,6 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-
 constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
 constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
 
@@ -72,14 +71,14 @@ enum GMLSRSNameFormat
 /*                        MakeGMLCoordinate()                           */
 /************************************************************************/
 
-static void MakeGMLCoordinate( char *pszTarget,
-                               double x, double y, double z, bool b3D )
+static void MakeGMLCoordinate(char *pszTarget, double x, double y, double z,
+                              bool b3D)
 
 {
-    OGRMakeWktCoordinate( pszTarget, x, y, z, b3D ? 3 : 2 );
-    while( *pszTarget != '\0' )
+    OGRMakeWktCoordinate(pszTarget, x, y, z, b3D ? 3 : 2);
+    while (*pszTarget != '\0')
     {
-        if( *pszTarget == ' ' )
+        if (*pszTarget == ' ')
             *pszTarget = ',';
         pszTarget++;
     }
@@ -89,10 +88,10 @@ static void MakeGMLCoordinate( char *pszTarget,
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
+static void _GrowBuffer(size_t nNeeded, char **ppszText, size_t *pnMaxLength)
 
 {
-    if( nNeeded + 1 >= *pnMaxLength )
+    if (nNeeded + 1 >= *pnMaxLength)
     {
         *pnMaxLength = std::max(*pnMaxLength * 2, nNeeded + 1);
         *ppszText = static_cast<char *>(CPLRealloc(*ppszText, *pnMaxLength));
@@ -103,55 +102,49 @@ static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 /*                            AppendString()                            */
 /************************************************************************/
 
-static void AppendString( char **ppszText, size_t *pnLength,
-                          size_t *pnMaxLength,
-                          const char *pszTextToAppend )
+static void AppendString(char **ppszText, size_t *pnLength, size_t *pnMaxLength,
+                         const char *pszTextToAppend)
 
 {
-    _GrowBuffer( *pnLength + strlen(pszTextToAppend) + 1,
-                 ppszText, pnMaxLength );
+    _GrowBuffer(*pnLength + strlen(pszTextToAppend) + 1, ppszText, pnMaxLength);
 
-    strcat( *ppszText + *pnLength, pszTextToAppend );
-    *pnLength += strlen( *ppszText + *pnLength );
+    strcat(*ppszText + *pnLength, pszTextToAppend);
+    *pnLength += strlen(*ppszText + *pnLength);
 }
 
 /************************************************************************/
 /*                        AppendCoordinateList()                        */
 /************************************************************************/
 
-static void AppendCoordinateList( const OGRLineString *poLine,
-                                  char **ppszText, size_t *pnLength,
-                                  size_t *pnMaxLength )
+static void AppendCoordinateList(const OGRLineString *poLine, char **ppszText,
+                                 size_t *pnLength, size_t *pnMaxLength)
 
 {
     const bool b3D = wkbHasZ(poLine->getGeometryType()) != FALSE;
 
     *pnLength += strlen(*ppszText + *pnLength);
-    _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
+    _GrowBuffer(*pnLength + 20, ppszText, pnMaxLength);
 
-    strcat( *ppszText + *pnLength, "<gml:coordinates>" );
+    strcat(*ppszText + *pnLength, "<gml:coordinates>");
     *pnLength += strlen(*ppszText + *pnLength);
 
     char szCoordinate[256] = {};
-    for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
+    for (int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++)
     {
-        MakeGMLCoordinate( szCoordinate,
-                           poLine->getX(iPoint),
-                           poLine->getY(iPoint),
-                           poLine->getZ(iPoint),
-                           b3D );
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 1,
-                     ppszText, pnMaxLength );
+        MakeGMLCoordinate(szCoordinate, poLine->getX(iPoint),
+                          poLine->getY(iPoint), poLine->getZ(iPoint), b3D);
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 1, ppszText,
+                    pnMaxLength);
 
-        if( iPoint != 0 )
-            strcat( *ppszText + *pnLength, " " );
+        if (iPoint != 0)
+            strcat(*ppszText + *pnLength, " ");
 
-        strcat( *ppszText + *pnLength, szCoordinate );
+        strcat(*ppszText + *pnLength, szCoordinate);
         *pnLength += strlen(*ppszText + *pnLength);
     }
 
-    _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
-    strcat( *ppszText + *pnLength, "</gml:coordinates>" );
+    _GrowBuffer(*pnLength + 20, ppszText, pnMaxLength);
+    strcat(*ppszText + *pnLength, "</gml:coordinates>");
     *pnLength += strlen(*ppszText + *pnLength);
 }
 
@@ -159,16 +152,15 @@ static void AppendCoordinateList( const OGRLineString *poLine,
 /*                       OGR2GMLGeometryAppend()                        */
 /************************************************************************/
 
-static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
-                                   char **ppszText, size_t *pnLength,
-                                   size_t *pnMaxLength,
-                                   bool bIsSubGeometry,
-                                   const char* pszNamespaceDecl )
+static bool OGR2GMLGeometryAppend(const OGRGeometry *poGeometry,
+                                  char **ppszText, size_t *pnLength,
+                                  size_t *pnMaxLength, bool bIsSubGeometry,
+                                  const char *pszNamespaceDecl)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Check for Spatial Reference System attached to given geometry   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Check for Spatial Reference System attached to given geometry   */
+    /* -------------------------------------------------------------------- */
 
     // Buffer for xmlns:gml and srsName attributes (srsName="...")
     char szAttributes[128] = {};
@@ -176,30 +168,28 @@ static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
 
     szAttributes[0] = 0;
 
-    const OGRSpatialReference* poSRS = poGeometry->getSpatialReference();
+    const OGRSpatialReference *poSRS = poGeometry->getSpatialReference();
 
-    if( pszNamespaceDecl != nullptr )
+    if (pszNamespaceDecl != nullptr)
     {
-        snprintf( szAttributes + nAttrsLength,
-                  sizeof(szAttributes) - nAttrsLength,
-                  " xmlns:gml=\"%s\"",
-                  pszNamespaceDecl );
+        snprintf(szAttributes + nAttrsLength,
+                 sizeof(szAttributes) - nAttrsLength, " xmlns:gml=\"%s\"",
+                 pszNamespaceDecl);
         nAttrsLength += strlen(szAttributes + nAttrsLength);
         pszNamespaceDecl = nullptr;
     }
 
-    if( nullptr != poSRS && !bIsSubGeometry )
+    if (nullptr != poSRS && !bIsSubGeometry)
     {
-        const char* pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
-        const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
-        const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-        if( nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
-            nullptr != pszAuthCode && strlen(pszAuthCode) < 10 )
+        const char *pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
+        const char *pszAuthName = poSRS->GetAuthorityName(pszTarget);
+        const char *pszAuthCode = poSRS->GetAuthorityCode(pszTarget);
+        if (nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
+            nullptr != pszAuthCode && strlen(pszAuthCode) < 10)
         {
-            snprintf( szAttributes + nAttrsLength,
-                        sizeof(szAttributes) - nAttrsLength,
-                        " srsName=\"%s:%s\"",
-                        pszAuthName, pszAuthCode );
+            snprintf(szAttributes + nAttrsLength,
+                     sizeof(szAttributes) - nAttrsLength, " srsName=\"%s:%s\"",
+                     pszAuthName, pszAuthCode);
 
             nAttrsLength += strlen(szAttributes + nAttrsLength);
         }
@@ -208,189 +198,177 @@ static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
     OGRwkbGeometryType eFType = wkbFlatten(eType);
 
-/* -------------------------------------------------------------------- */
-/*      2D Point                                                        */
-/* -------------------------------------------------------------------- */
-    if( eType == wkbPoint )
+    /* -------------------------------------------------------------------- */
+    /*      2D Point                                                        */
+    /* -------------------------------------------------------------------- */
+    if (eType == wkbPoint)
     {
         const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
-        MakeGMLCoordinate( szCoordinate,
-                           poPoint->getX(), poPoint->getY(), 0.0, false );
+        MakeGMLCoordinate(szCoordinate, poPoint->getX(), poPoint->getY(), 0.0,
+                          false);
 
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
-                     ppszText, pnMaxLength );
-
-        snprintf(
-            *ppszText + *pnLength, *pnMaxLength - *pnLength,
-            "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
-            szAttributes, szCoordinate );
-
-        *pnLength += strlen( *ppszText + *pnLength );
-    }
-/* -------------------------------------------------------------------- */
-/*      3D Point                                                        */
-/* -------------------------------------------------------------------- */
-    else if( eType == wkbPoint25D )
-    {
-        const auto poPoint = poGeometry->toPoint();
-
-        char szCoordinate[256] = {};
-        MakeGMLCoordinate( szCoordinate,
-                           poPoint->getX(), poPoint->getY(), poPoint->getZ(),
-                           true );
-
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
-                     ppszText, pnMaxLength );
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
+                    ppszText, pnMaxLength);
 
         snprintf(
             *ppszText + *pnLength, *pnMaxLength - *pnLength,
             "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
             szAttributes, szCoordinate);
 
-        *pnLength += strlen( *ppszText + *pnLength );
+        *pnLength += strlen(*ppszText + *pnLength);
+    }
+    /* -------------------------------------------------------------------- */
+    /*      3D Point                                                        */
+    /* -------------------------------------------------------------------- */
+    else if (eType == wkbPoint25D)
+    {
+        const auto poPoint = poGeometry->toPoint();
+
+        char szCoordinate[256] = {};
+        MakeGMLCoordinate(szCoordinate, poPoint->getX(), poPoint->getY(),
+                          poPoint->getZ(), true);
+
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
+                    ppszText, pnMaxLength);
+
+        snprintf(
+            *ppszText + *pnLength, *pnMaxLength - *pnLength,
+            "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
+            szAttributes, szCoordinate);
+
+        *pnLength += strlen(*ppszText + *pnLength);
     }
 
-/* -------------------------------------------------------------------- */
-/*      LineString and LinearRing                                       */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbLineString )
+    /* -------------------------------------------------------------------- */
+    /*      LineString and LinearRing                                       */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbLineString)
     {
         bool bRing = EQUAL(poGeometry->getGeometryName(), "LINEARRING");
 
         // Buffer for tag name + srsName attribute if set
         const size_t nLineTagLength = 16;
         const size_t nLineTagNameBufLen = nLineTagLength + nAttrsLength + 1;
-        char* pszLineTagName =
+        char *pszLineTagName =
             static_cast<char *>(CPLMalloc(nLineTagNameBufLen));
 
-        if( bRing )
+        if (bRing)
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen,
-                      "<gml:LinearRing%s>", szAttributes );
+            snprintf(pszLineTagName, nLineTagNameBufLen, "<gml:LinearRing%s>",
+                     szAttributes);
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          pszLineTagName );
+            AppendString(ppszText, pnLength, pnMaxLength, pszLineTagName);
         }
         else
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen,
-                      "<gml:LineString%s>", szAttributes );
+            snprintf(pszLineTagName, nLineTagNameBufLen, "<gml:LineString%s>",
+                     szAttributes);
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          pszLineTagName );
+            AppendString(ppszText, pnLength, pnMaxLength, pszLineTagName);
         }
 
         // Free tag buffer.
-        CPLFree( pszLineTagName );
+        CPLFree(pszLineTagName);
 
         const auto poLineString = poGeometry->toLineString();
-        AppendCoordinateList( poLineString, ppszText, pnLength, pnMaxLength );
+        AppendCoordinateList(poLineString, ppszText, pnLength, pnMaxLength);
 
-        if( bRing )
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:LinearRing>" );
+        if (bRing)
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:LinearRing>");
         else
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:LineString>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:LineString>");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Polygon                                                         */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbPolygon )
+    /* -------------------------------------------------------------------- */
+    /*      Polygon                                                         */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbPolygon)
     {
         const auto poPolygon = poGeometry->toPolygon();
 
         // Buffer for polygon tag name + srsName attribute if set.
         const size_t nPolyTagLength = 13;
         const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
-        char* pszPolyTagName =
+        char *pszPolyTagName =
             static_cast<char *>(CPLMalloc(nPolyTagNameBufLen));
 
         // Compose Polygon tag with or without srsName attribute.
-        snprintf( pszPolyTagName, nPolyTagNameBufLen,
-                  "<gml:Polygon%s>", szAttributes );
+        snprintf(pszPolyTagName, nPolyTagNameBufLen, "<gml:Polygon%s>",
+                 szAttributes);
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      pszPolyTagName );
+        AppendString(ppszText, pnLength, pnMaxLength, pszPolyTagName);
 
         // Free tag buffer.
-        CPLFree( pszPolyTagName );
+        CPLFree(pszPolyTagName);
 
         // Don't add srsName to polygon rings.
-        if( poPolygon->getExteriorRing() != nullptr )
+        if (poPolygon->getExteriorRing() != nullptr)
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:outerBoundaryIs>" );
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "<gml:outerBoundaryIs>");
 
             CPL_IGNORE_RET_VAL(
-                OGR2GMLGeometryAppend( poPolygon->getExteriorRing(),
-                                        ppszText, pnLength, pnMaxLength,
-                                        true, nullptr ) );
+                OGR2GMLGeometryAppend(poPolygon->getExteriorRing(), ppszText,
+                                      pnLength, pnMaxLength, true, nullptr));
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:outerBoundaryIs>" );
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "</gml:outerBoundaryIs>");
         }
 
-        for( int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++ )
+        for (int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++)
         {
             const OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:innerBoundaryIs>" );
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "<gml:innerBoundaryIs>");
 
-            CPL_IGNORE_RET_VAL(
-                OGR2GMLGeometryAppend( poRing, ppszText, pnLength,
-                                        pnMaxLength, true, nullptr ) );
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:innerBoundaryIs>" );
+            CPL_IGNORE_RET_VAL(OGR2GMLGeometryAppend(
+                poRing, ppszText, pnLength, pnMaxLength, true, nullptr));
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "</gml:innerBoundaryIs>");
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:Polygon>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:Polygon>");
     }
 
-/* -------------------------------------------------------------------- */
-/*      MultiPolygon, MultiLineString, MultiPoint, MultiGeometry        */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbMultiPolygon
-             || eFType == wkbMultiLineString
-             || eFType == wkbMultiPoint
-             || eFType == wkbGeometryCollection )
+    /* -------------------------------------------------------------------- */
+    /*      MultiPolygon, MultiLineString, MultiPoint, MultiGeometry        */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbMultiPolygon || eFType == wkbMultiLineString ||
+             eFType == wkbMultiPoint || eFType == wkbGeometryCollection)
     {
         const auto poGC = poGeometry->toGeometryCollection();
         const char *pszElemClose = nullptr;
         const char *pszMemberElem = nullptr;
 
         // Buffer for opening tag + srsName attribute.
-        char* pszElemOpen = nullptr;
+        char *pszElemOpen = nullptr;
 
-        if( eFType == wkbMultiPolygon )
+        if (eFType == wkbMultiPolygon)
         {
             const size_t nBufLen = 13 + nAttrsLength + 1;
-            pszElemOpen = static_cast<char *>(CPLMalloc( nBufLen ));
-            snprintf( pszElemOpen, nBufLen, "MultiPolygon%s>", szAttributes );
+            pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
+            snprintf(pszElemOpen, nBufLen, "MultiPolygon%s>", szAttributes);
 
             pszElemClose = "MultiPolygon>";
             pszMemberElem = "polygonMember>";
         }
-        else if( eFType == wkbMultiLineString )
+        else if (eFType == wkbMultiLineString)
         {
             const size_t nBufLen = 16 + nAttrsLength + 1;
-            pszElemOpen = static_cast<char *>(CPLMalloc( nBufLen ));
-            snprintf( pszElemOpen, nBufLen,
-                      "MultiLineString%s>", szAttributes );
+            pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
+            snprintf(pszElemOpen, nBufLen, "MultiLineString%s>", szAttributes);
 
             pszElemClose = "MultiLineString>";
             pszMemberElem = "lineStringMember>";
         }
-        else if( eFType == wkbMultiPoint )
+        else if (eFType == wkbMultiPoint)
         {
             const size_t nBufLen = 11 + nAttrsLength + 1;
-            pszElemOpen = static_cast<char *>(CPLMalloc( nBufLen ));
-            snprintf( pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes );
+            pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
+            snprintf(pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes);
 
             pszElemClose = "MultiPoint>";
             pszMemberElem = "pointMember>";
@@ -398,40 +376,39 @@ static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
         else
         {
             const size_t nBufLen = 19 + nAttrsLength + 1;
-            pszElemOpen = static_cast<char *>(CPLMalloc( nBufLen ));
-            snprintf( pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes );
+            pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
+            snprintf(pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes);
 
             pszElemClose = "MultiGeometry>";
             pszMemberElem = "geometryMember>";
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:");
+        AppendString(ppszText, pnLength, pnMaxLength, pszElemOpen);
 
-        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for (int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
-            const auto poMember = poGC->getGeometryRef( iMember );
+            const auto poMember = poGC->getGeometryRef(iMember);
 
-            AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:");
+            AppendString(ppszText, pnLength, pnMaxLength, pszMemberElem);
 
-            if( !OGR2GMLGeometryAppend( poMember,
-                                        ppszText, pnLength, pnMaxLength,
-                                        true, nullptr ) )
+            if (!OGR2GMLGeometryAppend(poMember, ppszText, pnLength,
+                                       pnMaxLength, true, nullptr))
             {
                 CPLFree(pszElemOpen);
                 return false;
             }
 
-            AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
+            AppendString(ppszText, pnLength, pnMaxLength, pszMemberElem);
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
+        AppendString(ppszText, pnLength, pnMaxLength, pszElemClose);
 
         // Free tag buffer.
-        CPLFree( pszElemOpen );
+        CPLFree(pszElemOpen);
     }
     else
     {
@@ -448,57 +425,54 @@ static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
 /************************************************************************/
 
 /** Export the envelope of a geometry as a gml:Box. */
-CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
+CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree(OGRGeometryH hGeometry)
 
 {
     OGREnvelope sEnvelope;
 
-    reinterpret_cast<OGRGeometry *>(hGeometry)->getEnvelope( &sEnvelope );
+    reinterpret_cast<OGRGeometry *>(hGeometry)->getEnvelope(&sEnvelope);
 
-    if( !sEnvelope.IsInit() )
+    if (!sEnvelope.IsInit())
     {
         // TODO: There is apparently a special way of representing a null box
         // geometry. Should use it here eventually.
         return nullptr;
     }
 
-    CPLXMLNode *psBox = CPLCreateXMLNode( nullptr, CXT_Element, "gml:Box" );
+    CPLXMLNode *psBox = CPLCreateXMLNode(nullptr, CXT_Element, "gml:Box");
 
-/* -------------------------------------------------------------------- */
-/*      Add minxy coordinate.                                           */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    /* -------------------------------------------------------------------- */
+    /*      Add minxy coordinate.                                           */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psCoord = CPLCreateXMLNode(psBox, CXT_Element, "gml:coord");
 
     char szCoordinate[256] = {};
-    MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
-                       false );
+    MakeGMLCoordinate(szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0, false);
     char *pszY = strstr(szCoordinate, ",");
     // There must be more after the comma or we have an internal consistency
     // bug in MakeGMLCoordinate.
-    if( pszY == nullptr || strlen(pszY) < 2)
+    if (pszY == nullptr || strlen(pszY) < 2)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "MakeGMLCoordinate failed." );
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MakeGMLCoordinate failed.");
         return nullptr;
     }
     *pszY = '\0';
     pszY++;
 
-    CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
-    CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
+    CPLCreateXMLElementAndValue(psCoord, "gml:X", szCoordinate);
+    CPLCreateXMLElementAndValue(psCoord, "gml:Y", pszY);
 
-/* -------------------------------------------------------------------- */
-/*      Add maxxy coordinate.                                           */
-/* -------------------------------------------------------------------- */
-    psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    /* -------------------------------------------------------------------- */
+    /*      Add maxxy coordinate.                                           */
+    /* -------------------------------------------------------------------- */
+    psCoord = CPLCreateXMLNode(psBox, CXT_Element, "gml:coord");
 
-    MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0,
-                       false );
+    MakeGMLCoordinate(szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0, false);
     pszY = strstr(szCoordinate, ",") + 1;
     pszY[-1] = '\0';
 
-    CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
-    CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
+    CPLCreateXMLElementAndValue(psCoord, "gml:X", szCoordinate);
+    CPLCreateXMLElementAndValue(psCoord, "gml:Y", pszY);
 
     return psBox;
 }
@@ -507,52 +481,47 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 /*                     AppendGML3CoordinateList()                       */
 /************************************************************************/
 
-static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine,
-                                      bool bCoordSwap,
-                                      char **ppszText, size_t *pnLength,
-                                      size_t *pnMaxLength,
-                                      int nSRSDimensionLocFlags )
+static void AppendGML3CoordinateList(const OGRSimpleCurve *poLine,
+                                     bool bCoordSwap, char **ppszText,
+                                     size_t *pnLength, size_t *pnMaxLength,
+                                     int nSRSDimensionLocFlags)
 
 {
     bool b3D = wkbHasZ(poLine->getGeometryType());
 
     *pnLength += strlen(*ppszText + *pnLength);
-    _GrowBuffer( *pnLength + 40, ppszText, pnMaxLength );
+    _GrowBuffer(*pnLength + 40, ppszText, pnMaxLength);
 
-    if( b3D && (nSRSDimensionLocFlags & SRSDIM_LOC_POSLIST) != 0 )
-        strcat( *ppszText + *pnLength, "<gml:posList srsDimension=\"3\">" );
+    if (b3D && (nSRSDimensionLocFlags & SRSDIM_LOC_POSLIST) != 0)
+        strcat(*ppszText + *pnLength, "<gml:posList srsDimension=\"3\">");
     else
-        strcat( *ppszText + *pnLength, "<gml:posList>" );
+        strcat(*ppszText + *pnLength, "<gml:posList>");
     *pnLength += strlen(*ppszText + *pnLength);
 
     char szCoordinate[256] = {};
 
-    for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
+    for (int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++)
     {
-        if( bCoordSwap )
-            OGRMakeWktCoordinate( szCoordinate,
-                                  poLine->getY(iPoint),
-                                  poLine->getX(iPoint),
-                                  poLine->getZ(iPoint),
-                                  b3D ? 3 : 2 );
+        if (bCoordSwap)
+            OGRMakeWktCoordinate(szCoordinate, poLine->getY(iPoint),
+                                 poLine->getX(iPoint), poLine->getZ(iPoint),
+                                 b3D ? 3 : 2);
         else
-            OGRMakeWktCoordinate( szCoordinate,
-                                  poLine->getX(iPoint),
-                                  poLine->getY(iPoint),
-                                  poLine->getZ(iPoint),
-                                  b3D ? 3 : 2 );
-        _GrowBuffer( *pnLength + strlen(szCoordinate)+1,
-                     ppszText, pnMaxLength );
+            OGRMakeWktCoordinate(szCoordinate, poLine->getX(iPoint),
+                                 poLine->getY(iPoint), poLine->getZ(iPoint),
+                                 b3D ? 3 : 2);
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 1, ppszText,
+                    pnMaxLength);
 
-        if( iPoint != 0 )
-            strcat( *ppszText + *pnLength, " " );
+        if (iPoint != 0)
+            strcat(*ppszText + *pnLength, " ");
 
-        strcat( *ppszText + *pnLength, szCoordinate );
+        strcat(*ppszText + *pnLength, szCoordinate);
         *pnLength += strlen(*ppszText + *pnLength);
     }
 
-    _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
-    strcat( *ppszText + *pnLength, "</gml:posList>" );
+    _GrowBuffer(*pnLength + 20, ppszText, pnMaxLength);
+    strcat(*ppszText + *pnLength, "</gml:posList>");
     *pnLength += strlen(*ppszText + *pnLength);
 }
 
@@ -560,68 +529,60 @@ static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine,
 /*                      OGR2GML3GeometryAppend()                        */
 /************************************************************************/
 
-static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
-                                    const OGRSpatialReference* poParentSRS,
-                                    char **ppszText, size_t *pnLength,
-                                    size_t *pnMaxLength,
-                                    bool bIsSubGeometry,
-                                    GMLSRSNameFormat eSRSNameFormat,
-                                    bool bCoordSwap,
-                                    bool bLineStringAsCurve,
-                                    const char* pszGMLId,
-                                    int nSRSDimensionLocFlags,
-                                    bool bForceLineStringAsLinearRing,
-                                    const char* pszNamespaceDecl,
-                                    const char* pszOverriddenElementName )
+static bool OGR2GML3GeometryAppend(
+    const OGRGeometry *poGeometry, const OGRSpatialReference *poParentSRS,
+    char **ppszText, size_t *pnLength, size_t *pnMaxLength, bool bIsSubGeometry,
+    GMLSRSNameFormat eSRSNameFormat, bool bCoordSwap, bool bLineStringAsCurve,
+    const char *pszGMLId, int nSRSDimensionLocFlags,
+    bool bForceLineStringAsLinearRing, const char *pszNamespaceDecl,
+    const char *pszOverriddenElementName)
 
 {
 
-/* -------------------------------------------------------------------- */
-/*      Check for Spatial Reference System attached to given geometry   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Check for Spatial Reference System attached to given geometry   */
+    /* -------------------------------------------------------------------- */
 
     // Buffer for srsName, xmlns:gml, srsDimension and gml:id attributes
     // (srsName="..." gml:id="...").
 
-    const OGRSpatialReference* poSRS =
-         poParentSRS ? poParentSRS : poGeometry->getSpatialReference();
+    const OGRSpatialReference *poSRS =
+        poParentSRS ? poParentSRS : poGeometry->getSpatialReference();
 
     char szAttributes[256] = {};
     size_t nAttrsLength = 0;
 
-    if( pszNamespaceDecl != nullptr )
+    if (pszNamespaceDecl != nullptr)
     {
-        snprintf( szAttributes + nAttrsLength,
-                  sizeof(szAttributes) - nAttrsLength,
-                  " xmlns:gml=\"%s\"",
-                  pszNamespaceDecl );
+        snprintf(szAttributes + nAttrsLength,
+                 sizeof(szAttributes) - nAttrsLength, " xmlns:gml=\"%s\"",
+                 pszNamespaceDecl);
         pszNamespaceDecl = nullptr;
         nAttrsLength += strlen(szAttributes + nAttrsLength);
     }
 
-    if( nullptr != poSRS )
+    if (nullptr != poSRS)
     {
-        const char* pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
-        const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
-        const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-        if( nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
-            nullptr != pszAuthCode && strlen(pszAuthCode) < 10 )
+        const char *pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
+        const char *pszAuthName = poSRS->GetAuthorityName(pszTarget);
+        const char *pszAuthCode = poSRS->GetAuthorityCode(pszTarget);
+        if (nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
+            nullptr != pszAuthCode && strlen(pszAuthCode) < 10)
         {
-            if( !bIsSubGeometry )
+            if (!bIsSubGeometry)
             {
                 if (eSRSNameFormat == SRSNAME_OGC_URN)
                 {
-                    snprintf( szAttributes + nAttrsLength,
-                              sizeof(szAttributes) - nAttrsLength,
-                              " srsName=\"urn:ogc:def:crs:%s::%s\"",
-                              pszAuthName, pszAuthCode );
+                    snprintf(szAttributes + nAttrsLength,
+                             sizeof(szAttributes) - nAttrsLength,
+                             " srsName=\"urn:ogc:def:crs:%s::%s\"", pszAuthName,
+                             pszAuthCode);
                 }
                 else if (eSRSNameFormat == SRSNAME_SHORT)
                 {
-                    snprintf( szAttributes + nAttrsLength,
-                              sizeof(szAttributes) - nAttrsLength,
-                              " srsName=\"%s:%s\"",
-                              pszAuthName, pszAuthCode );
+                    snprintf(szAttributes + nAttrsLength,
+                             sizeof(szAttributes) - nAttrsLength,
+                             " srsName=\"%s:%s\"", pszAuthName, pszAuthCode);
                 }
                 else if (eSRSNameFormat == SRSNAME_OGC_URL)
                 {
@@ -629,108 +590,101 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                         szAttributes + nAttrsLength,
                         sizeof(szAttributes) - nAttrsLength,
                         " srsName=\"http://www.opengis.net/def/crs/%s/0/%s\"",
-                        pszAuthName, pszAuthCode );
+                        pszAuthName, pszAuthCode);
                 }
                 nAttrsLength += strlen(szAttributes + nAttrsLength);
             }
         }
     }
 
-    if( (nSRSDimensionLocFlags & SRSDIM_LOC_GEOMETRY) != 0 &&
-        wkbHasZ(poGeometry->getGeometryType()) )
+    if ((nSRSDimensionLocFlags & SRSDIM_LOC_GEOMETRY) != 0 &&
+        wkbHasZ(poGeometry->getGeometryType()))
     {
-        snprintf( szAttributes + nAttrsLength,
-                  sizeof(szAttributes) - nAttrsLength,
-                  " srsDimension=\"3\"" );
+        snprintf(szAttributes + nAttrsLength,
+                 sizeof(szAttributes) - nAttrsLength, " srsDimension=\"3\"");
         nAttrsLength += strlen(szAttributes + nAttrsLength);
 
         nSRSDimensionLocFlags &= ~SRSDIM_LOC_GEOMETRY;
     }
 
-    if( pszGMLId != nullptr &&
-        nAttrsLength + 9 + strlen(pszGMLId) + 1 < sizeof(szAttributes) )
+    if (pszGMLId != nullptr &&
+        nAttrsLength + 9 + strlen(pszGMLId) + 1 < sizeof(szAttributes))
     {
-        snprintf( szAttributes + nAttrsLength,
-                  sizeof(szAttributes) - nAttrsLength,
-                  " gml:id=\"%s\"",
-                  pszGMLId );
+        snprintf(szAttributes + nAttrsLength,
+                 sizeof(szAttributes) - nAttrsLength, " gml:id=\"%s\"",
+                 pszGMLId);
         nAttrsLength += strlen(szAttributes + nAttrsLength);
     }
 
     const OGRwkbGeometryType eType = poGeometry->getGeometryType();
     const OGRwkbGeometryType eFType = wkbFlatten(eType);
 
-/* -------------------------------------------------------------------- */
-/*      2D Point                                                        */
-/* -------------------------------------------------------------------- */
-    if( eType == wkbPoint )
+    /* -------------------------------------------------------------------- */
+    /*      2D Point                                                        */
+    /* -------------------------------------------------------------------- */
+    if (eType == wkbPoint)
     {
         const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
-        if( bCoordSwap )
-            OGRMakeWktCoordinate( szCoordinate,
-                                  poPoint->getY(), poPoint->getX(), 0.0, 2 );
+        if (bCoordSwap)
+            OGRMakeWktCoordinate(szCoordinate, poPoint->getY(), poPoint->getX(),
+                                 0.0, 2);
         else
-            OGRMakeWktCoordinate( szCoordinate,
-                                  poPoint->getX(), poPoint->getY(), 0.0, 2 );
+            OGRMakeWktCoordinate(szCoordinate, poPoint->getX(), poPoint->getY(),
+                                 0.0, 2);
 
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
-                     ppszText, pnMaxLength );
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
+                    ppszText, pnMaxLength);
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
-                  "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
-                  szAttributes, szCoordinate );
+        snprintf(*ppszText + *pnLength, *pnMaxLength - *pnLength,
+                 "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>", szAttributes,
+                 szCoordinate);
 
-        *pnLength += strlen( *ppszText + *pnLength );
+        *pnLength += strlen(*ppszText + *pnLength);
     }
-/* -------------------------------------------------------------------- */
-/*      3D Point                                                        */
-/* -------------------------------------------------------------------- */
-    else if( eType == wkbPoint25D )
+    /* -------------------------------------------------------------------- */
+    /*      3D Point                                                        */
+    /* -------------------------------------------------------------------- */
+    else if (eType == wkbPoint25D)
     {
         const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
-        if( bCoordSwap )
-            OGRMakeWktCoordinate(
-                szCoordinate,
-                poPoint->getY(), poPoint->getX(), poPoint->getZ(), 3 );
+        if (bCoordSwap)
+            OGRMakeWktCoordinate(szCoordinate, poPoint->getY(), poPoint->getX(),
+                                 poPoint->getZ(), 3);
         else
-            OGRMakeWktCoordinate(
-                szCoordinate,
-                poPoint->getX(), poPoint->getY(), poPoint->getZ(), 3 );
+            OGRMakeWktCoordinate(szCoordinate, poPoint->getX(), poPoint->getY(),
+                                 poPoint->getZ(), 3);
 
-        _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
-                     ppszText, pnMaxLength );
+        _GrowBuffer(*pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
+                    ppszText, pnMaxLength);
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
-                  "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
-                  szAttributes, szCoordinate );
+        snprintf(*ppszText + *pnLength, *pnMaxLength - *pnLength,
+                 "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>", szAttributes,
+                 szCoordinate);
 
-        *pnLength += strlen( *ppszText + *pnLength );
+        *pnLength += strlen(*ppszText + *pnLength);
     }
 
-/* -------------------------------------------------------------------- */
-/*      LineString and LinearRing                                       */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbLineString )
+    /* -------------------------------------------------------------------- */
+    /*      LineString and LinearRing                                       */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbLineString)
     {
-        const bool bRing =
-            EQUAL(poGeometry->getGeometryName(), "LINEARRING") ||
-            bForceLineStringAsLinearRing;
-        if( !bRing && bLineStringAsCurve )
+        const bool bRing = EQUAL(poGeometry->getGeometryName(), "LINEARRING") ||
+                           bForceLineStringAsLinearRing;
+        if (!bRing && bLineStringAsCurve)
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                            "<gml:Curve" );
-            AppendString( ppszText, pnLength, pnMaxLength,
-                            szAttributes );
-            AppendString( ppszText, pnLength, pnMaxLength,
-                            "><gml:segments><gml:LineStringSegment>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:Curve");
+            AppendString(ppszText, pnLength, pnMaxLength, szAttributes);
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "><gml:segments><gml:LineStringSegment>");
             const auto poLineString = poGeometry->toLineString();
-            AppendGML3CoordinateList(
-                poLineString, bCoordSwap,
-                ppszText, pnLength, pnMaxLength, nSRSDimensionLocFlags );
+            AppendGML3CoordinateList(poLineString, bCoordSwap, ppszText,
+                                     pnLength, pnMaxLength,
+                                     nSRSDimensionLocFlags);
             AppendString(ppszText, pnLength, pnMaxLength,
                          "</gml:LineStringSegment></gml:segments></gml:Curve>");
         }
@@ -739,58 +693,54 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             // Buffer for tag name + srsName attribute if set.
             const size_t nLineTagLength = 16;
             const size_t nLineTagNameBufLen = nLineTagLength + nAttrsLength + 1;
-            char* pszLineTagName =
+            char *pszLineTagName =
                 static_cast<char *>(CPLMalloc(nLineTagNameBufLen));
 
-            if( bRing )
+            if (bRing)
             {
                 // LinearRing isn't supposed to have srsName attribute according
                 // to GML3 SF-0.
-                AppendString( ppszText, pnLength, pnMaxLength,
-                              "<gml:LinearRing>" );
+                AppendString(ppszText, pnLength, pnMaxLength,
+                             "<gml:LinearRing>");
             }
             else
             {
-                snprintf( pszLineTagName, nLineTagNameBufLen,
-                          "<gml:LineString%s>", szAttributes );
+                snprintf(pszLineTagName, nLineTagNameBufLen,
+                         "<gml:LineString%s>", szAttributes);
 
-                AppendString( ppszText, pnLength, pnMaxLength,
-                              pszLineTagName );
+                AppendString(ppszText, pnLength, pnMaxLength, pszLineTagName);
             }
 
             // Free tag buffer.
-            CPLFree( pszLineTagName );
+            CPLFree(pszLineTagName);
 
             const auto poLineString = poGeometry->toLineString();
 
-            AppendGML3CoordinateList( poLineString, bCoordSwap,
-                                      ppszText, pnLength, pnMaxLength,
-                                      nSRSDimensionLocFlags );
+            AppendGML3CoordinateList(poLineString, bCoordSwap, ppszText,
+                                     pnLength, pnMaxLength,
+                                     nSRSDimensionLocFlags);
 
-            if( bRing )
-                AppendString( ppszText, pnLength, pnMaxLength,
-                              "</gml:LinearRing>" );
+            if (bRing)
+                AppendString(ppszText, pnLength, pnMaxLength,
+                             "</gml:LinearRing>");
             else
-                AppendString( ppszText, pnLength, pnMaxLength,
-                              "</gml:LineString>" );
+                AppendString(ppszText, pnLength, pnMaxLength,
+                             "</gml:LineString>");
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      ArcString or Circle                                             */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbCircularString )
+    /* -------------------------------------------------------------------- */
+    /*      ArcString or Circle                                             */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbCircularString)
     {
-        AppendString( ppszText, pnLength, pnMaxLength,
-                        "<gml:Curve" );
-        AppendString( ppszText, pnLength, pnMaxLength,
-                        szAttributes );
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:Curve");
+        AppendString(ppszText, pnLength, pnMaxLength, szAttributes);
         const auto poSC = poGeometry->toCircularString();
 
         // SQL MM has a unique type for arc and circle, GML does not.
-        if( poSC->getNumPoints() == 3 &&
-            poSC->getX(0) == poSC->getX(2) &&
-            poSC->getY(0) == poSC->getY(2) )
+        if (poSC->getNumPoints() == 3 && poSC->getX(0) == poSC->getX(2) &&
+            poSC->getY(0) == poSC->getY(2))
         {
             const double dfMidX = (poSC->getX(0) + poSC->getX(1)) / 2.0;
             const double dfMidY = (poSC->getY(0) + poSC->getY(1)) / 2.0;
@@ -800,208 +750,178 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             const double dfNormY = dfDirX;
             const double dfNewX = dfMidX + dfNormX;
             const double dfNewY = dfMidY + dfNormY;
-            OGRLineString* poLS = new OGRLineString();
+            OGRLineString *poLS = new OGRLineString();
             OGRPoint p;
             poSC->getPoint(0, &p);
             poLS->addPoint(&p);
             poSC->getPoint(1, &p);
-            if( poSC->getCoordinateDimension() == 3 )
+            if (poSC->getCoordinateDimension() == 3)
                 poLS->addPoint(dfNewX, dfNewY, p.getZ());
             else
                 poLS->addPoint(dfNewX, dfNewY);
             poLS->addPoint(&p);
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "><gml:segments><gml:Circle>" );
-            AppendGML3CoordinateList(
-                poLS, bCoordSwap,
-                ppszText, pnLength, pnMaxLength, nSRSDimensionLocFlags );
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:Circle></gml:segments></gml:Curve>" );
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "><gml:segments><gml:Circle>");
+            AppendGML3CoordinateList(poLS, bCoordSwap, ppszText, pnLength,
+                                     pnMaxLength, nSRSDimensionLocFlags);
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "</gml:Circle></gml:segments></gml:Curve>");
             delete poLS;
         }
         else
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "><gml:segments><gml:ArcString>" );
-            AppendGML3CoordinateList(
-                poSC, bCoordSwap,
-                ppszText, pnLength, pnMaxLength, nSRSDimensionLocFlags );
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:ArcString></gml:segments></gml:Curve>" );
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "><gml:segments><gml:ArcString>");
+            AppendGML3CoordinateList(poSC, bCoordSwap, ppszText, pnLength,
+                                     pnMaxLength, nSRSDimensionLocFlags);
+            AppendString(ppszText, pnLength, pnMaxLength,
+                         "</gml:ArcString></gml:segments></gml:Curve>");
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      CompositeCurve                                                  */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbCompoundCurve )
+    /* -------------------------------------------------------------------- */
+    /*      CompositeCurve                                                  */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbCompoundCurve)
     {
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:CompositeCurve" );
-        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
-        AppendString( ppszText, pnLength, pnMaxLength, ">");
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:CompositeCurve");
+        AppendString(ppszText, pnLength, pnMaxLength, szAttributes);
+        AppendString(ppszText, pnLength, pnMaxLength, ">");
 
         const auto poCC = poGeometry->toCompoundCurve();
-        for( int i = 0; i < poCC->getNumCurves(); i++ )
+        for (int i = 0; i < poCC->getNumCurves(); i++)
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:curveMember>" );
-            CPL_IGNORE_RET_VAL(
-                OGR2GML3GeometryAppend( poCC->getCurve(i), poSRS,
-                                         ppszText, pnLength,
-                                         pnMaxLength, true, eSRSNameFormat,
-                                         bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         false, nullptr, nullptr) );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:curveMember>");
+            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                poCC->getCurve(i), poSRS, ppszText, pnLength, pnMaxLength, true,
+                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
+                nSRSDimensionLocFlags, false, nullptr, nullptr));
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:curveMember>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:curveMember>");
         }
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:CompositeCurve>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:CompositeCurve>");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Polygon                                                         */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbPolygon || eFType == wkbCurvePolygon )
+    /* -------------------------------------------------------------------- */
+    /*      Polygon                                                         */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbPolygon || eFType == wkbCurvePolygon)
     {
         const auto poCP = poGeometry->toCurvePolygon();
 
         // Buffer for polygon tag name + srsName attribute if set.
-        const char* pszElemName = pszOverriddenElementName ?
-                                        pszOverriddenElementName : "Polygon";
+        const char *pszElemName =
+            pszOverriddenElementName ? pszOverriddenElementName : "Polygon";
         const size_t nPolyTagLength = 7 + strlen(pszElemName);
         const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
-        char* pszPolyTagName =
+        char *pszPolyTagName =
             static_cast<char *>(CPLMalloc(nPolyTagNameBufLen));
 
         // Compose Polygon tag with or without srsName attribute.
-        snprintf( pszPolyTagName, nPolyTagNameBufLen,
-                  "<gml:%s%s>",
-                  pszElemName,
-                  szAttributes );
+        snprintf(pszPolyTagName, nPolyTagNameBufLen, "<gml:%s%s>", pszElemName,
+                 szAttributes);
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      pszPolyTagName );
+        AppendString(ppszText, pnLength, pnMaxLength, pszPolyTagName);
 
         // Free tag buffer.
-        CPLFree( pszPolyTagName );
+        CPLFree(pszPolyTagName);
 
         // Don't add srsName to polygon rings.
 
-        if( poCP->getExteriorRingCurve() != nullptr )
+        if (poCP->getExteriorRingCurve() != nullptr)
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:exterior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:exterior>");
 
-            CPL_IGNORE_RET_VAL(
-                OGR2GML3GeometryAppend( poCP->getExteriorRingCurve(), poSRS,
-                                         ppszText, pnLength, pnMaxLength,
-                                         true, eSRSNameFormat, bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         true, nullptr, nullptr) );
+            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                poCP->getExteriorRingCurve(), poSRS, ppszText, pnLength,
+                pnMaxLength, true, eSRSNameFormat, bCoordSwap,
+                bLineStringAsCurve, nullptr, nSRSDimensionLocFlags, true,
+                nullptr, nullptr));
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:exterior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:exterior>");
         }
 
-        for( int iRing = 0; iRing < poCP->getNumInteriorRings(); iRing++ )
+        for (int iRing = 0; iRing < poCP->getNumInteriorRings(); iRing++)
         {
             const OGRCurve *poRing = poCP->getInteriorRingCurve(iRing);
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:interior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:interior>");
 
-            CPL_IGNORE_RET_VAL(
-                OGR2GML3GeometryAppend( poRing, poSRS, ppszText, pnLength,
-                                         pnMaxLength, true, eSRSNameFormat,
-                                         bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         true, nullptr, nullptr) );
+            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                poRing, poSRS, ppszText, pnLength, pnMaxLength, true,
+                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
+                nSRSDimensionLocFlags, true, nullptr, nullptr));
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:interior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:interior>");
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElemName );
-        AppendString( ppszText, pnLength, pnMaxLength, ">" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
+        AppendString(ppszText, pnLength, pnMaxLength, pszElemName);
+        AppendString(ppszText, pnLength, pnMaxLength, ">");
     }
 
-/* -------------------------------------------------------------------- */
-/*     Triangle                                                         */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbTriangle )
+    /* -------------------------------------------------------------------- */
+    /*     Triangle                                                         */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbTriangle)
     {
         const auto poTri = poGeometry->toPolygon();
 
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:Triangle>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:Triangle>");
 
-        if( poTri->getExteriorRingCurve() != nullptr )
+        if (poTri->getExteriorRingCurve() != nullptr)
         {
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:exterior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:exterior>");
 
-            CPL_IGNORE_RET_VAL(
-                OGR2GML3GeometryAppend( poTri->getExteriorRingCurve(), poSRS,
-                                         ppszText, pnLength,
-                                         pnMaxLength, true, eSRSNameFormat,
-                                         bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         true, nullptr, nullptr) );
+            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                poTri->getExteriorRingCurve(), poSRS, ppszText, pnLength,
+                pnMaxLength, true, eSRSNameFormat, bCoordSwap,
+                bLineStringAsCurve, nullptr, nSRSDimensionLocFlags, true,
+                nullptr, nullptr));
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:exterior>" );
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:exterior>");
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:Triangle>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:Triangle>");
     }
 
-/* -------------------------------------------------------------------- */
-/*      MultiSurface, MultiCurve, MultiPoint, MultiGeometry             */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbMultiPolygon
-             || eFType == wkbMultiSurface
-             || eFType == wkbMultiLineString
-             || eFType == wkbMultiCurve
-             || eFType == wkbMultiPoint
-             || eFType == wkbGeometryCollection )
+    /* -------------------------------------------------------------------- */
+    /*      MultiSurface, MultiCurve, MultiPoint, MultiGeometry             */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbMultiPolygon || eFType == wkbMultiSurface ||
+             eFType == wkbMultiLineString || eFType == wkbMultiCurve ||
+             eFType == wkbMultiPoint || eFType == wkbGeometryCollection)
     {
         const auto poGC = poGeometry->toGeometryCollection();
         const char *pszElemClose = nullptr;
         const char *pszMemberElem = nullptr;
 
         // Buffer for opening tag + srsName attribute.
-        char* pszElemOpen = nullptr;
+        char *pszElemOpen = nullptr;
 
-        if( eFType == wkbMultiPolygon || eFType == wkbMultiSurface )
+        if (eFType == wkbMultiPolygon || eFType == wkbMultiSurface)
         {
             const size_t nBufLen = 13 + nAttrsLength + 1;
             pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
-            snprintf( pszElemOpen, nBufLen, "MultiSurface%s>", szAttributes );
+            snprintf(pszElemOpen, nBufLen, "MultiSurface%s>", szAttributes);
 
             pszElemClose = "MultiSurface>";
             pszMemberElem = "surfaceMember>";
         }
-        else if( eFType == wkbMultiLineString || eFType == wkbMultiCurve )
+        else if (eFType == wkbMultiLineString || eFType == wkbMultiCurve)
         {
             const size_t nBufLen = 16 + nAttrsLength + 1;
             pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
-            snprintf( pszElemOpen, nBufLen, "MultiCurve%s>", szAttributes );
+            snprintf(pszElemOpen, nBufLen, "MultiCurve%s>", szAttributes);
 
             pszElemClose = "MultiCurve>";
             pszMemberElem = "curveMember>";
         }
-        else if( eFType == wkbMultiPoint )
+        else if (eFType == wkbMultiPoint)
         {
             const size_t nBufLen = 11 + nAttrsLength + 1;
             pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
-            snprintf( pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes );
+            snprintf(pszElemOpen, nBufLen, "MultiPoint%s>", szAttributes);
 
             pszElemClose = "MultiPoint>";
             pszMemberElem = "pointMember>";
@@ -1010,78 +930,73 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             const size_t nBufLen = 19 + nAttrsLength + 1;
             pszElemOpen = static_cast<char *>(CPLMalloc(nBufLen));
-            snprintf( pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes );
+            snprintf(pszElemOpen, nBufLen, "MultiGeometry%s>", szAttributes);
 
             pszElemClose = "MultiGeometry>";
             pszMemberElem = "geometryMember>";
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:");
+        AppendString(ppszText, pnLength, pnMaxLength, pszElemOpen);
 
         // Free tag buffer.
-        CPLFree( pszElemOpen );
+        CPLFree(pszElemOpen);
 
-        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
+        for (int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
-            const OGRGeometry *poMember = poGC->getGeometryRef( iMember );
+            const OGRGeometry *poMember = poGC->getGeometryRef(iMember);
 
-            AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
+            AppendString(ppszText, pnLength, pnMaxLength, "<gml:");
+            AppendString(ppszText, pnLength, pnMaxLength, pszMemberElem);
 
-            char* pszGMLIdSub = nullptr;
-            if( pszGMLId != nullptr )
-                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
-
-            if( !OGR2GML3GeometryAppend( poMember, poSRS,
-                                         ppszText, pnLength, pnMaxLength,
-                                         true, eSRSNameFormat, bCoordSwap,
-                                         bLineStringAsCurve,
-                                         pszGMLIdSub, nSRSDimensionLocFlags,
-                                         false, nullptr, nullptr ) )
-            {
-                CPLFree(pszGMLIdSub);
-                return false;
-            }
-
-            CPLFree(pszGMLIdSub);
-
-            AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
-            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
-        }
-
-        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
-        AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
-
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Polyhedral Surface                                              */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbPolyhedralSurface)
-    {
-        // The patches enclosed in a single <gml:polygonPatches> tag need to be co-planar.
-        // TODO - enforce the condition within this implementation
-        const auto poPS = poGeometry->toPolyhedralSurface();
-
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:PolyhedralSurface" );
-        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
-        AppendString( ppszText, pnLength, pnMaxLength, "><gml:polygonPatches>" );
-
-        for( int iMember = 0; iMember < poPS->getNumGeometries(); iMember++)
-        {
-            const OGRGeometry *poMember = poPS->getGeometryRef( iMember );
-            char* pszGMLIdSub = nullptr;
+            char *pszGMLIdSub = nullptr;
             if (pszGMLId != nullptr)
                 pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
 
-            if( !OGR2GML3GeometryAppend( poMember, poSRS,
-                                         ppszText, pnLength,
-                                         pnMaxLength, true, eSRSNameFormat,
-                                         bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         false, nullptr, "PolygonPatch" ) )
+            if (!OGR2GML3GeometryAppend(
+                    poMember, poSRS, ppszText, pnLength, pnMaxLength, true,
+                    eSRSNameFormat, bCoordSwap, bLineStringAsCurve, pszGMLIdSub,
+                    nSRSDimensionLocFlags, false, nullptr, nullptr))
+            {
+                CPLFree(pszGMLIdSub);
+                return false;
+            }
+
+            CPLFree(pszGMLIdSub);
+
+            AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
+            AppendString(ppszText, pnLength, pnMaxLength, pszMemberElem);
+        }
+
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
+        AppendString(ppszText, pnLength, pnMaxLength, pszElemClose);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Polyhedral Surface                                              */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbPolyhedralSurface)
+    {
+        // The patches enclosed in a single <gml:polygonPatches> tag need to be
+        // co-planar.
+        // TODO - enforce the condition within this implementation
+        const auto poPS = poGeometry->toPolyhedralSurface();
+
+        AppendString(ppszText, pnLength, pnMaxLength, "<gml:PolyhedralSurface");
+        AppendString(ppszText, pnLength, pnMaxLength, szAttributes);
+        AppendString(ppszText, pnLength, pnMaxLength, "><gml:polygonPatches>");
+
+        for (int iMember = 0; iMember < poPS->getNumGeometries(); iMember++)
+        {
+            const OGRGeometry *poMember = poPS->getGeometryRef(iMember);
+            char *pszGMLIdSub = nullptr;
+            if (pszGMLId != nullptr)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
+            if (!OGR2GML3GeometryAppend(
+                    poMember, poSRS, ppszText, pnLength, pnMaxLength, true,
+                    eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
+                    nSRSDimensionLocFlags, false, nullptr, "PolygonPatch"))
             {
                 CPLFree(pszGMLIdSub);
                 return false;
@@ -1090,16 +1005,15 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             CPLFree(pszGMLIdSub);
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:polygonPatches>" );
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:PolyhedralSurface>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:polygonPatches>");
+        AppendString(ppszText, pnLength, pnMaxLength,
+                     "</gml:PolyhedralSurface>");
     }
 
-/* -------------------------------------------------------------------- */
-/*      TIN                                                             */
-/* -------------------------------------------------------------------- */
-    else if( eFType == wkbTIN)
+    /* -------------------------------------------------------------------- */
+    /*      TIN                                                             */
+    /* -------------------------------------------------------------------- */
+    else if (eFType == wkbTIN)
     {
         // OGR uses the following hierarchy for TriangulatedSurface -
 
@@ -1115,36 +1029,34 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         //     </gml:patches>
         // </gml:TriangulatedSurface>
 
-        // <gml:trianglePatches> is deprecated, so write feature is not enabled for <gml:trianglePatches>
+        // <gml:trianglePatches> is deprecated, so write feature is not enabled
+        // for <gml:trianglePatches>
         const auto poTIN = poGeometry->toPolyhedralSurface();
 
-        AppendString( ppszText, pnLength, pnMaxLength, "<gml:TriangulatedSurface" );
-        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
-        AppendString( ppszText, pnLength, pnMaxLength, "><gml:patches>" );
+        AppendString(ppszText, pnLength, pnMaxLength,
+                     "<gml:TriangulatedSurface");
+        AppendString(ppszText, pnLength, pnMaxLength, szAttributes);
+        AppendString(ppszText, pnLength, pnMaxLength, "><gml:patches>");
 
-        for( int iMember = 0; iMember < poTIN->getNumGeometries(); iMember++)
+        for (int iMember = 0; iMember < poTIN->getNumGeometries(); iMember++)
         {
-            const OGRGeometry *poMember = poTIN->getGeometryRef( iMember );
+            const OGRGeometry *poMember = poTIN->getGeometryRef(iMember);
 
-            char* pszGMLIdSub = nullptr;
+            char *pszGMLIdSub = nullptr;
             if (pszGMLId != nullptr)
                 pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
 
-            CPL_IGNORE_RET_VAL(
-                OGR2GML3GeometryAppend( poMember, poSRS,
-                                         ppszText, pnLength,
-                                         pnMaxLength, true, eSRSNameFormat,
-                                         bCoordSwap,
-                                         bLineStringAsCurve,
-                                         nullptr, nSRSDimensionLocFlags,
-                                         false, nullptr, nullptr) );
+            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                poMember, poSRS, ppszText, pnLength, pnMaxLength, true,
+                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
+                nSRSDimensionLocFlags, false, nullptr, nullptr));
 
             CPLFree(pszGMLIdSub);
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength, "</gml:patches>" );
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:TriangulatedSurface>" );
+        AppendString(ppszText, pnLength, pnMaxLength, "</gml:patches>");
+        AppendString(ppszText, pnLength, pnMaxLength,
+                     "</gml:TriangulatedSurface>");
     }
 
     else
@@ -1162,16 +1074,16 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /************************************************************************/
 
 /** Convert a geometry into GML format. */
-CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
+CPLXMLNode *OGR_G_ExportToGMLTree(OGRGeometryH hGeometry)
 
 {
-    char *pszText = OGR_G_ExportToGML( hGeometry );
-    if( pszText == nullptr )
+    char *pszText = OGR_G_ExportToGML(hGeometry);
+    if (pszText == nullptr)
         return nullptr;
 
-    CPLXMLNode *psTree = CPLParseXMLString( pszText );
+    CPLXMLNode *psTree = CPLParseXMLString(pszText);
 
-    CPLFree( pszText );
+    CPLFree(pszText);
 
     return psTree;
 }
@@ -1193,7 +1105,7 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
  * @return A GML fragment or NULL in case of error.
  */
 
-char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
+char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
 
 {
     return OGR_G_ExportToGMLEx(hGeometry, nullptr);
@@ -1232,7 +1144,8 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
  *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE. For
- *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long or
+ *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long
+ or
  *      northing/easting, then the function will take care of coordinate order
  *      swapping if the data axis to CRS axis mapping indicates it.
  * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
@@ -1262,14 +1175,14 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  * @since OGR 1.8.0
  */
 
-char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
+char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
 
 {
-    if( hGeometry == nullptr )
-        return CPLStrdup( "" );
+    if (hGeometry == nullptr)
+        return CPLStrdup("");
 
     // Do not use hGeometry after here.
-    OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry*>(hGeometry);
+    OGRGeometry *poGeometry = reinterpret_cast<OGRGeometry *>(hGeometry);
 
     size_t nLength = 0;
     size_t nMaxLength = 1;
@@ -1277,34 +1190,34 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     char *pszText = static_cast<char *>(CPLMalloc(nMaxLength));
     pszText[0] = '\0';
 
-    const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
+    const char *pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
     const bool bNamespaceDecl =
-        CPLTestBool(CSLFetchNameValueDef(papszOptions,
-                                         "NAMESPACE_DECL", "NO")) != FALSE;
-    if( pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML32")) )
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL",
+                                         "NO")) != FALSE;
+    if (pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML32")))
     {
-        const char* pszLineStringElement =
+        const char *pszLineStringElement =
             CSLFetchNameValue(papszOptions, "GML3_LINESTRING_ELEMENT");
         const bool bLineStringAsCurve =
             pszLineStringElement && EQUAL(pszLineStringElement, "curve");
-        const char* pszLongSRS =
+        const char *pszLongSRS =
             CSLFetchNameValue(papszOptions, "GML3_LONGSRS");
-        const char* pszSRSNameFormat =
+        const char *pszSRSNameFormat =
             CSLFetchNameValue(papszOptions, "SRSNAME_FORMAT");
         GMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
-        if( pszSRSNameFormat )
+        if (pszSRSNameFormat)
         {
-            if( pszLongSRS )
+            if (pszLongSRS)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "Both GML3_LONGSRS and SRSNAME_FORMAT specified. "
                          "Ignoring GML3_LONGSRS");
             }
-            if( EQUAL(pszSRSNameFormat, "SHORT") )
+            if (EQUAL(pszSRSNameFormat, "SHORT"))
                 eSRSNameFormat = SRSNAME_SHORT;
-            else if( EQUAL(pszSRSNameFormat, "OGC_URN") )
+            else if (EQUAL(pszSRSNameFormat, "OGC_URN"))
                 eSRSNameFormat = SRSNAME_OGC_URN;
-            else if( EQUAL(pszSRSNameFormat, "OGC_URL") )
+            else if (EQUAL(pszSRSNameFormat, "OGC_URL"))
                 eSRSNameFormat = SRSNAME_OGC_URL;
             else
             {
@@ -1313,81 +1226,75 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
                          "Using SRSNAME_OGC_URN");
             }
         }
-        else if( pszLongSRS && !CPLTestBool(pszLongSRS) )
+        else if (pszLongSRS && !CPLTestBool(pszLongSRS))
             eSRSNameFormat = SRSNAME_SHORT;
 
-        const char* pszGMLId = CSLFetchNameValue(papszOptions, "GMLID");
-        if( pszGMLId == nullptr && EQUAL(pszFormat, "GML32") )
+        const char *pszGMLId = CSLFetchNameValue(papszOptions, "GMLID");
+        if (pszGMLId == nullptr && EQUAL(pszFormat, "GML32"))
             CPLError(CE_Warning, CPLE_AppDefined,
                      "FORMAT=GML32 specified but not GMLID set");
-        const char* pszSRSDimensionLoc =
-                CSLFetchNameValueDef(papszOptions, "SRSDIMENSION_LOC",
-                                     "POSLIST");
-        char** papszSRSDimensionLoc =
+        const char *pszSRSDimensionLoc =
+            CSLFetchNameValueDef(papszOptions, "SRSDIMENSION_LOC", "POSLIST");
+        char **papszSRSDimensionLoc =
             CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
         int nSRSDimensionLocFlags = 0;
-        for( int i = 0; papszSRSDimensionLoc[i] != nullptr; i++ )
+        for (int i = 0; papszSRSDimensionLoc[i] != nullptr; i++)
         {
-            if( EQUAL(papszSRSDimensionLoc[i], "POSLIST") )
+            if (EQUAL(papszSRSDimensionLoc[i], "POSLIST"))
                 nSRSDimensionLocFlags |= SRSDIM_LOC_POSLIST;
-            else if( EQUAL(papszSRSDimensionLoc[i], "GEOMETRY") )
+            else if (EQUAL(papszSRSDimensionLoc[i], "GEOMETRY"))
                 nSRSDimensionLocFlags |= SRSDIM_LOC_GEOMETRY;
             else
                 CPLDebug("OGR", "Unrecognized location for srsDimension : %s",
                          papszSRSDimensionLoc[i]);
         }
         CSLDestroy(papszSRSDimensionLoc);
-        const char* pszNamespaceDecl = nullptr;
-        if( bNamespaceDecl && EQUAL(pszFormat, "GML32") )
+        const char *pszNamespaceDecl = nullptr;
+        if (bNamespaceDecl && EQUAL(pszFormat, "GML32"))
             pszNamespaceDecl = "http://www.opengis.net/gml/3.2";
-        else if( bNamespaceDecl )
+        else if (bNamespaceDecl)
             pszNamespaceDecl = "http://www.opengis.net/gml";
 
         bool bCoordSwap = false;
-        const char* pszCoordSwap =
+        const char *pszCoordSwap =
             CSLFetchNameValue(papszOptions, "COORD_SWAP");
-        if( pszCoordSwap )
+        if (pszCoordSwap)
         {
             bCoordSwap = CPLTestBool(pszCoordSwap);
         }
         else
         {
-            const OGRSpatialReference* poSRS =
+            const OGRSpatialReference *poSRS =
                 poGeometry->getSpatialReference();
-            if( poSRS != nullptr && eSRSNameFormat != SRSNAME_SHORT )
+            if (poSRS != nullptr && eSRSNameFormat != SRSNAME_SHORT)
             {
-                const auto& map = poSRS->GetDataAxisToSRSAxisMapping();
-                if( map.size() >= 2 && map[0] == 2 && map[1] == 1 )
+                const auto &map = poSRS->GetDataAxisToSRSAxisMapping();
+                if (map.size() >= 2 && map[0] == 2 && map[1] == 1)
                 {
                     bCoordSwap = true;
                 }
             }
         }
 
-        if( !OGR2GML3GeometryAppend( poGeometry, nullptr, &pszText,
-                                     &nLength, &nMaxLength, false,
-                                     eSRSNameFormat,
-                                     bCoordSwap,
-                                     bLineStringAsCurve, pszGMLId,
-                                     nSRSDimensionLocFlags, false,
-                                     pszNamespaceDecl, nullptr ))
+        if (!OGR2GML3GeometryAppend(
+                poGeometry, nullptr, &pszText, &nLength, &nMaxLength, false,
+                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, pszGMLId,
+                nSRSDimensionLocFlags, false, pszNamespaceDecl, nullptr))
         {
-            CPLFree( pszText );
+            CPLFree(pszText);
             return nullptr;
         }
 
         return pszText;
     }
 
-    const char* pszNamespaceDecl = nullptr;
-    if( bNamespaceDecl )
+    const char *pszNamespaceDecl = nullptr;
+    if (bNamespaceDecl)
         pszNamespaceDecl = "http://www.opengis.net/gml";
-    if( !OGR2GMLGeometryAppend(
-            poGeometry, &pszText,
-            &nLength, &nMaxLength, false,
-            pszNamespaceDecl) )
+    if (!OGR2GMLGeometryAppend(poGeometry, &pszText, &nLength, &nMaxLength,
+                               false, pszNamespaceDecl))
     {
-        CPLFree( pszText );
+        CPLFree(pszText);
         return nullptr;
     }
 

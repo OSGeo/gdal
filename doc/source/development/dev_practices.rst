@@ -68,7 +68,7 @@ Working with a feature branch
 
     # push your branch
     git push my_user_name my_new_feature_branch
-    
+
 
 From the GitHub UI, issue a pull request.
 
@@ -96,7 +96,7 @@ Commit messages should indicate a component name (eg a driver name), a short
 description, and when relevant, a reference to a issue (with 'fixes #' if it
 actually fixes it)
 
-:: 
+::
 
     COMPONENT_NAME: fix bla bla (fixes #1234)
 
@@ -116,6 +116,19 @@ hooks are cloned with the repository and can be installed using
 
 
 Once installed, the hooks can be run manually via ``pre-commit run --all-files``.
+
+Blame ignore file
+^^^^^^^^^^^^^^^^^
+
+Due to whole-tree code reformatting done during GDAL 3.7 development,
+``git blame`` information might be misleading. To avoid that, you need
+to modify your git configuration as following to ignore the revision of
+the whole-tree reformatting:
+
+.. code-block:: bash
+
+    git config blame.ignoreRevsFile .git-blame-ignore-revs
+
 
 Backporting bugfixes from master to a stable branch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

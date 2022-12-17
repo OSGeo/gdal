@@ -38,51 +38,48 @@
 /*                          JPEGDecompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
-                                  GByte* pabyOut, GUInt32 nSizeOut,
+size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
+                                  GByte *pabyOut, GUInt32 nSizeOut,
                                   GUInt32 nRawXSize, GUInt32 nRawYSize)
 {
-    if(pabyIn == nullptr ||
-       pabyOut == nullptr ||
-       nSizeOut < nSizeIn ||
-       nSizeIn < 2)
-       return 0;
+    if (pabyIn == nullptr || pabyOut == nullptr || nSizeOut < nSizeIn ||
+        nSizeIn < 2)
+        return 0;
 
-    CPLString   osTmpFilename;
-    VSILFILE*   fp;
+    CPLString osTmpFilename;
+    VSILFILE *fp;
 
     osTmpFilename.Printf("/vsimem/rmfjpeg/%p.jpg", pabyIn);
 
-    fp = VSIFileFromMemBuffer(osTmpFilename, const_cast<GByte*>(pabyIn),
+    fp = VSIFileFromMemBuffer(osTmpFilename, const_cast<GByte *>(pabyIn),
                               nSizeIn, FALSE);
 
-    if(fp == nullptr)
+    if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "RMF JPEG: Can't create %s file", osTmpFilename.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "RMF JPEG: Can't create %s file",
+                 osTmpFilename.c_str());
         return 0;
     }
 
-    const char*     apszAllowedDrivers[] = {"JPEG", nullptr};
-    GDALDatasetH    hTile;
+    const char *apszAllowedDrivers[] = {"JPEG", nullptr};
+    GDALDatasetH hTile;
 
-
-    CPLConfigOptionSetter   oNoReadDir("GDAL_DISABLE_READDIR_ON_OPEN",
-                                       "EMPTY_DIR", false);
+    CPLConfigOptionSetter oNoReadDir("GDAL_DISABLE_READDIR_ON_OPEN",
+                                     "EMPTY_DIR", false);
 
     hTile = GDALOpenEx(osTmpFilename, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                        apszAllowedDrivers, nullptr, nullptr);
 
-    if(hTile == nullptr)
+    if (hTile == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "RMF JPEG: Can't open %s file", osTmpFilename.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "RMF JPEG: Can't open %s file",
+                 osTmpFilename.c_str());
         VSIFCloseL(fp);
         VSIUnlink(osTmpFilename);
         return 0;
     }
 
-    if(GDALGetRasterCount(hTile) != RMF_JPEG_BAND_COUNT)
+    if (GDALGetRasterCount(hTile) != RMF_JPEG_BAND_COUNT)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Invalid band count %d in tile, must be %d",
@@ -95,12 +92,12 @@ size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
     int nBandCount = GDALGetRasterCount(hTile);
 
-    int nImageWidth = std::min(GDALGetRasterXSize(hTile),
-                               static_cast<int>(nRawXSize));
-    int nImageHeight = std::min(GDALGetRasterYSize(hTile),
-                                static_cast<int>(nRawYSize));
+    int nImageWidth =
+        std::min(GDALGetRasterXSize(hTile), static_cast<int>(nRawXSize));
+    int nImageHeight =
+        std::min(GDALGetRasterYSize(hTile), static_cast<int>(nRawYSize));
 
-    if( nRawXSize * nBandCount * nImageHeight > nSizeOut )
+    if (nRawXSize * nBandCount * nImageHeight > nSizeOut)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Too small output buffer");
@@ -110,15 +107,14 @@ size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
         return 0;
     }
 
-    CPLErr  eErr;
-    size_t  nRet;
-    int     aBandMap[RMF_JPEG_BAND_COUNT] = {3, 2, 1};
-    eErr = GDALDatasetRasterIO(hTile, GF_Read, 0, 0,
-                               nImageWidth, nImageHeight, pabyOut,
-                               nImageWidth, nImageHeight, GDT_Byte,
-                               nBandCount, aBandMap,
-                               nBandCount, nRawXSize * nBandCount, 1);
-    if(CE_None != eErr)
+    CPLErr eErr;
+    size_t nRet;
+    int aBandMap[RMF_JPEG_BAND_COUNT] = {3, 2, 1};
+    eErr = GDALDatasetRasterIO(hTile, GF_Read, 0, 0, nImageWidth, nImageHeight,
+                               pabyOut, nImageWidth, nImageHeight, GDT_Byte,
+                               nBandCount, aBandMap, nBandCount,
+                               nRawXSize * nBandCount, 1);
+    if (CE_None != eErr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Error decompress JPEG tile");
@@ -140,59 +136,57 @@ size_t RMFDataset::JPEGDecompress(const GByte* pabyIn, GUInt32 nSizeIn,
 /*                            JPEGCompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
-                                GByte* pabyOut, GUInt32 nSizeOut,
+size_t RMFDataset::JPEGCompress(const GByte *pabyIn, GUInt32 nSizeIn,
+                                GByte *pabyOut, GUInt32 nSizeOut,
                                 GUInt32 nRawXSize, GUInt32 nRawYSize,
-                                const RMFDataset* poDS)
+                                const RMFDataset *poDS)
 {
-    if(pabyIn == nullptr ||
-       pabyOut == nullptr ||
-       nSizeIn < 2)
-       return 0;
+    if (pabyIn == nullptr || pabyOut == nullptr || nSizeIn < 2)
+        return 0;
 
     GDALDriverH hJpegDriver = GDALGetDriverByName("JPEG");
 
-    if(hJpegDriver == nullptr)
+    if (hJpegDriver == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "RMF: JPEG driver not found");
+        CPLError(CE_Failure, CPLE_AppDefined, "RMF: JPEG driver not found");
         return 0;
     }
 
-    const GDALDataType    eType = GDT_Byte;
+    const GDALDataType eType = GDT_Byte;
     auto poMemDS = std::unique_ptr<MEMDataset>(
         MEMDataset::Create("", nRawXSize, nRawYSize, 0, eType, nullptr));
 
-    for(int iBand = 0; iBand < RMF_JPEG_BAND_COUNT; ++iBand)
+    for (int iBand = 0; iBand < RMF_JPEG_BAND_COUNT; ++iBand)
     {
-        const GByte* pabyBand = pabyIn + (RMF_JPEG_BAND_COUNT - iBand - 1);
-        auto hBand = MEMCreateRasterBandEx( poMemDS.get(), iBand + 1,
-                                            const_cast<GByte*>(pabyBand),
-                                            eType, 3, nRawXSize*RMF_JPEG_BAND_COUNT, false );
+        const GByte *pabyBand = pabyIn + (RMF_JPEG_BAND_COUNT - iBand - 1);
+        auto hBand = MEMCreateRasterBandEx(
+            poMemDS.get(), iBand + 1, const_cast<GByte *>(pabyBand), eType, 3,
+            nRawXSize * RMF_JPEG_BAND_COUNT, false);
         poMemDS->AddMEMBand(hBand);
     }
 
-    CPLString   osTmpFilename;
+    CPLString osTmpFilename;
     osTmpFilename.Printf("/vsimem/rmfjpeg/%p.jpg", pabyIn);
 
     char szQuality[32] = {};
-    if(poDS != nullptr && poDS->sHeader.iJpegQuality > 0)
+    if (poDS != nullptr && poDS->sHeader.iJpegQuality > 0)
     {
-        snprintf(szQuality, sizeof(szQuality),
-                 "QUALITY=%d", (int)poDS->sHeader.iJpegQuality);
+        snprintf(szQuality, sizeof(szQuality), "QUALITY=%d",
+                 (int)poDS->sHeader.iJpegQuality);
     }
     else
     {
         snprintf(szQuality, sizeof(szQuality), "QUALITY=75");
     }
 
-    char* apszJpegOptions[2] = {szQuality, nullptr};
+    char *apszJpegOptions[2] = {szQuality, nullptr};
 
-    GDALDatasetH   hJpeg = GDALCreateCopy(hJpegDriver, osTmpFilename, poMemDS.get(),
-                                          0, apszJpegOptions, nullptr, nullptr);
+    GDALDatasetH hJpeg =
+        GDALCreateCopy(hJpegDriver, osTmpFilename, poMemDS.get(), 0,
+                       apszJpegOptions, nullptr, nullptr);
     poMemDS.reset();
 
-    if(hJpeg == nullptr)
+    if (hJpeg == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RMF JPEG: Error compress JPEG tile");
@@ -202,10 +196,10 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
     GDALClose(hJpeg);
 
-    vsi_l_offset    nDataLength = 0;
-    GByte* pabyBuffer = VSIGetMemFileBuffer(osTmpFilename, &nDataLength, TRUE);
+    vsi_l_offset nDataLength = 0;
+    GByte *pabyBuffer = VSIGetMemFileBuffer(osTmpFilename, &nDataLength, TRUE);
 
-    if(nDataLength < nSizeOut)
+    if (nDataLength < nSizeOut)
     {
         memcpy(pabyOut, pabyBuffer, static_cast<size_t>(nDataLength));
         CPLFree(pabyBuffer);
@@ -215,4 +209,4 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
     CPLFree(pabyBuffer);
     return 0;
 }
-#endif //HAVE_LIBJPEG
+#endif  // HAVE_LIBJPEG

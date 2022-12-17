@@ -1,8 +1,8 @@
 /******************************************************************************
  *
  * Project:  MSSQL Spatial driver
- * Purpose:  Implements OGRMSSQLSpatialTableLayer class, access to an existing table.
- * Author:   Tamas Szekeres, szekerest at gmail.com
+ * Purpose:  Implements OGRMSSQLSpatialTableLayer class, access to an existing
+ *table. Author:   Tamas Szekeres, szekerest at gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2010, Tamas Szekeres
@@ -33,14 +33,15 @@
 
 #include <memory>
 
-
-#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+#define UNSUPPORTED_OP_READ_ONLY                                               \
+    "%s : unsupported operation on a read-only datasource."
 
 /************************************************************************/
 /*                         OGRMSSQLAppendEscaped( )                     */
 /************************************************************************/
 
-void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrValue)
+void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
+                           const char *pszStrValue)
 {
     if (!pszStrValue)
     {
@@ -48,17 +49,17 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
         return;
     }
 
-    size_t  iIn, iOut , nTextLen = strlen(pszStrValue);
-    char    *pszEscapedText = (char *) CPLMalloc(nTextLen*2 + 3);
+    size_t iIn, iOut, nTextLen = strlen(pszStrValue);
+    char *pszEscapedText = (char *)CPLMalloc(nTextLen * 2 + 3);
 
     pszEscapedText[0] = '\'';
 
-    for( iIn = 0, iOut = 1; iIn < nTextLen; iIn++ )
+    for (iIn = 0, iOut = 1; iIn < nTextLen; iIn++)
     {
-        switch( pszStrValue[iIn] )
+        switch (pszStrValue[iIn])
         {
             case '\'':
-                pszEscapedText[iOut++] = '\''; // double quote
+                pszEscapedText[iOut++] = '\'';  // double quote
                 pszEscapedText[iOut++] = pszStrValue[iIn];
                 break;
 
@@ -74,17 +75,19 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 
     poStatement->Append(pszEscapedText);
 
-    CPLFree( pszEscapedText );
+    CPLFree(pszEscapedText);
 }
 
 /************************************************************************/
 /*                          OGRMSSQLSpatialTableLayer()                 */
 /************************************************************************/
 
-OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn )
+OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer(
+    OGRMSSQLSpatialDataSource *poDSIn)
 {
     poDS = poDSIn;
-    bUseGeometryValidation = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_VALIDATION", "YES"));
+    bUseGeometryValidation = CPLTestBool(
+        CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_VALIDATION", "YES"));
 }
 
 /************************************************************************/
@@ -98,18 +101,18 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
     CloseBCP();
 #endif
 
-    if ( bNeedSpatialIndex && nLayerStatus == MSSQLLAYERSTATUS_CREATED )
+    if (bNeedSpatialIndex && nLayerStatus == MSSQLLAYERSTATUS_CREATED)
     {
         /* recreate spatial index */
         DropSpatialIndex();
         CreateSpatialIndex();
     }
 
-    CPLFree( pszTableName );
-    CPLFree( pszLayerName );
-    CPLFree( pszSchemaName );
+    CPLFree(pszTableName);
+    CPLFree(pszLayerName);
+    CPLFree(pszSchemaName);
 
-    CPLFree( pszQuery );
+    CPLFree(pszQuery);
     ClearStatement();
 }
 
@@ -126,102 +129,107 @@ const char *OGRMSSQLSpatialTableLayer::GetName()
 /************************************************************************/
 /*                             GetLayerDefn()                           */
 /************************************************************************/
-OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
+OGRFeatureDefn *OGRMSSQLSpatialTableLayer::GetLayerDefn()
 {
     if (poFeatureDefn)
         return poFeatureDefn;
 
     CPLODBCSession *poSession = poDS->GetSession();
-/* -------------------------------------------------------------------- */
-/*      Do we have a simple primary key?                                */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement oGetKey( poSession );
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a simple primary key?                                */
+    /* -------------------------------------------------------------------- */
+    CPLODBCStatement oGetKey(poSession);
 
-    if( oGetKey.GetPrimaryKeys( pszTableName, poDS->GetCatalog(), pszSchemaName )
-        && oGetKey.Fetch() )
+    if (oGetKey.GetPrimaryKeys(pszTableName, poDS->GetCatalog(),
+                               pszSchemaName) &&
+        oGetKey.Fetch())
     {
         CPLFree(pszFIDColumn);
-        pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
+        pszFIDColumn = CPLStrdup(oGetKey.GetColData(3));
 
-        if( oGetKey.Fetch() ) // more than one field in key!
+        if (oGetKey.Fetch())  // more than one field in key!
         {
             oGetKey.Clear();
-            CPLFree( pszFIDColumn );
+            CPLFree(pszFIDColumn);
             pszFIDColumn = nullptr;
 
-            CPLDebug( "OGR_MSSQLSpatial", "Table %s has multiple primary key fields, "
-                      "ignoring them all.", pszTableName );
+            CPLDebug("OGR_MSSQLSpatial",
+                     "Table %s has multiple primary key fields, "
+                     "ignoring them all.",
+                     pszTableName);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Get the column definitions for this table.                      */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement oGetCol( poSession );
+    /* -------------------------------------------------------------------- */
+    /*      Get the column definitions for this table.                      */
+    /* -------------------------------------------------------------------- */
+    CPLODBCStatement oGetCol(poSession);
 
-    if( !oGetCol.GetColumns( pszTableName, poDS->GetCatalog(), pszSchemaName ) )
+    if (!oGetCol.GetColumns(pszTableName, poDS->GetCatalog(), pszSchemaName))
     {
         poFeatureDefn = new OGRFeatureDefn();
         poFeatureDefn->Reference();
         return poFeatureDefn;
     }
 
-    BuildFeatureDefn( pszLayerName, &oGetCol );
+    BuildFeatureDefn(pszLayerName, &oGetCol);
 
     if (eGeomType != wkbNone)
         poFeatureDefn->SetGeomType(eGeomType);
 
-    if ( GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSRS );
+    if (GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    if( poFeatureDefn->GetFieldCount() == 0 &&
-        pszFIDColumn == nullptr && pszGeomColumn == nullptr )
+    if (poFeatureDefn->GetFieldCount() == 0 && pszFIDColumn == nullptr &&
+        pszGeomColumn == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "No column definitions found for table '%s', layer not usable.",
-                  pszLayerName );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "No column definitions found for table '%s', layer not usable.",
+            pszLayerName);
         return poFeatureDefn;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we got a geometry column, does it exist?  Is it binary?      */
-/* -------------------------------------------------------------------- */
-    if( pszGeomColumn != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      If we got a geometry column, does it exist?  Is it binary?      */
+    /* -------------------------------------------------------------------- */
+    if (pszGeomColumn != nullptr)
     {
-        int iColumn = oGetCol.GetColId( pszGeomColumn );
-        if( iColumn < 0 )
+        int iColumn = oGetCol.GetColId(pszGeomColumn);
+        if (iColumn < 0)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Column %s requested for geometry, but it does not exist.",
-                      pszGeomColumn );
-            CPLFree( pszGeomColumn );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Column %s requested for geometry, but it does not exist.",
+                     pszGeomColumn);
+            CPLFree(pszGeomColumn);
             pszGeomColumn = nullptr;
         }
         else
         {
-            if ( nGeomColumnType < 0 )
+            if (nGeomColumnType < 0)
             {
                 /* last attempt to identify the geometry column type */
-                if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "geometry") )
+                if (EQUAL(oGetCol.GetColTypeName(iColumn), "geometry"))
                     nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "geography") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "geography"))
                     nGeomColumnType = MSSQLCOLTYPE_GEOGRAPHY;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "varchar") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "varchar"))
                     nGeomColumnType = MSSQLCOLTYPE_TEXT;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "nvarchar") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "nvarchar"))
                     nGeomColumnType = MSSQLCOLTYPE_TEXT;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "text") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "text"))
                     nGeomColumnType = MSSQLCOLTYPE_TEXT;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "ntext") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "ntext"))
                     nGeomColumnType = MSSQLCOLTYPE_TEXT;
-                else if ( EQUAL(oGetCol.GetColTypeName( iColumn ), "image") )
+                else if (EQUAL(oGetCol.GetColTypeName(iColumn), "image"))
                     nGeomColumnType = MSSQLCOLTYPE_BINARY;
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                          "Column type %s is not supported for geometry column.",
-                          oGetCol.GetColTypeName( iColumn ) );
-                    CPLFree( pszGeomColumn );
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Column type %s is not supported for geometry column.",
+                        oGetCol.GetColTypeName(iColumn));
+                    CPLFree(pszGeomColumn);
                     pszGeomColumn = nullptr;
                 }
             }
@@ -235,24 +243,23 @@ OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn()
 /*                             Initialize()                             */
 /************************************************************************/
 
-CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
-                                              const char *pszLayerNameIn,
-                                              const char *pszGeomCol,
-                                              CPL_UNUSED int nCoordDimension,
-                                              int nSRId,
-                                              const char *pszSRText,
-                                              OGRwkbGeometryType eType )
+CPLErr OGRMSSQLSpatialTableLayer::Initialize(const char *pszSchema,
+                                             const char *pszLayerNameIn,
+                                             const char *pszGeomCol,
+                                             CPL_UNUSED int nCoordDimension,
+                                             int nSRId, const char *pszSRText,
+                                             OGRwkbGeometryType eType)
 {
-    CPLFree( pszFIDColumn );
+    CPLFree(pszFIDColumn);
     pszFIDColumn = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Parse out schema name if present in layer.  We assume a         */
-/*      schema is provided if there is a dot in the name, and that      */
-/*      it is in the form <schema>.<tablename>                          */
-/* -------------------------------------------------------------------- */
-    const char *pszDot = strstr(pszLayerNameIn,".");
-    if( pszDot != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Parse out schema name if present in layer.  We assume a         */
+    /*      schema is provided if there is a dot in the name, and that      */
+    /*      it is in the form <schema>.<tablename>                          */
+    /* -------------------------------------------------------------------- */
+    const char *pszDot = strstr(pszLayerNameIn, ".");
+    if (pszDot != nullptr)
     {
         pszTableName = CPLStrdup(pszDot + 1);
         if (pszSchema == nullptr)
@@ -268,7 +275,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     else
     {
         pszTableName = CPLStrdup(pszLayerNameIn);
-        if ( pszSchema == nullptr || EQUAL(pszSchema, "dbo") )
+        if (pszSchema == nullptr || EQUAL(pszSchema, "dbo"))
         {
             pszSchemaName = CPLStrdup("dbo");
             this->pszLayerName = CPLStrdup(pszLayerNameIn);
@@ -276,26 +283,27 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         else
         {
             pszSchemaName = CPLStrdup(pszSchema);
-            this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
+            this->pszLayerName =
+                CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
         }
     }
-    SetDescription( this->pszLayerName );
+    SetDescription(this->pszLayerName);
 
-/* -------------------------------------------------------------------- */
-/*      Have we been provided a geometry column?                        */
-/* -------------------------------------------------------------------- */
-    CPLFree( pszGeomColumn );
-    if( pszGeomCol == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Have we been provided a geometry column?                        */
+    /* -------------------------------------------------------------------- */
+    CPLFree(pszGeomColumn);
+    if (pszGeomCol == nullptr)
         GetLayerDefn(); /* fetch geom column if not specified */
     else
-        pszGeomColumn = CPLStrdup( pszGeomCol );
+        pszGeomColumn = CPLStrdup(pszGeomCol);
 
     if (eType != wkbNone)
         eGeomType = eType;
 
-/* -------------------------------------------------------------------- */
-/*             Try to find out the spatial reference                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*             Try to find out the spatial reference                    */
+    /* -------------------------------------------------------------------- */
 
     nSRSId = nSRId;
 
@@ -304,17 +312,17 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         /* Process srtext directly if specified */
         poSRS = new OGRSpatialReference();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( poSRS->importFromWkt( pszSRText ) != OGRERR_NONE )
+        if (poSRS->importFromWkt(pszSRText) != OGRERR_NONE)
         {
             delete poSRS;
             poSRS = nullptr;
         }
         else
         {
-            const char* pszAuthorityName = poSRS->GetAuthorityName(nullptr);
-            const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
-            if( pszAuthorityName && pszAuthorityCode &&
-                EQUAL(pszAuthorityName, "EPSG") )
+            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            if (pszAuthorityName && pszAuthorityCode &&
+                EQUAL(pszAuthorityName, "EPSG"))
             {
                 const int nCode = atoi(pszAuthorityCode);
                 poSRS->Clear();
@@ -343,18 +351,19 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 
 int OGRMSSQLSpatialTableLayer::FetchSRSId()
 {
-    if ( poDS->UseGeometryColumns() )
+    if (poDS->UseGeometryColumns())
     {
-        CPLODBCStatement oStatement( poDS->GetSession() );
-        oStatement.Appendf( "select srid from geometry_columns "
-                        "where f_table_schema = '%s' and f_table_name = '%s'",
-                        pszSchemaName, pszTableName );
+        CPLODBCStatement oStatement(poDS->GetSession());
+        oStatement.Appendf(
+            "select srid from geometry_columns "
+            "where f_table_schema = '%s' and f_table_name = '%s'",
+            pszSchemaName, pszTableName);
 
-        if( oStatement.ExecuteSQL() && oStatement.Fetch() )
+        if (oStatement.ExecuteSQL() && oStatement.Fetch())
         {
-            if ( oStatement.GetColData( 0 ) )
-                nSRSId = atoi( oStatement.GetColData( 0 ) );
-            if( nSRSId < 0 )
+            if (oStatement.GetColData(0))
+                nSRSId = atoi(oStatement.GetColData(0));
+            if (nSRSId < 0)
                 nSRSId = 0;
         }
     }
@@ -374,51 +383,54 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 
     if (pszGeomColumn == nullptr)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-            "No geometry column found.");
+        CPLError(CE_Warning, CPLE_AppDefined, "No geometry column found.");
         return OGRERR_FAILURE;
     }
 
-    CPLODBCStatement oStatement( poDS->GetSession() );
+    CPLODBCStatement oStatement(poDS->GetSession());
 
     if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
     {
         OGREnvelope oExt;
         if (GetExtent(&oExt, TRUE) != OGRERR_NONE)
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to get extent for spatial index." );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Failed to get extent for spatial index.");
             return OGRERR_FAILURE;
         }
 
         if (oExt.MinX == oExt.MaxX || oExt.MinY == oExt.MaxY)
             return OGRERR_NONE; /* skip creating index */
 
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
-            "USING GEOMETRY_GRID WITH (BOUNDING_BOX =(%.15g, %.15g, %.15g, %.15g))",
-                           pszSchemaName, pszTableName, pszGeomColumn,
-                           pszSchemaName, pszTableName, pszGeomColumn,
-                           oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY );
+        oStatement.Appendf(
+            "CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
+            "USING GEOMETRY_GRID WITH (BOUNDING_BOX =(%.15g, %.15g, %.15g, "
+            "%.15g))",
+            pszSchemaName, pszTableName, pszGeomColumn, pszSchemaName,
+            pszTableName, pszGeomColumn, oExt.MinX, oExt.MinY, oExt.MaxX,
+            oExt.MaxY);
     }
     else if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
-        oStatement.Appendf("CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
+        oStatement.Appendf(
+            "CREATE SPATIAL INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s] ( [%s] ) "
             "USING GEOGRAPHY_GRID",
-                           pszSchemaName, pszTableName, pszGeomColumn,
-                           pszSchemaName, pszTableName, pszGeomColumn );
+            pszSchemaName, pszTableName, pszGeomColumn, pszSchemaName,
+            pszTableName, pszGeomColumn);
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Spatial index is not supported on the geometry column '%s'", pszGeomColumn);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Spatial index is not supported on the geometry column '%s'",
+                 pszGeomColumn);
         return OGRERR_FAILURE;
     }
 
-    if( !oStatement.ExecuteSQL() )
+    if (!oStatement.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to create the spatial index, %s.",
-                      poDS->GetSession()->GetLastError());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to create the spatial index, %s.",
+                 poDS->GetSession()->GetLastError());
         return OGRERR_FAILURE;
     }
 
@@ -435,21 +447,21 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 {
     OGRMSSQLSpatialTableLayer::GetLayerDefn();
 
-    CPLODBCStatement oStatement( poDS->GetSession() );
+    CPLODBCStatement oStatement(poDS->GetSession());
 
     oStatement.Appendf("IF  EXISTS (SELECT * FROM sys.indexes "
-        "WHERE object_id = OBJECT_ID(N'[%s].[%s]') AND name = N'ogr_%s_%s_%s_sidx') "
-        "DROP INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s]",
-                       pszSchemaName, pszTableName,
-                       pszSchemaName, pszTableName, pszGeomColumn,
-                       pszSchemaName, pszTableName, pszGeomColumn,
-                       pszSchemaName, pszTableName );
+                       "WHERE object_id = OBJECT_ID(N'[%s].[%s]') AND name = "
+                       "N'ogr_%s_%s_%s_sidx') "
+                       "DROP INDEX [ogr_%s_%s_%s_sidx] ON [%s].[%s]",
+                       pszSchemaName, pszTableName, pszSchemaName, pszTableName,
+                       pszGeomColumn, pszSchemaName, pszTableName,
+                       pszGeomColumn, pszSchemaName, pszTableName);
 
-    if( !oStatement.ExecuteSQL() )
+    if (!oStatement.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to drop the spatial index, %s.",
-                      poDS->GetSession()->GetLastError());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to drop the spatial index, %s.",
+                 poDS->GetSession()->GetLastError());
         return;
     }
 }
@@ -469,7 +481,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
 
     GetLayerDefn();
 
-    if( pszFIDColumn && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
+    if (pszFIDColumn && poFeatureDefn->GetFieldIndex(pszFIDColumn) == -1)
     {
         /* Always get the FID column */
         osFieldList += "[";
@@ -478,27 +490,27 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
         ++nColumn;
     }
 
-    if( pszGeomColumn && !poFeatureDefn->IsGeometryIgnored())
+    if (pszGeomColumn && !poFeatureDefn->IsGeometryIgnored())
     {
-        if( nColumn > 0 )
+        if (nColumn > 0)
             osFieldList += ", ";
 
         osFieldList += "[";
         osFieldList += pszGeomColumn;
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
-                            nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+            nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if ( poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKB )
+            if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKB)
             {
                 osFieldList += "].STAsBinary() as [";
                 osFieldList += pszGeomColumn;
             }
-            else if ( poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKT )
+            else if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKT)
             {
                 osFieldList += "].AsTextZM() as [";
                 osFieldList += pszGeomColumn;
             }
-            else if ( poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKBZM )
+            else if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKBZM)
             {
                 /* SQL Server 2012 */
                 osFieldList += "].AsBinaryZM() as [";
@@ -514,16 +526,17 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
     {
         /* need to reconstruct the field ordinals list */
         CPLFree(panFieldOrdinals);
-        panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * poFeatureDefn->GetFieldCount() );
+        panFieldOrdinals =
+            (int *)CPLMalloc(sizeof(int) * poFeatureDefn->GetFieldCount());
 
-        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
-            if ( poFeatureDefn->GetFieldDefn(i)->IsIgnored() )
+            if (poFeatureDefn->GetFieldDefn(i)->IsIgnored())
                 continue;
 
             const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-            if( nColumn > 0 )
+            if (nColumn > 0)
                 osFieldList += ", ";
 
             osFieldList += "[";
@@ -546,7 +559,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
 CPLODBCStatement *OGRMSSQLSpatialTableLayer::GetStatement()
 
 {
-    if( poStmt == nullptr )
+    if (poStmt == nullptr)
     {
         poStmt = BuildStatement(BuildFields());
     }
@@ -558,71 +571,75 @@ CPLODBCStatement *OGRMSSQLSpatialTableLayer::GetStatement()
 /*                           BuildStatement()                           */
 /************************************************************************/
 
-CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColumns)
+CPLODBCStatement *
+OGRMSSQLSpatialTableLayer::BuildStatement(const char *pszColumns)
 
 {
-    CPLODBCStatement* poStatement = new CPLODBCStatement( poDS->GetSession() );
-    poStatement->Append( "select " );
-    poStatement->Append( pszColumns );
-    poStatement->Append( " from [" );
-    poStatement->Append( pszSchemaName );
-    poStatement->Append( "].[" );
-    poStatement->Append( pszTableName );
-    poStatement->Append( "]" );
+    CPLODBCStatement *poStatement = new CPLODBCStatement(poDS->GetSession());
+    poStatement->Append("select ");
+    poStatement->Append(pszColumns);
+    poStatement->Append(" from [");
+    poStatement->Append(pszSchemaName);
+    poStatement->Append("].[");
+    poStatement->Append(pszTableName);
+    poStatement->Append("]");
 
     /* Append attribute query if we have it */
-    if( pszQuery != nullptr )
-        poStatement->Appendf( " where (%s)", pszQuery );
+    if (pszQuery != nullptr)
+        poStatement->Appendf(" where (%s)", pszQuery);
 
     /* If we have a spatial filter, query on it */
-    if ( m_poFilterGeom != nullptr )
+    if (m_poFilterGeom != nullptr)
     {
-        if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
-            || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+        if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
+            nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if( !CPLIsInf(m_sFilterEnvelope.MinX) &&
+            if (!CPLIsInf(m_sFilterEnvelope.MinX) &&
                 !CPLIsInf(m_sFilterEnvelope.MinY) &&
                 !CPLIsInf(m_sFilterEnvelope.MaxX) &&
-                !CPLIsInf(m_sFilterEnvelope.MaxY) )
+                !CPLIsInf(m_sFilterEnvelope.MaxY))
             {
-                if( pszQuery == nullptr )
-                    poStatement->Append( " where" );
+                if (pszQuery == nullptr)
+                    poStatement->Append(" where");
                 else
-                    poStatement->Append( " and" );
+                    poStatement->Append(" and");
 
-                poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn );
+                poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn);
 
                 if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                    poStatement->Append( "geography::" );
+                    poStatement->Append("geography::");
                 else
-                    poStatement->Append( "geometry::" );
+                    poStatement->Append("geometry::");
 
-                if ( m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX ||
+                if (m_sFilterEnvelope.MinX == m_sFilterEnvelope.MaxX ||
                     m_sFilterEnvelope.MinY == m_sFilterEnvelope.MaxY)
-                    poStatement->Appendf("STGeomFromText('POINT(%.15g %.15g)',%d)) = 1",
-                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId);
+                    poStatement->Appendf(
+                        "STGeomFromText('POINT(%.15g %.15g)',%d)) = 1",
+                        m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId);
                 else
-                    poStatement->Appendf( "STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1",
-                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
-                                                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY,
-                                                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
-                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
-                                                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
-                                                nSRSId );
+                    poStatement->Appendf(
+                        "STGeomFromText('POLYGON((%.15g %.15g,%.15g "
+                        "%.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%d)) = 1",
+                        m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
+                        m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY,
+                        m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
+                        m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
+                        m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, nSRSId);
             }
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Spatial filter is supported only on geometry and geography column types." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Spatial filter is supported only on geometry and "
+                     "geography column types.");
 
             delete poStatement;
             return nullptr;
         }
     }
 
-    CPLDebug( "OGR_MSSQLSpatial", "ExecuteSQL(%s)", poStatement->GetCommand() );
-    if( poStatement->ExecuteSQL() )
+    CPLDebug("OGR_MSSQLSpatial", "ExecuteSQL(%s)", poStatement->GetCommand());
+    if (poStatement->ExecuteSQL())
         return poStatement;
     else
     {
@@ -635,11 +652,11 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    if( pszFIDColumn == nullptr )
-        return OGRMSSQLSpatialLayer::GetFeature( nFeatureId );
+    if (pszFIDColumn == nullptr)
+        return OGRMSSQLSpatialLayer::GetFeature(nFeatureId);
 
     poDS->EndCopy();
 
@@ -648,12 +665,13 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
     iNextShapeId = nFeatureId;
 
     m_bResetNeeded = true;
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
+    poStmt = new CPLODBCStatement(poDS->GetSession());
     CPLString osFields = BuildFields();
-    poStmt->Appendf( "select %s from %s where %s = " CPL_FRMT_GIB, osFields.c_str(),
-        poFeatureDefn->GetName(), pszFIDColumn, nFeatureId );
+    poStmt->Appendf("select %s from %s where %s = " CPL_FRMT_GIB,
+                    osFields.c_str(), poFeatureDefn->GetName(), pszFIDColumn,
+                    nFeatureId);
 
-    if( !poStmt->ExecuteSQL() )
+    if (!poStmt->ExecuteSQL())
     {
         delete poStmt;
         poStmt = nullptr;
@@ -663,7 +681,6 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
     return GetNextRawFeature();
 }
 
-
 /************************************************************************/
 /*                             GetExtent()                              */
 /*                                                                      */
@@ -671,7 +688,8 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
 /*      statement in other cases we use standard OGRLayer::GetExtent()  */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
+                                            OGREnvelope *psExtent, int bForce)
 {
     GetLayerDefn();
 
@@ -682,59 +700,88 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
         if (iGeomField != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "Invalid geometry field index : %d", iGeomField);
+                     "Invalid geometry field index : %d", iGeomField);
         }
         return OGRERR_FAILURE;
     }
 
     // If we have a geometry or geography type:
-    if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY || nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
+    if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY ||
+        nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
     {
         // Prepare statement
-        auto poStatement = cpl::make_unique<CPLODBCStatement>(poDS->GetSession());
+        auto poStatement =
+            cpl::make_unique<CPLODBCStatement>(poDS->GetSession());
 
-        if (poDS->sMSSQLVersion.nMajor >= 11) {
+        if (poDS->sMSSQLVersion.nMajor >= 11)
+        {
             // SQLServer 2012 or later:
-            // geography is converted to geometry to obtain the rectangular envelope
+            // geography is converted to geometry to obtain the rectangular
+            // envelope
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStatement->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid()) as extentcol FROM [%s].[%s])", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf(
+                    "WITH extent(extentcol) AS (SELECT "
+                    "geometry::EnvelopeAggregate(geometry::STGeomFromWKB(%s."
+                    "STAsBinary(), %s.STSrid).MakeValid()) as extentcol FROM "
+                    "[%s].[%s])",
+                    pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
             else
-                poStatement->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s.MakeValid()) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH extent(extentcol) AS (SELECT "
+                                     "geometry::EnvelopeAggregate(%s.MakeValid("
+                                     ")) AS extentcol FROM [%s].[%s])",
+                                     pszGeomColumn, pszSchemaName,
+                                     pszTableName);
 
-            poStatement->Appendf("SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY,");
-            poStatement->Appendf("extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent;");
+            poStatement->Appendf(
+                "SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY,");
+            poStatement->Appendf("extentcol.STPointN(3).STX, "
+                                 "extentcol.STPointN(3).STY FROM extent;");
         }
         else
         {
             // Before 2012 use two CTE's:
             // geography is converted to geometry to obtain the envelope
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStatement->Appendf("WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH ENVELOPE as (SELECT "
+                                     "geometry::STGeomFromWKB(%s.STAsBinary(), "
+                                     "%s.STSrid).MakeValid().STEnvelope() as "
+                                     "envelope from [%s].[%s]),",
+                                     pszGeomColumn, pszGeomColumn,
+                                     pszSchemaName, pszTableName);
             else
-                poStatement->Appendf("WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf(
+                    "WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as "
+                    "envelope from [%s].[%s]),",
+                    pszGeomColumn, pszSchemaName, pszTableName);
 
-            poStatement->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
-            poStatement->Appendf("SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS;");
+            poStatement->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as "
+                                 "point from ENVELOPE UNION ALL select "
+                                 "envelope.STPointN(3) from ENVELOPE)");
+            poStatement->Appendf(
+                "SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), "
+                "MAX(point.STY) FROM CORNERS;");
         }
 
         // Execute
         if (!poStatement->ExecuteSQL())
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Error getting extents, %s",
-                poDS->GetSession()->GetLastError());
+            CPLError(CE_Failure, CPLE_AppDefined, "Error getting extents, %s",
+                     poDS->GetSession()->GetLastError());
         }
         else
         {
             // Try to update
-            while (poStatement->Fetch()) {
+            while (poStatement->Fetch())
+            {
 
                 const char *minx = poStatement->GetColData(0);
                 const char *miny = poStatement->GetColData(1);
                 const char *maxx = poStatement->GetColData(2);
                 const char *maxy = poStatement->GetColData(3);
 
-                if (!(minx == nullptr || miny == nullptr || maxx == nullptr || maxy == nullptr)) {
+                if (!(minx == nullptr || miny == nullptr || maxx == nullptr ||
+                      maxy == nullptr))
+                {
                     psExtent->MinX = CPLAtof(minx);
                     psExtent->MinY = CPLAtof(miny);
                     psExtent->MaxX = CPLAtof(maxx);
@@ -744,11 +791,10 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                        "MSSQL extents query returned a NULL value");
+                             "MSSQL extents query returned a NULL value");
                 }
             }
         }
-
     }
 
     // Fall back to generic implementation (loading all features)
@@ -762,19 +808,19 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
+OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter(const char *pszQueryIn)
 
 {
     CPLFree(m_pszAttrQueryString);
     m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : nullptr;
 
-    if( (pszQueryIn == nullptr && this->pszQuery == nullptr)
-        || (pszQueryIn != nullptr && this->pszQuery != nullptr
-            && EQUAL(pszQueryIn,this->pszQuery)) )
+    if ((pszQueryIn == nullptr && this->pszQuery == nullptr) ||
+        (pszQueryIn != nullptr && this->pszQuery != nullptr &&
+         EQUAL(pszQueryIn, this->pszQuery)))
         return OGRERR_NONE;
 
-    CPLFree( this->pszQuery );
-    this->pszQuery = (pszQueryIn) ? CPLStrdup( pszQueryIn ) : nullptr;
+    CPLFree(this->pszQuery);
+    this->pszQuery = (pszQueryIn) ? CPLStrdup(pszQueryIn) : nullptr;
 
     ClearStatement();
 
@@ -795,33 +841,33 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
+int OGRMSSQLSpatialTableLayer::TestCapability(const char *pszCap)
 
 {
-    if ( bUpdateAccess )
+    if (bUpdateAccess)
     {
-        if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField)
-            || EQUAL(pszCap,OLCDeleteFeature) )
+        if (EQUAL(pszCap, OLCSequentialWrite) ||
+            EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCDeleteFeature))
             return TRUE;
 
-        else if( EQUAL(pszCap,OLCRandomWrite) )
+        else if (EQUAL(pszCap, OLCRandomWrite))
             return pszFIDColumn != nullptr;
     }
 
 #if (ODBCVER >= 0x0300)
-    if( EQUAL(pszCap,OLCTransactions) )
+    if (EQUAL(pszCap, OLCTransactions))
         return TRUE;
 #else
-    if( EQUAL(pszCap,OLCTransactions) )
+    if (EQUAL(pszCap, OLCTransactions))
         return FALSE;
 #endif
 
-    if( EQUAL(pszCap,OLCIgnoreFields) )
+    if (EQUAL(pszCap, OLCIgnoreFields))
         return TRUE;
 
-    if( EQUAL(pszCap,OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return pszFIDColumn != nullptr;
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
         return TRUE;
     else if (EQUAL(pszCap, OLCCurveGeometries))
         return TRUE;
@@ -830,32 +876,32 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
     else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
     else
-        return OGRMSSQLSpatialLayer::TestCapability( pszCap );
+        return OGRMSSQLSpatialLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount(int bForce)
 
 {
     poDS->EndCopy();
 
     GetLayerDefn();
 
-    if( TestCapability(OLCFastFeatureCount) == FALSE )
-        return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
+    if (TestCapability(OLCFastFeatureCount) == FALSE)
+        return OGRMSSQLSpatialLayer::GetFeatureCount(bForce);
 
-    CPLODBCStatement* poStatement = BuildStatement( "count(*)" );
+    CPLODBCStatement *poStatement = BuildStatement("count(*)");
 
     if (poStatement == nullptr || !poStatement->Fetch())
     {
         delete poStatement;
-        return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
+        return OGRMSSQLSpatialLayer::GetFeatureCount(bForce);
     }
 
-    GIntBig nRet = CPLAtoGIntBig(poStatement->GetColData( 0 ));
+    GIntBig nRet = CPLAtoGIntBig(poStatement->GetColData(0));
     delete poStatement;
     return nRet;
 }
@@ -887,144 +933,148 @@ OGRErr OGRMSSQLSpatialTableLayer::EndCopy()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
-                                         int bApproxOK )
+OGRErr OGRMSSQLSpatialTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+                                              int bApproxOK)
 
 {
-    char                szFieldType[256];
-    OGRFieldDefn        oField( poFieldIn );
+    char szFieldType[256];
+    OGRFieldDefn oField(poFieldIn);
 
     poDS->EndCopy();
 
     GetLayerDefn();
 
-/* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into MSSQL             */
-/*      friendly format?                                                */
-/* -------------------------------------------------------------------- */
-    if( bLaunderColumnNames )
+    /* -------------------------------------------------------------------- */
+    /*      Do we want to "launder" the column names into MSSQL             */
+    /*      friendly format?                                                */
+    /* -------------------------------------------------------------------- */
+    if (bLaunderColumnNames)
     {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+        char *pszSafeName = poDS->LaunderName(oField.GetNameRef());
 
-        oField.SetName( pszSafeName );
-        CPLFree( pszSafeName );
+        oField.SetName(pszSafeName);
+        CPLFree(pszSafeName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Identify the MSSQL type.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Identify the MSSQL type.                                        */
+    /* -------------------------------------------------------------------- */
 
-    if( oField.GetType() == OFTInteger )
+    if (oField.GetType() == OFTInteger)
     {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
-        else if( oField.GetSubType() == OFSTInt16 )
-            strcpy( szFieldType, "smallint" );
+        if (oField.GetWidth() > 0 && bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "numeric(%d,0)",
+                     oField.GetWidth());
+        else if (oField.GetSubType() == OFSTInt16)
+            strcpy(szFieldType, "smallint");
         else
-            strcpy( szFieldType, "int" );
+            strcpy(szFieldType, "int");
     }
-    else if( oField.GetType() == OFTInteger64 )
+    else if (oField.GetType() == OFTInteger64)
     {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
+        if (oField.GetWidth() > 0 && bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "numeric(%d,0)",
+                     oField.GetWidth());
         else
-            strcpy( szFieldType, "bigint" );
+            strcpy(szFieldType, "bigint");
     }
-    else if( oField.GetType() == OFTReal )
+    else if (oField.GetType() == OFTReal)
     {
-        if( oField.GetWidth() > 0 && oField.GetPrecision() >= 0
-            && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
-                     oField.GetWidth(), oField.GetPrecision() );
-        else if( oField.GetSubType() == OFSTFloat32 )
-            strcpy( szFieldType, "float(23)" );
+        if (oField.GetWidth() > 0 && oField.GetPrecision() >= 0 &&
+            bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
+                     oField.GetWidth(), oField.GetPrecision());
+        else if (oField.GetSubType() == OFSTFloat32)
+            strcpy(szFieldType, "float(23)");
         else
-            strcpy( szFieldType, "float(53)" );
+            strcpy(szFieldType, "float(53)");
     }
-    else if( oField.GetType() == OFTString )
+    else if (oField.GetType() == OFTString)
     {
-        if( oField.GetSubType() == OGRFieldSubType::OFSTUUID)
+        if (oField.GetSubType() == OGRFieldSubType::OFSTUUID)
         {
             m_bHasUUIDColumn = true;
-            strcpy( szFieldType, "uniqueidentifier" );
+            strcpy(szFieldType, "uniqueidentifier");
         }
-        else if( oField.GetWidth() == 0 || oField.GetWidth() > 4000 || !bPreservePrecision )
-            strcpy( szFieldType, "nvarchar(MAX)" );
+        else if (oField.GetWidth() == 0 || oField.GetWidth() > 4000 ||
+                 !bPreservePrecision)
+            strcpy(szFieldType, "nvarchar(MAX)");
         else
-            snprintf( szFieldType, sizeof(szFieldType), "nvarchar(%d)", oField.GetWidth() );
+            snprintf(szFieldType, sizeof(szFieldType), "nvarchar(%d)",
+                     oField.GetWidth());
     }
-    else if( oField.GetType() == OFTDate )
+    else if (oField.GetType() == OFTDate)
     {
-        strcpy( szFieldType, "date" );
+        strcpy(szFieldType, "date");
     }
-    else if( oField.GetType() == OFTTime )
+    else if (oField.GetType() == OFTTime)
     {
-        strcpy( szFieldType, "time(7)" );
+        strcpy(szFieldType, "time(7)");
     }
-    else if( oField.GetType() == OFTDateTime )
+    else if (oField.GetType() == OFTDateTime)
     {
-        strcpy( szFieldType, "datetime" );
+        strcpy(szFieldType, "datetime");
     }
-    else if( oField.GetType() == OFTBinary )
+    else if (oField.GetType() == OFTBinary)
     {
-        strcpy( szFieldType, "image" );
+        strcpy(szFieldType, "image");
     }
-    else if( bApproxOK )
+    else if (bApproxOK)
     {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on MSSQL layers.  Creating as varchar.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "varchar" );
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Can't create field %s with type %s on MSSQL layers.  "
+                 "Creating as varchar.",
+                 oField.GetNameRef(),
+                 OGRFieldDefn::GetFieldTypeName(oField.GetType()));
+        strcpy(szFieldType, "varchar");
     }
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s with type %s on MSSQL layers.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Can't create field %s with type %s on MSSQL layers.",
+                 oField.GetNameRef(),
+                 OGRFieldDefn::GetFieldTypeName(oField.GetType()));
 
         return OGRERR_FAILURE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the new field.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the new field.                                           */
+    /* -------------------------------------------------------------------- */
 
-    CPLODBCStatement oStmt( poDS->GetSession() );
+    CPLODBCStatement oStmt(poDS->GetSession());
 
-    oStmt.Appendf( "ALTER TABLE [%s].[%s] ADD [%s] %s",
-        pszSchemaName, pszTableName, oField.GetNameRef(), szFieldType);
+    oStmt.Appendf("ALTER TABLE [%s].[%s] ADD [%s] %s", pszSchemaName,
+                  pszTableName, oField.GetNameRef(), szFieldType);
 
-    if ( !oField.IsNullable() )
+    if (!oField.IsNullable())
     {
         oStmt.Append(" NOT NULL");
     }
-    if ( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
+    if (oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific())
     {
         /* process default value specifications */
-        if ( EQUAL(oField.GetDefault(), "CURRENT_TIME") )
+        if (EQUAL(oField.GetDefault(), "CURRENT_TIME"))
             oStmt.Append(" DEFAULT(CONVERT([time],getdate()))");
-        else if ( EQUAL(oField.GetDefault(), "CURRENT_DATE") )
-            oStmt.Append( " DEFAULT(CONVERT([date],getdate()))" );
+        else if (EQUAL(oField.GetDefault(), "CURRENT_DATE"))
+            oStmt.Append(" DEFAULT(CONVERT([date],getdate()))");
         else
             oStmt.Appendf(" DEFAULT(%s)", oField.GetDefault());
     }
 
-    if( !oStmt.ExecuteSQL() )
+    if (!oStmt.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "Error creating field %s, %s", oField.GetNameRef(),
-                    poDS->GetSession()->GetLastError() );
+        CPLError(CE_Failure, CPLE_AppDefined, "Error creating field %s, %s",
+                 oField.GetNameRef(), poDS->GetSession()->GetLastError());
 
         return OGRERR_FAILURE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Add the field to the OGRFeatureDefn.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add the field to the OGRFeatureDefn.                            */
+    /* -------------------------------------------------------------------- */
 
-    poFeatureDefn->AddFieldDefn( &oField );
+    poFeatureDefn->AddFieldDefn(&oField);
 
     return OGRERR_NONE;
 }
@@ -1035,53 +1085,52 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*      SetFeature() is implemented by an UPDATE SQL command            */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
+OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
 
 {
-    if( !bUpdateAccess )
+    if (!bUpdateAccess)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "SetFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "SetFeature");
         return OGRERR_FAILURE;
     }
 
-    OGRErr              eErr = OGRERR_FAILURE;
+    OGRErr eErr = OGRERR_FAILURE;
 
     poDS->EndCopy();
 
     GetLayerDefn();
 
-    if( nullptr == poFeature )
+    if (nullptr == poFeature)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to SetFeature()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NULL pointer to OGRFeature passed to SetFeature().");
         return eErr;
     }
 
-    if( poFeature->GetFID() == OGRNullFID )
+    if (poFeature->GetFID() == OGRNullFID)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "FID required on features given to SetFeature()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FID required on features given to SetFeature().");
         return eErr;
     }
 
-    if( !pszFIDColumn )
+    if (!pszFIDColumn)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to update features in tables without\n"
-                  "a recognised FID column.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to update features in tables without\n"
+                 "a recognised FID column.");
         return eErr;
     }
 
     ClearStatement();
 
-/* -------------------------------------------------------------------- */
-/*      Form the UPDATE command.                                        */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement oStmt( poDS->GetSession() );
+    /* -------------------------------------------------------------------- */
+    /*      Form the UPDATE command.                                        */
+    /* -------------------------------------------------------------------- */
+    CPLODBCStatement oStmt(poDS->GetSession());
 
-    oStmt.Appendf( "UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
+    oStmt.Appendf("UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if (bUseGeometryValidation && poGeom != nullptr)
@@ -1091,177 +1140,192 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
         {
             oValidator.MakeValid(poGeom);
             CPLError(CE_Warning, CPLE_NotSupported,
-                "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
+                     "Geometry with FID = " CPL_FRMT_GIB
+                     " has been modified to valid geometry.",
+                     poFeature->GetFID());
         }
     }
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
-    void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
+    void **bind_buffer = (void **)CPLMalloc(sizeof(void *) * nFieldCount);
 
     int bNeedComma = FALSE;
     SQLLEN nWKBLenBindParameter;
-    if(poGeom != nullptr && pszGeomColumn != nullptr)
+    if (poGeom != nullptr && pszGeomColumn != nullptr)
     {
-        oStmt.Appendf( "[%s] = ", pszGeomColumn );
+        oStmt.Appendf("[%s] = ", pszGeomColumn);
 
         if (nUploadGeometryFormat == MSSQLGEOMETRY_NATIVE)
         {
             OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
             int nDataLen = poWriter.GetDataLen();
-            GByte *pabyData = (GByte *) CPLMalloc(nDataLen + 1);
+            GByte *pabyData = (GByte *)CPLMalloc(nDataLen + 1);
             if (poWriter.WriteSqlGeometry(pabyData, nDataLen) == OGRERR_NONE)
             {
-                char* pszBytes = GByteArrayToHexString( pabyData, nDataLen);
+                char *pszBytes = GByteArrayToHexString(pabyData, nDataLen);
                 SQLLEN nts = SQL_NTS;
-                int nRetCode = SQLBindParameter(oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
-                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR,
-                    nDataLen, 0, (SQLPOINTER)pszBytes, 0, &nts);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                int nRetCode = SQLBindParameter(
+                    oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
+                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR, nDataLen, 0,
+                    (SQLPOINTER)pszBytes, 0, &nts);
+                if (nRetCode == SQL_SUCCESS ||
+                    nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
-                    oStmt.Append( "?" );
+                    oStmt.Append("?");
                     bind_buffer[bind_num] = pszBytes;
                     ++bind_num;
                 }
                 else
                 {
-                    oStmt.Append( "null" );
+                    oStmt.Append("null");
                     CPLFree(pszBytes);
                 }
             }
             else
             {
-                oStmt.Append( "null" );
+                oStmt.Append("null");
             }
             CPLFree(pabyData);
         }
         else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
             const size_t nWKBLen = poGeom->WkbSize();
-            GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen + 1); // do we need the +1 ?
-            if( pabyWKB == nullptr )
+            GByte *pabyWKB = (GByte *)VSI_MALLOC_VERBOSE(
+                nWKBLen + 1);  // do we need the +1 ?
+            if (pabyWKB == nullptr)
             {
-                oStmt.Append( "null" );
+                oStmt.Append("null");
             }
-            else if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
-                || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
+            else if (poGeom->exportToWkb(wkbNDR, pabyWKB, wkbVariantIso) ==
+                         OGRERR_NONE &&
+                     (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
+                      nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
             {
                 nWKBLenBindParameter = nWKBLen;
-                int nRetCode = SQLBindParameter(oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
-                    SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY,
-                    nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, &nWKBLenBindParameter);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                int nRetCode = SQLBindParameter(
+                    oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
+                    SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, nWKBLen,
+                    0, (SQLPOINTER)pabyWKB, nWKBLen, &nWKBLenBindParameter);
+                if (nRetCode == SQL_SUCCESS ||
+                    nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
                     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                     {
-                        oStmt.Append( "geography::STGeomFromWKB(?" );
-                        oStmt.Appendf(",%d)", nSRSId );
+                        oStmt.Append("geography::STGeomFromWKB(?");
+                        oStmt.Appendf(",%d)", nSRSId);
                     }
                     else
                     {
-                        oStmt.Append( "geometry::STGeomFromWKB(?" );
-                        oStmt.Appendf(",%d).MakeValid()", nSRSId );
+                        oStmt.Append("geometry::STGeomFromWKB(?");
+                        oStmt.Appendf(",%d).MakeValid()", nSRSId);
                     }
                     bind_buffer[bind_num] = pabyWKB;
                     ++bind_num;
                 }
                 else
                 {
-                    oStmt.Append( "null" );
+                    oStmt.Append("null");
                     CPLFree(pabyWKB);
                 }
             }
             else
             {
-                oStmt.Append( "null" );
+                oStmt.Append("null");
                 CPLFree(pabyWKB);
             }
         }
         else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKT)
         {
-            char    *pszWKT = nullptr;
-            if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
-                || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
+            char *pszWKT = nullptr;
+            if (poGeom->exportToWkt(&pszWKT) == OGRERR_NONE &&
+                (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
+                 nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
             {
                 size_t nLen = 0;
-                while(pszWKT[nLen] != '\0')
-                    nLen ++;
+                while (pszWKT[nLen] != '\0')
+                    nLen++;
 
-                int nRetCode = SQLBindParameter(oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
-                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR,
-                    nLen, 0, (SQLPOINTER)pszWKT, 0, nullptr);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                int nRetCode = SQLBindParameter(
+                    oStmt.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
+                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR, nLen, 0,
+                    (SQLPOINTER)pszWKT, 0, nullptr);
+                if (nRetCode == SQL_SUCCESS ||
+                    nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
                     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                     {
-                        oStmt.Append( "geography::STGeomFromText(?" );
-                        oStmt.Appendf(",%d)", nSRSId );
+                        oStmt.Append("geography::STGeomFromText(?");
+                        oStmt.Appendf(",%d)", nSRSId);
                     }
                     else
                     {
-                        oStmt.Append( "geometry::STGeomFromText(?" );
-                        oStmt.Appendf(",%d).MakeValid()", nSRSId );
+                        oStmt.Append("geometry::STGeomFromText(?");
+                        oStmt.Appendf(",%d).MakeValid()", nSRSId);
                     }
                     bind_buffer[bind_num] = pszWKT;
                     ++bind_num;
                 }
                 else
                 {
-                    oStmt.Append( "null" );
+                    oStmt.Append("null");
                     CPLFree(pszWKT);
                 }
             }
             else
             {
-                oStmt.Append( "null" );
+                oStmt.Append("null");
                 CPLFree(pszWKT);
             }
         }
         else
-            oStmt.Append( "null" );
+            oStmt.Append("null");
 
         bNeedComma = TRUE;
     }
 
     int i;
-    for( i = 0; i < nFieldCount; i++ )
+    for (i = 0; i < nFieldCount; i++)
     {
         if (bNeedComma)
-            oStmt.Appendf( ", [%s] = ", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            oStmt.Appendf(", [%s] = ",
+                          poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         else
         {
-            oStmt.Appendf( "[%s] = ", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            oStmt.Appendf("[%s] = ",
+                          poFeatureDefn->GetFieldDefn(i)->GetNameRef());
             bNeedComma = TRUE;
         }
 
-        if( !poFeature->IsFieldSetAndNotNull( i ) )
-            oStmt.Append( "null" );
+        if (!poFeature->IsFieldSetAndNotNull(i))
+            oStmt.Append("null");
         else
             AppendFieldValue(&oStmt, poFeature, i, &bind_num, bind_buffer);
     }
 
     /* Add the WHERE clause */
-    oStmt.Appendf( " WHERE [%s] = " CPL_FRMT_GIB, pszFIDColumn, poFeature->GetFID());
+    oStmt.Appendf(" WHERE [%s] = " CPL_FRMT_GIB, pszFIDColumn,
+                  poFeature->GetFID());
 
-/* -------------------------------------------------------------------- */
-/*      Execute the update.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Execute the update.                                             */
+    /* -------------------------------------------------------------------- */
 
-    if( !oStmt.ExecuteSQL() )
+    if (!oStmt.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Error updating feature with FID:" CPL_FRMT_GIB ", %s", poFeature->GetFID(),
-                    poDS->GetSession()->GetLastError() );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error updating feature with FID:" CPL_FRMT_GIB ", %s",
+                 poFeature->GetFID(), poDS->GetSession()->GetLastError());
 
-        for( i = 0; i < bind_num; i++ )
+        for (i = 0; i < bind_num; i++)
             CPLFree(bind_buffer[i]);
         CPLFree(bind_buffer);
 
         return OGRERR_FAILURE;
     }
 
-    for( i = 0; i < bind_num; i++ )
-            CPLFree(bind_buffer[i]);
+    for (i = 0; i < bind_num; i++)
+        CPLFree(bind_buffer[i]);
     CPLFree(bind_buffer);
 
     if (oStmt.GetRowCountAffected() < 1)
@@ -1274,14 +1338,13 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
+OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature(GIntBig nFID)
 
 {
-    if( !bUpdateAccess )
+    if (!bUpdateAccess)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "DeleteFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1289,35 +1352,36 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
     GetLayerDefn();
 
-    if( pszFIDColumn == nullptr )
+    if (pszFIDColumn == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature() without any FID column." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeleteFeature() without any FID column.");
         return OGRERR_FAILURE;
     }
 
-    if( nFID == OGRNullFID )
+    if (nFID == OGRNullFID)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature() with unset FID fails." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeleteFeature() with unset FID fails.");
         return OGRERR_FAILURE;
     }
 
     ClearStatement();
 
-/* -------------------------------------------------------------------- */
-/*      Drop the record with this FID.                                  */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement oStatement( poDS->GetSession() );
+    /* -------------------------------------------------------------------- */
+    /*      Drop the record with this FID.                                  */
+    /* -------------------------------------------------------------------- */
+    CPLODBCStatement oStatement(poDS->GetSession());
 
     oStatement.Appendf("DELETE FROM [%s].[%s] WHERE [%s] = " CPL_FRMT_GIB,
-            pszSchemaName, pszTableName, pszFIDColumn, nFID);
+                       pszSchemaName, pszTableName, pszFIDColumn, nFID);
 
-    if( !oStatement.ExecuteSQL() )
+    if (!oStatement.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to delete feature with FID " CPL_FRMT_GIB " failed. %s",
-                  nFID, poDS->GetSession()->GetLastError() );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt to delete feature with FID " CPL_FRMT_GIB
+                 " failed. %s",
+                 nFID, poDS->GetSession()->GetLastError());
 
         return OGRERR_FAILURE;
     }
@@ -1332,10 +1396,10 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 /*                           Failed()                                   */
 /************************************************************************/
 
-int OGRMSSQLSpatialTableLayer::Failed( int nRetCode )
+int OGRMSSQLSpatialTableLayer::Failed(int nRetCode)
 
 {
-    if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+    if (nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO)
         return FALSE;
 
     char SQLState[6] = "";
@@ -1343,12 +1407,13 @@ int OGRMSSQLSpatialTableLayer::Failed( int nRetCode )
     SQLINTEGER iNativeError = 0;
     SQLSMALLINT iMsgLen = 0;
 
-    int iRc = SQLGetDiagRec(SQL_HANDLE_ENV, hEnvBCP, 1,
-    (SQLCHAR*)SQLState, &iNativeError, (SQLCHAR*)Msg, 256, &iMsgLen);
-    if (iRc != SQL_NO_DATA) {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
-                  static_cast<int>(iNativeError), Msg );
+    int iRc = SQLGetDiagRec(SQL_HANDLE_ENV, hEnvBCP, 1, (SQLCHAR *)SQLState,
+                            &iNativeError, (SQLCHAR *)Msg, 256, &iMsgLen);
+    if (iRc != SQL_NO_DATA)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
+                 static_cast<int>(iNativeError), Msg);
     }
 
     return TRUE;
@@ -1359,7 +1424,7 @@ int OGRMSSQLSpatialTableLayer::Failed( int nRetCode )
 /************************************************************************/
 
 #ifdef MSSQL_BCP_SUPPORTED
-int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
+int OGRMSSQLSpatialTableLayer::Failed2(int nRetCode)
 
 {
     if (nRetCode == SUCCEED)
@@ -1370,12 +1435,13 @@ int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
     SQLINTEGER iNativeError = 0;
     SQLSMALLINT iMsgLen = 0;
 
-    int iRc = SQLGetDiagRec(SQL_HANDLE_DBC, hDBCBCP, 1,
-    (SQLCHAR*)SQLState, &iNativeError, (SQLCHAR*)Msg, 256, &iMsgLen);
-    if (iRc != SQL_NO_DATA) {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
-                  static_cast<int>(iNativeError), Msg );
+    int iRc = SQLGetDiagRec(SQL_HANDLE_DBC, hDBCBCP, 1, (SQLCHAR *)SQLState,
+                            &iNativeError, (SQLCHAR *)Msg, 256, &iMsgLen);
+    if (iRc != SQL_NO_DATA)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SQL Error SQLState=%s, NativeError=%d, Msg=%s\n", SQLState,
+                 static_cast<int>(iNativeError), Msg);
     }
 
     return TRUE;
@@ -1385,43 +1451,45 @@ int OGRMSSQLSpatialTableLayer::Failed2( int nRetCode )
 /*                            InitBCP()                                 */
 /************************************************************************/
 
-int OGRMSSQLSpatialTableLayer::InitBCP(const char* pszDSN)
+int OGRMSSQLSpatialTableLayer::InitBCP(const char *pszDSN)
 
 {
     /* Create a different connection for BCP upload */
-    if( Failed( SQLAllocHandle( SQL_HANDLE_ENV, nullptr, &hEnvBCP ) ) )
-    return FALSE;
+    if (Failed(SQLAllocHandle(SQL_HANDLE_ENV, nullptr, &hEnvBCP)))
+        return FALSE;
 
     /* Notify ODBC that this is an ODBC 3.0 app. */
-    if( Failed( SQLSetEnvAttr( hEnvBCP, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER ) ) )
+    if (Failed(SQLSetEnvAttr(hEnvBCP, SQL_ATTR_ODBC_VERSION,
+                             (SQLPOINTER)SQL_OV_ODBC3, SQL_IS_INTEGER)))
     {
         CloseBCP();
         return FALSE;
     }
 
-    if( Failed( SQLAllocHandle( SQL_HANDLE_DBC, hEnvBCP, &hDBCBCP ) ) )
+    if (Failed(SQLAllocHandle(SQL_HANDLE_DBC, hEnvBCP, &hDBCBCP)))
     {
         CloseBCP();
         return FALSE;
     }
 
     /* set bulk copy mode */
-    if( Failed( SQLSetConnectAttr(hDBCBCP, SQL_COPT_SS_BCP, (void *)SQL_BCP_ON, SQL_IS_INTEGER) ) )
+    if (Failed(SQLSetConnectAttr(hDBCBCP, SQL_COPT_SS_BCP, (void *)SQL_BCP_ON,
+                                 SQL_IS_INTEGER)))
     {
         CloseBCP();
         return FALSE;
     }
 
-    Failed(SQLSetConnectAttr(hDBCBCP, SQL_ATTR_LOGIN_TIMEOUT, (void*)30, SQL_IS_INTEGER));
+    Failed(SQLSetConnectAttr(hDBCBCP, SQL_ATTR_LOGIN_TIMEOUT, (void *)30,
+                             SQL_IS_INTEGER));
 
     SQLCHAR szOutConnString[1024];
     SQLSMALLINT nOutConnStringLen = 0;
 
-    if ( Failed(
-        SQLDriverConnect( hDBCBCP, nullptr,
-                            (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
-                            szOutConnString, sizeof(szOutConnString),
-                            &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ))
+    if (Failed(SQLDriverConnect(hDBCBCP, nullptr, (SQLCHAR *)pszDSN,
+                                (SQLSMALLINT)strlen(pszDSN), szOutConnString,
+                                sizeof(szOutConnString), &nOutConnStringLen,
+                                SQL_DRIVER_NOPROMPT)))
     {
         CloseBCP();
         return FALSE;
@@ -1441,32 +1509,32 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
     {
         int iCol;
 
-        int nRecNum = bcp_done( hDBCBCP );
+        int nRecNum = bcp_done(hDBCBCP);
         if (nRecNum == -1)
             Failed2(nRecNum);
 
-        for( iCol = 0; iCol < nRawColumns; iCol++ )
+        for (iCol = 0; iCol < nRawColumns; iCol++)
             CPLFree(papstBindBuffer[iCol]);
         CPLFree(papstBindBuffer);
         papstBindBuffer = nullptr;
 
-        if( bIdentityInsert )
+        if (bIdentityInsert)
         {
             bIdentityInsert = FALSE;
         }
     }
 
-    if( hDBCBCP!=nullptr )
+    if (hDBCBCP != nullptr)
     {
-        CPLDebug( "ODBC", "SQLDisconnect()" );
-        SQLDisconnect( hDBCBCP );
-        SQLFreeHandle( SQL_HANDLE_DBC, hDBCBCP );
+        CPLDebug("ODBC", "SQLDisconnect()");
+        SQLDisconnect(hDBCBCP);
+        SQLFreeHandle(SQL_HANDLE_DBC, hDBCBCP);
         hDBCBCP = nullptr;
     }
 
-    if( hEnvBCP!=nullptr )
+    if (hEnvBCP != nullptr)
     {
-        SQLFreeHandle( SQL_HANDLE_ENV, hEnvBCP );
+        SQLFreeHandle(SQL_HANDLE_ENV, hEnvBCP);
         hEnvBCP = nullptr;
     }
 }
@@ -1475,26 +1543,26 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
 /*                            CreateFeatureBCP()                        */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
+OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
 
 {
     int iCol;
     int iField = 0;
 
-    if ( hDBCBCP == nullptr )
+    if (hDBCBCP == nullptr)
     {
         nBCPCount = 0;
 
         /* Tell the datasource we are now planning to copy data */
         poDS->StartCopy(this);
 
-        CPLODBCSession* poSession = poDS->GetSession();
+        CPLODBCSession *poSession = poDS->GetSession();
 
         if (poSession->IsInTransaction())
             poSession->CommitTransaction(); /* commit creating the table */
 
         /* Get the column definitions for this table. */
-        if( poFeatureDefn )
+        if (poFeatureDefn)
         {
             /* need to re-create layer defn */
             poFeatureDefn->Release();
@@ -1504,16 +1572,19 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
         if (!poFeatureDefn)
             return OGRERR_FAILURE;
 
-        if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid )
+        if (poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr &&
+            bIsIdentityFid)
         {
             bIdentityInsert = TRUE;
         }
 
-        if ( !InitBCP( poDS->GetConnectionString() ) )
+        if (!InitBCP(poDS->GetConnectionString()))
             return OGRERR_FAILURE;
 
         /* Initialize the bulk copy */
-        if (Failed2( bcp_init(hDBCBCP, CPLSPrintf("[%s].[%s]", pszSchemaName, pszTableName), nullptr, nullptr, DB_IN) ))
+        if (Failed2(bcp_init(
+                hDBCBCP, CPLSPrintf("[%s].[%s]", pszSchemaName, pszTableName),
+                nullptr, nullptr, DB_IN)))
         {
             CloseBCP();
             return OGRERR_FAILURE;
@@ -1521,46 +1592,51 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
         if (bIdentityInsert)
         {
-            if (Failed2( bcp_control(hDBCBCP, BCPKEEPIDENTITY, (void*) TRUE )))
+            if (Failed2(bcp_control(hDBCBCP, BCPKEEPIDENTITY, (void *)TRUE)))
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                                "Failed to set identity insert bulk copy mode, %s.",
-                                poDS->GetSession()->GetLastError());
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to set identity insert bulk copy mode, %s.",
+                         poDS->GetSession()->GetLastError());
                 return OGRERR_FAILURE;
             }
         }
 
-        papstBindBuffer = (BCPData**)CPLMalloc(sizeof(BCPData*) * (nRawColumns));
+        papstBindBuffer =
+            (BCPData **)CPLMalloc(sizeof(BCPData *) * (nRawColumns));
 
-        for( iCol = 0; iCol < nRawColumns; iCol++ )
+        for (iCol = 0; iCol < nRawColumns; iCol++)
         {
             papstBindBuffer[iCol] = nullptr;
 
             if (iCol == nGeomColumnIndex)
             {
-                papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
-                    0, 0/*or any value < 8000*/, nullptr, 0, SQLUDT, iCol + 1) ))
+                papstBindBuffer[iCol] = (BCPData *)CPLMalloc(sizeof(BCPData));
+                if (Failed2(bcp_bind(hDBCBCP,
+                                     nullptr /* data is provided later */, 0,
+                                     0 /*or any value < 8000*/, nullptr, 0,
+                                     SQLUDT, iCol + 1)))
                     return OGRERR_FAILURE;
             }
             else if (iCol == nFIDColumnIndex)
             {
-                if ( !bIdentityInsert )
+                if (!bIdentityInsert)
                     continue;
                 /* bind fid column */
-                papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                papstBindBuffer[iCol] = (BCPData *)CPLMalloc(sizeof(BCPData));
                 papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                    0, SQL_VARLEN_DATA,
-                        (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                if (Failed2(bcp_bind(
+                        hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
+                        0, SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                        iCol + 1)))
                     return OGRERR_FAILURE;
             }
-            else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+            else if (iField < poFeatureDefn->GetFieldCount() &&
+                     iCol == panFieldOrdinals[iField])
             {
-                OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+                OGRFieldDefn *poFDefn = poFeatureDefn->GetFieldDefn(iField);
 
-                if ( poFDefn->IsIgnored() )
+                if (poFDefn->IsIgnored())
                 {
                     /* set null */
                     ++iField;
@@ -1574,106 +1650,135 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     continue; /* no such field at the source */
                 }
 
-                if( poFDefn->GetType() == OFTInteger )
+                if (poFDefn->GetType() == OFTInteger)
                 {
                     /* int */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                    papstBindBuffer[iCol]->Integer.iIndicator = sizeof(papstBindBuffer[iCol]->Integer.Value);
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol]->Integer.iIndicator =
+                        sizeof(papstBindBuffer[iCol]->Integer.Value);
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
-                        sizeof(papstBindBuffer[iCol]->Integer.iIndicator), sizeof(papstBindBuffer[iCol]->Integer.Value),
-                            nullptr, 0, SQLINT4, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
+                            sizeof(papstBindBuffer[iCol]->Integer.iIndicator),
+                            sizeof(papstBindBuffer[iCol]->Integer.Value),
+                            nullptr, 0, SQLINT4, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTInteger64 )
+                else if (poFDefn->GetType() == OFTInteger64)
                 {
                     /* bigint */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                        0, SQL_VARLEN_DATA,
-                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP,
+                            (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 0,
+                            SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTReal )
+                else if (poFDefn->GetType() == OFTReal)
                 {
                     /* float */
                     /* TODO convert to DBNUMERIC */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                        0, SQL_VARLEN_DATA,
-                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP,
+                            (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 0,
+                            SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTString )
+                else if (poFDefn->GetType() == OFTString)
                 {
                     /* nvarchar */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = poFDefn->GetWidth();
                     if (poFDefn->GetWidth() == 0)
                     {
-                        if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
-                            0, 0/*or any value < 8000*/, nullptr, 0, 0, iCol + 1) ))
+                        if (Failed2(bcp_bind(
+                                hDBCBCP, nullptr /* data is provided later */,
+                                0, 0 /*or any value < 8000*/, nullptr, 0, 0,
+                                iCol + 1)))
                             return OGRERR_FAILURE;
                     }
                     else
                     {
-                        if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
-                            sizeof(papstBindBuffer[iCol]->VarChar.nSize), poFDefn->GetWidth(),
-                                nullptr, 0, SQLNVARCHAR, iCol + 1) ))
+                        if (Failed2(bcp_bind(
+                                hDBCBCP, (LPCBYTE)papstBindBuffer[iCol],
+                                sizeof(papstBindBuffer[iCol]->VarChar.nSize),
+                                poFDefn->GetWidth(), nullptr, 0, SQLNVARCHAR,
+                                iCol + 1)))
                             return OGRERR_FAILURE;
                     }
                 }
-                else if( poFDefn->GetType() == OFTDate )
+                else if (poFDefn->GetType() == OFTDate)
                 {
                     /* date */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                        0, SQL_VARLEN_DATA,
-                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP,
+                            (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 0,
+                            SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTTime )
+                else if (poFDefn->GetType() == OFTTime)
                 {
                     /* time(7) */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                        0, SQL_VARLEN_DATA,
-                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP,
+                            (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 0,
+                            SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTDateTime )
+                else if (poFDefn->GetType() == OFTDateTime)
                 {
                     /* datetime */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
 
-                    if (Failed2( bcp_bind(hDBCBCP, (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData,
-                        0, SQL_VARLEN_DATA,
-                            (LPCBYTE)"", 1, SQLVARCHAR, iCol + 1) ))
+                    if (Failed2(bcp_bind(
+                            hDBCBCP,
+                            (LPCBYTE)papstBindBuffer[iCol]->VarChar.pData, 0,
+                            SQL_VARLEN_DATA, (LPCBYTE) "", 1, SQLVARCHAR,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
-                else if( poFDefn->GetType() == OFTBinary )
+                else if (poFDefn->GetType() == OFTBinary)
                 {
                     /* image */
-                    papstBindBuffer[iCol] = (BCPData*)CPLMalloc(sizeof(BCPData));
-                    if (Failed2( bcp_bind(hDBCBCP, nullptr /* data is provided later */,
-                        0, 0/*or any value < 8000*/, nullptr, 0, 0, iCol + 1) ))
+                    papstBindBuffer[iCol] =
+                        (BCPData *)CPLMalloc(sizeof(BCPData));
+                    if (Failed2(bcp_bind(hDBCBCP,
+                                         nullptr /* data is provided later */,
+                                         0, 0 /*or any value < 8000*/, nullptr,
+                                         0, 0, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
                 {
-                    CPLError( CE_Failure, CPLE_NotSupported,
-                              "Filed %s with type %s is not supported for bulk insert.",
-                              poFDefn->GetNameRef(),
-                              OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()) );
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported,
+                        "Filed %s with type %s is not supported for bulk "
+                        "insert.",
+                        poFDefn->GetNameRef(),
+                        OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()));
 
                     return OGRERR_FAILURE;
                 }
@@ -1687,7 +1792,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
     /* prepare data to variables */
     iField = 0;
-    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    for (iCol = 0; iCol < nRawColumns; iCol++)
     {
         if (iCol == nGeomColumnIndex)
         {
@@ -1697,69 +1802,82 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 /* prepare geometry */
                 if (bUseGeometryValidation)
                 {
-                    OGRMSSQLGeometryValidator oValidator(poGeom, nGeomColumnType);
+                    OGRMSSQLGeometryValidator oValidator(poGeom,
+                                                         nGeomColumnType);
                     if (!oValidator.IsValid())
                     {
                         oValidator.MakeValid(poGeom);
                         CPLError(CE_Warning, CPLE_NotSupported,
-                            "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
+                                 "Geometry with FID = " CPL_FRMT_GIB
+                                 " has been modified to valid geometry.",
+                                 poFeature->GetFID());
                     }
                 }
 
                 int nOutgoingSRSId = 0;
                 // Use the SRID specified by the provided feature's geometry, if
-                // its spatial-reference system is known; otherwise, use the SRID
-                // associated with the table
-                OGRSpatialReference *poFeatureSRS = poGeom->getSpatialReference();
+                // its spatial-reference system is known; otherwise, use the
+                // SRID associated with the table
+                OGRSpatialReference *poFeatureSRS =
+                    poGeom->getSpatialReference();
                 if (poFeatureSRS)
                     nOutgoingSRSId = poDS->FetchSRSId(poFeatureSRS);
                 if (nOutgoingSRSId <= 0)
                     nOutgoingSRSId = nSRSId;
 
-                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nOutgoingSRSId);
+                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType,
+                                                nOutgoingSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
-                papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
+                papstBindBuffer[iCol]->RawData.pData = (GByte *)CPLMalloc(
+                    papstBindBuffer[iCol]->RawData.nSize + 1);
 
-                if (poWriter.WriteSqlGeometry(papstBindBuffer[iCol]->RawData.pData, (int)papstBindBuffer[iCol]->RawData.nSize) != OGRERR_NONE)
+                if (poWriter.WriteSqlGeometry(
+                        papstBindBuffer[iCol]->RawData.pData,
+                        (int)papstBindBuffer[iCol]->RawData.nSize) !=
+                    OGRERR_NONE)
                     return OGRERR_FAILURE;
 
                 /* set data length */
-                if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                if (Failed2(bcp_collen(
+                        hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize,
+                        iCol + 1)))
                     return OGRERR_FAILURE;
             }
             else
             {
                 /* set NULL */
                 papstBindBuffer[iCol]->RawData.nSize = SQL_NULL_DATA;
-                if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                     return OGRERR_FAILURE;
             }
         }
         else if (iCol == nFIDColumnIndex)
         {
-            if ( !bIdentityInsert )
-                    continue;
+            if (!bIdentityInsert)
+                continue;
 
             GIntBig nFID = poFeature->GetFID();
-            if ( nFID == OGRNullFID )
+            if (nFID == OGRNullFID)
             {
                 papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                 /* set NULL */
-                if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                     return OGRERR_FAILURE;
             }
             else
             {
                 papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, CPL_FRMT_GIB, nFID);
+                snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                         CPL_FRMT_GIB, nFID);
 
-                if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                     return OGRERR_FAILURE;
             }
         }
-        else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+        else if (iField < poFeatureDefn->GetFieldCount() &&
+                 iCol == panFieldOrdinals[iField])
         {
-            OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+            OGRFieldDefn *poFDefn = poFeatureDefn->GetFieldDefn(iField);
 
             if (papstBindBuffer[iCol] == nullptr)
             {
@@ -1767,95 +1885,111 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 continue; /* column requires no data */
             }
 
-            if( poFDefn->GetType() == OFTInteger )
+            if (poFDefn->GetType() == OFTInteger)
             {
                 /* int */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                     papstBindBuffer[iCol]->Integer.iIndicator = SQL_NULL_DATA;
                 else
                 {
-                    papstBindBuffer[iCol]->Integer.iIndicator = sizeof(papstBindBuffer[iCol]->Integer.Value);
-                    papstBindBuffer[iCol]->Integer.Value = poFeature->GetFieldAsInteger(iField);
+                    papstBindBuffer[iCol]->Integer.iIndicator =
+                        sizeof(papstBindBuffer[iCol]->Integer.Value);
+                    papstBindBuffer[iCol]->Integer.Value =
+                        poFeature->GetFieldAsInteger(iField);
                 }
             }
-            else if( poFDefn->GetType() == OFTInteger64 )
+            else if (poFDefn->GetType() == OFTInteger64)
             {
                 /* bigint */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%s", poFeature->GetFieldAsString(iField));
+                    snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                             "%s", poFeature->GetFieldAsString(iField));
 
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
-            else if( poFDefn->GetType() == OFTReal )
+            else if (poFDefn->GetType() == OFTReal)
             {
                 /* float */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%s", poFeature->GetFieldAsString(iField));
+                    snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                             "%s", poFeature->GetFieldAsString(iField));
 
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
-            else if( poFDefn->GetType() == OFTString )
+            else if (poFDefn->GetType() == OFTString)
             {
                 /* nvarchar */
                 if (poFDefn->GetWidth() != 0)
                 {
-                    if (!poFeature->IsFieldSetAndNotNull( iField ))
+                    if (!poFeature->IsFieldSetAndNotNull(iField))
                     {
                         papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
-                        if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                        if (Failed2(
+                                bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                             return OGRERR_FAILURE;
                     }
                     else
                     {
 
-                        wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
+                        wchar_t *buffer = CPLRecodeToWChar(
+                            poFeature->GetFieldAsString(iField), CPL_ENC_UTF8,
+                            CPL_ENC_UCS2);
                         const auto nLen = wcslen(buffer);
-                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)nLen * sizeof(GUInt16);
+                        papstBindBuffer[iCol]->VarChar.nSize =
+                            (SQLLEN)nLen * sizeof(GUInt16);
 #if WCHAR_MAX > 0xFFFFu
-                        // Shorten each character to a two-byte value, as expected by
-                        // the ODBC driver
-                        GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
-                        for( unsigned int nIndex = 1; nIndex <= nLen; nIndex += 1 )
-                            panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+                        // Shorten each character to a two-byte value, as
+                        // expected by the ODBC driver
+                        GUInt16 *panBuffer =
+                            reinterpret_cast<GUInt16 *>(buffer);
+                        for (unsigned int nIndex = 1; nIndex <= nLen;
+                             nIndex += 1)
+                            panBuffer[nIndex] =
+                                static_cast<GUInt16>(buffer[nIndex]);
 #endif
-                        memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + sizeof(GUInt16));
+                        memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer,
+                               papstBindBuffer[iCol]->VarChar.nSize +
+                                   sizeof(GUInt16));
                         CPLFree(buffer);
 
-                        if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->VarChar.nSize, iCol + 1) ))
+                        if (Failed2(bcp_collen(
+                                hDBCBCP,
+                                (DBINT)papstBindBuffer[iCol]->VarChar.nSize,
+                                iCol + 1)))
                             return OGRERR_FAILURE;
                     }
                 }
             }
-            else if( poFDefn->GetType() == OFTDate )
+            else if (poFDefn->GetType() == OFTDate)
             {
                 /* date */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
@@ -1868,23 +2002,26 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     float pfSecond;
                     int pnTZFlag;
 
-                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay,
-                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth,
+                                                  &pnDay, &pnHour, &pnMinute,
+                                                  &pfSecond, &pnTZFlag);
 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                    snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                             "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth,
+                             pnDay, pnHour, pnMinute, pfSecond);
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
-            else if( poFDefn->GetType() == OFTTime )
+            else if (poFDefn->GetType() == OFTTime)
             {
                 /* time(7) */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
@@ -1897,23 +2034,26 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     float pfSecond;
                     int pnTZFlag;
 
-                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay,
-                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth,
+                                                  &pnDay, &pnHour, &pnMinute,
+                                                  &pfSecond, &pnTZFlag);
 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                    snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                             "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth,
+                             pnDay, pnHour, pnMinute, pfSecond);
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
-            else if( poFDefn->GetType() == OFTDateTime )
+            else if (poFDefn->GetType() == OFTDateTime)
             {
                 /* datetime */
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
@@ -1926,43 +2066,51 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     float pfSecond;
                     int pnTZFlag;
 
-                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth, &pnDay,
-                        &pnHour, &pnMinute, &pfSecond, &pnTZFlag);
+                    poFeature->GetFieldAsDateTime(iField, &pnYear, &pnMonth,
+                                                  &pnDay, &pnHour, &pnMinute,
+                                                  &pfSecond, &pnTZFlag);
 
                     papstBindBuffer[iCol]->VarChar.nSize = SQL_VARLEN_DATA;
-                    snprintf((char*)papstBindBuffer[iCol]->VarChar.pData, 8000, "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth, pnDay, pnHour, pnMinute, pfSecond);
+                    snprintf((char *)papstBindBuffer[iCol]->VarChar.pData, 8000,
+                             "%4d-%02d-%02d %02d:%02d:%06.3f", pnYear, pnMonth,
+                             pnDay, pnHour, pnMinute, pfSecond);
 
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_VARLEN_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_VARLEN_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
-            else if( poFDefn->GetType() == OFTBinary )
+            else if (poFDefn->GetType() == OFTBinary)
             {
-                if (!poFeature->IsFieldSetAndNotNull( iField ))
+                if (!poFeature->IsFieldSetAndNotNull(iField))
                 {
                     papstBindBuffer[iCol]->RawData.nSize = SQL_NULL_DATA;
                     /* set NULL */
-                    if (Failed2( bcp_collen( hDBCBCP, SQL_NULL_DATA, iCol + 1) ))
+                    if (Failed2(bcp_collen(hDBCBCP, SQL_NULL_DATA, iCol + 1)))
                         return OGRERR_FAILURE;
                 }
                 else
                 {
                     /* image */
                     int nLen;
-                    papstBindBuffer[iCol]->RawData.pData = poFeature->GetFieldAsBinary(iField, &nLen);
+                    papstBindBuffer[iCol]->RawData.pData =
+                        poFeature->GetFieldAsBinary(iField, &nLen);
                     papstBindBuffer[iCol]->RawData.nSize = nLen;
 
                     /* set data length */
-                    if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                    if (Failed2(bcp_collen(
+                            hDBCBCP,
+                            (DBINT)papstBindBuffer[iCol]->RawData.nSize,
+                            iCol + 1)))
                         return OGRERR_FAILURE;
                 }
             }
             else
             {
-                CPLError( CE_Failure, CPLE_NotSupported,
-                            "Filed %s with type %s is not supported for bulk insert.",
-                            poFDefn->GetNameRef(),
-                            OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()) );
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "Filed %s with type %s is not supported for bulk insert.",
+                    poFDefn->GetNameRef(),
+                    OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()));
 
                 return OGRERR_FAILURE;
             }
@@ -1972,34 +2120,31 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
     }
 
     /* send row */
-    if (Failed2( bcp_sendrow( hDBCBCP ) ))
+    if (Failed2(bcp_sendrow(hDBCBCP)))
         return OGRERR_FAILURE;
 
     /* send dynamic data */
     iField = 0;
-    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    for (iCol = 0; iCol < nRawColumns; iCol++)
     {
         if (iCol == nGeomColumnIndex)
         {
             if (papstBindBuffer[iCol]->RawData.nSize != SQL_NULL_DATA)
             {
-                if (Failed2( bcp_moretext( hDBCBCP,
-                    (DBINT)papstBindBuffer[iCol]->RawData.nSize,
-                    papstBindBuffer[iCol]->RawData.pData ) ))
+                if (Failed2(bcp_moretext(
+                        hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize,
+                        papstBindBuffer[iCol]->RawData.pData)))
                 {
-
                 }
                 CPLFree(papstBindBuffer[iCol]->RawData.pData);
-                if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
+                if (Failed2(bcp_moretext(hDBCBCP, 0, nullptr)))
                 {
-
                 }
             }
             else
             {
-                if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
+                if (Failed2(bcp_moretext(hDBCBCP, SQL_NULL_DATA, nullptr)))
                 {
-
                 }
             }
         }
@@ -2008,76 +2153,81 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             /* TODO */
             continue;
         }
-        else if (iField < poFeatureDefn->GetFieldCount() && iCol == panFieldOrdinals[iField])
+        else if (iField < poFeatureDefn->GetFieldCount() &&
+                 iCol == panFieldOrdinals[iField])
         {
-            OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(iField);
+            OGRFieldDefn *poFDefn = poFeatureDefn->GetFieldDefn(iField);
 
-            if( poFDefn->GetType() == OFTString )
+            if (poFDefn->GetType() == OFTString)
             {
                 if (poFDefn->GetWidth() == 0)
                 {
-                    if (poFeature->IsFieldSetAndNotNull( iField ))
+                    if (poFeature->IsFieldSetAndNotNull(iField))
                     {
-                        const char* pszStr = poFeature->GetFieldAsString(iField);
+                        const char *pszStr =
+                            poFeature->GetFieldAsString(iField);
                         if (pszStr[0] != 0)
                         {
-                            wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
+                            wchar_t *buffer = CPLRecodeToWChar(
+                                poFeature->GetFieldAsString(iField),
+                                CPL_ENC_UTF8, CPL_ENC_UCS2);
                             const auto nLen = wcslen(buffer);
-                            papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)nLen * sizeof(GUInt16);
+                            papstBindBuffer[iCol]->VarChar.nSize =
+                                (SQLLEN)nLen * sizeof(GUInt16);
 #if WCHAR_MAX > 0xFFFFu
-                            // Shorten each character to a two-byte value, as expected by
-                            // the ODBC driver
-                            GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
-                            for( unsigned int nIndex = 1; nIndex <= nLen; nIndex += 1 )
-                                panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+                            // Shorten each character to a two-byte value, as
+                            // expected by the ODBC driver
+                            GUInt16 *panBuffer =
+                                reinterpret_cast<GUInt16 *>(buffer);
+                            for (unsigned int nIndex = 1; nIndex <= nLen;
+                                 nIndex += 1)
+                                panBuffer[nIndex] =
+                                    static_cast<GUInt16>(buffer[nIndex]);
 #endif
-                            if (Failed2( bcp_moretext( hDBCBCP,
-                                (DBINT)papstBindBuffer[iCol]->VarChar.nSize,
-                                (LPCBYTE)buffer ) ))
+                            if (Failed2(bcp_moretext(
+                                    hDBCBCP,
+                                    (DBINT)papstBindBuffer[iCol]->VarChar.nSize,
+                                    (LPCBYTE)buffer)))
                             {
-
                             }
 
                             CPLFree(buffer);
                         }
 
-                        if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
+                        if (Failed2(bcp_moretext(hDBCBCP, 0, nullptr)))
                         {
-
                         }
                     }
                     else
                     {
-                        if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
+                        if (Failed2(
+                                bcp_moretext(hDBCBCP, SQL_NULL_DATA, nullptr)))
                         {
-
                         }
                     }
                 }
             }
-            else if ( poFDefn->GetType() == OFTBinary )
+            else if (poFDefn->GetType() == OFTBinary)
             {
                 if (papstBindBuffer[iCol]->RawData.nSize != SQL_NULL_DATA)
                 {
                     if (papstBindBuffer[iCol]->RawData.nSize > 0)
                     {
-                        if (Failed2( bcp_moretext( hDBCBCP,
-                            (DBINT)papstBindBuffer[iCol]->RawData.nSize,
-                            papstBindBuffer[iCol]->RawData.pData ) ))
+                        if (Failed2(bcp_moretext(
+                                hDBCBCP,
+                                (DBINT)papstBindBuffer[iCol]->RawData.nSize,
+                                papstBindBuffer[iCol]->RawData.pData)))
                         {
-
                         }
                     }
-                    if (Failed2( bcp_moretext( hDBCBCP, 0, nullptr) ))
+                    if (Failed2(bcp_moretext(hDBCBCP, 0, nullptr)))
                     {
-
                     }
                 }
                 else
                 {
-                    if (Failed2( bcp_moretext( hDBCBCP, SQL_NULL_DATA, nullptr) ))
+                    if (Failed2(bcp_moretext(hDBCBCP, SQL_NULL_DATA, nullptr)))
                     {
-
                     }
                 }
             }
@@ -2088,7 +2238,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
     if (++nBCPCount >= nBCPSize)
     {
         /* commit */
-        int nRecNum = bcp_batch( hDBCBCP );
+        int nRecNum = bcp_batch(hDBCBCP);
         if (nRecNum == -1)
             Failed2(nRecNum);
 
@@ -2103,49 +2253,49 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
-    if( !bUpdateAccess )
+    if (!bUpdateAccess)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "CreateFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "CreateFeature");
         return OGRERR_FAILURE;
     }
 
     GetLayerDefn();
 
-    if( nullptr == poFeature )
+    if (nullptr == poFeature)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to CreateFeature()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NULL pointer to OGRFeature passed to CreateFeature().");
         return OGRERR_FAILURE;
     }
 
 #if (ODBCVER >= 0x0300) && defined(MSSQL_BCP_SUPPORTED)
     if (bUseCopy && !m_bHasUUIDColumn)
     {
-        return CreateFeatureBCP( poFeature );
+        return CreateFeatureBCP(poFeature);
     }
 #endif
 
     ClearStatement();
 
-    CPLODBCSession* poSession = poDS->GetSession();
+    CPLODBCSession *poSession = poDS->GetSession();
 
     /* the fid values are retrieved from the source layer */
-    CPLODBCStatement oStatement( poSession );
+    CPLODBCStatement oStatement(poSession);
 
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid )
-        oStatement.Appendf( "SET IDENTITY_INSERT [%s].[%s] ON;",
-                            pszSchemaName, pszTableName );
+    if (poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr &&
+        bIsIdentityFid)
+        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] ON;", pszSchemaName,
+                           pszTableName);
 
-/* -------------------------------------------------------------------- */
-/*      Form the INSERT command.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Form the INSERT command.                                        */
+    /* -------------------------------------------------------------------- */
 
-    oStatement.Appendf( "INSERT INTO [%s].[%s] ", pszSchemaName, pszTableName );
+    oStatement.Appendf("INSERT INTO [%s].[%s] ", pszSchemaName, pszTableName);
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     GIntBig nFID = poFeature->GetFID();
@@ -2156,7 +2306,9 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             oValidator.MakeValid(poGeom);
             CPLError(CE_Warning, CPLE_NotSupported,
-                "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
+                     "Geometry with FID = " CPL_FRMT_GIB
+                     " has been modified to valid geometry.",
+                     poFeature->GetFID());
         }
     }
 
@@ -2165,29 +2317,30 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     if (poGeom != nullptr && pszGeomColumn != nullptr)
     {
         oStatement.Append("([");
-        oStatement.Append( pszGeomColumn );
+        oStatement.Append(pszGeomColumn);
         oStatement.Append("]");
         bNeedComma = TRUE;
     }
 
-    if( nFID != OGRNullFID && pszFIDColumn != nullptr )
+    if (nFID != OGRNullFID && pszFIDColumn != nullptr)
     {
-        if( !CPL_INT64_FITS_ON_INT32(nFID) &&
-            GetMetadataItem(OLMD_FID64) == nullptr )
+        if (!CPL_INT64_FITS_ON_INT32(nFID) &&
+            GetMetadataItem(OLMD_FID64) == nullptr)
         {
-            /* MSSQL server doesn't support modifying pk columns without recreating the field */
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to create feature with large integer fid. "
-                  "The FID64 layer creation option should be used." );
+            /* MSSQL server doesn't support modifying pk columns without
+             * recreating the field */
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to create feature with large integer fid. "
+                     "The FID64 layer creation option should be used.");
 
             return OGRERR_FAILURE;
         }
 
         if (bNeedComma)
-            oStatement.Appendf( ", [%s]", pszFIDColumn );
+            oStatement.Appendf(", [%s]", pszFIDColumn);
         else
         {
-            oStatement.Appendf( "([%s]", pszFIDColumn );
+            oStatement.Appendf("([%s]", pszFIDColumn);
             bNeedComma = TRUE;
         }
     }
@@ -2195,22 +2348,25 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     int nFieldCount = poFeatureDefn->GetFieldCount();
 
     int bind_num = 0;
-    void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * (nFieldCount + 1));
+    void **bind_buffer = (void **)CPLMalloc(sizeof(void *) * (nFieldCount + 1));
 #ifdef SQL_SS_UDT
-    SQLLEN* bind_datalen = (SQLLEN*)CPLMalloc(sizeof(SQLLEN) * (nFieldCount + 1));
+    SQLLEN *bind_datalen =
+        (SQLLEN *)CPLMalloc(sizeof(SQLLEN) * (nFieldCount + 1));
 #endif
 
     int i;
-    for( i = 0; i < nFieldCount; i++ )
+    for (i = 0; i < nFieldCount; i++)
     {
-        if( !poFeature->IsFieldSetAndNotNull( i ) )
+        if (!poFeature->IsFieldSetAndNotNull(i))
             continue;
 
         if (bNeedComma)
-            oStatement.Appendf( ", [%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            oStatement.Appendf(", [%s]",
+                               poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         else
         {
-            oStatement.Appendf( "([%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            oStatement.Appendf("([%s]",
+                               poFeatureDefn->GetFieldDefn(i)->GetNameRef());
             bNeedComma = TRUE;
         }
     }
@@ -2220,22 +2376,26 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         /* no fields were added */
 
-        if (nFID == OGRNullFID && pszFIDColumn != nullptr && (bIsIdentityFid || poDS->AlwaysOutputFid() ))
-            oStatement.Appendf(" OUTPUT INSERTED.[%s] DEFAULT VALUES;", GetFIDColumn());
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr &&
+            (bIsIdentityFid || poDS->AlwaysOutputFid()))
+            oStatement.Appendf(" OUTPUT INSERTED.[%s] DEFAULT VALUES;",
+                               GetFIDColumn());
         else
-            oStatement.Appendf( "DEFAULT VALUES;" );
+            oStatement.Appendf("DEFAULT VALUES;");
     }
     else
     {
         /* prepend VALUES section */
-        if (nFID == OGRNullFID && pszFIDColumn != nullptr && (bIsIdentityFid || poDS->AlwaysOutputFid() ))
-            oStatement.Appendf(") OUTPUT INSERTED.[%s] VALUES (", GetFIDColumn());
+        if (nFID == OGRNullFID && pszFIDColumn != nullptr &&
+            (bIsIdentityFid || poDS->AlwaysOutputFid()))
+            oStatement.Appendf(") OUTPUT INSERTED.[%s] VALUES (",
+                               GetFIDColumn());
         else
-            oStatement.Appendf( ") VALUES (" );
+            oStatement.Appendf(") VALUES (");
 
         /* Set the geometry */
         bNeedComma = FALSE;
-        if(poGeom != nullptr && pszGeomColumn != nullptr)
+        if (poGeom != nullptr && pszGeomColumn != nullptr)
         {
             int nOutgoingSRSId = 0;
 
@@ -2251,175 +2411,201 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             if (nUploadGeometryFormat == MSSQLGEOMETRY_NATIVE)
             {
 #ifdef SQL_SS_UDT
-                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nOutgoingSRSId);
+                OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType,
+                                                nOutgoingSRSId);
                 bind_datalen[bind_num] = poWriter.GetDataLen();
-                GByte *pabyData = (GByte *) CPLMalloc(bind_datalen[bind_num] + 1);
-                if (poWriter.WriteSqlGeometry(pabyData, (int)bind_datalen[bind_num]) == OGRERR_NONE)
+                GByte *pabyData =
+                    (GByte *)CPLMalloc(bind_datalen[bind_num] + 1);
+                if (poWriter.WriteSqlGeometry(
+                        pabyData, (int)bind_datalen[bind_num]) == OGRERR_NONE)
                 {
                     SQLHANDLE ipd;
-                    if ((!poSession->Failed( SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
-                        SQL_PARAM_INPUT, SQL_C_BINARY, SQL_SS_UDT,
-                        SQL_SS_LENGTH_UNLIMITED, 0, (SQLPOINTER)pabyData, bind_datalen[bind_num], (SQLLEN*)&bind_datalen[bind_num])))
-                        && (!poSession->Failed(SQLGetStmtAttr(oStatement.GetStatement(), SQL_ATTR_IMP_PARAM_DESC, &ipd, 0, nullptr)))
-                        && (!poSession->Failed(SQLSetDescField(ipd, 1, SQL_CA_SS_UDT_TYPE_NAME,
-                            const_cast<char*>(nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY? "geography" : "geometry"), SQL_NTS))))
+                    if ((!poSession->Failed(SQLBindParameter(
+                            oStatement.GetStatement(),
+                            (SQLUSMALLINT)(bind_num + 1), SQL_PARAM_INPUT,
+                            SQL_C_BINARY, SQL_SS_UDT, SQL_SS_LENGTH_UNLIMITED,
+                            0, (SQLPOINTER)pabyData, bind_datalen[bind_num],
+                            (SQLLEN *)&bind_datalen[bind_num]))) &&
+                        (!poSession->Failed(SQLGetStmtAttr(
+                            oStatement.GetStatement(), SQL_ATTR_IMP_PARAM_DESC,
+                            &ipd, 0, nullptr))) &&
+                        (!poSession->Failed(SQLSetDescField(
+                            ipd, 1, SQL_CA_SS_UDT_TYPE_NAME,
+                            const_cast<char *>(nGeomColumnType ==
+                                                       MSSQLCOLTYPE_GEOGRAPHY
+                                                   ? "geography"
+                                                   : "geometry"),
+                            SQL_NTS))))
                     {
-                        oStatement.Append( "?" );
+                        oStatement.Append("?");
                         bind_buffer[bind_num] = pabyData;
                         ++bind_num;
                     }
                     else
                     {
-                        oStatement.Append( "null" );
+                        oStatement.Append("null");
                         CPLFree(pabyData);
                     }
                 }
                 else
                 {
-                    oStatement.Append( "null" );
+                    oStatement.Append("null");
                     CPLFree(pabyData);
                 }
 #else
-                CPLError( CE_Failure, CPLE_AppDefined,
-                  "Native geometry upload is not supported" );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Native geometry upload is not supported");
 
-                // No need to free bind_buffer[i] since bind_num == 0 in that branch
+                // No need to free bind_buffer[i] since bind_num == 0 in that
+                // branch
                 CPLFree(bind_buffer);
 
                 return OGRERR_FAILURE;
 #endif
-                //CPLFree(pabyData);
+                // CPLFree(pabyData);
             }
             else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
             {
                 const size_t nWKBLen = poGeom->WkbSize();
-                GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen + 1); // do we need the +1 ?
-                if( pabyWKB == nullptr )
+                GByte *pabyWKB = (GByte *)VSI_MALLOC_VERBOSE(
+                    nWKBLen + 1);  // do we need the +1 ?
+                if (pabyWKB == nullptr)
                 {
-                    oStatement.Append( "null" );
+                    oStatement.Append("null");
                 }
-                else if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
-                    || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
+                else if (poGeom->exportToWkb(wkbNDR, pabyWKB, wkbVariantIso) ==
+                             OGRERR_NONE &&
+                         (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
+                          nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
                     nWKBLenBindParameter = nWKBLen;
-                    int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
+                    int nRetCode = SQLBindParameter(
+                        oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
                         SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY,
-                        nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, &nWKBLenBindParameter);
-                    if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                        nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen,
+                        &nWKBLenBindParameter);
+                    if (nRetCode == SQL_SUCCESS ||
+                        nRetCode == SQL_SUCCESS_WITH_INFO)
                     {
                         if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                         {
-                            oStatement.Append( "geography::STGeomFromWKB(?" );
-                            oStatement.Appendf(",%d)", nOutgoingSRSId );
+                            oStatement.Append("geography::STGeomFromWKB(?");
+                            oStatement.Appendf(",%d)", nOutgoingSRSId);
                         }
                         else
                         {
-                            oStatement.Append( "geometry::STGeomFromWKB(?" );
-                            oStatement.Appendf(",%d).MakeValid()", nOutgoingSRSId );
+                            oStatement.Append("geometry::STGeomFromWKB(?");
+                            oStatement.Appendf(",%d).MakeValid()",
+                                               nOutgoingSRSId);
                         }
                         bind_buffer[bind_num] = pabyWKB;
                         ++bind_num;
                     }
                     else
                     {
-                        oStatement.Append( "null" );
+                        oStatement.Append("null");
                         CPLFree(pabyWKB);
                     }
                 }
                 else
                 {
-                    oStatement.Append( "null" );
+                    oStatement.Append("null");
                     CPLFree(pabyWKB);
                 }
             }
             else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKT)
             {
-                char    *pszWKT = nullptr;
-                if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
-                    || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
+                char *pszWKT = nullptr;
+                if (poGeom->exportToWkt(&pszWKT) == OGRERR_NONE &&
+                    (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
+                     nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
                     size_t nLen = 0;
-                    while(pszWKT[nLen] != '\0')
-                        nLen ++;
+                    while (pszWKT[nLen] != '\0')
+                        nLen++;
 
-                    int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
-                        SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR,
-                        nLen, 0, (SQLPOINTER)pszWKT, 0, nullptr);
-                    if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                    int nRetCode = SQLBindParameter(
+                        oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
+                        SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR, nLen, 0,
+                        (SQLPOINTER)pszWKT, 0, nullptr);
+                    if (nRetCode == SQL_SUCCESS ||
+                        nRetCode == SQL_SUCCESS_WITH_INFO)
                     {
                         if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                         {
-                            oStatement.Append( "geography::STGeomFromText(?" );
-                            oStatement.Appendf(",%d)", nOutgoingSRSId );
+                            oStatement.Append("geography::STGeomFromText(?");
+                            oStatement.Appendf(",%d)", nOutgoingSRSId);
                         }
                         else
                         {
-                            oStatement.Append( "geometry::STGeomFromText(?" );
-                            oStatement.Appendf(",%d).MakeValid()", nOutgoingSRSId );
+                            oStatement.Append("geometry::STGeomFromText(?");
+                            oStatement.Appendf(",%d).MakeValid()",
+                                               nOutgoingSRSId);
                         }
                         bind_buffer[bind_num] = pszWKT;
                         ++bind_num;
                     }
                     else
                     {
-                        oStatement.Append( "null" );
+                        oStatement.Append("null");
                         CPLFree(pszWKT);
                     }
                 }
                 else
                 {
-                    oStatement.Append( "null" );
+                    oStatement.Append("null");
                     CPLFree(pszWKT);
                 }
             }
             else
-                oStatement.Append( "null" );
+                oStatement.Append("null");
 
             bNeedComma = TRUE;
         }
 
         /* Set the FID */
-        if( nFID != OGRNullFID && pszFIDColumn != nullptr )
+        if (nFID != OGRNullFID && pszFIDColumn != nullptr)
         {
             if (bNeedComma)
-                oStatement.Appendf( ", " CPL_FRMT_GIB, nFID );
+                oStatement.Appendf(", " CPL_FRMT_GIB, nFID);
             else
             {
-                oStatement.Appendf( CPL_FRMT_GIB, nFID );
+                oStatement.Appendf(CPL_FRMT_GIB, nFID);
                 bNeedComma = TRUE;
             }
         }
 
-        for( i = 0; i < nFieldCount; i++ )
+        for (i = 0; i < nFieldCount; i++)
         {
-            if( !poFeature->IsFieldSetAndNotNull( i ) )
+            if (!poFeature->IsFieldSetAndNotNull(i))
                 continue;
 
             if (bNeedComma)
-                oStatement.Append( ", " );
+                oStatement.Append(", ");
             else
                 bNeedComma = TRUE;
 
             AppendFieldValue(&oStatement, poFeature, i, &bind_num, bind_buffer);
         }
 
-        oStatement.Append( ");" );
+        oStatement.Append(");");
     }
 
-    if( nFID != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid )
-        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName, pszTableName );
+    if (nFID != OGRNullFID && pszFIDColumn != nullptr && bIsIdentityFid)
+        oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName,
+                           pszTableName);
 
-/* -------------------------------------------------------------------- */
-/*      Execute the insert.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Execute the insert.                                             */
+    /* -------------------------------------------------------------------- */
 
-    if( !oStatement.ExecuteSQL() )
+    if (!oStatement.ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "INSERT command for new feature failed. %s",
-                   poDS->GetSession()->GetLastError() );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "INSERT command for new feature failed. %s",
+                 poDS->GetSession()->GetLastError());
 
-        for( i = 0; i < bind_num; i++ )
+        for (i = 0; i < bind_num; i++)
             CPLFree(bind_buffer[i]);
         CPLFree(bind_buffer);
 
@@ -2429,7 +2615,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         return OGRERR_FAILURE;
     }
-    else if(nFID == OGRNullFID && pszFIDColumn != nullptr && (bIsIdentityFid || poDS->AlwaysOutputFid() ))
+    else if (nFID == OGRNullFID && pszFIDColumn != nullptr &&
+             (bIsIdentityFid || poDS->AlwaysOutputFid()))
     {
         // fetch new ID and set it into the feature
         if (oStatement.Fetch())
@@ -2439,8 +2626,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    for( i = 0; i < bind_num; i++ )
-            CPLFree(bind_buffer[i]);
+    for (i = 0; i < bind_num; i++)
+        CPLFree(bind_buffer[i]);
     CPLFree(bind_buffer);
 
 #ifdef SQL_SS_UDT
@@ -2458,42 +2645,44 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 
 void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
-                                       OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer)
+                                                 OGRFeature *poFeature, int i,
+                                                 int *bind_num,
+                                                 void **bind_buffer)
 {
     int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
     int nOGRFieldSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
 
     // We need special formatting for integer list values.
-    if(  nOGRFieldType == OFTIntegerList )
+    if (nOGRFieldType == OFTIntegerList)
     {
-        //TODO
-        poStatement->Append( "null" );
+        // TODO
+        poStatement->Append("null");
         return;
     }
 
     // We need special formatting for real list values.
-    else if( nOGRFieldType == OFTRealList )
+    else if (nOGRFieldType == OFTRealList)
     {
-        //TODO
-        poStatement->Append( "null" );
+        // TODO
+        poStatement->Append("null");
         return;
     }
 
     // We need special formatting for string list values.
-    else if( nOGRFieldType == OFTStringList )
+    else if (nOGRFieldType == OFTStringList)
     {
-        //TODO
-        poStatement->Append( "null" );
+        // TODO
+        poStatement->Append("null");
         return;
     }
 
     // Binary formatting
-    if( nOGRFieldType == OFTBinary )
+    if (nOGRFieldType == OFTBinary)
     {
         int nLen = 0;
-        GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );
-        char* pszBytes = GByteArrayToHexString( pabyData, nLen);
-        poStatement->Append( pszBytes );
+        GByte *pabyData = poFeature->GetFieldAsBinary(i, &nLen);
+        char *pszBytes = GByteArrayToHexString(pabyData, nLen);
+        poStatement->Append(pszBytes);
         CPLFree(pszBytes);
         return;
     }
@@ -2501,26 +2690,25 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     // Datetime values need special handling as SQL Server's datetime type
     // accepts values only in ISO 8601 format and only without time zone
     // information
-    else if( nOGRFieldType == OFTDateTime )
+    else if (nOGRFieldType == OFTDateTime)
     {
-        char *pszStrValue = OGRGetXMLDateTime( (*poFeature)[i].GetRawValue() );
+        char *pszStrValue = OGRGetXMLDateTime((*poFeature)[i].GetRawValue());
 
-        int nRetCode = SQLBindParameter( poStatement->GetStatement(),
-            (SQLUSMALLINT)((*bind_num) + 1), SQL_PARAM_INPUT, SQL_C_CHAR,
-            SQL_VARCHAR, strlen(pszStrValue) + 1, 0, (SQLPOINTER)pszStrValue,
-            0, nullptr );
-        if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+        int nRetCode = SQLBindParameter(
+            poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
+            SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, strlen(pszStrValue) + 1,
+            0, (SQLPOINTER)pszStrValue, 0, nullptr);
+        if (nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO)
         {
             bind_buffer[*bind_num] = pszStrValue;
             ++(*bind_num);
-            poStatement->Append(
-                "CAST(CAST(? AS datetimeoffset) AS datetime)" );
+            poStatement->Append("CAST(CAST(? AS datetimeoffset) AS datetime)");
         }
-        else {
-            poStatement->Append(
-                CPLSPrintf( "CAST(CAST('%s' AS datetimeoffset) AS datetime)",
-                    pszStrValue ) );
-            CPLFree( pszStrValue );
+        else
+        {
+            poStatement->Append(CPLSPrintf(
+                "CAST(CAST('%s' AS datetimeoffset) AS datetime)", pszStrValue));
+            CPLFree(pszStrValue);
         }
         return;
     }
@@ -2532,33 +2720,37 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     const char *pszStrValue = poFeature->GetFieldAsString(i);
 
     // Check if date is NULL: 0000-00-00
-    if( nOGRFieldType == OFTDate )
+    if (nOGRFieldType == OFTDate)
     {
-        if( STARTS_WITH_CI(pszStrValue, "0000") )
+        if (STARTS_WITH_CI(pszStrValue, "0000"))
         {
             pszStrValue = "null";
             bIsDateNull = TRUE;
         }
     }
-    else if ( nOGRFieldType == OFTReal )
+    else if (nOGRFieldType == OFTReal)
     {
-        char* pszComma = strchr((char*)pszStrValue, ',');
+        char *pszComma = strchr((char *)pszStrValue, ',');
         if (pszComma)
             *pszComma = '.';
     }
 
-    if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTInteger64 && nOGRFieldType != OFTReal
-        && !bIsDateNull )
+    if (nOGRFieldType != OFTInteger && nOGRFieldType != OFTInteger64 &&
+        nOGRFieldType != OFTReal && !bIsDateNull)
     {
         if (nOGRFieldType == OFTString)
         {
             if (nOGRFieldSubType == OFSTUUID)
             {
-                int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
-                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_GUID, 16, 0, (SQLPOINTER)pszStrValue, 0, nullptr);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                int nRetCode =
+                    SQLBindParameter(poStatement->GetStatement(),
+                                     (SQLUSMALLINT)((*bind_num) + 1),
+                                     SQL_PARAM_INPUT, SQL_C_CHAR, SQL_GUID, 16,
+                                     0, (SQLPOINTER)pszStrValue, 0, nullptr);
+                if (nRetCode == SQL_SUCCESS ||
+                    nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
-                    poStatement->Append( "?" );
+                    poStatement->Append("?");
                     bind_buffer[*bind_num] = CPLStrdup(pszStrValue);
                     ++(*bind_num);
                 }
@@ -2570,33 +2762,41 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
             else
             {
                 // bind UTF8 as unicode parameter
-                wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
+                wchar_t *buffer =
+                    CPLRecodeToWChar(pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
                 size_t nLen = wcslen(buffer) + 1;
                 if (nLen > 4000)
                 {
                     /* need to handle nvarchar(max) */
-    #ifdef SQL_SS_LENGTH_UNLIMITED
+#ifdef SQL_SS_LENGTH_UNLIMITED
                     nLen = SQL_SS_LENGTH_UNLIMITED;
-    #else
+#else
                     /* for older drivers truncate the data to 4000 chars */
                     buffer[4000] = 0;
                     nLen = 4000;
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                            "String data truncation applied on field: %s. Use a more recent ODBC driver that supports handling large string values.", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-    #endif
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "String data truncation applied on field: %s. Use "
+                             "a more recent ODBC driver that supports handling "
+                             "large string values.",
+                             poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+#endif
                 }
-    #if WCHAR_MAX > 0xFFFFu
+#if WCHAR_MAX > 0xFFFFu
                 // Shorten each character to a two-byte value, as expected by
                 // the ODBC driver
                 GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
-                for( unsigned int nIndex = 1; nIndex < nLen; nIndex += 1 )
+                for (unsigned int nIndex = 1; nIndex < nLen; nIndex += 1)
                     panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
-    #endif
-                int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
-                    SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, nLen, 0, (SQLPOINTER)buffer, 0, nullptr);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+#endif
+                int nRetCode =
+                    SQLBindParameter(poStatement->GetStatement(),
+                                     (SQLUSMALLINT)((*bind_num) + 1),
+                                     SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR,
+                                     nLen, 0, (SQLPOINTER)buffer, 0, nullptr);
+                if (nRetCode == SQL_SUCCESS ||
+                    nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
-                    poStatement->Append( "?" );
+                    poStatement->Append("?");
                     bind_buffer[*bind_num] = buffer;
                     ++(*bind_num);
                 }
@@ -2612,6 +2812,6 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     }
     else
     {
-        poStatement->Append( pszStrValue );
+        poStatement->Append(pszStrValue);
     }
 }

@@ -37,17 +37,21 @@
 #include "cpl_port.h"
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4324 ) /* 'my_alignment_imp<0x02>' : structure was padded due to __declspec(align()) */
-#pragma warning( disable : 4201 ) /* nonstandard extension used : nameless struct/union */
-#pragma warning( disable : 4211 ) /* nonstandard extension used : redefined extern to static */
-#pragma warning( disable : 4005 ) /* warning C4005: 'HAVE_STRUCT_TIMESPEC': macro redefinition */
+#pragma warning(push)
+#pragma warning(disable : 4324) /* 'my_alignment_imp<0x02>' : structure was    \
+                                   padded due to __declspec(align()) */
+#pragma warning(                                                               \
+    disable : 4201) /* nonstandard extension used : nameless struct/union */
+#pragma warning(disable : 4211) /* nonstandard extension used : redefined      \
+                                   extern to static */
+#pragma warning(disable : 4005) /* warning C4005: 'HAVE_STRUCT_TIMESPEC':      \
+                                   macro redefinition */
 #endif
 
 #include <mysql.h>
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 /* my_global.h from mysql 5.1 declares the min and max macros. */
@@ -72,53 +76,56 @@
 
 class OGRMySQLDataSource;
 
-class OGRMySQLLayer CPL_NON_FINAL: public OGRLayer
+class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
-    int                 nSRSId;
+    int nSRSId;
 
-    GIntBig             iNextShapeId;
+    GIntBig iNextShapeId;
 
-    OGRMySQLDataSource    *poDS;
+    OGRMySQLDataSource *poDS;
 
-    char               *pszQueryStatement;
+    char *pszQueryStatement;
 
-    int                 nResultOffset;
+    int nResultOffset;
 
-    char                *pszGeomColumn;
-    char                *pszGeomColumnTable;
-    int                 nGeomType;
+    char *pszGeomColumn;
+    char *pszGeomColumnTable;
+    int nGeomType;
 
-    int                 bHasFid;
-    char                *pszFIDColumn;
+    int bHasFid;
+    char *pszFIDColumn;
 
-    MYSQL_RES           *hResultSet;
-    bool                m_bEOF = false;
+    MYSQL_RES *hResultSet;
+    bool m_bEOF = false;
 
-    int                 FetchSRSId();
+    int FetchSRSId();
 
   public:
-                        OGRMySQLLayer();
-    virtual             ~OGRMySQLLayer();
+    OGRMySQLLayer();
+    virtual ~OGRMySQLLayer();
 
-    virtual void        ResetReading() override;
+    virtual void ResetReading() override;
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual const char *GetFIDColumn() override;
 
     /* custom methods */
-    virtual OGRFeature *RecordToFeature( char **papszRow, unsigned long * );
+    virtual OGRFeature *RecordToFeature(char **papszRow, unsigned long *);
     virtual OGRFeature *GetNextRawFeature();
 };
 
@@ -126,157 +133,179 @@ class OGRMySQLLayer CPL_NON_FINAL: public OGRLayer
 /*                          OGRMySQLTableLayer                          */
 /************************************************************************/
 
-class OGRMySQLTableLayer final: public OGRMySQLLayer
+class OGRMySQLTableLayer final : public OGRMySQLLayer
 {
-    int                 bUpdateAccess;
+    int bUpdateAccess;
 
-    OGRFeatureDefn     *ReadTableDefinition(const char *);
+    OGRFeatureDefn *ReadTableDefinition(const char *);
 
-    void                BuildWhere();
-    char               *BuildFields();
-    void                BuildFullQueryStatement();
+    void BuildWhere();
+    char *BuildFields();
+    void BuildFullQueryStatement();
 
-    char                *pszQuery;
-    char                *pszWHERE;
+    char *pszQuery;
+    char *pszWHERE;
 
-    int                 bLaunderColumnNames;
-    int                 bPreservePrecision;
+    int bLaunderColumnNames;
+    int bPreservePrecision;
 
   public:
-                        OGRMySQLTableLayer( OGRMySQLDataSource *,
-                                            const char * pszName,
-                                            int bUpdate, int nSRSId = -2 );
-                        virtual ~OGRMySQLTableLayer();
+    OGRMySQLTableLayer(OGRMySQLDataSource *, const char *pszName, int bUpdate,
+                       int nSRSId = -2);
+    virtual ~OGRMySQLTableLayer();
 
-    OGRErr              Initialize(const char* pszTableName);
+    OGRErr Initialize(const char *pszTableName);
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    void                SetSpatialFilter( OGRGeometry * ) override;
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+    void SetSpatialFilter(OGRGeometry *) override;
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr SetAttributeFilter(const char *) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr CreateField(OGRFieldDefn *poField,
+                               int bApproxOK = TRUE) override;
 
-    void                SetLaunderFlag( int bFlag )
-                                { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag )
-                                { bPreservePrecision = bFlag; }
+    void SetLaunderFlag(int bFlag)
+    {
+        bLaunderColumnNames = bFlag;
+    }
+    void SetPrecisionFlag(int bFlag)
+    {
+        bPreservePrecision = bFlag;
+    }
 
-    virtual int         TestCapability( const char * ) override;
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    virtual int TestCapability(const char *) override;
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 };
 
 /************************************************************************/
 /*                         OGRMySQLResultLayer                          */
 /************************************************************************/
 
-class OGRMySQLResultLayer final: public OGRMySQLLayer
+class OGRMySQLResultLayer final : public OGRMySQLLayer
 {
-    void                BuildFullQueryStatement();
+    void BuildFullQueryStatement();
 
-    char                *pszRawStatement;
+    char *pszRawStatement;
 
   public:
-                        OGRMySQLResultLayer( OGRMySQLDataSource *,
-                                             const char * pszRawStatement,
-                                             MYSQL_RES *hResultSetIn );
-    virtual             ~OGRMySQLResultLayer();
+    OGRMySQLResultLayer(OGRMySQLDataSource *, const char *pszRawStatement,
+                        MYSQL_RES *hResultSetIn);
+    virtual ~OGRMySQLResultLayer();
 
-    OGRFeatureDefn     *ReadResultDefinition();
+    OGRFeatureDefn *ReadResultDefinition();
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                          OGRMySQLDataSource                          */
 /************************************************************************/
 
-class OGRMySQLDataSource final: public OGRDataSource
+class OGRMySQLDataSource final : public OGRDataSource
 {
-    OGRMySQLLayer       **papoLayers;
-    int                 nLayers;
+    OGRMySQLLayer **papoLayers;
+    int nLayers;
 
-    char               *pszName;
+    char *pszName;
 
-    int                 bDSUpdate;
+    int bDSUpdate;
 
-    MYSQL              *hConn;
+    MYSQL *hConn;
 
-    OGRErr              DeleteLayer( int iLayer ) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int                 nKnownSRID;
-    int                *panSRID;
+    int nKnownSRID;
+    int *panSRID;
     OGRSpatialReference **papoSRS;
 
-    OGRMySQLLayer      *poLongResultLayer;
+    OGRMySQLLayer *poLongResultLayer;
 
-    bool                m_bIsMariaDB = false;
-    int                 m_nMajor = 0;
-    int                 m_nMinor = 0;
+    bool m_bIsMariaDB = false;
+    int m_nMajor = 0;
+    int m_nMinor = 0;
 
   public:
-                        OGRMySQLDataSource();
-                        virtual ~OGRMySQLDataSource();
+    OGRMySQLDataSource();
+    virtual ~OGRMySQLDataSource();
 
-    MYSQL              *GetConn() { return hConn; }
+    MYSQL *GetConn()
+    {
+        return hConn;
+    }
 
-    int                 FetchSRSId( OGRSpatialReference * poSRS );
+    int FetchSRSId(OGRSpatialReference *poSRS);
 
-    OGRSpatialReference *FetchSRS( int nSRSId );
+    OGRSpatialReference *FetchSRS(int nSRSId);
 
-    OGRErr              InitializeMetadataTables();
-    OGRErr              UpdateMetadataTables(const char *pszLayerName,
-                                             OGRwkbGeometryType eType,
-                                             const char *pszGeomColumnName,
-                                             const int nSRSId);
+    OGRErr InitializeMetadataTables();
+    OGRErr UpdateMetadataTables(const char *pszLayerName,
+                                OGRwkbGeometryType eType,
+                                const char *pszGeomColumnName,
+                                const int nSRSId);
 
-    int                 Open( const char *, char** papszOpenOptions, int bUpdate );
-    int                 OpenTable( const char *, int bUpdate );
+    int Open(const char *, char **papszOpenOptions, int bUpdate);
+    int OpenTable(const char *, int bUpdate);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = nullptr,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = nullptr ) override;
+    virtual OGRLayer *ICreateLayer(const char *,
+                                   OGRSpatialReference * = nullptr,
+                                   OGRwkbGeometryType = wkbUnknown,
+                                   char ** = nullptr) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect ) override;
-    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
     // nonstandard
 
-    void                ReportError( const char * = nullptr );
+    void ReportError(const char * = nullptr);
 
-    static char        *LaunderName( const char * );
+    static char *LaunderName(const char *);
 
-    void                RequestLongResult( OGRMySQLLayer * );
-    void                InterruptLongResult();
+    void RequestLongResult(OGRMySQLLayer *);
+    void InterruptLongResult();
 
-    bool                IsMariaDB() const { return m_bIsMariaDB; }
-    int                 GetMajorVersion() const { return m_nMajor; }
-    int                 GetUnknownSRID() const;
+    bool IsMariaDB() const
+    {
+        return m_bIsMariaDB;
+    }
+    int GetMajorVersion() const
+    {
+        return m_nMajor;
+    }
+    int GetUnknownSRID() const;
 };
 
 #endif /* ndef OGR_MYSQL_H_INCLUDED */

@@ -52,22 +52,22 @@ namespace
 
 class LayerCreationOptionsConstants
 {
-public:
+  public:
     LayerCreationOptionsConstants() = delete;
 
-public:
-    static constexpr const char* OVERWRITE = "OVERWRITE";
-    static constexpr const char* LAUNDER = "LAUNDER";
-    static constexpr const char* PRECISION = "PRECISION";
-    static constexpr const char* DEFAULT_STRING_SIZE = "DEFAULT_STRING_SIZE";
-    static constexpr const char* GEOMETRY_NAME = "GEOMETRY_NAME";
-    static constexpr const char* GEOMETRY_NULLABLE = "GEOMETRY_NULLABLE";
-    static constexpr const char* GEOMETRY_INDEX = "GEOMETRY_INDEX";
-    static constexpr const char* SRID = "SRID";
-    static constexpr const char* FID = "FID";
-    static constexpr const char* FID64 = "FID64";
-    static constexpr const char* COLUMN_TYPES = "COLUMN_TYPES";
-    static constexpr const char* BATCH_SIZE = "BATCH_SIZE";
+  public:
+    static constexpr const char *OVERWRITE = "OVERWRITE";
+    static constexpr const char *LAUNDER = "LAUNDER";
+    static constexpr const char *PRECISION = "PRECISION";
+    static constexpr const char *DEFAULT_STRING_SIZE = "DEFAULT_STRING_SIZE";
+    static constexpr const char *GEOMETRY_NAME = "GEOMETRY_NAME";
+    static constexpr const char *GEOMETRY_NULLABLE = "GEOMETRY_NULLABLE";
+    static constexpr const char *GEOMETRY_INDEX = "GEOMETRY_INDEX";
+    static constexpr const char *SRID = "SRID";
+    static constexpr const char *FID = "FID";
+    static constexpr const char *FID64 = "FID64";
+    static constexpr const char *COLUMN_TYPES = "COLUMN_TYPES";
+    static constexpr const char *BATCH_SIZE = "BATCH_SIZE";
 
     // clang-format off
     static const char* GetList()
@@ -93,34 +93,34 @@ public:
 
 class OpenOptionsConstants
 {
-public:
+  public:
     OpenOptionsConstants() = delete;
 
-public:
-    static constexpr const char* DSN = "DSN";
-    static constexpr const char* DRIVER = "DRIVER";
-    static constexpr const char* HOST = "HOST";
-    static constexpr const char* PORT = "PORT";
-    static constexpr const char* DATABASE = "DATABASE";
-    static constexpr const char* USER = "USER";
-    static constexpr const char* PASSWORD = "PASSWORD";
-    static constexpr const char* SCHEMA = "SCHEMA";
-    static constexpr const char* TABLES = "TABLES";
+  public:
+    static constexpr const char *DSN = "DSN";
+    static constexpr const char *DRIVER = "DRIVER";
+    static constexpr const char *HOST = "HOST";
+    static constexpr const char *PORT = "PORT";
+    static constexpr const char *DATABASE = "DATABASE";
+    static constexpr const char *USER = "USER";
+    static constexpr const char *PASSWORD = "PASSWORD";
+    static constexpr const char *SCHEMA = "SCHEMA";
+    static constexpr const char *TABLES = "TABLES";
 
-    static constexpr const char* ENCRYPT = "ENCRYPT";
-    static constexpr const char* SSL_CRYPTO_PROVIDER = "SSL_CRYPTO_PROVIDER";
-    static constexpr const char* SSL_KEY_STORE = "SSL_KEY_STORE";
-    static constexpr const char* SSL_TRUST_STORE = "SSL_TRUST_STORE";
-    static constexpr const char* SSL_VALIDATE_CERTIFICATE =
+    static constexpr const char *ENCRYPT = "ENCRYPT";
+    static constexpr const char *SSL_CRYPTO_PROVIDER = "SSL_CRYPTO_PROVIDER";
+    static constexpr const char *SSL_KEY_STORE = "SSL_KEY_STORE";
+    static constexpr const char *SSL_TRUST_STORE = "SSL_TRUST_STORE";
+    static constexpr const char *SSL_VALIDATE_CERTIFICATE =
         "SSL_VALIDATE_CERTIFICATE";
-    static constexpr const char* SSL_HOST_NAME_CERTIFICATE =
+    static constexpr const char *SSL_HOST_NAME_CERTIFICATE =
         "SSL_HOST_NAME_CERTIFICATE";
 
-    static constexpr const char* CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT";
-    static constexpr const char* PACKET_SIZE = "PACKET_SIZE";
-    static constexpr const char* SPLIT_BATCH_COMMANDS = "SPLIT_BATCH_COMMANDS";
+    static constexpr const char *CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT";
+    static constexpr const char *PACKET_SIZE = "PACKET_SIZE";
+    static constexpr const char *SPLIT_BATCH_COMMANDS = "SPLIT_BATCH_COMMANDS";
 
-    static constexpr const char* DETECT_GEOMETRY_TYPE = "DETECT_GEOMETRY_TYPE";
+    static constexpr const char *DETECT_GEOMETRY_TYPE = "DETECT_GEOMETRY_TYPE";
 
     // clang-format off
     static const char* GetList()
@@ -150,7 +150,7 @@ public:
     // clang-format on
 };
 
-CPLString BuildConnectionString(char** openOptions)
+CPLString BuildConnectionString(char **openOptions)
 {
     // See notes for constructing connection string for HANA
     // https://help.sap.com/docs/SAP_HANA_CLIENT/f1b440ded6144a54ada97ff95dac7adf/7cab593774474f2f8db335710b2f5c50.html
@@ -159,20 +159,21 @@ CPLString BuildConnectionString(char** openOptions)
     bool isValid = true;
     const CPLString specialChars("[]{}(),;?*=!@");
 
-    auto getOptValue = [&](const char* optionName, bool mandatory = false)
+    auto getOptValue = [&](const char *optionName, bool mandatory = false)
     {
-        const char* paramValue = CSLFetchNameValueDef(openOptions, optionName, nullptr);
+        const char *paramValue =
+            CSLFetchNameValueDef(openOptions, optionName, nullptr);
         if (mandatory && paramValue == nullptr)
         {
             isValid = false;
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Mandatory connection parameter '%s' is missing.", optionName);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Mandatory connection parameter '%s' is missing.",
+                     optionName);
         }
         return paramValue;
     };
 
-    auto addParameter = [&](const char* paramName, const char* paramValue)
+    auto addParameter = [&](const char *paramName, const char *paramValue)
     {
         if (paramValue == nullptr)
             return;
@@ -181,7 +182,7 @@ CPLString BuildConnectionString(char** openOptions)
         if (value.find_first_of(specialChars) != std::string::npos)
         {
             value.replaceAll("}", "}}");
-            params.push_back( CPLString(paramName) + "={" + value + "}" );
+            params.push_back(CPLString(paramName) + "={" + value + "}");
         }
         else
         {
@@ -189,9 +190,10 @@ CPLString BuildConnectionString(char** openOptions)
         }
     };
 
-    auto addOptParameter = [&](const char* optionName, const char* paramName, bool mandatory = false)
+    auto addOptParameter = [&](const char *optionName, const char *paramName,
+                               bool mandatory = false)
     {
-        const char* paramValue = getOptValue(optionName, mandatory);
+        const char *paramValue = getOptValue(optionName, mandatory);
         addParameter(paramName, paramValue);
     };
 
@@ -202,8 +204,8 @@ CPLString BuildConnectionString(char** openOptions)
     else
     {
         addOptParameter(OpenOptionsConstants::DRIVER, "DRIVER", true);
-        const char* paramHost = getOptValue(OpenOptionsConstants::HOST, true);
-        const char* paramPort = getOptValue(OpenOptionsConstants::PORT, true);
+        const char *paramHost = getOptValue(OpenOptionsConstants::HOST, true);
+        const char *paramPort = getOptValue(OpenOptionsConstants::PORT, true);
         if (paramHost != nullptr && paramPort != nullptr)
         {
             CPLString node = CPLString().Printf("%s:%s", paramHost, paramPort);
@@ -214,7 +216,7 @@ CPLString BuildConnectionString(char** openOptions)
 
     addOptParameter(OpenOptionsConstants::USER, "UID", true);
     addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
-    const char* paramSchema = getOptValue(OpenOptionsConstants::SCHEMA, true);
+    const char *paramSchema = getOptValue(OpenOptionsConstants::SCHEMA, true);
     if (paramSchema != nullptr)
     {
         CPLString schema = CPLString().Printf("\"%s\"", paramSchema);
@@ -224,15 +226,19 @@ CPLString BuildConnectionString(char** openOptions)
     if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, false))
     {
         addOptParameter(OpenOptionsConstants::ENCRYPT, "ENCRYPT");
-        addOptParameter(OpenOptionsConstants::SSL_CRYPTO_PROVIDER, "sslCryptoProvider");
+        addOptParameter(OpenOptionsConstants::SSL_CRYPTO_PROVIDER,
+                        "sslCryptoProvider");
         addOptParameter(OpenOptionsConstants::SSL_KEY_STORE, "sslKeyStore");
         addOptParameter(OpenOptionsConstants::SSL_TRUST_STORE, "sslTrustStore");
-        addOptParameter(OpenOptionsConstants::SSL_VALIDATE_CERTIFICATE, "sslValidateCertificate");
-        addOptParameter(OpenOptionsConstants::SSL_HOST_NAME_CERTIFICATE, "sslHostNameInCertificate");
+        addOptParameter(OpenOptionsConstants::SSL_VALIDATE_CERTIFICATE,
+                        "sslValidateCertificate");
+        addOptParameter(OpenOptionsConstants::SSL_HOST_NAME_CERTIFICATE,
+                        "sslHostNameInCertificate");
     }
 
     addOptParameter(OpenOptionsConstants::PACKET_SIZE, "PACKETSIZE");
-    addOptParameter(OpenOptionsConstants::SPLIT_BATCH_COMMANDS, "SPLITBATCHCOMMANDS");
+    addOptParameter(OpenOptionsConstants::SPLIT_BATCH_COMMANDS,
+                    "SPLITBATCHCOMMANDS");
     addParameter("CHAR_AS_UTF8", "1");
 
     return isValid ? JoinStrings(params, ";") : "";
@@ -240,14 +246,13 @@ CPLString BuildConnectionString(char** openOptions)
 
 int CPLFetchInt(CSLConstList papszStrList, const char *pszKey, int defaultValue)
 {
-    const char * const pszValue =
-        CSLFetchNameValue( papszStrList, pszKey );
-    if( pszValue == nullptr )
+    const char *const pszValue = CSLFetchNameValue(papszStrList, pszKey);
+    if (pszValue == nullptr)
         return defaultValue;
-    return atoi( pszValue );
+    return atoi(pszValue);
 }
 
-int GetSrid(odbc::ResultSet& resultSet)
+int GetSrid(odbc::ResultSet &resultSet)
 {
     int srid = UNDETERMINED_SRID;
     while (resultSet.next())
@@ -263,11 +268,8 @@ int GetSrid(odbc::ResultSet& resultSet)
     return srid;
 }
 
-int GetColumnSrid(
-    odbc::Connection& conn,
-    const CPLString& schemaName,
-    const CPLString& tableName,
-    const CPLString& columnName)
+int GetColumnSrid(odbc::Connection &conn, const CPLString &schemaName,
+                  const CPLString &tableName, const CPLString &columnName)
 {
     CPLString sql =
         "SELECT SRS_ID FROM SYS.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = ?"
@@ -280,20 +282,20 @@ int GetColumnSrid(
     return GetSrid(*stmt->executeQuery());
 }
 
-int GetColumnSrid(
-    odbc::Connection& conn, const CPLString& query, const CPLString& columnName)
+int GetColumnSrid(odbc::Connection &conn, const CPLString &query,
+                  const CPLString &columnName)
 {
     CPLString clmName = QuotedIdentifier(columnName);
 
-    CPLString sql = CPLString().Printf(
-        "SELECT %s.ST_SRID() FROM (%s) WHERE %s IS NOT NULL", clmName.c_str(),
-        query.c_str(), clmName.c_str());
+    CPLString sql =
+        CPLString().Printf("SELECT %s.ST_SRID() FROM (%s) WHERE %s IS NOT NULL",
+                           clmName.c_str(), query.c_str(), clmName.c_str());
 
     odbc::StatementRef stmt = conn.createStatement();
     return GetSrid(*stmt->executeQuery(sql.c_str()));
 }
 
-int GetSridWithFilter(odbc::Connection& conn, const CPLString& whereCondition)
+int GetSridWithFilter(odbc::Connection &conn, const CPLString &whereCondition)
 {
     CPLAssert(whereCondition != nullptr);
 
@@ -318,10 +320,10 @@ int GetSridWithFilter(odbc::Connection& conn, const CPLString& whereCondition)
     return ret;
 }
 
-CPLString GetSrsWktById(odbc::Connection& conn, int srid)
+CPLString GetSrsWktById(odbc::Connection &conn, int srid)
 {
     CPLString ret;
-    const char* sql = "SELECT DEFINITION FROM "
+    const char *sql = "SELECT DEFINITION FROM "
                       "SYS.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID = ?";
     odbc::PreparedStatementRef stmt = conn.prepareStatement(sql);
     stmt->setInt(1, odbc::Int(srid));
@@ -341,10 +343,9 @@ CPLString GetSrsWktById(odbc::Connection& conn, int srid)
     return ret;
 }
 
-OGRwkbGeometryType GetGeometryType(
-    odbc::Connection& conn,
-    const CPLString& query,
-    const CPLString& columnName)
+OGRwkbGeometryType GetGeometryType(odbc::Connection &conn,
+                                   const CPLString &query,
+                                   const CPLString &columnName)
 {
     CPLString clmName = QuotedIdentifier(columnName);
 
@@ -384,25 +385,25 @@ OGRwkbGeometryType GetGeometryType(
 }
 
 GeometryColumnDescription GetGeometryColumnDescription(
-    odbc::Connection& conn,
-    const CPLString& schemaName,
-    const CPLString& tableName,
-    const CPLString& columnName,
+    odbc::Connection &conn, const CPLString &schemaName,
+    const CPLString &tableName, const CPLString &columnName,
     bool detectGeometryType)
 {
-    OGRwkbGeometryType type = detectGeometryType ?
-        GetGeometryType(conn, GetFullTableNameQuoted(schemaName, tableName), columnName) :
-        OGRwkbGeometryType::wkbUnknown;
+    OGRwkbGeometryType type =
+        detectGeometryType
+            ? GetGeometryType(conn,
+                              GetFullTableNameQuoted(schemaName, tableName),
+                              columnName)
+            : OGRwkbGeometryType::wkbUnknown;
     int srid = GetColumnSrid(conn, schemaName, tableName, columnName);
 
     return {columnName, type, srid, false};
 }
 
-GeometryColumnDescription GetGeometryColumnDescription(
-    odbc::Connection& conn,
-    const CPLString& query,
-    const CPLString& columnName,
-    bool detectGeometryType)
+GeometryColumnDescription
+GetGeometryColumnDescription(odbc::Connection &conn, const CPLString &query,
+                             const CPLString &columnName,
+                             bool detectGeometryType)
 {
     // For some queries like this SELECT ST_GeomFROMWKT('POINT(0 0)') FROM DUMMY
     // we need to have a proper column name.
@@ -421,32 +422,33 @@ GeometryColumnDescription GetGeometryColumnDescription(
     CPLString clmName = columnName;
     if (needColumnName)
     {
-        auto it = std::search(
-            preparedQuery.begin(), preparedQuery.end(), columnName.begin(),
-            columnName.end(), [](char ch1, char ch2) {
-                return std::toupper(ch1) == std::toupper(ch2);
-            });
+        auto it = std::search(preparedQuery.begin(), preparedQuery.end(),
+                              columnName.begin(), columnName.end(),
+                              [](char ch1, char ch2) {
+                                  return std::toupper(ch1) == std::toupper(ch2);
+                              });
 
         if (it != preparedQuery.end())
         {
             auto pos = it - preparedQuery.begin();
             CPLString newName = columnName + " AS \"tmp_geom_field\"";
-            preparedQuery.replace(
-                static_cast<std::size_t>(pos), columnName.length(), newName, 0,
-                newName.length());
+            preparedQuery.replace(static_cast<std::size_t>(pos),
+                                  columnName.length(), newName, 0,
+                                  newName.length());
             clmName = "tmp_geom_field";
         }
     }
 
-    OGRwkbGeometryType type = detectGeometryType ?
-        GetGeometryType(conn, "(" + preparedQuery + ")", clmName) :
-        OGRwkbGeometryType::wkbUnknown;
+    OGRwkbGeometryType type =
+        detectGeometryType
+            ? GetGeometryType(conn, "(" + preparedQuery + ")", clmName)
+            : OGRwkbGeometryType::wkbUnknown;
     int srid = GetColumnSrid(conn, preparedQuery, clmName);
 
     return {columnName, type, srid, false};
 }
 
-CPLString FormatDefaultValue(const char* value, short dataType)
+CPLString FormatDefaultValue(const char *value, short dataType)
 {
     /*
      The values that can be set as default values are :
@@ -466,51 +468,51 @@ CPLString FormatDefaultValue(const char* value, short dataType)
 
     switch (dataType)
     {
-    case odbc::SQLDataTypes::Bit:
-    case odbc::SQLDataTypes::Boolean:
-        return value;
-    case odbc::SQLDataTypes::TinyInt:
-    case odbc::SQLDataTypes::SmallInt:
-    case odbc::SQLDataTypes::Integer:
-    case odbc::SQLDataTypes::BigInt:
-    case odbc::SQLDataTypes::Real:
-    case odbc::SQLDataTypes::Float:
-    case odbc::SQLDataTypes::Double:
-    case odbc::SQLDataTypes::Decimal:
-    case odbc::SQLDataTypes::Numeric:
-        return value;
-    case odbc::SQLDataTypes::Char:
-    case odbc::SQLDataTypes::VarChar:
-    case odbc::SQLDataTypes::LongVarChar:
-    case odbc::SQLDataTypes::WChar:
-    case odbc::SQLDataTypes::WVarChar:
-    case odbc::SQLDataTypes::WLongVarChar:
-        return Literal(value);
-    case odbc::SQLDataTypes::Binary:
-    case odbc::SQLDataTypes::VarBinary:
-    case odbc::SQLDataTypes::LongVarBinary:
-        return value;
-    case odbc::SQLDataTypes::Date:
-    case odbc::SQLDataTypes::TypeDate:
-        if (EQUAL(value, "CURRENT_DATE"))
+        case odbc::SQLDataTypes::Bit:
+        case odbc::SQLDataTypes::Boolean:
             return value;
-        return Literal(value);
-    case odbc::SQLDataTypes::Time:
-    case odbc::SQLDataTypes::TypeTime:
-        if (EQUAL(value, "CURRENT_TIME"))
+        case odbc::SQLDataTypes::TinyInt:
+        case odbc::SQLDataTypes::SmallInt:
+        case odbc::SQLDataTypes::Integer:
+        case odbc::SQLDataTypes::BigInt:
+        case odbc::SQLDataTypes::Real:
+        case odbc::SQLDataTypes::Float:
+        case odbc::SQLDataTypes::Double:
+        case odbc::SQLDataTypes::Decimal:
+        case odbc::SQLDataTypes::Numeric:
             return value;
-        return Literal(value);
-    case odbc::SQLDataTypes::Timestamp:
-    case odbc::SQLDataTypes::TypeTimestamp:
-        if (EQUAL(value, "CURRENT_TIMESTAMP"))
+        case odbc::SQLDataTypes::Char:
+        case odbc::SQLDataTypes::VarChar:
+        case odbc::SQLDataTypes::LongVarChar:
+        case odbc::SQLDataTypes::WChar:
+        case odbc::SQLDataTypes::WVarChar:
+        case odbc::SQLDataTypes::WLongVarChar:
+            return Literal(value);
+        case odbc::SQLDataTypes::Binary:
+        case odbc::SQLDataTypes::VarBinary:
+        case odbc::SQLDataTypes::LongVarBinary:
             return value;
-        return Literal(value);
-    default:
-        return value;
+        case odbc::SQLDataTypes::Date:
+        case odbc::SQLDataTypes::TypeDate:
+            if (EQUAL(value, "CURRENT_DATE"))
+                return value;
+            return Literal(value);
+        case odbc::SQLDataTypes::Time:
+        case odbc::SQLDataTypes::TypeTime:
+            if (EQUAL(value, "CURRENT_TIME"))
+                return value;
+            return Literal(value);
+        case odbc::SQLDataTypes::Timestamp:
+        case odbc::SQLDataTypes::TypeTimestamp:
+            if (EQUAL(value, "CURRENT_TIMESTAMP"))
+                return value;
+            return Literal(value);
+        default:
+            return value;
     }
 }
 
-short GetArrayDataType(const CPLString& typeName)
+short GetArrayDataType(const CPLString &typeName)
 {
     if (typeName == "BOOLEAN ARRAY")
         return odbc::SQLDataTypes::Boolean;
@@ -553,41 +555,41 @@ std::vector<CPLString> GetSupportedArrayTypes()
 
 bool IsKnownDataType(short dataType)
 {
-    return dataType == odbc::SQLDataTypes::Bit
-           || dataType == odbc::SQLDataTypes::Boolean
-           || dataType == odbc::SQLDataTypes::TinyInt
-           || dataType == odbc::SQLDataTypes::SmallInt
-           || dataType == odbc::SQLDataTypes::Integer
-           || dataType == odbc::SQLDataTypes::BigInt
-           || dataType == odbc::SQLDataTypes::Double
-           || dataType == odbc::SQLDataTypes::Real
-           || dataType == odbc::SQLDataTypes::Float
-           || dataType == odbc::SQLDataTypes::Decimal
-           || dataType == odbc::SQLDataTypes::Numeric
-           || dataType == odbc::SQLDataTypes::Char
-           || dataType == odbc::SQLDataTypes::VarChar
-           || dataType == odbc::SQLDataTypes::LongVarChar
-           || dataType == odbc::SQLDataTypes::WChar
-           || dataType == odbc::SQLDataTypes::WVarChar
-           || dataType == odbc::SQLDataTypes::WLongVarChar
-           || dataType == odbc::SQLDataTypes::Date
-           || dataType == odbc::SQLDataTypes::TypeDate
-           || dataType == odbc::SQLDataTypes::Time
-           || dataType == odbc::SQLDataTypes::TypeTime
-           || dataType == odbc::SQLDataTypes::Timestamp
-           || dataType == odbc::SQLDataTypes::TypeTimestamp
-           || dataType == odbc::SQLDataTypes::Binary
-           || dataType == odbc::SQLDataTypes::VarBinary
-           || dataType == odbc::SQLDataTypes::LongVarBinary;
+    return dataType == odbc::SQLDataTypes::Bit ||
+           dataType == odbc::SQLDataTypes::Boolean ||
+           dataType == odbc::SQLDataTypes::TinyInt ||
+           dataType == odbc::SQLDataTypes::SmallInt ||
+           dataType == odbc::SQLDataTypes::Integer ||
+           dataType == odbc::SQLDataTypes::BigInt ||
+           dataType == odbc::SQLDataTypes::Double ||
+           dataType == odbc::SQLDataTypes::Real ||
+           dataType == odbc::SQLDataTypes::Float ||
+           dataType == odbc::SQLDataTypes::Decimal ||
+           dataType == odbc::SQLDataTypes::Numeric ||
+           dataType == odbc::SQLDataTypes::Char ||
+           dataType == odbc::SQLDataTypes::VarChar ||
+           dataType == odbc::SQLDataTypes::LongVarChar ||
+           dataType == odbc::SQLDataTypes::WChar ||
+           dataType == odbc::SQLDataTypes::WVarChar ||
+           dataType == odbc::SQLDataTypes::WLongVarChar ||
+           dataType == odbc::SQLDataTypes::Date ||
+           dataType == odbc::SQLDataTypes::TypeDate ||
+           dataType == odbc::SQLDataTypes::Time ||
+           dataType == odbc::SQLDataTypes::TypeTime ||
+           dataType == odbc::SQLDataTypes::Timestamp ||
+           dataType == odbc::SQLDataTypes::TypeTimestamp ||
+           dataType == odbc::SQLDataTypes::Binary ||
+           dataType == odbc::SQLDataTypes::VarBinary ||
+           dataType == odbc::SQLDataTypes::LongVarBinary;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 /************************************************************************/
 /*                               GetPrefix()                            */
 /************************************************************************/
 
-const char* OGRHanaDataSource::GetPrefix()
+const char *OGRHanaDataSource::GetPrefix()
 {
     return "HANA:";
 }
@@ -596,7 +598,7 @@ const char* OGRHanaDataSource::GetPrefix()
 /*                         GetLayerCreationOptions()                    */
 /************************************************************************/
 
-const char* OGRHanaDataSource::GetLayerCreationOptions()
+const char *OGRHanaDataSource::GetLayerCreationOptions()
 {
     return LayerCreationOptionsConstants::GetList();
 }
@@ -605,7 +607,7 @@ const char* OGRHanaDataSource::GetLayerCreationOptions()
 /*                           GetOpenOptions()                           */
 /************************************************************************/
 
-const char* OGRHanaDataSource::GetOpenOptions()
+const char *OGRHanaDataSource::GetOpenOptions()
 {
     return OpenOptionsConstants::GetList();
 }
@@ -614,7 +616,7 @@ const char* OGRHanaDataSource::GetOpenOptions()
 /*                         GetSupportedDataTypes()                      */
 /************************************************************************/
 
-const char* OGRHanaDataSource::GetSupportedDataTypes()
+const char *OGRHanaDataSource::GetSupportedDataTypes()
 {
     return "Integer Integer64 Real String Date DateTime Time IntegerList "
            "Integer64List RealList StringList Binary";
@@ -636,9 +638,9 @@ OGRHanaDataSource::~OGRHanaDataSource()
 {
     layers_.clear();
 
-    for (const auto& kv : srsCache_)
+    for (const auto &kv : srsCache_)
     {
-        OGRSpatialReference* srs = kv.second;
+        OGRSpatialReference *srs = kv.second;
         if (srs != nullptr)
             srs->Release();
     }
@@ -649,28 +651,28 @@ OGRHanaDataSource::~OGRHanaDataSource()
 /*                                 Open()                               */
 /************************************************************************/
 
-int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
+int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
 {
     CPLAssert(layers_.size() == 0);
 
     if (!STARTS_WITH_CI(newName, GetPrefix()))
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "%s does not conform to HANA driver naming convention,"
-            " %s*\n",
-            newName, GetPrefix());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s does not conform to HANA driver naming convention,"
+                 " %s*\n",
+                 newName, GetPrefix());
         return FALSE;
     }
 
     updateMode_ = update;
-    detectGeometryType_ =
-        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
+    detectGeometryType_ = CPLFetchBool(
+        openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
 
     std::size_t prefixLength = strlen(GetPrefix());
-    char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
+    char **connOptions =
+        CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
 
-    const char* paramSchema = CSLFetchNameValueDef(
+    const char *paramSchema = CSLFetchNameValueDef(
         connOptions, OpenOptionsConstants::SCHEMA, nullptr);
     if (paramSchema != nullptr)
         schemaName_ = paramSchema;
@@ -685,7 +687,7 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
         conn_ = connEnv_->createConnection();
         conn_->setAutoCommit(false);
 
-        const char* paramConnTimeout = CSLFetchNameValueDef(
+        const char *paramConnTimeout = CSLFetchNameValueDef(
             connOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
         if (paramConnTimeout != nullptr)
             conn_->setConnectionTimeout(
@@ -695,21 +697,21 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
         {
             conn_->connect(connectionStr.c_str());
         }
-        catch (const odbc::Exception& ex)
+        catch (const odbc::Exception &ex)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined, "HANA connection failed: %s\n",
-                ex.what());
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "HANA connection failed: %s\n", ex.what());
         }
 
         if (conn_->connected())
         {
             odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
             CPLString dbVersion(dbmd->getDBMSVersion());
-            majorVersion_ = atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
+            majorVersion_ =
+                atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
 
-            const char* paramTables =
-                CSLFetchNameValueDef(connOptions, OpenOptionsConstants::TABLES, "");
+            const char *paramTables = CSLFetchNameValueDef(
+                connOptions, OpenOptionsConstants::TABLES, "");
             InitializeLayers(paramSchema, paramTables);
             ret = TRUE;
         }
@@ -729,11 +731,11 @@ OGRErr OGRHanaDataSource::DeleteLayer(int index)
     if (index < 0 || static_cast<std::size_t>(index) >= layers_.size())
         return OGRERR_FAILURE;
 
-    const std::unique_ptr<OGRLayer>& layer =
+    const std::unique_ptr<OGRLayer> &layer =
         layers_[static_cast<std::size_t>(index)];
     CPLDebug("HANA", "DeleteLayer(%s)", layer->GetName());
 
-    if (auto tableLayer = dynamic_cast<OGRHanaTableLayer*>(layer.get()))
+    if (auto tableLayer = dynamic_cast<OGRHanaTableLayer *>(layer.get()))
     {
         OGRErr err = tableLayer->DropTable();
         if (OGRERR_NONE == err)
@@ -746,33 +748,32 @@ OGRErr OGRHanaDataSource::DeleteLayer(int index)
 }
 
 void OGRHanaDataSource::CreateTable(
-    const CPLString& tableName,
-    const CPLString& fidName,
-    const CPLString& fidType,
-    const CPLString& geomColumnName,
-    OGRwkbGeometryType geomType,
-    bool geomColumnNullable,
-    const CPLString& geomColumnIndexType,
-    int geomSrid)
+    const CPLString &tableName, const CPLString &fidName,
+    const CPLString &fidType, const CPLString &geomColumnName,
+    OGRwkbGeometryType geomType, bool geomColumnNullable,
+    const CPLString &geomColumnIndexType, int geomSrid)
 {
     CPLString sql;
-    if (geomType == OGRwkbGeometryType::wkbNone || !(!geomColumnName.empty() && geomSrid >= 0))
+    if (geomType == OGRwkbGeometryType::wkbNone ||
+        !(!geomColumnName.empty() && geomSrid >= 0))
     {
-        sql = "CREATE COLUMN TABLE "
-              + GetFullTableNameQuoted(schemaName_, tableName) + " ("
-              + QuotedIdentifier(fidName) + " " + fidType
-              + " GENERATED BY DEFAULT AS IDENTITY, PRIMARY KEY ( "
-              + QuotedIdentifier(fidName) + "));";
+        sql = "CREATE COLUMN TABLE " +
+              GetFullTableNameQuoted(schemaName_, tableName) + " (" +
+              QuotedIdentifier(fidName) + " " + fidType +
+              " GENERATED BY DEFAULT AS IDENTITY, PRIMARY KEY ( " +
+              QuotedIdentifier(fidName) + "));";
     }
     else
     {
-        sql = "CREATE COLUMN TABLE "
-              + GetFullTableNameQuoted(schemaName_, tableName) + " ("
-              + QuotedIdentifier(fidName) + " " + fidType
-              + " GENERATED BY DEFAULT AS IDENTITY, "
-              + QuotedIdentifier(geomColumnName) + " ST_GEOMETRY ("
-              + std::to_string(geomSrid) + ")" + (geomColumnNullable ? "" : " NOT NULL") + " SPATIAL INDEX PREFERENCE " + geomColumnIndexType
-              + ", PRIMARY KEY ( " + QuotedIdentifier(fidName) + "));";
+        sql = "CREATE COLUMN TABLE " +
+              GetFullTableNameQuoted(schemaName_, tableName) + " (" +
+              QuotedIdentifier(fidName) + " " + fidType +
+              " GENERATED BY DEFAULT AS IDENTITY, " +
+              QuotedIdentifier(geomColumnName) + " ST_GEOMETRY (" +
+              std::to_string(geomSrid) + ")" +
+              (geomColumnNullable ? "" : " NOT NULL") +
+              " SPATIAL INDEX PREFERENCE " + geomColumnIndexType +
+              ", PRIMARY KEY ( " + QuotedIdentifier(fidName) + "));";
     }
 
     ExecuteSQL(sql);
@@ -782,8 +783,8 @@ void OGRHanaDataSource::CreateTable(
 /*                            FindSchemaAndTableNames()                 */
 /************************************************************************/
 
-std::pair<CPLString, CPLString> OGRHanaDataSource::FindSchemaAndTableNames(
-    const char* query)
+std::pair<CPLString, CPLString>
+OGRHanaDataSource::FindSchemaAndTableNames(const char *query)
 {
     odbc::PreparedStatementRef stmt = PrepareStatement(query);
     if (stmt.get() == nullptr)
@@ -806,7 +807,7 @@ std::pair<CPLString, CPLString> OGRHanaDataSource::FindSchemaAndTableNames(
 /*                            FindLayerByName()                         */
 /************************************************************************/
 
-int OGRHanaDataSource::FindLayerByName(const char* name)
+int OGRHanaDataSource::FindLayerByName(const char *name)
 {
     for (size_t i = 0; i < layers_.size(); ++i)
     {
@@ -820,9 +821,10 @@ int OGRHanaDataSource::FindLayerByName(const char* name)
 /*                            FindSchemaName()                          */
 /************************************************************************/
 
-CPLString OGRHanaDataSource::FindSchemaName(const char* objectName)
+CPLString OGRHanaDataSource::FindSchemaName(const char *objectName)
 {
-    auto getSchemaName = [&](const char* sql) {
+    auto getSchemaName = [&](const char *sql)
+    {
         odbc::PreparedStatementRef stmt = PrepareStatement(sql);
         stmt->setString(1, odbc::String(objectName));
         odbc::ResultSetRef rsEntries = stmt->executeQuery();
@@ -864,7 +866,7 @@ odbc::StatementRef OGRHanaDataSource::CreateStatement()
 /*                              PrepareStatement()                      */
 /************************************************************************/
 
-odbc::PreparedStatementRef OGRHanaDataSource::PrepareStatement(const char* sql)
+odbc::PreparedStatementRef OGRHanaDataSource::PrepareStatement(const char *sql)
 {
     CPLAssert(sql != nullptr);
 
@@ -875,11 +877,10 @@ odbc::PreparedStatementRef OGRHanaDataSource::PrepareStatement(const char* sql)
         std::u16string sqlUtf16 = odbc::StringConverter::utf8ToUtf16(sql);
         return conn_->prepareStatement(sqlUtf16.c_str());
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to prepare statement: %s",
-            ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to prepare statement: %s",
+                 ex.what());
     }
     return nullptr;
 }
@@ -897,10 +898,10 @@ void OGRHanaDataSource::Commit()
 /*                            ExecuteSQL()                              */
 /************************************************************************/
 
-void OGRHanaDataSource::ExecuteSQL(const CPLString& sql)
+void OGRHanaDataSource::ExecuteSQL(const CPLString &sql)
 {
-    std::u16string sqlUtf16 = odbc::StringConverter::utf8ToUtf16(
-        sql.c_str(), sql.length());
+    std::u16string sqlUtf16 =
+        odbc::StringConverter::utf8ToUtf16(sql.c_str(), sql.length());
     odbc::StatementRef stmt = conn_->createStatement();
     stmt->execute(sqlUtf16.c_str());
     if (!IsTransactionStarted())
@@ -916,7 +917,7 @@ void OGRHanaDataSource::ExecuteSQL(const CPLString& sql)
 /*      with it.                                                        */
 /************************************************************************/
 
-OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
+OGRSpatialReference *OGRHanaDataSource::GetSrsById(int srid)
 {
     if (srid < 0)
         return nullptr;
@@ -928,7 +929,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
         return it->second;
     }
 
-    OGRSpatialReference* srs = nullptr;
+    OGRSpatialReference *srs = nullptr;
 
     CPLString wkt = GetSrsWktById(*conn_, srid);
     if (!wkt.empty())
@@ -944,7 +945,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
 
     srsCache_.insert({srid, srs});
 
-    if( srs )
+    if (srs)
         srs->Reference();
     return srs;
 }
@@ -953,7 +954,7 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
 /*                               GetSrsId()                             */
 /************************************************************************/
 
-int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
+int OGRHanaDataSource::GetSrsId(OGRSpatialReference *srs)
 {
     if (srs == nullptr)
         return UNDETERMINED_SRID;
@@ -963,14 +964,14 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     /* -------------------------------------------------------------------- */
     OGRSpatialReference srsLocal(*srs);
 
-    const char* authorityName = srsLocal.GetAuthorityName(nullptr);
+    const char *authorityName = srsLocal.GetAuthorityName(nullptr);
     if (authorityName == nullptr || strlen(authorityName) == 0)
     {
         srsLocal.AutoIdentifyEPSG();
         authorityName = srsLocal.GetAuthorityName(nullptr);
         if (authorityName != nullptr && EQUAL(authorityName, "EPSG"))
         {
-            const char* authorityCode = srsLocal.GetAuthorityCode(nullptr);
+            const char *authorityCode = srsLocal.GetAuthorityCode(nullptr);
             if (authorityCode != nullptr && strlen(authorityCode) > 0)
             {
                 srsLocal.importFromEPSG(atoi(authorityCode));
@@ -986,9 +987,9 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
         if (authorityCode > 0)
         {
             int ret = GetSridWithFilter(
-                *conn_, CPLString().Printf(
-                            "SRS_ID = %d AND ORGANIZATION = '%s'", authorityCode,
-                            authorityName));
+                *conn_,
+                CPLString().Printf("SRS_ID = %d AND ORGANIZATION = '%s'",
+                                   authorityCode, authorityName));
             if (ret != UNDETERMINED_SRID)
                 return ret;
         }
@@ -998,7 +999,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     /*      Try to find srs id using wkt content.                           */
     /* -------------------------------------------------------------------- */
 
-    char* wkt = nullptr;
+    char *wkt = nullptr;
     OGRErr err = srsLocal.exportToWkt(&wkt);
     CPLString strWkt(wkt);
     CPLFree(wkt);
@@ -1015,7 +1016,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     /*      Try to add a new spatial reference system to the database       */
     /* -------------------------------------------------------------------- */
 
-    char* proj4 = nullptr;
+    char *proj4 = nullptr;
     err = srsLocal.exportToProj4(&proj4);
     CPLString strProj4(proj4);
     CPLFree(proj4);
@@ -1030,7 +1031,9 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
     else
     {
         odbc::StatementRef stmt = conn_->createStatement();
-        const char* sql = "SELECT MAX(SRS_ID) FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID >= 10000000 AND SRS_ID < 20000000";
+        const char *sql =
+            "SELECT MAX(SRS_ID) FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS WHERE "
+            "SRS_ID >= 10000000 AND SRS_ID < 20000000";
         odbc::ResultSetRef rsSrid = stmt->executeQuery(sql);
         while (rsSrid->next())
         {
@@ -1042,17 +1045,14 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
 
     try
     {
-        CreateSpatialReferenceSystem(
-            srsLocal, srid,
-            authorityName, authorityCode,
-            strWkt, strProj4);
+        CreateSpatialReferenceSystem(srsLocal, srid, authorityName,
+                                     authorityCode, strWkt, strProj4);
         return srid;
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Unable to create an SRS in the database: %s.\n", ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create an SRS in the database: %s.\n", ex.what());
     }
 
     return UNDETERMINED_SRID;
@@ -1064,7 +1064,7 @@ int OGRHanaDataSource::GetSrsId(OGRSpatialReference* srs)
 
 bool OGRHanaDataSource::IsSrsRoundEarth(int srid)
 {
-    const char* sql =
+    const char *sql =
         "SELECT ROUND_EARTH FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS "
         "WHERE SRS_ID = ?";
     odbc::PreparedStatementRef stmt = PrepareStatement(sql);
@@ -1083,7 +1083,7 @@ bool OGRHanaDataSource::IsSrsRoundEarth(int srid)
 
 bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 {
-    const char* sql = "SELECT COUNT(*) FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS "
+    const char *sql = "SELECT COUNT(*) FROM SYS.ST_SPATIAL_REFERENCE_SYSTEMS "
                       "WHERE SRS_ID = ?";
     odbc::PreparedStatementRef stmt = PrepareStatement(sql);
     stmt->setInt(1, ToPlanarSRID(srid));
@@ -1100,9 +1100,8 @@ bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 /************************************************************************/
 
 OGRErr OGRHanaDataSource::GetQueryColumns(
-    const CPLString& schemaName,
-    const CPLString& query,
-    std::vector<ColumnDescription>& columnDescriptions)
+    const CPLString &schemaName, const CPLString &query,
+    std::vector<ColumnDescription> &columnDescriptions)
 {
     columnDescriptions.clear();
 
@@ -1142,9 +1141,9 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
         if (!schemaName.empty() && !tableName.empty())
         {
             // Retrieve information about default value in column
-            odbc::ResultSetRef rsColumns = dmd->getColumns(
-                nullptr, schemaName.c_str(), tableName.c_str(),
-                columnName.c_str());
+            odbc::ResultSetRef rsColumns =
+                dmd->getColumns(nullptr, schemaName.c_str(), tableName.c_str(),
+                                columnName.c_str());
             if (rsColumns->next())
             {
                 odbc::String defaultValueStr =
@@ -1187,14 +1186,13 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 odbc::String name = rsTypeInfo->getString(1);
                 if (name.isNull())
                     continue;
-                if (name->compare("SHORTTEXT") == 0
-                    || name->compare("ALPHANUM") == 0)
+                if (name->compare("SHORTTEXT") == 0 ||
+                    name->compare("ALPHANUM") == 0)
                 {
                     dataType = odbc::SQLDataTypes::WVarChar;
                 }
-                else if (
-                    name->compare("ST_GEOMETRY") == 0
-                    || name->compare("ST_POINT") == 0)
+                else if (name->compare("ST_GEOMETRY") == 0 ||
+                         name->compare("ST_POINT") == 0)
                 {
                     isGeometry = true;
                 }
@@ -1206,11 +1204,12 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
         {
             GeometryColumnDescription geometryColumnDesc;
             if (schemaName.empty() || tableName.empty())
-                geometryColumnDesc =
-                    GetGeometryColumnDescription(*conn_, query, columnName, detectGeometryType_);
+                geometryColumnDesc = GetGeometryColumnDescription(
+                    *conn_, query, columnName, detectGeometryType_);
             else
                 geometryColumnDesc = GetGeometryColumnDescription(
-                    *conn_, schemaName, tableName, columnName, detectGeometryType_);
+                    *conn_, schemaName, tableName, columnName,
+                    detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
             columnDescriptions.push_back(
@@ -1244,8 +1243,9 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
 /*                          GetTablePrimaryKeys()                       */
 /************************************************************************/
 
-std::vector<CPLString> OGRHanaDataSource::GetTablePrimaryKeys(
-    const char* schemaName, const char* tableName)
+std::vector<CPLString>
+OGRHanaDataSource::GetTablePrimaryKeys(const char *schemaName,
+                                       const char *tableName)
 {
     std::vector<CPLString> ret;
 
@@ -1265,12 +1265,13 @@ std::vector<CPLString> OGRHanaDataSource::GetTablePrimaryKeys(
 /*                          InitializeLayers()                          */
 /************************************************************************/
 
-void OGRHanaDataSource::InitializeLayers(
-    const char* schemaName, const char* tableNames)
+void OGRHanaDataSource::InitializeLayers(const char *schemaName,
+                                         const char *tableNames)
 {
     std::vector<CPLString> tables = SplitStrings(tableNames, ",");
 
-    auto addLayersFromQuery = [&](const char* query, bool updatable) {
+    auto addLayersFromQuery = [&](const char *query, bool updatable)
+    {
         odbc::PreparedStatementRef stmt = PrepareStatement(query);
         stmt->setString(1, odbc::String(schemaName));
         odbc::ResultSetRef rsTables = stmt->executeQuery();
@@ -1283,7 +1284,8 @@ void OGRHanaDataSource::InitializeLayers(
             if (pos != tables.end())
                 tables.erase(pos);
 
-            auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), tableName->c_str(), updatable);
+            auto layer = cpl::make_unique<OGRHanaTableLayer>(
+                this, schemaName_.c_str(), tableName->c_str(), updatable);
             layers_.push_back(std::move(layer));
         }
         rsTables->close();
@@ -1308,15 +1310,14 @@ void OGRHanaDataSource::InitializeLayers(
     addLayersFromQuery(osViews.str().c_str(), false);
 
     // Report about tables that could not be found
-    for (const auto& tableName : tables)
+    for (const auto &tableName : tables)
     {
-        const char* layerName = tableName.c_str();
+        const char *layerName = tableName.c_str();
         if (GetLayerByName(layerName) == nullptr)
-            CPLDebug(
-                "HANA",
-                "Table '%s' not found or does not "
-                "have any geometry column.",
-                layerName);
+            CPLDebug("HANA",
+                     "Table '%s' not found or does not "
+                     "have any geometry column.",
+                     layerName);
     }
 }
 
@@ -1324,15 +1325,14 @@ void OGRHanaDataSource::InitializeLayers(
 /*                          LaunderName()                               */
 /************************************************************************/
 
-std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char* name)
+std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char *name)
 {
     CPLAssert(name != nullptr);
 
     if (!CPLIsUTF8(name, -1))
     {
-       CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "%s is not a valid UTF-8 string.", name);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s is not a valid UTF-8 string.",
+                 name);
         return {OGRERR_FAILURE, ""};
     }
 
@@ -1354,7 +1354,7 @@ std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char* name)
     bool hasNonASCII = false;
     size_t i = 0;
 
-    while(name[i] != '\0')
+    while (name[i] != '\0')
     {
         char c = name[i];
         int len = getUTF8SequenceLength(c);
@@ -1376,7 +1376,7 @@ std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char* name)
     if (!hasNonASCII)
         return {OGRERR_NONE, newName};
 
-    const char* sql = "SELECT UPPER(?) FROM DUMMY";
+    const char *sql = "SELECT UPPER(?) FROM DUMMY";
     odbc::PreparedStatementRef stmt = PrepareStatement(sql);
     stmt->setString(1, odbc::String(newName.c_str()));
     odbc::ResultSetRef rsName = stmt->executeQuery();
@@ -1399,16 +1399,11 @@ std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char* name)
 /************************************************************************/
 
 void OGRHanaDataSource::CreateSpatialReferenceSystem(
-    const OGRSpatialReference& srs,
-    int srid,
-    const char* authorityName,
-    int authorityCode,
-    const CPLString& wkt,
-    const CPLString& proj4)
+    const OGRSpatialReference &srs, int srid, const char *authorityName,
+    int authorityCode, const CPLString &wkt, const CPLString &proj4)
 {
-    CPLString refName(
-        (srs.IsProjected()) ? srs.GetAttrValue("PROJCS")
-                            : srs.GetAttrValue("GEOGCS"));
+    CPLString refName((srs.IsProjected()) ? srs.GetAttrValue("PROJCS")
+                                          : srs.GetAttrValue("GEOGCS"));
     if (refName.empty() || EQUAL(refName.c_str(), "UNKNOWN"))
         refName = "OGR_PROJECTION_" + std::to_string(srid);
 
@@ -1431,24 +1426,24 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
     srs.GetAngularUnits(&angularUnits);
 
     CPLString xRange, yRange;
-    double dfWestLongitudeDeg, dfSouthLatitudeDeg,
-            dfEastLongitudeDeg, dfNorthLatitudeDeg;
+    double dfWestLongitudeDeg, dfSouthLatitudeDeg, dfEastLongitudeDeg,
+        dfNorthLatitudeDeg;
     if (srs.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
-            &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr))
+                         &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr))
     {
         xRange = CPLString().Printf("%s BETWEEN %f AND %f",
-            srs.IsGeographic() ? "LONGITUDE" : "X",
-            dfWestLongitudeDeg, dfEastLongitudeDeg);
+                                    srs.IsGeographic() ? "LONGITUDE" : "X",
+                                    dfWestLongitudeDeg, dfEastLongitudeDeg);
         yRange = CPLString().Printf("%s BETWEEN %f AND %f",
-            srs.IsGeographic() ? "LATITUDE" : "Y",
-            dfSouthLatitudeDeg, dfNorthLatitudeDeg);
+                                    srs.IsGeographic() ? "LATITUDE" : "Y",
+                                    dfSouthLatitudeDeg, dfNorthLatitudeDeg);
     }
     else
     {
         xRange = CPLString().Printf("%s UNBOUNDED",
-            srs.IsGeographic() ? "LONGITUDE" : "X");
+                                    srs.IsGeographic() ? "LONGITUDE" : "X");
         yRange = CPLString().Printf("%s UNBOUNDED ",
-            srs.IsGeographic() ? "LATITUDE" : "Y");
+                                    srs.IsGeographic() ? "LATITUDE" : "Y");
     }
 
     CPLString organization;
@@ -1456,8 +1451,7 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
     {
         organization = CPLString().Printf(
             "ORGANIZATION %s IDENTIFIED BY %d",
-            QuotedIdentifier(authorityName).c_str(),
-            authorityCode);
+            QuotedIdentifier(authorityName).c_str(), authorityCode);
     }
 
     CPLString sql = CPLString().Printf(
@@ -1466,22 +1460,30 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
         "TYPE %s "
         "LINEAR UNIT OF MEASURE %s "
         "ANGULAR UNIT OF MEASURE %s "
-        "%s " // ELLIPSOID
+        "%s "  // ELLIPSOID
         "COORDINATE %s "
         "COORDINATE %s "
-        "%s " // ORGANIZATION
+        "%s "  // ORGANIZATION
         "DEFINITION %s "
         "TRANSFORM DEFINITION %s",
-        QuotedIdentifier(refName).c_str(),
-        srid,
+        QuotedIdentifier(refName).c_str(), srid,
         srs.IsGeographic() ? "ROUND EARTH" : "PLANAR",
-        QuotedIdentifier((linearUnits == nullptr || EQUAL(linearUnits, "unknown")) ? "metre" : linearUnits).tolower().c_str(),
-        QuotedIdentifier((angularUnits == nullptr || EQUAL(angularUnits, "unknown")) ? "degree" : angularUnits).tolower().c_str(),
-        (ellipsoidParams.empty() ? "" : ("ELLIPSOID" + ellipsoidParams).c_str()),
-        xRange.c_str(), yRange.c_str(),
-        organization.c_str(),
-        Literal(wkt).c_str(),
-        Literal(proj4).c_str());
+        QuotedIdentifier(
+            (linearUnits == nullptr || EQUAL(linearUnits, "unknown"))
+                ? "metre"
+                : linearUnits)
+            .tolower()
+            .c_str(),
+        QuotedIdentifier(
+            (angularUnits == nullptr || EQUAL(angularUnits, "unknown"))
+                ? "degree"
+                : angularUnits)
+            .tolower()
+            .c_str(),
+        (ellipsoidParams.empty() ? ""
+                                 : ("ELLIPSOID" + ellipsoidParams).c_str()),
+        xRange.c_str(), yRange.c_str(), organization.c_str(),
+        Literal(wkt).c_str(), Literal(proj4).c_str());
 
     ExecuteSQL(sql);
 }
@@ -1490,10 +1492,11 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
 /*                       CreateParseArrayFunctions()                    */
 /************************************************************************/
 
-void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
+void OGRHanaDataSource::CreateParseArrayFunctions(const char *schemaName)
 {
-    auto replaceAll = [](const CPLString& str, const CPLString& before,
-                         const CPLString& after) {
+    auto replaceAll = [](const CPLString &str, const CPLString &before,
+                         const CPLString &after)
+    {
         CPLString res = str;
         return res.replaceAll(before, after);
     };
@@ -1531,8 +1534,8 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
         "END;\n";
     // clang-format on
 
-    CPLString sql = replaceAll(
-        parseStringArrayFunc, "{SCHEMA}", QuotedIdentifier(schemaName));
+    CPLString sql = replaceAll(parseStringArrayFunc, "{SCHEMA}",
+                               QuotedIdentifier(schemaName));
     ExecuteSQL(sql);
 
     // clang-format off
@@ -1563,10 +1566,10 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
         "END;\n";
     // clang-format on
 
-    sql = replaceAll(
-        parseTypeArrayFunc, "{SCHEMA}", QuotedIdentifier(schemaName));
+    sql = replaceAll(parseTypeArrayFunc, "{SCHEMA}",
+                     QuotedIdentifier(schemaName));
 
-    for (const CPLString& type : GetSupportedArrayTypes())
+    for (const CPLString &type : GetSupportedArrayTypes())
     {
         if (type == "STRING")
             continue;
@@ -1578,9 +1581,9 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
 /*                       ParseArrayFunctionsExist()                     */
 /************************************************************************/
 
-bool OGRHanaDataSource::ParseArrayFunctionsExist(const char* schemaName)
+bool OGRHanaDataSource::ParseArrayFunctionsExist(const char *schemaName)
 {
-    const char* sql =
+    const char *sql =
         "SELECT COUNT(*) FROM FUNCTIONS WHERE SCHEMA_NAME = ? AND "
         "FUNCTION_NAME LIKE 'OGR_PARSE_%_ARRAY'";
     odbc::PreparedStatementRef stmt = PrepareStatement(sql);
@@ -1588,16 +1591,15 @@ bool OGRHanaDataSource::ParseArrayFunctionsExist(const char* schemaName)
     odbc::ResultSetRef rsFunctions = stmt->executeQuery();
     auto numFunctions = rsFunctions->next() ? *rsFunctions->getLong(1) : 0;
     rsFunctions->close();
-    return (
-        static_cast<std::size_t>(numFunctions)
-        == GetSupportedArrayTypes().size());
+    return (static_cast<std::size_t>(numFunctions) ==
+            GetSupportedArrayTypes().size());
 }
 
 /************************************************************************/
 /*                               GetLayer()                             */
 /************************************************************************/
 
-OGRLayer* OGRHanaDataSource::GetLayer(int index)
+OGRLayer *OGRHanaDataSource::GetLayer(int index)
 {
     if (index < 0 || static_cast<std::size_t>(index) >= layers_.size())
         return nullptr;
@@ -1608,7 +1610,7 @@ OGRLayer* OGRHanaDataSource::GetLayer(int index)
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
-OGRLayer* OGRHanaDataSource::GetLayerByName(const char* name)
+OGRLayer *OGRHanaDataSource::GetLayerByName(const char *name)
 {
     return GetLayer(FindLayerByName(name));
 }
@@ -1617,11 +1619,10 @@ OGRLayer* OGRHanaDataSource::GetLayerByName(const char* name)
 /*                              ICreateLayer()                          */
 /************************************************************************/
 
-OGRLayer* OGRHanaDataSource::ICreateLayer(
-    const char* layerNameIn,
-    OGRSpatialReference* srs,
-    OGRwkbGeometryType geomType,
-    char** options)
+OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
+                                          OGRSpatialReference *srs,
+                                          OGRwkbGeometryType geomType,
+                                          char **options)
 {
     if (layerNameIn == nullptr)
         return nullptr;
@@ -1630,11 +1631,10 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
     if (dmd->isReadOnly())
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Unable to create Layer %s.\n"
-            "Database %s is read only.",
-            layerNameIn, dmd->getDatabaseName().c_str());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create Layer %s.\n"
+                 "Database %s is read only.",
+                 layerNameIn, dmd->getDatabaseName().c_str());
         return nullptr;
     }
 
@@ -1654,47 +1654,47 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     int layerIndex = FindLayerByName(layerName.c_str());
     if (layerIndex >= 0)
     {
-        bool overwriteLayer = CPLFetchBool(options, LayerCreationOptionsConstants::OVERWRITE, false);
+        bool overwriteLayer = CPLFetchBool(
+            options, LayerCreationOptionsConstants::OVERWRITE, false);
         if (!overwriteLayer)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Layer %s already exists, CreateLayer failed.\n"
-                "Use the layer creation option OVERWRITE=YES to "
-                "replace it.",
-                layerName.c_str());
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Layer %s already exists, CreateLayer failed.\n"
+                     "Use the layer creation option OVERWRITE=YES to "
+                     "replace it.",
+                     layerName.c_str());
             return nullptr;
         }
 
         DeleteLayer(layerIndex);
     }
 
-    int batchSize = CPLFetchInt(options, LayerCreationOptionsConstants::BATCH_SIZE,
-                                DEFAULT_BATCH_SIZE);
+    int batchSize = CPLFetchInt(
+        options, LayerCreationOptionsConstants::BATCH_SIZE, DEFAULT_BATCH_SIZE);
     if (batchSize <= 0)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Unable to create layer %s. The value of %s parameter must be "
-            "greater than 0.",
-            layerName.c_str(), LayerCreationOptionsConstants::BATCH_SIZE);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create layer %s. The value of %s parameter must be "
+                 "greater than 0.",
+                 layerName.c_str(), LayerCreationOptionsConstants::BATCH_SIZE);
         return nullptr;
     }
 
-    int defaultStringSize = CPLFetchInt(options, LayerCreationOptionsConstants::DEFAULT_STRING_SIZE,
-                                        DEFAULT_STRING_SIZE);
+    int defaultStringSize =
+        CPLFetchInt(options, LayerCreationOptionsConstants::DEFAULT_STRING_SIZE,
+                    DEFAULT_STRING_SIZE);
     if (defaultStringSize <= 0)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Unable to create layer %s. The value of %s parameter must be "
-            "greater than 0.",
-            layerName.c_str(),
-            LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create layer %s. The value of %s parameter must be "
+                 "greater than 0.",
+                 layerName.c_str(),
+                 LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
         return nullptr;
     }
 
-    CPLString geomColumnName(CSLFetchNameValueDef(options, LayerCreationOptionsConstants::GEOMETRY_NAME, "OGR_GEOMETRY"));
+    CPLString geomColumnName(CSLFetchNameValueDef(
+        options, LayerCreationOptionsConstants::GEOMETRY_NAME, "OGR_GEOMETRY"));
     if (launderNames)
     {
         auto nameRes = LaunderName(geomColumnName.c_str());
@@ -1703,10 +1703,13 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
         geomColumnName.swap(nameRes.second);
     }
 
-    const bool geomColumnNullable = CPLFetchBool(options, LayerCreationOptionsConstants::GEOMETRY_NULLABLE, true);
-    CPLString geomColumnIndexType(CSLFetchNameValueDef(options, LayerCreationOptionsConstants::GEOMETRY_INDEX, "DEFAULT"));
+    const bool geomColumnNullable = CPLFetchBool(
+        options, LayerCreationOptionsConstants::GEOMETRY_NULLABLE, true);
+    CPLString geomColumnIndexType(CSLFetchNameValueDef(
+        options, LayerCreationOptionsConstants::GEOMETRY_INDEX, "DEFAULT"));
 
-    const char* paramFidName = CSLFetchNameValueDef(options, LayerCreationOptionsConstants::FID, "OGR_FID");
+    const char *paramFidName = CSLFetchNameValueDef(
+        options, LayerCreationOptionsConstants::FID, "OGR_FID");
     CPLString fidName(paramFidName);
     if (launderNames)
     {
@@ -1716,33 +1719,36 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
         fidName.swap(nameRes.second);
     }
 
-    CPLString fidType = CPLFetchBool(options, LayerCreationOptionsConstants::FID64, false) ? "BIGINT" : "INTEGER";
+    CPLString fidType =
+        CPLFetchBool(options, LayerCreationOptionsConstants::FID64, false)
+            ? "BIGINT"
+            : "INTEGER";
 
     CPLDebug("HANA", "Geometry Column Name %s.", geomColumnName.c_str());
     CPLDebug("HANA", "FID Column Name %s, Type %s.", fidName.c_str(),
              fidType.c_str());
 
-    int srid = CPLFetchInt(options, LayerCreationOptionsConstants::SRID, UNDETERMINED_SRID);
+    int srid = CPLFetchInt(options, LayerCreationOptionsConstants::SRID,
+                           UNDETERMINED_SRID);
     if (srid < 0 && srs != nullptr)
         srid = GetSrsId(srs);
 
     try
     {
-        CreateTable(
-            layerName, fidName, fidType,
-            geomColumnName, geomType, geomColumnNullable, geomColumnIndexType, srid);
+        CreateTable(layerName, fidName, fidType, geomColumnName, geomType,
+                    geomColumnNullable, geomColumnIndexType, srid);
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Unable to create layer %s. CreateLayer failed:%s\n",
-            layerName.c_str(), ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to create layer %s. CreateLayer failed:%s\n",
+                 layerName.c_str(), ex.what());
         return nullptr;
     }
 
     // Create new layer object
-    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(), layerName.c_str(), true);
+    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(),
+                                                     layerName.c_str(), true);
     if (geomType != wkbNone && layer->GetLayerDefn()->GetGeomFieldCount() > 0)
         layer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
     if (batchSize > 0)
@@ -1765,7 +1771,7 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaDataSource::TestCapability(const char* capabilities)
+int OGRHanaDataSource::TestCapability(const char *capabilities)
 {
     if (EQUAL(capabilities, ODsCCreateLayer))
         return updateMode_;
@@ -1787,8 +1793,9 @@ int OGRHanaDataSource::TestCapability(const char* capabilities)
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-OGRLayer* OGRHanaDataSource::ExecuteSQL(
-    const char* sqlCommand, OGRGeometry* spatialFilter, const char* dialect)
+OGRLayer *OGRHanaDataSource::ExecuteSQL(const char *sqlCommand,
+                                        OGRGeometry *spatialFilter,
+                                        const char *dialect)
 {
     sqlCommand = SkipLeadingSpaces(sqlCommand);
 
@@ -1797,7 +1804,7 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
 
     if (STARTS_WITH_CI(sqlCommand, "DELLAYER:"))
     {
-        const char* layerName = SkipLeadingSpaces(sqlCommand + 9);
+        const char *layerName = SkipLeadingSpaces(sqlCommand + 9);
         int layerIndex = FindLayerByName(layerName);
         if (layerIndex >= 0)
             DeleteLayer(layerIndex);
@@ -1811,7 +1818,7 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
 
         auto layer = cpl::make_unique<OGRHanaResultLayer>(this, sqlCommand);
         if (spatialFilter != nullptr)
-            layer->SetSpatialFilter( spatialFilter );
+            layer->SetSpatialFilter(spatialFilter);
         return layer.release();
     }
 
@@ -1819,11 +1826,11 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
     {
         ExecuteSQL(sqlCommand);
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Failed to execute SQL statement '%s': %s", sqlCommand, ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to execute SQL statement '%s': %s", sqlCommand,
+                 ex.what());
     }
 
     return nullptr;
@@ -1837,8 +1844,8 @@ OGRErr OGRHanaDataSource::StartTransaction(CPL_UNUSED int bForce)
 {
     if (isTransactionStarted_)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Transaction already established");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Transaction already established");
         return OGRERR_FAILURE;
     }
 
@@ -1864,21 +1871,21 @@ OGRErr OGRHanaDataSource::CommitTransaction()
     {
         for (size_t i = 0; i < layers_.size(); ++i)
         {
-            OGRHanaLayer* layer = static_cast<OGRHanaLayer*>(layers_[i].get());
-            if(layer->IsTableLayer())
+            OGRHanaLayer *layer = static_cast<OGRHanaLayer *>(layers_[i].get());
+            if (layer->IsTableLayer())
             {
-                OGRHanaTableLayer* tableLayer = static_cast<OGRHanaTableLayer*>(layer);
+                OGRHanaTableLayer *tableLayer =
+                    static_cast<OGRHanaTableLayer *>(layer);
                 tableLayer->FlushPendingBatches(false);
             }
         }
 
         conn_->commit();
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to commit transaction: %s",
-            ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to commit transaction: %s", ex.what());
         return OGRERR_FAILURE;
     }
     return OGRERR_NONE;
@@ -1902,11 +1909,10 @@ OGRErr OGRHanaDataSource::RollbackTransaction()
     {
         conn_->rollback();
     }
-    catch (const odbc::Exception& ex)
+    catch (const odbc::Exception &ex)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to roll back transaction: %s",
-            ex.what());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to roll back transaction: %s", ex.what());
         return OGRERR_FAILURE;
     }
     return OGRERR_NONE;

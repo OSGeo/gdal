@@ -45,9 +45,9 @@
 #define moveStart_delta_type Goffset
 
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-#define makeSubStream_object_type Object&&
+#define makeSubStream_object_type Object &&
 #else
-#define makeSubStream_object_type Object*
+#define makeSubStream_object_type Object *
 #endif
 
 // Detect Poppler 0.71 that no longer defines GBool
@@ -60,67 +60,71 @@
 #endif
 #endif
 
-class VSIPDFFileStream final: public BaseStream
+class VSIPDFFileStream final : public BaseStream
 {
-    public:
-        VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
-                         makeSubStream_object_type dictA);
-        VSIPDFFileStream(VSIPDFFileStream* poParent,
-                         vsi_l_offset startA, GBool limitedA,
-                         vsi_l_offset lengthA,
-                         makeSubStream_object_type dictA);
-        virtual ~VSIPDFFileStream();
+  public:
+    VSIPDFFileStream(VSILFILE *f, const char *pszFilename,
+                     makeSubStream_object_type dictA);
+    VSIPDFFileStream(VSIPDFFileStream *poParent, vsi_l_offset startA,
+                     GBool limitedA, vsi_l_offset lengthA,
+                     makeSubStream_object_type dictA);
+    virtual ~VSIPDFFileStream();
 
-        virtual BaseStream* copy() override;
+    virtual BaseStream *copy() override;
 
-        virtual Stream *   makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
-                                         makeSubStream_offset_type lengthA, makeSubStream_object_type dictA) override;
-        virtual getPos_ret_type      getPos() override;
-        virtual getStart_ret_type    getStart() override;
+    virtual Stream *makeSubStream(makeSubStream_offset_type startA,
+                                  GBool limitedA,
+                                  makeSubStream_offset_type lengthA,
+                                  makeSubStream_object_type dictA) override;
+    virtual getPos_ret_type getPos() override;
+    virtual getStart_ret_type getStart() override;
 
-        virtual void       setPos(setPos_offset_type pos, int dir = 0) override;
-        virtual void       moveStart(moveStart_delta_type delta) override;
+    virtual void setPos(setPos_offset_type pos, int dir = 0) override;
+    virtual void moveStart(moveStart_delta_type delta) override;
 
-        virtual StreamKind getKind()
+    virtual StreamKind getKind()
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
-            const
+        const
 #endif
-            override;
+        override;
 
-        virtual GooString *getFileName() override;
+    virtual GooString *getFileName() override;
 
-        virtual int        getChar() override;
-        virtual int        getUnfilteredChar () override;
-        virtual int        lookChar() override;
+    virtual int getChar() override;
+    virtual int getUnfilteredChar() override;
+    virtual int lookChar() override;
 
-        virtual void       reset() override;
-        virtual void       unfilteredReset () override;
-        virtual void       close() override;
+    virtual void reset() override;
+    virtual void unfilteredReset() override;
+    virtual void close() override;
 
-        bool               FoundLinearizedHint() const { return bFoundLinearizedHint; }
+    bool FoundLinearizedHint() const
+    {
+        return bFoundLinearizedHint;
+    }
 
-    private:
-        virtual GBool hasGetChars() override;
-        virtual int getChars(int nChars, Guchar *buffer) override;
+  private:
+    virtual GBool hasGetChars() override;
+    virtual int getChars(int nChars, Guchar *buffer) override;
 
-        VSIPDFFileStream  *poParent;
-        GooString         *poFilename;
-        VSILFILE          *f;
-        vsi_l_offset       nStart;
-        GBool              bLimited;
-        vsi_l_offset       nLength;
+    VSIPDFFileStream *poParent;
+    GooString *poFilename;
+    VSILFILE *f;
+    vsi_l_offset nStart;
+    GBool bLimited;
+    vsi_l_offset nLength;
 
-        vsi_l_offset       nCurrentPos;
-        int                bHasSavedPos;
-        vsi_l_offset       nSavedPos;
+    vsi_l_offset nCurrentPos;
+    int bHasSavedPos;
+    vsi_l_offset nSavedPos;
 
-        GByte              abyBuffer[BUFFER_SIZE];
-        int                nPosInBuffer;
-        int                nBufferLength;
+    GByte abyBuffer[BUFFER_SIZE];
+    int nPosInBuffer;
+    int nBufferLength;
 
-        bool               bFoundLinearizedHint = false;
+    bool bFoundLinearizedHint = false;
 
-        int                FillBuffer();
+    int FillBuffer();
 };
 
-#endif // PDFIO_H_INCLUDED
+#endif  // PDFIO_H_INCLUDED

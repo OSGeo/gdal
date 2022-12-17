@@ -31,13 +31,12 @@
 #include "cpl_conv.h"
 #include "ogr_idb.h"
 
-
 /************************************************************************/
 /*                          OGRIDBSelectLayer()                         */
 /************************************************************************/
 
-OGRIDBSelectLayer::OGRIDBSelectLayer( OGRIDBDataSource *poDSIn,
-                                        ITCursor * poCurrIn )
+OGRIDBSelectLayer::OGRIDBSelectLayer(OGRIDBDataSource *poDSIn,
+                                     ITCursor *poCurrIn)
 
 {
     poDS = poDSIn;
@@ -47,9 +46,9 @@ OGRIDBSelectLayer::OGRIDBSelectLayer( OGRIDBDataSource *poDSIn,
     poFeatureDefn = nullptr;
 
     m_poCurr = poCurrIn;
-    pszBaseQuery = CPLStrdup( poCurrIn->Command() );
+    pszBaseQuery = CPLStrdup(poCurrIn->Command());
 
-    BuildFeatureDefn( "SELECT", m_poCurr );
+    BuildFeatureDefn("SELECT", m_poCurr);
 }
 
 /************************************************************************/
@@ -69,7 +68,7 @@ OGRIDBSelectLayer::~OGRIDBSelectLayer()
 void OGRIDBSelectLayer::ClearQuery()
 
 {
-    if( m_poCurr != nullptr )
+    if (m_poCurr != nullptr)
     {
         delete m_poCurr;
         m_poCurr = nullptr;
@@ -83,7 +82,7 @@ void OGRIDBSelectLayer::ClearQuery()
 ITCursor *OGRIDBSelectLayer::GetQuery()
 
 {
-    if( m_poCurr == nullptr )
+    if (m_poCurr == nullptr)
         ResetQuery();
 
     return m_poCurr;
@@ -100,11 +99,10 @@ OGRErr OGRIDBSelectLayer::ResetQuery()
 
     iNextShapeId = 0;
 
-    CPLDebug( "OGR_IDB", "Recreating statement." );
-    m_poCurr = new ITCursor( *poDS->GetConnection() );
+    CPLDebug("OGR_IDB", "Recreating statement.");
+    m_poCurr = new ITCursor(*poDS->GetConnection());
 
-    if( m_poCurr->Prepare( pszBaseQuery ) &&
-        m_poCurr->Open( ITCursor::ReadOnly ) )
+    if (m_poCurr->Prepare(pszBaseQuery) && m_poCurr->Open(ITCursor::ReadOnly))
         return OGRERR_NONE;
     else
     {
@@ -121,7 +119,7 @@ OGRErr OGRIDBSelectLayer::ResetQuery()
 void OGRIDBSelectLayer::ResetReading()
 
 {
-    if( iNextShapeId != 0 )
+    if (iNextShapeId != 0)
         ClearQuery();
 
     OGRIDBLayer::ResetReading();
@@ -131,20 +129,20 @@ void OGRIDBSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBSelectLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRIDBSelectLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    return OGRIDBLayer::GetFeature( nFeatureId );
+    return OGRIDBLayer::GetFeature(nFeatureId);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBSelectLayer::TestCapability( const char * pszCap )
+int OGRIDBSelectLayer::TestCapability(const char *pszCap)
 
 {
-    return OGRIDBLayer::TestCapability( pszCap );
+    return OGRIDBLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -154,7 +152,7 @@ int OGRIDBSelectLayer::TestCapability( const char * pszCap )
 /*      can optimize the GetExtent() method!                            */
 /************************************************************************/
 
-OGRErr OGRIDBSelectLayer::GetExtent(OGREnvelope *, int )
+OGRErr OGRIDBSelectLayer::GetExtent(OGREnvelope *, int)
 
 {
     return OGRERR_FAILURE;
@@ -169,8 +167,8 @@ OGRErr OGRIDBSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRIDBSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRIDBSelectLayer::GetFeatureCount(int bForce)
 
 {
-    return OGRIDBLayer::GetFeatureCount( bForce );
+    return OGRIDBLayer::GetFeatureCount(bForce);
 }

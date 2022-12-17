@@ -54,30 +54,33 @@ class OGRSOSIDataSource; /* defined below */
  * source, in an orderly fashion.                                       *
  ************************************************************************/
 
-class OGRSOSILayer final: public OGRLayer {
-    int                 nNextFID;
+class OGRSOSILayer final : public OGRLayer
+{
+    int nNextFID;
 
-    OGRSOSIDataSource  *poParent;   /* used to call methods from data source */
-    LC_FILADM          *poFileadm;  /* ResetReading needs to refer to the file struct */
-    OGRFeatureDefn     *poFeatureDefn;  /* the common definition of all features returned by this layer  */
-    S2I                *poHeaderDefn;
+    OGRSOSIDataSource *poParent; /* used to call methods from data source */
+    LC_FILADM *poFileadm; /* ResetReading needs to refer to the file struct */
+    OGRFeatureDefn *poFeatureDefn; /* the common definition of all features
+                                      returned by this layer  */
+    S2I *poHeaderDefn;
 
-    LC_SNR_ADM          oSnradm;
-    LC_BGR              oNextSerial;  /* used by FYBA to iterate through features */
-    LC_BGR             *poNextSerial;
+    LC_SNR_ADM oSnradm;
+    LC_BGR oNextSerial; /* used by FYBA to iterate through features */
+    LC_BGR *poNextSerial;
 
-public:
-    OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn, LC_FILADM *poFil, S2I *poHeadDefn);
+  public:
+    OGRSOSILayer(OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn,
+                 LC_FILADM *poFil, S2I *poHeadDefn);
     ~OGRSOSILayer();
 
-    void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
-    OGRFeatureDefn *    GetLayerDefn() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeatureDefn *GetLayerDefn() override;
 #ifdef WRITE_SUPPORT
-    OGRErr              CreateField(OGRFieldDefn *poField, int bApproxOK=TRUE);
-    OGRErr              ICreateFeature(OGRFeature *poFeature);
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE);
+    OGRErr ICreateFeature(OGRFeature *poFeature);
 #endif
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
 /************************************************************************
@@ -85,54 +88,61 @@ public:
  * OGRSOSIDataSource reads a SOSI file, prebuilds the features, and     *
  * creates one OGRSOSILayer per geometry type                           *
  ************************************************************************/
-class OGRSOSIDataSource final: public OGRDataSource {
-    char                *pszName;
-    OGRSOSILayer        **papoLayers;
-    int                 nLayers;
+class OGRSOSIDataSource final : public OGRDataSource
+{
+    char *pszName;
+    OGRSOSILayer **papoLayers;
+    int nLayers;
 
 #define MODE_READING 0
 #define MODE_WRITING 1
-    int                 nMode;
+    int nMode;
 
-    void                buildOGRPoint(long nSerial);
-    void                buildOGRLineString(int nNumCoo, long nSerial);
-    void                buildOGRMultiPoint(int nNumCoo, long nSerial);
-    void                buildOGRLineStringFromArc(long nSerial);
+    void buildOGRPoint(long nSerial);
+    void buildOGRLineString(int nNumCoo, long nSerial);
+    void buildOGRMultiPoint(int nNumCoo, long nSerial);
+    void buildOGRLineStringFromArc(long nSerial);
 
-public:
-
+  public:
     OGRSpatialReference *poSRS;
-    const char          *pszEncoding;
-    unsigned int        nNumFeatures;
-    OGRGeometry         **papoBuiltGeometries;  /* OGRSOSIDataSource prebuilds some features upon opening, te be used
-                                                * by the more complex geometries later. */
-    //FYBA specific
-    LC_BASEADM          *poBaseadm;
-    LC_FILADM           *poFileadm;
+    const char *pszEncoding;
+    unsigned int nNumFeatures;
+    OGRGeometry **papoBuiltGeometries; /* OGRSOSIDataSource prebuilds some
+                                        * features upon opening, te be used by
+                                        * the more complex geometries later. */
+    // FYBA specific
+    LC_BASEADM *poBaseadm;
+    LC_FILADM *poFileadm;
 
-    S2I                 *poPolyHeaders;   /* Contain the header definitions of the four feature layers */
-    S2I                 *poPointHeaders;
-    S2I                 *poCurveHeaders;
-    S2I                 *poTextHeaders;
+    S2I *poPolyHeaders; /* Contain the header definitions of the four feature
+                           layers */
+    S2I *poPointHeaders;
+    S2I *poCurveHeaders;
+    S2I *poTextHeaders;
 
     OGRSOSIDataSource();
     ~OGRSOSIDataSource();
 
-    int                 Open  ( const char * pszFilename, int bUpdate);
+    int Open(const char *pszFilename, int bUpdate);
 #ifdef WRITE_SUPPORT
-    int                 Create( const char * pszFilename );
+    int Create(const char *pszFilename);
 #endif
-    const char          *GetName() override {
+    const char *GetName() override
+    {
         return pszName;
     }
-    int                 GetLayerCount() override {
+    int GetLayerCount() override
+    {
         return nLayers;
     }
-    OGRLayer            *GetLayer( int ) override;
+    OGRLayer *GetLayer(int) override;
 #ifdef WRITE_SUPPORT
-    OGRLayer            *ICreateLayer( const char *pszName, OGRSpatialReference  *poSpatialRef=NULL, OGRwkbGeometryType eGType=wkbUnknown, char **papszOptions=NULL);
+    OGRLayer *ICreateLayer(const char *pszName,
+                           OGRSpatialReference *poSpatialRef = NULL,
+                           OGRwkbGeometryType eGType = wkbUnknown,
+                           char **papszOptions = NULL);
 #endif
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
 /************************************************************************
@@ -141,46 +151,47 @@ public:
  * most common SOSI elements.                                           *
  ************************************************************************/
 
-class OGRSOSISimpleDataType {
-    CPLString           osName;
-    OGRFieldType        nType;
+class OGRSOSISimpleDataType
+{
+    CPLString osName;
+    OGRFieldType nType;
 
-public:
-    OGRSOSISimpleDataType ();
-    OGRSOSISimpleDataType (const char *pszName, OGRFieldType nType);
+  public:
+    OGRSOSISimpleDataType();
+    OGRSOSISimpleDataType(const char *pszName, OGRFieldType nType);
     ~OGRSOSISimpleDataType();
 
-    void setType (const char *pszName, OGRFieldType nType);
-    const char          *GetName() const {
+    void setType(const char *pszName, OGRFieldType nType);
+    const char *GetName() const
+    {
         return osName.c_str();
     }
-    OGRFieldType        GetType() const {
+    OGRFieldType GetType() const
+    {
         return nType;
     }
 };
 
-class OGRSOSIDataType {
-    OGRSOSISimpleDataType* poElements;
-    int                    nElementCount;
+class OGRSOSIDataType
+{
+    OGRSOSISimpleDataType *poElements;
+    int nElementCount;
 
-    OGRSOSIDataType& operator= (const OGRSOSIDataType& ) = delete;
+    OGRSOSIDataType &operator=(const OGRSOSIDataType &) = delete;
 
-public:
-    explicit OGRSOSIDataType (int nSize);
+  public:
+    explicit OGRSOSIDataType(int nSize);
 
-    OGRSOSIDataType( const OGRSOSIDataType& oSrc ) :
-            poElements( nullptr ),
-            nElementCount( oSrc.nElementCount )
+    OGRSOSIDataType(const OGRSOSIDataType &oSrc)
+        : poElements(nullptr), nElementCount(oSrc.nElementCount)
     {
         poElements = new OGRSOSISimpleDataType[nElementCount];
-        for( int i = 0; i < nElementCount; i++ )
+        for (int i = 0; i < nElementCount; i++)
             poElements[i] = oSrc.poElements[i];
     }
 
-
-    OGRSOSIDataType( OGRSOSIDataType&& oSrc ) noexcept:
-            poElements( oSrc.poElements ),
-            nElementCount( oSrc.nElementCount )
+    OGRSOSIDataType(OGRSOSIDataType &&oSrc) noexcept
+        : poElements(oSrc.poElements), nElementCount(oSrc.nElementCount)
     {
         oSrc.poElements = nullptr;
         oSrc.nElementCount = 0;
@@ -189,10 +200,12 @@ public:
     ~OGRSOSIDataType();
 
     void setElement(int nIndex, const char *name, OGRFieldType type);
-    OGRSOSISimpleDataType* getElements() {
+    OGRSOSISimpleDataType *getElements()
+    {
         return poElements;
     }
-    int getElementCount() {
+    int getElementCount()
+    {
         return nElementCount;
     }
 };
@@ -201,10 +214,10 @@ typedef std::map<CPLString, OGRSOSIDataType> C2F;
 
 void SOSIInitTypes();
 void SOSICleanupTypes();
-OGRSOSIDataType* SOSIGetType(const CPLString& name);
-int  SOSITypeToInt(const char* value);
-double  SOSITypeToReal(const char* value);
-void SOSITypeToDate(const char* value, int* date);
-void SOSITypeToDateTime(const char* value, int* date);
+OGRSOSIDataType *SOSIGetType(const CPLString &name);
+int SOSITypeToInt(const char *value);
+double SOSITypeToReal(const char *value);
+void SOSITypeToDate(const char *value, int *date);
+void SOSITypeToDateTime(const char *value, int *date);
 
 #endif /* OGR_SOSI_H_INCLUDED */

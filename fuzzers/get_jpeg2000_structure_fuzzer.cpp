@@ -34,9 +34,9 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     return 0;
 }
@@ -49,15 +49,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     GDALRegister_GTiff();
     GDALRegister_VRT();
-    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        MEM_FILENAME, reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)),
+        len, FALSE);
     VSIFCloseL(fp);
-    char** papszOptions = CSLSetNameValue(nullptr, "ALL", "YES");
+    char **papszOptions = CSLSetNameValue(nullptr, "ALL", "YES");
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLXMLNode* psNode = GDALGetJPEG2000Structure(MEM_FILENAME, papszOptions);
+    CPLXMLNode *psNode = GDALGetJPEG2000Structure(MEM_FILENAME, papszOptions);
     CPLPopErrorHandler();
     CSLDestroy(papszOptions);
-    if( psNode )
+    if (psNode)
         CPLDestroyXMLNode(psNode);
     VSIUnlink(MEM_FILENAME);
     return 0;

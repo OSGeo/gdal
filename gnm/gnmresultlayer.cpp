@@ -30,15 +30,14 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-
 /** Constructor */
-OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDSIn,
-                                                   OGRLayer* poLayerIn)
+OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset *poDSIn,
+                                                   OGRLayer *poLayerIn)
 {
     this->poDS = poDSIn;
     this->poLayer = poLayerIn;
 
-    //create standard fields
+    // create standard fields
 
     OGRFieldDefn oFieldGID(GNM_SYSFIELD_GFID, GNMGFIDInt);
     poLayer->CreateField(&oFieldGID);
@@ -50,7 +49,7 @@ OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset* poDSIn,
     OGRFieldDefn oFieldNo(GNM_SYSFIELD_PATHNUM, OFTInteger);
     poLayer->CreateField(&oFieldNo);
 
-    OGRFieldDefn oFieldType(GNM_SYSFIELD_TYPE, OFTString); //EDGE or VERTEX
+    OGRFieldDefn oFieldType(GNM_SYSFIELD_TYPE, OFTString);  // EDGE or VERTEX
     poLayer->CreateField(&oFieldType);
 }
 
@@ -69,12 +68,12 @@ OGRFeature *OGRGNMWrappedResultLayer::GetNextFeature()
     return poLayer->GetNextFeature();
 }
 
-OGRErr OGRGNMWrappedResultLayer::SetNextByIndex( GIntBig nIndex )
+OGRErr OGRGNMWrappedResultLayer::SetNextByIndex(GIntBig nIndex)
 {
     return poLayer->SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRGNMWrappedResultLayer::GetFeature( GIntBig nFID )
+OGRFeature *OGRGNMWrappedResultLayer::GetFeature(GIntBig nFID)
 {
     return poLayer->GetFeature(nFID);
 }
@@ -84,17 +83,18 @@ OGRFeatureDefn *OGRGNMWrappedResultLayer::GetLayerDefn()
     return poLayer->GetLayerDefn();
 }
 
-GIntBig OGRGNMWrappedResultLayer::GetFeatureCount( int bForce )
+GIntBig OGRGNMWrappedResultLayer::GetFeatureCount(int bForce)
 {
     return poLayer->GetFeatureCount(bForce);
 }
 
-int OGRGNMWrappedResultLayer::TestCapability( const char * pszCap )
+int OGRGNMWrappedResultLayer::TestCapability(const char *pszCap)
 {
     return poLayer->TestCapability(pszCap);
 }
 
-OGRErr OGRGNMWrappedResultLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGNMWrappedResultLayer::CreateField(OGRFieldDefn *poField,
+                                             int bApproxOK)
 {
     return poLayer->CreateField(poField, bApproxOK);
 }
@@ -122,14 +122,15 @@ OGRSpatialReference *OGRGNMWrappedResultLayer::GetSpatialRef()
 
 /** Undocumented */
 OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
-                                              const CPLString &soLayerName,
-                                              int nPathNo, bool bIsEdge)
+                                               const CPLString &soLayerName,
+                                               int nPathNo, bool bIsEdge)
 {
-    VALIDATE_POINTER1(poFeature, "Input feature is invalid", OGRERR_INVALID_HANDLE);
+    VALIDATE_POINTER1(poFeature, "Input feature is invalid",
+                      OGRERR_INVALID_HANDLE);
     // add fields from input feature
     OGRFeatureDefn *poSrcDefn = poFeature->GetDefnRef();
-    OGRFeatureDefn* poDstFDefn = GetLayerDefn();
-    if(nullptr == poSrcDefn || nullptr == poDstFDefn)
+    OGRFeatureDefn *poDstFDefn = GetLayerDefn();
+    if (nullptr == poSrcDefn || nullptr == poDstFDefn)
         return OGRERR_INVALID_HANDLE;
 
     int nSrcFieldCount = poSrcDefn->GetFieldCount();
@@ -137,14 +138,14 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
     int iField, *panMap;
 
     // Initialize the index-to-index map to -1's
-    panMap = (int *) CPLMalloc( sizeof(int) * nSrcFieldCount );
-    for( iField = 0; iField < nSrcFieldCount; iField++)
+    panMap = (int *)CPLMalloc(sizeof(int) * nSrcFieldCount);
+    for (iField = 0; iField < nSrcFieldCount; iField++)
         panMap[iField] = -1;
 
-    for(iField = 0; iField < nSrcFieldCount; iField++)
+    for (iField = 0; iField < nSrcFieldCount; iField++)
     {
-        OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
-        OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+        OGRFieldDefn *poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
+        OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
         /* The field may have been already created at layer creation */
         int iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
@@ -153,52 +154,55 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
             // TODO: by now skip fields with different types. In future shoul
             // cast types
             OGRFieldDefn *poDstField = poDstFDefn->GetFieldDefn(iDstField);
-            if(nullptr != poDstField && oFieldDefn.GetType() == poDstField->GetType())
+            if (nullptr != poDstField &&
+                oFieldDefn.GetType() == poDstField->GetType())
                 panMap[iField] = iDstField;
         }
-        else if (CreateField( &oFieldDefn ) == OGRERR_NONE)
+        else if (CreateField(&oFieldDefn) == OGRERR_NONE)
         {
             /* Sanity check : if it fails, the driver is buggy */
             if (poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "The output driver has claimed to have added the %s field, but it did not!",
-                         oFieldDefn.GetNameRef() );
+                         "The output driver has claimed to have added the %s "
+                         "field, but it did not!",
+                         oFieldDefn.GetNameRef());
             }
             else
             {
                 panMap[iField] = nDstFieldCount;
-                nDstFieldCount ++;
+                nDstFieldCount++;
             }
         }
     }
 
-    OGRFeature* poInsertFeature = OGRFeature::CreateFeature( GetLayerDefn() );
-    if( poInsertFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+    OGRFeature *poInsertFeature = OGRFeature::CreateFeature(GetLayerDefn());
+    if (poInsertFeature->SetFrom(poFeature, panMap, TRUE) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to translate feature " CPL_FRMT_GIB
-                  " from layer %s.\n",
-                  poFeature->GetFID(), soLayerName.c_str() );
-        OGRFeature::DestroyFeature( poInsertFeature );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to translate feature " CPL_FRMT_GIB
+                 " from layer %s.\n",
+                 poFeature->GetFID(), soLayerName.c_str());
+        OGRFeature::DestroyFeature(poInsertFeature);
         CPLFree(panMap);
         return OGRERR_FAILURE;
     }
 
-    //poInsertFeature->SetField( GNM_SYSFIELD_GFID, (GNMGFID)poFeature->GetFID() );
-    poInsertFeature->SetField( GNM_SYSFIELD_LAYERNAME, soLayerName);
-    poInsertFeature->SetField( GNM_SYSFIELD_PATHNUM, nPathNo);
-    poInsertFeature->SetField( GNM_SYSFIELD_TYPE, bIsEdge ? "EDGE" : "VERTEX");
+    // poInsertFeature->SetField( GNM_SYSFIELD_GFID,
+    // (GNMGFID)poFeature->GetFID() );
+    poInsertFeature->SetField(GNM_SYSFIELD_LAYERNAME, soLayerName);
+    poInsertFeature->SetField(GNM_SYSFIELD_PATHNUM, nPathNo);
+    poInsertFeature->SetField(GNM_SYSFIELD_TYPE, bIsEdge ? "EDGE" : "VERTEX");
 
     CPLErrorReset();
-    if( CreateFeature( poInsertFeature ) != OGRERR_NONE )
+    if (CreateFeature(poInsertFeature) != OGRERR_NONE)
     {
-        OGRFeature::DestroyFeature( poInsertFeature );
+        OGRFeature::DestroyFeature(poInsertFeature);
         CPLFree(panMap);
         return OGRERR_FAILURE;
     }
 
-    OGRFeature::DestroyFeature( poInsertFeature );
+    OGRFeature::DestroyFeature(poInsertFeature);
     CPLFree(panMap);
     return OGRERR_NONE;
 }

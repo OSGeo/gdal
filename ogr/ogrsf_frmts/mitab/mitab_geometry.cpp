@@ -39,9 +39,9 @@
 
 #include "ogr_core.h"
 
-
-#define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
-#define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))
+#define OGR_NUM_RINGS(poly) (poly->getNumInteriorRings() + 1)
+#define OGR_GET_RING(poly, i)                                                  \
+    (i == 0 ? poly->getExteriorRing() : poly->getInteriorRing(i - 1))
 
 /**********************************************************************
  *                   OGRPointInRing()
@@ -60,12 +60,13 @@ GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
     x = poPoint->getX();
     y = poPoint->getY();
 
-    for (i = 0, j = numpoints-1; i < numpoints; j = i++)
+    for (i = 0, j = numpoints - 1; i < numpoints; j = i++)
     {
-        if ((((poRing->getY(i)<=y) && (y<poRing->getY(j))) ||
-             ((poRing->getY(j)<=y) && (y<poRing->getY(i)))) &&
+        if ((((poRing->getY(i) <= y) && (y < poRing->getY(j))) ||
+             ((poRing->getY(j) <= y) && (y < poRing->getY(i)))) &&
             (x < (poRing->getX(j) - poRing->getX(i)) * (y - poRing->getY(i)) /
-                 (poRing->getY(j) - poRing->getY(i)) + poRing->getX(i)))
+                         (poRing->getY(j) - poRing->getY(i)) +
+                     poRing->getX(i)))
             status = !status;
     }
 
@@ -87,7 +88,7 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 {
     GBool status = FALSE;
 
-    for( int i = 0; i<OGR_NUM_RINGS(poPoly); i++ )
+    for (int i = 0; i < OGR_NUM_RINGS(poPoly); i++)
     {
         if (OGRPointInRing(poPoint, OGR_GET_RING(poPoly, i)))
         {
@@ -115,12 +116,17 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
  * Adapted version of msPolygonLabelPoint() from MapServer's mapprimitive.c
  **********************************************************************/
 
-typedef enum { CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT } CLIP_STATE;
-static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
+typedef enum
 {
-    if( x < std::min(x0, x1) )
+    CLIP_LEFT,
+    CLIP_MIDDLE,
+    CLIP_RIGHT
+} CLIP_STATE;
+static CLIP_STATE EDGE_CHECK(double x0, double x, double x1)
+{
+    if (x < std::min(x0, x1))
         return CLIP_LEFT;
-    if( x > std::max(x0, x1) )
+    if (x > std::max(x0, x1))
         return CLIP_RIGHT;
     return CLIP_MIDDLE;
 }
@@ -132,80 +138,80 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
     if (poPoly == nullptr)
         return OGRERR_FAILURE;
 
-    OGREnvelope   oEnv;
+    OGREnvelope oEnv;
     poPoly->getEnvelope(&oEnv);
 
-    poLabelPoint->setX((oEnv.MaxX + oEnv.MinX)/2.0);
-    poLabelPoint->setY((oEnv.MaxY + oEnv.MinY)/2.0);
+    poLabelPoint->setX((oEnv.MaxX + oEnv.MinX) / 2.0);
+    poLabelPoint->setY((oEnv.MaxY + oEnv.MinY) / 2.0);
 
     // if( get_centroid(p, lp, &miny, &maxy) == -1 ) return -1;
 
-    if(OGRIntersectPointPolygon(poLabelPoint, poPoly) == TRUE) /* cool, done */
+    if (OGRIntersectPointPolygon(poLabelPoint, poPoly) == TRUE) /* cool, done */
         return OGRERR_NONE;
 
     /* do it the hard way - scanline */
 
-    double skip = (oEnv.MaxY - oEnv.MinY)/NUM_SCANLINES;
+    double skip = (oEnv.MaxY - oEnv.MinY) / NUM_SCANLINES;
 
     int n = 0;
-    for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )
+    for (int j = 0; j < OGR_NUM_RINGS(poPoly); j++)
     {
         /* count total number of points */
         n += OGR_GET_RING(poPoly, j)->getNumPoints();
     }
-    if( n == 0 )
+    if (n == 0)
         return OGRERR_FAILURE;
 
     double *xintersect = static_cast<double *>(calloc(n, sizeof(double)));
-    if( xintersect == nullptr )
+    if (xintersect == nullptr)
         return OGRERR_FAILURE;
 
     double max_len = 0.0;
 
-    for( int k = 1; k <= NUM_SCANLINES; k++ )
+    for (int k = 1; k <= NUM_SCANLINES; k++)
     {
         /* sample the shape in the y direction */
 
-        double y = oEnv.MaxY - k*skip;
+        double y = oEnv.MaxY - k * skip;
 
         // Need to find a y that won't intersect any vertices exactly.
         // First initializing lo_y, hi_y to be any 2 pnts on either side of
         // lp->y.
         double hi_y = y - 1;
         double lo_y = y + 1;
-        for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )
+        for (int j = 0; j < OGR_NUM_RINGS(poPoly); j++)
         {
-            OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
+            OGRLinearRing *poRing = OGR_GET_RING(poPoly, j);
 
-            if((lo_y < y) && (hi_y >= y))
+            if ((lo_y < y) && (hi_y >= y))
                 break; /* already initialized */
-            for( int i = 0; i < poRing->getNumPoints(); i++ )
+            for (int i = 0; i < poRing->getNumPoints(); i++)
             {
-                if((lo_y < y) && (hi_y >= y))
+                if ((lo_y < y) && (hi_y >= y))
                     break; /* already initialized */
-                if(poRing->getY(i) < y)
+                if (poRing->getY(i) < y)
                     lo_y = poRing->getY(i);
-                if(poRing->getY(i) >= y)
+                if (poRing->getY(i) >= y)
                     hi_y = poRing->getY(i);
             }
         }
 
-        for( int j = 0; j<OGR_NUM_RINGS(poPoly); j++ )
+        for (int j = 0; j < OGR_NUM_RINGS(poPoly); j++)
         {
-            OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
+            OGRLinearRing *poRing = OGR_GET_RING(poPoly, j);
 
-            for( int i = 0; i < poRing->getNumPoints(); i++ )
+            for (int i = 0; i < poRing->getNumPoints(); i++)
             {
-                if((poRing->getY(i) < y) &&
-                   ((y - poRing->getY(i)) < (y - lo_y)))
+                if ((poRing->getY(i) < y) &&
+                    ((y - poRing->getY(i)) < (y - lo_y)))
                     lo_y = poRing->getY(i);
-                if((poRing->getY(i) >= y) &&
-                   ((poRing->getY(i) - y) < (hi_y - y)))
+                if ((poRing->getY(i) >= y) &&
+                    ((poRing->getY(i) - y) < (hi_y - y)))
                     hi_y = poRing->getY(i);
             }
         }
 
-        if( lo_y == hi_y )
+        if (lo_y == hi_y)
         {
             free(xintersect);
             return OGRERR_FAILURE;
@@ -217,32 +223,32 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         OGRRawPoint point2;
 
         int nfound = 0;
-        for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )   // For each line.
+        for (int j = 0; j < OGR_NUM_RINGS(poPoly); j++)  // For each line.
         {
-            OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
-            if( poRing->IsEmpty() )
+            OGRLinearRing *poRing = OGR_GET_RING(poPoly, j);
+            if (poRing->IsEmpty())
                 continue;
-            point1.x = poRing->getX(poRing->getNumPoints()-1);
-            point1.y = poRing->getY(poRing->getNumPoints()-1);
+            point1.x = poRing->getX(poRing->getNumPoints() - 1);
+            point1.y = poRing->getY(poRing->getNumPoints() - 1);
 
-            for( int i = 0; i < poRing->getNumPoints(); i++ )
+            for (int i = 0; i < poRing->getNumPoints(); i++)
             {
                 point2.x = poRing->getX(i);
                 point2.y = poRing->getY(i);
 
-                if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE)
+                if (EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE)
                 {
-                    if(point1.y == point2.y)
+                    if (point1.y == point2.y)
                         continue;  // Ignore horizontal edges.
 
                     const double slope =
                         (point2.x - point1.x) / (point2.y - point1.y);
 
-                    double x = point1.x + (y - point1.y)*slope;
+                    double x = point1.x + (y - point1.y) * slope;
                     xintersect[nfound++] = x;
                 } /* End of checking this edge */
 
-                point1 = point2;  /* Go on to next edge */
+                point1 = point2; /* Go on to next edge */
             }
         } /* Finished the scanline */
 
@@ -251,30 +257,30 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         do
         {
             wrong_order = false;
-            for( int i = 0; i < nfound-1; i++ )
+            for (int i = 0; i < nfound - 1; i++)
             {
-                if(xintersect[i] > xintersect[i+1])
+                if (xintersect[i] > xintersect[i + 1])
                 {
                     wrong_order = true;
-                    std::swap(xintersect[i], xintersect[i+1]);
+                    std::swap(xintersect[i], xintersect[i + 1]);
                 }
             }
-        } while( wrong_order );
+        } while (wrong_order);
 
         // Great, now find longest span.
         // point1.y = y;
         // point2.y = y;
-        for( int i = 0; i < nfound-1; i += 2 )
+        for (int i = 0; i < nfound - 1; i += 2)
         {
             point1.x = xintersect[i];
-            point2.x = xintersect[i+1];
+            point2.x = xintersect[i + 1];
             /* len = length(point1, point2); */
             const double len = std::abs((point2.x - point1.x));
-            if(len > max_len)
+            if (len > max_len)
             {
                 max_len = len;
-                poLabelPoint->setX( (point1.x + point2.x)/2 );
-                poLabelPoint->setY( y );
+                poLabelPoint->setX((point1.x + point2.x) / 2);
+                poLabelPoint->setY(y);
             }
         }
     }
@@ -288,20 +294,18 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
      * Until we find the source of the problem, we'll at least validate
      * the label point to make sure that it overlaps the polygon MBR.
      */
-    if( poLabelPoint->getX() < oEnv.MinX
-        || poLabelPoint->getY() < oEnv.MinY
-        || poLabelPoint->getX() > oEnv.MaxX
-        || poLabelPoint->getY() > oEnv.MaxY )
+    if (poLabelPoint->getX() < oEnv.MinX || poLabelPoint->getY() < oEnv.MinY ||
+        poLabelPoint->getX() > oEnv.MaxX || poLabelPoint->getY() > oEnv.MaxY)
     {
         // Reset label coordinates to center of MBR, just in case
-        poLabelPoint->setX((oEnv.MaxX + oEnv.MinX)/2.0);
-        poLabelPoint->setY((oEnv.MaxY + oEnv.MinY)/2.0);
+        poLabelPoint->setX((oEnv.MaxX + oEnv.MinX) / 2.0);
+        poLabelPoint->setY((oEnv.MaxY + oEnv.MinY) / 2.0);
 
         // And return an error
         return OGRERR_FAILURE;
     }
 
-    if(max_len > 0)
+    if (max_len > 0)
         return OGRERR_NONE;
     else
         return OGRERR_FAILURE;
@@ -325,32 +329,32 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
     double len = 0.0;
     double total_len = 0.0;
 
-    for( int i = 0; i<OGR_NUM_RINGS(poPoly); i++ )
+    for (int i = 0; i < OGR_NUM_RINGS(poPoly); i++)
     {
         OGRLinearRing *poRing = OGR_GET_RING(poPoly, i);
 
         double x2 = poRing->getX(0);
         double y2 = poRing->getY(0);
 
-        for( int j = 1; j<poRing->getNumPoints(); j++ )
+        for (int j = 1; j < poRing->getNumPoints(); j++)
         {
             double x1 = x2;
             double y1 = y2;
             x2 = poRing->getX(j);
             y2 = poRing->getY(j);
 
-            len = sqrt( pow((x2-x1),2) + pow((y2-y1),2) );
-            cent_weight_x += len * ((x1 + x2)/2.0);
-            cent_weight_y += len * ((y1 + y2)/2.0);
+            len = sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2));
+            cent_weight_x += len * ((x1 + x2) / 2.0);
+            cent_weight_y += len * ((y1 + y2) / 2.0);
             total_len += len;
         }
     }
 
-    if(total_len == 0)
+    if (total_len == 0)
         return OGRERR_FAILURE;
 
-    poCentroid->setX( cent_weight_x / total_len );
-    poCentroid->setY( cent_weight_y / total_len );
+    poCentroid->setX(cent_weight_x / total_len);
+    poCentroid->setY(cent_weight_y / total_len);
 
     return OGRERR_NONE;
 }
@@ -378,14 +382,14 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
     if (poLine->getNumPoints() % 2 == 0)
     {
         // Return the midway between the 2 center points
-        int i = poLine->getNumPoints()/2;
-        poLabelPoint->setX( (poLine->getX(i-1) + poLine->getX(i))/2.0 );
-        poLabelPoint->setY( (poLine->getY(i-1) + poLine->getY(i))/2.0 );
+        int i = poLine->getNumPoints() / 2;
+        poLabelPoint->setX((poLine->getX(i - 1) + poLine->getX(i)) / 2.0);
+        poLabelPoint->setY((poLine->getY(i - 1) + poLine->getY(i)) / 2.0);
     }
     else
     {
         // Return the center point
-        poLine->getPoint(poLine->getNumPoints()/2, poLabelPoint);
+        poLine->getPoint(poLine->getNumPoints() / 2, poLabelPoint);
     }
 
     return OGRERR_NONE;
@@ -409,19 +413,19 @@ int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
     double x2 = poLine->getX(0);
     double y2 = poLine->getY(0);
 
-    for( int i = 1; i < poLine->getNumPoints(); i++ )
+    for (int i = 1; i < poLine->getNumPoints(); i++)
     {
         double x1 = x2;
         double y1 = y2;
         x2 = poLine->getX(i);
         y2 = poLine->getY(i);
 
-        double segment_length = pow((x2-x1),2) + pow((y2-y1),2);
+        double segment_length = pow((x2 - x1), 2) + pow((y2 - y1), 2);
         if (segment_length > max_segment_length)
         {
             max_segment_length = segment_length;
-            poLabelPoint->setX( (x1 + x2)/2.0 );
-            poLabelPoint->setY( (y1 + y2)/2.0 );
+            poLabelPoint->setX((x1 + x2) / 2.0);
+            poLabelPoint->setY((y1 + y2) / 2.0);
         }
     }
 

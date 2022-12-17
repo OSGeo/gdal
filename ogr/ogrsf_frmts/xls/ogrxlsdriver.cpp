@@ -29,7 +29,6 @@
 #include "ogr_xls.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                           ~OGRXLSDriver()                            */
 /************************************************************************/
@@ -53,7 +52,7 @@ const char *OGRXLSDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
+OGRDataSource *OGRXLSDriver::Open(const char *pszFilename, int bUpdate)
 
 {
     if (bUpdate)
@@ -66,9 +65,9 @@ OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
         return nullptr;
     }
 
-    OGRXLSDataSource   *poDS = new OGRXLSDataSource();
+    OGRXLSDataSource *poDS = new OGRXLSDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if (!poDS->Open(pszFilename, bUpdate))
     {
         delete poDS;
         poDS = nullptr;
@@ -81,7 +80,7 @@ OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSDriver::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRXLSDriver::TestCapability(CPL_UNUSED const char *pszCap)
 
 {
     return FALSE;
@@ -94,14 +93,14 @@ int OGRXLSDriver::TestCapability( CPL_UNUSED const char * pszCap )
 void RegisterOGRXLS()
 
 {
-    OGRSFDriver* poDriver = new OGRXLSDriver;
+    OGRSFDriver *poDriver = new OGRXLSDriver;
 
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MS Excel format" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xls" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/xls.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MS Excel format");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xls");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/xls.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_NONSPATIAL, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

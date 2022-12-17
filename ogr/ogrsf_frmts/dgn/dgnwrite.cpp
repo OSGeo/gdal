@@ -33,9 +33,8 @@
 
 #include <algorithm>
 
-
-static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
-                           unsigned char *pabyTarget );
+static void DGNPointToInt(DGNInfo *psDGN, DGNPoint *psPoint,
+                          unsigned char *pabyTarget);
 
 /************************************************************************/
 /*                          DGNResizeElement()                          */
@@ -68,88 +67,86 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
  * @return TRUE on success, or FALSE on error.
  */
 
-int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
+int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-/* -------------------------------------------------------------------- */
-/*      Check various conditions.                                       */
-/* -------------------------------------------------------------------- */
-    if( psElement->raw_bytes == 0
-        || psElement->raw_bytes != psElement->size )
+    /* -------------------------------------------------------------------- */
+    /*      Check various conditions.                                       */
+    /* -------------------------------------------------------------------- */
+    if (psElement->raw_bytes == 0 || psElement->raw_bytes != psElement->size)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Raw bytes not loaded, or not matching element size." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Raw bytes not loaded, or not matching element size.");
         return FALSE;
     }
 
-    if( nNewSize % 2 == 1 )
+    if (nNewSize % 2 == 1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "DGNResizeElement(%d): "
-                  "can't change to odd (not divisible by two) size.",
-                  nNewSize );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DGNResizeElement(%d): "
+                 "can't change to odd (not divisible by two) size.",
+                 nNewSize);
         return FALSE;
     }
 
-    if( nNewSize == psElement->raw_bytes )
+    if (nNewSize == psElement->raw_bytes)
         return TRUE;
 
-/* -------------------------------------------------------------------- */
-/*      Mark the existing element as deleted if the element has to      */
-/*      move to the end of the file.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Mark the existing element as deleted if the element has to      */
+    /*      move to the end of the file.                                    */
+    /* -------------------------------------------------------------------- */
 
-    if( psElement->offset != -1 )
+    if (psElement->offset != -1)
     {
-        vsi_l_offset nOldFLoc = VSIFTellL( psDGN->fp );
+        vsi_l_offset nOldFLoc = VSIFTellL(psDGN->fp);
         unsigned char abyLeader[2];
 
-        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFReadL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
+        if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+            VSIFReadL(abyLeader, sizeof(abyLeader), 1, psDGN->fp) != 1)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed seek or read when trying to mark existing\n"
-                      "element as deleted in DGNResizeElement()\n" );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed seek or read when trying to mark existing\n"
+                     "element as deleted in DGNResizeElement()\n");
             return FALSE;
         }
 
         abyLeader[1] |= 0x80;
 
-        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFWriteL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
-            || VSIFSeekL( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
+        if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+            VSIFWriteL(abyLeader, sizeof(abyLeader), 1, psDGN->fp) != 1 ||
+            VSIFSeekL(psDGN->fp, nOldFLoc, SEEK_SET) != 0)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed seek or write when trying to mark existing\n"
-                      "element as deleted in DGNResizeElement()\n" );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed seek or write when trying to mark existing\n"
+                     "element as deleted in DGNResizeElement()\n");
             return FALSE;
         }
 
-        if( psElement->element_id != -1 && psDGN->index_built )
-            psDGN->element_index[psElement->element_id].flags
-                |= DGNEIF_DELETED;
+        if (psElement->element_id != -1 && psDGN->index_built)
+            psDGN->element_index[psElement->element_id].flags |= DGNEIF_DELETED;
     }
 
     psElement->offset = -1; /* move to end of file. */
     psElement->element_id = -1;
 
-/* -------------------------------------------------------------------- */
-/*      Set the new size information, and realloc the raw data buffer.  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the new size information, and realloc the raw data buffer.  */
+    /* -------------------------------------------------------------------- */
     psElement->size = nNewSize;
-    psElement->raw_data = (unsigned char *)
-        CPLRealloc( psElement->raw_data, nNewSize );
+    psElement->raw_data =
+        (unsigned char *)CPLRealloc(psElement->raw_data, nNewSize);
     psElement->raw_bytes = nNewSize;
 
-/* -------------------------------------------------------------------- */
-/*      Update the size information within the raw buffer.              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Update the size information within the raw buffer.              */
+    /* -------------------------------------------------------------------- */
     const int nWords = (nNewSize / 2) - 2;
 
-    psElement->raw_data[2] = (unsigned char) (nWords % 256);
-    psElement->raw_data[3] = (unsigned char) (nWords / 256);
+    psElement->raw_data[2] = (unsigned char)(nWords % 256);
+    psElement->raw_data[3] = (unsigned char)(nWords / 256);
 
     return TRUE;
 }
@@ -183,51 +180,51 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
  * @return TRUE on success or FALSE in case of failure.
  */
 
-int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
+int DGNWriteElement(DGNHandle hDGN, DGNElemCore *psElement)
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-/* ==================================================================== */
-/*      If this element hasn't been positioned yet, place it at the     */
-/*      end of the file.                                                */
-/* ==================================================================== */
-    if( psElement->offset == -1 )
+    /* ==================================================================== */
+    /*      If this element hasn't been positioned yet, place it at the     */
+    /*      end of the file.                                                */
+    /* ==================================================================== */
+    if (psElement->offset == -1)
     {
         // We must have an index, in order to properly assign the
         // element id of the newly written element.  Ensure it is built.
-        if( !psDGN->index_built )
-            DGNBuildIndex( psDGN );
+        if (!psDGN->index_built)
+            DGNBuildIndex(psDGN);
 
         // Read the current "last" element.
-        if( !DGNGotoElement( hDGN, psDGN->element_count-1 ) )
+        if (!DGNGotoElement(hDGN, psDGN->element_count - 1))
             return FALSE;
 
         int nJunk = 0;
-        if( !DGNLoadRawElement( psDGN, &nJunk, &nJunk ) )
+        if (!DGNLoadRawElement(psDGN, &nJunk, &nJunk))
             return FALSE;
 
         // Establish the position of the new element.
-        psElement->offset = static_cast<int>(VSIFTellL( psDGN->fp ));
+        psElement->offset = static_cast<int>(VSIFTellL(psDGN->fp));
         psElement->element_id = psDGN->element_count;
 
         // Grow element buffer if needed.
-        if( psDGN->element_count == psDGN->max_element_count )
+        if (psDGN->element_count == psDGN->max_element_count)
         {
             psDGN->max_element_count += 500;
 
-            psDGN->element_index = (DGNElementInfo *)
-                CPLRealloc( psDGN->element_index,
-                            psDGN->max_element_count * sizeof(DGNElementInfo));
+            psDGN->element_index = (DGNElementInfo *)CPLRealloc(
+                psDGN->element_index,
+                psDGN->max_element_count * sizeof(DGNElementInfo));
         }
 
         // Set up the element info
         DGNElementInfo *psInfo = psDGN->element_index + psDGN->element_count;
-        psInfo->level = (unsigned char) psElement->level;
-        psInfo->type = (unsigned char) psElement->type;
-        psInfo->stype = (unsigned char) psElement->stype;
+        psInfo->level = (unsigned char)psElement->level;
+        psInfo->type = (unsigned char)psElement->type;
+        psInfo->stype = (unsigned char)psElement->stype;
         psInfo->offset = psElement->offset;
-        if( psElement->complex )
+        if (psElement->complex)
             psInfo->flags = DGNEIF_COMPLEX;
         else
             psInfo->flags = 0;
@@ -235,33 +232,32 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         psDGN->element_count++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write out the element.                                          */
-/* -------------------------------------------------------------------- */
-    if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-        || VSIFWriteL( psElement->raw_data, psElement->raw_bytes,
-                      1, psDGN->fp) != 1 )
+    /* -------------------------------------------------------------------- */
+    /*      Write out the element.                                          */
+    /* -------------------------------------------------------------------- */
+    if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||
+        VSIFWriteL(psElement->raw_data, psElement->raw_bytes, 1, psDGN->fp) !=
+            1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error seeking or writing new element of %d bytes at %d.",
-                  psElement->offset,
-                  psElement->raw_bytes );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error seeking or writing new element of %d bytes at %d.",
+                 psElement->offset, psElement->raw_bytes);
         return FALSE;
     }
 
     psDGN->next_element_id = psElement->element_id + 1;
 
-/* -------------------------------------------------------------------- */
-/*      Write out the end of file 0xffff marker (if we were             */
-/*      extending the file), but push the file pointer back before      */
-/*      this EOF when done.                                             */
-/* -------------------------------------------------------------------- */
-    if( psDGN->next_element_id == psDGN->element_count )
+    /* -------------------------------------------------------------------- */
+    /*      Write out the end of file 0xffff marker (if we were             */
+    /*      extending the file), but push the file pointer back before      */
+    /*      this EOF when done.                                             */
+    /* -------------------------------------------------------------------- */
+    if (psDGN->next_element_id == psDGN->element_count)
     {
-        const unsigned char abyEOF[2] = { 0xff, 0xff };
+        const unsigned char abyEOF[2] = {0xff, 0xff};
 
-        VSIFWriteL( abyEOF, 2, 1, psDGN->fp );
-        VSIFSeekL( psDGN->fp, VSIFTellL(psDGN->fp)-2, SEEK_SET );
+        VSIFWriteL(abyEOF, 2, 1, psDGN->fp);
+        VSIFSeekL(psDGN->fp, VSIFTellL(psDGN->fp) - 2, SEEK_SET);
     }
 
     return TRUE;
@@ -305,118 +301,117 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
  * @param pszSubUnits the name of the subunits (2 characters).
  */
 
-DGNHandle
-      DGNCreate( const char *pszNewFilename, const char *pszSeedFile,
-                 int nCreationFlags,
-                 double dfOriginX, double dfOriginY, double dfOriginZ,
-                 int nSubUnitsPerMasterUnit, int nUORPerSubUnit,
-                 const char *pszMasterUnits, const char *pszSubUnits )
+DGNHandle DGNCreate(const char *pszNewFilename, const char *pszSeedFile,
+                    int nCreationFlags, double dfOriginX, double dfOriginY,
+                    double dfOriginZ, int nSubUnitsPerMasterUnit,
+                    int nUORPerSubUnit, const char *pszMasterUnits,
+                    const char *pszSubUnits)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Open output file.                                               */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fpNew = VSIFOpenL( pszNewFilename, "wb" );
-    if( fpNew == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Open output file.                                               */
+    /* -------------------------------------------------------------------- */
+    VSILFILE *fpNew = VSIFOpenL(pszNewFilename, "wb");
+    if (fpNew == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open output file: %s", pszNewFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open output file: %s",
+                 pszNewFilename);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open seed file, and read TCB element.                           */
-/* -------------------------------------------------------------------- */
-    DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
-    if( psSeed == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Open seed file, and read TCB element.                           */
+    /* -------------------------------------------------------------------- */
+    DGNInfo *psSeed = (DGNInfo *)DGNOpen(pszSeedFile, FALSE);
+    if (psSeed == nullptr)
     {
-        VSIFCloseL( fpNew );
+        VSIFCloseL(fpNew);
         return nullptr;
     }
 
-    DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
+    DGNSetOptions(psSeed, DGNO_CAPTURE_RAW_DATA);
 
-    DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
+    DGNElemCore *psSrcTCB = DGNReadElement(psSeed);
 
-    CPLAssert( psSrcTCB->raw_bytes >= 1536 );
+    CPLAssert(psSrcTCB->raw_bytes >= 1536);
 
-/* -------------------------------------------------------------------- */
-/*      Modify TCB appropriately for the output file.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Modify TCB appropriately for the output file.                   */
+    /* -------------------------------------------------------------------- */
     GByte *pabyRawTCB = static_cast<GByte *>(CPLMalloc(psSrcTCB->raw_bytes));
 
-    memcpy( pabyRawTCB, psSrcTCB->raw_data, psSrcTCB->raw_bytes );
+    memcpy(pabyRawTCB, psSrcTCB->raw_data, psSrcTCB->raw_bytes);
 
-    if( !(nCreationFlags & DGNCF_USE_SEED_UNITS) )
+    if (!(nCreationFlags & DGNCF_USE_SEED_UNITS))
     {
-        memcpy( pabyRawTCB+1120, pszMasterUnits, 2 );
-        memcpy( pabyRawTCB+1122, pszSubUnits, 2 );
+        memcpy(pabyRawTCB + 1120, pszMasterUnits, 2);
+        memcpy(pabyRawTCB + 1122, pszSubUnits, 2);
 
-        DGN_WRITE_INT32( nUORPerSubUnit, pabyRawTCB+1116 );
-        DGN_WRITE_INT32( nSubUnitsPerMasterUnit,pabyRawTCB+1112);
+        DGN_WRITE_INT32(nUORPerSubUnit, pabyRawTCB + 1116);
+        DGN_WRITE_INT32(nSubUnitsPerMasterUnit, pabyRawTCB + 1112);
     }
     else
     {
-        nUORPerSubUnit = DGN_INT32( pabyRawTCB+1116 );
-        nSubUnitsPerMasterUnit = DGN_INT32( pabyRawTCB+1112 );
+        nUORPerSubUnit = DGN_INT32(pabyRawTCB + 1116);
+        nSubUnitsPerMasterUnit = DGN_INT32(pabyRawTCB + 1112);
     }
 
-    if( !(nCreationFlags & DGNCF_USE_SEED_ORIGIN) )
+    if (!(nCreationFlags & DGNCF_USE_SEED_ORIGIN))
     {
         dfOriginX *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
         dfOriginY *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
         dfOriginZ *= (nUORPerSubUnit * nSubUnitsPerMasterUnit);
 
-        memcpy( pabyRawTCB+1240, &dfOriginX, 8 );
-        memcpy( pabyRawTCB+1248, &dfOriginY, 8 );
-        memcpy( pabyRawTCB+1256, &dfOriginZ, 8 );
+        memcpy(pabyRawTCB + 1240, &dfOriginX, 8);
+        memcpy(pabyRawTCB + 1248, &dfOriginY, 8);
+        memcpy(pabyRawTCB + 1256, &dfOriginZ, 8);
 
-        IEEE2DGNDouble( pabyRawTCB+1240 );
-        IEEE2DGNDouble( pabyRawTCB+1248 );
-        IEEE2DGNDouble( pabyRawTCB+1256 );
+        IEEE2DGNDouble(pabyRawTCB + 1240);
+        IEEE2DGNDouble(pabyRawTCB + 1248);
+        IEEE2DGNDouble(pabyRawTCB + 1256);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write TCB and EOF to new file.                                  */
-/* -------------------------------------------------------------------- */
-    VSIFWriteL( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
-    CPLFree( pabyRawTCB );
+    /* -------------------------------------------------------------------- */
+    /*      Write TCB and EOF to new file.                                  */
+    /* -------------------------------------------------------------------- */
+    VSIFWriteL(pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew);
+    CPLFree(pabyRawTCB);
 
-    unsigned char abyEOF[2] = { 0xff,  0xff };
+    unsigned char abyEOF[2] = {0xff, 0xff};
 
-    VSIFWriteL( abyEOF, 2, 1, fpNew );
+    VSIFWriteL(abyEOF, 2, 1, fpNew);
 
-    DGNFreeElement( psSeed, psSrcTCB );
+    DGNFreeElement(psSeed, psSrcTCB);
 
-/* -------------------------------------------------------------------- */
-/*      Close and re-open using DGN API.                                */
-/* -------------------------------------------------------------------- */
-    VSIFCloseL( fpNew );
+    /* -------------------------------------------------------------------- */
+    /*      Close and re-open using DGN API.                                */
+    /* -------------------------------------------------------------------- */
+    VSIFCloseL(fpNew);
 
-    DGNInfo *psDGN = (DGNInfo *) DGNOpen( pszNewFilename, TRUE );
+    DGNInfo *psDGN = (DGNInfo *)DGNOpen(pszNewFilename, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Now copy over elements according to options in effect.          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Now copy over elements according to options in effect.          */
+    /* -------------------------------------------------------------------- */
     DGNElemCore *psSrcElement = nullptr;
     DGNElemCore *psDstElement = nullptr;
 
-    while( (psSrcElement = DGNReadElement( psSeed )) != nullptr )
+    while ((psSrcElement = DGNReadElement(psSeed)) != nullptr)
     {
-        if( (nCreationFlags & DGNCF_COPY_WHOLE_SEED_FILE)
-            || (psSrcElement->stype == DGNST_COLORTABLE
-                && nCreationFlags & DGNCF_COPY_SEED_FILE_COLOR_TABLE)
-            || psSrcElement->element_id <= 2 )
+        if ((nCreationFlags & DGNCF_COPY_WHOLE_SEED_FILE) ||
+            (psSrcElement->stype == DGNST_COLORTABLE &&
+             nCreationFlags & DGNCF_COPY_SEED_FILE_COLOR_TABLE) ||
+            psSrcElement->element_id <= 2)
         {
-            psDstElement = DGNCloneElement( psSeed, psDGN, psSrcElement );
-            DGNWriteElement( psDGN, psDstElement );
-            DGNFreeElement( psDGN, psDstElement );
+            psDstElement = DGNCloneElement(psSeed, psDGN, psSrcElement);
+            DGNWriteElement(psDGN, psDstElement);
+            DGNFreeElement(psDGN, psDstElement);
         }
 
-        DGNFreeElement( psSeed, psSrcElement );
+        DGNFreeElement(psSeed, psSrcElement);
     }
 
-    DGNClose( psSeed );
+    DGNClose(psSeed);
 
     return psDGN;
 }
@@ -443,234 +438,230 @@ DGNHandle
  * the source element suitable to write to hDGNDst.
  */
 
-DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
-                              DGNHandle hDGNDst,
-                              DGNElemCore *psSrcElement )
+DGNElemCore *DGNCloneElement(CPL_UNUSED DGNHandle hDGNSrc, DGNHandle hDGNDst,
+                             DGNElemCore *psSrcElement)
 
 {
     DGNElemCore *psClone = nullptr;
 
-    DGNLoadTCB( hDGNDst );
+    DGNLoadTCB(hDGNDst);
 
-/* -------------------------------------------------------------------- */
-/*      Per structure specific copying.  The core is fixed up later.    */
-/* -------------------------------------------------------------------- */
-    if( psSrcElement->stype == DGNST_CORE )
+    /* -------------------------------------------------------------------- */
+    /*      Per structure specific copying.  The core is fixed up later.    */
+    /* -------------------------------------------------------------------- */
+    if (psSrcElement->stype == DGNST_CORE)
     {
         psClone = static_cast<DGNElemCore *>(CPLMalloc(sizeof(DGNElemCore)));
-        memcpy( psClone, psSrcElement, sizeof(DGNElemCore) );
+        memcpy(psClone, psSrcElement, sizeof(DGNElemCore));
     }
-    else if( psSrcElement->stype == DGNST_MULTIPOINT )
+    else if (psSrcElement->stype == DGNST_MULTIPOINT)
     {
-        DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *) psSrcElement;
+        DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *)psSrcElement;
 
-        const size_t nSize = sizeof(DGNElemMultiPoint)
-            + sizeof(DGNPoint) * (psSrcMP->num_vertices-1);
+        const size_t nSize = sizeof(DGNElemMultiPoint) +
+                             sizeof(DGNPoint) * (psSrcMP->num_vertices - 1);
 
         DGNElemMultiPoint *psMP =
-            static_cast<DGNElemMultiPoint *>(CPLMalloc( nSize ));
-        memcpy( psMP, psSrcElement, nSize );
+            static_cast<DGNElemMultiPoint *>(CPLMalloc(nSize));
+        memcpy(psMP, psSrcElement, nSize);
 
-        psClone = (DGNElemCore *) psMP;
+        psClone = (DGNElemCore *)psMP;
     }
-    else if( psSrcElement->stype == DGNST_ARC )
+    else if (psSrcElement->stype == DGNST_ARC)
     {
         DGNElemArc *psArc =
             static_cast<DGNElemArc *>(CPLMalloc(sizeof(DGNElemArc)));
-        memcpy( psArc, psSrcElement, sizeof(DGNElemArc) );
+        memcpy(psArc, psSrcElement, sizeof(DGNElemArc));
 
-        psClone = (DGNElemCore *) psArc;
+        psClone = (DGNElemCore *)psArc;
     }
-    else if( psSrcElement->stype == DGNST_TEXT )
+    else if (psSrcElement->stype == DGNST_TEXT)
     {
-        DGNElemText *psSrcText = (DGNElemText *) psSrcElement;
+        DGNElemText *psSrcText = (DGNElemText *)psSrcElement;
         const size_t nSize = sizeof(DGNElemText) + strlen(psSrcText->string);
 
-        DGNElemText *psText =
-          static_cast<DGNElemText *>(CPLMalloc( nSize ));
-        memcpy( psText, psSrcElement, nSize );
+        DGNElemText *psText = static_cast<DGNElemText *>(CPLMalloc(nSize));
+        memcpy(psText, psSrcElement, nSize);
 
-        psClone = (DGNElemCore *) psText;
+        psClone = (DGNElemCore *)psText;
     }
-    else if( psSrcElement->stype == DGNST_TEXT_NODE )
+    else if (psSrcElement->stype == DGNST_TEXT_NODE)
     {
-        DGNElemTextNode *psNode = static_cast<DGNElemTextNode *>(
-            CPLMalloc(sizeof(DGNElemTextNode)));
-        memcpy( psNode, psSrcElement, sizeof(DGNElemTextNode) );
+        DGNElemTextNode *psNode =
+            static_cast<DGNElemTextNode *>(CPLMalloc(sizeof(DGNElemTextNode)));
+        memcpy(psNode, psSrcElement, sizeof(DGNElemTextNode));
 
-        psClone = (DGNElemCore *) psNode;
+        psClone = (DGNElemCore *)psNode;
     }
-    else if( psSrcElement->stype == DGNST_COMPLEX_HEADER )
+    else if (psSrcElement->stype == DGNST_COMPLEX_HEADER)
     {
         DGNElemComplexHeader *psCH = static_cast<DGNElemComplexHeader *>(
             CPLMalloc(sizeof(DGNElemComplexHeader)));
-        memcpy( psCH, psSrcElement, sizeof(DGNElemComplexHeader) );
+        memcpy(psCH, psSrcElement, sizeof(DGNElemComplexHeader));
 
-        psClone = (DGNElemCore *) psCH;
+        psClone = (DGNElemCore *)psCH;
     }
-    else if( psSrcElement->stype == DGNST_COLORTABLE )
+    else if (psSrcElement->stype == DGNST_COLORTABLE)
     {
         DGNElemColorTable *psCT = static_cast<DGNElemColorTable *>(
             CPLMalloc(sizeof(DGNElemColorTable)));
-        memcpy( psCT, psSrcElement, sizeof(DGNElemColorTable) );
+        memcpy(psCT, psSrcElement, sizeof(DGNElemColorTable));
 
-        psClone = (DGNElemCore *) psCT;
+        psClone = (DGNElemCore *)psCT;
     }
-    else if( psSrcElement->stype == DGNST_TCB )
+    else if (psSrcElement->stype == DGNST_TCB)
     {
         DGNElemTCB *psTCB =
             static_cast<DGNElemTCB *>(CPLMalloc(sizeof(DGNElemTCB)));
-        memcpy( psTCB, psSrcElement, sizeof(DGNElemTCB) );
+        memcpy(psTCB, psSrcElement, sizeof(DGNElemTCB));
 
-        psClone = (DGNElemCore *) psTCB;
+        psClone = (DGNElemCore *)psTCB;
     }
-    else if( psSrcElement->stype == DGNST_CELL_HEADER )
+    else if (psSrcElement->stype == DGNST_CELL_HEADER)
     {
         DGNElemCellHeader *psCH = static_cast<DGNElemCellHeader *>(
             CPLMalloc(sizeof(DGNElemCellHeader)));
-        memcpy( psCH, psSrcElement, sizeof(DGNElemCellHeader) );
+        memcpy(psCH, psSrcElement, sizeof(DGNElemCellHeader));
 
-        psClone = (DGNElemCore *) psCH;
+        psClone = (DGNElemCore *)psCH;
     }
-    else if( psSrcElement->stype == DGNST_CELL_LIBRARY )
+    else if (psSrcElement->stype == DGNST_CELL_LIBRARY)
     {
         DGNElemCellLibrary *psCL = static_cast<DGNElemCellLibrary *>(
             CPLMalloc(sizeof(DGNElemCellLibrary)));
-        memcpy( psCL, psSrcElement, sizeof(DGNElemCellLibrary) );
+        memcpy(psCL, psSrcElement, sizeof(DGNElemCellLibrary));
 
-        psClone = (DGNElemCore *) psCL;
+        psClone = (DGNElemCore *)psCL;
     }
-    else if( psSrcElement->stype == DGNST_TAG_VALUE )
+    else if (psSrcElement->stype == DGNST_TAG_VALUE)
     {
-        DGNElemTagValue *psTV = static_cast<DGNElemTagValue *>(
-            CPLMalloc(sizeof(DGNElemTagValue)));
-        memcpy( psTV, psSrcElement, sizeof(DGNElemTagValue) );
+        DGNElemTagValue *psTV =
+            static_cast<DGNElemTagValue *>(CPLMalloc(sizeof(DGNElemTagValue)));
+        memcpy(psTV, psSrcElement, sizeof(DGNElemTagValue));
 
-        if( psTV->tagType == 1 )
-            psTV->tagValue.string = CPLStrdup( psTV->tagValue.string );
+        if (psTV->tagType == 1)
+            psTV->tagValue.string = CPLStrdup(psTV->tagValue.string);
 
-        psClone = (DGNElemCore *) psTV;
+        psClone = (DGNElemCore *)psTV;
     }
-    else if( psSrcElement->stype == DGNST_TAG_SET )
+    else if (psSrcElement->stype == DGNST_TAG_SET)
     {
-        DGNElemTagSet *psTS = static_cast<DGNElemTagSet *>(
-            CPLMalloc(sizeof(DGNElemTagSet)));
-        memcpy( psTS, psSrcElement, sizeof(DGNElemTagSet) );
+        DGNElemTagSet *psTS =
+            static_cast<DGNElemTagSet *>(CPLMalloc(sizeof(DGNElemTagSet)));
+        memcpy(psTS, psSrcElement, sizeof(DGNElemTagSet));
 
-        psTS->tagSetName = CPLStrdup( psTS->tagSetName );
+        psTS->tagSetName = CPLStrdup(psTS->tagSetName);
 
         DGNTagDef *pasTagList = static_cast<DGNTagDef *>(
-            CPLMalloc( sizeof(DGNTagDef) * psTS->tagCount ));
-        memcpy( pasTagList, psTS->tagList,
-                sizeof(DGNTagDef) * psTS->tagCount );
+            CPLMalloc(sizeof(DGNTagDef) * psTS->tagCount));
+        memcpy(pasTagList, psTS->tagList, sizeof(DGNTagDef) * psTS->tagCount);
 
-        for( int iTag = 0; iTag < psTS->tagCount; iTag++ )
+        for (int iTag = 0; iTag < psTS->tagCount; iTag++)
         {
-            pasTagList[iTag].name = CPLStrdup( pasTagList[iTag].name );
-            pasTagList[iTag].prompt = CPLStrdup( pasTagList[iTag].prompt );
-            if( pasTagList[iTag].type == 1 )
+            pasTagList[iTag].name = CPLStrdup(pasTagList[iTag].name);
+            pasTagList[iTag].prompt = CPLStrdup(pasTagList[iTag].prompt);
+            if (pasTagList[iTag].type == 1)
                 pasTagList[iTag].defaultValue.string =
-                    CPLStrdup( pasTagList[iTag].defaultValue.string);
+                    CPLStrdup(pasTagList[iTag].defaultValue.string);
         }
 
         psTS->tagList = pasTagList;
-        psClone = (DGNElemCore *) psTS;
+        psClone = (DGNElemCore *)psTS;
     }
-    else if( psSrcElement->stype == DGNST_CONE )
+    else if (psSrcElement->stype == DGNST_CONE)
     {
-        DGNElemCone *psCone = static_cast<DGNElemCone *>(
-            CPLMalloc(sizeof(DGNElemCone)));
-        memcpy( psCone, psSrcElement, sizeof(DGNElemCone) );
+        DGNElemCone *psCone =
+            static_cast<DGNElemCone *>(CPLMalloc(sizeof(DGNElemCone)));
+        memcpy(psCone, psSrcElement, sizeof(DGNElemCone));
 
-        psClone = (DGNElemCore *) psCone;
+        psClone = (DGNElemCore *)psCone;
     }
-    else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_HEADER )
+    else if (psSrcElement->stype == DGNST_BSPLINE_SURFACE_HEADER)
     {
         DGNElemBSplineSurfaceHeader *psSurface =
             static_cast<DGNElemBSplineSurfaceHeader *>(
                 CPLMalloc(sizeof(DGNElemBSplineSurfaceHeader)));
-        memcpy( psSurface, psSrcElement, sizeof(DGNElemBSplineSurfaceHeader) );
+        memcpy(psSurface, psSrcElement, sizeof(DGNElemBSplineSurfaceHeader));
 
-        psClone = (DGNElemCore *) psSurface;
+        psClone = (DGNElemCore *)psSurface;
     }
-    else if( psSrcElement->stype == DGNST_BSPLINE_CURVE_HEADER )
+    else if (psSrcElement->stype == DGNST_BSPLINE_CURVE_HEADER)
     {
         DGNElemBSplineCurveHeader *psCurve =
             static_cast<DGNElemBSplineCurveHeader *>(
                 CPLMalloc(sizeof(DGNElemBSplineCurveHeader)));
-        memcpy( psCurve, psSrcElement, sizeof(DGNElemBSplineCurveHeader) );
+        memcpy(psCurve, psSrcElement, sizeof(DGNElemBSplineCurveHeader));
 
-        psClone = (DGNElemCore *) psCurve;
+        psClone = (DGNElemCore *)psCurve;
     }
-    else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_BOUNDARY )
+    else if (psSrcElement->stype == DGNST_BSPLINE_SURFACE_BOUNDARY)
     {
         DGNElemBSplineSurfaceBoundary *psSrcBSB =
-            (DGNElemBSplineSurfaceBoundary *) psSrcElement;
+            (DGNElemBSplineSurfaceBoundary *)psSrcElement;
 
-        const size_t nSize = sizeof(DGNElemBSplineSurfaceBoundary)
-            + sizeof(DGNPoint) * (psSrcBSB->numverts-1);
+        const size_t nSize = sizeof(DGNElemBSplineSurfaceBoundary) +
+                             sizeof(DGNPoint) * (psSrcBSB->numverts - 1);
 
         DGNElemBSplineSurfaceBoundary *psBSB =
-            static_cast<DGNElemBSplineSurfaceBoundary *>(
-                CPLMalloc( nSize ));
-        memcpy( psBSB, psSrcElement, nSize );
+            static_cast<DGNElemBSplineSurfaceBoundary *>(CPLMalloc(nSize));
+        memcpy(psBSB, psSrcElement, nSize);
 
-        psClone = (DGNElemCore *) psBSB;
+        psClone = (DGNElemCore *)psBSB;
     }
-    else if( psSrcElement->stype == DGNST_KNOT_WEIGHT )
+    else if (psSrcElement->stype == DGNST_KNOT_WEIGHT)
     {
         // FIXME: Is it OK to assume that the # of elements corresponds
         // directly to the element size? kintel 20051218.
         const int numelems =
-            (psSrcElement->size - 36 - psSrcElement->attr_bytes)/4;
+            (psSrcElement->size - 36 - psSrcElement->attr_bytes) / 4;
 
-        /* DGNElemKnotWeight *psSrcArray = (DGNElemKnotWeight *) psSrcElement; */
+        /* DGNElemKnotWeight *psSrcArray = (DGNElemKnotWeight *) psSrcElement;
+         */
 
         const size_t nSize =
-            sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
+            sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems - 1);
 
-        DGNElemKnotWeight *psArray = static_cast<DGNElemKnotWeight *>(
-            CPLMalloc( nSize ));
-        memcpy( psArray, psSrcElement, nSize );
+        DGNElemKnotWeight *psArray =
+            static_cast<DGNElemKnotWeight *>(CPLMalloc(nSize));
+        memcpy(psArray, psSrcElement, nSize);
 
-        psClone = (DGNElemCore *) psArray;
+        psClone = (DGNElemCore *)psArray;
     }
-    else if( psSrcElement->stype == DGNST_SHARED_CELL_DEFN )
+    else if (psSrcElement->stype == DGNST_SHARED_CELL_DEFN)
     {
         DGNElemSharedCellDefn *psCH = static_cast<DGNElemSharedCellDefn *>(
             CPLMalloc(sizeof(DGNElemSharedCellDefn)));
-        memcpy( psCH, psSrcElement, sizeof(DGNElemSharedCellDefn) );
+        memcpy(psCH, psSrcElement, sizeof(DGNElemSharedCellDefn));
 
-        psClone = (DGNElemCore *) psCH;
+        psClone = (DGNElemCore *)psCH;
     }
     else
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Copy core raw data, and attributes.                             */
-/* -------------------------------------------------------------------- */
-    if( psClone->raw_bytes != 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Copy core raw data, and attributes.                             */
+    /* -------------------------------------------------------------------- */
+    if (psClone->raw_bytes != 0)
     {
-        psClone->raw_data = static_cast<unsigned char *>(
-            CPLMalloc(psClone->raw_bytes));
-        memcpy( psClone->raw_data, psSrcElement->raw_data,
-                psClone->raw_bytes );
+        psClone->raw_data =
+            static_cast<unsigned char *>(CPLMalloc(psClone->raw_bytes));
+        memcpy(psClone->raw_data, psSrcElement->raw_data, psClone->raw_bytes);
     }
 
-    if( psClone->attr_bytes != 0 )
+    if (psClone->attr_bytes != 0)
     {
-        psClone->attr_data = static_cast<unsigned char *>(
-            CPLMalloc(psClone->attr_bytes));
-        memcpy( psClone->attr_data, psSrcElement->attr_data,
-                psClone->attr_bytes );
+        psClone->attr_data =
+            static_cast<unsigned char *>(CPLMalloc(psClone->attr_bytes));
+        memcpy(psClone->attr_data, psSrcElement->attr_data,
+               psClone->attr_bytes);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Clear location and id information.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Clear location and id information.                              */
+    /* -------------------------------------------------------------------- */
     psClone->offset = -1;
     psClone->element_id = -1;
 
@@ -700,9 +691,8 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
  * @return Returns TRUE on success or FALSE on failure.
  */
 
-int DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
-                       int nLevel, int nGraphicGroup, int nColor,
-                       int nWeight, int nStyle )
+int DGNUpdateElemCore(DGNHandle hDGN, DGNElemCore *psElement, int nLevel,
+                      int nGraphicGroup, int nColor, int nWeight, int nStyle)
 
 {
     psElement->level = nLevel;
@@ -711,7 +701,7 @@ int DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
     psElement->weight = nWeight;
     psElement->style = nStyle;
 
-    return DGNUpdateElemCoreExtended( hDGN, psElement );
+    return DGNUpdateElemCoreExtended(hDGN, psElement);
 }
 
 /************************************************************************/
@@ -733,55 +723,53 @@ int DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
  * @return TRUE on success, or FALSE on failure.
  */
 
-int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
-                               DGNElemCore *psElement )
+int DGNUpdateElemCoreExtended(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement)
 {
     GByte *rd = psElement->raw_data;
     const int nWords = (psElement->raw_bytes / 2) - 2;
 
-    if( psElement->raw_data == nullptr
-        || psElement->raw_bytes < 36 )
+    if (psElement->raw_data == nullptr || psElement->raw_bytes < 36)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Setup first four bytes.                                         */
-/* -------------------------------------------------------------------- */
-    rd[0] = (GByte) psElement->level;
-    if( psElement->complex )
+    /* -------------------------------------------------------------------- */
+    /*      Setup first four bytes.                                         */
+    /* -------------------------------------------------------------------- */
+    rd[0] = (GByte)psElement->level;
+    if (psElement->complex)
         rd[0] |= 0x80;
 
-    rd[1] = (GByte) psElement->type;
-    if( psElement->deleted )
+    rd[1] = (GByte)psElement->type;
+    if (psElement->deleted)
         rd[1] |= 0x80;
 
-    rd[2] = (GByte) (nWords % 256);
-    rd[3] = (GByte) (nWords / 256);
+    rd[2] = (GByte)(nWords % 256);
+    rd[3] = (GByte)(nWords / 256);
 
-/* -------------------------------------------------------------------- */
-/*      If the attribute offset hasn't been set, set it now under       */
-/*      the assumption it should point to the end of the element.       */
-/* -------------------------------------------------------------------- */
-    if( psElement->raw_data[30] == 0 && psElement->raw_data[31] == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      If the attribute offset hasn't been set, set it now under       */
+    /*      the assumption it should point to the end of the element.       */
+    /* -------------------------------------------------------------------- */
+    if (psElement->raw_data[30] == 0 && psElement->raw_data[31] == 0)
     {
         const int nAttIndex = (psElement->raw_bytes - 32) / 2;
 
-        psElement->raw_data[30] = (GByte) (nAttIndex % 256);
-        psElement->raw_data[31] = (GByte) (nAttIndex / 256);
+        psElement->raw_data[30] = (GByte)(nAttIndex % 256);
+        psElement->raw_data[31] = (GByte)(nAttIndex / 256);
     }
-/* -------------------------------------------------------------------- */
-/*      Handle the graphic properties.                                  */
-/* -------------------------------------------------------------------- */
-    if( psElement->raw_bytes > 36 && DGNElemTypeHasDispHdr( psElement->type ) )
+    /* -------------------------------------------------------------------- */
+    /*      Handle the graphic properties.                                  */
+    /* -------------------------------------------------------------------- */
+    if (psElement->raw_bytes > 36 && DGNElemTypeHasDispHdr(psElement->type))
     {
-        rd[28] = (GByte) (psElement->graphic_group % 256);
-        rd[29] = (GByte) (psElement->graphic_group / 256);
-        rd[32] = (GByte) (psElement->properties % 256);
-        rd[33] = (GByte) (psElement->properties / 256);
-        rd[34] = (GByte) (psElement->style | (psElement->weight << 3));
-        rd[35] = (GByte) psElement->color;
+        rd[28] = (GByte)(psElement->graphic_group % 256);
+        rd[29] = (GByte)(psElement->graphic_group / 256);
+        rd[32] = (GByte)(psElement->properties % 256);
+        rd[33] = (GByte)(psElement->properties / 256);
+        rd[34] = (GByte)(psElement->style | (psElement->weight << 3));
+        rd[35] = (GByte)psElement->color;
     }
 
     return TRUE;
@@ -791,10 +779,10 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
 /*                         DGNInitializeElemCore()                      */
 /************************************************************************/
 
-static void DGNInitializeElemCore( CPL_UNUSED DGNHandle hDGN,
-                                   DGNElemCore *psElement )
+static void DGNInitializeElemCore(CPL_UNUSED DGNHandle hDGN,
+                                  DGNElemCore *psElement)
 {
-    memset( psElement, 0, sizeof(DGNElemCore) );
+    memset(psElement, 0, sizeof(DGNElemCore));
 
     psElement->offset = -1;
     psElement->element_id = -1;
@@ -806,14 +794,14 @@ static void DGNInitializeElemCore( CPL_UNUSED DGNHandle hDGN,
 /*      Write bounds to element raw data.                               */
 /************************************************************************/
 
-static void DGNWriteBounds( DGNInfo *psInfo, DGNElemCore *psElement,
-                            DGNPoint *psMin, DGNPoint *psMax )
+static void DGNWriteBounds(DGNInfo *psInfo, DGNElemCore *psElement,
+                           DGNPoint *psMin, DGNPoint *psMax)
 
 {
-    CPLAssert( psElement->raw_bytes >= 28 );
+    CPLAssert(psElement->raw_bytes >= 28);
 
-    DGNInverseTransformPointToInt( psInfo, psMin, psElement->raw_data + 4 );
-    DGNInverseTransformPointToInt( psInfo, psMax, psElement->raw_data + 16 );
+    DGNInverseTransformPointToInt(psInfo, psMin, psElement->raw_data + 4);
+    DGNInverseTransformPointToInt(psInfo, psMax, psElement->raw_data + 16);
 
     /* convert from twos complement to "binary offset" format. */
 
@@ -849,94 +837,91 @@ static void DGNWriteBounds( DGNInfo *psInfo, DGNElemCore *psElement,
  * @return the new element (a DGNElemMultiPoint structure) or NULL on failure.
  */
 
-DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
-                                      int nPointCount, DGNPoint *pasVertices )
+DGNElemCore *DGNCreateMultiPointElem(DGNHandle hDGN, int nType, int nPointCount,
+                                     DGNPoint *pasVertices)
 
 {
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-    CPLAssert( nType == DGNT_LINE
-               || nType == DGNT_LINE_STRING
-               || nType == DGNT_SHAPE
-               || nType == DGNT_CURVE
-               || nType == DGNT_BSPLINE_POLE );
+    CPLAssert(nType == DGNT_LINE || nType == DGNT_LINE_STRING ||
+              nType == DGNT_SHAPE || nType == DGNT_CURVE ||
+              nType == DGNT_BSPLINE_POLE);
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Is this too many vertices to write to a single element?         */
-/* -------------------------------------------------------------------- */
-    if( nPointCount > 101 )
+    /* -------------------------------------------------------------------- */
+    /*      Is this too many vertices to write to a single element?         */
+    /* -------------------------------------------------------------------- */
+    if (nPointCount > 101)
     {
-        CPLError( CE_Failure, CPLE_ElementTooBig,
-                  "Attempt to create %s element with %d points failed.\n"
-                  "Element would be too large.",
-                  DGNTypeToName( nType ), nPointCount );
+        CPLError(CE_Failure, CPLE_ElementTooBig,
+                 "Attempt to create %s element with %d points failed.\n"
+                 "Element would be too large.",
+                 DGNTypeToName(nType), nPointCount);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(
-        CPLCalloc( sizeof(DGNElemMultiPoint)
-                   + sizeof(DGNPoint) * (nPointCount-1), 1 ));
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(CPLCalloc(
+        sizeof(DGNElemMultiPoint) + sizeof(DGNPoint) * (nPointCount - 1), 1));
     DGNElemCore *psCore = &(psMP->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_MULTIPOINT;
     psCore->type = nType;
 
-/* -------------------------------------------------------------------- */
-/*      Set multipoint specific information in the structure.           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set multipoint specific information in the structure.           */
+    /* -------------------------------------------------------------------- */
     psMP->num_vertices = nPointCount;
     // coverity[overrun-buffer-arg]
-    memcpy( psMP->vertices + 0, pasVertices, sizeof(DGNPoint) * nPointCount );
+    memcpy(psMP->vertices + 0, pasVertices, sizeof(DGNPoint) * nPointCount);
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the multipoint section.                      */
-/* -------------------------------------------------------------------- */
-    if( nType == DGNT_LINE )
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the multipoint section.                      */
+    /* -------------------------------------------------------------------- */
+    if (nType == DGNT_LINE)
     {
-        CPLAssert( nPointCount == 2 );
+        CPLAssert(nPointCount == 2);
 
-        psCore->raw_bytes = 36 + psDGN->dimension* 4 * nPointCount;
+        psCore->raw_bytes = 36 + psDGN->dimension * 4 * nPointCount;
 
-        psCore->raw_data = static_cast<unsigned char *>(
-            CPLCalloc(psCore->raw_bytes, 1));
+        psCore->raw_data =
+            static_cast<unsigned char *>(CPLCalloc(psCore->raw_bytes, 1));
 
-        DGNInverseTransformPointToInt( psDGN, pasVertices + 0,
-                                       psCore->raw_data + 36 );
-        DGNInverseTransformPointToInt( psDGN, pasVertices + 1,
-                                       psCore->raw_data + 36
-                                       + psDGN->dimension * 4 );
+        DGNInverseTransformPointToInt(psDGN, pasVertices + 0,
+                                      psCore->raw_data + 36);
+        DGNInverseTransformPointToInt(psDGN, pasVertices + 1,
+                                      psCore->raw_data + 36 +
+                                          psDGN->dimension * 4);
     }
     else
     {
-        CPLAssert( nPointCount >= 2 );
+        CPLAssert(nPointCount >= 2);
 
         psCore->raw_bytes = 38 + psDGN->dimension * 4 * nPointCount;
-        psCore->raw_data = static_cast<unsigned char *>(
-            CPLCalloc(psCore->raw_bytes, 1));
+        psCore->raw_data =
+            static_cast<unsigned char *>(CPLCalloc(psCore->raw_bytes, 1));
 
-        psCore->raw_data[36] = (unsigned char) (nPointCount % 256);
-        psCore->raw_data[37] = (unsigned char) (nPointCount/256);
+        psCore->raw_data[36] = (unsigned char)(nPointCount % 256);
+        psCore->raw_data[37] = (unsigned char)(nPointCount / 256);
 
-        for( int i = 0; i < nPointCount; i++ )
-            DGNInverseTransformPointToInt( psDGN, pasVertices + i,
-                                           psCore->raw_data + 38
-                                           + psDGN->dimension * i * 4 );
+        for (int i = 0; i < nPointCount; i++)
+            DGNInverseTransformPointToInt(psDGN, pasVertices + i,
+                                          psCore->raw_data + 38 +
+                                              psDGN->dimension * i * 4);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data, including the bounds.                    */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data, including the bounds.                    */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
     DGNPoint sMin = pasVertices[0];
     DGNPoint sMax = pasVertices[0];
-    for( int i = 1; i < nPointCount; i++ )
+    for (int i = 1; i < nPointCount; i++)
     {
         sMin.x = std::min(pasVertices[i].x, sMin.x);
         sMin.y = std::min(pasVertices[i].y, sMin.y);
@@ -946,27 +931,24 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
         sMax.z = std::max(pasVertices[i].z, sMax.z);
     }
 
-    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
+    DGNWriteBounds(psDGN, psCore, &sMin, &sMax);
 
-    return (DGNElemCore*) psMP;
+    return (DGNElemCore *)psMP;
 }
 
 /************************************************************************/
 /*                         DGNCreateArcElem2D()                         */
 /************************************************************************/
 
-DGNElemCore *
-DGNCreateArcElem2D( DGNHandle hDGN, int nType,
-                    double dfOriginX, double dfOriginY,
-                    double dfPrimaryAxis, double dfSecondaryAxis,
-                    double dfRotation,
-                    double dfStartAngle, double dfSweepAngle )
+DGNElemCore *DGNCreateArcElem2D(DGNHandle hDGN, int nType, double dfOriginX,
+                                double dfOriginY, double dfPrimaryAxis,
+                                double dfSecondaryAxis, double dfRotation,
+                                double dfStartAngle, double dfSweepAngle)
 
 {
-    return DGNCreateArcElem( hDGN, nType, dfOriginX, dfOriginY, 0.0,
-                             dfPrimaryAxis, dfSecondaryAxis,
-                             dfStartAngle, dfSweepAngle,
-                             dfRotation, nullptr );
+    return DGNCreateArcElem(hDGN, nType, dfOriginX, dfOriginY, 0.0,
+                            dfPrimaryAxis, dfSecondaryAxis, dfStartAngle,
+                            dfSweepAngle, dfRotation, nullptr);
 }
 
 /************************************************************************/
@@ -998,203 +980,198 @@ DGNCreateArcElem2D( DGNHandle hDGN, int nType,
  * @return the new element (DGNElemArc) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateArcElem( DGNHandle hDGN, int nType,
-                  double dfOriginX, double dfOriginY, double dfOriginZ,
-                  double dfPrimaryAxis, double dfSecondaryAxis,
-                  double dfStartAngle, double dfSweepAngle,
-                  double dfRotation, int *panQuaternion )
+DGNElemCore *DGNCreateArcElem(DGNHandle hDGN, int nType, double dfOriginX,
+                              double dfOriginY, double dfOriginZ,
+                              double dfPrimaryAxis, double dfSecondaryAxis,
+                              double dfStartAngle, double dfSweepAngle,
+                              double dfRotation, int *panQuaternion)
 
 {
-    CPLAssert( nType == DGNT_ARC || nType == DGNT_ELLIPSE );
+    CPLAssert(nType == DGNT_ARC || nType == DGNT_ELLIPSE);
 
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
-    DGNLoadTCB( hDGN );
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemArc *psArc = static_cast<DGNElemArc *>(
-        CPLCalloc(sizeof(DGNElemArc), 1));
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemArc *psArc =
+        static_cast<DGNElemArc *>(CPLCalloc(sizeof(DGNElemArc), 1));
     DGNElemCore *psCore = &(psArc->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_ARC;
     psCore->type = nType;
 
-/* -------------------------------------------------------------------- */
-/*      Set arc specific information in the structure.                  */
-/* -------------------------------------------------------------------- */
-    DGNPoint sOrigin = { dfOriginX, dfOriginY, dfOriginZ };
+    /* -------------------------------------------------------------------- */
+    /*      Set arc specific information in the structure.                  */
+    /* -------------------------------------------------------------------- */
+    DGNPoint sOrigin = {dfOriginX, dfOriginY, dfOriginZ};
 
     psArc->origin = sOrigin;
     psArc->primary_axis = dfPrimaryAxis;
     psArc->secondary_axis = dfSecondaryAxis;
-    memset( psArc->quat, 0, sizeof(int) * 4 );
+    memset(psArc->quat, 0, sizeof(int) * 4);
     psArc->startang = dfStartAngle;
     psArc->sweepang = dfSweepAngle;
 
     psArc->rotation = dfRotation;
-    if( panQuaternion == nullptr )
+    if (panQuaternion == nullptr)
     {
-        DGNRotationToQuaternion( dfRotation, psArc->quat );
+        DGNRotationToQuaternion(dfRotation, psArc->quat);
     }
     else
     {
-        memcpy( psArc->quat, panQuaternion, sizeof(int)*4 );
+        memcpy(psArc->quat, panQuaternion, sizeof(int) * 4);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the arc section.                             */
-/* -------------------------------------------------------------------- */
-    if( nType == DGNT_ARC )
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the arc section.                             */
+    /* -------------------------------------------------------------------- */
+    if (nType == DGNT_ARC)
     {
         double dfScaledAxis;
 
-        if( psDGN->dimension == 3 )
+        if (psDGN->dimension == 3)
             psCore->raw_bytes = 100;
         else
             psCore->raw_bytes = 80;
-        psCore->raw_data = static_cast<unsigned char *>(
-            CPLCalloc(psCore->raw_bytes, 1));
+        psCore->raw_data =
+            static_cast<unsigned char *>(CPLCalloc(psCore->raw_bytes, 1));
 
         /* start angle */
-        GInt32 nAngle = (int) (dfStartAngle * 360000.0);
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 36 );
+        GInt32 nAngle = (int)(dfStartAngle * 360000.0);
+        DGN_WRITE_INT32(nAngle, psCore->raw_data + 36);
 
         /* sweep angle */
-        if( dfSweepAngle < 0.0 )
+        if (dfSweepAngle < 0.0)
         {
             nAngle = static_cast<int>(std::abs(dfSweepAngle) * 360000.0);
             nAngle |= 0x80000000;
         }
-        else if( dfSweepAngle > 364.9999 )
+        else if (dfSweepAngle > 364.9999)
         {
             nAngle = 0;
         }
         else
         {
-            nAngle = (int) (dfSweepAngle * 360000.0);
+            nAngle = (int)(dfSweepAngle * 360000.0);
         }
-        DGN_WRITE_INT32( nAngle, psCore->raw_data + 40 );
+        DGN_WRITE_INT32(nAngle, psCore->raw_data + 40);
 
         /* axes */
         dfScaledAxis = dfPrimaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 44, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 44 );
+        memcpy(psCore->raw_data + 44, &dfScaledAxis, 8);
+        IEEE2DGNDouble(psCore->raw_data + 44);
 
         dfScaledAxis = dfSecondaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 52, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 52 );
+        memcpy(psCore->raw_data + 52, &dfScaledAxis, 8);
+        IEEE2DGNDouble(psCore->raw_data + 52);
 
-        if( psDGN->dimension == 3 )
+        if (psDGN->dimension == 3)
         {
             /* quaternion */
-            DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 60 );
-            DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 64 );
-            DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 68 );
-            DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 72 );
+            DGN_WRITE_INT32(psArc->quat[0], psCore->raw_data + 60);
+            DGN_WRITE_INT32(psArc->quat[1], psCore->raw_data + 64);
+            DGN_WRITE_INT32(psArc->quat[2], psCore->raw_data + 68);
+            DGN_WRITE_INT32(psArc->quat[3], psCore->raw_data + 72);
 
             /* origin */
-            DGNInverseTransformPoint( psDGN, &sOrigin );
-            memcpy( psCore->raw_data + 76, &(sOrigin.x), 8 );
-            memcpy( psCore->raw_data + 84, &(sOrigin.y), 8 );
-            memcpy( psCore->raw_data + 92, &(sOrigin.z), 8 );
-            IEEE2DGNDouble( psCore->raw_data + 76 );
-            IEEE2DGNDouble( psCore->raw_data + 84 );
-            IEEE2DGNDouble( psCore->raw_data + 92 );
+            DGNInverseTransformPoint(psDGN, &sOrigin);
+            memcpy(psCore->raw_data + 76, &(sOrigin.x), 8);
+            memcpy(psCore->raw_data + 84, &(sOrigin.y), 8);
+            memcpy(psCore->raw_data + 92, &(sOrigin.z), 8);
+            IEEE2DGNDouble(psCore->raw_data + 76);
+            IEEE2DGNDouble(psCore->raw_data + 84);
+            IEEE2DGNDouble(psCore->raw_data + 92);
         }
         else
         {
             /* rotation */
-            nAngle = (int) (dfRotation * 360000.0);
-            DGN_WRITE_INT32( nAngle, psCore->raw_data + 60 );
+            nAngle = (int)(dfRotation * 360000.0);
+            DGN_WRITE_INT32(nAngle, psCore->raw_data + 60);
 
             /* origin */
-            DGNInverseTransformPoint( psDGN, &sOrigin );
-            memcpy( psCore->raw_data + 64, &(sOrigin.x), 8 );
-            memcpy( psCore->raw_data + 72, &(sOrigin.y), 8 );
-            IEEE2DGNDouble( psCore->raw_data + 64 );
-            IEEE2DGNDouble( psCore->raw_data + 72 );
+            DGNInverseTransformPoint(psDGN, &sOrigin);
+            memcpy(psCore->raw_data + 64, &(sOrigin.x), 8);
+            memcpy(psCore->raw_data + 72, &(sOrigin.y), 8);
+            IEEE2DGNDouble(psCore->raw_data + 64);
+            IEEE2DGNDouble(psCore->raw_data + 72);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the ellipse section.                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the ellipse section.                         */
+    /* -------------------------------------------------------------------- */
     else
     {
         double dfScaledAxis;
 
-        if( psDGN->dimension == 3 )
+        if (psDGN->dimension == 3)
             psCore->raw_bytes = 92;
         else
             psCore->raw_bytes = 72;
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+        psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
         /* axes */
         dfScaledAxis = dfPrimaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 36, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 36 );
+        memcpy(psCore->raw_data + 36, &dfScaledAxis, 8);
+        IEEE2DGNDouble(psCore->raw_data + 36);
 
         dfScaledAxis = dfSecondaryAxis / psDGN->scale;
-        memcpy( psCore->raw_data + 44, &dfScaledAxis, 8 );
-        IEEE2DGNDouble( psCore->raw_data + 44 );
+        memcpy(psCore->raw_data + 44, &dfScaledAxis, 8);
+        IEEE2DGNDouble(psCore->raw_data + 44);
 
-        if( psDGN->dimension == 3 )
+        if (psDGN->dimension == 3)
         {
             /* quaternion */
-            DGN_WRITE_INT32( psArc->quat[0], psCore->raw_data + 52 );
-            DGN_WRITE_INT32( psArc->quat[1], psCore->raw_data + 56 );
-            DGN_WRITE_INT32( psArc->quat[2], psCore->raw_data + 60 );
-            DGN_WRITE_INT32( psArc->quat[3], psCore->raw_data + 64 );
+            DGN_WRITE_INT32(psArc->quat[0], psCore->raw_data + 52);
+            DGN_WRITE_INT32(psArc->quat[1], psCore->raw_data + 56);
+            DGN_WRITE_INT32(psArc->quat[2], psCore->raw_data + 60);
+            DGN_WRITE_INT32(psArc->quat[3], psCore->raw_data + 64);
 
             /* origin */
-            DGNInverseTransformPoint( psDGN, &sOrigin );
-            memcpy( psCore->raw_data + 68, &(sOrigin.x), 8 );
-            memcpy( psCore->raw_data + 76, &(sOrigin.y), 8 );
-            memcpy( psCore->raw_data + 84, &(sOrigin.z), 8 );
-            IEEE2DGNDouble( psCore->raw_data + 68 );
-            IEEE2DGNDouble( psCore->raw_data + 76 );
-            IEEE2DGNDouble( psCore->raw_data + 84 );
+            DGNInverseTransformPoint(psDGN, &sOrigin);
+            memcpy(psCore->raw_data + 68, &(sOrigin.x), 8);
+            memcpy(psCore->raw_data + 76, &(sOrigin.y), 8);
+            memcpy(psCore->raw_data + 84, &(sOrigin.z), 8);
+            IEEE2DGNDouble(psCore->raw_data + 68);
+            IEEE2DGNDouble(psCore->raw_data + 76);
+            IEEE2DGNDouble(psCore->raw_data + 84);
         }
         else
         {
             /* rotation */
-            GInt32 nAngle = (int) (dfRotation * 360000.0);
-            DGN_WRITE_INT32( nAngle, psCore->raw_data + 52 );
+            GInt32 nAngle = (int)(dfRotation * 360000.0);
+            DGN_WRITE_INT32(nAngle, psCore->raw_data + 52);
 
             /* origin */
-            DGNInverseTransformPoint( psDGN, &sOrigin );
-            memcpy( psCore->raw_data + 56, &(sOrigin.x), 8 );
-            memcpy( psCore->raw_data + 64, &(sOrigin.y), 8 );
-            IEEE2DGNDouble( psCore->raw_data + 56 );
-            IEEE2DGNDouble( psCore->raw_data + 64 );
+            DGNInverseTransformPoint(psDGN, &sOrigin);
+            memcpy(psCore->raw_data + 56, &(sOrigin.x), 8);
+            memcpy(psCore->raw_data + 64, &(sOrigin.y), 8);
+            IEEE2DGNDouble(psCore->raw_data + 56);
+            IEEE2DGNDouble(psCore->raw_data + 64);
         }
 
         psArc->startang = 0.0;
         psArc->sweepang = 360.0;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data, including the bounds.                    */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data, including the bounds.                    */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-    DGNPoint sMin = {
-        dfOriginX - std::max(dfPrimaryAxis, dfSecondaryAxis),
-        dfOriginY - std::max(dfPrimaryAxis, dfSecondaryAxis),
-        dfOriginZ - std::max(dfPrimaryAxis, dfSecondaryAxis)
-    };
-    DGNPoint sMax = {
-        dfOriginX + std::max(dfPrimaryAxis, dfSecondaryAxis),
-        dfOriginY + std::max(dfPrimaryAxis, dfSecondaryAxis),
-        dfOriginZ + std::max(dfPrimaryAxis, dfSecondaryAxis)
-    };
+    DGNPoint sMin = {dfOriginX - std::max(dfPrimaryAxis, dfSecondaryAxis),
+                     dfOriginY - std::max(dfPrimaryAxis, dfSecondaryAxis),
+                     dfOriginZ - std::max(dfPrimaryAxis, dfSecondaryAxis)};
+    DGNPoint sMax = {dfOriginX + std::max(dfPrimaryAxis, dfSecondaryAxis),
+                     dfOriginY + std::max(dfPrimaryAxis, dfSecondaryAxis),
+                     dfOriginZ + std::max(dfPrimaryAxis, dfSecondaryAxis)};
 
-    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
+    DGNWriteBounds(psDGN, psCore, &sMin, &sMax);
 
-    return (DGNElemCore*) psArc;
+    return (DGNElemCore *)psArc;
 }
 
 /************************************************************************/
@@ -1219,124 +1196,123 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
  * @param dfCenter_2Y the center of the second bounding circle (Y).
  * @param dfCenter_2Z the center of the second bounding circle (Z).
  * @param dfRadius_2 the radius of the second bounding circle.
- * @param panQuaternion 3D orientation quaternion (NULL for default orientation - circles parallel to the X-Y plane).
+ * @param panQuaternion 3D orientation quaternion (NULL for default orientation
+ * - circles parallel to the X-Y plane).
  *
  * @return the new element (DGNElemCone) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateConeElem( DGNHandle hDGN,
-                   double dfCenter_1X, double dfCenter_1Y,
-                   double dfCenter_1Z, double dfRadius_1,
-                   double dfCenter_2X, double dfCenter_2Y,
-                   double dfCenter_2Z, double dfRadius_2,
-                   int *panQuaternion )
+DGNElemCore *DGNCreateConeElem(DGNHandle hDGN, double dfCenter_1X,
+                               double dfCenter_1Y, double dfCenter_1Z,
+                               double dfRadius_1, double dfCenter_2X,
+                               double dfCenter_2Y, double dfCenter_2Z,
+                               double dfRadius_2, int *panQuaternion)
 {
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemCone *psCone = (DGNElemCone *) CPLCalloc( sizeof(DGNElemCone), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemCone *psCone = (DGNElemCone *)CPLCalloc(sizeof(DGNElemCone), 1);
     DGNElemCore *psCore = &(psCone->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_CONE;
     psCore->type = DGNT_CONE;
 
-/* -------------------------------------------------------------------- */
-/*      Set cone specific information in the structure.                 */
-/* -------------------------------------------------------------------- */
-    DGNPoint sCenter_1 = { dfCenter_1X, dfCenter_1Y, dfCenter_1Z };
-    DGNPoint sCenter_2 = { dfCenter_2X, dfCenter_2Y, dfCenter_2Z };
+    /* -------------------------------------------------------------------- */
+    /*      Set cone specific information in the structure.                 */
+    /* -------------------------------------------------------------------- */
+    DGNPoint sCenter_1 = {dfCenter_1X, dfCenter_1Y, dfCenter_1Z};
+    DGNPoint sCenter_2 = {dfCenter_2X, dfCenter_2Y, dfCenter_2Z};
     psCone->center_1 = sCenter_1;
     psCone->center_2 = sCenter_2;
     psCone->radius_1 = dfRadius_1;
     psCone->radius_2 = dfRadius_2;
 
-    memset( psCone->quat, 0, sizeof(int) * 4 );
-    if( panQuaternion != nullptr )
+    memset(psCone->quat, 0, sizeof(int) * 4);
+    if (panQuaternion != nullptr)
     {
-        memcpy( psCone->quat, panQuaternion, sizeof(int)*4 );
+        memcpy(psCone->quat, panQuaternion, sizeof(int) * 4);
     }
     else
     {
-      psCone->quat[0] = static_cast<int>(1U << 31);
-      psCone->quat[1] = 0;
-      psCone->quat[2] = 0;
-      psCone->quat[3] = 0;
+        psCone->quat[0] = static_cast<int>(1U << 31);
+        psCone->quat[1] = 0;
+        psCone->quat[2] = 0;
+        psCone->quat[3] = 0;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the cone.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the cone.                                    */
+    /* -------------------------------------------------------------------- */
     psCore->raw_bytes = 118;
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
     /* unknown data */
     psCore->raw_data[36] = 0;
     psCore->raw_data[37] = 0;
 
     /* quaternion */
-    DGN_WRITE_INT32( psCone->quat[0], psCore->raw_data + 38 );
-    DGN_WRITE_INT32( psCone->quat[1], psCore->raw_data + 42 );
-    DGN_WRITE_INT32( psCone->quat[2], psCore->raw_data + 46 );
-    DGN_WRITE_INT32( psCone->quat[3], psCore->raw_data + 50 );
+    DGN_WRITE_INT32(psCone->quat[0], psCore->raw_data + 38);
+    DGN_WRITE_INT32(psCone->quat[1], psCore->raw_data + 42);
+    DGN_WRITE_INT32(psCone->quat[2], psCore->raw_data + 46);
+    DGN_WRITE_INT32(psCone->quat[3], psCore->raw_data + 50);
 
     /* center_1 */
-    DGNInverseTransformPoint( psDGN, &sCenter_1 );
-    memcpy( psCore->raw_data + 54, &sCenter_1.x, 8 );
-    memcpy( psCore->raw_data + 62, &sCenter_1.y, 8 );
-    memcpy( psCore->raw_data + 70, &sCenter_1.z, 8 );
-    IEEE2DGNDouble( psCore->raw_data + 54 );
-    IEEE2DGNDouble( psCore->raw_data + 62 );
-    IEEE2DGNDouble( psCore->raw_data + 70 );
+    DGNInverseTransformPoint(psDGN, &sCenter_1);
+    memcpy(psCore->raw_data + 54, &sCenter_1.x, 8);
+    memcpy(psCore->raw_data + 62, &sCenter_1.y, 8);
+    memcpy(psCore->raw_data + 70, &sCenter_1.z, 8);
+    IEEE2DGNDouble(psCore->raw_data + 54);
+    IEEE2DGNDouble(psCore->raw_data + 62);
+    IEEE2DGNDouble(psCore->raw_data + 70);
 
     /* radius_1 */
     double dfScaledRadius = psCone->radius_1 / psDGN->scale;
-    memcpy( psCore->raw_data + 78, &dfScaledRadius, 8 );
-    IEEE2DGNDouble( psCore->raw_data + 78 );
+    memcpy(psCore->raw_data + 78, &dfScaledRadius, 8);
+    IEEE2DGNDouble(psCore->raw_data + 78);
 
     /* center_2 */
-    DGNInverseTransformPoint( psDGN, &sCenter_2 );
-    memcpy( psCore->raw_data + 86, &sCenter_2.x, 8 );
-    memcpy( psCore->raw_data + 94, &sCenter_2.y, 8 );
-    memcpy( psCore->raw_data + 102, &sCenter_2.z, 8 );
-    IEEE2DGNDouble( psCore->raw_data + 86 );
-    IEEE2DGNDouble( psCore->raw_data + 94 );
-    IEEE2DGNDouble( psCore->raw_data + 102 );
+    DGNInverseTransformPoint(psDGN, &sCenter_2);
+    memcpy(psCore->raw_data + 86, &sCenter_2.x, 8);
+    memcpy(psCore->raw_data + 94, &sCenter_2.y, 8);
+    memcpy(psCore->raw_data + 102, &sCenter_2.z, 8);
+    IEEE2DGNDouble(psCore->raw_data + 86);
+    IEEE2DGNDouble(psCore->raw_data + 94);
+    IEEE2DGNDouble(psCore->raw_data + 102);
 
     /* radius_2 */
     dfScaledRadius = psCone->radius_2 / psDGN->scale;
-    memcpy( psCore->raw_data + 110, &dfScaledRadius, 8 );
-    IEEE2DGNDouble( psCore->raw_data + 110 );
+    memcpy(psCore->raw_data + 110, &dfScaledRadius, 8);
+    IEEE2DGNDouble(psCore->raw_data + 110);
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data, including the bounds.                    */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data, including the bounds.                    */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-    //FIXME: Calculate bounds. Do we need to take the quaternion into account?
-    // kintel 20030819
+    // FIXME: Calculate bounds. Do we need to take the quaternion into account?
+    //  kintel 20030819
 
     // Old implementation attempt:
     // What if center_1.z > center_2.z ?
-//     double largestRadius =
-//       psCone->radius_1>psCone->radius_2?psCone->radius_1:psCone->radius_2;
-//     sMin.x = psCone->center_1.x-largestRadius;
-//     sMin.y = psCone->center_1.y-largestRadius;
-//     sMin.z = psCone->center_1.z;
-//     sMax.x = psCone->center_2.x+largestRadius;
-//     sMax.y = psCone->center_2.y+largestRadius;
-//     sMax.z = psCone->center_2.z;
+    //     double largestRadius =
+    //       psCone->radius_1>psCone->radius_2?psCone->radius_1:psCone->radius_2;
+    //     sMin.x = psCone->center_1.x-largestRadius;
+    //     sMin.y = psCone->center_1.y-largestRadius;
+    //     sMin.z = psCone->center_1.z;
+    //     sMax.x = psCone->center_2.x+largestRadius;
+    //     sMax.y = psCone->center_2.y+largestRadius;
+    //     sMax.z = psCone->center_2.z;
 
-    DGNPoint sMin = { 0.0, 0.0, 0.0 };
-    DGNPoint sMax = { 0.0, 0.0, 0.0 };
-    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
+    DGNPoint sMin = {0.0, 0.0, 0.0};
+    DGNPoint sMax = {0.0, 0.0, 0.0};
+    DGNWriteBounds(psDGN, psCore, &sMin, &sMax);
 
-    return (DGNElemCore*) psCone;
+    return (DGNElemCore *)psCone;
 }
 
 /************************************************************************/
@@ -1367,32 +1343,31 @@ DGNCreateConeElem( DGNHandle hDGN,
  * @return the new element (DGNElemText) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
-                   int nFontId, int nJustification,
-                   double dfLengthMult, double dfHeightMult,
-                   double dfRotation, int *panQuaternion,
-                   double dfOriginX, double dfOriginY, double dfOriginZ )
+DGNElemCore *DGNCreateTextElem(DGNHandle hDGN, const char *pszText, int nFontId,
+                               int nJustification, double dfLengthMult,
+                               double dfHeightMult, double dfRotation,
+                               int *panQuaternion, double dfOriginX,
+                               double dfOriginY, double dfOriginZ)
 
 {
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemText *psText = (DGNElemText *)
-        CPLCalloc( sizeof(DGNElemText)+strlen(pszText), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemText *psText =
+        (DGNElemText *)CPLCalloc(sizeof(DGNElemText) + strlen(pszText), 1);
     DGNElemCore *psCore = &(psText->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_TEXT;
     psCore->type = DGNT_TEXT;
 
-/* -------------------------------------------------------------------- */
-/*      Set arc specific information in the structure.                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set arc specific information in the structure.                  */
+    /* -------------------------------------------------------------------- */
     psText->font_id = nFontId;
     psText->justification = nJustification;
     psText->length_mult = dfLengthMult;
@@ -1401,38 +1376,38 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     psText->origin.x = dfOriginX;
     psText->origin.y = dfOriginY;
     psText->origin.z = dfOriginZ;
-    strcpy( psText->string, pszText );
+    strcpy(psText->string, pszText);
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the text specific portion.                   */
-/* -------------------------------------------------------------------- */
-    if( psDGN->dimension == 2 )
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the text specific portion.                   */
+    /* -------------------------------------------------------------------- */
+    if (psDGN->dimension == 2)
         psCore->raw_bytes = 60 + static_cast<int>(strlen(pszText));
     else
         psCore->raw_bytes = 76 + static_cast<int>(strlen(pszText));
 
     psCore->raw_bytes += (psCore->raw_bytes % 2);
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
-    psCore->raw_data[36] = (unsigned char) nFontId;
-    psCore->raw_data[37] = (unsigned char) nJustification;
+    psCore->raw_data[36] = (unsigned char)nFontId;
+    psCore->raw_data[37] = (unsigned char)nJustification;
 
     GInt32 nIntValue =
         static_cast<int>(dfLengthMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
-    DGN_WRITE_INT32( nIntValue, psCore->raw_data + 38 );
+    DGN_WRITE_INT32(nIntValue, psCore->raw_data + 38);
 
-    nIntValue = (int) (dfHeightMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
-    DGN_WRITE_INT32( nIntValue, psCore->raw_data + 42 );
+    nIntValue = (int)(dfHeightMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
+    DGN_WRITE_INT32(nIntValue, psCore->raw_data + 42);
 
     GInt32 nBase = 0;
 
-    if( psDGN->dimension == 2 )
+    if (psDGN->dimension == 2)
     {
-        nIntValue = (int) (dfRotation * 360000.0);
-        DGN_WRITE_INT32( nIntValue, psCore->raw_data + 46 );
+        nIntValue = (int)(dfRotation * 360000.0);
+        DGN_WRITE_INT32(nIntValue, psCore->raw_data + 46);
 
-        DGNInverseTransformPointToInt( psDGN, &(psText->origin),
-                                       psCore->raw_data + 50 );
+        DGNInverseTransformPointToInt(psDGN, &(psText->origin),
+                                      psCore->raw_data + 50);
 
         nBase = 58;
     }
@@ -1440,39 +1415,36 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     {
         int anQuaternion[4];
 
-        if( panQuaternion == nullptr )
-            DGNRotationToQuaternion( dfRotation, anQuaternion );
+        if (panQuaternion == nullptr)
+            DGNRotationToQuaternion(dfRotation, anQuaternion);
         else
-            memcpy( anQuaternion, panQuaternion, sizeof(int) * 4 );
+            memcpy(anQuaternion, panQuaternion, sizeof(int) * 4);
 
-        DGN_WRITE_INT32( anQuaternion[0], psCore->raw_data + 46 );
-        DGN_WRITE_INT32( anQuaternion[1], psCore->raw_data + 50 );
-        DGN_WRITE_INT32( anQuaternion[2], psCore->raw_data + 54 );
-        DGN_WRITE_INT32( anQuaternion[3], psCore->raw_data + 58 );
+        DGN_WRITE_INT32(anQuaternion[0], psCore->raw_data + 46);
+        DGN_WRITE_INT32(anQuaternion[1], psCore->raw_data + 50);
+        DGN_WRITE_INT32(anQuaternion[2], psCore->raw_data + 54);
+        DGN_WRITE_INT32(anQuaternion[3], psCore->raw_data + 58);
 
-        DGNInverseTransformPointToInt( psDGN, &(psText->origin),
-                                       psCore->raw_data + 62 );
+        DGNInverseTransformPointToInt(psDGN, &(psText->origin),
+                                      psCore->raw_data + 62);
         nBase = 74;
     }
 
-    psCore->raw_data[nBase] = (unsigned char) strlen(pszText);
-    psCore->raw_data[nBase+1] = 0; /* edflds? */
-    memcpy( psCore->raw_data + nBase+2, pszText, strlen(pszText) );
+    psCore->raw_data[nBase] = (unsigned char)strlen(pszText);
+    psCore->raw_data[nBase + 1] = 0; /* edflds? */
+    memcpy(psCore->raw_data + nBase + 2, pszText, strlen(pszText));
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data, including the bounds.                    */
-/*                                                                      */
-/*      Code contributed by Mart Kelder.                                */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data, including the bounds.                    */
+    /*                                                                      */
+    /*      Code contributed by Mart Kelder.                                */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-    //calculate bounds if rotation is 0
-    DGNPoint sMin = { dfOriginX, dfOriginY, 0.0 };
-    DGNPoint sMax = {
-        dfOriginX + dfLengthMult * strlen(pszText),
-        dfOriginY + dfHeightMult,
-        0.0
-    };
+    // calculate bounds if rotation is 0
+    DGNPoint sMin = {dfOriginX, dfOriginY, 0.0};
+    DGNPoint sMax = {dfOriginX + dfLengthMult * strlen(pszText),
+                     dfOriginY + dfHeightMult, 0.0};
 
 #if 0
     //calculate rotated bounding box coordinates
@@ -1513,9 +1485,9 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     sMax.y = dfOriginY + dfHeightMult;
     sMax.z = 0.0;
 
-    DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
+    DGNWriteBounds(psDGN, psCore, &sMin, &sMax);
 
-    return (DGNElemCore*) psText;
+    return (DGNElemCore *)psText;
 }
 
 /************************************************************************/
@@ -1544,47 +1516,46 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
  * @return the new element (DGNElemColorTable) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
-                         GByte abyColorInfo[256][3] )
+DGNElemCore *DGNCreateColorTableElem(DGNHandle hDGN, int nScreenFlag,
+                                     GByte abyColorInfo[256][3])
 
 {
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemColorTable *psCT = (DGNElemColorTable *)
-        CPLCalloc( sizeof(DGNElemColorTable), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemColorTable *psCT =
+        (DGNElemColorTable *)CPLCalloc(sizeof(DGNElemColorTable), 1);
     DGNElemCore *psCore = &(psCT->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_COLORTABLE;
     psCore->type = DGNT_GROUP_DATA;
     psCore->level = DGN_GDL_COLOR_TABLE;
 
-/* -------------------------------------------------------------------- */
-/*      Set colortable specific information in the structure.           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set colortable specific information in the structure.           */
+    /* -------------------------------------------------------------------- */
     psCT->screen_flag = nScreenFlag;
-    memcpy( psCT->color_info, abyColorInfo, 768 );
+    memcpy(psCT->color_info, abyColorInfo, 768);
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the color table specific portion.            */
-/* -------------------------------------------------------------------- */
-    psCore->raw_bytes = 41+(256-1)*3;
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the color table specific portion.            */
+    /* -------------------------------------------------------------------- */
+    psCore->raw_bytes = 41 + (256 - 1) * 3;
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
-    psCore->raw_data[36] = (unsigned char) (nScreenFlag % 256);
-    psCore->raw_data[37] = (unsigned char) (nScreenFlag / 256);
+    psCore->raw_data[36] = (unsigned char)(nScreenFlag % 256);
+    psCore->raw_data[37] = (unsigned char)(nScreenFlag / 256);
 
-    memcpy( psCore->raw_data + 38, abyColorInfo[255], 3 );
-    memcpy( psCore->raw_data + 41, abyColorInfo, (256-1)*3 );
+    memcpy(psCore->raw_data + 38, abyColorInfo[255], 3);
+    memcpy(psCore->raw_data + 41, abyColorInfo, (256 - 1) * 3);
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data.                                          */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data.                                          */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-    return (DGNElemCore*) psCT;
+    return (DGNElemCore *)psCT;
 }
 
 /************************************************************************/
@@ -1612,60 +1583,59 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
  *
  * @return the new element (DGNElemComplexHeader) or NULL on failure.
  */
-DGNElemCore *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
-                            int nTotLength, int nNumElems )
+DGNElemCore *DGNCreateComplexHeaderElem(DGNHandle hDGN, int nType,
+                                        int nTotLength, int nNumElems)
 {
-    unsigned char abyRawZeroLinkage[8] = {0,0,0,0,0,0,0,0};
+    unsigned char abyRawZeroLinkage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    CPLAssert( nType == DGNT_COMPLEX_CHAIN_HEADER
-               || nType == DGNT_COMPLEX_SHAPE_HEADER );
+    CPLAssert(nType == DGNT_COMPLEX_CHAIN_HEADER ||
+              nType == DGNT_COMPLEX_SHAPE_HEADER);
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemComplexHeader *psCH = (DGNElemComplexHeader *)
-        CPLCalloc( sizeof(DGNElemComplexHeader), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemComplexHeader *psCH =
+        (DGNElemComplexHeader *)CPLCalloc(sizeof(DGNElemComplexHeader), 1);
     DGNElemCore *psCore = &(psCH->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->complex = TRUE;
     psCore->stype = DGNST_COMPLEX_HEADER;
     psCore->type = nType;
 
-/* -------------------------------------------------------------------- */
-/*      Set complex header specific information in the structure.       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set complex header specific information in the structure.       */
+    /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength - 4;
     psCH->numelems = nNumElems;
     psCH->surftype = 0;
     psCH->boundelms = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the complex specific portion.                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the complex specific portion.                */
+    /* -------------------------------------------------------------------- */
     psCore->raw_bytes = 40;
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
-    psCore->raw_data[36] = (unsigned char) ((nTotLength-4) % 256);
-    psCore->raw_data[37] = (unsigned char) ((nTotLength-4) / 256);
-    psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
-    psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
+    psCore->raw_data[36] = (unsigned char)((nTotLength - 4) % 256);
+    psCore->raw_data[37] = (unsigned char)((nTotLength - 4) / 256);
+    psCore->raw_data[38] = (unsigned char)(nNumElems % 256);
+    psCore->raw_data[39] = (unsigned char)(nNumElems / 256);
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data.                                          */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data.                                          */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-/* -------------------------------------------------------------------- */
-/*      Elements have to be at least 48 bytes long, so we have to       */
-/*      add a dummy bit of attribute data to fill out the length.       */
-/* -------------------------------------------------------------------- */
-    DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
+    /* -------------------------------------------------------------------- */
+    /*      Elements have to be at least 48 bytes long, so we have to       */
+    /*      add a dummy bit of attribute data to fill out the length.       */
+    /* -------------------------------------------------------------------- */
+    DGNAddRawAttrLink(hDGN, psCore, 8, abyRawZeroLinkage);
 
-    return (DGNElemCore*) psCH;
+    return (DGNElemCore *)psCH;
 }
 
 /************************************************************************/
@@ -1693,46 +1663,46 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
  * @return the new element (DGNElemComplexHeader) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
-                                 int nNumElems, DGNElemCore **papsElems )
+DGNElemCore *DGNCreateComplexHeaderFromGroup(DGNHandle hDGN, int nType,
+                                             int nNumElems,
+                                             DGNElemCore **papsElems)
 
 {
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-    if( nNumElems < 1 || papsElems == nullptr )
+    if (nNumElems < 1 || papsElems == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Need at least one element to form a complex group." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Need at least one element to form a complex group.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect the total size, and bounds.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect the total size, and bounds.                             */
+    /* -------------------------------------------------------------------- */
     int nTotalLength = 5;
     const int nLevel = papsElems[0]->level;
-    DGNPoint sMin = { 0.0, 0.0, 0.0 };
-    DGNPoint sMax = { 0.0, 0.0, 0.0 };
+    DGNPoint sMin = {0.0, 0.0, 0.0};
+    DGNPoint sMax = {0.0, 0.0, 0.0};
 
-    for( int i = 0; i < nNumElems; i++ )
+    for (int i = 0; i < nNumElems; i++)
     {
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
         papsElems[i]->complex = TRUE;
         papsElems[i]->raw_data[0] |= 0x80;
 
-        if( papsElems[i]->level != nLevel )
+        if (papsElems[i]->level != nLevel)
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Not all level values matching in a complex set group!");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Not all level values matching in a complex set group!");
         }
 
-        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
-        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
+        DGNPoint sThisMin = {0.0, 0.0, 0.0};
+        DGNPoint sThisMax = {0.0, 0.0, 0.0};
 
-        DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
-        if( i == 0 )
+        DGNGetElementExtents(hDGN, papsElems[i], &sThisMin, &sThisMax);
+        if (i == 0)
         {
             sMin = sThisMin;
             sMax = sThisMax;
@@ -1748,15 +1718,15 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the corresponding complex header.                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the corresponding complex header.                        */
+    /* -------------------------------------------------------------------- */
     DGNElemCore *psCH =
-        DGNCreateComplexHeaderElem( hDGN, nType, nTotalLength, nNumElems );
-    DGNUpdateElemCore( hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
-                       psCH->color, psCH->weight, psCH->style );
+        DGNCreateComplexHeaderElem(hDGN, nType, nTotalLength, nNumElems);
+    DGNUpdateElemCore(hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
+                      psCH->color, psCH->weight, psCH->style);
 
-    DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
+    DGNWriteBounds((DGNInfo *)hDGN, psCH, &sMin, &sMax);
 
     return psCH;
 }
@@ -1786,62 +1756,61 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
  *
  * @return the new element (DGNElemComplexHeader) or NULL on failure.
  */
-DGNElemCore *
-DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
-                          int nBoundElems, int nTotLength, int nNumElems )
+DGNElemCore *DGNCreateSolidHeaderElem(DGNHandle hDGN, int nType, int nSurfType,
+                                      int nBoundElems, int nTotLength,
+                                      int nNumElems)
 {
-    CPLAssert( nType == DGNT_3DSURFACE_HEADER
-               || nType == DGNT_3DSOLID_HEADER );
+    CPLAssert(nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER);
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemComplexHeader *psCH = (DGNElemComplexHeader *)
-        CPLCalloc( sizeof(DGNElemComplexHeader), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemComplexHeader *psCH =
+        (DGNElemComplexHeader *)CPLCalloc(sizeof(DGNElemComplexHeader), 1);
     DGNElemCore *psCore = &(psCH->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->complex = TRUE;
     psCore->stype = DGNST_COMPLEX_HEADER;
     psCore->type = nType;
 
-/* -------------------------------------------------------------------- */
-/*      Set solid header specific information in the structure.         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set solid header specific information in the structure.         */
+    /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength - 4;
     psCH->numelems = nNumElems;
     psCH->surftype = nSurfType;
     psCH->boundelms = nBoundElems;
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the solid specific portion.                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the solid specific portion.                  */
+    /* -------------------------------------------------------------------- */
     psCore->raw_bytes = 42;
 
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
-    psCore->raw_data[36] = (unsigned char) ((nTotLength-4) % 256);
-    psCore->raw_data[37] = (unsigned char) ((nTotLength-4) / 256);
-    psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
-    psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
-    psCore->raw_data[40] = (unsigned char) psCH->surftype;
-    psCore->raw_data[41] = (unsigned char) psCH->boundelms - 1;
+    psCore->raw_data[36] = (unsigned char)((nTotLength - 4) % 256);
+    psCore->raw_data[37] = (unsigned char)((nTotLength - 4) / 256);
+    psCore->raw_data[38] = (unsigned char)(nNumElems % 256);
+    psCore->raw_data[39] = (unsigned char)(nNumElems / 256);
+    psCore->raw_data[40] = (unsigned char)psCH->surftype;
+    psCore->raw_data[41] = (unsigned char)psCH->boundelms - 1;
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data.                                          */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data.                                          */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-/* -------------------------------------------------------------------- */
-/*      Elements have to be at least 48 bytes long, so we have to       */
-/*      add a dummy bit of attribute data to fill out the length.       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Elements have to be at least 48 bytes long, so we have to       */
+    /*      add a dummy bit of attribute data to fill out the length.       */
+    /* -------------------------------------------------------------------- */
     unsigned char abyRawZeroLinkage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
+    DGNAddRawAttrLink(hDGN, psCore, 8, abyRawZeroLinkage);
 
-    return (DGNElemCore*) psCH;
+    return (DGNElemCore *)psCH;
 }
 
 /************************************************************************/
@@ -1869,71 +1838,70 @@ DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
  * @return the new element (DGNElemComplexHeader) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
-                               int nBoundElems, int nNumElems,
-                               DGNElemCore **papsElems )
+DGNElemCore *DGNCreateSolidHeaderFromGroup(DGNHandle hDGN, int nType,
+                                           int nSurfType, int nBoundElems,
+                                           int nNumElems,
+                                           DGNElemCore **papsElems)
 
 {
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-    if( nNumElems < 1 || papsElems == nullptr )
+    if (nNumElems < 1 || papsElems == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Need at least one element to form a solid." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Need at least one element to form a solid.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect the total size, and bounds.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect the total size, and bounds.                             */
+    /* -------------------------------------------------------------------- */
     const int nLevel = papsElems[0]->level;
     int nTotalLength = 6;
-    DGNPoint sMin = { 0.0, 0.0, 0.0 };
-    DGNPoint sMax = { 0.0, 0.0, 0.0 };
+    DGNPoint sMin = {0.0, 0.0, 0.0};
+    DGNPoint sMax = {0.0, 0.0, 0.0};
 
-    for( int i = 0; i < nNumElems; i++ )
+    for (int i = 0; i < nNumElems; i++)
     {
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
         papsElems[i]->complex = TRUE;
         papsElems[i]->raw_data[0] |= 0x80;
 
-        if( papsElems[i]->level != nLevel )
+        if (papsElems[i]->level != nLevel)
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Not all level values matching in a complex set group!");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Not all level values matching in a complex set group!");
         }
 
-        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
-        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
-        DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
-        if( i == 0 )
+        DGNPoint sThisMin = {0.0, 0.0, 0.0};
+        DGNPoint sThisMax = {0.0, 0.0, 0.0};
+        DGNGetElementExtents(hDGN, papsElems[i], &sThisMin, &sThisMax);
+        if (i == 0)
         {
             sMin = sThisMin;
             sMax = sThisMax;
         }
         else
         {
-            sMin.x = std::min(sMin.x,sThisMin.x);
-            sMin.y = std::min(sMin.y,sThisMin.y);
-            sMin.z = std::min(sMin.z,sThisMin.z);
-            sMax.x = std::max(sMax.x,sThisMax.x);
-            sMax.y = std::max(sMax.y,sThisMax.y);
-            sMax.z = std::max(sMax.z,sThisMax.z);
+            sMin.x = std::min(sMin.x, sThisMin.x);
+            sMin.y = std::min(sMin.y, sThisMin.y);
+            sMin.z = std::min(sMin.z, sThisMin.z);
+            sMax.x = std::max(sMax.x, sThisMax.x);
+            sMax.y = std::max(sMax.y, sThisMax.y);
+            sMax.z = std::max(sMax.z, sThisMax.z);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the corresponding solid header.                          */
-/* -------------------------------------------------------------------- */
-    DGNElemCore *psCH =
-        DGNCreateSolidHeaderElem( hDGN, nType, nSurfType, nBoundElems,
-                                  nTotalLength, nNumElems );
-    DGNUpdateElemCore( hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
-                       psCH->color, psCH->weight, psCH->style );
+    /* -------------------------------------------------------------------- */
+    /*      Create the corresponding solid header.                          */
+    /* -------------------------------------------------------------------- */
+    DGNElemCore *psCH = DGNCreateSolidHeaderElem(
+        hDGN, nType, nSurfType, nBoundElems, nTotalLength, nNumElems);
+    DGNUpdateElemCore(hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
+                      psCH->color, psCH->weight, psCH->style);
 
-    DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
+    DGNWriteBounds((DGNInfo *)hDGN, psCH, &sMin, &sMax);
 
     return psCH;
 }
@@ -1942,12 +1910,11 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
 /*                      DGNCreateCellHeaderElem()                       */
 /************************************************************************/
 
-DGNElemCore CPL_DLL  *
-DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
-                         short nClass, short *panLevels,
-                         DGNPoint *psRangeLow, DGNPoint *psRangeHigh,
-                         DGNPoint *psOrigin, double dfXScale, double dfYScale,
-                         double dfRotation )
+DGNElemCore CPL_DLL *
+DGNCreateCellHeaderElem(DGNHandle hDGN, int nTotLength, const char *pszName,
+                        short nClass, short *panLevels, DGNPoint *psRangeLow,
+                        DGNPoint *psRangeHigh, DGNPoint *psOrigin,
+                        double dfXScale, double dfYScale, double dfRotation)
 
 /**
  * Create cell header.
@@ -1981,83 +1948,81 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
  */
 
 {
-    DGNInfo *psInfo = (DGNInfo *) hDGN;
+    DGNInfo *psInfo = (DGNInfo *)hDGN;
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-/* -------------------------------------------------------------------- */
-/*      Allocate element.                                               */
-/* -------------------------------------------------------------------- */
-    DGNElemCellHeader *psCH = (DGNElemCellHeader *)
-        CPLCalloc( sizeof(DGNElemCellHeader), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate element.                                               */
+    /* -------------------------------------------------------------------- */
+    DGNElemCellHeader *psCH =
+        (DGNElemCellHeader *)CPLCalloc(sizeof(DGNElemCellHeader), 1);
     DGNElemCore *psCore = &(psCH->core);
 
-    DGNInitializeElemCore( hDGN, psCore );
+    DGNInitializeElemCore(hDGN, psCore);
     psCore->stype = DGNST_CELL_HEADER;
     psCore->type = DGNT_CELL_HEADER;
 
-/* -------------------------------------------------------------------- */
-/*      Set complex header specific information in the structure.       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set complex header specific information in the structure.       */
+    /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength;
 
-/* -------------------------------------------------------------------- */
-/*      Setup Raw data for the cell header specific portion.            */
-/* -------------------------------------------------------------------- */
-    if( psInfo->dimension == 2 )
+    /* -------------------------------------------------------------------- */
+    /*      Setup Raw data for the cell header specific portion.            */
+    /* -------------------------------------------------------------------- */
+    if (psInfo->dimension == 2)
         psCore->raw_bytes = 92;
     else
         psCore->raw_bytes = 124;
-    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+    psCore->raw_data = (unsigned char *)CPLCalloc(psCore->raw_bytes, 1);
 
-    psCore->raw_data[36] = (unsigned char) (nTotLength % 256);
-    psCore->raw_data[37] = (unsigned char) (nTotLength / 256);
+    psCore->raw_data[36] = (unsigned char)(nTotLength % 256);
+    psCore->raw_data[37] = (unsigned char)(nTotLength / 256);
 
-    DGNAsciiToRad50( pszName, (unsigned short *) (psCore->raw_data + 38) );
-    if( strlen(pszName) > 3 )
-        DGNAsciiToRad50( pszName+3, (unsigned short *) (psCore->raw_data+40) );
+    DGNAsciiToRad50(pszName, (unsigned short *)(psCore->raw_data + 38));
+    if (strlen(pszName) > 3)
+        DGNAsciiToRad50(pszName + 3, (unsigned short *)(psCore->raw_data + 40));
 
-    psCore->raw_data[42] = (unsigned char) (nClass % 256);
-    psCore->raw_data[43] = (unsigned char) (nClass / 256);
+    psCore->raw_data[42] = (unsigned char)(nClass % 256);
+    psCore->raw_data[43] = (unsigned char)(nClass / 256);
 
-    memcpy( psCore->raw_data + 44, panLevels, 8 );
+    memcpy(psCore->raw_data + 44, panLevels, 8);
 
-    if( psInfo->dimension == 2 )
+    if (psInfo->dimension == 2)
     {
-        DGNPointToInt( psInfo, psRangeLow, psCore->raw_data + 52 );
-        DGNPointToInt( psInfo, psRangeHigh, psCore->raw_data+ 60 );
+        DGNPointToInt(psInfo, psRangeLow, psCore->raw_data + 52);
+        DGNPointToInt(psInfo, psRangeHigh, psCore->raw_data + 60);
 
-        DGNInverseTransformPointToInt( psInfo, psOrigin,
-                                       psCore->raw_data + 84 );
+        DGNInverseTransformPointToInt(psInfo, psOrigin, psCore->raw_data + 84);
     }
     else
     {
-        DGNPointToInt( psInfo, psRangeLow, psCore->raw_data + 52 );
-        DGNPointToInt( psInfo, psRangeHigh, psCore->raw_data+ 64 );
+        DGNPointToInt(psInfo, psRangeLow, psCore->raw_data + 52);
+        DGNPointToInt(psInfo, psRangeHigh, psCore->raw_data + 64);
 
-        DGNInverseTransformPointToInt( psInfo, psOrigin,
-                                       psCore->raw_data + 112 );
+        DGNInverseTransformPointToInt(psInfo, psOrigin, psCore->raw_data + 112);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Produce a transformation matrix that approximates the           */
-/*      requested scaling and rotation.                                 */
-/* -------------------------------------------------------------------- */
-    if( psInfo->dimension == 2 )
+    /* -------------------------------------------------------------------- */
+    /*      Produce a transformation matrix that approximates the           */
+    /*      requested scaling and rotation.                                 */
+    /* -------------------------------------------------------------------- */
+    if (psInfo->dimension == 2)
     {
         long anTrans[4];
         double cos_a = cos(-dfRotation * M_PI / 180.0);
         double sin_a = sin(-dfRotation * M_PI / 180.0);
 
-        anTrans[0] = (long) (cos_a * dfXScale * 214748);
-        anTrans[1] = (long) (sin_a * dfYScale * 214748);
+        anTrans[0] = (long)(cos_a * dfXScale * 214748);
+        anTrans[1] = (long)(sin_a * dfYScale * 214748);
         anTrans[2] = (long)(-sin_a * dfXScale * 214748);
-        anTrans[3] = (long) (cos_a * dfYScale * 214748);
+        anTrans[3] = (long)(cos_a * dfYScale * 214748);
 
-        DGN_WRITE_INT32( anTrans[0], psCore->raw_data + 68 );
-        DGN_WRITE_INT32( anTrans[1], psCore->raw_data + 72 );
-        DGN_WRITE_INT32( anTrans[2], psCore->raw_data + 76 );
-        DGN_WRITE_INT32( anTrans[3], psCore->raw_data + 80 );
+        DGN_WRITE_INT32(anTrans[0], psCore->raw_data + 68);
+        DGN_WRITE_INT32(anTrans[1], psCore->raw_data + 72);
+        DGN_WRITE_INT32(anTrans[2], psCore->raw_data + 76);
+        DGN_WRITE_INT32(anTrans[3], psCore->raw_data + 80);
     }
     else
     {
@@ -2066,37 +2031,37 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
         // NOTE: This is still just rotation in the plane
         double cos_a = cos(-dfRotation * M_PI / 180.0);
         double sin_a = sin(-dfRotation * M_PI / 180.0);
-        double dfZScale = 1.0; // Should we get this from somewhere?
+        double dfZScale = 1.0;  // Should we get this from somewhere?
 
-        anTrans[0] = (long) ( cos_a * dfXScale * 214748);
-        anTrans[1] = (long) ( sin_a * dfYScale * 214748);
-        anTrans[2] = (long) ( sin_a * dfZScale * 214748);
+        anTrans[0] = (long)(cos_a * dfXScale * 214748);
+        anTrans[1] = (long)(sin_a * dfYScale * 214748);
+        anTrans[2] = (long)(sin_a * dfZScale * 214748);
 
-        anTrans[3] = (long) (-sin_a * dfXScale * 214748);
-        anTrans[4] = (long) ( cos_a * dfYScale * 214748);
-        anTrans[5] = (long) ( sin_a * dfZScale * 214748);
+        anTrans[3] = (long)(-sin_a * dfXScale * 214748);
+        anTrans[4] = (long)(cos_a * dfYScale * 214748);
+        anTrans[5] = (long)(sin_a * dfZScale * 214748);
 
-        anTrans[6] = (long) (-sin_a * dfXScale * 214748);
-        anTrans[7] = (long) (-sin_a * dfYScale * 214748);
-        anTrans[8] = (long) ( cos_a * dfZScale * 214748);
+        anTrans[6] = (long)(-sin_a * dfXScale * 214748);
+        anTrans[7] = (long)(-sin_a * dfYScale * 214748);
+        anTrans[8] = (long)(cos_a * dfZScale * 214748);
 
-        DGN_WRITE_INT32( anTrans[0], psCore->raw_data + 76 );
-        DGN_WRITE_INT32( anTrans[1], psCore->raw_data + 80 );
-        DGN_WRITE_INT32( anTrans[2], psCore->raw_data + 84 );
-        DGN_WRITE_INT32( anTrans[3], psCore->raw_data + 88 );
-        DGN_WRITE_INT32( anTrans[4], psCore->raw_data + 92 );
-        DGN_WRITE_INT32( anTrans[5], psCore->raw_data + 96 );
-        DGN_WRITE_INT32( anTrans[6], psCore->raw_data + 100 );
-        DGN_WRITE_INT32( anTrans[7], psCore->raw_data + 104 );
-        DGN_WRITE_INT32( anTrans[8], psCore->raw_data + 108 );
+        DGN_WRITE_INT32(anTrans[0], psCore->raw_data + 76);
+        DGN_WRITE_INT32(anTrans[1], psCore->raw_data + 80);
+        DGN_WRITE_INT32(anTrans[2], psCore->raw_data + 84);
+        DGN_WRITE_INT32(anTrans[3], psCore->raw_data + 88);
+        DGN_WRITE_INT32(anTrans[4], psCore->raw_data + 92);
+        DGN_WRITE_INT32(anTrans[5], psCore->raw_data + 96);
+        DGN_WRITE_INT32(anTrans[6], psCore->raw_data + 100);
+        DGN_WRITE_INT32(anTrans[7], psCore->raw_data + 104);
+        DGN_WRITE_INT32(anTrans[8], psCore->raw_data + 108);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the core raw data.                                          */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psCore );
+    /* -------------------------------------------------------------------- */
+    /*      Set the core raw data.                                          */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psCore);
 
-    return (DGNElemCore*) psCH;
+    return (DGNElemCore *)psCH;
 }
 
 /************************************************************************/
@@ -2107,34 +2072,30 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
 /*      range section of the CELL HEADER.                               */
 /************************************************************************/
 
-static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
-                           unsigned char *pabyTarget )
+static void DGNPointToInt(DGNInfo *psDGN, DGNPoint *psPoint,
+                          unsigned char *pabyTarget)
 
 {
-    double adfCT[3] = {
-        psPoint->x,
-        psPoint->y,
-        psPoint->z
-    };
+    double adfCT[3] = {psPoint->x, psPoint->y, psPoint->z};
 
     const int nIter = std::min(3, psDGN->dimension);
-    for( int i = 0; i < nIter; i++ )
+    for (int i = 0; i < nIter; i++)
     {
         GInt32 nCTI = static_cast<GInt32>(
-            std::max(-2147483647.0, std::min(2147483647.0,adfCT[i])));
+            std::max(-2147483647.0, std::min(2147483647.0, adfCT[i])));
         unsigned char abyCTI[4];
         memcpy(abyCTI, &nCTI, sizeof(GInt32));
 
 #ifdef WORDS_BIGENDIAN
-        pabyTarget[i*4+0] = abyCTI[1];
-        pabyTarget[i*4+1] = abyCTI[0];
-        pabyTarget[i*4+2] = abyCTI[3];
-        pabyTarget[i*4+3] = abyCTI[2];
+        pabyTarget[i * 4 + 0] = abyCTI[1];
+        pabyTarget[i * 4 + 1] = abyCTI[0];
+        pabyTarget[i * 4 + 2] = abyCTI[3];
+        pabyTarget[i * 4 + 3] = abyCTI[2];
 #else
-        pabyTarget[i*4+3] = abyCTI[1];
-        pabyTarget[i*4+2] = abyCTI[0];
-        pabyTarget[i*4+1] = abyCTI[3];
-        pabyTarget[i*4+0] = abyCTI[2];
+        pabyTarget[i * 4 + 3] = abyCTI[1];
+        pabyTarget[i * 4 + 2] = abyCTI[0];
+        pabyTarget[i * 4 + 1] = abyCTI[3];
+        pabyTarget[i * 4 + 0] = abyCTI[2];
 #endif
     }
 }
@@ -2174,36 +2135,35 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
  * @return the new element (DGNElemCellHeader) or NULL on failure.
  */
 
-DGNElemCore *
-DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
-                              short nClass, short *panLevels,
-                              int nNumElems, DGNElemCore **papsElems,
-                              DGNPoint *psOrigin,
-                              double dfXScale, double dfYScale,
-                              double dfRotation )
+DGNElemCore *DGNCreateCellHeaderFromGroup(DGNHandle hDGN, const char *pszName,
+                                          short nClass, short *panLevels,
+                                          int nNumElems,
+                                          DGNElemCore **papsElems,
+                                          DGNPoint *psOrigin, double dfXScale,
+                                          double dfYScale, double dfRotation)
 
 {
-    DGNInfo *psInfo = (DGNInfo *) hDGN;
+    DGNInfo *psInfo = (DGNInfo *)hDGN;
 
-    DGNLoadTCB( hDGN );
+    DGNLoadTCB(hDGN);
 
-    if( nNumElems < 1 || papsElems == nullptr )
+    if (nNumElems < 1 || papsElems == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Need at least one element to form a cell." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Need at least one element to form a cell.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect the total size, and bounds.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect the total size, and bounds.                             */
+    /* -------------------------------------------------------------------- */
     int nTotalLength = psInfo->dimension == 2 ? 27 : 43;
     // nLevel = papsElems[0]->level;x
-    DGNPoint sMin = { 0.0, 0.0, 0.0 };
-    DGNPoint sMax = { 0.0, 0.0, 0.0 };
-    unsigned char abyLevelsOccurring[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    DGNPoint sMin = {0.0, 0.0, 0.0};
+    DGNPoint sMax = {0.0, 0.0, 0.0};
+    unsigned char abyLevelsOccurring[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    for( int i = 0; i < nNumElems; i++ )
+    for (int i = 0; i < nNumElems; i++)
     {
         nTotalLength += papsElems[i]->raw_bytes / 2;
 
@@ -2213,25 +2173,25 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
         /* establish level */
         int nLevel = papsElems[i]->level;
-        nLevel = std::max(1,std::min(nLevel,64));
-        abyLevelsOccurring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
+        nLevel = std::max(1, std::min(nLevel, 64));
+        abyLevelsOccurring[(nLevel - 1) >> 3] |= (0x1 << ((nLevel - 1) & 0x7));
 
-        DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
-        DGNPoint sThisMax = { 0.0, 0.0, 0.0 };
-        DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
-        if( i == 0 )
+        DGNPoint sThisMin = {0.0, 0.0, 0.0};
+        DGNPoint sThisMax = {0.0, 0.0, 0.0};
+        DGNGetElementExtents(hDGN, papsElems[i], &sThisMin, &sThisMax);
+        if (i == 0)
         {
             sMin = sThisMin;
             sMax = sThisMax;
         }
         else
         {
-            sMin.x = std::min(sMin.x,sThisMin.x);
-            sMin.y = std::min(sMin.y,sThisMin.y);
-            sMin.z = std::min(sMin.z,sThisMin.z);
-            sMax.x = std::max(sMax.x,sThisMax.x);
-            sMax.y = std::max(sMax.y,sThisMax.y);
-            sMax.z = std::max(sMax.z,sThisMax.z);
+            sMin.x = std::min(sMin.x, sThisMin.x);
+            sMin.y = std::min(sMin.y, sThisMin.y);
+            sMin.z = std::min(sMin.z, sThisMin.z);
+            sMax.x = std::max(sMax.x, sThisMax.x);
+            sMax.y = std::max(sMax.y, sThisMax.y);
+            sMax.z = std::max(sMax.z, sThisMax.z);
         }
     }
 
@@ -2250,26 +2210,24 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     sMax.y -= psOrigin->y;
     sMax.z -= psOrigin->z;
 
-    sMin.x /= ((DGNInfo *) hDGN)->scale;
-    sMin.y /= ((DGNInfo *) hDGN)->scale;
-    sMin.z /= ((DGNInfo *) hDGN)->scale;
-    sMax.x /= ((DGNInfo *) hDGN)->scale;
-    sMax.y /= ((DGNInfo *) hDGN)->scale;
-    sMax.z /= ((DGNInfo *) hDGN)->scale;
+    sMin.x /= ((DGNInfo *)hDGN)->scale;
+    sMin.y /= ((DGNInfo *)hDGN)->scale;
+    sMin.z /= ((DGNInfo *)hDGN)->scale;
+    sMax.x /= ((DGNInfo *)hDGN)->scale;
+    sMax.y /= ((DGNInfo *)hDGN)->scale;
+    sMax.z /= ((DGNInfo *)hDGN)->scale;
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Create the corresponding cell header.                           */
-/* -------------------------------------------------------------------- */
-    if( panLevels == nullptr )
-        panLevels = (short *) abyLevelsOccurring + 0;
+    /* -------------------------------------------------------------------- */
+    /*      Create the corresponding cell header.                           */
+    /* -------------------------------------------------------------------- */
+    if (panLevels == nullptr)
+        panLevels = (short *)abyLevelsOccurring + 0;
 
-    DGNElemCore *psCH =
-        DGNCreateCellHeaderElem( hDGN, nTotalLength, pszName,
-                                 nClass, panLevels,
-                                 &sMin, &sMax, psOrigin,
-                                 dfXScale, dfYScale, dfRotation );
-    DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
+    DGNElemCore *psCH = DGNCreateCellHeaderElem(
+        hDGN, nTotalLength, pszName, nClass, panLevels, &sMin, &sMax, psOrigin,
+        dfXScale, dfYScale, dfRotation);
+    DGNWriteBounds((DGNInfo *)hDGN, psCH, &sMin, &sMax);
 
     return psCH;
 }
@@ -2297,23 +2255,23 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
  * @return -1 on failure, or the link index.
  */
 
-int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
-                  int nLinkageType, int nEntityNum, int nMSLink )
+int DGNAddMSLink(DGNHandle hDGN, DGNElemCore *psElement, int nLinkageType,
+                 int nEntityNum, int nMSLink)
 
 {
     unsigned char abyLinkage[32] = {};
     int nLinkageSize = 0;
 
-    if( nLinkageType == DGNLT_DMRS )
+    if (nLinkageType == DGNLT_DMRS)
     {
         nLinkageSize = 8;
         abyLinkage[0] = 0x00;
         abyLinkage[1] = 0x00;
-        abyLinkage[2] = (GByte) (nEntityNum % 256);
-        abyLinkage[3] = (GByte) (nEntityNum / 256);
-        abyLinkage[4] = (GByte) (nMSLink % 256);
-        abyLinkage[5] = (GByte) ((nMSLink / 256) % 256);
-        abyLinkage[6] = (GByte) (nMSLink / 65536);
+        abyLinkage[2] = (GByte)(nEntityNum % 256);
+        abyLinkage[3] = (GByte)(nEntityNum / 256);
+        abyLinkage[4] = (GByte)(nMSLink % 256);
+        abyLinkage[5] = (GByte)((nMSLink / 256) % 256);
+        abyLinkage[6] = (GByte)(nMSLink / 65536);
         abyLinkage[7] = 0x01;
     }
     else
@@ -2321,23 +2279,23 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
         nLinkageSize = 16;
         abyLinkage[0] = 0x07;
         abyLinkage[1] = 0x10;
-        abyLinkage[2] = (GByte) (nLinkageType % 256);
-        abyLinkage[3] = (GByte) (nLinkageType / 256);
-        abyLinkage[4] = (GByte) (0x81);
-        abyLinkage[5] = (GByte) (0x0F);
-        abyLinkage[6] = (GByte) (nEntityNum % 256);
-        abyLinkage[7] = (GByte) (nEntityNum / 256);
-        abyLinkage[8] = (GByte) (nMSLink % 256);
-        abyLinkage[9] = (GByte) ((nMSLink / 256) % 256);
-        abyLinkage[10] = (GByte) ((nMSLink / 65536) % 256);
-        abyLinkage[11] = (GByte) (nMSLink / 16777216);
+        abyLinkage[2] = (GByte)(nLinkageType % 256);
+        abyLinkage[3] = (GByte)(nLinkageType / 256);
+        abyLinkage[4] = (GByte)(0x81);
+        abyLinkage[5] = (GByte)(0x0F);
+        abyLinkage[6] = (GByte)(nEntityNum % 256);
+        abyLinkage[7] = (GByte)(nEntityNum / 256);
+        abyLinkage[8] = (GByte)(nMSLink % 256);
+        abyLinkage[9] = (GByte)((nMSLink / 256) % 256);
+        abyLinkage[10] = (GByte)((nMSLink / 65536) % 256);
+        abyLinkage[11] = (GByte)(nMSLink / 16777216);
         abyLinkage[12] = 0x00;
         abyLinkage[13] = 0x00;
         abyLinkage[14] = 0x00;
         abyLinkage[15] = 0x00;
     }
 
-    return DGNAddRawAttrLink( hDGN, psElement, nLinkageSize, abyLinkage );
+    return DGNAddRawAttrLink(hDGN, psElement, nLinkageSize, abyLinkage);
 }
 
 /************************************************************************/
@@ -2367,76 +2325,76 @@ int DGNAddMSLink( DGNHandle hDGN, DGNElemCore *psElement,
  * @return -1 on failure, or the link index.
  */
 
-int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
-                       int nLinkSize, unsigned char *pabyRawLinkData )
+int DGNAddRawAttrLink(DGNHandle hDGN, DGNElemCore *psElement, int nLinkSize,
+                      unsigned char *pabyRawLinkData)
 
 {
-    if( nLinkSize % 2 == 1 )
+    if (nLinkSize % 2 == 1)
         nLinkSize++;
 
-    if( psElement->size + nLinkSize > 768 )
+    if (psElement->size + nLinkSize > 768)
     {
-        CPLError( CE_Failure, CPLE_ElementTooBig,
-                  "Attempt to add %d byte linkage to element exceeds maximum"
-                  " element size.",
-                  nLinkSize );
+        CPLError(CE_Failure, CPLE_ElementTooBig,
+                 "Attempt to add %d byte linkage to element exceeds maximum"
+                 " element size.",
+                 nLinkSize);
         return -1;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Ensure the attribute linkage bit is set.                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Ensure the attribute linkage bit is set.                        */
+    /* -------------------------------------------------------------------- */
     psElement->properties |= DGNPF_ATTRIBUTES;
 
-/* -------------------------------------------------------------------- */
-/*      Append the attribute linkage to the linkage area.               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Append the attribute linkage to the linkage area.               */
+    /* -------------------------------------------------------------------- */
     psElement->attr_bytes += nLinkSize;
-    psElement->attr_data = (unsigned char *)
-        CPLRealloc( psElement->attr_data, psElement->attr_bytes );
+    psElement->attr_data = (unsigned char *)CPLRealloc(psElement->attr_data,
+                                                       psElement->attr_bytes);
 
-    memcpy( psElement->attr_data + (psElement->attr_bytes-nLinkSize),
-            pabyRawLinkData, nLinkSize );
+    memcpy(psElement->attr_data + (psElement->attr_bytes - nLinkSize),
+           pabyRawLinkData, nLinkSize);
 
-/* -------------------------------------------------------------------- */
-/*      Grow the raw data, if we have rawdata.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Grow the raw data, if we have rawdata.                          */
+    /* -------------------------------------------------------------------- */
     psElement->raw_bytes += nLinkSize;
-    psElement->raw_data = (unsigned char *)
-        CPLRealloc( psElement->raw_data, psElement->raw_bytes );
+    psElement->raw_data =
+        (unsigned char *)CPLRealloc(psElement->raw_data, psElement->raw_bytes);
 
-    memcpy( psElement->raw_data + (psElement->raw_bytes-nLinkSize),
-            pabyRawLinkData, nLinkSize );
+    memcpy(psElement->raw_data + (psElement->raw_bytes - nLinkSize),
+           pabyRawLinkData, nLinkSize);
 
-/* -------------------------------------------------------------------- */
-/*      If the element is a shape or chain complex header, then we      */
-/*      need to increase the total complex group size appropriately.    */
-/* -------------------------------------------------------------------- */
-    if( psElement->stype == DGNST_COMPLEX_HEADER ||
-        psElement->stype == DGNST_TEXT_NODE )  // compatible structures
+    /* -------------------------------------------------------------------- */
+    /*      If the element is a shape or chain complex header, then we      */
+    /*      need to increase the total complex group size appropriately.    */
+    /* -------------------------------------------------------------------- */
+    if (psElement->stype == DGNST_COMPLEX_HEADER ||
+        psElement->stype == DGNST_TEXT_NODE)  // compatible structures
     {
-        DGNElemComplexHeader *psCT = (DGNElemComplexHeader *) psElement;
+        DGNElemComplexHeader *psCT = (DGNElemComplexHeader *)psElement;
 
         psCT->totlength += (nLinkSize / 2);
 
-        psElement->raw_data[36] = (unsigned char) (psCT->totlength % 256);
-        psElement->raw_data[37] = (unsigned char) (psCT->totlength / 256);
+        psElement->raw_data[36] = (unsigned char)(psCT->totlength % 256);
+        psElement->raw_data[37] = (unsigned char)(psCT->totlength / 256);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Ensure everything is updated properly, including element        */
-/*      length and properties.                                          */
-/* -------------------------------------------------------------------- */
-    DGNUpdateElemCoreExtended( hDGN, psElement );
+    /* -------------------------------------------------------------------- */
+    /*      Ensure everything is updated properly, including element        */
+    /*      length and properties.                                          */
+    /* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended(hDGN, psElement);
 
-/* -------------------------------------------------------------------- */
-/*      Figure out what the linkage index is.                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Figure out what the linkage index is.                           */
+    /* -------------------------------------------------------------------- */
     int iLinkage = 0;  // Used after for.
-    for( ; ; iLinkage++ )
+    for (;; iLinkage++)
     {
-        if( DGNGetLinkage( hDGN, psElement, iLinkage, nullptr, nullptr, nullptr, nullptr )
-            == nullptr )
+        if (DGNGetLinkage(hDGN, psElement, iLinkage, nullptr, nullptr, nullptr,
+                          nullptr) == nullptr)
             break;
     }
 
@@ -2462,16 +2420,15 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
  * @return -1 on failure, or the link index.
  */
 
-int DGNAddShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElement,
-                          int nColor )
+int DGNAddShapeFillInfo(DGNHandle hDGN, DGNElemCore *psElement, int nColor)
 
 {
-    unsigned char abyFillInfo[16] =
-    { 0x07, 0x10, 0x41, 0x00, 0x02, 0x08, 0x01, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    unsigned char abyFillInfo[16] = {0x07, 0x10, 0x41, 0x00, 0x02, 0x08,
+                                     0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x00, 0x00, 0x00};
 
-    abyFillInfo[8] = (unsigned char) nColor;
+    abyFillInfo[8] = (unsigned char)nColor;
 
     // coverity[overrun-buffer-arg]
-    return DGNAddRawAttrLink( hDGN, psElement, 16, abyFillInfo );
+    return DGNAddRawAttrLink(hDGN, psElement, 16, abyFillInfo);
 }

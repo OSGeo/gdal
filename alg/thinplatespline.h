@@ -50,7 +50,7 @@ typedef enum
     VIZ_GEOREF_SPLINE_POINT_WAS_DELETED
 } vizGeorefInterType;
 
-//#define VIZ_GEOREF_SPLINE_MAX_POINTS 40
+// #define VIZ_GEOREF_SPLINE_MAX_POINTS 40
 #define VIZGEOREF_MAX_VARS 2
 
 class VizGeorefSpline2D
@@ -58,29 +58,18 @@ class VizGeorefSpline2D
     bool grow_points();
 
   public:
-
-    explicit VizGeorefSpline2D(int nof_vars = 1) :
-        type(VIZ_GEOREF_SPLINE_ZERO_POINTS),
-        _nof_vars(nof_vars),
-        _nof_points(0),
-        _max_nof_points(0),
-        _nof_eqs(0),
+    explicit VizGeorefSpline2D(int nof_vars = 1)
+        : type(VIZ_GEOREF_SPLINE_ZERO_POINTS), _nof_vars(nof_vars),
+          _nof_points(0), _max_nof_points(0), _nof_eqs(0),
 #if 0
         _tx(0.0),
         _ty(0.0),
         _ta(10.0),
 #endif
-        _dx(0.0),
-        _dy(0.0),
-        x(nullptr),
-        y(nullptr),
-        u(nullptr),
-        unused(nullptr),
-        index(nullptr),
-        x_mean(0),
-        y_mean(0)
+          _dx(0.0), _dy(0.0), x(nullptr), y(nullptr), u(nullptr),
+          unused(nullptr), index(nullptr), x_mean(0), y_mean(0)
     {
-        for( int i = 0; i < VIZGEOREF_MAX_VARS; i++ )
+        for (int i = 0; i < VIZGEOREF_MAX_VARS; i++)
         {
             rhs[i] = nullptr;
             coef[i] = nullptr;
@@ -89,16 +78,17 @@ class VizGeorefSpline2D
         grow_points();
     }
 
-    ~VizGeorefSpline2D() {
-        CPLFree( x );
-        CPLFree( y );
-        CPLFree( u );
-        CPLFree( unused );
-        CPLFree( index );
-        for( int i = 0; i < _nof_vars; i++ )
+    ~VizGeorefSpline2D()
+    {
+        CPLFree(x);
+        CPLFree(y);
+        CPLFree(u);
+        CPLFree(unused);
+        CPLFree(index);
+        for (int i = 0; i < _nof_vars; i++)
         {
-            CPLFree( rhs[i] );
-            CPLFree( coef[i] );
+            CPLFree(rhs[i]);
+            CPLFree(coef[i]);
         }
     }
 
@@ -150,8 +140,8 @@ class VizGeorefSpline2D
     }
 #endif
 
-    bool add_point( const double Px, const double Py, const double *Pvars );
-    int get_point( const double Px, const double Py, double *Pvars );
+    bool add_point(const double Px, const double Py, const double *Pvars);
+    int get_point(const double Px, const double Py, double *Pvars);
 #if 0
     int delete_point(const double Px, const double Py );
     bool get_xy(int index, double& x, double& y);
@@ -161,7 +151,6 @@ class VizGeorefSpline2D
     int solve(void);
 
   private:
-
     vizGeorefInterType type;
 
     const int _nof_vars;
@@ -177,20 +166,21 @@ class VizGeorefSpline2D
 
     double _dx, _dy;
 
-    double *x; // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
-    double *y; // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
+    double *x;  // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
+    double *y;  // [VIZ_GEOREF_SPLINE_MAX_POINTS+3];
 
-//    double rhs[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
-//    double coef[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
+    //    double rhs[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
+    //    double coef[VIZ_GEOREF_SPLINE_MAX_POINTS+3][VIZGEOREF_MAX_VARS];
     double *rhs[VIZGEOREF_MAX_VARS];
     double *coef[VIZGEOREF_MAX_VARS];
 
-    double *u; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
-    int *unused; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
-    int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
+    double *u;    // [VIZ_GEOREF_SPLINE_MAX_POINTS];
+    int *unused;  // [VIZ_GEOREF_SPLINE_MAX_POINTS];
+    int *index;   // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 
     double x_mean;
     double y_mean;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D)
 };

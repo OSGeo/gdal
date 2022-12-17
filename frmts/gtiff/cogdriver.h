@@ -34,16 +34,12 @@
 
 bool COGHasWarpingOptions(CSLConstList papszOptions);
 
-bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
-                                  const char * const* papszOptions,
-                                  CPLString& osResampling,
-                                  CPLString& osTargetSRS,
-                                  int& nXSize,
-                                  int& nYSize,
-                                  double& dfMinX,
-                                  double& dfMinY,
-                                  double& dfMaxX,
-                                  double& dfMaxY);
-void COGRemoveWarpingOptions(CPLStringList& aosOptions);
+bool COGGetWarpingCharacteristics(GDALDataset *poSrcDS,
+                                  const char *const *papszOptions,
+                                  CPLString &osResampling,
+                                  CPLString &osTargetSRS, int &nXSize,
+                                  int &nYSize, double &dfMinX, double &dfMinY,
+                                  double &dfMaxX, double &dfMaxY);
+void COGRemoveWarpingOptions(CPLStringList &aosOptions);
 
-#endif // COGDRIVER_H_INCLUDED
+#endif  // COGDRIVER_H_INCLUDED

@@ -52,11 +52,11 @@ CPL_C_START
  * In case of failure due to insufficient space, it will be updated to the size
  * needed (if known), or 0 (if unknown)</li>
  * <li>output_data == NULL and output_size != NULL. *output_size will be updated
- * with the minimum size the output buffer should be (if known), or 0 (if unknown).</li>
- * <li>output_data != NULL and *output_data == NULL and output_size != NULL.
- * *output_data will be allocated using VSIMalloc(), and should be freed by the
- * caller with VSIFree(). *output_size will be updated to the size of the output
- * buffer.</li>
+ * with the minimum size the output buffer should be (if known), or 0 (if
+ * unknown).</li> <li>output_data != NULL and *output_data == NULL and
+ * output_size != NULL. *output_data will be allocated using VSIMalloc(), and
+ * should be freed by the caller with VSIFree(). *output_size will be updated to
+ * the size of the output buffer.</li>
  * </ul>
  *
  * @param input_data Input data. Should not be NULL.
@@ -67,12 +67,10 @@ CPL_C_START
  * @param compressor_user_data User data provided at registration time.
  * @return true in case of success.
  */
-typedef bool (*CPLCompressionFunc)(const void* input_data,
-                                   size_t input_size,
-                                   void** output_data,
-                                   size_t* output_size,
+typedef bool (*CPLCompressionFunc)(const void *input_data, size_t input_size,
+                                   void **output_data, size_t *output_size,
                                    CSLConstList options,
-                                   void* compressor_user_data);
+                                   void *compressor_user_data);
 
 /** Type of compressor */
 typedef enum
@@ -87,11 +85,11 @@ typedef enum
 typedef struct
 {
     /** Structure version. Should be set to 1 */
-    int                 nStructVersion;
+    int nStructVersion;
     /** Id of the compressor/decompressor. Should NOT be NULL. */
-    const char*         pszId;
+    const char *pszId;
     /** Compressor type */
-    CPLCompressorType   eType;
+    CPLCompressorType eType;
     /** Metadata, as a NULL terminated list of strings. Or NULL.
      * The OPTIONS metadata key is reserved for compressors/decompressors to
      * provide the available options as a XML string of the form
@@ -99,24 +97,24 @@ typedef struct
      *   &lt;Option name='' type='' description='' default=''/&gt;
      * &lt;/Options&gt;
      */
-    CSLConstList        papszMetadata;
+    CSLConstList papszMetadata;
     /** Compressor/decompressor callback. Should NOT be NULL. */
-    CPLCompressionFunc  pfnFunc;
+    CPLCompressionFunc pfnFunc;
     /** User data to provide to the callback. May be NULL. */
-    void*               user_data;
+    void *user_data;
 } CPLCompressor;
 
-bool CPL_DLL CPLRegisterCompressor(const CPLCompressor* compressor);
+bool CPL_DLL CPLRegisterCompressor(const CPLCompressor *compressor);
 
-bool CPL_DLL CPLRegisterDecompressor(const CPLCompressor* decompressor);
+bool CPL_DLL CPLRegisterDecompressor(const CPLCompressor *decompressor);
 
-char CPL_DLL ** CPLGetCompressors(void);
+char CPL_DLL **CPLGetCompressors(void);
 
-char CPL_DLL ** CPLGetDecompressors(void);
+char CPL_DLL **CPLGetDecompressors(void);
 
-const CPLCompressor CPL_DLL *CPLGetCompressor(const char* pszId);
+const CPLCompressor CPL_DLL *CPLGetCompressor(const char *pszId);
 
-const CPLCompressor CPL_DLL *CPLGetDecompressor(const char* pszId);
+const CPLCompressor CPL_DLL *CPLGetDecompressor(const char *pszId);
 
 /*! @cond Doxygen_Suppress */
 void CPL_DLL CPLDestroyCompressorRegistry(void);

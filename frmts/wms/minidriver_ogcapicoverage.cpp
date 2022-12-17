@@ -28,16 +28,22 @@
 #include "wmsdriver.h"
 #include "minidriver_ogcapicoverage.h"
 
-
-CPLErr WMSMiniDriver_OGCAPICoverage::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr
+WMSMiniDriver_OGCAPICoverage::Initialize(CPLXMLNode *config,
+                                         CPL_UNUSED char **papszOpenOptions)
+{
     CPLErr ret = CE_None;
 
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
+        if (base_url[0] != '\0')
+        {
             m_base_url = base_url;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, OGCAPICoverage mini-driver: ServerURL missing.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALWMS, OGCAPICoverage mini-driver: ServerURL missing.");
             ret = CE_Failure;
         }
     }
@@ -45,9 +51,9 @@ CPLErr WMSMiniDriver_OGCAPICoverage::Initialize(CPLXMLNode *config, CPL_UNUSED c
     return ret;
 }
 
-CPLErr WMSMiniDriver_OGCAPICoverage::TiledImageRequest(WMSHTTPRequest &request,
-                                            const GDALWMSImageRequestInfo &iri,
-                                            const GDALWMSTiledImageRequestInfo &)
+CPLErr WMSMiniDriver_OGCAPICoverage::TiledImageRequest(
+    WMSHTTPRequest &request, const GDALWMSImageRequestInfo &iri,
+    const GDALWMSTiledImageRequestInfo &)
 {
     CPLString &url = request.URL;
 
@@ -59,10 +65,13 @@ CPLErr WMSMiniDriver_OGCAPICoverage::TiledImageRequest(WMSHTTPRequest &request,
     URLSearchAndReplace(&url, "${miny}", "%.18g", iri.m_y1);
     URLSearchAndReplace(&url, "${maxx}", "%.18g", iri.m_x1);
     URLSearchAndReplace(&url, "${maxy}", "%.18g", iri.m_y0);
-    /*URLSearchAndReplace(&url, "${minx_centerpixel}", "%.18g", iri.m_x0 + 0.5 * (iri.m_x1 - iri.m_x0) / iri.m_sx);
-    URLSearchAndReplace(&url, "${miny_centerpixel}", "%.18g", iri.m_y1 - 0.5 * (iri.m_y1 - iri.m_y0) / iri.m_sy);
-    URLSearchAndReplace(&url, "${maxx_centerpixel}", "%.18g", iri.m_x1 - 0.5 * (iri.m_x1 - iri.m_x0) / iri.m_sx);
-    URLSearchAndReplace(&url, "${maxy_centerpixel}", "%.18g", iri.m_y0 + 0.5 * (iri.m_y1 - iri.m_y0) / iri.m_sy);*/
+    /*URLSearchAndReplace(&url, "${minx_centerpixel}", "%.18g", iri.m_x0 + 0.5 *
+    (iri.m_x1 - iri.m_x0) / iri.m_sx); URLSearchAndReplace(&url,
+    "${miny_centerpixel}", "%.18g", iri.m_y1 - 0.5 * (iri.m_y1 - iri.m_y0) /
+    iri.m_sy); URLSearchAndReplace(&url, "${maxx_centerpixel}", "%.18g",
+    iri.m_x1 - 0.5 * (iri.m_x1 - iri.m_x0) / iri.m_sx);
+    URLSearchAndReplace(&url, "${maxy_centerpixel}", "%.18g", iri.m_y0 + 0.5 *
+    (iri.m_y1 - iri.m_y0) / iri.m_sy);*/
 
     return CE_None;
 }

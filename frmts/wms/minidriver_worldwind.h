@@ -28,14 +28,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-class WMSMiniDriver_WorldWind : public WMSMiniDriver {
-public:
+class WMSMiniDriver_WorldWind : public WMSMiniDriver
+{
+  public:
     WMSMiniDriver_WorldWind();
     virtual ~WMSMiniDriver_WorldWind();
 
-public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
-                                     const GDALWMSImageRequestInfo &iri,
-                                     const GDALWMSTiledImageRequestInfo &tiri) override;
+  public:
+    virtual CPLErr Initialize(CPLXMLNode *config,
+                              char **papszOpenOptions) override;
+    virtual CPLErr
+    TiledImageRequest(WMSHTTPRequest &request,
+                      const GDALWMSImageRequestInfo &iri,
+                      const GDALWMSTiledImageRequestInfo &tiri) override;
 };

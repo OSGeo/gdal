@@ -40,9 +40,9 @@
 #include <string>
 
 #define shUNDEF -32767
-#define iUNDEF  -2147483647
+#define iUNDEF -2147483647
 #define flUNDEF ((float)-1e38)
-#define rUNDEF  ((double)-1e308)
+#define rUNDEF ((double)-1e308)
 
 namespace GDAL
 {
@@ -58,21 +58,39 @@ enum ilwisStoreType
 
 class ValueRange
 {
-public:
+  public:
     ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
-    explicit ValueRange(const std::string& str);
+    explicit ValueRange(const std::string &str);
     std::string ToString() const;
-    ilwisStoreType get_NeededStoreType() const { return st; }
-    double get_rLo() const { return _rLo; }
-    double get_rHi() const { return _rHi; }
-    double get_rStep() const { return _rStep; }
-    double get_rRaw0() const { return _r0; }
-    int get_iDec() const { return _iDec; }
+    ilwisStoreType get_NeededStoreType() const
+    {
+        return st;
+    }
+    double get_rLo() const
+    {
+        return _rLo;
+    }
+    double get_rHi() const
+    {
+        return _rHi;
+    }
+    double get_rStep() const
+    {
+        return _rStep;
+    }
+    double get_rRaw0() const
+    {
+        return _r0;
+    }
+    int get_iDec() const
+    {
+        return _iDec;
+    }
     double rValue(int raw) const;
     int iRaw(double value) const;
 
-private:
+  private:
     void init(double rRaw0);
     void init();
     double _rLo, _rHi;
@@ -90,7 +108,9 @@ private:
 
 struct ILWISInfo
 {
-    ILWISInfo() : bUseValueRange(false), vr(0, 0), stStoreType(stByte) {}
+    ILWISInfo() : bUseValueRange(false), vr(0, 0), stStoreType(stByte)
+    {
+    }
     bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;
@@ -103,72 +123,72 @@ struct ILWISInfo
 
 class ILWISDataset;
 
-class ILWISRasterBand final: public GDALPamRasterBand
+class ILWISRasterBand final : public GDALPamRasterBand
 {
     friend class ILWISDataset;
-public:
+
+  public:
     VSILFILE *fpRaw;
     ILWISInfo psInfo;
     int nSizePerPixel;
 
-    ILWISRasterBand( ILWISDataset *, int, const std::string& sBandNameIn );
+    ILWISRasterBand(ILWISDataset *, int, const std::string &sBandNameIn);
     virtual ~ILWISRasterBand();
-    CPLErr GetILWISInfo(const std::string& pszFileName);
-    void ILWISOpen( const std::string& pszFilename);
+    CPLErr GetILWISInfo(const std::string &pszFileName);
+    void ILWISOpen(const std::string &pszFilename);
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
-    virtual double GetNoDataValue( int *pbSuccess ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
+    virtual double GetNoDataValue(int *pbSuccess) override;
 
-private:
-    void FillWithNoData(void * pImage);
+  private:
+    void FillWithNoData(void *pImage);
     void SetValue(void *pImage, int i, double rV);
     double GetValue(void *pImage, int i);
-    void ReadValueDomainProperties(const std::string& pszFileName);
+    void ReadValueDomainProperties(const std::string &pszFileName);
 };
 
 /************************************************************************/
 /*                         ILWISDataset                                 */
 /************************************************************************/
-class ILWISDataset final: public GDALPamDataset
+class ILWISDataset final : public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;
     std::string pszIlwFileName;
     OGRSpatialReference m_oSRS{};
     double adfGeoTransform[6];
-    int    bGeoDirty;
-    int    bNewDataset;            /* product of Create() */
-    std::string pszFileType; //indicating the input dataset: Map/MapList
-    CPLErr ReadProjection( const std::string& csyFileName);
+    int bGeoDirty;
+    int bNewDataset;          /* product of Create() */
+    std::string pszFileType;  // indicating the input dataset: Map/MapList
+    CPLErr ReadProjection(const std::string &csyFileName);
     CPLErr WriteProjection();
     CPLErr WriteGeoReference();
-    void   CollectTransformCoef( std::string &pszRefFile );
+    void CollectTransformCoef(std::string &pszRefFile);
 
-public:
+  public:
     ILWISDataset();
     virtual ~ILWISDataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 
-    static GDALDataset *CreateCopy( const char * pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char ** papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void * pProgressData );
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 
-    static GDALDataset *Create(const char* pszFilename,
-                               int nXSize, int nYSize,
+    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char** papszParamList);
+                               char **papszParamList);
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr  SetGeoTransform( double * ) override;
+    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr SetGeoTransform(double *) override;
 
-    const OGRSpatialReference* GetSpatialRef() const override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual void   FlushCache(bool bAtClosing) override;
+    virtual void FlushCache(bool bAtClosing) override;
 };
 
 // IniFile.h: interface for the IniFile class.
@@ -177,26 +197,27 @@ public:
 
 class CompareAsNum
 {
-public:
-    bool operator() (const std::string&, const std::string&) const;
+  public:
+    bool operator()(const std::string &, const std::string &) const;
 };
 
-typedef std::map<std::string, std::string>          SectionEntries;
-typedef std::map<std::string, SectionEntries*> Sections;
+typedef std::map<std::string, std::string> SectionEntries;
+typedef std::map<std::string, SectionEntries *> Sections;
 
 class IniFile
 {
-public:
-    explicit IniFile(const std::string& filename);
+  public:
+    explicit IniFile(const std::string &filename);
     virtual ~IniFile();
 
-    void SetKeyValue(const std::string& section, const std::string& key, const std::string& value);
-    std::string GetKeyValue(const std::string& section, const std::string& key);
+    void SetKeyValue(const std::string &section, const std::string &key,
+                     const std::string &value);
+    std::string GetKeyValue(const std::string &section, const std::string &key);
 
-    void RemoveKeyValue(const std::string& section, const std::string& key);
-    void RemoveSection(const std::string& section);
+    void RemoveKeyValue(const std::string &section, const std::string &key);
+    void RemoveSection(const std::string &section);
 
-private:
+  private:
     std::string filename;
     Sections sections;
     bool bChanged;
@@ -205,11 +226,15 @@ private:
     void Store();
 };
 
-std::string ReadElement(const std::string& section, const std::string& entry, const std::string& filename);
-bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, const std::string& sValue);
-bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, int nValue);
-bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, double dValue);
+std::string ReadElement(const std::string &section, const std::string &entry,
+                        const std::string &filename);
+bool WriteElement(const std::string &sSection, const std::string &sEntry,
+                  const std::string &fn, const std::string &sValue);
+bool WriteElement(const std::string &sSection, const std::string &sEntry,
+                  const std::string &fn, int nValue);
+bool WriteElement(const std::string &sSection, const std::string &sEntry,
+                  const std::string &fn, double dValue);
 
-} // namespace GDAL
+}  // namespace GDAL
 
-#endif // ILWISDATASET_H_INCLUDED
+#endif  // ILWISDATASET_H_INCLUDED

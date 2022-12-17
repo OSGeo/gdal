@@ -31,58 +31,60 @@
 #include <algorithm>
 #include <string.h>
 
-
 /* Various offsets, in bytes */
 // Commented out the unused defines.
 // #define BIB_OFFSET   0  /* Bytes in burst, valid only for ScanSAR */
 // #define RSRI_OFFSET  4  /* Range Sample Relative Index */
-constexpr int RS_OFFSET = 8;  /* Range Samples, the length of a range line */
-// #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimuth column */
-// #define BI_OFFSET    16 /* Burst Index, the index number of the burst */
-constexpr int RTNB_OFFSET = 20;  /* Rangeline total number of bytes, incl. annot. */
+constexpr int RS_OFFSET = 8; /* Range Samples, the length of a range line */
+// #define AS_OFFSET    12 /* Azimuth Samples, the length of an azimuth column
+// */ #define BI_OFFSET    16 /* Burst Index, the index number of the burst */
+constexpr int RTNB_OFFSET =
+    20; /* Rangeline total number of bytes, incl. annot. */
 // #define TNL_OFFSET   24 /* Total Number of Lines */
-constexpr int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
+constexpr int MAGIC1_OFFSET = 28;         /* Magic number 1: 0x43534152 */
 constexpr int VERSION_NUMBER_OFFSET = 32; /* 1 for COSAR, 2 for COSSC */
 
-// #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test */
+// #define FILLER_MAGIC 0x7F7F7F7F  /* Filler value, we'll use this for a test
+// */
 
-class COSARDataset final: public GDALDataset
+class COSARDataset final : public GDALDataset
 {
-        friend class COSARRasterBand;
-        VSILFILE *m_fp = nullptr;
-        uint32_t  m_nVersion = 0;
-public:
-        COSARDataset() = default;
-        ~COSARDataset();
+    friend class COSARRasterBand;
+    VSILFILE *m_fp = nullptr;
+    uint32_t m_nVersion = 0;
 
-        static GDALDataset *Open( GDALOpenInfo * );
+  public:
+    COSARDataset() = default;
+    ~COSARDataset();
+
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
-class COSARRasterBand final: public GDALRasterBand
+class COSARRasterBand final : public GDALRasterBand
 {
     uint32_t nRTNB;
 
   public:
-    COSARRasterBand( COSARDataset *, uint32_t nRTNB );
-    CPLErr IReadBlock( int, int, void * ) override;
+    COSARRasterBand(COSARDataset *, uint32_t nRTNB);
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /*****************************************************************************
  * COSARRasterBand Implementation
  *****************************************************************************/
 
-COSARRasterBand::COSARRasterBand( COSARDataset *pDS, uint32_t nRTNBIn ) :
-    nRTNB(nRTNBIn)
+COSARRasterBand::COSARRasterBand(COSARDataset *pDS, uint32_t nRTNBIn)
+    : nRTNB(nRTNBIn)
 {
-        COSARDataset *pCDS = cpl::down_cast<COSARDataset *>(pDS);
-        nBlockXSize = pDS->GetRasterXSize();
-        nBlockYSize = 1;
-        eDataType = pCDS->m_nVersion == 1 ? GDT_CInt16 : GDT_CFloat32;
+    COSARDataset *pCDS = cpl::down_cast<COSARDataset *>(pDS);
+    nBlockXSize = pDS->GetRasterXSize();
+    nBlockYSize = 1;
+    eDataType = pCDS->m_nVersion == 1 ? GDT_CInt16 : GDT_CFloat32;
 }
 
-CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/,
-                                   int nBlockYOff,
-                                   void *pImage) {
+CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
+                                   void *pImage)
+{
 
     COSARDataset *pCDS = cpl::down_cast<COSARDataset *>(poDS);
     constexpr uint32_t ITEM_SIZE = 2 * sizeof(int16_t);
@@ -94,22 +96,23 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/,
      *    of file
      */
 
-    VSIFSeekL(pCDS->m_fp, static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + ITEM_SIZE), SEEK_SET);
+    VSIFSeekL(pCDS->m_fp,
+              static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + ITEM_SIZE),
+              SEEK_SET);
 
     /* Read RSFV and RSLV (TX-GS-DD-3307) */
-    uint32_t nRSFV = 0; // Range Sample First Valid (starting at 1)
-    uint32_t nRSLV = 0; // Range Sample Last Valid (starting at 1)
-    VSIFReadL(&nRSFV,1,sizeof(nRSFV),pCDS->m_fp);
-    VSIFReadL(&nRSLV,1,sizeof(nRSLV),pCDS->m_fp);
+    uint32_t nRSFV = 0;  // Range Sample First Valid (starting at 1)
+    uint32_t nRSLV = 0;  // Range Sample Last Valid (starting at 1)
+    VSIFReadL(&nRSFV, 1, sizeof(nRSFV), pCDS->m_fp);
+    VSIFReadL(&nRSLV, 1, sizeof(nRSLV), pCDS->m_fp);
 
     nRSFV = CPL_MSBWORD32(nRSFV);
     nRSLV = CPL_MSBWORD32(nRSLV);
 
-
-    if (nRSLV < nRSFV || nRSFV == 0 || nRSLV == 0
-        || nRSFV - 1 >= static_cast<uint32_t>(nBlockXSize)
-        || nRSLV - 1 >= static_cast<uint32_t>(nBlockXSize)
-        || nRSFV >= this->nRTNB || nRSLV > this->nRTNB)
+    if (nRSLV < nRSFV || nRSFV == 0 || nRSLV == 0 ||
+        nRSFV - 1 >= static_cast<uint32_t>(nBlockXSize) ||
+        nRSLV - 1 >= static_cast<uint32_t>(nBlockXSize) ||
+        nRSFV >= this->nRTNB || nRSLV > this->nRTNB)
     {
         /* throw an error */
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -123,23 +126,29 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/,
     /* properly account for validity mask */
     if (nRSFV > 1)
     {
-        VSIFSeekL(pCDS->m_fp, static_cast<vsi_l_offset>(nRTNB)*(nBlockYOff+ITEM_SIZE)+(nRSFV+1)*ITEM_SIZE, SEEK_SET);
+        VSIFSeekL(pCDS->m_fp,
+                  static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + ITEM_SIZE) +
+                      (nRSFV + 1) * ITEM_SIZE,
+                  SEEK_SET);
     }
 
     /* Read the valid samples: */
-    VSIFReadL(((char *)pImage)+(static_cast<size_t>(nRSFV - 1)*ITEM_SIZE),1,static_cast<size_t>(nRSLV - nRSFV + 1)*ITEM_SIZE,pCDS->m_fp);
+    VSIFReadL(((char *)pImage) + (static_cast<size_t>(nRSFV - 1) * ITEM_SIZE),
+              1, static_cast<size_t>(nRSLV - nRSFV + 1) * ITEM_SIZE,
+              pCDS->m_fp);
 
 #ifdef CPL_LSB
-    GDALSwapWords( pImage, sizeof(int16_t), nBlockXSize * 2, sizeof(int16_t) );
+    GDALSwapWords(pImage, sizeof(int16_t), nBlockXSize * 2, sizeof(int16_t));
 #endif
 
-    if( pCDS->m_nVersion == 2 )
+    if (pCDS->m_nVersion == 2)
     {
         // Convert from half-float to float32
         // Iterate starting the end to avoid overwriting first values
-        for( int i = nBlockXSize * 2 - 1; i >= 0; --i )
+        for (int i = nBlockXSize * 2 - 1; i >= 0; --i)
         {
-            static_cast<GUInt32*>(pImage)[i] = CPLHalfToFloat(static_cast<GUInt16*>(pImage)[i]);
+            static_cast<GUInt32 *>(pImage)[i] =
+                CPLHalfToFloat(static_cast<GUInt16 *>(pImage)[i]);
         }
     }
 
@@ -152,35 +161,38 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/,
 
 COSARDataset::~COSARDataset()
 {
-    if( m_fp != nullptr )
+    if (m_fp != nullptr)
     {
         VSIFCloseL(m_fp);
     }
 }
 
-GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
+GDALDataset *COSARDataset::Open(GDALOpenInfo *pOpenInfo)
+{
 
     /* Check if we're actually a COSAR data set. */
-    if( pOpenInfo->nHeaderBytes < VERSION_NUMBER_OFFSET + 4 || pOpenInfo->fpL == nullptr)
+    if (pOpenInfo->nHeaderBytes < VERSION_NUMBER_OFFSET + 4 ||
+        pOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR"))
+    if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader + MAGIC1_OFFSET, "CSAR"))
         return nullptr;
 
     uint32_t nVersionMSB;
-    memcpy(&nVersionMSB, pOpenInfo->pabyHeader + VERSION_NUMBER_OFFSET, sizeof(uint32_t));
+    memcpy(&nVersionMSB, pOpenInfo->pabyHeader + VERSION_NUMBER_OFFSET,
+           sizeof(uint32_t));
     const uint32_t nVersion = CPL_MSBWORD32(nVersionMSB);
-    if( nVersion != 1 && nVersion != 2 )
+    if (nVersion != 1 && nVersion != 2)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( pOpenInfo->eAccess == GA_Update )
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the requested access is supported.                      */
+    /* -------------------------------------------------------------------- */
+    if (pOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The COSAR driver does not support update access to existing"
-                  " datasets.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The COSAR driver does not support update access to existing"
+                 " datasets.\n");
         return nullptr;
     }
 
@@ -200,7 +212,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     VSIFReadL(&nYSize, 1, sizeof(nYSize), pDS->m_fp);
     pDS->nRasterYSize = CPL_MSBWORD32(nYSize);
 
-    if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
+    if (!GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize))
     {
         delete pDS;
         return nullptr;
@@ -220,17 +232,16 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 void GDALRegister_COSAR()
 
 {
-    if( GDALGetDriverByName( "cosar" ) != nullptr )
+    if (GDALGetDriverByName("cosar") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("COSAR");
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "COSAR Annotated Binary Matrix (TerraSAR-X)");
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drivers/raster/cosar.html");
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "COSAR Annotated Binary Matrix (TerraSAR-X)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/cosar.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->pfnOpen = COSARDataset::Open;
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

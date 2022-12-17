@@ -34,7 +34,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-
 /*!
   \brief VFKFeatureSQLite constructor (from DB)
 
@@ -42,11 +41,11 @@
 
   \param poDataBlock pointer to related IVFKDataBlock
 */
-VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock ) :
-    IVFKFeature(poDataBlock),
-    // Starts at 1.
-    m_iRowId(static_cast<int>(poDataBlock->GetFeatureCount() + 1)),
-    m_hStmt(nullptr)
+VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock)
+    : IVFKFeature(poDataBlock),
+      // Starts at 1.
+      m_iRowId(static_cast<int>(poDataBlock->GetFeatureCount() + 1)),
+      m_hStmt(nullptr)
 {
     // Set FID from DB.
     SetFIDFromDB();  // -> m_nFID
@@ -59,11 +58,9 @@ VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock ) :
   \param iRowId feature DB rowid (starts at 1)
   \param nFID feature id
 */
-VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock, int iRowId,
-                                    GIntBig nFID) :
-    IVFKFeature(poDataBlock),
-    m_iRowId(iRowId),
-    m_hStmt(nullptr)
+VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId,
+                                   GIntBig nFID)
+    : IVFKFeature(poDataBlock), m_iRowId(iRowId), m_hStmt(nullptr)
 {
     m_nFID = nFID;
 }
@@ -73,10 +70,10 @@ VFKFeatureSQLite::VFKFeatureSQLite( IVFKDataBlock *poDataBlock, int iRowId,
 */
 OGRErr VFKFeatureSQLite::SetFIDFromDB()
 {
-    CPLString   osSQL;
+    CPLString osSQL;
 
-    osSQL.Printf("SELECT %s FROM %s WHERE rowid = %d",
-                 FID_COLUMN, m_poDataBlock->GetName(), m_iRowId);
+    osSQL.Printf("SELECT %s FROM %s WHERE rowid = %d", FID_COLUMN,
+                 m_poDataBlock->GetName(), m_iRowId);
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
         return OGRERR_FAILURE;
 
@@ -115,28 +112,31 @@ void VFKFeatureSQLite::FinalizeSQL()
 */
 OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 {
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
-    sqlite3  *poDB = poReader->m_poDB;
+    VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poDataBlock->GetReader();
+    sqlite3 *poDB = poReader->m_poDB;
 
-    int rc = sqlite3_prepare_v2(poDB, pszSQLCommand, -1,
-                         &m_hStmt, nullptr);
-    if (rc != SQLITE_OK) {
+    int rc = sqlite3_prepare_v2(poDB, pszSQLCommand, -1, &m_hStmt, nullptr);
+    if (rc != SQLITE_OK)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
 
-        if(m_hStmt != nullptr) {
+        if (m_hStmt != nullptr)
+        {
             FinalizeSQL();
         }
         return OGRERR_FAILURE;
     }
     rc = sqlite3_step(m_hStmt);
-    if (rc != SQLITE_ROW) {
+    if (rc != SQLITE_ROW)
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
-                 pszSQLCommand, sqlite3_errmsg(poDB));
+                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", pszSQLCommand,
+                 sqlite3_errmsg(poDB));
 
-        if (m_hStmt) {
+        if (m_hStmt)
+        {
             FinalizeSQL();
         }
 
@@ -151,12 +151,12 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 
   Read VFK feature from VFK file and insert it into DB
 */
-VFKFeatureSQLite::VFKFeatureSQLite( const VFKFeature *poVFKFeature ) :
-    IVFKFeature(poVFKFeature->m_poDataBlock),
-    // Starts at 1.
-    m_iRowId(static_cast<int>(
-        poVFKFeature->m_poDataBlock->GetFeatureCount() + 1)),
-    m_hStmt(nullptr)
+VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature)
+    : IVFKFeature(poVFKFeature->m_poDataBlock),
+      // Starts at 1.
+      m_iRowId(
+          static_cast<int>(poVFKFeature->m_poDataBlock->GetFeatureCount() + 1)),
+      m_hStmt(nullptr)
 {
     m_nFID = poVFKFeature->m_nFID;
 }
@@ -218,58 +218,66 @@ bool VFKFeatureSQLite::LoadGeometryPolygon()
 */
 OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {
-    sqlite3_stmt *hStmt = ((VFKDataBlockSQLite *) m_poDataBlock)->m_hStmt;
-    if ( hStmt == nullptr ) {
+    sqlite3_stmt *hStmt = ((VFKDataBlockSQLite *)m_poDataBlock)->m_hStmt;
+    if (hStmt == nullptr)
+    {
         /* random access */
-        CPLString   osSQL;
+        CPLString osSQL;
 
         osSQL.Printf("SELECT * FROM %s WHERE rowid = %d",
-                    m_poDataBlock->GetName(), m_iRowId);
+                     m_poDataBlock->GetName(), m_iRowId);
         if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
             return OGRERR_FAILURE;
 
         hStmt = m_hStmt;
     }
-    else {
+    else
+    {
         /* sequential access */
-        VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
-        if ( poReader->ExecuteSQL(hStmt) != OGRERR_NONE )
+        VFKReaderSQLite *poReader =
+            (VFKReaderSQLite *)m_poDataBlock->GetReader();
+        if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
         {
-            ((VFKDataBlockSQLite *) m_poDataBlock)->m_hStmt = nullptr;
+            ((VFKDataBlockSQLite *)m_poDataBlock)->m_hStmt = nullptr;
             return OGRERR_FAILURE;
         }
     }
 
     int nPropertyCount = m_poDataBlock->GetPropertyCount();
-    for( int iField = 0; iField < nPropertyCount; iField++ ) {
-        if (sqlite3_column_type(hStmt, iField) == SQLITE_NULL) /* skip null values */
+    for (int iField = 0; iField < nPropertyCount; iField++)
+    {
+        if (sqlite3_column_type(hStmt, iField) ==
+            SQLITE_NULL) /* skip null values */
             continue;
-        OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-        switch (fType) {
-        case OFTInteger:
-            poFeature->SetField(iField,
-                                sqlite3_column_int(hStmt, iField));
-            break;
-        case OFTInteger64:
-            poFeature->SetField(iField,
-                                sqlite3_column_int64(hStmt, iField));
-            break;
-        case OFTReal:
-            poFeature->SetField(iField,
-                                sqlite3_column_double(hStmt, iField));
-            break;
-        default:
-            poFeature->SetField(iField,
-                                (const char *) sqlite3_column_text(hStmt, iField));
-            break;
+        OGRFieldType fType =
+            poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
+        switch (fType)
+        {
+            case OFTInteger:
+                poFeature->SetField(iField, sqlite3_column_int(hStmt, iField));
+                break;
+            case OFTInteger64:
+                poFeature->SetField(iField,
+                                    sqlite3_column_int64(hStmt, iField));
+                break;
+            case OFTReal:
+                poFeature->SetField(iField,
+                                    sqlite3_column_double(hStmt, iField));
+                break;
+            default:
+                poFeature->SetField(
+                    iField, (const char *)sqlite3_column_text(hStmt, iField));
+                break;
         }
     }
 
-    if ( m_poDataBlock->GetReader()->HasFileField() ) {
+    if (m_poDataBlock->GetReader()->HasFileField())
+    {
         /* open option FILE_FIELD=YES specified, append extra
          * attribute */
-        poFeature->SetField( nPropertyCount,
-                             CPLGetFilename(m_poDataBlock->GetReader()->GetFilename()) );
+        poFeature->SetField(
+            nPropertyCount,
+            CPLGetFilename(m_poDataBlock->GetReader()->GetFilename()));
     }
 
     FinalizeSQL();

@@ -37,33 +37,31 @@
 #include <limits>
 #include <vector>
 
-namespace OGRHANA {
+namespace OGRHANA
+{
 
-constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
+constexpr const char *ARRAY_VALUES_DELIMITER = "^%^";
 
-const char* SkipLeadingSpaces(const char* value);
-CPLString JoinStrings(
-    const std::vector<CPLString>& strs,
-    const char* delimiter,
-    CPLString (*decorator)(const CPLString& str) = nullptr);
-std::vector<CPLString> SplitStrings(const char* str, const char* delimiter);
+const char *SkipLeadingSpaces(const char *value);
+CPLString JoinStrings(const std::vector<CPLString> &strs, const char *delimiter,
+                      CPLString (*decorator)(const CPLString &str) = nullptr);
+std::vector<CPLString> SplitStrings(const char *str, const char *delimiter);
 
-CPLString GetFullColumnNameQuoted(
-    const CPLString& schemaName,
-    const CPLString& tableName,
-    const CPLString& columnName);
-CPLString GetFullTableName(
-    const CPLString& schemaName, const CPLString& tableName);
-CPLString GetFullTableNameQuoted(
-    const CPLString& schemaName, const CPLString& tableName);
-CPLString Literal(const CPLString& value);
-CPLString QuotedIdentifier(const CPLString& value);
+CPLString GetFullColumnNameQuoted(const CPLString &schemaName,
+                                  const CPLString &tableName,
+                                  const CPLString &columnName);
+CPLString GetFullTableName(const CPLString &schemaName,
+                           const CPLString &tableName);
+CPLString GetFullTableNameQuoted(const CPLString &schemaName,
+                                 const CPLString &tableName);
+CPLString Literal(const CPLString &value);
+CPLString QuotedIdentifier(const CPLString &value);
 
 bool IsArrayField(OGRFieldType fieldType);
 bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType);
-OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM);
+OGRwkbGeometryType ToWkbType(const char *type, bool hasZ, bool hasM);
 int ToPlanarSRID(int srid);
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA
 
 #endif /* ndef OGRHANAUTILS_H_INCLUDED */

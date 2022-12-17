@@ -31,7 +31,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              CEOSDataset                             */
@@ -40,16 +39,16 @@
 
 class CEOSRasterBand;
 
-class CEOSDataset final: public GDALPamDataset
+class CEOSDataset final : public GDALPamDataset
 {
     friend class CEOSRasterBand;
 
-    CEOSImage   *psCEOS;
+    CEOSImage *psCEOS;
 
   public:
-                 CEOSDataset();
-                ~CEOSDataset();
-    static GDALDataset *Open( GDALOpenInfo * );
+    CEOSDataset();
+    ~CEOSDataset();
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -58,21 +57,21 @@ class CEOSDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CEOSRasterBand final: public GDALPamRasterBand
+class CEOSRasterBand final : public GDALPamRasterBand
 {
     friend class CEOSDataset;
 
   public:
-    CEOSRasterBand( CEOSDataset *, int );
+    CEOSRasterBand(CEOSDataset *, int);
 
-    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/
 /*                           CEOSRasterBand()                            */
 /************************************************************************/
 
-CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDSIn, int nBandIn )
+CEOSRasterBand::CEOSRasterBand(CEOSDataset *poDSIn, int nBandIn)
 
 {
     poDS = poDSIn;
@@ -88,15 +87,14 @@ CEOSRasterBand::CEOSRasterBand( CEOSDataset *poDSIn, int nBandIn )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
-                                   int nBlockYOff,
-                                   void * pImage )
+CPLErr CEOSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                  void *pImage)
 {
-    CEOSDataset *poCEOS_DS = (CEOSDataset *) poDS;
+    CEOSDataset *poCEOS_DS = (CEOSDataset *)poDS;
 
-    CPLAssert( nBlockXOff == 0 );
+    CPLAssert(nBlockXOff == 0);
 
-    return CEOSReadScanline(poCEOS_DS->psCEOS, nBand, nBlockYOff+1, pImage);
+    return CEOSReadScanline(poCEOS_DS->psCEOS, nBand, nBlockYOff + 1, pImage);
 }
 
 /************************************************************************/
@@ -109,9 +107,9 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                            CEOSDataset()                             */
 /************************************************************************/
 
-CEOSDataset::CEOSDataset() :
-    psCEOS(nullptr)
-{}
+CEOSDataset::CEOSDataset() : psCEOS(nullptr)
+{
+}
 
 /************************************************************************/
 /*                            ~CEOSDataset()                            */
@@ -121,95 +119,94 @@ CEOSDataset::~CEOSDataset()
 
 {
     FlushCache(true);
-    if( psCEOS )
-        CEOSClose( psCEOS );
+    if (psCEOS)
+        CEOSClose(psCEOS);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Before trying CEOSOpen() we first verify that the first         */
-/*      record is in fact a CEOS file descriptor record.                */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 100 )
+    /* -------------------------------------------------------------------- */
+    /*      Before trying CEOSOpen() we first verify that the first         */
+    /*      record is in fact a CEOS file descriptor record.                */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->nHeaderBytes < 100)
         return nullptr;
 
-    if( poOpenInfo->pabyHeader[4] != 0x3f
-        || poOpenInfo->pabyHeader[5] != 0xc0
-        || poOpenInfo->pabyHeader[6] != 0x12
-        || poOpenInfo->pabyHeader[7] != 0x12 )
+    if (poOpenInfo->pabyHeader[4] != 0x3f ||
+        poOpenInfo->pabyHeader[5] != 0xc0 ||
+        poOpenInfo->pabyHeader[6] != 0x12 || poOpenInfo->pabyHeader[7] != 0x12)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Try opening the dataset.                                        */
-/* -------------------------------------------------------------------- */
-    CEOSImage *psCEOS = CEOSOpen( poOpenInfo->pszFilename, "rb" );
-    if( psCEOS == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Try opening the dataset.                                        */
+    /* -------------------------------------------------------------------- */
+    CEOSImage *psCEOS = CEOSOpen(poOpenInfo->pszFilename, "rb");
+    if (psCEOS == nullptr)
         return nullptr;
 
-    if( psCEOS->nBitsPerPixel != 8 )
+    if (psCEOS->nBitsPerPixel != 8)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The CEOS driver cannot handle nBitsPerPixel = %d",
-                  psCEOS->nBitsPerPixel );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The CEOS driver cannot handle nBitsPerPixel = %d",
+                 psCEOS->nBitsPerPixel);
         CEOSClose(psCEOS);
         return nullptr;
     }
 
-    if( !GDALCheckDatasetDimensions(psCEOS->nPixels, psCEOS->nBands) ||
-        !GDALCheckBandCount(psCEOS->nBands, FALSE) )
+    if (!GDALCheckDatasetDimensions(psCEOS->nPixels, psCEOS->nBands) ||
+        !GDALCheckBandCount(psCEOS->nBands, FALSE))
     {
-        CEOSClose( psCEOS );
+        CEOSClose(psCEOS);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the requested access is supported.                      */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->eAccess == GA_Update)
     {
         CEOSClose(psCEOS);
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The CEOS driver does not support update access to existing"
-                  " datasets.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The CEOS driver does not support update access to existing"
+                 " datasets.\n");
         return nullptr;
     }
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
     CEOSDataset *poDS = new CEOSDataset();
 
     poDS->psCEOS = psCEOS;
 
-/* -------------------------------------------------------------------- */
-/*      Capture some information from the file that is of interest.     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Capture some information from the file that is of interest.     */
+    /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = psCEOS->nPixels;
     poDS->nRasterYSize = psCEOS->nLines;
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
     poDS->nBands = psCEOS->nBands;
 
-    for( int i = 0; i < poDS->nBands; i++ )
-        poDS->SetBand( i+1, new CEOSRasterBand( poDS, i+1 ) );
+    for (int i = 0; i < poDS->nBands; i++)
+        poDS->SetBand(i + 1, new CEOSRasterBand(poDS, i + 1));
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -221,20 +218,18 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_CEOS()
 
 {
-    if( GDALGetDriverByName( "CEOS" ) != nullptr )
+    if (GDALGetDriverByName("CEOS") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "CEOS" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "CEOS Image" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drivers/raster/ceos.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("CEOS");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "CEOS Image");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/ceos.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = CEOSDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

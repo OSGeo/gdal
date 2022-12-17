@@ -30,26 +30,26 @@
 
 class WMSMiniDriver_AGS : public WMSMiniDriver
 {
-public:
+  public:
     WMSMiniDriver_AGS();
     virtual ~WMSMiniDriver_AGS();
 
-public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+  public:
+    virtual CPLErr Initialize(CPLXMLNode *config,
+                              char **papszOpenOptions) override;
     virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
-                                   const GDALWMSImageRequestInfo &iri,
-                                   const GDALWMSTiledImageRequestInfo &tiri) override;
+    virtual CPLErr
+    TiledImageRequest(WMSHTTPRequest &request,
+                      const GDALWMSImageRequestInfo &iri,
+                      const GDALWMSTiledImageRequestInfo &tiri) override;
     virtual void GetTiledImageInfo(CPLString &url,
                                    const GDALWMSImageRequestInfo &iri,
                                    const GDALWMSTiledImageRequestInfo &tiri,
-                                   int nXInBlock,
-                                   int nYInBlock) override;
+                                   int nXInBlock, int nYInBlock) override;
 
     virtual char **GetMetadataDomainList() override;
 
-protected:
-
+  protected:
     /*
      * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
      * http://resources.arcgis.com/en/help/rest/apiref/

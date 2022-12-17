@@ -42,11 +42,14 @@
 #define SEP "/"
 #endif
 
-namespace tut {
+namespace tut
+{
 
-::testing::AssertionResult CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance);
+::testing::AssertionResult
+CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance);
 
-namespace common {
+namespace common
+{
 
 // Data directory path used by GDAL C++ Unit Tests subset
 extern std::string const data_basedir;
@@ -54,7 +57,7 @@ extern std::string const data_basedir;
 // Temp directory path
 extern std::string const tmp_basedir;
 
-} // common
-} // tut
+}  // namespace common
+}  // namespace tut
 
-#endif // GDAL_COMMON_H_INCLUDED
+#endif  // GDAL_COMMON_H_INCLUDED

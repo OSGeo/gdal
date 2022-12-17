@@ -41,7 +41,6 @@
 #include "cpl_vsi.h"
 #include "mitab_priv.h"
 
-
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
@@ -55,17 +54,14 @@ constexpr GByte HDR_DEF_REFLECTXAXIS = 0;
  * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
 constexpr GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
-constexpr GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
-            0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
-            0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
-            0xa7,0xb5,0xd9,0x0f,0x17,0x23,0x13,0x1f,
-            0x2b,0x0f,0x17,0x23,0x4f,0x57,0x63,0x9c,
-            0xa4,0xa9,0xa0,0xa8,0xad,0xa4,0xa8,0xad,
-            0x16,0x1a,0x39,0x0d,0x11,0x37,0xa5,0xa9,
-            0xb5,0xa4,0xa8,0xad,0xb2,0xb6,0xdc,0xbd,
-            0xbd,0xf4,0x2b,0x2f,0x55,0xc8,0xcc,0xd8,
-            0xc7,0xcb,0xd0,0xd3,0xd7,0xfd,0xc2,0xc2,
-            0xf9};
+constexpr GByte gabyObjLenArray[HDR_OBJ_LEN_ARRAY_SIZE] = {
+    0x00, 0x0a, 0x0e, 0x15, 0x0e, 0x16, 0x1b, 0xa2, 0xa6, 0xab, 0x1a,
+    0x2a, 0x2f, 0xa5, 0xa9, 0xb5, 0xa7, 0xb5, 0xd9, 0x0f, 0x17, 0x23,
+    0x13, 0x1f, 0x2b, 0x0f, 0x17, 0x23, 0x4f, 0x57, 0x63, 0x9c, 0xa4,
+    0xa9, 0xa0, 0xa8, 0xad, 0xa4, 0xa8, 0xad, 0x16, 0x1a, 0x39, 0x0d,
+    0x11, 0x37, 0xa5, 0xa9, 0xb5, 0xa4, 0xa8, 0xad, 0xb2, 0xb6, 0xdc,
+    0xbd, 0xbd, 0xf4, 0x2b, 0x2f, 0x55, 0xc8, 0xcc, 0xd8, 0xc7, 0xcb,
+    0xd0, 0xd3, 0xd7, 0xfd, 0xc2, 0xc2, 0xf9};
 
 /*=====================================================================
  *                      class TABMAPHeaderBlock
@@ -76,8 +72,8 @@ constexpr GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
  *
  * Constructor.
  **********************************************************************/
-TABMAPHeaderBlock::TABMAPHeaderBlock( TABAccess eAccessMode /*= TABRead*/ ):
-    TABRawBinBlock(eAccessMode, TRUE)
+TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/)
+    : TABRawBinBlock(eAccessMode, TRUE)
 {
     // TODO(schwehr): Consider using initializer list for most values.
     InitMembersWithDefaultValues();
@@ -91,7 +87,9 @@ TABMAPHeaderBlock::TABMAPHeaderBlock( TABAccess eAccessMode /*= TABRead*/ ):
  *
  * Destructor.
  **********************************************************************/
-TABMAPHeaderBlock::~TABMAPHeaderBlock() {}
+TABMAPHeaderBlock::~TABMAPHeaderBlock()
+{
+}
 
 /**********************************************************************
  *            TABMAPHeaderBlock::InitMembersWithDefaultValues()
@@ -121,19 +119,19 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_numTextObjects = 0;
     m_nMaxCoordBufSize = 0;
 
-    m_nDistUnitsCode = 7;       // Meters
+    m_nDistUnitsCode = 7;  // Meters
     m_nMaxSpIndexDepth = 0;
-    m_nCoordPrecision = 3;      // ??? 3 Digits of precision
-    m_nCoordOriginQuadrant = HDR_DEF_ORG_QUADRANT; // ??? N-E quadrant
+    m_nCoordPrecision = 3;                          // ??? 3 Digits of precision
+    m_nCoordOriginQuadrant = HDR_DEF_ORG_QUADRANT;  // ??? N-E quadrant
     m_nReflectXAxisCoord = HDR_DEF_REFLECTXAXIS;
-    m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE-1;  // See gabyObjLenArray[]
+    m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE - 1;  // See gabyObjLenArray[]
     m_numPenDefs = 0;
     m_numBrushDefs = 0;
     m_numSymbolDefs = 0;
     m_numFontDefs = 0;
     m_numMapToolBlocks = 0;
 
-    m_sProj.nProjId  = 0;
+    m_sProj.nProjId = 0;
     m_sProj.nEllipsoidId = 0;
     m_sProj.nUnitsId = 7;
     m_sProj.nDatumId = 0;
@@ -144,17 +142,17 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_XPrecision = 0.0;  // not specified
     m_YPrecision = 0.0;  // not specified
 
-    for( int i = 0; i<6; i++ )
+    for (int i = 0; i < 6; i++)
         m_sProj.adProjParams[i] = 0.0;
 
     m_sProj.dDatumShiftX = 0.0;
     m_sProj.dDatumShiftY = 0.0;
     m_sProj.dDatumShiftZ = 0.0;
-    for( int i = 0; i < 5; i++ )
+    for (int i = 0; i < 5; i++)
         m_sProj.adDatumParams[i] = 0.0;
 
-    m_sProj.nAffineFlag = 0;    // Only in version 500 and up
-    m_sProj.nAffineUnits  = 7;
+    m_sProj.nAffineFlag = 0;  // Only in version 500 and up
+    m_sProj.nAffineUnits = 7;
     m_sProj.dAffineParamA = 0.0;
     m_sProj.dAffineParamB = 0.0;
     m_sProj.dAffineParamC = 0.0;
@@ -172,20 +170,17 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
-                                             int nBlockSize, int nSizeUsed,
-                                             GBool bMakeCopy /* = TRUE */,
-                                             VSILFILE *fpSrc /* = NULL */,
-                                             int nOffset /* = 0 */)
+int TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
+                                         int nSizeUsed,
+                                         GBool bMakeCopy /* = TRUE */,
+                                         VSILFILE *fpSrc /* = NULL */,
+                                         int nOffset /* = 0 */)
 {
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    const int nStatus =
-        TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                          nBlockSize, nSizeUsed,
-                                          bMakeCopy,
-                                          fpSrc, nOffset);
+    const int nStatus = TABRawBinBlock::InitBlockFromData(
+        pabyBuf, nBlockSize, nSizeUsed, bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -198,7 +193,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     if (nMagicCookie != HDR_MAGIC_COOKIE)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-              "ReadFromFile(): Invalid Magic Cookie: got %d expected %d",
+                 "ReadFromFile(): Invalid Magic Cookie: got %d expected %d",
                  nMagicCookie, HDR_MAGIC_COOKIE);
         CPLFree(m_pabyBuf);
         m_pabyBuf = nullptr;
@@ -214,10 +209,10 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     GotoByteInBlock(0x104);
     m_nMAPVersionNumber = ReadInt16();
     m_nRegularBlockSize = ReadInt16();
-    if( m_nRegularBlockSize < TAB_MIN_BLOCK_SIZE )
+    if (m_nRegularBlockSize < TAB_MIN_BLOCK_SIZE)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-              "ReadFromFile(): Invalid block size %d", m_nRegularBlockSize);
+                 "ReadFromFile(): Invalid block size %d", m_nRegularBlockSize);
         CPLFree(m_pabyBuf);
         m_pabyBuf = nullptr;
         return -1;
@@ -228,13 +223,14 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     m_nYMin = ReadInt32();
     m_nXMax = ReadInt32();
     m_nYMax = ReadInt32();
-    if( m_nXMin > m_nXMax || m_nYMin > m_nYMax )
+    if (m_nXMin > m_nXMax || m_nYMin > m_nYMax)
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "Reading corrupted MBR from .map header");
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Reading corrupted MBR from .map header");
         CPLErrorReset();
     }
 
-    GotoByteInBlock(0x130);     // Skip 16 unknown bytes
+    GotoByteInBlock(0x130);  // Skip 16 unknown bytes
 
     m_nFirstIndexBlock = ReadInt32();
     m_nFirstGarbageBlock = ReadInt32();
@@ -246,42 +242,42 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     m_numTextObjects = ReadInt32();
     m_nMaxCoordBufSize = ReadInt32();
 
-    GotoByteInBlock(0x15e);     // Skip 14 unknown bytes
+    GotoByteInBlock(0x15e);  // Skip 14 unknown bytes
 
     m_nDistUnitsCode = ReadByte();
     m_nMaxSpIndexDepth = ReadByte();
     m_nCoordPrecision = ReadByte();
     m_nCoordOriginQuadrant = ReadByte();
     m_nReflectXAxisCoord = ReadByte();
-    m_nMaxObjLenArrayId = ReadByte();    // See gabyObjLenArray[]
+    m_nMaxObjLenArrayId = ReadByte();  // See gabyObjLenArray[]
     m_numPenDefs = ReadByte();
     m_numBrushDefs = ReadByte();
     m_numSymbolDefs = ReadByte();
     m_numFontDefs = ReadByte();
     m_numMapToolBlocks = ReadByte();
 
-    ReadByte(); // skip unused byte
+    ReadByte();  // skip unused byte
 
     /* DatumId was never set (always 0) until MapInfo 7.8. See bug 910
      * MAP Version Number is 500 in this case.
      */
     if (m_nMAPVersionNumber >= 500)
-        m_sProj.nDatumId  = ReadInt16();
+        m_sProj.nDatumId = ReadInt16();
     else
     {
-        ReadInt16();    // Skip.
+        ReadInt16();  // Skip.
         m_sProj.nDatumId = 0;
     }
-    ReadByte();         // Skip unknown byte
-    m_sProj.nProjId  = ReadByte();
+    ReadByte();  // Skip unknown byte
+    m_sProj.nProjId = ReadByte();
     m_sProj.nEllipsoidId = ReadByte();
     m_sProj.nUnitsId = ReadByte();
     m_XScale = ReadDouble();
     m_YScale = ReadDouble();
-    if( m_XScale == 0.0 || m_YScale == 0.0 )
+    if (m_XScale == 0.0 || m_YScale == 0.0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-              "ReadFromFile(): Null xscale and/or yscale");
+                 "ReadFromFile(): Null xscale and/or yscale");
         CPLFree(m_pabyBuf);
         m_pabyBuf = nullptr;
         return -1;
@@ -300,13 +296,13 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         m_YDispl = 0.0;
     }
 
-    for( int i = 0; i < 6; i++ )
+    for (int i = 0; i < 6; i++)
         m_sProj.adProjParams[i] = ReadDouble();
 
     m_sProj.dDatumShiftX = ReadDouble();
     m_sProj.dDatumShiftY = ReadDouble();
     m_sProj.dDatumShiftZ = ReadDouble();
-    for( int i = 0; i < 5; i++ )
+    for (int i = 0; i < 5; i++)
     {
         /* In V.200 files, the next 5 datum params are unused and they
          * sometimes contain junk bytes... in this case we set adDatumParams[]
@@ -321,13 +317,14 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     if (m_nMAPVersionNumber >= 500 && m_nSizeUsed > TAB_MIN_BLOCK_SIZE)
     {
         // Read Affine parameters A,B,C,D,E,F
-        // only if version 500+ and block is larger than TAB_MIN_BLOCK_SIZE bytes
+        // only if version 500+ and block is larger than TAB_MIN_BLOCK_SIZE
+        // bytes
         int nInUse = ReadByte();
         if (nInUse)
         {
             m_sProj.nAffineFlag = 1;
             m_sProj.nAffineUnits = ReadByte();
-            GotoByteInBlock(0x0208); // Skip unused bytes
+            GotoByteInBlock(0x0208);  // Skip unused bytes
             m_sProj.dAffineParamA = ReadDouble();
             m_sProj.dAffineParamB = ReadDouble();
             m_sProj.dAffineParamC = ReadDouble();
@@ -353,8 +350,8 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
-                                     double &dX, double &dY )
+int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX,
+                                    double &dY)
 {
     if (m_pabyBuf == nullptr)
         return -1;
@@ -365,14 +362,14 @@ int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
     // In version 100 .tab files (version 400 .map), it is possible to have
     // a quadrant 0 and it should be treated the same way as quadrant 3
 
-    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
-        m_nCoordOriginQuadrant==0 )
+    if (m_nCoordOriginQuadrant == 2 || m_nCoordOriginQuadrant == 3 ||
+        m_nCoordOriginQuadrant == 0)
         dX = -1.0 * (nX + m_XDispl) / m_XScale;
     else
         dX = (nX - m_XDispl) / m_XScale;
 
-    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4||
-        m_nCoordOriginQuadrant==0)
+    if (m_nCoordOriginQuadrant == 3 || m_nCoordOriginQuadrant == 4 ||
+        m_nCoordOriginQuadrant == 0)
         dY = -1.0 * (nY + m_YDispl) / m_YScale;
     else
         dY = (nY - m_YDispl) / m_YScale;
@@ -380,10 +377,10 @@ int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
     // Round coordinates to the desired precision
     if (m_XPrecision > 0 && m_YPrecision > 0)
     {
-        dX = round(dX*m_XPrecision)/m_XPrecision;
-        dY = round(dY*m_YPrecision)/m_YPrecision;
+        dX = round(dX * m_XPrecision) / m_XPrecision;
+        dY = round(dY * m_YPrecision) / m_YPrecision;
     }
-//printf("Int2Coordsys: (%d, %d) -> (%.10g, %.10g)\n", nX, nY, dX, dY);
+    // printf("Int2Coordsys: (%d, %d) -> (%.10g, %.10g)\n", nX, nY, dX, dY);
 
     return 0;
 }
@@ -399,9 +396,9 @@ int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
-                                     GInt32 &nX, GInt32 &nY,
-                                     GBool bIgnoreOverflow /*=FALSE*/ )
+int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, GInt32 &nX,
+                                    GInt32 &nY,
+                                    GBool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_pabyBuf == nullptr)
         return -1;
@@ -419,17 +416,17 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
     double dTempX = 0.0;
     double dTempY = 0.0;
 
-    if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
-        m_nCoordOriginQuadrant==0 )
-        dTempX = -1.0*dX*m_XScale - m_XDispl;
+    if (m_nCoordOriginQuadrant == 2 || m_nCoordOriginQuadrant == 3 ||
+        m_nCoordOriginQuadrant == 0)
+        dTempX = -1.0 * dX * m_XScale - m_XDispl;
     else
-        dTempX = dX*m_XScale + m_XDispl;
+        dTempX = dX * m_XScale + m_XDispl;
 
-    if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
-        m_nCoordOriginQuadrant==0 )
-        dTempY = -1.0*dY*m_YScale - m_YDispl;
+    if (m_nCoordOriginQuadrant == 3 || m_nCoordOriginQuadrant == 4 ||
+        m_nCoordOriginQuadrant == 0)
+        dTempY = -1.0 * dY * m_YScale - m_YDispl;
     else
-        dTempY = dY*m_YScale + m_YDispl;
+        dTempY = dY * m_YScale + m_YDispl;
 
     /*-----------------------------------------------------------------
      * Make sure we'll never output coordinates outside of the valid
@@ -465,9 +462,9 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
     {
         m_bIntBoundsOverflow = TRUE;
 #ifdef DEBUG
-        CPLError(CE_Warning, static_cast<CPLErrorNum>(TAB_WarningBoundsOverflow),
-                 "Integer bounds overflow: (%f, %f) -> (%d, %d)\n",
-                 dX, dY, nX, nY);
+        CPLError(
+            CE_Warning, static_cast<CPLErrorNum>(TAB_WarningBoundsOverflow),
+            "Integer bounds overflow: (%f, %f) -> (%d, %d)\n", dX, dY, nX, nY);
 #endif
     }
 
@@ -488,14 +485,14 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
-                                          int nDeltaX, int nDeltaY,
-                                          double &dX, double &dY )
+int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
+                                         int nDeltaX, int nDeltaY, double &dX,
+                                         double &dY)
 {
     if (m_pabyBuf == nullptr)
         return -1;
 
-    return Int2Coordsys(nCenterX+nDeltaX, nCenterY+nDeltaY, dX, dY);
+    return Int2Coordsys(nCenterX + nDeltaX, nCenterY + nDeltaY, dX, dY);
 }
 
 /**********************************************************************
@@ -513,8 +510,8 @@ int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
-                                         double &dX, double &dY )
+int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX,
+                                        double &dY)
 {
     if (m_pabyBuf == nullptr)
         return -1;
@@ -540,14 +537,14 @@ int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
-                                         GInt32 &nX, GInt32 &nY )
+int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY, GInt32 &nX,
+                                        GInt32 &nY)
 {
     if (m_pabyBuf == nullptr)
         return -1;
 
-    nX = static_cast<GInt32>(dX*m_XScale);
-    nY = static_cast<GInt32>(dY*m_YScale);
+    nX = static_cast<GInt32>(dX * m_XScale);
+    nY = static_cast<GInt32>(dY * m_YScale);
 
     return 0;
 }
@@ -563,10 +560,11 @@ int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::SetCoordsysBounds( double dXMin, double dYMin,
-                                          double dXMax, double dYMax )
+int TABMAPHeaderBlock::SetCoordsysBounds(double dXMin, double dYMin,
+                                         double dXMax, double dYMax)
 {
-//printf("SetCoordsysBounds(%10g, %10g, %10g, %10g)\n", dXMin, dYMin, dXMax, dYMax);
+    // printf("SetCoordsysBounds(%10g, %10g, %10g, %10g)\n", dXMin, dYMin,
+    // dXMax, dYMax);
     /*-----------------------------------------------------------------
      * Check for 0-width or 0-height bounds
      *----------------------------------------------------------------*/
@@ -624,8 +622,8 @@ int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
 
     if (nObjType < 0 || nObjType > 255)
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Invalid object type %d", nObjType);
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid object type %d",
+                 nObjType);
         return -1;
     }
 
@@ -651,14 +649,14 @@ GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
 
     if (nObjType < 0 || nObjType > 255)
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Invalid object type %d", nObjType);
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid object type %d",
+                 nObjType);
         return FALSE;
     }
 
     // Byte 0x80 is set for objects that have coordinates inside type 3 blocks
 
-    return ((m_pabyBuf[nObjType] & 0x80) != 0) ? TRUE: FALSE;
+    return ((m_pabyBuf[nObjType] & 0x80) != 0) ? TRUE : FALSE;
 }
 
 /**********************************************************************
@@ -669,7 +667,7 @@ GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int  TABMAPHeaderBlock::GetProjInfo(TABProjInfo *psProjInfo)
+int TABMAPHeaderBlock::GetProjInfo(TABProjInfo *psProjInfo)
 {
     if (m_pabyBuf == nullptr)
     {
@@ -691,7 +689,7 @@ int  TABMAPHeaderBlock::GetProjInfo(TABProjInfo *psProjInfo)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
+int TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
 {
     if (m_pabyBuf == nullptr)
     {
@@ -719,14 +717,15 @@ int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::CommitToFile()
+int TABMAPHeaderBlock::CommitToFile()
 {
     int i;
 
-    if ( m_pabyBuf == nullptr || m_nRegularBlockSize == 0 )
+    if (m_pabyBuf == nullptr || m_nRegularBlockSize == 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
-        "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
+                 "TABRawBinBlock::CommitToFile(): Block has not been "
+                 "initialized yet!");
         return -1;
     }
 
@@ -735,12 +734,12 @@ int     TABMAPHeaderBlock::CommitToFile()
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x000);
     WriteBytes(HDR_OBJ_LEN_ARRAY_SIZE, gabyObjLenArray);
-    m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE-1;
+    m_nMaxObjLenArrayId = HDR_OBJ_LEN_ARRAY_SIZE - 1;
 
     GotoByteInBlock(0x100);
     WriteInt32(HDR_MAGIC_COOKIE);
 
-    if (m_sProj.nAffineFlag && m_nMAPVersionNumber<500)
+    if (m_sProj.nAffineFlag && m_nMAPVersionNumber < 500)
     {
         // Must be at least version 500 to support affine params
         // Default value for HDR_VERSION_NUMBER is 500 so this error should
@@ -761,12 +760,13 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteInt32(m_nYMin);
     WriteInt32(m_nXMax);
     WriteInt32(m_nYMax);
-    if( m_nXMin > m_nXMax || m_nYMin > m_nYMax )
+    if (m_nXMin > m_nXMax || m_nYMin > m_nYMax)
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "Writing corrupted MBR into .map header");
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Writing corrupted MBR into .map header");
     }
 
-    WriteZeros(16);     // ???
+    WriteZeros(16);  // ???
 
     WriteInt32(m_nFirstIndexBlock);
     WriteInt32(m_nFirstGarbageBlock);
@@ -778,14 +778,14 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteInt32(m_numTextObjects);
     WriteInt32(m_nMaxCoordBufSize);
 
-    WriteZeros(14);     // ???
+    WriteZeros(14);  // ???
 
     WriteByte(m_nDistUnitsCode);
     WriteByte(m_nMaxSpIndexDepth);
     WriteByte(m_nCoordPrecision);
     WriteByte(m_nCoordOriginQuadrant);
     WriteByte(m_nReflectXAxisCoord);
-    WriteByte(m_nMaxObjLenArrayId);    // See gabyObjLenArray[]
+    WriteByte(m_nMaxObjLenArrayId);  // See gabyObjLenArray[]
     WriteByte(m_numPenDefs);
     WriteByte(m_numBrushDefs);
     WriteByte(m_numSymbolDefs);
@@ -793,9 +793,9 @@ int     TABMAPHeaderBlock::CommitToFile()
     CPLAssert(m_numMapToolBlocks >= 0 && m_numMapToolBlocks <= 255);
     WriteByte(static_cast<GByte>(m_numMapToolBlocks));
 
-    WriteZeros(1);      // unused byte
+    WriteZeros(1);  // unused byte
     WriteInt16(m_sProj.nDatumId);
-    WriteZeros(1);      // unused byte
+    WriteZeros(1);  // unused byte
 
     WriteByte(m_sProj.nProjId);
     WriteByte(m_sProj.nEllipsoidId);
@@ -805,18 +805,18 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteDouble(m_XDispl);
     WriteDouble(m_YDispl);
 
-    for(i=0; i<6; i++)
+    for (i = 0; i < 6; i++)
         WriteDouble(m_sProj.adProjParams[i]);
 
     WriteDouble(m_sProj.dDatumShiftX);
     WriteDouble(m_sProj.dDatumShiftY);
     WriteDouble(m_sProj.dDatumShiftZ);
-    for(i=0; i<5; i++)
+    for (i = 0; i < 5; i++)
         WriteDouble(m_sProj.adDatumParams[i]);
 
     if (m_sProj.nAffineFlag)
     {
-        WriteByte(1); // In Use Flag
+        WriteByte(1);  // In Use Flag
         WriteByte(m_sProj.nAffineUnits);
         WriteZeros(6);
         WriteDouble(m_sProj.dAffineParamA);
@@ -826,7 +826,7 @@ int     TABMAPHeaderBlock::CommitToFile()
         WriteDouble(m_sProj.dAffineParamE);
         WriteDouble(m_sProj.dAffineParamF);
 
-        WriteZeros(456); // Pad rest of block with zeros (Bounds info here ?)
+        WriteZeros(456);  // Pad rest of block with zeros (Bounds info here ?)
     }
 
     /*-----------------------------------------------------------------
@@ -853,8 +853,8 @@ int     TABMAPHeaderBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
-                                        int nFileOffset /* = 0*/)
+int TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
+                                    int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
      * Start with the default initialization
@@ -862,7 +862,7 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
     /* .MAP files of Version 500 and up appear to have a 1024 bytes
      * header.  The last 512 bytes are usually all zeros. */
-    if ( TABRawBinBlock::InitNewBlock(fpSrc, 1024, nFileOffset) != 0)
+    if (TABRawBinBlock::InitNewBlock(fpSrc, 1024, nFileOffset) != 0)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -870,7 +870,7 @@ int     TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
      *----------------------------------------------------------------*/
     InitMembersWithDefaultValues();
 
-    CPLAssert( nBlockSize >= 0 && nBlockSize <= 32767 );
+    CPLAssert(nBlockSize >= 0 && nBlockSize <= 32767);
     m_nRegularBlockSize = static_cast<GInt16>(nBlockSize);
 
     /*-----------------------------------------------------------------
@@ -920,70 +920,78 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
     }
     else
     {
-        fprintf(fpOut,"Version %d header block.\n", m_nMAPVersionNumber);
-        fprintf(fpOut,"  m_nRegularBlockSize       = %d\n", m_nRegularBlockSize);
-        fprintf(fpOut,"  m_nFirstIndexBlock    = %d\n", m_nFirstIndexBlock);
-        fprintf(fpOut,"  m_nFirstGarbageBlock  = %d\n", m_nFirstGarbageBlock);
-        fprintf(fpOut,"  m_nFirstToolBlock     = %d\n", m_nFirstToolBlock);
-        fprintf(fpOut,"  m_numPointObjects     = %d\n", m_numPointObjects);
-        fprintf(fpOut,"  m_numLineObjects      = %d\n", m_numLineObjects);
-        fprintf(fpOut,"  m_numRegionObjects    = %d\n", m_numRegionObjects);
-        fprintf(fpOut,"  m_numTextObjects      = %d\n", m_numTextObjects);
-        fprintf(fpOut,"  m_nMaxCoordBufSize    = %d\n", m_nMaxCoordBufSize);
+        fprintf(fpOut, "Version %d header block.\n", m_nMAPVersionNumber);
+        fprintf(fpOut, "  m_nRegularBlockSize       = %d\n",
+                m_nRegularBlockSize);
+        fprintf(fpOut, "  m_nFirstIndexBlock    = %d\n", m_nFirstIndexBlock);
+        fprintf(fpOut, "  m_nFirstGarbageBlock  = %d\n", m_nFirstGarbageBlock);
+        fprintf(fpOut, "  m_nFirstToolBlock     = %d\n", m_nFirstToolBlock);
+        fprintf(fpOut, "  m_numPointObjects     = %d\n", m_numPointObjects);
+        fprintf(fpOut, "  m_numLineObjects      = %d\n", m_numLineObjects);
+        fprintf(fpOut, "  m_numRegionObjects    = %d\n", m_numRegionObjects);
+        fprintf(fpOut, "  m_numTextObjects      = %d\n", m_numTextObjects);
+        fprintf(fpOut, "  m_nMaxCoordBufSize    = %d\n", m_nMaxCoordBufSize);
 
-        fprintf(fpOut,"\n");
-        fprintf(fpOut,"  m_dCoordsys2DistUnits = %g\n", m_dCoordsys2DistUnits);
-        fprintf(fpOut,"  m_nXMin               = %d\n", m_nXMin);
-        fprintf(fpOut,"  m_nYMin               = %d\n", m_nYMin);
-        fprintf(fpOut,"  m_nXMax               = %d\n", m_nXMax);
-        fprintf(fpOut,"  m_nYMax               = %d\n", m_nYMax);
-        fprintf(fpOut,"  m_XScale              = %g\n", m_XScale);
-        fprintf(fpOut,"  m_YScale              = %g\n", m_YScale);
-        fprintf(fpOut,"  m_XDispl              = %g\n", m_XDispl);
-        fprintf(fpOut,"  m_YDispl              = %g\n", m_YDispl);
+        fprintf(fpOut, "\n");
+        fprintf(fpOut, "  m_dCoordsys2DistUnits = %g\n", m_dCoordsys2DistUnits);
+        fprintf(fpOut, "  m_nXMin               = %d\n", m_nXMin);
+        fprintf(fpOut, "  m_nYMin               = %d\n", m_nYMin);
+        fprintf(fpOut, "  m_nXMax               = %d\n", m_nXMax);
+        fprintf(fpOut, "  m_nYMax               = %d\n", m_nYMax);
+        fprintf(fpOut, "  m_XScale              = %g\n", m_XScale);
+        fprintf(fpOut, "  m_YScale              = %g\n", m_YScale);
+        fprintf(fpOut, "  m_XDispl              = %g\n", m_XDispl);
+        fprintf(fpOut, "  m_YDispl              = %g\n", m_YDispl);
 
-        fprintf(fpOut,"\n");
-        fprintf(fpOut,"  m_nDistUnistCode      = %d\n", m_nDistUnitsCode);
-        fprintf(fpOut,"  m_nMaxSpIndexDepth    = %d\n", m_nMaxSpIndexDepth);
-        fprintf(fpOut,"  m_nCoordPrecision     = %d\n", m_nCoordPrecision);
-        fprintf(fpOut,"  m_nCoordOriginQuadrant= %d\n",m_nCoordOriginQuadrant);
-        fprintf(fpOut,"  m_nReflecXAxisCoord   = %d\n", m_nReflectXAxisCoord);
-        fprintf(fpOut,"  m_nMaxObjLenArrayId   = %d\n", m_nMaxObjLenArrayId);
-        fprintf(fpOut,"  m_numPenDefs          = %d\n", m_numPenDefs);
-        fprintf(fpOut,"  m_numBrushDefs        = %d\n", m_numBrushDefs);
-        fprintf(fpOut,"  m_numSymbolDefs       = %d\n", m_numSymbolDefs);
-        fprintf(fpOut,"  m_numFontDefs         = %d\n", m_numFontDefs);
-        fprintf(fpOut,"  m_numMapToolBlocks    = %d\n", m_numMapToolBlocks);
+        fprintf(fpOut, "\n");
+        fprintf(fpOut, "  m_nDistUnistCode      = %d\n", m_nDistUnitsCode);
+        fprintf(fpOut, "  m_nMaxSpIndexDepth    = %d\n", m_nMaxSpIndexDepth);
+        fprintf(fpOut, "  m_nCoordPrecision     = %d\n", m_nCoordPrecision);
+        fprintf(fpOut, "  m_nCoordOriginQuadrant= %d\n",
+                m_nCoordOriginQuadrant);
+        fprintf(fpOut, "  m_nReflecXAxisCoord   = %d\n", m_nReflectXAxisCoord);
+        fprintf(fpOut, "  m_nMaxObjLenArrayId   = %d\n", m_nMaxObjLenArrayId);
+        fprintf(fpOut, "  m_numPenDefs          = %d\n", m_numPenDefs);
+        fprintf(fpOut, "  m_numBrushDefs        = %d\n", m_numBrushDefs);
+        fprintf(fpOut, "  m_numSymbolDefs       = %d\n", m_numSymbolDefs);
+        fprintf(fpOut, "  m_numFontDefs         = %d\n", m_numFontDefs);
+        fprintf(fpOut, "  m_numMapToolBlocks    = %d\n", m_numMapToolBlocks);
 
-        fprintf(fpOut,"\n");
-        fprintf(fpOut,"  m_sProj.nDatumId      = %d\n", m_sProj.nDatumId);
-        fprintf(fpOut,"  m_sProj.nProjId       = %d\n", static_cast<int>(m_sProj.nProjId));
-        fprintf(fpOut,"  m_sProj.nEllipsoidId  = %d\n",
-                                                    static_cast<int>(m_sProj.nEllipsoidId));
-        fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", static_cast<int>(m_sProj.nUnitsId));
-        fprintf(fpOut,"  m_sProj.adProjParams  =");
-        for( int i = 0; i < 6; i++)
-            fprintf(fpOut, " %g",  m_sProj.adProjParams[i]);
-        fprintf(fpOut,"\n");
+        fprintf(fpOut, "\n");
+        fprintf(fpOut, "  m_sProj.nDatumId      = %d\n", m_sProj.nDatumId);
+        fprintf(fpOut, "  m_sProj.nProjId       = %d\n",
+                static_cast<int>(m_sProj.nProjId));
+        fprintf(fpOut, "  m_sProj.nEllipsoidId  = %d\n",
+                static_cast<int>(m_sProj.nEllipsoidId));
+        fprintf(fpOut, "  m_sProj.nUnitsId      = %d\n",
+                static_cast<int>(m_sProj.nUnitsId));
+        fprintf(fpOut, "  m_sProj.adProjParams  =");
+        for (int i = 0; i < 6; i++)
+            fprintf(fpOut, " %g", m_sProj.adProjParams[i]);
+        fprintf(fpOut, "\n");
 
-        fprintf(fpOut,"  m_sProj.dDatumShiftX  = %.15g\n", m_sProj.dDatumShiftX);
-        fprintf(fpOut,"  m_sProj.dDatumShiftY  = %.15g\n", m_sProj.dDatumShiftY);
-        fprintf(fpOut,"  m_sProj.dDatumShiftZ  = %.15g\n", m_sProj.dDatumShiftZ);
-        fprintf(fpOut,"  m_sProj.adDatumParams =");
-        for( int i = 0; i < 5; i++ )
-            fprintf(fpOut, " %.15g",  m_sProj.adDatumParams[i]);
-        fprintf(fpOut,"\n");
+        fprintf(fpOut, "  m_sProj.dDatumShiftX  = %.15g\n",
+                m_sProj.dDatumShiftX);
+        fprintf(fpOut, "  m_sProj.dDatumShiftY  = %.15g\n",
+                m_sProj.dDatumShiftY);
+        fprintf(fpOut, "  m_sProj.dDatumShiftZ  = %.15g\n",
+                m_sProj.dDatumShiftZ);
+        fprintf(fpOut, "  m_sProj.adDatumParams =");
+        for (int i = 0; i < 5; i++)
+            fprintf(fpOut, " %.15g", m_sProj.adDatumParams[i]);
+        fprintf(fpOut, "\n");
 
         // Dump array of map object lengths... optional
         if (FALSE)
         {
-            fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
-            for( int i = 0; i < 256; i++ )
+            fprintf(fpOut,
+                    "-- Header bytes 00-FF: Array of map object lengths --\n");
+            for (int i = 0; i < 256; i++)
             {
                 fprintf(fpOut, "0x%2.2x", static_cast<int>(m_pabyBuf[i]));
                 if (i != 255)
                     fprintf(fpOut, ",");
-                if ((i+1)%16 == 0)
+                if ((i + 1) % 16 == 0)
                     fprintf(fpOut, "\n");
             }
         }
@@ -992,4 +1000,4 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-#endif // DEBUG
+#endif  // DEBUG

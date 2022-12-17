@@ -47,7 +47,6 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-
 /*=====================================================================
  *                      class TABSeamless
  *
@@ -68,16 +67,11 @@
  *
  * Constructor.
  **********************************************************************/
-TABSeamless::TABSeamless() :
-    m_pszFname(nullptr),
-    m_pszPath(nullptr),
-    m_eAccessMode(TABRead),
-    m_poFeatureDefnRef(nullptr),
-    m_poIndexTable(nullptr),
-    m_nTableNameField(-1),
-    m_nCurBaseTableId(-1),
-    m_poCurBaseTable(nullptr),
-    m_bEOF(FALSE)
+TABSeamless::TABSeamless()
+    : m_pszFname(nullptr), m_pszPath(nullptr), m_eAccessMode(TABRead),
+      m_poFeatureDefnRef(nullptr), m_poIndexTable(nullptr),
+      m_nTableNameField(-1), m_nCurBaseTableId(-1), m_poCurBaseTable(nullptr),
+      m_bEOF(FALSE)
 {
     m_poCurFeature = nullptr;
     m_nCurFeatureId = -1;
@@ -121,7 +115,7 @@ void TABSeamless::ResetReading()
  **********************************************************************/
 int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
                       GBool bTestOpenNoError /*= FALSE*/,
-                      const char* /*pszCharset = NULL */ )
+                      const char * /*pszCharset = NULL */)
 {
     char nStatus = 0;
 
@@ -158,7 +152,7 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::OpenForRead(const char *pszFname,
-                             GBool bTestOpenNoError /*= FALSE*/ )
+                             GBool bTestOpenNoError /*= FALSE*/)
 {
     int nFnameLen = 0;
 
@@ -187,8 +181,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
     {
         if (!bTestOpenNoError)
         {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed opening %s.", m_pszFname);
+            CPLError(CE_Failure, CPLE_FileIO, "Failed opening %s.", m_pszFname);
         }
 
         CPLFree(m_pszFname);
@@ -202,17 +195,17 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * but we do not support it in this class.
      *------------------------------------------------------------*/
     GBool bSeamlessFound = FALSE;
-    for (int i=0; !bSeamlessFound && papszTABFile[i]; i++)
+    for (int i = 0; !bSeamlessFound && papszTABFile[i]; i++)
     {
         const char *pszStr = papszTABFile[i];
-        while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
+        while (*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
             pszStr++;
         if (STARTS_WITH_CI(pszStr, "\"\\IsSeamless\" = \"TRUE\""))
             bSeamlessFound = TRUE;
     }
     CSLDestroy(papszTABFile);
 
-    if ( !bSeamlessFound )
+    if (!bSeamlessFound)
     {
         if (!bTestOpenNoError)
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -234,14 +227,13 @@ int TABSeamless::OpenForRead(const char *pszFname,
      *----------------------------------------------------------------*/
     m_pszPath = CPLStrdup(m_pszFname);
     nFnameLen = static_cast<int>(strlen(m_pszPath));
-    for( ; nFnameLen > 0; nFnameLen--)
+    for (; nFnameLen > 0; nFnameLen--)
     {
-        if (m_pszPath[nFnameLen-1] == '/' ||
-            m_pszPath[nFnameLen-1] == '\\' )
+        if (m_pszPath[nFnameLen - 1] == '/' || m_pszPath[nFnameLen - 1] == '\\')
         {
             break;
         }
-        m_pszPath[nFnameLen-1] = '\0';
+        m_pszPath[nFnameLen - 1] = '\0';
     }
 
     /*-----------------------------------------------------------------
@@ -275,7 +267,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
     /*-----------------------------------------------------------------
      * We need to open the first table to get its FeatureDefn
      *----------------------------------------------------------------*/
-    if (OpenBaseTable(-1, bTestOpenNoError) != 0 )
+    if (OpenBaseTable(-1, bTestOpenNoError) != 0)
     {
         // Open Failed... an error has already been reported, just return.
         if (bTestOpenNoError)
@@ -304,7 +296,7 @@ int TABSeamless::Close()
         delete m_poIndexTable;  // Automatically closes.
     m_poIndexTable = nullptr;
 
-    if (m_poFeatureDefnRef )
+    if (m_poFeatureDefnRef)
         m_poFeatureDefnRef->Release();
     m_poFeatureDefnRef = nullptr;
 
@@ -374,7 +366,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
 #ifndef _WIN32
     // On Unix, replace any '\\' in path with '/'
     char *pszPtr = pszFname;
-    while((pszPtr = strchr(pszPtr, '\\')) != nullptr)
+    while ((pszPtr = strchr(pszPtr, '\\')) != nullptr)
     {
         *pszPtr = '/';
         pszPtr++;
@@ -394,9 +386,9 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
     }
 
     // Set the spatial filter to the new table
-    if( m_poFilterGeom != nullptr )
+    if (m_poFilterGeom != nullptr)
     {
-        m_poCurBaseTable->SetSpatialFilter( m_poFilterGeom );
+        m_poCurBaseTable->SetSpatialFilter(m_poFilterGeom);
     }
 
     m_nCurBaseTableId = nTableId;
@@ -466,7 +458,8 @@ int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
 {
     CPLAssert(m_poIndexTable);
 
-    TABFeature *poIndexFeature = cpl::down_cast<TABFeature*>(m_poIndexTable->GetNextFeature());
+    TABFeature *poIndexFeature =
+        cpl::down_cast<TABFeature *>(m_poIndexTable->GetNextFeature());
 
     if (poIndexFeature)
     {
@@ -504,7 +497,7 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return (static_cast<GIntBig>(nTableId)<<32) + nBaseFeatureId;
+    return (static_cast<GIntBig>(nTableId) << 32) + nBaseFeatureId;
 }
 
 int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
@@ -512,7 +505,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return static_cast<int>(nEncodedFeatureId>>32);
+    return static_cast<int>(nEncodedFeatureId >> 32);
 }
 
 int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
@@ -532,7 +525,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
 GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
 {
     if (m_poIndexTable == nullptr || m_poCurBaseTable == nullptr)
-        return -1; // File is not opened yet
+        return -1;  // File is not opened yet
 
     if (nPrevId == -1 || m_nCurBaseTableId != ExtractBaseTableId(nPrevId))
     {
@@ -570,7 +563,7 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
 TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
 {
     if (m_poIndexTable == nullptr)
-        return nullptr; // File is not opened yet
+        return nullptr;  // File is not opened yet
 
     if (nFeatureId == m_nCurFeatureId && m_poCurFeature)
         return m_poCurFeature;
@@ -587,8 +580,9 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
             delete m_poCurFeature;
         m_poCurFeature = nullptr;
 
-        TABFeature* poCurFeature = static_cast<TABFeature*>(m_poCurBaseTable->GetFeature(ExtractBaseFeatureId(nFeatureId)));
-        if( poCurFeature == nullptr )
+        TABFeature *poCurFeature = static_cast<TABFeature *>(
+            m_poCurBaseTable->GetFeature(ExtractBaseFeatureId(nFeatureId)));
+        if (poCurFeature == nullptr)
             return nullptr;
         m_poCurFeature = new TABFeature(m_poFeatureDefnRef);
         m_poCurFeature->SetFrom(poCurFeature);
@@ -674,14 +668,14 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::GetBounds( double &dXMin, double &dYMin,
-                            double &dXMax, double &dYMax,
-                            GBool bForce /*= TRUE*/ )
+int TABSeamless::GetBounds(double &dXMin, double &dYMin, double &dXMax,
+                           double &dYMax, GBool bForce /*= TRUE*/)
 {
     if (m_poIndexTable == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-             "GetBounds() can be called only after dataset has been opened.");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GetBounds() can be called only after dataset has been opened.");
         return -1;
     }
 
@@ -698,12 +692,13 @@ int TABSeamless::GetBounds( double &dXMin, double &dYMin,
  *
  * Returns OGRERR_NONE/OGRRERR_FAILURE.
  **********************************************************************/
-OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
+OGRErr TABSeamless::GetExtent(OGREnvelope *psExtent, int bForce)
 {
     if (m_poIndexTable == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-             "GetExtent() can be called only after dataset has been opened.");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "GetExtent() can be called only after dataset has been opened.");
         return OGRERR_FAILURE;
     }
 
@@ -776,42 +771,41 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
  * Standard OGR SetSpatialFiltere implementation.  This method is used
  * to set a SpatialFilter for this OGRLayer.
  **********************************************************************/
-void TABSeamless::SetSpatialFilter (OGRGeometry * poGeomIn )
+void TABSeamless::SetSpatialFilter(OGRGeometry *poGeomIn)
 
 {
-    IMapInfoFile::SetSpatialFilter( poGeomIn );
+    IMapInfoFile::SetSpatialFilter(poGeomIn);
 
-    if( m_poIndexTable )
-        m_poIndexTable->SetSpatialFilter( poGeomIn );
+    if (m_poIndexTable)
+        m_poIndexTable->SetSpatialFilter(poGeomIn);
 
-    if( m_poCurBaseTable )
-        m_poCurBaseTable->SetSpatialFilter( poGeomIn );
+    if (m_poCurBaseTable)
+        m_poCurBaseTable->SetSpatialFilter(poGeomIn);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABSeamless::TestCapability( const char * pszCap )
+int TABSeamless::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite)
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite))
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    else if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TestUtf8Capability();
 
     else
@@ -844,4 +838,4 @@ void TABSeamless::Dump(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-#endif // DEBUG
+#endif  // DEBUG

@@ -33,15 +33,15 @@
 #include "odbc/PreparedStatement.h"
 #include "odbc/ResultSetMetaData.h"
 
-
-namespace OGRHANA {
+namespace OGRHANA
+{
 
 /************************************************************************/
 /*                              OGRHanaResultLayer()                    */
 /************************************************************************/
 
-OGRHanaResultLayer::OGRHanaResultLayer(
-    OGRHanaDataSource* datasource, const char* query)
+OGRHanaResultLayer::OGRHanaResultLayer(OGRHanaDataSource *datasource,
+                                       const char *query)
     : OGRHanaLayer(datasource)
 {
     rawQuery_ = (query == nullptr) ? "" : query;
@@ -58,8 +58,8 @@ OGRErr OGRHanaResultLayer::Initialize()
         return OGRERR_NONE;
 
     auto names = dataSource_->FindSchemaAndTableNames(rawQuery_.c_str());
-    OGRErr err = InitFeatureDefinition(
-        names.first, names.second, rawQuery_, "sql_statement");
+    OGRErr err = InitFeatureDefinition(names.first, names.second, rawQuery_,
+                                       "sql_statement");
     return err;
 }
 
@@ -67,11 +67,11 @@ OGRErr OGRHanaResultLayer::Initialize()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaResultLayer::TestCapability(const char* capabilities)
+int OGRHanaResultLayer::TestCapability(const char *capabilities)
 {
-    if (EQUAL(capabilities, OLCFastFeatureCount)
-        || EQUAL(capabilities, OLCFastSpatialFilter)
-        || EQUAL(capabilities, OLCFastGetExtent))
+    if (EQUAL(capabilities, OLCFastFeatureCount) ||
+        EQUAL(capabilities, OLCFastSpatialFilter) ||
+        EQUAL(capabilities, OLCFastGetExtent))
     {
         EnsureInitialized();
         return (geomColumns_.size() > 0);
@@ -82,4 +82,4 @@ int OGRHanaResultLayer::TestCapability(const char* capabilities)
     return FALSE;
 }
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA

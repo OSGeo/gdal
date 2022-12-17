@@ -32,7 +32,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /*!
   \brief OGRVFKLayer constructor
 
@@ -41,27 +40,25 @@
   \param eReqType WKB geometry type
   \param poDSIn  data source where to register OGR layer
 */
-OGRVFKLayer::OGRVFKLayer( const char *pszName,
-                          OGRSpatialReference *poSRSIn,
-                          OGRwkbGeometryType eReqType,
-                          OGRVFKDataSource *poDSIn ) :
-    poSRS(poSRSIn == nullptr ? new OGRSpatialReference() : poSRSIn->Clone()),
-    poFeatureDefn(new OGRFeatureDefn(pszName)),
-    poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)),
-    m_iNextFeature(0)
+OGRVFKLayer::OGRVFKLayer(const char *pszName, OGRSpatialReference *poSRSIn,
+                         OGRwkbGeometryType eReqType, OGRVFKDataSource *poDSIn)
+    : poSRS(poSRSIn == nullptr ? new OGRSpatialReference() : poSRSIn->Clone()),
+      poFeatureDefn(new OGRFeatureDefn(pszName)),
+      poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)), m_iNextFeature(0)
 {
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    if( poSRSIn == nullptr ) {
+    if (poSRSIn == nullptr)
+    {
         // Default is S-JTSK (EPSG: 5514).
-        if( poSRS->importFromEPSG(5514) != OGRERR_NONE )
+        if (poSRS->importFromEPSG(5514) != OGRERR_NONE)
         {
             delete poSRS;
             poSRS = nullptr;
         }
     }
 
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poFeatureDefn->Reference();
@@ -73,10 +70,10 @@ OGRVFKLayer::OGRVFKLayer( const char *pszName,
 */
 OGRVFKLayer::~OGRVFKLayer()
 {
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 
-    if( poSRS )
+    if (poSRS)
         poSRS->Release();
 }
 
@@ -85,12 +82,14 @@ OGRVFKLayer::~OGRVFKLayer()
 
   \param pszCap capability name
 */
-int OGRVFKLayer::TestCapability(const char * pszCap)
+int OGRVFKLayer::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, OLCRandomRead)) {
+    if (EQUAL(pszCap, OLCRandomRead))
+    {
         return TRUE; /* ? */
     }
-    if (EQUAL(pszCap, OLCStringsAsUTF8)) {
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
+    {
         return TRUE;
     }
 
@@ -115,7 +114,7 @@ void OGRVFKLayer::ResetReading()
 
   \return pointer to OGRGeometry or NULL on error
 */
-OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
+OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature *poVfkFeature)
 {
     return poVfkFeature->GetGeometry();
 }
@@ -133,7 +132,7 @@ GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     /* note that 'nfeatures' is 0 when data are not read from DB */
     int nfeatures = (int)poDataBlock->GetFeatureCount();
-    if( m_poFilterGeom || m_poAttrQuery || nfeatures < 1 )
+    if (m_poFilterGeom || m_poAttrQuery || nfeatures < 1)
     {
         /* force real feature count */
         nfeatures = (int)OGRLayer::GetFeatureCount();
@@ -155,16 +154,18 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
     /* loop till we find and translate a feature meeting all our
        requirements
     */
-    if ( m_iNextFeature < 1 &&
-        m_poFilterGeom == nullptr &&
-        m_poAttrQuery == nullptr ) {
+    if (m_iNextFeature < 1 && m_poFilterGeom == nullptr &&
+        m_poAttrQuery == nullptr)
+    {
         /* sequential feature properties access only supported when no
         filter enabled */
         poDataBlock->LoadProperties();
     }
-    while( true ) {
-        IVFKFeature* poVFKFeature = poDataBlock->GetNextFeature();
-        if (!poVFKFeature) {
+    while (true)
+    {
+        IVFKFeature *poVFKFeature = poDataBlock->GetNextFeature();
+        if (!poVFKFeature)
+        {
             /* clean loaded feature properties for a next run */
             poDataBlock->CleanProperties();
             return nullptr;
@@ -174,7 +175,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
         if (poVFKFeature->GetGeometryType() == wkbUnknown)
             continue;
 
-        OGRFeature* poOGRFeature = GetFeature(poVFKFeature);
+        OGRFeature *poOGRFeature = GetFeature(poVFKFeature);
         if (poOGRFeature)
             return poOGRFeature;
     }
@@ -196,13 +197,15 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
 
     /* clean loaded feature properties (sequential access not
        finished) */
-    if ( m_iNextFeature > 0 ) {
+    if (m_iNextFeature > 0)
+    {
         ResetReading();
         poDataBlock->CleanProperties();
     }
 
     CPLAssert(nFID == poVFKFeature->GetFID());
-    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB, GetName(), nFID);
+    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB,
+             GetName(), nFID);
 
     return GetFeature(poVFKFeature);
 }
@@ -224,7 +227,8 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
         poGeom->assignSpatialReference(poSRS);
 
     /* does it satisfy the spatial query, if there is one? */
-    if (m_poFilterGeom != nullptr && poGeom && !FilterGeometry(poGeom)) {
+    if (m_poFilterGeom != nullptr && poGeom && !FilterGeometry(poGeom))
+    {
         return nullptr;
     }
 
@@ -234,8 +238,8 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
     poVFKFeature->LoadProperties(poOGRFeature);
 
     /* test against the attribute query */
-    if (m_poAttrQuery != nullptr &&
-        !m_poAttrQuery->Evaluate(poOGRFeature)) {
+    if (m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poOGRFeature))
+    {
         delete poOGRFeature;
         return nullptr;
     }

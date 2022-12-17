@@ -35,13 +35,14 @@
 
 // So argc, argv can be used from test fixtures
 int global_argc = 0;
-char** global_argv = nullptr;
+char **global_argv = nullptr;
 
-GTEST_API_ int main(int argc, char **argv) {
+GTEST_API_ int main(int argc, char **argv)
+{
     // Use a potentially non-C locale to make sure we are robust
     setlocale(LC_ALL, "");
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
     int nRetCode;
     try
@@ -53,18 +54,18 @@ GTEST_API_ int main(int argc, char **argv) {
 
         nRetCode = RUN_ALL_TESTS();
     }
-    catch( const std::exception& e )
+    catch (const std::exception &e)
     {
         nRetCode = 1;
         fprintf(stderr, "Caught exception %s\n", e.what());
     }
-    catch( ... )
+    catch (...)
     {
         nRetCode = 1;
         fprintf(stderr, "Caught exception of unknown type\n");
     }
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
 
     return nRetCode;
 }

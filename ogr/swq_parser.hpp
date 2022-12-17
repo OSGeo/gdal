@@ -35,10 +35,10 @@
    are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_SWQ_SWQ_PARSER_HPP_INCLUDED
-# define YY_SWQ_SWQ_PARSER_HPP_INCLUDED
+#define YY_SWQ_SWQ_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int swqdebug;
@@ -46,9 +46,9 @@ extern int swqdebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
+#define YYTOKENTYPE
+enum yytokentype
+{
     END = 0,
     SWQT_INTEGER_NUMBER = 258,
     SWQT_FLOAT_NUMBER = 259,
@@ -85,18 +85,16 @@ extern int swqdebug;
     SWQT_AND = 290,
     SWQT_UMINUS = 291,
     SWQT_RESERVED_KEYWORD = 292
-  };
+};
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+#define YYSTYPE_IS_TRIVIAL 1
+#define YYSTYPE_IS_DECLARED 1
 #endif
 
-
-
-int swqparse (swq_parse_context *context);
+int swqparse(swq_parse_context *context);
 
 #endif /* !YY_SWQ_SWQ_PARSER_HPP_INCLUDED  */

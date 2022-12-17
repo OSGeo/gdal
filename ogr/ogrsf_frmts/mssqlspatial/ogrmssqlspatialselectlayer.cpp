@@ -1,9 +1,9 @@
 /******************************************************************************
  *
  * Project:  MSSQL Spatial driver
- * Purpose:  Implements OGRMSSQLSpatialSelectLayer class, layer access to the results
- *           of a SELECT statement executed via ExecuteSQL().
- * Author:   Tamas Szekeres, szekerest at gmail.com
+ * Purpose:  Implements OGRMSSQLSpatialSelectLayer class, layer access to the
+ *results of a SELECT statement executed via ExecuteSQL(). Author:   Tamas
+ *Szekeres, szekerest at gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2010, Tamas Szekeres
@@ -36,15 +36,15 @@
 #endif
 
 #ifndef SQL_CA_SS_UDT_TYPE_NAME
-#define SQL_CA_SS_UDT_TYPE_NAME (SQL_CA_SS_BASE+20)
+#define SQL_CA_SS_UDT_TYPE_NAME (SQL_CA_SS_BASE + 20)
 #endif
 
 /************************************************************************/
 /*                     OGRMSSQLSpatialSelectLayer()                     */
 /************************************************************************/
 
-OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
+OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer(
+    OGRMSSQLSpatialDataSource *poDSIn, CPLODBCStatement *poStmtIn)
 
 {
     poDS = poDSIn;
@@ -54,26 +54,29 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
     poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
+    pszBaseStatement = CPLStrdup(poStmtIn->GetCommand());
 
     /* identify the geometry column */
     pszGeomColumn = nullptr;
     int iImageCol = -1;
-    for ( int iColumn = 0; iColumn < poStmt->GetColCount(); iColumn++ )
+    for (int iColumn = 0; iColumn < poStmt->GetColCount(); iColumn++)
     {
-        if ( EQUAL(poStmt->GetColTypeName( iColumn ), "image") )
+        if (EQUAL(poStmt->GetColTypeName(iColumn), "image"))
         {
-            SQLCHAR     szTableName[256];
+            SQLCHAR szTableName[256];
             SQLSMALLINT nTableNameLength = 0;
 
-            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1), SQL_DESC_TABLE_NAME,
-                                     szTableName, sizeof(szTableName),
-                                     &nTableNameLength, nullptr);
+            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1),
+                            SQL_DESC_TABLE_NAME, szTableName,
+                            sizeof(szTableName), &nTableNameLength, nullptr);
 
             if (nTableNameLength > 0)
             {
-                OGRLayer *poBaseLayer = poDS->GetLayerByName((const char*)szTableName);
-                if (poBaseLayer != nullptr && EQUAL(poBaseLayer->GetGeometryColumn(), poStmt->GetColName(iColumn)))
+                OGRLayer *poBaseLayer =
+                    poDS->GetLayerByName((const char *)szTableName);
+                if (poBaseLayer != nullptr &&
+                    EQUAL(poBaseLayer->GetGeometryColumn(),
+                          poStmt->GetColName(iColumn)))
                 {
                     nGeomColumnType = MSSQLCOLTYPE_BINARY;
                     pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
@@ -86,38 +89,40 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
             else if (iImageCol == -1)
                 iImageCol = iColumn;
         }
-        else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "geometry") )
+        else if (EQUAL(poStmt->GetColTypeName(iColumn), "geometry"))
         {
             nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
             pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             break;
         }
-        else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "geography") )
+        else if (EQUAL(poStmt->GetColTypeName(iColumn), "geography"))
         {
             nGeomColumnType = MSSQLCOLTYPE_GEOGRAPHY;
             pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             break;
         }
-        else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "udt") )
+        else if (EQUAL(poStmt->GetColTypeName(iColumn), "udt"))
         {
-            SQLCHAR     szUDTTypeName[256];
+            SQLCHAR szUDTTypeName[256];
             SQLSMALLINT nUDTTypeNameLength = 0;
 
-            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1), SQL_CA_SS_UDT_TYPE_NAME,
-                                     szUDTTypeName, sizeof(szUDTTypeName),
-                                     &nUDTTypeNameLength, nullptr);
+            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1),
+                            SQL_CA_SS_UDT_TYPE_NAME, szUDTTypeName,
+                            sizeof(szUDTTypeName), &nUDTTypeNameLength,
+                            nullptr);
 
             // For some reason on unixODBC, a UCS2 string is returned
-            if ( EQUAL((char*)szUDTTypeName, "geometry") ||
-                 (nUDTTypeNameLength == 16 &&
-                  memcmp(szUDTTypeName, "g\0e\0o\0m\0e\0t\0r\0y", 16) == 0) )
+            if (EQUAL((char *)szUDTTypeName, "geometry") ||
+                (nUDTTypeNameLength == 16 &&
+                 memcmp(szUDTTypeName, "g\0e\0o\0m\0e\0t\0r\0y", 16) == 0))
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
                 pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
             }
-            else if ( EQUAL((char*)szUDTTypeName, "geography") ||
-                 (nUDTTypeNameLength == 18 &&
-                  memcmp(szUDTTypeName, "g\0e\0o\0g\0r\0a\0p\0h\0y", 18) == 0) )
+            else if (EQUAL((char *)szUDTTypeName, "geography") ||
+                     (nUDTTypeNameLength == 18 &&
+                      memcmp(szUDTTypeName, "g\0e\0o\0g\0r\0a\0p\0h\0y", 18) ==
+                          0))
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOGRAPHY;
                 pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
@@ -133,10 +138,10 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
         pszGeomColumn = CPLStrdup(poStmt->GetColName(iImageCol));
     }
 
-    BuildFeatureDefn( "SELECT", poStmt );
+    BuildFeatureDefn("SELECT", poStmt);
 
-    if ( GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSRS );
+    if (GetSpatialRef() && poFeatureDefn->GetGeomFieldCount() == 1)
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
 /************************************************************************/
@@ -156,13 +161,13 @@ OGRMSSQLSpatialSelectLayer::~OGRMSSQLSpatialSelectLayer()
 CPLODBCStatement *OGRMSSQLSpatialSelectLayer::GetStatement()
 
 {
-    if( poStmt == nullptr )
+    if (poStmt == nullptr)
     {
-        CPLDebug( "OGR_MSSQLSpatial", "Recreating statement." );
-        poStmt = new CPLODBCStatement( poDS->GetSession() );
-        poStmt->Append( pszBaseStatement );
+        CPLDebug("OGR_MSSQLSpatial", "Recreating statement.");
+        poStmt = new CPLODBCStatement(poDS->GetSession());
+        poStmt->Append(pszBaseStatement);
 
-        if( !poStmt->ExecuteSQL() )
+        if (!poStmt->ExecuteSQL())
         {
             delete poStmt;
             poStmt = nullptr;
@@ -176,20 +181,20 @@ CPLODBCStatement *OGRMSSQLSpatialSelectLayer::GetStatement()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    return OGRMSSQLSpatialLayer::GetFeature( nFeatureId );
+    return OGRMSSQLSpatialLayer::GetFeature(nFeatureId);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialSelectLayer::TestCapability( const char * pszCap )
+int OGRMSSQLSpatialSelectLayer::TestCapability(const char *pszCap)
 
 {
-    return OGRMSSQLSpatialLayer::TestCapability( pszCap );
+    return OGRMSSQLSpatialLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -199,7 +204,7 @@ int OGRMSSQLSpatialSelectLayer::TestCapability( const char * pszCap )
 /*      can optimize the GetExtent() method!                            */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int )
+OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int)
 
 {
     return OGRERR_FAILURE;
@@ -214,8 +219,8 @@ OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRMSSQLSpatialSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRMSSQLSpatialSelectLayer::GetFeatureCount(int bForce)
 
 {
-    return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
+    return OGRMSSQLSpatialLayer::GetFeatureCount(bForce);
 }

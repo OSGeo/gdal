@@ -37,16 +37,16 @@
 
 class WMSCTileSetDesc
 {
-    public:
-        CPLString osLayers;
-        CPLString osSRS;
-        CPLString osMinX, osMinY, osMaxX, osMaxY;
-        double    dfMinX, dfMinY, dfMaxX, dfMaxY;
-        int       nResolutions;
-        double    dfMinResolution;
-        CPLString osFormat;
-        CPLString osStyle;
-        int       nTileWidth, nTileHeight;
+  public:
+    CPLString osLayers;
+    CPLString osSRS;
+    CPLString osMinX, osMinY, osMaxX, osMaxY;
+    double dfMinX, dfMinY, dfMaxX, dfMaxY;
+    int nResolutions;
+    double dfMinResolution;
+    CPLString osFormat;
+    CPLString osStyle;
+    int nTileWidth, nTileHeight;
 };
 
 /************************************************************************/
@@ -55,76 +55,66 @@ class WMSCTileSetDesc
 /* ==================================================================== */
 /************************************************************************/
 
-class GDALWMSMetaDataset final: public GDALPamDataset
+class GDALWMSMetaDataset final : public GDALPamDataset
 {
   private:
     CPLString osGetURL;
     CPLString osVersion;
     CPLString osXMLEncoding;
-    char** papszSubDatasets;
+    char **papszSubDatasets;
 
     typedef std::pair<CPLString, CPLString> WMSCKeyType;
     std::map<WMSCKeyType, WMSCTileSetDesc> osMapWMSCTileSet;
 
-    void                AddSubDataset(const char* pszName,
-                                      const char* pszDesc);
+    void AddSubDataset(const char *pszName, const char *pszDesc);
 
-    void                AddSubDataset(const char* pszLayerName,
-                                      const char* pszTitle,
-                                      const char* pszAbstract,
-                                      const char* pszSRS,
-                                      const char* pszMinX,
-                                      const char* pszMinY,
-                                      const char* pszMaxX,
-                                      const char* pszMaxY,
-                                      CPLString osFormat,
-                                      CPLString osTransparent);
+    void AddSubDataset(const char *pszLayerName, const char *pszTitle,
+                       const char *pszAbstract, const char *pszSRS,
+                       const char *pszMinX, const char *pszMinY,
+                       const char *pszMaxX, const char *pszMaxY,
+                       CPLString osFormat, CPLString osTransparent);
 
-    void                ExploreLayer(CPLXMLNode* psXML,
-                                     CPLString osFormat,
-                                     CPLString osTransparent,
-                                     CPLString osPreferredSRS,
-                                     const char* pszSRS = nullptr,
-                                     const char* pszMinX = nullptr,
-                                     const char* pszMinY = nullptr,
-                                     const char* pszMaxX = nullptr,
-                                     const char* pszMaxY = nullptr);
+    void
+    ExploreLayer(CPLXMLNode *psXML, CPLString osFormat, CPLString osTransparent,
+                 CPLString osPreferredSRS, const char *pszSRS = nullptr,
+                 const char *pszMinX = nullptr, const char *pszMinY = nullptr,
+                 const char *pszMaxX = nullptr, const char *pszMaxY = nullptr);
 
     // tiledWMS only
-    void                AddTiledSubDataset(const char* pszTiledGroupName,
-                                           const char* pszTitle,
-                                           const char* const* papszChanges);
+    void AddTiledSubDataset(const char *pszTiledGroupName, const char *pszTitle,
+                            const char *const *papszChanges);
 
     // tiledWMS only
-    void                AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo* poOpenInfo);
+    void AnalyzeGetTileServiceRecurse(CPLXMLNode *psXML,
+                                      GDALOpenInfo *poOpenInfo);
 
     // WMS-C only
-    void                AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
-                                          const char* pszTitle,
-                                          CPLString osTransparent);
+    void AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
+                           const char *pszTitle, CPLString osTransparent);
 
     // WMS-C only
-    void                ParseWMSCTileSets(CPLXMLNode* psXML);
+    void ParseWMSCTileSets(CPLXMLNode *psXML);
 
   public:
-        GDALWMSMetaDataset();
+    GDALWMSMetaDataset();
     virtual ~GDALWMSMetaDataset();
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    virtual char **GetMetadataDomainList() override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    static GDALDataset* AnalyzeGetCapabilities(CPLXMLNode* psXML,
+    static GDALDataset *AnalyzeGetCapabilities(CPLXMLNode *psXML,
                                                CPLString osFormat = "",
                                                CPLString osTransparent = "",
                                                CPLString osPreferredSRS = "");
-    static GDALDataset* AnalyzeTileMapService(CPLXMLNode* psXML);
+    static GDALDataset *AnalyzeTileMapService(CPLXMLNode *psXML);
 
-    static GDALDataset* DownloadGetCapabilities(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *DownloadGetCapabilities(GDALOpenInfo *poOpenInfo);
 
     // tiledWMS only
-    static GDALDataset* DownloadGetTileService(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *DownloadGetTileService(GDALOpenInfo *poOpenInfo);
     // tiledWMS only
-    static GDALDataset* AnalyzeGetTileService(CPLXMLNode* psXML, GDALOpenInfo* poOpenInfo);
+    static GDALDataset *AnalyzeGetTileService(CPLXMLNode *psXML,
+                                              GDALOpenInfo *poOpenInfo);
 };
 
-#endif // WMS_METADATASET_H_INCLUDED
+#endif  // WMS_METADATASET_H_INCLUDED

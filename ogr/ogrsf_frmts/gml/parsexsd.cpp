@@ -43,7 +43,6 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 
-
 /************************************************************************/
 /*                              StripNS()                               */
 /*                                                                      */
@@ -55,7 +54,7 @@ static const char *StripNS(const char *pszFullValue)
 
 {
     const char *pszColon = strstr(pszFullValue, ":");
-    if( pszColon == nullptr )
+    if (pszColon == nullptr)
         return pszFullValue;
     else
         return pszColon + 1;
@@ -65,16 +64,14 @@ static const char *StripNS(const char *pszFullValue)
 /*                   GetSimpleTypeProperties()                          */
 /************************************************************************/
 
-static
-bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
-                             GMLPropertyType *pGMLType,
-                             int *pnWidth,
-                             int *pnPrecision)
+static bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
+                                    GMLPropertyType *pGMLType, int *pnWidth,
+                                    int *pnPrecision)
 {
     const char *pszBase =
         StripNS(CPLGetXMLValue(psTypeNode, "restriction.base", ""));
 
-    if( EQUAL(pszBase, "decimal") )
+    if (EQUAL(pszBase, "decimal"))
     {
         *pGMLType = GMLPT_Real;
         const char *pszWidth =
@@ -86,19 +83,19 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-     else if( EQUAL(pszBase, "float") )
+    else if (EQUAL(pszBase, "float"))
     {
         *pGMLType = GMLPT_Float;
         return true;
     }
 
-    else if( EQUAL(pszBase, "double") )
+    else if (EQUAL(pszBase, "double"))
     {
         *pGMLType = GMLPT_Real;
         return true;
     }
 
-    else if( EQUAL(pszBase, "integer") )
+    else if (EQUAL(pszBase, "integer"))
     {
         *pGMLType = GMLPT_Integer;
         const char *pszWidth =
@@ -107,7 +104,7 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "long") )
+    else if (EQUAL(pszBase, "long"))
     {
         *pGMLType = GMLPT_Integer64;
         const char *pszWidth =
@@ -116,7 +113,7 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "unsignedLong") )
+    else if (EQUAL(pszBase, "unsignedLong"))
     {
         // Optimistically map to signed integer...
         *pGMLType = GMLPT_Integer64;
@@ -126,7 +123,7 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "string") )
+    else if (EQUAL(pszBase, "string"))
     {
         *pGMLType = GMLPT_String;
         const char *pszWidth =
@@ -135,31 +132,31 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "date")  )
+    else if (EQUAL(pszBase, "date"))
     {
         *pGMLType = GMLPT_Date;
         return true;
     }
 
-    else if( EQUAL(pszBase, "time")  )
+    else if (EQUAL(pszBase, "time"))
     {
         *pGMLType = GMLPT_Time;
         return true;
     }
 
-    else if( EQUAL(pszBase, "dateTime") )
+    else if (EQUAL(pszBase, "dateTime"))
     {
         *pGMLType = GMLPT_DateTime;
         return true;
     }
 
-    else if( EQUAL(pszBase, "boolean") )
+    else if (EQUAL(pszBase, "boolean"))
     {
         *pGMLType = GMLPT_Boolean;
         return true;
     }
 
-    else if( EQUAL(pszBase, "short") )
+    else if (EQUAL(pszBase, "short"))
     {
         *pGMLType = GMLPT_Short;
         return true;
@@ -172,24 +169,22 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
 /*                      LookForSimpleType()                             */
 /************************************************************************/
 
-static
-bool LookForSimpleType(CPLXMLNode *psSchemaNode,
-                      const char* pszStrippedNSType,
-                      GMLPropertyType *pGMLType,
-                      int *pnWidth,
-                      int *pnPrecision)
+static bool LookForSimpleType(CPLXMLNode *psSchemaNode,
+                              const char *pszStrippedNSType,
+                              GMLPropertyType *pGMLType, int *pnWidth,
+                              int *pnPrecision)
 {
     CPLXMLNode *psThis = psSchemaNode->psChild;
-    for( ; psThis != nullptr; psThis = psThis->psNext )
+    for (; psThis != nullptr; psThis = psThis->psNext)
     {
-        if( psThis->eType == CXT_Element &&
+        if (psThis->eType == CXT_Element &&
             EQUAL(psThis->pszValue, "simpleType") &&
-            EQUAL(CPLGetXMLValue(psThis, "name", ""), pszStrippedNSType) )
+            EQUAL(CPLGetXMLValue(psThis, "name", ""), pszStrippedNSType))
         {
             break;
         }
     }
-    if( psThis == nullptr )
+    if (psThis == nullptr)
         return false;
 
     return GetSimpleTypeProperties(psThis, pGMLType, pnWidth, pnPrecision);
@@ -201,26 +196,25 @@ bool LookForSimpleType(CPLXMLNode *psSchemaNode,
 
 /* Returns the child element whose name is pszExpectedValue only if */
 /* there is only one child that is an element. */
-static
-CPLXMLNode *GetSingleChildElement(CPLXMLNode *psNode,
-                                  const char *pszExpectedValue)
+static CPLXMLNode *GetSingleChildElement(CPLXMLNode *psNode,
+                                         const char *pszExpectedValue)
 {
-    if( psNode == nullptr )
+    if (psNode == nullptr)
         return nullptr;
 
     CPLXMLNode *psIter = psNode->psChild;
-    if( psIter == nullptr )
+    if (psIter == nullptr)
         return nullptr;
 
     CPLXMLNode *psChild = nullptr;
-    while( psIter != nullptr )
+    while (psIter != nullptr)
     {
-        if( psIter->eType == CXT_Element )
+        if (psIter->eType == CXT_Element)
         {
-            if( psChild != nullptr )
+            if (psChild != nullptr)
                 return nullptr;
-            if( pszExpectedValue != nullptr &&
-                strcmp(psIter->pszValue, pszExpectedValue) != 0 )
+            if (pszExpectedValue != nullptr &&
+                strcmp(psIter->pszValue, pszExpectedValue) != 0)
                 return nullptr;
             psChild = psIter;
         }
@@ -248,17 +242,17 @@ static int CheckMinMaxOccursCardinality(CPLXMLNode *psNode)
 
 static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
 {
-    if( eType == GMLPT_String )
+    if (eType == GMLPT_String)
         return GMLPT_StringList;
-    if( eType == GMLPT_Integer || eType == GMLPT_Short )
+    if (eType == GMLPT_Integer || eType == GMLPT_Short)
         return GMLPT_IntegerList;
-    if( eType == GMLPT_Integer64 )
+    if (eType == GMLPT_Integer64)
         return GMLPT_Integer64List;
-    if( eType == GMLPT_Real || eType == GMLPT_Float )
+    if (eType == GMLPT_Real || eType == GMLPT_Float)
         return GMLPT_RealList;
-    if( eType == GMLPT_Boolean )
+    if (eType == GMLPT_Boolean)
         return GMLPT_BooleanList;
-    if( eType == GMLPT_FeatureProperty )
+    if (eType == GMLPT_FeatureProperty)
         return GMLPT_FeaturePropertyList;
     return eType;
 }
@@ -273,8 +267,7 @@ typedef struct
     OGRwkbGeometryType eType;
 } AssocNameType;
 
-static const AssocNameType apsPropertyTypes[] =
-{
+static const AssocNameType apsPropertyTypes[] = {
     {"GeometryPropertyType", wkbUnknown},
     {"PointPropertyType", wkbPoint},
     {"LineStringPropertyType", wkbLineString},
@@ -292,11 +285,10 @@ static const AssocNameType apsPropertyTypes[] =
 };
 
 /* Found in FME .xsd  (e.g. <element ref="gml:curveProperty" minOccurs="0"/>) */
-static const AssocNameType apsRefTypes[] =
-{
+static const AssocNameType apsRefTypes[] = {
     {"pointProperty", wkbPoint},
-    {"curveProperty", wkbLineString}, // Should we promote to wkbCompoundCurve?
-    {"surfaceProperty", wkbPolygon},  // Should we promote to wkbCurvePolygon?
+    {"curveProperty", wkbLineString},  // Should we promote to wkbCompoundCurve?
+    {"surfaceProperty", wkbPolygon},   // Should we promote to wkbCurvePolygon?
     {"multiPointProperty", wkbMultiPoint},
     {"multiCurveProperty", wkbMultiLineString},
     // Should we promote to wkbMultiSurface?
@@ -304,67 +296,64 @@ static const AssocNameType apsRefTypes[] =
     {nullptr, wkbUnknown},
 };
 
-static
-GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
-                                     const char *pszName,
-                                     CPLXMLNode *psThis);
+static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
+                                            const char *pszName,
+                                            CPLXMLNode *psThis);
 
-static
-GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
-                                const char *pszName,
-                                const char *pszType)
+static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
+                                            const char *pszName,
+                                            const char *pszType)
 {
     CPLXMLNode *psThis = psSchemaNode->psChild;
-    for( ; psThis != nullptr; psThis = psThis->psNext )
+    for (; psThis != nullptr; psThis = psThis->psNext)
     {
-        if( psThis->eType == CXT_Element &&
+        if (psThis->eType == CXT_Element &&
             EQUAL(psThis->pszValue, "complexType") &&
-            EQUAL(CPLGetXMLValue(psThis, "name", ""), pszType) )
+            EQUAL(CPLGetXMLValue(psThis, "name", ""), pszType))
         {
             break;
         }
     }
-    if( psThis == nullptr )
+    if (psThis == nullptr)
         return nullptr;
 
     return GMLParseFeatureType(psSchemaNode, pszName, psThis);
 }
 
-static
-GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
-                                     const char *pszName,
-                                     CPLXMLNode *psComplexType)
+static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
+                                            const char *pszName,
+                                            CPLXMLNode *psComplexType)
 {
 
-/* -------------------------------------------------------------------- */
-/*      Grab the sequence of extensions greatgrandchild.                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Grab the sequence of extensions greatgrandchild.                */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psAttrSeq =
         CPLGetXMLNode(psComplexType, "complexContent.extension.sequence");
 
-    if( psAttrSeq == nullptr )
+    if (psAttrSeq == nullptr)
     {
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      We are pretty sure this going to be a valid Feature class       */
-/*      now, so create it.                                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      We are pretty sure this going to be a valid Feature class       */
+    /*      now, so create it.                                              */
+    /* -------------------------------------------------------------------- */
     GMLFeatureClass *poClass = new GMLFeatureClass(pszName);
 
-/* -------------------------------------------------------------------- */
-/*      Loop over each of the attribute elements being defined for      */
-/*      this feature class.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Loop over each of the attribute elements being defined for      */
+    /*      this feature class.                                             */
+    /* -------------------------------------------------------------------- */
     int nAttributeIndex = 0;
 
     bool bGotUnrecognizedType = false;
 
     CPLXMLNode *psAttrDef = psAttrSeq->psChild;
-    for( ; psAttrDef != nullptr; psAttrDef = psAttrDef->psNext )
+    for (; psAttrDef != nullptr; psAttrDef = psAttrDef->psNext)
     {
-        if( strcmp(psAttrDef->pszValue, "group") == 0 )
+        if (strcmp(psAttrDef->pszValue, "group") == 0)
         {
             /* Too complex schema for us. Aborts parsing */
             delete poClass;
@@ -376,27 +365,30 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             <xs:element ref="gml:polygonProperty"/>
             <xs:element ref="gml:multiPolygonProperty"/>
         </xs:choice>
-        as found in https://downloadagiv.blob.core.windows.net/overstromingsgebieden-en-oeverzones/2014_01/Overstromingsgebieden_en_oeverzones_2014_01_GML.zip
+        as found in
+        https://downloadagiv.blob.core.windows.net/overstromingsgebieden-en-oeverzones/2014_01/Overstromingsgebieden_en_oeverzones_2014_01_GML.zip
         */
-        if( strcmp(psAttrDef->pszValue, "choice") == 0 )
+        if (strcmp(psAttrDef->pszValue, "choice") == 0)
         {
             CPLXMLNode *psChild = psAttrDef->psChild;
             bool bPolygon = false;
             bool bMultiPolygon = false;
-            for( ; psChild; psChild = psChild->psNext )
+            for (; psChild; psChild = psChild->psNext)
             {
-                if( psChild->eType != CXT_Element )
+                if (psChild->eType != CXT_Element)
                     continue;
-                if( strcmp(psChild->pszValue, "element") == 0 )
+                if (strcmp(psChild->pszValue, "element") == 0)
                 {
-                    const char *pszRef = CPLGetXMLValue(psChild, "ref", nullptr);
-                    if( pszRef != nullptr )
+                    const char *pszRef =
+                        CPLGetXMLValue(psChild, "ref", nullptr);
+                    if (pszRef != nullptr)
                     {
-                        if( strcmp(pszRef, "gml:polygonProperty") == 0 )
+                        if (strcmp(pszRef, "gml:polygonProperty") == 0)
                         {
                             bPolygon = true;
                         }
-                        else if( strcmp(pszRef, "gml:multiPolygonProperty") == 0 )
+                        else if (strcmp(pszRef, "gml:multiPolygonProperty") ==
+                                 0)
                         {
                             bMultiPolygon = true;
                         }
@@ -413,7 +405,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     }
                 }
             }
-            if( bPolygon && bMultiPolygon )
+            if (bPolygon && bMultiPolygon)
             {
                 poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
                     "", "", wkbMultiPolygon, nAttributeIndex, true));
@@ -423,7 +415,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             continue;
         }
 
-        if( !EQUAL(psAttrDef->pszValue, "element") )
+        if (!EQUAL(psAttrDef->pszValue, "element"))
             continue;
 
         // MapServer WFS writes element type as an attribute of element
@@ -432,7 +424,8 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         const char *pszElementName = CPLGetXMLValue(psAttrDef, "name", nullptr);
         bool bNullable =
             EQUAL(CPLGetXMLValue(psAttrDef, "minOccurs", "1"), "0");
-        const char *pszMaxOccurs = CPLGetXMLValue(psAttrDef, "maxOccurs", nullptr);
+        const char *pszMaxOccurs =
+            CPLGetXMLValue(psAttrDef, "maxOccurs", nullptr);
         if (pszType != nullptr)
         {
             const char *pszStrippedNSType = StripNS(pszType);
@@ -453,7 +446,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      EQUAL(pszStrippedNSType, "double") ||
                      EQUAL(pszStrippedNSType, "decimal"))
                 gmlType = GMLPT_Real;
-            else if (EQUAL(pszStrippedNSType, "float") )
+            else if (EQUAL(pszStrippedNSType, "float"))
                 gmlType = GMLPT_Float;
             else if (EQUAL(pszStrippedNSType, "int") ||
                      EQUAL(pszStrippedNSType, "integer"))
@@ -465,21 +458,21 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 // Optimistically map to signed integer
                 gmlType = GMLPT_Integer64;
             }
-            else if (EQUAL(pszStrippedNSType, "short") )
+            else if (EQUAL(pszStrippedNSType, "short"))
                 gmlType = GMLPT_Short;
-            else if (EQUAL(pszStrippedNSType, "boolean") )
+            else if (EQUAL(pszStrippedNSType, "boolean"))
                 gmlType = GMLPT_Boolean;
             // TODO: Would be nice to have a binary type.
             else if (EQUAL(pszStrippedNSType, "hexBinary"))
                 gmlType = GMLPT_String;
-            else if (strcmp(pszType, "gml:FeaturePropertyType") == 0 )
+            else if (strcmp(pszType, "gml:FeaturePropertyType") == 0)
             {
                 gmlType = GMLPT_FeatureProperty;
             }
             else if (STARTS_WITH(pszType, "gml:"))
             {
                 const AssocNameType *psIter = apsPropertyTypes;
-                while(psIter->pszName)
+                while (psIter->pszName)
                 {
                     if (strncmp(pszType + 4, psIter->pszName,
                                 strlen(psIter->pszName)) == 0)
@@ -488,31 +481,34 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         std::string osSRSName;
 
                         // Look if there's a comment restricting to subclasses.
-                        const CPLXMLNode* psIter2 = psAttrDef->psNext;
-                        while( psIter2 != nullptr )
+                        const CPLXMLNode *psIter2 = psAttrDef->psNext;
+                        while (psIter2 != nullptr)
                         {
-                            if( psIter2->eType == CXT_Comment )
+                            if (psIter2->eType == CXT_Comment)
                             {
-                                if( strstr(psIter2->pszValue,
-                                           "restricted to Polygon") )
+                                if (strstr(psIter2->pszValue,
+                                           "restricted to Polygon"))
                                     eType = wkbPolygon;
-                                else if( strstr(psIter2->pszValue,
-                                                "restricted to LineString") )
+                                else if (strstr(psIter2->pszValue,
+                                                "restricted to LineString"))
                                     eType = wkbLineString;
-                                else if( strstr(psIter2->pszValue,
-                                                "restricted to MultiPolygon") )
+                                else if (strstr(psIter2->pszValue,
+                                                "restricted to MultiPolygon"))
                                     eType = wkbMultiPolygon;
-                                else if( strstr(psIter2->pszValue,
-                                                "restricted to MultiLineString") )
+                                else if (strstr(
+                                             psIter2->pszValue,
+                                             "restricted to MultiLineString"))
                                     eType = wkbMultiLineString;
                                 else
                                 {
-                                    const char* pszSRSName = strstr(psIter2->pszValue, "srsName=\"");
-                                    if( pszSRSName )
+                                    const char *pszSRSName =
+                                        strstr(psIter2->pszValue, "srsName=\"");
+                                    if (pszSRSName)
                                     {
-                                        osSRSName = pszSRSName + strlen("srsName=\"");
+                                        osSRSName =
+                                            pszSRSName + strlen("srsName=\"");
                                         const auto nPos = osSRSName.find('"');
-                                        if( nPos != std::string::npos )
+                                        if (nPos != std::string::npos)
                                             osSRSName.resize(nPos);
                                         else
                                             osSRSName.clear();
@@ -523,13 +519,13 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                             psIter2 = psIter2->psNext;
                         }
 
-                        GMLGeometryPropertyDefn* poDefn =
+                        GMLGeometryPropertyDefn *poDefn =
                             new GMLGeometryPropertyDefn(
                                 pszElementName, pszElementName, eType,
                                 nAttributeIndex, bNullable);
                         poDefn->SetSRSName(osSRSName);
 
-                        if( poClass->AddGeometryProperty(poDefn) < 0 )
+                        if (poClass->AddGeometryProperty(poDefn) < 0)
                             delete poDefn;
                         else
                             nAttributeIndex++;
@@ -558,12 +554,11 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0 ||
                      strcmp(pszType, "gmgml:Point_MultiPointPropertyType") == 0)
             {
-                GMLGeometryPropertyDefn* poDefn =
-                    new GMLGeometryPropertyDefn(
-                        pszElementName, pszElementName, wkbMultiPoint,
-                        nAttributeIndex, bNullable);
+                GMLGeometryPropertyDefn *poDefn = new GMLGeometryPropertyDefn(
+                    pszElementName, pszElementName, wkbMultiPoint,
+                    nAttributeIndex, bNullable);
 
-                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                if (poClass->AddGeometryProperty(poDefn) < 0)
                     delete poDefn;
                 else
                     nAttributeIndex++;
@@ -573,33 +568,32 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (strcmp(pszType,
                             "G:LineString_MultiLineStringPropertyType") == 0 ||
                      strcmp(pszType,
-                            "gmgml:LineString_MultiLineStringPropertyType") == 0)
+                            "gmgml:LineString_MultiLineStringPropertyType") ==
+                         0)
             {
-                GMLGeometryPropertyDefn* poDefn =
-                    new GMLGeometryPropertyDefn(
-                        pszElementName, pszElementName, wkbMultiLineString,
-                        nAttributeIndex, bNullable);
+                GMLGeometryPropertyDefn *poDefn = new GMLGeometryPropertyDefn(
+                    pszElementName, pszElementName, wkbMultiLineString,
+                    nAttributeIndex, bNullable);
 
-                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                if (poClass->AddGeometryProperty(poDefn) < 0)
                     delete poDefn;
                 else
                     nAttributeIndex++;
 
                 continue;
             }
-            else if (strcmp(pszType,
-                            "G:Polygon_MultiPolygonPropertyType") == 0 ||
+            else if (strcmp(pszType, "G:Polygon_MultiPolygonPropertyType") ==
+                         0 ||
                      strcmp(pszType,
                             "gmgml:Polygon_MultiPolygonPropertyType") == 0 ||
-                     strcmp(pszType,
-                            "gmgml:Polygon_Surface_MultiSurface_CompositeSurfacePropertyType") == 0)
+                     strcmp(pszType, "gmgml:Polygon_Surface_MultiSurface_"
+                                     "CompositeSurfacePropertyType") == 0)
             {
-                GMLGeometryPropertyDefn* poDefn =
-                    new GMLGeometryPropertyDefn(
-                        pszElementName, pszElementName, wkbMultiPolygon,
-                        nAttributeIndex, bNullable);
+                GMLGeometryPropertyDefn *poDefn = new GMLGeometryPropertyDefn(
+                    pszElementName, pszElementName, wkbMultiPolygon,
+                    nAttributeIndex, bNullable);
 
-                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                if (poClass->AddGeometryProperty(poDefn) < 0)
                     delete poDefn;
                 else
                     nAttributeIndex++;
@@ -611,12 +605,11 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             // http://apollo.erdas.com/erdas-apollo/vector/WORLDWIDE?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=wfs:cntry98)
             else if (strcmp(pszType, "wfs:MixedPolygonPropertyType") == 0)
             {
-                GMLGeometryPropertyDefn* poDefn =
-                    new GMLGeometryPropertyDefn(
-                        pszElementName, pszElementName, wkbMultiPolygon,
-                        nAttributeIndex, bNullable);
+                GMLGeometryPropertyDefn *poDefn = new GMLGeometryPropertyDefn(
+                    pszElementName, pszElementName, wkbMultiPolygon,
+                    nAttributeIndex, bNullable);
 
-                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                if (poClass->AddGeometryProperty(poDefn) < 0)
                     delete poDefn;
                 else
                     nAttributeIndex++;
@@ -627,8 +620,8 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else
             {
                 gmlType = GMLPT_Untyped;
-                if ( !LookForSimpleType(psSchemaNode, pszStrippedNSType,
-                                        &gmlType, &nWidth, &nPrecision) )
+                if (!LookForSimpleType(psSchemaNode, pszStrippedNSType,
+                                       &gmlType, &nWidth, &nPrecision))
                 {
                     // Too complex schema for us. Aborts parsing.
                     delete poClass;
@@ -639,14 +632,14 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             if (pszElementName == nullptr)
                 pszElementName = "unnamed";
             const char *pszPropertyName = pszElementName;
-            if( gmlType == GMLPT_FeatureProperty )
+            if (gmlType == GMLPT_FeatureProperty)
             {
                 pszPropertyName = CPLSPrintf("%s_href", pszElementName);
             }
             GMLPropertyDefn *poProp =
                 new GMLPropertyDefn(pszPropertyName, pszElementName);
 
-            if( pszMaxOccurs != nullptr && strcmp(pszMaxOccurs, "1") != 0 )
+            if (pszMaxOccurs != nullptr && strcmp(pszMaxOccurs, "1") != 0)
                 gmlType = GetListTypeFromSingleType(gmlType);
 
             poProp->SetType(gmlType);
@@ -654,7 +647,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             poProp->SetPrecision(nPrecision);
             poProp->SetNullable(bNullable);
 
-            if (poClass->AddProperty( poProp ) < 0)
+            if (poClass->AddProperty(poProp) < 0)
                 delete poProp;
             else
                 nAttributeIndex++;
@@ -664,7 +657,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
         // For now we skip geometries.  Fixup later.
         CPLXMLNode *psSimpleType = CPLGetXMLNode(psAttrDef, "simpleType");
-        if( psSimpleType == nullptr )
+        if (psSimpleType == nullptr)
         {
             const char *pszRef = CPLGetXMLValue(psAttrDef, "ref", nullptr);
 
@@ -672,7 +665,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             if (pszRef != nullptr && STARTS_WITH(pszRef, "gml:"))
             {
                 const AssocNameType *psIter = apsRefTypes;
-                while(psIter->pszName)
+                while (psIter->pszName)
                 {
                     if (strncmp(pszRef + 4, psIter->pszName,
                                 strlen(psIter->pszName)) == 0)
@@ -697,20 +690,19 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                             }
                             else
                             {
-                                CPLDebug(
-                                    "GML",
-                                    "Geometry field already found ! "
-                                    "Ignoring the following ones");
+                                CPLDebug("GML",
+                                         "Geometry field already found ! "
+                                         "Ignoring the following ones");
                             }
                         }
                         else
                         {
-                            GMLGeometryPropertyDefn* poDefn =
+                            GMLGeometryPropertyDefn *poDefn =
                                 new GMLGeometryPropertyDefn(
                                     pszElementName, pszElementName,
                                     psIter->eType, nAttributeIndex, true);
 
-                            if( poClass->AddGeometryProperty(poDefn) < 0 )
+                            if (poClass->AddGeometryProperty(poDefn) < 0)
                                 delete poDefn;
                             else
                                 nAttributeIndex++;
@@ -736,8 +728,9 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 continue;
             }
 
-            /* Parse stuff like the following found in http://199.29.1.81:8181/miwfs/GetFeature.ashx?REQUEST=GetFeature&MAXFEATURES=1&SERVICE=WFS&VERSION=1.0.0&TYPENAME=miwfs:World :
-            <xs:element name="Obj" minOccurs="0" maxOccurs="1">
+            /* Parse stuff like the following found in
+            http://199.29.1.81:8181/miwfs/GetFeature.ashx?REQUEST=GetFeature&MAXFEATURES=1&SERVICE=WFS&VERSION=1.0.0&TYPENAME=miwfs:World
+            : <xs:element name="Obj" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element ref="gml:_Geometry"/>
@@ -752,19 +745,18 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             CPLXMLNode *psComplexTypeSequenceElement =
                 GetSingleChildElement(psComplexTypeSequence, "element");
 
-            if( pszElementName != nullptr &&
+            if (pszElementName != nullptr &&
                 CheckMinMaxOccursCardinality(psAttrDef) &&
                 psComplexTypeSequenceElement != nullptr &&
                 CheckMinMaxOccursCardinality(psComplexTypeSequence) &&
                 strcmp(CPLGetXMLValue(psComplexTypeSequenceElement, "ref", ""),
-                       "gml:_Geometry") == 0 )
+                       "gml:_Geometry") == 0)
             {
-                GMLGeometryPropertyDefn* poDefn =
-                    new GMLGeometryPropertyDefn(
-                        pszElementName, pszElementName, wkbUnknown, nAttributeIndex,
-                        bNullable);
+                GMLGeometryPropertyDefn *poDefn = new GMLGeometryPropertyDefn(
+                    pszElementName, pszElementName, wkbUnknown, nAttributeIndex,
+                    bNullable);
 
-                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                if (poClass->AddGeometryProperty(poDefn) < 0)
                     delete poDefn;
                 else
                     nAttributeIndex++;
@@ -789,7 +781,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         int nPrecision = 0;
         GetSimpleTypeProperties(psSimpleType, &eType, &nWidth, &nPrecision);
 
-        if( pszMaxOccurs != nullptr && strcmp(pszMaxOccurs, "1") != 0 )
+        if (pszMaxOccurs != nullptr && strcmp(pszMaxOccurs, "1") != 0)
             eType = GetListTypeFromSingleType(eType);
 
         poProp->SetType(eType);
@@ -805,16 +797,15 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
     // If we have found an unknown types, let's be on the side of caution and
     // create a geometry field.
-    if( poClass->GetGeometryPropertyCount() == 0 &&
-        bGotUnrecognizedType )
+    if (poClass->GetGeometryPropertyCount() == 0 && bGotUnrecognizedType)
     {
         poClass->AddGeometryProperty(
             new GMLGeometryPropertyDefn("", "", wkbUnknown, -1, true));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Class complete, add to reader class list.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Class complete, add to reader class list.                       */
+    /* -------------------------------------------------------------------- */
     poClass->SetSchemaLocked(true);
 
     return poClass;
@@ -826,14 +817,14 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 
 static CPLXMLNode *GMLParseXMLFile(const char *pszFilename)
 {
-    if( STARTS_WITH(pszFilename, "http://") ||
-        STARTS_WITH(pszFilename, "https://") )
+    if (STARTS_WITH(pszFilename, "http://") ||
+        STARTS_WITH(pszFilename, "https://"))
     {
         CPLXMLNode *psRet = nullptr;
         CPLHTTPResult *psResult = CPLHTTPFetch(pszFilename, nullptr);
-        if( psResult != nullptr )
+        if (psResult != nullptr)
         {
-            if( psResult->pabyData != nullptr )
+            if (psResult->pabyData != nullptr)
             {
                 psRet = CPLParseXMLString((const char *)psResult->pabyData);
             }
@@ -853,12 +844,12 @@ static CPLXMLNode *GMLParseXMLFile(const char *pszFilename)
 
 static CPLXMLNode *CPLGetFirstChildNode(CPLXMLNode *psNode)
 {
-    if( psNode == nullptr )
+    if (psNode == nullptr)
         return nullptr;
     CPLXMLNode *psIter = psNode->psChild;
-    while( psIter != nullptr )
+    while (psIter != nullptr)
     {
-        if( psIter->eType == CXT_Element )
+        if (psIter->eType == CXT_Element)
             return psIter;
         psIter = psIter->psNext;
     }
@@ -872,7 +863,7 @@ static CPLXMLNode *CPLGetFirstChildNode(CPLXMLNode *psNode)
 static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
 {
     CPLXMLNode *psIter = psNode;
-    while( psIter->psNext != nullptr )
+    while (psIter->psNext != nullptr)
         psIter = psIter->psNext;
     return psIter;
 }
@@ -881,9 +872,8 @@ static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
 /*                       CPLXMLSchemaResolveInclude()                   */
 /************************************************************************/
 
-static
-void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
-                                 CPLXMLNode *psSchemaNode )
+static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
+                                       CPLXMLNode *psSchemaNode)
 {
     std::set<CPLString> osAlreadyIncluded;
 
@@ -894,21 +884,21 @@ void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
         bTryAgain = false;
 
         CPLXMLNode *psThis = psSchemaNode->psChild;
-        for( ; psThis != nullptr; psThis = psThis->psNext )
+        for (; psThis != nullptr; psThis = psThis->psNext)
         {
-            if( psThis->eType == CXT_Element &&
-                EQUAL(psThis->pszValue, "include") )
+            if (psThis->eType == CXT_Element &&
+                EQUAL(psThis->pszValue, "include"))
             {
                 const char *pszSchemaLocation =
                     CPLGetXMLValue(psThis, "schemaLocation", nullptr);
-                if( pszSchemaLocation != nullptr &&
-                    osAlreadyIncluded.count( pszSchemaLocation) == 0 )
+                if (pszSchemaLocation != nullptr &&
+                    osAlreadyIncluded.count(pszSchemaLocation) == 0)
                 {
-                    osAlreadyIncluded.insert( pszSchemaLocation );
+                    osAlreadyIncluded.insert(pszSchemaLocation);
 
-                    if( !STARTS_WITH(pszSchemaLocation, "http://") &&
+                    if (!STARTS_WITH(pszSchemaLocation, "http://") &&
                         !STARTS_WITH(pszSchemaLocation, "https://") &&
-                        CPLIsFilenameRelative(pszSchemaLocation) )
+                        CPLIsFilenameRelative(pszSchemaLocation))
                     {
                         pszSchemaLocation =
                             CPLFormFilename(CPLGetPath(pszMainSchemaLocation),
@@ -916,22 +906,22 @@ void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
                     }
 
                     CPLXMLNode *psIncludedXSDTree =
-                                GMLParseXMLFile( pszSchemaLocation );
-                    if( psIncludedXSDTree != nullptr )
+                        GMLParseXMLFile(pszSchemaLocation);
+                    if (psIncludedXSDTree != nullptr)
                     {
                         CPLStripXMLNamespace(psIncludedXSDTree, nullptr, TRUE);
                         CPLXMLNode *psIncludedSchemaNode =
                             CPLGetXMLNode(psIncludedXSDTree, "=schema");
-                        if( psIncludedSchemaNode != nullptr )
+                        if (psIncludedSchemaNode != nullptr)
                         {
                             // Substitute de <include> node by its content.
                             CPLXMLNode *psFirstChildElement =
                                 CPLGetFirstChildNode(psIncludedSchemaNode);
-                            if( psFirstChildElement != nullptr )
+                            if (psFirstChildElement != nullptr)
                             {
                                 CPLXMLNode *psCopy =
                                     CPLCloneXMLTree(psFirstChildElement);
-                                if( psLast != nullptr )
+                                if (psLast != nullptr)
                                     psLast->psNext = psCopy;
                                 else
                                     psSchemaNode->psChild = psCopy;
@@ -953,11 +943,11 @@ void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
 
             psLast = psThis;
         }
-    } while( bTryAgain );
+    } while (bTryAgain);
 
     const char *pszSchemaOutputName =
         CPLGetConfigOption("GML_SCHEMA_OUTPUT_NAME", nullptr);
-    if( pszSchemaOutputName != nullptr )
+    if (pszSchemaOutputName != nullptr)
     {
         CPLSerializeXMLTreeToFile(psSchemaNode, pszSchemaOutputName);
     }
@@ -968,7 +958,7 @@ void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
 /************************************************************************/
 
 static std::set<std::pair<std::string, std::string>>
-                                GetUniqueConstraints(const CPLXMLNode* psNode)
+GetUniqueConstraints(const CPLXMLNode *psNode)
 {
     /* Parse
         <xs:unique name="uniqueConstraintpolyeas_id">
@@ -977,20 +967,22 @@ static std::set<std::pair<std::string, std::string>>
         </xs:unique>
     */
     std::set<std::pair<std::string, std::string>> oSet;
-    for( const auto* psIter= psNode->psChild; psIter != nullptr; psIter = psIter->psNext )
+    for (const auto *psIter = psNode->psChild; psIter != nullptr;
+         psIter = psIter->psNext)
     {
-        if( psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "unique") )
+        if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "unique"))
         {
-            const char* pszSelector = CPLGetXMLValue(psIter, "selector.xpath", nullptr);
-            const char* pszField = CPLGetXMLValue(psIter, "field.xpath", nullptr);
-            if( pszSelector && pszField && pszField[0] != '@' )
+            const char *pszSelector =
+                CPLGetXMLValue(psIter, "selector.xpath", nullptr);
+            const char *pszField =
+                CPLGetXMLValue(psIter, "field.xpath", nullptr);
+            if (pszSelector && pszField && pszField[0] != '@')
             {
-                const char* pszSlash = strchr(pszSelector, '/');
-                if( pszSlash )
+                const char *pszSlash = strchr(pszSelector, '/');
+                if (pszSlash)
                 {
-                    oSet.insert(std::pair<std::string,std::string>(
-                        StripNS(pszSlash+1), StripNS(pszField)));
+                    oSet.insert(std::pair<std::string, std::string>(
+                        StripNS(pszSlash + 1), StripNS(pszField)));
                 }
             }
         }
@@ -1002,98 +994,105 @@ static std::set<std::pair<std::string, std::string>>
 /*                          GMLParseXSD()                               */
 /************************************************************************/
 
-bool GMLParseXSD( const char *pszFile,
-                 std::vector<GMLFeatureClass*> &aosClasses,
+bool GMLParseXSD(const char *pszFile,
+                 std::vector<GMLFeatureClass *> &aosClasses,
                  bool &bFullyUnderstood)
 
 {
     bFullyUnderstood = false;
 
-    if( pszFile == nullptr )
+    if (pszFile == nullptr)
         return false;
 
-/* -------------------------------------------------------------------- */
-/*      Load the raw XML file.                                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Load the raw XML file.                                          */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psXSDTree = GMLParseXMLFile(pszFile);
 
-    if( psXSDTree == nullptr )
+    if (psXSDTree == nullptr)
         return false;
 
-/* -------------------------------------------------------------------- */
-/*      Strip off any namespace qualifiers.                             */
-/* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psXSDTree, nullptr, TRUE );
+    /* -------------------------------------------------------------------- */
+    /*      Strip off any namespace qualifiers.                             */
+    /* -------------------------------------------------------------------- */
+    CPLStripXMLNamespace(psXSDTree, nullptr, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Find <schema> root element.                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Find <schema> root element.                                     */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psSchemaNode = CPLGetXMLNode(psXSDTree, "=schema");
-    if( psSchemaNode == nullptr )
+    if (psSchemaNode == nullptr)
     {
-        CPLDestroyXMLNode( psXSDTree );
+        CPLDestroyXMLNode(psXSDTree);
         return false;
     }
 
-/* ==================================================================== */
-/*      Process each include directive.                                 */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Process each include directive.                                 */
+    /* ==================================================================== */
     CPLXMLSchemaResolveInclude(pszFile, psSchemaNode);
 
     // CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
 
     bFullyUnderstood = true;
 
-/* ==================================================================== */
-/*      Process each feature class definition.                          */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Process each feature class definition.                          */
+    /* ==================================================================== */
     CPLXMLNode *psThis = psSchemaNode->psChild;
 
     std::set<std::pair<std::string, std::string>> oSetUniqueConstraints;
 
-    for( ; psThis != nullptr; psThis = psThis->psNext )
+    for (; psThis != nullptr; psThis = psThis->psNext)
     {
-/* -------------------------------------------------------------------- */
-/*      Check for <xs:element> node.                                    */
-/* -------------------------------------------------------------------- */
-        if( psThis->eType != CXT_Element
-            || !EQUAL(psThis->pszValue, "element") )
+        /* --------------------------------------------------------------------
+         */
+        /*      Check for <xs:element> node. */
+        /* --------------------------------------------------------------------
+         */
+        if (psThis->eType != CXT_Element || !EQUAL(psThis->pszValue, "element"))
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Get name                                                        */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Get name */
+        /* --------------------------------------------------------------------
+         */
         const char *pszName = CPLGetXMLValue(psThis, "name", nullptr);
-        if( pszName == nullptr )
+        if (pszName == nullptr)
         {
             continue;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Check the substitution group.                                   */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Check the substitution group. */
+        /* --------------------------------------------------------------------
+         */
         const char *pszSubGroup =
             StripNS(CPLGetXMLValue(psThis, "substitutionGroup", ""));
 
-        if( EQUAL(pszName, "FeatureCollection") &&
+        if (EQUAL(pszName, "FeatureCollection") &&
             (EQUAL(pszSubGroup, "_FeatureCollection") ||
              EQUAL(pszSubGroup, "_GML") ||
-             EQUAL(pszSubGroup, "AbstractFeature")) )
+             EQUAL(pszSubGroup, "AbstractFeature")))
         {
             oSetUniqueConstraints = GetUniqueConstraints(psThis);
             continue;
         }
 
         // AbstractFeature used by GML 3.2.
-        if( !EQUAL(pszSubGroup, "_Feature") &&
-            !EQUAL(pszSubGroup, "AbstractFeature") )
+        if (!EQUAL(pszSubGroup, "_Feature") &&
+            !EQUAL(pszSubGroup, "AbstractFeature"))
         {
             continue;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Get type and verify relationship with name.                     */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Get type and verify relationship with name. */
+        /* --------------------------------------------------------------------
+         */
         const char *pszType = CPLGetXMLValue(psThis, "type", nullptr);
         if (pszType == nullptr)
         {
@@ -1109,39 +1108,41 @@ bool GMLParseXSD( const char *pszFile,
             }
             continue;
         }
-        if( strstr(pszType, ":") != nullptr )
+        if (strstr(pszType, ":") != nullptr)
             pszType = strstr(pszType, ":") + 1;
-        if( EQUAL(pszType, pszName) )
+        if (EQUAL(pszType, pszName))
         {
             // A few WFS servers return a type name which is the element name
             // without any _Type or Type suffix
             // e.g.:
-            // http://apollo.erdas.com/erdas-apollo/vector/Cherokee?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=iwfs:Air */
+            // http://apollo.erdas.com/erdas-apollo/vector/Cherokee?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=iwfs:Air
+            // */
 
             // TODO(schwehr): What was supposed to go here?
         }
 
-        // <element name="RekisteriyksikonPalstanTietoja" type="ktjkiiwfs:PalstanTietojaType" substitutionGroup="gml:_Feature" />
-        else if( strlen(pszType) > 4 &&
+        // <element name="RekisteriyksikonPalstanTietoja"
+        // type="ktjkiiwfs:PalstanTietojaType" substitutionGroup="gml:_Feature"
+        // />
+        else if (strlen(pszType) > 4 &&
                  strcmp(pszType + strlen(pszType) - 4, "Type") == 0 &&
                  strlen(pszName) > strlen(pszType) - 4 &&
                  strncmp(pszName + strlen(pszName) - (strlen(pszType) - 4),
-                         pszType,
-                         strlen(pszType) - 4) == 0 )        {
+                         pszType, strlen(pszType) - 4) == 0)
+        {
         }
 
-        else if( !EQUALN(pszType, pszName, strlen(pszName))
-            || !(EQUAL(pszType + strlen(pszName), "_Type") ||
-                    EQUAL(pszType + strlen(pszName), "Type") ||
-                    EQUAL(pszType + strlen(pszName), "FeatureType")) )
+        else if (!EQUALN(pszType, pszName, strlen(pszName)) ||
+                 !(EQUAL(pszType + strlen(pszName), "_Type") ||
+                   EQUAL(pszType + strlen(pszName), "Type") ||
+                   EQUAL(pszType + strlen(pszName), "FeatureType")))
         {
             continue;
         }
 
         // CanVec .xsd contains weird types that are not used in the related
         // GML.
-        if (STARTS_WITH(pszName, "XyZz") ||
-            STARTS_WITH(pszName, "XyZ1") ||
+        if (STARTS_WITH(pszName, "XyZz") || STARTS_WITH(pszName, "XyZ1") ||
             STARTS_WITH(pszName, "XyZ2"))
             continue;
 
@@ -1156,14 +1157,15 @@ bool GMLParseXSD( const char *pszFile,
     CPLDestroyXMLNode(psXSDTree);
 
     // Attach unique constraints to fields
-    for( const auto& typeFieldPair: oSetUniqueConstraints )
+    for (const auto &typeFieldPair : oSetUniqueConstraints)
     {
-        for( const auto* poClass: aosClasses )
+        for (const auto *poClass : aosClasses)
         {
-            if( poClass->GetName() == typeFieldPair.first )
+            if (poClass->GetName() == typeFieldPair.first)
             {
-                auto poProperty = poClass->GetProperty(typeFieldPair.second.c_str());
-                if( poProperty )
+                auto poProperty =
+                    poClass->GetProperty(typeFieldPair.second.c_str());
+                if (poProperty)
                 {
                     poProperty->SetUnique(true);
                 }

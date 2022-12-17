@@ -30,18 +30,15 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                         OGRDGNDataSource()                           */
 /************************************************************************/
 
-OGRDGNDataSource::OGRDGNDataSource() :
-    papoLayers(nullptr),
-    nLayers(0),
-    pszName(nullptr),
-    hDGN(nullptr),
-    papszOptions(nullptr)
-{}
+OGRDGNDataSource::OGRDGNDataSource()
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr), hDGN(nullptr),
+      papszOptions(nullptr)
+{
+}
 
 /************************************************************************/
 /*                        ~OGRDGNDataSource()                           */
@@ -50,77 +47,75 @@ OGRDGNDataSource::OGRDGNDataSource() :
 OGRDGNDataSource::~OGRDGNDataSource()
 
 {
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
-    CPLFree( papoLayers );
-    CPLFree( pszName );
-    CSLDestroy( papszOptions );
+    CPLFree(papoLayers);
+    CPLFree(pszName);
+    CSLDestroy(papszOptions);
 
-    if( hDGN != nullptr )
-        DGNClose( hDGN );
+    if (hDGN != nullptr)
+        DGNClose(hDGN);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDGNDataSource::Open( const char * pszNewName,
-                            int bTestOpen,
-                            int bUpdate )
+int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
 
 {
-    CPLAssert( nLayers == 0 );
+    CPLAssert(nLayers == 0);
 
-/* -------------------------------------------------------------------- */
-/*      For now we require files to have the .dgn or .DGN               */
-/*      extension.  Eventually we will implement a more                 */
-/*      sophisticated test to see if it is a dgn file.                  */
-/* -------------------------------------------------------------------- */
-    if( bTestOpen )
+    /* -------------------------------------------------------------------- */
+    /*      For now we require files to have the .dgn or .DGN               */
+    /*      extension.  Eventually we will implement a more                 */
+    /*      sophisticated test to see if it is a dgn file.                  */
+    /* -------------------------------------------------------------------- */
+    if (bTestOpen)
     {
 
-        VSILFILE *fp = VSIFOpenL( pszNewName, "rb" );
-        if( fp == nullptr )
+        VSILFILE *fp = VSIFOpenL(pszNewName, "rb");
+        if (fp == nullptr)
             return FALSE;
 
         GByte abyHeader[512];
-        const int nHeaderBytes = static_cast<int>(
-            VSIFReadL( abyHeader, 1, sizeof(abyHeader), fp ) );
+        const int nHeaderBytes =
+            static_cast<int>(VSIFReadL(abyHeader, 1, sizeof(abyHeader), fp));
 
-        VSIFCloseL( fp );
+        VSIFCloseL(fp);
 
-        if( nHeaderBytes < 512 )
+        if (nHeaderBytes < 512)
             return FALSE;
 
-        if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
+        if (!DGNTestOpen(abyHeader, nHeaderBytes))
             return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to open the file as a DGN file.                             */
-/* -------------------------------------------------------------------- */
-    hDGN = DGNOpen( pszNewName, bUpdate );
-    if( hDGN == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Try to open the file as a DGN file.                             */
+    /* -------------------------------------------------------------------- */
+    hDGN = DGNOpen(pszNewName, bUpdate);
+    if (hDGN == nullptr)
     {
-        if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to open %s as a Microstation .dgn file.",
-                      pszNewName );
+        if (!bTestOpen)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to open %s as a Microstation .dgn file.",
+                     pszNewName);
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    OGRDGNLayer *poLayer = new OGRDGNLayer( "elements", hDGN, bUpdate );
-    pszName = CPLStrdup( pszNewName );
+    /* -------------------------------------------------------------------- */
+    /*      Create the layer object.                                        */
+    /* -------------------------------------------------------------------- */
+    OGRDGNLayer *poLayer = new OGRDGNLayer("elements", hDGN, bUpdate);
+    pszName = CPLStrdup(pszNewName);
 
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add layer to data source layer list.                            */
+    /* -------------------------------------------------------------------- */
     papoLayers = static_cast<OGRDGNLayer **>(
-        CPLRealloc( papoLayers,  sizeof(OGRDGNLayer *) * (nLayers+1) ) );
+        CPLRealloc(papoLayers, sizeof(OGRDGNLayer *) * (nLayers + 1)));
     papoLayers[nLayers++] = poLayer;
 
     return TRUE;
@@ -130,12 +125,12 @@ int OGRDGNDataSource::Open( const char * pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNDataSource::TestCapability( const char * pszCap )
+int OGRDGNDataSource::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;
-    else if( EQUAL(pszCap, ODsCZGeometries) )
+    else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
 
     return FALSE;
@@ -145,10 +140,10 @@ int OGRDGNDataSource::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
+OGRLayer *OGRDGNDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
 
     return papoLayers[iLayer];
@@ -162,12 +157,11 @@ OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
 /*      yet.  It will be created by theICreateLayer() call.             */
 /************************************************************************/
 
-bool OGRDGNDataSource::PreCreate( const char *pszFilename,
-                                  char **papszOptionsIn )
+bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
 
 {
-    papszOptions = CSLDuplicate( papszOptionsIn );
-    pszName = CPLStrdup( pszFilename );
+    papszOptions = CSLDuplicate(papszOptionsIn);
+    pszName = CPLStrdup(pszFilename);
 
     return true;
 }
@@ -176,27 +170,27 @@ bool OGRDGNDataSource::PreCreate( const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
+OGRLayer *OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
                                          OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eGeomType,
-                                         char **papszExtraOptions )
+                                         char **papszExtraOptions)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Ensure only one layer gets created.                             */
-/* -------------------------------------------------------------------- */
-    if( nLayers > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Ensure only one layer gets created.                             */
+    /* -------------------------------------------------------------------- */
+    if (nLayers > 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "DGN driver only supports one layer with all the elements "
-                  "in it." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DGN driver only supports one layer with all the elements "
+                 "in it.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If the coordinate system is geographic, we should use a         */
-/*      localized default origin and resolution.                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If the coordinate system is geographic, we should use a         */
+    /*      localized default origin and resolution.                        */
+    /* -------------------------------------------------------------------- */
     const char *pszMasterUnit = "m";
     const char *pszSubUnit = "cm";
 
@@ -207,7 +201,7 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
     double dfOriginY = -21474836.0;  // with two decimals of precision.
     double dfOriginZ = -21474836.0;
 
-    if( poSRS != nullptr && poSRS->IsGeographic() )
+    if (poSRS != nullptr && poSRS->IsGeographic())
     {
         dfOriginX = -200.0;
         dfOriginY = -200.0;
@@ -218,78 +212,77 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
         nUORPerSU = 1000;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Parse out various creation options.                             */
-/* -------------------------------------------------------------------- */
-    papszOptions = CSLInsertStrings( papszOptions, 0, papszExtraOptions );
+    /* -------------------------------------------------------------------- */
+    /*      Parse out various creation options.                             */
+    /* -------------------------------------------------------------------- */
+    papszOptions = CSLInsertStrings(papszOptions, 0, papszExtraOptions);
 
-    const bool b3DRequested
-        = CPLFetchBool( papszOptions, "3D", wkbHasZ(eGeomType) );
+    const bool b3DRequested =
+        CPLFetchBool(papszOptions, "3D", wkbHasZ(eGeomType));
 
-    const char *pszSeed = CSLFetchNameValue( papszOptions, "SEED" );
+    const char *pszSeed = CSLFetchNameValue(papszOptions, "SEED");
     int nCreationFlags = 0;
-    if( pszSeed )
+    if (pszSeed)
         nCreationFlags |= DGNCF_USE_SEED_ORIGIN | DGNCF_USE_SEED_UNITS;
-    else if( b3DRequested )
-        pszSeed = CPLFindFile( "gdal", "seed_3d.dgn" );
+    else if (b3DRequested)
+        pszSeed = CPLFindFile("gdal", "seed_3d.dgn");
     else
-        pszSeed = CPLFindFile( "gdal", "seed_2d.dgn" );
+        pszSeed = CPLFindFile("gdal", "seed_2d.dgn");
 
-    if( pszSeed == nullptr )
+    if (pszSeed == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "No seed file provided, and unable to find seed_2d.dgn." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "No seed file provided, and unable to find seed_2d.dgn.");
         return nullptr;
     }
 
-    if( CPLFetchBool( papszOptions, "COPY_WHOLE_SEED_FILE", true ) )
+    if (CPLFetchBool(papszOptions, "COPY_WHOLE_SEED_FILE", true))
         nCreationFlags |= DGNCF_COPY_WHOLE_SEED_FILE;
-    if( CPLFetchBool( papszOptions, "COPY_SEED_FILE_COLOR_TABLE", true ) )
+    if (CPLFetchBool(papszOptions, "COPY_SEED_FILE_COLOR_TABLE", true))
         nCreationFlags |= DGNCF_COPY_SEED_FILE_COLOR_TABLE;
 
-    const char *pszValue
-        = CSLFetchNameValue( papszOptions, "MASTER_UNIT_NAME" );
-    if( pszValue != nullptr )
+    const char *pszValue = CSLFetchNameValue(papszOptions, "MASTER_UNIT_NAME");
+    if (pszValue != nullptr)
     {
         nCreationFlags &= ~DGNCF_USE_SEED_UNITS;
         pszMasterUnit = pszValue;
     }
 
-    pszValue = CSLFetchNameValue( papszOptions, "SUB_UNIT_NAME" );
-    if( pszValue != nullptr )
+    pszValue = CSLFetchNameValue(papszOptions, "SUB_UNIT_NAME");
+    if (pszValue != nullptr)
     {
         nCreationFlags &= ~DGNCF_USE_SEED_UNITS;
         pszSubUnit = pszValue;
     }
 
-    pszValue = CSLFetchNameValue( papszOptions, "SUB_UNITS_PER_MASTER_UNIT" );
-    if( pszValue != nullptr )
+    pszValue = CSLFetchNameValue(papszOptions, "SUB_UNITS_PER_MASTER_UNIT");
+    if (pszValue != nullptr)
     {
         nCreationFlags &= ~DGNCF_USE_SEED_UNITS;
         nSUPerMU = atoi(pszValue);
     }
 
-    pszValue = CSLFetchNameValue( papszOptions, "UOR_PER_SUB_UNIT" );
-    if( pszValue != nullptr )
+    pszValue = CSLFetchNameValue(papszOptions, "UOR_PER_SUB_UNIT");
+    if (pszValue != nullptr)
     {
         nCreationFlags &= ~DGNCF_USE_SEED_UNITS;
         nUORPerSU = atoi(pszValue);
     }
 
-    pszValue = CSLFetchNameValue( papszOptions, "ORIGIN" );
-    if( pszValue != nullptr )
+    pszValue = CSLFetchNameValue(papszOptions, "ORIGIN");
+    if (pszValue != nullptr)
     {
-        char **papszTuple = CSLTokenizeStringComplex( pszValue, " ,",
-                                                      FALSE, FALSE );
+        char **papszTuple =
+            CSLTokenizeStringComplex(pszValue, " ,", FALSE, FALSE);
 
         nCreationFlags &= ~DGNCF_USE_SEED_ORIGIN;
-        if( CSLCount(papszTuple) == 3 )
+        if (CSLCount(papszTuple) == 3)
         {
             dfOriginX = CPLAtof(papszTuple[0]);
             dfOriginY = CPLAtof(papszTuple[1]);
             dfOriginZ = CPLAtof(papszTuple[2]);
         }
-        else if( CSLCount(papszTuple) == 2 )
+        else if (CSLCount(papszTuple) == 2)
         {
             dfOriginX = CPLAtof(papszTuple[0]);
             dfOriginY = CPLAtof(papszTuple[1]);
@@ -298,33 +291,32 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
         else
         {
             CSLDestroy(papszTuple);
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "ORIGIN is not a valid 2d or 3d tuple.\n"
-                      "Separate tuple values with comma." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ORIGIN is not a valid 2d or 3d tuple.\n"
+                     "Separate tuple values with comma.");
             return nullptr;
         }
         CSLDestroy(papszTuple);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try creating the base file.                                     */
-/* -------------------------------------------------------------------- */
-    hDGN = DGNCreate( pszName, pszSeed, nCreationFlags,
-                      dfOriginX, dfOriginY, dfOriginZ,
-                      nSUPerMU, nUORPerSU, pszMasterUnit, pszSubUnit );
-    if( hDGN == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Try creating the base file.                                     */
+    /* -------------------------------------------------------------------- */
+    hDGN = DGNCreate(pszName, pszSeed, nCreationFlags, dfOriginX, dfOriginY,
+                     dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit, pszSubUnit);
+    if (hDGN == nullptr)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    OGRDGNLayer *poLayer = new OGRDGNLayer( pszLayerName, hDGN, TRUE );
+    /* -------------------------------------------------------------------- */
+    /*      Create the layer object.                                        */
+    /* -------------------------------------------------------------------- */
+    OGRDGNLayer *poLayer = new OGRDGNLayer(pszLayerName, hDGN, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add layer to data source layer list.                            */
+    /* -------------------------------------------------------------------- */
     papoLayers = static_cast<OGRDGNLayer **>(
-        CPLRealloc( papoLayers,  sizeof(OGRDGNLayer *) * (nLayers+1) ) );
+        CPLRealloc(papoLayers, sizeof(OGRDGNLayer *) * (nLayers + 1)));
     papoLayers[nLayers++] = poLayer;
 
     return poLayer;

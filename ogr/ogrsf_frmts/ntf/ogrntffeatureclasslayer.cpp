@@ -29,7 +29,6 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                      OGRNTFFeatureClassLayer()                       */
 /*                                                                      */
@@ -37,28 +36,26 @@
 /*      OGRFeatureDefn object.                                          */
 /************************************************************************/
 
-OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn ) :
-    poFeatureDefn(new OGRFeatureDefn("FEATURE_CLASSES")),
-    poFilterGeom(nullptr),
-    poDS(poDSIn),
-    iCurrentFC(0)
+OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer(OGRNTFDataSource *poDSIn)
+    : poFeatureDefn(new OGRFeatureDefn("FEATURE_CLASSES")),
+      poFilterGeom(nullptr), poDS(poDSIn), iCurrentFC(0)
 {
-/* -------------------------------------------------------------------- */
-/*      Establish the schema.                                           */
-/* -------------------------------------------------------------------- */
-    SetDescription( poFeatureDefn->GetName() );
-    poFeatureDefn->SetGeomType( wkbNone );
+    /* -------------------------------------------------------------------- */
+    /*      Establish the schema.                                           */
+    /* -------------------------------------------------------------------- */
+    SetDescription(poFeatureDefn->GetName());
+    poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
 
-    OGRFieldDefn oFCNum( "FEAT_CODE", OFTString );
+    OGRFieldDefn oFCNum("FEAT_CODE", OFTString);
 
-    oFCNum.SetWidth( 4 );
-    poFeatureDefn->AddFieldDefn( &oFCNum );
+    oFCNum.SetWidth(4);
+    poFeatureDefn->AddFieldDefn(&oFCNum);
 
-    OGRFieldDefn oFCName( "FC_NAME", OFTString );
+    OGRFieldDefn oFCName("FC_NAME", OFTString);
 
-    oFCNum.SetWidth( 80 );
-    poFeatureDefn->AddFieldDefn( &oFCName );
+    oFCNum.SetWidth(80);
+    poFeatureDefn->AddFieldDefn(&oFCName);
 }
 
 /************************************************************************/
@@ -68,10 +65,10 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn ) :
 OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
 
 {
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 
-    if( poFilterGeom != nullptr )
+    if (poFilterGeom != nullptr)
         delete poFilterGeom;
 }
 
@@ -79,16 +76,16 @@ OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRNTFFeatureClassLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+void OGRNTFFeatureClassLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
 {
-    if( poFilterGeom != nullptr )
+    if (poFilterGeom != nullptr)
     {
         delete poFilterGeom;
         poFilterGeom = nullptr;
     }
 
-    if( poGeomIn != nullptr )
+    if (poGeomIn != nullptr)
         poFilterGeom = poGeomIn->clone();
 }
 
@@ -109,34 +106,34 @@ void OGRNTFFeatureClassLayer::ResetReading()
 OGRFeature *OGRNTFFeatureClassLayer::GetNextFeature()
 
 {
-    if( iCurrentFC >= GetFeatureCount() )
+    if (iCurrentFC >= GetFeatureCount())
         return nullptr;
 
-    return GetFeature( (long) iCurrentFC++ );
+    return GetFeature((long)iCurrentFC++);
 }
 
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRNTFFeatureClassLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    char        *pszFCName, *pszFCId;
+    char *pszFCName, *pszFCId;
 
-    if( nFeatureId < 0 || nFeatureId >= poDS->GetFCCount() )
+    if (nFeatureId < 0 || nFeatureId >= poDS->GetFCCount())
         return nullptr;
 
-    poDS->GetFeatureClass( (int)nFeatureId, &pszFCId, &pszFCName );
+    poDS->GetFeatureClass((int)nFeatureId, &pszFCId, &pszFCName);
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding feature.                                 */
-/* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding feature.                                 */
+    /* -------------------------------------------------------------------- */
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
-    poFeature->SetField( 0, pszFCId );
-    poFeature->SetField( 1, pszFCName );
-    poFeature->SetFID( nFeatureId );
+    poFeature->SetField(0, pszFCId);
+    poFeature->SetField(1, pszFCName);
+    poFeature->SetFID(nFeatureId);
 
     return poFeature;
 }
@@ -150,7 +147,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRNTFFeatureClassLayer::GetFeatureCount( CPL_UNUSED int bForce )
+GIntBig OGRNTFFeatureClassLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     return poDS->GetFCCount();
 }
@@ -159,20 +156,19 @@ GIntBig OGRNTFFeatureClassLayer::GetFeatureCount( CPL_UNUSED int bForce )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNTFFeatureClassLayer::TestCapability( const char * pszCap )
+int OGRNTFFeatureClassLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite)
-             || EQUAL(pszCap,OLCRandomWrite) )
+    else if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite))
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return TRUE;
 
     else

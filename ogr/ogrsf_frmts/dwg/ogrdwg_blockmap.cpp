@@ -32,7 +32,6 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
-
 /************************************************************************/
 /*                          ReadBlockSection()                          */
 /************************************************************************/
@@ -40,30 +39,30 @@
 void OGRDWGDataSource::ReadBlocksSection()
 
 {
-    OGRDWGLayer *poReaderLayer = (OGRDWGLayer *) GetLayerByName( "Entities" );
-    int bMergeBlockGeometries = CPLTestBool(
-        CPLGetConfigOption( "DWG_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
+    OGRDWGLayer *poReaderLayer = (OGRDWGLayer *)GetLayerByName("Entities");
+    int bMergeBlockGeometries =
+        CPLTestBool(CPLGetConfigOption("DWG_MERGE_BLOCK_GEOMETRIES", "TRUE"));
 
-/* -------------------------------------------------------------------- */
-/*      Loop over all the block tables, skipping *Model_Space which     */
-/*      we assume is primary entities.                                  */
-/* -------------------------------------------------------------------- */
-    OdDbBlockTableRecordPtr  poModelSpace, poBlock;
+    /* -------------------------------------------------------------------- */
+    /*      Loop over all the block tables, skipping *Model_Space which     */
+    /*      we assume is primary entities.                                  */
+    /* -------------------------------------------------------------------- */
+    OdDbBlockTableRecordPtr poModelSpace, poBlock;
     OdDbBlockTablePtr pTable = GetDB()->getBlockTableId().safeOpenObject();
     OdDbSymbolTableIteratorPtr pBlkIter = pTable->newIterator();
 
-    for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
+    for (pBlkIter->start(); !pBlkIter->done(); pBlkIter->step())
     {
         poBlock = pBlkIter->getRecordId().safeOpenObject();
-        CPLString osBlockName = (const char *) poBlock->getName();
+        CPLString osBlockName = (const char *)poBlock->getName();
 
-        if( EQUAL(osBlockName,"*Model_Space") )
+        if (EQUAL(osBlockName, "*Model_Space"))
         {
             poModelSpace = poBlock;
             continue;
         }
 
-        poReaderLayer->SetBlockTable( poBlock );
+        poReaderLayer->SetBlockTable(poBlock);
 
         // Now we will process entities till we run out.
         // We aggregate the geometries of the features into a multi-geometry,
@@ -71,63 +70,64 @@ void OGRDWGDataSource::ReadBlocksSection()
 
         OGRFeature *poFeature = nullptr;
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
-        std::vector<OGRFeature*> apoFeatures;
+        std::vector<OGRFeature *> apoFeatures;
 
-        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != nullptr )
+        while ((poFeature = poReaderLayer->GetNextUnfilteredFeature()) !=
+               nullptr)
         {
-            if( (poFeature->GetStyleString() != nullptr
-                 && strstr(poFeature->GetStyleString(),"LABEL") != nullptr)
-                || !bMergeBlockGeometries )
+            if ((poFeature->GetStyleString() != nullptr &&
+                 strstr(poFeature->GetStyleString(), "LABEL") != nullptr) ||
+                !bMergeBlockGeometries)
             {
-                apoFeatures.push_back( poFeature );
+                apoFeatures.push_back(poFeature);
             }
             else
             {
-                poColl->addGeometryDirectly( poFeature->StealGeometry() );
+                poColl->addGeometryDirectly(poFeature->StealGeometry());
                 delete poFeature;
             }
         }
 
-        if( poColl->getNumGeometries() == 0 )
+        if (poColl->getNumGeometries() == 0)
             delete poColl;
         else
             oBlockMap[osBlockName].poGeometry = SimplifyBlockGeometry(poColl);
 
-        if( !apoFeatures.empty() )
+        if (!apoFeatures.empty())
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 
-    CPLDebug( "DWG", "Read %d blocks with meaningful geometry.",
-              (int) oBlockMap.size() );
+    CPLDebug("DWG", "Read %d blocks with meaningful geometry.",
+             (int)oBlockMap.size());
 
-    poReaderLayer->SetBlockTable( poModelSpace );
+    poReaderLayer->SetBlockTable(poModelSpace);
 }
 
 /************************************************************************/
 /*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
-OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
-    OGRGeometryCollection *poCollection )
+OGRGeometry *
+OGRDWGDataSource::SimplifyBlockGeometry(OGRGeometryCollection *poCollection)
 
 {
-/* -------------------------------------------------------------------- */
-/*      If there is only one geometry in the collection, just return    */
-/*      it.                                                             */
-/* -------------------------------------------------------------------- */
-    if( poCollection->getNumGeometries() == 1 )
+    /* -------------------------------------------------------------------- */
+    /*      If there is only one geometry in the collection, just return    */
+    /*      it.                                                             */
+    /* -------------------------------------------------------------------- */
+    if (poCollection->getNumGeometries() == 1)
     {
         OGRGeometry *poReturn = poCollection->getGeometryRef(0);
-        poCollection->removeGeometry(0,FALSE);
+        poCollection->removeGeometry(0, FALSE);
         delete poCollection;
         return poReturn;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Eventually we likely ought to have logic to convert to          */
-/*      polygon, multipolygon, multilinestring or multipoint but        */
-/*      I'll put that off till it would be meaningful.                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Eventually we likely ought to have logic to convert to          */
+    /*      polygon, multipolygon, multilinestring or multipoint but        */
+    /*      I'll put that off till it would be meaningful.                  */
+    /* -------------------------------------------------------------------- */
 
     return poCollection;
 }
@@ -141,12 +141,12 @@ OGRGeometry *OGRDWGDataSource::SimplifyBlockGeometry(
 /*      should be cloned for use.                                       */
 /************************************************************************/
 
-DWGBlockDefinition *OGRDWGDataSource::LookupBlock( const char *pszName )
+DWGBlockDefinition *OGRDWGDataSource::LookupBlock(const char *pszName)
 
 {
     CPLString osName = pszName;
 
-    if( oBlockMap.count( osName ) == 0 )
+    if (oBlockMap.count(osName) == 0)
         return nullptr;
     else
         return &(oBlockMap[osName]);
@@ -163,7 +163,7 @@ DWGBlockDefinition::~DWGBlockDefinition()
 {
     delete poGeometry;
 
-    while( !apoFeatures.empty() )
+    while (!apoFeatures.empty())
     {
         delete apoFeatures.back();
         apoFeatures.pop_back();

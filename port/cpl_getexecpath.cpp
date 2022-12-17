@@ -54,30 +54,31 @@
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable. Currently this only works on
- * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8 encoded,
- * and will be nul-terminated if success is reported.
+ * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8
+ * encoded, and will be nul-terminated if success is reported.
  *
  * @param pszPathBuf the buffer into which the path is placed.
- * @param nMaxLength the buffer size (including the nul-terminating character). MAX_PATH+1 is suggested.
+ * @param nMaxLength the buffer size (including the nul-terminating character).
+ * MAX_PATH+1 is suggested.
  *
  * @return FALSE on failure or TRUE on success.
  */
 
-int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
+int CPLGetExecPath(char *pszPathBuf, int nMaxLength)
 {
-    if( nMaxLength == 0 )
+    if (nMaxLength == 0)
         return FALSE;
     pszPathBuf[0] = '\0';
 
 #if defined(_WIN32)
-    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
-        wchar_t *pwszPathBuf = static_cast<wchar_t *>(
-            CPLCalloc(nMaxLength + 1, sizeof(wchar_t)));
+        wchar_t *pwszPathBuf =
+            static_cast<wchar_t *>(CPLCalloc(nMaxLength + 1, sizeof(wchar_t)));
 
-        if( GetModuleFileNameW( nullptr, pwszPathBuf, nMaxLength ) == 0 )
+        if (GetModuleFileNameW(nullptr, pwszPathBuf, nMaxLength) == 0)
         {
-            CPLFree( pwszPathBuf );
+            CPLFree(pwszPathBuf);
             return FALSE;
         }
         else
@@ -86,9 +87,9 @@ int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
                 CPLRecodeFromWChar(pwszPathBuf, CPL_ENC_UCS2, CPL_ENC_UTF8);
 
             const size_t nStrlenDecoded = strlen(pszDecoded);
-            strncpy( pszPathBuf, pszDecoded, nMaxLength );
+            strncpy(pszPathBuf, pszDecoded, nMaxLength);
             int bOK = TRUE;
-            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1 )
+            if (nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1)
             {
                 pszPathBuf[nMaxLength - 1] = '\0';
                 // There is no easy way to detect if the string has been
@@ -96,20 +97,20 @@ int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
                 VSIStatBufL sStat;
                 bOK = (VSIStatL(pszPathBuf, &sStat) == 0);
             }
-            CPLFree( pszDecoded );
-            CPLFree( pwszPathBuf );
+            CPLFree(pszDecoded);
+            CPLFree(pwszPathBuf);
             return bOK;
         }
     }
     else
     {
-        if( GetModuleFileNameA( nullptr, pszPathBuf, nMaxLength ) == 0 )
+        if (GetModuleFileNameA(nullptr, pszPathBuf, nMaxLength) == 0)
             return FALSE;
         else
         {
             const size_t nStrlenDecoded = strlen(pszPathBuf);
             int bOK = TRUE;
-            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1 )
+            if (nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1)
             {
                 pszPathBuf[nMaxLength - 1] = '\0';
                 // There is no easy way to detect if the string has been
@@ -124,11 +125,11 @@ int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
     long nPID = getpid();
     CPLString osExeLink;
 
-    osExeLink.Printf( "/proc/%ld/exe", nPID );
-    ssize_t nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
-    if( nResultLen == nMaxLength )
+    osExeLink.Printf("/proc/%ld/exe", nPID);
+    ssize_t nResultLen = readlink(osExeLink, pszPathBuf, nMaxLength);
+    if (nResultLen == nMaxLength)
         pszPathBuf[nMaxLength - 1] = '\0';
-    else if( nResultLen >= 0 )
+    else if (nResultLen >= 0)
         pszPathBuf[nResultLen] = '\0';
 
     return nResultLen > 0 && nResultLen < nMaxLength;

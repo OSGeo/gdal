@@ -33,9 +33,9 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     return 0;
 }
@@ -45,12 +45,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     OGRGeometryH hGeom = nullptr;
-    char* pszWKT = static_cast<char*>(CPLMalloc( len + 1 ));
+    char *pszWKT = static_cast<char *>(CPLMalloc(len + 1));
     memcpy(pszWKT, buf, len);
     pszWKT[len] = '\0';
-    char* pszWKTParam = pszWKT;
+    char *pszWKTParam = pszWKT;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGR_G_CreateFromWkt( &pszWKTParam, nullptr, &hGeom );
+    OGR_G_CreateFromWkt(&pszWKTParam, nullptr, &hGeom);
     CPLPopErrorHandler();
     CPLFree(pszWKT);
     OGR_G_DestroyGeometry(hGeom);

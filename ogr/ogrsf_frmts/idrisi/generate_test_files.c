@@ -29,14 +29,14 @@
 
 #include <stdio.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     char c;
     int i;
     int nfeatures;
     int nodes;
     int nparts;
-    FILE* f;
+    FILE *f;
     double id, x, y;
     double minx, maxx, miny, maxy;
 
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     fwrite(&c, 1, 1, f);
     nfeatures = 2;
     fwrite(&nfeatures, 1, sizeof(int), f);
-    for(i=5;i<0x105;i++)
+    for (i = 5; i < 0x105; i++)
     {
         c = 0;
         fwrite(&c, 1, 1, f);
@@ -67,14 +67,12 @@ int main(int argc, char* argv[])
 
     fclose(f);
 
-
-
     f = fopen("lines.vct", "wb");
     c = 0x02;
     fwrite(&c, 1, 1, f);
     nfeatures = 2;
     fwrite(&nfeatures, 1, sizeof(int), f);
-    for(i=5;i<0x105;i++)
+    for (i = 5; i < 0x105; i++)
     {
         c = 0;
         fwrite(&c, 1, 1, f);
@@ -124,14 +122,12 @@ int main(int argc, char* argv[])
 
     fclose(f);
 
-
-
     f = fopen("polygons.vct", "wb");
     c = 0x03;
     fwrite(&c, 1, 1, f);
     nfeatures = 2;
     fwrite(&nfeatures, 1, sizeof(int), f);
-    for(i=5;i<0x105;i++)
+    for (i = 5; i < 0x105; i++)
     {
         c = 0;
         fwrite(&c, 1, 1, f);
@@ -238,7 +234,6 @@ int main(int argc, char* argv[])
     y = 4000000;
     fwrite(&x, 1, sizeof(double), f);
     fwrite(&y, 1, sizeof(double), f);
-
 
     fclose(f);
 

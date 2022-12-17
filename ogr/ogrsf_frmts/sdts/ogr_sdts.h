@@ -40,56 +40,68 @@ class OGRSDTSDataSource;
 /*                             OGRSDTSLayer                             */
 /************************************************************************/
 
-class OGRSDTSLayer final: public OGRLayer
+class OGRSDTSLayer final : public OGRLayer
 {
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
-    SDTSTransfer       *poTransfer;
-    int                 iLayer;
-    SDTSIndexedReader  *poReader;
+    SDTSTransfer *poTransfer;
+    int iLayer;
+    SDTSIndexedReader *poReader;
 
-    OGRSDTSDataSource  *poDS;
+    OGRSDTSDataSource *poDS;
 
-    OGRFeature         *GetNextUnfilteredFeature();
+    OGRFeature *GetNextUnfilteredFeature();
 
   public:
-                        OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
-                        ~OGRSDTSLayer();
+    OGRSDTSLayer(SDTSTransfer *, int, OGRSDTSDataSource *);
+    ~OGRSDTSLayer();
 
-    void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                          OGRSDTSDataSource                           */
 /************************************************************************/
 
-class OGRSDTSDataSource final: public OGRDataSource
+class OGRSDTSDataSource final : public OGRDataSource
 {
-    SDTSTransfer        *poTransfer;
-    char                *pszName;
+    SDTSTransfer *poTransfer;
+    char *pszName;
 
-    int                 nLayers;
-    OGRSDTSLayer        **papoLayers;
+    int nLayers;
+    OGRSDTSLayer **papoLayers;
 
     OGRSpatialReference *poSRS;
 
   public:
-                        OGRSDTSDataSource();
-                        ~OGRSDTSDataSource();
+    OGRSDTSDataSource();
+    ~OGRSDTSDataSource();
 
-    int                 Open( const char * pszFilename, int bTestOpen );
+    int Open(const char *pszFilename, int bTestOpen);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
-    int                 TestCapability( const char * ) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
+    int TestCapability(const char *) override;
 
-    OGRSpatialReference *DSGetSpatialRef() { return poSRS; }
+    OGRSpatialReference *DSGetSpatialRef()
+    {
+        return poSRS;
+    }
 };
 
 #endif /* ndef OGR_SDTS_H_INCLUDED */

@@ -60,31 +60,31 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *, void *);
 hid_t HDF5GetFileDriver();
 void HDF5UnloadFileDriver();
 
-hid_t GDAL_HDF5Open(const std::string& osFilename );
+hid_t GDAL_HDF5Open(const std::string &osFilename);
 
-#if defined(H5_VERSION_GE) // added in 1.8.7
-# if !H5_VERSION_GE(1,8,13)
+#if defined(H5_VERSION_GE)  // added in 1.8.7
+#if !H5_VERSION_GE(1, 8, 13)
 #ifndef _WIN32
-#  define H5free_memory(x) free(x)
+#define H5free_memory(x) free(x)
 #else
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+#define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
 #endif
-# endif
+#endif
 #else
 #ifndef _WIN32
-#  define H5free_memory(x) free(x)
+#define H5free_memory(x) free(x)
 #else
-#  define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
+#define H5free_memory(x) CPL_IGNORE_RET_VAL(x)
 #endif
 #endif
 
 // Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
 
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
-       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
-#  define H5OFFSET_TYPE hssize_t
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 &&                                \
+    (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
+#define H5OFFSET_TYPE hssize_t
 #else
-#  define H5OFFSET_TYPE  hsize_t
+#define H5OFFSET_TYPE hsize_t
 #endif
 
 class HDF5Dataset;
@@ -103,85 +103,101 @@ class HDF5SharedResources
     friend class ::BAGDataset;
 
     bool m_bReadOnly = true;
-    hid_t            m_hHDF5 = 0;
-    CPLString        m_osFilename{};
+    hid_t m_hHDF5 = 0;
+    CPLString m_osFilename{};
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
-public:
-    explicit HDF5SharedResources(const std::string& osFilename);
+  public:
+    explicit HDF5SharedResources(const std::string &osFilename);
     ~HDF5SharedResources();
 
-    const std::string& GetFilename() const { return m_osFilename; }
+    const std::string &GetFilename() const
+    {
+        return m_osFilename;
+    }
 
-    inline hid_t GetHDF5() const { return m_hHDF5; }
-    inline bool IsReadOnly() const { return m_bReadOnly; }
+    inline hid_t GetHDF5() const
+    {
+        return m_hHDF5;
+    }
+    inline bool IsReadOnly() const
+    {
+        return m_bReadOnly;
+    }
 
-    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
+    const std::shared_ptr<GDALPamMultiDim> &GetPAM()
+    {
+        return m_poPAM;
+    }
 };
 
-} // namespace GDAL
+}  // namespace GDAL
 
 /************************************************************************/
 /* ==================================================================== */
 /*                              HDF5Dataset                             */
 /* ==================================================================== */
 /************************************************************************/
-class HDF5Dataset CPL_NON_FINAL: public GDALPamDataset
+class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
 {
-protected:
-    hid_t            hHDF5;
-    hid_t            hGroupID; // H handler interface.
-    char             **papszSubDatasets;
-    int              bIsHDFEOS;
-    int              nDatasetType;
-    int              nSubDataCount;
+  protected:
+    hid_t hHDF5;
+    hid_t hGroupID;  // H handler interface.
+    char **papszSubDatasets;
+    int bIsHDFEOS;
+    int nDatasetType;
+    int nSubDataCount;
 
     HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 
     CPLErr ReadGlobalAttributes(int);
-    CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
-    CPLErr CreateMetadata( HDF5GroupObjects *, int );
+    CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int);
+    CPLErr CreateMetadata(HDF5GroupObjects *, int);
 
-    HDF5GroupObjects *HDF5FindDatasetObjects( HDF5GroupObjects *, const char * );
-    HDF5GroupObjects *HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, const char * );
+    HDF5GroupObjects *HDF5FindDatasetObjects(HDF5GroupObjects *, const char *);
+    HDF5GroupObjects *HDF5FindDatasetObjectsbyPath(HDF5GroupObjects *,
+                                                   const char *);
     char *CreatePath(HDF5GroupObjects *);
     void DestroyH5Objects(HDF5GroupObjects *);
 
     static const char *GetDataTypeName(hid_t);
 
-  /**
-   * Reads an array of double attributes from the HDF5 metadata.
-   * It reads the attributes directly on its binary form directly,
-   * thus avoiding string conversions.
-   *
-   * Important: It allocates the memory for the attributes internally,
-   * so the caller must free the returned array after using it.
-   * @param pszAttrName Name of the attribute to be read.
-   *                    the attribute name must be the form:
-   *                                    root attribute name
-   *                                    SUBDATASET/subdataset attribute name
-   * @param pdfValues pointer which will store the array of doubles read.
-   * @param nLen it stores the length of the array read. If NULL it doesn't inform
-   *        the length of the array.
-   * @return CPLErr CE_None in case of success, CE_Failure in case of failure
-   */
+    /**
+     * Reads an array of double attributes from the HDF5 metadata.
+     * It reads the attributes directly on its binary form directly,
+     * thus avoiding string conversions.
+     *
+     * Important: It allocates the memory for the attributes internally,
+     * so the caller must free the returned array after using it.
+     * @param pszAttrName Name of the attribute to be read.
+     *                    the attribute name must be the form:
+     *                                    root attribute name
+     *                                    SUBDATASET/subdataset attribute name
+     * @param pdfValues pointer which will store the array of doubles read.
+     * @param nLen it stores the length of the array read. If NULL it doesn't
+     * inform the length of the array.
+     * @return CPLErr CE_None in case of success, CE_Failure in case of failure
+     */
     CPLErr HDF5ReadDoubleAttr(const char *pszAttrName, double **pdfValues,
                               int *nLen = nullptr);
 
   public:
-
-    char             **papszMetadata;
+    char **papszMetadata;
     HDF5GroupObjects *poH5CurrentObject;
 
     HDF5Dataset();
     ~HDF5Dataset();
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poRootGroup;
+    }
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
-    static std::shared_ptr<GDALGroup> OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources);
+    static std::shared_ptr<GDALGroup>
+    OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources);
     static int Identify(GDALOpenInfo *);
 
     static GDALDataType GetDataType(hid_t);

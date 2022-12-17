@@ -33,32 +33,37 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-
 /************************************************************************/
 /*               HTTPFetchContentDispositionFilename()                 */
 /************************************************************************/
 
-static const char* HTTPFetchContentDispositionFilename(char** papszHeaders)
+static const char *HTTPFetchContentDispositionFilename(char **papszHeaders)
 {
-    char** papszIter = papszHeaders;
-    while(papszIter && *papszIter)
+    char **papszIter = papszHeaders;
+    while (papszIter && *papszIter)
     {
-        /* For multipart, we have in raw format, but without end-of-line characters */
-        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
+        /* For multipart, we have in raw format, but without end-of-line
+         * characters */
+        if (STARTS_WITH(*papszIter,
+                        "Content-Disposition: attachment; filename="))
         {
             return *papszIter + 42;
         }
-        /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
+        /* For single part, the headers are in KEY=VAL format, but with e-o-l
+         * ... */
+        else if (STARTS_WITH(*papszIter,
+                             "Content-Disposition=attachment; filename="))
         {
-            char* pszVal = (char*)(*papszIter + 41);
-            char* pszEOL = strchr(pszVal, '\r');
-            if (pszEOL) *pszEOL = 0;
+            char *pszVal = (char *)(*papszIter + 41);
+            char *pszEOL = strchr(pszVal, '\r');
+            if (pszEOL)
+                *pszEOL = 0;
             pszEOL = strchr(pszVal, '\n');
-            if (pszEOL) *pszEOL = 0;
+            if (pszEOL)
+                *pszEOL = 0;
             return pszVal;
         }
-        papszIter ++;
+        papszIter++;
     }
     return nullptr;
 }
@@ -67,43 +72,44 @@ static const char* HTTPFetchContentDispositionFilename(char** papszHeaders)
 /*                              HTTPOpen()                              */
 /************************************************************************/
 
-static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
+static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
 
 {
     static volatile int nCounter = 0;
 
-    if( poOpenInfo->nHeaderBytes != 0 )
+    if (poOpenInfo->nHeaderBytes != 0)
         return nullptr;
 
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http:")
-        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:")
-        && !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:") )
+    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "http:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:") &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:"))
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Fetch the result.                                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Fetch the result.                                               */
+    /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    CPLHTTPResult *psResult = CPLHTTPFetch( poOpenInfo->pszFilename, nullptr );
+    CPLHTTPResult *psResult = CPLHTTPFetch(poOpenInfo->pszFilename, nullptr);
 
-/* -------------------------------------------------------------------- */
-/*      Try to handle errors.                                           */
-/* -------------------------------------------------------------------- */
-    if( psResult == nullptr || psResult->nDataLen == 0
-        || CPLGetLastErrorNo() != 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Try to handle errors.                                           */
+    /* -------------------------------------------------------------------- */
+    if (psResult == nullptr || psResult->nDataLen == 0 ||
+        CPLGetLastErrorNo() != 0)
     {
-        CPLHTTPDestroyResult( psResult );
+        CPLHTTPDestroyResult(psResult);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a memory file from the result.                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a memory file from the result.                           */
+    /* -------------------------------------------------------------------- */
     CPLString osResultFilename;
 
     int nNewCounter = CPLAtomicInc(&nCounter);
 
-    const char* pszFilename = HTTPFetchContentDispositionFilename(psResult->papszHeaders);
+    const char *pszFilename =
+        HTTPFetchContentDispositionFilename(psResult->papszHeaders);
     if (pszFilename == nullptr)
     {
         pszFilename = CPLGetFilename(poOpenInfo->pszFilename);
@@ -112,90 +118,88 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
             pszFilename = "file.dat";
     }
 
-    osResultFilename.Printf( "/vsimem/http_%d/%s",
-                             nNewCounter, pszFilename );
+    osResultFilename.Printf("/vsimem/http_%d/%s", nNewCounter, pszFilename);
 
-    VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename,
-                                     psResult->pabyData,
-                                     psResult->nDataLen,
-                                     TRUE );
+    VSILFILE *fp = VSIFileFromMemBuffer(osResultFilename, psResult->pabyData,
+                                        psResult->nDataLen, TRUE);
 
-    if( fp == nullptr )
+    if (fp == nullptr)
         return nullptr;
 
-    VSIFCloseL( fp );
+    VSIFCloseL(fp);
 
-/* -------------------------------------------------------------------- */
-/*      Steal the memory buffer from HTTP result before destroying      */
-/*      it.                                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Steal the memory buffer from HTTP result before destroying      */
+    /*      it.                                                             */
+    /* -------------------------------------------------------------------- */
     psResult->pabyData = nullptr;
     psResult->nDataLen = 0;
     psResult->nDataAlloc = 0;
 
-    CPLHTTPDestroyResult( psResult );
+    CPLHTTPDestroyResult(psResult);
 
-/* -------------------------------------------------------------------- */
-/*      Try opening this result as a gdaldataset.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try opening this result as a gdaldataset.                       */
+    /* -------------------------------------------------------------------- */
     /* suppress errors as not all drivers support /vsimem */
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    GDALDataset *poDS = (GDALDataset *)
-        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
-                    poOpenInfo->papszAllowedDrivers,
-                    poOpenInfo->papszOpenOptions, nullptr);
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    GDALDataset *poDS = (GDALDataset *)GDALOpenEx(
+        osResultFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
+        poOpenInfo->papszAllowedDrivers, poOpenInfo->papszOpenOptions, nullptr);
     CPLPopErrorHandler();
 
     // The JP2OpenJPEG driver may need to reopen the file, hence this special
     // behavior
-    if( poDS != nullptr && poDS->GetDriver() != nullptr &&
-        EQUAL(poDS->GetDriver()->GetDescription(), "JP2OpenJPEG") )
+    if (poDS != nullptr && poDS->GetDriver() != nullptr &&
+        EQUAL(poDS->GetDriver()->GetDescription(), "JP2OpenJPEG"))
     {
         poDS->MarkSuppressOnClose();
         return poDS;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If opening it in memory didn't work, perhaps we need to         */
-/*      write to a temp file on disk?                                   */
-/* -------------------------------------------------------------------- */
-    if( poDS == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      If opening it in memory didn't work, perhaps we need to         */
+    /*      write to a temp file on disk?                                   */
+    /* -------------------------------------------------------------------- */
+    if (poDS == nullptr)
     {
         CPLString osTempFilename;
 
 #ifdef WIN32
-        const char* pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
+        const char *pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
 #else
-        const char* pszPath = "/tmp";
+        const char *pszPath = "/tmp";
 #endif
-        osTempFilename = CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), nullptr );
-        if( CPLCopyFile( osTempFilename, osResultFilename ) != 0 )
+        osTempFilename =
+            CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), nullptr);
+        if (CPLCopyFile(osTempFilename, osResultFilename) != 0)
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to create temporary file:%s",
-                      osTempFilename.c_str() );
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Failed to create temporary file:%s",
+                     osTempFilename.c_str());
         }
         else
         {
-            poDS =  (GDALDataset *)
-                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
-                            poOpenInfo->papszAllowedDrivers,
-                            poOpenInfo->papszOpenOptions, nullptr );
-            if( VSIUnlink( osTempFilename ) != 0 && poDS != nullptr )
-                poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
-            if( poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0 )
+            poDS = (GDALDataset *)GDALOpenEx(
+                osTempFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
+                poOpenInfo->papszAllowedDrivers, poOpenInfo->papszOpenOptions,
+                nullptr);
+            if (VSIUnlink(osTempFilename) != 0 && poDS != nullptr)
+                poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on
+                                                windows */
+            if (poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0)
                 poDS->SetDescription(poOpenInfo->pszFilename);
         }
     }
-    else if( strcmp(poDS->GetDescription(), osResultFilename) == 0 )
+    else if (strcmp(poDS->GetDescription(), osResultFilename) == 0)
         poDS->SetDescription(poOpenInfo->pszFilename);
 
-/* -------------------------------------------------------------------- */
-/*      Release our hold on the vsi memory file, though if it is        */
-/*      held open by a dataset it will continue to exist till that      */
-/*      lets it go.                                                     */
-/* -------------------------------------------------------------------- */
-    VSIUnlink( osResultFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Release our hold on the vsi memory file, though if it is        */
+    /*      held open by a dataset it will continue to exist till that      */
+    /*      lets it go.                                                     */
+    /* -------------------------------------------------------------------- */
+    VSIUnlink(osResultFilename);
 
     return poDS;
 }
@@ -207,17 +211,17 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 void GDALRegister_HTTP()
 
 {
-    if( GDALGetDriverByName( "HTTP" ) != nullptr )
+    if (GDALGetDriverByName("HTTP") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "HTTP" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HTTP Fetching Wrapper" );
+    poDriver->SetDescription("HTTP");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HTTP Fetching Wrapper");
 
     poDriver->pfnOpen = HTTPOpen;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

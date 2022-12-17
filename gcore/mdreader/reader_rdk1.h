@@ -45,21 +45,23 @@ Common metadata (from metadata filename):
     AcquisitionDateTime: dSceneDate, tSceneTime
 */
 
-class GDALMDReaderResursDK1: public GDALMDReaderBase
+class GDALMDReaderResursDK1 : public GDALMDReaderBase
 {
-public:
+  public:
     GDALMDReaderResursDK1(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderResursDK1();
     virtual bool HasRequiredFiles() const override;
-    virtual char** GetMetadataFiles() const override;
-protected:
+    virtual char **GetMetadataFiles() const override;
+
+  protected:
     virtual void LoadMetadata() override;
-    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
-    virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
+    virtual GIntBig
+    GetAcquisitionTimeFromString(const char *pszDateTime) override;
+    virtual char **AddXMLNameValueToList(char **papszList, const char *pszName,
                                          const char *pszValue) override;
-protected:
+
+  protected:
     CPLString m_osXMLSourceFilename{};
 };
 
-#endif // READER_RDK1_H_INCLUDED
-
+#endif  // READER_RDK1_H_INCLUDED

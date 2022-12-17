@@ -33,16 +33,17 @@
 
 #include "gtest_include.h"
 
-namespace {
+namespace
+{
 
 // ---------------------------------------------------------------------------
 
 TEST(testlog, test)
 {
-    const char* logname = "log_with_âccent.txt";
+    const char *logname = "log_with_âccent.txt";
     CPLSetConfigOption("CPL_LOG", logname);
     CPLError(CE_Failure, CPLE_AppDefined, "test");
-    VSILFILE* fp = VSIFOpenL(logname, "rb");
+    VSILFILE *fp = VSIFOpenL(logname, "rb");
     char szGot[20 + 1];
     size_t nRead = VSIFReadL(szGot, 1, 20, fp);
     szGot[nRead] = 0;
@@ -54,4 +55,4 @@ TEST(testlog, test)
     EXPECT_TRUE(strstr(szGot, "test") != nullptr) << szGot;
 }
 
-} // namespace
+}  // namespace

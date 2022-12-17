@@ -37,14 +37,13 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-
 /************************************************************************/
 /*                          GDALMajorObject()                           */
 /************************************************************************/
 
-GDALMajorObject::GDALMajorObject() :
-    nFlags(GMO_VALID)
-{}
+GDALMajorObject::GDALMajorObject() : nFlags(GMO_VALID)
+{
+}
 
 /************************************************************************/
 /*                          ~GDALMajorObject()                          */
@@ -53,8 +52,8 @@ GDALMajorObject::GDALMajorObject() :
 GDALMajorObject::~GDALMajorObject()
 
 {
-    if( (nFlags & GMO_VALID) == 0 )
-        CPLDebug( "GDAL", "In ~GDALMajorObject on invalid object" );
+    if ((nFlags & GMO_VALID) == 0)
+        CPLDebug("GDAL", "In ~GDALMajorObject on invalid object");
 
     nFlags &= ~GMO_VALID;
 }
@@ -91,10 +90,10 @@ const char *GDALMajorObject::GetDescription() const
  * @see GDALMajorObject::GetDescription()
  */
 
-const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
+const char *CPL_STDCALL GDALGetDescription(GDALMajorObjectH hObject)
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetDescription", nullptr );
+    VALIDATE_POINTER1(hObject, "GDALGetDescription", nullptr);
 
     return GDALMajorObject::FromHandle(hObject)->GetDescription();
 }
@@ -116,7 +115,7 @@ const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
  * This method is the same as the C function GDALSetDescription().
  */
 
-void GDALMajorObject::SetDescription( const char * pszNewDesc )
+void GDALMajorObject::SetDescription(const char *pszNewDesc)
 
 {
     sDescription = pszNewDesc;
@@ -132,13 +131,13 @@ void GDALMajorObject::SetDescription( const char * pszNewDesc )
  * @see GDALMajorObject::SetDescription()
  */
 
-void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject,
-                                     const char *pszNewDesc )
+void CPL_STDCALL GDALSetDescription(GDALMajorObjectH hObject,
+                                    const char *pszNewDesc)
 
 {
-    VALIDATE_POINTER0( hObject, "GDALSetDescription" );
+    VALIDATE_POINTER0(hObject, "GDALSetDescription");
 
-    GDALMajorObject::FromHandle(hObject)->SetDescription( pszNewDesc );
+    GDALMajorObject::FromHandle(hObject)->SetDescription(pszNewDesc);
 }
 
 /************************************************************************/
@@ -150,7 +149,8 @@ void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject,
  *
  * The returned string list is the list of (non-empty) metadata domains.
  *
- * This method does the same thing as the C function GDALGetMetadataDomainList().
+ * This method does the same thing as the C function
+ * GDALGetMetadataDomainList().
  *
  * @return NULL or a string list. Must be freed with CSLDestroy()
  *
@@ -181,17 +181,17 @@ char **GDALMajorObject::GetMetadataDomainList()
  * @since GDAL 1.11
  */
 
-char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
-                                                 int bCheckNonEmpty, ... )
+char **GDALMajorObject::BuildMetadataDomainList(char **papszList,
+                                                int bCheckNonEmpty, ...)
 {
     va_list args;
-    const char* pszDomain = nullptr;
+    const char *pszDomain = nullptr;
     va_start(args, bCheckNonEmpty);
 
-    while( (pszDomain = va_arg(args, const char*)) != nullptr )
+    while ((pszDomain = va_arg(args, const char *)) != nullptr)
     {
-        if( CSLFindString(papszList, pszDomain) < 0 &&
-            (!bCheckNonEmpty || GetMetadata(pszDomain) != nullptr) )
+        if (CSLFindString(papszList, pszDomain) < 0 &&
+            (!bCheckNonEmpty || GetMetadata(pszDomain) != nullptr))
         {
             papszList = CSLAddString(papszList, pszDomain);
         }
@@ -214,11 +214,10 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
  * @since GDAL 1.11
  */
 
-char ** CPL_STDCALL
-GDALGetMetadataDomainList( GDALMajorObjectH hObject )
+char **CPL_STDCALL GDALGetMetadataDomainList(GDALMajorObjectH hObject)
 
 {
-    VALIDATE_POINTER1( hObject, "GetMetadataDomainList", nullptr );
+    VALIDATE_POINTER1(hObject, "GetMetadataDomainList", nullptr);
 
     return GDALMajorObject::FromHandle(hObject)->GetMetadataDomainList();
 }
@@ -245,10 +244,10 @@ GDALGetMetadataDomainList( GDALMajorObjectH hObject )
  * @return NULL or a string list.
  */
 
-char **GDALMajorObject::GetMetadata( const char * pszDomain )
+char **GDALMajorObject::GetMetadata(const char *pszDomain)
 
 {
-    return oMDMD.GetMetadata( pszDomain );
+    return oMDMD.GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -261,11 +260,11 @@ char **GDALMajorObject::GetMetadata( const char * pszDomain )
  * @see GDALMajorObject::GetMetadata()
  */
 
-char ** CPL_STDCALL
-GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
+char **CPL_STDCALL GDALGetMetadata(GDALMajorObjectH hObject,
+                                   const char *pszDomain)
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetMetadata", nullptr );
+    VALIDATE_POINTER1(hObject, "GDALGetMetadata", nullptr);
 
     return GDALMajorObject::FromHandle(hObject)->GetMetadata(pszDomain);
 }
@@ -288,12 +287,12 @@ GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
  * by the underlying object between sessions.
  */
 
-CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
-                                     const char * pszDomain )
+CPLErr GDALMajorObject::SetMetadata(char **papszMetadataIn,
+                                    const char *pszDomain)
 
 {
     nFlags |= GMO_MD_DIRTY;
-    return oMDMD.SetMetadata( papszMetadataIn, pszDomain );
+    return oMDMD.SetMetadata(papszMetadataIn, pszDomain);
 }
 
 /************************************************************************/
@@ -306,22 +305,21 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
  * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
  * depending on the format, older values of the updated information might
  * still be found in the file in a "ghost" state, even if no longer accessible
- * through the GDAL API. This is for example the case of the GTiff format (this is
- * not a exhaustive list)
+ * through the GDAL API. This is for example the case of the GTiff format (this
+ * is not a exhaustive list)
  *
  * @see GDALMajorObject::SetMetadata(), GDALDataset::SetMetadata(),
  *      GDALRasterBand::SetMetadata()
  */
 
-CPLErr CPL_STDCALL
-GDALSetMetadata( GDALMajorObjectH hObject, CSLConstList papszMD,
-                 const char *pszDomain )
+CPLErr CPL_STDCALL GDALSetMetadata(GDALMajorObjectH hObject,
+                                   CSLConstList papszMD, const char *pszDomain)
 
 {
-    VALIDATE_POINTER1( hObject, "GDALSetMetadata", CE_Failure );
+    VALIDATE_POINTER1(hObject, "GDALSetMetadata", CE_Failure);
 
-    return GDALMajorObject::FromHandle(hObject)->
-        SetMetadata( const_cast<char**>(papszMD), pszDomain );
+    return GDALMajorObject::FromHandle(hObject)->SetMetadata(
+        const_cast<char **>(papszMD), pszDomain);
 }
 
 /************************************************************************/
@@ -340,11 +338,11 @@ GDALSetMetadata( GDALMajorObjectH hObject, CSLConstList papszMD,
  * copy of the value string on success.
  */
 
-const char *GDALMajorObject::GetMetadataItem( const char * pszName,
-                                              const char * pszDomain )
+const char *GDALMajorObject::GetMetadataItem(const char *pszName,
+                                             const char *pszDomain)
 
 {
-    return oMDMD.GetMetadataItem( pszName, pszDomain );
+    return oMDMD.GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -357,15 +355,15 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
  * @see GDALMajorObject::GetMetadataItem()
  */
 
-const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
-                                              const char *pszName,
-                                              const char *pszDomain )
+const char *CPL_STDCALL GDALGetMetadataItem(GDALMajorObjectH hObject,
+                                            const char *pszName,
+                                            const char *pszDomain)
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetMetadataItem", nullptr );
+    VALIDATE_POINTER1(hObject, "GDALGetMetadataItem", nullptr);
 
-    return GDALMajorObject::FromHandle(hObject)->
-        GetMetadataItem( pszName, pszDomain);
+    return GDALMajorObject::FromHandle(hObject)->GetMetadataItem(pszName,
+                                                                 pszDomain);
 }
 
 /************************************************************************/
@@ -384,13 +382,13 @@ const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
  * @return CE_None on success, or an error code on failure.
  */
 
-CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
-                                         const char * pszValue,
-                                         const char * pszDomain )
+CPLErr GDALMajorObject::SetMetadataItem(const char *pszName,
+                                        const char *pszValue,
+                                        const char *pszDomain)
 
 {
     nFlags |= GMO_MD_DIRTY;
-    return oMDMD.SetMetadataItem( pszName, pszValue,  pszDomain );
+    return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
 /************************************************************************/
@@ -403,23 +401,23 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
  * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
  * depending on the format, older values of the updated information might
  * still be found in the file in a "ghost" state, even if no longer accessible
- * through the GDAL API. This is for example the case of the GTiff format (this is
- * not a exhaustive list)
+ * through the GDAL API. This is for example the case of the GTiff format (this
+ * is not a exhaustive list)
  *
  * @see GDALMajorObject::SetMetadataItem(), GDALDataset::SetMetadataItem(),
  *      GDALRasterBand::SetMetadataItem()
  */
 
-CPLErr CPL_STDCALL
-GDALSetMetadataItem( GDALMajorObjectH hObject,
-                     const char *pszName, const char *pszValue,
-                     const char *pszDomain )
+CPLErr CPL_STDCALL GDALSetMetadataItem(GDALMajorObjectH hObject,
+                                       const char *pszName,
+                                       const char *pszValue,
+                                       const char *pszDomain)
 
 {
-    VALIDATE_POINTER1( hObject, "GDALSetMetadataItem", CE_Failure );
+    VALIDATE_POINTER1(hObject, "GDALSetMetadataItem", CE_Failure);
 
-    return GDALMajorObject::FromHandle(hObject)->
-        SetMetadataItem( pszName, pszValue, pszDomain );
+    return GDALMajorObject::FromHandle(hObject)->SetMetadataItem(
+        pszName, pszValue, pszDomain);
 }
 
 /************************************************************************/
@@ -442,7 +440,7 @@ int GDALMajorObject::GetMOFlags() const
 /** Assign GMO_flags.
  * @param nNewFlags new flags.
  */
-void GDALMajorObject::SetMOFlags( int nNewFlags )
+void GDALMajorObject::SetMOFlags(int nNewFlags)
 
 {
     nFlags = nNewFlags;

@@ -86,45 +86,44 @@ int OGRCDump(const char *pszFname)
     /* Loop through layers and dump their contents */
 
     numLayers = OGR_DS_GetLayerCount(datasource);
-    for(i=0; i<numLayers; i++)
+    for (i = 0; i < numLayers; i++)
     {
         OGRLayerH layer;
         int j, numFields;
         OGRFeatureH feature;
         OGRFeatureDefnH layerDefn;
 
-        layer = OGR_DS_GetLayer( datasource, i );
+        layer = OGR_DS_GetLayer(datasource, i);
 
         /* Dump info about this layer */
-        layerDefn = OGR_L_GetLayerDefn( layer );
-        numFields = OGR_FD_GetFieldCount( layerDefn );
+        layerDefn = OGR_L_GetLayerDefn(layer);
+        numFields = OGR_FD_GetFieldCount(layerDefn);
 
         printf("\n===================\n");
         printf("Layer %d: '%s'\n\n", i, OGR_FD_GetName(layerDefn));
 
-        for(j=0; j<numFields; j++)
+        for (j = 0; j < numFields; j++)
         {
             OGRFieldDefnH fieldDefn;
 
-            fieldDefn = OGR_FD_GetFieldDefn( layerDefn, j );
-            printf(" Field %d: %s (%s)\n",
-                   j, OGR_Fld_GetNameRef(fieldDefn),
-                   OGR_GetFieldTypeName(OGR_Fld_GetType(fieldDefn)) );
+            fieldDefn = OGR_FD_GetFieldDefn(layerDefn, j);
+            printf(" Field %d: %s (%s)\n", j, OGR_Fld_GetNameRef(fieldDefn),
+                   OGR_GetFieldTypeName(OGR_Fld_GetType(fieldDefn)));
         }
         printf("\n");
 
         /* And dump each feature individually */
-        while( (feature = OGR_L_GetNextFeature( layer )) != NULL )
+        while ((feature = OGR_L_GetNextFeature(layer)) != NULL)
         {
-            OGR_F_DumpReadable( feature, stdout );
-            OGR_F_Destroy( feature );
+            OGR_F_DumpReadable(feature, stdout);
+            OGR_F_Destroy(feature);
         }
 
         /* No need to free layer handle, it belongs to the datasource */
     }
 
     /* Close data source */
-    OGR_DS_Destroy( datasource );
+    OGR_DS_Destroy(datasource);
 
     return 0;
 }
@@ -138,25 +137,25 @@ int OGRCDump(const char *pszFname)
 
 int OGRCCreate(const char *pszFname)
 {
-    OGRSFDriverH    driver;
-    int             i, numDrivers;
-    OGRDataSourceH  datasource;
-    OGRLayerH       layer;
+    OGRSFDriverH driver;
+    int i, numDrivers;
+    OGRDataSourceH datasource;
+    OGRLayerH layer;
     OGRFeatureDefnH layerDefn;
-    OGRFieldDefnH   fieldDefn;
-    OGRFeatureH     feature;
-    OGRGeometryH    geometry, ring;
+    OGRFieldDefnH fieldDefn;
+    OGRFeatureH feature;
+    OGRGeometryH geometry, ring;
 
     /* Register all OGR drivers */
     OGRRegisterAll();
 
     /* Fetch MITAB driver - we want to create a TAB file */
     numDrivers = OGRGetDriverCount();
-    for(i=0; i<numDrivers; i++)
+    for (i = 0; i < numDrivers; i++)
     {
         driver = OGRGetDriver(i);
         if (EQUAL("MapInfo File", OGR_Dr_GetName(driver)))
-            break;  /* Found it! */
+            break; /* Found it! */
         driver = NULL;
     }
 
@@ -186,66 +185,66 @@ int OGRCCreate(const char *pszFname)
     }
 
     /* Add a few fields to the layer defn */
-    fieldDefn = OGR_Fld_Create( "id", OFTInteger );
+    fieldDefn = OGR_Fld_Create("id", OFTInteger);
     OGR_L_CreateField(layer, fieldDefn, 0);
 
-    fieldDefn = OGR_Fld_Create( "area", OFTReal );
+    fieldDefn = OGR_Fld_Create("area", OFTReal);
     OGR_L_CreateField(layer, fieldDefn, 0);
 
-    fieldDefn = OGR_Fld_Create( "name", OFTString );
+    fieldDefn = OGR_Fld_Create("name", OFTString);
     OGR_L_CreateField(layer, fieldDefn, 0);
 
     /* We'll need the layerDefn handle to create new features in this layer */
-    layerDefn = OGR_L_GetLayerDefn( layer );
+    layerDefn = OGR_L_GetLayerDefn(layer);
 
     /* Create a new point */
-    feature = OGR_F_Create( layerDefn );
-    OGR_F_SetFieldInteger( feature, 0, 1);
-    OGR_F_SetFieldDouble( feature, 1, 123.45);
-    OGR_F_SetFieldString( feature, 2, "Feature #1");
+    feature = OGR_F_Create(layerDefn);
+    OGR_F_SetFieldInteger(feature, 0, 1);
+    OGR_F_SetFieldDouble(feature, 1, 123.45);
+    OGR_F_SetFieldString(feature, 2, "Feature #1");
 
-    geometry = OGR_G_CreateGeometry( wkbPoint );
+    geometry = OGR_G_CreateGeometry(wkbPoint);
     OGR_G_SetPoint(geometry, 0, 123.45, 456.78, 0);
 
     OGR_F_SetGeometryDirectly(feature, geometry);
 
-    OGR_L_CreateFeature( layer, feature );
+    OGR_L_CreateFeature(layer, feature);
 
     /* Create a new line */
-    feature = OGR_F_Create( layerDefn );
-    OGR_F_SetFieldInteger( feature, 0, 2);
-    OGR_F_SetFieldDouble( feature, 1, 42.45);
-    OGR_F_SetFieldString( feature, 2, "Feature #2");
+    feature = OGR_F_Create(layerDefn);
+    OGR_F_SetFieldInteger(feature, 0, 2);
+    OGR_F_SetFieldDouble(feature, 1, 42.45);
+    OGR_F_SetFieldString(feature, 2, "Feature #2");
 
-    geometry = OGR_G_CreateGeometry( wkbLineString );
+    geometry = OGR_G_CreateGeometry(wkbLineString);
     OGR_G_AddPoint(geometry, 123.45, 456.78, 0);
-    OGR_G_AddPoint(geometry, 12.34,  45.67, 0);
+    OGR_G_AddPoint(geometry, 12.34, 45.67, 0);
 
     OGR_F_SetGeometryDirectly(feature, geometry);
 
-    OGR_L_CreateFeature( layer, feature );
+    OGR_L_CreateFeature(layer, feature);
 
     /* Create a new polygon (square) */
-    feature = OGR_F_Create( layerDefn );
-    OGR_F_SetFieldInteger( feature, 0, 3);
-    OGR_F_SetFieldDouble( feature, 1, 49.71);
-    OGR_F_SetFieldString( feature, 2, "Feature #3");
+    feature = OGR_F_Create(layerDefn);
+    OGR_F_SetFieldInteger(feature, 0, 3);
+    OGR_F_SetFieldDouble(feature, 1, 49.71);
+    OGR_F_SetFieldString(feature, 2, "Feature #3");
 
-    geometry = OGR_G_CreateGeometry( wkbPolygon );
-    ring = OGR_G_CreateGeometry( wkbLinearRing );
+    geometry = OGR_G_CreateGeometry(wkbPolygon);
+    ring = OGR_G_CreateGeometry(wkbLinearRing);
     OGR_G_AddPoint(ring, 123.45, 456.78, 0);
-    OGR_G_AddPoint(ring, 12.34,  456.78, 0);
-    OGR_G_AddPoint(ring, 12.34,  45.67, 0);
+    OGR_G_AddPoint(ring, 12.34, 456.78, 0);
+    OGR_G_AddPoint(ring, 12.34, 45.67, 0);
     OGR_G_AddPoint(ring, 123.45, 45.67, 0);
     OGR_G_AddPoint(ring, 123.45, 456.78, 0);
     OGR_G_AddGeometryDirectly(geometry, ring);
 
     OGR_F_SetGeometryDirectly(feature, geometry);
 
-    OGR_L_CreateFeature( layer, feature );
+    OGR_L_CreateFeature(layer, feature);
 
     /* Close data source */
-    OGR_DS_Destroy( datasource );
+    OGR_DS_Destroy(datasource);
 
     return 0;
 }

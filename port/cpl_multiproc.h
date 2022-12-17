@@ -41,27 +41,27 @@
 */
 
 #if defined(WIN32) && !defined(CPL_MULTIPROC_STUB)
-#  define CPL_MULTIPROC_WIN32
+#define CPL_MULTIPROC_WIN32
 /* MinGW can have pthread support, so disable it to avoid issues */
 /* in cpl_multiproc.cpp */
-#  undef  CPL_MULTIPROC_PTHREAD
+#undef CPL_MULTIPROC_PTHREAD
 #endif
 
-#if !defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD) \
- && !defined(CPL_MULTIPROC_STUB) && !defined(CPL_MULTIPROC_NONE)
-#  define CPL_MULTIPROC_STUB
+#if !defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD) &&        \
+    !defined(CPL_MULTIPROC_STUB) && !defined(CPL_MULTIPROC_NONE)
+#define CPL_MULTIPROC_STUB
 #endif
 
 CPL_C_START
 
 typedef void (*CPLThreadFunc)(void *);
 
-void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
-void  CPL_DLL CPLUnlockFile( void *hLock );
+void CPL_DLL *CPLLockFile(const char *pszPath, double dfWaitInSeconds);
+void CPL_DLL CPLUnlockFile(void *hLock);
 
 #ifdef DEBUG
-typedef struct _CPLMutex  CPLMutex;
-typedef struct _CPLCond   CPLCond;
+typedef struct _CPLMutex CPLMutex;
+typedef struct _CPLCond CPLCond;
 typedef struct _CPLJoinableThread CPLJoinableThread;
 #else
 #define CPLMutex void
@@ -70,43 +70,48 @@ typedef struct _CPLJoinableThread CPLJoinableThread;
 #endif
 
 /* Options for CPLCreateMutexEx() and CPLCreateOrAcquireMutexEx() */
-#define CPL_MUTEX_RECURSIVE         0
-#define CPL_MUTEX_ADAPTIVE          1
-#define CPL_MUTEX_REGULAR           2
+#define CPL_MUTEX_RECURSIVE 0
+#define CPL_MUTEX_ADAPTIVE 1
+#define CPL_MUTEX_REGULAR 2
 
-CPLMutex CPL_DLL *CPLCreateMutex( void ); /* returned acquired */
-CPLMutex CPL_DLL *CPLCreateMutexEx( int nOptions ); /* returned acquired */
-int   CPL_DLL CPLCreateOrAcquireMutex( CPLMutex **, double dfWaitInSeconds );
-int   CPL_DLL CPLCreateOrAcquireMutexEx( CPLMutex **, double dfWaitInSeconds, int nOptions  );
-int   CPL_DLL CPLAcquireMutex( CPLMutex *hMutex, double dfWaitInSeconds );
-void  CPL_DLL CPLReleaseMutex( CPLMutex *hMutex );
-void  CPL_DLL CPLDestroyMutex( CPLMutex *hMutex );
-void  CPL_DLL CPLCleanupMasterMutex( void );
+CPLMutex CPL_DLL *CPLCreateMutex(void);           /* returned acquired */
+CPLMutex CPL_DLL *CPLCreateMutexEx(int nOptions); /* returned acquired */
+int CPL_DLL CPLCreateOrAcquireMutex(CPLMutex **, double dfWaitInSeconds);
+int CPL_DLL CPLCreateOrAcquireMutexEx(CPLMutex **, double dfWaitInSeconds,
+                                      int nOptions);
+int CPL_DLL CPLAcquireMutex(CPLMutex *hMutex, double dfWaitInSeconds);
+void CPL_DLL CPLReleaseMutex(CPLMutex *hMutex);
+void CPL_DLL CPLDestroyMutex(CPLMutex *hMutex);
+void CPL_DLL CPLCleanupMasterMutex(void);
 
-CPLCond  CPL_DLL *CPLCreateCond( void );
-void  CPL_DLL  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex );
+CPLCond CPL_DLL *CPLCreateCond(void);
+void CPL_DLL CPLCondWait(CPLCond *hCond, CPLMutex *hMutex);
 typedef enum
 {
     COND_TIMED_WAIT_COND,
     COND_TIMED_WAIT_TIME_OUT,
     COND_TIMED_WAIT_OTHER
 } CPLCondTimedWaitReason;
-CPLCondTimedWaitReason CPL_DLL CPLCondTimedWait( CPLCond *hCond, CPLMutex* hMutex, double dfWaitInSeconds );
-void  CPL_DLL  CPLCondSignal( CPLCond *hCond );
-void  CPL_DLL  CPLCondBroadcast( CPLCond *hCond );
-void  CPL_DLL  CPLDestroyCond( CPLCond *hCond );
+CPLCondTimedWaitReason CPL_DLL CPLCondTimedWait(CPLCond *hCond,
+                                                CPLMutex *hMutex,
+                                                double dfWaitInSeconds);
+void CPL_DLL CPLCondSignal(CPLCond *hCond);
+void CPL_DLL CPLCondBroadcast(CPLCond *hCond);
+void CPL_DLL CPLDestroyCond(CPLCond *hCond);
 
-/** Contrary to what its name suggests, CPLGetPID() actually returns the thread id */
-GIntBig CPL_DLL CPLGetPID( void );
-int CPL_DLL CPLGetCurrentProcessID( void );
-int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
-CPLJoinableThread  CPL_DLL* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pArg );
-void  CPL_DLL CPLJoinThread(CPLJoinableThread* hJoinableThread);
-void  CPL_DLL CPLSleep( double dfWaitInSeconds );
+/** Contrary to what its name suggests, CPLGetPID() actually returns the thread
+ * id */
+GIntBig CPL_DLL CPLGetPID(void);
+int CPL_DLL CPLGetCurrentProcessID(void);
+int CPL_DLL CPLCreateThread(CPLThreadFunc pfnMain, void *pArg);
+CPLJoinableThread CPL_DLL *CPLCreateJoinableThread(CPLThreadFunc pfnMain,
+                                                   void *pArg);
+void CPL_DLL CPLJoinThread(CPLJoinableThread *hJoinableThread);
+void CPL_DLL CPLSleep(double dfWaitInSeconds);
 
-const char CPL_DLL *CPLGetThreadingModel( void );
+const char CPL_DLL *CPLGetThreadingModel(void);
 
-int CPL_DLL CPLGetNumCPUs( void );
+int CPL_DLL CPLGetNumCPUs(void);
 
 typedef struct _CPLLock CPLLock;
 
@@ -120,85 +125,89 @@ typedef enum
     LOCK_SPIN
 } CPLLockType;
 
-CPLLock  CPL_DLL *CPLCreateLock( CPLLockType eType ); /* returned NON acquired */
-int   CPL_DLL  CPLCreateOrAcquireLock( CPLLock**, CPLLockType eType );
-int   CPL_DLL  CPLAcquireLock( CPLLock* );
-void  CPL_DLL  CPLReleaseLock( CPLLock* );
-void  CPL_DLL  CPLDestroyLock( CPLLock* );
-void  CPL_DLL  CPLLockSetDebugPerf( CPLLock*, int bEnableIn ); /* only available on x86/x86_64 with GCC for now */
+CPLLock CPL_DLL *CPLCreateLock(CPLLockType eType); /* returned NON acquired */
+int CPL_DLL CPLCreateOrAcquireLock(CPLLock **, CPLLockType eType);
+int CPL_DLL CPLAcquireLock(CPLLock *);
+void CPL_DLL CPLReleaseLock(CPLLock *);
+void CPL_DLL CPLDestroyLock(CPLLock *);
+void CPL_DLL CPLLockSetDebugPerf(
+    CPLLock *,
+    int bEnableIn); /* only available on x86/x86_64 with GCC for now */
 
 CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
-/* Instantiates the mutex if not already done. The parameter x should be a (void**). */
-#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
+/* Instantiates the mutex if not already done. The parameter x should be a
+ * (void**). */
+#define CPLMutexHolderD(x) CPLMutexHolder oHolder(x, 1000.0, __FILE__, __LINE__)
 
 /* Instantiates the mutex with options if not already done. */
 /* The parameter x should be a (void**). */
-#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions)
+#define CPLMutexHolderExD(x, nOptions)                                         \
+    CPLMutexHolder oHolder(x, 1000.0, __FILE__, __LINE__, nOptions)
 
 /* This variant assumes the mutex has already been created. If not, it will */
 /* be a no-op. The parameter x should be a (void*) */
-#define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
+#define CPLMutexHolderOptionalLockD(x)                                         \
+    CPLMutexHolder oHolder(x, 1000.0, __FILE__, __LINE__)
 
 /** Object to hold a mutex */
 class CPL_DLL CPLMutexHolder
 {
   private:
-    CPLMutex   *hMutex = nullptr;
+    CPLMutex *hMutex = nullptr;
     // Only used for debugging.
     const char *pszFile = nullptr;
-    int         nLine = 0;
+    int nLine = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(CPLMutexHolder)
 
   public:
-
     /** Instantiates the mutex if not already done. */
-    explicit CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
-                    const char *pszFile = __FILE__,
-                    int nLine = __LINE__,
-                    int nOptions = CPL_MUTEX_RECURSIVE);
+    explicit CPLMutexHolder(CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
+                            const char *pszFile = __FILE__,
+                            int nLine = __LINE__,
+                            int nOptions = CPL_MUTEX_RECURSIVE);
 
     /** This variant assumes the mutex has already been created. If not, it will
      * be a no-op */
-    explicit CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
-                    const char *pszFile = __FILE__,
-                    int nLine = __LINE__ );
+    explicit CPLMutexHolder(CPLMutex *hMutex, double dfWaitInSeconds = 1000.0,
+                            const char *pszFile = __FILE__,
+                            int nLine = __LINE__);
 
     ~CPLMutexHolder();
 };
 
-/* Instantiates the lock if not already done. The parameter x should be a (CPLLock**). */
-#define CPLLockHolderD(x, eType)  CPLLockHolder oHolder(x,eType,__FILE__,__LINE__);
+/* Instantiates the lock if not already done. The parameter x should be a
+ * (CPLLock**). */
+#define CPLLockHolderD(x, eType)                                               \
+    CPLLockHolder oHolder(x, eType, __FILE__, __LINE__);
 
 /* This variant assumes the lock has already been created. If not, it will */
 /* be a no-op. The parameter should be (CPLLock*) */
-#define CPLLockHolderOptionalLockD(x)  CPLLockHolder oHolder(x,__FILE__,__LINE__);
+#define CPLLockHolderOptionalLockD(x)                                          \
+    CPLLockHolder oHolder(x, __FILE__, __LINE__);
 
 /** Object to hold a lock */
 class CPL_DLL CPLLockHolder
 {
   private:
-    CPLLock    *hLock = nullptr;
+    CPLLock *hLock = nullptr;
     const char *pszFile = nullptr;
-    int         nLine = 0;
+    int nLine = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(CPLLockHolder)
 
   public:
-
     /** Instantiates the lock if not already done. */
-    CPLLockHolder( CPLLock **phSpin, CPLLockType eType,
-                    const char *pszFile = __FILE__,
-                    int nLine = __LINE__);
+    CPLLockHolder(CPLLock **phSpin, CPLLockType eType,
+                  const char *pszFile = __FILE__, int nLine = __LINE__);
 
     /** This variant assumes the lock has already been created. If not, it will
      * be a no-op */
-    explicit CPLLockHolder( CPLLock* hSpin,
-                    const char *pszFile = __FILE__,
-                    int nLine = __LINE__ );
+    explicit CPLLockHolder(CPLLock *hSpin, const char *pszFile = __FILE__,
+                           int nLine = __LINE__);
 
     ~CPLLockHolder();
 };
@@ -209,41 +218,44 @@ class CPL_DLL CPLLockHolder
 /*      Thread local storage.                                           */
 /* -------------------------------------------------------------------- */
 
-#define CTLS_RLBUFFERINFO                1         /* cpl_conv.cpp */
-#define CTLS_WIN32_COND                  2         /* cpl_multiproc.cpp */
-#define CTLS_CSVTABLEPTR                 3         /* cpl_csv.cpp */
-#define CTLS_CSVDEFAULTFILENAME          4         /* cpl_csv.cpp */
-#define CTLS_ERRORCONTEXT                5         /* cpl_error.cpp */
-#define CTLS_VSICURL_CACHEDCONNECTION    6         /* cpl_vsil_curl.cpp */
-#define CTLS_PATHBUF                     7         /* cpl_path.cpp */
-#define CTLS_ABSTRACTARCHIVE_SPLIT       8         /* cpl_vsil_abstract_archive.cpp */
-#define CTLS_GDALOPEN_ANTIRECURSION      9         /* gdaldataset.cpp */
-#define CTLS_CPLSPRINTF                 10         /* cpl_string.h */
-#define CTLS_RESPONSIBLEPID             11         /* gdaldataset.cpp */
-#define CTLS_VERSIONINFO                12         /* gdal_misc.cpp */
-#define CTLS_VERSIONINFO_LICENCE        13         /* gdal_misc.cpp */
-#define CTLS_CONFIGOPTIONS              14         /* cpl_conv.cpp */
-#define CTLS_FINDFILE                   15         /* cpl_findfile.cpp */
-#define CTLS_VSIERRORCONTEXT            16         /* cpl_vsi_error.cpp */
-#define CTLS_ERRORHANDLERACTIVEDATA     17         /* cpl_error.cpp */
-#define CTLS_PROJCONTEXTHOLDER          18         /* ogr_proj_p.cpp */
-#define CTLS_GDALDEFAULTOVR_ANTIREC     19         /* gdaldefaultoverviews.cpp */
-#define CTLS_HTTPFETCHCALLBACK          20         /* cpl_http.cpp */
+#define CTLS_RLBUFFERINFO 1             /* cpl_conv.cpp */
+#define CTLS_WIN32_COND 2               /* cpl_multiproc.cpp */
+#define CTLS_CSVTABLEPTR 3              /* cpl_csv.cpp */
+#define CTLS_CSVDEFAULTFILENAME 4       /* cpl_csv.cpp */
+#define CTLS_ERRORCONTEXT 5             /* cpl_error.cpp */
+#define CTLS_VSICURL_CACHEDCONNECTION 6 /* cpl_vsil_curl.cpp */
+#define CTLS_PATHBUF 7                  /* cpl_path.cpp */
+#define CTLS_ABSTRACTARCHIVE_SPLIT 8    /* cpl_vsil_abstract_archive.cpp */
+#define CTLS_GDALOPEN_ANTIRECURSION 9   /* gdaldataset.cpp */
+#define CTLS_CPLSPRINTF 10              /* cpl_string.h */
+#define CTLS_RESPONSIBLEPID 11          /* gdaldataset.cpp */
+#define CTLS_VERSIONINFO 12             /* gdal_misc.cpp */
+#define CTLS_VERSIONINFO_LICENCE 13     /* gdal_misc.cpp */
+#define CTLS_CONFIGOPTIONS 14           /* cpl_conv.cpp */
+#define CTLS_FINDFILE 15                /* cpl_findfile.cpp */
+#define CTLS_VSIERRORCONTEXT 16         /* cpl_vsi_error.cpp */
+#define CTLS_ERRORHANDLERACTIVEDATA 17  /* cpl_error.cpp */
+#define CTLS_PROJCONTEXTHOLDER 18       /* ogr_proj_p.cpp */
+#define CTLS_GDALDEFAULTOVR_ANTIREC 19  /* gdaldefaultoverviews.cpp */
+#define CTLS_HTTPFETCHCALLBACK 20       /* cpl_http.cpp */
 
-#define CTLS_MAX                        32
+#define CTLS_MAX 32
 
 CPL_C_START
-void CPL_DLL * CPLGetTLS( int nIndex );
-void CPL_DLL * CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccurred );
-void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
+void CPL_DLL *CPLGetTLS(int nIndex);
+void CPL_DLL *CPLGetTLSEx(int nIndex, int *pbMemoryErrorOccurred);
+void CPL_DLL CPLSetTLS(int nIndex, void *pData, int bFreeOnExit);
 
 /* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
 /* use or fetch any TLS data, or a terminating thread will hang ! */
-typedef void (*CPLTLSFreeFunc)( void* pData );
-void CPL_DLL CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree );
-void CPL_DLL CPLSetTLSWithFreeFuncEx( int nIndex, void *pData, CPLTLSFreeFunc pfnFree, int* pbMemoryErrorOccurred );
+typedef void (*CPLTLSFreeFunc)(void *pData);
+void CPL_DLL CPLSetTLSWithFreeFunc(int nIndex, void *pData,
+                                   CPLTLSFreeFunc pfnFree);
+void CPL_DLL CPLSetTLSWithFreeFuncEx(int nIndex, void *pData,
+                                     CPLTLSFreeFunc pfnFree,
+                                     int *pbMemoryErrorOccurred);
 
-void CPL_DLL CPLCleanupTLS( void );
+void CPL_DLL CPLCleanupTLS(void);
 CPL_C_END
 
 #endif /* CPL_MULTIPROC_H_INCLUDED_ */

@@ -38,7 +38,6 @@
 
 #include "cpl_config.h"
 
-
 /************************************************************************/
 /*                            CPLAtofDelim()                            */
 /************************************************************************/
@@ -130,20 +129,20 @@ double CPLAtof(const char *nptr)
  * @return Converted value, if any.  Zero on failure.
  */
 
-double CPLAtofM( const char *nptr )
+double CPLAtofM(const char *nptr)
 
 {
     const int nMaxSearch = 50;
 
-    for( int i = 0; i < nMaxSearch; i++ )
+    for (int i = 0; i < nMaxSearch; i++)
     {
-        if( nptr[i] == ',' )
-            return CPLStrtodDelim( nptr, nullptr, ',' );
-        if( nptr[i] == '.' || nptr[i] == '\0' )
-            return CPLStrtodDelim( nptr, nullptr, '.' );
+        if (nptr[i] == ',')
+            return CPLStrtodDelim(nptr, nullptr, ',');
+        if (nptr[i] == '.' || nptr[i] == '\0')
+            return CPLStrtodDelim(nptr, nullptr, '.');
     }
 
-    return CPLStrtodDelim( nptr, nullptr, '.' );
+    return CPLStrtodDelim(nptr, nullptr, '.');
 }
 
 /************************************************************************/
@@ -153,44 +152,42 @@ double CPLAtofM( const char *nptr )
 /* Return a newly allocated variable if substitution was done, or NULL
  * otherwise.
  */
-static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
+static char *CPLReplacePointByLocalePoint(const char *pszNumber, char point)
 {
 #if defined(__ANDROID__)
     static char byPoint = 0;
-    if( byPoint == 0 )
+    if (byPoint == 0)
     {
         char szBuf[16] = {};
         snprintf(szBuf, sizeof(szBuf), "%.1f", 1.0);
         byPoint = szBuf[1];
     }
-    if( point != byPoint )
+    if (point != byPoint)
     {
-        const char* pszPoint = strchr(pszNumber, point);
-        if( pszPoint )
+        const char *pszPoint = strchr(pszNumber, point);
+        if (pszPoint)
         {
-            char* pszNew = CPLStrdup(pszNumber);
+            char *pszNew = CPLStrdup(pszNumber);
             pszNew[pszPoint - pszNumber] = byPoint;
             return pszNew;
         }
     }
-#else  // ndef __ANDROID__
+#else   // ndef __ANDROID__
     struct lconv *poLconv = localeconv();
-    if( poLconv
-        && poLconv->decimal_point
-        && poLconv->decimal_point[0] != '\0' )
+    if (poLconv && poLconv->decimal_point && poLconv->decimal_point[0] != '\0')
     {
         char byPoint = poLconv->decimal_point[0];
 
-        if( point != byPoint )
+        if (point != byPoint)
         {
-            const char* pszLocalePoint = strchr(pszNumber, byPoint);
-            const char* pszPoint = strchr(pszNumber, point);
-            if( pszPoint || pszLocalePoint )
+            const char *pszLocalePoint = strchr(pszNumber, byPoint);
+            const char *pszPoint = strchr(pszNumber, point);
+            if (pszPoint || pszLocalePoint)
             {
-                char* pszNew = CPLStrdup(pszNumber);
-                if( pszLocalePoint )
+                char *pszNew = CPLStrdup(pszNumber);
+                if (pszLocalePoint)
                     pszNew[pszLocalePoint - pszNumber] = ' ';
-                if( pszPoint )
+                if (pszPoint)
                     pszNew[pszPoint - pszNumber] = byPoint;
                 return pszNew;
             }
@@ -224,70 +221,73 @@ static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
-    while( *nptr == ' ' )
+    while (*nptr == ' ')
         nptr++;
 
-    if( nptr[0] == '-' )
+    if (nptr[0] == '-')
     {
-        if( STARTS_WITH(nptr, "-1.#QNAN") ||
-            STARTS_WITH(nptr, "-1.#IND") )
+        if (STARTS_WITH(nptr, "-1.#QNAN") || STARTS_WITH(nptr, "-1.#IND"))
         {
-            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
+            if (endptr)
+                *endptr = const_cast<char *>(nptr) + strlen(nptr);
             // While it is possible on some platforms to flip the sign
             // of NAN to negative, this function will always return a positive
             // quiet (non-signalling) NaN.
             return std::numeric_limits<double>::quiet_NaN();
         }
 
-        if( strcmp(nptr, "-inf") == 0 ||
-            STARTS_WITH_CI(nptr, "-1.#INF") )
+        if (strcmp(nptr, "-inf") == 0 || STARTS_WITH_CI(nptr, "-1.#INF"))
         {
-            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
+            if (endptr)
+                *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return -std::numeric_limits<double>::infinity();
         }
     }
-    else if( nptr[0] == '1' )
+    else if (nptr[0] == '1')
     {
-        if( STARTS_WITH(nptr, "1.#QNAN") ||
-            STARTS_WITH(nptr, "1.#SNAN") )
+        if (STARTS_WITH(nptr, "1.#QNAN") || STARTS_WITH(nptr, "1.#SNAN"))
         {
-            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
+            if (endptr)
+                *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();
         }
-        if( STARTS_WITH_CI(nptr, "1.#INF") )
+        if (STARTS_WITH_CI(nptr, "1.#INF"))
         {
-            if( endptr ) *endptr = const_cast<char*>(nptr) + strlen(nptr);
+            if (endptr)
+                *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::infinity();
         }
     }
-    else if( nptr[0] == 'i' && strcmp(nptr, "inf") == 0 )
+    else if (nptr[0] == 'i' && strcmp(nptr, "inf") == 0)
     {
-        if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
+        if (endptr)
+            *endptr = const_cast<char *>(nptr) + strlen(nptr);
         return std::numeric_limits<double>::infinity();
     }
-    else if( nptr[0] == 'n' && strcmp(nptr, "nan") == 0 )
+    else if (nptr[0] == 'n' && strcmp(nptr, "nan") == 0)
     {
-        if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
+        if (endptr)
+            *endptr = const_cast<char *>(nptr) + strlen(nptr);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-/* -------------------------------------------------------------------- */
-/*  We are implementing a simple method here: copy the input string     */
-/*  into the temporary buffer, replace the specified decimal delimiter  */
-/*  with the one, taken from locale settings and use standard strtod()  */
-/*  on that buffer.                                                     */
-/* -------------------------------------------------------------------- */
-    char* pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
-    const char* pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
+    /* -------------------------------------------------------------------- */
+    /*  We are implementing a simple method here: copy the input string     */
+    /*  into the temporary buffer, replace the specified decimal delimiter  */
+    /*  with the one, taken from locale settings and use standard strtod()  */
+    /*  on that buffer.                                                     */
+    /* -------------------------------------------------------------------- */
+    char *pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
+    const char *pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
 
-    const double dfValue = strtod( pszNumber, endptr );
+    const double dfValue = strtod(pszNumber, endptr);
     const int nError = errno;
 
-    if( endptr )
+    if (endptr)
         *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if( pszNewNumberOrNull )
-        CPLFree( pszNewNumberOrNull );
+    if (pszNewNumberOrNull)
+        CPLFree(pszNewNumberOrNull);
 
     errno = nError;
     return dfValue;
@@ -342,22 +342,22 @@ double CPLStrtod(const char *nptr, char **endptr)
  */
 float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 {
-/* -------------------------------------------------------------------- */
-/*  We are implementing a simple method here: copy the input string     */
-/*  into the temporary buffer, replace the specified decimal delimiter  */
-/*  with the one, taken from locale settings and use standard strtof()  */
-/*  on that buffer.                                                     */
-/* -------------------------------------------------------------------- */
-    char * const pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
-    const char* pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
-    const float fValue = strtof( pszNumber, endptr );
+    /* -------------------------------------------------------------------- */
+    /*  We are implementing a simple method here: copy the input string     */
+    /*  into the temporary buffer, replace the specified decimal delimiter  */
+    /*  with the one, taken from locale settings and use standard strtof()  */
+    /*  on that buffer.                                                     */
+    /* -------------------------------------------------------------------- */
+    char *const pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
+    const char *pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
+    const float fValue = strtof(pszNumber, endptr);
     const int nError = errno;
 
-    if( endptr )
+    if (endptr)
         *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if( pszNewNumberOrNull )
-        CPLFree( pszNewNumberOrNull );
+    if (pszNewNumberOrNull)
+        CPLFree(pszNewNumberOrNull);
 
     errno = nError;
     return fValue;

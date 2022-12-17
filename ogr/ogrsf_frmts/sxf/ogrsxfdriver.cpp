@@ -32,7 +32,6 @@
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-
 extern "C" void RegisterOGRSXF();
 
 /************************************************************************/
@@ -47,12 +46,12 @@ OGRSXFDriver::~OGRSXFDriver()
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRSXFDriver::Open(GDALOpenInfo* poOpenInfo)
+GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Determine what sort of object this is.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Determine what sort of object this is.                          */
+    /* -------------------------------------------------------------------- */
 
     VSIStatBufL sStatBuf;
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
@@ -60,11 +59,10 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo* poOpenInfo)
         !VSI_ISREG(sStatBuf.st_mode))
         return nullptr;
 
-    OGRSXFDataSource   *poDS = new OGRSXFDataSource();
+    OGRSXFDataSource *poDS = new OGRSXFDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename,
-                     poOpenInfo->eAccess == GA_Update,
-                     poOpenInfo->papszOpenOptions ) )
+    if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
+                    poOpenInfo->papszOpenOptions))
     {
         delete poDS;
         poDS = nullptr;
@@ -77,20 +75,20 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo* poOpenInfo)
 /*                              Identify()                              */
 /************************************************************************/
 
-int OGRSXFDriver::Identify(GDALOpenInfo* poOpenInfo)
+int OGRSXFDriver::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
         !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
     {
         return GDAL_IDENTIFY_FALSE;
     }
-        
-    if(poOpenInfo->nHeaderBytes < 4)
+
+    if (poOpenInfo->nHeaderBytes < 4)
     {
         return GDAL_IDENTIFY_UNKNOWN;
     }
-    
-    if(0 != memcmp(poOpenInfo->pabyHeader, "SXF", 3))
+
+    if (0 != memcmp(poOpenInfo->pabyHeader, "SXF", 3))
     {
         return GDAL_IDENTIFY_FALSE;
     }
@@ -102,25 +100,24 @@ int OGRSXFDriver::Identify(GDALOpenInfo* poOpenInfo)
 /*                           DeleteDataSource()                         */
 /************************************************************************/
 
-CPLErr OGRSXFDriver::DeleteDataSource(const char* pszName)
+CPLErr OGRSXFDriver::DeleteDataSource(const char *pszName)
 {
-    //TODO: add more extensions if aplicable
-    static const char * const apszExtensions[] = { "szf", "rsc", "SZF", "RSC", nullptr };
+    // TODO: add more extensions if aplicable
+    static const char *const apszExtensions[] = {"szf", "rsc", "SZF", "RSC",
+                                                 nullptr};
 
     VSIStatBufL sStatBuf;
     if (VSIStatL(pszName, &sStatBuf) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-            "%s does not appear to be a valid sxf file.",
-            pszName);
+                 "%s does not appear to be a valid sxf file.", pszName);
 
         return CE_Failure;
     }
 
-    for( int iExt = 0; apszExtensions[iExt] != nullptr; iExt++ )
+    for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
     {
-        const char *pszFile = CPLResetExtension(pszName,
-            apszExtensions[iExt]);
+        const char *pszFile = CPLResetExtension(pszName, apszExtensions[iExt]);
         if (VSIStatL(pszFile, &sStatBuf) == 0)
             VSIUnlink(pszFile);
     }
@@ -133,30 +130,34 @@ CPLErr OGRSXFDriver::DeleteDataSource(const char* pszName)
 /************************************************************************/
 void RegisterOGRSXF()
 {
-    if( GDALGetDriverByName( "SXF" ) != nullptr )
+    if (GDALGetDriverByName("SXF") != nullptr)
         return;
 
-    OGRSXFDriver* poDriver = new OGRSXFDriver;
+    OGRSXFDriver *poDriver = new OGRSXFDriver;
 
-    poDriver->SetDescription( "SXF" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Storage and eXchange Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sxf.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    poDriver->SetDescription("SXF");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Storage and eXchange Format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/sxf.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sxf");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
-        "  <Option name='SXF_LAYER_FULLNAME' type='string' description='Use long layer names' default='NO'/>"
-        "  <Option name='SXF_RSC_FILENAME' type='string' description='RSC file name' default=''/>"
-        "  <Option name='SXF_SET_VERTCS' type='string' description='Layers spatial reference will include vertical coordinate system description if exist' default='NO'/>"
+        "  <Option name='SXF_LAYER_FULLNAME' type='string' description='Use "
+        "long layer names' default='NO'/>"
+        "  <Option name='SXF_RSC_FILENAME' type='string' description='RSC file "
+        "name' default=''/>"
+        "  <Option name='SXF_SET_VERTCS' type='string' description='Layers "
+        "spatial reference will include vertical coordinate system description "
+        "if exist' default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRSXFDriver::Open;
     poDriver->pfnDelete = OGRSXFDriver::DeleteDataSource;
     poDriver->pfnIdentify = OGRSXFDriver::Identify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
