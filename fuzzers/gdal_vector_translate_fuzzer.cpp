@@ -37,13 +37,13 @@
 #define REGISTER_FUNC OGRRegisterAll
 #endif
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
 {
-    const char* exe_path = (*argv)[0];
-    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    const char *exe_path = (*argv)[0];
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr)
     {
         CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     }
@@ -60,31 +60,32 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test.tar",
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        "/vsimem/test.tar",
+        reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)), len, FALSE);
     VSIFCloseL(fp);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    char** papszArgv = nullptr;
+    char **papszArgv = nullptr;
 
     CPLString osOutFilename("out");
     fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
-    if( fp != nullptr )
+    if (fp != nullptr)
     {
-        const char* pszLine = nullptr;
-        if( (pszLine = CPLReadLineL(fp)) != nullptr )
+        const char *pszLine = nullptr;
+        if ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
             osOutFilename = pszLine;
             osOutFilename = osOutFilename.replaceAll('/', '_');
         }
         int nCandidateLayerNames = 0;
-        while( (pszLine = CPLReadLineL(fp)) != nullptr )
+        while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
-            if( pszLine[0] != '-' )
+            if (pszLine[0] != '-')
             {
-                nCandidateLayerNames ++;
-                if( nCandidateLayerNames == 10 )
+                nCandidateLayerNames++;
+                if (nCandidateLayerNames == 10)
                     break;
             }
             papszArgv = CSLAddString(papszArgv, pszLine);
@@ -92,22 +93,23 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         VSIFCloseL(fp);
     }
 
-    char** papszDrivers = CSLAddString(nullptr, "CSV");
-    GDALDatasetH hSrcDS = GDALOpenEx( "/vsitar//vsimem/test.tar/in",
-                        GDAL_OF_VECTOR, papszDrivers, nullptr, nullptr );
+    char **papszDrivers = CSLAddString(nullptr, "CSV");
+    GDALDatasetH hSrcDS =
+        GDALOpenEx("/vsitar//vsimem/test.tar/in", GDAL_OF_VECTOR, papszDrivers,
+                   nullptr, nullptr);
     CSLDestroy(papszDrivers);
 
-    if( papszArgv != nullptr && hSrcDS != nullptr )
+    if (papszArgv != nullptr && hSrcDS != nullptr)
     {
         const int nLayerCount = GDALDatasetGetLayerCount(hSrcDS);
-        for( int i = 0; i < nLayerCount; i++ )
+        for (int i = 0; i < nLayerCount; i++)
         {
             OGRLayerH hLayer = GDALDatasetGetLayer(hSrcDS, i);
-            if( hLayer )
+            if (hLayer)
             {
-                int nFieldCount = OGR_FD_GetFieldCount(
-                    OGR_L_GetLayerDefn(hLayer));
-                if( nFieldCount > 100 )
+                int nFieldCount =
+                    OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(hLayer));
+                if (nFieldCount > 100)
                 {
                     papszArgv = CSLAddString(papszArgv, "-limit");
                     papszArgv = CSLAddString(papszArgv, "100");
@@ -116,25 +118,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
         }
 
-        GDALVectorTranslateOptions* psOptions =
+        GDALVectorTranslateOptions *psOptions =
             GDALVectorTranslateOptionsNew(papszArgv, nullptr);
-        if( psOptions )
+        if (psOptions)
         {
             CPLString osFullOutFilename("/vsimem/" + osOutFilename);
-            GDALDatasetH hOutDS = GDALVectorTranslate(
-                osFullOutFilename.c_str(),
-                nullptr, 1, &hSrcDS, psOptions, nullptr);
-            if( hOutDS )
+            GDALDatasetH hOutDS =
+                GDALVectorTranslate(osFullOutFilename.c_str(), nullptr, 1,
+                                    &hSrcDS, psOptions, nullptr);
+            if (hOutDS)
             {
                 GDALDriverH hOutDrv = GDALGetDatasetDriver(hOutDS);
                 GDALClose(hOutDS);
 
                 // Try re-opening generated file
-                GDALClose(
-                    GDALOpenEx(osFullOutFilename, GDAL_OF_VECTOR,
-                            nullptr, nullptr, nullptr));
+                GDALClose(GDALOpenEx(osFullOutFilename, GDAL_OF_VECTOR, nullptr,
+                                     nullptr, nullptr));
 
-                if( hOutDrv )
+                if (hOutDrv)
                     GDALDeleteDataset(hOutDrv, osFullOutFilename);
             }
             GDALVectorTranslateOptionsFree(psOptions);

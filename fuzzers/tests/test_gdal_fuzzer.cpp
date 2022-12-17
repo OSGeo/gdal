@@ -30,8 +30,11 @@
 
 int main()
 {
-    const char szVRT[] = "<VRTDataset rasterXSize='1' rasterYSize='1'><VRTRasterBand subClass='VRTDerivedRasterBand'><PixelFunctionType>Real</PixelFunctionType></VRTRasterBand></VRTDataset>";
-    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szVRT),
+    const char szVRT[] =
+        "<VRTDataset rasterXSize='1' rasterYSize='1'><VRTRasterBand "
+        "subClass='VRTDerivedRasterBand'><PixelFunctionType>Real</"
+        "PixelFunctionType></VRTRasterBand></VRTDataset>";
+    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t *>(szVRT),
                            strlen(szVRT));
     return 0;
 }

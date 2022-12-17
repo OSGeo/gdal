@@ -33,9 +33,9 @@
 #include "cpl_error.h"
 #include "ogrsqlitebase.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     return 0;
 }
@@ -44,10 +44,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRGeometry* poGeom = nullptr;
+    OGRGeometry *poGeom = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGRSQLiteImportSpatiaLiteGeometry(
-        const_cast<unsigned char*>(buf), static_cast<int>(len), &poGeom );
+    OGRSQLiteImportSpatiaLiteGeometry(const_cast<unsigned char *>(buf),
+                                      static_cast<int>(len), &poGeom);
     CPLPopErrorHandler();
     delete poGeom;
     return 0;
