@@ -632,11 +632,12 @@ struct GDALRasterizeOptions
 /*                             GDALRasterize()                          */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Burns vector geometries into a raster
  *
- * This is the equivalent of the <a
- * href="/programs/gdal_rasterize.html">gdal_rasterize</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdal_rasterize.html">gdal_rasterize</a> utility.
  *
  * GDALRasterizeOptions* must be allocated and freed with
  * GDALRasterizeOptionsNew() and GDALRasterizeOptionsFree() respectively.
@@ -654,6 +655,7 @@ struct GDALRasterizeOptions
  *
  * @since GDAL 2.1
  */
+/* clang-format on */
 
 GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                            GDALDatasetH hSrcDataset,

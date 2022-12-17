@@ -374,14 +374,15 @@ void RegisterOGROpenFileGDB()
         "  <Option name='CREATE_SHAPE_AREA_AND_LENGTH_FIELDS' type='boolean' "
         "description='Whether to create special Shape_Length and Shape_Area "
         "fields' default='NO'/>"
-        // Setting to another value than the default one doesn't really work
-        // with the SDK
-        //"  <Option name='AREA_FIELD_NAME' type='string' description='Name of
-        // the column that contains the geometry area' default='Shape_Area'/>" "
-        //<Option name='length_field_name' type='string' description='Name of
-        // the column that contains the geometry length'
-        // default='Shape_Length'/>"
         "</LayerCreationOptionList>");
+
+    // Setting to another value than the default one doesn't really work
+    // with the SDK
+    // Option name='AREA_FIELD_NAME' type='string' description='Name of
+    // the column that contains the geometry area' default='Shape_Area'
+    // Option name='length_field_name' type='string' description='Name of
+    // the column that contains the geometry length'
+    // default='Shape_Length'
 
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;

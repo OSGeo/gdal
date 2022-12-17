@@ -1298,16 +1298,15 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr &poFeature)
 /*                           OGRFieldDomain                             */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Definition of a field domain.
  *
  * A field domain is a set of constraints that apply to one or several fields.
  *
  * This is a concept found in
- * <a
- * href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File
- * Geodatabase</a> or GeoPackage (using the <a
- * href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
+ * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File
+ * Geodatabase</a> or GeoPackage (using the <a href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
  * for example.
  *
  * A field domain can be:
@@ -1319,6 +1318,8 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr &poFeature)
  *
  * @since GDAL 3.3
  */
+/* clang-format on */
+
 class CPL_DLL OGRFieldDomain
 {
   protected:

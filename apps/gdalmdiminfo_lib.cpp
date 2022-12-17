@@ -1036,11 +1036,12 @@ static void WriteToStdout(const char *pszText, void *)
 /*                         GDALMultiDimInfo()                           */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Lists various information about a GDAL multidimensional dataset.
  *
- * This is the equivalent of the <a
- * href="/programs/gdalmdiminfo.html">gdalmdiminfo</a>utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdalmdiminfo.html">gdalmdiminfo</a>utility.
  *
  * GDALMultiDimInfoOptions* must be allocated and freed with
  * GDALMultiDimInfoOptionsNew() and GDALMultiDimInfoOptionsFree() respectively.
@@ -1053,6 +1054,7 @@ static void WriteToStdout(const char *pszText, void *)
  *
  * @since GDAL 3.1
  */
+/* clang-format on */
 
 char *GDALMultiDimInfo(GDALDatasetH hDataset,
                        const GDALMultiDimInfoOptions *psOptionsIn)

@@ -1387,9 +1387,9 @@ int OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
  * @since GDAL 1.11
  */
 
+/* clang-format off */
 /**
- * \fn const OGRGeomFieldDefn *OGRFeature::GetGeomFieldDefnRef( int iGeomField )
- * const;
+ * \fn const OGRGeomFieldDefn *OGRFeature::GetGeomFieldDefnRef( int iGeomField ) const;
  *
  * \brief Fetch definition for this geometry field.
  *
@@ -1402,6 +1402,7 @@ int OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
  *
  * @since GDAL 2.3
  */
+/* clang-format on */
 
 /************************************************************************/
 /*                       OGR_F_GetGeomFieldDefnRef()                    */
@@ -2740,9 +2741,9 @@ const char *OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)
 /*                       GetFieldAsIntegerList()                        */
 /************************************************************************/
 
+/* clang-format off */
 /**
- * \fn OGRFeature::GetFieldAsIntegerList( const char* pszFName, int *pnCount )
- const
+ * \fn OGRFeature::GetFieldAsIntegerList( const char* pszFName, int *pnCount ) const
  * \brief Fetch field value as a list of integers.
  *
  * Currently this method only works for OFTIntegerList fields.
@@ -2757,6 +2758,7 @@ const char *OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)
  * sprintf(), but not necessarily using the established formatting rules.
  * Other field types, or errors will result in a return value of zero.
  */
+/* clang-format on */
 
 /**
  * \brief Fetch field value as a list of integers.
@@ -2827,9 +2829,10 @@ const int *OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                      GetFieldAsInteger64List()                       */
 /************************************************************************/
+
+/* clang-format off */
 /**
- * \fn OGRFeature::GetFieldAsInteger64List( const char* pszFName, int *pnCount )
- const
+ * \fn OGRFeature::GetFieldAsInteger64List( const char* pszFName, int *pnCount ) const
  * \brief Fetch field value as a list of 64 bit integers.
  *
  * Currently this method only works for OFTInteger64List fields.
@@ -2842,6 +2845,7 @@ const int *OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField,
  * on return the returned pointer may be NULL or non-NULL.
  * @since GDAL 2.0
  */
+/* clang-format on */
 
 /**
  * \brief Fetch field value as a list of 64 bit integers.
@@ -2915,9 +2919,10 @@ const GIntBig *OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                        GetFieldAsDoubleList()                        */
 /************************************************************************/
+
+/* clang-format off */
 /**
- * \fn OGRFeature::GetFieldAsDoubleList( const char* pszFName, int *pnCount )
- const
+ * \fn OGRFeature::GetFieldAsDoubleList( const char* pszFName, int *pnCount ) const
  * \brief Fetch field value as a list of doubles.
  *
  * Currently this method only works for OFTRealList fields.
@@ -2929,6 +2934,7 @@ const GIntBig *OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField,
  * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
  * on return the returned pointer may be NULL or non-NULL.
  */
+/* clang-format on */
 
 /**
  * \brief Fetch field value as a list of doubles.

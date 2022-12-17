@@ -1566,11 +1566,12 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
 /*                        GDALMultiDimTranslate()                       */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Converts raster data between different formats.
  *
- * This is the equivalent of the <a
- * href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
  *
  * GDALMultiDimTranslateOptions* must be allocated and freed with
  * GDALMultiDimTranslateOptionsNew() and GDALMultiDimTranslateOptionsFree()
@@ -1589,6 +1590,7 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
  *
  * @since GDAL 3.1
  */
+/* clang-format on */
 
 GDALDatasetH
 GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,

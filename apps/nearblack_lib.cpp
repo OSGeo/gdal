@@ -82,11 +82,12 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 /*                            GDALNearblack()                           */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Convert nearly black/white borders to exact value.
  *
- * This is the equivalent of the <a
- * href="/programs/nearblack.html">nearblack</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/nearblack.html">nearblack</a> utility.
  *
  * GDALNearblackOptions* must be allocated and freed with
  * GDALNearblackOptionsNew() and GDALNearblackOptionsFree() respectively.
@@ -107,6 +108,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
  *
  * @since GDAL 2.1
  */
+/* clang-format on */
 
 GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                                    GDALDatasetH hSrcDataset,

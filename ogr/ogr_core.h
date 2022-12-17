@@ -519,6 +519,7 @@ typedef enum
 #endif
 } OGRwkbGeometryType;
 
+/* clang-format off */
 /**
  * Output variants of WKB we support.
  *
@@ -527,15 +528,15 @@ typedef enum
  *
  * SQL/MM Part 3 and SFSQL 1.2 use offsets of 1000 (Z), 2000 (M) and 3000 (ZM)
  * to indicate the present of higher dimensional coordinates in a WKB geometry.
- * Reference: <a
- * href="https://portal.opengeospatial.org/files/?artifact_id=320243">
+ * Reference: <a href="https://portal.opengeospatial.org/files/?artifact_id=320243">
  * 09-009_Committee_Draft_ISOIEC_CD_13249-3_SQLMM_Spatial.pdf</a>,
  * ISO/IEC JTC 1/SC 32 N 1820, ISO/IEC CD 13249-3:201x(E), Date: 2009-01-16.
- * The codes are also found in §8.2.3 of <a
- * href="http://portal.opengeospatial.org/files/?artifact_id=25355"> OGC
+ * The codes are also found in §8.2.3 of <a href="http://portal.opengeospatial.org/files/?artifact_id=25355"> OGC
  * 06-103r4 "OpenGIS® Implementation Standard for Geographic information -
  * Simple feature access - Part 1: Common architecture", v1.2.1</a>
  */
+/* clang-format on */
+
 typedef enum
 {
     wkbVariantOldOgc, /**< Old-style 99-402 extended dimension (Z) WKB types */

@@ -197,6 +197,7 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
 /*                       OGRGeocodeCreateSession()                      */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * \brief Creates a session handle for geocoding requests.
  *
@@ -208,13 +209,11 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
  *                    datasource.
  * <li> "READ_CACHE" : "TRUE" (default) or "FALSE"
  * <li> "WRITE_CACHE" : "TRUE" (default) or "FALSE"
- * <li> "SERVICE": <a
- * href="http://wiki.openstreetmap.org/wiki/Nominatim">"OSM_NOMINATIM"</a>
- *      (default), <a
- * href="http://open.mapquestapi.com/nominatim/">"MAPQUEST_NOMINATIM"</a>, <a
- * href="http://developer.yahoo.com/geo/placefinder/">"YAHOO"</a>, <a
- * href="http://www.geonames.org/export/geonames-search.html">"GEONAMES"</a>, <a
- * href="http://msdn.microsoft.com/en-us/library/ff701714.aspx">"BING"</a> or
+ * <li> "SERVICE": <a href="http://wiki.openstreetmap.org/wiki/Nominatim">"OSM_NOMINATIM"</a>
+ *      (default), <a href="http://open.mapquestapi.com/nominatim/">"MAPQUEST_NOMINATIM"</a>,
+ *      <a href="http://developer.yahoo.com/geo/placefinder/">"YAHOO"</a>,
+ *      <a href="http://www.geonames.org/export/geonames-search.html">"GEONAMES"</a>,
+ *      <a href="http://msdn.microsoft.com/en-us/library/ff701714.aspx">"BING"</a> or
  *       other value.
  *      Note: "YAHOO" is no longer available as a free service.
  * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommended.
@@ -248,6 +247,7 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
  *
  * @since GDAL 1.10
  */
+/* clang-format on */
 
 OGRGeocodingSessionH OGRGeocodeCreateSession(char **papszOptions)
 {
@@ -1367,6 +1367,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
 /*                              OGRGeocode()                            */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * \brief Runs a geocoding request.
  *
@@ -1385,8 +1386,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
  * with OGRGeocodeFreeResult().
  *
  * Note: this function is also available as the SQL
- * <a
- * href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode()</a>
+ * <a href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode()</a>
  * function of the SQL SQLite dialect.
  *
  * The list of recognized options is :
@@ -1415,6 +1415,8 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
  *
  * @since GDAL 1.10
  */
+/* clang-format on */
+
 OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession, const char *pszQuery,
                      char **papszStructuredQuery, char **papszOptions)
 {
@@ -1506,6 +1508,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
 /*                         OGRGeocodeReverse()                          */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * \brief Runs a reverse geocoding request.
  *
@@ -1523,8 +1526,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
  * freed with OGRGeocodeFreeResult().
  *
  * Note: this function is also available as the SQL
- * <a
- * href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode_reverse()</a>
+ * <a href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode_reverse()</a>
  * function of the SQL SQLite dialect.
  *
  * The list of recognized options is :
@@ -1547,6 +1549,8 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
  *
  * @since GDAL 1.10
  */
+/* clang-format on */
+
 OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
                             double dfLat, char **papszOptions)
 {
