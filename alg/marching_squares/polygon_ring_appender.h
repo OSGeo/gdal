@@ -38,49 +38,61 @@
 #include "point.h"
 #include "ogr_geometry.h"
 
-namespace marching_squares {
+namespace marching_squares
+{
 
 // Receive rings of different levels and organize them
 // into multi-polygons with possible interior rings when requested.
-template <typename PolygonWriter>
-class PolygonRingAppender
+template <typename PolygonWriter> class PolygonRingAppender
 {
-private:
+  private:
     struct Ring
     {
-        Ring() : points(), interiorRings() {}
-        Ring( const Ring& other ) = default;
-        Ring& operator=( const Ring& other ) = default;
+        Ring() : points(), interiorRings()
+        {
+        }
+        Ring(const Ring &other) = default;
+        Ring &operator=(const Ring &other) = default;
 
         LineString points;
 
         mutable std::vector<Ring> interiorRings;
 
-        const Ring* closestExterior = nullptr;
+        const Ring *closestExterior = nullptr;
 
-        bool isIn( const Ring& other ) const
+        bool isIn(const Ring &other) const
         {
             // Check if this is inside other using the winding number algorithm
             auto checkPoint = this->points.front();
             int windingNum = 0;
             auto otherIter = other.points.begin();
-            // p1 and p2 define each segment of the ring other that will be tested
+            // p1 and p2 define each segment of the ring other that will be
+            // tested
             auto p1 = *otherIter;
-            while(true) {
+            while (true)
+            {
                 otherIter++;
-                if (otherIter == other.points.end()) {
+                if (otherIter == other.points.end())
+                {
                     break;
                 }
                 auto p2 = *otherIter;
-                if ( p1.y <= checkPoint.y ) {
-                    if ( p2.y  > checkPoint.y ) {
-                        if ( isLeft(p1, p2, checkPoint) )  {
-                             ++windingNum;
+                if (p1.y <= checkPoint.y)
+                {
+                    if (p2.y > checkPoint.y)
+                    {
+                        if (isLeft(p1, p2, checkPoint))
+                        {
+                            ++windingNum;
                         }
                     }
-                } else {
-                    if ( p2.y <= checkPoint.y ) {
-                        if ( !isLeft( p1, p2, checkPoint)  ) {
+                }
+                else
+                {
+                    if (p2.y <= checkPoint.y)
+                    {
+                        if (!isLeft(p1, p2, checkPoint))
+                        {
                             --windingNum;
                         }
                     }
@@ -93,29 +105,35 @@ private:
 #ifdef DEBUG
         size_t id() const
         {
-            return size_t(static_cast<const void*>(this)) & 0xffff;
+            return size_t(static_cast<const void *>(this)) & 0xffff;
         }
 
-        void print( std::ostream& ostr ) const
+        void print(std::ostream &ostr) const
         {
             ostr << id() << ":";
-            for ( const auto& pt : points ) {
+            for (const auto &pt : points)
+            {
                 ostr << pt.x << "," << pt.y << " ";
             }
         }
 #endif
     };
 
-    void processTree(const std::vector<Ring> &tree, int level) {
-        if ( level % 2 == 0 ) {
-            for( auto &r: tree ) {
+    void processTree(const std::vector<Ring> &tree, int level)
+    {
+        if (level % 2 == 0)
+        {
+            for (auto &r : tree)
+            {
                 writer_.addPart(r.points);
-                for( auto &innerRing: r.interiorRings ) {
+                for (auto &innerRing : r.interiorRings)
+                {
                     writer_.addInteriorRing(innerRing.points);
                 }
             }
         }
-        for( auto &r: tree ) {
+        for (auto &r : tree)
+        {
             processTree(r.interiorRings, level + 1);
         }
     }
@@ -123,65 +141,64 @@ private:
     // level -> rings
     std::map<double, std::vector<Ring>> rings_;
 
-    PolygonWriter& writer_;
+    PolygonWriter &writer_;
 
-public:
+  public:
     const bool polygonize = true;
 
-    PolygonRingAppender( PolygonWriter& writer )
-        : rings_()
-        , writer_( writer )
-    {}
+    PolygonRingAppender(PolygonWriter &writer) : rings_(), writer_(writer)
+    {
+    }
 
-    void addLine( double level, LineString& ls, bool )
+    void addLine(double level, LineString &ls, bool)
     {
         // Create a new ring from the LineString
         Ring newRing;
-        newRing.points.swap( ls );
+        newRing.points.swap(ls);
         auto &levelRings = rings_[level];
         // This queue holds the rings to be checked
-        std::deque<Ring*> queue;
-        std::transform(levelRings.begin(),
-                       levelRings.end(),
-                       std::back_inserter(queue),
-                       [](Ring &r) {
-                           return &r;
-                       });
+        std::deque<Ring *> queue;
+        std::transform(levelRings.begin(), levelRings.end(),
+                       std::back_inserter(queue), [](Ring &r) { return &r; });
         Ring *parentRing = nullptr;
-        while( !queue.empty() ) {
+        while (!queue.empty())
+        {
             Ring *curRing = queue.front();
             queue.pop_front();
-            if ( newRing.isIn(*curRing) ) {
-                // We know that there should only be one ring per level that we should fit in,
-                // so we can discard the rest of the queue and try again with the children of this ring
+            if (newRing.isIn(*curRing))
+            {
+                // We know that there should only be one ring per level that we
+                // should fit in, so we can discard the rest of the queue and
+                // try again with the children of this ring
                 parentRing = curRing;
                 queue.clear();
                 std::transform(curRing->interiorRings.begin(),
-                            curRing->interiorRings.end(),
-                            std::back_inserter(queue),
-                            [](Ring &r) {
-                                return &r;
-                            });
+                               curRing->interiorRings.end(),
+                               std::back_inserter(queue),
+                               [](Ring &r) { return &r; });
             }
         }
-        // Get a pointer to the list we need to check for rings to include in this ring
+        // Get a pointer to the list we need to check for rings to include in
+        // this ring
         std::vector<Ring> *parentRingList;
-        if ( parentRing == nullptr ) {
+        if (parentRing == nullptr)
+        {
             parentRingList = &levelRings;
-        } else {
+        }
+        else
+        {
             parentRingList = &(parentRing->interiorRings);
         }
         // We found a valid parent, so we need to:
-        // 1. Find all the inner rings of the parent that are inside the new ring
+        // 1. Find all the inner rings of the parent that are inside the new
+        // ring
         auto trueGroupIt = std::partition(
-            parentRingList->begin(),
-            parentRingList->end(),
-            [newRing](Ring &pRing) {
-                return !pRing.isIn(newRing);
-            }
-        );
-        // 2. Move those rings out of the parent and into the new ring's interior rings
-        std::move(trueGroupIt, parentRingList->end(), std::back_inserter(newRing.interiorRings));
+            parentRingList->begin(), parentRingList->end(),
+            [newRing](Ring &pRing) { return !pRing.isIn(newRing); });
+        // 2. Move those rings out of the parent and into the new ring's
+        // interior rings
+        std::move(trueGroupIt, parentRingList->end(),
+                  std::back_inserter(newRing.interiorRings));
         // 3. Get rid of the moved-from elements in the parent's interior rings
         parentRingList->erase(trueGroupIt, parentRingList->end());
         // 4. Add the new ring to the parent's interior rings
@@ -191,20 +208,21 @@ public:
     ~PolygonRingAppender()
     {
         // If there's no rings, nothing to do here
-        if ( rings_.size() == 0 )
+        if (rings_.size() == 0)
             return;
 
         // Traverse tree of rings
-        for ( auto& r: rings_ ) {
+        for (auto &r : rings_)
+        {
             // For each level, create a multipolygon by traversing the tree of
             // rings and adding a part for every other level
-            writer_.startPolygon( r.first );
+            writer_.startPolygon(r.first);
             processTree(r.second, 0);
             writer_.endPolygon();
         }
     }
 };
 
-}
+}  // namespace marching_squares
 
 #endif

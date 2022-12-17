@@ -31,7 +31,8 @@
 #include <limits>
 #include <cmath>
 
-namespace marching_squares {
+namespace marching_squares
+{
 
 // This is used to determine the maximum level value for polygons,
 // the one that spans all the remaining plane
@@ -39,24 +40,23 @@ const double Inf = std::numeric_limits<double>::max();
 
 const double NaN = std::numeric_limits<double>::quiet_NaN();
 
-#define debug(format, ...) CPLDebug("MarchingSquare", format, ##__VA_ARGS__ )
+#define debug(format, ...) CPLDebug("MarchingSquare", format, ##__VA_ARGS__)
 
 // Perturb a value if it is too close to a level value
-inline
-double fudge(double level, double value)
+inline double fudge(double level, double value)
 {
     // FIXME
-    // This is too "hard coded". The perturbation to apply really depend on values
-    // between which we have to interpolate, so that the result of interpolation
-    // should give coordinates that are "numerically" stable for classical algorithms
-    // to work (on polygons for instance).
+    // This is too "hard coded". The perturbation to apply really depend on
+    // values between which we have to interpolate, so that the result of
+    // interpolation should give coordinates that are "numerically" stable for
+    // classical algorithms to work (on polygons for instance).
     //
-    // Ideally we should probably use snap rounding to ensure no contour lines are
-    // within a user-provided minimum distance.
+    // Ideally we should probably use snap rounding to ensure no contour lines
+    // are within a user-provided minimum distance.
 
     const double absTol = 1e-6;
     return std::abs(level - value) < absTol ? value + absTol : value;
 }
 
-}
+}  // namespace marching_squares
 #endif

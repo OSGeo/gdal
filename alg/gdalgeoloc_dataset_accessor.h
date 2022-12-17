@@ -38,54 +38,55 @@ class GDALGeoLocDatasetAccessors
 {
     typedef class GDALGeoLocDatasetAccessors AccessorType;
 
-    GDALGeoLocTransformInfo*  m_psTransform;
+    GDALGeoLocTransformInfo *m_psTransform;
 
-    CPLStringList    m_aosGTiffCreationOptions{};
+    CPLStringList m_aosGTiffCreationOptions{};
 
-    GDALDataset*     m_poGeolocTmpDataset = nullptr;
-    GDALDataset*     m_poBackmapTmpDataset = nullptr;
-    GDALDataset*     m_poBackmapWeightsTmpDataset = nullptr;
+    GDALDataset *m_poGeolocTmpDataset = nullptr;
+    GDALDataset *m_poBackmapTmpDataset = nullptr;
+    GDALDataset *m_poBackmapWeightsTmpDataset = nullptr;
 
-    GDALGeoLocDatasetAccessors(const GDALGeoLocDatasetAccessors&) = delete;
-    GDALGeoLocDatasetAccessors& operator= (const GDALGeoLocDatasetAccessors&) = delete;
+    GDALGeoLocDatasetAccessors(const GDALGeoLocDatasetAccessors &) = delete;
+    GDALGeoLocDatasetAccessors &
+    operator=(const GDALGeoLocDatasetAccessors &) = delete;
 
-    bool         LoadGeoloc(bool bIsRegularGrid);
+    bool LoadGeoloc(bool bIsRegularGrid);
 
-public:
-
+  public:
     static constexpr int TILE_SIZE = 1024;
 
     GDALCachedPixelAccessor<double, TILE_SIZE> geolocXAccessor;
     GDALCachedPixelAccessor<double, TILE_SIZE> geolocYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE>  backMapXAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE>  backMapYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE>  backMapWeightAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE> backMapXAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE> backMapYAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE> backMapWeightAccessor;
 
-    explicit GDALGeoLocDatasetAccessors(GDALGeoLocTransformInfo* psTransform):
-        m_psTransform(psTransform),
-        geolocXAccessor(nullptr),
-        geolocYAccessor(nullptr),
-        backMapXAccessor(nullptr),
-        backMapYAccessor(nullptr),
-        backMapWeightAccessor(nullptr)
+    explicit GDALGeoLocDatasetAccessors(GDALGeoLocTransformInfo *psTransform)
+        : m_psTransform(psTransform), geolocXAccessor(nullptr),
+          geolocYAccessor(nullptr), backMapXAccessor(nullptr),
+          backMapYAccessor(nullptr), backMapWeightAccessor(nullptr)
     {
         m_aosGTiffCreationOptions.SetNameValue("TILED", "YES");
         m_aosGTiffCreationOptions.SetNameValue("INTERLEAVE", "BAND");
-        m_aosGTiffCreationOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", TILE_SIZE));
-        m_aosGTiffCreationOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", TILE_SIZE));
+        m_aosGTiffCreationOptions.SetNameValue("BLOCKXSIZE",
+                                               CPLSPrintf("%d", TILE_SIZE));
+        m_aosGTiffCreationOptions.SetNameValue("BLOCKYSIZE",
+                                               CPLSPrintf("%d", TILE_SIZE));
     }
 
-               ~GDALGeoLocDatasetAccessors();
+    ~GDALGeoLocDatasetAccessors();
 
-    bool         Load(bool bIsRegularGrid, bool bUseQuadtree);
+    bool Load(bool bIsRegularGrid, bool bUseQuadtree);
 
-    bool         AllocateBackMap();
+    bool AllocateBackMap();
 
-    GDALDataset* GetBackmapDataset();
-    void         FlushBackmapCaches();
-    static void  ReleaseBackmapDataset(GDALDataset*) {}
+    GDALDataset *GetBackmapDataset();
+    void FlushBackmapCaches();
+    static void ReleaseBackmapDataset(GDALDataset *)
+    {
+    }
 
-    void         FreeWghtsBackMap();
+    void FreeWghtsBackMap();
 };
 
 /************************************************************************/
@@ -112,17 +113,14 @@ GDALGeoLocDatasetAccessors::~GDALGeoLocDatasetAccessors()
 bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 {
     auto poDriver = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
-    if( poDriver == nullptr )
+    if (poDriver == nullptr)
         return false;
 
     m_poBackmapTmpDataset = poDriver->Create(
         CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"),
-        m_psTransform->nBackMapWidth,
-        m_psTransform->nBackMapHeight,
-        2,
-        GDT_Float32,
-        m_aosGTiffCreationOptions.List());
-    if( m_poBackmapTmpDataset == nullptr )
+        m_psTransform->nBackMapWidth, m_psTransform->nBackMapHeight, 2,
+        GDT_Float32, m_aosGTiffCreationOptions.List());
+    if (m_poBackmapTmpDataset == nullptr)
     {
         return false;
     }
@@ -136,18 +134,16 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 
     m_poBackmapWeightsTmpDataset = poDriver->Create(
         CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"),
-        m_psTransform->nBackMapWidth,
-        m_psTransform->nBackMapHeight,
-        1,
-        GDT_Float32,
-        m_aosGTiffCreationOptions.List());
-    if( m_poBackmapWeightsTmpDataset == nullptr )
+        m_psTransform->nBackMapWidth, m_psTransform->nBackMapHeight, 1,
+        GDT_Float32, m_aosGTiffCreationOptions.List());
+    if (m_poBackmapWeightsTmpDataset == nullptr)
     {
         return false;
     }
     m_poBackmapWeightsTmpDataset->MarkSuppressOnClose();
     VSIUnlink(m_poBackmapWeightsTmpDataset->GetDescription());
-    backMapWeightAccessor.SetBand(m_poBackmapWeightsTmpDataset->GetRasterBand(1));
+    backMapWeightAccessor.SetBand(
+        m_poBackmapWeightsTmpDataset->GetRasterBand(1));
 
     return true;
 }
@@ -158,7 +154,7 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 
 void GDALGeoLocDatasetAccessors::FreeWghtsBackMap()
 {
-    if( m_poBackmapWeightsTmpDataset )
+    if (m_poBackmapWeightsTmpDataset)
     {
         backMapWeightAccessor.ResetModifiedFlag();
         delete m_poBackmapWeightsTmpDataset;
@@ -170,7 +166,7 @@ void GDALGeoLocDatasetAccessors::FreeWghtsBackMap()
 /*                        GetBackmapDataset()                           */
 /************************************************************************/
 
-GDALDataset* GDALGeoLocDatasetAccessors::GetBackmapDataset()
+GDALDataset *GDALGeoLocDatasetAccessors::GetBackmapDataset()
 {
     auto poBandX = m_poBackmapTmpDataset->GetRasterBand(1);
     auto poBandY = m_poBackmapTmpDataset->GetRasterBand(2);
@@ -197,7 +193,8 @@ bool GDALGeoLocDatasetAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
 {
     return LoadGeoloc(bIsRegularGrid) &&
            ((bUseQuadtree && GDALGeoLocBuildQuadTree(m_psTransform)) ||
-            (!bUseQuadtree && GDALGeoLoc<AccessorType>::GenerateBackMap(m_psTransform)));
+            (!bUseQuadtree &&
+             GDALGeoLoc<AccessorType>::GenerateBackMap(m_psTransform)));
 }
 
 /************************************************************************/
@@ -207,23 +204,19 @@ bool GDALGeoLocDatasetAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
 bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)
 
 {
-    if( bIsRegularGrid )
+    if (bIsRegularGrid)
     {
         const int nXSize = m_psTransform->nGeoLocXSize;
         const int nYSize = m_psTransform->nGeoLocYSize;
 
         auto poDriver = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
-        if( poDriver == nullptr )
+        if (poDriver == nullptr)
             return false;
 
         m_poGeolocTmpDataset = poDriver->Create(
-            CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"),
-            nXSize,
-            nYSize,
-            2,
-            GDT_Float64,
-            m_aosGTiffCreationOptions.List());
-        if( m_poGeolocTmpDataset == nullptr )
+            CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"), nXSize,
+            nYSize, 2, GDT_Float64, m_aosGTiffCreationOptions.List());
+        if (m_poGeolocTmpDataset == nullptr)
         {
             return false;
         }
@@ -237,11 +230,11 @@ bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)
         // The XBAND contains the x coordinates for all lines.
         // The YBAND contains the y coordinates for all columns.
 
-        double* padfTempX = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
-        double* padfTempY = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
-        if( padfTempX == nullptr || padfTempY == nullptr )
+        double *padfTempX =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
+        double *padfTempY =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
+        if (padfTempX == nullptr || padfTempY == nullptr)
         {
             CPLFree(padfTempX);
             CPLFree(padfTempY);
@@ -249,64 +242,55 @@ bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)
         }
 
         CPLErr eErr =
-            GDALRasterIO( m_psTransform->hBand_X, GF_Read,
-                          0, 0, nXSize, 1,
-                          padfTempX, nXSize, 1,
-                          GDT_Float64, 0, 0 );
+            GDALRasterIO(m_psTransform->hBand_X, GF_Read, 0, 0, nXSize, 1,
+                         padfTempX, nXSize, 1, GDT_Float64, 0, 0);
 
-        for( int j = 0; j < nYSize; j++ )
+        for (int j = 0; j < nYSize; j++)
         {
-             if( poXBand->RasterIO(GF_Write,
-                              0, j, nXSize, 1,
-                              padfTempX,
-                              nXSize, 1,
-                              GDT_Float64,
-                              0, 0, nullptr) != CE_None )
-             {
-                 eErr = CE_Failure;
-                 break;
-             }
+            if (poXBand->RasterIO(GF_Write, 0, j, nXSize, 1, padfTempX, nXSize,
+                                  1, GDT_Float64, 0, 0, nullptr) != CE_None)
+            {
+                eErr = CE_Failure;
+                break;
+            }
         }
 
-        if( eErr == CE_None )
+        if (eErr == CE_None)
         {
-            eErr = GDALRasterIO( m_psTransform->hBand_Y, GF_Read,
-                                 0, 0, nYSize, 1,
-                                 padfTempY, nYSize, 1,
-                                 GDT_Float64, 0, 0 );
+            eErr = GDALRasterIO(m_psTransform->hBand_Y, GF_Read, 0, 0, nYSize,
+                                1, padfTempY, nYSize, 1, GDT_Float64, 0, 0);
 
-            for( int i = 0; i < nXSize; i++ )
+            for (int i = 0; i < nXSize; i++)
             {
-                 if( poYBand->RasterIO(GF_Write,
-                                  i, 0, 1, nYSize,
-                                  padfTempY,
-                                  1, nYSize,
-                                  GDT_Float64,
-                                  0, 0, nullptr) != CE_None )
-                 {
-                     eErr = CE_Failure;
-                     break;
-                 }
+                if (poYBand->RasterIO(GF_Write, i, 0, 1, nYSize, padfTempY, 1,
+                                      nYSize, GDT_Float64, 0, 0,
+                                      nullptr) != CE_None)
+                {
+                    eErr = CE_Failure;
+                    break;
+                }
             }
         }
 
         CPLFree(padfTempX);
         CPLFree(padfTempY);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return false;
 
-        geolocXAccessor.SetBand( poXBand );
-        geolocYAccessor.SetBand( poYBand );
-
+        geolocXAccessor.SetBand(poXBand);
+        geolocYAccessor.SetBand(poYBand);
     }
     else
     {
-        geolocXAccessor.SetBand( GDALRasterBand::FromHandle(m_psTransform->hBand_X) );
-        geolocYAccessor.SetBand( GDALRasterBand::FromHandle(m_psTransform->hBand_Y) );
+        geolocXAccessor.SetBand(
+            GDALRasterBand::FromHandle(m_psTransform->hBand_X));
+        geolocYAccessor.SetBand(
+            GDALRasterBand::FromHandle(m_psTransform->hBand_Y));
     }
 
-    return GDALGeoLoc<GDALGeoLocDatasetAccessors>::LoadGeolocFinish(m_psTransform);
+    return GDALGeoLoc<GDALGeoLocDatasetAccessors>::LoadGeolocFinish(
+        m_psTransform);
 }
 
 /*! @endcond */

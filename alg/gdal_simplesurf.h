@@ -45,11 +45,12 @@
  * @details This point presents coordinates of distinctive pixel in image.
  * In computer vision, feature points - the most "strong" and "unique"
  * pixels (or areas) in picture, which can be distinguished from others.
- * For more details, see FAST corner detector, SIFT, SURF and similar algorithms.
+ * For more details, see FAST corner detector, SIFT, SURF and similar
+ * algorithms.
  */
 class GDALFeaturePoint
 {
-public:
+  public:
     /**
      * Standard constructor. Initializes all parameters with negative numbers
      * and allocates memory for descriptor.
@@ -60,7 +61,7 @@ public:
      * Copy constructor
      * @param fp Copied instance of GDALFeaturePoint class
      */
-    GDALFeaturePoint(const GDALFeaturePoint& fp);
+    GDALFeaturePoint(const GDALFeaturePoint &fp);
 
     /**
      * Create instance of GDALFeaturePoint class
@@ -78,18 +79,19 @@ public:
     virtual ~GDALFeaturePoint();
 
     /** Assignment operator */
-    GDALFeaturePoint& operator=(const GDALFeaturePoint& point);
+    GDALFeaturePoint &operator=(const GDALFeaturePoint &point);
 
     /**
      * Provide access to point's descriptor.
      *
      * @param nIndex Position of descriptor's value.
-     * nIndex should be within range from 0 to DESC_SIZE (in current version - 64)
+     * nIndex should be within range from 0 to DESC_SIZE (in current version -
+     * 64)
      *
      * @return Reference to value of descriptor in 'nIndex' position.
      * If index is out of range then behavior is undefined.
      */
-    double& operator[](int nIndex);
+    double &operator[](int nIndex);
 
     /** Descriptor length */
     static const int DESC_SIZE = 64;
@@ -127,7 +129,7 @@ public:
      *
      * @return Scale for this point.
      */
-    int GetScale() const ;
+    int GetScale() const;
 
     /**
      * Set scale of point.
@@ -141,7 +143,7 @@ public:
      *
      * @return Radius for this point.
      */
-    int  GetRadius() const;
+    int GetRadius() const;
 
     /**
      * Set radius of point.
@@ -164,7 +166,7 @@ public:
      */
     void SetSign(int nSign);
 
-private:
+  private:
     // Coordinates of point in image
     int nX;
     int nY;
@@ -189,7 +191,7 @@ class GDALIntegralImage
 {
     CPL_DISALLOW_COPY_ASSIGN(GDALIntegralImage)
 
-public:
+  public:
     GDALIntegralImage();
     virtual ~GDALIntegralImage();
 
@@ -208,7 +210,8 @@ public:
      * @param nRow Row of this position
      * @param nCol Column of this position
      *
-     * @return Value in specified position or zero if parameters are out of range.
+     * @return Value in specified position or zero if parameters are out of
+     * range.
      */
     double GetValue(int nRow, int nCol);
 
@@ -261,7 +264,7 @@ public:
      */
     int GetWidth();
 
-private:
+  private:
     double **pMatrix = nullptr;
     int nWidth = 0;
     int nHeight = 0;
@@ -269,17 +272,18 @@ private:
 
 /**
  * @author Andrew Migal migal.drew@gmail.com
- * @brief Class for computation and storage of Hessian values in SURF-based algorithm.
+ * @brief Class for computation and storage of Hessian values in SURF-based
+ * algorithm.
  *
  * @details SURF-based algorithm normally uses this class for searching
- * feature points on raster images. Class also contains traces of Hessian matrices
- * to provide fast computations.
+ * feature points on raster images. Class also contains traces of Hessian
+ * matrices to provide fast computations.
  */
 class GDALOctaveLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(GDALOctaveLayer)
 
-public:
+  public:
     GDALOctaveLayer();
 
     /**
@@ -341,19 +345,22 @@ public:
 /**
  * @author Andrew Migal migal.drew@gmail.com
  * @brief Class for handling octave layers in SURF-based algorithm.
- * @details Class contains OctaveLayers and provides capability to construct octave space and distinguish
- * feature points. Normally this class is used only by SURF-based algorithm.
+ * @details Class contains OctaveLayers and provides capability to construct
+ * octave space and distinguish feature points. Normally this class is used only
+ * by SURF-based algorithm.
  */
 class GDALOctaveMap
 {
-    CPL_DISALLOW_COPY_ASSIGN( GDALOctaveMap )
+    CPL_DISALLOW_COPY_ASSIGN(GDALOctaveMap)
 
-public:
+  public:
     /**
-     * Create octave space. Octave numbers are start with one. (1, 2, 3, 4, ... )
+     * Create octave space. Octave numbers are start with one. (1, 2, 3, 4, ...
+     * )
      *
      * @param nOctaveStart Number of bottom octave
-     * @param nOctaveEnd Number of top octave. Should be equal or greater than OctaveStart
+     * @param nOctaveEnd Number of top octave. Should be equal or greater than
+     * OctaveStart
      */
     GDALOctaveMap(int nOctaveStart, int nOctaveEnd);
     virtual ~GDALOctaveMap();
@@ -370,21 +377,24 @@ public:
      * Method makes decision that specified point
      * in middle octave layer is maximum among all points
      * from 3x3x3 neighbourhood (surrounding points in
-     * bottom, middle and top layers). Provided layers should be from the same octave's interval.
-     * Detects feature points.
+     * bottom, middle and top layers). Provided layers should be from the same
+     * octave's interval. Detects feature points.
      *
      * @param row Row of point, which is candidate to be feature point
      * @param col Column of point, which is candidate to be feature point
      * @param bot Bottom octave layer
      * @param mid Middle octave layer
      * @param top Top octave layer
-     * @param threshold Threshold for feature point recognition. Detected feature point
-     * will have Hessian value greater than this provided threshold.
+     * @param threshold Threshold for feature point recognition. Detected
+     * feature point will have Hessian value greater than this provided
+     * threshold.
      *
-     * @return TRUE if candidate was evaluated as feature point or FALSE otherwise.
+     * @return TRUE if candidate was evaluated as feature point or FALSE
+     * otherwise.
      */
     static bool PointIsExtremum(int row, int col, GDALOctaveLayer *bot,
-                         GDALOctaveLayer *mid, GDALOctaveLayer *top, double threshold);
+                                GDALOctaveLayer *mid, GDALOctaveLayer *top,
+                                double threshold);
 
     /**
      * 2-dimensional array of octave layers
@@ -412,50 +422,56 @@ public:
  * @brief Class for searching corresponding points on images.
  * @details Provides capability for detection feature points
  * and finding equal points on different images.
- * Class implements simplified version of SURF algorithm (Speeded Up Robust Features).
- * As original, this realization is scale invariant, but sensitive to rotation.
- * Images should have similar rotation angles (maximum difference is up to 10-15 degrees),
- * otherwise algorithm produces incorrect and very unstable results.
+ * Class implements simplified version of SURF algorithm (Speeded Up Robust
+ * Features). As original, this realization is scale invariant, but sensitive to
+ * rotation. Images should have similar rotation angles (maximum difference is
+ * up to 10-15 degrees), otherwise algorithm produces incorrect and very
+ * unstable results.
  */
 
 class GDALSimpleSURF
 {
-private:
+  private:
     /**
      * Class stores indexes of pair of point
      * and distance between them.
      */
     class MatchedPointPairInfo
     {
-    public:
-        MatchedPointPairInfo(int nInd_1, int nInd_2, double dfDist):
-            ind_1(nInd_1), ind_2(nInd_2), euclideanDist(dfDist) {}
+      public:
+        MatchedPointPairInfo(int nInd_1, int nInd_2, double dfDist)
+            : ind_1(nInd_1), ind_2(nInd_2), euclideanDist(dfDist)
+        {
+        }
 
         int ind_1;
         int ind_2;
         double euclideanDist;
     };
 
-    CPL_DISALLOW_COPY_ASSIGN( GDALSimpleSURF )
+    CPL_DISALLOW_COPY_ASSIGN(GDALSimpleSURF)
 
-public:
+  public:
     /**
      * Prepare class according to specified parameters. Octave numbers affects
      * to amount of detected points and their robustness.
-     * Range between bottom and top octaves also affects to required time of detection points
-     * (if range is large, algorithm should perform more operations).
-     * @param nOctaveStart Number of bottom octave. Octave numbers starts with one
-     * @param nOctaveEnd Number of top octave. Should be equal or greater than OctaveStart
+     * Range between bottom and top octaves also affects to required time of
+     * detection points (if range is large, algorithm should perform more
+     * operations).
+     * @param nOctaveStart Number of bottom octave. Octave numbers starts with
+     * one
+     * @param nOctaveEnd Number of top octave. Should be equal or greater than
+     * OctaveStart
      *
      * @note
      * Every octave finds points with specific size. For small images
      * use small octave numbers, for high resolution - large.
-     * For 1024x1024 images it's normal to use any octave numbers from range 1-6.
-     * (for example, octave start - 1, octave end - 3, or octave start - 2, octave end - 2.)
-     * For larger images, try 1-10 range or even higher.
-     * Pay attention that number of detected point decreases quickly per octave
-     * for particular image. Algorithm finds more points in case of small octave numbers.
-     * If method detects nothing, reduce bottom bound of octave range.
+     * For 1024x1024 images it's normal to use any octave numbers from range
+     * 1-6. (for example, octave start - 1, octave end - 3, or octave start - 2,
+     * octave end - 2.) For larger images, try 1-10 range or even higher. Pay
+     * attention that number of detected point decreases quickly per octave for
+     * particular image. Algorithm finds more points in case of small octave
+     * numbers. If method detects nothing, reduce bottom bound of octave range.
      *
      * NOTICE that every octave requires time to compute. Use a little range
      * or only one octave if execution time is significant.
@@ -479,19 +495,19 @@ public:
      *
      * @return CE_None or CE_Failure if error occurs.
      */
-    static CPLErr ConvertRGBToLuminosity(
-        GDALRasterBand *red,
-        GDALRasterBand *green,
-        GDALRasterBand *blue,
-        int nXSize, int nYSize,
-        double **padfImg, int nHeight, int nWidth);
+    static CPLErr ConvertRGBToLuminosity(GDALRasterBand *red,
+                                         GDALRasterBand *green,
+                                         GDALRasterBand *blue, int nXSize,
+                                         int nYSize, double **padfImg,
+                                         int nHeight, int nWidth);
 
     /**
      * Find feature points using specified integral image.
      *
      * @param poImg Integral image to be used
-     * @param dfThreshold Threshold for feature point recognition. Detected feature point
-     * will have Hessian value greater than this provided threshold.
+     * @param dfThreshold Threshold for feature point recognition. Detected
+     * feature point will have Hessian value greater than this provided
+     * threshold.
      *
      * @note Typical threshold's value is 0,001. But this value
      * can be various in each case and depends on image's nature.
@@ -500,36 +516,36 @@ public:
      * If threshold is high, than number of detected feature points is small,
      * and vice versa.
      */
-    std::vector<GDALFeaturePoint>*
+    std::vector<GDALFeaturePoint> *
     ExtractFeaturePoints(GDALIntegralImage *poImg, double dfThreshold);
 
     /**
-    * Find corresponding points (equal points in two collections).
-    *
-    * @param poMatchPairs Resulting collection for matched points
-    * @param poFirstCollect Points on the first image
-    * @param poSecondCollect Points on the second image
-    * @param dfThreshold Value from 0 to 1. Threshold affects to number of
-    * matched points. If threshold is higher, amount of corresponding
-    * points is larger, and vice versa
-    *
-    * @note Typical threshold's value is 0,1. BUT it's a very approximate guide.
-    * It can be 0,001 or even 1. This threshold provides direct adjustment
-    * of point matching.
-    * NOTICE that if threshold is lower, matches are more robust and correct, but
-    * number of matched points is smaller. Therefore if algorithm performs many
-    * false detections and produces bad results, reduce threshold.  Otherwise, if
-    * algorithm finds nothing, increase threshold.
-    *
-    * @return CE_None or CE_Failure if error occurs.
-    */
-    static CPLErr MatchFeaturePoints(
-        std::vector<GDALFeaturePoint*> *poMatchPairs,
-        std::vector<GDALFeaturePoint> *poFirstCollect,
-        std::vector<GDALFeaturePoint> *poSecondCollect,
-        double dfThreshold);
+     * Find corresponding points (equal points in two collections).
+     *
+     * @param poMatchPairs Resulting collection for matched points
+     * @param poFirstCollect Points on the first image
+     * @param poSecondCollect Points on the second image
+     * @param dfThreshold Value from 0 to 1. Threshold affects to number of
+     * matched points. If threshold is higher, amount of corresponding
+     * points is larger, and vice versa
+     *
+     * @note Typical threshold's value is 0,1. BUT it's a very approximate
+     * guide. It can be 0,001 or even 1. This threshold provides direct
+     * adjustment of point matching. NOTICE that if threshold is lower, matches
+     * are more robust and correct, but number of matched points is smaller.
+     * Therefore if algorithm performs many false detections and produces bad
+     * results, reduce threshold.  Otherwise, if algorithm finds nothing,
+     * increase threshold.
+     *
+     * @return CE_None or CE_Failure if error occurs.
+     */
+    static CPLErr
+    MatchFeaturePoints(std::vector<GDALFeaturePoint *> *poMatchPairs,
+                       std::vector<GDALFeaturePoint> *poFirstCollect,
+                       std::vector<GDALFeaturePoint> *poSecondCollect,
+                       double dfThreshold);
 
-private:
+  private:
     /**
      * Compute euclidean distance between descriptors of two feature points.
      * It's used in comparison and matching of points.
@@ -539,8 +555,8 @@ private:
      *
      * @return Euclidean distance between descriptors.
      */
-    static double GetEuclideanDistance(
-        GDALFeaturePoint &firstPoint, GDALFeaturePoint &secondPoint);
+    static double GetEuclideanDistance(GDALFeaturePoint &firstPoint,
+                                       GDALFeaturePoint &secondPoint);
 
     /**
      * Set provided distance values to range from 0 to 1.
@@ -555,9 +571,10 @@ private:
      * @param poPoint Feature point instance
      * @param poImg image where feature point was found
      */
-    static void SetDescriptor(GDALFeaturePoint *poPoint, GDALIntegralImage *poImg);
+    static void SetDescriptor(GDALFeaturePoint *poPoint,
+                              GDALIntegralImage *poImg);
 
-private:
+  private:
     int octaveStart;
     int octaveEnd;
     GDALOctaveMap *poOctMap;

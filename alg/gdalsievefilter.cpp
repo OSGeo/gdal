@@ -74,20 +74,17 @@ CPL_CVSID("$Id$")
 /*      band is zero.                                                   */
 /************************************************************************/
 
-static CPLErr
-GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
-                 int iY, int nXSize,
-                 std::int64_t *panImageLine )
+static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
+                              int iY, int nXSize, std::int64_t *panImageLine)
 
 {
-    const CPLErr eErr =
-        GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
-                      pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
-    if( eErr == CE_None )
+    const CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1,
+                                     pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0);
+    if (eErr == CE_None)
     {
-        for( int i = 0; i < nXSize; i++ )
+        for (int i = 0; i < nXSize; i++)
         {
-            if( pabyMaskLine[i] == 0 )
+            if (pabyMaskLine[i] == 0)
                 panImageLine[i] = GP_NODATA_MARKER;
         }
     }
@@ -111,23 +108,23 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 /*      smaller than our sieve threshold.                               */
 /************************************************************************/
 
-static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
-                                     int *panPolyIdMap,
-                                     std::int64_t * /* panPolyValue */,
-                                     std::vector<int> &anPolySizes,
-                                     std::vector<int> &anBigNeighbour )
+static inline void CompareNeighbour(int nPolyId1, int nPolyId2,
+                                    int *panPolyIdMap,
+                                    std::int64_t * /* panPolyValue */,
+                                    std::vector<int> &anPolySizes,
+                                    std::vector<int> &anBigNeighbour)
 
 {
     // Nodata polygon do not need neighbours, and cannot be neighbours
     // to valid polygons.
-    if( nPolyId1 < 0 || nPolyId2 < 0 )
+    if (nPolyId1 < 0 || nPolyId2 < 0)
         return;
 
     // Make sure we are working with the final merged polygon ids.
     nPolyId1 = panPolyIdMap[nPolyId1];
     nPolyId2 = panPolyIdMap[nPolyId2];
 
-    if( nPolyId1 == nPolyId2 )
+    if (nPolyId1 == nPolyId2)
         return;
 
     // Nodata polygon do not need neighbours, and cannot be neighbours
@@ -137,12 +134,12 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
     //    || panPolyValue[nPolyId2] == GP_NODATA_MARKER )
     //    return;
 
-    if( anBigNeighbour[nPolyId1] == -1
-        || anPolySizes[anBigNeighbour[nPolyId1]] < anPolySizes[nPolyId2] )
+    if (anBigNeighbour[nPolyId1] == -1 ||
+        anPolySizes[anBigNeighbour[nPolyId1]] < anPolySizes[nPolyId2])
         anBigNeighbour[nPolyId1] = nPolyId2;
 
-    if( anBigNeighbour[nPolyId2] == -1
-        || anPolySizes[anBigNeighbour[nPolyId2]] < anPolySizes[nPolyId1] )
+    if (anBigNeighbour[nPolyId2] == -1 ||
+        anPolySizes[anBigNeighbour[nPolyId2]] < anPolySizes[nPolyId1])
         anBigNeighbour[nPolyId2] = nPolyId1;
 }
 
@@ -196,135 +193,137 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-CPLErr CPL_STDCALL
-GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
-                 GDALRasterBandH hDstBand,
-                 int nSizeThreshold, int nConnectedness,
-                 CPL_UNUSED char **papszOptions,
-                 GDALProgressFunc pfnProgress,
-                 void * pProgressArg )
+CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
+                                   GDALRasterBandH hMaskBand,
+                                   GDALRasterBandH hDstBand, int nSizeThreshold,
+                                   int nConnectedness,
+                                   CPL_UNUSED char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressArg)
 {
-    VALIDATE_POINTER1( hSrcBand, "GDALSieveFilter", CE_Failure );
-    VALIDATE_POINTER1( hDstBand, "GDALSieveFilter", CE_Failure );
+    VALIDATE_POINTER1(hSrcBand, "GDALSieveFilter", CE_Failure);
+    VALIDATE_POINTER1(hDstBand, "GDALSieveFilter", CE_Failure);
 
-    if( pfnProgress == nullptr )
+    if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
 
-/* -------------------------------------------------------------------- */
-/*      Allocate working buffers.                                       */
-/* -------------------------------------------------------------------- */
-    int nXSize = GDALGetRasterBandXSize( hSrcBand );
-    int nYSize = GDALGetRasterBandYSize( hSrcBand );
+    /* -------------------------------------------------------------------- */
+    /*      Allocate working buffers.                                       */
+    /* -------------------------------------------------------------------- */
+    int nXSize = GDALGetRasterBandXSize(hSrcBand);
+    int nYSize = GDALGetRasterBandYSize(hSrcBand);
     auto *panLastLineVal = static_cast<std::int64_t *>(
         VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
     auto *panThisLineVal = static_cast<std::int64_t *>(
         VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
-    auto *panLastLineId = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    auto *panThisLineId = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+    auto *panLastLineId =
+        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+    auto *panThisLineId =
+        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
     auto *panThisLineWriteVal = static_cast<std::int64_t *>(
         VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
-    GByte *pabyMaskLine =
-        hMaskBand != nullptr
-        ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
-        : nullptr;
-    if( panLastLineVal == nullptr || panThisLineVal == nullptr ||
+    GByte *pabyMaskLine = hMaskBand != nullptr
+                              ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
+                              : nullptr;
+    if (panLastLineVal == nullptr || panThisLineVal == nullptr ||
         panLastLineId == nullptr || panThisLineId == nullptr ||
         panThisLineWriteVal == nullptr ||
-        (hMaskBand != nullptr && pabyMaskLine == nullptr) )
+        (hMaskBand != nullptr && pabyMaskLine == nullptr))
     {
-        CPLFree( panThisLineId );
-        CPLFree( panLastLineId );
-        CPLFree( panThisLineVal );
-        CPLFree( panLastLineVal );
-        CPLFree( panThisLineWriteVal );
-        CPLFree( pabyMaskLine );
+        CPLFree(panThisLineId);
+        CPLFree(panLastLineId);
+        CPLFree(panThisLineVal);
+        CPLFree(panLastLineVal);
+        CPLFree(panThisLineWriteVal);
+        CPLFree(pabyMaskLine);
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      The first pass over the raster is only used to build up the     */
-/*      polygon id map so we will know in advance what polygons are     */
-/*      what on the second pass.                                        */
-/* -------------------------------------------------------------------- */
-    GDALRasterPolygonEnumerator oFirstEnum( nConnectedness );
+    /* -------------------------------------------------------------------- */
+    /*      The first pass over the raster is only used to build up the     */
+    /*      polygon id map so we will know in advance what polygons are     */
+    /*      what on the second pass.                                        */
+    /* -------------------------------------------------------------------- */
+    GDALRasterPolygonEnumerator oFirstEnum(nConnectedness);
     std::vector<int> anPolySizes;
 
     CPLErr eErr = CE_None;
-    for( int iY = 0; eErr == CE_None && iY < nYSize; iY++ )
+    for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
-        eErr = GDALRasterIO(
-            hSrcBand,
-            GF_Read, 0, iY, nXSize, 1,
-            panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
+        eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1, panThisLineVal,
+                            nXSize, 1, GDT_Int64, 0, 0);
 
-        if( eErr == CE_None && hMaskBand != nullptr )
+        if (eErr == CE_None && hMaskBand != nullptr)
             eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
                                    panThisLineVal);
 
-        if( iY == 0 )
-            oFirstEnum.ProcessLine(
-                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
+        if (iY == 0)
+            oFirstEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
+                                   panThisLineId, nXSize);
         else
-            oFirstEnum.ProcessLine(
-                panLastLineVal, panThisLineVal,
-                panLastLineId,  panThisLineId,
-                nXSize );
+            oFirstEnum.ProcessLine(panLastLineVal, panThisLineVal,
+                                   panLastLineId, panThisLineId, nXSize);
 
-/* -------------------------------------------------------------------- */
-/*      Accumulate polygon sizes.                                       */
-/* -------------------------------------------------------------------- */
-        if( oFirstEnum.nNextPolygonId > static_cast<int>(anPolySizes.size()) )
-            anPolySizes.resize( oFirstEnum.nNextPolygonId );
+        /* --------------------------------------------------------------------
+         */
+        /*      Accumulate polygon sizes. */
+        /* --------------------------------------------------------------------
+         */
+        if (oFirstEnum.nNextPolygonId > static_cast<int>(anPolySizes.size()))
+            anPolySizes.resize(oFirstEnum.nNextPolygonId);
 
-        for( int iX = 0; iX < nXSize; iX++ )
+        for (int iX = 0; iX < nXSize; iX++)
         {
             const int iPoly = panThisLineId[iX];
 
-            if( iPoly >= 0 && anPolySizes[iPoly] < MY_MAX_INT )
+            if (iPoly >= 0 && anPolySizes[iPoly] < MY_MAX_INT)
                 anPolySizes[iPoly] += 1;
         }
 
-/* -------------------------------------------------------------------- */
-/*      swap this/last lines.                                           */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      swap this/last lines. */
+        /* --------------------------------------------------------------------
+         */
         std::swap(panLastLineVal, panThisLineVal);
         std::swap(panLastLineId, panThisLineId);
 
-/* -------------------------------------------------------------------- */
-/*      Report progress, and support interrupts.                        */
-/* -------------------------------------------------------------------- */
-        if( eErr == CE_None
-            && !pfnProgress( 0.25 * ((iY+1) / static_cast<double>(nYSize)),
-                             "", pProgressArg ) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report progress, and support interrupts. */
+        /* --------------------------------------------------------------------
+         */
+        if (eErr == CE_None &&
+            !pfnProgress(0.25 * ((iY + 1) / static_cast<double>(nYSize)), "",
+                         pProgressArg))
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             eErr = CE_Failure;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Make a pass through the maps, ensuring every polygon id         */
-/*      points to the final id it should use, not an intermediate       */
-/*      value.                                                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Make a pass through the maps, ensuring every polygon id         */
+    /*      points to the final id it should use, not an intermediate       */
+    /*      value.                                                          */
+    /* -------------------------------------------------------------------- */
     oFirstEnum.CompleteMerges();
 
-/* -------------------------------------------------------------------- */
-/*      Push the sizes of merged polygon fragments into the             */
-/*      merged polygon id's count.                                      */
-/* -------------------------------------------------------------------- */
-    for( int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
-                        iPoly < oFirstEnum.nNextPolygonId; iPoly++ )
+    /* -------------------------------------------------------------------- */
+    /*      Push the sizes of merged polygon fragments into the             */
+    /*      merged polygon id's count.                                      */
+    /* -------------------------------------------------------------------- */
+    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
+                        iPoly < oFirstEnum.nNextPolygonId;
+         iPoly++)
     {
-        if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
+        if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
         {
             GIntBig nSize = anPolySizes[oFirstEnum.panPolyIdMap[iPoly]];
 
             nSize += anPolySizes[iPoly];
 
-            if( nSize > MY_MAX_INT )
+            if (nSize > MY_MAX_INT)
                 nSize = MY_MAX_INT;
 
             anPolySizes[oFirstEnum.panPolyIdMap[iPoly]] =
@@ -333,130 +332,135 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      We will use a new enumerator for the second pass primarily      */
-/*      so we can preserve the first pass map.                          */
-/* -------------------------------------------------------------------- */
-    GDALRasterPolygonEnumerator oSecondEnum( nConnectedness );
+    /* -------------------------------------------------------------------- */
+    /*      We will use a new enumerator for the second pass primarily      */
+    /*      so we can preserve the first pass map.                          */
+    /* -------------------------------------------------------------------- */
+    GDALRasterPolygonEnumerator oSecondEnum(nConnectedness);
 
     std::vector<int> anBigNeighbour;
-    anBigNeighbour.resize( anPolySizes.size() );
+    anBigNeighbour.resize(anPolySizes.size());
 
-    for( int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++ )
+    for (int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++)
         anBigNeighbour[iPoly] = -1;
 
-/* ==================================================================== */
-/*      Second pass ... identify the largest neighbour for each         */
-/*      polygon.                                                        */
-/* ==================================================================== */
-    for( int iY = 0; eErr == CE_None && iY < nYSize; iY++ )
+    /* ==================================================================== */
+    /*      Second pass ... identify the largest neighbour for each         */
+    /*      polygon.                                                        */
+    /* ==================================================================== */
+    for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
-/* -------------------------------------------------------------------- */
-/*      Read the image data.                                            */
-/* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
-                             panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
+        /* --------------------------------------------------------------------
+         */
+        /*      Read the image data. */
+        /* --------------------------------------------------------------------
+         */
+        eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1, panThisLineVal,
+                            nXSize, 1, GDT_Int64, 0, 0);
 
-        if( eErr == CE_None && hMaskBand != nullptr )
-            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
-                                    panThisLineVal );
+        if (eErr == CE_None && hMaskBand != nullptr)
+            eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
+                                   panThisLineVal);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Determine what polygon the various pixels belong to (redoing    */
-/*      the same thing done in the first pass above).                   */
-/* -------------------------------------------------------------------- */
-        if( iY == 0 )
-            oSecondEnum.ProcessLine(
-                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
+        /* --------------------------------------------------------------------
+         */
+        /*      Determine what polygon the various pixels belong to (redoing */
+        /*      the same thing done in the first pass above). */
+        /* --------------------------------------------------------------------
+         */
+        if (iY == 0)
+            oSecondEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
+                                    panThisLineId, nXSize);
         else
-            oSecondEnum.ProcessLine(
-                panLastLineVal, panThisLineVal,
-                panLastLineId,  panThisLineId,
-                nXSize );
+            oSecondEnum.ProcessLine(panLastLineVal, panThisLineVal,
+                                    panLastLineId, panThisLineId, nXSize);
 
-/* -------------------------------------------------------------------- */
-/*      Check our neighbours, and update our biggest neighbour map      */
-/*      as appropriate.                                                 */
-/* -------------------------------------------------------------------- */
-        for( int iX = 0; iX < nXSize; iX++ )
+        /* --------------------------------------------------------------------
+         */
+        /*      Check our neighbours, and update our biggest neighbour map */
+        /*      as appropriate. */
+        /* --------------------------------------------------------------------
+         */
+        for (int iX = 0; iX < nXSize; iX++)
         {
-            if( iY > 0 )
+            if (iY > 0)
             {
-                CompareNeighbour( panThisLineId[iX],
-                                  panLastLineId[iX],
-                                  oFirstEnum.panPolyIdMap,
-                                  oFirstEnum.panPolyValue,
-                                  anPolySizes, anBigNeighbour );
+                CompareNeighbour(panThisLineId[iX], panLastLineId[iX],
+                                 oFirstEnum.panPolyIdMap,
+                                 oFirstEnum.panPolyValue, anPolySizes,
+                                 anBigNeighbour);
 
-                if( iX > 0 && nConnectedness == 8 )
-                    CompareNeighbour( panThisLineId[iX],
-                                      panLastLineId[iX-1],
-                                      oFirstEnum.panPolyIdMap,
-                                      oFirstEnum.panPolyValue,
-                                      anPolySizes, anBigNeighbour );
+                if (iX > 0 && nConnectedness == 8)
+                    CompareNeighbour(panThisLineId[iX], panLastLineId[iX - 1],
+                                     oFirstEnum.panPolyIdMap,
+                                     oFirstEnum.panPolyValue, anPolySizes,
+                                     anBigNeighbour);
 
-                if( iX < nXSize-1 && nConnectedness == 8 )
-                    CompareNeighbour( panThisLineId[iX],
-                                      panLastLineId[iX+1],
-                                      oFirstEnum.panPolyIdMap,
-                                      oFirstEnum.panPolyValue,
-                                      anPolySizes, anBigNeighbour );
+                if (iX < nXSize - 1 && nConnectedness == 8)
+                    CompareNeighbour(panThisLineId[iX], panLastLineId[iX + 1],
+                                     oFirstEnum.panPolyIdMap,
+                                     oFirstEnum.panPolyValue, anPolySizes,
+                                     anBigNeighbour);
             }
 
-            if( iX > 0 )
-                CompareNeighbour( panThisLineId[iX],
-                                  panThisLineId[iX-1],
-                                  oFirstEnum.panPolyIdMap,
-                                  oFirstEnum.panPolyValue,
-                                  anPolySizes, anBigNeighbour );
+            if (iX > 0)
+                CompareNeighbour(panThisLineId[iX], panThisLineId[iX - 1],
+                                 oFirstEnum.panPolyIdMap,
+                                 oFirstEnum.panPolyValue, anPolySizes,
+                                 anBigNeighbour);
 
             // We don't need to compare to next pixel or next line
             // since they will be compared to us.
         }
 
-/* -------------------------------------------------------------------- */
-/*      Swap pixel value, and polygon id lines to be ready for the      */
-/*      next line.                                                      */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Swap pixel value, and polygon id lines to be ready for the */
+        /*      next line. */
+        /* --------------------------------------------------------------------
+         */
         std::swap(panLastLineVal, panThisLineVal);
         std::swap(panLastLineId, panThisLineId);
 
-/* -------------------------------------------------------------------- */
-/*      Report progress, and support interrupts.                        */
-/* -------------------------------------------------------------------- */
-        if( !pfnProgress(0.25 + 0.25 * ((iY + 1) / static_cast<double>(nYSize)),
-                         "", pProgressArg) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report progress, and support interrupts. */
+        /* --------------------------------------------------------------------
+         */
+        if (!pfnProgress(0.25 + 0.25 * ((iY + 1) / static_cast<double>(nYSize)),
+                         "", pProgressArg))
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             eErr = CE_Failure;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If our biggest neighbour is still smaller than the              */
-/*      threshold, then try tracking to that polygons biggest           */
-/*      neighbour, and so forth.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If our biggest neighbour is still smaller than the              */
+    /*      threshold, then try tracking to that polygons biggest           */
+    /*      neighbour, and so forth.                                        */
+    /* -------------------------------------------------------------------- */
     int nFailedMerges = 0;
     int nIsolatedSmall = 0;
     int nSieveTargets = 0;
 
-    for( int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
-                        oFirstEnum.panPolyValue != nullptr && // for Coverity
-                        iPoly < static_cast<int>(anPolySizes.size()); iPoly++ )
+    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
+                        oFirstEnum.panPolyValue != nullptr &&  // for Coverity
+                        iPoly < static_cast<int>(anPolySizes.size());
+         iPoly++)
     {
-        if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
+        if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
             continue;
 
         // Ignore nodata polygons.
-        if( oFirstEnum.panPolyValue[iPoly] == GP_NODATA_MARKER )
+        if (oFirstEnum.panPolyValue[iPoly] == GP_NODATA_MARKER)
             continue;
 
         // Don't try to merge polygons larger than the threshold.
-        if( anPolySizes[iPoly] >= nSizeThreshold )
+        if (anPolySizes[iPoly] >= nSizeThreshold)
         {
             anBigNeighbour[iPoly] = -1;
             continue;
@@ -465,7 +469,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         nSieveTargets++;
 
         // if we have no neighbours but we are small, what shall we do?
-        if( anBigNeighbour[iPoly] == -1 )
+        if (anBigNeighbour[iPoly] == -1)
         {
             nIsolatedSmall++;
             continue;
@@ -477,27 +481,27 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         // Walk through our neighbours until we find a polygon large enough.
         int iFinalId = iPoly;
         bool bFoundBigEnoughPoly = false;
-        while( true )
+        while (true)
         {
             iFinalId = anBigNeighbour[iFinalId];
-            if( iFinalId < 0 )
+            if (iFinalId < 0)
             {
                 break;
             }
             // If the biggest neighbour is larger than the threshold
             // then we are golden.
-            if( anPolySizes[iFinalId] >= nSizeThreshold )
+            if (anPolySizes[iFinalId] >= nSizeThreshold)
             {
                 bFoundBigEnoughPoly = true;
                 break;
             }
             // Check that we don't cycle on an already visited polygon.
-            if( oSetVisitedPoly.find(iFinalId) != oSetVisitedPoly.end() )
+            if (oSetVisitedPoly.find(iFinalId) != oSetVisitedPoly.end())
                 break;
             oSetVisitedPoly.insert(iFinalId);
         }
 
-        if( !bFoundBigEnoughPoly )
+        if (!bFoundBigEnoughPoly)
         {
             nFailedMerges++;
             anBigNeighbour[iPoly] = -1;
@@ -506,7 +510,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
         // Map the whole intermediate chain to it.
         int iPolyCur = iPoly;
-        while( anBigNeighbour[iPolyCur] != iFinalId )
+        while (anBigNeighbour[iPolyCur] != iFinalId)
         {
             int iNextPoly = anBigNeighbour[iPolyCur];
             anBigNeighbour[iPolyCur] = iFinalId;
@@ -514,102 +518,113 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         }
     }
 
-    CPLDebug( "GDALSieveFilter",
-              "Small Polygons: %d, Isolated: %d, Unmergable: %d",
-              nSieveTargets, nIsolatedSmall, nFailedMerges );
+    CPLDebug("GDALSieveFilter",
+             "Small Polygons: %d, Isolated: %d, Unmergable: %d", nSieveTargets,
+             nIsolatedSmall, nFailedMerges);
 
-/* ==================================================================== */
-/*      Make a third pass over the image, actually applying the         */
-/*      merges.  We reuse the second enumerator but preserve the        */
-/*      "final maps" from the first.                                    */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Make a third pass over the image, actually applying the         */
+    /*      merges.  We reuse the second enumerator but preserve the        */
+    /*      "final maps" from the first.                                    */
+    /* ==================================================================== */
     oSecondEnum.Clear();
 
-    for( int iY = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
-                     eErr == CE_None && iY < nYSize; iY++ )
+    for (int iY = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
+                     eErr == CE_None && iY < nYSize;
+         iY++)
     {
-/* -------------------------------------------------------------------- */
-/*      Read the image data.                                            */
-/* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
-                             panThisLineVal, nXSize, 1, GDT_Int64, 0, 0 );
+        /* --------------------------------------------------------------------
+         */
+        /*      Read the image data. */
+        /* --------------------------------------------------------------------
+         */
+        eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1, panThisLineVal,
+                            nXSize, 1, GDT_Int64, 0, 0);
 
-        memcpy( panThisLineWriteVal, panThisLineVal, sizeof(panThisLineVal[0]) * nXSize );
+        memcpy(panThisLineWriteVal, panThisLineVal,
+               sizeof(panThisLineVal[0]) * nXSize);
 
-        if( eErr == CE_None && hMaskBand != nullptr )
-            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
-                                    panThisLineVal );
+        if (eErr == CE_None && hMaskBand != nullptr)
+            eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
+                                   panThisLineVal);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Determine what polygon the various pixels belong to (redoing    */
-/*      the same thing done in the first pass above).                   */
-/* -------------------------------------------------------------------- */
-        if( iY == 0 )
-            oSecondEnum.ProcessLine(
-                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
+        /* --------------------------------------------------------------------
+         */
+        /*      Determine what polygon the various pixels belong to (redoing */
+        /*      the same thing done in the first pass above). */
+        /* --------------------------------------------------------------------
+         */
+        if (iY == 0)
+            oSecondEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
+                                    panThisLineId, nXSize);
         else
-            oSecondEnum.ProcessLine(
-                panLastLineVal, panThisLineVal,
-                panLastLineId,  panThisLineId,
-                nXSize );
+            oSecondEnum.ProcessLine(panLastLineVal, panThisLineVal,
+                                    panLastLineId, panThisLineId, nXSize);
 
-/* -------------------------------------------------------------------- */
-/*      Reprocess the actual pixel values according to the polygon      */
-/*      merging, and write out this line of image data.                 */
-/* -------------------------------------------------------------------- */
-        for( int iX = 0; iX < nXSize; iX++ )
+        /* --------------------------------------------------------------------
+         */
+        /*      Reprocess the actual pixel values according to the polygon */
+        /*      merging, and write out this line of image data. */
+        /* --------------------------------------------------------------------
+         */
+        for (int iX = 0; iX < nXSize; iX++)
         {
             int iThisPoly = panThisLineId[iX];
-            if( iThisPoly >= 0 )
+            if (iThisPoly >= 0)
             {
                 iThisPoly = oFirstEnum.panPolyIdMap[iThisPoly];
 
-                if( anBigNeighbour[iThisPoly] != -1 )
+                if (anBigNeighbour[iThisPoly] != -1)
                 {
                     panThisLineWriteVal[iX] =
-                        oFirstEnum.panPolyValue[
-                            anBigNeighbour[iThisPoly]];
+                        oFirstEnum.panPolyValue[anBigNeighbour[iThisPoly]];
                 }
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Write the update data out.                                      */
-/* -------------------------------------------------------------------- */
-        eErr = GDALRasterIO( hDstBand, GF_Write, 0, iY, nXSize, 1,
-                             panThisLineWriteVal, nXSize, 1, GDT_Int64, 0, 0 );
+        /* --------------------------------------------------------------------
+         */
+        /*      Write the update data out. */
+        /* --------------------------------------------------------------------
+         */
+        eErr = GDALRasterIO(hDstBand, GF_Write, 0, iY, nXSize, 1,
+                            panThisLineWriteVal, nXSize, 1, GDT_Int64, 0, 0);
 
-/* -------------------------------------------------------------------- */
-/*      Swap pixel value, and polygon id lines to be ready for the      */
-/*      next line.                                                      */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Swap pixel value, and polygon id lines to be ready for the */
+        /*      next line. */
+        /* --------------------------------------------------------------------
+         */
         std::swap(panLastLineVal, panThisLineVal);
         std::swap(panLastLineId, panThisLineId);
 
-/* -------------------------------------------------------------------- */
-/*      Report progress, and support interrupts.                        */
-/* -------------------------------------------------------------------- */
-        if( eErr == CE_None
-            && !pfnProgress(0.5 + 0.5 * ((iY+1) / static_cast<double>(nYSize)),
-                            "", pProgressArg) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report progress, and support interrupts. */
+        /* --------------------------------------------------------------------
+         */
+        if (eErr == CE_None &&
+            !pfnProgress(0.5 + 0.5 * ((iY + 1) / static_cast<double>(nYSize)),
+                         "", pProgressArg))
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
             eErr = CE_Failure;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CPLFree( panThisLineId );
-    CPLFree( panLastLineId );
-    CPLFree( panThisLineVal );
-    CPLFree( panLastLineVal );
-    CPLFree( panThisLineWriteVal );
-    CPLFree( pabyMaskLine );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    CPLFree(panThisLineId);
+    CPLFree(panLastLineId);
+    CPLFree(panThisLineVal);
+    CPLFree(panLastLineVal);
+    CPLFree(panThisLineWriteVal);
+    CPLFree(pabyMaskLine);
 
     return eErr;
 }
