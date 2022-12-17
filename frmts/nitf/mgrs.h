@@ -1,5 +1,5 @@
 #ifndef MGRS_H
-  #define MGRS_H
+#define MGRS_H
 
 /***************************************************************************
  * $Id$
@@ -87,17 +87,17 @@
  *                              DEFINES
  */
 
-  #define MGRS_NO_ERROR                0x0000
-  #define MGRS_LAT_ERROR               0x0001
-  #define MGRS_LON_ERROR               0x0002
-  #define MGRS_STRING_ERROR            0x0004
-  #define MGRS_PRECISION_ERROR         0x0008
-  #define MGRS_A_ERROR                 0x0010
-  #define MGRS_INV_F_ERROR             0x0020
-  #define MGRS_EASTING_ERROR           0x0040
-  #define MGRS_NORTHING_ERROR          0x0080
-  #define MGRS_ZONE_ERROR              0x0100
-  #define MGRS_HEMISPHERE_ERROR        0x0200
+#define MGRS_NO_ERROR 0x0000
+#define MGRS_LAT_ERROR 0x0001
+#define MGRS_LON_ERROR 0x0002
+#define MGRS_STRING_ERROR 0x0004
+#define MGRS_PRECISION_ERROR 0x0008
+#define MGRS_A_ERROR 0x0010
+#define MGRS_INV_F_ERROR 0x0020
+#define MGRS_EASTING_ERROR 0x0040
+#define MGRS_NORTHING_ERROR 0x0080
+#define MGRS_ZONE_ERROR 0x0100
+#define MGRS_HEMISPHERE_ERROR 0x0200
 
 /***************************************************************************/
 /*
@@ -105,145 +105,130 @@
  */
 
 /* ensure proper linkage to c++ programs */
-  #ifdef __cplusplus
-extern "C" {
-  #endif
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #ifdef unused
-  long Set_MGRS_Parameters(double a,
-                           double f,
-                           char   *Ellipsoid_Code);
+    long Set_MGRS_Parameters(double a, double f, char *Ellipsoid_Code);
 #endif
-/*
- * The function Set_MGRS_Parameters receives the ellipsoid parameters and sets
- * the corresponding state variables. If any errors occur, the error code(s)
- * are returned by the function, otherwise MGRS_NO_ERROR is returned.
- *
- *   a                : Semi-major axis of ellipsoid in meters (input)
- *   f                : Flattening of ellipsoid                (input)
- *   Ellipsoid_Code   : 2-letter code for ellipsoid            (input)
- */
+    /*
+     * The function Set_MGRS_Parameters receives the ellipsoid parameters and
+     * sets the corresponding state variables. If any errors occur, the error
+     * code(s) are returned by the function, otherwise MGRS_NO_ERROR is
+     * returned.
+     *
+     *   a                : Semi-major axis of ellipsoid in meters (input)
+     *   f                : Flattening of ellipsoid                (input)
+     *   Ellipsoid_Code   : 2-letter code for ellipsoid            (input)
+     */
 
-  void Get_MGRS_Parameters(double *a,
-                           double *f,
-                           char   *Ellipsoid_Code);
-/*
- * The function Get_MGRS_Parameters returns the current ellipsoid
- * parameters.
- *
- *  a                : Semi-major axis of ellipsoid, in meters (output)
- *  f                : Flattening of ellipsoid                 (output)
- *  Ellipsoid_Code   : 2-letter code for ellipsoid             (output)
- */
+    void Get_MGRS_Parameters(double *a, double *f, char *Ellipsoid_Code);
+    /*
+     * The function Get_MGRS_Parameters returns the current ellipsoid
+     * parameters.
+     *
+     *  a                : Semi-major axis of ellipsoid, in meters (output)
+     *  f                : Flattening of ellipsoid                 (output)
+     *  Ellipsoid_Code   : 2-letter code for ellipsoid             (output)
+     */
 
-  long Convert_Geodetic_To_MGRS (double Latitude,
-                                 double Longitude,
-                                 long   Precision,
-                                 char *MGRS);
-/*
- * The function Convert_Geodetic_To_MGRS converts geodetic (latitude and
- * longitude) coordinates to an MGRS coordinate string, according to the
- * current ellipsoid parameters.  If any errors occur, the error code(s)
- * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
- *
- *    Latitude   : Latitude in radians              (input)
- *    Longitude  : Longitude in radians             (input)
- *    Precision  : Precision level of MGRS string   (input)
- *    MGRS       : MGRS coordinate string           (output)
- *
- */
+    long Convert_Geodetic_To_MGRS(double Latitude, double Longitude,
+                                  long Precision, char *MGRS);
+    /*
+     * The function Convert_Geodetic_To_MGRS converts geodetic (latitude and
+     * longitude) coordinates to an MGRS coordinate string, according to the
+     * current ellipsoid parameters.  If any errors occur, the error code(s)
+     * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
+     *
+     *    Latitude   : Latitude in radians              (input)
+     *    Longitude  : Longitude in radians             (input)
+     *    Precision  : Precision level of MGRS string   (input)
+     *    MGRS       : MGRS coordinate string           (output)
+     *
+     */
 
-  long Convert_MGRS_To_Geodetic (char *MGRS,
-                                 double *Latitude,
-                                 double *Longitude);
-/*
- * This function converts an MGRS coordinate string to Geodetic (latitude
- * and longitude in radians) coordinates.  If any errors occur, the error
- * code(s) are returned by the  function, otherwise MGRS_NO_ERROR is returned.
- *
- *    MGRS       : MGRS coordinate string           (input)
- *    Latitude   : Latitude in radians              (output)
- *    Longitude  : Longitude in radians             (output)
- *
- */
+    long Convert_MGRS_To_Geodetic(char *MGRS, double *Latitude,
+                                  double *Longitude);
+    /*
+     * This function converts an MGRS coordinate string to Geodetic (latitude
+     * and longitude in radians) coordinates.  If any errors occur, the error
+     * code(s) are returned by the  function, otherwise MGRS_NO_ERROR is
+     * returned.
+     *
+     *    MGRS       : MGRS coordinate string           (input)
+     *    Latitude   : Latitude in radians              (output)
+     *    Longitude  : Longitude in radians             (output)
+     *
+     */
 
-  long Convert_UTM_To_MGRS (long Zone,
-                            char Hemisphere,
-                            double Easting,
-                            double Northing,
-                            long Precision,
-                            char *MGRS);
-/*
- * The function Convert_UTM_To_MGRS converts UTM (zone, easting, and
- * northing) coordinates to an MGRS coordinate string, according to the
- * current ellipsoid parameters.  If any errors occur, the error code(s)
- * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
- *
- *    Zone       : UTM zone                         (input)
- *    Hemisphere : North or South hemisphere        (input)
- *    Easting    : Easting (X) in meters            (input)
- *    Northing   : Northing (Y) in meters           (input)
- *    Precision  : Precision level of MGRS string   (input)
- *    MGRS       : MGRS coordinate string           (output)
- */
+    long Convert_UTM_To_MGRS(long Zone, char Hemisphere, double Easting,
+                             double Northing, long Precision, char *MGRS);
+    /*
+     * The function Convert_UTM_To_MGRS converts UTM (zone, easting, and
+     * northing) coordinates to an MGRS coordinate string, according to the
+     * current ellipsoid parameters.  If any errors occur, the error code(s)
+     * are returned by the  function, otherwise MGRS_NO_ERROR is returned.
+     *
+     *    Zone       : UTM zone                         (input)
+     *    Hemisphere : North or South hemisphere        (input)
+     *    Easting    : Easting (X) in meters            (input)
+     *    Northing   : Northing (Y) in meters           (input)
+     *    Precision  : Precision level of MGRS string   (input)
+     *    MGRS       : MGRS coordinate string           (output)
+     */
 
-  long Convert_MGRS_To_UTM (char   *MGRS,
-                            long   *Zone,
-                            char   *Hemisphere,
-                            double *Easting,
-                            double *Northing);
-/*
- * The function Convert_MGRS_To_UTM converts an MGRS coordinate string
- * to UTM projection (zone, hemisphere, easting and northing) coordinates
- * according to the current ellipsoid parameters.  If any errors occur,
- * the error code(s) are returned by the function, otherwise UTM_NO_ERROR
- * is returned.
- *
- *    MGRS       : MGRS coordinate string           (input)
- *    Zone       : UTM zone                         (output)
- *    Hemisphere : North or South hemisphere        (output)
- *    Easting    : Easting (X) in meters            (output)
- *    Northing   : Northing (Y) in meters           (output)
- */
+    long Convert_MGRS_To_UTM(char *MGRS, long *Zone, char *Hemisphere,
+                             double *Easting, double *Northing);
+    /*
+     * The function Convert_MGRS_To_UTM converts an MGRS coordinate string
+     * to UTM projection (zone, hemisphere, easting and northing) coordinates
+     * according to the current ellipsoid parameters.  If any errors occur,
+     * the error code(s) are returned by the function, otherwise UTM_NO_ERROR
+     * is returned.
+     *
+     *    MGRS       : MGRS coordinate string           (input)
+     *    Zone       : UTM zone                         (output)
+     *    Hemisphere : North or South hemisphere        (output)
+     *    Easting    : Easting (X) in meters            (output)
+     *    Northing   : Northing (Y) in meters           (output)
+     */
 
-  long Convert_UPS_To_MGRS ( char   Hemisphere,
-                             double Easting,
-                             double Northing,
-                             long Precision,
-                             char *MGRS);
+    long Convert_UPS_To_MGRS(char Hemisphere, double Easting, double Northing,
+                             long Precision, char *MGRS);
 
-/*
- *  The function Convert_UPS_To_MGRS converts UPS (hemisphere, easting,
- *  and northing) coordinates to an MGRS coordinate string according to
- *  the current ellipsoid parameters.  If any errors occur, the error
- *  code(s) are returned by the function, otherwise UPS_NO_ERROR is
- *  returned.
- *
- *    Hemisphere    : Hemisphere either 'N' or 'S'     (input)
- *    Easting       : Easting/X in meters              (input)
- *    Northing      : Northing/Y in meters             (input)
- *    Precision     : Precision level of MGRS string   (input)
- *    MGRS          : MGRS coordinate string           (output)
- */
+    /*
+     *  The function Convert_UPS_To_MGRS converts UPS (hemisphere, easting,
+     *  and northing) coordinates to an MGRS coordinate string according to
+     *  the current ellipsoid parameters.  If any errors occur, the error
+     *  code(s) are returned by the function, otherwise UPS_NO_ERROR is
+     *  returned.
+     *
+     *    Hemisphere    : Hemisphere either 'N' or 'S'     (input)
+     *    Easting       : Easting/X in meters              (input)
+     *    Northing      : Northing/Y in meters             (input)
+     *    Precision     : Precision level of MGRS string   (input)
+     *    MGRS          : MGRS coordinate string           (output)
+     */
 
-  long Convert_MGRS_To_UPS ( char   *MGRS,
-                             char   *Hemisphere,
-                             double *Easting,
+    long Convert_MGRS_To_UPS(char *MGRS, char *Hemisphere, double *Easting,
                              double *Northing);
-/*
- *  The function Convert_MGRS_To_UPS converts an MGRS coordinate string
- *  to UPS (hemisphere, easting, and northing) coordinates, according
- *  to the current ellipsoid parameters. If any errors occur, the error
- *  code(s) are returned by the function, otherwise UPS_NO_ERROR is returned.
- *
- *    MGRS          : MGRS coordinate string           (input)
- *    Hemisphere    : Hemisphere either 'N' or 'S'     (output)
- *    Easting       : Easting/X in meters              (output)
- *    Northing      : Northing/Y in meters             (output)
- */
+    /*
+     *  The function Convert_MGRS_To_UPS converts an MGRS coordinate string
+     *  to UPS (hemisphere, easting, and northing) coordinates, according
+     *  to the current ellipsoid parameters. If any errors occur, the error
+     *  code(s) are returned by the function, otherwise UPS_NO_ERROR is
+     * returned.
+     *
+     *    MGRS          : MGRS coordinate string           (input)
+     *    Hemisphere    : Hemisphere either 'N' or 'S'     (output)
+     *    Easting       : Easting/X in meters              (output)
+     *    Northing      : Northing/Y in meters             (output)
+     */
 
-  #ifdef __cplusplus
+#ifdef __cplusplus
 }
-  #endif
+#endif
 
 #endif /* MGRS_H */
