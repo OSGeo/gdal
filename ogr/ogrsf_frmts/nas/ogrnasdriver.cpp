@@ -31,61 +31,58 @@
 #include "nasreaderp.h"
 #include "ogr_nas.h"
 
-
 /************************************************************************/
 /*                     OGRNASDriverIdentify()                           */
 /************************************************************************/
 
-static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRNASDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->fpL == nullptr )
+    if (poOpenInfo->fpL == nullptr)
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Check for a UTF-8 BOM and skip if found                         */
-/*                                                                      */
-/*      TODO: BOM is variable-length parameter and depends on encoding. */
-/*            Add BOM detection for other encodings.                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Check for a UTF-8 BOM and skip if found                         */
+    /*                                                                      */
+    /*      TODO: BOM is variable-length parameter and depends on encoding. */
+    /*            Add BOM detection for other encodings.                    */
+    /* -------------------------------------------------------------------- */
 
     // Used to skip to actual beginning of XML data
     // const char* szPtr = (const char*)poOpenInfo->pabyHeader;
-    const char* szPtr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    const char *szPtr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
 
-    if( ( (unsigned char)szPtr[0] == 0xEF )
-        && ( (unsigned char)szPtr[1] == 0xBB )
-        && ( (unsigned char)szPtr[2] == 0xBF) )
+    if (((unsigned char)szPtr[0] == 0xEF) &&
+        ((unsigned char)szPtr[1] == 0xBB) && ((unsigned char)szPtr[2] == 0xBF))
     {
         szPtr += 3;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Here, we expect the opening chevrons of NAS tree root element   */
-/* -------------------------------------------------------------------- */
-    if( szPtr[0] != '<' )
+    /* -------------------------------------------------------------------- */
+    /*      Here, we expect the opening chevrons of NAS tree root element   */
+    /* -------------------------------------------------------------------- */
+    if (szPtr[0] != '<')
         return FALSE;
 
-    if( !poOpenInfo->TryToIngest(8192) )
+    if (!poOpenInfo->TryToIngest(8192))
         return FALSE;
-    szPtr = (const char*)poOpenInfo->pabyHeader;
+    szPtr = (const char *)poOpenInfo->pabyHeader;
 
-    if( strstr(szPtr,"opengis.net/gml") == nullptr )
+    if (strstr(szPtr, "opengis.net/gml") == nullptr)
         return FALSE;
 
     char **papszIndicators = CSLTokenizeStringComplex(
-        CPLGetConfigOption(
-            "NAS_INDICATOR",
-            "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite" ),
-        ";", 0, 0 );
+        CPLGetConfigOption("NAS_INDICATOR",
+                           "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite"),
+        ";", 0, 0);
 
     bool bFound = false;
-    for( int i = 0; papszIndicators[i] && !bFound; i++ )
+    for (int i = 0; papszIndicators[i] && !bFound; i++)
     {
-        bFound = strstr( szPtr, papszIndicators[i] ) != nullptr;
+        bFound = strstr(szPtr, papszIndicators[i]) != nullptr;
     }
 
-    CSLDestroy( papszIndicators );
+    CSLDestroy(papszIndicators);
 
     return bFound;
 }
@@ -94,11 +91,10 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRNASDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->eAccess == GA_Update ||
-        !OGRNASDriverIdentify(poOpenInfo) )
+    if (poOpenInfo->eAccess == GA_Update || !OGRNASDriverIdentify(poOpenInfo))
         return nullptr;
 
     VSIFCloseL(poOpenInfo->fpL);
@@ -106,8 +102,7 @@ static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRNASDataSource *poDS = new OGRNASDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename )
-        || poDS->GetLayerCount() == 0 )
+    if (!poDS->Open(poOpenInfo->pszFilename) || poDS->GetLayerCount() == 0)
     {
         delete poDS;
         return nullptr;
@@ -123,21 +118,21 @@ static GDALDataset *OGRNASDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRNAS()
 
 {
-    if( GDALGetDriverByName( "NAS" ) != nullptr )
+    if (GDALGetDriverByName("NAS") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "NAS" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NAS - ALKIS" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/nas.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetDescription("NAS");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "NAS - ALKIS");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xml");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/nas.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->pfnOpen = OGRNASDriverOpen;
     poDriver->pfnIdentify = OGRNASDriverIdentify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

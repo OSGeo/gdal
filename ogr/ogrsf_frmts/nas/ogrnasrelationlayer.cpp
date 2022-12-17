@@ -32,34 +32,31 @@
 #include "cpl_string.h"
 #include "ogr_nas.h"
 
-
 /************************************************************************/
 /*                        OGRNASRelationLayer()                         */
 /************************************************************************/
 
-OGRNASRelationLayer::OGRNASRelationLayer( OGRNASDataSource *poDSIn ) :
-    poFeatureDefn(new OGRFeatureDefn( "ALKIS_beziehungen" )),
-    poDS(poDSIn),
-    bPopulated(false),
-    iNextFeature(0)
+OGRNASRelationLayer::OGRNASRelationLayer(OGRNASDataSource *poDSIn)
+    : poFeatureDefn(new OGRFeatureDefn("ALKIS_beziehungen")), poDS(poDSIn),
+      bPopulated(false), iNextFeature(0)
 {
-/* -------------------------------------------------------------------- */
-/*      Establish the layer fields.                                     */
-/* -------------------------------------------------------------------- */
-    SetDescription( poFeatureDefn->GetName() );
+    /* -------------------------------------------------------------------- */
+    /*      Establish the layer fields.                                     */
+    /* -------------------------------------------------------------------- */
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( wkbNone );
+    poFeatureDefn->SetGeomType(wkbNone);
 
-    OGRFieldDefn oFD( "", OFTString );
+    OGRFieldDefn oFD("", OFTString);
 
-    oFD.SetName( "beziehung_von" );
-    poFeatureDefn->AddFieldDefn( &oFD );
+    oFD.SetName("beziehung_von");
+    poFeatureDefn->AddFieldDefn(&oFD);
 
-    oFD.SetName( "beziehungsart" );
-    poFeatureDefn->AddFieldDefn( &oFD );
+    oFD.SetName("beziehungsart");
+    poFeatureDefn->AddFieldDefn(&oFD);
 
-    oFD.SetName( "beziehung_zu" );
-    poFeatureDefn->AddFieldDefn( &oFD );
+    oFD.SetName("beziehung_zu");
+    poFeatureDefn->AddFieldDefn(&oFD);
 }
 
 /************************************************************************/
@@ -69,7 +66,7 @@ OGRNASRelationLayer::OGRNASRelationLayer( OGRNASDataSource *poDSIn ) :
 OGRNASRelationLayer::~OGRNASRelationLayer()
 
 {
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 }
 
@@ -90,45 +87,50 @@ void OGRNASRelationLayer::ResetReading()
 OGRFeature *OGRNASRelationLayer::GetNextFeature()
 
 {
-    if( !bPopulated )
+    if (!bPopulated)
         poDS->PopulateRelations();
 
-/* ==================================================================== */
-/*      Loop till we find and translate a feature meeting all our       */
-/*      requirements.                                                   */
-/* ==================================================================== */
-    while( true )
+    /* ==================================================================== */
+    /*      Loop till we find and translate a feature meeting all our       */
+    /*      requirements.                                                   */
+    /* ==================================================================== */
+    while (true)
     {
         // out of features?
-        if( iNextFeature >= static_cast<int>(aoRelationCollection.size()) )
+        if (iNextFeature >= static_cast<int>(aoRelationCollection.size()))
             return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      The from/type/to values are stored in a packed string with      */
-/*      \0 separators for compactness.  Split out components.           */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      The from/type/to values are stored in a packed string with */
+        /*      \0 separators for compactness.  Split out components. */
+        /* --------------------------------------------------------------------
+         */
         const char *pszFromID = aoRelationCollection[iNextFeature].c_str();
         const char *pszType = pszFromID + strlen(pszFromID) + 1;
         const char *pszToID = pszType + strlen(pszType) + 1;
 
         m_nFeaturesRead++;
 
-/* -------------------------------------------------------------------- */
-/*      Translate values into an OGRFeature.                            */
-/* -------------------------------------------------------------------- */
-        OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+        /* --------------------------------------------------------------------
+         */
+        /*      Translate values into an OGRFeature. */
+        /* --------------------------------------------------------------------
+         */
+        OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
-        poFeature->SetField( 0, pszFromID );
-        poFeature->SetField( 1, pszType );
-        poFeature->SetField( 2, pszToID );
+        poFeature->SetField(0, pszFromID);
+        poFeature->SetField(1, pszType);
+        poFeature->SetField(2, pszToID);
 
-        poFeature->SetFID( iNextFeature++ );
+        poFeature->SetFID(iNextFeature++);
 
-/* -------------------------------------------------------------------- */
-/*      Test against the attribute query.                               */
-/* -------------------------------------------------------------------- */
-        if( m_poAttrQuery != nullptr
-            && !m_poAttrQuery->Evaluate( poFeature ) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Test against the attribute query. */
+        /* --------------------------------------------------------------------
+         */
+        if (m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poFeature))
             delete poFeature;
         else
             return poFeature;
@@ -141,32 +143,32 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRNASRelationLayer::GetFeatureCount( int bForce )
+GIntBig OGRNASRelationLayer::GetFeatureCount(int bForce)
 
 {
-    if( !bPopulated )
+    if (!bPopulated)
         poDS->PopulateRelations();
 
-    if( m_poAttrQuery == nullptr )
+    if (m_poAttrQuery == nullptr)
         return aoRelationCollection.size();
 
-    return OGRLayer::GetFeatureCount( bForce );
+    return OGRLayer::GetFeatureCount(bForce);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASRelationLayer::TestCapability( const char * pszCap )
+int OGRNASRelationLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCFastGetExtent) )
+    if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
 
-    if( EQUAL(pszCap,OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
         return bPopulated && m_poAttrQuery == nullptr;
 
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
     return FALSE;
@@ -176,23 +178,22 @@ int OGRNASRelationLayer::TestCapability( const char * pszCap )
 /*                            AddRelation()                             */
 /************************************************************************/
 
-void OGRNASRelationLayer::AddRelation( const char *pszFromID,
-                                       const char *pszType,
-                                       const char *pszToID )
+void OGRNASRelationLayer::AddRelation(const char *pszFromID,
+                                      const char *pszType, const char *pszToID)
 
 {
     const size_t nMergedLen =
         strlen(pszFromID) + strlen(pszType) + strlen(pszToID) + 3;
-    char *pszMerged = (char *) CPLMalloc(nMergedLen);
+    char *pszMerged = (char *)CPLMalloc(nMergedLen);
 
-    strcpy( pszMerged, pszFromID );
-    strcpy( pszMerged + strlen(pszFromID) + 1, pszType );
-    strcpy( pszMerged + strlen(pszFromID) + strlen(pszType) + 2, pszToID );
+    strcpy(pszMerged, pszFromID);
+    strcpy(pszMerged + strlen(pszFromID) + 1, pszType);
+    strcpy(pszMerged + strlen(pszFromID) + strlen(pszType) + 2, pszToID);
 
     CPLString osRelation;
-    osRelation.assign( pszMerged, nMergedLen );
+    osRelation.assign(pszMerged, nMergedLen);
 
-    CPLFree( pszMerged );
+    CPLFree(pszMerged);
 
-    aoRelationCollection.push_back( osRelation );
+    aoRelationCollection.push_back(osRelation);
 }
