@@ -44,16 +44,15 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
 /*      Parameter hResult is input/output - a reference to pointer      */
 /************************************************************************/
 
-inline void OGRPGClearResult( PGresult*& hResult )
+inline void OGRPGClearResult(PGresult *&hResult)
 {
-    if( nullptr != hResult )
+    if (nullptr != hResult)
     {
-        PQclear( hResult );
+        PQclear(hResult);
         hResult = nullptr;
     }
 }
 
-bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char * pszTableName);
+bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char *pszTableName);
 
 #endif /* ndef OGRPGUTILITY_H_INCLUDED */
-
