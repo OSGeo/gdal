@@ -33,7 +33,7 @@
 
 #include "cpl_float.h"
 
-#include "netcdf_cf_constants.h" // for CF_UNITS, etc
+#include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 
 #include <algorithm>
 #include <cassert>
@@ -46,28 +46,28 @@
 
 #define CRS_ATTRIBUTE_NAME "_CRS"
 
-namespace {
+namespace
+{
 
-inline
-std::vector<GByte> UTF8ToUCS4(const char* pszStr, bool needByteSwap)
+inline std::vector<GByte> UTF8ToUCS4(const char *pszStr, bool needByteSwap)
 {
     const size_t nLen = strlen(pszStr);
     // Worst case if that we need 4 more bytes than the UTF-8 one
     // (when the content is pure ASCII)
-    if( nLen > std::numeric_limits<size_t>::max() / sizeof(uint32_t) )
+    if (nLen > std::numeric_limits<size_t>::max() / sizeof(uint32_t))
         throw std::bad_alloc();
     std::vector<GByte> ret(nLen * sizeof(uint32_t));
     size_t outPos = 0;
-    for( size_t i = 0; i < nLen; outPos += sizeof(uint32_t))
+    for (size_t i = 0; i < nLen; outPos += sizeof(uint32_t))
     {
         uint32_t ucs4 = 0;
         int consumed = FcUtf8ToUcs4(
-            reinterpret_cast<const uint8_t*>(pszStr + i), &ucs4, nLen - i);
-        if( consumed <= 0 )
+            reinterpret_cast<const uint8_t *>(pszStr + i), &ucs4, nLen - i);
+        if (consumed <= 0)
         {
             ret.resize(outPos);
         }
-        if( needByteSwap )
+        if (needByteSwap)
         {
             CPL_SWAP32PTR(&ucs4);
         }
@@ -78,63 +78,58 @@ std::vector<GByte> UTF8ToUCS4(const char* pszStr, bool needByteSwap)
     return ret;
 }
 
-inline char* UCS4ToUTF8(const uint8_t* ucs4Ptr, size_t nSize, bool needByteSwap)
+inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 {
     // A UCS4 char can require up to 6 bytes in UTF8.
-    if( nSize > (std::numeric_limits<size_t>::max() - 1) / 6 * 4 )
+    if (nSize > (std::numeric_limits<size_t>::max() - 1) / 6 * 4)
         return nullptr;
     const size_t nOutSize = nSize / 4 * 6 + 1;
-    char* ret = static_cast<char*>(VSI_MALLOC_VERBOSE(nOutSize));
-    if( ret == nullptr )
+    char *ret = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutSize));
+    if (ret == nullptr)
         return nullptr;
     size_t outPos = 0;
-    for(size_t i = 0; i + sizeof(uint32_t) - 1 < nSize; i += sizeof(uint32_t))
+    for (size_t i = 0; i + sizeof(uint32_t) - 1 < nSize; i += sizeof(uint32_t))
     {
         uint32_t ucs4;
         memcpy(&ucs4, ucs4Ptr + i, sizeof(uint32_t));
-        if( needByteSwap )
+        if (needByteSwap)
         {
             CPL_SWAP32PTR(&ucs4);
         }
-        int written = FcUcs4ToUtf8 (ucs4, reinterpret_cast<uint8_t*>(ret + outPos));
+        int written =
+            FcUcs4ToUtf8(ucs4, reinterpret_cast<uint8_t *>(ret + outPos));
         outPos += written;
     }
     ret[outPos] = 0;
     return ret;
 }
 
-} // namespace
+}  // namespace
 
 /************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
 
-ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
-                     const std::string& osParentName,
-                     const std::string& osName,
-                     const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
-                     const GDALExtendedDataType& oType,
-                     const std::vector<DtypeElt>& aoDtypeElts,
-                     const std::vector<GUInt64>& anBlockSize,
-                     bool bFortranOrder):
-    GDALAbstractMDArray(osParentName, osName),
-    GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
-    m_poSharedResource(poSharedResource),
-    m_aoDims(aoDims),
-    m_oType(oType),
-    m_aoDtypeElts(aoDtypeElts),
-    m_anBlockSize(anBlockSize),
-    m_bFortranOrder(bFortranOrder),
-    m_oAttrGroup(osParentName)
+ZarrArray::ZarrArray(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::string &osParentName, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+    : GDALAbstractMDArray(osParentName, osName),
+      GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
+      m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
+      m_aoDtypeElts(aoDtypeElts), m_anBlockSize(anBlockSize),
+      m_bFortranOrder(bFortranOrder), m_oAttrGroup(osParentName)
 {
     m_oCompressorJSonV2.Deinit();
     m_oCompressorJSonV3.Deinit();
 
     // Compute individual tile size
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
     m_nTileSize = nSourceSize;
-    for( const auto& nBlockSize: m_anBlockSize )
+    for (const auto &nBlockSize : m_anBlockSize)
     {
         m_nTileSize *= static_cast<size_t>(nBlockSize);
     }
@@ -144,35 +139,36 @@ ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource
 /*                          ZarrArray::Create()                         */
 /************************************************************************/
 
-std::shared_ptr<ZarrArray> ZarrArray::Create(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
-                                             const std::string& osParentName,
-                                             const std::string& osName,
-                                             const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
-                                             const GDALExtendedDataType& oType,
-                                             const std::vector<DtypeElt>& aoDtypeElts,
-                                             const std::vector<GUInt64>& anBlockSize,
-                                             bool bFortranOrder)
+std::shared_ptr<ZarrArray>
+ZarrArray::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+                  const std::string &osParentName, const std::string &osName,
+                  const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+                  const GDALExtendedDataType &oType,
+                  const std::vector<DtypeElt> &aoDtypeElts,
+                  const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
 {
     uint64_t nTotalTileCount = 1;
-    for( size_t i = 0; i < aoDims.size(); ++i )
+    for (size_t i = 0; i < aoDims.size(); ++i)
     {
-        uint64_t nTileThisDim = (aoDims[i]->GetSize() / anBlockSize[i]) +
-                    (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
-        if( nTileThisDim != 0 &&
-            nTotalTileCount > std::numeric_limits<uint64_t>::max() / nTileThisDim )
+        uint64_t nTileThisDim =
+            (aoDims[i]->GetSize() / anBlockSize[i]) +
+            (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
+        if (nTileThisDim != 0 &&
+            nTotalTileCount >
+                std::numeric_limits<uint64_t>::max() / nTileThisDim)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Array %s has more than 2^64 tiles. This is not supported.",
-                     osName.c_str());
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "Array %s has more than 2^64 tiles. This is not supported.",
+                osName.c_str());
             return nullptr;
         }
         nTotalTileCount *= nTileThisDim;
     }
 
     auto arr = std::shared_ptr<ZarrArray>(
-        new ZarrArray(poSharedResource,
-                      osParentName, osName, aoDims, oType, aoDtypeElts,
-                      anBlockSize, bFortranOrder));
+        new ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
+                      aoDtypeElts, anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
     arr->m_nTotalTileCount = nTotalTileCount;
@@ -190,7 +186,7 @@ ZarrArray::~ZarrArray()
 {
     Flush();
 
-    if( m_pabyNoData )
+    if (m_pabyNoData)
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
         CPLFree(m_pabyNoData);
@@ -208,9 +204,9 @@ void ZarrArray::Flush()
     FlushDirtyTile();
     bool bSerializeV3 = false;
 
-    if( m_bDefinitionModified  )
+    if (m_bDefinitionModified)
     {
-        if( m_nVersion == 2 )
+        if (m_nVersion == 2)
         {
             SerializeV2();
         }
@@ -222,13 +218,14 @@ void ZarrArray::Flush()
     }
 
     CPLJSONArray j_ARRAY_DIMENSIONS;
-    if( !m_aoDims.empty() )
+    if (!m_aoDims.empty())
     {
-        for( const auto& poDim: m_aoDims )
+        for (const auto &poDim : m_aoDims)
         {
-            if( dynamic_cast<const ZarrArray*>(poDim->GetIndexingVariable().get()) != nullptr )
+            if (dynamic_cast<const ZarrArray *>(
+                    poDim->GetIndexingVariable().get()) != nullptr)
             {
-                j_ARRAY_DIMENSIONS.Add( poDim->GetName() );
+                j_ARRAY_DIMENSIONS.Add(poDim->GetName());
             }
             else
             {
@@ -239,12 +236,9 @@ void ZarrArray::Flush()
     }
 
     CPLJSONObject oAttrs;
-    if( m_oAttrGroup.IsModified() ||
-        (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) ||
-        m_bUnitModified ||
-        m_bOffsetModified ||
-        m_bScaleModified ||
-        m_bSRSModified )
+    if (m_oAttrGroup.IsModified() ||
+        (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) || m_bUnitModified ||
+        m_bOffsetModified || m_bScaleModified || m_bSRSModified)
     {
         m_bNew = false;
         m_bSRSModified = false;
@@ -252,18 +246,18 @@ void ZarrArray::Flush()
 
         oAttrs = m_oAttrGroup.Serialize();
 
-        if( j_ARRAY_DIMENSIONS.Size() != 0 )
+        if (j_ARRAY_DIMENSIONS.Size() != 0)
         {
             oAttrs.Delete("_ARRAY_DIMENSIONS");
             oAttrs.Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
         }
 
-        if( m_poSRS )
+        if (m_poSRS)
         {
             CPLJSONObject oCRS;
-            const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
-            char* pszWKT = nullptr;
-            if( m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE )
+            const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+            char *pszWKT = nullptr;
+            if (m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
             {
                 oCRS.Add("wkt", pszWKT);
             }
@@ -272,12 +266,13 @@ void ZarrArray::Flush()
             {
                 CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
                 CPLErrorStateBackuper errorStateBackuper;
-                char* projjson = nullptr;
-                if( m_poSRS->exportToPROJJSON(&projjson, nullptr) == OGRERR_NONE &&
-                    projjson != nullptr )
+                char *projjson = nullptr;
+                if (m_poSRS->exportToPROJJSON(&projjson, nullptr) ==
+                        OGRERR_NONE &&
+                    projjson != nullptr)
                 {
                     CPLJSONDocument oDocProjJSON;
-                    if( oDocProjJSON.LoadMemory(std::string(projjson)) )
+                    if (oDocProjJSON.LoadMemory(std::string(projjson)))
                     {
                         oCRS.Add("projjson", oDocProjJSON.GetRoot());
                     }
@@ -285,10 +280,10 @@ void ZarrArray::Flush()
                 CPLFree(projjson);
             }
 
-            const char* pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
-            const char* pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
-            if( pszAuthorityCode && pszAuthorityName &&
-                EQUAL(pszAuthorityName, "EPSG") )
+            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+            const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            if (pszAuthorityCode && pszAuthorityName &&
+                EQUAL(pszAuthorityName, "EPSG"))
             {
                 oCRS.Add("url",
                          std::string("http://www.opengis.net/def/crs/EPSG/0/") +
@@ -298,9 +293,9 @@ void ZarrArray::Flush()
             oAttrs.Add(CRS_ATTRIBUTE_NAME, oCRS);
         }
 
-        if( m_osUnit.empty() )
+        if (m_osUnit.empty())
         {
-            if( m_bUnitModified )
+            if (m_bUnitModified)
                 oAttrs.Delete(CF_UNITS);
         }
         else
@@ -309,7 +304,7 @@ void ZarrArray::Flush()
         }
         m_bUnitModified = false;
 
-        if( !m_bHasOffset )
+        if (!m_bHasOffset)
         {
             oAttrs.Delete(CF_ADD_OFFSET);
         }
@@ -319,7 +314,7 @@ void ZarrArray::Flush()
         }
         m_bOffsetModified = false;
 
-        if( !m_bHasScale )
+        if (!m_bHasScale)
         {
             oAttrs.Delete(CF_SCALE_FACTOR);
         }
@@ -329,7 +324,7 @@ void ZarrArray::Flush()
         }
         m_bScaleModified = false;
 
-        if( m_nVersion == 2 )
+        if (m_nVersion == 2)
         {
             CPLJSONDocument oDoc;
             oDoc.SetRoot(oAttrs);
@@ -344,7 +339,7 @@ void ZarrArray::Flush()
         }
     }
 
-    if( bSerializeV3 )
+    if (bSerializeV3)
     {
         SerializeV3(oAttrs);
     }
@@ -356,20 +351,21 @@ void ZarrArray::Flush()
 
 void ZarrArray::DeallocateDecodedTileData()
 {
-    if( !m_abyDecodedTileData.empty() )
+    if (!m_abyDecodedTileData.empty())
     {
         const size_t nDTSize = m_oType.GetSize();
-        GByte* pDst = &m_abyDecodedTileData[0];
+        GByte *pDst = &m_abyDecodedTileData[0];
         const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        for( auto& elt: m_aoDtypeElts )
+        for (auto &elt : m_aoDtypeElts)
         {
-            if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
-                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+            if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
+                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
             {
-                for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
+                for (size_t i = 0; i < nValues; i++, pDst += nDTSize)
                 {
-                    char* ptr;
-                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+                    char *ptr;
+                    char **pptr =
+                        reinterpret_cast<char **>(pDst + elt.gdalOffset);
                     memcpy(&ptr, pptr, sizeof(ptr));
                     VSIFree(ptr);
                 }
@@ -383,33 +379,35 @@ void ZarrArray::DeallocateDecodedTileData()
 /************************************************************************/
 
 /* Encode from GDAL raw type to Zarr native type */
-static void EncodeElt(const std::vector<DtypeElt>& elts,
-                      const GByte* pSrc,
-                      GByte* pDst)
+static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
+                      GByte *pDst)
 {
-    for( const auto& elt: elts )
+    for (const auto &elt : elts)
     {
-        if( elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+        if (elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
         {
-            const char* pStr = *reinterpret_cast<const char* const*>(pSrc + elt.gdalOffset);
-            if( pStr )
+            const char *pStr =
+                *reinterpret_cast<const char *const *>(pSrc + elt.gdalOffset);
+            if (pStr)
             {
                 try
                 {
                     const auto ucs4 = UTF8ToUCS4(pStr, elt.needByteSwapping);
                     const auto ucs4Len = ucs4.size();
-                    memcpy(pDst + elt.nativeOffset, ucs4.data(), std::min(ucs4Len, elt.nativeSize));
-                    if( ucs4Len > elt.nativeSize )
+                    memcpy(pDst + elt.nativeOffset, ucs4.data(),
+                           std::min(ucs4Len, elt.nativeSize));
+                    if (ucs4Len > elt.nativeSize)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Too long string truncated");
                     }
-                    else if( ucs4Len < elt.nativeSize )
+                    else if (ucs4Len < elt.nativeSize)
                     {
-                        memset(pDst + elt.nativeOffset + ucs4Len, 0, elt.nativeSize - ucs4Len);
+                        memset(pDst + elt.nativeOffset + ucs4Len, 0,
+                               elt.nativeSize - ucs4Len);
                     }
                 }
-                catch( const std::exception& )
+                catch (const std::exception &)
                 {
                     memset(pDst + elt.nativeOffset, 0, elt.nativeSize);
                 }
@@ -419,58 +417,64 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                 memset(pDst + elt.nativeOffset, 0, elt.nativeSize);
             }
         }
-        else if( elt.needByteSwapping )
+        else if (elt.needByteSwapping)
         {
-            if( elt.nativeSize == 2 )
+            if (elt.nativeSize == 2)
             {
-                if( elt.gdalTypeIsApproxOfNative )
+                if (elt.gdalTypeIsApproxOfNative)
                 {
-                    CPLAssert( elt.nativeType == DtypeElt::NativeType::IEEEFP );
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
+                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
                     const uint32_t uint32Val =
-                        *reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset);
+                        *reinterpret_cast<const uint32_t *>(pSrc +
+                                                            elt.gdalOffset);
                     bool bHasWarned = false;
-                    uint16_t uint16Val = CPL_SWAP16(CPLFloatToHalf(uint32Val, bHasWarned));
-                    memcpy(pDst + elt.nativeOffset, &uint16Val, sizeof(uint16Val));
+                    uint16_t uint16Val =
+                        CPL_SWAP16(CPLFloatToHalf(uint32Val, bHasWarned));
+                    memcpy(pDst + elt.nativeOffset, &uint16Val,
+                           sizeof(uint16Val));
                 }
                 else
                 {
                     const uint16_t val =
-                        CPL_SWAP16(*reinterpret_cast<const uint16_t*>(pSrc + elt.gdalOffset));
+                        CPL_SWAP16(*reinterpret_cast<const uint16_t *>(
+                            pSrc + elt.gdalOffset));
                     memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
                 }
             }
-            else if( elt.nativeSize == 4 )
+            else if (elt.nativeSize == 4)
             {
-                const uint32_t val =
-                    CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset));
+                const uint32_t val = CPL_SWAP32(
+                    *reinterpret_cast<const uint32_t *>(pSrc + elt.gdalOffset));
                 memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
             }
-            else if( elt.nativeSize == 8 )
+            else if (elt.nativeSize == 8)
             {
-                if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
+                if (elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP)
                 {
                     uint32_t val =
-                        CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset));
+                        CPL_SWAP32(*reinterpret_cast<const uint32_t *>(
+                            pSrc + elt.gdalOffset));
                     memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                    val =
-                        CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset + 4));
+                    val = CPL_SWAP32(*reinterpret_cast<const uint32_t *>(
+                        pSrc + elt.gdalOffset + 4));
                     memcpy(pDst + elt.nativeOffset + 4, &val, sizeof(val));
                 }
                 else
                 {
-                    const uint64_t val = CPL_SWAP64(
-                        *reinterpret_cast<const uint64_t*>(pSrc + elt.gdalOffset));
+                    const uint64_t val =
+                        CPL_SWAP64(*reinterpret_cast<const uint64_t *>(
+                            pSrc + elt.gdalOffset));
                     memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
                 }
             }
-            else if( elt.nativeSize == 16 )
+            else if (elt.nativeSize == 16)
             {
-                uint64_t val =
-                    CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.gdalOffset));
+                uint64_t val = CPL_SWAP64(
+                    *reinterpret_cast<const uint64_t *>(pSrc + elt.gdalOffset));
                 memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                val =
-                    CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.gdalOffset + 8));
+                val = CPL_SWAP64(*reinterpret_cast<const uint64_t *>(
+                    pSrc + elt.gdalOffset + 8));
                 memcpy(pDst + elt.nativeOffset + 8, &val, sizeof(val));
             }
             else
@@ -478,24 +482,26 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.gdalTypeIsApproxOfNative )
+        else if (elt.gdalTypeIsApproxOfNative)
         {
-            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                elt.nativeSize == 1 )
+            if (elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                elt.nativeSize == 1)
             {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
-                const int16_t int16Val = *reinterpret_cast<const int16_t*>(pSrc + elt.gdalOffset);
+                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Int16);
+                const int16_t int16Val =
+                    *reinterpret_cast<const int16_t *>(pSrc + elt.gdalOffset);
                 const int8_t intVal = static_cast<int8_t>(int16Val);
                 memcpy(pDst + elt.nativeOffset, &intVal, sizeof(intVal));
             }
-            else if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                     elt.nativeSize == 2 )
+            else if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
+                     elt.nativeSize == 2)
             {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
                 const uint32_t uint32Val =
-                    *reinterpret_cast<const uint32_t*>(pSrc + elt.gdalOffset);
+                    *reinterpret_cast<const uint32_t *>(pSrc + elt.gdalOffset);
                 bool bHasWarned = false;
-                const uint16_t uint16Val = CPLFloatToHalf(uint32Val, bHasWarned);
+                const uint16_t uint16Val =
+                    CPLFloatToHalf(uint32Val, bHasWarned);
                 memcpy(pDst + elt.nativeOffset, &uint16Val, sizeof(uint16Val));
             }
             else
@@ -503,15 +509,18 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII )
+        else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
-            const char* pStr = *reinterpret_cast<const char* const*>(pSrc + elt.gdalOffset);
-            if( pStr )
+            const char *pStr =
+                *reinterpret_cast<const char *const *>(pSrc + elt.gdalOffset);
+            if (pStr)
             {
                 const size_t nLen = strlen(pStr);
-                memcpy(pDst + elt.nativeOffset, pStr, std::min(nLen, elt.nativeSize));
-                if( nLen < elt.nativeSize )
-                    memset(pDst + elt.nativeOffset + nLen, 0, elt.nativeSize - nLen);
+                memcpy(pDst + elt.nativeOffset, pStr,
+                       std::min(nLen, elt.nativeSize));
+                if (nLen < elt.nativeSize)
+                    memset(pDst + elt.nativeOffset + nLen, 0,
+                           elt.nativeSize - nLen);
             }
             else
             {
@@ -520,9 +529,8 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
         }
         else
         {
-            CPLAssert( elt.nativeSize == elt.gdalSize );
-            memcpy(pDst + elt.nativeOffset,
-                   pSrc + elt.gdalOffset,
+            CPLAssert(elt.nativeSize == elt.gdalSize);
+            memcpy(pDst + elt.nativeOffset, pSrc + elt.gdalOffset,
                    elt.nativeSize);
         }
     }
@@ -532,32 +540,32 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
 /*           StripUselessItemsFromCompressorConfiguration()             */
 /************************************************************************/
 
-static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject& o)
+static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 {
-    o.Delete("num_threads"); // Blosc
-    o.Delete("typesize"); // Blosc
-    o.Delete("header"); // LZ4
+    o.Delete("num_threads");  // Blosc
+    o.Delete("typesize");     // Blosc
+    o.Delete("header");       // LZ4
 }
 
 /************************************************************************/
 /*                ZarrArray::SerializeNumericNoData()                   */
 /************************************************************************/
 
-void ZarrArray::SerializeNumericNoData(CPLJSONObject& oRoot) const
+void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
 {
-    if( m_oType.GetNumericDataType() == GDT_Int64 )
+    if (m_oType.GetNumericDataType() == GDT_Int64)
     {
         const auto nVal = GetNoDataValueAsInt64();
         oRoot.Add("fill_value", static_cast<GInt64>(nVal));
     }
-    else if( m_oType.GetNumericDataType() == GDT_UInt64 )
+    else if (m_oType.GetNumericDataType() == GDT_UInt64)
     {
         const auto nVal = GetNoDataValueAsUInt64();
-        if( nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) )
+        if (nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
         {
             oRoot.Add("fill_value", static_cast<GInt64>(nVal));
         }
-        else if( nVal == static_cast<uint64_t>(static_cast<double>(nVal)) )
+        else if (nVal == static_cast<uint64_t>(static_cast<double>(nVal)))
         {
             oRoot.Add("fill_value", static_cast<double>(nVal));
         }
@@ -571,13 +579,13 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject& oRoot) const
     else
     {
         const double dfVal = GetNoDataValueAsDouble();
-        if( std::isnan(dfVal) )
+        if (std::isnan(dfVal))
             oRoot.Add("fill_value", "NaN");
-        else if( dfVal == std::numeric_limits<double>::infinity() )
+        else if (dfVal == std::numeric_limits<double>::infinity())
             oRoot.Add("fill_value", "Infinity");
-        else if( dfVal == -std::numeric_limits<double>::infinity() )
+        else if (dfVal == -std::numeric_limits<double>::infinity())
             oRoot.Add("fill_value", "-Infinity");
-        else if( GDALDataTypeIsInteger(m_oType.GetNumericDataType()) )
+        else if (GDALDataTypeIsInteger(m_oType.GetNumericDataType()))
             oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
         else
             oRoot.Add("fill_value", dfVal);
@@ -594,13 +602,13 @@ void ZarrArray::SerializeV2()
     CPLJSONObject oRoot = oDoc.GetRoot();
 
     CPLJSONArray oChunks;
-    for( const auto nBlockSize: m_anBlockSize )
+    for (const auto nBlockSize : m_anBlockSize)
     {
         oChunks.Add(static_cast<GInt64>(nBlockSize));
     }
     oRoot.Add("chunks", oChunks);
 
-    if( m_oCompressorJSonV2.IsValid() )
+    if (m_oCompressorJSonV2.IsValid())
     {
         oRoot.Add("compressor", m_oCompressorJSonV2);
         CPLJSONObject compressor = oRoot["compressor"];
@@ -611,18 +619,18 @@ void ZarrArray::SerializeV2()
         oRoot.AddNull("compressor");
     }
 
-    if( m_dtype.GetType() == CPLJSONObject::Type::Object )
+    if (m_dtype.GetType() == CPLJSONObject::Type::Object)
         oRoot.Add("dtype", m_dtype["dummy"]);
     else
         oRoot.Add("dtype", m_dtype);
 
-    if( m_pabyNoData == nullptr )
+    if (m_pabyNoData == nullptr)
     {
         oRoot.AddNull("fill_value");
     }
     else
     {
-        switch( m_oType.GetClass() )
+        switch (m_oType.GetClass())
         {
             case GEDTC_NUMERIC:
             {
@@ -632,14 +640,15 @@ void ZarrArray::SerializeV2()
 
             case GEDTC_STRING:
             {
-                char* pszStr;
-                char** ppszStr = reinterpret_cast<char**>(m_pabyNoData);
+                char *pszStr;
+                char **ppszStr = reinterpret_cast<char **>(m_pabyNoData);
                 memcpy(&pszStr, ppszStr, sizeof(pszStr));
-                if( pszStr )
+                if (pszStr)
                 {
-                    const size_t nNativeSize = m_aoDtypeElts.back().nativeOffset +
-                                               m_aoDtypeElts.back().nativeSize;
-                    char* base64 = CPLBase64Encode(
+                    const size_t nNativeSize =
+                        m_aoDtypeElts.back().nativeOffset +
+                        m_aoDtypeElts.back().nativeSize;
+                    char *base64 = CPLBase64Encode(
                         static_cast<int>(std::min(nNativeSize, strlen(pszStr))),
                         reinterpret_cast<const GByte *>(pszStr));
                     oRoot.Add("fill_value", base64);
@@ -658,7 +667,7 @@ void ZarrArray::SerializeV2()
                                            m_aoDtypeElts.back().nativeSize;
                 std::vector<GByte> nativeNoData(nNativeSize);
                 EncodeElt(m_aoDtypeElts, m_pabyNoData, &nativeNoData[0]);
-                char* base64 = CPLBase64Encode(static_cast<int>(nNativeSize),
+                char *base64 = CPLBase64Encode(static_cast<int>(nNativeSize),
                                                nativeNoData.data());
                 oRoot.Add("fill_value", base64);
                 CPLFree(base64);
@@ -666,15 +675,15 @@ void ZarrArray::SerializeV2()
         }
     }
 
-    if( m_oFiltersArray.Size() == 0 )
+    if (m_oFiltersArray.Size() == 0)
         oRoot.AddNull("filters");
     else
         oRoot.Add("filters", m_oFiltersArray);
 
-    oRoot.Add("order", m_bFortranOrder ? "F": "C");
+    oRoot.Add("order", m_bFortranOrder ? "F" : "C");
 
     CPLJSONArray oShape;
-    for( const auto& poDim: m_aoDims )
+    for (const auto &poDim : m_aoDims)
     {
         oShape.Add(static_cast<GInt64>(poDim->GetSize()));
     }
@@ -682,7 +691,7 @@ void ZarrArray::SerializeV2()
 
     oRoot.Add("zarr_format", m_nVersion);
 
-    if( m_osDimSeparator != "." )
+    if (m_osDimSeparator != ".")
     {
         oRoot.Add("dimension_separator", m_osDimSeparator);
     }
@@ -696,13 +705,13 @@ void ZarrArray::SerializeV2()
 /*                    ZarrArray::SerializeV3()                          */
 /************************************************************************/
 
-void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
+void ZarrArray::SerializeV3(const CPLJSONObject &oAttrs)
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
 
     CPLJSONArray oShape;
-    for( const auto& poDim: m_aoDims )
+    for (const auto &poDim : m_aoDims)
     {
         oShape.Add(static_cast<GInt64>(poDim->GetSize()));
     }
@@ -713,7 +722,7 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
     CPLJSONObject oChunkGrid;
     oChunkGrid.Add("type", "regular");
     CPLJSONArray oChunks;
-    for( const auto nBlockSize: m_anBlockSize )
+    for (const auto nBlockSize : m_anBlockSize)
     {
         oChunks.Add(static_cast<GInt64>(nBlockSize));
     }
@@ -721,14 +730,14 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
     oChunkGrid.Add("separator", m_osDimSeparator);
     oRoot.Add("chunk_grid", oChunkGrid);
 
-    if( m_oCompressorJSonV3.IsValid() )
+    if (m_oCompressorJSonV3.IsValid())
     {
         oRoot.Add("compressor", m_oCompressorJSonV3);
         CPLJSONObject oConfiguration = oRoot["compressor"]["configuration"];
         StripUselessItemsFromCompressorConfiguration(oConfiguration);
     }
 
-    if( m_pabyNoData == nullptr )
+    if (m_pabyNoData == nullptr)
     {
         oRoot.AddNull("fill_value");
     }
@@ -737,7 +746,7 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
         SerializeNumericNoData(oRoot);
     }
 
-    oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F": "C");
+    oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F" : "C");
 
     oRoot.Add("extensions", CPLJSONArray());
 
@@ -752,19 +761,20 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
 
 bool ZarrArray::NeedDecodedBuffer() const
 {
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
-    if( m_oType.GetClass() == GEDTC_COMPOUND && nSourceSize != m_oType.GetSize() )
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+    if (m_oType.GetClass() == GEDTC_COMPOUND &&
+        nSourceSize != m_oType.GetSize())
     {
         return true;
     }
-    else if( m_oType.GetClass() != GEDTC_STRING )
+    else if (m_oType.GetClass() != GEDTC_STRING)
     {
-        for( const auto& elt: m_aoDtypeElts )
+        for (const auto &elt : m_aoDtypeElts)
         {
-            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
+            if (elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
                 elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
-                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
             {
                 return true;
             }
@@ -779,35 +789,36 @@ bool ZarrArray::NeedDecodedBuffer() const
 
 bool ZarrArray::AllocateWorkingBuffers() const
 {
-    if( m_bAllocateWorkingBuffersDone )
+    if (m_bAllocateWorkingBuffersDone)
         return m_bWorkingBuffersOK;
 
     m_bAllocateWorkingBuffersDone = true;
 
     size_t nSizeNeeded = m_nTileSize;
-    if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
+    if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
     {
-        if( nSizeNeeded > std::numeric_limits<size_t>::max() / 2 )
+        if (nSizeNeeded > std::numeric_limits<size_t>::max() / 2)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
             return false;
         }
         nSizeNeeded *= 2;
     }
-    if( NeedDecodedBuffer() )
+    if (NeedDecodedBuffer())
     {
         size_t nDecodedBufferSize = m_oType.GetSize();
-        for( const auto& nBlockSize: m_anBlockSize )
+        for (const auto &nBlockSize : m_anBlockSize)
         {
-            if( nDecodedBufferSize > std::numeric_limits<size_t>::max() /
-                                        static_cast<size_t>(nBlockSize) )
+            if (nDecodedBufferSize > std::numeric_limits<size_t>::max() /
+                                         static_cast<size_t>(nBlockSize))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
                 return false;
             }
             nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
         }
-        if( nSizeNeeded > std::numeric_limits<size_t>::max() - nDecodedBufferSize )
+        if (nSizeNeeded >
+            std::numeric_limits<size_t>::max() - nDecodedBufferSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
             return false;
@@ -816,26 +827,26 @@ bool ZarrArray::AllocateWorkingBuffers() const
     }
 
     // Reserve a buffer for tile content
-    if( nSizeNeeded > 1024 * 1024 * 1024 &&
-        !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")) )
+    if (nSizeNeeded > 1024 * 1024 * 1024 &&
+        !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
                  "By default the driver limits to 1 GB. To allow that memory "
                  "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.", static_cast<GUIntBig>(nSizeNeeded));
+                 "option to YES.",
+                 static_cast<GUIntBig>(nSizeNeeded));
         return false;
     }
 
-    m_bWorkingBuffersOK = AllocateWorkingBuffers(m_abyRawTileData,
-                                                 m_abyTmpRawTileData,
-                                                 m_abyDecodedTileData);
+    m_bWorkingBuffersOK = AllocateWorkingBuffers(
+        m_abyRawTileData, m_abyTmpRawTileData, m_abyDecodedTileData);
     return m_bWorkingBuffersOK;
 }
 
-bool ZarrArray::AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
-                                       std::vector<GByte>& abyTmpRawTileData,
-                                       std::vector<GByte>& abyDecodedTileData) const
+bool ZarrArray::AllocateWorkingBuffers(
+    std::vector<GByte> &abyRawTileData, std::vector<GByte> &abyTmpRawTileData,
+    std::vector<GByte> &abyDecodedTileData) const
 {
     // This method should NOT modify any ZarrArray member, as it is going to
     // be called concurrently from several threads.
@@ -847,28 +858,28 @@ bool ZarrArray::AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
 
     try
     {
-        abyRawTileData.resize( m_nTileSize );
-        if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
-            abyTmpRawTileData.resize( m_nTileSize );
+        abyRawTileData.resize(m_nTileSize);
+        if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
+            abyTmpRawTileData.resize(m_nTileSize);
     }
-    catch( const std::bad_alloc& e )
+    catch (const std::bad_alloc &e)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
         return false;
     }
 
-    if( NeedDecodedBuffer() )
+    if (NeedDecodedBuffer())
     {
         size_t nDecodedBufferSize = m_oType.GetSize();
-        for( const auto& nBlockSize: m_anBlockSize )
+        for (const auto &nBlockSize : m_anBlockSize)
         {
             nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
         }
         try
         {
-            abyDecodedTileData.resize( nDecodedBufferSize );
+            abyDecodedTileData.resize(nDecodedBufferSize);
         }
-        catch( const std::bad_alloc& e )
+        catch (const std::bad_alloc &e)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return false;
@@ -887,7 +898,7 @@ bool ZarrArray::AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
 
 std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 {
-    if( m_poSRS )
+    if (m_poSRS)
         return m_poSRS;
     return GDALPamMDArray::GetSpatialRef();
 }
@@ -896,12 +907,11 @@ std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 /*                        SetRawNoDataValue()                           */
 /************************************************************************/
 
-bool ZarrArray::SetRawNoDataValue(const void* pRawNoData)
+bool ZarrArray::SetRawNoDataValue(const void *pRawNoData)
 {
-    if( !m_bUpdatable )
+    if (!m_bUpdatable)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Array opened in read-only mode");
+        CPLError(CE_Failure, CPLE_AppDefined, "Array opened in read-only mode");
         return false;
     }
     m_bDefinitionModified = true;
@@ -913,14 +923,14 @@ bool ZarrArray::SetRawNoDataValue(const void* pRawNoData)
 /*                        RegisterNoDataValue()                         */
 /************************************************************************/
 
-void ZarrArray::RegisterNoDataValue(const void* pNoData)
+void ZarrArray::RegisterNoDataValue(const void *pNoData)
 {
-    if( m_pabyNoData )
+    if (m_pabyNoData)
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
     }
 
-    if( pNoData == nullptr )
+    if (pNoData == nullptr)
     {
         CPLFree(m_pabyNoData);
         m_pabyNoData = nullptr;
@@ -928,12 +938,13 @@ void ZarrArray::RegisterNoDataValue(const void* pNoData)
     else
     {
         const auto nSize = m_oType.GetSize();
-        if( m_pabyNoData == nullptr )
+        if (m_pabyNoData == nullptr)
         {
-            m_pabyNoData = static_cast<GByte*>(CPLMalloc(nSize));
+            m_pabyNoData = static_cast<GByte *>(CPLMalloc(nSize));
         }
         memset(m_pabyNoData, 0, nSize);
-        GDALExtendedDataType::CopyValue( pNoData, m_oType, m_pabyNoData, m_oType );
+        GDALExtendedDataType::CopyValue(pNoData, m_oType, m_pabyNoData,
+                                        m_oType);
     }
 }
 
@@ -941,59 +952,59 @@ void ZarrArray::RegisterNoDataValue(const void* pNoData)
 /*                      ZarrArray::BlockTranspose()                     */
 /************************************************************************/
 
-void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
-                               std::vector<GByte>& abyDst,
-                               bool bDecode) const
+void ZarrArray::BlockTranspose(const std::vector<GByte> &abySrc,
+                               std::vector<GByte> &abyDst, bool bDecode) const
 {
     // Perform transposition
     const size_t nDims = m_anBlockSize.size();
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
 
     struct Stack
     {
-        size_t       nIters = 0;
-        const GByte* src_ptr = nullptr;
-        GByte*       dst_ptr = nullptr;
-        size_t       src_inc_offset = 0;
-        size_t       dst_inc_offset = 0;
+        size_t nIters = 0;
+        const GByte *src_ptr = nullptr;
+        GByte *dst_ptr = nullptr;
+        size_t src_inc_offset = 0;
+        size_t dst_inc_offset = 0;
     };
 
     std::vector<Stack> stack(nDims);
-    stack.emplace_back(Stack()); // to make gcc 9.3 -O2 -Wnull-dereference happy
+    stack.emplace_back(
+        Stack());  // to make gcc 9.3 -O2 -Wnull-dereference happy
 
-    if( bDecode )
+    if (bDecode)
     {
         stack[0].src_inc_offset = nSourceSize;
-        for( size_t i = 1; i < nDims; ++i )
+        for (size_t i = 1; i < nDims; ++i)
         {
-            stack[i].src_inc_offset = stack[i-1].src_inc_offset *
-                                    static_cast<size_t>(m_anBlockSize[i-1]);
+            stack[i].src_inc_offset = stack[i - 1].src_inc_offset *
+                                      static_cast<size_t>(m_anBlockSize[i - 1]);
         }
 
-        stack[nDims-1].dst_inc_offset = nSourceSize;
-        for( size_t i = nDims - 1; i > 0; )
+        stack[nDims - 1].dst_inc_offset = nSourceSize;
+        for (size_t i = nDims - 1; i > 0;)
         {
             --i;
-            stack[i].dst_inc_offset = stack[i+1].dst_inc_offset *
-                                    static_cast<size_t>(m_anBlockSize[i+1]);
+            stack[i].dst_inc_offset = stack[i + 1].dst_inc_offset *
+                                      static_cast<size_t>(m_anBlockSize[i + 1]);
         }
     }
     else
     {
         stack[0].dst_inc_offset = nSourceSize;
-        for( size_t i = 1; i < nDims; ++i )
+        for (size_t i = 1; i < nDims; ++i)
         {
-            stack[i].dst_inc_offset = stack[i-1].dst_inc_offset *
-                                    static_cast<size_t>(m_anBlockSize[i-1]);
+            stack[i].dst_inc_offset = stack[i - 1].dst_inc_offset *
+                                      static_cast<size_t>(m_anBlockSize[i - 1]);
         }
 
-        stack[nDims-1].src_inc_offset = nSourceSize;
-        for( size_t i = nDims - 1; i > 0; )
+        stack[nDims - 1].src_inc_offset = nSourceSize;
+        for (size_t i = nDims - 1; i > 0;)
         {
             --i;
-            stack[i].src_inc_offset = stack[i+1].src_inc_offset *
-                                    static_cast<size_t>(m_anBlockSize[i+1]);
+            stack[i].src_inc_offset = stack[i + 1].src_inc_offset *
+                                      static_cast<size_t>(m_anBlockSize[i + 1]);
         }
     }
 
@@ -1002,39 +1013,42 @@ void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
 
     size_t dimIdx = 0;
 lbl_next_depth:
-    if( dimIdx == nDims )
+    if (dimIdx == nDims)
     {
-        void* dst_ptr = stack[nDims].dst_ptr;
-        const void* src_ptr = stack[nDims].src_ptr;
-        if( nSourceSize == 1 )
+        void *dst_ptr = stack[nDims].dst_ptr;
+        const void *src_ptr = stack[nDims].src_ptr;
+        if (nSourceSize == 1)
             *stack[nDims].dst_ptr = *stack[nDims].src_ptr;
-        else if( nSourceSize == 2 )
-            *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr);
-        else if( nSourceSize == 4 )
-            *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr);
-        else if( nSourceSize == 8 )
-            *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr);
+        else if (nSourceSize == 2)
+            *static_cast<uint16_t *>(dst_ptr) =
+                *static_cast<const uint16_t *>(src_ptr);
+        else if (nSourceSize == 4)
+            *static_cast<uint32_t *>(dst_ptr) =
+                *static_cast<const uint32_t *>(src_ptr);
+        else if (nSourceSize == 8)
+            *static_cast<uint64_t *>(dst_ptr) =
+                *static_cast<const uint64_t *>(src_ptr);
         else
             memcpy(dst_ptr, src_ptr, nSourceSize);
     }
     else
     {
         stack[dimIdx].nIters = static_cast<size_t>(m_anBlockSize[dimIdx]);
-        while(true)
+        while (true)
         {
-            dimIdx ++;
-            stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
-            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            dimIdx++;
+            stack[dimIdx].src_ptr = stack[dimIdx - 1].src_ptr;
+            stack[dimIdx].dst_ptr = stack[dimIdx - 1].dst_ptr;
             goto lbl_next_depth;
-lbl_return_to_caller:
-            dimIdx --;
-            if( (--stack[dimIdx].nIters) == 0 )
+        lbl_return_to_caller:
+            dimIdx--;
+            if ((--stack[dimIdx].nIters) == 0)
                 break;
             stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
             stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
         }
     }
-    if( dimIdx > 0 )
+    if (dimIdx > 0)
         goto lbl_return_to_caller;
 }
 
@@ -1042,77 +1056,77 @@ lbl_return_to_caller:
 /*                        DecodeSourceElt()                             */
 /************************************************************************/
 
-static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
-                            const GByte* pSrc,
-                            GByte* pDst)
+static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
+                            const GByte *pSrc, GByte *pDst)
 {
-    for( auto& elt: elts )
+    for (auto &elt : elts)
     {
-        if( elt.nativeType == DtypeElt::NativeType::STRING_UNICODE )
+        if (elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
         {
-            char* ptr;
-            char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+            char *ptr;
+            char **pDstPtr = reinterpret_cast<char **>(pDst + elt.gdalOffset);
             memcpy(&ptr, pDstPtr, sizeof(ptr));
             VSIFree(ptr);
 
-            char* pDstStr = UCS4ToUTF8(pSrc + elt.nativeOffset, elt.nativeSize,
+            char *pDstStr = UCS4ToUTF8(pSrc + elt.nativeOffset, elt.nativeSize,
                                        elt.needByteSwapping);
             memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
         }
-        else if( elt.needByteSwapping )
+        else if (elt.needByteSwapping)
         {
-            if( elt.nativeSize == 2 )
+            if (elt.nativeSize == 2)
             {
                 uint16_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                if( elt.gdalTypeIsApproxOfNative )
+                if (elt.gdalTypeIsApproxOfNative)
                 {
-                    CPLAssert( elt.nativeType == DtypeElt::NativeType::IEEEFP );
-                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
+                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
                     uint32_t uint32Val = CPLHalfToFloat(CPL_SWAP16(val));
-                    memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
+                    memcpy(pDst + elt.gdalOffset, &uint32Val,
+                           sizeof(uint32Val));
                 }
                 else
                 {
-                    *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
+                    *reinterpret_cast<uint16_t *>(pDst + elt.gdalOffset) =
                         CPL_SWAP16(val);
                 }
             }
-            else if( elt.nativeSize == 4 )
+            else if (elt.nativeSize == 4)
             {
                 uint32_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                *reinterpret_cast<uint32_t *>(pDst + elt.gdalOffset) =
                     CPL_SWAP32(val);
             }
-            else if( elt.nativeSize == 8 )
+            else if (elt.nativeSize == 8)
             {
-                if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
+                if (elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP)
                 {
                     uint32_t val;
                     memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                    *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                    *reinterpret_cast<uint32_t *>(pDst + elt.gdalOffset) =
                         CPL_SWAP32(val);
                     memcpy(&val, pSrc + elt.nativeOffset + 4, sizeof(val));
-                    *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset + 4) =
+                    *reinterpret_cast<uint32_t *>(pDst + elt.gdalOffset + 4) =
                         CPL_SWAP32(val);
                 }
                 else
                 {
                     uint64_t val;
                     memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                    *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                    *reinterpret_cast<uint64_t *>(pDst + elt.gdalOffset) =
                         CPL_SWAP64(val);
                 }
             }
-            else if( elt.nativeSize == 16 )
+            else if (elt.nativeSize == 16)
             {
                 uint64_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                *reinterpret_cast<uint64_t *>(pDst + elt.gdalOffset) =
                     CPL_SWAP64(val);
                 memcpy(&val, pSrc + elt.nativeOffset + 8, sizeof(val));
-                *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset + 8) =
+                *reinterpret_cast<uint64_t *>(pDst + elt.gdalOffset + 8) =
                     CPL_SWAP64(val);
             }
             else
@@ -1120,19 +1134,20 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.gdalTypeIsApproxOfNative )
+        else if (elt.gdalTypeIsApproxOfNative)
         {
-            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                elt.nativeSize == 1 )
+            if (elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                elt.nativeSize == 1)
             {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
-                int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
+                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Int16);
+                int16_t intVal =
+                    *reinterpret_cast<const int8_t *>(pSrc + elt.nativeOffset);
                 memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
             }
-            else if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                     elt.nativeSize == 2 )
+            else if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
+                     elt.nativeSize == 2)
             {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
                 uint16_t uint16Val;
                 memcpy(&uint16Val, pSrc + elt.nativeOffset, sizeof(uint16Val));
                 uint32_t uint32Val = CPLHalfToFloat(uint16Val);
@@ -1143,23 +1158,22 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                 CPLAssert(false);
             }
         }
-        else if( elt.nativeType == DtypeElt::NativeType::STRING_ASCII )
+        else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
-            char* ptr;
-            char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+            char *ptr;
+            char **pDstPtr = reinterpret_cast<char **>(pDst + elt.gdalOffset);
             memcpy(&ptr, pDstPtr, sizeof(ptr));
             VSIFree(ptr);
 
-            char* pDstStr = static_cast<char*>(CPLMalloc(elt.nativeSize + 1));
+            char *pDstStr = static_cast<char *>(CPLMalloc(elt.nativeSize + 1));
             memcpy(pDstStr, pSrc + elt.nativeOffset, elt.nativeSize);
             pDstStr[elt.nativeSize] = 0;
             memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
         }
         else
         {
-            CPLAssert( elt.nativeSize == elt.gdalSize );
-            memcpy(pDst + elt.gdalOffset,
-                   pSrc + elt.nativeOffset,
+            CPLAssert(elt.nativeSize == elt.gdalSize);
+            memcpy(pDst + elt.gdalOffset, pSrc + elt.nativeOffset,
                    elt.nativeSize);
         }
     }
@@ -1169,25 +1183,21 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
 /*                        ZarrArray::LoadTileData()                     */
 /************************************************************************/
 
-bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
-                             bool& bMissingTileOut) const
+bool ZarrArray::LoadTileData(const uint64_t *tileIndices,
+                             bool &bMissingTileOut) const
 {
     return LoadTileData(tileIndices,
-                        false, // use mutex
-                        m_psDecompressor,
-                        m_abyRawTileData,
-                        m_abyTmpRawTileData,
-                        m_abyDecodedTileData,
-                        bMissingTileOut);
+                        false,  // use mutex
+                        m_psDecompressor, m_abyRawTileData, m_abyTmpRawTileData,
+                        m_abyDecodedTileData, bMissingTileOut);
 }
 
-bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
-                             bool bUseMutex,
-                             const CPLCompressor* psDecompressor,
-                             std::vector<GByte>& abyRawTileData,
-                             std::vector<GByte>& abyTmpRawTileData,
-                             std::vector<GByte>& abyDecodedTileData,
-                             bool& bMissingTileOut) const
+bool ZarrArray::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
+                             const CPLCompressor *psDecompressor,
+                             std::vector<GByte> &abyRawTileData,
+                             std::vector<GByte> &abyTmpRawTileData,
+                             std::vector<GByte> &abyDecodedTileData,
+                             bool &bMissingTileOut) const
 {
     // This method should NOT modify any ZarrArray member, as it is going to
     // be called concurrently from several threads.
@@ -1201,91 +1211,92 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
     bMissingTileOut = false;
 
     std::string osFilename;
-    if( m_aoDims.empty() )
+    if (m_aoDims.empty())
     {
         osFilename = "0";
     }
     else
     {
-        for( size_t i = 0; i < m_aoDims.size(); ++i )
+        for (size_t i = 0; i < m_aoDims.size(); ++i)
         {
-            if( !osFilename.empty() )
+            if (!osFilename.empty())
                 osFilename += m_osDimSeparator;
             osFilename += std::to_string(tileIndices[i]);
         }
     }
 
-    if( m_nVersion == 2 )
+    if (m_nVersion == 2)
     {
-        osFilename = CPLFormFilename(
-            CPLGetDirname(m_osFilename.c_str()), osFilename.c_str(), nullptr);
+        osFilename = CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
+                                     osFilename.c_str(), nullptr);
     }
     else
     {
         std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if( GetFullName() != "/" )
+        if (GetFullName() != "/")
             osTmp += GetFullName();
         osFilename = osTmp + "/c" + osFilename;
     }
 
     // For network file systems, get the streaming version of the filename,
     // as we don't need arbitrary seeking in the file
-    osFilename = VSIFileManager::GetHandler( osFilename.c_str() )->GetStreamingFilename(osFilename);
+    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
+                     ->GetStreamingFilename(osFilename);
 
     // First if we have a tile presence cache, check tile presence from it
-    if( bUseMutex )
+    if (bUseMutex)
         m_oMutex.lock();
     auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if( poTilePresenceArray )
+    if (poTilePresenceArray)
     {
         std::vector<GUInt64> anTileIdx(m_aoDims.size());
         const std::vector<size_t> anCount(m_aoDims.size(), 1);
         const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
         const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
         const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for( size_t i = 0; i < m_aoDims.size(); ++i )
+        for (size_t i = 0; i < m_aoDims.size(); ++i)
         {
             anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
         }
         GByte byValue = 0;
-        if( poTilePresenceArray->Read(anTileIdx.data(),
-                                       anCount.data(),
-                                       anArrayStep.data(),
-                                       anBufferStride.data(),
-                                       eByteDT,
-                                       &byValue) &&
-            byValue == 0 )
+        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
+                                      anArrayStep.data(), anBufferStride.data(),
+                                      eByteDT, &byValue) &&
+            byValue == 0)
         {
-            if( bUseMutex )
+            if (bUseMutex)
                 m_oMutex.unlock();
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                         osFilename.c_str());
             bMissingTileOut = true;
             return true;
         }
     }
-    if( bUseMutex )
+    if (bUseMutex)
         m_oMutex.unlock();
 
-    VSILFILE* fp = nullptr;
+    VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
     constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
-    if( (m_osDimSeparator == "/" &&
-            m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
+    if ((m_osDimSeparator == "/" &&
+         m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
         (m_osDimSeparator != "/" &&
-            m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) )
+         m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING))
     {
         // Avoid issuing ReadDir() when a lot of files are expected
-        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN", "YES", true);
+        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN",
+                                           "YES", true);
         fp = VSIFOpenL(osFilename.c_str(), "rb");
     }
     else
     {
         fp = VSIFOpenL(osFilename.c_str(), "rb");
     }
-    if( fp == nullptr )
+    if (fp == nullptr)
     {
         // Missing files are OK and indicate nodata_value
-        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
+        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
+                     osFilename.c_str());
         bMissingTileOut = true;
         return true;
     }
@@ -1293,7 +1304,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
     bMissingTileOut = false;
     bool bRet = true;
     size_t nRawDataSize = abyRawTileData.size();
-    if( psDecompressor == nullptr )
+    if (psDecompressor == nullptr)
     {
         nRawDataSize = VSIFReadL(&abyRawTileData[0], 1, nRawDataSize, fp);
     }
@@ -1302,7 +1313,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         VSIFSeekL(fp, 0, SEEK_END);
         const auto nSize = VSIFTellL(fp);
         VSIFSeekL(fp, 0, SEEK_SET);
-        if( nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
+        if (nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large tile %s",
                      osFilename.c_str());
@@ -1314,9 +1325,8 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
             try
             {
                 abyCompressedData.resize(static_cast<size_t>(nSize));
-
             }
-            catch( const std::exception& )
+            catch (const std::exception &)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Cannot allocate memory for tile %s",
@@ -1324,10 +1334,10 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
                 bRet = false;
             }
 
-            if( bRet &&
+            if (bRet &&
                 (abyCompressedData.empty() ||
                  VSIFReadL(&abyCompressedData[0], 1, abyCompressedData.size(),
-                          fp) != abyCompressedData.size()) )
+                           fp) != abyCompressedData.size()))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Could not read tile %s correctly",
@@ -1336,12 +1346,11 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
             }
             else
             {
-                void* out_buffer = &abyRawTileData[0];
-                if( !psDecompressor->pfnFunc(abyCompressedData.data(),
-                                             abyCompressedData.size(),
-                                             &out_buffer, &nRawDataSize,
-                                             nullptr,
-                                             psDecompressor->user_data ))
+                void *out_buffer = &abyRawTileData[0];
+                if (!psDecompressor->pfnFunc(
+                        abyCompressedData.data(), abyCompressedData.size(),
+                        &out_buffer, &nRawDataSize, nullptr,
+                        psDecompressor->user_data))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Decompression of tile %s failed",
@@ -1352,42 +1361,40 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         }
     }
     VSIFCloseL(fp);
-    if( !bRet )
+    if (!bRet)
         return false;
 
-    for( int i = m_oFiltersArray.Size(); i > 0; )
+    for (int i = m_oFiltersArray.Size(); i > 0;)
     {
         --i;
-        const auto& oFilter = m_oFiltersArray[i];
+        const auto &oFilter = m_oFiltersArray[i];
         const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterDecompressor = CPLGetDecompressor( osFilterId.c_str() );
+        const auto psFilterDecompressor =
+            CPLGetDecompressor(osFilterId.c_str());
         CPLAssert(psFilterDecompressor);
 
         CPLStringList aosOptions;
-        for( const auto& obj: oFilter.GetChildren() )
+        for (const auto &obj : oFilter.GetChildren())
         {
             aosOptions.SetNameValue(obj.GetName().c_str(),
                                     obj.ToString().c_str());
         }
-        void* out_buffer = &abyTmpRawTileData[0];
+        void *out_buffer = &abyTmpRawTileData[0];
         size_t nOutSize = abyTmpRawTileData.size();
-        if( !psFilterDecompressor->pfnFunc(abyRawTileData.data(),
-                                         nRawDataSize,
-                                         &out_buffer,
-                                         &nOutSize,
-                                         aosOptions.List(),
-                                         psFilterDecompressor->user_data ) )
+        if (!psFilterDecompressor->pfnFunc(
+                abyRawTileData.data(), nRawDataSize, &out_buffer, &nOutSize,
+                aosOptions.List(), psFilterDecompressor->user_data))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Filter %s for tile %s failed",
-                     osFilterId.c_str(), osFilename.c_str());
+                     "Filter %s for tile %s failed", osFilterId.c_str(),
+                     osFilename.c_str());
             return false;
         }
 
         nRawDataSize = nOutSize;
         std::swap(abyRawTileData, abyTmpRawTileData);
     }
-    if( nRawDataSize != abyRawTileData.size() )
+    if (nRawDataSize != abyRawTileData.size())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Decompressed tile %s has not expected size after filters",
@@ -1395,21 +1402,22 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         return false;
     }
 
-    if( m_bFortranOrder && !m_aoDims.empty() )
+    if (m_bFortranOrder && !m_aoDims.empty())
     {
         BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
         std::swap(abyRawTileData, abyTmpRawTileData);
     }
 
-    if( !abyDecodedTileData.empty() )
+    if (!abyDecodedTileData.empty())
     {
-        const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                                   m_aoDtypeElts.back().nativeSize;
+        const size_t nSourceSize =
+            m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
         const auto nDTSize = m_oType.GetSize();
         const size_t nValues = abyDecodedTileData.size() / nDTSize;
-        const GByte* pSrc = abyRawTileData.data();
-        GByte* pDst = &abyDecodedTileData[0];
-        for( size_t i = 0; i < nValues; i++, pSrc += nSourceSize, pDst += nDTSize )
+        const GByte *pSrc = abyRawTileData.data();
+        GByte *pDst = &abyDecodedTileData[0];
+        for (size_t i = 0; i < nValues;
+             i++, pSrc += nSourceSize, pDst += nDTSize)
         {
             DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
         }
@@ -1427,8 +1435,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
 /*                      ZarrArray::IAdviseRead()                        */
 /************************************************************************/
 
-bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
-                            const size_t* count,
+bool ZarrArray::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                             CSLConstList papszOptions) const
 {
     const size_t nDims = m_aoDims.size();
@@ -1439,7 +1446,7 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
     // Compute min and max tile indices in each dimension, and the total
     // nomber of tiles this represents.
     uint64_t nReqTiles = 1;
-    for( size_t i = 0; i < nDims; ++i )
+    for (size_t i = 0; i < nDims; ++i)
     {
         anIndicesMin[i] = arrayStartIdx[i] / m_anBlockSize[i];
         anIndicesMax[i] = (arrayStartIdx[i] + count[i] - 1) / m_anBlockSize[i];
@@ -1451,13 +1458,13 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
     const size_t nCacheSize = [papszOptions]()
     {
         size_t nCacheSizeTmp;
-        const char* pszCacheSize = CSLFetchNameValue(papszOptions, "CACHE_SIZE");
-        if( pszCacheSize )
+        const char *pszCacheSize =
+            CSLFetchNameValue(papszOptions, "CACHE_SIZE");
+        if (pszCacheSize)
         {
             const auto nCacheSizeBig = CPLAtoGIntBig(pszCacheSize);
-            if( nCacheSizeBig < 0 ||
-                static_cast<uint64_t>(nCacheSizeBig) >
-                        std::numeric_limits<size_t>::max() / 2 )
+            if (nCacheSizeBig < 0 || static_cast<uint64_t>(nCacheSizeBig) >
+                                         std::numeric_limits<size_t>::max() / 2)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big CACHE_SIZE");
                 return std::numeric_limits<size_t>::max();
@@ -1467,51 +1474,52 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
         else
         {
             // Arbitrarily take half of remaining cache size
-            nCacheSizeTmp = static_cast<size_t>(
-                std::min(static_cast<uint64_t>(
-                            (GDALGetCacheMax64() - GDALGetCacheUsed64())/2),
-                         static_cast<uint64_t>(
-                             std::numeric_limits<size_t>::max() / 2)));
+            nCacheSizeTmp = static_cast<size_t>(std::min(
+                static_cast<uint64_t>(
+                    (GDALGetCacheMax64() - GDALGetCacheUsed64()) / 2),
+                static_cast<uint64_t>(std::numeric_limits<size_t>::max() / 2)));
             CPLDebug(ZARR_DEBUG_KEY, "Using implicit CACHE_SIZE=" CPL_FRMT_GUIB,
                      static_cast<GUIntBig>(nCacheSizeTmp));
         }
         return nCacheSizeTmp;
     }();
-    if( nCacheSize == std::numeric_limits<size_t>::max() )
+    if (nCacheSize == std::numeric_limits<size_t>::max())
         return false;
 
     // Check that cache size is sufficient to hold all needed tiles.
     // Also check that anReqTilesIndices size computation won't overflow.
-    if( nReqTiles > nCacheSize / std::max(m_nTileSize, nDims) )
+    if (nReqTiles > nCacheSize / std::max(m_nTileSize, nDims))
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "CACHE_SIZE=" CPL_FRMT_GUIB " is not big enough to cache "
-                 "all needed tiles. "
-                 "At least " CPL_FRMT_GUIB " bytes would be needed",
-                 static_cast<GUIntBig>(nCacheSize),
-                 static_cast<GUIntBig>(nReqTiles * std::max(m_nTileSize, nDims)));
+        CPLError(
+            CE_Failure, CPLE_OutOfMemory,
+            "CACHE_SIZE=" CPL_FRMT_GUIB " is not big enough to cache "
+            "all needed tiles. "
+            "At least " CPL_FRMT_GUIB " bytes would be needed",
+            static_cast<GUIntBig>(nCacheSize),
+            static_cast<GUIntBig>(nReqTiles * std::max(m_nTileSize, nDims)));
         return false;
     }
 
     const int nThreadsMax = [papszOptions]()
     {
         int nThreadsTmp;
-        const char* pszNumThreads = CSLFetchNameValueDef(
+        const char *pszNumThreads = CSLFetchNameValueDef(
             papszOptions, "NUM_THREADS",
             CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-        if( EQUAL(pszNumThreads, "ALL_CPUS") )
+        if (EQUAL(pszNumThreads, "ALL_CPUS"))
             nThreadsTmp = CPLGetNumCPUs();
         else
             nThreadsTmp = std::max(1, atoi(pszNumThreads));
-        if( nThreadsTmp > 1024 )
+        if (nThreadsTmp > 1024)
             nThreadsTmp = 1024;
         return nThreadsTmp;
     }();
-    if( nThreadsMax <= 1 )
+    if (nThreadsMax <= 1)
         return true;
-    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads", nThreadsMax);
-    const int nThreads = static_cast<int>(std::min(
-        static_cast<uint64_t>(nThreadsMax), nReqTiles));
+    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",
+             nThreadsMax);
+    const int nThreads = static_cast<int>(
+        std::min(static_cast<uint64_t>(nThreadsMax), nReqTiles));
 
     m_oMapTileIndexToCachedTile.clear();
 
@@ -1519,76 +1527,76 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
     // Overflow checked above
     try
     {
-        anReqTilesIndices.resize( static_cast<size_t>(nDims * nReqTiles) );
+        anReqTilesIndices.resize(static_cast<size_t>(nDims * nReqTiles));
     }
-    catch( const std::bad_alloc& e )
+    catch (const std::bad_alloc &e)
     {
-         CPLError(CE_Failure, CPLE_OutOfMemory,
-                  "Cannot allocate anReqTilesIndices: %s", e.what());
-         return false;
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate anReqTilesIndices: %s", e.what());
+        return false;
     }
 
     size_t dimIdx = 0;
     size_t nTileIter = 0;
 lbl_next_depth:
-    if( dimIdx == nDims )
+    if (dimIdx == nDims)
     {
-        if( nDims == 2 )
+        if (nDims == 2)
         {
             // optimize in common case
-            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
-                    sizeof(uint64_t) * 2 );
+            memcpy(&anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                   sizeof(uint64_t) * 2);
         }
-        else if( nDims == 3 )
+        else if (nDims == 3)
         {
             // optimize in common case
-            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
-                    sizeof(uint64_t) * 3 );
+            memcpy(&anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                   sizeof(uint64_t) * 3);
         }
         else
         {
-            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
-                    sizeof(uint64_t) * nDims );
+            memcpy(&anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                   sizeof(uint64_t) * nDims);
         }
-        nTileIter ++;
+        nTileIter++;
     }
     else
     {
         // This level of loop loops over blocks
         anIndicesCur[dimIdx] = anIndicesMin[dimIdx];
-        while(true)
+        while (true)
         {
-            dimIdx ++;
+            dimIdx++;
             goto lbl_next_depth;
-lbl_return_to_caller:
-            dimIdx --;
-            if( anIndicesCur[dimIdx] == anIndicesMax[dimIdx] )
+        lbl_return_to_caller:
+            dimIdx--;
+            if (anIndicesCur[dimIdx] == anIndicesMax[dimIdx])
                 break;
-            ++ anIndicesCur[dimIdx];
+            ++anIndicesCur[dimIdx];
         }
     }
-    if( dimIdx > 0 )
+    if (dimIdx > 0)
         goto lbl_return_to_caller;
-    assert( nTileIter == nReqTiles );
+    assert(nTileIter == nReqTiles);
 
-    CPLWorkerThreadPool* wtp = GDALGetGlobalThreadPool(nThreadsMax);
-    if( wtp == nullptr )
+    CPLWorkerThreadPool *wtp = GDALGetGlobalThreadPool(nThreadsMax);
+    if (wtp == nullptr)
         return false;
 
     struct JobStruct
     {
         JobStruct() = default;
 
-        JobStruct(const JobStruct&) = delete;
-        JobStruct& operator= (const JobStruct&) = delete;
+        JobStruct(const JobStruct &) = delete;
+        JobStruct &operator=(const JobStruct &) = delete;
 
-        JobStruct(JobStruct&&) = default;
-        JobStruct& operator= (JobStruct&&) = default;
+        JobStruct(JobStruct &&) = default;
+        JobStruct &operator=(JobStruct &&) = default;
 
-        const ZarrArray* poArray = nullptr;
-        bool* pbGlobalStatus = nullptr;
-        int* pnRemainingThreads = nullptr;
-        const std::vector<uint64_t>* panReqTilesIndices = nullptr;
+        const ZarrArray *poArray = nullptr;
+        bool *pbGlobalStatus = nullptr;
+        int *pnRemainingThreads = nullptr;
+        const std::vector<uint64_t> *panReqTilesIndices = nullptr;
         size_t nFirstIdx = 0;
         size_t nLastIdxNotIncluded = 0;
     };
@@ -1597,11 +1605,11 @@ lbl_return_to_caller:
     bool bGlobalStatus = true;
     int nRemainingThreads = nThreads;
     // Check for very highly overflow in below loop
-    assert( static_cast<size_t>(nThreads) <
-                    std::numeric_limits<size_t>::max() / nReqTiles );
+    assert(static_cast<size_t>(nThreads) <
+           std::numeric_limits<size_t>::max() / nReqTiles);
 
     // Setup jobs
-    for( int i = 0; i < nThreads; i++ )
+    for (int i = 0; i < nThreads; i++)
     {
         JobStruct jobStruct;
         jobStruct.poArray = this;
@@ -1614,42 +1622,43 @@ lbl_return_to_caller:
         asJobStructs.emplace_back(std::move(jobStruct));
     }
 
-    const auto JobFunc = [](void* pThreadData)
+    const auto JobFunc = [](void *pThreadData)
     {
-        const JobStruct* jobStruct = static_cast<const JobStruct*>(pThreadData);
+        const JobStruct *jobStruct =
+            static_cast<const JobStruct *>(pThreadData);
 
         const auto poArray = jobStruct->poArray;
-        const auto& aoDims = poArray->m_aoDims;
+        const auto &aoDims = poArray->m_aoDims;
         const size_t l_nDims = poArray->GetDimensionCount();
         std::vector<GByte> abyRawTileData;
         std::vector<GByte> abyDecodedTileData;
         std::vector<GByte> abyTmpRawTileData;
-        const CPLCompressor* psDecompressor =
+        const CPLCompressor *psDecompressor =
             CPLGetDecompressor(poArray->m_osDecompressorId.c_str());
 
-        for( size_t iReq = jobStruct->nFirstIdx; iReq < jobStruct->nLastIdxNotIncluded; ++iReq )
+        for (size_t iReq = jobStruct->nFirstIdx;
+             iReq < jobStruct->nLastIdxNotIncluded; ++iReq)
         {
             // Check if we must early exit
             {
                 std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-                if( !(*jobStruct->pbGlobalStatus) )
+                if (!(*jobStruct->pbGlobalStatus))
                     return;
             }
 
-            const uint64_t* tileIndices =
+            const uint64_t *tileIndices =
                 jobStruct->panReqTilesIndices->data() + iReq * l_nDims;
 
             uint64_t nTileIdx = 0;
-            for( size_t j = 0; j < l_nDims; ++j )
+            for (size_t j = 0; j < l_nDims; ++j)
             {
-                if( j > 0 )
-                    nTileIdx *= aoDims[j-1]->GetSize();
+                if (j > 0)
+                    nTileIdx *= aoDims[j - 1]->GetSize();
                 nTileIdx += tileIndices[j];
             }
 
-            if( !poArray->AllocateWorkingBuffers(abyRawTileData,
-                                                 abyTmpRawTileData,
-                                                 abyDecodedTileData) )
+            if (!poArray->AllocateWorkingBuffers(
+                    abyRawTileData, abyTmpRawTileData, abyDecodedTileData))
             {
                 std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
                 *jobStruct->pbGlobalStatus = false;
@@ -1658,39 +1667,38 @@ lbl_return_to_caller:
 
             bool bIsEmpty = false;
             bool success = poArray->LoadTileData(tileIndices,
-                                                 true, // use mutex
-                                                 psDecompressor,
-                                                 abyRawTileData,
+                                                 true,  // use mutex
+                                                 psDecompressor, abyRawTileData,
                                                  abyTmpRawTileData,
-                                                 abyDecodedTileData,
-                                                 bIsEmpty);
+                                                 abyDecodedTileData, bIsEmpty);
 
             std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-            if( !success )
+            if (!success)
             {
                 *jobStruct->pbGlobalStatus = false;
                 break;
             }
 
             CachedTile cachedTile;
-            if( !bIsEmpty )
+            if (!bIsEmpty)
             {
-                if( !abyDecodedTileData.empty() )
+                if (!abyDecodedTileData.empty())
                     std::swap(cachedTile.abyDecoded, abyDecodedTileData);
                 else
                     std::swap(cachedTile.abyDecoded, abyRawTileData);
             }
-            poArray->m_oMapTileIndexToCachedTile[nTileIdx] = std::move(cachedTile);
+            poArray->m_oMapTileIndexToCachedTile[nTileIdx] =
+                std::move(cachedTile);
         }
 
         std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-        (*jobStruct->pnRemainingThreads) --;
+        (*jobStruct->pnRemainingThreads)--;
     };
 
     // Start jobs
-    for( int i = 0; i < nThreads; i++ )
+    for (int i = 0; i < nThreads; i++)
     {
-        if( !wtp->SubmitJob(JobFunc, &asJobStructs[i]) )
+        if (!wtp->SubmitJob(JobFunc, &asJobStructs[i]))
         {
             std::lock_guard<std::mutex> oLock(m_oMutex);
             bGlobalStatus = false;
@@ -1700,11 +1708,11 @@ lbl_return_to_caller:
     }
 
     // Wait for all jobs to be finished
-    while( true )
+    while (true)
     {
         {
             std::lock_guard<std::mutex> oLock(m_oMutex);
-            if( nRemainingThreads == 0 )
+            if (nRemainingThreads == 0)
                 break;
         }
         wtp->WaitEvent();
@@ -1717,14 +1725,12 @@ lbl_return_to_caller:
 /*                           ZarrArray::IRead()                         */
 /************************************************************************/
 
-bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
-                      const size_t* count,
-                      const GInt64* arrayStep,
-                      const GPtrDiff_t* bufferStride,
-                      const GDALExtendedDataType& bufferDataType,
-                      void* pDstBuffer) const
+bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
+                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                      const GDALExtendedDataType &bufferDataType,
+                      void *pDstBuffer) const
 {
-    if( !AllocateWorkingBuffers() )
+    if (!AllocateWorkingBuffers())
         return false;
 
     // Need to be kept in top-level scope
@@ -1734,33 +1740,36 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
 
     const size_t nDims = m_aoDims.size();
     bool negativeStep = false;
-    for( size_t i = 0; i < nDims; ++i )
+    for (size_t i = 0; i < nDims; ++i)
     {
-        if( arrayStep[i] < 0 )
+        if (arrayStep[i] < 0)
         {
             negativeStep = true;
             break;
         }
     }
 
-    //const auto eBufferDT = bufferDataType.GetNumericDataType();
+    // const auto eBufferDT = bufferDataType.GetNumericDataType();
     const auto nBufferDTSize = static_cast<int>(bufferDataType.GetSize());
 
     // Make sure that arrayStep[i] are positive for sake of simplicity
-    if( negativeStep )
+    if (negativeStep)
     {
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
-        for( size_t i = 0; i < nDims; ++i )
+        for (size_t i = 0; i < nDims; ++i)
         {
-            if( arrayStep[i] < 0 )
+            if (arrayStep[i] < 0)
             {
-                arrayStartIdxMod[i] = arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
+                arrayStartIdxMod[i] =
+                    arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
                 arrayStepMod[i] = -arrayStep[i];
                 bufferStrideMod[i] = -bufferStride[i];
-                pDstBuffer = static_cast<GByte*>(pDstBuffer) +
-                    bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
+                pDstBuffer =
+                    static_cast<GByte *>(pDstBuffer) +
+                    bufferStride[i] *
+                        static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
             }
             else
             {
@@ -1775,69 +1784,69 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
     }
 
     std::vector<uint64_t> indicesOuterLoop(nDims + 1);
-    std::vector<GByte*> dstPtrStackOuterLoop(nDims + 1);
+    std::vector<GByte *> dstPtrStackOuterLoop(nDims + 1);
 
     std::vector<uint64_t> indicesInnerLoop(nDims + 1);
-    std::vector<GByte*> dstPtrStackInnerLoop(nDims + 1);
+    std::vector<GByte *> dstPtrStackInnerLoop(nDims + 1);
 
     std::vector<GPtrDiff_t> dstBufferStrideBytes;
-    for( size_t i = 0; i < nDims; ++i )
+    for (size_t i = 0; i < nDims; ++i)
     {
-        dstBufferStrideBytes.push_back(
-            bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize));
+        dstBufferStrideBytes.push_back(bufferStride[i] *
+                                       static_cast<GPtrDiff_t>(nBufferDTSize));
     }
     dstBufferStrideBytes.push_back(0);
 
     const auto nDTSize = m_oType.GetSize();
 
     std::vector<uint64_t> tileIndices(nDims);
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
 
     std::vector<size_t> countInnerLoopInit(nDims + 1, 1);
     std::vector<size_t> countInnerLoop(nDims);
 
-    const bool bBothAreNumericDT =
-        m_oType.GetClass() == GEDTC_NUMERIC &&
-        bufferDataType.GetClass() == GEDTC_NUMERIC;
+    const bool bBothAreNumericDT = m_oType.GetClass() == GEDTC_NUMERIC &&
+                                   bufferDataType.GetClass() == GEDTC_NUMERIC;
     const bool bSameNumericDT =
         bBothAreNumericDT &&
         m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
     const bool bSameCompoundAndNoDynamicMem =
-        m_oType.GetClass() == GEDTC_COMPOUND &&
-        m_oType == bufferDataType &&
+        m_oType.GetClass() == GEDTC_COMPOUND && m_oType == bufferDataType &&
         !m_oType.NeedsFreeDynamicMemory();
     std::vector<GByte> abyTargetNoData;
     bool bNoDataIsZero = false;
 
     size_t dimIdx = 0;
-    dstPtrStackOuterLoop[0] = static_cast<GByte*>(pDstBuffer);
+    dstPtrStackOuterLoop[0] = static_cast<GByte *>(pDstBuffer);
 lbl_next_depth:
-    if( dimIdx == nDims )
+    if (dimIdx == nDims)
     {
         size_t dimIdxSubLoop = 0;
         dstPtrStackInnerLoop[0] = dstPtrStackOuterLoop[nDims];
         bool bEmptyTile = false;
 
-        const GByte* pabySrcTile = m_abyDecodedTileData.empty() ?
-                            m_abyRawTileData.data(): m_abyDecodedTileData.data();
+        const GByte *pabySrcTile = m_abyDecodedTileData.empty()
+                                       ? m_abyRawTileData.data()
+                                       : m_abyDecodedTileData.data();
         bool bMatchFoundInMapTileIndexToCachedTile = false;
 
         // Use cache built by IAdviseRead() if possible
-        if( !m_oMapTileIndexToCachedTile.empty() )
+        if (!m_oMapTileIndexToCachedTile.empty())
         {
             uint64_t nTileIdx = 0;
-            for( size_t j = 0; j < nDims; ++j )
+            for (size_t j = 0; j < nDims; ++j)
             {
-                if( j > 0 )
-                    nTileIdx *= m_aoDims[j-1]->GetSize();
+                if (j > 0)
+                    nTileIdx *= m_aoDims[j - 1]->GetSize();
                 nTileIdx += tileIndices[j];
             }
             const auto oIter = m_oMapTileIndexToCachedTile.find(nTileIdx);
-            if( oIter != m_oMapTileIndexToCachedTile.end() )
+            if (oIter != m_oMapTileIndexToCachedTile.end())
             {
                 bMatchFoundInMapTileIndexToCachedTile = true;
-                if( oIter->second.abyDecoded.empty() )
+                if (oIter->second.abyDecoded.empty())
                 {
                     bEmptyTile = true;
                 }
@@ -1848,62 +1857,68 @@ lbl_next_depth:
             }
             else
             {
-                CPLDebugOnly(ZARR_DEBUG_KEY, "Cache miss for tile " CPL_FRMT_GUIB,
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Cache miss for tile " CPL_FRMT_GUIB,
                              static_cast<GUIntBig>(nTileIdx));
             }
         }
 
-        if( !bMatchFoundInMapTileIndexToCachedTile )
+        if (!bMatchFoundInMapTileIndexToCachedTile)
         {
-            if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
+            if (!tileIndices.empty() && tileIndices == m_anCachedTiledIndices)
             {
-                if( !m_bCachedTiledValid )
+                if (!m_bCachedTiledValid)
                     return false;
                 bEmptyTile = m_bCachedTiledEmpty;
             }
             else
             {
-                if( !FlushDirtyTile() )
+                if (!FlushDirtyTile())
                     return false;
 
                 m_anCachedTiledIndices = tileIndices;
-                m_bCachedTiledValid = LoadTileData(tileIndices.data(), bEmptyTile);
-                if( !m_bCachedTiledValid )
+                m_bCachedTiledValid =
+                    LoadTileData(tileIndices.data(), bEmptyTile);
+                if (!m_bCachedTiledValid)
                 {
                     return false;
                 }
                 m_bCachedTiledEmpty = bEmptyTile;
             }
 
-            pabySrcTile = m_abyDecodedTileData.empty() ?
-                            m_abyRawTileData.data(): m_abyDecodedTileData.data();
+            pabySrcTile = m_abyDecodedTileData.empty()
+                              ? m_abyRawTileData.data()
+                              : m_abyDecodedTileData.data();
         }
-        const size_t nSrcDTSize = m_abyDecodedTileData.empty() ? nSourceSize : nDTSize;
+        const size_t nSrcDTSize =
+            m_abyDecodedTileData.empty() ? nSourceSize : nDTSize;
 
-        for( size_t i = 0; i < nDims; ++i )
+        for (size_t i = 0; i < nDims; ++i)
         {
             countInnerLoopInit[i] = 1;
-            if( arrayStep[i] != 0 )
+            if (arrayStep[i] != 0)
             {
-                const auto nextBlockIdx = std::min(
-                    (1 + indicesOuterLoop[i] / m_anBlockSize[i]) * m_anBlockSize[i],
-                    arrayStartIdx[i] + count[i] * arrayStep[i]);
+                const auto nextBlockIdx =
+                    std::min((1 + indicesOuterLoop[i] / m_anBlockSize[i]) *
+                                 m_anBlockSize[i],
+                             arrayStartIdx[i] + count[i] * arrayStep[i]);
                 countInnerLoopInit[i] = static_cast<size_t>(
-                        (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) / arrayStep[i]);
+                    (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) /
+                    arrayStep[i]);
             }
         }
 
-        if( bEmptyTile && bBothAreNumericDT && abyTargetNoData.empty() )
+        if (bEmptyTile && bBothAreNumericDT && abyTargetNoData.empty())
         {
             abyTargetNoData.resize(nBufferDTSize);
-            if( m_pabyNoData )
+            if (m_pabyNoData)
             {
-                GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
-                                                &abyTargetNoData[0], bufferDataType);
+                GDALExtendedDataType::CopyValue(
+                    m_pabyNoData, m_oType, &abyTargetNoData[0], bufferDataType);
                 bNoDataIsZero = true;
-                for( size_t i = 0; i < abyTargetNoData.size(); ++i )
+                for (size_t i = 0; i < abyTargetNoData.size(); ++i)
                 {
-                    if( abyTargetNoData[i] != 0 )
+                    if (abyTargetNoData[i] != 0)
                         bNoDataIsZero = false;
                 }
             }
@@ -1911,90 +1926,94 @@ lbl_next_depth:
             {
                 bNoDataIsZero = true;
                 GByte zero = 0;
-                GDALCopyWords(&zero, GDT_Byte, 0,
-                              &abyTargetNoData[0],
-                              bufferDataType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&zero, GDT_Byte, 0, &abyTargetNoData[0],
+                              bufferDataType.GetNumericDataType(), 0, 1);
             }
         }
 
-lbl_next_depth_inner_loop:
-        if( nDims == 0 || dimIdxSubLoop == nDims - 1 )
+    lbl_next_depth_inner_loop:
+        if (nDims == 0 || dimIdxSubLoop == nDims - 1)
         {
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
-            void* dst_ptr = dstPtrStackInnerLoop[dimIdxSubLoop];
+            void *dst_ptr = dstPtrStackInnerLoop[dimIdxSubLoop];
 
-            if( m_bUseOptimizedCodePaths &&
-                bEmptyTile && bBothAreNumericDT && bNoDataIsZero &&
-                nBufferDTSize == dstBufferStrideBytes[dimIdxSubLoop] )
+            if (m_bUseOptimizedCodePaths && bEmptyTile && bBothAreNumericDT &&
+                bNoDataIsZero &&
+                nBufferDTSize == dstBufferStrideBytes[dimIdxSubLoop])
             {
-                memset(dst_ptr, 0, nBufferDTSize * countInnerLoopInit[dimIdxSubLoop]);
+                memset(dst_ptr, 0,
+                       nBufferDTSize * countInnerLoopInit[dimIdxSubLoop]);
                 goto end_inner_loop;
             }
-            else if( m_bUseOptimizedCodePaths &&
-                bEmptyTile && !abyTargetNoData.empty() && bBothAreNumericDT &&
-                     dstBufferStrideBytes[dimIdxSubLoop] < std::numeric_limits<int>::max() )
+            else if (m_bUseOptimizedCodePaths && bEmptyTile &&
+                     !abyTargetNoData.empty() && bBothAreNumericDT &&
+                     dstBufferStrideBytes[dimIdxSubLoop] <
+                         std::numeric_limits<int>::max())
             {
-                GDALCopyWords64( abyTargetNoData.data(),
-                                 bufferDataType.GetNumericDataType(),
-                                 0,
-                                 dst_ptr,
-                                 bufferDataType.GetNumericDataType(),
-                                 static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
-                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+                GDALCopyWords64(
+                    abyTargetNoData.data(), bufferDataType.GetNumericDataType(),
+                    0, dst_ptr, bufferDataType.GetNumericDataType(),
+                    static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
+                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
                 goto end_inner_loop;
             }
-            else if( bEmptyTile )
+            else if (bEmptyTile)
             {
-                for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                        ++i,
-                        dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
+                for (size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                     ++i, dst_ptr = static_cast<uint8_t *>(dst_ptr) +
+                                    dstBufferStrideBytes[dimIdxSubLoop])
                 {
-                    if( bNoDataIsZero )
+                    if (bNoDataIsZero)
                     {
-                        if( nBufferDTSize == 1 )
+                        if (nBufferDTSize == 1)
                         {
-                            *static_cast<uint8_t*>(dst_ptr) = 0;
+                            *static_cast<uint8_t *>(dst_ptr) = 0;
                         }
-                        else if( nBufferDTSize == 2 )
+                        else if (nBufferDTSize == 2)
                         {
-                            *static_cast<uint16_t*>(dst_ptr) = 0;
+                            *static_cast<uint16_t *>(dst_ptr) = 0;
                         }
-                        else if( nBufferDTSize == 4 )
+                        else if (nBufferDTSize == 4)
                         {
-                            *static_cast<uint32_t*>(dst_ptr) = 0;
+                            *static_cast<uint32_t *>(dst_ptr) = 0;
                         }
-                        else if( nBufferDTSize == 8 )
+                        else if (nBufferDTSize == 8)
                         {
-                            *static_cast<uint64_t*>(dst_ptr) = 0;
+                            *static_cast<uint64_t *>(dst_ptr) = 0;
                         }
-                        else if( nBufferDTSize == 16 )
+                        else if (nBufferDTSize == 16)
                         {
-                            static_cast<uint64_t*>(dst_ptr)[0] = 0;
-                            static_cast<uint64_t*>(dst_ptr)[1] = 0;
+                            static_cast<uint64_t *>(dst_ptr)[0] = 0;
+                            static_cast<uint64_t *>(dst_ptr)[1] = 0;
                         }
                         else
                         {
                             CPLAssert(false);
                         }
                     }
-                    else if( m_pabyNoData )
+                    else if (m_pabyNoData)
                     {
-                        if( bBothAreNumericDT )
+                        if (bBothAreNumericDT)
                         {
-                            const void* src_ptr_v = abyTargetNoData.data();
-                            if( nBufferDTSize == 1 )
-                                *static_cast<uint8_t*>(dst_ptr) = *static_cast<const uint8_t*>(src_ptr_v);
-                            else if( nBufferDTSize == 2 )
-                                *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
-                            else if( nBufferDTSize == 4 )
-                                *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
-                            else if( nBufferDTSize == 8 )
-                                *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
-                            else if( nBufferDTSize == 16 )
+                            const void *src_ptr_v = abyTargetNoData.data();
+                            if (nBufferDTSize == 1)
+                                *static_cast<uint8_t *>(dst_ptr) =
+                                    *static_cast<const uint8_t *>(src_ptr_v);
+                            else if (nBufferDTSize == 2)
+                                *static_cast<uint16_t *>(dst_ptr) =
+                                    *static_cast<const uint16_t *>(src_ptr_v);
+                            else if (nBufferDTSize == 4)
+                                *static_cast<uint32_t *>(dst_ptr) =
+                                    *static_cast<const uint32_t *>(src_ptr_v);
+                            else if (nBufferDTSize == 8)
+                                *static_cast<uint64_t *>(dst_ptr) =
+                                    *static_cast<const uint64_t *>(src_ptr_v);
+                            else if (nBufferDTSize == 16)
                             {
-                                static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
-                                static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
+                                static_cast<uint64_t *>(dst_ptr)[0] =
+                                    static_cast<const uint64_t *>(src_ptr_v)[0];
+                                static_cast<uint64_t *>(dst_ptr)[1] =
+                                    static_cast<const uint64_t *>(src_ptr_v)[1];
                             }
                             else
                             {
@@ -2003,8 +2022,8 @@ lbl_next_depth_inner_loop:
                         }
                         else
                         {
-                            GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
-                                                            dst_ptr, bufferDataType);
+                            GDALExtendedDataType::CopyValue(
+                                m_pabyNoData, m_oType, dst_ptr, bufferDataType);
                         }
                     }
                     else
@@ -2017,87 +2036,98 @@ lbl_next_depth_inner_loop:
             }
 
             size_t nOffset = 0;
-            for( size_t i = 0; i < nDims; i++ )
+            for (size_t i = 0; i < nDims; i++)
             {
-                nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
+                nOffset = static_cast<size_t>(
+                    nOffset * m_anBlockSize[i] +
                     (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
             }
-            const GByte* src_ptr = pabySrcTile + nOffset * nSrcDTSize;
+            const GByte *src_ptr = pabySrcTile + nOffset * nSrcDTSize;
             const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
 
-            if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
-                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
-                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
+            if (m_bUseOptimizedCodePaths && bBothAreNumericDT &&
+                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() /
+                                             nDTSize) &&
+                dstBufferStrideBytes[dimIdxSubLoop] <=
+                    std::numeric_limits<int>::max())
             {
-                GDALCopyWords64( src_ptr,
-                                 m_oType.GetNumericDataType(),
-                                 static_cast<int>(step * nDTSize),
-                                 dst_ptr,
-                                 bufferDataType.GetNumericDataType(),
-                                 static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
-                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+                GDALCopyWords64(
+                    src_ptr, m_oType.GetNumericDataType(),
+                    static_cast<int>(step * nDTSize), dst_ptr,
+                    bufferDataType.GetNumericDataType(),
+                    static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
+                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
 
                 goto end_inner_loop;
             }
 
-            for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                    ++i,
-                    src_ptr += step * nSrcDTSize,
-                    dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
+            for (size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                 ++i, src_ptr += step * nSrcDTSize,
+                        dst_ptr = static_cast<uint8_t *>(dst_ptr) +
+                                  dstBufferStrideBytes[dimIdxSubLoop])
             {
-                if( bSameNumericDT )
+                if (bSameNumericDT)
                 {
-                    const void* src_ptr_v = src_ptr;
-                    if( nSameDTSize == 1 )
-                        *static_cast<uint8_t*>(dst_ptr) = *static_cast<const uint8_t*>(src_ptr_v);
-                    else if( nSameDTSize == 2 )
+                    const void *src_ptr_v = src_ptr;
+                    if (nSameDTSize == 1)
+                        *static_cast<uint8_t *>(dst_ptr) =
+                            *static_cast<const uint8_t *>(src_ptr_v);
+                    else if (nSameDTSize == 2)
                     {
-                        *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
+                        *static_cast<uint16_t *>(dst_ptr) =
+                            *static_cast<const uint16_t *>(src_ptr_v);
                     }
-                    else if( nSameDTSize == 4 )
+                    else if (nSameDTSize == 4)
                     {
-                        *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
+                        *static_cast<uint32_t *>(dst_ptr) =
+                            *static_cast<const uint32_t *>(src_ptr_v);
                     }
-                    else if( nSameDTSize == 8 )
+                    else if (nSameDTSize == 8)
                     {
-                        *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
+                        *static_cast<uint64_t *>(dst_ptr) =
+                            *static_cast<const uint64_t *>(src_ptr_v);
                     }
-                    else if( nSameDTSize == 16 )
+                    else if (nSameDTSize == 16)
                     {
-                        static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
-                        static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
+                        static_cast<uint64_t *>(dst_ptr)[0] =
+                            static_cast<const uint64_t *>(src_ptr_v)[0];
+                        static_cast<uint64_t *>(dst_ptr)[1] =
+                            static_cast<const uint64_t *>(src_ptr_v)[1];
                     }
                     else
                     {
                         CPLAssert(false);
                     }
                 }
-                else if( bSameCompoundAndNoDynamicMem )
+                else if (bSameCompoundAndNoDynamicMem)
                 {
                     memcpy(dst_ptr, src_ptr, nDTSize);
                 }
-                else if( m_oType.GetClass() == GEDTC_STRING )
+                else if (m_oType.GetClass() == GEDTC_STRING)
                 {
-                    if( m_aoDtypeElts.back().nativeType == DtypeElt::NativeType::STRING_UNICODE )
+                    if (m_aoDtypeElts.back().nativeType ==
+                        DtypeElt::NativeType::STRING_UNICODE)
                     {
-                        char* pDstStr = UCS4ToUTF8(src_ptr, nSourceSize,
-                                                   m_aoDtypeElts.back().needByteSwapping);
-                        char** pDstPtr = static_cast<char**>(dst_ptr);
+                        char *pDstStr =
+                            UCS4ToUTF8(src_ptr, nSourceSize,
+                                       m_aoDtypeElts.back().needByteSwapping);
+                        char **pDstPtr = static_cast<char **>(dst_ptr);
                         memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
                     }
                     else
                     {
-                        char* pDstStr = static_cast<char*>(CPLMalloc(nSourceSize + 1));
+                        char *pDstStr =
+                            static_cast<char *>(CPLMalloc(nSourceSize + 1));
                         memcpy(pDstStr, src_ptr, nSourceSize);
                         pDstStr[nSourceSize] = 0;
-                        char** pDstPtr = static_cast<char**>(dst_ptr);
-                        memcpy(pDstPtr, &pDstStr, sizeof(char*));
+                        char **pDstPtr = static_cast<char **>(dst_ptr);
+                        memcpy(pDstPtr, &pDstStr, sizeof(char *));
                     }
                 }
                 else
                 {
-                    GDALExtendedDataType::CopyValue(src_ptr, m_oType,
-                                                    dst_ptr, bufferDataType);
+                    GDALExtendedDataType::CopyValue(src_ptr, m_oType, dst_ptr,
+                                                    bufferDataType);
                 }
             }
         }
@@ -2107,24 +2137,26 @@ lbl_next_depth_inner_loop:
             // block
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
             countInnerLoop[dimIdxSubLoop] = countInnerLoopInit[dimIdxSubLoop];
-            while(true)
+            while (true)
             {
-                dimIdxSubLoop ++;
-                dstPtrStackInnerLoop[dimIdxSubLoop] = dstPtrStackInnerLoop[dimIdxSubLoop-1];
+                dimIdxSubLoop++;
+                dstPtrStackInnerLoop[dimIdxSubLoop] =
+                    dstPtrStackInnerLoop[dimIdxSubLoop - 1];
                 goto lbl_next_depth_inner_loop;
-lbl_return_to_caller_inner_loop:
-                dimIdxSubLoop --;
-                -- countInnerLoop[dimIdxSubLoop];
-                if( countInnerLoop[dimIdxSubLoop] == 0 )
+            lbl_return_to_caller_inner_loop:
+                dimIdxSubLoop--;
+                --countInnerLoop[dimIdxSubLoop];
+                if (countInnerLoop[dimIdxSubLoop] == 0)
                 {
                     break;
                 }
                 indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
-                dstPtrStackInnerLoop[dimIdxSubLoop] += dstBufferStrideBytes[dimIdxSubLoop];
+                dstPtrStackInnerLoop[dimIdxSubLoop] +=
+                    dstBufferStrideBytes[dimIdxSubLoop];
             }
         }
-end_inner_loop:
-        if( dimIdxSubLoop > 0 )
+    end_inner_loop:
+        if (dimIdxSubLoop > 0)
             goto lbl_return_to_caller_inner_loop;
     }
     else
@@ -2132,38 +2164,45 @@ end_inner_loop:
         // This level of loop loops over blocks
         indicesOuterLoop[dimIdx] = arrayStartIdx[dimIdx];
         tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
-        while(true)
+        while (true)
         {
-            dimIdx ++;
+            dimIdx++;
             dstPtrStackOuterLoop[dimIdx] = dstPtrStackOuterLoop[dimIdx - 1];
             goto lbl_next_depth;
-lbl_return_to_caller:
-            dimIdx --;
-            if( count[dimIdx] == 1 || arrayStep[dimIdx] == 0 )
+        lbl_return_to_caller:
+            dimIdx--;
+            if (count[dimIdx] == 1 || arrayStep[dimIdx] == 0)
                 break;
 
             size_t nIncr;
-            if( static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx] )
+            if (static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx])
             {
                 // Compute index at next block boundary
-                auto newIdx = indicesOuterLoop[dimIdx] +
-                    (m_anBlockSize[dimIdx] - (indicesOuterLoop[dimIdx] % m_anBlockSize[dimIdx]));
+                auto newIdx =
+                    indicesOuterLoop[dimIdx] +
+                    (m_anBlockSize[dimIdx] -
+                     (indicesOuterLoop[dimIdx] % m_anBlockSize[dimIdx]));
                 // And round up compared to arrayStartIdx, arrayStep
-                nIncr = static_cast<size_t>(
-                    (newIdx - indicesOuterLoop[dimIdx] + arrayStep[dimIdx] - 1) / arrayStep[dimIdx]);
+                nIncr = static_cast<size_t>((newIdx - indicesOuterLoop[dimIdx] +
+                                             arrayStep[dimIdx] - 1) /
+                                            arrayStep[dimIdx]);
             }
             else
             {
                 nIncr = 1;
             }
             indicesOuterLoop[dimIdx] += nIncr * arrayStep[dimIdx];
-            if( indicesOuterLoop[dimIdx] > arrayStartIdx[dimIdx] + (count[dimIdx]-1) * arrayStep[dimIdx] )
+            if (indicesOuterLoop[dimIdx] >
+                arrayStartIdx[dimIdx] + (count[dimIdx] - 1) * arrayStep[dimIdx])
                 break;
-            dstPtrStackOuterLoop[dimIdx] += bufferStride[dimIdx] * static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
-            tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
+            dstPtrStackOuterLoop[dimIdx] +=
+                bufferStride[dimIdx] *
+                static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
+            tileIndices[dimIdx] =
+                indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         }
     }
-    if( dimIdx > 0 )
+    if (dimIdx > 0)
         goto lbl_return_to_caller;
 
     return true;
@@ -2175,63 +2214,63 @@ lbl_return_to_caller:
 
 bool ZarrArray::FlushDirtyTile() const
 {
-    if( !m_bDirtyTile )
+    if (!m_bDirtyTile)
         return true;
     m_bDirtyTile = false;
 
     std::string osFilename;
-    if( m_anCachedTiledIndices.empty() )
+    if (m_anCachedTiledIndices.empty())
     {
         osFilename = "0";
     }
     else
     {
-        for( const auto index: m_anCachedTiledIndices )
+        for (const auto index : m_anCachedTiledIndices)
         {
-            if( !osFilename.empty() )
+            if (!osFilename.empty())
                 osFilename += m_osDimSeparator;
             osFilename += std::to_string(index);
         }
     }
 
-    if( m_nVersion == 2 )
+    if (m_nVersion == 2)
     {
-        osFilename = CPLFormFilename(
-            CPLGetDirname(m_osFilename.c_str()), osFilename.c_str(), nullptr);
+        osFilename = CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
+                                     osFilename.c_str(), nullptr);
     }
     else
     {
         std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if( GetFullName() != "/" )
+        if (GetFullName() != "/")
             osTmp += GetFullName();
         osFilename = osTmp + "/c" + osFilename;
     }
 
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
-    auto& abyTile = m_abyDecodedTileData.empty() ?
-                            m_abyRawTileData: m_abyDecodedTileData;
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+    auto &abyTile =
+        m_abyDecodedTileData.empty() ? m_abyRawTileData : m_abyDecodedTileData;
 
     bool bEmptyTile = false;
-    if( m_pabyNoData == nullptr ||
-        (m_oType.GetClass() == GEDTC_NUMERIC && GetNoDataValueAsDouble() == 0.0) )
+    if (m_pabyNoData == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
+                                    GetNoDataValueAsDouble() == 0.0))
     {
         const size_t nBytes = abyTile.size();
         size_t i = 0;
         bEmptyTile = true;
-        for(; i + (sizeof(size_t)-1) < nBytes; i += sizeof(size_t) )
+        for (; i + (sizeof(size_t) - 1) < nBytes; i += sizeof(size_t))
         {
-            if( *reinterpret_cast<const size_t*>(abyTile.data() + i) != 0 )
+            if (*reinterpret_cast<const size_t *>(abyTile.data() + i) != 0)
             {
                 bEmptyTile = false;
                 break;
             }
         }
-        if( bEmptyTile )
+        if (bEmptyTile)
         {
-            for(; i < nBytes; ++i )
+            for (; i < nBytes; ++i)
             {
-                if( abyTile[i] != 0 )
+                if (abyTile[i] != 0)
                 {
                     bEmptyTile = false;
                     break;
@@ -2239,84 +2278,81 @@ bool ZarrArray::FlushDirtyTile() const
             }
         }
     }
-    else if( m_oType.GetClass() == GEDTC_NUMERIC &&
-             !GDALDataTypeIsComplex(m_oType.GetNumericDataType()) )
+    else if (m_oType.GetClass() == GEDTC_NUMERIC &&
+             !GDALDataTypeIsComplex(m_oType.GetNumericDataType()))
     {
         const int nDTSize = static_cast<int>(m_oType.GetSize());
         const size_t nElts = abyTile.size() / nDTSize;
         const auto eDT = m_oType.GetNumericDataType();
         bEmptyTile = GDALBufferHasOnlyNoData(
-            abyTile.data(),
-            GetNoDataValueAsDouble(),
-            nElts, // nWidth
-            1, // nHeight
-            nElts, // nLineStride
-            1, // nComponents
-            nDTSize * 8, // nBitsPerSample
-            GDALDataTypeIsInteger(eDT) ?
-                (GDALDataTypeIsSigned(eDT) ?
-                    GSF_SIGNED_INT:
-                    GSF_UNSIGNED_INT) :
-                GSF_FLOATING_POINT);
+            abyTile.data(), GetNoDataValueAsDouble(),
+            nElts,        // nWidth
+            1,            // nHeight
+            nElts,        // nLineStride
+            1,            // nComponents
+            nDTSize * 8,  // nBitsPerSample
+            GDALDataTypeIsInteger(eDT)
+                ? (GDALDataTypeIsSigned(eDT) ? GSF_SIGNED_INT
+                                             : GSF_UNSIGNED_INT)
+                : GSF_FLOATING_POINT);
     }
 
-    if( bEmptyTile )
+    if (bEmptyTile)
     {
         m_bCachedTiledEmpty = true;
 
         VSIStatBufL sStat;
-        if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
+        if (VSIStatL(osFilename.c_str(), &sStat) == 0)
         {
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Deleting tile %s that has now empty content",
+            CPLDebugOnly(ZARR_DEBUG_KEY,
+                         "Deleting tile %s that has now empty content",
                          osFilename.c_str());
             return VSIUnlink(osFilename.c_str()) == 0;
         }
         return true;
     }
 
-    if( !m_abyDecodedTileData.empty() )
+    if (!m_abyDecodedTileData.empty())
     {
         const size_t nDTSize = m_oType.GetSize();
         const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        GByte* pDst = &m_abyRawTileData[0];
-        const GByte* pSrc = m_abyDecodedTileData.data();
-        for( size_t i = 0; i < nValues; i++, pDst += nSourceSize, pSrc += nDTSize )
+        GByte *pDst = &m_abyRawTileData[0];
+        const GByte *pSrc = m_abyDecodedTileData.data();
+        for (size_t i = 0; i < nValues;
+             i++, pDst += nSourceSize, pSrc += nDTSize)
         {
             EncodeElt(m_aoDtypeElts, pSrc, pDst);
         }
     }
 
-    if( m_bFortranOrder && !m_aoDims.empty() )
+    if (m_bFortranOrder && !m_aoDims.empty())
     {
         BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, false);
         std::swap(m_abyRawTileData, m_abyTmpRawTileData);
     }
 
     size_t nRawDataSize = m_abyRawTileData.size();
-    for( const auto& oFilter: m_oFiltersArray )
+    for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterCompressor = CPLGetCompressor( osFilterId.c_str() );
+        const auto psFilterCompressor = CPLGetCompressor(osFilterId.c_str());
         CPLAssert(psFilterCompressor);
 
         CPLStringList aosOptions;
-        for( const auto& obj: oFilter.GetChildren() )
+        for (const auto &obj : oFilter.GetChildren())
         {
             aosOptions.SetNameValue(obj.GetName().c_str(),
                                     obj.ToString().c_str());
         }
-        void* out_buffer = &m_abyTmpRawTileData[0];
+        void *out_buffer = &m_abyTmpRawTileData[0];
         size_t nOutSize = m_abyTmpRawTileData.size();
-        if( !psFilterCompressor->pfnFunc(m_abyRawTileData.data(),
-                                         nRawDataSize,
-                                         &out_buffer,
-                                         &nOutSize,
-                                         aosOptions.List(),
-                                         psFilterCompressor->user_data ) )
+        if (!psFilterCompressor->pfnFunc(
+                m_abyRawTileData.data(), nRawDataSize, &out_buffer, &nOutSize,
+                aosOptions.List(), psFilterCompressor->user_data))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Filter %s for tile %s failed",
-                     osFilterId.c_str(), osFilename.c_str());
+                     "Filter %s for tile %s failed", osFilterId.c_str(),
+                     osFilename.c_str());
             return false;
         }
 
@@ -2324,13 +2360,13 @@ bool ZarrArray::FlushDirtyTile() const
         std::swap(m_abyRawTileData, m_abyTmpRawTileData);
     }
 
-    if( m_osDimSeparator == "/" )
+    if (m_osDimSeparator == "/")
     {
         std::string osDir = CPLGetDirname(osFilename.c_str());
         VSIStatBufL sStat;
-        if( VSIStatL(osDir.c_str(), &sStat) != 0 )
+        if (VSIStatL(osDir.c_str(), &sStat) != 0)
         {
-            if( VSIMkdirRecursive(osDir.c_str(), 0755) != 0 )
+            if (VSIMkdirRecursive(osDir.c_str(), 0755) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot create directory %s", osDir.c_str());
@@ -2339,22 +2375,22 @@ bool ZarrArray::FlushDirtyTile() const
         }
     }
 
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "wb");
-    if( fp == nullptr )
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
+    if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot create tile %s", osFilename.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create tile %s",
+                 osFilename.c_str());
         return false;
     }
 
     bool bRet = true;
-    if( m_psCompressor == nullptr )
+    if (m_psCompressor == nullptr)
     {
-        if( VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) != nRawDataSize )
+        if (VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) !=
+            nRawDataSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly",
-                     osFilename.c_str());
+                     "Could not write tile %s correctly", osFilename.c_str());
             bRet = false;
         }
     }
@@ -2363,64 +2399,57 @@ bool ZarrArray::FlushDirtyTile() const
         std::vector<GByte> abyCompressedData;
         try
         {
-            constexpr size_t MIN_BUF_SIZE = 64; // somewhat arbitrary
+            constexpr size_t MIN_BUF_SIZE = 64;  // somewhat arbitrary
             abyCompressedData.resize(static_cast<size_t>(
-                MIN_BUF_SIZE +
-                nRawDataSize +
-                nRawDataSize / 3));
-
+                MIN_BUF_SIZE + nRawDataSize + nRawDataSize / 3));
         }
-        catch( const std::exception& )
+        catch (const std::exception &)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate memory for tile %s",
-                     osFilename.c_str());
+                     "Cannot allocate memory for tile %s", osFilename.c_str());
             bRet = false;
         }
 
-        if( bRet )
+        if (bRet)
         {
-            void* out_buffer = &abyCompressedData[0];
+            void *out_buffer = &abyCompressedData[0];
             size_t out_size = abyCompressedData.size();
             CPLStringList aosOptions;
-            const auto compressorConfig = m_nVersion == 2 ?
-                m_oCompressorJSonV2 : m_oCompressorJSonV3["configuration"];
-            for( const auto& obj: compressorConfig.GetChildren() )
+            const auto compressorConfig =
+                m_nVersion == 2 ? m_oCompressorJSonV2
+                                : m_oCompressorJSonV3["configuration"];
+            for (const auto &obj : compressorConfig.GetChildren())
             {
                 aosOptions.SetNameValue(obj.GetName().c_str(),
                                         obj.ToString().c_str());
             }
-            if( EQUAL(m_psCompressor->pszId, "blosc") &&
-                m_oType.GetClass() == GEDTC_NUMERIC )
+            if (EQUAL(m_psCompressor->pszId, "blosc") &&
+                m_oType.GetClass() == GEDTC_NUMERIC)
             {
-                aosOptions.SetNameValue("TYPESIZE",
-                    CPLSPrintf("%d",
-                       GDALGetDataTypeSizeBytes(
-                           GDALGetNonComplexDataType(
-                               m_oType.GetNumericDataType()))));
+                aosOptions.SetNameValue(
+                    "TYPESIZE",
+                    CPLSPrintf("%d", GDALGetDataTypeSizeBytes(
+                                         GDALGetNonComplexDataType(
+                                             m_oType.GetNumericDataType()))));
             }
 
-            if( !m_psCompressor->pfnFunc(m_abyRawTileData.data(),
-                                         nRawDataSize,
-                                         &out_buffer, &out_size,
-                                         aosOptions.List(),
-                                         m_psCompressor->user_data ) )
+            if (!m_psCompressor->pfnFunc(
+                    m_abyRawTileData.data(), nRawDataSize, &out_buffer,
+                    &out_size, aosOptions.List(), m_psCompressor->user_data))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Compression of tile %s failed",
-                         osFilename.c_str());
+                         "Compression of tile %s failed", osFilename.c_str());
                 bRet = false;
             }
             abyCompressedData.resize(out_size);
         }
 
-        if( bRet &&
+        if (bRet &&
             VSIFWriteL(abyCompressedData.data(), 1, abyCompressedData.size(),
-                       fp) != abyCompressedData.size() )
+                       fp) != abyCompressedData.size())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly",
-                     osFilename.c_str());
+                     "Could not write tile %s correctly", osFilename.c_str());
             bRet = false;
         }
     }
@@ -2433,14 +2462,12 @@ bool ZarrArray::FlushDirtyTile() const
 /*                           ZarrArray::IRead()                         */
 /************************************************************************/
 
-bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
-                       const size_t* count,
-                       const GInt64* arrayStep,
-                       const GPtrDiff_t* bufferStride,
-                       const GDALExtendedDataType& bufferDataType,
-                       const void* pSrcBuffer)
+bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
+                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                       const GDALExtendedDataType &bufferDataType,
+                       const void *pSrcBuffer)
 {
-    if( !AllocateWorkingBuffers() )
+    if (!AllocateWorkingBuffers())
         return false;
 
     m_oMapTileIndexToCachedTile.clear();
@@ -2452,9 +2479,9 @@ bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
 
     const size_t nDims = m_aoDims.size();
     bool negativeStep = false;
-    for( size_t i = 0; i < nDims; ++i )
+    for (size_t i = 0; i < nDims; ++i)
     {
-        if( arrayStep[i] < 0 )
+        if (arrayStep[i] < 0)
         {
             negativeStep = true;
             break;
@@ -2464,20 +2491,23 @@ bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
     const auto nBufferDTSize = static_cast<int>(bufferDataType.GetSize());
 
     // Make sure that arrayStep[i] are positive for sake of simplicity
-    if( negativeStep )
+    if (negativeStep)
     {
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
-        for( size_t i = 0; i < nDims; ++i )
+        for (size_t i = 0; i < nDims; ++i)
         {
-            if( arrayStep[i] < 0 )
+            if (arrayStep[i] < 0)
             {
-                arrayStartIdxMod[i] = arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
+                arrayStartIdxMod[i] =
+                    arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
                 arrayStepMod[i] = -arrayStep[i];
                 bufferStrideMod[i] = -bufferStride[i];
-                pSrcBuffer = static_cast<const GByte*>(pSrcBuffer) +
-                    bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
+                pSrcBuffer =
+                    static_cast<const GByte *>(pSrcBuffer) +
+                    bufferStride[i] *
+                        static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
             }
             else
             {
@@ -2492,64 +2522,66 @@ bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
     }
 
     std::vector<uint64_t> indicesOuterLoop(nDims + 1);
-    std::vector<const GByte*> srcPtrStackOuterLoop(nDims + 1);
+    std::vector<const GByte *> srcPtrStackOuterLoop(nDims + 1);
 
     std::vector<uint64_t> indicesInnerLoop(nDims + 1);
-    std::vector<const GByte*> srcPtrStackInnerLoop(nDims + 1);
+    std::vector<const GByte *> srcPtrStackInnerLoop(nDims + 1);
 
     std::vector<GPtrDiff_t> srcBufferStrideBytes;
-    for( size_t i = 0; i < nDims; ++i )
+    for (size_t i = 0; i < nDims; ++i)
     {
-        srcBufferStrideBytes.push_back(
-            bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize));
+        srcBufferStrideBytes.push_back(bufferStride[i] *
+                                       static_cast<GPtrDiff_t>(nBufferDTSize));
     }
     srcBufferStrideBytes.push_back(0);
 
     const auto nDTSize = m_oType.GetSize();
 
     std::vector<uint64_t> tileIndices(nDims);
-    const size_t nNativeSize = m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+    const size_t nNativeSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
 
     std::vector<size_t> countInnerLoopInit(nDims + 1, 1);
     std::vector<size_t> countInnerLoop(nDims);
 
-    const bool bBothAreNumericDT =
-        m_oType.GetClass() == GEDTC_NUMERIC &&
-        bufferDataType.GetClass() == GEDTC_NUMERIC;
+    const bool bBothAreNumericDT = m_oType.GetClass() == GEDTC_NUMERIC &&
+                                   bufferDataType.GetClass() == GEDTC_NUMERIC;
     const bool bSameNumericDT =
         bBothAreNumericDT &&
         m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
     const bool bSameCompoundAndNoDynamicMem =
-        m_oType.GetClass() == GEDTC_COMPOUND &&
-        m_oType == bufferDataType &&
+        m_oType.GetClass() == GEDTC_COMPOUND && m_oType == bufferDataType &&
         !m_oType.NeedsFreeDynamicMemory();
 
     size_t dimIdx = 0;
-    srcPtrStackOuterLoop[0] = static_cast<const GByte*>(pSrcBuffer);
+    srcPtrStackOuterLoop[0] = static_cast<const GByte *>(pSrcBuffer);
 lbl_next_depth:
-    if( dimIdx == nDims )
+    if (dimIdx == nDims)
     {
         bool bWriteWholeTile = true;
         bool bPartialTile = false;
-        for( size_t i = 0; i < nDims; ++i )
+        for (size_t i = 0; i < nDims; ++i)
         {
             countInnerLoopInit[i] = 1;
-            if( arrayStep[i] != 0 )
+            if (arrayStep[i] != 0)
             {
-                const auto nextBlockIdx = std::min(
-                    (1 + indicesOuterLoop[i] / m_anBlockSize[i]) * m_anBlockSize[i],
-                    arrayStartIdx[i] + count[i] * arrayStep[i]);
+                const auto nextBlockIdx =
+                    std::min((1 + indicesOuterLoop[i] / m_anBlockSize[i]) *
+                                 m_anBlockSize[i],
+                             arrayStartIdx[i] + count[i] * arrayStep[i]);
                 countInnerLoopInit[i] = static_cast<size_t>(
-                        (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) / arrayStep[i]);
+                    (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) /
+                    arrayStep[i]);
             }
-            if( bWriteWholeTile )
+            if (bWriteWholeTile)
             {
                 const bool bWholePartialTileThisDim =
-                    indicesOuterLoop[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
+                    indicesOuterLoop[i] + countInnerLoopInit[i] ==
+                    m_aoDims[i]->GetSize();
                 bWriteWholeTile = (countInnerLoopInit[i] == m_anBlockSize[i] ||
                                    bWholePartialTileThisDim);
-                if( bWholePartialTileThisDim )
+                if (bWholePartialTileThisDim)
                 {
                     bPartialTile = true;
                 }
@@ -2558,26 +2590,27 @@ lbl_next_depth:
 
         size_t dimIdxSubLoop = 0;
         srcPtrStackInnerLoop[0] = srcPtrStackOuterLoop[nDims];
-        const size_t nCacheDTSize = m_abyDecodedTileData.empty() ? nNativeSize : nDTSize;
-        auto& abyTile = m_abyDecodedTileData.empty() ?
-                            m_abyRawTileData: m_abyDecodedTileData;
+        const size_t nCacheDTSize =
+            m_abyDecodedTileData.empty() ? nNativeSize : nDTSize;
+        auto &abyTile = m_abyDecodedTileData.empty() ? m_abyRawTileData
+                                                     : m_abyDecodedTileData;
 
-        if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
+        if (!tileIndices.empty() && tileIndices == m_anCachedTiledIndices)
         {
-            if( !m_bCachedTiledValid )
+            if (!m_bCachedTiledValid)
                 return false;
         }
         else
         {
-            if( !FlushDirtyTile() )
+            if (!FlushDirtyTile())
                 return false;
 
             m_anCachedTiledIndices = tileIndices;
             m_bCachedTiledValid = true;
 
-            if( bWriteWholeTile )
+            if (bWriteWholeTile)
             {
-                if( bPartialTile )
+                if (bPartialTile)
                 {
                     DeallocateDecodedTileData();
                     memset(&abyTile[0], 0, abyTile.size());
@@ -2588,40 +2621,39 @@ lbl_next_depth:
                 // If we don't write the whole tile, we need to fetch a
                 // potentially existing one.
                 bool bEmptyTile = false;
-                m_bCachedTiledValid = LoadTileData(tileIndices.data(), bEmptyTile);
-                if( !m_bCachedTiledValid )
+                m_bCachedTiledValid =
+                    LoadTileData(tileIndices.data(), bEmptyTile);
+                if (!m_bCachedTiledValid)
                 {
                     return false;
                 }
 
-                if( bEmptyTile )
+                if (bEmptyTile)
                 {
                     DeallocateDecodedTileData();
 
-                    if( m_pabyNoData == nullptr )
+                    if (m_pabyNoData == nullptr)
                     {
                         memset(&abyTile[0], 0, abyTile.size());
                     }
                     else
                     {
                         const size_t nElts = abyTile.size() / nCacheDTSize;
-                        GByte* dstPtr = &abyTile[0];
-                        if( m_oType.GetClass() == GEDTC_NUMERIC )
+                        GByte *dstPtr = &abyTile[0];
+                        if (m_oType.GetClass() == GEDTC_NUMERIC)
                         {
-                            GDALCopyWords64( m_pabyNoData,
-                                             m_oType.GetNumericDataType(),
-                                             0,
-                                             dstPtr,
-                                             m_oType.GetNumericDataType(),
-                                             static_cast<int>(m_oType.GetSize()),
-                                             static_cast<GPtrDiff_t>(nElts) );
+                            GDALCopyWords64(
+                                m_pabyNoData, m_oType.GetNumericDataType(), 0,
+                                dstPtr, m_oType.GetNumericDataType(),
+                                static_cast<int>(m_oType.GetSize()),
+                                static_cast<GPtrDiff_t>(nElts));
                         }
                         else
                         {
-                            for(size_t i = 0; i < nElts; ++i )
+                            for (size_t i = 0; i < nElts; ++i)
                             {
-                                GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
-                                                                dstPtr, m_oType);
+                                GDALExtendedDataType::CopyValue(
+                                    m_pabyNoData, m_oType, dstPtr, m_oType);
                                 dstPtr += nCacheDTSize;
                             }
                         }
@@ -2632,106 +2664,121 @@ lbl_next_depth:
         m_bDirtyTile = true;
         m_bCachedTiledEmpty = false;
 
-        GByte* pabyTile = &abyTile[0];
+        GByte *pabyTile = &abyTile[0];
 
-lbl_next_depth_inner_loop:
-        if( nDims == 0 || dimIdxSubLoop == nDims - 1 )
+    lbl_next_depth_inner_loop:
+        if (nDims == 0 || dimIdxSubLoop == nDims - 1)
         {
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
-            const void* src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
+            const void *src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
 
             size_t nOffset = 0;
-            for( size_t i = 0; i < nDims; i++ )
+            for (size_t i = 0; i < nDims; i++)
             {
-                nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
+                nOffset = static_cast<size_t>(
+                    nOffset * m_anBlockSize[i] +
                     (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
             }
-            GByte* dst_ptr = pabyTile + nOffset * nCacheDTSize;
+            GByte *dst_ptr = pabyTile + nOffset * nCacheDTSize;
             const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
 
-            if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
-                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
-                srcBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
+            if (m_bUseOptimizedCodePaths && bBothAreNumericDT &&
+                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() /
+                                             nDTSize) &&
+                srcBufferStrideBytes[dimIdxSubLoop] <=
+                    std::numeric_limits<int>::max())
             {
-                GDALCopyWords64( src_ptr,
-                                 bufferDataType.GetNumericDataType(),
-                                 static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
-                                 dst_ptr,
-                                 m_oType.GetNumericDataType(),
-                                 static_cast<int>(step * nDTSize),
-                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+                GDALCopyWords64(
+                    src_ptr, bufferDataType.GetNumericDataType(),
+                    static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
+                    dst_ptr, m_oType.GetNumericDataType(),
+                    static_cast<int>(step * nDTSize),
+                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
 
                 goto end_inner_loop;
             }
 
-            for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                    ++i,
-                    dst_ptr += step * nCacheDTSize,
-                    src_ptr = static_cast<const uint8_t*>(src_ptr) + srcBufferStrideBytes[dimIdxSubLoop] )
+            for (size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                 ++i, dst_ptr += step * nCacheDTSize,
+                        src_ptr = static_cast<const uint8_t *>(src_ptr) +
+                                  srcBufferStrideBytes[dimIdxSubLoop])
             {
-                if( bSameNumericDT )
+                if (bSameNumericDT)
                 {
-                    void* dst_ptr_v = dst_ptr;
-                    if( nSameDTSize == 1 )
-                        *static_cast<uint8_t*>(dst_ptr_v) = *static_cast<const uint8_t*>(src_ptr);
-                    else if( nSameDTSize == 2 )
+                    void *dst_ptr_v = dst_ptr;
+                    if (nSameDTSize == 1)
+                        *static_cast<uint8_t *>(dst_ptr_v) =
+                            *static_cast<const uint8_t *>(src_ptr);
+                    else if (nSameDTSize == 2)
                     {
-                        *static_cast<uint16_t*>(dst_ptr_v) = *static_cast<const uint16_t*>(src_ptr);
+                        *static_cast<uint16_t *>(dst_ptr_v) =
+                            *static_cast<const uint16_t *>(src_ptr);
                     }
-                    else if( nSameDTSize == 4 )
+                    else if (nSameDTSize == 4)
                     {
-                        *static_cast<uint32_t*>(dst_ptr_v) = *static_cast<const uint32_t*>(src_ptr);
+                        *static_cast<uint32_t *>(dst_ptr_v) =
+                            *static_cast<const uint32_t *>(src_ptr);
                     }
-                    else if( nSameDTSize == 8 )
+                    else if (nSameDTSize == 8)
                     {
-                        *static_cast<uint64_t*>(dst_ptr_v) = *static_cast<const uint64_t*>(src_ptr);
+                        *static_cast<uint64_t *>(dst_ptr_v) =
+                            *static_cast<const uint64_t *>(src_ptr);
                     }
-                    else if( nSameDTSize == 16 )
+                    else if (nSameDTSize == 16)
                     {
-                        static_cast<uint64_t*>(dst_ptr_v)[0] = static_cast<const uint64_t*>(src_ptr)[0];
-                        static_cast<uint64_t*>(dst_ptr_v)[1] = static_cast<const uint64_t*>(src_ptr)[1];
+                        static_cast<uint64_t *>(dst_ptr_v)[0] =
+                            static_cast<const uint64_t *>(src_ptr)[0];
+                        static_cast<uint64_t *>(dst_ptr_v)[1] =
+                            static_cast<const uint64_t *>(src_ptr)[1];
                     }
                     else
                     {
                         CPLAssert(false);
                     }
                 }
-                else if( bSameCompoundAndNoDynamicMem )
+                else if (bSameCompoundAndNoDynamicMem)
                 {
                     memcpy(dst_ptr, src_ptr, nDTSize);
                 }
-                else if( m_oType.GetClass() == GEDTC_STRING )
+                else if (m_oType.GetClass() == GEDTC_STRING)
                 {
-                    const char* pSrcStr = *static_cast<const char* const*>(src_ptr);
-                    if( pSrcStr )
+                    const char *pSrcStr =
+                        *static_cast<const char *const *>(src_ptr);
+                    if (pSrcStr)
                     {
                         const size_t nLen = strlen(pSrcStr);
-                        if( m_aoDtypeElts.back().nativeType == DtypeElt::NativeType::STRING_UNICODE )
+                        if (m_aoDtypeElts.back().nativeType ==
+                            DtypeElt::NativeType::STRING_UNICODE)
                         {
                             try
                             {
-                                const auto ucs4 = UTF8ToUCS4(pSrcStr, m_aoDtypeElts.back().needByteSwapping);
+                                const auto ucs4 = UTF8ToUCS4(
+                                    pSrcStr,
+                                    m_aoDtypeElts.back().needByteSwapping);
                                 const auto ucs4Len = ucs4.size();
-                                memcpy(dst_ptr, ucs4.data(), std::min(ucs4Len, nNativeSize));
-                                if( ucs4Len > nNativeSize )
+                                memcpy(dst_ptr, ucs4.data(),
+                                       std::min(ucs4Len, nNativeSize));
+                                if (ucs4Len > nNativeSize)
                                 {
                                     CPLError(CE_Warning, CPLE_AppDefined,
                                              "Too long string truncated");
                                 }
-                                else if( ucs4Len < nNativeSize )
+                                else if (ucs4Len < nNativeSize)
                                 {
-                                    memset(dst_ptr + ucs4Len, 0, nNativeSize - ucs4Len);
+                                    memset(dst_ptr + ucs4Len, 0,
+                                           nNativeSize - ucs4Len);
                                 }
                             }
-                            catch( const std::exception& )
+                            catch (const std::exception &)
                             {
-                                 memset(dst_ptr, 0, nNativeSize);
+                                memset(dst_ptr, 0, nNativeSize);
                             }
                         }
                         else
                         {
-                            memcpy(dst_ptr, pSrcStr, std::min(nLen, nNativeSize));
-                            if( nLen < nNativeSize )
+                            memcpy(dst_ptr, pSrcStr,
+                                   std::min(nLen, nNativeSize));
+                            if (nLen < nNativeSize)
                                 memset(dst_ptr + nLen, 0, nNativeSize - nLen);
                         }
                     }
@@ -2742,7 +2789,7 @@ lbl_next_depth_inner_loop:
                 }
                 else
                 {
-                    if( m_oType.NeedsFreeDynamicMemory() )
+                    if (m_oType.NeedsFreeDynamicMemory())
                         m_oType.FreeDynamicMemory(dst_ptr);
                     GDALExtendedDataType::CopyValue(src_ptr, bufferDataType,
                                                     dst_ptr, m_oType);
@@ -2755,24 +2802,26 @@ lbl_next_depth_inner_loop:
             // block
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
             countInnerLoop[dimIdxSubLoop] = countInnerLoopInit[dimIdxSubLoop];
-            while(true)
+            while (true)
             {
-                dimIdxSubLoop ++;
-                srcPtrStackInnerLoop[dimIdxSubLoop] = srcPtrStackInnerLoop[dimIdxSubLoop-1];
+                dimIdxSubLoop++;
+                srcPtrStackInnerLoop[dimIdxSubLoop] =
+                    srcPtrStackInnerLoop[dimIdxSubLoop - 1];
                 goto lbl_next_depth_inner_loop;
-lbl_return_to_caller_inner_loop:
-                dimIdxSubLoop --;
-                -- countInnerLoop[dimIdxSubLoop];
-                if( countInnerLoop[dimIdxSubLoop] == 0 )
+            lbl_return_to_caller_inner_loop:
+                dimIdxSubLoop--;
+                --countInnerLoop[dimIdxSubLoop];
+                if (countInnerLoop[dimIdxSubLoop] == 0)
                 {
                     break;
                 }
                 indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
-                srcPtrStackInnerLoop[dimIdxSubLoop] += srcBufferStrideBytes[dimIdxSubLoop];
+                srcPtrStackInnerLoop[dimIdxSubLoop] +=
+                    srcBufferStrideBytes[dimIdxSubLoop];
             }
         }
-end_inner_loop:
-        if( dimIdxSubLoop > 0 )
+    end_inner_loop:
+        if (dimIdxSubLoop > 0)
             goto lbl_return_to_caller_inner_loop;
     }
     else
@@ -2780,38 +2829,45 @@ end_inner_loop:
         // This level of loop loops over blocks
         indicesOuterLoop[dimIdx] = arrayStartIdx[dimIdx];
         tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
-        while(true)
+        while (true)
         {
-            dimIdx ++;
+            dimIdx++;
             srcPtrStackOuterLoop[dimIdx] = srcPtrStackOuterLoop[dimIdx - 1];
             goto lbl_next_depth;
-lbl_return_to_caller:
-            dimIdx --;
-            if( count[dimIdx] == 1 || arrayStep[dimIdx] == 0 )
+        lbl_return_to_caller:
+            dimIdx--;
+            if (count[dimIdx] == 1 || arrayStep[dimIdx] == 0)
                 break;
 
             size_t nIncr;
-            if( static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx] )
+            if (static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx])
             {
                 // Compute index at next block boundary
-                auto newIdx = indicesOuterLoop[dimIdx] +
-                    (m_anBlockSize[dimIdx] - (indicesOuterLoop[dimIdx] % m_anBlockSize[dimIdx]));
+                auto newIdx =
+                    indicesOuterLoop[dimIdx] +
+                    (m_anBlockSize[dimIdx] -
+                     (indicesOuterLoop[dimIdx] % m_anBlockSize[dimIdx]));
                 // And round up compared to arrayStartIdx, arrayStep
-                nIncr = static_cast<size_t>(
-                    (newIdx - indicesOuterLoop[dimIdx] + arrayStep[dimIdx] - 1) / arrayStep[dimIdx]);
+                nIncr = static_cast<size_t>((newIdx - indicesOuterLoop[dimIdx] +
+                                             arrayStep[dimIdx] - 1) /
+                                            arrayStep[dimIdx]);
             }
             else
             {
                 nIncr = 1;
             }
             indicesOuterLoop[dimIdx] += nIncr * arrayStep[dimIdx];
-            if( indicesOuterLoop[dimIdx] > arrayStartIdx[dimIdx] + (count[dimIdx]-1) * arrayStep[dimIdx] )
+            if (indicesOuterLoop[dimIdx] >
+                arrayStartIdx[dimIdx] + (count[dimIdx] - 1) * arrayStep[dimIdx])
                 break;
-            srcPtrStackOuterLoop[dimIdx] += bufferStride[dimIdx] * static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
-            tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
+            srcPtrStackOuterLoop[dimIdx] +=
+                bufferStride[dimIdx] *
+                static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
+            tileIndices[dimIdx] =
+                indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         }
     }
-    if( dimIdx > 0 )
+    if (dimIdx > 0)
         goto lbl_return_to_caller;
 
     return true;
@@ -2821,37 +2877,37 @@ lbl_return_to_caller:
 /*                             ParseDtype()                             */
 /************************************************************************/
 
-static size_t GetAlignment(const CPLJSONObject& obj)
+static size_t GetAlignment(const CPLJSONObject &obj)
 {
-    if( obj.GetType() == CPLJSONObject::Type::String )
+    if (obj.GetType() == CPLJSONObject::Type::String)
     {
         const auto str = obj.ToString();
-        if( str.size() < 3 )
+        if (str.size() < 3)
             return 1;
         const char chType = str[1];
         const int nBytes = atoi(str.c_str() + 2);
-        if( chType == 'S' )
-            return sizeof(char*);
-        if( chType == 'c' && nBytes == 8 )
+        if (chType == 'S')
+            return sizeof(char *);
+        if (chType == 'c' && nBytes == 8)
             return sizeof(float);
-        if( chType == 'c' && nBytes == 16 )
+        if (chType == 'c' && nBytes == 16)
             return sizeof(double);
-       return nBytes;
+        return nBytes;
     }
-    else if( obj.GetType() == CPLJSONObject::Type::Array )
+    else if (obj.GetType() == CPLJSONObject::Type::Array)
     {
         const auto oArray = obj.ToArray();
         size_t nAlignment = 1;
-        for( const auto& oElt: oArray )
+        for (const auto &oElt : oArray)
         {
             const auto oEltArray = oElt.ToArray();
-            if( !oEltArray.IsValid() || oEltArray.Size() != 2 ||
-                oEltArray[0].GetType() != CPLJSONObject::Type::String )
+            if (!oEltArray.IsValid() || oEltArray.Size() != 2 ||
+                oEltArray[0].GetType() != CPLJSONObject::Type::String)
             {
                 return 1;
             }
             nAlignment = std::max(nAlignment, GetAlignment(oEltArray[1]));
-            if( nAlignment == sizeof(void*) )
+            if (nAlignment == sizeof(void *))
                 break;
         }
         return nAlignment;
@@ -2859,27 +2915,24 @@ static size_t GetAlignment(const CPLJSONObject& obj)
     return 1;
 }
 
-static GDALExtendedDataType ParseDtype(bool isZarrV2,
-                                       const CPLJSONObject& obj,
-                                       std::vector<DtypeElt>& elts)
+static GDALExtendedDataType ParseDtype(bool isZarrV2, const CPLJSONObject &obj,
+                                       std::vector<DtypeElt> &elts)
 {
     const auto AlignOffsetOn = [](size_t offset, size_t alignment)
-    {
-        return offset + (alignment - (offset % alignment)) % alignment;
-    };
+    { return offset + (alignment - (offset % alignment)) % alignment; };
 
     do
     {
-        if( obj.GetType() == CPLJSONObject::Type::String )
+        if (obj.GetType() == CPLJSONObject::Type::String)
         {
             const auto str = obj.ToString();
             char chEndianness = 0;
             char chType;
             int nBytes;
             DtypeElt elt;
-            if( isZarrV2 )
+            if (isZarrV2)
             {
-                if( str.size() < 3 )
+                if (str.size() < 3)
                     break;
                 chEndianness = str[0];
                 chType = str[1];
@@ -2887,118 +2940,119 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             }
             else
             {
-                if( str.size() < 2 )
+                if (str.size() < 2)
                     break;
-                if( str == "bool" )
+                if (str == "bool")
                 {
                     chType = 'b';
                     nBytes = 1;
                 }
-                else if( str == "u1" || str == "i1" )
+                else if (str == "u1" || str == "i1")
                 {
                     chType = str[0];
                     nBytes = 1;
                 }
                 else
                 {
-                    if( str.size() < 3 )
+                    if (str.size() < 3)
                         break;
                     chEndianness = str[0];
                     chType = str[1];
                     nBytes = atoi(str.c_str() + 2);
                 }
             }
-            if( nBytes <= 0 || nBytes >= 1000 )
+            if (nBytes <= 0 || nBytes >= 1000)
                 break;
 
             elt.needByteSwapping = false;
-            if( (nBytes > 1 && chType != 'S') || chType == 'U' )
+            if ((nBytes > 1 && chType != 'S') || chType == 'U')
             {
-                if( chEndianness == '<' )
+                if (chEndianness == '<')
                     elt.needByteSwapping = (CPL_IS_LSB == 0);
-                else if( chEndianness == '>' )
+                else if (chEndianness == '>')
                     elt.needByteSwapping = (CPL_IS_LSB != 0);
             }
 
             GDALDataType eDT;
-            if( !elts.empty() )
+            if (!elts.empty())
             {
-                elt.nativeOffset = elts.back().nativeOffset + elts.back().nativeSize;
+                elt.nativeOffset =
+                    elts.back().nativeOffset + elts.back().nativeSize;
             }
             elt.nativeSize = nBytes;
-            if( chType == 'b' && nBytes == 1 ) // boolean
+            if (chType == 'b' && nBytes == 1)  // boolean
             {
                 elt.nativeType = DtypeElt::NativeType::BOOLEAN;
                 eDT = GDT_Byte;
             }
-            else if( chType == 'u' && nBytes == 1 )
+            else if (chType == 'u' && nBytes == 1)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_Byte;
             }
-            else if( chType == 'i' && nBytes == 1 )
+            else if (chType == 'i' && nBytes == 1)
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 elt.gdalTypeIsApproxOfNative = true;
                 eDT = GDT_Int16;
             }
-            else if( chType == 'i' && nBytes == 2 )
+            else if (chType == 'i' && nBytes == 2)
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int16;
             }
-            else if( chType == 'i' && nBytes == 4 )
+            else if (chType == 'i' && nBytes == 4)
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int32;
             }
-            else if( chType == 'i' && nBytes == 8 )
+            else if (chType == 'i' && nBytes == 8)
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int64;
             }
-            else if( chType == 'u' && nBytes == 2 )
+            else if (chType == 'u' && nBytes == 2)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt16;
             }
-            else if( chType == 'u' && nBytes == 4 )
+            else if (chType == 'u' && nBytes == 4)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt32;
             }
-            else if( chType == 'u' && nBytes == 8 )
+            else if (chType == 'u' && nBytes == 8)
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt64;
             }
-            else if( chType == 'f' && nBytes == 2 )
+            else if (chType == 'f' && nBytes == 2)
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 elt.gdalTypeIsApproxOfNative = true;
                 eDT = GDT_Float32;
             }
-            else if( chType == 'f' && nBytes == 4 )
+            else if (chType == 'f' && nBytes == 4)
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float32;
             }
-            else if( chType == 'f' && nBytes == 8 )
+            else if (chType == 'f' && nBytes == 8)
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float64;
             }
-            else if( chType == 'c' && nBytes == 8 )
+            else if (chType == 'c' && nBytes == 8)
             {
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat32;
             }
-            else if( chType == 'c' && nBytes == 16 )
+            else if (chType == 'c' && nBytes == 16)
             {
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat64;
             }
-            else if( chType == 'S' )
+            else if (chType == 'S')
             {
                 elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
                 elt.gdalType = GDALExtendedDataType::CreateString(nBytes);
@@ -3006,10 +3060,11 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                 elts.emplace_back(elt);
                 return GDALExtendedDataType::CreateString(nBytes);
             }
-            else if( chType == 'U' )
+            else if (chType == 'U')
             {
                 elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
-                // the dtype declaration is number of UCS4 characters. Store it as bytes
+                // the dtype declaration is number of UCS4 characters. Store it
+                // as bytes
                 elt.nativeSize *= 4;
                 // We can really map UCS4 size to UTF-8
                 elt.gdalType = GDALExtendedDataType::CreateString();
@@ -3024,25 +3079,26 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
-        else if( isZarrV2 && obj.GetType() == CPLJSONObject::Type::Array )
+        else if (isZarrV2 && obj.GetType() == CPLJSONObject::Type::Array)
         {
             bool error = false;
             const auto oArray = obj.ToArray();
             std::vector<std::unique_ptr<GDALEDTComponent>> comps;
             size_t offset = 0;
             size_t alignmentMax = 1;
-            for( const auto& oElt: oArray )
+            for (const auto &oElt : oArray)
             {
                 const auto oEltArray = oElt.ToArray();
-                if( !oEltArray.IsValid() || oEltArray.Size() != 2 ||
-                    oEltArray[0].GetType() != CPLJSONObject::Type::String )
+                if (!oEltArray.IsValid() || oEltArray.Size() != 2 ||
+                    oEltArray[0].GetType() != CPLJSONObject::Type::String)
                 {
                     error = true;
                     break;
                 }
-                GDALExtendedDataType subDT = ParseDtype(isZarrV2, oEltArray[1], elts);
-                if( subDT.GetClass() == GEDTC_NUMERIC &&
-                    subDT.GetNumericDataType() == GDT_Unknown )
+                GDALExtendedDataType subDT =
+                    ParseDtype(isZarrV2, oEltArray[1], elts);
+                if (subDT.GetClass() == GEDTC_NUMERIC &&
+                    subDT.GetNumericDataType() == GDT_Unknown)
                 {
                     error = true;
                     break;
@@ -3058,31 +3114,28 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                     new GDALEDTComponent(osName, offset, subDT)));
                 offset += subDT.GetSize();
             }
-            if( error )
+            if (error)
                 break;
             size_t nTotalSize = offset;
             nTotalSize = AlignOffsetOn(nTotalSize, alignmentMax);
-            return GDALExtendedDataType::Create(obj.ToString(),
-                                                nTotalSize,
+            return GDALExtendedDataType::Create(obj.ToString(), nTotalSize,
                                                 std::move(comps));
         }
-    }
-    while(false);
+    } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
              "Invalid or unsupported format for dtype: %s",
              obj.ToString().c_str());
     return GDALExtendedDataType::Create(GDT_Unknown);
 }
 
-static void SetGDALOffset(const GDALExtendedDataType& dt,
-                          const size_t nBaseOffset,
-                          std::vector<DtypeElt>& elts,
-                          size_t& iCurElt)
+static void SetGDALOffset(const GDALExtendedDataType &dt,
+                          const size_t nBaseOffset, std::vector<DtypeElt> &elts,
+                          size_t &iCurElt)
 {
-    if( dt.GetClass() == GEDTC_COMPOUND )
+    if (dt.GetClass() == GEDTC_COMPOUND)
     {
-        const auto& comps = dt.GetComponents();
-        for( const auto& comp: comps )
+        const auto &comps = dt.GetComponents();
+        for (const auto &comp : comps)
         {
             const size_t nBaseOffsetSub = nBaseOffset + comp->GetOffset();
             SetGDALOffset(comp->GetType(), nBaseOffsetSub, elts, iCurElt);
@@ -3099,21 +3152,22 @@ static void SetGDALOffset(const GDALExtendedDataType& dt,
 /*                     ZarrGroupBase::LoadArray()                       */
 /************************************************************************/
 
-std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayName,
-                                                const std::string& osZarrayFilename,
-                                                const CPLJSONObject& oRoot,
-                                                bool bLoadedFromZMetadata,
-                                                const CPLJSONObject& oAttributesIn,
-                                                std::set<std::string>& oSetFilenamesInLoading) const
+std::shared_ptr<ZarrArray>
+ZarrGroupBase::LoadArray(const std::string &osArrayName,
+                         const std::string &osZarrayFilename,
+                         const CPLJSONObject &oRoot, bool bLoadedFromZMetadata,
+                         const CPLJSONObject &oAttributesIn,
+                         std::set<std::string> &oSetFilenamesInLoading) const
 {
     // Prevent too deep or recursive array loading
-    if( oSetFilenamesInLoading.find(osZarrayFilename) != oSetFilenamesInLoading.end() )
+    if (oSetFilenamesInLoading.find(osZarrayFilename) !=
+        oSetFilenamesInLoading.end())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt at recursively loading %s", osZarrayFilename.c_str());
         return nullptr;
     }
-    if( oSetFilenamesInLoading.size() == 32 )
+    if (oSetFilenamesInLoading.size() == 32)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too deep call stack in LoadArray()");
@@ -3122,13 +3176,12 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
     struct SetFilenameAdder
     {
-        std::set<std::string>& m_oSetFilenames;
+        std::set<std::string> &m_oSetFilenames;
         std::string m_osFilename;
 
-        SetFilenameAdder(std::set<std::string>& oSetFilenamesIn,
-                         const std::string& osFilename):
-             m_oSetFilenames(oSetFilenamesIn),
-             m_osFilename(osFilename)
+        SetFilenameAdder(std::set<std::string> &oSetFilenamesIn,
+                         const std::string &osFilename)
+            : m_oSetFilenames(oSetFilenamesIn), m_osFilename(osFilename)
         {
             m_oSetFilenames.insert(osFilename);
         }
@@ -3143,52 +3196,54 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     // of this function call.
     SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
 
-    const bool isZarrV2 = dynamic_cast<const ZarrGroupV2*>(this) != nullptr;
+    const bool isZarrV2 = dynamic_cast<const ZarrGroupV2 *>(this) != nullptr;
 
-    if( isZarrV2 )
+    if (isZarrV2)
     {
         const auto osFormat = oRoot["zarr_format"].ToString();
-        if( osFormat != "2" )
+        if (osFormat != "2")
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for zarr_format");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid value for zarr_format");
             return nullptr;
         }
     }
 
     bool bFortranOrder = false;
-    const char* orderKey = isZarrV2 ? "order": "chunk_memory_layout";
+    const char *orderKey = isZarrV2 ? "order" : "chunk_memory_layout";
     const auto osOrder = oRoot[orderKey].ToString();
-    if( osOrder == "C" )
+    if (osOrder == "C")
     {
         // ok
     }
-    else if( osOrder == "F" )
+    else if (osOrder == "F")
     {
         bFortranOrder = true;
     }
     else
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for %s", orderKey);
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for %s",
+                 orderKey);
         return nullptr;
     }
 
     const auto oShape = oRoot["shape"].ToArray();
-    if( !oShape.IsValid() )
+    if (!oShape.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "shape missing or not an array");
         return nullptr;
     }
 
-    const char* chunksKey = isZarrV2 ? "chunks": "chunk_grid/chunk_shape";
+    const char *chunksKey = isZarrV2 ? "chunks" : "chunk_grid/chunk_shape";
     const auto oChunks = oRoot[chunksKey].ToArray();
-    if( !oChunks.IsValid() )
+    if (!oChunks.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s missing or not an array",
                  chunksKey);
         return nullptr;
     }
 
-    if( oShape.Size() != oChunks.Size() )
+    if (oShape.Size() != oChunks.Size())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "shape and chunks arrays are of different size");
@@ -3196,19 +3251,19 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     }
 
     CPLJSONObject oAttributes(oAttributesIn);
-    if( !bLoadedFromZMetadata && isZarrV2 )
+    if (!bLoadedFromZMetadata && isZarrV2)
     {
         CPLJSONDocument oDoc;
-        const std::string osZattrsFilename(
-            CPLFormFilename(CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
+        const std::string osZattrsFilename(CPLFormFilename(
+            CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
         CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
         CPLErrorStateBackuper errorStateBackuper;
-        if( oDoc.Load(osZattrsFilename) )
+        if (oDoc.Load(osZattrsFilename))
         {
             oAttributes = oDoc.GetRoot();
         }
     }
-    else if( !isZarrV2 )
+    else if (!isZarrV2)
     {
         oAttributes = oRoot["attributes"];
     }
@@ -3223,16 +3278,20 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
     const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
     std::shared_ptr<OGRSpatialReference> poSRS;
-    if( crs.GetType() == CPLJSONObject::Type::Object )
+    if (crs.GetType() == CPLJSONObject::Type::Object)
     {
-        for( const char* key: { "url", "wkt", "projjson" } )
+        for (const char *key : {"url", "wkt", "projjson"})
         {
             const auto item = crs[key];
-            if( item.IsValid() )
+            if (item.IsValid())
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if( poSRS->SetFromUserInput(item.ToString().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+                if (poSRS->SetFromUserInput(
+                        item.ToString().c_str(),
+                        OGRSpatialReference::
+                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                    OGRERR_NONE)
                 {
                     oAttributes.Delete(CRS_ATTRIBUTE_NAME);
                     break;
@@ -3244,7 +3303,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
     const auto unit = oAttributes[CF_UNITS];
     std::string osUnit;
-    if( unit.GetType() == CPLJSONObject::Type::String )
+    if (unit.GetType() == CPLJSONObject::Type::String)
     {
         osUnit = unit.ToString();
         oAttributes.Delete(CF_UNITS);
@@ -3254,9 +3313,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     double dfOffset = 0.0;
     const auto offset = oAttributes[CF_ADD_OFFSET];
     const auto offsetType = offset.GetType();
-    if( offsetType == CPLJSONObject::Type::Integer ||
+    if (offsetType == CPLJSONObject::Type::Integer ||
         offsetType == CPLJSONObject::Type::Long ||
-        offsetType == CPLJSONObject::Type::Double )
+        offsetType == CPLJSONObject::Type::Double)
     {
         dfOffset = offset.ToDouble();
         bHasOffset = true;
@@ -3267,9 +3326,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     double dfScale = 1.0;
     const auto scale = oAttributes[CF_SCALE_FACTOR];
     const auto scaleType = scale.GetType();
-    if( scaleType == CPLJSONObject::Type::Integer ||
+    if (scaleType == CPLJSONObject::Type::Integer ||
         scaleType == CPLJSONObject::Type::Long ||
-        scaleType == CPLJSONObject::Type::Double )
+        scaleType == CPLJSONObject::Type::Double)
     {
         dfScale = scale.ToDouble();
         bHasScale = true;
@@ -3277,48 +3336,47 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     }
 
     std::vector<std::shared_ptr<GDALDimension>> aoDims;
-    for( int i = 0; i < oShape.Size(); ++i )
+    for (int i = 0; i < oShape.Size(); ++i)
     {
         const auto nSize = static_cast<GUInt64>(oShape[i].ToLong());
-        if( nSize == 0 )
+        if (nSize == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for shape");
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<GDALDimension>(
-            std::string(), CPLSPrintf("dim%d", i),
-            std::string(), std::string(), nSize));
+            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
+            nSize));
     }
 
-    const auto GetDimensionTypeDirection = [&oAttributes, &osUnit](
-                                            std::string& osType,
-                                            std::string& osDirection)
+    const auto GetDimensionTypeDirection =
+        [&oAttributes, &osUnit](std::string &osType, std::string &osDirection)
     {
         const auto oStdName = oAttributes[CF_STD_NAME];
-        if( oStdName.GetType() == CPLJSONObject::Type::String )
+        if (oStdName.GetType() == CPLJSONObject::Type::String)
         {
             const auto osStdName = oStdName.ToString();
-            if( osStdName == CF_PROJ_X_COORD ||
-                osStdName == CF_LONGITUDE_STD_NAME )
+            if (osStdName == CF_PROJ_X_COORD ||
+                osStdName == CF_LONGITUDE_STD_NAME)
             {
                 osType = GDAL_DIM_TYPE_HORIZONTAL_X;
                 oAttributes.Delete(CF_STD_NAME);
-                if( osUnit == CF_DEGREES_EAST )
+                if (osUnit == CF_DEGREES_EAST)
                 {
                     osDirection = "EAST";
                 }
             }
-            else if( osStdName == CF_PROJ_Y_COORD ||
-                osStdName == CF_LATITUDE_STD_NAME )
+            else if (osStdName == CF_PROJ_Y_COORD ||
+                     osStdName == CF_LATITUDE_STD_NAME)
             {
                 osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
                 oAttributes.Delete(CF_STD_NAME);
-                if( osUnit == CF_DEGREES_NORTH )
+                if (osUnit == CF_DEGREES_NORTH)
                 {
                     osDirection = "NORTH";
                 }
             }
-            else if( osStdName == "time" )
+            else if (osStdName == "time")
             {
                 osType = GDAL_DIM_TYPE_TEMPORAL;
                 oAttributes.Delete(CF_STD_NAME);
@@ -3326,16 +3384,16 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
 
         const auto osAxis = oAttributes[CF_AXIS].ToString();
-        if( osAxis == "Z" )
+        if (osAxis == "Z")
         {
             osType = GDAL_DIM_TYPE_VERTICAL;
             const auto osPositive = oAttributes["positive"].ToString();
-            if( osPositive == "up" )
+            if (osPositive == "up")
             {
                 osDirection = "UP";
                 oAttributes.Delete("positive");
             }
-            else if( osPositive == "down" )
+            else if (osPositive == "down")
             {
                 osDirection = "DOWN";
                 oAttributes.Delete("positive");
@@ -3347,18 +3405,16 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     // XArray extension
     const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
 
-    const auto FindDimension = [this, &aoDims, &GetDimensionTypeDirection,
-                                bLoadedFromZMetadata, &osArrayName,
-                                &osZarrayFilename, &oSetFilenamesInLoading,
-                                isZarrV2](
-                                        const std::string& osDimName,
-                                        std::shared_ptr<GDALDimension>& poDim,
-                                        int i)
+    const auto FindDimension =
+        [this, &aoDims, &GetDimensionTypeDirection, bLoadedFromZMetadata,
+         &osArrayName, &osZarrayFilename, &oSetFilenamesInLoading,
+         isZarrV2](const std::string &osDimName,
+                   std::shared_ptr<GDALDimension> &poDim, int i)
     {
         auto oIter = m_oMapDimensions.find(osDimName);
-        if( oIter != m_oMapDimensions.end() )
+        if (oIter != m_oMapDimensions.end())
         {
-            if( oIter->second->GetSize() == poDim->GetSize() )
+            if (oIter->second->GetSize() == poDim->GetSize())
             {
                 poDim = oIter->second;
                 return true;
@@ -3366,8 +3422,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             else
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                     "Size of _ARRAY_DIMENSIONS[%d] different "
-                     "from the one of shape", i);
+                         "Size of _ARRAY_DIMENSIONS[%d] different "
+                         "from the one of shape",
+                         i);
                 return false;
             }
         }
@@ -3377,15 +3434,15 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         // If loading from zmetadata, we should have normally
         // already loaded the dimension variables, unless they
         // are in a upper level.
-        if( bLoadedFromZMetadata && osArrayName != osDimName &&
-            m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end() )
+        if (bLoadedFromZMetadata && osArrayName != osDimName &&
+            m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end())
         {
             auto poParent = m_poParent.lock();
-            while( poParent != nullptr )
+            while (poParent != nullptr)
             {
                 oIter = poParent->m_oMapDimensions.find(osDimName);
-                if( oIter != poParent->m_oMapDimensions.end() &&
-                    oIter->second->GetSize() == poDim->GetSize() )
+                if (oIter != poParent->m_oMapDimensions.end() &&
+                    oIter->second->GetSize() == poDim->GetSize())
                 {
                     poDim = oIter->second;
                     return true;
@@ -3396,45 +3453,39 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
         // Not loading from zmetadata, and not in m_oMapMDArrays,
         // then stat() the indexing variable.
-        else if( !bLoadedFromZMetadata &&
-                 osArrayName != osDimName &&
-                 m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end() )
+        else if (!bLoadedFromZMetadata && osArrayName != osDimName &&
+                 m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end())
         {
             std::string osDirName = m_osDirectoryName;
-            while( true )
+            while (true)
             {
                 const std::string osArrayFilenameDim =
-                    isZarrV2 ?
-                        CPLFormFilename(
-                            CPLFormFilename(osDirName.c_str(),
-                                            osDimName.c_str(),
-                                            nullptr),
-                            ".zarray", nullptr) :
-                        CPLFormFilename(
-                            CPLGetDirname(osZarrayFilename.c_str()),
-                            (osDimName + ".array.json").c_str(),
-                            nullptr);
+                    isZarrV2
+                        ? CPLFormFilename(CPLFormFilename(osDirName.c_str(),
+                                                          osDimName.c_str(),
+                                                          nullptr),
+                                          ".zarray", nullptr)
+                        : CPLFormFilename(
+                              CPLGetDirname(osZarrayFilename.c_str()),
+                              (osDimName + ".array.json").c_str(), nullptr);
                 VSIStatBufL sStat;
-                if( VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0 )
+                if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {
                     CPLJSONDocument oDoc;
-                    if( oDoc.Load(osArrayFilenameDim) )
+                    if (oDoc.Load(osArrayFilenameDim))
                     {
-                        LoadArray(
-                            osDimName,
-                            osArrayFilenameDim,
-                            oDoc.GetRoot(),
-                            false,
-                            CPLJSONObject(),
-                            oSetFilenamesInLoading);
+                        LoadArray(osDimName, osArrayFilenameDim, oDoc.GetRoot(),
+                                  false, CPLJSONObject(),
+                                  oSetFilenamesInLoading);
                     }
                 }
                 else
                 {
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
-                    const std::string osDirNameNew = CPLGetPath(osDirName.c_str());
-                    if( !osDirNameNew.empty() && osDirNameNew != osDirName )
+                    const std::string osDirNameNew =
+                        CPLGetPath(osDirName.c_str());
+                    if (!osDirNameNew.empty() && osDirNameNew != osDirName)
                     {
                         osDirName = osDirNameNew;
                         continue;
@@ -3445,8 +3496,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
 
         oIter = m_oMapDimensions.find(osDimName);
-        if( oIter != m_oMapDimensions.end() &&
-            oIter->second->GetSize() == poDim->GetSize() )
+        if (oIter != m_oMapDimensions.end() &&
+            oIter->second->GetSize() == poDim->GetSize())
         {
             poDim = oIter->second;
             return true;
@@ -3454,75 +3505,75 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
         std::string osType;
         std::string osDirection;
-        if( aoDims.size() == 1 && osArrayName == osDimName )
+        if (aoDims.size() == 1 && osArrayName == osDimName)
         {
             GetDimensionTypeDirection(osType, osDirection);
         }
 
         auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
-            GetFullName(), osDimName,
-            osType, osDirection, poDim->GetSize());
+            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
         return true;
     };
 
-    if( arrayDimensionsObj.GetType() == CPLJSONObject::Type::Array )
+    if (arrayDimensionsObj.GetType() == CPLJSONObject::Type::Array)
     {
         const auto arrayDims = arrayDimensionsObj.ToArray();
-        if( arrayDims.Size() == oShape.Size() )
+        if (arrayDims.Size() == oShape.Size())
         {
             bool ok = true;
-            for( int i = 0; i < oShape.Size(); ++i )
+            for (int i = 0; i < oShape.Size(); ++i)
             {
-                if( arrayDims[i].GetType() == CPLJSONObject::Type::String )
+                if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
                 {
                     const auto osDimName = arrayDims[i].ToString();
                     ok &= FindDimension(osDimName, aoDims[i], i);
                 }
             }
-            if( ok )
+            if (ok)
             {
                 oAttributes.Delete("_ARRAY_DIMENSIONS");
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Size of _ARRAY_DIMENSIONS different from the one of shape");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Size of _ARRAY_DIMENSIONS different from the one of shape");
         }
     }
 
     // _NCZARR_ARRAY extension
     const auto nczarrArrayDimrefs = oRoot["_NCZARR_ARRAY"]["dimrefs"].ToArray();
-    if( nczarrArrayDimrefs.IsValid() )
+    if (nczarrArrayDimrefs.IsValid())
     {
         const auto arrayDims = nczarrArrayDimrefs.ToArray();
-        if( arrayDims.Size() == oShape.Size() )
+        if (arrayDims.Size() == oShape.Size())
         {
             auto poRG = m_pSelf.lock();
-            CPLAssert( poRG != nullptr );
-            while(true)
+            CPLAssert(poRG != nullptr);
+            while (true)
             {
                 auto poNewRG = poRG->m_poParent.lock();
-                if( poNewRG == nullptr )
+                if (poNewRG == nullptr)
                     break;
                 poRG = poNewRG;
             }
 
-            for( int i = 0; i < oShape.Size(); ++i )
+            for (int i = 0; i < oShape.Size(); ++i)
             {
-                if( arrayDims[i].GetType() == CPLJSONObject::Type::String )
+                if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
                 {
                     const auto osDimFullpath = arrayDims[i].ToString();
                     auto poDim = poRG->OpenDimensionFromFullname(osDimFullpath);
-                    if( poDim == nullptr )
+                    if (poDim == nullptr)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Cannot find NCZarr dimension %s",
                                  osDimFullpath.c_str());
                     }
-                    else if( poDim->GetSize() != aoDims[i]->GetSize() )
+                    else if (poDim->GetSize() != aoDims[i]->GetSize())
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Inconsistency in size between NCZarr "
@@ -3536,8 +3587,11 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                         // If this is an indexing variable, then fetch the
                         // dimension type and direction, and patch the dimension
                         const std::string osArrayFullname =
-                            (GetFullName() != "/" ? GetFullName(): std::string()) + '/' + osArrayName;
-                        if( aoDims.size() == 1 && osArrayFullname == poDim->GetFullName() )
+                            (GetFullName() != "/" ? GetFullName()
+                                                  : std::string()) +
+                            '/' + osArrayName;
+                        if (aoDims.size() == 1 &&
+                            osArrayFullname == poDim->GetFullName())
                         {
                             std::string osType;
                             std::string osDirection;
@@ -3545,22 +3599,28 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
                             std::string osDimParent = osDimFullpath;
                             const auto nPos = osDimParent.rfind('/');
-                            if( nPos != std::string::npos )
+                            if (nPos != std::string::npos)
                             {
-                                if( nPos == 0 )
+                                if (nPos == 0)
                                     osDimParent = '/';
                                 else
                                     osDimParent.resize(nPos);
-                                auto poDimParentGroup = dynamic_cast<ZarrGroupBase*>(
-                                    poRG->OpenGroupFromFullname(osDimParent).get());
-                                if( poDimParentGroup )
+                                auto poDimParentGroup =
+                                    dynamic_cast<ZarrGroupBase *>(
+                                        poRG->OpenGroupFromFullname(osDimParent)
+                                            .get());
+                                if (poDimParentGroup)
                                 {
-                                    auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
-                                        poDimParentGroup->GetFullName(), poDim->GetName(),
-                                        osType, osDirection, poDim->GetSize());
+                                    auto poDimLocal = std::make_shared<
+                                        GDALDimensionWeakIndexingVar>(
+                                        poDimParentGroup->GetFullName(),
+                                        poDim->GetName(), osType, osDirection,
+                                        poDim->GetSize());
                                     aoDims[i] = poDimLocal;
 
-                                    poDimParentGroup->m_oMapDimensions[poDim->GetName()] = poDimLocal;
+                                    poDimParentGroup
+                                        ->m_oMapDimensions[poDim->GetName()] =
+                                        poDimLocal;
                                 }
                             }
                         }
@@ -3571,37 +3631,39 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Size of _NCZARR_ARRAY.dimrefs different from the one of shape");
+                     "Size of _NCZARR_ARRAY.dimrefs different from the one of "
+                     "shape");
         }
     }
 
-    const char* dtypeKey = isZarrV2 ? "dtype" : "data_type";
+    const char *dtypeKey = isZarrV2 ? "dtype" : "data_type";
     auto oDtype = oRoot[dtypeKey];
-    if( !oDtype.IsValid() )
+    if (!oDtype.IsValid())
     {
         CPLError(CE_Failure, CPLE_NotSupported, "%s missing", dtypeKey);
         return nullptr;
     }
-    if( !isZarrV2 && oDtype["fallback"].IsValid() )
+    if (!isZarrV2 && oDtype["fallback"].IsValid())
         oDtype = oDtype["fallback"];
     std::vector<DtypeElt> aoDtypeElts;
     const auto oType = ParseDtype(isZarrV2, oDtype, aoDtypeElts);
-    if( oType.GetClass() == GEDTC_NUMERIC && oType.GetNumericDataType() == GDT_Unknown )
+    if (oType.GetClass() == GEDTC_NUMERIC &&
+        oType.GetNumericDataType() == GDT_Unknown)
         return nullptr;
     size_t iCurElt = 0;
     SetGDALOffset(oType, 0, aoDtypeElts, iCurElt);
 
     std::vector<GUInt64> anBlockSize;
     size_t nBlockSize = oType.GetSize();
-    for( const auto& item: oChunks )
+    for (const auto &item : oChunks)
     {
         const auto nSize = static_cast<GUInt64>(item.ToLong());
-        if( nSize == 0 )
+        if (nSize == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for chunks");
             return nullptr;
         }
-        if( nBlockSize > std::numeric_limits<size_t>::max() / nSize )
+        if (nBlockSize > std::numeric_limits<size_t>::max() / nSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large chunks");
             return nullptr;
@@ -3611,16 +3673,16 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     }
 
     std::string osDimSeparator;
-    if( isZarrV2 )
+    if (isZarrV2)
     {
         osDimSeparator = oRoot["dimension_separator"].ToString();
-        if( osDimSeparator.empty() )
+        if (osDimSeparator.empty())
             osDimSeparator = ".";
     }
     else
     {
         osDimSeparator = oRoot["chunk_grid/separator"].ToString();
-        if( osDimSeparator.empty() )
+        if (osDimSeparator.empty())
             osDimSeparator = "/";
     }
 
@@ -3628,16 +3690,18 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
     struct NoDataFreer
     {
-        std::vector<GByte>& m_abyNodata;
-        const GDALExtendedDataType& m_oType;
+        std::vector<GByte> &m_abyNodata;
+        const GDALExtendedDataType &m_oType;
 
-        NoDataFreer(std::vector<GByte>& abyNoDataIn,
-                    const GDALExtendedDataType& oTypeIn) :
-                            m_abyNodata(abyNoDataIn), m_oType(oTypeIn) {}
+        NoDataFreer(std::vector<GByte> &abyNoDataIn,
+                    const GDALExtendedDataType &oTypeIn)
+            : m_abyNodata(abyNoDataIn), m_oType(oTypeIn)
+        {
+        }
 
         ~NoDataFreer()
         {
-            if( !m_abyNodata.empty() )
+            if (!m_abyNodata.empty())
                 m_oType.FreeDynamicMemory(&m_abyNodata[0]);
         }
     };
@@ -3647,67 +3711,64 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     auto eFillValueType = oFillValue.GetType();
 
     // Normally arrays are not supported, but that's what NCZarr 4.8.0 outputs
-    if( eFillValueType == CPLJSONObject::Type::Array &&
-        oFillValue.ToArray().Size() == 1 )
+    if (eFillValueType == CPLJSONObject::Type::Array &&
+        oFillValue.ToArray().Size() == 1)
     {
         oFillValue = oFillValue.ToArray()[0];
         eFillValueType = oFillValue.GetType();
     }
 
-    if( !oFillValue.IsValid() )
+    if (!oFillValue.IsValid())
     {
         // fill_value is normally required but some implementations
         // are lacking it: https://github.com/Unidata/netcdf-c/issues/2059
         CPLError(CE_Warning, CPLE_AppDefined, "fill_value missing");
     }
-    else if( eFillValueType == CPLJSONObject::Type::Null )
+    else if (eFillValueType == CPLJSONObject::Type::Null)
     {
         // Nothing to do
     }
-    else if( eFillValueType == CPLJSONObject::Type::String )
+    else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if( oType.GetClass() == GEDTC_NUMERIC &&
-            CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING )
+        if (oType.GetClass() == GEDTC_NUMERIC &&
+            CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING)
         {
             abyNoData.resize(oType.GetSize());
             // Be tolerant with numeric values serialized as strings.
-            if( oType.GetNumericDataType() == GDT_Int64 )
+            if (oType.GetNumericDataType() == GDT_Int64)
             {
                 const int64_t nVal = static_cast<int64_t>(
                     std::strtoll(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_Int64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&nVal, GDT_Int64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
-            else if( oType.GetNumericDataType() == GDT_UInt64 )
+            else if (oType.GetNumericDataType() == GDT_UInt64)
             {
                 const uint64_t nVal = static_cast<uint64_t>(
                     std::strtoull(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_UInt64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&nVal, GDT_UInt64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
             else
             {
                 const double dfNoDataValue = CPLAtof(osFillValue.c_str());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
         }
-        else if( oType.GetClass() == GEDTC_NUMERIC )
+        else if (oType.GetClass() == GEDTC_NUMERIC)
         {
             double dfNoDataValue;
-            if( osFillValue == "NaN" )
+            if (osFillValue == "NaN")
             {
                 dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
             }
-            else if( osFillValue == "Infinity" )
+            else if (osFillValue == "Infinity")
             {
                 dfNoDataValue = std::numeric_limits<double>::infinity();
             }
-            else if( osFillValue == "-Infinity" )
+            else if (osFillValue == "-Infinity")
             {
                 dfNoDataValue = -std::numeric_limits<double>::infinity();
             }
@@ -3716,16 +3777,16 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
-            if( oType.GetNumericDataType() == GDT_Float32 )
+            if (oType.GetNumericDataType() == GDT_Float32)
             {
                 const float fNoDataValue = static_cast<float>(dfNoDataValue);
                 abyNoData.resize(sizeof(fNoDataValue));
-                memcpy( &abyNoData[0], &fNoDataValue, sizeof(fNoDataValue) );
+                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
             }
-            else if( oType.GetNumericDataType() == GDT_Float64 )
+            else if (oType.GetNumericDataType() == GDT_Float64)
             {
                 abyNoData.resize(sizeof(dfNoDataValue));
-                memcpy( &abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue) );
+                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
             }
             else
             {
@@ -3733,74 +3794,75 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 return nullptr;
             }
         }
-        else if( oType.GetClass() == GEDTC_STRING )
+        else if (oType.GetClass() == GEDTC_STRING)
         {
-            // zarr.open('unicode_be.zarr', mode = 'w', shape=(1,), dtype = '>U1', compressor = None)
-            // oddly generates "fill_value": "0"
-            if( osFillValue != "0" )
+            // zarr.open('unicode_be.zarr', mode = 'w', shape=(1,), dtype =
+            // '>U1', compressor = None) oddly generates "fill_value": "0"
+            if (osFillValue != "0")
             {
                 std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-                memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
+                memcpy(&abyNativeFillValue[0], osFillValue.data(),
+                       osFillValue.size());
                 int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
                 abyNativeFillValue.resize(nBytes + 1);
                 abyNativeFillValue[nBytes] = 0;
-                abyNoData.resize( oType.GetSize() );
-                char* pDstStr = CPLStrdup( reinterpret_cast<const char*>(&abyNativeFillValue[0]) );
-                char** pDstPtr = reinterpret_cast<char**>(&abyNoData[0]);
+                abyNoData.resize(oType.GetSize());
+                char *pDstStr = CPLStrdup(
+                    reinterpret_cast<const char *>(&abyNativeFillValue[0]));
+                char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
                 memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
             }
         }
         else
         {
             std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-            memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
+            memcpy(&abyNativeFillValue[0], osFillValue.data(),
+                   osFillValue.size());
             int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
             abyNativeFillValue.resize(nBytes);
-            if( abyNativeFillValue.size() != aoDtypeElts.back().nativeOffset +
-                                             aoDtypeElts.back().nativeSize )
+            if (abyNativeFillValue.size() !=
+                aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
-            abyNoData.resize( oType.GetSize() );
-            DecodeSourceElt( aoDtypeElts,
-                             abyNativeFillValue.data(),
-                             &abyNoData[0] );
+            abyNoData.resize(oType.GetSize());
+            DecodeSourceElt(aoDtypeElts, abyNativeFillValue.data(),
+                            &abyNoData[0]);
         }
     }
-    else if( eFillValueType == CPLJSONObject::Type::Boolean ||
+    else if (eFillValueType == CPLJSONObject::Type::Boolean ||
              eFillValueType == CPLJSONObject::Type::Integer ||
              eFillValueType == CPLJSONObject::Type::Long ||
-             eFillValueType == CPLJSONObject::Type::Double )
+             eFillValueType == CPLJSONObject::Type::Double)
     {
-        if( oType.GetClass() == GEDTC_NUMERIC )
+        if (oType.GetClass() == GEDTC_NUMERIC)
         {
             const double dfNoDataValue = oFillValue.ToDouble();
-            if( oType.GetNumericDataType() == GDT_Int64 )
+            if (oType.GetNumericDataType() == GDT_Int64)
             {
-                const int64_t nNoDataValue = static_cast<int64_t>(oFillValue.ToLong());
+                const int64_t nNoDataValue =
+                    static_cast<int64_t>(oFillValue.ToLong());
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
-            else if( oType.GetNumericDataType() == GDT_UInt64 &&
+            else if (oType.GetNumericDataType() == GDT_UInt64 &&
                      /* we can't really deal with nodata value between */
                      /* int64::max and uint64::max due to json-c limitations */
-                     dfNoDataValue >= 0 )
+                     dfNoDataValue >= 0)
             {
-                const int64_t nNoDataValue = static_cast<int64_t>(oFillValue.ToLong());
+                const int64_t nNoDataValue =
+                    static_cast<int64_t>(oFillValue.ToLong());
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
             else
             {
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                              &abyNoData[0], oType.GetNumericDataType(), 0,
-                              1);
+                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
+                              oType.GetNumericDataType(), 0, 1);
             }
         }
         else
@@ -3815,32 +3877,32 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         return nullptr;
     }
 
-    const CPLCompressor* psCompressor = nullptr;
-    const CPLCompressor* psDecompressor = nullptr;
+    const CPLCompressor *psCompressor = nullptr;
+    const CPLCompressor *psDecompressor = nullptr;
     const auto oCompressor = oRoot["compressor"];
     std::string osDecompressorId("NONE");
-    if( isZarrV2 )
+    if (isZarrV2)
     {
-        if( !oCompressor.IsValid() )
+        if (!oCompressor.IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "compressor missing");
             return nullptr;
         }
-        if( oCompressor.GetType() == CPLJSONObject::Type::Null )
+        if (oCompressor.GetType() == CPLJSONObject::Type::Null)
         {
             // nothing to do
         }
-        else if( oCompressor.GetType() == CPLJSONObject::Type::Object )
+        else if (oCompressor.GetType() == CPLJSONObject::Type::Object)
         {
             osDecompressorId = oCompressor["id"].ToString();
-            if( osDecompressorId.empty() )
+            if (osDecompressorId.empty())
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
                 return nullptr;
             }
-            psCompressor = CPLGetCompressor( osDecompressorId.c_str() );
-            psDecompressor = CPLGetDecompressor( osDecompressorId.c_str() );
-            if( psCompressor == nullptr || psDecompressor == nullptr )
+            psCompressor = CPLGetCompressor(osDecompressorId.c_str());
+            psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
+            if (psCompressor == nullptr || psDecompressor == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Decompressor %s not handled",
@@ -3854,35 +3916,36 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             return nullptr;
         }
     }
-    else if( oCompressor.IsValid() )
+    else if (oCompressor.IsValid())
     {
         const auto oCodec = oCompressor["codec"];
-        if( oCodec.GetType() == CPLJSONObject::Type::String )
+        if (oCodec.GetType() == CPLJSONObject::Type::String)
         {
             const auto osCodec = oCodec.ToString();
             // See https://github.com/zarr-developers/zarr-specs/pull/119
             // We accept the plural form, but singular is the official one.
-            for( const char* key : { "https://purl.org/zarr/spec/codec/",
-                                     "https://purl.org/zarr/spec/codecs/" } )
+            for (const char *key : {"https://purl.org/zarr/spec/codec/",
+                                    "https://purl.org/zarr/spec/codecs/"})
             {
-                if( osCodec.find(key) == 0 )
+                if (osCodec.find(key) == 0)
                 {
                     auto osCodecName = osCodec.substr(strlen(key));
                     auto posSlash = osCodecName.find('/');
-                    if( posSlash != std::string::npos )
+                    if (posSlash != std::string::npos)
                     {
                         osDecompressorId = osCodecName.substr(0, posSlash);
-                        psCompressor = CPLGetCompressor( osDecompressorId.c_str() );
-                        psDecompressor = CPLGetDecompressor( osDecompressorId.c_str() );
+                        psCompressor =
+                            CPLGetCompressor(osDecompressorId.c_str());
+                        psDecompressor =
+                            CPLGetDecompressor(osDecompressorId.c_str());
                     }
                     break;
                 }
             }
-            if( psCompressor == nullptr || psDecompressor == nullptr )
+            if (psCompressor == nullptr || psDecompressor == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Decompressor %s not handled",
-                         osCodec.c_str());
+                         "Decompressor %s not handled", osCodec.c_str());
                 return nullptr;
             }
         }
@@ -3894,35 +3957,37 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     }
 
     CPLJSONArray oFiltersArray;
-    if( isZarrV2 )
+    if (isZarrV2)
     {
         const auto oFilters = oRoot["filters"];
-        if( !oFilters.IsValid() )
+        if (!oFilters.IsValid())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "filters missing");
             return nullptr;
         }
-        if( oFilters.GetType() == CPLJSONObject::Type::Null )
+        if (oFilters.GetType() == CPLJSONObject::Type::Null)
         {
         }
-        else if( oFilters.GetType() == CPLJSONObject::Type::Array )
+        else if (oFilters.GetType() == CPLJSONObject::Type::Array)
         {
             oFiltersArray = oFilters.ToArray();
-            for( const auto& oFilter: oFiltersArray )
+            for (const auto &oFilter : oFiltersArray)
             {
                 const auto osFilterId = oFilter["id"].ToString();
-                if( osFilterId.empty() )
+                if (osFilterId.empty())
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
                     return nullptr;
                 }
-                const auto psFilterCompressor = CPLGetCompressor( osFilterId.c_str() );
-                const auto psFilterDecompressor = CPLGetDecompressor( osFilterId.c_str() );
-                if( psFilterCompressor == nullptr || psFilterDecompressor == nullptr )
+                const auto psFilterCompressor =
+                    CPLGetCompressor(osFilterId.c_str());
+                const auto psFilterDecompressor =
+                    CPLGetDecompressor(osFilterId.c_str());
+                if (psFilterCompressor == nullptr ||
+                    psFilterDecompressor == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Filter %s not handled",
-                             osFilterId.c_str());
+                             "Filter %s not handled", osFilterId.c_str());
                     return nullptr;
                 }
             }
@@ -3934,21 +3999,20 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
-    auto poArray = ZarrArray::Create(m_poSharedResource,
-                                     GetFullName(),
-                                     osArrayName,
-                                     aoDims, oType, aoDtypeElts, anBlockSize,
-                                     bFortranOrder);
-    if( !poArray )
+    auto poArray = ZarrArray::Create(m_poSharedResource, GetFullName(),
+                                     osArrayName, aoDims, oType, aoDtypeElts,
+                                     anBlockSize, bFortranOrder);
+    if (!poArray)
         return nullptr;
-    poArray->SetUpdatable(m_bUpdatable); // must be set before SetAttributes()
+    poArray->SetUpdatable(m_bUpdatable);  // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
-    if( isZarrV2 )
+    if (isZarrV2)
         poArray->SetCompressorJsonV2(oCompressor);
-    poArray->SetCompressorDecompressor(osDecompressorId, psCompressor, psDecompressor);
+    poArray->SetCompressorDecompressor(osDecompressorId, psCompressor,
+                                       psDecompressor);
     poArray->SetFilters(oFiltersArray);
-    if( !abyNoData.empty() )
+    if (!abyNoData.empty())
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
@@ -3958,25 +4022,24 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     poArray->SetVersion(isZarrV2 ? 2 : 3);
     poArray->SetDtype(oDtype);
     poArray->RegisterUnit(osUnit);
-    if( bHasOffset )
+    if (bHasOffset)
         poArray->RegisterOffset(dfOffset);
-    if( bHasScale )
+    if (bHasScale)
         poArray->RegisterScale(dfScale);
     RegisterArray(poArray);
 
     // If this is an indexing variable, attach it to the dimension.
-    if( aoDims.size() == 1 &&
-        aoDims[0]->GetName() == poArray->GetName() )
+    if (aoDims.size() == 1 && aoDims[0]->GetName() == poArray->GetName())
     {
         auto oIter = m_oMapDimensions.find(poArray->GetName());
-        if( oIter != m_oMapDimensions.end() )
+        if (oIter != m_oMapDimensions.end())
         {
             oIter->second->SetIndexingVariable(poArray);
         }
     }
 
-    if( CPLTestBool(m_poSharedResource->GetOpenOptions().FetchNameValueDef(
-                                                "CACHE_TILE_PRESENCE", "NO")) )
+    if (CPLTestBool(m_poSharedResource->GetOpenOptions().FetchNameValueDef(
+            "CACHE_TILE_PRESENCE", "NO")))
     {
         poArray->CacheTilePresence();
     }
@@ -3988,46 +4051,49 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 /*                  ZarrArray::OpenTilePresenceCache()                  */
 /************************************************************************/
 
-std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
+std::shared_ptr<GDALMDArray>
+ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
 {
-    if( m_bHasTriedCacheTilePresenceArray )
+    if (m_bHasTriedCacheTilePresenceArray)
         return m_poCacheTilePresenceArray;
     m_bHasTriedCacheTilePresenceArray = true;
 
-    if( m_nTotalTileCount == 1 )
+    if (m_nTotalTileCount == 1)
         return nullptr;
 
     std::string osCacheFilename;
     auto poRGCache = GetCacheRootGroup(bCanCreate, osCacheFilename);
-    if( !poRGCache )
+    if (!poRGCache)
         return nullptr;
 
-    const std::string osTilePresenceArrayName(MassageName(GetFullName()) + "_tile_presence");
+    const std::string osTilePresenceArrayName(MassageName(GetFullName()) +
+                                              "_tile_presence");
     auto poTilePresenceArray = poRGCache->OpenMDArray(osTilePresenceArrayName);
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-    if( poTilePresenceArray )
+    if (poTilePresenceArray)
     {
         bool ok = true;
         const auto apoDimsCache = poTilePresenceArray->GetDimensions();
-        if( poTilePresenceArray->GetDataType() != eByteDT ||
-            apoDimsCache.size() != m_aoDims.size() )
+        if (poTilePresenceArray->GetDataType() != eByteDT ||
+            apoDimsCache.size() != m_aoDims.size())
         {
             ok = false;
         }
         else
         {
-            for( size_t i = 0; i < m_aoDims.size(); i++ )
+            for (size_t i = 0; i < m_aoDims.size(); i++)
             {
                 const auto nExpectedDimSize =
-                    (m_aoDims[i]->GetSize() + m_anBlockSize[i]-1) / m_anBlockSize[i];
-                if( apoDimsCache[i]->GetSize() != nExpectedDimSize )
+                    (m_aoDims[i]->GetSize() + m_anBlockSize[i] - 1) /
+                    m_anBlockSize[i];
+                if (apoDimsCache[i]->GetSize() != nExpectedDimSize)
                 {
                     ok = false;
                     break;
                 }
             }
         }
-        if( !ok )
+        if (!ok)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Array %s in %s has not expected characteristics",
@@ -4035,51 +4101,51 @@ std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) c
             return nullptr;
         }
 
-        if( !poTilePresenceArray->GetAttribute("filling_status") && !bCanCreate )
+        if (!poTilePresenceArray->GetAttribute("filling_status") && !bCanCreate)
         {
             CPLDebug(ZARR_DEBUG_KEY,
-                     "Cache tile presence array for %s found, but filling not finished",
+                     "Cache tile presence array for %s found, but filling not "
+                     "finished",
                      GetFullName().c_str());
             return nullptr;
         }
 
-        CPLDebug(ZARR_DEBUG_KEY, "Using cache tile presence for %s", GetFullName().c_str());
+        CPLDebug(ZARR_DEBUG_KEY, "Using cache tile presence for %s",
+                 GetFullName().c_str());
     }
-    else if( bCanCreate )
+    else if (bCanCreate)
     {
         int idxDim = 0;
         std::string osBlockSize;
         std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
-        for( const auto& poDim: m_aoDims )
+        for (const auto &poDim : m_aoDims)
         {
             auto poNewDim = poRGCache->CreateDimension(
                 osTilePresenceArrayName + '_' + std::to_string(idxDim),
-                std::string(),
-                std::string(),
-                (poDim->GetSize() + m_anBlockSize[idxDim]-1) / m_anBlockSize[idxDim]);
-            if( !poNewDim )
+                std::string(), std::string(),
+                (poDim->GetSize() + m_anBlockSize[idxDim] - 1) /
+                    m_anBlockSize[idxDim]);
+            if (!poNewDim)
                 return nullptr;
             apoNewDims.emplace_back(poNewDim);
 
-            if( !osBlockSize.empty() )
+            if (!osBlockSize.empty())
                 osBlockSize += ',';
             constexpr GUInt64 BLOCKSIZE = 256;
-            osBlockSize += std::to_string(
-                                std::min(poNewDim->GetSize(),BLOCKSIZE));
+            osBlockSize +=
+                std::to_string(std::min(poNewDim->GetSize(), BLOCKSIZE));
 
-            idxDim ++;
+            idxDim++;
         }
 
         CPLStringList aosOptionsTilePresence;
         aosOptionsTilePresence.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
-        poTilePresenceArray = poRGCache->CreateMDArray(osTilePresenceArrayName,
-                                                       apoNewDims,
-                                                       eByteDT,
-                                                       aosOptionsTilePresence.List());
-        if( !poTilePresenceArray )
+        poTilePresenceArray =
+            poRGCache->CreateMDArray(osTilePresenceArrayName, apoNewDims,
+                                     eByteDT, aosOptionsTilePresence.List());
+        if (!poTilePresenceArray)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot create %s in %s",
+            CPLError(CE_Failure, CPLE_NotSupported, "Cannot create %s in %s",
                      osTilePresenceArrayName.c_str(), osCacheFilename.c_str());
             return nullptr;
         }
@@ -4101,44 +4167,48 @@ std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) c
 
 bool ZarrArray::CacheTilePresence()
 {
-    if( m_nTotalTileCount == 1 )
+    if (m_nTotalTileCount == 1)
         return true;
 
     const std::string osDirectoryName = [this]()
     {
-        if( m_nVersion == 2 )
+        if (m_nVersion == 2)
             return std::string(CPLGetDirname(m_osFilename.c_str()));
 
         std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if( GetFullName() != "/" )
+        if (GetFullName() != "/")
             osTmp += GetFullName();
         return osTmp;
-    }
-    ();
+    }();
 
     struct DirCloser
     {
-        DirCloser(const DirCloser&) = delete;
-        DirCloser& operator= (const DirCloser&) = delete;
+        DirCloser(const DirCloser &) = delete;
+        DirCloser &operator=(const DirCloser &) = delete;
 
-        VSIDIR* m_psDir;
+        VSIDIR *m_psDir;
 
-        explicit DirCloser(VSIDIR* psDir): m_psDir(psDir) {}
-        ~DirCloser() { VSICloseDir(m_psDir); }
+        explicit DirCloser(VSIDIR *psDir) : m_psDir(psDir)
+        {
+        }
+        ~DirCloser()
+        {
+            VSICloseDir(m_psDir);
+        }
     };
 
     auto psDir = VSIOpenDir(osDirectoryName.c_str(), -1, nullptr);
-    if( !psDir )
+    if (!psDir)
         return false;
     DirCloser dirCloser(psDir);
 
     auto poTilePresenceArray = OpenTilePresenceCache(true);
-    if( !poTilePresenceArray )
+    if (!poTilePresenceArray)
     {
         return false;
     }
 
-    if( poTilePresenceArray->GetAttribute("filling_status") )
+    if (poTilePresenceArray->GetAttribute("filling_status"))
     {
         CPLDebug(ZARR_DEBUG_KEY,
                  "CacheTilePresence(): %s already filled. Nothing to do",
@@ -4154,60 +4224,61 @@ bool ZarrArray::CacheTilePresence()
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
 
     CPLDebug(ZARR_DEBUG_KEY,
-             "CacheTilePresence(): Iterating over %s to find which tiles are present...",
+             "CacheTilePresence(): Iterating over %s to find which tiles are "
+             "present...",
              osDirectoryName.c_str());
     uint64_t nCounter = 0;
-    while( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
+    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir))
     {
-        if( !VSI_ISDIR(psEntry->nMode) )
+        if (!VSI_ISDIR(psEntry->nMode))
         {
             int nOff = 0;
-            if( m_nVersion == 3 )
+            if (m_nVersion == 3)
             {
-                if( psEntry->pszName[0] != 'c' )
+                if (psEntry->pszName[0] != 'c')
                     continue;
                 nOff = 1;
             }
-            const CPLStringList aosTokens(
-                CSLTokenizeString2( psEntry->pszName + nOff, m_osDimSeparator.c_str(), 0 ));
-            if( aosTokens.size() == static_cast<int>(m_aoDims.size()) )
+            const CPLStringList aosTokens(CSLTokenizeString2(
+                psEntry->pszName + nOff, m_osDimSeparator.c_str(), 0));
+            if (aosTokens.size() == static_cast<int>(m_aoDims.size()))
             {
                 // Get tile indices from filename
                 bool unexpectedIndex = false;
-                for( int i = 0; i < aosTokens.size(); ++i )
+                for (int i = 0; i < aosTokens.size(); ++i)
                 {
-                    if( CPLGetValueType(aosTokens[i]) != CPL_VALUE_INTEGER )
+                    if (CPLGetValueType(aosTokens[i]) != CPL_VALUE_INTEGER)
                     {
                         unexpectedIndex = true;
                     }
-                    anTileIdx[i] = static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
-                    if( anTileIdx[i] >= apoDimsCache[i]->GetSize() )
+                    anTileIdx[i] =
+                        static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
+                    if (anTileIdx[i] >= apoDimsCache[i]->GetSize())
                     {
                         unexpectedIndex = true;
                     }
                 }
-                if( unexpectedIndex )
+                if (unexpectedIndex)
                 {
                     continue;
                 }
 
-                nCounter ++;
-                if( (nCounter % 1000) == 0 )
+                nCounter++;
+                if ((nCounter % 1000) == 0)
                 {
                     CPLDebug(ZARR_DEBUG_KEY,
                              "CacheTilePresence(): Listing in progress "
                              "(last examined %s, at least %.02f %% completed)",
                              psEntry->pszName,
-                             100.0 * double(nCounter) / double(m_nTotalTileCount));
+                             100.0 * double(nCounter) /
+                                 double(m_nTotalTileCount));
                 }
                 constexpr GByte byOne = 1;
-                //CPLDebugOnly(ZARR_DEBUG_KEY, "Marking %s has present", psEntry->pszName);
-                if( !poTilePresenceArray->Write(anTileIdx.data(),
-                                                anCount.data(),
-                                                anArrayStep.data(),
-                                                anBufferStride.data(),
-                                                eByteDT,
-                                                &byOne) )
+                // CPLDebugOnly(ZARR_DEBUG_KEY, "Marking %s has present",
+                // psEntry->pszName);
+                if (!poTilePresenceArray->Write(
+                        anTileIdx.data(), anCount.data(), anArrayStep.data(),
+                        anBufferStride.data(), eByteDT, &byOne))
                 {
                     return false;
                 }
@@ -4218,12 +4289,12 @@ bool ZarrArray::CacheTilePresence()
 
     // Write filling_status attribute
     auto poAttr = poTilePresenceArray->CreateAttribute(
-        "filling_status", {}, GDALExtendedDataType::CreateString(), nullptr );
-    if( poAttr )
+        "filling_status", {}, GDALExtendedDataType::CreateString(), nullptr);
+    if (poAttr)
     {
-        if( nCounter == 0 )
+        if (nCounter == 0)
             poAttr->Write("no_tile_present");
-        else if( nCounter == m_nTotalTileCount )
+        else if (nCounter == m_nTotalTileCount)
             poAttr->Write("all_tiles_present");
         else
             poAttr->Write("some_tiles_missing");
@@ -4241,38 +4312,37 @@ bool ZarrArray::CacheTilePresence()
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
-        const std::string& osName,
-        const std::vector<GUInt64>& anDimensions,
-        const GDALExtendedDataType& oDataType,
-        CSLConstList papszOptions)
+    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
-    if( !m_bUpdatable )
+    if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Dataset not open in update mode");
         return nullptr;
     }
-    if( anDimensions.size() >= 2 )
+    if (anDimensions.size() >= 2)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot create attributes of dimension >= 2");
         return nullptr;
     }
-    return m_oAttrGroup.CreateAttribute(osName, anDimensions, oDataType, papszOptions);
+    return m_oAttrGroup.CreateAttribute(osName, anDimensions, oDataType,
+                                        papszOptions);
 }
 
 /************************************************************************/
 /*                      ZarrArray::SetSpatialRef()                      */
 /************************************************************************/
 
-bool ZarrArray::SetSpatialRef(const OGRSpatialReference* poSRS)
+bool ZarrArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
-    if( !m_bUpdatable )
+    if (!m_bUpdatable)
     {
         return GDALPamMDArray::SetSpatialRef(poSRS);
     }
     m_poSRS.reset();
-    if( poSRS )
+    if (poSRS)
         m_poSRS.reset(poSRS->Clone());
     m_bSRSModified = true;
     return true;
@@ -4282,9 +4352,9 @@ bool ZarrArray::SetSpatialRef(const OGRSpatialReference* poSRS)
 /*                         ZarrArray::SetUnit()                         */
 /************************************************************************/
 
-bool ZarrArray::SetUnit(const std::string& osUnit)
+bool ZarrArray::SetUnit(const std::string &osUnit)
 {
-    if( !m_bUpdatable )
+    if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Dataset not open in update mode");
@@ -4299,11 +4369,12 @@ bool ZarrArray::SetUnit(const std::string& osUnit)
 /*                       ZarrArray::GetOffset()                         */
 /************************************************************************/
 
-double ZarrArray::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const
+double ZarrArray::GetOffset(bool *pbHasOffset,
+                            GDALDataType *peStorageType) const
 {
-    if( pbHasOffset )
+    if (pbHasOffset)
         *pbHasOffset = m_bHasOffset;
-    if( peStorageType )
+    if (peStorageType)
         *peStorageType = GDT_Unknown;
     return m_dfOffset;
 }
@@ -4312,11 +4383,11 @@ double ZarrArray::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) cons
 /*                       ZarrArray::GetScale()                          */
 /************************************************************************/
 
-double ZarrArray::GetScale(bool* pbHasScale, GDALDataType* peStorageType) const
+double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
 {
-    if( pbHasScale )
+    if (pbHasScale)
         *pbHasScale = m_bHasScale;
-    if( peStorageType )
+    if (peStorageType)
         *peStorageType = GDT_Unknown;
     return m_dfScale;
 }
@@ -4349,18 +4420,20 @@ bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
 /*                      GetCoordinateVariables()                        */
 /************************************************************************/
 
-std::vector<std::shared_ptr<GDALMDArray>> ZarrArray::GetCoordinateVariables() const
+std::vector<std::shared_ptr<GDALMDArray>>
+ZarrArray::GetCoordinateVariables() const
 {
     std::vector<std::shared_ptr<GDALMDArray>> ret;
     const auto poCoordinates = GetAttribute("coordinates");
-    if( poCoordinates && poCoordinates->GetDataType().GetClass() == GEDTC_STRING &&
-        poCoordinates->GetDimensionCount() == 0 )
+    if (poCoordinates &&
+        poCoordinates->GetDataType().GetClass() == GEDTC_STRING &&
+        poCoordinates->GetDimensionCount() == 0)
     {
-        const char* pszCoordinates = poCoordinates->ReadAsString();
-        if( pszCoordinates )
+        const char *pszCoordinates = poCoordinates->ReadAsString();
+        if (pszCoordinates)
         {
             auto poGroup = m_poGroupWeak.lock();
-            if( !poGroup )
+            if (!poGroup)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot access coordinate variables of %s has "
@@ -4369,18 +4442,20 @@ std::vector<std::shared_ptr<GDALMDArray>> ZarrArray::GetCoordinateVariables() co
             }
             else
             {
-                const CPLStringList aosNames(CSLTokenizeString2(pszCoordinates, " ", 0));
-                for( int i = 0; i < aosNames.size(); i++ )
+                const CPLStringList aosNames(
+                    CSLTokenizeString2(pszCoordinates, " ", 0));
+                for (int i = 0; i < aosNames.size(); i++)
                 {
                     auto poCoordinateVar = poGroup->OpenMDArray(aosNames[i]);
-                    if( poCoordinateVar )
+                    if (poCoordinateVar)
                     {
                         ret.emplace_back(poCoordinateVar);
                     }
                     else
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Cannot find variable corresponding to coordinate %s",
+                                 "Cannot find variable corresponding to "
+                                 "coordinate %s",
                                  aosNames[i]);
                     }
                 }
