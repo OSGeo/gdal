@@ -131,8 +131,7 @@
 
 #include "avc.h"
 
-#include <ctype.h>      /* for isspace() */
-
+#include <ctype.h> /* for isspace() */
 
 /* Used by avc_binwr.c */
 extern int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir);
@@ -147,7 +146,7 @@ static AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
                                         AVCDBCSInfo *psDBCSInfo);
 static AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszInfoPath,
                                            const char *pszTableName);
-static AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath,const char *pszName);
+static AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath, const char *pszName);
 
 static int _AVCBinReadNextTableRec(AVCRawBinFile *psFile, int nFields,
                                    AVCFieldInfo *pasDef, AVCField *pasFields,
@@ -184,7 +183,7 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
                            AVCCoverType eCoverType, AVCFileType eFileType,
                            AVCDBCSInfo *psDBCSInfo)
 {
-    AVCBinFile   *psFile;
+    AVCBinFile *psFile;
 
     /*-----------------------------------------------------------------
      * The case of INFO tables is a bit more complicated...
@@ -195,8 +194,8 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
         if (eCoverType == AVCCoverPC || eCoverType == AVCCoverPC2)
             return _AVCBinReadOpenDBFTable(pszPath, pszName);
         else
-            return _AVCBinReadOpenTable(pszPath, pszName,
-                                        eCoverType, psDBCSInfo);
+            return _AVCBinReadOpenTable(pszPath, pszName, eCoverType,
+                                        psDBCSInfo);
     }
 
     /*-----------------------------------------------------------------
@@ -211,20 +210,20 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
     /*-----------------------------------------------------------------
      * All other file types share a very similar opening method.
      *----------------------------------------------------------------*/
-    psFile = (AVCBinFile*)CPLCalloc(1, sizeof(AVCBinFile));
+    psFile = (AVCBinFile *)CPLCalloc(1, sizeof(AVCBinFile));
 
     psFile->eFileType = eFileType;
     psFile->eCoverType = eCoverType;
 
-    psFile->pszFilename = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
-    snprintf(psFile->pszFilename,
-             strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
+    psFile->pszFilename =
+        (char *)CPLMalloc(strlen(pszPath) + strlen(pszName) + 1);
+    snprintf(psFile->pszFilename, strlen(pszPath) + strlen(pszName) + 1, "%s%s",
+             pszPath, pszName);
 
     AVCAdjustCaseSensitiveFilename(psFile->pszFilename);
 
-    psFile->psRawBinFile = AVCRawBinOpen(psFile->pszFilename, "r",
-                                         AVC_COVER_BYTE_ORDER(eCoverType),
-                                         psDBCSInfo);
+    psFile->psRawBinFile = AVCRawBinOpen(
+        psFile->pszFilename, "r", AVC_COVER_BYTE_ORDER(eCoverType), psDBCSInfo);
 
     if (psFile->psRawBinFile == nullptr)
     {
@@ -254,33 +253,31 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
      *----------------------------------------------------------------*/
     if (psFile->eFileType == AVCFileARC)
     {
-        psFile->cur.psArc = (AVCArc*)CPLCalloc(1, sizeof(AVCArc));
+        psFile->cur.psArc = (AVCArc *)CPLCalloc(1, sizeof(AVCArc));
     }
-    else if (psFile->eFileType == AVCFilePAL ||
-             psFile->eFileType == AVCFileRPL )
+    else if (psFile->eFileType == AVCFilePAL || psFile->eFileType == AVCFileRPL)
     {
-        psFile->cur.psPal = (AVCPal*)CPLCalloc(1, sizeof(AVCPal));
+        psFile->cur.psPal = (AVCPal *)CPLCalloc(1, sizeof(AVCPal));
     }
     else if (psFile->eFileType == AVCFileCNT)
     {
-        psFile->cur.psCnt = (AVCCnt*)CPLCalloc(1, sizeof(AVCCnt));
+        psFile->cur.psCnt = (AVCCnt *)CPLCalloc(1, sizeof(AVCCnt));
     }
     else if (psFile->eFileType == AVCFileLAB)
     {
-        psFile->cur.psLab = (AVCLab*)CPLCalloc(1, sizeof(AVCLab));
+        psFile->cur.psLab = (AVCLab *)CPLCalloc(1, sizeof(AVCLab));
     }
     else if (psFile->eFileType == AVCFileTOL)
     {
-        psFile->cur.psTol = (AVCTol*)CPLCalloc(1, sizeof(AVCTol));
+        psFile->cur.psTol = (AVCTol *)CPLCalloc(1, sizeof(AVCTol));
     }
-    else if (psFile->eFileType == AVCFileTXT ||
-             psFile->eFileType == AVCFileTX6)
+    else if (psFile->eFileType == AVCFileTXT || psFile->eFileType == AVCFileTX6)
     {
-        psFile->cur.psTxt = (AVCTxt*)CPLCalloc(1, sizeof(AVCTxt));
+        psFile->cur.psTxt = (AVCTxt *)CPLCalloc(1, sizeof(AVCTxt));
     }
     else if (psFile->eFileType == AVCFileRXP)
     {
-        psFile->cur.psRxp = (AVCRxp*)CPLCalloc(1, sizeof(AVCRxp));
+        psFile->cur.psRxp = (AVCRxp *)CPLCalloc(1, sizeof(AVCRxp));
     }
     else
     {
@@ -302,7 +299,7 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
  * Close a coverage file, and release all memory (object strcut., buffers,
  * etc.) associated with this file.
  **********************************************************************/
-void    AVCBinReadClose(AVCBinFile *psFile)
+void AVCBinReadClose(AVCBinFile *psFile)
 {
     AVCRawBinClose(psFile->psRawBinFile);
     psFile->psRawBinFile = nullptr;
@@ -313,8 +310,8 @@ void    AVCBinReadClose(AVCBinFile *psFile)
     if (psFile->hDBFFile)
         DBFClose(psFile->hDBFFile);
 
-    if( psFile->psIndexFile != nullptr )
-        AVCRawBinClose( psFile->psIndexFile );
+    if (psFile->psIndexFile != nullptr)
+        AVCRawBinClose(psFile->psIndexFile);
 
     if (psFile->eFileType == AVCFileARC)
     {
@@ -322,8 +319,7 @@ void    AVCBinReadClose(AVCBinFile *psFile)
             CPLFree(psFile->cur.psArc->pasVertices);
         CPLFree(psFile->cur.psArc);
     }
-    else if (psFile->eFileType == AVCFilePAL ||
-             psFile->eFileType == AVCFileRPL )
+    else if (psFile->eFileType == AVCFilePAL || psFile->eFileType == AVCFileRPL)
     {
         if (psFile->cur.psPal)
             CPLFree(psFile->cur.psPal->pasArcs);
@@ -347,8 +343,7 @@ void    AVCBinReadClose(AVCBinFile *psFile)
     {
         CSLDestroy(psFile->cur.papszPrj);
     }
-    else if (psFile->eFileType == AVCFileTXT ||
-             psFile->eFileType == AVCFileTX6)
+    else if (psFile->eFileType == AVCFileTXT || psFile->eFileType == AVCFileTX6)
     {
         if (psFile->cur.psTxt)
         {
@@ -386,9 +381,8 @@ void    AVCBinReadClose(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
-                      AVCCoverType eCoverType)
+static int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
+                             AVCCoverType eCoverType)
 {
     int nStatus = 0;
 
@@ -410,12 +404,12 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
         nStatus = -1;
 
     psHeader->nPrecision = AVCRawBinReadInt32(psFile);
-    psHeader->nRecordSize= AVCRawBinReadInt32(psFile);
+    psHeader->nRecordSize = AVCRawBinReadInt32(psFile);
 
     /* Jump to 24th byte in header */
     AVCRawBinFSeek(psFile, 12, SEEK_CUR);
-    psHeader->nLength    = AVCRawBinReadInt32(psFile);
-    if( psHeader->nLength < 0 || psHeader->nLength > (INT_MAX - 256) / 2 )
+    psHeader->nLength = AVCRawBinReadInt32(psFile);
+    if (psHeader->nLength < 0 || psHeader->nLength > (INT_MAX - 256) / 2)
     {
         return -1;
     }
@@ -426,9 +420,9 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
      * this problem happens specially with PC Arc/Info files.
      *----------------------------------------------------------------*/
     if (eCoverType == AVCCoverPC)
-        AVCRawBinSetFileDataSize(psFile, psHeader->nLength*2 + 256);
+        AVCRawBinSetFileDataSize(psFile, psHeader->nLength * 2 + 256);
     else
-        AVCRawBinSetFileDataSize(psFile, psHeader->nLength*2 );
+        AVCRawBinSetFileDataSize(psFile, psHeader->nLength * 2);
 
     /* Move the pointer at the end of the 100 bytes header
      */
@@ -436,7 +430,6 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                          AVCBinReadRewind()
@@ -451,7 +444,7 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
 int AVCBinReadRewind(AVCBinFile *psFile)
 {
     AVCBinHeader sHeader;
-    int          nStatus=0;
+    int nStatus = 0;
 
     /*-----------------------------------------------------------------
      * For AVCCoverPC coverages, there is a first 256 bytes header
@@ -466,13 +459,10 @@ int AVCBinReadRewind(AVCBinFile *psFile)
 
     AVCRawBinFSeek(psFile->psRawBinFile, 0, SEEK_SET);
 
-    if ( psFile->eFileType == AVCFileARC ||
-         psFile->eFileType == AVCFilePAL ||
-         psFile->eFileType == AVCFileRPL ||
-         psFile->eFileType == AVCFileCNT ||
-         psFile->eFileType == AVCFileLAB ||
-         psFile->eFileType == AVCFileTXT ||
-         psFile->eFileType == AVCFileTX6  )
+    if (psFile->eFileType == AVCFileARC || psFile->eFileType == AVCFilePAL ||
+        psFile->eFileType == AVCFileRPL || psFile->eFileType == AVCFileCNT ||
+        psFile->eFileType == AVCFileLAB || psFile->eFileType == AVCFileTXT ||
+        psFile->eFileType == AVCFileTX6)
     {
         nStatus = _AVCBinReadHeader(psFile->psRawBinFile, &sHeader,
                                     psFile->eCoverType);
@@ -514,7 +504,7 @@ int AVCBinReadRewind(AVCBinFile *psFile)
          */
         if (psFile->eCoverType == AVCCoverWeird &&
             psFile->eFileType == AVCFileTXT &&
-            (sHeader.nPrecision == 67 || sHeader.nPrecision == -67) )
+            (sHeader.nPrecision == 67 || sHeader.nPrecision == -67))
         {
             /* TXT file will be processed as V7 TXT/TX6/TX7 */
             psFile->eFileType = AVCFileTX6;
@@ -573,34 +563,40 @@ int AVCBinReadRewind(AVCBinFile *psFile)
  *
  * Returns the read object on success or nullptr on error.
  **********************************************************************/
-void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
+void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex)
 {
-    int  bIndexed = FALSE;
-    int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
+    int bIndexed = FALSE;
+    int nObjectOffset, nRecordSize = 0, nRecordStart = 0, nLen;
     /* cppcheck-suppress unreadVariable */
-    char szExt[4] = {0,0,0,0};
+    char szExt[4] = {0, 0, 0, 0};
     char *pszExt = szExt;
 
-    if( iObjIndex < 0 )
+    if (iObjIndex < 0)
         return nullptr;
 
     /*-----------------------------------------------------------------
      * Determine some information from based on the coverage type.
      *----------------------------------------------------------------*/
     nLen = (int)strlen(psFile->pszFilename);
-    if( psFile->eFileType == AVCFileARC &&
-        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "arc")) ||
-         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "arc.adf"))))
+    if (psFile->eFileType == AVCFileARC &&
+        ((nLen >= 3 &&
+          STARTS_WITH_CI((pszExt = psFile->pszFilename + nLen - 3), "arc")) ||
+         (nLen >= 7 && STARTS_WITH_CI((pszExt = psFile->pszFilename + nLen - 7),
+                                      "arc.adf"))))
     {
         bIndexed = TRUE;
     }
-    else if( psFile->eFileType == AVCFilePAL &&
-        ((nLen>=3 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-3), "pal")) ||
-         (nLen>=7 && STARTS_WITH_CI((pszExt=psFile->pszFilename+nLen-7), "pal.adf"))))
+    else if (psFile->eFileType == AVCFilePAL &&
+             ((nLen >= 3 &&
+               STARTS_WITH_CI((pszExt = psFile->pszFilename + nLen - 3),
+                              "pal")) ||
+              (nLen >= 7 &&
+               STARTS_WITH_CI((pszExt = psFile->pszFilename + nLen - 7),
+                              "pal.adf"))))
     {
         bIndexed = TRUE;
     }
-    else if( psFile->eFileType == AVCFileTABLE )
+    else if (psFile->eFileType == AVCFileTABLE)
     {
         bIndexed = FALSE;
         nRecordSize = psFile->hdr.psTableDef->nRecSize;
@@ -613,47 +609,46 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
      * Ensure the index file is opened if an index file is required.
      *----------------------------------------------------------------*/
 
-    if( bIndexed && psFile->psIndexFile == nullptr )
+    if (bIndexed && psFile->psIndexFile == nullptr)
     {
         char chOrig;
 
         chOrig = pszExt[2];
-        if( chOrig > 'A' && chOrig < 'Z' )
+        if (chOrig > 'A' && chOrig < 'Z')
             pszExt[2] = 'X';
         else
             pszExt[2] = 'x';
 
-        psFile->psIndexFile =
-            AVCRawBinOpen( psFile->pszFilename, "rb",
-                           psFile->psRawBinFile->eByteOrder,
-                           psFile->psRawBinFile->psDBCSInfo);
+        psFile->psIndexFile = AVCRawBinOpen(psFile->pszFilename, "rb",
+                                            psFile->psRawBinFile->eByteOrder,
+                                            psFile->psRawBinFile->psDBCSInfo);
         pszExt[2] = chOrig;
 
-        if( psFile->psIndexFile == nullptr )
+        if (psFile->psIndexFile == nullptr)
             return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * Establish the offset to read the object from.
      *----------------------------------------------------------------*/
-    if( bIndexed )
+    if (bIndexed)
     {
         GIntBig nIndexOffsetBig;
 
         if (psFile->eCoverType == AVCCoverPC)
-            nIndexOffsetBig = 356 + static_cast<GIntBig>(iObjIndex-1)*8;
+            nIndexOffsetBig = 356 + static_cast<GIntBig>(iObjIndex - 1) * 8;
         else
-            nIndexOffsetBig = 100 + static_cast<GIntBig>(iObjIndex-1)*8;
-        if( nIndexOffsetBig < INT_MIN || nIndexOffsetBig > INT_MAX )
+            nIndexOffsetBig = 100 + static_cast<GIntBig>(iObjIndex - 1) * 8;
+        if (nIndexOffsetBig < INT_MIN || nIndexOffsetBig > INT_MAX)
             return nullptr;
 
         const int nIndexOffset = static_cast<int>(nIndexOffsetBig);
-        AVCRawBinFSeek( psFile->psIndexFile, nIndexOffset, SEEK_SET );
-        if( AVCRawBinEOF( psFile->psIndexFile ) )
+        AVCRawBinFSeek(psFile->psIndexFile, nIndexOffset, SEEK_SET);
+        if (AVCRawBinEOF(psFile->psIndexFile))
             return nullptr;
 
-        nObjectOffset = AVCRawBinReadInt32( psFile->psIndexFile );
-        if( nObjectOffset < INT_MIN / 2 || nObjectOffset > (INT_MAX - 256)/ 2 )
+        nObjectOffset = AVCRawBinReadInt32(psFile->psIndexFile);
+        if (nObjectOffset < INT_MIN / 2 || nObjectOffset > (INT_MAX - 256) / 2)
             return nullptr;
         nObjectOffset *= 2;
 
@@ -662,9 +657,9 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
     }
     else
     {
-        GIntBig nObjectOffsetBig = nRecordStart +
-            nRecordSize * static_cast<GIntBig>(iObjIndex-1);
-        if( nObjectOffsetBig < INT_MIN || nObjectOffsetBig > INT_MAX )
+        GIntBig nObjectOffsetBig =
+            nRecordStart + nRecordSize * static_cast<GIntBig>(iObjIndex - 1);
+        if (nObjectOffsetBig < INT_MIN || nObjectOffsetBig > INT_MAX)
             return nullptr;
         nObjectOffset = static_cast<int>(nObjectOffsetBig);
     }
@@ -672,16 +667,15 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
     /*-----------------------------------------------------------------
      * Seek to the start of the object in the data file.
      *----------------------------------------------------------------*/
-    AVCRawBinFSeek( psFile->psRawBinFile, nObjectOffset, SEEK_SET );
-    if( AVCRawBinEOF( psFile->psRawBinFile ) )
+    AVCRawBinFSeek(psFile->psRawBinFile, nObjectOffset, SEEK_SET);
+    if (AVCRawBinEOF(psFile->psRawBinFile))
         return nullptr;
 
     /*-----------------------------------------------------------------
      * Read and return the object.
      *----------------------------------------------------------------*/
-    return AVCBinReadNextObject( psFile );
+    return AVCBinReadNextObject(psFile);
 }
-
 
 /**********************************************************************
  *                          AVCBinReadNextObject()
@@ -701,43 +695,41 @@ void *AVCBinReadNextObject(AVCBinFile *psFile)
 {
     void *psObj = nullptr;
 
-    switch(psFile->eFileType)
+    switch (psFile->eFileType)
     {
-      case AVCFileARC:
-        psObj = (void*)AVCBinReadNextArc(psFile);
-        break;
-      case AVCFilePAL:
-      case AVCFileRPL:
-        psObj = (void*)AVCBinReadNextPal(psFile);
-        break;
-      case AVCFileCNT:
-        psObj = (void*)AVCBinReadNextCnt(psFile);
-        break;
-      case AVCFileLAB:
-        psObj = (void*)AVCBinReadNextLab(psFile);
-        break;
-      case AVCFileTOL:
-        psObj = (void*)AVCBinReadNextTol(psFile);
-        break;
-      case AVCFileTXT:
-      case AVCFileTX6:
-        psObj = (void*)AVCBinReadNextTxt(psFile);
-        break;
-      case AVCFileRXP:
-        psObj = (void*)AVCBinReadNextRxp(psFile);
-        break;
-      case AVCFileTABLE:
-        psObj = (void*)AVCBinReadNextTableRec(psFile);
-        break;
-      default:
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "AVCBinReadNextObject(): Unsupported file type!");
+        case AVCFileARC:
+            psObj = (void *)AVCBinReadNextArc(psFile);
+            break;
+        case AVCFilePAL:
+        case AVCFileRPL:
+            psObj = (void *)AVCBinReadNextPal(psFile);
+            break;
+        case AVCFileCNT:
+            psObj = (void *)AVCBinReadNextCnt(psFile);
+            break;
+        case AVCFileLAB:
+            psObj = (void *)AVCBinReadNextLab(psFile);
+            break;
+        case AVCFileTOL:
+            psObj = (void *)AVCBinReadNextTol(psFile);
+            break;
+        case AVCFileTXT:
+        case AVCFileTX6:
+            psObj = (void *)AVCBinReadNextTxt(psFile);
+            break;
+        case AVCFileRXP:
+            psObj = (void *)AVCBinReadNextRxp(psFile);
+            break;
+        case AVCFileTABLE:
+            psObj = (void *)AVCBinReadNextTableRec(psFile);
+            break;
+        default:
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "AVCBinReadNextObject(): Unsupported file type!");
     }
 
     return psObj;
 }
-
-
 
 /**********************************************************************
  *                          AVCBinReadNextTableRec()
@@ -750,21 +742,19 @@ void *AVCBinReadNextObject(AVCBinFile *psFile)
  **********************************************************************/
 AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
 {
-    if (psFile->eCoverType != AVCCoverPC &&
-        psFile->eCoverType != AVCCoverPC2 &&
+    if (psFile->eCoverType != AVCCoverPC && psFile->eCoverType != AVCCoverPC2 &&
         psFile->eFileType == AVCFileTABLE &&
         psFile->hdr.psTableDef->numRecords > 0 &&
-        ! AVCRawBinEOF(psFile->psRawBinFile) &&
-        _AVCBinReadNextTableRec(psFile->psRawBinFile,
-                                    psFile->hdr.psTableDef->numFields,
-                                    psFile->hdr.psTableDef->pasFieldDef,
-                                    psFile->cur.pasFields,
-                                    psFile->hdr.psTableDef->nRecSize) == 0 )
+        !AVCRawBinEOF(psFile->psRawBinFile) &&
+        _AVCBinReadNextTableRec(
+            psFile->psRawBinFile, psFile->hdr.psTableDef->numFields,
+            psFile->hdr.psTableDef->pasFieldDef, psFile->cur.pasFields,
+            psFile->hdr.psTableDef->nRecSize) == 0)
     {
         return psFile->cur.pasFields;
     }
     else if ((psFile->eCoverType == AVCCoverPC ||
-              psFile->eCoverType == AVCCoverPC2 ) &&
+              psFile->eCoverType == AVCCoverPC2) &&
              psFile->eFileType == AVCFileTABLE &&
              psFile->hdr.psTableDef->numRecords > 0 &&
              _AVCBinReadNextDBFTableRec(psFile->hDBFFile,
@@ -778,9 +768,6 @@ AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
 
     return nullptr;
 }
-
-
-
 
 /*=====================================================================
  *                              ARC
@@ -800,33 +787,32 @@ AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
+static int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
                               int nPrecision)
 {
     int i, numVertices;
     int nRecordSize, nStartPos, nBytesRead;
 
-    psArc->nArcId  = AVCRawBinReadInt32(psFile);
+    psArc->nArcId = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = AVCRawBinReadInt32(psFile);
-    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+    nRecordSize = AVCRawBinReadInt32(psFile);
+    if (nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024)
         return -1;
     nRecordSize *= 2;
-    nStartPos      = psFile->nCurPos+psFile->nOffset;
+    nStartPos = psFile->nCurPos + psFile->nOffset;
     psArc->nUserId = AVCRawBinReadInt32(psFile);
-    psArc->nFNode  = AVCRawBinReadInt32(psFile);
-    psArc->nTNode  = AVCRawBinReadInt32(psFile);
-    psArc->nLPoly  = AVCRawBinReadInt32(psFile);
-    psArc->nRPoly  = AVCRawBinReadInt32(psFile);
-    numVertices    = AVCRawBinReadInt32(psFile);
-    if( numVertices < 0 || numVertices > 100 * 1024 * 1024 )
+    psArc->nFNode = AVCRawBinReadInt32(psFile);
+    psArc->nTNode = AVCRawBinReadInt32(psFile);
+    psArc->nLPoly = AVCRawBinReadInt32(psFile);
+    psArc->nRPoly = AVCRawBinReadInt32(psFile);
+    numVertices = AVCRawBinReadInt32(psFile);
+    if (numVertices < 0 || numVertices > 100 * 1024 * 1024)
         return -1;
-    if( numVertices > 10 * 1024 * 1024 &&
-        !AVCRawBinIsFileGreaterThan(psFile,
-                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    if (numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(
+            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
     {
         return -1;
     }
@@ -838,9 +824,9 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
      */
     if (psArc->pasVertices == nullptr || numVertices > psArc->numVertices)
     {
-        AVCVertex* pasNewVertices = (AVCVertex*)VSIRealloc(psArc->pasVertices,
-                                                numVertices*sizeof(AVCVertex));
-        if( pasNewVertices == nullptr )
+        AVCVertex *pasNewVertices = (AVCVertex *)VSIRealloc(
+            psArc->pasVertices, numVertices * sizeof(AVCVertex));
+        if (pasNewVertices == nullptr)
             return -1;
         psArc->pasVertices = pasNewVertices;
     }
@@ -849,24 +835,23 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        for(i=0; i<numVertices; i++)
+        for (i = 0; i < numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psArc->pasVertices[i].y = AVCRawBinReadFloat(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
     }
     else
     {
-        for(i=0; i<numVertices; i++)
+        for (i = 0; i < numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psArc->pasVertices[i].y = AVCRawBinReadDouble(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
-
     }
 
     /*-----------------------------------------------------------------
@@ -874,7 +859,7 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
      * start of next object.
      *----------------------------------------------------------------*/
     nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
-    if ( nBytesRead < nRecordSize)
+    if (nBytesRead < nRecordSize)
         AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
@@ -891,17 +876,15 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
  **********************************************************************/
 AVCArc *AVCBinReadNextArc(AVCBinFile *psFile)
 {
-    if (psFile->eFileType != AVCFileARC ||
-        AVCRawBinEOF(psFile->psRawBinFile) ||
+    if (psFile->eFileType != AVCFileARC || AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextArc(psFile->psRawBinFile, psFile->cur.psArc,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
 
     return psFile->cur.psArc;
 }
-
 
 /*=====================================================================
  *                              PAL
@@ -921,43 +904,42 @@ AVCArc *AVCBinReadNextArc(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
+static int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
                               int nPrecision)
 {
     int i, numArcs;
     int nRecordSize, nStartPos, nBytesRead;
 
     psPal->nPolyId = AVCRawBinReadInt32(psFile);
-    nRecordSize    = AVCRawBinReadInt32(psFile);
-    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+    nRecordSize = AVCRawBinReadInt32(psFile);
+    if (nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024)
         return -1;
     nRecordSize *= 2;
-    nStartPos      = psFile->nCurPos+psFile->nOffset;
+    nStartPos = psFile->nCurPos + psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
         return -1;
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        psPal->sMin.x  = AVCRawBinReadFloat(psFile);
-        psPal->sMin.y  = AVCRawBinReadFloat(psFile);
-        psPal->sMax.x  = AVCRawBinReadFloat(psFile);
-        psPal->sMax.y  = AVCRawBinReadFloat(psFile);
+        psPal->sMin.x = AVCRawBinReadFloat(psFile);
+        psPal->sMin.y = AVCRawBinReadFloat(psFile);
+        psPal->sMax.x = AVCRawBinReadFloat(psFile);
+        psPal->sMax.y = AVCRawBinReadFloat(psFile);
     }
     else
     {
-        psPal->sMin.x  = AVCRawBinReadDouble(psFile);
-        psPal->sMin.y  = AVCRawBinReadDouble(psFile);
-        psPal->sMax.x  = AVCRawBinReadDouble(psFile);
-        psPal->sMax.y  = AVCRawBinReadDouble(psFile);
+        psPal->sMin.x = AVCRawBinReadDouble(psFile);
+        psPal->sMin.y = AVCRawBinReadDouble(psFile);
+        psPal->sMax.x = AVCRawBinReadDouble(psFile);
+        psPal->sMax.y = AVCRawBinReadDouble(psFile);
     }
 
-    numArcs            = AVCRawBinReadInt32(psFile);
-    if( numArcs < 0 || numArcs > 100 * 1024 * 1024 )
+    numArcs = AVCRawBinReadInt32(psFile);
+    if (numArcs < 0 || numArcs > 100 * 1024 * 1024)
         return -1;
-    if( numArcs > 10 * 1024 * 1024 &&
-        !AVCRawBinIsFileGreaterThan(psFile, numArcs * sizeof(int) * 3) )
+    if (numArcs > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile, numArcs * sizeof(int) * 3))
     {
         return -1;
     }
@@ -967,21 +949,21 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
      */
     if (psPal->pasArcs == nullptr || numArcs > psPal->numArcs)
     {
-        AVCPalArc* pasNewArcs = (AVCPalArc*)VSIRealloc(psPal->pasArcs,
-                                                 numArcs*sizeof(AVCPalArc));
-        if( pasNewArcs == nullptr )
+        AVCPalArc *pasNewArcs = (AVCPalArc *)VSIRealloc(
+            psPal->pasArcs, numArcs * sizeof(AVCPalArc));
+        if (pasNewArcs == nullptr)
             return -1;
         psPal->pasArcs = pasNewArcs;
     }
 
     psPal->numArcs = numArcs;
 
-    for(i=0; i<numArcs; i++)
+    for (i = 0; i < numArcs; i++)
     {
         psPal->pasArcs[i].nArcId = AVCRawBinReadInt32(psFile);
         psPal->pasArcs[i].nFNode = AVCRawBinReadInt32(psFile);
         psPal->pasArcs[i].nAdjPoly = AVCRawBinReadInt32(psFile);
-        if( psFile->nCurSize == 0 )
+        if (psFile->nCurSize == 0)
             return -1;
     }
 
@@ -990,7 +972,7 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
      * start of next object.
      *----------------------------------------------------------------*/
     nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
-    if ( nBytesRead < nRecordSize)
+    if (nBytesRead < nRecordSize)
         AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
@@ -1007,17 +989,16 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
  **********************************************************************/
 AVCPal *AVCBinReadNextPal(AVCBinFile *psFile)
 {
-    if ((psFile->eFileType!=AVCFilePAL && psFile->eFileType!=AVCFileRPL) ||
+    if ((psFile->eFileType != AVCFilePAL && psFile->eFileType != AVCFileRPL) ||
         AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextPal(psFile->psRawBinFile, psFile->cur.psPal,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
 
     return psFile->cur.psPal;
 }
-
 
 /*=====================================================================
  *                              CNT
@@ -1033,39 +1014,38 @@ AVCPal *AVCBinReadNextPal(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
+static int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
                               int nPrecision)
 {
     int i, numLabels;
     int nRecordSize, nStartPos, nBytesRead;
 
     psCnt->nPolyId = AVCRawBinReadInt32(psFile);
-    nRecordSize    = AVCRawBinReadInt32(psFile);
-    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+    nRecordSize = AVCRawBinReadInt32(psFile);
+    if (nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024)
         return -1;
     nRecordSize *= 2;
-    nStartPos      = psFile->nCurPos+psFile->nOffset;
+    nStartPos = psFile->nCurPos + psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
         return -1;
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        psCnt->sCoord.x  = AVCRawBinReadFloat(psFile);
-        psCnt->sCoord.y  = AVCRawBinReadFloat(psFile);
+        psCnt->sCoord.x = AVCRawBinReadFloat(psFile);
+        psCnt->sCoord.y = AVCRawBinReadFloat(psFile);
     }
     else
     {
-        psCnt->sCoord.x  = AVCRawBinReadDouble(psFile);
-        psCnt->sCoord.y  = AVCRawBinReadDouble(psFile);
+        psCnt->sCoord.x = AVCRawBinReadDouble(psFile);
+        psCnt->sCoord.y = AVCRawBinReadDouble(psFile);
     }
 
-    numLabels      = AVCRawBinReadInt32(psFile);
-    if( numLabels < 0 || numLabels > 100 * 1024 * 1024 )
+    numLabels = AVCRawBinReadInt32(psFile);
+    if (numLabels < 0 || numLabels > 100 * 1024 * 1024)
         return -1;
-    if( numLabels > 10 * 1024 * 1024 &&
-        !AVCRawBinIsFileGreaterThan(psFile, numLabels * sizeof(int)) )
+    if (numLabels > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile, numLabels * sizeof(int)))
     {
         return -1;
     }
@@ -1075,19 +1055,19 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
      */
     if (psCnt->panLabelIds == nullptr || numLabels > psCnt->numLabels)
     {
-        GInt32* panIds = (GInt32 *)VSIRealloc(psCnt->panLabelIds,
-                                                  numLabels*sizeof(GInt32));
-        if( panIds == nullptr )
+        GInt32 *panIds = (GInt32 *)VSIRealloc(psCnt->panLabelIds,
+                                              numLabels * sizeof(GInt32));
+        if (panIds == nullptr)
             return -1;
         psCnt->panLabelIds = panIds;
     }
 
     psCnt->numLabels = numLabels;
 
-    for(i=0; i<numLabels; i++)
+    for (i = 0; i < numLabels; i++)
     {
         psCnt->panLabelIds[i] = AVCRawBinReadInt32(psFile);
-        if( psFile->nCurSize == 0 )
+        if (psFile->nCurSize == 0)
             return -1;
     }
 
@@ -1096,7 +1076,7 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
      * start of next object.
      *----------------------------------------------------------------*/
     nBytesRead = (psFile->nCurPos + psFile->nOffset) - nStartPos;
-    if ( nBytesRead < nRecordSize)
+    if (nBytesRead < nRecordSize)
         AVCRawBinFSeek(psFile, nRecordSize - nBytesRead, SEEK_CUR);
 
     return 0;
@@ -1113,17 +1093,15 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
  **********************************************************************/
 AVCCnt *AVCBinReadNextCnt(AVCBinFile *psFile)
 {
-    if (psFile->eFileType != AVCFileCNT ||
-        AVCRawBinEOF(psFile->psRawBinFile) ||
+    if (psFile->eFileType != AVCFileCNT || AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextCnt(psFile->psRawBinFile, psFile->cur.psCnt,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
 
     return psFile->cur.psCnt;
 }
-
 
 /*=====================================================================
  *                              LAB
@@ -1139,12 +1117,11 @@ AVCCnt *AVCBinReadNextCnt(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextLab(AVCRawBinFile *psFile, AVCLab *psLab,
+static int _AVCBinReadNextLab(AVCRawBinFile *psFile, AVCLab *psLab,
                               int nPrecision)
 {
 
-    psLab->nValue  = AVCRawBinReadInt32(psFile);
+    psLab->nValue = AVCRawBinReadInt32(psFile);
     psLab->nPolyId = AVCRawBinReadInt32(psFile);
 
     if (AVCRawBinEOF(psFile))
@@ -1152,21 +1129,21 @@ int _AVCBinReadNextLab(AVCRawBinFile *psFile, AVCLab *psLab,
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        psLab->sCoord1.x  = AVCRawBinReadFloat(psFile);
-        psLab->sCoord1.y  = AVCRawBinReadFloat(psFile);
-        psLab->sCoord2.x  = AVCRawBinReadFloat(psFile);
-        psLab->sCoord2.y  = AVCRawBinReadFloat(psFile);
-        psLab->sCoord3.x  = AVCRawBinReadFloat(psFile);
-        psLab->sCoord3.y  = AVCRawBinReadFloat(psFile);
+        psLab->sCoord1.x = AVCRawBinReadFloat(psFile);
+        psLab->sCoord1.y = AVCRawBinReadFloat(psFile);
+        psLab->sCoord2.x = AVCRawBinReadFloat(psFile);
+        psLab->sCoord2.y = AVCRawBinReadFloat(psFile);
+        psLab->sCoord3.x = AVCRawBinReadFloat(psFile);
+        psLab->sCoord3.y = AVCRawBinReadFloat(psFile);
     }
     else
     {
-        psLab->sCoord1.x  = AVCRawBinReadDouble(psFile);
-        psLab->sCoord1.y  = AVCRawBinReadDouble(psFile);
-        psLab->sCoord2.x  = AVCRawBinReadDouble(psFile);
-        psLab->sCoord2.y  = AVCRawBinReadDouble(psFile);
-        psLab->sCoord3.x  = AVCRawBinReadDouble(psFile);
-        psLab->sCoord3.y  = AVCRawBinReadDouble(psFile);
+        psLab->sCoord1.x = AVCRawBinReadDouble(psFile);
+        psLab->sCoord1.y = AVCRawBinReadDouble(psFile);
+        psLab->sCoord2.x = AVCRawBinReadDouble(psFile);
+        psLab->sCoord2.y = AVCRawBinReadDouble(psFile);
+        psLab->sCoord3.x = AVCRawBinReadDouble(psFile);
+        psLab->sCoord3.y = AVCRawBinReadDouble(psFile);
     }
 
     return 0;
@@ -1183,10 +1160,9 @@ int _AVCBinReadNextLab(AVCRawBinFile *psFile, AVCLab *psLab,
  **********************************************************************/
 AVCLab *AVCBinReadNextLab(AVCBinFile *psFile)
 {
-    if (psFile->eFileType != AVCFileLAB ||
-        AVCRawBinEOF(psFile->psRawBinFile) ||
+    if (psFile->eFileType != AVCFileLAB || AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextLab(psFile->psRawBinFile, psFile->cur.psLab,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
@@ -1208,24 +1184,23 @@ AVCLab *AVCBinReadNextLab(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextTol(AVCRawBinFile *psFile, AVCTol *psTol,
-                       int nPrecision)
+static int _AVCBinReadNextTol(AVCRawBinFile *psFile, AVCTol *psTol,
+                              int nPrecision)
 {
 
-    psTol->nIndex  = AVCRawBinReadInt32(psFile);
-    psTol->nFlag   = AVCRawBinReadInt32(psFile);
+    psTol->nIndex = AVCRawBinReadInt32(psFile);
+    psTol->nFlag = AVCRawBinReadInt32(psFile);
 
     if (AVCRawBinEOF(psFile))
         return -1;
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        psTol->dValue  = AVCRawBinReadFloat(psFile);
+        psTol->dValue = AVCRawBinReadFloat(psFile);
     }
     else
     {
-        psTol->dValue  = AVCRawBinReadDouble(psFile);
+        psTol->dValue = AVCRawBinReadDouble(psFile);
     }
 
     return 0;
@@ -1242,10 +1217,9 @@ int _AVCBinReadNextTol(AVCRawBinFile *psFile, AVCTol *psTol,
  **********************************************************************/
 AVCTol *AVCBinReadNextTol(AVCBinFile *psFile)
 {
-    if (psFile->eFileType != AVCFileTOL ||
-        AVCRawBinEOF(psFile->psRawBinFile) ||
+    if (psFile->eFileType != AVCFileTOL || AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextTol(psFile->psRawBinFile, psFile->cur.psTol,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
@@ -1270,14 +1244,15 @@ AVCTol *AVCBinReadNextTol(AVCBinFile *psFile)
  **********************************************************************/
 AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath, const char *pszName)
 {
-    AVCBinFile   *psFile;
-    char         *pszFname, **papszPrj;
+    AVCBinFile *psFile;
+    char *pszFname, **papszPrj;
 
     /*-----------------------------------------------------------------
      * Load the PRJ file contents into a stringlist.
      *----------------------------------------------------------------*/
-    pszFname = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
-    snprintf(pszFname, strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
+    pszFname = (char *)CPLMalloc(strlen(pszPath) + strlen(pszName) + 1);
+    snprintf(pszFname, strlen(pszPath) + strlen(pszName) + 1, "%s%s", pszPath,
+             pszName);
 
     papszPrj = CSLLoad2(pszFname, 50, 160, nullptr);
 
@@ -1294,13 +1269,12 @@ AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath, const char *pszName)
     /*-----------------------------------------------------------------
      * Alloc and init the AVCBinFile handle.
      *----------------------------------------------------------------*/
-    psFile = (AVCBinFile*)CPLCalloc(1, sizeof(AVCBinFile));
+    psFile = (AVCBinFile *)CPLCalloc(1, sizeof(AVCBinFile));
 
     psFile->eFileType = AVCFilePRJ;
     psFile->psRawBinFile = nullptr;
     psFile->cur.papszPrj = papszPrj;
     psFile->pszFilename = nullptr;
-
 
     return psFile;
 }
@@ -1341,42 +1315,41 @@ char **AVCBinReadNextPrj(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
+static int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
                               int nPrecision)
 {
     int i, numVerticesBefore, numVertices, numCharsToRead, nRecordSize;
     int numBytesRead;
 
-    numVerticesBefore = ABS(psTxt->numVerticesLine) +
-                        ABS(psTxt->numVerticesArrow);
+    numVerticesBefore =
+        ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
 
-    psTxt->nTxtId  = AVCRawBinReadInt32(psFile);
+    psTxt->nTxtId = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = AVCRawBinReadInt32(psFile);
-    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+    nRecordSize = AVCRawBinReadInt32(psFile);
+    if (nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024)
         return -1;
-    nRecordSize = nRecordSize*2+8;
+    nRecordSize = nRecordSize * 2 + 8;
 
     psTxt->nUserId = AVCRawBinReadInt32(psFile);
-    psTxt->nLevel  = AVCRawBinReadInt32(psFile);
+    psTxt->nLevel = AVCRawBinReadInt32(psFile);
 
-    psTxt->f_1e2    = AVCRawBinReadFloat(psFile);
-    psTxt->nSymbol  = AVCRawBinReadInt32(psFile);
-    psTxt->numVerticesLine  = AVCRawBinReadInt32(psFile);
-    psTxt->n28      = AVCRawBinReadInt32(psFile);
+    psTxt->f_1e2 = AVCRawBinReadFloat(psFile);
+    psTxt->nSymbol = AVCRawBinReadInt32(psFile);
+    psTxt->numVerticesLine = AVCRawBinReadInt32(psFile);
+    psTxt->n28 = AVCRawBinReadInt32(psFile);
     psTxt->numChars = AVCRawBinReadInt32(psFile);
-    if( psTxt->numChars < 0 || psTxt->numChars > 10 * 1024 * 1024 )
+    if (psTxt->numChars < 0 || psTxt->numChars > 10 * 1024 * 1024)
         return -1;
     psTxt->numVerticesArrow = AVCRawBinReadInt32(psFile);
 
-    for(i=0; i<20; i++)
+    for (i = 0; i < 20; i++)
     {
         psTxt->anJust1[i] = AVCRawBinReadInt16(psFile);
     }
-    for(i=0; i<20; i++)
+    for (i = 0; i < 20; i++)
     {
         psTxt->anJust2[i] = AVCRawBinReadInt16(psFile);
     }
@@ -1384,23 +1357,23 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     if (nPrecision == AVC_SINGLE_PREC)
     {
         psTxt->dHeight = AVCRawBinReadFloat(psFile);
-        psTxt->dV2     = AVCRawBinReadFloat(psFile);
-        psTxt->dV3     = AVCRawBinReadFloat(psFile);
+        psTxt->dV2 = AVCRawBinReadFloat(psFile);
+        psTxt->dV3 = AVCRawBinReadFloat(psFile);
     }
     else
     {
         psTxt->dHeight = AVCRawBinReadDouble(psFile);
-        psTxt->dV2     = AVCRawBinReadDouble(psFile);
-        psTxt->dV3     = AVCRawBinReadDouble(psFile);
+        psTxt->dV2 = AVCRawBinReadDouble(psFile);
+        psTxt->dV3 = AVCRawBinReadDouble(psFile);
     }
 
-    numCharsToRead = ((int)(psTxt->numChars + 3)/4)*4;
+    numCharsToRead = ((int)(psTxt->numChars + 3) / 4) * 4;
     if (psTxt->pszText == nullptr ||
-        ((int)(strlen((char*)psTxt->pszText)+3)/4)*4 < numCharsToRead )
+        ((int)(strlen((char *)psTxt->pszText) + 3) / 4) * 4 < numCharsToRead)
     {
-        GByte* pszNewText = (GByte*)VSIRealloc(psTxt->pszText,
-                                            (numCharsToRead+1)*sizeof(char));
-        if( pszNewText == nullptr )
+        GByte *pszNewText = (GByte *)VSIRealloc(
+            psTxt->pszText, (numCharsToRead + 1) * sizeof(char));
+        if (pszNewText == nullptr)
             return -1;
         psTxt->pszText = pszNewText;
     }
@@ -1411,40 +1384,40 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     /* Realloc the vertices array only if it needs to grow...
      * do not realloc to a smaller size.
      */
-    if( psTxt->numVerticesLine == INT_MIN ||
+    if (psTxt->numVerticesLine == INT_MIN ||
         psTxt->numVerticesArrow == INT_MIN ||
         ABS(psTxt->numVerticesLine) >
-                100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
+            100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow))
         return -1;
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
-    if( numVertices > 10 * 1024 * 1024 &&
-        !AVCRawBinIsFileGreaterThan(psFile,
-                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    if (numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(
+            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
     {
         return -1;
     }
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
-        psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
-                                              numVertices*sizeof(AVCVertex));
+        psTxt->pasVertices = (AVCVertex *)CPLRealloc(
+            psTxt->pasVertices, numVertices * sizeof(AVCVertex));
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        for(i=0; i<numVertices; i++)
+        for (i = 0; i < numVertices; i++)
         {
             psTxt->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadFloat(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
     }
     else
     {
-        for(i=0; i<numVertices; i++)
+        for (i = 0; i < numVertices; i++)
         {
             psTxt->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadDouble(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
     }
@@ -1477,28 +1450,27 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
-                                 int nPrecision)
+static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
+                                        int nPrecision)
 {
     int i, numVerticesBefore, numVertices, numCharsToRead, nRecordSize;
 
-    numVerticesBefore = ABS(psTxt->numVerticesLine) +
-                        ABS(psTxt->numVerticesArrow);
+    numVerticesBefore =
+        ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
 
-    psTxt->nTxtId  = AVCRawBinReadInt32(psFile);
+    psTxt->nTxtId = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = AVCRawBinReadInt32(psFile);
-    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+    nRecordSize = AVCRawBinReadInt32(psFile);
+    if (nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024)
         return -1;
-    nRecordSize = nRecordSize*2+8;
+    nRecordSize = nRecordSize * 2 + 8;
 
     psTxt->nUserId = 0;
-    psTxt->nLevel  = AVCRawBinReadInt32(psFile);
+    psTxt->nLevel = AVCRawBinReadInt32(psFile);
 
-    psTxt->numVerticesLine  = AVCRawBinReadInt32(psFile);
+    psTxt->numVerticesLine = AVCRawBinReadInt32(psFile);
     /* We are not expecting more than 4 vertices */
     psTxt->numVerticesLine = MIN(psTxt->numVerticesLine, 4);
 
@@ -1512,37 +1484,37 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      * we have to include an additional vertex for that.
      */
     psTxt->numVerticesLine += 1;
-    if( psTxt->numVerticesLine == INT_MIN ||
-        ABS(psTxt->numVerticesLine) > 100 * 1024 * 1024 )
+    if (psTxt->numVerticesLine == INT_MIN ||
+        ABS(psTxt->numVerticesLine) > 100 * 1024 * 1024)
         return -1;
     numVertices = ABS(psTxt->numVerticesLine);
-    if( numVertices < 2 )
+    if (numVertices < 2)
         return -1;
-    if( numVertices > 10 * 1024 * 1024 &&
-        !AVCRawBinIsFileGreaterThan(psFile,
-                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    if (numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(
+            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
     {
         return -1;
     }
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
-        psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
-                                              numVertices*sizeof(AVCVertex));
+        psTxt->pasVertices = (AVCVertex *)CPLRealloc(
+            psTxt->pasVertices, numVertices * sizeof(AVCVertex));
 
-    for(i=1; i<numVertices; i++)
+    for (i = 1; i < numVertices; i++)
     {
         if (nPrecision == AVC_SINGLE_PREC)
         {
             psTxt->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadFloat(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
         else
         {
             psTxt->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadDouble(psFile);
-            if( psFile->nCurSize == 0 )
+            if (psFile->nCurSize == 0)
                 return -1;
         }
     }
@@ -1554,22 +1526,22 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
 
     /* Skip the other floats (vertices) that are unused */
     if (nPrecision == AVC_SINGLE_PREC)
-        AVCRawBinFSeek(psFile, 4*(15-2*(numVertices-1)) , SEEK_CUR);
+        AVCRawBinFSeek(psFile, 4 * (15 - 2 * (numVertices - 1)), SEEK_CUR);
     else
-        AVCRawBinFSeek(psFile, 8*(15-2*(numVertices-1)) , SEEK_CUR);
+        AVCRawBinFSeek(psFile, 8 * (15 - 2 * (numVertices - 1)), SEEK_CUR);
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        psTxt->dHeight  = AVCRawBinReadFloat(psFile);
+        psTxt->dHeight = AVCRawBinReadFloat(psFile);
     }
     else
     {
-        psTxt->dHeight  = AVCRawBinReadDouble(psFile);
+        psTxt->dHeight = AVCRawBinReadDouble(psFile);
     }
-    psTxt->f_1e2    = AVCRawBinReadFloat(psFile);
-    psTxt->nSymbol  = AVCRawBinReadInt32(psFile);
+    psTxt->f_1e2 = AVCRawBinReadFloat(psFile);
+    psTxt->nSymbol = AVCRawBinReadInt32(psFile);
     psTxt->numChars = AVCRawBinReadInt32(psFile);
-    if( psTxt->numChars < 0 )
+    if (psTxt->numChars < 0)
         return -1;
 
     /* In some cases, we may need to skip additional spaces after the
@@ -1578,23 +1550,23 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      */
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        numCharsToRead = nRecordSize - (28 + 16*4);
+        numCharsToRead = nRecordSize - (28 + 16 * 4);
     }
     else
     {
-        numCharsToRead = nRecordSize - (28 + 16*8);
+        numCharsToRead = nRecordSize - (28 + 16 * 8);
     }
-    if( numCharsToRead < 0 )
+    if (numCharsToRead < 0)
         return -1;
 
     /* Do a quick check in case file is corrupt! */
     psTxt->numChars = MIN(psTxt->numChars, numCharsToRead);
 
     if (psTxt->pszText == nullptr ||
-        ((int)(strlen((char*)psTxt->pszText)+3)/4)*4 < numCharsToRead )
+        ((int)(strlen((char *)psTxt->pszText) + 3) / 4) * 4 < numCharsToRead)
     {
-        psTxt->pszText = (GByte*)CPLRealloc(psTxt->pszText,
-                                            (numCharsToRead+5)*sizeof(char));
+        psTxt->pszText = (GByte *)CPLRealloc(
+            psTxt->pszText, (numCharsToRead + 5) * sizeof(char));
     }
 
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
@@ -1602,10 +1574,10 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
 
     /* Set unused members to default values...
      */
-    psTxt->dV2     = 0.0;
-    psTxt->dV3     = 0.0;
-    psTxt->n28      = 0;
-    for(i=0; i<20; i++)
+    psTxt->dV2 = 0.0;
+    psTxt->dV3 = 0.0;
+    psTxt->n28 = 0;
+    for (i = 0; i < 20; i++)
     {
         psTxt->anJust1[i] = 0;
         psTxt->anJust2[i] = 0;
@@ -1628,7 +1600,7 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
     int nStatus = 0;
 
     if ((psFile->eFileType != AVCFileTXT && psFile->eFileType != AVCFileTX6) ||
-        AVCRawBinEOF(psFile->psRawBinFile) )
+        AVCRawBinEOF(psFile->psRawBinFile))
     {
         return nullptr;
     }
@@ -1641,13 +1613,12 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
      */
     if (psFile->eFileType == AVCFileTXT &&
         (psFile->eCoverType == AVCCoverPC ||
-         psFile->eCoverType == AVCCoverWeird) )
+         psFile->eCoverType == AVCCoverWeird))
     {
         /* TXT file in PC Coverages (and some Weird Coverages)
          */
-        nStatus = _AVCBinReadNextPCCoverageTxt(psFile->psRawBinFile,
-                                               psFile->cur.psTxt,
-                                               psFile->nPrecision);
+        nStatus = _AVCBinReadNextPCCoverageTxt(
+            psFile->psRawBinFile, psFile->cur.psTxt, psFile->nPrecision);
     }
     else
     {
@@ -1666,7 +1637,6 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
     return psFile->cur.psTxt;
 }
 
-
 /*=====================================================================
  *                              RXP
  *====================================================================*/
@@ -1681,16 +1651,14 @@ AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextRxp(AVCRawBinFile *psFile,
-                       AVCRxp *psRxp,
-                       CPL_UNUSED int nPrecision)
+static int _AVCBinReadNextRxp(AVCRawBinFile *psFile, AVCRxp *psRxp,
+                              CPL_UNUSED int nPrecision)
 {
 
-    psRxp->n1  = AVCRawBinReadInt32(psFile);
+    psRxp->n1 = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
         return -1;
-    psRxp->n2  = AVCRawBinReadInt32(psFile);
+    psRxp->n2 = AVCRawBinReadInt32(psFile);
 
     return 0;
 }
@@ -1706,10 +1674,9 @@ int _AVCBinReadNextRxp(AVCRawBinFile *psFile,
  **********************************************************************/
 AVCRxp *AVCBinReadNextRxp(AVCBinFile *psFile)
 {
-    if (psFile->eFileType != AVCFileRXP ||
-        AVCRawBinEOF(psFile->psRawBinFile) ||
+    if (psFile->eFileType != AVCFileRXP || AVCRawBinEOF(psFile->psRawBinFile) ||
         _AVCBinReadNextRxp(psFile->psRawBinFile, psFile->cur.psRxp,
-                           psFile->nPrecision) !=0)
+                           psFile->nPrecision) != 0)
     {
         return nullptr;
     }
@@ -1753,23 +1720,23 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
      */
     AVCRawBinReadString(psFile, 8, (GByte *)psArcDir->szInfoFile);
     psArcDir->szInfoFile[7] = '\0';
-    for (i=6; i>0 && psArcDir->szInfoFile[i]==' '; i--)
+    for (i = 6; i > 0 && psArcDir->szInfoFile[i] == ' '; i--)
         psArcDir->szInfoFile[i] = '\0';
 
     psArcDir->numFields = AVCRawBinReadInt16(psFile);
-    psArcDir->nRecSize  = AVCRawBinReadInt16(psFile);
+    psArcDir->nRecSize = AVCRawBinReadInt16(psFile);
 
-    AVCRawBinFSeek(psFile, 18, SEEK_CUR);     /* Skip 18 bytes */
+    AVCRawBinFSeek(psFile, 18, SEEK_CUR); /* Skip 18 bytes */
 
     psArcDir->bDeletedFlag = AVCRawBinReadInt16(psFile);
     psArcDir->numRecords = AVCRawBinReadInt32(psFile);
 
-    AVCRawBinFSeek(psFile, 10, SEEK_CUR);     /* Skip 10 bytes */
+    AVCRawBinFSeek(psFile, 10, SEEK_CUR); /* Skip 10 bytes */
 
     AVCRawBinReadBytes(psFile, 2, (GByte *)psArcDir->szExternal);
     psArcDir->szExternal[2] = '\0';
 
-    AVCRawBinFSeek(psFile, 300, SEEK_CUR);  /* Skip the remaining 300 bytes */
+    AVCRawBinFSeek(psFile, 300, SEEK_CUR); /* Skip the remaining 300 bytes */
 
     return 0;
 }
@@ -1787,8 +1754,7 @@ int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
+static int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
 {
     AVCRawBinReadString(psFile, 16, (GByte *)psField->szName);
     psField->szName[16] = '\0';
@@ -1796,30 +1762,31 @@ int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    psField->nSize     = AVCRawBinReadInt16(psFile);
-    if( psField->nSize < 0 )
+    psField->nSize = AVCRawBinReadInt16(psFile);
+    if (psField->nSize < 0)
         return -1;
-    psField->v2        = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
-    psField->nOffset   = AVCRawBinReadInt16(psFile);
-    psField->v4        = AVCRawBinReadInt16(psFile);  /* Always 4 ?  */
-    psField->v5        = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
+    psField->v2 = AVCRawBinReadInt16(psFile); /* Always -1 ? */
+    psField->nOffset = AVCRawBinReadInt16(psFile);
+    psField->v4 = AVCRawBinReadInt16(psFile); /* Always 4 ?  */
+    psField->v5 = AVCRawBinReadInt16(psFile); /* Always -1 ? */
     psField->nFmtWidth = AVCRawBinReadInt16(psFile);
-    psField->nFmtPrec  = AVCRawBinReadInt16(psFile);
-    psField->nType1    = AVCRawBinReadInt16(psFile);
-    psField->nType2    = AVCRawBinReadInt16(psFile);  /* Always 0 ? */
-    psField->v10       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
-    psField->v11       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
-    psField->v12       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
-    psField->v13       = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
+    psField->nFmtPrec = AVCRawBinReadInt16(psFile);
+    psField->nType1 = AVCRawBinReadInt16(psFile);
+    psField->nType2 = AVCRawBinReadInt16(psFile); /* Always 0 ? */
+    psField->v10 = AVCRawBinReadInt16(psFile);    /* Always -1 ? */
+    psField->v11 = AVCRawBinReadInt16(psFile);    /* Always -1 ? */
+    psField->v12 = AVCRawBinReadInt16(psFile);    /* Always -1 ? */
+    psField->v13 = AVCRawBinReadInt16(psFile);    /* Always -1 ? */
 
-    AVCRawBinReadString(psFile, 16, (GByte *)psField->szAltName);   /* Always Blank ? */
+    AVCRawBinReadString(psFile, 16,
+                        (GByte *)psField->szAltName); /* Always Blank ? */
     psField->szAltName[16] = '\0';
 
-    AVCRawBinFSeek(psFile, 56, SEEK_CUR);             /* Skip 56 bytes */
+    AVCRawBinFSeek(psFile, 56, SEEK_CUR); /* Skip 56 bytes */
 
-    psField->nIndex    = AVCRawBinReadInt16(psFile);
+    psField->nIndex = AVCRawBinReadInt16(psFile);
 
-    AVCRawBinFSeek(psFile, 28, SEEK_CUR);  /* Skip the remaining 28 bytes */
+    AVCRawBinFSeek(psFile, 28, SEEK_CUR); /* Skip the remaining 28 bytes */
 
     return 0;
 }
@@ -1833,18 +1800,16 @@ int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
  * If pszRetFnmae/pszRetNitFile != nullptr then the filename with full path
  * will be copied to the specified buffer.
  **********************************************************************/
-static
-GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
-                                 const char *pszBasename,
-                                 const char *pszDatOrNit,
-                                 AVCCoverType eCoverType,
-                                 char *pszRetFname,
-                                 size_t nRetFnameLen)
+static GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
+                                        const char *pszBasename,
+                                        const char *pszDatOrNit,
+                                        AVCCoverType eCoverType,
+                                        char *pszRetFname, size_t nRetFnameLen)
 {
-    GBool       bFilesExist = FALSE;
-    char        *pszBuf = nullptr;
-    VSIStatBufL  sStatBuf;
-    size_t      nBufLen;
+    GBool bFilesExist = FALSE;
+    char *pszBuf = nullptr;
+    VSIStatBufL sStatBuf;
+    size_t nBufLen;
 
     if (pszRetFname)
     {
@@ -1853,17 +1818,19 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
     }
     else
     {
-        nBufLen = strlen(pszInfoPath)+strlen(pszBasename)+10;
-        pszBuf = (char*)CPLMalloc(nBufLen);
+        nBufLen = strlen(pszInfoPath) + strlen(pszBasename) + 10;
+        pszBuf = (char *)CPLMalloc(nBufLen);
     }
 
     if (eCoverType == AVCCoverWeird)
     {
-        snprintf(pszBuf, nBufLen, "%s%s%s", pszInfoPath, pszBasename, pszDatOrNit);
+        snprintf(pszBuf, nBufLen, "%s%s%s", pszInfoPath, pszBasename,
+                 pszDatOrNit);
     }
     else
     {
-        snprintf(pszBuf, nBufLen, "%s%s.%s", pszInfoPath, pszBasename, pszDatOrNit);
+        snprintf(pszBuf, nBufLen, "%s%s.%s", pszInfoPath, pszBasename,
+                 pszDatOrNit);
     }
 
     AVCAdjustCaseSensitiveFilename(pszBuf);
@@ -1876,7 +1843,7 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
         /* In some cases, the filename can be truncated to 8 chars
          * and we end up with "ARC000DA"... check that possibility.
          */
-        pszBuf[strlen(pszBuf)-1] = '\0';
+        pszBuf[strlen(pszBuf) - 1] = '\0';
 
         AVCAdjustCaseSensitiveFilename(pszBuf);
 
@@ -1888,7 +1855,6 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
         CPLFree(pszBuf);
 
     return bFilesExist;
-
 }
 
 /**********************************************************************
@@ -1900,17 +1866,15 @@ GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
  * If pszRetDatFile/pszRetNitFile != nullptr then the .DAT and .NIT filename
  * without the info path will be copied to the specified buffers.
  **********************************************************************/
-static
-GBool _AVCBinReadInfoFileExists(const char *pszInfoPath,
-                                const char *pszBasename,
-                                AVCCoverType eCoverType)
+static GBool _AVCBinReadInfoFileExists(const char *pszInfoPath,
+                                       const char *pszBasename,
+                                       AVCCoverType eCoverType)
 {
 
-    return (_AVCBinReadGetInfoFilename(pszInfoPath, pszBasename,
-                                       "dat", eCoverType, nullptr, 0) == TRUE &&
-            _AVCBinReadGetInfoFilename(pszInfoPath, pszBasename,
-                                       "nit", eCoverType, nullptr, 0) == TRUE);
-
+    return (_AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, "dat",
+                                       eCoverType, nullptr, 0) == TRUE &&
+            _AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, "nit",
+                                       eCoverType, nullptr, 0) == TRUE);
 }
 
 /**********************************************************************
@@ -1936,12 +1900,12 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
                             char ***ppapszArcDatFiles, AVCCoverType eCoverType,
                             AVCDBCSInfo *psDBCSInfo)
 {
-    char              **papszList = nullptr;
-    char               *pszFname;
-    char                szNameToFind[33] = "";
-    int                 nLen;
-    AVCRawBinFile      *hFile;
-    AVCTableDef         sEntry;
+    char **papszList = nullptr;
+    char *pszFname;
+    char szNameToFind[33] = "";
+    int nLen;
+    AVCRawBinFile *hFile;
+    AVCTableDef sEntry;
 
     if (ppapszArcDatFiles)
         *ppapszArcDatFiles = nullptr;
@@ -1968,11 +1932,11 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      * to our list.
      * In AVCCoverWeird, the file is called "arcdr9"
      *----------------------------------------------------------------*/
-    pszFname = (char*)CPLMalloc(strlen(pszInfoPath)+9);
+    pszFname = (char *)CPLMalloc(strlen(pszInfoPath) + 9);
     if (eCoverType == AVCCoverWeird)
-        snprintf(pszFname, strlen(pszInfoPath)+9, "%sarcdr9", pszInfoPath);
+        snprintf(pszFname, strlen(pszInfoPath) + 9, "%sarcdr9", pszInfoPath);
     else
-        snprintf(pszFname, strlen(pszInfoPath)+9, "%sarc.dir", pszInfoPath);
+        snprintf(pszFname, strlen(pszInfoPath) + 9, "%sarc.dir", pszInfoPath);
 
     AVCAdjustCaseSensitiveFilename(pszFname);
 
@@ -1988,19 +1952,17 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
                 !sEntry.bDeletedFlag &&
                 (pszCoverName == nullptr ||
                  EQUALN(szNameToFind, sEntry.szTableName, nLen)) &&
-                _AVCBinReadInfoFileExists(pszInfoPath,
-                                          sEntry.szInfoFile,
-                                          eCoverType) )
+                _AVCBinReadInfoFileExists(pszInfoPath, sEntry.szInfoFile,
+                                          eCoverType))
             {
                 papszList = CSLAddString(papszList, sEntry.szTableName);
 
                 if (ppapszArcDatFiles)
-                    *ppapszArcDatFiles = CSLAddString(*ppapszArcDatFiles,
-                                                      sEntry.szInfoFile);
+                    *ppapszArcDatFiles =
+                        CSLAddString(*ppapszArcDatFiles, sEntry.szInfoFile);
             }
         }
         AVCRawBinClose(hFile);
-
     }
 
     CPLFree(pszFname);
@@ -2028,14 +1990,14 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
                                  AVCCoverType eCoverType,
                                  AVCDBCSInfo *psDBCSInfo)
 {
-    AVCBinFile    *psFile;
+    AVCBinFile *psFile;
     AVCRawBinFile *hFile;
-    AVCTableDef    sTableDef;
-    AVCFieldInfo  *pasFieldDef;
-    char          *pszFname;
-    GBool          bFound;
-    int            i;
-    size_t         nFnameLen;
+    AVCTableDef sTableDef;
+    AVCFieldInfo *pasFieldDef;
+    char *pszFname;
+    GBool bFound;
+    int i;
+    size_t nFnameLen;
 
     memset(&sTableDef, 0, sizeof(sTableDef));
     sTableDef.numFields = 0;
@@ -2043,8 +2005,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
 
     /* Alloc a buffer big enough for the longest possible filename...
      */
-    nFnameLen = strlen(pszInfoPath)+81;
-    pszFname = (char*)CPLMalloc(nFnameLen);
+    nFnameLen = strlen(pszInfoPath) + 81;
+    pszFname = (char *)CPLMalloc(nFnameLen);
 
     /*-----------------------------------------------------------------
      * Fetch info about this table from the "arc.dir"
@@ -2062,12 +2024,12 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
 
     if (hFile)
     {
-        while(!bFound && _AVCBinReadNextArcDir(hFile, &sTableDef) == 0)
+        while (!bFound && _AVCBinReadNextArcDir(hFile, &sTableDef) == 0)
         {
             if (!sTableDef.bDeletedFlag &&
                 EQUALN(sTableDef.szTableName, pszTableName,
-                       strlen(pszTableName)) &&                _AVCBinReadInfoFileExists(pszInfoPath,
-                                          sTableDef.szInfoFile,
+                       strlen(pszTableName)) &&
+                _AVCBinReadInfoFileExists(pszInfoPath, sTableDef.szInfoFile,
                                           eCoverType))
             {
                 bFound = TRUE;
@@ -2080,16 +2042,16 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
      */
     if (!bFound)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open table %s", pszTableName);
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open table %s",
+                 pszTableName);
         CPLFree(pszFname);
         return nullptr;
     }
     /* To please Coverity */
-    if( sTableDef.numFields < 0 || sTableDef.numFields >= 32767 )
+    if (sTableDef.numFields < 0 || sTableDef.numFields >= 32767)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Invalid numFields in %s", pszTableName);
+        CPLError(CE_Failure, CPLE_OpenFailed, "Invalid numFields in %s",
+                 pszTableName);
         CPLFree(pszFname);
         return nullptr;
     }
@@ -2104,8 +2066,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * The data file is located outside of the INFO directory.
          * Read the path to the data file from the arc####.dat file
          *------------------------------------------------------------*/
-        _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                                   "dat", eCoverType, pszFname, nFnameLen);
+        _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile, "dat",
+                                   eCoverType, pszFname, nFnameLen);
         AVCAdjustCaseSensitiveFilename(pszFname);
 
         hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2118,9 +2080,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
             AVCRawBinReadBytes(hFile, 80, (GByte *)sTableDef.szDataFile);
             sTableDef.szDataFile[80] = '\0';
 
-            for(i = (int)strlen(sTableDef.szDataFile)-1;
-                i >= 0 && isspace((unsigned char)sTableDef.szDataFile[i]);
-                i--)
+            for (i = (int)strlen(sTableDef.szDataFile) - 1;
+                 i >= 0 && isspace((unsigned char)sTableDef.szDataFile[i]); i--)
             {
                 sTableDef.szDataFile[i] = '\0';
             }
@@ -2129,8 +2090,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
         }
         else
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Failed to open file %s", pszFname);
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s",
+                     pszFname);
             CPLFree(pszFname);
             return nullptr;
         }
@@ -2141,16 +2102,17 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * The data file IS the arc####.dat file
          * Note: sTableDef.szDataFile must be relative to info directory
          *------------------------------------------------------------*/
-        _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                                   "dat", eCoverType, pszFname, nFnameLen);
-        snprintf(sTableDef.szDataFile, sizeof(sTableDef.szDataFile), "%s", pszFname+strlen(pszInfoPath));
-   }
+        _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile, "dat",
+                                   eCoverType, pszFname, nFnameLen);
+        snprintf(sTableDef.szDataFile, sizeof(sTableDef.szDataFile), "%s",
+                 pszFname + strlen(pszInfoPath));
+    }
 
     /*-----------------------------------------------------------------
      * Read the table field definitions from the "arc####.nit" file.
      *----------------------------------------------------------------*/
-    _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile,
-                               "nit", eCoverType, pszFname, nFnameLen);
+    _AVCBinReadGetInfoFilename(pszInfoPath, sTableDef.szInfoFile, "nit",
+                               eCoverType, pszFname, nFnameLen);
     AVCAdjustCaseSensitiveFilename(pszFname);
 
     hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2160,8 +2122,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     {
         int iField;
 
-        pasFieldDef = (AVCFieldInfo*)CPLCalloc(sTableDef.numFields,
-                                               sizeof(AVCFieldInfo));
+        pasFieldDef = (AVCFieldInfo *)CPLCalloc(sTableDef.numFields,
+                                                sizeof(AVCFieldInfo));
 
         /*-------------------------------------------------------------
          * There must be at least sTableDef.numFields valid entries
@@ -2172,7 +2134,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * and I don't understand why Arc/Info includes them in their
          * E00 table headers...
          *------------------------------------------------------------*/
-        for(i=0, iField=0; iField<sTableDef.numFields; i++)
+        for (i = 0, iField = 0; iField < sTableDef.numFields; i++)
         {
             if (_AVCBinReadNextArcNit(hFile, &(pasFieldDef[iField])) != 0)
             {
@@ -2183,7 +2145,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
                 CPLFree(pasFieldDef);
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed reading table field info for table %s "
-                         "File may be corrupt?",  pszTableName);
+                         "File may be corrupt?",
+                         pszTableName);
                 return nullptr;
             }
 
@@ -2199,12 +2162,11 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open file %s", pszFname);
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s",
+                 pszFname);
         CPLFree(pszFname);
         return nullptr;
     }
-
 
     /*-----------------------------------------------------------------
      * Open the data file... ready to read records from it.
@@ -2214,9 +2176,10 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     if (sTableDef.numRecords > 0 &&
         AVCFileExists(pszInfoPath, sTableDef.szDataFile))
     {
-        VSIStatBufL      sStatBuf;
+        VSIStatBufL sStatBuf;
 
-        snprintf(pszFname, nFnameLen, "%s%s", pszInfoPath, sTableDef.szDataFile);
+        snprintf(pszFname, nFnameLen, "%s%s", pszInfoPath,
+                 sTableDef.szDataFile);
         AVCAdjustCaseSensitiveFilename(pszFname);
 
         hFile = AVCRawBinOpen(pszFname, "r", AVC_COVER_BYTE_ORDER(eCoverType),
@@ -2226,8 +2189,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          */
         if (hFile == nullptr)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Failed to open file %s", pszFname);
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s",
+                     pszFname);
             CPLFree(pszFname);
             return nullptr;
         }
@@ -2242,13 +2205,11 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
          * Fetch the data file size, and correct the number of record
          * field in the table header if necessary.
          *------------------------------------------------------------*/
-        if ( VSIStatL(pszFname, &sStatBuf) != -1 &&
-             sTableDef.nRecSize > 0 &&
-             sStatBuf.st_size/sTableDef.nRecSize != sTableDef.numRecords)
+        if (VSIStatL(pszFname, &sStatBuf) != -1 && sTableDef.nRecSize > 0 &&
+            sStatBuf.st_size / sTableDef.nRecSize != sTableDef.numRecords)
         {
-            sTableDef.numRecords = (int)(sStatBuf.st_size/sTableDef.nRecSize);
+            sTableDef.numRecords = (int)(sStatBuf.st_size / sTableDef.nRecSize);
         }
-
     }
     else
     {
@@ -2259,14 +2220,14 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     /*-----------------------------------------------------------------
      * Alloc. and init. the AVCBinFile structure.
      *----------------------------------------------------------------*/
-    psFile = (AVCBinFile*)CPLCalloc(1, sizeof(AVCBinFile));
+    psFile = (AVCBinFile *)CPLCalloc(1, sizeof(AVCBinFile));
 
     psFile->psRawBinFile = hFile;
     psFile->eCoverType = AVCCoverV7;
     psFile->eFileType = AVCFileTABLE;
     psFile->pszFilename = pszFname;
 
-    psFile->hdr.psTableDef = (AVCTableDef*)CPLMalloc(sizeof(AVCTableDef));
+    psFile->hdr.psTableDef = (AVCTableDef *)CPLMalloc(sizeof(AVCTableDef));
     *(psFile->hdr.psTableDef) = sTableDef;
 
     psFile->hdr.psTableDef->pasFieldDef = pasFieldDef;
@@ -2280,24 +2241,23 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
      * Allocate temp. structures to use to read records from the file
      * And allocate buffers for those fields that are stored as strings.
      *----------------------------------------------------------------*/
-    psFile->cur.pasFields = (AVCField*)CPLCalloc(sTableDef.numFields,
-                                                 sizeof(AVCField));
+    psFile->cur.pasFields =
+        (AVCField *)CPLCalloc(sTableDef.numFields, sizeof(AVCField));
 
-    for(i=0; i<sTableDef.numFields; i++)
+    for (i = 0; i < sTableDef.numFields; i++)
     {
-        if (pasFieldDef[i].nType1*10 == AVC_FT_DATE ||
-            pasFieldDef[i].nType1*10 == AVC_FT_CHAR ||
-            pasFieldDef[i].nType1*10 == AVC_FT_FIXINT ||
-            pasFieldDef[i].nType1*10 == AVC_FT_FIXNUM )
+        if (pasFieldDef[i].nType1 * 10 == AVC_FT_DATE ||
+            pasFieldDef[i].nType1 * 10 == AVC_FT_CHAR ||
+            pasFieldDef[i].nType1 * 10 == AVC_FT_FIXINT ||
+            pasFieldDef[i].nType1 * 10 == AVC_FT_FIXNUM)
         {
             psFile->cur.pasFields[i].pszStr =
-                (GByte*)CPLCalloc(pasFieldDef[i].nSize+1, sizeof(char));
+                (GByte *)CPLCalloc(pasFieldDef[i].nSize + 1, sizeof(char));
         }
     }
 
     return psFile;
 }
-
 
 /**********************************************************************
  *                         _AVCBinReadNextTableRec()
@@ -2314,24 +2274,23 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextTableRec(AVCRawBinFile *psFile, int nFields,
-                            AVCFieldInfo *pasDef, AVCField *pasFields,
-                            int nRecordSize)
+static int _AVCBinReadNextTableRec(AVCRawBinFile *psFile, int nFields,
+                                   AVCFieldInfo *pasDef, AVCField *pasFields,
+                                   int nRecordSize)
 {
-    int i, nType, nBytesRead=0;
+    int i, nType, nBytesRead = 0;
 
     if (psFile == nullptr)
         return -1;
 
-    for(i=0; i<nFields; i++)
+    for (i = 0; i < nFields; i++)
     {
         if (AVCRawBinEOF(psFile))
             return -1;
 
-        nType = pasDef[i].nType1*10;
+        nType = pasDef[i].nType1 * 10;
 
-        if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
+        if (nType == AVC_FT_DATE || nType == AVC_FT_CHAR ||
             nType == AVC_FT_FIXINT || nType == AVC_FT_FIXNUM)
         {
             /*---------------------------------------------------------
@@ -2374,8 +2333,8 @@ int _AVCBinReadNextTableRec(AVCRawBinFile *psFile, int nFields,
              * Hummm... unsupported field type...
              *--------------------------------------------------------*/
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unsupported field type: (type=%d, size=%d)",
-                     nType, pasDef[i].nSize);
+                     "Unsupported field type: (type=%d, size=%d)", nType,
+                     pasDef[i].nSize);
             return -1;
         }
 
@@ -2417,26 +2376,26 @@ void _AVCBinReadRepairDBFFieldName(char *pszFieldName);
 AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
                                     const char *pszArcInfoTableName)
 {
-    AVCBinFile    *psFile;
-    DBFHandle     hDBFFile = nullptr;
-    int            iField;
-    AVCTableDef   *psTableDef;
-    AVCFieldInfo  *pasFieldDef;
+    AVCBinFile *psFile;
+    DBFHandle hDBFFile = nullptr;
+    int iField;
+    AVCTableDef *psTableDef;
+    AVCFieldInfo *pasFieldDef;
 
     /*-----------------------------------------------------------------
      * Try to open the DBF file
      *----------------------------------------------------------------*/
-    if ( (hDBFFile = DBFOpen(pszDBFFilename, "rb")) == nullptr)
+    if ((hDBFFile = DBFOpen(pszDBFFilename, "rb")) == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open table %s", pszDBFFilename);
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open table %s",
+                 pszDBFFilename);
         return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * Alloc. and init. the AVCBinFile structure.
      *----------------------------------------------------------------*/
-    psFile = (AVCBinFile*)CPLCalloc(1, sizeof(AVCBinFile));
+    psFile = (AVCBinFile *)CPLCalloc(1, sizeof(AVCBinFile));
 
     psFile->hDBFFile = hDBFFile;
 
@@ -2463,10 +2422,11 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
      * Build TableDef from the info in the DBF header
      *----------------------------------------------------------------*/
     /* Use calloc() to init some unused struct members */
-    psTableDef = (AVCTableDef*)CPLCalloc(1, sizeof(AVCTableDef));
+    psTableDef = (AVCTableDef *)CPLCalloc(1, sizeof(AVCTableDef));
     psFile->hdr.psTableDef = psTableDef;
 
-    snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName), "%-32.32s", pszArcInfoTableName);
+    snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName),
+             "%-32.32s", pszArcInfoTableName);
 
     psTableDef->numFields = (GInt16)DBFGetFieldCount(hDBFFile);
 
@@ -2481,16 +2441,16 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
     /*-----------------------------------------------------------------
      * Build Field definitions
      *----------------------------------------------------------------*/
-    pasFieldDef = (AVCFieldInfo*)CPLCalloc(psTableDef->numFields,
-                                           sizeof(AVCFieldInfo));
+    pasFieldDef =
+        (AVCFieldInfo *)CPLCalloc(psTableDef->numFields, sizeof(AVCFieldInfo));
 
     psTableDef->pasFieldDef = pasFieldDef;
 
-    for(iField=0; iField< psTableDef->numFields; iField++)
+    for (iField = 0; iField < psTableDef->numFields; iField++)
     {
         int nWidth, nDecimals;
         /* DBFFieldType eDBFType; */
-        char         cNativeType;
+        char cNativeType;
 
         /*-------------------------------------------------------------
          * Fetch DBF Field info and convert to Arc/Info type...
@@ -2498,23 +2458,22 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
          * we do not have to worry about field name length in the process.
          *------------------------------------------------------------*/
         /* eDBFType = */
-        DBFGetFieldInfo(hDBFFile, iField,
-                        pasFieldDef[iField].szName,
-                        &nWidth, &nDecimals);
+        DBFGetFieldInfo(hDBFFile, iField, pasFieldDef[iField].szName, &nWidth,
+                        &nDecimals);
         cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
 
         pasFieldDef[iField].nFmtWidth = (GInt16)nWidth;
         pasFieldDef[iField].nFmtPrec = (GInt16)nDecimals;
 
         /* nIndex is the 1-based field index that we see in the E00 header */
-        pasFieldDef[iField].nIndex = (GInt16)(iField+1);
+        pasFieldDef[iField].nIndex = (GInt16)(iField + 1);
 
-        if (cNativeType == 'F' || (cNativeType == 'N' && nDecimals > 0) )
+        if (cNativeType == 'F' || (cNativeType == 'N' && nDecimals > 0))
         {
             /*---------------------------------------------------------
              * BINARY FLOAT
              *--------------------------------------------------------*/
-            pasFieldDef[iField].nType1 = AVC_FT_BINFLOAT/10;
+            pasFieldDef[iField].nType1 = AVC_FT_BINFLOAT / 10;
             pasFieldDef[iField].nSize = 4;
             pasFieldDef[iField].nFmtWidth = 12; /* PC Arc/Info ignores the */
             pasFieldDef[iField].nFmtPrec = 3;   /* DBF width/precision     */
@@ -2524,10 +2483,10 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
             /*---------------------------------------------------------
              * BINARY INTEGER
              *--------------------------------------------------------*/
-            pasFieldDef[iField].nType1 = AVC_FT_BININT/10;
+            pasFieldDef[iField].nType1 = AVC_FT_BININT / 10;
             pasFieldDef[iField].nSize = 4;
-            pasFieldDef[iField].nFmtWidth = 5;  /* PC Arc/Info ignores the */
-            pasFieldDef[iField].nFmtPrec = -1;  /* DBF width/precision     */
+            pasFieldDef[iField].nFmtWidth = 5; /* PC Arc/Info ignores the */
+            pasFieldDef[iField].nFmtPrec = -1; /* DBF width/precision     */
 
             /*---------------------------------------------------------
              * Some special integer fields need to have their names
@@ -2540,20 +2499,18 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
             /*---------------------------------------------------------
              * DATE - Actually handled as a string internally
              *--------------------------------------------------------*/
-            pasFieldDef[iField].nType1 = AVC_FT_DATE/10;
+            pasFieldDef[iField].nType1 = AVC_FT_DATE / 10;
             pasFieldDef[iField].nSize = (GInt16)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
-
         }
         else /* (cNativeType == 'C' || cNativeType == 'L') */
         {
             /*---------------------------------------------------------
              * CHAR STRINGS ... and all unknown types also handled as strings
              *--------------------------------------------------------*/
-            pasFieldDef[iField].nType1 = AVC_FT_CHAR/10;
+            pasFieldDef[iField].nType1 = AVC_FT_CHAR / 10;
             pasFieldDef[iField].nSize = (GInt16)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
-
         }
 
         /*---------------------------------------------------------
@@ -2563,21 +2520,20 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
         if (iField == 0)
             pasFieldDef[iField].nOffset = 1;
         else
-            pasFieldDef[iField].nOffset = (pasFieldDef[iField-1].nOffset +
-                                            pasFieldDef[iField-1].nSize );
+            pasFieldDef[iField].nOffset = (pasFieldDef[iField - 1].nOffset +
+                                           pasFieldDef[iField - 1].nSize);
 
         /*---------------------------------------------------------
          * Set default values for all other unused members in the struct
          *--------------------------------------------------------*/
-        pasFieldDef[iField].v2     = -1;  /* Always -1 ? */
-        pasFieldDef[iField].v4     = 4;   /* Always 4 ?  */
-        pasFieldDef[iField].v5     = -1;  /* Always -1 ? */
-        pasFieldDef[iField].nType2 = 0;   /* Always 0 ?  */
-        pasFieldDef[iField].v10    = -1;  /* Always -1 ? */
-        pasFieldDef[iField].v11    = -1;  /* Always -1 ? */
-        pasFieldDef[iField].v12    = -1;  /* Always -1 ? */
-        pasFieldDef[iField].v13    = -1;  /* Always -1 ? */
-
+        pasFieldDef[iField].v2 = -1;    /* Always -1 ? */
+        pasFieldDef[iField].v4 = 4;     /* Always 4 ?  */
+        pasFieldDef[iField].v5 = -1;    /* Always -1 ? */
+        pasFieldDef[iField].nType2 = 0; /* Always 0 ?  */
+        pasFieldDef[iField].v10 = -1;   /* Always -1 ? */
+        pasFieldDef[iField].v11 = -1;   /* Always -1 ? */
+        pasFieldDef[iField].v12 = -1;   /* Always -1 ? */
+        pasFieldDef[iField].v13 = -1;   /* Always -1 ? */
     }
 
     /*-----------------------------------------------------------------
@@ -2586,9 +2542,10 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
      *----------------------------------------------------------------*/
     if (psTableDef->numFields > 0)
     {
-        psTableDef->nRecSize = (pasFieldDef[psTableDef->numFields-1].nOffset-1+
-                                pasFieldDef[psTableDef->numFields-1].nSize);
-        psTableDef->nRecSize = ((psTableDef->nRecSize+1)/2)*2;
+        psTableDef->nRecSize =
+            (pasFieldDef[psTableDef->numFields - 1].nOffset - 1 +
+             pasFieldDef[psTableDef->numFields - 1].nSize);
+        psTableDef->nRecSize = ((psTableDef->nRecSize + 1) / 2) * 2;
     }
     else
         psTableDef->nRecSize = 0;
@@ -2597,24 +2554,23 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
      * Allocate temp. structures to use to read records from the file
      * And allocate buffers for those fields that are stored as strings.
      *----------------------------------------------------------------*/
-    psFile->cur.pasFields = (AVCField*)CPLCalloc(psTableDef->numFields,
-                                                 sizeof(AVCField));
+    psFile->cur.pasFields =
+        (AVCField *)CPLCalloc(psTableDef->numFields, sizeof(AVCField));
 
-    for(iField=0; iField<psTableDef->numFields; iField++)
+    for (iField = 0; iField < psTableDef->numFields; iField++)
     {
-        if (pasFieldDef[iField].nType1*10 == AVC_FT_DATE ||
-            pasFieldDef[iField].nType1*10 == AVC_FT_CHAR ||
-            pasFieldDef[iField].nType1*10 == AVC_FT_FIXINT ||
-            pasFieldDef[iField].nType1*10 == AVC_FT_FIXNUM )
+        if (pasFieldDef[iField].nType1 * 10 == AVC_FT_DATE ||
+            pasFieldDef[iField].nType1 * 10 == AVC_FT_CHAR ||
+            pasFieldDef[iField].nType1 * 10 == AVC_FT_FIXINT ||
+            pasFieldDef[iField].nType1 * 10 == AVC_FT_FIXNUM)
         {
-            psFile->cur.pasFields[iField].pszStr =
-                (GByte*)CPLCalloc(pasFieldDef[iField].nSize+1, sizeof(GByte));
+            psFile->cur.pasFields[iField].pszStr = (GByte *)CPLCalloc(
+                pasFieldDef[iField].nSize + 1, sizeof(GByte));
         }
     }
 
     return psFile;
 }
-
 
 /**********************************************************************
  *                         _AVCBinReadNextDBFTableRec()
@@ -2631,12 +2587,11 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-static
-int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
+static int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
                                       int nFields, AVCFieldInfo *pasDef,
                                       AVCField *pasFields)
 {
-    int         i, nType;
+    int i, nType;
 
     /*-----------------------------------------------------------------
      * Increment current record index.
@@ -2644,32 +2599,31 @@ int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
      * last record we read from the DBF file... this is to emulate
      * sequential access which is assumed by the rest of the lib.
      *----------------------------------------------------------------*/
-    if (hDBFFile == nullptr || piRecordIndex == nullptr ||
-        pasDef == nullptr || pasFields == nullptr)
+    if (hDBFFile == nullptr || piRecordIndex == nullptr || pasDef == nullptr ||
+        pasFields == nullptr)
         return -1;
 
     (*piRecordIndex)++;
 
     if (*piRecordIndex >= DBFGetRecordCount(hDBFFile))
-        return -1;  /* Reached EOF */
+        return -1; /* Reached EOF */
 
     /*-----------------------------------------------------------------
      * Read/convert each field based on type
      *----------------------------------------------------------------*/
-    for(i=0; i<nFields; i++)
+    for (i = 0; i < nFields; i++)
     {
-        nType = pasDef[i].nType1*10;
+        nType = pasDef[i].nType1 * 10;
 
-        if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
+        if (nType == AVC_FT_DATE || nType == AVC_FT_CHAR ||
             nType == AVC_FT_FIXINT || nType == AVC_FT_FIXNUM)
         {
             /*---------------------------------------------------------
              * Values stored as strings
              *--------------------------------------------------------*/
             const char *pszValue;
-            pszValue = DBFReadStringAttribute(hDBFFile,
-                                              *piRecordIndex, i);
-            strncpy((char*)pasFields[i].pszStr, pszValue, pasDef[i].nSize);
+            pszValue = DBFReadStringAttribute(hDBFFile, *piRecordIndex, i);
+            strncpy((char *)pasFields[i].pszStr, pszValue, pasDef[i].nSize);
             pasFields[i].pszStr[pasDef[i].nSize] = '\0';
         }
         else if (nType == AVC_FT_BININT && pasDef[i].nSize == 4)
@@ -2677,35 +2631,32 @@ int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
             /*---------------------------------------------------------
              * 32 bit binary integers
              *--------------------------------------------------------*/
-            pasFields[i].nInt32 = DBFReadIntegerAttribute(hDBFFile,
-                                                          *piRecordIndex, i);
+            pasFields[i].nInt32 =
+                DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
         }
         else if (nType == AVC_FT_BININT && pasDef[i].nSize == 2)
         {
             /*---------------------------------------------------------
              * 16 bit binary integers
              *--------------------------------------------------------*/
-            pasFields[i].nInt16 = (GInt16)DBFReadIntegerAttribute(hDBFFile,
-                                                               *piRecordIndex,
-                                                                  i);
+            pasFields[i].nInt16 =
+                (GInt16)DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4)
         {
             /*---------------------------------------------------------
              * Single precision floats
              *--------------------------------------------------------*/
-            pasFields[i].fFloat = (float)DBFReadDoubleAttribute(hDBFFile,
-                                                                *piRecordIndex,
-                                                                i);
+            pasFields[i].fFloat =
+                (float)DBFReadDoubleAttribute(hDBFFile, *piRecordIndex, i);
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 8)
         {
             /*---------------------------------------------------------
              * Double precision floats
              *--------------------------------------------------------*/
-            pasFields[i].dDouble = DBFReadDoubleAttribute(hDBFFile,
-                                                          *piRecordIndex,
-                                                          i);
+            pasFields[i].dDouble =
+                DBFReadDoubleAttribute(hDBFFile, *piRecordIndex, i);
         }
         else
         {
@@ -2713,16 +2664,14 @@ int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
              * Hummm... unsupported field type...
              *--------------------------------------------------------*/
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unsupported field type: (type=%d, size=%d)",
-                     nType, pasDef[i].nSize);
+                     "Unsupported field type: (type=%d, size=%d)", nType,
+                     pasDef[i].nSize);
             return -1;
         }
-
     }
 
     return 0;
 }
-
 
 /**********************************************************************
  *                         _AVCBinReadRepairDBFFieldName()
@@ -2737,7 +2686,7 @@ void _AVCBinReadRepairDBFFieldName(char *pszFieldName)
     char *pszTmp;
 
     if ((pszTmp = strrchr(pszFieldName, '_')) == nullptr)
-        return;  /* No special char to process */
+        return; /* No special char to process */
 
     /*-----------------------------------------------------------------
      * Replace '_' at end of field name by a '#', as in:
@@ -2749,5 +2698,4 @@ void _AVCBinReadRepairDBFFieldName(char *pszFieldName)
         *pszTmp = '#';
     else if (EQUAL(pszTmp, "_ID"))
         *pszTmp = '-';
-
 }

@@ -64,7 +64,6 @@
 
 #include "avc.h"
 
-
 /**********************************************************************
  *                          AVCE00ComputeRecSize()
  *
@@ -76,16 +75,16 @@
 int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
                           GBool bMapType40ToDouble)
 {
-    int i, nType, nBufSize=0;
+    int i, nType, nBufSize = 0;
 
     /*-------------------------------------------------------------
      * Add up the nbr of chars used by each field
      *------------------------------------------------------------*/
-    for(i=0; i < numFields; i++)
+    for (i = 0; i < numFields; i++)
     {
-        nType = pasDef[i].nType1*10;
-        if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
-            nType == AVC_FT_FIXINT )
+        nType = pasDef[i].nType1 * 10;
+        if (nType == AVC_FT_DATE || nType == AVC_FT_CHAR ||
+            nType == AVC_FT_FIXINT)
         {
             nBufSize += pasDef[i].nSize;
         }
@@ -93,16 +92,16 @@ int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
             nBufSize += 11;
         else if (nType == AVC_FT_BININT && pasDef[i].nSize == 2)
             nBufSize += 6;
-        else if (bMapType40ToDouble &&
-                 nType == AVC_FT_FIXNUM && pasDef[i].nSize > 8)
+        else if (bMapType40ToDouble && nType == AVC_FT_FIXNUM &&
+                 pasDef[i].nSize > 8)
         {
             /* See explanation in AVCE00GenTableHdr() about this hack to remap
              * type 40 fields to double precision floats.
              */
-            nBufSize += 24;  /* Remap to double float */
+            nBufSize += 24; /* Remap to double float */
         }
         else if ((nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4) ||
-                  nType == AVC_FT_FIXNUM )
+                 nType == AVC_FT_FIXNUM)
             nBufSize += 14;
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 8)
             nBufSize += 24;
@@ -122,8 +121,6 @@ int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
     return nBufSize;
 }
 
-
-
 /**********************************************************************
  *                          _AVCDestroyTableFields()
  *
@@ -131,24 +128,21 @@ int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
  **********************************************************************/
 void _AVCDestroyTableFields(AVCTableDef *psTableDef, AVCField *pasFields)
 {
-    int     i, nFieldType;
+    int i, nFieldType;
 
     if (pasFields)
     {
-        for(i=0; i<psTableDef->numFields; i++)
+        for (i = 0; i < psTableDef->numFields; i++)
         {
-            nFieldType = psTableDef->pasFieldDef[i].nType1*10;
-            if (nFieldType == AVC_FT_DATE   ||
-                nFieldType == AVC_FT_CHAR   ||
-                nFieldType == AVC_FT_FIXINT ||
-                nFieldType == AVC_FT_FIXNUM)
+            nFieldType = psTableDef->pasFieldDef[i].nType1 * 10;
+            if (nFieldType == AVC_FT_DATE || nFieldType == AVC_FT_CHAR ||
+                nFieldType == AVC_FT_FIXINT || nFieldType == AVC_FT_FIXNUM)
             {
                 CPLFree(pasFields[i].pszStr);
             }
         }
         CPLFree(pasFields);
     }
-
 }
 
 /**********************************************************************
@@ -166,7 +160,6 @@ void _AVCDestroyTableDef(AVCTableDef *psTableDef)
     }
 }
 
-
 /**********************************************************************
  *                          _AVCDupTableDef()
  *
@@ -179,19 +172,18 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef)
     if (psSrcDef == nullptr)
         return nullptr;
 
-    psNewDef = (AVCTableDef*)CPLMalloc(1*sizeof(AVCTableDef));
+    psNewDef = (AVCTableDef *)CPLMalloc(1 * sizeof(AVCTableDef));
 
     memcpy(psNewDef, psSrcDef, sizeof(AVCTableDef));
 
-    psNewDef->pasFieldDef = (AVCFieldInfo*)CPLMalloc(psSrcDef->numFields*
-                                                     sizeof(AVCFieldInfo));
+    psNewDef->pasFieldDef =
+        (AVCFieldInfo *)CPLMalloc(psSrcDef->numFields * sizeof(AVCFieldInfo));
 
     memcpy(psNewDef->pasFieldDef, psSrcDef->pasFieldDef,
-           psSrcDef->numFields*sizeof(AVCFieldInfo));
+           psSrcDef->numFields * sizeof(AVCFieldInfo));
 
-   return psNewDef;
+    return psNewDef;
 }
-
 
 /**********************************************************************
  *                          AVCFileExists()
@@ -204,13 +196,13 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef)
  **********************************************************************/
 GBool AVCFileExists(const char *pszPath, const char *pszName)
 {
-    char        *pszBuf;
-    GBool       bFileExists = FALSE;
-    VSILFILE    *fp;
+    char *pszBuf;
+    GBool bFileExists = FALSE;
+    VSILFILE *fp;
 
-    pszBuf = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
-    snprintf(pszBuf,
-             strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
+    pszBuf = (char *)CPLMalloc(strlen(pszPath) + strlen(pszName) + 1);
+    snprintf(pszBuf, strlen(pszPath) + strlen(pszName) + 1, "%s%s", pszPath,
+             pszName);
 
     AVCAdjustCaseSensitiveFilename(pszBuf);
 
@@ -242,10 +234,10 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
  **********************************************************************/
 char *AVCAdjustCaseSensitiveFilename(char *pszFname)
 {
-    VSIStatBufL  sStatBuf;
-    char        *pszTmpPath = nullptr;
-    int         nTotalLen, iTmpPtr;
-    GBool       bValidPath;
+    VSIStatBufL sStatBuf;
+    char *pszTmpPath = nullptr;
+    int nTotalLen, iTmpPtr;
+    GBool bValidPath;
 
     /*-----------------------------------------------------------------
      * First check if the filename is OK as is.
@@ -261,7 +253,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Remap '\\' to '/'
      *----------------------------------------------------------------*/
-    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    for (iTmpPtr = 0; iTmpPtr < nTotalLen; iTmpPtr++)
     {
         if (pszTmpPath[iTmpPtr] == '\\')
             pszTmpPath[iTmpPtr] = '/';
@@ -270,9 +262,9 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Try all lower case, check if the filename is OK as that.
      *----------------------------------------------------------------*/
-    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    for (iTmpPtr = 0; iTmpPtr < nTotalLen; iTmpPtr++)
     {
-        if ( pszTmpPath[iTmpPtr] >= 'A' && pszTmpPath[iTmpPtr] <= 'Z' )
+        if (pszTmpPath[iTmpPtr] >= 'A' && pszTmpPath[iTmpPtr] <= 'Z')
             pszTmpPath[iTmpPtr] += 32;
     }
 
@@ -286,9 +278,9 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Try all upper case, check if the filename is OK as that.
      *----------------------------------------------------------------*/
-    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    for (iTmpPtr = 0; iTmpPtr < nTotalLen; iTmpPtr++)
     {
-        if ( pszTmpPath[iTmpPtr] >= 'a' && pszTmpPath[iTmpPtr] <= 'z' )
+        if (pszTmpPath[iTmpPtr] >= 'a' && pszTmpPath[iTmpPtr] <= 'z')
             pszTmpPath[iTmpPtr] -= 32;
     }
 
@@ -308,20 +300,20 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Remap '\\' to '/'
      *----------------------------------------------------------------*/
-    for (iTmpPtr=0; iTmpPtr< nTotalLen; iTmpPtr++)
+    for (iTmpPtr = 0; iTmpPtr < nTotalLen; iTmpPtr++)
     {
         if (pszTmpPath[iTmpPtr] == '\\')
             pszTmpPath[iTmpPtr] = '/';
     }
 
     bValidPath = FALSE;
-    while(iTmpPtr > 0 && !bValidPath)
+    while (iTmpPtr > 0 && !bValidPath)
     {
         /*-------------------------------------------------------------
          * Move back to the previous '/' separator
          *------------------------------------------------------------*/
         pszTmpPath[--iTmpPtr] = '\0';
-        while( iTmpPtr > 0 && pszTmpPath[iTmpPtr-1] != '/' )
+        while (iTmpPtr > 0 && pszTmpPath[iTmpPtr - 1] != '/')
         {
             pszTmpPath[--iTmpPtr] = '\0';
         }
@@ -344,10 +336,10 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      * If we get to a point where a path component does not exist then
      * we simply return the rest of the path as is.
      *----------------------------------------------------------------*/
-    while(bValidPath && strlen(pszTmpPath) < (size_t)nTotalLen)
+    while (bValidPath && strlen(pszTmpPath) < (size_t)nTotalLen)
     {
-        char    **papszDir=VSIReadDir(pszTmpPath);
-        int     iEntry, iLastPartStart;
+        char **papszDir = VSIReadDir(pszTmpPath);
+        int iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
 
@@ -356,28 +348,28 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
          *------------------------------------------------------------*/
         pszTmpPath[iTmpPtr] = pszFname[iTmpPtr];
         iTmpPtr++;
-        for( ; pszFname[iTmpPtr] != '\0' && pszFname[iTmpPtr]!='/'; iTmpPtr++)
+        for (; pszFname[iTmpPtr] != '\0' && pszFname[iTmpPtr] != '/'; iTmpPtr++)
         {
             pszTmpPath[iTmpPtr] = pszFname[iTmpPtr];
         }
 
-        while(iLastPartStart < iTmpPtr && pszTmpPath[iLastPartStart] == '/')
+        while (iLastPartStart < iTmpPtr && pszTmpPath[iLastPartStart] == '/')
             iLastPartStart++;
 
         /*-------------------------------------------------------------
          * And do a case insensitive search in the current dir...
          *------------------------------------------------------------*/
-        for(iEntry=0; papszDir && papszDir[iEntry]; iEntry++)
+        for (iEntry = 0; papszDir && papszDir[iEntry]; iEntry++)
         {
-            if (EQUAL(pszTmpPath+iLastPartStart, papszDir[iEntry]))
+            if (EQUAL(pszTmpPath + iLastPartStart, papszDir[iEntry]))
             {
                 /* Fount it! */
 #ifdef CSA_BUILD
                 // Silence false positive warning about overlapping buffers
-                memmove(pszTmpPath+iLastPartStart, papszDir[iEntry],
+                memmove(pszTmpPath + iLastPartStart, papszDir[iEntry],
                         strlen(papszDir[iEntry]) + 1);
 #else
-                strcpy(pszTmpPath+iLastPartStart, papszDir[iEntry]);
+                strcpy(pszTmpPath + iLastPartStart, papszDir[iEntry]);
 #endif
                 break;
             }
@@ -393,9 +385,9 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      * We reached the last valid path component... just copy the rest
      * of the path as is.
      *----------------------------------------------------------------*/
-    if (iTmpPtr < nTotalLen-1)
+    if (iTmpPtr < nTotalLen - 1)
     {
-        strncpy(pszTmpPath+iTmpPtr, pszFname+iTmpPtr, nTotalLen-iTmpPtr);
+        strncpy(pszTmpPath + iTmpPtr, pszFname + iTmpPtr, nTotalLen - iTmpPtr);
     }
 
     /*-----------------------------------------------------------------
@@ -407,8 +399,6 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     return pszFname;
 }
 
-
-
 /**********************************************************************
  *                          AVCPrintRealValue()
  *
@@ -418,11 +408,11 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
  *
  * The function returns the number of characters added to the buffer.
  **********************************************************************/
-int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType eType,
-                        double dValue)
+int AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision,
+                      AVCFileType eType, double dValue)
 {
-    static int numExpDigits=-1;
-    int        nLen = 0;
+    static int numExpDigits = -1;
+    int nLen = 0;
 
     /* WIN32 systems' printf() for floating point output generates 3
      * digits exponents (ex: 1.23E+012), but E00 files must have 2 digits
@@ -433,11 +423,11 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
     if (numExpDigits == -1)
     {
         char szBuf[50];
-        int  i;
+        int i;
 
         CPLsnprintf(szBuf, sizeof(szBuf), "%10.7E", 123.45);
         numExpDigits = 0;
-        for(i=(int)strlen(szBuf)-1; i>0; i--)
+        for (i = (int)strlen(szBuf) - 1; i > 0; i--)
         {
             if (szBuf[i] == '+' || szBuf[i] == '-')
                 break;
@@ -448,16 +438,15 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
     /* We will append the value at the end of the current buffer contents.
      */
     nBufLen -= strlen(pszBuf);
-    pszBuf = pszBuf+strlen(pszBuf);
+    pszBuf = pszBuf + strlen(pszBuf);
 
     if (dValue < 0.0)
     {
         *pszBuf = '-';
-        dValue = -1.0*dValue;
+        dValue = -1.0 * dValue;
     }
     else
         *pszBuf = ' ';
-
 
     /* Just to make things more complicated, double values are
      * output in a different format in attribute tables than in
@@ -466,22 +455,22 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
     if (nPrecision == AVC_FORMAT_DBF_FLOAT)
     {
         /* Float stored in DBF table in PC coverages */
-        CPLsnprintf(pszBuf+1, nBufLen-1, "%9.6E", dValue);
+        CPLsnprintf(pszBuf + 1, nBufLen - 1, "%9.6E", dValue);
         nLen = 13;
     }
     else if (nPrecision == AVC_DOUBLE_PREC && eType == AVCFileTABLE)
     {
-        CPLsnprintf(pszBuf+1, nBufLen-1,"%20.17E", dValue);
+        CPLsnprintf(pszBuf + 1, nBufLen - 1, "%20.17E", dValue);
         nLen = 24;
     }
     else if (nPrecision == AVC_DOUBLE_PREC)
     {
-        CPLsnprintf(pszBuf+1, nBufLen-1,"%17.14E", dValue);
+        CPLsnprintf(pszBuf + 1, nBufLen - 1, "%17.14E", dValue);
         nLen = 21;
     }
     else
     {
-        CPLsnprintf(pszBuf+1, nBufLen-1,"%10.7E", dValue);
+        CPLsnprintf(pszBuf + 1, nBufLen - 1, "%10.7E", dValue);
         nLen = 14;
     }
 
@@ -492,9 +481,9 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
         int n;
         n = (int)strlen(pszBuf);
 
-        pszBuf[n - numExpDigits]    = pszBuf[n-2];
-        pszBuf[n - numExpDigits +1] = pszBuf[n-1];
-        pszBuf[n - numExpDigits +2] = '\0';
+        pszBuf[n - numExpDigits] = pszBuf[n - 2];
+        pszBuf[n - numExpDigits + 1] = pszBuf[n - 1];
+        pszBuf[n - numExpDigits + 2] = '\0';
     }
 
     /* Just make sure that the actual output length is what we expected.

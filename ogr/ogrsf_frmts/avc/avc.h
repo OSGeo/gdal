@@ -138,13 +138,13 @@ CPL_C_START
 
 /* Coverage precision
  */
-#define AVC_DEFAULT_PREC   0
-#define AVC_SINGLE_PREC    1
-#define AVC_DOUBLE_PREC    2
+#define AVC_DEFAULT_PREC 0
+#define AVC_SINGLE_PREC 1
+#define AVC_DOUBLE_PREC 2
 
 /* AVC_FORMAT_DBF_FLOAT used as nPrecision value only for AVCPrintRealValue()
  */
-#define AVC_FORMAT_DBF_FLOAT  42
+#define AVC_FORMAT_DBF_FLOAT 42
 
 /* Coverage file types
  */
@@ -158,12 +158,12 @@ typedef enum
     AVCFilePRJ,
     AVCFileTOL,
     AVCFileLOG,
-    AVCFileTXT,  /* TXT and TX6 share the same binary format */
+    AVCFileTXT, /* TXT and TX6 share the same binary format */
     AVCFileTX6,
     AVCFileRXP,
-    AVCFileRPL,  /* RPL is a PAL for a region */
+    AVCFileRPL, /* RPL is a PAL for a region */
     AVCFileTABLE
-}AVCFileType;
+} AVCFileType;
 
 /* Read or Write access flag
  */
@@ -181,8 +181,8 @@ typedef enum
     AVCCoverTypeUnknown = 0,
     AVCCoverV7,
     AVCCoverPC,
-    AVCCoverPC2,   /* Unknown version... hybrid between V7 and PC !!! */
-    AVCCoverWeird, /* Unknown version... hybrid between V7 and PC !!! */
+    AVCCoverPC2,     /* Unknown version... hybrid between V7 and PC !!! */
+    AVCCoverWeird,   /* Unknown version... hybrid between V7 and PC !!! */
     AVCCoverV7Tables /* Standalone tables, only an info directory     */
 } AVCCoverType;
 
@@ -190,16 +190,16 @@ typedef enum
  */
 typedef enum
 {
-    AVCBigEndian,    /* CPL_MSB, Motorola ordering */
-    AVCLittleEndian  /* CPL_LSB, Intel ordering */
+    AVCBigEndian,   /* CPL_MSB, Motorola ordering */
+    AVCLittleEndian /* CPL_LSB, Intel ordering */
 } AVCByteOrder;
 
 /* Macros to establish byte ordering for each coverage type
  * The rule until now: all coverage types use big endian (Motorola ordering)
  * except PC Arc/Info coverages variant 1 (AVCCoverPC).
  */
-#define AVC_COVER_BYTE_ORDER(cover_type)  \
-   (((cover_type) == AVCCoverPC ) ? AVCLittleEndian : AVCBigEndian )
+#define AVC_COVER_BYTE_ORDER(cover_type)                                       \
+    (((cover_type) == AVCCoverPC) ? AVCLittleEndian : AVCBigEndian)
 
 /*=====================================================================
                         Structures
@@ -212,24 +212,24 @@ typedef enum
 
 typedef struct AVCVertex_t
 {
-    double      x;      /* Even for single precision, we always         */
-    double      y;      /* use doubles for the vertices in memory.      */
-}AVCVertex;
+    double x; /* Even for single precision, we always         */
+    double y; /* use doubles for the vertices in memory.      */
+} AVCVertex;
 
 /*---------------------------------------------------------------------
  * AVCArc: Information about an ARC
  *--------------------------------------------------------------------*/
 typedef struct AVCArc_t
 {
-    GInt32      nArcId;
-    GInt32      nUserId;
-    GInt32      nFNode;
-    GInt32      nTNode;
-    GInt32      nLPoly;
-    GInt32      nRPoly;
-    GInt32      numVertices;
-    AVCVertex   *pasVertices;
-}AVCArc;
+    GInt32 nArcId;
+    GInt32 nUserId;
+    GInt32 nFNode;
+    GInt32 nTNode;
+    GInt32 nLPoly;
+    GInt32 nRPoly;
+    GInt32 numVertices;
+    AVCVertex *pasVertices;
+} AVCArc;
 
 /*---------------------------------------------------------------------
  * AVCPal: A PAL (Polygon Arc List) references all the arcs that
@@ -237,88 +237,88 @@ typedef struct AVCArc_t
  *--------------------------------------------------------------------*/
 typedef struct AVCPalArc_t
 {
-    GInt32      nArcId;
-    GInt32      nFNode;
-    GInt32      nAdjPoly;
-}AVCPalArc;
+    GInt32 nArcId;
+    GInt32 nFNode;
+    GInt32 nAdjPoly;
+} AVCPalArc;
 
 typedef struct AVCPal_t
 {
-    GInt32      nPolyId;
-    AVCVertex   sMin;
-    AVCVertex   sMax;
-    GInt32      numArcs;
-    AVCPalArc   *pasArcs;
-}AVCPal;
+    GInt32 nPolyId;
+    AVCVertex sMin;
+    AVCVertex sMax;
+    GInt32 numArcs;
+    AVCPalArc *pasArcs;
+} AVCPal;
 
 /*---------------------------------------------------------------------
  * AVCCnt: Information about a CNT (polygon centroid)
  *--------------------------------------------------------------------*/
 typedef struct AVCCnt_t
 {
-    GInt32      nPolyId;
-    AVCVertex   sCoord;
-    GInt32      numLabels;      /* 0 or 1 */
-    GInt32      *panLabelIds;
-}AVCCnt;
+    GInt32 nPolyId;
+    AVCVertex sCoord;
+    GInt32 numLabels; /* 0 or 1 */
+    GInt32 *panLabelIds;
+} AVCCnt;
 
 /*---------------------------------------------------------------------
  * AVCLab: Information about a LAB (polygon Label)
  *--------------------------------------------------------------------*/
 typedef struct AVCLab_t
 {
-    GInt32      nValue;
-    GInt32      nPolyId;
-    AVCVertex   sCoord1;
-    AVCVertex   sCoord2;
-    AVCVertex   sCoord3;
-}AVCLab;
+    GInt32 nValue;
+    GInt32 nPolyId;
+    AVCVertex sCoord1;
+    AVCVertex sCoord2;
+    AVCVertex sCoord3;
+} AVCLab;
 
 /*---------------------------------------------------------------------
  * AVCTol: Information about a TOL record (coverage tolerances)
  *--------------------------------------------------------------------*/
 typedef struct AVCTol_t
 {
-    GInt32      nIndex;
-    GInt32      nFlag;
-    double      dValue;
-}AVCTol;
+    GInt32 nIndex;
+    GInt32 nFlag;
+    double dValue;
+} AVCTol;
 
 /*---------------------------------------------------------------------
  * AVCTxt: Information about a TXT/TX6/TX7 record (annotations)
  *--------------------------------------------------------------------*/
 typedef struct AVCTxt_t
 {
-    GInt32      nTxtId;
-    GInt32      nUserId;
-    GInt32      nLevel;
-    float       f_1e2;  /* Always (float)-1e+20, even for double precision! */
-    GInt32      nSymbol;
-    GInt32      numVerticesLine;
-    GInt32      n28;    /* Unknown value at byte 28 */
-    GInt32      numChars;
-    GInt32      numVerticesArrow;
+    GInt32 nTxtId;
+    GInt32 nUserId;
+    GInt32 nLevel;
+    float f_1e2; /* Always (float)-1e+20, even for double precision! */
+    GInt32 nSymbol;
+    GInt32 numVerticesLine;
+    GInt32 n28; /* Unknown value at byte 28 */
+    GInt32 numChars;
+    GInt32 numVerticesArrow;
 
-    GInt16      anJust1[20];
-    GInt16      anJust2[20];
+    GInt16 anJust1[20];
+    GInt16 anJust2[20];
 
-    double      dHeight;
-    double      dV2;    /* ??? */
-    double      dV3;    /* ??? */
+    double dHeight;
+    double dV2; /* ??? */
+    double dV3; /* ??? */
 
-    GByte       *pszText; /* Needs to be unsigned char for DBCS */
+    GByte *pszText; /* Needs to be unsigned char for DBCS */
 
-    AVCVertex   *pasVertices;
-}AVCTxt;
+    AVCVertex *pasVertices;
+} AVCTxt;
 
 /*---------------------------------------------------------------------
  * AVCRxp: Information about a RXP record (something related to regions...)
  *--------------------------------------------------------------------*/
 typedef struct AVCRxp_t
 {
-    GInt32      n1;
-    GInt32      n2;
-}AVCRxp;
+    GInt32 n1;
+    GInt32 n2;
+} AVCRxp;
 
 /*---------------------------------------------------------------------
  * AVCTableDef: Definition of an INFO table's structure.
@@ -333,29 +333,29 @@ typedef struct AVCRxp_t
 
 typedef struct AVCFieldInfo_t
 {
-    char        szName[17];
-    GInt16      nSize;
-    GInt16      v2;
-    GInt16      nOffset;
-    GInt16      v4;
-    GInt16      v5;
-    GInt16      nFmtWidth;
-    GInt16      nFmtPrec;
-    GInt16      nType1;
-    GInt16      nType2;
-    GInt16      v10;
-    GInt16      v11;
-    GInt16      v12;
-    GInt16      v13;
-    char        szAltName[17];
-    GInt16      nIndex;         /* >0 if valid, or -1 if field is deleted */
-}AVCFieldInfo;
+    char szName[17];
+    GInt16 nSize;
+    GInt16 v2;
+    GInt16 nOffset;
+    GInt16 v4;
+    GInt16 v5;
+    GInt16 nFmtWidth;
+    GInt16 nFmtPrec;
+    GInt16 nType1;
+    GInt16 nType2;
+    GInt16 v10;
+    GInt16 v11;
+    GInt16 v12;
+    GInt16 v13;
+    char szAltName[17];
+    GInt16 nIndex; /* >0 if valid, or -1 if field is deleted */
+} AVCFieldInfo;
 
-#define AVC_FT_DATE     10
-#define AVC_FT_CHAR     20
-#define AVC_FT_FIXINT   30
-#define AVC_FT_FIXNUM   40
-#define AVC_FT_BININT   50
+#define AVC_FT_DATE 10
+#define AVC_FT_CHAR 20
+#define AVC_FT_FIXINT 30
+#define AVC_FT_FIXNUM 40
+#define AVC_FT_BININT 50
 #define AVC_FT_BINFLOAT 60
 
 typedef struct AVCTableDef_t
@@ -363,17 +363,17 @@ typedef struct AVCTableDef_t
     /* Stuff read from the arc.dir file
      * (1 record, corresponding to this table, from the arc.dir file)
      */
-    char        szTableName[33];
-    char        szInfoFile[9];
-    GInt16      numFields;
-    GInt16      nRecSize;
-    GInt32      numRecords;
-    char        szExternal[3];  /* "XX" or "  " */
-    GInt16      bDeletedFlag;   /* 1 if deleted, 0 if table is active */
+    char szTableName[33];
+    char szInfoFile[9];
+    GInt16 numFields;
+    GInt16 nRecSize;
+    GInt32 numRecords;
+    char szExternal[3];  /* "XX" or "  " */
+    GInt16 bDeletedFlag; /* 1 if deleted, 0 if table is active */
 
     /* Data file path read from the arc####.dat file
      */
-    char        szDataFile[81];
+    char szDataFile[81];
 
     /* Field information read from the arc####.nit file
      */
@@ -382,11 +382,11 @@ typedef struct AVCTableDef_t
 
 typedef struct AVCField_t
 {
-    GInt16      nInt16;
-    GInt32      nInt32;
-    float       fFloat;
-    double      dDouble;
-    GByte       *pszStr;
+    GInt16 nInt16;
+    GInt32 nInt32;
+    float fFloat;
+    double dDouble;
+    GByte *pszStr;
 } AVCField;
 
 /*---------------------------------------------------------------------
@@ -397,18 +397,18 @@ typedef struct AVCField_t
 
 typedef struct AVCRawBinFile_t
 {
-    VSILFILE    *fp;
-    char        *pszFname;
-    AVCAccess   eAccess;
+    VSILFILE *fp;
+    char *pszFname;
+    AVCAccess eAccess;
     AVCByteOrder eByteOrder;
-    GByte       abyBuf[AVCRAWBIN_READBUFSIZE];
-    int         nOffset;        /* Location of current buffer in the file */
-    int         nCurSize;       /* Nbr of bytes currently loaded        */
-    int         nCurPos;        /* Next byte to read from abyBuf[]      */
+    GByte abyBuf[AVCRAWBIN_READBUFSIZE];
+    int nOffset;  /* Location of current buffer in the file */
+    int nCurSize; /* Nbr of bytes currently loaded        */
+    int nCurPos;  /* Next byte to read from abyBuf[]      */
 
-    int         nFileDataSize;  /* File Size as stated in the header */
-                                /* EOF=TRUE passed this point in file */
-                                /* Set to -1 if not specified. */
+    int nFileDataSize; /* File Size as stated in the header */
+                       /* EOF=TRUE passed this point in file */
+                       /* Set to -1 if not specified. */
 
     /* Handle on dataset's multibyte character encoding info. */
     AVCDBCSInfo *psDBCSInfo;
@@ -421,45 +421,45 @@ typedef struct AVCRawBinFile_t
 
 typedef struct AVCBinHeader_t
 {
-    GUInt32     nSignature;
-    GInt32      nPrecision;     /* <0 for double prec., >0 for single prec. */
-    GInt32      nRecordSize;    /* nbr of 2 byte words, 0 for var. length   */
-    GInt32      nLength;        /* Overall file length, in 2 byte words     */
-}AVCBinHeader;
+    GUInt32 nSignature;
+    GInt32 nPrecision;  /* <0 for double prec., >0 for single prec. */
+    GInt32 nRecordSize; /* nbr of 2 byte words, 0 for var. length   */
+    GInt32 nLength;     /* Overall file length, in 2 byte words     */
+} AVCBinHeader;
 
 typedef struct AVCBinFile_t
 {
     AVCRawBinFile *psRawBinFile;
-    char          *pszFilename;
-    AVCRawBinFile *psIndexFile;   /* Index file, Write mode only */
+    char *pszFilename;
+    AVCRawBinFile *psIndexFile; /* Index file, Write mode only */
 
-    DBFHandle     hDBFFile;       /* Used for AVCCoverPC/PC2 DBF TABLES only */
-    int           nCurDBFRecord;  /* 0-based record index in DBF file */
+    DBFHandle hDBFFile; /* Used for AVCCoverPC/PC2 DBF TABLES only */
+    int nCurDBFRecord;  /* 0-based record index in DBF file */
 
-    AVCCoverType  eCoverType;
-    AVCFileType   eFileType;
-    int           nPrecision;     /* AVC_SINGLE/DOUBLE_PREC  */
+    AVCCoverType eCoverType;
+    AVCFileType eFileType;
+    int nPrecision; /* AVC_SINGLE/DOUBLE_PREC  */
 
     union
     {
-        AVCTableDef  *psTableDef;
-    }hdr;
+        AVCTableDef *psTableDef;
+    } hdr;
 
     /* cur.* : temp. storage used to read one record (ARC, PAL, ... or
      *         Table record) from the file.
      */
     union
     {
-        AVCArc       *psArc;
-        AVCPal       *psPal;
-        AVCCnt       *psCnt;
-        AVCLab       *psLab;
-        AVCTol       *psTol;
-        AVCTxt       *psTxt;
-        AVCRxp       *psRxp;
-        AVCField     *pasFields;
-        char         **papszPrj;
-    }cur;
+        AVCArc *psArc;
+        AVCPal *psPal;
+        AVCCnt *psCnt;
+        AVCLab *psLab;
+        AVCTol *psTol;
+        AVCTxt *psTxt;
+        AVCRxp *psRxp;
+        AVCField *pasFields;
+        char **papszPrj;
+    } cur;
 
 } AVCBinFile;
 
@@ -476,13 +476,13 @@ typedef struct AVCBinFile_t
 
 typedef struct AVCE00GenInfo_t
 {
-    char        *pszBuf;
-    int         nBufSize;
+    char *pszBuf;
+    int nBufSize;
 
-    int         nPrecision;     /* AVC_SINGLE/DOUBLE_PREC       */
-    int         iCurItem;
-    int         numItems;
-}AVCE00GenInfo;
+    int nPrecision; /* AVC_SINGLE/DOUBLE_PREC       */
+    int iCurItem;
+    int numItems;
+} AVCE00GenInfo;
 
 /*---------------------------------------------------------------------
  * Stuff related to the parsing of E00
@@ -497,46 +497,50 @@ typedef struct AVCE00GenInfo_t
 struct AVCE00ParseInfo
 {
     AVCFileType eFileType = AVCFileUnknown;
-    int         nPrecision = 0;     /* AVC_SINGLE/DOUBLE_PREC       */
-    int         iCurItem = 0;
-    int         numItems = 0;
-    int         nStartLineNum = 0;
-    int         nCurLineNum = 0;
+    int nPrecision = 0; /* AVC_SINGLE/DOUBLE_PREC       */
+    int iCurItem = 0;
+    int numItems = 0;
+    int nStartLineNum = 0;
+    int nCurLineNum = 0;
 
-    int         nCurObjectId = 0;
-    GBool       bForceEndOfSection = 0;  /* For sections that don't have an */
-                                     /* explicit end-of-section line.   */
-    AVCFileType eSuperSectionType = AVCFileUnknown;/* For sections containing several files*/
-    char        *pszSectionHdrLine = nullptr;  /* Used by supersection types      */
+    int nCurObjectId = 0;
+    GBool bForceEndOfSection = 0; /* For sections that don't have an */
+                                  /* explicit end-of-section line.   */
+    AVCFileType eSuperSectionType =
+        AVCFileUnknown; /* For sections containing several files*/
+    char *pszSectionHdrLine = nullptr; /* Used by supersection types      */
 
     struct
     {
-        AVCTableDef  *psTableDef = nullptr;
+        AVCTableDef *psTableDef = nullptr;
     } hdr;
-    GBool       bTableHdrComplete = 0;   /* FALSE until table header is */
-                                     /* finished parsing */
-    int         nTableE00RecLength = 0;
+    GBool bTableHdrComplete = 0; /* FALSE until table header is */
+                                 /* finished parsing */
+    int nTableE00RecLength = 0;
 
     /* cur.* : temp. storage used to store current object (ARC, PAL, ... or
      *         Table record) from the file.
      */
     union
     {
-        AVCArc       *psArc;
-        AVCPal       *psPal;
-        AVCCnt       *psCnt;
-        AVCLab       *psLab;
-        AVCTol       *psTol;
-        AVCTxt       *psTxt;
-        AVCRxp       *psRxp;
-        AVCField     *pasFields;
-    }cur;
+        AVCArc *psArc;
+        AVCPal *psPal;
+        AVCCnt *psCnt;
+        AVCLab *psLab;
+        AVCTol *psTol;
+        AVCTxt *psTxt;
+        AVCRxp *psRxp;
+        AVCField *pasFields;
+    } cur;
     CPLStringList aosPrj;
 
-    char        *pszBuf = nullptr;        /* Buffer used only for TABLEs  */
-    int         nBufSize = 0;
+    char *pszBuf = nullptr; /* Buffer used only for TABLEs  */
+    int nBufSize = 0;
 
-    AVCE00ParseInfo() { cur.psArc = nullptr; }
+    AVCE00ParseInfo()
+    {
+        cur.psArc = nullptr;
+    }
 };
 
 /*---------------------------------------------------------------------
@@ -544,39 +548,39 @@ struct AVCE00ParseInfo
  *--------------------------------------------------------------------*/
 typedef struct AVCE00Section_t
 {
-    AVCFileType eType;        /* File Type                      */
-    char        *pszName;     /* E00 section or Table Name      */
-    char        *pszFilename; /* Binary/E00 file filename       */
-    int         nLineNum;     /* E00 line number                */
-    int         nFeatureCount;
-}AVCE00Section;
+    AVCFileType eType; /* File Type                      */
+    char *pszName;     /* E00 section or Table Name      */
+    char *pszFilename; /* Binary/E00 file filename       */
+    int nLineNum;      /* E00 line number                */
+    int nFeatureCount;
+} AVCE00Section;
 
 typedef struct AVCE00ReadInfo_t
 {
-    char        *pszCoverPath;
-    char        *pszInfoPath;
-    char        *pszCoverName;
+    char *pszCoverPath;
+    char *pszInfoPath;
+    char *pszCoverName;
     AVCCoverType eCoverType;
 
     /* pasSections is built when the coverage is opened and describes
      * the skeleton of the E00 file.
      */
     AVCE00Section *pasSections;
-    int            numSections;
+    int numSections;
 
     /* If bReadAllSections=TRUE then reading automatically continues to
      * the next section when a section finishes. (This is the default)
      * Otherwise, you can use AVCE00ReadGotoSection() to read one section
      * at a time... this will set bReadAllSections=FALSE.
      */
-    GBool         bReadAllSections;
+    GBool bReadAllSections;
 
     /* Info about the file (or E00 section) currently being processed
      */
-    int           iCurSection;
-    AVCBinFile    *hFile;
+    int iCurSection;
+    AVCBinFile *hFile;
 
-    int           iCurStep;  /* AVC_GEN_* values, see below */
+    int iCurStep; /* AVC_GEN_* values, see below */
     AVCE00GenInfo *hGenInfo;
 
     /* Info related to multibyte character encoding
@@ -587,59 +591,59 @@ typedef struct AVCE00ReadInfo_t
 
 typedef struct AVCE00ReadInfoE00_t
 {
-    char        *pszCoverPath;
-    char        *pszCoverName;
+    char *pszCoverPath;
+    char *pszCoverName;
 
     AVCE00ParseInfo *hParseInfo;
-    AVCFileType  eCurFileType;
+    AVCFileType eCurFileType;
 
     /* pasSections is built when the coverage is opened and describes
      * the sections in the E00 file.
      */
     AVCE00Section *pasSections;
-    int            numSections;
+    int numSections;
 
     /* If bReadAllSections=TRUE then reading automatically continues to
      * the next section when a section finishes. (This is the default)
      * Otherwise, you can use AVCE00ReadGotoSectionE00() to read one
      * section at a time.
      */
-    GBool         bReadAllSections;
+    GBool bReadAllSections;
 
     /* File handle of the E00 file currently being processed
      */
-    VSILFILE     *hFile;
+    VSILFILE *hFile;
 
 } *AVCE00ReadE00Ptr;
 
 /* E00 generation steps... tells the AVCE00Read*() functions which
  * parts of the given E00 file are currently being processed.
  */
-#define AVC_GEN_NOTSTARTED      0
-#define AVC_GEN_DATA            1
-#define AVC_GEN_ENDSECTION      2
-#define AVC_GEN_TABLEHEADER     3
-#define AVC_GEN_TABLEDATA       4
+#define AVC_GEN_NOTSTARTED 0
+#define AVC_GEN_DATA 1
+#define AVC_GEN_ENDSECTION 2
+#define AVC_GEN_TABLEHEADER 3
+#define AVC_GEN_TABLEDATA 4
 
 /*---------------------------------------------------------------------
  * Stuff related to the transparent E00 -> binary conversion
  *--------------------------------------------------------------------*/
 typedef struct AVCE00WriteInfo_t
 {
-    char        *pszCoverPath;
-    char        *pszInfoPath;
-    char        *pszCoverName;
+    char *pszCoverPath;
+    char *pszInfoPath;
+    char *pszCoverName;
     AVCCoverType eCoverType;
 
     /* Info about the file (or E00 section) currently being processed
      */
-    AVCFileType  eCurFileType;
-    AVCBinFile  *hFile;
+    AVCFileType eCurFileType;
+    AVCBinFile *hFile;
 
     /* Requested precision for the new coverage... may differ from the
      * precision of the E00 input lines.  (AVC_SINGLE_PREC or AVC_DOUBLE_PREC)
      */
-    int          nPrecision;
+    int nPrecision;
 
     AVCE00ParseInfo *hParseInfo;
 
@@ -652,7 +656,7 @@ typedef struct AVCE00WriteInfo_t
 /* Coverage generation steps... used to store the current state of the
  * AVCE00WriteNextLine() function.
  */
-#define AVC_WR_TOPLEVEL         0
+#define AVC_WR_TOPLEVEL 0
 #define AVC_WR_READING_SECTION
 
 /*=====================================================================
@@ -665,30 +669,28 @@ typedef struct AVCE00WriteInfo_t
 AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
                              AVCByteOrder eFileByteOrder,
                              AVCDBCSInfo *psDBCSInfo);
-void        AVCRawBinClose(AVCRawBinFile *psInfo);
-void        AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
-GBool       AVCRawBinEOF(AVCRawBinFile *psInfo);
-void        AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
+void AVCRawBinClose(AVCRawBinFile *psInfo);
+void AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
+GBool AVCRawBinEOF(AVCRawBinFile *psInfo);
+void AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
 int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
 
-void        AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead,
-                               GByte *pBuf);
-GInt16      AVCRawBinReadInt16(AVCRawBinFile *psInfo);
-GInt32      AVCRawBinReadInt32(AVCRawBinFile *psInfo);
-float       AVCRawBinReadFloat(AVCRawBinFile *psInfo);
-double      AVCRawBinReadDouble(AVCRawBinFile *psInfo);
-void        AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead,
-                                GByte *pBuf);
+void AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead, GByte *pBuf);
+GInt16 AVCRawBinReadInt16(AVCRawBinFile *psInfo);
+GInt32 AVCRawBinReadInt32(AVCRawBinFile *psInfo);
+float AVCRawBinReadFloat(AVCRawBinFile *psInfo);
+double AVCRawBinReadDouble(AVCRawBinFile *psInfo);
+void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf);
 
-void        AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
-                                const GByte *pBuf);
-void        AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value);
-void        AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value);
-void        AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue);
-void        AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue);
-void        AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite);
-void        AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
-                                       const GByte *pszString);
+void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
+                         const GByte *pBuf);
+void AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value);
+void AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value);
+void AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue);
+void AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue);
+void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite);
+void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
+                                const GByte *pszString);
 
 /*---------------------------------------------------------------------
  * Functions related to reading the binary coverage files
@@ -697,68 +699,65 @@ void        AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
 AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
                            AVCCoverType eCoverType, AVCFileType eType,
                            AVCDBCSInfo *psDBCSInfo);
-void        AVCBinReadClose(AVCBinFile *psFile);
+void AVCBinReadClose(AVCBinFile *psFile);
 
-int         AVCBinReadRewind(AVCBinFile *psFile);
+int AVCBinReadRewind(AVCBinFile *psFile);
 
-void       *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex );
-void       *AVCBinReadNextObject(AVCBinFile *psFile);
-AVCArc     *AVCBinReadNextArc(AVCBinFile *psFile);
-AVCPal     *AVCBinReadNextPal(AVCBinFile *psFile);
-AVCCnt     *AVCBinReadNextCnt(AVCBinFile *psFile);
-AVCLab     *AVCBinReadNextLab(AVCBinFile *psFile);
-AVCTol     *AVCBinReadNextTol(AVCBinFile *psFile);
-AVCTxt     *AVCBinReadNextTxt(AVCBinFile *psFile);
-AVCRxp     *AVCBinReadNextRxp(AVCBinFile *psFile);
-AVCField   *AVCBinReadNextTableRec(AVCBinFile *psFile);
-char      **AVCBinReadNextPrj(AVCBinFile *psFile);
+void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex);
+void *AVCBinReadNextObject(AVCBinFile *psFile);
+AVCArc *AVCBinReadNextArc(AVCBinFile *psFile);
+AVCPal *AVCBinReadNextPal(AVCBinFile *psFile);
+AVCCnt *AVCBinReadNextCnt(AVCBinFile *psFile);
+AVCLab *AVCBinReadNextLab(AVCBinFile *psFile);
+AVCTol *AVCBinReadNextTol(AVCBinFile *psFile);
+AVCTxt *AVCBinReadNextTxt(AVCBinFile *psFile);
+AVCRxp *AVCBinReadNextRxp(AVCBinFile *psFile);
+AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile);
+char **AVCBinReadNextPrj(AVCBinFile *psFile);
 
-char      **AVCBinReadListTables(const char *pszInfoPath,
-                                 const char *pszCoverName,
-                                 char ***ppapszArcDatFiles,
-                                 AVCCoverType eCoverType,
-                                 AVCDBCSInfo *psDBCSInfo);
+char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
+                            char ***ppapszArcDatFiles, AVCCoverType eCoverType,
+                            AVCDBCSInfo *psDBCSInfo);
 
 /*---------------------------------------------------------------------
  * Functions related to writing the binary coverage files
  *--------------------------------------------------------------------*/
 AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
-                              AVCCoverType eCoverType,
-                              AVCFileType eType, int nPrecision,
-                              AVCDBCSInfo *psDBCSInfo);
+                              AVCCoverType eCoverType, AVCFileType eType,
+                              int nPrecision, AVCDBCSInfo *psDBCSInfo);
 AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
                                    const char *pszCoverName,
                                    AVCTableDef *psSrcTableDef,
-                                   AVCCoverType eCoverType,
-                                   int nPrecision, AVCDBCSInfo *psDBCSInfo);
-void        AVCBinWriteClose(AVCBinFile *psFile);
+                                   AVCCoverType eCoverType, int nPrecision,
+                                   AVCDBCSInfo *psDBCSInfo);
+void AVCBinWriteClose(AVCBinFile *psFile);
 
-int         AVCBinWriteHeader(AVCBinFile *psFile);
-int         AVCBinWriteObject(AVCBinFile *psFile, void *psObj);
-int         AVCBinWriteArc(AVCBinFile *psFile, AVCArc *psArc);
-int         AVCBinWritePal(AVCBinFile *psFile, AVCPal *psPal);
-int         AVCBinWriteCnt(AVCBinFile *psFile, AVCCnt *psCnt);
-int         AVCBinWriteLab(AVCBinFile *psFile, AVCLab *psLab);
-int         AVCBinWriteTol(AVCBinFile *psFile, AVCTol *psTol);
-int         AVCBinWritePrj(AVCBinFile *psFile, char **papszPrj);
-int         AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt);
-int         AVCBinWriteRxp(AVCBinFile *psFile, AVCRxp *psRxp);
-int         AVCBinWriteTableRec(AVCBinFile *psFile, AVCField *pasFields);
+int AVCBinWriteHeader(AVCBinFile *psFile);
+int AVCBinWriteObject(AVCBinFile *psFile, void *psObj);
+int AVCBinWriteArc(AVCBinFile *psFile, AVCArc *psArc);
+int AVCBinWritePal(AVCBinFile *psFile, AVCPal *psPal);
+int AVCBinWriteCnt(AVCBinFile *psFile, AVCCnt *psCnt);
+int AVCBinWriteLab(AVCBinFile *psFile, AVCLab *psLab);
+int AVCBinWriteTol(AVCBinFile *psFile, AVCTol *psTol);
+int AVCBinWritePrj(AVCBinFile *psFile, char **papszPrj);
+int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt);
+int AVCBinWriteRxp(AVCBinFile *psFile, AVCRxp *psRxp);
+int AVCBinWriteTableRec(AVCBinFile *psFile, AVCField *pasFields);
 
 /*---------------------------------------------------------------------
  * Functions related to the generation of E00
  *--------------------------------------------------------------------*/
-AVCE00GenInfo  *AVCE00GenInfoAlloc(int nCoverPrecision);
-void        AVCE00GenInfoFree(AVCE00GenInfo *psInfo);
-void        AVCE00GenReset(AVCE00GenInfo  *psInfo);
+AVCE00GenInfo *AVCE00GenInfoAlloc(int nCoverPrecision);
+void AVCE00GenInfoFree(AVCE00GenInfo *psInfo);
+void AVCE00GenReset(AVCE00GenInfo *psInfo);
 
 const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
                                   const char *pszFilename);
 const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
                                 GBool bCont);
 
-const char *AVCE00GenObject(AVCE00GenInfo *psInfo,
-                            AVCFileType eType, void *psObj, GBool bCont);
+const char *AVCE00GenObject(AVCE00GenInfo *psInfo, AVCFileType eType,
+                            void *psObj, GBool bCont);
 const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, GBool bCont);
 const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, GBool bCont);
 const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont);
@@ -778,33 +777,32 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 /*---------------------------------------------------------------------
  * Functions related to parsing E00 lines
  *--------------------------------------------------------------------*/
-AVCE00ParseInfo  *AVCE00ParseInfoAlloc(void);
-void    AVCE00ParseInfoFree(AVCE00ParseInfo *psInfo);
-void    AVCE00ParseReset(AVCE00ParseInfo  *psInfo);
+AVCE00ParseInfo *AVCE00ParseInfoAlloc(void);
+void AVCE00ParseInfoFree(AVCE00ParseInfo *psInfo);
+void AVCE00ParseReset(AVCE00ParseInfo *psInfo);
 
-AVCFileType AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
+AVCFileType AVCE00ParseSectionHeader(AVCE00ParseInfo *psInfo,
                                      const char *pszLine);
-GBool   AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
-                              GBool bResetParseInfo);
-AVCFileType AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
+GBool AVCE00ParseSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine,
+                            GBool bResetParseInfo);
+AVCFileType AVCE00ParseSuperSectionHeader(AVCE00ParseInfo *psInfo,
                                           const char *pszLine);
-GBool   AVCE00ParseSuperSectionEnd(AVCE00ParseInfo  *psInfo,
-                                   const char *pszLine );
+GBool AVCE00ParseSuperSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine);
 
-void    *AVCE00ParseNextLine(AVCE00ParseInfo  *psInfo, const char *pszLine);
-AVCArc  *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCPal  *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCCnt  *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCLab  *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCTol  *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCTxt  *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCTxt  *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine);
-char   **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine);
-AVCRxp  *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+void *AVCE00ParseNextLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCArc *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCPal *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCCnt *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCLab *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCTol *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCTxt *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine);
+char **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine);
+AVCRxp *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine);
 AVCTableDef *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
                                          const char *pszLine);
-AVCField    *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
-                                         const char *pszLine);
+AVCField *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
+                                      const char *pszLine);
 
 /*---------------------------------------------------------------------
  * Misc. functions shared by several parts of the lib.
@@ -818,8 +816,8 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef);
 
 GBool AVCFileExists(const char *pszPath, const char *pszName);
 char *AVCAdjustCaseSensitiveFilename(char *pszFname);
-int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType eType,
-                       double dValue);
+int AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision,
+                      AVCFileType eType, double dValue);
 
 /*=====================================================================
               Function prototypes (THE PUBLIC ONES)
@@ -829,39 +827,36 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
  * Functions to read E00
  *--------------------------------------------------------------------*/
 AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName);
-void             AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead);
-int              AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead);
-void            *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead);
+void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead);
+int AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead);
+void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead);
 
-AVCE00Section  *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect);
-int             AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead,
-                                         AVCE00Section *psSect,
-                                         GBool bContinue);
+AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect);
+int AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead, AVCE00Section *psSect,
+                             GBool bContinue);
 
 /*---------------------------------------------------------------------
  * Functions to make a binary coverage appear as E00
  *--------------------------------------------------------------------*/
 
-AVCE00ReadPtr   AVCE00ReadOpen(const char *pszCoverPath);
-void            AVCE00ReadClose(AVCE00ReadPtr psInfo);
-const char     *AVCE00ReadNextLine(AVCE00ReadPtr psInfo);
-int             AVCE00ReadRewind(AVCE00ReadPtr psInfo);
+AVCE00ReadPtr AVCE00ReadOpen(const char *pszCoverPath);
+void AVCE00ReadClose(AVCE00ReadPtr psInfo);
+const char *AVCE00ReadNextLine(AVCE00ReadPtr psInfo);
+int AVCE00ReadRewind(AVCE00ReadPtr psInfo);
 
-AVCE00Section  *AVCE00ReadSectionsList(AVCE00ReadPtr psInfo, int *numSect);
-int             AVCE00ReadGotoSection(AVCE00ReadPtr psInfo,
-                                      AVCE00Section *psSect,
-                                      GBool bContinue);
+AVCE00Section *AVCE00ReadSectionsList(AVCE00ReadPtr psInfo, int *numSect);
+int AVCE00ReadGotoSection(AVCE00ReadPtr psInfo, AVCE00Section *psSect,
+                          GBool bContinue);
 
 /*---------------------------------------------------------------------
  * Functions to write E00 lines to a binary coverage
  *--------------------------------------------------------------------*/
 
-AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
-                                AVCCoverType eNewCoverType, int nPrecision);
-void            AVCE00WriteClose(AVCE00WritePtr psInfo);
-int             AVCE00WriteNextLine(AVCE00WritePtr psInfo,
-                                    const char *pszLine);
-int             AVCE00DeleteCoverage(const char *pszCoverPath);
+AVCE00WritePtr AVCE00WriteOpen(const char *pszCoverPath,
+                               AVCCoverType eNewCoverType, int nPrecision);
+void AVCE00WriteClose(AVCE00WritePtr psInfo);
+int AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine);
+int AVCE00DeleteCoverage(const char *pszCoverPath);
 
 CPL_C_END
 
