@@ -32,12 +32,13 @@
 #include "ogrgeoconceptdatasource.h"
 #include "ogrgeoconceptdriver.h"
 
-
 /************************************************************************/
 /*                          ~OGRGeoconceptDriver()                      */
 /************************************************************************/
 
-OGRGeoconceptDriver::~OGRGeoconceptDriver() {}
+OGRGeoconceptDriver::~OGRGeoconceptDriver()
+{
+}
 
 /************************************************************************/
 /*                              GetName()                               */
@@ -53,24 +54,23 @@ const char *OGRGeoconceptDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
-                                          int bUpdate )
+OGRDataSource *OGRGeoconceptDriver::Open(const char *pszFilename, int bUpdate)
 
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-/* -------------------------------------------------------------------- */
-/*      We will only consider .gxt and .txt files.                      */
-/* -------------------------------------------------------------------- */
-    const char* pszExtension = CPLGetExtension(pszFilename);
-    if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
+    /* -------------------------------------------------------------------- */
+    /*      We will only consider .gxt and .txt files.                      */
+    /* -------------------------------------------------------------------- */
+    const char *pszExtension = CPLGetExtension(pszFilename);
+    if (!EQUAL(pszExtension, "gxt") && !EQUAL(pszExtension, "txt"))
     {
         return nullptr;
     }
 #endif
 
-    OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
+    OGRGeoconceptDataSource *poDS = new OGRGeoconceptDataSource();
 
-    if( !poDS->Open( pszFilename, true, CPL_TO_BOOL(bUpdate) ) )
+    if (!poDS->Open(pszFilename, true, CPL_TO_BOOL(bUpdate)))
     {
         delete poDS;
         return nullptr;
@@ -85,51 +85,48 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
 /*   EXTENSION=GXT|TXT (default GXT)                                    */
 /************************************************************************/
 
-OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
-                                                      char** papszOptions )
+OGRDataSource *OGRGeoconceptDriver::CreateDataSource(const char *pszName,
+                                                     char **papszOptions)
 
 {
-    VSIStatBufL  sStat;
+    VSIStatBufL sStat;
     /* int bSingleNewFile = FALSE; */
 
-    if( pszName==nullptr || strlen(pszName)==0 )
+    if (pszName == nullptr || strlen(pszName) == 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid datasource name (null or empty)");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid datasource name (null or empty)");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Is the target a valid existing directory?                       */
-/* -------------------------------------------------------------------- */
-    if( VSIStatL( pszName, &sStat ) == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Is the target a valid existing directory?                       */
+    /* -------------------------------------------------------------------- */
+    if (VSIStatL(pszName, &sStat) == 0)
     {
-        if( !VSI_ISDIR(sStat.st_mode) )
+        if (!VSI_ISDIR(sStat.st_mode))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s is not a valid existing directory.",
-                      pszName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s is not a valid existing directory.", pszName);
             return nullptr;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Does it end with the extension .gxt indicating the user likely  */
-/*      wants to create a single file set?                              */
-/* -------------------------------------------------------------------- */
-    else if(
-             EQUAL(CPLGetExtension(pszName),"gxt")  ||
-             EQUAL(CPLGetExtension(pszName),"txt")
-           )
+    /* -------------------------------------------------------------------- */
+    /*      Does it end with the extension .gxt indicating the user likely  */
+    /*      wants to create a single file set?                              */
+    /* -------------------------------------------------------------------- */
+    else if (EQUAL(CPLGetExtension(pszName), "gxt") ||
+             EQUAL(CPLGetExtension(pszName), "txt"))
     {
         /* bSingleNewFile = TRUE; */
     }
 
-/* -------------------------------------------------------------------- */
-/*      Return a new OGRDataSource()                                    */
-/* -------------------------------------------------------------------- */
-    OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
-    if( !poDS->Create( pszName, papszOptions ) )
+    /* -------------------------------------------------------------------- */
+    /*      Return a new OGRDataSource()                                    */
+    /* -------------------------------------------------------------------- */
+    OGRGeoconceptDataSource *poDS = new OGRGeoconceptDataSource();
+    if (!poDS->Create(pszName, papszOptions))
     {
         delete poDS;
         return nullptr;
@@ -141,56 +138,53 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
 /*                          DeleteDataSource()                          */
 /************************************************************************/
 
-OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
+OGRErr OGRGeoconceptDriver::DeleteDataSource(const char *pszDataSource)
 
 {
     VSIStatBufL sStatBuf;
-    static const char * const apszExtensions[] =
-        { "gxt", "txt", "gct", "gcm", "gcr", nullptr };
+    static const char *const apszExtensions[] = {"gxt", "txt", "gct",
+                                                 "gcm", "gcr", nullptr};
 
-    if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
+    if (VSIStatL(pszDataSource, &sStatBuf) != 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s does not appear to be a file or directory.",
-                  pszDataSource );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s does not appear to be a file or directory.",
+                 pszDataSource);
 
         return OGRERR_FAILURE;
     }
 
-    if( VSI_ISREG(sStatBuf.st_mode)
-        && (
-            EQUAL(CPLGetExtension(pszDataSource),"gxt") ||
-            EQUAL(CPLGetExtension(pszDataSource),"txt")
-           ) )
+    if (VSI_ISREG(sStatBuf.st_mode) &&
+        (EQUAL(CPLGetExtension(pszDataSource), "gxt") ||
+         EQUAL(CPLGetExtension(pszDataSource), "txt")))
     {
-        for( int iExt=0; apszExtensions[iExt] != nullptr; iExt++ )
+        for (int iExt = 0; apszExtensions[iExt] != nullptr; iExt++)
         {
-            const char *pszFile = CPLResetExtension(pszDataSource,
-                                                    apszExtensions[iExt] );
-            if( VSIStatL( pszFile, &sStatBuf ) == 0 )
-                VSIUnlink( pszFile );
+            const char *pszFile =
+                CPLResetExtension(pszDataSource, apszExtensions[iExt]);
+            if (VSIStatL(pszFile, &sStatBuf) == 0)
+                VSIUnlink(pszFile);
         }
     }
-    else if( VSI_ISDIR(sStatBuf.st_mode) )
+    else if (VSI_ISDIR(sStatBuf.st_mode))
     {
-        char **papszDirEntries = VSIReadDir( pszDataSource );
+        char **papszDirEntries = VSIReadDir(pszDataSource);
 
-        for( int iFile = 0;
+        for (int iFile = 0;
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
-             iFile++ )
+             iFile++)
         {
-            if( CSLFindString( const_cast<char **>( apszExtensions ),
-                               CPLGetExtension(papszDirEntries[iFile])) != -1)
+            if (CSLFindString(const_cast<char **>(apszExtensions),
+                              CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
-                VSIUnlink( CPLFormFilename( pszDataSource,
-                                            papszDirEntries[iFile],
-                                            nullptr ) );
+                VSIUnlink(CPLFormFilename(pszDataSource, papszDirEntries[iFile],
+                                          nullptr));
             }
         }
 
-        CSLDestroy( papszDirEntries );
+        CSLDestroy(papszDirEntries);
 
-        VSIRmdir( pszDataSource );
+        VSIRmdir(pszDataSource);
     }
 
     return OGRERR_NONE;
@@ -200,13 +194,13 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoconceptDriver::TestCapability( const char * pszCap )
+int OGRGeoconceptDriver::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
+    if (EQUAL(pszCap, ODrCCreateDataSource))
         return TRUE;
 
-    if( EQUAL(pszCap,ODrCDeleteDataSource) )
+    if (EQUAL(pszCap, ODrCDeleteDataSource))
         return TRUE;
 
     return FALSE;
@@ -219,35 +213,42 @@ int OGRGeoconceptDriver::TestCapability( const char * pszCap )
 void RegisterOGRGeoconcept()
 
 {
-    OGRSFDriver* poDriver = new OGRGeoconceptDriver;
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gxt txt" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    OGRSFDriver *poDriver = new OGRGeoconceptDriver;
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gxt txt");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
-"  <Option name='EXTENSION' type='string-select' description='indicates the "
-"GeoConcept export file extension. TXT was used by earlier releases of "
-"GeoConcept. GXT is currently used.' default='GXT'>"
-"    <Value>GXT</Value>"
-"    <Value>TXT</Value>"
-"  </Option>"
-"  <Option name='CONFIG' type='string' description='path to the GCT file that "
-"describes the GeoConcept types definitions.'/>"
-"</CreationOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='EXTENSION' type='string-select' "
+        "description='indicates the "
+        "GeoConcept export file extension. TXT was used by earlier releases of "
+        "GeoConcept. GXT is currently used.' default='GXT'>"
+        "    <Value>GXT</Value>"
+        "    <Value>TXT</Value>"
+        "  </Option>"
+        "  <Option name='CONFIG' type='string' description='path to the GCT "
+        "file that "
+        "describes the GeoConcept types definitions.'/>"
+        "</CreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-"<LayerCreationOptionList>"
-"  <Option name='FEATURETYPE' type='string' description='TYPE.SUBTYPE : "
-"defines the feature to be created. The TYPE corresponds to one of the Name "
-"found in the GCT file for a type section. The SUBTYPE corresponds to one of "
-"the Name found in the GCT file for a sub-type section within the previous "
-"type section'/>"
-"</LayerCreationOptionList>" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                              "<LayerCreationOptionList>"
+                              "  <Option name='FEATURETYPE' type='string' "
+                              "description='TYPE.SUBTYPE : "
+                              "defines the feature to be created. The TYPE "
+                              "corresponds to one of the Name "
+                              "found in the GCT file for a type section. The "
+                              "SUBTYPE corresponds to one of "
+                              "the Name found in the GCT file for a sub-type "
+                              "section within the previous "
+                              "type section'/>"
+                              "</LayerCreationOptionList>");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

@@ -37,48 +37,55 @@
 /**********************************************************************/
 /*            OGCGeoconceptLayer Class                           */
 /**********************************************************************/
-class OGRGeoconceptLayer final: public OGRLayer
+class OGRGeoconceptLayer final : public OGRLayer
 {
   private:
-    OGRFeatureDefn      *_poFeatureDefn;
+    OGRFeatureDefn *_poFeatureDefn;
 
-    GCSubType           *_gcFeature;
+    GCSubType *_gcFeature;
 
   public:
-                         OGRGeoconceptLayer();
-                        virtual ~OGRGeoconceptLayer();
+    OGRGeoconceptLayer();
+    virtual ~OGRGeoconceptLayer();
 
-    OGRErr               Open( GCSubType* Subclass );
+    OGRErr Open(GCSubType *Subclass);
 
-//    OGRGeometry*         GetSpatialFilter( );
-//    void                 SetSpatialFilter( OGRGeometry* poGeomIn );
-//    void                 SetSpatialFilterRect( double dfMinX, double dfMinY, double dfMaxX, double dfMaxY );
-//    OGRErr               SetAttributeFilter( const char* pszQuery );
-    void                 ResetReading() override;
-    OGRFeature*          GetNextFeature() override;
-//    OGRErr               SetNextByIndex( GIntBig nIndex );
+    //    OGRGeometry*         GetSpatialFilter( );
+    //    void                 SetSpatialFilter( OGRGeometry* poGeomIn );
+    //    void                 SetSpatialFilterRect( double dfMinX, double
+    //    dfMinY, double dfMaxX, double dfMaxY ); OGRErr SetAttributeFilter(
+    //    const char* pszQuery );
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    //    OGRErr               SetNextByIndex( GIntBig nIndex );
 
-//    OGRFeature*          GetFeature( GIntBig nFID );
-//    OGRErr               ISetFeature( OGRFeature* poFeature );
-//    OGRErr               DeleteFeature( GIntBig nFID );
-    OGRErr               ICreateFeature( OGRFeature* poFeature ) override;
-    OGRFeatureDefn*      GetLayerDefn( ) override { return _poFeatureDefn; } // FIXME
-    OGRSpatialReference* GetSpatialRef( ) override;
-    GIntBig              GetFeatureCount( int bForce = TRUE ) override;
-    OGRErr               GetExtent( OGREnvelope *psExtent, int bForce = TRUE ) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    int                  TestCapability( const char* pszCap ) override;
-//    const char*          GetInfo( const char* pszTag );
-    OGRErr               CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE ) override;
-    OGRErr               SyncToDisk( ) override;
-//    OGRStyleTable*       GetStyleTable( );
-//    void                 SetStyleTableDirectly( OGRStyleTable* poStyleTable );
-//    void                 SetStyleTable( OGRStyleTable* poStyleTable );
-//    const char*          GetFIDColumn( );
-//    const char*          GetGeometryColumn( );
+    //    OGRFeature*          GetFeature( GIntBig nFID );
+    //    OGRErr               ISetFeature( OGRFeature* poFeature );
+    //    OGRErr               DeleteFeature( GIntBig nFID );
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return _poFeatureDefn;
+    }  // FIXME
+    OGRSpatialReference *GetSpatialRef() override;
+    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+    int TestCapability(const char *pszCap) override;
+    //    const char*          GetInfo( const char* pszTag );
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr SyncToDisk() override;
+    //    OGRStyleTable*       GetStyleTable( );
+    //    void                 SetStyleTableDirectly( OGRStyleTable*
+    //    poStyleTable ); void                 SetStyleTable( OGRStyleTable*
+    //    poStyleTable ); const char*          GetFIDColumn( ); const char*
+    //    GetGeometryColumn( );
 
-    void                   SetSpatialRef( OGRSpatialReference *poSpatialRef );
+    void SetSpatialRef(OGRSpatialReference *poSpatialRef);
 };
 
 #endif /* GEOCONCEPT_OGR_LAYER_H_INCLUDED_ */
