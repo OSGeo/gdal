@@ -1479,11 +1479,11 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
         static_cast<const GByte *>(pabyData), nSize);
 }
 
+/* clang-format off */
 /**
  * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
                                         unsigned char * pabyData,
-                                        OGRwkbVariant
- eWkbVariant=wkbVariantOldOgc ) const
+                                        OGRwkbVariant eWkbVariant=wkbVariantOldOgc ) const
  *
  * \brief Convert a geometry into well known binary format.
  *
@@ -1506,6 +1506,7 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
  *
  * @return Currently OGRERR_NONE is always returned.
  */
+/* clang-format on */
 
 /************************************************************************/
 /*                         OGR_G_ExportToWkb()                          */

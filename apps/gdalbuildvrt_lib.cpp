@@ -1782,11 +1782,12 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
 /*                           GDALBuildVRT()                             */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Build a VRT from a list of datasets.
  *
- * This is the equivalent of the <a
- * href="/programs/gdalbuildvrt.html">gdalbuildvrt</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdalbuildvrt.html">gdalbuildvrt</a> utility.
  *
  * GDALBuildVRTOptions* must be allocated and freed with
  * GDALBuildVRTOptionsNew() and GDALBuildVRTOptionsFree() respectively. pahSrcDS
@@ -1807,6 +1808,7 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
  *
  * @since GDAL 2.1
  */
+/* clang-format on */
 
 GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
                           GDALDatasetH *pahSrcDS,

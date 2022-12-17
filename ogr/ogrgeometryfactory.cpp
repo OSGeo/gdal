@@ -5126,6 +5126,7 @@ static bool OGRGF_NeedSwithArcOrder(double x0, double y0, double x2, double y2)
 /*                         curveToLineString()                          */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * \brief Converts an arc circle into an approximate line string
  *
@@ -5161,10 +5162,10 @@ static bool OGRGF_NeedSwithArcOrder(double x0, double y0, double x2, double y2)
  *         intermediate points and OGRGeometryFactory::curveFromLineString() can
  *         decode them.  This is the best compromise for round-tripping in OGR
  *         and better results with PostGIS
- *         <a
- * href="http://postgis.org/docs/ST_LineToCurve.html">ST_LineToCurve()</a> If
- * set to YES, the intermediate point is explicitly added to the linestring. If
- * set to NO, the intermediate point is not explicitly added.
+ *         <a href="http://postgis.org/docs/ST_LineToCurve.html">ST_LineToCurve()</a>.
+ *         If set to YES, the intermediate point is explicitly added to the
+ *         linestring. If set to NO, the intermediate point is not explicitly
+ *         added.
  * </li>
  * </ul>
  *
@@ -5172,6 +5173,7 @@ static bool OGRGF_NeedSwithArcOrder(double x0, double y0, double x2, double y2)
  *
  * @since GDAL 2.0
  */
+/* clang-format on */
 
 OGRLineString *OGRGeometryFactory::curveToLineString(
     double x0, double y0, double z0, double x1, double y1, double z1, double x2,
