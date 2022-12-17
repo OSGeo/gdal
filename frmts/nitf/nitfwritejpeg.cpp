@@ -35,12 +35,11 @@
 #include "cpl_port.h"
 #include "gdal_pam.h"
 
-
 CPL_C_START
 #ifdef LIBJPEG_12_PATH
-#  include LIBJPEG_12_PATH
+#include LIBJPEG_12_PATH
 #else
-#  include "jpeglib.h"
+#include "jpeglib.h"
 #endif
 CPL_C_END
 
@@ -51,73 +50,65 @@ CPL_C_END
 #endif
 
 /*
-* Do we want to do special processing suitable for when JSAMPLE is a
-* 16bit value?
-*/
+ * Do we want to do special processing suitable for when JSAMPLE is a
+ * 16bit value?
+ */
 #if defined(JPEG_LIB_MK1)
-#  define JPEG_LIB_MK1_OR_12BIT 1
+#define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
-#  define JPEG_LIB_MK1_OR_12BIT 1
+#define JPEG_LIB_MK1_OR_12BIT 1
 #endif
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(NITFWriteJPEGBlock)
-int
-NITFWriteJPEGBlock_12( GDALDataset *poSrcDS, VSILFILE *fp,
-                     int nBlockXOff, int nBlockYOff,
-                     int nBlockXSize, int nBlockYSize,
-                     int bProgressive, int nQuality,
-                     const GByte* pabyAPP6, int nRestartInterval,
-                     GDALProgressFunc pfnProgress, void * pProgressData );
+int NITFWriteJPEGBlock_12(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
+                          int nBlockYOff, int nBlockXSize, int nBlockYSize,
+                          int bProgressive, int nQuality, const GByte *pabyAPP6,
+                          int nRestartInterval, GDALProgressFunc pfnProgress,
+                          void *pProgressData);
 #endif
 
-int
-NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
-                    int nBlockXOff, int nBlockYOff,
-                    int nBlockXSize, int nBlockYSize,
-                    int bProgressive, int nQuality,
-                    const GByte* pabyAPP6, int nRestartInterval,
-                    GDALProgressFunc pfnProgress, void * pProgressData );
+int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
+                       int nBlockYOff, int nBlockXSize, int nBlockYSize,
+                       int bProgressive, int nQuality, const GByte *pabyAPP6,
+                       int nRestartInterval, GDALProgressFunc pfnProgress,
+                       void *pProgressData);
 
-void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
+void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile);
 
 /************************************************************************/
 /*                         NITFWriteJPEGBlock()                         */
 /************************************************************************/
 
-int
-NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
-                    int nBlockXOff, int nBlockYOff,
-                    int nBlockXSize, int nBlockYSize,
-                    int bProgressive, int nQuality,
-                    const GByte* pabyAPP6, int nRestartInterval,
-                    GDALProgressFunc pfnProgress, void * pProgressData )
+int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
+                       int nBlockYOff, int nBlockXSize, int nBlockYSize,
+                       int bProgressive, int nQuality, const GByte *pabyAPP6,
+                       int nRestartInterval, GDALProgressFunc pfnProgress,
+                       void *pProgressData)
 {
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(NITFWriteJPEGBlock)
-    if( eDT == GDT_UInt16 )
+    if (eDT == GDT_UInt16)
     {
-        return NITFWriteJPEGBlock_12(poSrcDS, fp,
-                                     nBlockXOff, nBlockYOff,
-                                     nBlockXSize, nBlockYSize,
-                                     bProgressive, nQuality,
-                                     pabyAPP6, nRestartInterval,
-                                     pfnProgress, pProgressData );
+        return NITFWriteJPEGBlock_12(poSrcDS, fp, nBlockXOff, nBlockYOff,
+                                     nBlockXSize, nBlockYSize, bProgressive,
+                                     nQuality, pabyAPP6, nRestartInterval,
+                                     pfnProgress, pProgressData);
     }
 #endif
 
-    int  anBandList[3] = {1,2,3};
+    int anBandList[3] = {1, 2, 3};
 
-/* -------------------------------------------------------------------- */
-/*      Initialize JPG access to the file.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Initialize JPG access to the file.                              */
+    /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
 
     memset(&sCInfo, 0, sizeof(sCInfo));
-    sCInfo.err = jpeg_std_error( &sJErr );
-    jpeg_create_compress( &sCInfo );
+    sCInfo.err = jpeg_std_error(&sJErr);
+    jpeg_create_compress(&sCInfo);
 
-    jpeg_vsiio_dest( &sCInfo, fp );
+    jpeg_vsiio_dest(&sCInfo, fp);
 
     sCInfo.image_width = nBlockXSize;
     sCInfo.image_height = nBlockYSize;
@@ -125,7 +116,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     const int nBands = poSrcDS->GetRasterCount();
     sCInfo.input_components = nBands;
 
-    if( nBands == 1 )
+    if (nBands == 1)
     {
         sCInfo.in_color_space = JCS_GRAYSCALE;
     }
@@ -134,10 +125,10 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
         sCInfo.in_color_space = JCS_RGB;
     }
 
-    jpeg_set_defaults( &sCInfo );
+    jpeg_set_defaults(&sCInfo);
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-    if( eDT == GDT_UInt16 )
+    if (eDT == GDT_UInt16)
     {
         sCInfo.data_precision = 12;
     }
@@ -169,34 +160,34 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
     if (nRestartInterval > 0)
         sCInfo.restart_interval = nRestartInterval;
 
-    jpeg_set_quality( &sCInfo, nQuality, TRUE );
+    jpeg_set_quality(&sCInfo, nQuality, TRUE);
 
-    if( bProgressive )
-        jpeg_simple_progression( &sCInfo );
+    if (bProgressive)
+        jpeg_simple_progression(&sCInfo);
 
-    jpeg_start_compress( &sCInfo, TRUE );
+    jpeg_start_compress(&sCInfo, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*    Emits APP6 NITF application segment (required by MIL-STD-188-198) */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*    Emits APP6 NITF application segment (required by MIL-STD-188-198) */
+    /* -------------------------------------------------------------------- */
     if (pabyAPP6)
     {
         /* 0xe6 = APP6 marker */
-        jpeg_write_marker( &sCInfo, 0xe6, (const JOCTET*) pabyAPP6, 23);
+        jpeg_write_marker(&sCInfo, 0xe6, (const JOCTET *)pabyAPP6, 23);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Loop over image, copying image data.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Loop over image, copying image data.                            */
+    /* -------------------------------------------------------------------- */
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
 
     GByte *pabyScanline = reinterpret_cast<GByte *>(
-        CPLMalloc( nBands * nBlockXSize * nWorkDTSize ) );
+        CPLMalloc(nBands * nBlockXSize * nWorkDTSize));
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    const double nTotalPixels = static_cast<double>( nXSize * nYSize );
+    const double nTotalPixels = static_cast<double>(nXSize * nYSize);
 
     int nBlockXSizeToRead = nBlockXSize;
     if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
@@ -214,14 +205,16 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 #endif
 
     CPLErr eErr = CE_None;
-    for( int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++ )
+    for (int iLine = 0; iLine < nBlockYSize && eErr == CE_None; iLine++)
     {
         if (iLine < nBlockYSizeToRead)
         {
-            eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1,
-                                    pabyScanline, nBlockXSizeToRead, 1, eWorkDT,
-                                    nBands, anBandList,
-                                    nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize, nullptr );
+            eErr = poSrcDS->RasterIO(
+                GF_Read, nBlockXSize * nBlockXOff,
+                iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1,
+                pabyScanline, nBlockXSizeToRead, 1, eWorkDT, nBands, anBandList,
+                nBands * nWorkDTSize, nBands * nBlockXSize * nWorkDTSize,
+                nWorkDTSize, nullptr);
 
 #if !defined(JPEG_LIB_MK1_OR_12BIT)
             /* Repeat the last pixel till the end of the line */
@@ -230,10 +223,11 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             {
                 for (int iBand = 0; iBand < nBands; iBand++)
                 {
-                    GByte bVal = pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
-                    for(int iX = nBlockXSizeToRead; iX < nBlockXSize; iX ++)
+                    GByte bVal =
+                        pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
+                    for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
                     {
-                        pabyScanline[nBands * iX + iBand ] = bVal;
+                        pabyScanline[nBands * iX + iBand] = bVal;
                     }
                 }
             }
@@ -242,52 +236,53 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
         // clamp 16bit values to 12bit.
-        if( eDT == GDT_UInt16 )
+        if (eDT == GDT_UInt16)
         {
-            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>( pabyScanline );
+            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
 
-            for( int iPixel = 0; iPixel < nXSize*nBands; iPixel++ )
+            for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
             {
-                if( panScanline[iPixel] > 4095 )
+                if (panScanline[iPixel] > 4095)
                 {
                     panScanline[iPixel] = 4095;
-                    if( !bClipWarn )
+                    if (!bClipWarn)
                     {
                         bClipWarn = true;
-                        CPLError( CE_Warning, CPLE_AppDefined,
-                                  "One or more pixels clipped to fit 12bit domain for jpeg output." );
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "One or more pixels clipped to fit 12bit "
+                                 "domain for jpeg output.");
                     }
                 }
             }
         }
 #endif
 
-        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>( pabyScanline );
+        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
 
-        if( eErr == CE_None )
-            jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+        if (eErr == CE_None)
+            jpeg_write_scanlines(&sCInfo, &ppSamples, 1);
 
         double nCurPixels =
-            static_cast<double>( nBlockYOff ) * nBlockYSize * nXSize +
-            static_cast<double>( nBlockXOff ) * nBlockYSize * nBlockXSize +
+            static_cast<double>(nBlockYOff) * nBlockYSize * nXSize +
+            static_cast<double>(nBlockXOff) * nBlockYSize * nBlockXSize +
             (iLine + 1) * nBlockXSizeToRead;
-        if( eErr == CE_None
-            && !pfnProgress( nCurPixels / nTotalPixels, nullptr, pProgressData ) )
+        if (eErr == CE_None &&
+            !pfnProgress(nCurPixels / nTotalPixels, nullptr, pProgressData))
         {
             eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt,
-                      "User terminated CreateCopy()" );
+            CPLError(CE_Failure, CPLE_UserInterrupt,
+                     "User terminated CreateCopy()");
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup and close.                                              */
-/* -------------------------------------------------------------------- */
-    CPLFree( pabyScanline );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup and close.                                              */
+    /* -------------------------------------------------------------------- */
+    CPLFree(pabyScanline);
 
-    if( eErr == CE_None )
-        jpeg_finish_compress( &sCInfo );
-    jpeg_destroy_compress( &sCInfo );
+    if (eErr == CE_None)
+        jpeg_finish_compress(&sCInfo);
+    jpeg_destroy_compress(&sCInfo);
 
     return eErr == CE_None;
 }
