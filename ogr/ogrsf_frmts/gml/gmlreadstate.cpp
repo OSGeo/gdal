@@ -39,22 +39,22 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                            GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::GMLReadState() :
-    m_poFeature(nullptr),
-    m_poParentState(nullptr),
-    m_nPathLength(0)
-{}
+GMLReadState::GMLReadState()
+    : m_poFeature(nullptr), m_poParentState(nullptr), m_nPathLength(0)
+{
+}
 
 /************************************************************************/
 /*                           ~GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::~GMLReadState() {}
+GMLReadState::~GMLReadState()
+{
+}
 
 /************************************************************************/
 /*                              Reset()                                 */
@@ -73,7 +73,7 @@ void GMLReadState::Reset()
 /*                              PushPath()                              */
 /************************************************************************/
 
-void GMLReadState::PushPath( const char *pszElement, int nLen )
+void GMLReadState::PushPath(const char *pszElement, int nLen)
 
 {
     if (m_nPathLength > 0)
