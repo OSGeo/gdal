@@ -1,8 +1,8 @@
 /******************************************************************************
  *
  * Project:  GDAL Utilities
- * Purpose:  Command line application to list info about a multidimensional raster
- * Author:   Even Rouault,<even.rouault at spatialys.com>
+ * Purpose:  Command line application to list info about a multidimensional
+ *raster Author:   Even Rouault,<even.rouault at spatialys.com>
  *
  * ****************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
@@ -33,22 +33,23 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf( "Usage: gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*\n"
-            "                    [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]\n"
-            "                    [-stats] [-if format]* datasetname\n" );
+    printf("Usage: gdalmdiminfo [--help-general] [-oo NAME=VALUE]* "
+           "[-arrayoption NAME=VALUE]*\n"
+           "                    [-detailed] [-nopretty] [-array {array_name}] "
+           "[-limit {number}]\n"
+           "                    [-stats] [-if format]* datasetname\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit( 1 );
+    exit(1);
 }
 
 /************************************************************************/
@@ -62,20 +63,21 @@ MAIN_START(argc, argv)
 
     GDALAllRegister();
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; argv != nullptr && argv[i] != nullptr; i++ )
+    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
@@ -84,59 +86,57 @@ MAIN_START(argc, argv)
 
     GDALMultiDimInfoOptionsForBinary sOptionsForBinary;
 
-    GDALMultiDimInfoOptions *psOptions
-        = GDALMultiDimInfoOptionsNew(argv + 1, &sOptionsForBinary);
-    if( psOptions == nullptr )
+    GDALMultiDimInfoOptions *psOptions =
+        GDALMultiDimInfoOptionsNew(argv + 1, &sOptionsForBinary);
+    if (psOptions == nullptr)
         Usage();
 
-    if( sOptionsForBinary.osFilename.empty() )
+    if (sOptionsForBinary.osFilename.empty())
         Usage("No datasource specified.");
 
-    GDALDatasetH hDataset
-        = GDALOpenEx( sOptionsForBinary.osFilename.c_str(),
-                      GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
-                      sOptionsForBinary.aosAllowInputDrivers.List(),
-                      sOptionsForBinary.aosOpenOptions.List(),
-                      nullptr );
-    if( !hDataset )
+    GDALDatasetH hDataset =
+        GDALOpenEx(sOptionsForBinary.osFilename.c_str(),
+                   GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
+                   sOptionsForBinary.aosAllowInputDrivers.List(),
+                   sOptionsForBinary.aosOpenOptions.List(), nullptr);
+    if (!hDataset)
     {
-        fprintf( stderr,
-                 "gdalmdiminfo failed - unable to open '%s'.\n",
-                 sOptionsForBinary.osFilename.c_str() );
+        fprintf(stderr, "gdalmdiminfo failed - unable to open '%s'.\n",
+                sOptionsForBinary.osFilename.c_str());
 
-        GDALMultiDimInfoOptionsFree( psOptions );
+        GDALMultiDimInfoOptionsFree(psOptions);
 
-        CSLDestroy( argv );
+        CSLDestroy(argv);
 
-        GDALDumpOpenDatasets( stderr );
+        GDALDumpOpenDatasets(stderr);
 
         GDALDestroyDriverManager();
 
-        CPLDumpSharedList( nullptr );
+        CPLDumpSharedList(nullptr);
         CPLCleanupTLS();
         exit(1);
     }
 
-    char* pszGDALInfoOutput = GDALMultiDimInfo( hDataset, psOptions );
+    char *pszGDALInfoOutput = GDALMultiDimInfo(hDataset, psOptions);
 
-    if( pszGDALInfoOutput )
-        printf( "%s", pszGDALInfoOutput );
+    if (pszGDALInfoOutput)
+        printf("%s", pszGDALInfoOutput);
 
-    CPLFree( pszGDALInfoOutput );
+    CPLFree(pszGDALInfoOutput);
 
     GDALClose(hDataset);
 
-    GDALMultiDimInfoOptionsFree( psOptions );
+    GDALMultiDimInfoOptionsFree(psOptions);
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
 
-    GDALDumpOpenDatasets( stderr );
+    GDALDumpOpenDatasets(stderr);
 
     GDALDestroyDriverManager();
 
-    CPLDumpSharedList( nullptr );
+    CPLDumpSharedList(nullptr);
     CPLCleanupTLS();
 
-    exit( 0 );
+    exit(0);
 }
 MAIN_END

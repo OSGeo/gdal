@@ -31,12 +31,11 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
@@ -44,28 +43,35 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
-        "    [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]\n"
+        "    [-zfield field_name] [-z_increase increase_value] [-z_multiply "
+        "multiply_value]\n"
         "    [-a_srs srs_def] [-spat xmin ymin xmax ymax]\n"
         "    [-clipsrc <xmin ymin xmax ymax>|WKT|datasource|spat_extent]\n"
         "    [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
         "    [-clipsrcwhere expression]\n"
         "    [-l layername]* [-where expression] [-sql select_statement]\n"
-        "    [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize ysize]\n"
+        "    [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize "
+        "ysize]\n"
         "    [-a algorithm[:parameter1=value1]*]"
         "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
         "Available algorithms and parameters with their defaults:\n"
         "    Inverse distance to a power (default)\n"
-        "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
+        "        "
+        "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_"
+        "points=0:min_points=0:nodata=0.0\n"
         "    Inverse distance to a power with nearest neighbor search\n"
-        "        invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
+        "        "
+        "invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
         "    Moving average\n"
-        "        average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
+        "        "
+        "average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
         "    Nearest neighbor\n"
         "        nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0\n"
         "    Various data metrics\n"
-        "        <metric name>:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
+        "        <metric "
+        "name>:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
         "        possible metrics are:\n"
         "            minimum\n"
         "            maximum\n"
@@ -77,11 +83,11 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "        linear:radius=-1.0:nodata=0.0\n"
         "\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     GDALDestroyDriverManager();
-    exit( 1 );
+    exit(1);
 }
 /************************************************************************/
 /*                         GDALGridOptionsForBinaryNew()                */
@@ -97,9 +103,10 @@ static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 /*                         GDALGridOptionsForBinaryFree()               */
 /************************************************************************/
 
-static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsForBinary )
+static void
+GDALGridOptionsForBinaryFree(GDALGridOptionsForBinary *psOptionsForBinary)
 {
-    if( psOptionsForBinary == nullptr )
+    if (psOptionsForBinary == nullptr)
         return;
 
     CPLFree(psOptionsForBinary->pszSource);
@@ -115,67 +122,70 @@ static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsFor
 MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if (!GDAL_CHECK_VERSION(argv[0]))
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
 
-/* -------------------------------------------------------------------- */
-/*      Generic arg processing.                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Generic arg processing.                                         */
+    /* -------------------------------------------------------------------- */
     GDALAllRegister();
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; i < argc; i++ )
+    for (int i = 0; i < argc; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
     }
 
-    GDALGridOptionsForBinary* psOptionsForBinary = GDALGridOptionsForBinaryNew();
+    GDALGridOptionsForBinary *psOptionsForBinary =
+        GDALGridOptionsForBinaryNew();
     /* coverity[tainted_data] */
-    GDALGridOptions *psOptions = GDALGridOptionsNew(argv + 1, psOptionsForBinary);
-    CSLDestroy( argv );
+    GDALGridOptions *psOptions =
+        GDALGridOptionsNew(argv + 1, psOptionsForBinary);
+    CSLDestroy(argv);
 
-    if( psOptions == nullptr )
+    if (psOptions == nullptr)
     {
         Usage();
     }
 
-    if( !(psOptionsForBinary->bQuiet) )
+    if (!(psOptionsForBinary->bQuiet))
     {
         GDALGridOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == nullptr )
+    if (psOptionsForBinary->pszSource == nullptr)
         Usage("No input file specified.");
-    if( psOptionsForBinary->pszDest== nullptr )
+    if (psOptionsForBinary->pszDest == nullptr)
         Usage("No output file specified.");
 
-/* -------------------------------------------------------------------- */
-/*      Open input file.                                                */
-/* -------------------------------------------------------------------- */
-    GDALDatasetH hInDS = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                                     nullptr, nullptr, nullptr );
-    if( hInDS == nullptr )
-        exit( 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Open input file.                                                */
+    /* -------------------------------------------------------------------- */
+    GDALDatasetH hInDS = GDALOpenEx(psOptionsForBinary->pszSource,
+                                    GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                                    nullptr, nullptr, nullptr);
+    if (hInDS == nullptr)
+        exit(1);
 
     int bUsageError = FALSE;
-    GDALDatasetH hOutDS = GDALGrid(psOptionsForBinary->pszDest,
-                                   hInDS,
-                                   psOptions, &bUsageError);
-    if(bUsageError == TRUE)
+    GDALDatasetH hOutDS =
+        GDALGrid(psOptionsForBinary->pszDest, hInDS, psOptions, &bUsageError);
+    if (bUsageError == TRUE)
         Usage();
     int nRetCode = hOutDS ? 0 : 1;
 

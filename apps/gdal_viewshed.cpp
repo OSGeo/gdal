@@ -36,32 +36,31 @@
 #include "ogr_spatialref.h"
 #include "commonutils.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf(
-       "Usage: gdal_viewshed [-b <band>]\n"
-       "                     [-a_nodata <value>] [-f <formatname>]\n"
-       "                     [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
-       "                     -ox <observer_x> -oy <observer_y>\n"
-       "                     [-vv <visibility>] [-iv <invisibility>]\n"
-       "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
-       "                     [[-co NAME=VALUE] ...]\n"
-       "                     [-q] [-om <output mode>]\n"
-       "                     <src_filename> <dst_filename>\n");
+    printf("Usage: gdal_viewshed [-b <band>]\n"
+           "                     [-a_nodata <value>] [-f <formatname>]\n"
+           "                     [-oz <observer_height>] [-tz <target_height>] "
+           "[-md <max_distance>]\n"
+           "                     -ox <observer_x> -oy <observer_y>\n"
+           "                     [-vv <visibility>] [-iv <invisibility>]\n"
+           "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
+           "                     [[-co NAME=VALUE] ...]\n"
+           "                     [-q] [-om <output mode>]\n"
+           "                     <src_filename> <dst_filename>\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit( 1 );
+    exit(1);
 }
 
-static double CPLAtofTaintedSuppressed(const char* pszVal)
+static double CPLAtofTaintedSuppressed(const char *pszVal)
 {
     // coverity[tainted_data]
     return CPLAtof(pszVal);
@@ -71,10 +70,13 @@ static double CPLAtofTaintedSuppressed(const char* pszVal)
 /*                                main()                                */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if (i + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", \
-                         argv[i], nExtraArg)); } while( false )
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
+    do                                                                         \
+    {                                                                          \
+        if (i + nExtraArg >= argc)                                             \
+            Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i],     \
+                             nExtraArg));                                      \
+    } while (false)
 
 MAIN_START(argc, argv)
 
@@ -91,7 +93,8 @@ MAIN_START(argc, argv)
     double dfInvisibleVal = 0.0;
     double dfOutOfRangeVal = 0.0;
     double dfNoDataVal = -1.0;
-    // Value for standard atmospheric refraction. See doc/source/programs/gdal_viewshed.rst
+    // Value for standard atmospheric refraction. See
+    // doc/source/programs/gdal_viewshed.rst
     bool bCurvCoeffSpecified = false;
     double dfCurvCoeff = 0.85714;
     const char *pszDriverName = nullptr;
@@ -99,34 +102,34 @@ MAIN_START(argc, argv)
     const char *pszDstFilename = nullptr;
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
-    char** papszCreateOptions = nullptr;
+    char **papszCreateOptions = nullptr;
     const char *pszOutputMode = nullptr;
 
     GDALAllRegister();
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
-/* -------------------------------------------------------------------- */
-/*      Parse arguments.                                                */
-/* -------------------------------------------------------------------- */
-    for( int i = 1; i < argc; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Parse arguments.                                                */
+    /* -------------------------------------------------------------------- */
+    for (int i = 1; i < argc; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
             printf("%s was compiled against GDAL %s and "
                    "is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i], "--help") )
+        else if (EQUAL(argv[i], "--help"))
             Usage();
-        else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
+        else if (EQUAL(argv[i], "-f") || EQUAL(argv[i], "-of"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDriverName = argv[++i];
         }
-        else if( EQUAL(argv[i],"-ox") )
+        else if (EQUAL(argv[i], "-ox"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bObserverXSpecified = true;
@@ -138,7 +141,7 @@ MAIN_START(argc, argv)
             bObserverYSpecified = true;
             dfObserverY = CPLAtofTaintedSuppressed(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-oz") )
+        else if (EQUAL(argv[i], "-oz"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfObserverHeight = CPLAtofTaintedSuppressed(argv[++i]);
@@ -158,15 +161,16 @@ MAIN_START(argc, argv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfOutOfRangeVal = CPLAtofTaintedSuppressed(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-co"))
+        else if (EQUAL(argv[i], "-co"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+            papszCreateOptions = CSLAddString(papszCreateOptions, argv[++i]);
         }
         else if (EQUAL(argv[i], "-a_nodata"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfNoDataVal = CPLAtofM(argv[++i]);;
+            dfNoDataVal = CPLAtofM(argv[++i]);
+            ;
         }
         else if (EQUAL(argv[i], "-tz"))
         {
@@ -184,25 +188,25 @@ MAIN_START(argc, argv)
             bCurvCoeffSpecified = true;
             dfCurvCoeff = CPLAtofTaintedSuppressed(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-b") )
+        else if (EQUAL(argv[i], "-b"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-om") )
+        else if (EQUAL(argv[i], "-om"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputMode = argv[++i];
         }
-        else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
+        else if (EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet"))
         {
             bQuiet = TRUE;
         }
-        else if( pszSrcFilename == nullptr )
+        else if (pszSrcFilename == nullptr)
         {
             pszSrcFilename = argv[i];
         }
-        else if( pszDstFilename == nullptr )
+        else if (pszDstFilename == nullptr)
         {
             pszDstFilename = argv[i];
         }
@@ -220,12 +224,12 @@ MAIN_START(argc, argv)
         Usage("Missing destination filename.");
     }
 
-    if( !bObserverXSpecified )
+    if (!bObserverXSpecified)
     {
         Usage("Missing -ox.");
     }
 
-    if( !bObserverYSpecified )
+    if (!bObserverYSpecified)
     {
         Usage("Missing -oy.");
     }
@@ -234,26 +238,26 @@ MAIN_START(argc, argv)
         pfnProgress = GDALTermProgress;
 
     CPLString osFormat;
-    if( pszDriverName == nullptr  )
+    if (pszDriverName == nullptr)
     {
         osFormat = GetOutputDriverForRaster(pszDstFilename);
-        if( osFormat.empty() )
+        if (osFormat.empty())
         {
-            exit( 2 );
+            exit(2);
         }
     }
 
     GDALViewshedOutputType outputMode = GVOT_NORMAL;
-    if(pszOutputMode != nullptr)
+    if (pszOutputMode != nullptr)
     {
-        if(EQUAL(pszOutputMode, "NORMAL"))
+        if (EQUAL(pszOutputMode, "NORMAL"))
         {
         }
-        else if(EQUAL(pszOutputMode, "DEM"))
+        else if (EQUAL(pszOutputMode, "DEM"))
         {
             outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
         }
-        else if(EQUAL(pszOutputMode, "GROUND"))
+        else if (EQUAL(pszOutputMode, "GROUND"))
         {
             outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
         }
@@ -263,31 +267,32 @@ MAIN_START(argc, argv)
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open source raster file.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open source raster file.                                        */
+    /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
-    if( hSrcDS == nullptr )
-        exit( 2 );
+    if (hSrcDS == nullptr)
+        exit(2);
 
-    GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nBandIn );
-    if( hBand == nullptr )
+    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, nBandIn);
+    if (hBand == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Band %d does not exist on dataset.",
-                  nBandIn );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Band %d does not exist on dataset.", nBandIn);
         exit(2);
     }
 
-    if( !bCurvCoeffSpecified )
+    if (!bCurvCoeffSpecified)
     {
-        const OGRSpatialReference* poSRS = GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
+        const OGRSpatialReference *poSRS =
+            GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
         if (poSRS)
         {
             OGRErr eSRSerr;
             const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
             if (eSRSerr != OGRERR_FAILURE &&
-                fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) > 0.05 * SRS_WGS84_SEMIMAJOR)
+                fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
+                    0.05 * SRS_WGS84_SEMIMAJOR)
             {
                 dfCurvCoeff = 1.0;
                 CPLDebug("gdal_viewshed",
@@ -296,24 +301,21 @@ MAIN_START(argc, argv)
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Invoke.                                                         */
-/* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS = GDALViewshedGenerate( hBand,
-                         pszDriverName ? pszDriverName : osFormat.c_str(),
-                         pszDstFilename, papszCreateOptions,
-                         dfObserverX, dfObserverY,
-                         dfObserverHeight, dfTargetHeight,
-                         dfVisibleVal, dfInvisibleVal,
-                         dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
-                         GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, outputMode, nullptr);
+    /* -------------------------------------------------------------------- */
+    /*      Invoke.                                                         */
+    /* -------------------------------------------------------------------- */
+    GDALDatasetH hDstDS = GDALViewshedGenerate(
+        hBand, pszDriverName ? pszDriverName : osFormat.c_str(), pszDstFilename,
+        papszCreateOptions, dfObserverX, dfObserverY, dfObserverHeight,
+        dfTargetHeight, dfVisibleVal, dfInvisibleVal, dfOutOfRangeVal,
+        dfNoDataVal, dfCurvCoeff, GVM_Edge, dfMaxDistance, pfnProgress, nullptr,
+        outputMode, nullptr);
     bool bSuccess = hDstDS != nullptr;
-    GDALClose( hSrcDS );
-    GDALClose( hDstDS );
+    GDALClose(hSrcDS);
+    GDALClose(hDstDS);
 
-    CSLDestroy( argv );
-    CSLDestroy( papszCreateOptions);
+    CSLDestroy(argv);
+    CSLDestroy(papszCreateOptions);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 

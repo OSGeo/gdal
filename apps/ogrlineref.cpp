@@ -43,11 +43,10 @@
 #include <set>
 #include <vector>
 
-
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"
 #define FIELD_SCALE_FACTOR "scale"
-constexpr double DELTA = 0.00000001; // - delta
+constexpr double DELTA = 0.00000001;  // - delta
 #ifdef HAVE_GEOS
 constexpr double TOLERANCE_DEGREE = 0.00008983153;
 constexpr double TOLERANCE_METER = 10.0;
@@ -64,9 +63,10 @@ enum operation
 
 typedef struct _curve_data
 {
-    OGRLineString* pPart;
+    OGRLineString *pPart;
     double dfBeg, dfEnd, dfFactor;
-    bool IsInside( const double& dfDist ) const {
+    bool IsInside(const double &dfDist) const
+    {
         return (dfDist + DELTA >= dfBeg) && (dfDist - DELTA <= dfEnd);
     }
 } CURVE_DATA;
@@ -74,28 +74,32 @@ typedef struct _curve_data
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage( const char* pszAdditionalMsg,
-                   bool bShort = true ) CPL_NO_RETURN;
+static void Usage(const char *pszAdditionalMsg,
+                  bool bShort = true) CPL_NO_RETURN;
 
-static void Usage( const char* pszAdditionalMsg, bool bShort )
+static void Usage(const char *pszAdditionalMsg, bool bShort)
 {
     OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
     printf("Usage: ogrlineref [--help-general] [-progress] [-quiet]\n"
-        "               [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE]...]\n"
-        "               [-create]\n"
-        "               [-l src_line_datasource_name] [-ln layer_name] [-lf field_name]\n"
-        "               [-p src_repers_datasource_name] [-pn layer_name] [-pm pos_field_name] [-pf field_name]\n"
-        "               [-r src_parts_datasource_name] [-rn layer_name]\n"
-        "               [-o dst_datasource_name] [-on layer_name]  [-of field_name] [-s step]\n"
-        "               [-get_pos] [-x long] [-y lat]\n"
-        "               [-get_coord] [-m position] \n"
-        "               [-get_subline] [-mb position] [-me position]\n");
+           "               [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco "
+           "NAME=VALUE]...]\n"
+           "               [-create]\n"
+           "               [-l src_line_datasource_name] [-ln layer_name] [-lf "
+           "field_name]\n"
+           "               [-p src_repers_datasource_name] [-pn layer_name] "
+           "[-pm pos_field_name] [-pf field_name]\n"
+           "               [-r src_parts_datasource_name] [-rn layer_name]\n"
+           "               [-o dst_datasource_name] [-on layer_name]  [-of "
+           "field_name] [-s step]\n"
+           "               [-get_pos] [-x long] [-y lat]\n"
+           "               [-get_coord] [-m position] \n"
+           "               [-get_subline] [-mb position] [-me position]\n");
 
-    if( bShort )
+    if (bShort)
     {
         printf("\nNote: ogrlineref --long-usage for full help.\n");
-        if( pszAdditionalMsg )
+        if (pszAdditionalMsg)
             fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
         exit(1);
     }
@@ -103,42 +107,44 @@ static void Usage( const char* pszAdditionalMsg, bool bShort )
     printf(
         "\n -f format_name: output file format name, possible values are:\n");
 
-    for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+    for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
 
-        if( CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                             GDAL_DCAP_CREATE, "FALSE")) )
+        if (CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
+                                             GDAL_DCAP_CREATE, "FALSE")))
             printf("     -f \"%s\"\n", poDriver->GetDescription());
     }
 
-    printf(
-        " -progress: Display progress on terminal. Only works if input layers have the \n"
-        "                                          \"fast feature count\" capability\n"
-        " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
-        " -lco  NAME=VALUE: Layer creation option (format specific)\n"
-        " -l src_line_datasource_name: Datasource of line path name\n"
-        " -ln layer_name: Layer name in datasource (optional)\n"
-        " -lf field_name: Field name for unique paths in layer (optional)\n"
-        " -p src_repers_datasource_name: Datasource of repers name\n"
-        " -pn layer_name: Layer name in datasource (optional)\n"
-        " -pm pos_field_name: Line position field name\n"
-        " -pf field_name: Field name for correspondence repers of separate paths in layer (optional)\n"
-        " -r src_parts_datasource_name: Parts datasource name\n"
-        " -rn layer_name: Layer name in datasource (optional)\n"
-        " -o dst_datasource_name: Parts datasource name\n"
-        " -on layer_name: Layer name in datasource (optional)\n"
-        " -of field_name: Field name for correspondence parts of separate paths in layer (optional)\n"
-        " -s step: part size in m\n"
-        );
+    printf(" -progress: Display progress on terminal. Only works if input "
+           "layers have the \n"
+           "                                          \"fast feature count\" "
+           "capability\n"
+           " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
+           " -lco  NAME=VALUE: Layer creation option (format specific)\n"
+           " -l src_line_datasource_name: Datasource of line path name\n"
+           " -ln layer_name: Layer name in datasource (optional)\n"
+           " -lf field_name: Field name for unique paths in layer (optional)\n"
+           " -p src_repers_datasource_name: Datasource of repers name\n"
+           " -pn layer_name: Layer name in datasource (optional)\n"
+           " -pm pos_field_name: Line position field name\n"
+           " -pf field_name: Field name for correspondence repers of separate "
+           "paths in layer (optional)\n"
+           " -r src_parts_datasource_name: Parts datasource name\n"
+           " -rn layer_name: Layer name in datasource (optional)\n"
+           " -o dst_datasource_name: Parts datasource name\n"
+           " -on layer_name: Layer name in datasource (optional)\n"
+           " -of field_name: Field name for correspondence parts of separate "
+           "paths in layer (optional)\n"
+           " -s step: part size in m\n");
 
-    if( pszAdditionalMsg )
+    if (pszAdditionalMsg)
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
 
     exit(1);
 }
 
-static void Usage( bool bShort = true )
+static void Usage(bool bShort = true)
 {
     Usage(nullptr, bShort);
 }
@@ -147,14 +153,13 @@ static void Usage( bool bShort = true )
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
-static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
-                                   char **papszLCO, const char *pszNewLayerName,
-                                   const char* pszOutputSepFieldName = nullptr )
+static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
+                                  char **papszLCO, const char *pszNewLayerName,
+                                  const char *pszOutputSepFieldName = nullptr)
 {
     const CPLString szLayerName =
-        pszNewLayerName == nullptr
-        ? CPLGetBasename(poDstDS->GetDescription())
-        : pszNewLayerName;
+        pszNewLayerName == nullptr ? CPLGetBasename(poDstDS->GetDescription())
+                                   : pszNewLayerName;
 
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
@@ -180,18 +185,18 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
     CPLPopErrorHandler();
     CPLErrorReset();
 
-    if( poDstLayer != nullptr )
+    if (poDstLayer != nullptr)
     {
         const int nLayerCount = poDstDS->GetLayerCount();
         int iLayer = -1;  // Used after for.
-        for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
+        for (iLayer = 0; iLayer < nLayerCount; iLayer++)
         {
             OGRLayer *poLayer = poDstDS->GetLayer(iLayer);
-            if( poLayer == poDstLayer )
+            if (poLayer == poDstLayer)
                 break;
         }
 
-        if( iLayer == nLayerCount )
+        if (iLayer == nLayerCount)
             // Should not happen with an ideal driver.
             poDstLayer = nullptr;
     }
@@ -199,9 +204,9 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
     /* -------------------------------------------------------------------- */
     /*      If the layer does not exist, then create it.                    */
     /* -------------------------------------------------------------------- */
-    if( poDstLayer == nullptr )
+    if (poDstLayer == nullptr)
     {
-        if( !poDstDS->TestCapability(ODsCCreateLayer) )
+        if (!poDstDS->TestCapability(ODsCCreateLayer))
         {
             fprintf(stderr,
                     "Layer %s not found, and "
@@ -214,23 +219,22 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
 
         CPLErrorReset();
 
-        if( poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        if (poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer))
         {
             eGType = wkbNone;
         }
 
-        poDstLayer =
-            poDstDS->CreateLayer(szLayerName, poOutputSRS,
-                                 static_cast<OGRwkbGeometryType>(eGType),
-                                 papszLCO);
+        poDstLayer = poDstDS->CreateLayer(
+            szLayerName, poOutputSRS, static_cast<OGRwkbGeometryType>(eGType),
+            papszLCO);
 
-        if( poDstLayer == nullptr )
+        if (poDstLayer == nullptr)
             return nullptr;
 
-        if( poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
+        if (poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer))
         {
             OGRGeomFieldDefn oGFldDefn(poSrcFDefn->GetGeomFieldDefn(0));
-            if( poOutputSRS != nullptr )
+            if (poOutputSRS != nullptr)
                 oGFldDefn.SetSpatialRef(poOutputSRS);
             oGFldDefn.SetType(wkbLineString);
             poDstLayer->CreateGeomField(&oGFldDefn);
@@ -249,7 +253,7 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
 
     // Create beg, end, scale factor fields.
     OGRFieldDefn oFieldDefn_Beg(FIELD_START, OFTReal);
-    if( poDstLayer->CreateField(&oFieldDefn_Beg) != OGRERR_NONE )
+    if (poDstLayer->CreateField(&oFieldDefn_Beg) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
                  oFieldDefn_Beg.GetNameRef());
@@ -257,7 +261,7 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
     }
 
     OGRFieldDefn oFieldDefn_End(FIELD_FINISH, OFTReal);
-    if( poDstLayer->CreateField(&oFieldDefn_End) != OGRERR_NONE )
+    if (poDstLayer->CreateField(&oFieldDefn_End) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
                  oFieldDefn_End.GetNameRef());
@@ -265,18 +269,18 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
     }
 
     OGRFieldDefn oFieldDefn_SF(FIELD_SCALE_FACTOR, OFTReal);
-    if( poDstLayer->CreateField(&oFieldDefn_SF) != OGRERR_NONE )
+    if (poDstLayer->CreateField(&oFieldDefn_SF) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
                  oFieldDefn_SF.GetNameRef());
         return nullptr;
     }
 
-    if( pszOutputSepFieldName != nullptr )
+    if (pszOutputSepFieldName != nullptr)
     {
         OGRFieldDefn oSepField(pszOutputSepFieldName, OFTString);
         oSepField.SetWidth(254);
-        if( poDstLayer->CreateField(&oSepField) != OGRERR_NONE )
+        if (poDstLayer->CreateField(&oSepField) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
                      oSepField.GetNameRef());
@@ -288,7 +292,7 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
 
     // Sanity check: if it fails, the driver is buggy.
-    if( poDstFDefn != nullptr && poDstFDefn->GetFieldCount() != 3 )
+    if (poDstFDefn != nullptr && poDstFDefn->GetFieldCount() != 3)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The output driver has claimed to have added the %s field, "
@@ -303,78 +307,72 @@ static OGRLayer* SetupTargetLayer( OGRLayer * poSrcLayer, GDALDataset *poDstDS,
 /*                  CheckDestDataSourceNameConsistency()                */
 /* -------------------------------------------------------------------- */
 
-static
-void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
-                                        const char* pszDriverName)
+static void CheckDestDataSourceNameConsistency(const char *pszDestFilename,
+                                               const char *pszDriverName)
 {
-    char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
+    char *pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
 
     // TODO: Would be good to have driver metadata like for GDAL drivers.
-    static const char* apszExtensions[][2] = { { "shp"    , "ESRI Shapefile" },
-                                               { "dbf"    , "ESRI Shapefile" },
-                                               { "sqlite" , "SQLite" },
-                                               { "db"     , "SQLite" },
-                                               { "mif"    , "MapInfo File" },
-                                               { "tab"    , "MapInfo File" },
-                                               { "s57"    , "S57" },
-                                               { "bna"    , "BNA" },
-                                               { "csv"    , "CSV" },
-                                               { "gml"    , "GML" },
-                                               { "kml"    , "KML" },
-                                               { "kmz"    , "LIBKML" },
-                                               { "json"   , "GeoJSON" },
-                                               { "geojson", "GeoJSON" },
-                                               { "dxf"    , "DXF" },
-                                               { "gdb"    , "FileGDB" },
-                                               { "pix"    , "PCIDSK" },
-                                               { "sql"    , "PGDump" },
-                                               { "gtm"    , "GPSTrackMaker" },
-                                               { "gmt"    , "GMT" },
-                                               { "pdf"    , "PDF" },
-                                               { nullptr, nullptr }
-                                              };
-    static const char* apszBeginName[][2] =  { { "PG:"      , "PG" },
-                                               { "MySQL:"   , "MySQL" },
-                                               { "CouchDB:" , "CouchDB" },
-                                               { "GFT:"     , "GFT" },
-                                               { "MSSQL:"   , "MSSQLSpatial" },
-                                               { "ODBC:"    , "ODBC" },
-                                               { "OCI:"     , "OCI" },
-                                               { "SDE:"     , "SDE" },
-                                               { "WFS:"     , "WFS" },
-                                               { nullptr, nullptr }
-                                             };
+    static const char *apszExtensions[][2] = {{"shp", "ESRI Shapefile"},
+                                              {"dbf", "ESRI Shapefile"},
+                                              {"sqlite", "SQLite"},
+                                              {"db", "SQLite"},
+                                              {"mif", "MapInfo File"},
+                                              {"tab", "MapInfo File"},
+                                              {"s57", "S57"},
+                                              {"bna", "BNA"},
+                                              {"csv", "CSV"},
+                                              {"gml", "GML"},
+                                              {"kml", "KML"},
+                                              {"kmz", "LIBKML"},
+                                              {"json", "GeoJSON"},
+                                              {"geojson", "GeoJSON"},
+                                              {"dxf", "DXF"},
+                                              {"gdb", "FileGDB"},
+                                              {"pix", "PCIDSK"},
+                                              {"sql", "PGDump"},
+                                              {"gtm", "GPSTrackMaker"},
+                                              {"gmt", "GMT"},
+                                              {"pdf", "PDF"},
+                                              {nullptr, nullptr}};
+    static const char *apszBeginName[][2] = {{"PG:", "PG"},
+                                             {"MySQL:", "MySQL"},
+                                             {"CouchDB:", "CouchDB"},
+                                             {"GFT:", "GFT"},
+                                             {"MSSQL:", "MSSQLSpatial"},
+                                             {"ODBC:", "ODBC"},
+                                             {"OCI:", "OCI"},
+                                             {"SDE:", "SDE"},
+                                             {"WFS:", "WFS"},
+                                             {nullptr, nullptr}};
 
-    for( int i = 0; apszExtensions[i][0] != nullptr; i++ )
+    for (int i = 0; apszExtensions[i][0] != nullptr; i++)
     {
-        if( EQUAL(pszDestExtension, apszExtensions[i][0]) &&
-            !EQUAL(pszDriverName, apszExtensions[i][1]) )
+        if (EQUAL(pszDestExtension, apszExtensions[i][0]) &&
+            !EQUAL(pszDriverName, apszExtensions[i][1]))
         {
             fprintf(stderr,
                     "Warning: The target file has a '%s' extension, "
                     "which is normally used by the %s driver,\n"
                     "but the requested output driver is %s. "
                     "Is it really what you want ?\n",
-                    pszDestExtension,
-                    apszExtensions[i][1],
-                    pszDriverName);
+                    pszDestExtension, apszExtensions[i][1], pszDriverName);
             break;
         }
     }
 
-    for( int i = 0; apszBeginName[i][0] != nullptr; i++ )
+    for (int i = 0; apszBeginName[i][0] != nullptr; i++)
     {
-        if( EQUALN(pszDestFilename, apszBeginName[i][0],
+        if (EQUALN(pszDestFilename, apszBeginName[i][0],
                    strlen(apszBeginName[i][0])) &&
-            !EQUAL(pszDriverName, apszBeginName[i][1]) )
+            !EQUAL(pszDriverName, apszBeginName[i][1]))
         {
             fprintf(stderr,
                     "Warning: The target file has a name which is normally "
                     "recognized by the %s driver,\n"
                     "but the requested output driver is %s. "
                     "Is it really what you want ?\n",
-                    apszBeginName[i][1],
-                    pszDriverName);
+                    apszBeginName[i][1], pszDriverName);
             break;
         }
     }
@@ -386,11 +384,11 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 // AddFeature
 //------------------------------------------------------------------------
 
-static OGRErr AddFeature( OGRLayer* const poOutLayer, OGRLineString* pPart,
-                          double dfFrom, double dfTo, double dfScaleFactor,
-                          bool bQuiet,
-                          const char* pszOutputSepFieldName = nullptr,
-                          const char* pszOutputSepFieldValue = nullptr )
+static OGRErr AddFeature(OGRLayer *const poOutLayer, OGRLineString *pPart,
+                         double dfFrom, double dfTo, double dfScaleFactor,
+                         bool bQuiet,
+                         const char *pszOutputSepFieldName = nullptr,
+                         const char *pszOutputSepFieldValue = nullptr)
 {
     OGRFeature *poFeature =
         OGRFeature::CreateFeature(poOutLayer->GetLayerDefn());
@@ -399,16 +397,16 @@ static OGRErr AddFeature( OGRLayer* const poOutLayer, OGRLineString* pPart,
     poFeature->SetField(FIELD_FINISH, dfTo);
     poFeature->SetField(FIELD_SCALE_FACTOR, dfScaleFactor);
 
-    if( pszOutputSepFieldName != nullptr )
+    if (pszOutputSepFieldName != nullptr)
     {
         poFeature->SetField(pszOutputSepFieldName, pszOutputSepFieldValue);
     }
 
     poFeature->SetGeometryDirectly(pPart);
 
-    if( poOutLayer->CreateFeature(poFeature) != OGRERR_NONE )
+    if (poOutLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
-        if( !bQuiet )
+        if (!bQuiet)
             printf("Failed to create feature in shapefile.\n");
         return OGRERR_FAILURE;
     }
@@ -421,17 +419,14 @@ static OGRErr AddFeature( OGRLayer* const poOutLayer, OGRLineString* pPart,
 //------------------------------------------------------------------------
 // CreateSubline
 //------------------------------------------------------------------------
-static OGRErr CreateSubline( OGRLayer* const poPkLayer,
-                             double dfPosBeg,
-                             double dfPosEnd,
-                             OGRLayer* const poOutLayer,
-                             CPL_UNUSED int bDisplayProgress,
-                             bool bQuiet )
+static OGRErr CreateSubline(OGRLayer *const poPkLayer, double dfPosBeg,
+                            double dfPosEnd, OGRLayer *const poOutLayer,
+                            CPL_UNUSED int bDisplayProgress, bool bQuiet)
 {
     // Get step
     poPkLayer->ResetReading();
-    OGRFeature* pFeature = poPkLayer->GetNextFeature();
-    if( nullptr != pFeature )
+    OGRFeature *pFeature = poPkLayer->GetNextFeature();
+    if (nullptr != pFeature)
     {
         // FIXME: Clang Static Analyzer rightly found that the following
         // code is dead
@@ -441,15 +436,15 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
     }
     else
     {
-        fprintf(stderr, "Get step for positions %f - %f failed\n",
-                dfPosBeg, dfPosEnd);
+        fprintf(stderr, "Get step for positions %f - %f failed\n", dfPosBeg,
+                dfPosEnd);
         return OGRERR_FAILURE;
     }
     // Get second part.
     double dfBeg = 0.0;
     double dfEnd = 0.0;
     pFeature = poPkLayer->GetNextFeature();
-    if( nullptr != pFeature )
+    if (nullptr != pFeature)
     {
         dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
         dfEnd = pFeature->GetFieldAsDouble(FIELD_FINISH);
@@ -457,8 +452,8 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
     }
     else
     {
-        fprintf(stderr, "Get step for positions %f - %f failed\n",
-                dfPosBeg, dfPosEnd);
+        fprintf(stderr, "Get step for positions %f - %f failed\n", dfPosBeg,
+                dfPosEnd);
         return OGRERR_FAILURE;
     }
     const double dfStep = dfEnd - dfBeg;
@@ -468,8 +463,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
     const double dfPosEndHigh = ceil(dfPosEnd / dfStep) * dfStep;
 
     CPLString szAttributeFilter;
-    szAttributeFilter.Printf("%s >= %f AND %s <= %f",
-                             FIELD_START, dfPosBegLow,
+    szAttributeFilter.Printf("%s >= %f AND %s <= %f", FIELD_START, dfPosBegLow,
                              FIELD_FINISH, dfPosEndHigh);
     // TODO: ExecuteSQL should be faster.
     poPkLayer->SetAttributeFilter(szAttributeFilter);
@@ -477,22 +471,21 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 
     std::map<double, OGRFeature *> moParts;
 
-    while( (pFeature = poPkLayer->GetNextFeature()) != nullptr )
+    while ((pFeature = poPkLayer->GetNextFeature()) != nullptr)
     {
         double dfStart = pFeature->GetFieldAsDouble(FIELD_START);
         moParts[dfStart] = pFeature;
     }
 
-
-    if( moParts.empty() )
+    if (moParts.empty())
     {
-        fprintf(stderr, "Get parts for positions %f - %f failed\n",
-                dfPosBeg, dfPosEnd);
+        fprintf(stderr, "Get parts for positions %f - %f failed\n", dfPosBeg,
+                dfPosEnd);
         return OGRERR_FAILURE;
     }
 
     OGRLineString SubLine;
-    if( moParts.size() == 1 )
+    if (moParts.size() == 1)
     {
         std::map<double, OGRFeature *>::iterator IT = moParts.begin();
         const double dfStart = IT->first;
@@ -509,8 +502,8 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 
         OGRFeature::DestroyFeature(IT->second);
         // Store.
-        return AddFeature(poOutLayer, pSubLine, dfPosBeg, dfPosEnd,
-                          1.0, bQuiet);
+        return AddFeature(poOutLayer, pSubLine, dfPosBeg, dfPosEnd, 1.0,
+                          bQuiet);
     }
     else
     {
@@ -535,7 +528,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
         ++IT;
         nCounter--;
 
-        while( nCounter > 1 )
+        while (nCounter > 1)
         {
             pLine = IT->second->GetGeometryRef()->toLineString();
             pOutLine->addSubLineString(pLine);
@@ -558,8 +551,8 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 
         OGRFeature::DestroyFeature(IT->second);
         // Store
-        return AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd,
-                          1.0, bQuiet);
+        return AddFeature(poOutLayer, pOutLine, dfPosBeg, dfPosEnd, 1.0,
+                          bQuiet);
     }
 }
 
@@ -567,16 +560,16 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 // Project
 //------------------------------------------------------------------------
 #ifdef HAVE_GEOS
-static double Project( OGRLineString* pLine, OGRPoint* pPoint )
+static double Project(OGRLineString *pLine, OGRPoint *pPoint)
 {
-    if( nullptr == pLine || nullptr == pPoint )
+    if (nullptr == pLine || nullptr == pPoint)
         return -1;
     OGRPoint TestPoint;
     pLine->StartPoint(&TestPoint);
-    if( TestPoint.Equals(pPoint) )
+    if (TestPoint.Equals(pPoint))
         return 0.0;
     pLine->EndPoint(&TestPoint);
-    if( TestPoint.Equals(pPoint) )
+    if (TestPoint.Equals(pPoint))
         return pLine->get_Length();
 
     return pLine->Project(pPoint);
@@ -588,14 +581,14 @@ static double Project( OGRLineString* pLine, OGRPoint* pPoint )
 //------------------------------------------------------------------------
 #ifdef HAVE_GEOS
 static OGRErr CreatePartsFromLineString(
-    OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField,
-    double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
-    bool bQuiet, const char* pszOutputSepFieldName = nullptr,
-    const char* pszOutputSepFieldValue = nullptr )
+    OGRLineString *pPathGeom, OGRLayer *const poPkLayer, int nMValField,
+    double dfStep, OGRLayer *const poOutLayer, int bDisplayProgress,
+    bool bQuiet, const char *pszOutputSepFieldName = nullptr,
+    const char *pszOutputSepFieldValue = nullptr)
 {
     // Check repers/milestones/reference points type
     OGRwkbGeometryType eGeomType = poPkLayer->GetGeomType();
-    if( wkbFlatten(eGeomType) != wkbPoint )
+    if (wkbFlatten(eGeomType) != wkbPoint)
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n",
                 OGRGeometryTypeToName(eGeomType));
@@ -603,8 +596,8 @@ static OGRErr CreatePartsFromLineString(
     }
 
     double dfTolerance = 1.0;
-    OGRSpatialReference* pSpaRef = pPathGeom->getSpatialReference();
-    if( pSpaRef->IsGeographic() )
+    OGRSpatialReference *pSpaRef = pPathGeom->getSpatialReference();
+    if (pSpaRef->IsGeographic())
     {
         dfTolerance = TOLERANCE_DEGREE;
     }
@@ -614,19 +607,19 @@ static OGRErr CreatePartsFromLineString(
     }
 
     // Create sorted list of repers.
-    std::map<double, OGRPoint*> moRepers;
+    std::map<double, OGRPoint *> moRepers;
     poPkLayer->ResetReading();
-    OGRFeature* pReperFeature = nullptr;
-    while( (pReperFeature = poPkLayer->GetNextFeature()) != nullptr )
+    OGRFeature *pReperFeature = nullptr;
+    while ((pReperFeature = poPkLayer->GetNextFeature()) != nullptr)
     {
         const double dfReperPos = pReperFeature->GetFieldAsDouble(nMValField);
-        OGRGeometry* pGeom = pReperFeature->GetGeometryRef();
-        if( nullptr != pGeom )
+        OGRGeometry *pGeom = pReperFeature->GetGeometryRef();
+        if (nullptr != pGeom)
         {
-            OGRPoint* pPt = pGeom->clone()->toPoint();
-            if( !bQuiet )
+            OGRPoint *pPt = pGeom->clone()->toPoint();
+            if (!bQuiet)
             {
-                if( moRepers.find(dfReperPos) != moRepers.end() )
+                if (moRepers.find(dfReperPos) != moRepers.end())
                 {
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
@@ -636,9 +629,9 @@ static OGRErr CreatePartsFromLineString(
             }
             // Check if reper is inside the path
             const double dfTestDistance = Project(pPathGeom, pPt);
-            if( dfTestDistance < 0 )
+            if (dfTestDistance < 0)
             {
-                if( !bQuiet )
+                if (!bQuiet)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "The distance %f is out of path!", dfReperPos);
@@ -648,7 +641,7 @@ static OGRErr CreatePartsFromLineString(
             else
             {
                 const double dfDist = pPathGeom->Distance(pPt);
-                if( dfDist < dfTolerance )
+                if (dfDist < dfTolerance)
                     moRepers[dfReperPos] = pPt;
                 else
                     delete pPt;
@@ -657,21 +650,21 @@ static OGRErr CreatePartsFromLineString(
         OGRFeature::DestroyFeature(pReperFeature);
     }
 
-    if( moRepers.size() < 2 )
+    if (moRepers.size() < 2)
     {
         fprintf(stderr, "Not enough repers to proceed\n");
         return OGRERR_FAILURE;
     }
 
     // Check direction.
-    if( !bQuiet )
+    if (!bQuiet)
     {
         fprintf(stdout, "Check path direction\n");
     }
 
     // Get distance along path from pt1 and pt2.
     // If pt1 distance > pt2 distance, reverse path
-    std::map<double, OGRPoint*>::const_iterator IT;
+    std::map<double, OGRPoint *>::const_iterator IT;
     IT = moRepers.begin();
     double dfPosition = IT->first;
     double dfBeginPosition = IT->first;
@@ -682,9 +675,9 @@ static OGRErr CreatePartsFromLineString(
     double dfDistance1 = Project(pPathGeom, pt1);
     double dfDistance2 = Project(pPathGeom, pt2);
 
-    if( dfDistance1 > dfDistance2 )
+    if (dfDistance1 > dfDistance2)
     {
-        if( !bQuiet )
+        if (!bQuiet)
         {
             fprintf(stderr,
                     "Warning: The path is opposite the repers direction. "
@@ -696,11 +689,11 @@ static OGRErr CreatePartsFromLineString(
         dfDistance2 = Project(pPathGeom, pt2);
     }
 
-    OGRLineString* pPart = nullptr;
+    OGRLineString *pPart = nullptr;
 
     std::vector<CURVE_DATA> astSubLines;
 
-    if( !bQuiet )
+    if (!bQuiet)
     {
         fprintf(stdout, "Create parts\n");
     }
@@ -714,21 +707,21 @@ static OGRErr CreatePartsFromLineString(
     double dfPtBegPosition = 0.0;
     double dfPtEndPosition = 0.0;
 
-    if( dfDistance1 > DELTA )
+    if (dfDistance1 > DELTA)
     {
         pPart = pPathGeom->getSubLine(0, dfDistance1, FALSE);
-        if( nullptr != pPart )
+        if (nullptr != pPart)
         {
             double dfLen = pPart->get_Length();
-            if( pSpaRef->IsGeographic() )
+            if (pSpaRef->IsGeographic())
             {
-                //convert to UTM/WGS84
+                // convert to UTM/WGS84
                 OGRPoint pt;
                 pPart->Value(dfLen / 2, &pt);
                 const int nZoneEnv =
                     static_cast<int>(30 + (pt.getX() + 3.0) / 6.0 + 0.5);
                 int nEPSG;
-                if( pt.getY() > 0 )
+                if (pt.getY() > 0)
                 {
                     nEPSG = 32600 + nZoneEnv;
                 }
@@ -739,15 +732,15 @@ static OGRErr CreatePartsFromLineString(
                 OGRSpatialReference SpatRef;
                 SpatRef.importFromEPSG(nEPSG);
                 OGRGeometry *pTransformPart = pPart->clone();
-                if( pTransformPart->transformTo(&SpatRef) == OGRERR_NONE )
+                if (pTransformPart->transformTo(&SpatRef) == OGRERR_NONE)
                 {
-                    OGRLineString* pTransformPartLS =
+                    OGRLineString *pTransformPartLS =
                         pTransformPart->toLineString();
                     dfLen = pTransformPartLS->get_Length();
                 }
 
-                CURVE_DATA data = { pPart, dfPosition - dfLen, dfPosition,
-                                    pPart->get_Length() / dfLen };
+                CURVE_DATA data = {pPart, dfPosition - dfLen, dfPosition,
+                                   pPart->get_Length() / dfLen};
                 astSubLines.push_back(data);
 
                 pPtBeg = new OGRPoint();
@@ -760,9 +753,7 @@ static OGRErr CreatePartsFromLineString(
             }
             else
             {
-                CURVE_DATA data = {
-                    pPart, dfPosition - dfLen, dfPosition, 1.0
-                };
+                CURVE_DATA data = {pPart, dfPosition - dfLen, dfPosition, 1.0};
                 astSubLines.push_back(data);
                 // AddFeature(poOutLayer, pPart, dfPosition - dfLen, dfPosition,
                 //            1.0, bQuiet);
@@ -773,15 +764,13 @@ static OGRErr CreatePartsFromLineString(
         }
     }
 
-    if( dfDistance2 - dfDistance1 > DELTA )
+    if (dfDistance2 - dfDistance1 > DELTA)
     {
         pPart = pPathGeom->getSubLine(dfDistance1, dfDistance2, FALSE);
-        if( nullptr != pPart )
+        if (nullptr != pPart)
         {
-            CURVE_DATA data = {
-                pPart, dfPosition, IT->first,
-                pPart->get_Length() / (IT->first - dfPosition)
-            };
+            CURVE_DATA data = {pPart, dfPosition, IT->first,
+                               pPart->get_Length() / (IT->first - dfPosition)};
             astSubLines.push_back(data);
             // AddFeature(poOutLayer, pPart, dfPosition, IT->first,
             //            pPart->get_Length() / (IT->first - dfPosition),
@@ -793,7 +782,7 @@ static OGRErr CreatePartsFromLineString(
     void *pProgressArg = nullptr;
 
     double dfFactor = 1.0 / moRepers.size();
-    if( bDisplayProgress )
+    if (bDisplayProgress)
     {
         pfnProgress = GDALScaledProgress;
         pProgressArg =
@@ -806,9 +795,9 @@ static OGRErr CreatePartsFromLineString(
     ++IT;  // Get third point
 
     double dfEndPosition = 0.0;
-    while( IT != moRepers.end() )
+    while (IT != moRepers.end())
     {
-        if( bDisplayProgress )
+        if (bDisplayProgress)
         {
             pfnProgress(nCount * dfFactor, "", pProgressArg);
             nCount++;
@@ -818,15 +807,14 @@ static OGRErr CreatePartsFromLineString(
 
         dfDistance2 = Project(pPathGeom, IT->second);
 
-        if(dfDistance2 - dfDistance1 > DELTA)
+        if (dfDistance2 - dfDistance1 > DELTA)
         {
             pPart = pPathGeom->getSubLine(dfDistance1, dfDistance2, FALSE);
-            if( nullptr != pPart )
+            if (nullptr != pPart)
             {
-                CURVE_DATA data = {
-                    pPart, dfPosition, IT->first,
-                    pPart->get_Length() / (IT->first - dfPosition)
-                };
+                CURVE_DATA data = {pPart, dfPosition, IT->first,
+                                   pPart->get_Length() /
+                                       (IT->first - dfPosition)};
                 astSubLines.push_back(data);
                 // AddFeature(poOutLayer, pPart, dfPosition, IT->first,
                 //            pPart->get_Length() / (IT->first - dfPosition),
@@ -840,22 +828,22 @@ static OGRErr CreatePartsFromLineString(
     }
 
     // Get last part
-    if( pPathGeom->get_Length() - dfDistance1 > DELTA )
+    if (pPathGeom->get_Length() - dfDistance1 > DELTA)
     {
         pPart =
             pPathGeom->getSubLine(dfDistance1, pPathGeom->get_Length(), FALSE);
-        if( nullptr != pPart )
+        if (nullptr != pPart)
         {
             double dfLen = pPart->get_Length();
-            if( pSpaRef->IsGeographic() )
+            if (pSpaRef->IsGeographic())
             {
-                //convert to UTM/WGS84
+                // convert to UTM/WGS84
                 OGRPoint pt;
                 pPart->Value(dfLen / 2, &pt);
                 const int nZoneEnv =
                     static_cast<int>(30 + (pt.getX() + 3.0) / 6.0 + 0.5);
                 int nEPSG;
-                if( pt.getY() > 0 )
+                if (pt.getY() > 0)
                 {
                     nEPSG = 32600 + nZoneEnv;
                 }
@@ -866,16 +854,14 @@ static OGRErr CreatePartsFromLineString(
                 OGRSpatialReference SpatRef;
                 SpatRef.importFromEPSG(nEPSG);
                 OGRGeometry *pTransformPart = pPart->clone();
-                if( pTransformPart->transformTo(&SpatRef) == OGRERR_NONE )
+                if (pTransformPart->transformTo(&SpatRef) == OGRERR_NONE)
                 {
-                    OGRLineString* pTransformPartLS =
+                    OGRLineString *pTransformPartLS =
                         pTransformPart->toLineString();
                     dfLen = pTransformPartLS->get_Length();
                 }
-                CURVE_DATA data = {
-                    pPart, dfPosition, dfPosition + dfLen,
-                    pPart->get_Length() / dfLen
-                };
+                CURVE_DATA data = {pPart, dfPosition, dfPosition + dfLen,
+                                   pPart->get_Length() / dfLen};
                 astSubLines.push_back(data);
                 // AddFeature(poOutLayer, pPart, dfPosition, dfPosition + dfLen,
                 //            pPart->get_Length() / dfLen, bQuiet);
@@ -888,9 +874,7 @@ static OGRErr CreatePartsFromLineString(
             }
             else
             {
-                CURVE_DATA data = {
-                    pPart, dfPosition, dfPosition + dfLen, 1.0
-                };
+                CURVE_DATA data = {pPart, dfPosition, dfPosition + dfLen, 1.0};
                 astSubLines.push_back(data);
                 // AddFeature(poOutLayer, pPart, dfPosition - dfLen, dfPosition,
                 //            1.0, bQuiet);
@@ -902,46 +886,44 @@ static OGRErr CreatePartsFromLineString(
     }
 
     // Create pickets
-    if( !bQuiet )
+    if (!bQuiet)
     {
         fprintf(stdout, "\nCreate pickets\n");
     }
 
-    const double dfRoundBeg =
-        pPtBeg != nullptr
-        ? ceil(dfPtBegPosition / dfStep) * dfStep
-        : ceil(dfBeginPosition / dfStep) * dfStep;
+    const double dfRoundBeg = pPtBeg != nullptr
+                                  ? ceil(dfPtBegPosition / dfStep) * dfStep
+                                  : ceil(dfBeginPosition / dfStep) * dfStep;
 
-    if( pPtEnd != nullptr )
+    if (pPtEnd != nullptr)
         dfEndPosition = dfPtEndPosition;
 
     dfFactor = dfStep / (dfEndPosition - dfRoundBeg);
     nCount = 0;
-    for( std::map<double, OGRPoint*>::iterator oIter = moRepers.begin();
-         oIter != moRepers.end();
-         ++oIter )
+    for (std::map<double, OGRPoint *>::iterator oIter = moRepers.begin();
+         oIter != moRepers.end(); ++oIter)
     {
         delete oIter->second;
     }
 
     moRepers.clear();
 
-    if( pPtBeg != nullptr )
+    if (pPtBeg != nullptr)
         moRepers[dfPtBegPosition] = pPtBeg;
-    if( pPtEnd != nullptr )
+    if (pPtEnd != nullptr)
         moRepers[dfPtEndPosition] = pPtEnd;
 
-    for( double dfDist = dfRoundBeg; dfDist <= dfEndPosition; dfDist += dfStep )
+    for (double dfDist = dfRoundBeg; dfDist <= dfEndPosition; dfDist += dfStep)
     {
-        if( bDisplayProgress )
+        if (bDisplayProgress)
         {
             pfnProgress(nCount * dfFactor, "", pProgressArg);
             nCount++;
         }
 
-        for( int j = 0; j < static_cast<int>(astSubLines.size()); j++ )
+        for (int j = 0; j < static_cast<int>(astSubLines.size()); j++)
         {
-            if( astSubLines[j].IsInside(dfDist) )
+            if (astSubLines[j].IsInside(dfDist))
             {
                 const double dfRealDist =
                     (dfDist - astSubLines[j].dfBeg) * astSubLines[j].dfFactor;
@@ -954,13 +936,13 @@ static OGRErr CreatePartsFromLineString(
         }
     }
 
-    for( int i = 0; i < static_cast<int>(astSubLines.size()); i++ )
+    for (int i = 0; i < static_cast<int>(astSubLines.size()); i++)
     {
         delete astSubLines[i].pPart;
     }
     astSubLines.clear();
 
-    if( !bQuiet )
+    if (!bQuiet)
     {
         fprintf(stdout, "\nCreate sublines\n");
     }
@@ -971,9 +953,9 @@ static OGRErr CreatePartsFromLineString(
     dfDistance1 = 0;
     dfPosition = IT->first;
 
-    while( IT != moRepers.end() )
+    while (IT != moRepers.end())
     {
-        if( bDisplayProgress )
+        if (bDisplayProgress)
         {
             pfnProgress(nCount * dfFactor, "", pProgressArg);
             nCount++;
@@ -981,10 +963,10 @@ static OGRErr CreatePartsFromLineString(
 
         dfDistance2 = Project(pPathGeom, IT->second);
 
-        if( dfDistance2 - dfDistance1 > DELTA )
+        if (dfDistance2 - dfDistance1 > DELTA)
         {
             pPart = pPathGeom->getSubLine(dfDistance1, dfDistance2, FALSE);
-            if( nullptr != pPart )
+            if (nullptr != pPart)
             {
                 AddFeature(poOutLayer, pPart, dfPosition, IT->first,
                            pPart->get_Length() / (IT->first - dfPosition),
@@ -998,19 +980,18 @@ static OGRErr CreatePartsFromLineString(
         ++IT;
     }
 
-    for( std::map<double, OGRPoint*>::iterator oIter = moRepers.begin();
-         oIter != moRepers.end();
-         ++oIter)
+    for (std::map<double, OGRPoint *>::iterator oIter = moRepers.begin();
+         oIter != moRepers.end(); ++oIter)
     {
         delete oIter->second;
     }
 
-    if( !bQuiet )
+    if (!bQuiet)
     {
         fprintf(stdout, "\nSuccess!\n\n");
     }
 
-    if( nullptr != pProgressArg )
+    if (nullptr != pProgressArg)
     {
         GDALDestroyScaledProgress(pProgressArg);
     }
@@ -1023,19 +1004,19 @@ static OGRErr CreatePartsFromLineString(
 // CreateParts
 //------------------------------------------------------------------------
 #ifdef HAVE_GEOS
-static OGRErr CreateParts(
-    OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField,
-    double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
-    bool bQuiet,
-    const char* pszOutputSepFieldName = nullptr,
-    const char* pszOutputSepFieldValue = nullptr )
+static OGRErr CreateParts(OGRLayer *const poLnLayer, OGRLayer *const poPkLayer,
+                          int nMValField, double dfStep,
+                          OGRLayer *const poOutLayer, int bDisplayProgress,
+                          bool bQuiet,
+                          const char *pszOutputSepFieldName = nullptr,
+                          const char *pszOutputSepFieldValue = nullptr)
 {
     OGRErr eRetCode = OGRERR_FAILURE;
 
-    //check path and get first line
+    // check path and get first line
     OGRwkbGeometryType eGeomType = poLnLayer->GetGeomType();
-    if( wkbFlatten(eGeomType) != wkbLineString &&
-        wkbFlatten(eGeomType) != wkbMultiLineString )
+    if (wkbFlatten(eGeomType) != wkbLineString &&
+        wkbFlatten(eGeomType) != wkbMultiLineString)
     {
         fprintf(stderr, "Unsupported geometry type %s for path\n",
                 OGRGeometryTypeToName(eGeomType));
@@ -1045,25 +1026,26 @@ static OGRErr CreateParts(
     poLnLayer->ResetReading();
     // Get first geometry
     // TODO: Attribute filter for path geometry.
-    OGRFeature* pPathFeature = poLnLayer->GetNextFeature();
-    if( nullptr != pPathFeature )
+    OGRFeature *pPathFeature = poLnLayer->GetNextFeature();
+    if (nullptr != pPathFeature)
     {
-        OGRGeometry* pGeom = pPathFeature->GetGeometryRef();
+        OGRGeometry *pGeom = pPathFeature->GetGeometryRef();
 
-        if( pGeom != nullptr &&
-            wkbFlatten(pGeom->getGeometryType()) == wkbMultiLineString )
+        if (pGeom != nullptr &&
+            wkbFlatten(pGeom->getGeometryType()) == wkbMultiLineString)
         {
-            if( !bQuiet )
+            if (!bQuiet)
             {
-                fprintf(stdout, "\nThe geometry " CPL_FRMT_GIB
+                fprintf(stdout,
+                        "\nThe geometry " CPL_FRMT_GIB
                         " is wkbMultiLineString type\n",
                         pPathFeature->GetFID());
             }
 
-            OGRGeometryCollection* pGeomColl = pGeom->toGeometryCollection();
-            for( int i = 0; i < pGeomColl->getNumGeometries(); ++i )
+            OGRGeometryCollection *pGeomColl = pGeom->toGeometryCollection();
+            for (int i = 0; i < pGeomColl->getNumGeometries(); ++i)
             {
-                OGRLineString* pPath =
+                OGRLineString *pPath =
                     pGeomColl->getGeometryRef(i)->clone()->toLineString();
                 pPath->assignSpatialReference(pGeomColl->getSpatialReference());
                 eRetCode = CreatePartsFromLineString(
@@ -1071,17 +1053,17 @@ static OGRErr CreateParts(
                     bDisplayProgress, bQuiet, pszOutputSepFieldName,
                     pszOutputSepFieldValue);
 
-                if( eRetCode != OGRERR_NONE )
+                if (eRetCode != OGRERR_NONE)
                 {
                     OGRFeature::DestroyFeature(pPathFeature);
                     return eRetCode;
                 }
             }
         }
-        else if( pGeom != nullptr &&
-            wkbFlatten(pGeom->getGeometryType()) == wkbLineString )
+        else if (pGeom != nullptr &&
+                 wkbFlatten(pGeom->getGeometryType()) == wkbLineString)
         {
-            OGRLineString* pGeomClone = pGeom->clone()->toLineString();
+            OGRLineString *pGeomClone = pGeom->clone()->toLineString();
             eRetCode = CreatePartsFromLineString(
                 pGeomClone, poPkLayer, nMValField, dfStep, poOutLayer,
                 bDisplayProgress, bQuiet, pszOutputSepFieldName,
@@ -1103,15 +1085,15 @@ static OGRErr CreateParts(
 //------------------------------------------------------------------------
 #ifdef HAVE_GEOS
 static OGRErr CreatePartsMultiple(
-    OGRLayer* const poLnLayer, const char* pszLineSepFieldName,
-    OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName,
-    int nMValField, double dfStep, OGRLayer* const poOutLayer,
-    const char* pszOutputSepFieldName, int bDisplayProgress, bool bQuiet )
+    OGRLayer *const poLnLayer, const char *pszLineSepFieldName,
+    OGRLayer *const poPkLayer, const char *pszPicketsSepFieldName,
+    int nMValField, double dfStep, OGRLayer *const poOutLayer,
+    const char *pszOutputSepFieldName, int bDisplayProgress, bool bQuiet)
 {
     // Read all separate field values into array
     OGRFeatureDefn *pDefn = poLnLayer->GetLayerDefn();
     const int nLineSepFieldInd = pDefn->GetFieldIndex(pszLineSepFieldName);
-    if( nLineSepFieldInd == -1 )
+    if (nLineSepFieldInd == -1)
     {
         fprintf(stderr, "The field %s not found\n", pszLineSepFieldName);
         return OGRERR_FAILURE;
@@ -1120,8 +1102,8 @@ static OGRErr CreatePartsMultiple(
     poLnLayer->ResetReading();
 
     std::set<CPLString> asIDs;
-    OGRFeature* pFeature = nullptr;
-    while( (pFeature = poLnLayer->GetNextFeature()) != nullptr )
+    OGRFeature *pFeature = nullptr;
+    while ((pFeature = poLnLayer->GetNextFeature()) != nullptr)
     {
         CPLString sID = pFeature->GetFieldAsString(nLineSepFieldInd);
         asIDs.insert(sID);
@@ -1129,8 +1111,8 @@ static OGRErr CreatePartsMultiple(
         OGRFeature::DestroyFeature(pFeature);
     }
 
-    for( std::set<CPLString>::const_iterator it = asIDs.begin();
-         it != asIDs.end(); ++it )
+    for (std::set<CPLString>::const_iterator it = asIDs.begin();
+         it != asIDs.end(); ++it)
     {
         // Create select clause
         CPLString sLineWhere;
@@ -1141,7 +1123,7 @@ static OGRErr CreatePartsMultiple(
         sPkWhere.Printf("%s = '%s'", pszPicketsSepFieldName, it->c_str());
         poPkLayer->SetAttributeFilter(sPkWhere);
 
-        if( !bQuiet )
+        if (!bQuiet)
         {
             fprintf(stdout, "The %s %s\n", pszPicketsSepFieldName, it->c_str());
         }
@@ -1159,11 +1141,8 @@ static OGRErr CreatePartsMultiple(
 // GetPosition
 //------------------------------------------------------------------------
 #ifdef HAVE_GEOS
-static OGRErr GetPosition( OGRLayer* const poPkLayer,
-                           double dfX,
-                           double dfY,
-                           int /* bDisplayProgress */,
-                           int bQuiet)
+static OGRErr GetPosition(OGRLayer *const poPkLayer, double dfX, double dfY,
+                          int /* bDisplayProgress */, int bQuiet)
 {
     // Create point
     OGRPoint pt;
@@ -1176,17 +1155,17 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
     double dfBeg = 0.0;
     double dfScale = 0.0;
     double dfMinDistance = std::numeric_limits<double>::max();
-    OGRFeature* pFeature = nullptr;
-    while( (pFeature = poPkLayer->GetNextFeature()) != nullptr )
+    OGRFeature *pFeature = nullptr;
+    while ((pFeature = poPkLayer->GetNextFeature()) != nullptr)
     {
-        OGRGeometry* pCurrentGeom = pFeature->GetGeometryRef();
-        if( pCurrentGeom != nullptr )
+        OGRGeometry *pCurrentGeom = pFeature->GetGeometryRef();
+        if (pCurrentGeom != nullptr)
         {
             double dfCurrentDistance = pCurrentGeom->Distance(&pt);
-            if( dfCurrentDistance < dfMinDistance )
+            if (dfCurrentDistance < dfMinDistance)
             {
                 dfMinDistance = dfCurrentDistance;
-                if( pCloserPart != nullptr )
+                if (pCloserPart != nullptr)
                     delete pCloserPart;
                 pCloserPart = pFeature->StealGeometry()->toLineString();
                 dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
@@ -1196,7 +1175,7 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
         OGRFeature::DestroyFeature(pFeature);
     }
 
-    if( nullptr == pCloserPart )
+    if (nullptr == pCloserPart)
     {
         fprintf(stderr, "Filed to find closest part\n");
         return OGRERR_FAILURE;
@@ -1207,15 +1186,16 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
     delete pCloserPart;
     // Compute reference distance
     const double dfRefDist = dfBeg + dfRealDist / dfScale;
-    if( bQuiet )
+    if (bQuiet)
     {
         fprintf(stdout, "%s", CPLSPrintf("%f\n", dfRefDist));
     }
     else
     {
-        fprintf(stdout, "%s", CPLSPrintf(
-           "The position for coordinates lat:%f, long:%f is %f\n",
-           dfY, dfX, dfRefDist));
+        fprintf(
+            stdout, "%s",
+            CPLSPrintf("The position for coordinates lat:%f, long:%f is %f\n",
+                       dfY, dfX, dfRefDist));
     }
 
     return OGRERR_NONE;
@@ -1225,20 +1205,19 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
 //------------------------------------------------------------------------
 // GetCoordinates
 //------------------------------------------------------------------------
-static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
-                              double dfPos,
-                              /* CPL_UNUSED */ int /* bDisplayProgress */,
-                              bool bQuiet )
+static OGRErr GetCoordinates(OGRLayer *const poPkLayer, double dfPos,
+                             /* CPL_UNUSED */ int /* bDisplayProgress */,
+                             bool bQuiet)
 {
     CPLString szAttributeFilter;
-    szAttributeFilter.Printf(
-        "%s < %f AND %s > %f", FIELD_START, dfPos, FIELD_FINISH, dfPos);
+    szAttributeFilter.Printf("%s < %f AND %s > %f", FIELD_START, dfPos,
+                             FIELD_FINISH, dfPos);
     // TODO: ExecuteSQL should be faster.
     poPkLayer->SetAttributeFilter(szAttributeFilter);
     poPkLayer->ResetReading();
 
     bool bHaveCoords = false;
-    for( auto& pFeature: poPkLayer )
+    for (auto &pFeature : poPkLayer)
     {
         bHaveCoords = true;
         const double dfStart = pFeature->GetFieldAsDouble(FIELD_START);
@@ -1250,20 +1229,21 @@ static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
         OGRPoint pt;
         pLine->Value(dfPosCorr, &pt);
 
-        if( bQuiet )
+        if (bQuiet)
         {
             fprintf(stdout, "%s",
                     CPLSPrintf("%f,%f,%f\n", pt.getX(), pt.getY(), pt.getZ()));
         }
         else
         {
-            fprintf(stdout, "%s", CPLSPrintf(
-                "The position for distance %f is lat:%f, long:%f, height:%f\n",
-                dfPos, pt.getY(), pt.getX(), pt.getZ()));
+            fprintf(stdout, "%s",
+                    CPLSPrintf("The position for distance %f is lat:%f, "
+                               "long:%f, height:%f\n",
+                               dfPos, pt.getY(), pt.getX(), pt.getZ()));
         }
     }
 
-    if( bHaveCoords )
+    if (bHaveCoords)
     {
         return OGRERR_NONE;
     }
@@ -1278,10 +1258,13 @@ static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
 /*                                main()                                */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
-    do { if( iArg + nExtraArg >= nArgc ) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", \
-                         papszArgv[iArg], nExtraArg)); } while( false )
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
+    do                                                                         \
+    {                                                                          \
+        if (iArg + nExtraArg >= nArgc)                                         \
+            Usage(CPLSPrintf("%s option requires %d argument(s)",              \
+                             papszArgv[iArg], nExtraArg));                     \
+    } while (false)
 
 MAIN_START(nArgc, papszArgv)
 
@@ -1327,95 +1310,95 @@ MAIN_START(nArgc, papszArgv)
 #endif
 
     // Check strict compilation and runtime library version as we use C++ API.
-    if( ! GDAL_CHECK_VERSION(papszArgv[0]) )
+    if (!GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
 
     EarlySetConfigOptions(nArgc, papszArgv);
 
     OGRRegisterAll();
 
-/* -------------------------------------------------------------------- */
-/*      Processing command line arguments.                              */
-/* -------------------------------------------------------------------- */
-    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+    /* -------------------------------------------------------------------- */
+    /*      Processing command line arguments.                              */
+    /* -------------------------------------------------------------------- */
+    nArgc = OGRGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
 
-    if( nArgc < 1 )
-        exit( -nArgc );
+    if (nArgc < 1)
+        exit(-nArgc);
 
-    for( int iArg = 1; iArg < nArgc; iArg++ )
+    for (int iArg = 1; iArg < nArgc; iArg++)
     {
-        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        if (EQUAL(papszArgv[iArg], "--utility_version"))
         {
             printf("%s was compiled against GDAL %s and "
                    "is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME,
                    GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( papszArgv );
+            CSLDestroy(papszArgv);
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"--help") )
+        else if (EQUAL(papszArgv[iArg], "--help"))
         {
             Usage();
         }
-        else if( EQUAL(papszArgv[iArg], "--long-usage") )
+        else if (EQUAL(papszArgv[iArg], "--long-usage"))
         {
             Usage(false);
         }
 
-        else if( EQUAL(papszArgv[iArg], "-q") ||
-                 EQUAL(papszArgv[iArg], "-quiet") )
+        else if (EQUAL(papszArgv[iArg], "-q") ||
+                 EQUAL(papszArgv[iArg], "-quiet"))
         {
             bQuiet = true;
         }
-        else if( (EQUAL(papszArgv[iArg], "-f") ||
-                  EQUAL(papszArgv[iArg], "-of")) )
+        else if ((EQUAL(papszArgv[iArg], "-f") ||
+                  EQUAL(papszArgv[iArg], "-of")))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // bFormatExplicitlySet = TRUE;
             // coverity[tainted_data]
             pszFormat = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-dsco") )
+        else if (EQUAL(papszArgv[iArg], "-dsco"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             papszDSCO = CSLAddString(papszDSCO, papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-lco") )
+        else if (EQUAL(papszArgv[iArg], "-lco"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg], "-create") )
+        else if (EQUAL(papszArgv[iArg], "-create"))
         {
             stOper = op_create;
         }
-        else if( EQUAL(papszArgv[iArg], "-get_pos") )
+        else if (EQUAL(papszArgv[iArg], "-get_pos"))
         {
             stOper = op_get_pos;
         }
-        else if( EQUAL(papszArgv[iArg], "-get_coord") )
+        else if (EQUAL(papszArgv[iArg], "-get_coord"))
         {
             stOper = op_get_coord;
         }
-        else if( EQUAL(papszArgv[iArg], "-get_subline") )
+        else if (EQUAL(papszArgv[iArg], "-get_subline"))
         {
             stOper = op_get_subline;
         }
-        else if( EQUAL(papszArgv[iArg], "-l") )
+        else if (EQUAL(papszArgv[iArg], "-l"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszLineDataSource = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-ln") )
+        else if (EQUAL(papszArgv[iArg], "-ln"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszLineLayerName = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-lf") )
+        else if (EQUAL(papszArgv[iArg], "-lf"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1427,13 +1410,13 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-p") )
+        else if (EQUAL(papszArgv[iArg], "-p"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszPicketsDataSource = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-pn") )
+        else if (EQUAL(papszArgv[iArg], "-pn"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1445,7 +1428,7 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-pm") )
+        else if (EQUAL(papszArgv[iArg], "-pm"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1457,7 +1440,7 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-pf") )
+        else if (EQUAL(papszArgv[iArg], "-pf"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1469,31 +1452,31 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-r") )
+        else if (EQUAL(papszArgv[iArg], "-r"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszPartsDataSource = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-rn") )
+        else if (EQUAL(papszArgv[iArg], "-rn"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszPartsLayerName = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-o") )
+        else if (EQUAL(papszArgv[iArg], "-o"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszOutputDataSource = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg], "-on") )
+        else if (EQUAL(papszArgv[iArg], "-on"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             pszOutputLayerName = CPLStrdup(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg], "-of") )
+        else if (EQUAL(papszArgv[iArg], "-of"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1505,7 +1488,7 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-x") )
+        else if (EQUAL(papszArgv[iArg], "-x"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1517,7 +1500,7 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-y") )
+        else if (EQUAL(papszArgv[iArg], "-y"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1529,25 +1512,25 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-m") )
+        else if (EQUAL(papszArgv[iArg], "-m"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             dfPos = CPLAtofM(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg], "-mb") )
+        else if (EQUAL(papszArgv[iArg], "-mb"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             dfPosBeg = CPLAtofM(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg], "-me") )
+        else if (EQUAL(papszArgv[iArg], "-me"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             // coverity[tainted_data]
             dfPosEnd = CPLAtofM(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg], "-s") )
+        else if (EQUAL(papszArgv[iArg], "-s"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
 #ifdef HAVE_GEOS
@@ -1559,50 +1542,55 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
 #endif
         }
-        else if( EQUAL(papszArgv[iArg], "-progress") )
+        else if (EQUAL(papszArgv[iArg], "-progress"))
         {
             bDisplayProgress = TRUE;
         }
-        else if( papszArgv[iArg][0] == '-' )
+        else if (papszArgv[iArg][0] == '-')
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
     }
 
-    if( stOper == op_create )
+    if (stOper == op_create)
     {
 #ifdef HAVE_GEOS
-        if( pszOutputDataSource == nullptr )
+        if (pszOutputDataSource == nullptr)
             Usage("no output datasource provided");
-        else if( pszLineDataSource == nullptr )
+        else if (pszLineDataSource == nullptr)
             Usage("no path datasource provided");
-        else if( pszPicketsDataSource == nullptr )
+        else if (pszPicketsDataSource == nullptr)
             Usage("no repers datasource provided");
-        else if( pszPicketsMField == nullptr )
+        else if (pszPicketsMField == nullptr)
             Usage("no position field provided");
-        else if( dfStep == -100000000.0 )
+        else if (dfStep == -100000000.0)
             Usage("no step provided");
 
-    /* -------------------------------------------------------------------- */
-    /*      Open data source.                                               */
-    /* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Open data source. */
+        /* --------------------------------------------------------------------
+         */
 
         GDALDataset *poLnDS = reinterpret_cast<GDALDataset *>(
             OGROpen(pszLineDataSource, FALSE, nullptr));
 
-    /* -------------------------------------------------------------------- */
-    /*      Report failure                                                  */
-    /* -------------------------------------------------------------------- */
-        if( poLnDS == nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report failure */
+        /* --------------------------------------------------------------------
+         */
+        if (poLnDS == nullptr)
         {
             OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-            fprintf(stderr, "FAILURE:\n"
+            fprintf(stderr,
+                    "FAILURE:\n"
                     "Unable to open path datasource `%s' with "
                     "the following drivers.\n",
                     pszLineDataSource);
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> %s\n",
                         poR->GetDriver(iDriver)->GetDescription());
@@ -1613,19 +1601,22 @@ MAIN_START(nArgc, papszArgv)
 
         GDALDataset *poPkDS = reinterpret_cast<GDALDataset *>(
             OGROpen(pszPicketsDataSource, FALSE, nullptr));
-    /* -------------------------------------------------------------------- */
-    /*      Report failure                                                  */
-    /* -------------------------------------------------------------------- */
-        if( poPkDS == nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report failure */
+        /* --------------------------------------------------------------------
+         */
+        if (poPkDS == nullptr)
         {
             OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-            fprintf(stderr, "FAILURE:\n"
+            fprintf(stderr,
+                    "FAILURE:\n"
                     "Unable to open repers datasource `%s' "
                     "with the following drivers.\n",
                     pszPicketsDataSource);
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> %s\n",
                         poR->GetDriver(iDriver)->GetDescription());
@@ -1634,31 +1625,33 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
         }
 
-    /* -------------------------------------------------------------------- */
-    /*      Find the output driver.                                         */
-    /* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Find the output driver. */
+        /* --------------------------------------------------------------------
+         */
 
-        if( !bQuiet )
+        if (!bQuiet)
             CheckDestDataSourceNameConsistency(pszOutputDataSource, pszFormat);
 
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
         GDALDriver *poDriver = poR->GetDriverByName(pszFormat);
-        if( poDriver == nullptr )
+        if (poDriver == nullptr)
         {
             fprintf(stderr, "Unable to find driver `%s'.\n", pszFormat);
-            fprintf(stderr,  "The following drivers are available:\n");
+            fprintf(stderr, "The following drivers are available:\n");
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
-                fprintf(stderr,  "  -> `%s'\n",
+                fprintf(stderr, "  -> `%s'\n",
                         poR->GetDriver(iDriver)->GetDescription());
             }
             exit(1);
         }
 
-        if( !CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                              GDAL_DCAP_CREATE, "FALSE")) )
+        if (!CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
+                                              GDAL_DCAP_CREATE, "FALSE")))
         {
             fprintf(stderr,
                     "%s driver does not support data source creation.\n",
@@ -1666,51 +1659,50 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
         }
 
-    /* -------------------------------------------------------------------- */
-    /*      Create the output data source.                                  */
-    /* -------------------------------------------------------------------- */
-        GDALDataset *poODS = poDriver->Create(
-            pszOutputDataSource, 0, 0, 0, GDT_Unknown, papszDSCO);
-        if( poODS == nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Create the output data source. */
+        /* --------------------------------------------------------------------
+         */
+        GDALDataset *poODS = poDriver->Create(pszOutputDataSource, 0, 0, 0,
+                                              GDT_Unknown, papszDSCO);
+        if (poODS == nullptr)
         {
-            fprintf( stderr,  "%s driver failed to create %s\n",
-                    pszFormat, pszOutputDataSource );
-            exit( 1 );
+            fprintf(stderr, "%s driver failed to create %s\n", pszFormat,
+                    pszOutputDataSource);
+            exit(1);
         }
 
-        OGRLayer *poLnLayer =
-            pszLineLayerName == nullptr
-            ? poLnDS->GetLayer(0)
-            : poLnDS->GetLayerByName(pszLineLayerName);
+        OGRLayer *poLnLayer = pszLineLayerName == nullptr
+                                  ? poLnDS->GetLayer(0)
+                                  : poLnDS->GetLayerByName(pszLineLayerName);
 
-        if( poLnLayer == nullptr )
+        if (poLnLayer == nullptr)
         {
             fprintf(stderr, "Get path layer failed.\n");
             exit(1);
         }
 
-        OGRLayer *poPkLayer =
-            pszPicketsLayerName == nullptr
-            ? poPkDS->GetLayer(0)
-            : poPkDS->GetLayerByName(pszPicketsLayerName);
+        OGRLayer *poPkLayer = pszPicketsLayerName == nullptr
+                                  ? poPkDS->GetLayer(0)
+                                  : poPkDS->GetLayerByName(pszPicketsLayerName);
 
-        if(poPkLayer == nullptr)
+        if (poPkLayer == nullptr)
         {
             fprintf(stderr, "Get repers layer failed.\n");
             exit(1);
         }
 
         OGRFeatureDefn *poPkFDefn = poPkLayer->GetLayerDefn();
-        int nMValField = poPkFDefn->GetFieldIndex( pszPicketsMField );
+        int nMValField = poPkFDefn->GetFieldIndex(pszPicketsMField);
 
         OGRLayer *poOutLayer = nullptr;
-        if( pszLineSepFieldName != nullptr &&
-            pszPicketsSepFieldName != nullptr )
+        if (pszLineSepFieldName != nullptr && pszPicketsSepFieldName != nullptr)
         {
-            poOutLayer = SetupTargetLayer(poLnLayer, poODS, papszLCO,
-                                          pszOutputLayerName,
-                                          pszOutputSepFieldName);
-            if( poOutLayer == nullptr )
+            poOutLayer =
+                SetupTargetLayer(poLnLayer, poODS, papszLCO, pszOutputLayerName,
+                                 pszOutputSepFieldName);
+            if (poOutLayer == nullptr)
             {
                 fprintf(stderr, "Create output layer failed.\n");
                 exit(1);
@@ -1726,7 +1718,7 @@ MAIN_START(nArgc, papszArgv)
         {
             poOutLayer = SetupTargetLayer(poLnLayer, poODS, papszLCO,
                                           pszOutputLayerName);
-            if( poOutLayer == nullptr )
+            if (poOutLayer == nullptr)
             {
                 fprintf(stderr, "Create output layer failed.\n");
                 exit(1);
@@ -1741,39 +1733,42 @@ MAIN_START(nArgc, papszArgv)
         GDALClose(poPkDS);
         GDALClose(poODS);
 
-        if( nullptr != pszOutputLayerName )
+        if (nullptr != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
-#else  // HAVE_GEOS
+#else   // HAVE_GEOS
         fprintf(stderr, "GEOS support not enabled or incompatible version.\n");
         exit(1);
 #endif  // HAVE_GEOS
     }
-    else if(stOper == op_get_pos)
+    else if (stOper == op_get_pos)
     {
 #ifdef HAVE_GEOS
-        if( pszPartsDataSource == nullptr )
+        if (pszPartsDataSource == nullptr)
             Usage("no parts datasource provided");
-        else if( dfX == -100000000.0 || dfY == -100000000.0 )
+        else if (dfX == -100000000.0 || dfY == -100000000.0)
             Usage("no coordinates provided");
 
         GDALDataset *poPartsDS = reinterpret_cast<GDALDataset *>(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
-    /* -------------------------------------------------------------------- */
-    /*      Report failure                                                  */
-    /* -------------------------------------------------------------------- */
-        if( poPartsDS == nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report failure */
+        /* --------------------------------------------------------------------
+         */
+        if (poPartsDS == nullptr)
         {
             OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-            fprintf(stderr, "FAILURE:\n"
+            fprintf(stderr,
+                    "FAILURE:\n"
                     "Unable to open parts datasource `%s' with "
                     "the following drivers.\n",
                     pszPicketsDataSource);
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> %s\n",
-                        poR->GetDriver(iDriver)->GetDescription() );
+                        poR->GetDriver(iDriver)->GetDescription());
             }
 
             exit(1);
@@ -1781,10 +1776,10 @@ MAIN_START(nArgc, papszArgv)
 
         OGRLayer *poPartsLayer =
             pszPartsLayerName == nullptr
-            ? poPartsDS->GetLayer(0)
-            : poPartsDS->GetLayerByName(pszPartsLayerName);
+                ? poPartsDS->GetLayer(0)
+                : poPartsDS->GetLayerByName(pszPartsLayerName);
 
-        if( poPartsLayer == nullptr )
+        if (poPartsLayer == nullptr)
         {
             fprintf(stderr, "Get parts layer failed.\n");
             exit(1);
@@ -1795,33 +1790,36 @@ MAIN_START(nArgc, papszArgv)
 
         GDALClose(poPartsDS);
 
-#else  // HAVE_GEOS
+#else   // HAVE_GEOS
         fprintf(stderr, "GEOS support not enabled or incompatible version.\n");
         exit(1);
 #endif  // HAVE_GEOS
     }
-    else if( stOper == op_get_coord )
+    else if (stOper == op_get_coord)
     {
-        if( pszPartsDataSource == nullptr )
+        if (pszPartsDataSource == nullptr)
             Usage("no parts datasource provided");
-        else if( dfPos == -100000000.0 )
+        else if (dfPos == -100000000.0)
             Usage("no position provided");
 
         GDALDataset *poPartsDS = reinterpret_cast<GDALDataset *>(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
-    /* -------------------------------------------------------------------- */
-    /*      Report failure                                                  */
-    /* -------------------------------------------------------------------- */
-        if( poPartsDS == nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report failure */
+        /* --------------------------------------------------------------------
+         */
+        if (poPartsDS == nullptr)
         {
             OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-            fprintf(stderr, "FAILURE:\n"
+            fprintf(stderr,
+                    "FAILURE:\n"
                     "Unable to open parts datasource `%s' with "
                     "the following drivers.\n",
                     pszPicketsDataSource);
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> %s\n",
                         poR->GetDriver(iDriver)->GetDescription());
@@ -1832,10 +1830,10 @@ MAIN_START(nArgc, papszArgv)
 
         OGRLayer *poPartsLayer =
             pszPartsLayerName == nullptr
-            ? poPartsDS->GetLayer(0)
-            : poPartsDS->GetLayerByName(pszPartsLayerName);
+                ? poPartsDS->GetLayer(0)
+                : poPartsDS->GetLayerByName(pszPartsLayerName);
 
-        if( poPartsLayer == nullptr )
+        if (poPartsLayer == nullptr)
         {
             fprintf(stderr, "Get parts layer failed.\n");
             exit(1);
@@ -1845,15 +1843,15 @@ MAIN_START(nArgc, papszArgv)
 
         GDALClose(poPartsDS);
     }
-    else if( stOper == op_get_subline )
+    else if (stOper == op_get_subline)
     {
-        if( pszOutputDataSource == nullptr )
+        if (pszOutputDataSource == nullptr)
             Usage("no output datasource provided");
-        else if( pszPartsDataSource == nullptr )
+        else if (pszPartsDataSource == nullptr)
             Usage("no parts datasource provided");
-        else if( dfPosBeg == -100000000.0 )
+        else if (dfPosBeg == -100000000.0)
             Usage("no begin position provided");
-        else if( dfPosEnd == -100000000.0 )
+        else if (dfPosEnd == -100000000.0)
             Usage("no end position provided");
 
         // Open data source.
@@ -1861,16 +1859,17 @@ MAIN_START(nArgc, papszArgv)
             OGROpen(pszPartsDataSource, FALSE, nullptr));
 
         // Report failure.
-        if( poPartsDS == nullptr )
+        if (poPartsDS == nullptr)
         {
             OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-            fprintf(stderr, "FAILURE:\n"
+            fprintf(stderr,
+                    "FAILURE:\n"
                     "Unable to open parts datasource `%s' with "
                     "the following drivers.\n",
                     pszLineDataSource);
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> %s\n",
                         poR->GetDriver(iDriver)->GetDescription());
@@ -1881,18 +1880,18 @@ MAIN_START(nArgc, papszArgv)
 
         // Find the output driver.
 
-        if( !bQuiet )
+        if (!bQuiet)
             CheckDestDataSourceNameConsistency(pszOutputDataSource, pszFormat);
 
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
         GDALDriver *poDriver = poR->GetDriverByName(pszFormat);
-        if( poDriver == nullptr )
+        if (poDriver == nullptr)
         {
             fprintf(stderr, "Unable to find driver `%s'.\n", pszFormat);
             fprintf(stderr, "The following drivers are available:\n");
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
             {
                 fprintf(stderr, "  -> `%s'\n",
                         poR->GetDriver(iDriver)->GetDescription());
@@ -1900,8 +1899,8 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
         }
 
-        if( !CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                              GDAL_DCAP_CREATE, "FALSE")) )
+        if (!CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
+                                              GDAL_DCAP_CREATE, "FALSE")))
         {
             fprintf(stderr,
                     "%s driver does not support data source creation.\n",
@@ -1910,22 +1909,21 @@ MAIN_START(nArgc, papszArgv)
         }
 
         // Create the output data source.
-        GDALDataset *poODS =
-            poDriver->Create(pszOutputDataSource, 0, 0, 0,
-                             GDT_Unknown, papszDSCO);
-        if( poODS == nullptr )
+        GDALDataset *poODS = poDriver->Create(pszOutputDataSource, 0, 0, 0,
+                                              GDT_Unknown, papszDSCO);
+        if (poODS == nullptr)
         {
-            fprintf(stderr, "%s driver failed to create %s\n",
-                pszFormat, pszOutputDataSource);
+            fprintf(stderr, "%s driver failed to create %s\n", pszFormat,
+                    pszOutputDataSource);
             exit(1);
         }
 
         OGRLayer *poPartsLayer =
             pszLineLayerName == nullptr
-            ? poPartsDS->GetLayer(0)
-            : poPartsDS->GetLayerByName(pszLineLayerName);
+                ? poPartsDS->GetLayer(0)
+                : poPartsDS->GetLayerByName(pszLineLayerName);
 
-        if( poPartsLayer == nullptr )
+        if (poPartsLayer == nullptr)
         {
             fprintf(stderr, "Get parts layer failed.\n");
             exit(1);
@@ -1933,7 +1931,7 @@ MAIN_START(nArgc, papszArgv)
 
         OGRLayer *poOutLayer =
             SetupTargetLayer(poPartsLayer, poODS, papszLCO, pszOutputLayerName);
-        if( poOutLayer == nullptr )
+        if (poOutLayer == nullptr)
         {
             fprintf(stderr, "Create output layer failed.\n");
             exit(1);
@@ -1946,7 +1944,7 @@ MAIN_START(nArgc, papszArgv)
         GDALClose(poPartsDS);
         GDALClose(poODS);
 
-        if( nullptr != pszOutputLayerName )
+        if (nullptr != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
     }
     else
@@ -1954,9 +1952,9 @@ MAIN_START(nArgc, papszArgv)
         Usage("no operation provided");
     }
 
-    CSLDestroy( papszArgv );
-    CSLDestroy( papszDSCO );
-    CSLDestroy( papszLCO );
+    CSLDestroy(papszArgv);
+    CSLDestroy(papszDSCO);
+    CSLDestroy(papszLCO);
 
     OGRCleanupAll();
 

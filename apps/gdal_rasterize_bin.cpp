@@ -32,26 +32,29 @@
 #include "gdal_utils_priv.h"
 #include "gdal_priv.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
         "Usage: gdal_rasterize [-b band]* [-i] [-at]\n"
         "       {[-burn value]* | [-a attribute_name] | [-3d]} [-add]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
-        "       [-dialect dialect] [-of format] [-a_srs srs_def] [-to \"NAME=VALUE\"]*\n"
+        "       [-dialect dialect] [-of format] [-a_srs srs_def] [-to "
+        "\"NAME=VALUE\"]*\n"
         "       [-co \"NAME=VALUE\"]* [-a_nodata value] [-init value]*\n"
-        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
-        "       [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
-        "             CInt16/CInt32/CFloat32/CFloat64}] [-optim {[AUTO]/VECTOR/RASTER}] [-q]\n"
-        "       <src_datasource> <dst_filename>\n" );
+        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width "
+        "height]\n"
+        "       [-ot "
+        "{Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
+        "             CInt16/CInt32/CFloat32/CFloat64}] [-optim "
+        "{[AUTO]/VECTOR/RASTER}] [-q]\n"
+        "       <src_datasource> <dst_filename>\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
     exit(1);
 }
@@ -71,9 +74,9 @@ static GDALRasterizeOptionsForBinary *GDALRasterizeOptionsForBinaryNew(void)
 /************************************************************************/
 
 static void GDALRasterizeOptionsForBinaryFree(
-    GDALRasterizeOptionsForBinary* psOptionsForBinary )
+    GDALRasterizeOptionsForBinary *psOptionsForBinary)
 {
-    if( psOptionsForBinary == nullptr )
+    if (psOptionsForBinary == nullptr)
         return;
 
     CPLFree(psOptionsForBinary->pszSource);
@@ -87,22 +90,22 @@ static void GDALRasterizeOptionsForBinaryFree(
 MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if (!GDAL_CHECK_VERSION(argv[0]))
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
 
-/* -------------------------------------------------------------------- */
-/*      Generic arg processing.                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Generic arg processing.                                         */
+    /* -------------------------------------------------------------------- */
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
-    if( argc < 1 )
-        exit( -argc );
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; i < argc; i++ )
+    for (int i = 0; i < argc; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
             printf("%s was compiled against GDAL %s and "
                    "is running against GDAL %s\n",
@@ -110,92 +113,89 @@ MAIN_START(argc, argv)
             CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i], "--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
     }
 
-    GDALRasterizeOptionsForBinary* psOptionsForBinary =
+    GDALRasterizeOptionsForBinary *psOptionsForBinary =
         GDALRasterizeOptionsForBinaryNew();
     // coverity[tainted_data]
     GDALRasterizeOptions *psOptions =
         GDALRasterizeOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy(argv);
 
-    if( psOptions == nullptr )
+    if (psOptions == nullptr)
     {
         Usage();
     }
 
-    if( !(psOptionsForBinary->bQuiet) )
+    if (!(psOptionsForBinary->bQuiet))
     {
         GDALRasterizeOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == nullptr )
+    if (psOptionsForBinary->pszSource == nullptr)
         Usage("No input file specified.");
 
-    if( psOptionsForBinary->pszDest == nullptr )
+    if (psOptionsForBinary->pszDest == nullptr)
         Usage("No output file specified.");
 
-/* -------------------------------------------------------------------- */
-/*      Open input file.                                                */
-/* -------------------------------------------------------------------- */
-    GDALDatasetH hInDS = GDALOpenEx(
-        psOptionsForBinary->pszSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-        nullptr, nullptr, nullptr);
+    /* -------------------------------------------------------------------- */
+    /*      Open input file.                                                */
+    /* -------------------------------------------------------------------- */
+    GDALDatasetH hInDS = GDALOpenEx(psOptionsForBinary->pszSource,
+                                    GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                                    nullptr, nullptr, nullptr);
 
-    if( hInDS == nullptr )
+    if (hInDS == nullptr)
         exit(1);
 
-/* -------------------------------------------------------------------- */
-/*      Open output file if it exists.                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open output file if it exists.                                  */
+    /* -------------------------------------------------------------------- */
     GDALDatasetH hDstDS = nullptr;
-    if( !(psOptionsForBinary->bCreateOutput) )
+    if (!(psOptionsForBinary->bCreateOutput))
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        hDstDS = GDALOpenEx(
-            psOptionsForBinary->pszDest,
-            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-            nullptr, nullptr, nullptr );
+        hDstDS =
+            GDALOpenEx(psOptionsForBinary->pszDest,
+                       GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+                       nullptr, nullptr, nullptr);
         CPLPopErrorHandler();
     }
 
-    if( psOptionsForBinary->pszFormat != nullptr &&
-        (psOptionsForBinary->bCreateOutput || hDstDS == nullptr) )
+    if (psOptionsForBinary->pszFormat != nullptr &&
+        (psOptionsForBinary->bCreateOutput || hDstDS == nullptr))
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
         GDALDriver *poDriver =
             poDM->GetDriverByName(psOptionsForBinary->pszFormat);
-        char** papszDriverMD = (poDriver) ? poDriver->GetMetadata(): nullptr;
-        if( poDriver == nullptr ||
+        char **papszDriverMD = (poDriver) ? poDriver->GetMetadata() : nullptr;
+        if (poDriver == nullptr ||
             !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
                                               "FALSE")) ||
-            !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE,
-                                              "FALSE")) )
+            !CPLTestBool(
+                CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE")))
         {
             fprintf(stderr,
                     "Output driver `%s' not recognised or does not support "
                     "direct output file creation.\n",
                     psOptionsForBinary->pszFormat);
-            fprintf(stderr,
-                    "The following format drivers are configured and "
-                    "support direct output:\n" );
+            fprintf(stderr, "The following format drivers are configured and "
+                            "support direct output:\n");
 
-            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+            for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
             {
-                GDALDriver* poIter = poDM->GetDriver(iDriver);
+                GDALDriver *poIter = poDM->GetDriver(iDriver);
                 papszDriverMD = poIter->GetMetadata();
-                if( CPLTestBool(
-                        CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
-                                             "FALSE")) &&
-                    CPLTestBool(
-                        CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE,
-                                             "FALSE")) )
+                if (CPLTestBool(CSLFetchNameValueDef(
+                        papszDriverMD, GDAL_DCAP_RASTER, "FALSE")) &&
+                    CPLTestBool(CSLFetchNameValueDef(
+                        papszDriverMD, GDAL_DCAP_CREATE, "FALSE")))
                 {
-                    fprintf(stderr,  "  -> `%s'\n", poIter->GetDescription());
+                    fprintf(stderr, "  -> `%s'\n", poIter->GetDescription());
                 }
             }
             exit(1);
@@ -203,11 +203,9 @@ MAIN_START(argc, argv)
     }
 
     int bUsageError = FALSE;
-    GDALDatasetH hRetDS = GDALRasterize(psOptionsForBinary->pszDest,
-                                        hDstDS,
-                                        hInDS,
-                                        psOptions, &bUsageError);
-    if(bUsageError == TRUE)
+    GDALDatasetH hRetDS = GDALRasterize(psOptionsForBinary->pszDest, hDstDS,
+                                        hInDS, psOptions, &bUsageError);
+    if (bUsageError == TRUE)
         Usage();
     const int nRetCode = hRetDS ? 0 : 1;
 

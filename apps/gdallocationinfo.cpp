@@ -41,7 +41,6 @@
 #include <unistd.h>
 #endif
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -49,37 +48,37 @@
 static void Usage()
 
 {
-    printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
-            "                        [-b band]* [-overview overview_level]\n"
-            "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
-            "                        [-oo NAME=VALUE]* srcfile x y\n"
-            "\n" );
-    exit( 1 );
+    printf("Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] "
+           "[-valonly]\n"
+           "                        [-b band]* [-overview overview_level]\n"
+           "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
+           "                        [-oo NAME=VALUE]* srcfile x y\n"
+           "\n");
+    exit(1);
 }
 
 /************************************************************************/
 /*                             SanitizeSRS                              */
 /************************************************************************/
 
-static char *SanitizeSRS( const char *pszUserInput )
+static char *SanitizeSRS(const char *pszUserInput)
 
 {
     CPLErrorReset();
 
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference( nullptr );
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
 
     char *pszResult = nullptr;
-    if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
-        OSRExportToWkt( hSRS, &pszResult );
+    if (OSRSetFromUserInput(hSRS, pszUserInput) == OGRERR_NONE)
+        OSRExportToWkt(hSRS, &pszResult);
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Translating source or target SRS failed:\n%s",
-                  pszUserInput );
-        exit( 1 );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Translating source or target SRS failed:\n%s", pszUserInput);
+        exit(1);
     }
 
-    OSRDestroySpatialReference( hSRS );
+    OSRDestroySpatialReference(hSRS);
 
     return pszResult;
 }
@@ -91,153 +90,155 @@ static char *SanitizeSRS( const char *pszUserInput )
 MAIN_START(argc, argv)
 
 {
-    const char         *pszLocX = nullptr, *pszLocY = nullptr;
-    const char         *pszSrcFilename = nullptr;
-    char               *pszSourceSRS = nullptr;
-    std::vector<int>   anBandList;
-    bool               bAsXML = false, bLIFOnly = false;
-    bool               bQuiet = false, bValOnly = false;
-    int                nOverview = -1;
-    char             **papszOpenOptions = nullptr;
+    const char *pszLocX = nullptr, *pszLocY = nullptr;
+    const char *pszSrcFilename = nullptr;
+    char *pszSourceSRS = nullptr;
+    std::vector<int> anBandList;
+    bool bAsXML = false, bLIFOnly = false;
+    bool bQuiet = false, bValOnly = false;
+    int nOverview = -1;
+    char **papszOpenOptions = nullptr;
 
     GDALAllRegister();
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-/* -------------------------------------------------------------------- */
-/*      Parse arguments.                                                */
-/* -------------------------------------------------------------------- */
-    for( int i = 1; i < argc; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Parse arguments.                                                */
+    /* -------------------------------------------------------------------- */
+    for (int i = 1; i < argc; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             GDALDestroyDriverManager();
             CSLDestroy(argv);
             return 0;
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-b") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-b"))
         {
-            anBandList.push_back( atoi(argv[++i]) );
+            anBandList.push_back(atoi(argv[++i]));
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-overview") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-overview"))
         {
             nOverview = atoi(argv[++i]) - 1;
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-l_srs") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-l_srs"))
         {
             CPLFree(pszSourceSRS);
             // coverity[tainted_data]
             pszSourceSRS = SanitizeSRS(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-geoloc") )
+        else if (EQUAL(argv[i], "-geoloc"))
         {
             CPLFree(pszSourceSRS);
             pszSourceSRS = CPLStrdup("-geoloc");
         }
-        else if( EQUAL(argv[i],"-wgs84") )
+        else if (EQUAL(argv[i], "-wgs84"))
         {
             CPLFree(pszSourceSRS);
             pszSourceSRS = SanitizeSRS("WGS84");
         }
-        else if( EQUAL(argv[i],"-xml") )
+        else if (EQUAL(argv[i], "-xml"))
         {
             bAsXML = true;
         }
-        else if( EQUAL(argv[i],"-lifonly") )
+        else if (EQUAL(argv[i], "-lifonly"))
         {
             bLIFOnly = true;
             bQuiet = true;
         }
-        else if( EQUAL(argv[i],"-valonly") )
+        else if (EQUAL(argv[i], "-valonly"))
         {
             bValOnly = true;
             bQuiet = true;
         }
-        else if( i < argc-1 && EQUAL(argv[i], "-oo") )
+        else if (i < argc - 1 && EQUAL(argv[i], "-oo"))
         {
-            papszOpenOptions = CSLAddString( papszOpenOptions,
-                                                argv[++i] );
+            papszOpenOptions = CSLAddString(papszOpenOptions, argv[++i]);
         }
-        else if( argv[i][0] == '-' && !isdigit(argv[i][1]) )
+        else if (argv[i][0] == '-' && !isdigit(argv[i][1]))
             Usage();
 
-        else if( pszSrcFilename == nullptr )
+        else if (pszSrcFilename == nullptr)
             pszSrcFilename = argv[i];
 
-        else if( pszLocX == nullptr )
+        else if (pszLocX == nullptr)
             pszLocX = argv[i];
 
-        else if( pszLocY == nullptr )
+        else if (pszLocY == nullptr)
             pszLocY = argv[i];
 
         else
             Usage();
     }
 
-    if( pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr) )
+    if (pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr))
         Usage();
 
-/* -------------------------------------------------------------------- */
-/*      Open source file.                                               */
-/* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS
-        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-                      nullptr,
-                      papszOpenOptions, nullptr );
-    if( hSrcDS == nullptr )
-        exit( 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Open source file.                                               */
+    /* -------------------------------------------------------------------- */
+    GDALDatasetH hSrcDS =
+        GDALOpenEx(pszSrcFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                   nullptr, papszOpenOptions, nullptr);
+    if (hSrcDS == nullptr)
+        exit(1);
 
-/* -------------------------------------------------------------------- */
-/*      Setup coordinate transformation, if required                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup coordinate transformation, if required                    */
+    /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH hSrcSRS = nullptr;
     OGRCoordinateTransformationH hCT = nullptr;
-    if( pszSourceSRS != nullptr && !EQUAL(pszSourceSRS,"-geoloc") )
+    if (pszSourceSRS != nullptr && !EQUAL(pszSourceSRS, "-geoloc"))
     {
 
-        hSrcSRS = OSRNewSpatialReference( pszSourceSRS );
+        hSrcSRS = OSRNewSpatialReference(pszSourceSRS);
         OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        auto hTrgSRS = GDALGetSpatialRef( hSrcDS );
-        if( !hTrgSRS )
+        auto hTrgSRS = GDALGetSpatialRef(hSrcDS);
+        if (!hTrgSRS)
             exit(1);
 
-        hCT = OCTNewCoordinateTransformation( hSrcSRS, hTrgSRS );
-        if( hCT == nullptr )
-            exit( 1 );
+        hCT = OCTNewCoordinateTransformation(hSrcSRS, hTrgSRS);
+        if (hCT == nullptr)
+            exit(1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      If no bands were requested, we will query them all.             */
-/* -------------------------------------------------------------------- */
-    if( anBandList.empty() )
+    /* -------------------------------------------------------------------- */
+    /*      If no bands were requested, we will query them all.             */
+    /* -------------------------------------------------------------------- */
+    if (anBandList.empty())
     {
-        for( int i = 0; i < GDALGetRasterCount( hSrcDS ); i++ )
-            anBandList.push_back( i+1 );
+        for (int i = 0; i < GDALGetRasterCount(hSrcDS); i++)
+            anBandList.push_back(i + 1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Turn the location into a pixel and line location.               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Turn the location into a pixel and line location.               */
+    /* -------------------------------------------------------------------- */
     int inputAvailable = 1;
     double dfGeoX;
     double dfGeoY;
     CPLString osXML;
 
-    if( pszLocX == nullptr && pszLocY == nullptr )
+    if (pszLocX == nullptr && pszLocY == nullptr)
     {
         // Is it an interactive terminal ?
-        if( isatty(static_cast<int>(fileno(stdin))) )
+        if (isatty(static_cast<int>(fileno(stdin))))
         {
-            if( pszSourceSRS != nullptr )
+            if (pszSourceSRS != nullptr)
             {
-                fprintf(stderr, "Enter X Y values separated by space, and press Return.\n");
+                fprintf(
+                    stderr,
+                    "Enter X Y values separated by space, and press Return.\n");
             }
             else
             {
-                fprintf(stderr, "Enter pixel line values separated by space, and press Return.\n");
+                fprintf(stderr, "Enter pixel line values separated by space, "
+                                "and press Return.\n");
             }
         }
 
@@ -258,80 +259,84 @@ MAIN_START(argc, argv)
 
         if (hCT)
         {
-            if( !OCTTransform( hCT, 1, &dfGeoX, &dfGeoY, nullptr ) )
-                exit( 1 );
+            if (!OCTTransform(hCT, 1, &dfGeoX, &dfGeoY, nullptr))
+                exit(1);
         }
 
-        if( pszSourceSRS != nullptr )
+        if (pszSourceSRS != nullptr)
         {
             double adfGeoTransform[6] = {};
-            if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) != CE_None )
+            if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) != CE_None)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot get geotransform");
-                exit( 1 );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot get geotransform");
+                exit(1);
             }
 
             double adfInvGeoTransform[6] = {};
-            if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
+            if (!GDALInvGeoTransform(adfGeoTransform, adfInvGeoTransform))
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
-                exit( 1 );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot invert geotransform");
+                exit(1);
             }
 
-            iPixel = static_cast<int>(floor(
-                adfInvGeoTransform[0]
-                + adfInvGeoTransform[1] * dfGeoX
-                + adfInvGeoTransform[2] * dfGeoY));
-            iLine = static_cast<int>(floor(
-                adfInvGeoTransform[3]
-                + adfInvGeoTransform[4] * dfGeoX
-                + adfInvGeoTransform[5] * dfGeoY));
+            iPixel = static_cast<int>(floor(adfInvGeoTransform[0] +
+                                            adfInvGeoTransform[1] * dfGeoX +
+                                            adfInvGeoTransform[2] * dfGeoY));
+            iLine = static_cast<int>(floor(adfInvGeoTransform[3] +
+                                           adfInvGeoTransform[4] * dfGeoX +
+                                           adfInvGeoTransform[5] * dfGeoY));
         }
         else
         {
             iPixel = static_cast<int>(floor(dfGeoX));
-            iLine  = static_cast<int>(floor(dfGeoY));
+            iLine = static_cast<int>(floor(dfGeoY));
         }
 
-    /* -------------------------------------------------------------------- */
-    /*      Prepare report.                                                 */
-    /* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Prepare report. */
+        /* --------------------------------------------------------------------
+         */
         CPLString osLine;
 
-        if( bAsXML )
+        if (bAsXML)
         {
-            osLine.Printf( "<Report pixel=\"%d\" line=\"%d\">",
-                          iPixel, iLine );
+            osLine.Printf("<Report pixel=\"%d\" line=\"%d\">", iPixel, iLine);
             osXML += osLine;
         }
-        else if( !bQuiet )
+        else if (!bQuiet)
         {
-            printf( "Report:\n" );
-            printf( "  Location: (%dP,%dL)\n", iPixel, iLine );
+            printf("Report:\n");
+            printf("  Location: (%dP,%dL)\n", iPixel, iLine);
         }
 
         bool bPixelReport = true;
 
-        if( iPixel < 0 || iLine < 0
-            || iPixel >= GDALGetRasterXSize( hSrcDS )
-            || iLine  >= GDALGetRasterYSize( hSrcDS ) )
+        if (iPixel < 0 || iLine < 0 || iPixel >= GDALGetRasterXSize(hSrcDS) ||
+            iLine >= GDALGetRasterYSize(hSrcDS))
         {
-            if( bAsXML )
-                osXML += "<Alert>Location is off this file! No further details to report.</Alert>";
-            else if( bValOnly )
+            if (bAsXML)
+                osXML += "<Alert>Location is off this file! No further details "
+                         "to report.</Alert>";
+            else if (bValOnly)
                 printf("\n");
-            else if( !bQuiet )
-                printf( "\nLocation is off this file! No further details to report.\n");
+            else if (!bQuiet)
+                printf("\nLocation is off this file! No further details to "
+                       "report.\n");
             bPixelReport = false;
         }
 
-    /* -------------------------------------------------------------------- */
-    /*      Process each band.                                              */
-    /* -------------------------------------------------------------------- */
-        for( int i = 0; bPixelReport && i < static_cast<int>(anBandList.size());
-             i++ )
+        /* --------------------------------------------------------------------
+         */
+        /*      Process each band. */
+        /* --------------------------------------------------------------------
+         */
+        for (int i = 0; bPixelReport && i < static_cast<int>(anBandList.size());
+             i++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
+            GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, anBandList[i]);
 
             int iPixelToQuery = iPixel;
             int iLineToQuery = iLine;
@@ -357,8 +362,8 @@ MAIN_START(argc, argv)
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot get overview %d of band %d",
-                             nOverview + 1, anBandList[i] );
+                             "Cannot get overview %d of band %d", nOverview + 1,
+                             anBandList[i]);
                 }
                 hBand = hOvrBand;
             }
@@ -366,92 +371,96 @@ MAIN_START(argc, argv)
             if (hBand == nullptr)
                 continue;
 
-            if( bAsXML )
+            if (bAsXML)
             {
-                osLine.Printf( "<BandReport band=\"%d\">", anBandList[i] );
+                osLine.Printf("<BandReport band=\"%d\">", anBandList[i]);
                 osXML += osLine;
             }
-            else if( !bQuiet )
+            else if (!bQuiet)
             {
-                printf( "  Band %d:\n", anBandList[i] );
+                printf("  Band %d:\n", anBandList[i]);
             }
 
-    /* -------------------------------------------------------------------- */
-    /*      Request location info for this location.  It is possible        */
-    /*      only the VRT driver actually supports this.                     */
-    /* -------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------
+             */
+            /*      Request location info for this location.  It is possible */
+            /*      only the VRT driver actually supports this. */
+            /* --------------------------------------------------------------------
+             */
             CPLString osItem;
 
-            osItem.Printf( "Pixel_%d_%d", iPixelToQuery, iLineToQuery );
+            osItem.Printf("Pixel_%d_%d", iPixelToQuery, iLineToQuery);
 
-            const char *pszLI = GDALGetMetadataItem( hBand, osItem, "LocationInfo");
+            const char *pszLI =
+                GDALGetMetadataItem(hBand, osItem, "LocationInfo");
 
-            if( pszLI != nullptr )
+            if (pszLI != nullptr)
             {
-                if( bAsXML )
+                if (bAsXML)
                     osXML += pszLI;
-                else if( !bQuiet )
-                    printf( "    %s\n", pszLI );
-                else if( bLIFOnly )
+                else if (!bQuiet)
+                    printf("    %s\n", pszLI);
+                else if (bLIFOnly)
                 {
                     /* Extract all files, if any. */
 
-                    CPLXMLNode *psRoot = CPLParseXMLString( pszLI );
+                    CPLXMLNode *psRoot = CPLParseXMLString(pszLI);
 
-                    if( psRoot != nullptr
-                        && psRoot->psChild != nullptr
-                        && psRoot->eType == CXT_Element
-                        && EQUAL(psRoot->pszValue,"LocationInfo") )
+                    if (psRoot != nullptr && psRoot->psChild != nullptr &&
+                        psRoot->eType == CXT_Element &&
+                        EQUAL(psRoot->pszValue, "LocationInfo"))
                     {
-                        for( CPLXMLNode *psNode = psRoot->psChild;
-                             psNode != nullptr;
-                             psNode = psNode->psNext )
+                        for (CPLXMLNode *psNode = psRoot->psChild;
+                             psNode != nullptr; psNode = psNode->psNext)
                         {
-                            if( psNode->eType == CXT_Element
-                                && EQUAL(psNode->pszValue,"File")
-                                && psNode->psChild != nullptr )
+                            if (psNode->eType == CXT_Element &&
+                                EQUAL(psNode->pszValue, "File") &&
+                                psNode->psChild != nullptr)
                             {
-                                char* pszUnescaped = CPLUnescapeString(
-                                    psNode->psChild->pszValue, nullptr, CPLES_XML);
-                                printf( "%s\n", pszUnescaped );
+                                char *pszUnescaped =
+                                    CPLUnescapeString(psNode->psChild->pszValue,
+                                                      nullptr, CPLES_XML);
+                                printf("%s\n", pszUnescaped);
                                 CPLFree(pszUnescaped);
                             }
                         }
                     }
-                    CPLDestroyXMLNode( psRoot );
+                    CPLDestroyXMLNode(psRoot);
                 }
             }
 
-    /* -------------------------------------------------------------------- */
-    /*      Report the pixel value of this band.                            */
-    /* -------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------
+             */
+            /*      Report the pixel value of this band. */
+            /* --------------------------------------------------------------------
+             */
             double adfPixel[2];
 
-            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
-                              adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None )
+            if (GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
+                             adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None)
             {
                 CPLString osValue;
 
-                if( GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) ) )
-                    osValue.Printf( "%.15g+%.15gi", adfPixel[0], adfPixel[1] );
+                if (GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)))
+                    osValue.Printf("%.15g+%.15gi", adfPixel[0], adfPixel[1]);
                 else
-                    osValue.Printf( "%.15g", adfPixel[0] );
+                    osValue.Printf("%.15g", adfPixel[0]);
 
-                if( bAsXML )
+                if (bAsXML)
                 {
                     osXML += "<Value>";
                     osXML += osValue;
                     osXML += "</Value>";
                 }
-                else if( !bQuiet )
-                    printf( "    Value: %s\n", osValue.c_str() );
-                else if( bValOnly )
-                    printf( "%s\n", osValue.c_str() );
+                else if (!bQuiet)
+                    printf("    Value: %s\n", osValue.c_str());
+                else if (bValOnly)
+                    printf("%s\n", osValue.c_str());
 
                 // Report unscaled if we have scale/offset values.
                 int bSuccess;
 
-                double dfOffset = GDALGetRasterOffset( hBand, &bSuccess );
+                double dfOffset = GDALGetRasterOffset(hBand, &bSuccess);
                 // TODO: Should we turn on checking of bSuccess?
                 // Alternatively, delete these checks and put a comment as to
                 // why checking bSuccess does not matter.
@@ -462,7 +471,7 @@ MAIN_START(argc, argv)
                               "Unable to get raster offset." );
                 }
 #endif
-                double dfScale  = GDALGetRasterScale( hBand, &bSuccess );
+                double dfScale = GDALGetRasterScale(hBand, &bSuccess);
 #if 0
                 if (bSuccess == FALSE)
                 {
@@ -470,69 +479,71 @@ MAIN_START(argc, argv)
                               "Unable to get raster scale." );
                 }
 #endif
-                if( dfOffset != 0.0 || dfScale != 1.0 )
+                if (dfOffset != 0.0 || dfScale != 1.0)
                 {
                     adfPixel[0] = adfPixel[0] * dfScale + dfOffset;
                     adfPixel[1] = adfPixel[1] * dfScale + dfOffset;
 
-                    if( GDALDataTypeIsComplex( GDALGetRasterDataType( hBand ) ) )
-                        osValue.Printf( "%.15g+%.15gi", adfPixel[0], adfPixel[1] );
+                    if (GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)))
+                        osValue.Printf("%.15g+%.15gi", adfPixel[0],
+                                       adfPixel[1]);
                     else
-                        osValue.Printf( "%.15g", adfPixel[0] );
+                        osValue.Printf("%.15g", adfPixel[0]);
 
-                    if( bAsXML )
+                    if (bAsXML)
                     {
                         osXML += "<DescaledValue>";
                         osXML += osValue;
                         osXML += "</DescaledValue>";
                     }
-                    else if( !bQuiet )
-                        printf( "    Descaled Value: %s\n", osValue.c_str() );
+                    else if (!bQuiet)
+                        printf("    Descaled Value: %s\n", osValue.c_str());
                 }
             }
 
-            if( bAsXML )
+            if (bAsXML)
                 osXML += "</BandReport>";
         }
 
         osXML += "</Report>";
 
-        if( (pszLocX != nullptr && pszLocY != nullptr)  ||
-            (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2) )
+        if ((pszLocX != nullptr && pszLocY != nullptr) ||
+            (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2))
         {
             inputAvailable = 0;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Finalize xml report and print.                                  */
-/* -------------------------------------------------------------------- */
-    if( bAsXML )
+    /* -------------------------------------------------------------------- */
+    /*      Finalize xml report and print.                                  */
+    /* -------------------------------------------------------------------- */
+    if (bAsXML)
     {
-        CPLXMLNode *psRoot = CPLParseXMLString( osXML );
-        char *pszFormattedXML = CPLSerializeXMLTree( psRoot );
-        CPLDestroyXMLNode( psRoot );
+        CPLXMLNode *psRoot = CPLParseXMLString(osXML);
+        char *pszFormattedXML = CPLSerializeXMLTree(psRoot);
+        CPLDestroyXMLNode(psRoot);
 
-        printf( "%s", pszFormattedXML );
-        CPLFree( pszFormattedXML );
+        printf("%s", pszFormattedXML);
+        CPLFree(pszFormattedXML);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    if (hCT) {
-        OSRDestroySpatialReference( hSrcSRS );
-        OCTDestroyCoordinateTransformation( hCT );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    if (hCT)
+    {
+        OSRDestroySpatialReference(hSrcSRS);
+        OCTDestroyCoordinateTransformation(hCT);
     }
 
     GDALClose(hSrcDS);
 
-    GDALDumpOpenDatasets( stderr );
+    GDALDumpOpenDatasets(stderr);
     GDALDestroyDriverManager();
     CPLFree(pszSourceSRS);
     CSLDestroy(papszOpenOptions);
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
 
     return 0;
 }
