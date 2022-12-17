@@ -45,7 +45,7 @@
 #include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 
 #include <algorithm>
@@ -78,32 +78,32 @@ typedef enum
 
 class AAIGRasterBand;
 
-class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
+class AAIGDataset CPL_NON_FINAL : public GDALPamDataset
 {
     friend class AAIGRasterBand;
 
-    VSILFILE   *fp;
+    VSILFILE *fp;
 
-    char        **papszPrj;
-    CPLString   osPrjFilename;
+    char **papszPrj;
+    CPLString osPrjFilename;
     OGRSpatialReference m_oSRS{};
 
     unsigned char achReadBuf[256];
-    GUIntBig    nBufferOffset;
-    int         nOffsetInBuffer;
+    GUIntBig nBufferOffset;
+    int nOffsetInBuffer;
 
-    char        Getc();
-    GUIntBig    Tell() const;
-    int         Seek( GUIntBig nOffset );
+    char Getc();
+    GUIntBig Tell() const;
+    int Seek(GUIntBig nOffset);
 
   protected:
     GDALDataType eDataType;
-    double      adfGeoTransform[6];
-    bool        bNoDataSet;
-    double      dfNoDataValue;
-    CPLString   osUnits{};
+    double adfGeoTransform[6];
+    bool bNoDataSet;
+    double dfNoDataValue;
+    CPLString osUnits{};
 
-    virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
+    virtual int ParseHeader(const char *pszHeader, const char *pszDataType);
 
   public:
     AAIGDataset();
@@ -111,21 +111,21 @@ class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 
     char **GetFileList(void) override;
 
-    static GDALDataset *CommonOpen( GDALOpenInfo * poOpenInfo,
-                                    GridFormat eFormat );
+    static GDALDataset *CommonOpen(GDALOpenInfo *poOpenInfo,
+                                   GridFormat eFormat);
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-    static CPLErr       Delete( const char *pszFilename );
-    static CPLErr       Remove( const char *pszFilename, int bRepError );
-    static GDALDataset *CreateCopy( const char * pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char ** papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void * pProgressData );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
+    static CPLErr Delete(const char *pszFilename);
+    static CPLErr Remove(const char *pszFilename, int bRepError);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 
-    CPLErr GetGeoTransform( double * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -134,16 +134,20 @@ class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSASCIIDataset final: public AAIGDataset
+class GRASSASCIIDataset final : public AAIGDataset
 {
-    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+    int ParseHeader(const char *pszHeader, const char *pszDataType) override;
 
   public:
-    GRASSASCIIDataset() : AAIGDataset() {}
-    ~GRASSASCIIDataset() override {}
+    GRASSASCIIDataset() : AAIGDataset()
+    {
+    }
+    ~GRASSASCIIDataset() override
+    {
+    }
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -152,15 +156,17 @@ class GRASSASCIIDataset final: public AAIGDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ISGDataset final: public AAIGDataset
+class ISGDataset final : public AAIGDataset
 {
-    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+    int ParseHeader(const char *pszHeader, const char *pszDataType) override;
 
   public:
-    ISGDataset() : AAIGDataset() {}
+    ISGDataset() : AAIGDataset()
+    {
+    }
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -169,19 +175,19 @@ class ISGDataset final: public AAIGDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AAIGRasterBand final: public GDALPamRasterBand
+class AAIGRasterBand final : public GDALPamRasterBand
 {
     friend class AAIGDataset;
 
-    GUIntBig      *panLineOffset;
+    GUIntBig *panLineOffset;
 
   public:
-    AAIGRasterBand( AAIGDataset *, int );
+    AAIGRasterBand(AAIGDataset *, int);
     ~AAIGRasterBand() override;
 
-    double GetNoDataValue( int * ) override;
-    CPLErr SetNoDataValue( double ) override;
-    CPLErr IReadBlock( int, int, void * ) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
 #endif  // GDAL_FRMTS_AAIGRID_AAIGRIDDATASET_H_INCLUDED
