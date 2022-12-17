@@ -34,9 +34,12 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4244 )  /*  warning 4244: 'initializing': conversion from 'int32_t' to 'int16_t', possible loss of data */
-#pragma warning( disable : 4458 )  /*  warning 4458: declaration of 'type_id' hides class member */
+#pragma warning(push)
+#pragma warning(                                                               \
+    disable : 4244) /*  warning 4244: 'initializing': conversion from          \
+                       'int32_t' to 'int16_t', possible loss of data */
+#pragma warning(disable : 4458) /*  warning 4458: declaration of 'type_id'     \
+                                   hides class member */
 #endif
 
 #include "arrow/array.h"
@@ -52,7 +55,7 @@
 #include "arrow/util/key_value_metadata.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif

@@ -35,141 +35,151 @@
 
 #include <xercesc/sax2/Attributes.hpp>
 
-
 //
 // constants
 //
-static const char* const ILI2_DATASECTION = "DATASECTION";
+static const char *const ILI2_DATASECTION = "DATASECTION";
 
 //
 // ILI2Handler
 //
-ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
-    m_poReader(poReader),
-    level(0),
-    dom_doc(nullptr),
-    dom_elem(nullptr),
-    m_nEntityCounter(0)
+ILI2Handler::ILI2Handler(ILI2Reader *poReader)
+    : m_poReader(poReader), level(0), dom_doc(nullptr), dom_elem(nullptr),
+      m_nEntityCounter(0)
 {
-  XMLCh *tmpCh = XMLString::transcode("CORE");
-  DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
-  XMLString::release(&tmpCh);
+    XMLCh *tmpCh = XMLString::transcode("CORE");
+    DOMImplementation *impl =
+        DOMImplementationRegistry::getDOMImplementation(tmpCh);
+    XMLString::release(&tmpCh);
 
-  // the root element
-  tmpCh = XMLString::transcode("ROOT");
-  dom_doc = impl->createDocument(nullptr,tmpCh,nullptr);
-  XMLString::release(&tmpCh);
+    // the root element
+    tmpCh = XMLString::transcode("ROOT");
+    dom_doc = impl->createDocument(nullptr, tmpCh, nullptr);
+    XMLString::release(&tmpCh);
 
-  // the first element is root
-  dom_elem = dom_doc->getDocumentElement();
+    // the first element is root
+    dom_elem = dom_doc->getDocumentElement();
 }
 
-ILI2Handler::~ILI2Handler() {
-  // remove all elements
-  DOMNode *tmpNode = dom_doc->getFirstChild();
-  while (tmpNode != nullptr) {
-    /*tmpNode = */dom_doc->removeChild(tmpNode);
-    tmpNode = dom_doc->getFirstChild();
-  }
-
-  // release the dom tree
-  dom_doc->release();
-}
-
-void ILI2Handler::startDocument() {
-  // the level counter starts with DATASECTION
-  level = -1;
-  m_nEntityCounter = 0;
-}
-
-void ILI2Handler::endDocument() {
-  // nothing to do
-}
-
-void ILI2Handler::startElement(
-    const XMLCh* const /* uri */,
-    const XMLCh* const /* localname */,
-    const XMLCh* const qname,
-    const Attributes& attrs
-    ) {
-  // start to add the layers, features with the DATASECTION
-  char *tmpC = nullptr;
-  m_nEntityCounter = 0;
-  if ((level >= 0) || (cmpStr(ILI2_DATASECTION,
-                              tmpC = XMLString::transcode(qname)) == 0)) {
-    level++;
-
-    if (level >= 2) {
-
-      // create the dom tree
-      DOMElement *elem = reinterpret_cast<DOMElement *>(
-          dom_doc->createElement(qname) );
-
-      // add all attributes
-      unsigned int len = static_cast<unsigned int>(attrs.getLength());
-      for (unsigned int index = 0; index < len; index++)
-        elem->setAttribute(attrs.getQName(index), attrs.getValue(index));
-      dom_elem->appendChild(elem);
-      dom_elem = elem;
+ILI2Handler::~ILI2Handler()
+{
+    // remove all elements
+    DOMNode *tmpNode = dom_doc->getFirstChild();
+    while (tmpNode != nullptr)
+    {
+        /*tmpNode = */ dom_doc->removeChild(tmpNode);
+        tmpNode = dom_doc->getFirstChild();
     }
-  }
-  XMLString::release(&tmpC);
+
+    // release the dom tree
+    dom_doc->release();
 }
 
-void ILI2Handler::endElement(
-    CPL_UNUSED const XMLCh* const uri,
-    CPL_UNUSED const XMLCh* const localname,
-    CPL_UNUSED const XMLCh* const qname
-    ) {
-  m_nEntityCounter = 0;
-  if (level >= 0) {
-    if (level == 2) {
+void ILI2Handler::startDocument()
+{
+    // the level counter starts with DATASECTION
+    level = -1;
+    m_nEntityCounter = 0;
+}
 
-      // go to the parent element and parse the child element
-      DOMElement* childElem = dom_elem;
-      dom_elem = (DOMElement*)dom_elem->getParentNode();
+void ILI2Handler::endDocument()
+{
+    // nothing to do
+}
 
-      m_poReader->AddFeature(childElem);
+void ILI2Handler::startElement(const XMLCh *const /* uri */,
+                               const XMLCh *const /* localname */,
+                               const XMLCh *const qname,
+                               const Attributes &attrs)
+{
+    // start to add the layers, features with the DATASECTION
+    char *tmpC = nullptr;
+    m_nEntityCounter = 0;
+    if ((level >= 0) ||
+        (cmpStr(ILI2_DATASECTION, tmpC = XMLString::transcode(qname)) == 0))
+    {
+        level++;
 
-      // remove the child element
-      /*childElem = (DOMElement*)*/dom_elem->removeChild(childElem);
-    } else if (level >= 3) {
+        if (level >= 2)
+        {
 
-      // go to the parent element
-      dom_elem = reinterpret_cast<DOMElement *>( dom_elem->getParentNode() );
+            // create the dom tree
+            DOMElement *elem =
+                reinterpret_cast<DOMElement *>(dom_doc->createElement(qname));
+
+            // add all attributes
+            unsigned int len = static_cast<unsigned int>(attrs.getLength());
+            for (unsigned int index = 0; index < len; index++)
+                elem->setAttribute(attrs.getQName(index),
+                                   attrs.getValue(index));
+            dom_elem->appendChild(elem);
+            dom_elem = elem;
+        }
     }
-    level--;
-  }
+    XMLString::release(&tmpC);
+}
+
+void ILI2Handler::endElement(CPL_UNUSED const XMLCh *const uri,
+                             CPL_UNUSED const XMLCh *const localname,
+                             CPL_UNUSED const XMLCh *const qname)
+{
+    m_nEntityCounter = 0;
+    if (level >= 0)
+    {
+        if (level == 2)
+        {
+
+            // go to the parent element and parse the child element
+            DOMElement *childElem = dom_elem;
+            dom_elem = (DOMElement *)dom_elem->getParentNode();
+
+            m_poReader->AddFeature(childElem);
+
+            // remove the child element
+            /*childElem = (DOMElement*)*/ dom_elem->removeChild(childElem);
+        }
+        else if (level >= 3)
+        {
+
+            // go to the parent element
+            dom_elem =
+                reinterpret_cast<DOMElement *>(dom_elem->getParentNode());
+        }
+        level--;
+    }
 }
 
 /************************************************************************/
 /*                     characters() (xerces 3 version)                  */
 /************************************************************************/
 
-void ILI2Handler::characters( const XMLCh *const chars,
-                              CPL_UNUSED const XMLSize_t length ) {
-  // add the text element
-  if (level >= 3) {
-    char *tmpC = XMLString::transcode(chars);
+void ILI2Handler::characters(const XMLCh *const chars,
+                             CPL_UNUSED const XMLSize_t length)
+{
+    // add the text element
+    if (level >= 3)
+    {
+        char *tmpC = XMLString::transcode(chars);
 
-    // only add the text if it is not empty
-    if (trim(tmpC) != "")
-      dom_elem->appendChild(dom_doc->createTextNode(chars));
+        // only add the text if it is not empty
+        if (trim(tmpC) != "")
+            dom_elem->appendChild(dom_doc->createTextNode(chars));
 
-    XMLString::release(&tmpC);
-  }
+        XMLString::release(&tmpC);
+    }
 }
 
-void ILI2Handler::startEntity (CPL_UNUSED const XMLCh *const name)
+void ILI2Handler::startEntity(CPL_UNUSED const XMLCh *const name)
 {
     m_nEntityCounter++;
     if (m_nEntityCounter > 1000)
     {
-        throw SAXNotSupportedException (
-            "File probably corrupted (million laugh pattern)" );
+        throw SAXNotSupportedException(
+            "File probably corrupted (million laugh pattern)");
     }
 }
 
-void ILI2Handler::fatalError(const SAXParseException&) {
-  // FIXME Error handling
+void ILI2Handler::fatalError(const SAXParseException &)
+{
+    // FIXME Error handling
 }

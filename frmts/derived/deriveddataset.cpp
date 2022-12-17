@@ -29,25 +29,26 @@
 #include "gdal_pam.h"
 #include "derivedlist.h"
 
-
-class DerivedDataset final: public VRTDataset
+class DerivedDataset final : public VRTDataset
 {
-    public:
-        DerivedDataset( int nXSize, int nYSize );
-       ~DerivedDataset() {}
+  public:
+    DerivedDataset(int nXSize, int nYSize);
+    ~DerivedDataset()
+    {
+    }
 
-        static int Identify( GDALOpenInfo * );
-        static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
-DerivedDataset::DerivedDataset(int nXSize, int nYSize) :
-    VRTDataset(nXSize, nYSize)
+DerivedDataset::DerivedDataset(int nXSize, int nYSize)
+    : VRTDataset(nXSize, nYSize)
 {
     poDriver = nullptr;
     SetWritable(FALSE);
 }
 
-int DerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
+int DerivedDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     /* Try to open original dataset */
     CPLString filename(poOpenInfo->pszFilename);
@@ -64,7 +65,7 @@ int DerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
     return TRUE;
 }
 
-GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *DerivedDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     /* Try to open original dataset */
     CPLString filename(poOpenInfo->pszFilename);
@@ -80,50 +81,55 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* Next, we need to now which derived dataset to compute */
-    const size_t alg_pos = filename.find(":",nPrefixLen+1);
+    const size_t alg_pos = filename.find(":", nPrefixLen + 1);
     if (alg_pos == std::string::npos)
     {
         /* Unable to Open if we do not find the name of the derived dataset */
         return nullptr;
     }
 
-    CPLString odDerivedName = filename.substr(nPrefixLen,alg_pos-nPrefixLen);
+    CPLString odDerivedName = filename.substr(nPrefixLen, alg_pos - nPrefixLen);
 
-    CPLDebug("DerivedDataset::Open","Derived dataset requested: %s",odDerivedName.c_str());
+    CPLDebug("DerivedDataset::Open", "Derived dataset requested: %s",
+             odDerivedName.c_str());
 
     CPLString pixelFunctionName = "";
     bool datasetFound = false;
 
     unsigned int nbSupportedDerivedDS(0);
-    GDALDataType type  = GDT_Float64;
+    GDALDataType type = GDT_Float64;
 
-    const DerivedDatasetDescription * poDDSDesc = GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
+    const DerivedDatasetDescription *poDDSDesc =
+        GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
 
-    for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
+    for (unsigned int derivedId = 0; derivedId < nbSupportedDerivedDS;
+         ++derivedId)
     {
-        if(odDerivedName == poDDSDesc[derivedId].pszDatasetName)
+        if (odDerivedName == poDDSDesc[derivedId].pszDatasetName)
         {
             datasetFound = true;
             pixelFunctionName = poDDSDesc[derivedId].pszPixelFunction;
-            type = GDALGetDataTypeByName(poDDSDesc[derivedId].pszOutputPixelType);
+            type =
+                GDALGetDataTypeByName(poDDSDesc[derivedId].pszOutputPixelType);
         }
     }
 
-    if(!datasetFound)
+    if (!datasetFound)
     {
         return nullptr;
     }
 
-    CPLString odFilename = filename.substr(alg_pos+1,filename.size() - alg_pos);
+    CPLString odFilename =
+        filename.substr(alg_pos + 1, filename.size() - alg_pos);
 
-    GDALDataset * poTmpDS = (GDALDataset*)GDALOpen(odFilename, GA_ReadOnly);
+    GDALDataset *poTmpDS = (GDALDataset *)GDALOpen(odFilename, GA_ReadOnly);
 
-    if( poTmpDS == nullptr )
+    if (poTmpDS == nullptr)
         return nullptr;
 
     int nbBands = poTmpDS->GetRasterCount();
 
-    if(nbBands == 0)
+    if (nbBands == 0)
     {
         GDALClose(poTmpDS);
         return nullptr;
@@ -132,13 +138,13 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     int nRows = poTmpDS->GetRasterYSize();
     int nCols = poTmpDS->GetRasterXSize();
 
-    DerivedDataset * poDS = new DerivedDataset(nCols,nRows);
+    DerivedDataset *poDS = new DerivedDataset(nCols, nRows);
 
     // Transfer metadata
     poDS->SetMetadata(poTmpDS->GetMetadata());
 
-    char** papszRPC = poTmpDS->GetMetadata("RPC");
-    if( papszRPC )
+    char **papszRPC = poTmpDS->GetMetadata("RPC");
+    if (papszRPC)
     {
         poDS->SetMetadata(papszRPC, "RPC");
     }
@@ -150,40 +156,43 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     double padfTransform[6];
     CPLErr transformOk = poTmpDS->GetGeoTransform(padfTransform);
 
-    if(transformOk == CE_None)
+    if (transformOk == CE_None)
     {
         poDS->SetGeoTransform(padfTransform);
     }
 
     // Transfer GCPs
-    const char * gcpProjection = poTmpDS->GetGCPProjection();
+    const char *gcpProjection = poTmpDS->GetGCPProjection();
     int nbGcps = poTmpDS->GetGCPCount();
-    poDS->SetGCPs(nbGcps,poTmpDS->GetGCPs(),gcpProjection);
+    poDS->SetGCPs(nbGcps, poTmpDS->GetGCPs(), gcpProjection);
 
     // Map bands
-    for(int nBand = 1; nBand <= nbBands; ++nBand)
+    for (int nBand = 1; nBand <= nbBands; ++nBand)
     {
         VRTDerivedRasterBand *poBand =
-            new VRTDerivedRasterBand(poDS,nBand,type,nCols,nRows);
-        poDS->SetBand(nBand,poBand);
+            new VRTDerivedRasterBand(poDS, nBand, type, nCols, nRows);
+        poDS->SetBand(nBand, poBand);
 
         poBand->SetPixelFunctionName(pixelFunctionName);
-        poBand->SetSourceTransferType(poTmpDS->GetRasterBand(nBand)->GetRasterDataType());
+        poBand->SetSourceTransferType(
+            poTmpDS->GetRasterBand(nBand)->GetRasterDataType());
 
-        poBand->AddComplexSource(odFilename,nBand,0,0,nCols,nRows,0,0,nCols,nRows);
+        poBand->AddComplexSource(odFilename, nBand, 0, 0, nCols, nRows, 0, 0,
+                                 nCols, nRows);
     }
 
     GDALClose(poTmpDS);
 
     // If dataset is a real file, initialize overview manager
-    VSIStatBufL  sStat;
-    if( VSIStatL( odFilename, &sStat ) == 0 )
+    VSIStatBufL sStat;
+    if (VSIStatL(odFilename, &sStat) == 0)
     {
         CPLString path = CPLGetPath(odFilename);
-        CPLString ovrFileName = "DERIVED_DATASET_"+odDerivedName+"_"+CPLGetFilename(odFilename);
-        CPLString ovrFilePath = CPLFormFilename(path,ovrFileName,nullptr);
+        CPLString ovrFileName = "DERIVED_DATASET_" + odDerivedName + "_" +
+                                CPLGetFilename(odFilename);
+        CPLString ovrFilePath = CPLFormFilename(path, ovrFileName, nullptr);
 
-        poDS->oOvManager.Initialize( poDS, ovrFilePath );
+        poDS->oOvManager.Initialize(poDS, ovrFilePath);
     }
 
     return poDS;
@@ -191,21 +200,23 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void GDALRegister_Derived()
 {
-    if( GDALGetDriverByName( "DERIVED" ) != nullptr )
+    if (GDALGetDriverByName("DERIVED") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "DERIVED" );
+    poDriver->SetDescription("DERIVED");
 #ifdef GDAL_DCAP_RASTER
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
 #endif
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Derived datasets using VRT pixel functions" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/derived.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Derived datasets using VRT pixel functions");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "drivers/raster/derived.html");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "NO");
 
     poDriver->pfnOpen = DerivedDataset::Open;
     poDriver->pfnIdentify = DerivedDataset::Identify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

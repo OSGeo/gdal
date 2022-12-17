@@ -36,8 +36,8 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4458 )
+#pragma warning(push)
+#pragma warning(disable : 4458)
 #endif
 
 #include "jp2_local.h"
@@ -68,13 +68,13 @@
 // #define USE_JPIP
 
 #ifdef USE_JPIP
-#  include "kdu_client.h"
+#include "kdu_client.h"
 #else
-#  define kdu_client void
+#define kdu_client void
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif  // JP2KAK_HEADERS_H

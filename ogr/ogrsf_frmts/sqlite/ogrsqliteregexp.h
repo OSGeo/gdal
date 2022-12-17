@@ -32,7 +32,7 @@
 
 #include "ogr_sqlite.h"
 
-static void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB);
-static void OGRSQLiteFreeRegExpCache(void* hRegExpCache);
+static void *OGRSQLiteRegisterRegExpFunction(sqlite3 *hDB);
+static void OGRSQLiteFreeRegExpCache(void *hRegExpCache);
 
-#endif // OGR_SQLITE_REGEXP_INCLUDED
+#endif  // OGR_SQLITE_REGEXP_INCLUDED

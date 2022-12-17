@@ -13,39 +13,39 @@
 namespace
 {
 
-std::ostream& operator<<(std::ostream& os, const tut::test_result& tr)
+std::ostream &operator<<(std::ostream &os, const tut::test_result &tr)
 {
-    switch(tr.result)
+    switch (tr.result)
     {
-    case tut::test_result::ok:
-        os << '.';
-        break;
-    case tut::test_result::fail:
-        os << '[' << tr.test << "=F]";
-        break;
-    case tut::test_result::ex_ctor:
-        os << '[' << tr.test << "=C]";
-        break;
-    case tut::test_result::ex:
-        os << '[' << tr.test << "=X]";
-        break;
-    case tut::test_result::warn:
-        os << '[' << tr.test << "=W]";
-        break;
-    case tut::test_result::term:
-        os << '[' << tr.test << "=T]";
-        break;
-    case tut::test_result::rethrown:
-        os << '[' << tr.test << "=P]";
-        break;
-    case tut::test_result::dummy:
-        assert(!"Should never be called");
+        case tut::test_result::ok:
+            os << '.';
+            break;
+        case tut::test_result::fail:
+            os << '[' << tr.test << "=F]";
+            break;
+        case tut::test_result::ex_ctor:
+            os << '[' << tr.test << "=C]";
+            break;
+        case tut::test_result::ex:
+            os << '[' << tr.test << "=X]";
+            break;
+        case tut::test_result::warn:
+            os << '[' << tr.test << "=W]";
+            break;
+        case tut::test_result::term:
+            os << '[' << tr.test << "=T]";
+            break;
+        case tut::test_result::rethrown:
+            os << '[' << tr.test << "=P]";
+            break;
+        case tut::test_result::dummy:
+            assert(!"Should never be called");
     }
 
     return os;
 }
 
-} // end of namespace
+}  // end of namespace
 
 namespace tut
 {
@@ -58,24 +58,21 @@ class console_reporter : public tut::callback
     std::string current_group;
     typedef std::vector<tut::test_result> not_passed_list;
     not_passed_list not_passed;
-    std::ostream& os;
+    std::ostream &os;
 
-public:
-
+  public:
     int ok_count;
     int exceptions_count;
     int failures_count;
     int terminations_count;
     int warnings_count;
 
-    console_reporter()
-        : os(std::cout)
+    console_reporter() : os(std::cout)
     {
         init();
     }
 
-    console_reporter(std::ostream& out)
-        : os(out)
+    console_reporter(std::ostream &out) : os(out)
     {
         init();
     }
@@ -85,7 +82,7 @@ public:
         init();
     }
 
-    void test_completed(const tut::test_result& tr) CPL_OVERRIDE
+    void test_completed(const tut::test_result &tr) CPL_OVERRIDE
     {
         if (tr.group != current_group)
         {
@@ -96,7 +93,8 @@ public:
         os << tr << std::flush;
 
         // update global statistics
-        switch (tr.result) {
+        switch (tr.result)
+        {
             case test_result::ok:
                 ok_count++;
                 break;
@@ -116,7 +114,7 @@ public:
                 break;
             case tut::test_result::dummy:
                 assert(!"Should never be called");
-        } // switch
+        }  // switch
 
         if (tr.result != tut::test_result::ok)
         {
@@ -137,44 +135,47 @@ public:
 
                 os << std::endl;
 
-                os << "---> " << "group: " << tr.group
-                << ", test: test<" << tr.test << ">"
-                << (!tr.name.empty() ? (std::string(" : ") + tr.name) : std::string())
-                << std::endl;
+                os << "---> "
+                   << "group: " << tr.group << ", test: test<" << tr.test << ">"
+                   << (!tr.name.empty() ? (std::string(" : ") + tr.name)
+                                        : std::string())
+                   << std::endl;
 
 #if defined(TUT_USE_POSIX)
-                if(tr.pid != getpid())
+                if (tr.pid != getpid())
                 {
                     os << "     child pid: " << tr.pid << std::endl;
                 }
 #endif
                 os << "     problem: ";
-                switch(tr.result)
+                switch (tr.result)
                 {
-                case test_result::rethrown:
-                    os << "assertion failed in child" << std::endl;
-                    break;
-                case test_result::fail:
-                    os << "assertion failed" << std::endl;
-                    break;
-                case test_result::ex:
-                case test_result::ex_ctor:
-                    os << "unexpected exception" << std::endl;
-                    if( tr.exception_typeid != "" )
-                    {
-                        os << "     exception typeid: "
-                        << tr.exception_typeid << std::endl;
-                    }
-                    break;
-                case test_result::term:
-                    os << "would be terminated" << std::endl;
-                    break;
-                case test_result::warn:
-                    os << "test passed, but cleanup code (destructor) raised"
-                        " an exception" << std::endl;
-                    break;
-                default:
-                    break;
+                    case test_result::rethrown:
+                        os << "assertion failed in child" << std::endl;
+                        break;
+                    case test_result::fail:
+                        os << "assertion failed" << std::endl;
+                        break;
+                    case test_result::ex:
+                    case test_result::ex_ctor:
+                        os << "unexpected exception" << std::endl;
+                        if (tr.exception_typeid != "")
+                        {
+                            os << "     exception typeid: "
+                               << tr.exception_typeid << std::endl;
+                        }
+                        break;
+                    case test_result::term:
+                        os << "would be terminated" << std::endl;
+                        break;
+                    case test_result::warn:
+                        os << "test passed, but cleanup code (destructor) "
+                              "raised"
+                              " an exception"
+                           << std::endl;
+                        break;
+                    default:
+                        break;
                 }
 
                 if (!tr.message.empty())
@@ -182,12 +183,12 @@ public:
                     if (tr.result == test_result::fail)
                     {
                         os << "     failed assertion: \"" << tr.message << "\""
-                            << std::endl;
+                           << std::endl;
                     }
                     else
                     {
                         os << "     message: \"" << tr.message << "\""
-                            << std::endl;
+                           << std::endl;
                     }
                 }
 
@@ -223,8 +224,7 @@ public:
         return not_passed.empty();
     }
 
-private:
-
+  private:
     void init()
     {
         ok_count = 0;
@@ -236,6 +236,6 @@ private:
     }
 };
 
-}
+}  // namespace tut
 
 #endif

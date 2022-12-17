@@ -32,8 +32,9 @@
 /*                         OGRArrowDataset()                            */
 /************************************************************************/
 
-inline OGRArrowDataset::OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool):
-    m_poMemoryPool(poMemoryPool)
+inline OGRArrowDataset::OGRArrowDataset(
+    const std::shared_ptr<arrow::MemoryPool> &poMemoryPool)
+    : m_poMemoryPool(poMemoryPool)
 {
 }
 
@@ -41,7 +42,7 @@ inline OGRArrowDataset::OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>
 /*                            SetLayer()                                */
 /************************************************************************/
 
-inline void OGRArrowDataset::SetLayer(std::unique_ptr<OGRArrowLayer>&& poLayer)
+inline void OGRArrowDataset::SetLayer(std::unique_ptr<OGRArrowLayer> &&poLayer)
 {
     m_poLayer = std::move(poLayer);
 }
@@ -50,7 +51,8 @@ inline void OGRArrowDataset::SetLayer(std::unique_ptr<OGRArrowLayer>&& poLayer)
 /*                          RegisterDomainName()                        */
 /************************************************************************/
 
-inline void OGRArrowDataset::RegisterDomainName(const std::string& osDomainName, int iFieldIndex)
+inline void OGRArrowDataset::RegisterDomainName(const std::string &osDomainName,
+                                                int iFieldIndex)
 {
     m_aosDomainNames.push_back(osDomainName);
     m_oMapDomainNameToCol[osDomainName] = iFieldIndex;
@@ -60,7 +62,8 @@ inline void OGRArrowDataset::RegisterDomainName(const std::string& osDomainName,
 /*                          GetFieldDomainNames()                       */
 /************************************************************************/
 
-inline std::vector<std::string> OGRArrowDataset::GetFieldDomainNames(CSLConstList) const
+inline std::vector<std::string>
+OGRArrowDataset::GetFieldDomainNames(CSLConstList) const
 {
     return m_aosDomainNames;
 }
@@ -69,19 +72,21 @@ inline std::vector<std::string> OGRArrowDataset::GetFieldDomainNames(CSLConstLis
 /*                          GetFieldDomain()                            */
 /************************************************************************/
 
-inline const OGRFieldDomain* OGRArrowDataset::GetFieldDomain(const std::string& name) const
+inline const OGRFieldDomain *
+OGRArrowDataset::GetFieldDomain(const std::string &name) const
 {
     {
         const auto iter = m_oMapFieldDomains.find(name);
-        if( iter != m_oMapFieldDomains.end() )
+        if (iter != m_oMapFieldDomains.end())
             return iter->second.get();
     }
     const auto iter = m_oMapDomainNameToCol.find(name);
-    if( iter == m_oMapDomainNameToCol.end() )
+    if (iter == m_oMapDomainNameToCol.end())
         return nullptr;
-    return m_oMapFieldDomains.insert(
-        std::pair<std::string, std::unique_ptr<OGRFieldDomain>>(
-            name, m_poLayer->BuildDomain(name, iter->second))).first->second.get();
+    return m_oMapFieldDomains
+        .insert(std::pair<std::string, std::unique_ptr<OGRFieldDomain>>(
+            name, m_poLayer->BuildDomain(name, iter->second)))
+        .first->second.get();
 }
 
 /************************************************************************/
@@ -97,9 +102,7 @@ inline int OGRArrowDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-inline OGRLayer* OGRArrowDataset::GetLayer(int idx)
+inline OGRLayer *OGRArrowDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
-
-

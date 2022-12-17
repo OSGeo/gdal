@@ -35,7 +35,6 @@
 #include <cstring>
 #include <algorithm>
 
-
 /************************************************************************/
 /*                      OGRGPSBabelDataSource()                         */
 /************************************************************************/
@@ -67,10 +66,10 @@ OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
 
 int OGRGPSBabelDataSource::CloseDependentDatasets()
 {
-    if( poGPXDS == nullptr )
+    if (poGPXDS == nullptr)
         return FALSE;
 
-    GDALClose( poGPXDS );
+    GDALClose(poGPXDS);
     poGPXDS = nullptr;
     return TRUE;
 }
@@ -79,16 +78,19 @@ int OGRGPSBabelDataSource::CloseDependentDatasets()
 /*                             GetArgv()                                */
 /************************************************************************/
 
-static char** GetArgv( int bExplicitFeatures, int bWaypoints, int bRoutes,
-                       int bTracks, const char* pszGPSBabelDriverName,
-                       const char* pszFilename )
+static char **GetArgv(int bExplicitFeatures, int bWaypoints, int bRoutes,
+                      int bTracks, const char *pszGPSBabelDriverName,
+                      const char *pszFilename)
 {
-    char** argv = CSLAddString(nullptr, "gpsbabel");
+    char **argv = CSLAddString(nullptr, "gpsbabel");
     if (bExplicitFeatures)
     {
-        if (bWaypoints) argv = CSLAddString(argv, "-w");
-        if (bRoutes) argv = CSLAddString(argv, "-r");
-        if (bTracks) argv = CSLAddString(argv, "-t");
+        if (bWaypoints)
+            argv = CSLAddString(argv, "-w");
+        if (bRoutes)
+            argv = CSLAddString(argv, "-r");
+        if (bTracks)
+            argv = CSLAddString(argv, "-t");
     }
     argv = CSLAddString(argv, "-i");
     argv = CSLAddString(argv, pszGPSBabelDriverName);
@@ -106,31 +108,28 @@ static char** GetArgv( int bExplicitFeatures, int bWaypoints, int bRoutes,
 /*                         IsSpecialFile()                              */
 /************************************************************************/
 
-bool OGRGPSBabelDataSource::IsSpecialFile( const char* pszFilename )
+bool OGRGPSBabelDataSource::IsSpecialFile(const char *pszFilename)
 {
-    return
-        STARTS_WITH(pszFilename, "/dev/") ||
-        STARTS_WITH(pszFilename, "usb:") ||
-        (STARTS_WITH(pszFilename, "COM")  && atoi(pszFilename + 3) > 0);
+    return STARTS_WITH(pszFilename, "/dev/") ||
+           STARTS_WITH(pszFilename, "usb:") ||
+           (STARTS_WITH(pszFilename, "COM") && atoi(pszFilename + 3) > 0);
 }
 
 /************************************************************************/
 /*                       IsValidDriverName()                            */
 /************************************************************************/
 
-bool
-OGRGPSBabelDataSource::IsValidDriverName( const char* pszGPSBabelDriverName )
+bool OGRGPSBabelDataSource::IsValidDriverName(const char *pszGPSBabelDriverName)
 {
-    for( int i = 0; pszGPSBabelDriverName[i] != '\0'; i++ )
+    for (int i = 0; pszGPSBabelDriverName[i] != '\0'; i++)
     {
         char ch = pszGPSBabelDriverName[i];
-        if( !((ch >= 'A' && ch <= 'Z') ||
-              (ch >= 'a' && ch <= 'z') ||
-              (ch >= '0' && ch <= '9') ||
-              ch == '_' || ch == '=' || ch == '.'  || ch == ',') )
+        if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+              (ch >= '0' && ch <= '9') || ch == '_' || ch == '=' || ch == '.' ||
+              ch == ','))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid GPSBabel driver name");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid GPSBabel driver name");
             return false;
         }
     }
@@ -141,9 +140,9 @@ OGRGPSBabelDataSource::IsValidDriverName( const char* pszGPSBabelDriverName )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
-                                 const char* pszGPSBabelDriverNameIn,
-                                 char** papszOpenOptionsIn )
+int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
+                                const char *pszGPSBabelDriverNameIn,
+                                char **papszOpenOptionsIn)
 
 {
     if (!STARTS_WITH_CI(pszDatasourceName, "GPSBABEL:"))
@@ -154,20 +153,20 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     }
     else
     {
-        if( CSLFetchNameValue(papszOpenOptionsIn, "FILENAME") )
-            pszFilename = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn,
-                                                      "FILENAME"));
+        if (CSLFetchNameValue(papszOpenOptionsIn, "FILENAME"))
+            pszFilename =
+                CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "FILENAME"));
 
-        if( CSLFetchNameValue(papszOpenOptionsIn, "GPSBABEL_DRIVER") )
+        if (CSLFetchNameValue(papszOpenOptionsIn, "GPSBABEL_DRIVER"))
         {
-            if( pszFilename == nullptr )
+            if (pszFilename == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing FILENAME");
                 return FALSE;
             }
 
-            pszGPSBabelDriverName
-                = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "DRIVER"));
+            pszGPSBabelDriverName =
+                CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "DRIVER"));
 
             /* A bit of validation to avoid command line injection */
             if (!IsValidDriverName(pszGPSBabelDriverName))
@@ -175,7 +174,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
         }
     }
 
-    pszName = CPLStrdup( pszDatasourceName );
+    pszName = CPLStrdup(pszDatasourceName);
 
     bool bExplicitFeatures = false;
     bool bWaypoints = true;
@@ -184,11 +183,11 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
 
     if (pszGPSBabelDriverName == nullptr)
     {
-        const char* pszSep = strchr(pszDatasourceName + 9, ':');
+        const char *pszSep = strchr(pszDatasourceName + 9, ':');
         if (pszSep == nullptr)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Wrong syntax. Expected GPSBabel:driver_name:file_name");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Wrong syntax. Expected GPSBabel:driver_name:file_name");
             return FALSE;
         }
 
@@ -200,28 +199,28 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
             return FALSE;
 
         /* Parse optional features= option */
-        if (STARTS_WITH_CI(pszSep+1, "features="))
+        if (STARTS_WITH_CI(pszSep + 1, "features="))
         {
-            const char* pszNextSep = strchr(pszSep+1, ':');
+            const char *pszNextSep = strchr(pszSep + 1, ':');
             if (pszNextSep == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Wrong syntax. Expected "
+                         "Wrong syntax. Expected "
                          "GPSBabel:driver_name[,options]*:["
                          "features=waypoints,tracks,routes:]file_name");
                 return FALSE;
             }
 
-            char* pszFeatures = CPLStrdup(pszSep+1+9);
+            char *pszFeatures = CPLStrdup(pszSep + 1 + 9);
             *strchr(pszFeatures, ':') = 0;
-            char** papszTokens = CSLTokenizeString(pszFeatures);
-            char** papszIter = papszTokens;
+            char **papszTokens = CSLTokenizeString(pszFeatures);
+            char **papszIter = papszTokens;
             bool bErr = false;
             bExplicitFeatures = true;
             bWaypoints = false;
             bTracks = false;
             bRoutes = false;
-            while(papszIter && *papszIter)
+            while (papszIter && *papszIter)
             {
                 if (EQUAL(*papszIter, "waypoints"))
                     bWaypoints = true;
@@ -231,8 +230,8 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
                     bRoutes = true;
                 else
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "Wrong value for 'features' options");
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong value for 'features' options");
                     bErr = true;
                 }
                 papszIter++;
@@ -246,11 +245,12 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
             pszSep = pszNextSep;
         }
 
-        if( pszFilename == nullptr )
-            pszFilename = CPLStrdup(pszSep+1);
+        if (pszFilename == nullptr)
+            pszFilename = CPLStrdup(pszSep + 1);
     }
 
-    const char* pszOptionUseTempFile = CPLGetConfigOption("USE_TEMPFILE", nullptr);
+    const char *pszOptionUseTempFile =
+        CPLGetConfigOption("USE_TEMPFILE", nullptr);
     if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(nullptr);
     else
@@ -260,9 +260,9 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     if (IsSpecialFile(pszFilename))
     {
         /* Special file : don't try to open it */
-        char** argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes,
-                              bTracks, pszGPSBabelDriverName, pszFilename);
-        VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
+        char **argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes, bTracks,
+                              pszGPSBabelDriverName, pszFilename);
+        VSILFILE *tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
         bRet = (CPLSpawn(argv, nullptr, tmpfp, TRUE) == 0);
         VSIFCloseL(tmpfp);
         tmpfp = nullptr;
@@ -271,18 +271,18 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
     }
     else
     {
-        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+        VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
         if (fp == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot open file %s", pszFilename);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open file %s",
+                     pszFilename);
             return FALSE;
         }
 
-        char** argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes,
-                              bTracks, pszGPSBabelDriverName, "-");
+        char **argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes, bTracks,
+                              pszGPSBabelDriverName, "-");
 
-        VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
+        VSILFILE *tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         bRet = (CPLSpawn(argv, fp, tmpfp, TRUE) == 0);
@@ -303,27 +303,28 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
 
         if (!bRet)
         {
-            if ( strstr(osLastErrorMsg.c_str(),
-                        "This format cannot be used in piped commands") == nullptr)
+            if (strstr(osLastErrorMsg.c_str(),
+                       "This format cannot be used in piped commands") ==
+                nullptr)
             {
-                CPLError( nLastErrorType, nLastErrorNo, "%s",
-                          osLastErrorMsg.c_str());
+                CPLError(nLastErrorType, nLastErrorNo, "%s",
+                         osLastErrorMsg.c_str());
             }
             else
             {
                 VSIStatBuf sStatBuf;
                 if (VSIStat(pszFilename, &sStatBuf) != 0)
                 {
-                    CPLError( CE_Failure, CPLE_NotSupported,
-                              "Driver %s only supports real (non virtual) "
-                              "files",
-                              pszGPSBabelDriverName );
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Driver %s only supports real (non virtual) "
+                             "files",
+                             pszGPSBabelDriverName);
                     return FALSE;
                 }
 
                 /* Try without piping in */
-                argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes,
-                              bTracks, pszGPSBabelDriverName, pszFilename);
+                argv = GetArgv(bExplicitFeatures, bWaypoints, bRoutes, bTracks,
+                               pszGPSBabelDriverName, pszFilename);
                 tmpfp = VSIFOpenL(osTmpFileName.c_str(), "wb");
                 bRet = (CPLSpawn(argv, nullptr, tmpfp, TRUE) == 0);
                 VSIFCloseL(tmpfp);
@@ -337,21 +338,20 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
 
     if (bRet)
     {
-        poGPXDS = static_cast<GDALDataset *>(
-            GDALOpenEx( osTmpFileName.c_str(),
-                        GDAL_OF_VECTOR, nullptr, nullptr, nullptr ) );
+        poGPXDS = static_cast<GDALDataset *>(GDALOpenEx(
+            osTmpFileName.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
         if (poGPXDS)
         {
             if (bWaypoints)
             {
-                OGRLayer* poLayer = poGPXDS->GetLayerByName("waypoints");
+                OGRLayer *poLayer = poGPXDS->GetLayerByName("waypoints");
                 if (poLayer != nullptr && poLayer->GetFeatureCount() != 0)
                     apoLayers[nLayers++] = poLayer;
             }
 
             if (bRoutes)
             {
-                OGRLayer* poLayer = poGPXDS->GetLayerByName("routes");
+                OGRLayer *poLayer = poGPXDS->GetLayerByName("routes");
                 if (poLayer != nullptr && poLayer->GetFeatureCount() != 0)
                     apoLayers[nLayers++] = poLayer;
                 poLayer = poGPXDS->GetLayerByName("route_points");
@@ -361,7 +361,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
 
             if (bTracks)
             {
-                OGRLayer* poLayer = poGPXDS->GetLayerByName("tracks");
+                OGRLayer *poLayer = poGPXDS->GetLayerByName("tracks");
                 if (poLayer != nullptr && poLayer->GetFeatureCount() != 0)
                     apoLayers[nLayers++] = poLayer;
                 poLayer = poGPXDS->GetLayerByName("track_points");
@@ -378,7 +378,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPSBabelDataSource::TestCapability( const char * /* pszCap */ )
+int OGRGPSBabelDataSource::TestCapability(const char * /* pszCap */)
 {
     return FALSE;
 }
@@ -387,10 +387,10 @@ int OGRGPSBabelDataSource::TestCapability( const char * /* pszCap */ )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRGPSBabelDataSource::GetLayer( int iLayer )
+OGRLayer *OGRGPSBabelDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
 
     return apoLayers[iLayer];

@@ -50,26 +50,24 @@ typedef enum
     SRSNAME_OGC_URL
 } OGRGMLSRSNameFormat;
 
-const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
-                                     std::string& osWork,
-                                     bool bConsiderEPSGAsURN);
+const char *
+GML_ExtractSrsNameFromGeometry(const CPLXMLNode *const *papsGeometry,
+                               std::string &osWork, bool bConsiderEPSGAsURN);
 
-bool GML_IsSRSLatLongOrder(const char* pszSRSName);
-bool GML_IsLegitSRSName(const char* pszSRSName);
+bool GML_IsSRSLatLongOrder(const char *pszSRSName);
+bool GML_IsLegitSRSName(const char *pszSRSName);
 
-void* GML_BuildOGRGeometryFromList_CreateCache();
-void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);
+void *GML_BuildOGRGeometryFromList_CreateCache();
+void GML_BuildOGRGeometryFromList_DestroyCache(void *hCacheSRS);
 
-OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry,
-                                          bool bTryToMakeMultipolygons,
-                                          bool bInvertAxisOrderIfLatLong,
-                                          const char* pszDefaultSRSName,
-                                          bool bConsiderEPSGAsURN,
-                                          GMLSwapCoordinatesEnum eSwapCoordinates,
-                                          int nPseudoBoolGetSecondaryGeometryOption,
-                                          void* hCacheSRS,
-                                          bool bFaceHoleNegative = false );
+OGRGeometry *GML_BuildOGRGeometryFromList(
+    const CPLXMLNode *const *papsGeometry, bool bTryToMakeMultipolygons,
+    bool bInvertAxisOrderIfLatLong, const char *pszDefaultSRSName,
+    bool bConsiderEPSGAsURN, GMLSwapCoordinatesEnum eSwapCoordinates,
+    int nPseudoBoolGetSecondaryGeometryOption, void *hCacheSRS,
+    bool bFaceHoleNegative = false);
 
-char* GML_GetSRSName(const OGRSpatialReference* poSRS, OGRGMLSRSNameFormat eSRSNameFormat, bool *pbCoordSwap);
+char *GML_GetSRSName(const OGRSpatialReference *poSRS,
+                     OGRGMLSRSNameFormat eSRSNameFormat, bool *pbCoordSwap);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

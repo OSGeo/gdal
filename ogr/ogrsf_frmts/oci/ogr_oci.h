@@ -37,14 +37,14 @@
 /* -------------------------------------------------------------------- */
 /*      Low level Oracle spatial declarations.                          */
 /* -------------------------------------------------------------------- */
-#define TYPE_OWNER                 "MDSYS"
-#define SDO_GEOMETRY               "MDSYS.SDO_GEOMETRY"
+#define TYPE_OWNER "MDSYS"
+#define SDO_GEOMETRY "MDSYS.SDO_GEOMETRY"
 
 typedef struct
 {
-   OCINumber x;
-   OCINumber y;
-   OCINumber z;
+    OCINumber x;
+    OCINumber y;
+    OCINumber z;
 } sdo_point_type;
 
 typedef OCIArray sdo_elem_info_array;
@@ -52,137 +52,142 @@ typedef OCIArray sdo_ordinate_array;
 
 typedef struct
 {
-   OCINumber      sdo_gtype;
-   OCINumber      sdo_srid;
-   sdo_point_type sdo_point;
-   OCIArray       *sdo_elem_info;
-   OCIArray       *sdo_ordinates;
+    OCINumber sdo_gtype;
+    OCINumber sdo_srid;
+    sdo_point_type sdo_point;
+    OCIArray *sdo_elem_info;
+    OCIArray *sdo_ordinates;
 } SDO_GEOMETRY_TYPE;
 
 typedef struct
 {
-   OCIInd _atomic;
-   OCIInd x;
-   OCIInd y;
-   OCIInd z;
+    OCIInd _atomic;
+    OCIInd x;
+    OCIInd y;
+    OCIInd z;
 } sdo_point_type_ind;
 
 typedef struct
 {
-   OCIInd                    _atomic;
-   OCIInd                    sdo_gtype;
-   OCIInd                    sdo_srid;
-   sdo_point_type_ind        sdo_point;
-   OCIInd                    sdo_elem_info;
-   OCIInd                    sdo_ordinates;
+    OCIInd _atomic;
+    OCIInd sdo_gtype;
+    OCIInd sdo_srid;
+    sdo_point_type_ind sdo_point;
+    OCIInd sdo_elem_info;
+    OCIInd sdo_ordinates;
 } SDO_GEOMETRY_ind;
 
-#define ORA_GTYPE_MATCH(a,b)      ( ((a) % 100) == ((b) % 100))
-#define ORA_GTYPE_UNKNOWN         0
-#define ORA_GTYPE_POINT           1
-#define ORA_GTYPE_LINESTRING      2    // or curve
-#define ORA_GTYPE_POLYGON         3    // or surface
-#define ORA_GTYPE_COLLECTION      4
-#define ORA_GTYPE_MULTIPOINT      5
-#define ORA_GTYPE_MULTILINESTRING 6    // or multicurve
-#define ORA_GTYPE_MULTIPOLYGON    7    // or multisurface
-#define ORA_GTYPE_SOLID           8
-#define ORA_GTYPE_MULTISOLID      9
+#define ORA_GTYPE_MATCH(a, b) (((a) % 100) == ((b) % 100))
+#define ORA_GTYPE_UNKNOWN 0
+#define ORA_GTYPE_POINT 1
+#define ORA_GTYPE_LINESTRING 2  // or curve
+#define ORA_GTYPE_POLYGON 3     // or surface
+#define ORA_GTYPE_COLLECTION 4
+#define ORA_GTYPE_MULTIPOINT 5
+#define ORA_GTYPE_MULTILINESTRING 6  // or multicurve
+#define ORA_GTYPE_MULTIPOLYGON 7     // or multisurface
+#define ORA_GTYPE_SOLID 8
+#define ORA_GTYPE_MULTISOLID 9
 
-#define DEFAULT_STRING_SIZE       4000
+#define DEFAULT_STRING_SIZE 4000
 
 /************************************************************************/
 /*                            OGROCISession                             */
 /************************************************************************/
-class CPL_DLL OGROCISession {
+class CPL_DLL OGROCISession
+{
   public:
-    OCIEnv     *hEnv;
-    OCIError   *hError;
-    OCISvcCtx  *hSvcCtx;
-    OCIServer  *hServer;
+    OCIEnv *hEnv;
+    OCIError *hError;
+    OCISvcCtx *hSvcCtx;
+    OCIServer *hServer;
     OCISession *hSession;
-    OCIDescribe*hDescribe;
-    OCIType    *hGeometryTDO;
-    OCIType    *hOrdinatesTDO;
-    OCIType    *hElemInfoTDO;
+    OCIDescribe *hDescribe;
+    OCIType *hGeometryTDO;
+    OCIType *hOrdinatesTDO;
+    OCIType *hElemInfoTDO;
 
-    char       *pszUserid;
-    char       *pszPassword;
-    char       *pszDatabase;
+    char *pszUserid;
+    char *pszPassword;
+    char *pszDatabase;
 
   public:
-             OGROCISession();
+    OGROCISession();
     virtual ~OGROCISession();
 
-    int      EstablishSession( const char *pszUserid,
-                               const char *pszPassword,
-                               const char *pszDatabase );
+    int EstablishSession(const char *pszUserid, const char *pszPassword,
+                         const char *pszDatabase);
 
-    int      Failed( sword nStatus, const char *pszFunction = nullptr );
+    int Failed(sword nStatus, const char *pszFunction = nullptr);
 
-    CPLErr   GetParamInfo( OCIParam *hParamDesc, OGRFieldDefn *poOGRDefn,
-                          ub2 *pnOCIType, ub4 *pnOCILen );
+    CPLErr GetParamInfo(OCIParam *hParamDesc, OGRFieldDefn *poOGRDefn,
+                        ub2 *pnOCIType, ub4 *pnOCILen);
 
-    void     CleanName( char * );
+    void CleanName(char *);
 
-    OCIType *PinTDO( const char * );
+    OCIType *PinTDO(const char *);
 
   private:
-
-    int         nServerVersion;
-    int         nServerRelease;
-    size_t      nMaxNameLength;
+    int nServerVersion;
+    int nServerRelease;
+    size_t nMaxNameLength;
 };
 
-OGROCISession CPL_DLL*
-OGRGetOCISession( const char *pszUserid,
-                  const char *pszPassword,
-                  const char *pszDatabase );
+OGROCISession CPL_DLL *OGRGetOCISession(const char *pszUserid,
+                                        const char *pszPassword,
+                                        const char *pszDatabase);
 
 /************************************************************************/
 /*                           OGROCIStatement                            */
 /************************************************************************/
-class CPL_DLL OGROCIStatement {
+class CPL_DLL OGROCIStatement
+{
   public:
-    explicit     OGROCIStatement( OGROCISession * );
-    virtual     ~OGROCIStatement();
+    explicit OGROCIStatement(OGROCISession *);
+    virtual ~OGROCIStatement();
 
-    OCIStmt     *GetStatement() { return hStatement; }
-    CPLErr       BindScalar( const char *pszPlaceName,
-                             void *pData, int nDataLen, int nSQLType,
-                             sb2 *paeInd = nullptr );
-    CPLErr       BindString( const char *pszPlaceName,
-                             const char *pszData,
-                             sb2 *paeInd = nullptr );
-    CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
-                             OCIType *hTDO, void **papIndicators );
+    OCIStmt *GetStatement()
+    {
+        return hStatement;
+    }
+    CPLErr BindScalar(const char *pszPlaceName, void *pData, int nDataLen,
+                      int nSQLType, sb2 *paeInd = nullptr);
+    CPLErr BindString(const char *pszPlaceName, const char *pszData,
+                      sb2 *paeInd = nullptr);
+    CPLErr BindObject(const char *pszPlaceName, void *pahObject, OCIType *hTDO,
+                      void **papIndicators);
 
-    char        *pszCommandText;
+    char *pszCommandText;
 
-    CPLErr       Prepare( const char * pszStatement );
-    CPLErr       Execute( const char * pszStatement,
-                          int nMode = -1 );
-    void         Clean();
+    CPLErr Prepare(const char *pszStatement);
+    CPLErr Execute(const char *pszStatement, int nMode = -1);
+    void Clean();
 
-    OGRFeatureDefn *GetResultDefn() { return poDefn; }
+    OGRFeatureDefn *GetResultDefn()
+    {
+        return poDefn;
+    }
 
-    char       **SimpleFetchRow();
+    char **SimpleFetchRow();
 
-    int          GetAffectedRows() const { return nAffectedRows; }
+    int GetAffectedRows() const
+    {
+        return nAffectedRows;
+    }
 
   private:
     OGROCISession *poSession;
-    OCIStmt       *hStatement;
+    OCIStmt *hStatement;
 
-    OGRFeatureDefn*poDefn;
+    OGRFeatureDefn *poDefn;
 
-    char         **papszCurColumn;
-    char         **papszCurImage;
-    sb2          *panCurColumnInd;
+    char **papszCurColumn;
+    char **papszCurImage;
+    sb2 *panCurColumnInd;
 
-    int           nRawColumnCount;
-    int           *panFieldMap;
-    int           nAffectedRows;
+    int nRawColumnCount;
+    int *panFieldMap;
+    int nAffectedRows;
 };
 
 /************************************************************************/
@@ -190,25 +195,32 @@ class CPL_DLL OGROCIStatement {
 /************************************************************************/
 class OGROCIStringBuf
 {
-  char *pszString;
-  int  nLen;
-  int  nBufSize;
+    char *pszString;
+    int nLen;
+    int nBufSize;
 
-  void UpdateEnd();
+    void UpdateEnd();
 
-public:
-
+  public:
     OGROCIStringBuf();
     ~OGROCIStringBuf();
 
-    void MakeRoomFor( int );
-    void Append( const char * );
-    void Appendf( int nMax, const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (3, 4);
+    void MakeRoomFor(int);
+    void Append(const char *);
+    void Appendf(int nMax, const char *pszFormat, ...)
+        CPL_PRINT_FUNC_FORMAT(3, 4);
     char *StealString();
 
     char GetLast();
-    char *GetEnd() { UpdateEnd(); return pszString + nLen; }
-    char *GetString() { return pszString; }
+    char *GetEnd()
+    {
+        UpdateEnd();
+        return pszString + nLen;
+    }
+    char *GetString()
+    {
+        return pszString;
+    }
 
     void Clear();
 };
@@ -219,365 +231,398 @@ public:
 
 class OGROCIDataSource;
 
-class OGROCILayer CPL_NON_FINAL: public OGRLayer
+class OGROCILayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
-    int                 iNextShapeId;
+    int iNextShapeId;
 
-    OGROCIDataSource    *poDS;
+    OGROCIDataSource *poDS;
 
-    char               *pszQueryStatement;
+    char *pszQueryStatement;
 
-    int                 nResultOffset;
+    int nResultOffset;
 
-    OGROCIStatement    *poStatement;
+    OGROCIStatement *poStatement;
 
-    int                 ExecuteQuery( const char * );
+    int ExecuteQuery(const char *);
 
-    SDO_GEOMETRY_TYPE  *hLastGeom;
-    SDO_GEOMETRY_ind   *hLastGeomInd;
+    SDO_GEOMETRY_TYPE *hLastGeom;
+    SDO_GEOMETRY_ind *hLastGeomInd;
 
-    char               *pszGeomName;
-    int                iGeomColumn;
+    char *pszGeomName;
+    int iGeomColumn;
 
-    char               *pszFIDName;
-    int                iFIDColumn;
+    char *pszFIDName;
+    int iFIDColumn;
 
-    OGRGeometry        *TranslateGeometry();
-    OGRGeometry        *TranslateGeometryElement( int *piElement,
-                                                  int nGType, int nDimension,
-                                                  int nEType,
-                                                  int nInterpretation,
-                                                  int nStartOrdinal,
-                                                  int nOrdCount);
-    int      LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
-                              int *pnEType, int *pnInterpretation,
-                              int *pnStartOrdinal, int *pnElemOrdCount );
-    int                 GetOrdinalPoint( int iOrdinal, int nDimension,
-                                         double *pdfX, double *pdfY,
-                                         double *pdfZ );
+    OGRGeometry *TranslateGeometry();
+    OGRGeometry *TranslateGeometryElement(int *piElement, int nGType,
+                                          int nDimension, int nEType,
+                                          int nInterpretation,
+                                          int nStartOrdinal, int nOrdCount);
+    int LoadElementInfo(int iElement, int nElemCount, int nTotalOrdCount,
+                        int *pnEType, int *pnInterpretation,
+                        int *pnStartOrdinal, int *pnElemOrdCount);
+    int GetOrdinalPoint(int iOrdinal, int nDimension, double *pdfX,
+                        double *pdfY, double *pdfZ);
 
   public:
-                        OGROCILayer();
-    virtual             ~OGROCILayer();
-    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch ) override { return OGRLayer::FindFieldIndex( pszFieldName, bExactMatch ); }
+    OGROCILayer();
+    virtual ~OGROCILayer();
+    virtual int FindFieldIndex(const char *pszFieldName,
+                               int bExactMatch) override
+    {
+        return OGRLayer::FindFieldIndex(pszFieldName, bExactMatch);
+    }
 
-    virtual void        ResetReading() override;
+    virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
 
-    int                 LookupTableSRID();
+    int LookupTableSRID();
 };
 
 /************************************************************************/
 /*                         OGROCIWritableLayer                          */
 /************************************************************************/
 
-class OGROCIWritableLayer CPL_NON_FINAL: public OGROCILayer
+class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
 {
-protected:
-    int                 nDimension;
-    int                 nSRID;
+  protected:
+    int nDimension;
+    int nSRID;
 
-    int                 nOrdinalCount;
-    int                 nOrdinalMax;
-    double             *padfOrdinals;
+    int nOrdinalCount;
+    int nOrdinalMax;
+    double *padfOrdinals;
 
-    int                 nElemInfoCount;
-    int                 nElemInfoMax;
-    int                *panElemInfo;
+    int nElemInfoCount;
+    int nElemInfoMax;
+    int *panElemInfo;
 
-    void                PushOrdinal( double );
-    void                PushElemInfo( int, int, int );
+    void PushOrdinal(double);
+    void PushElemInfo(int, int, int);
 
-    OGRErr              TranslateToSDOGeometry( OGRGeometry *,
-                                                int *pnGType );
-    OGRErr              TranslateElementGroup( OGRGeometry *poGeometry );
+    OGRErr TranslateToSDOGeometry(OGRGeometry *, int *pnGType);
+    OGRErr TranslateElementGroup(OGRGeometry *poGeometry);
 
-    int                 bLaunderColumnNames;
-    int                 bPreservePrecision;
-    int                 nDefaultStringSize;
+    int bLaunderColumnNames;
+    int bPreservePrecision;
+    int nDefaultStringSize;
 
     OGRSpatialReference *poSRS;
 
-    char              **papszOptions;
+    char **papszOptions;
 
-    int                 bTruncationReported;
-    void                ReportTruncation( OGRFieldDefn * );
+    int bTruncationReported;
+    void ReportTruncation(OGRFieldDefn *);
 
-    void                ParseDIMINFO( const char *, double *, double *,
-                                      double * );
+    void ParseDIMINFO(const char *, double *, double *, double *);
 
-                        OGROCIWritableLayer();
-    virtual            ~OGROCIWritableLayer();
-public:
+    OGROCIWritableLayer();
+    virtual ~OGROCIWritableLayer();
 
-    virtual OGRSpatialReference *GetSpatialRef() override { return poSRS; }
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
-    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch ) override;
+  public:
+    virtual OGRSpatialReference *GetSpatialRef() override
+    {
+        return poSRS;
+    }
+    virtual OGRErr CreateField(OGRFieldDefn *poField,
+                               int bApproxOK = TRUE) override;
+    virtual int FindFieldIndex(const char *pszFieldName,
+                               int bExactMatch) override;
 
     // following methods are not base class overrides
-    void                SetOptions( char ** );
+    void SetOptions(char **);
 
-    void                SetDimension( int );
-    void                SetLaunderFlag( int bFlag )
-                                { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag )
-                                { bPreservePrecision = bFlag; }
-    void                SetDefaultStringSize( int nSize )
-                                { nDefaultStringSize = nSize; }
+    void SetDimension(int);
+    void SetLaunderFlag(int bFlag)
+    {
+        bLaunderColumnNames = bFlag;
+    }
+    void SetPrecisionFlag(int bFlag)
+    {
+        bPreservePrecision = bFlag;
+    }
+    void SetDefaultStringSize(int nSize)
+    {
+        nDefaultStringSize = nSize;
+    }
 };
 
 /************************************************************************/
 /*                          OGROCILoaderLayer                           */
 /************************************************************************/
 
-#define LDRM_UNKNOWN  0
-#define LDRM_STREAM   1
+#define LDRM_UNKNOWN 0
+#define LDRM_STREAM 1
 #define LDRM_VARIABLE 2
-#define LDRM_BINARY   3
+#define LDRM_BINARY 3
 
-class OGROCILoaderLayer final: public OGROCIWritableLayer
+class OGROCILoaderLayer final : public OGROCIWritableLayer
 {
-    OGREnvelope         sExtent;
-    int                 iNextFIDToWrite;
+    OGREnvelope sExtent;
+    int iNextFIDToWrite;
 
-    char                *pszLoaderFilename;
+    char *pszLoaderFilename;
 
-    FILE                *fpLoader;
-    int                 bHeaderWritten;
+    FILE *fpLoader;
+    int bHeaderWritten;
 
-    FILE                *fpData;
+    FILE *fpData;
 
-    int                 nLDRMode;
+    int nLDRMode;
 
-    void                WriteLoaderHeader();
-    void                FinalizeNewLayer();
+    void WriteLoaderHeader();
+    void FinalizeNewLayer();
 
-    OGRErr              WriteFeatureStreamMode( OGRFeature * );
-    OGRErr              WriteFeatureVariableMode( OGRFeature * );
+    OGRErr WriteFeatureStreamMode(OGRFeature *);
+    OGRErr WriteFeatureVariableMode(OGRFeature *);
     // cppcheck-suppress functionStatic
-    OGRErr              WriteFeatureBinaryMode( OGRFeature * );
+    OGRErr WriteFeatureBinaryMode(OGRFeature *);
 
   public:
-                        OGROCILoaderLayer( OGROCIDataSource *,
-                                           const char * pszName,
-                                           const char *pszGeomCol,
-                                           int nSRID,
-                                           const char *pszLoaderFile );
-                        virtual ~OGROCILoaderLayer();
+    OGROCILoaderLayer(OGROCIDataSource *, const char *pszName,
+                      const char *pszGeomCol, int nSRID,
+                      const char *pszLoaderFile);
+    virtual ~OGROCILoaderLayer();
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * ) override {}
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+    virtual void SetSpatialFilter(OGRGeometry *) override
+    {
+    }
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override
-                                { return OGRERR_UNSUPPORTED_OPERATION; }
+    virtual OGRErr SetAttributeFilter(const char *) override
+    {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override { return poSRS; }
+    virtual OGRSpatialReference *GetSpatialRef() override
+    {
+        return poSRS;
+    }
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                           OGROCITableLayer                            */
 /************************************************************************/
 
-class OGROCITableLayer final: public OGROCIWritableLayer
+class OGROCITableLayer final : public OGROCIWritableLayer
 {
-    int                 bUpdateAccess;
-    int                 bNewLayer;
-    OGREnvelope         sExtent;
-    bool                bExtentUpdated;
+    int bUpdateAccess;
+    int bNewLayer;
+    OGREnvelope sExtent;
+    bool bExtentUpdated;
 
-    int                 iNextFIDToWrite;
-    int                 bHaveSpatialIndex;
+    int iNextFIDToWrite;
+    int bHaveSpatialIndex;
 
-    OGRFeatureDefn     *ReadTableDefinition(const char *);
+    OGRFeatureDefn *ReadTableDefinition(const char *);
 
-    void                BuildWhere();
-    char               *BuildFields();
-    void                BuildFullQueryStatement();
+    void BuildWhere();
+    char *BuildFields();
+    void BuildFullQueryStatement();
 
-    char               *pszQuery;
-    char               *pszWHERE;
+    char *pszQuery;
+    char *pszWHERE;
 
-    int                 bValidTable;
+    int bValidTable;
 
-    CPLString           osTableName;
-    CPLString           osOwner;
+    CPLString osTableName;
+    CPLString osOwner;
 
-    int                 nFirstId;
-    int                 nMultiLoadCount;
-    int                 bMultiLoad;
+    int nFirstId;
+    int nMultiLoadCount;
+    int bMultiLoad;
 
-    OCIArray           *hOrdVARRAY;
-    OCIArray           *hElemInfoVARRAY;
+    OCIArray *hOrdVARRAY;
+    OCIArray *hElemInfoVARRAY;
 
-    void                UpdateLayerExtents();
-    void                CreateSpatialIndex();
+    void UpdateLayerExtents();
+    void CreateSpatialIndex();
 
-    void                TestForSpatialIndex( const char * );
+    void TestForSpatialIndex(const char *);
 
-    OGROCIStatement   *poBoundStatement;
+    OGROCIStatement *poBoundStatement;
 
-    int                 nWriteCacheMax;
-    int                 nWriteCacheUsed;
+    int nWriteCacheMax;
+    int nWriteCacheUsed;
 
-    SDO_GEOMETRY_TYPE  *pasWriteGeoms;
+    SDO_GEOMETRY_TYPE *pasWriteGeoms;
     SDO_GEOMETRY_TYPE **papsWriteGeomMap;
-    SDO_GEOMETRY_ind   *pasWriteGeomInd;
-    SDO_GEOMETRY_ind  **papsWriteGeomIndMap;
+    SDO_GEOMETRY_ind *pasWriteGeomInd;
+    SDO_GEOMETRY_ind **papsWriteGeomIndMap;
 
-    void              **papWriteFields;
-    OCIInd            **papaeWriteFieldInd;
-    int                *panWriteFIDs;
+    void **papWriteFields;
+    OCIInd **papaeWriteFieldInd;
+    int *panWriteFIDs;
 
-    int                 AllocAndBindForWrite();
-    OGRErr              FlushPendingFeatures();
+    int AllocAndBindForWrite();
+    OGRErr FlushPendingFeatures();
 
-    OGRErr              UnboundCreateFeature( OGRFeature *poFeature );
-    OGRErr              BoundCreateFeature( OGRFeature *poFeature );
+    OGRErr UnboundCreateFeature(OGRFeature *poFeature);
+    OGRErr BoundCreateFeature(OGRFeature *poFeature);
 
   public:
-                        OGROCITableLayer( OGROCIDataSource *,
-                                          const char * pszName, OGRwkbGeometryType eGType,
-                                          int nSRID, int bUpdate, int bNew );
-                        virtual ~OGROCITableLayer();
+    OGROCITableLayer(OGROCIDataSource *, const char *pszName,
+                     OGRwkbGeometryType eGType, int nSRID, int bUpdate,
+                     int bNew);
+    virtual ~OGROCITableLayer();
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * ) override;
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+    virtual void SetSpatialFilter(OGRGeometry *) override;
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRErr      SyncToDisk() override;
+    virtual OGRErr SyncToDisk() override;
 
     // following methods are not base class overrides
-    int                 IsValid() { return bValidTable; }
+    int IsValid()
+    {
+        return bValidTable;
+    }
 
-    int                 GetMaxFID();
+    int GetMaxFID();
 };
 
 /************************************************************************/
 /*                          OGROCISelectLayer                           */
 /************************************************************************/
 
-class OGROCISelectLayer final: public OGROCILayer
+class OGROCISelectLayer final : public OGROCILayer
 {
-    OGRFeatureDefn     *ReadTableDefinition( OGROCIStatement * poStatement );
+    OGRFeatureDefn *ReadTableDefinition(OGROCIStatement *poStatement);
 
   public:
-                        OGROCISelectLayer( OGROCIDataSource *,
-                                           const char * pszName,
-                                           OGROCIStatement *poStatement );
-                        ~OGROCISelectLayer();
+    OGROCISelectLayer(OGROCIDataSource *, const char *pszName,
+                      OGROCIStatement *poStatement);
+    ~OGROCISelectLayer();
 };
 
 /************************************************************************/
 /*                           OGROCIDataSource                           */
 /************************************************************************/
 
-class OGROCIDataSource final: public OGRDataSource
+class OGROCIDataSource final : public OGRDataSource
 {
-    OGROCILayer       **papoLayers;
-    int                 nLayers;
+    OGROCILayer **papoLayers;
+    int nLayers;
 
-    char               *pszName;
-    char               *pszDBName;
+    char *pszName;
+    char *pszDBName;
 
-    int                 bDSUpdate;
-    int                 bNoLogging;
+    int bDSUpdate;
+    int bNoLogging;
 
-    OGROCISession      *poSession;
+    OGROCISession *poSession;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int                 nKnownSRID;
-    int                *panSRID;
+    int nKnownSRID;
+    int *panSRID;
     OGRSpatialReference **papoSRS;
 
   public:
-                        OGROCIDataSource();
-                        virtual ~OGROCIDataSource();
+    OGROCIDataSource();
+    virtual ~OGROCIDataSource();
 
-    OGROCISession      *GetSession() { return poSession; }
+    OGROCISession *GetSession()
+    {
+        return poSession;
+    }
 
-    int                 Open( const char *, char** papszOpenOptionsIn,
-                              int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName,
-                                   int nSRID, int bUpdate, int bTestOpen,
-                                   char** papszOpenOptionsIn );
+    int Open(const char *, char **papszOpenOptionsIn, int bUpdate,
+             int bTestOpen);
+    int OpenTable(const char *pszTableName, int nSRID, int bUpdate,
+                  int bTestOpen, char **papszOpenOptionsIn);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
-    OGRLayer            *GetLayerByName(const char * pszName) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
+    OGRLayer *GetLayerByName(const char *pszName) override;
 
-    virtual OGRErr      DeleteLayer(int) override;
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = nullptr,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = nullptr ) override;
+    virtual OGRErr DeleteLayer(int) override;
+    virtual OGRLayer *ICreateLayer(const char *,
+                                   OGRSpatialReference * = nullptr,
+                                   OGRwkbGeometryType = wkbUnknown,
+                                   char ** = nullptr) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-    void                DeleteLayer( const char * );
+    void DeleteLayer(const char *);
 
-    void                TruncateLayer( const char * );
-    void                ValidateLayer( const char * );
+    void TruncateLayer(const char *);
+    void ValidateLayer(const char *);
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect ) override;
-    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    int                 FetchSRSId( OGRSpatialReference * poSRS );
-    OGRSpatialReference *FetchSRS( int nSRID );
+    int FetchSRSId(OGRSpatialReference *poSRS);
+    OGRSpatialReference *FetchSRS(int nSRID);
 };
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
-int
-OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
-                                     double dfAlongX, double dfAlongY,
-                                     double dfEndX, double dfEndY,
-                                     double dfMaxAngleStepSizeDegrees,
-                                     int bForceWholeCircle,
-                                     OGRLineString *poLine );
+int OGROCIStrokeArcToOGRGeometry_Points(double dfStartX, double dfStartY,
+                                        double dfAlongX, double dfAlongY,
+                                        double dfEndX, double dfEndY,
+                                        double dfMaxAngleStepSizeDegrees,
+                                        int bForceWholeCircle,
+                                        OGRLineString *poLine);
 
 #endif /* ndef OGR_OCI_H_INCLUDED */

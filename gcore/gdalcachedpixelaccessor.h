@@ -48,48 +48,50 @@
  *
  * @since GDAL 3.5
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT = 4> class GDALCachedPixelAccessor
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT = 4>
+class GDALCachedPixelAccessor
 {
-    GDALRasterBand*         m_poBand = nullptr;
+    GDALRasterBand *m_poBand = nullptr;
 
     struct CachedTile
     {
-        std::vector<Type>   m_data{};
-        int                 m_nTileX = -1;
-        int                 m_nTileY = -1;
-        bool                m_bModified = false;
+        std::vector<Type> m_data{};
+        int m_nTileX = -1;
+        int m_nTileY = -1;
+        bool m_bModified = false;
     };
 
-    int                     m_nCachedTileCount = 0;
+    int m_nCachedTileCount = 0;
     std::array<CachedTile, CACHED_TILE_COUNT> m_aCachedTiles{};
 
-    bool                    LoadTile(int nTileX, int nTileY);
-    bool                    FlushTile(int iSlot);
+    bool LoadTile(int nTileX, int nTileY);
+    bool FlushTile(int iSlot);
 
-    Type                    GetSlowPath(int nTileX, int nTileY,
-                                        int nXInTile, int nYInTile,
-                                        bool* pbSuccess);
-    bool                    SetSlowPath(int nTileX, int nTileY,
-                                        int nXInTile, int nYInTile,
-                                        Type val);
+    Type GetSlowPath(int nTileX, int nTileY, int nXInTile, int nYInTile,
+                     bool *pbSuccess);
+    bool SetSlowPath(int nTileX, int nTileY, int nXInTile, int nYInTile,
+                     Type val);
 
-                            GDALCachedPixelAccessor(const GDALCachedPixelAccessor&) = delete;
-    GDALCachedPixelAccessor&      operator= (const GDALCachedPixelAccessor&) = delete;
+    GDALCachedPixelAccessor(const GDALCachedPixelAccessor &) = delete;
+    GDALCachedPixelAccessor &
+    operator=(const GDALCachedPixelAccessor &) = delete;
 
-public:
-    explicit                GDALCachedPixelAccessor(GDALRasterBand* poBand);
-                           ~GDALCachedPixelAccessor();
+  public:
+    explicit GDALCachedPixelAccessor(GDALRasterBand *poBand);
+    ~GDALCachedPixelAccessor();
 
     /** Assign the raster band if not known at construction time. */
-    void                    SetBand(GDALRasterBand* poBand) { m_poBand = poBand; }
+    void SetBand(GDALRasterBand *poBand)
+    {
+        m_poBand = poBand;
+    }
 
-    Type                    Get(int nX, int nY, bool* pbSuccess = nullptr);
-    bool                    Set(int nX, int nY, Type val);
+    Type Get(int nX, int nY, bool *pbSuccess = nullptr);
+    bool Set(int nX, int nY, Type val);
 
-    bool                    FlushCache();
-    void                    ResetModifiedFlag();
+    bool FlushCache();
+    void ResetModifiedFlag();
 };
-
 
 /************************************************************************/
 /*                      GDALCachedPixelAccessor()                       */
@@ -98,7 +100,8 @@ public:
 /** Constructor.
  *
  * The template accepts the following parameters:
- * - Type: should be one of GByte, GUInt16, GInt16, GUInt32, GInt32, GUInt64, GInt64, float or double
+ * - Type: should be one of GByte, GUInt16, GInt16, GUInt32, GInt32, GUInt64,
+ * GInt64, float or double
  * - TILE_SIZE: the tile size for the cache of GDALCachedPixelAccessor.
  *              Use a power of two for faster computation.
  *              It doesn't need to be the same of the underlying raster
@@ -106,8 +109,10 @@ public:
  *
  * @param poBand Raster band.
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::GDALCachedPixelAccessor(GDALRasterBand* poBand): m_poBand(poBand)
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::
+    GDALCachedPixelAccessor(GDALRasterBand *poBand)
+    : m_poBand(poBand)
 {
 }
 
@@ -119,8 +124,9 @@ GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::GDALCachedPixelAcce
  *
  * Will call FlushCache()
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::~GDALCachedPixelAccessor()
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+GDALCachedPixelAccessor<Type, TILE_SIZE,
+                        CACHED_TILE_COUNT>::~GDALCachedPixelAccessor()
 {
     FlushCache();
 }
@@ -138,18 +144,18 @@ GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::~GDALCachedPixelAcc
  * @param[out] pbSuccess Optional pointer to a success flag
  * @return the pixel value
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-inline
-Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Get(int nX, int nY, bool* pbSuccess)
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+inline Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Get(
+    int nX, int nY, bool *pbSuccess)
 {
     const int nTileX = nX / TILE_SIZE;
     const int nTileY = nY / TILE_SIZE;
     const int nXInTile = nX % TILE_SIZE;
     const int nYInTile = nY % TILE_SIZE;
-    if( m_aCachedTiles[0].m_nTileX == nTileX &&
-        m_aCachedTiles[0].m_nTileY == nTileY )
+    if (m_aCachedTiles[0].m_nTileX == nTileX &&
+        m_aCachedTiles[0].m_nTileY == nTileY)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
         return m_aCachedTiles[0].m_data[nYInTile * TILE_SIZE + nXInTile];
     }
@@ -160,33 +166,32 @@ Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Get(int nX, in
 /*                       GetSlowPath()                                  */
 /************************************************************************/
 
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
 Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::GetSlowPath(
-        int nTileX, int nTileY, int nXInTile, int nYInTile, bool* pbSuccess)
+    int nTileX, int nTileY, int nXInTile, int nYInTile, bool *pbSuccess)
 {
-    for( int i = 1; i < m_nCachedTileCount; ++i )
+    for (int i = 1; i < m_nCachedTileCount; ++i)
     {
-        const auto& cachedTile = m_aCachedTiles[i];
-        if( cachedTile.m_nTileX == nTileX &&
-            cachedTile.m_nTileY == nTileY )
+        const auto &cachedTile = m_aCachedTiles[i];
+        if (cachedTile.m_nTileX == nTileX && cachedTile.m_nTileY == nTileY)
         {
             const auto ret = cachedTile.m_data[nYInTile * TILE_SIZE + nXInTile];
             CachedTile tmp = std::move(m_aCachedTiles[i]);
-            for( int j = i; j >= 1; --j )
-                m_aCachedTiles[j] = std::move(m_aCachedTiles[j-1]);
+            for (int j = i; j >= 1; --j)
+                m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
             m_aCachedTiles[0] = std::move(tmp);
-            if( pbSuccess )
+            if (pbSuccess)
                 *pbSuccess = true;
             return ret;
         }
     }
-    if( !LoadTile(nTileX, nTileY) )
+    if (!LoadTile(nTileX, nTileY))
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = false;
         return 0;
     }
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = true;
     return m_aCachedTiles[0].m_data[nYInTile * TILE_SIZE + nXInTile];
 }
@@ -211,16 +216,17 @@ Type GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::GetSlowPath(
  * @param val pixel value
  * @return true if success
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-inline
-bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Set(int nX, int nY, Type val)
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+inline bool
+GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Set(int nX, int nY,
+                                                                 Type val)
 {
     const int nTileX = nX / TILE_SIZE;
     const int nTileY = nY / TILE_SIZE;
     const int nXInTile = nX % TILE_SIZE;
     const int nYInTile = nY % TILE_SIZE;
-    if( m_aCachedTiles[0].m_nTileX == nTileX &&
-        m_aCachedTiles[0].m_nTileY == nTileY )
+    if (m_aCachedTiles[0].m_nTileX == nTileX &&
+        m_aCachedTiles[0].m_nTileY == nTileY)
     {
         m_aCachedTiles[0].m_data[nYInTile * TILE_SIZE + nXInTile] = val;
         m_aCachedTiles[0].m_bModified = true;
@@ -233,29 +239,28 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::Set(int nX, in
 /*                         SetSlowPath()                                */
 /************************************************************************/
 
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
 bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::SetSlowPath(
     int nTileX, int nTileY, int nXInTile, int nYInTile, Type val)
 {
-    for( int i = 1; i < m_nCachedTileCount; ++i )
+    for (int i = 1; i < m_nCachedTileCount; ++i)
     {
-        auto& cachedTile = m_aCachedTiles[i];
-        if( cachedTile.m_nTileX == nTileX &&
-            cachedTile.m_nTileY == nTileY )
+        auto &cachedTile = m_aCachedTiles[i];
+        if (cachedTile.m_nTileX == nTileX && cachedTile.m_nTileY == nTileY)
         {
             cachedTile.m_data[nYInTile * TILE_SIZE + nXInTile] = val;
             cachedTile.m_bModified = true;
-            if( i > 0 )
+            if (i > 0)
             {
                 CachedTile tmp = std::move(m_aCachedTiles[i]);
-                for( int j = i; j >= 1; --j )
-                    m_aCachedTiles[j] = std::move(m_aCachedTiles[j-1]);
+                for (int j = i; j >= 1; --j)
+                    m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
                 m_aCachedTiles[0] = std::move(tmp);
             }
             return true;
         }
     }
-    if( !LoadTile(nTileX, nTileY) )
+    if (!LoadTile(nTileX, nTileY))
     {
         return false;
     }
@@ -272,13 +277,13 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::SetSlowPath(
  *
  * @return true if success
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
 bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushCache()
 {
     bool bRet = true;
-    for( int i = 0; i < m_nCachedTileCount; ++i )
+    for (int i = 0; i < m_nCachedTileCount; ++i)
     {
-        if( !FlushTile(i) )
+        if (!FlushTile(i))
             bRet = false;
         m_aCachedTiles[i].m_nTileX = -1;
         m_aCachedTiles[i].m_nTileY = -1;
@@ -292,10 +297,11 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushCache()
 
 /** Reset the modified flag for cached tiles.
  */
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-void GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::ResetModifiedFlag()
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+void GDALCachedPixelAccessor<Type, TILE_SIZE,
+                             CACHED_TILE_COUNT>::ResetModifiedFlag()
 {
-    for( int i = 0; i < m_nCachedTileCount; ++i )
+    for (int i = 0; i < m_nCachedTileCount; ++i)
     {
         m_aCachedTiles[i].m_bModified = false;
     }
@@ -306,46 +312,82 @@ void GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::ResetModifiedF
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
-template<class T> struct GDALCachedPixelAccessorGetDataType {};
+template <class T> struct GDALCachedPixelAccessorGetDataType
+{
+};
 
-template<> struct GDALCachedPixelAccessorGetDataType<GByte>   { static constexpr GDALDataType DataType = GDT_Byte; };
-template<> struct GDALCachedPixelAccessorGetDataType<GUInt16> { static constexpr GDALDataType DataType = GDT_UInt16; };
-template<> struct GDALCachedPixelAccessorGetDataType<GInt16>  { static constexpr GDALDataType DataType = GDT_Int16; };
-template<> struct GDALCachedPixelAccessorGetDataType<GUInt32> { static constexpr GDALDataType DataType = GDT_UInt32; };
-template<> struct GDALCachedPixelAccessorGetDataType<GInt32>  { static constexpr GDALDataType DataType = GDT_Int32; };
+template <> struct GDALCachedPixelAccessorGetDataType<GByte>
+{
+    static constexpr GDALDataType DataType = GDT_Byte;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<GUInt16>
+{
+    static constexpr GDALDataType DataType = GDT_UInt16;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<GInt16>
+{
+    static constexpr GDALDataType DataType = GDT_Int16;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<GUInt32>
+{
+    static constexpr GDALDataType DataType = GDT_UInt32;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<GInt32>
+{
+    static constexpr GDALDataType DataType = GDT_Int32;
+};
 #if SIZEOF_UNSIGNED_LONG == 8
 // std::uint64_t on Linux 64-bit resolves as unsigned long
-template<> struct GDALCachedPixelAccessorGetDataType<unsigned long> { static constexpr GDALDataType DataType = GDT_UInt64; };
-template<> struct GDALCachedPixelAccessorGetDataType<long >         { static constexpr GDALDataType DataType = GDT_Int64; };
+template <> struct GDALCachedPixelAccessorGetDataType<unsigned long>
+{
+    static constexpr GDALDataType DataType = GDT_UInt64;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<long>
+{
+    static constexpr GDALDataType DataType = GDT_Int64;
+};
 #endif
-template<> struct GDALCachedPixelAccessorGetDataType<GUInt64> { static constexpr GDALDataType DataType = GDT_UInt64; };
-template<> struct GDALCachedPixelAccessorGetDataType<GInt64>  { static constexpr GDALDataType DataType = GDT_Int64; };
-template<> struct GDALCachedPixelAccessorGetDataType<float>   { static constexpr GDALDataType DataType = GDT_Float32; };
-template<> struct GDALCachedPixelAccessorGetDataType<double>  { static constexpr GDALDataType DataType = GDT_Float64; };
+template <> struct GDALCachedPixelAccessorGetDataType<GUInt64>
+{
+    static constexpr GDALDataType DataType = GDT_UInt64;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<GInt64>
+{
+    static constexpr GDALDataType DataType = GDT_Int64;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<float>
+{
+    static constexpr GDALDataType DataType = GDT_Float32;
+};
+template <> struct GDALCachedPixelAccessorGetDataType<double>
+{
+    static constexpr GDALDataType DataType = GDT_Float64;
+};
 /*! @endcond */
 
 /************************************************************************/
 /*                          LoadTile()                                  */
 /************************************************************************/
 
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::LoadTile(int nTileX, int nTileY)
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::LoadTile(
+    int nTileX, int nTileY)
 {
-    if( m_nCachedTileCount == CACHED_TILE_COUNT )
+    if (m_nCachedTileCount == CACHED_TILE_COUNT)
     {
-        if( !FlushTile(CACHED_TILE_COUNT - 1) )
+        if (!FlushTile(CACHED_TILE_COUNT - 1))
             return false;
-        CachedTile tmp = std::move(m_aCachedTiles[CACHED_TILE_COUNT-1]);
-        for( int i = CACHED_TILE_COUNT - 1; i >= 1; --i )
-            m_aCachedTiles[i] = std::move(m_aCachedTiles[i-1]);
+        CachedTile tmp = std::move(m_aCachedTiles[CACHED_TILE_COUNT - 1]);
+        for (int i = CACHED_TILE_COUNT - 1; i >= 1; --i)
+            m_aCachedTiles[i] = std::move(m_aCachedTiles[i - 1]);
         m_aCachedTiles[0] = std::move(tmp);
     }
     else
     {
-        if( m_nCachedTileCount > 0 )
+        if (m_nCachedTileCount > 0)
             std::swap(m_aCachedTiles[0], m_aCachedTiles[m_nCachedTileCount]);
         m_aCachedTiles[0].m_data.resize(TILE_SIZE * TILE_SIZE);
-        m_nCachedTileCount ++;
+        m_nCachedTileCount++;
     }
 
 #if 0
@@ -358,12 +400,11 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::LoadTile(int n
     const int nYOff = nTileY * TILE_SIZE;
     const int nReqXSize = std::min(m_poBand->GetXSize() - nXOff, TILE_SIZE);
     const int nReqYSize = std::min(m_poBand->GetYSize() - nYOff, TILE_SIZE);
-    if( m_poBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
-                       m_aCachedTiles[0].m_data.data(),
-                       nReqXSize, nReqYSize,
-                       GDALCachedPixelAccessorGetDataType<Type>::DataType,
-                       sizeof(Type), TILE_SIZE * sizeof(Type),
-                       nullptr) != CE_None )
+    if (m_poBand->RasterIO(
+            GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
+            m_aCachedTiles[0].m_data.data(), nReqXSize, nReqYSize,
+            GDALCachedPixelAccessorGetDataType<Type>::DataType, sizeof(Type),
+            TILE_SIZE * sizeof(Type), nullptr) != CE_None)
     {
         m_aCachedTiles[0].m_nTileX = -1;
         m_aCachedTiles[0].m_nTileY = -1;
@@ -378,10 +419,11 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::LoadTile(int n
 /*                          FlushTile()                                 */
 /************************************************************************/
 
-template<class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
-bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushTile(int iSlot)
+template <class Type, int TILE_SIZE, int CACHED_TILE_COUNT>
+bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushTile(
+    int iSlot)
 {
-    if( !m_aCachedTiles[iSlot].m_bModified )
+    if (!m_aCachedTiles[iSlot].m_bModified)
         return true;
 
     m_aCachedTiles[iSlot].m_bModified = false;
@@ -389,12 +431,11 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushTile(int 
     const int nYOff = m_aCachedTiles[iSlot].m_nTileY * TILE_SIZE;
     const int nReqXSize = std::min(m_poBand->GetXSize() - nXOff, TILE_SIZE);
     const int nReqYSize = std::min(m_poBand->GetYSize() - nYOff, TILE_SIZE);
-    return m_poBand->RasterIO(GF_Write, nXOff, nYOff, nReqXSize, nReqYSize,
-                       m_aCachedTiles[iSlot].m_data.data(),
-                       nReqXSize, nReqYSize,
-                       GDALCachedPixelAccessorGetDataType<Type>::DataType,
-                       sizeof(Type), TILE_SIZE * sizeof(Type),
-                       nullptr) == CE_None;
+    return m_poBand->RasterIO(
+               GF_Write, nXOff, nYOff, nReqXSize, nReqYSize,
+               m_aCachedTiles[iSlot].m_data.data(), nReqXSize, nReqYSize,
+               GDALCachedPixelAccessorGetDataType<Type>::DataType, sizeof(Type),
+               TILE_SIZE * sizeof(Type), nullptr) == CE_None;
 }
 
-#endif // GDAL_PIXEL_ACCESSOR_INCLUDED
+#endif  // GDAL_PIXEL_ACCESSOR_INCLUDED

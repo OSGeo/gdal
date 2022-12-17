@@ -31,7 +31,6 @@
 
 #include "gdal_ecw.h"
 
-
 #if defined(HAVE_COMPRESS)
 
 /************************************************************************/
@@ -53,9 +52,9 @@ JP2UserBox::JP2UserBox()
 JP2UserBox::~JP2UserBox()
 
 {
-    if( pabyData != nullptr )
+    if (pabyData != nullptr)
     {
-        CPLFree( pabyData );
+        CPLFree(pabyData);
         pabyData = nullptr;
     }
 }
@@ -64,15 +63,15 @@ JP2UserBox::~JP2UserBox()
 /*                              SetData()                               */
 /************************************************************************/
 
-void JP2UserBox::SetData( int nLengthIn, const unsigned char *pabyDataIn )
+void JP2UserBox::SetData(int nLengthIn, const unsigned char *pabyDataIn)
 
 {
-    if( pabyData != nullptr )
-        CPLFree( pabyData );
+    if (pabyData != nullptr)
+        CPLFree(pabyData);
 
     nDataLength = nLengthIn;
     pabyData = static_cast<unsigned char *>(CPLMalloc(nDataLength));
-    memcpy( pabyData, pabyDataIn, nDataLength );
+    memcpy(pabyData, pabyDataIn, nDataLength);
 
     m_bValid = true;
 }
@@ -94,14 +93,14 @@ void JP2UserBox::UpdateXLBox()
 /*      Parse box, and data contents from file into memory.             */
 /************************************************************************/
 #if ECWSDK_VERSION >= 55
-CNCSError JP2UserBox::Parse(CPL_UNUSED NCS::SDK::CFileBase &JP2File, 
+CNCSError JP2UserBox::Parse(CPL_UNUSED NCS::SDK::CFileBase &JP2File,
                             CPL_UNUSED const NCS::CIOStreamPtr &Stream)
 #elif ECWSDK_VERSION >= 40
-CNCSError JP2UserBox::Parse( CPL_UNUSED NCS::SDK::CFileBase &JP2File,
-                             CPL_UNUSED NCS::CIOStream &Stream )
+CNCSError JP2UserBox::Parse(CPL_UNUSED NCS::SDK::CFileBase &JP2File,
+                            CPL_UNUSED NCS::CIOStream &Stream)
 #else
-CNCSError JP2UserBox::Parse( CPL_UNUSED class CNCSJP2File &JP2File,
-                             CPL_UNUSED CNCSJPCIOStream &Stream )
+CNCSError JP2UserBox::Parse(CPL_UNUSED class CNCSJP2File &JP2File,
+                            CPL_UNUSED CNCSJPCIOStream &Stream)
 #endif
 {
     CNCSError Error(GetCNCSError(NCS_SUCCESS));
@@ -118,23 +117,23 @@ CNCSError JP2UserBox::Parse( CPL_UNUSED class CNCSJP2File &JP2File,
 CNCSError JP2UserBox::UnParse(NCS::SDK::CFileBase &JP2File,
                               const NCS::CIOStreamPtr &Stream)
 #elif ECWSDK_VERSION >= 40
-CNCSError JP2UserBox::UnParse( NCS::SDK::CFileBase &JP2File,
-                               NCS::CIOStream &Stream )
+CNCSError JP2UserBox::UnParse(NCS::SDK::CFileBase &JP2File,
+                              NCS::CIOStream &Stream)
 #else
-CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
-                               CNCSJPCIOStream &Stream )
+CNCSError JP2UserBox::UnParse(class CNCSJP2File &JP2File,
+                              CNCSJPCIOStream &Stream)
 #endif
 {
     CNCSError Error(GetCNCSError(NCS_SUCCESS));
 
-    if( m_nTBox == 0 )
+    if (m_nTBox == 0)
     {
         Error = GetCNCSError(NCS_UNKNOWN_ERROR);
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "No box type set in JP2UserBox::UnParse()" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "No box type set in JP2UserBox::UnParse()");
         return Error;
     }
-#if ECWSDK_VERSION<50
+#if ECWSDK_VERSION < 50
     Error = CNCSJP2Box::UnParse(JP2File, Stream);
 #else
     Error = CNCSSDKBox::UnParse(JP2File, Stream);

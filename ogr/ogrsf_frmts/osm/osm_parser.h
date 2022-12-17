@@ -45,34 +45,34 @@ typedef struct
 {
     union
     {
-        GIntBig      nTimeStamp;
-        const char  *pszTimeStamp;
+        GIntBig nTimeStamp;
+        const char *pszTimeStamp;
     } ts;
-    GIntBig      nChangeset;
-    int          nVersion;
-    int          nUID;
-    int          bTimeStampIsStr;
-    const char  *pszUserSID;
+    GIntBig nChangeset;
+    int nVersion;
+    int nUID;
+    int bTimeStampIsStr;
+    const char *pszUserSID;
 } OSMInfo;
 
 typedef struct
 {
-    GIntBig      nID;
-    double       dfLat;
-    double       dfLon;
-    OSMInfo      sInfo;
+    GIntBig nID;
+    double dfLat;
+    double dfLon;
+    OSMInfo sInfo;
     unsigned int nTags;
-    OSMTag      *pasTags;
+    OSMTag *pasTags;
 } OSMNode;
 
 typedef struct
 {
-    GIntBig      nID;
-    OSMInfo      sInfo;
+    GIntBig nID;
+    OSMInfo sInfo;
     unsigned int nTags;
     unsigned int nRefs;
-    OSMTag      *pasTags;
-    GIntBig     *panNodeRefs;
+    OSMTag *pasTags;
+    GIntBig *panNodeRefs;
 } OSMWay;
 
 typedef enum
@@ -84,19 +84,19 @@ typedef enum
 
 typedef struct
 {
-    GIntBig        nID;
-    const char    *pszRole;
-    OSMMemberType  eType;
+    GIntBig nID;
+    const char *pszRole;
+    OSMMemberType eType;
 } OSMMember;
 
 typedef struct
 {
-    GIntBig      nID;
-    OSMInfo      sInfo;
+    GIntBig nID;
+    OSMInfo sInfo;
     unsigned int nTags;
     unsigned int nMembers;
-    OSMTag      *pasTags;
-    OSMMember   *pasMembers;
+    OSMTag *pasTags;
+    OSMMember *pasMembers;
 } OSMRelation;
 
 typedef enum
@@ -108,25 +108,28 @@ typedef enum
 
 typedef struct _OSMContext OSMContext;
 
-typedef void (*NotifyNodesFunc) (unsigned int nNodes, OSMNode* pasNodes, OSMContext* psOSMContext, void* user_data);
-typedef void (*NotifyWayFunc) (OSMWay* psWay, OSMContext* psOSMContext, void* user_data);
-typedef void (*NotifyRelationFunc) (OSMRelation* psRelation, OSMContext* psOSMContext, void* user_data);
-typedef void (*NotifyBoundsFunc) (double dfXMin, double dfYMin, double dfXMax, double dfYMax, OSMContext* psOSMContext, void* user_data);
+typedef void (*NotifyNodesFunc)(unsigned int nNodes, OSMNode *pasNodes,
+                                OSMContext *psOSMContext, void *user_data);
+typedef void (*NotifyWayFunc)(OSMWay *psWay, OSMContext *psOSMContext,
+                              void *user_data);
+typedef void (*NotifyRelationFunc)(OSMRelation *psRelation,
+                                   OSMContext *psOSMContext, void *user_data);
+typedef void (*NotifyBoundsFunc)(double dfXMin, double dfYMin, double dfXMax,
+                                 double dfYMax, OSMContext *psOSMContext,
+                                 void *user_data);
 
-OSMContext* OSM_Open( const char* pszFilename,
-                      NotifyNodesFunc pfnNotifyNodes,
-                      NotifyWayFunc pfnNotifyWay,
-                      NotifyRelationFunc pfnNotifyRelation,
-                      NotifyBoundsFunc pfnNotifyBounds,
-                      void* user_data );
+OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
+                     NotifyWayFunc pfnNotifyWay,
+                     NotifyRelationFunc pfnNotifyRelation,
+                     NotifyBoundsFunc pfnNotifyBounds, void *user_data);
 
-GUIntBig OSM_GetBytesRead( OSMContext* psOSMContext );
+GUIntBig OSM_GetBytesRead(OSMContext *psOSMContext);
 
-void OSM_ResetReading( OSMContext* psOSMContext );
+void OSM_ResetReading(OSMContext *psOSMContext);
 
-OSMRetCode OSM_ProcessBlock( OSMContext* psOSMContext );
+OSMRetCode OSM_ProcessBlock(OSMContext *psOSMContext);
 
-void OSM_Close( OSMContext* psOSMContext );
+void OSM_Close(OSMContext *psOSMContext);
 
 CPL_C_END
 

@@ -5,7 +5,7 @@
 
 namespace tut
 {
-    typedef console_reporter reporter;
+typedef console_reporter reporter;
 }
 
 #endif

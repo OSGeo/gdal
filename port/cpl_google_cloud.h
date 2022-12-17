@@ -41,67 +41,74 @@
 #include "cpl_aws.h"
 #include <map>
 
-class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
+class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
 {
-        CPL_DISALLOW_COPY_ASSIGN(VSIGSHandleHelper)
+    CPL_DISALLOW_COPY_ASSIGN(VSIGSHandleHelper)
 
-        CPLString m_osURL;
-        CPLString m_osEndpoint;
-        CPLString m_osBucketObjectKey;
-        CPLString m_osSecretAccessKey;
-        CPLString m_osAccessKeyId;
-        bool      m_bUseHeaderFile;
-        GOA2Manager m_oManager;
-        std::string m_osUserProject{};
+    CPLString m_osURL;
+    CPLString m_osEndpoint;
+    CPLString m_osBucketObjectKey;
+    CPLString m_osSecretAccessKey;
+    CPLString m_osAccessKeyId;
+    bool m_bUseHeaderFile;
+    GOA2Manager m_oManager;
+    std::string m_osUserProject{};
 
-        static bool     GetConfiguration(const std::string& osPathForOption,
-                                         CSLConstList papszOptions,
-                                         CPLString& osSecretAccessKey,
-                                         CPLString& osAccessKeyId,
-                                         CPLString& osHeaderFile,
-                                         GOA2Manager& oManager);
+    static bool GetConfiguration(const std::string &osPathForOption,
+                                 CSLConstList papszOptions,
+                                 CPLString &osSecretAccessKey,
+                                 CPLString &osAccessKeyId,
+                                 CPLString &osHeaderFile,
+                                 GOA2Manager &oManager);
 
-        static bool     GetConfigurationFromConfigFile(
-                                         CPLString& osSecretAccessKey,
-                                         CPLString& osAccessKeyId,
-                                         CPLString& osOAuth2RefreshToken,
-                                         CPLString& osOAuth2ClientId,
-                                         CPLString& osOAuth2ClientSecret,
-                                         CPLString& osCredentials);
+    static bool GetConfigurationFromConfigFile(CPLString &osSecretAccessKey,
+                                               CPLString &osAccessKeyId,
+                                               CPLString &osOAuth2RefreshToken,
+                                               CPLString &osOAuth2ClientId,
+                                               CPLString &osOAuth2ClientSecret,
+                                               CPLString &osCredentials);
 
-        void RebuildURL() override;
+    void RebuildURL() override;
 
-    public:
-        VSIGSHandleHelper(const CPLString& osEndpoint,
-                          const CPLString& osBucketObjectKey,
-                          const CPLString& osSecretAccessKey,
-                          const CPLString& osAccessKeyId,
-                          bool bUseHeaderFile,
-                          const GOA2Manager& oManager,
-                          const std::string& osUserProject);
-       ~VSIGSHandleHelper();
+  public:
+    VSIGSHandleHelper(const CPLString &osEndpoint,
+                      const CPLString &osBucketObjectKey,
+                      const CPLString &osSecretAccessKey,
+                      const CPLString &osAccessKeyId, bool bUseHeaderFile,
+                      const GOA2Manager &oManager,
+                      const std::string &osUserProject);
+    ~VSIGSHandleHelper();
 
-        static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
-                                               const char* pszFSPrefix,
-                                               CSLConstList papszOptions = nullptr);
+    static VSIGSHandleHelper *BuildFromURI(const char *pszURI,
+                                           const char *pszFSPrefix,
+                                           CSLConstList papszOptions = nullptr);
 
-        bool UsesHMACKey() const;
+    bool UsesHMACKey() const;
 
-        struct curl_slist* GetCurlHeaders(
-            const CPLString& osVerbosVerb,
-            const  struct curl_slist* psExistingHeaders,
-            const void *pabyDataContent = nullptr,
-            size_t nBytesContent = 0) const override;
+    struct curl_slist *
+    GetCurlHeaders(const CPLString &osVerbosVerb,
+                   const struct curl_slist *psExistingHeaders,
+                   const void *pabyDataContent = nullptr,
+                   size_t nBytesContent = 0) const override;
 
-        const CPLString& GetURL() const override { return m_osURL; }
+    const CPLString &GetURL() const override
+    {
+        return m_osURL;
+    }
 
-        CPLString GetCopySourceHeader() const override { return "x-goog-copy-source"; }
-        const char* GetMetadataDirectiveREPLACE() const override { return "x-goog-metadata-directive: REPLACE"; }
+    CPLString GetCopySourceHeader() const override
+    {
+        return "x-goog-copy-source";
+    }
+    const char *GetMetadataDirectiveREPLACE() const override
+    {
+        return "x-goog-metadata-directive: REPLACE";
+    }
 
-        CPLString GetSignedURL(CSLConstList papszOptions);
+    CPLString GetSignedURL(CSLConstList papszOptions);
 
-        static void CleanMutex();
-        static void ClearCache();
+    static void CleanMutex();
+    static void ClearCache();
 };
 
 #endif /* HAVE_CURL */

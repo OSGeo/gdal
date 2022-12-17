@@ -36,8 +36,8 @@
 #include <vector>
 #include "gmlreader.h"
 
-bool CPL_DLL GMLParseXSD( const char *pszFile,
-                 std::vector<GMLFeatureClass*> & aosClasses,
-                 bool& bFullyUnderstood );
+bool CPL_DLL GMLParseXSD(const char *pszFile,
+                         std::vector<GMLFeatureClass *> &aosClasses,
+                         bool &bFullyUnderstood);
 
-#endif // PARSEXSD_H_INCLUDED
+#endif  // PARSEXSD_H_INCLUDED

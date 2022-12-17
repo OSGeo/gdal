@@ -38,43 +38,51 @@
 #include <string>
 #include <vector>
 
-CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace, CSLConstList papszArgs );
-CPLErr CustomPixelFunc( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace, CSLConstList papszArgs );
-CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace);
+CPLErr CustomPixelFuncWithMetadata(void **papoSources, int nSources,
+                                   void *pData, int nXSize, int nYSize,
+                                   GDALDataType eSrcType, GDALDataType eBufType,
+                                   int nPixelSpace, int nLineSpace,
+                                   CSLConstList papszArgs);
+CPLErr CustomPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize, GDALDataType eSrcType,
+                       GDALDataType eBufType, int nPixelSpace, int nLineSpace,
+                       CSLConstList papszArgs);
+CPLErr CustomPixelFuncNoArgs(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace);
 
-CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+CPLErr CustomPixelFuncWithMetadata(void **papoSources, int nSources,
+                                   void *pData, int nXSize, int nYSize,
+                                   GDALDataType eSrcType, GDALDataType eBufType,
+                                   int nPixelSpace, int nLineSpace,
+                                   CSLConstList papszArgs)
+{
 
     /* ---- Init ---- */
-    if( nSources != 1 ) return CE_Failure;
-    const char* pszConstant = CSLFetchNameValue(papszArgs, "customConstant");
-    if (pszConstant == nullptr) return CE_Failure;
-    if (strncmp(pszConstant, "something", strlen("something"))) return CE_Failure;
-    const char* pszScale = CSLFetchNameValue(papszArgs, "scale");
-    if (pszScale == nullptr) return CE_Failure;
+    if (nSources != 1)
+        return CE_Failure;
+    const char *pszConstant = CSLFetchNameValue(papszArgs, "customConstant");
+    if (pszConstant == nullptr)
+        return CE_Failure;
+    if (strncmp(pszConstant, "something", strlen("something")))
+        return CE_Failure;
+    const char *pszScale = CSLFetchNameValue(papszArgs, "scale");
+    if (pszScale == nullptr)
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
-    for( int iLine = 0; iLine < nYSize; ++iLine )
+    for (int iLine = 0; iLine < nYSize; ++iLine)
     {
-        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 2;
-            GDALCopyWords(
-                    &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
-                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
         }
     }
 
@@ -82,27 +90,30 @@ CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pDat
     return CE_None;
 }
 
-CPLErr CustomPixelFunc( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+CPLErr CustomPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize, GDALDataType eSrcType,
+                       GDALDataType eBufType, int nPixelSpace, int nLineSpace,
+                       CSLConstList papszArgs)
+{
 
     /* ---- Init ---- */
-    if( nSources != 1 ) return CE_Failure;
+    if (nSources != 1)
+        return CE_Failure;
 
     (void)papszArgs;
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
-    for( int iLine = 0; iLine < nYSize; ++iLine )
+    for (int iLine = 0; iLine < nYSize; ++iLine)
     {
-        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 3;
-            GDALCopyWords(
-                    &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
-                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
         }
     }
 
@@ -110,25 +121,28 @@ CPLErr CustomPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
-CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace ) {
+CPLErr CustomPixelFuncNoArgs(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace)
+{
 
     /* ---- Init ---- */
-    if( nSources != 1 ) return CE_Failure;
+    if (nSources != 1)
+        return CE_Failure;
 
     /* ---- Set pixels ---- */
     size_t ii = 0;
-    for( int iLine = 0; iLine < nYSize; ++iLine )
+    for (int iLine = 0; iLine < nYSize; ++iLine)
     {
-        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii )
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
         {
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 4;
-            GDALCopyWords(
-                    &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
-                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
         }
     }
 
@@ -138,96 +152,94 @@ CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
 
 namespace tut
 {
-    const char pszFuncMetadata[] =
-        "<PixelFunctionArgumentsList>"
-        "   <Argument name='customConstant' type='constant' value='something'>"
-        "   </Argument>"
-        "   <Argument type='builtin' value='scale'>"
-        "   </Argument>"
-        "</PixelFunctionArgumentsList>";
+const char pszFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='customConstant' type='constant' value='something'>"
+    "   </Argument>"
+    "   <Argument type='builtin' value='scale'>"
+    "   </Argument>"
+    "</PixelFunctionArgumentsList>";
 
-    struct test_pixelfn_data {
-        std::string src_;
-        test_pixelfn_data() {
-            src_ = tut::common::data_basedir;
-            src_ += SEP;
-            src_ += "pixelfn.vrt";
-        }
-    };
-
-    // Register test group
-    typedef test_group<test_pixelfn_data> group;
-    typedef group::object object;
-    group test_pixelfn_group("GDAL::PixelFunc");
-
-    // Test constant parameters in a custom pixel function
-    template<>
-    template<>
-    void object::test<1>()
+struct test_pixelfn_data
+{
+    std::string src_;
+    test_pixelfn_data()
     {
-        GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata, pszFuncMetadata);
-        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
-
-        GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
-
-        float buf[20 * 20];
-        CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
-
-        ensure_equals("Read wrong data", buf[0], 107 * 2);
-
-        GDALClose(ds);
+        src_ = tut::common::data_basedir;
+        src_ += SEP;
+        src_ += "pixelfn.vrt";
     }
+};
 
-    // Test registering of a custom pixel function without metadata
-    template<>
-    template<>
-    void
-    object::test<2>()
-    {
-        GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
-        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
+// Register test group
+typedef test_group<test_pixelfn_data> group;
+typedef group::object object;
+group test_pixelfn_group("GDAL::PixelFunc");
 
-        GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
+// Test constant parameters in a custom pixel function
+template <> template <> void object::test<1>()
+{
+    GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata,
+                                        pszFuncMetadata);
+    GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
+    ensure("Can't open dataset", nullptr != ds);
 
-        VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(GDALRasterBand::FromHandle(band));
-        derived->SetPixelFunctionName("custom2");
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    ensure("Can't get raster band", nullptr != band);
 
-        float buf[20 * 20];
-        CPL_IGNORE_RET_VAL(GDALRasterIO(
-          band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
+    float buf[20 * 20];
+    CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20,
+                                    GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107 * 3);
+    ensure_equals("Read wrong data", buf[0], 107 * 2);
 
-        GDALClose(ds);
-    }
+    GDALClose(ds);
+}
 
-    // Test the registering of a custom pixel function without args
-    template<>
-    template<>
-    void
-    object::test<3>()
-    {
-        GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
-        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
+// Test registering of a custom pixel function without metadata
+template <> template <> void object::test<2>()
+{
+    GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
+    GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
+    ensure("Can't open dataset", nullptr != ds);
 
-        GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    ensure("Can't get raster band", nullptr != band);
 
-        VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(GDALRasterBand::FromHandle(band));
-        derived->SetPixelFunctionName("custom3");
+    VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(
+        GDALRasterBand::FromHandle(band));
+    derived->SetPixelFunctionName("custom2");
 
-        float buf[20 * 20];
-        CPL_IGNORE_RET_VAL(GDALRasterIO(
-          band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
+    float buf[20 * 20];
+    CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20,
+                                    GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107 * 4);
+    ensure_equals("Read wrong data", buf[0], 107 * 3);
 
-        GDALClose(ds);
-    }
+    GDALClose(ds);
+}
 
- } // namespace tut
+// Test the registering of a custom pixel function without args
+template <> template <> void object::test<3>()
+{
+    GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
+    GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
+    ensure("Can't open dataset", nullptr != ds);
+
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    ensure("Can't get raster band", nullptr != band);
+
+    VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(
+        GDALRasterBand::FromHandle(band));
+    derived->SetPixelFunctionName("custom3");
+
+    float buf[20 * 20];
+    CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20,
+                                    GDT_Float32, 0, 0));
+
+    ensure_equals("Read wrong data", buf[0], 107 * 4);
+
+    GDALClose(ds);
+}
+
+}  // namespace tut

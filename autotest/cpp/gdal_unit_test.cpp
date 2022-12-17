@@ -28,7 +28,7 @@
 
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
-#endif // _MSC_VER
+#endif  // _MSC_VER
 
 #include "gdal_unit_test.h"
 
@@ -46,26 +46,27 @@
 
 namespace tut
 {
-    test_runner_singleton runner;
+test_runner_singleton runner;
 
-    // Common test data path
-    std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
-    std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
+// Common test data path
+std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
+std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
 
-    static void check_test_group(char const* name)
-    {
-        std::string grpname(name);
-        if (grpname.empty())
-            throw std::runtime_error("missing test group name");
+static void check_test_group(char const *name)
+{
+    std::string grpname(name);
+    if (grpname.empty())
+        throw std::runtime_error("missing test group name");
 
-        tut::groupnames gl = runner.get().list_groups();
-        tut::groupnames::const_iterator found = std::find(gl.begin(), gl.end(), grpname);
-        if (found == gl.end())
-            throw std::runtime_error("test group " + grpname + " not found");
-    }
-} // namespace tut
+    tut::groupnames gl = runner.get().list_groups();
+    tut::groupnames::const_iterator found =
+        std::find(gl.begin(), gl.end(), grpname);
+    if (found == gl.end())
+        throw std::runtime_error("test group " + grpname + " not found");
+}
+}  // namespace tut
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     // Register GDAL/OGR drivers
     ::GDALAllRegister();
@@ -76,7 +77,7 @@ int main(int argc, char* argv[])
         << " (" << ::GDALVersionInfo("--version") << ")"
         << "\n---------------------------------------------------------\n";
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 1)
     {
         std::cout
@@ -84,8 +85,6 @@ int main(int argc, char* argv[])
             << "No tests to run\n";
         return EXIT_SUCCESS;
     }
-
-
 
     // Initialize TUT framework
     int nRetCode = EXIT_FAILURE;
@@ -105,7 +104,8 @@ int main(int argc, char* argv[])
                 tut::groupnames::const_iterator b = gl.begin();
                 tut::groupnames::const_iterator e = gl.end();
                 tut::groupnames::difference_type d = std::distance(b, e);
-                std::cout << "Registered " << d << " test groups:\n" << std::endl;
+                std::cout << "Registered " << d << " test groups:\n"
+                          << std::endl;
                 while (b != e)
                 {
                     std::cout << "  " << *b << std::endl;
@@ -126,12 +126,13 @@ int main(int argc, char* argv[])
             }
             nRetCode = EXIT_SUCCESS;
         }
-        catch (const std::exception& ex)
+        catch (const std::exception &ex)
         {
-            std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
+            std::cerr << "GDAL C/C++ API tests error: " << ex.what()
+                      << std::endl;
             nRetCode = EXIT_FAILURE;
         }
-        if( !visi.all_ok() )
+        if (!visi.all_ok())
             nRetCode = EXIT_FAILURE;
     }
 
@@ -143,7 +144,7 @@ int main(int argc, char* argv[])
 
     OGRCleanupAll();
 
-    CPLDumpSharedList( nullptr );
+    CPLDumpSharedList(nullptr);
     CPLCleanupTLS();
 
     return nRetCode;

@@ -42,14 +42,13 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-
 /************************************************************************/
 /*                         GetEmptyNonEmptyFlag()                       */
 /************************************************************************/
 
 static int GetEmptyNonEmptyFlag(double x, double y)
 {
-    if( std::isnan(x) || std::isnan(y) )
+    if (std::isnan(x) || std::isnan(y))
         return 0;
     return OGRGeometry::OGR_G_NOT_EMPTY_POINT;
 }
@@ -62,7 +61,7 @@ static int GetEmptyNonEmptyFlag(double x, double y)
  * \brief Create an empty point.
  */
 
-OGRPoint::OGRPoint(): x(0.0), y(0.0), z(0.0), m(0.0)
+OGRPoint::OGRPoint() : x(0.0), y(0.0), z(0.0), m(0.0)
 
 {
     flags = 0;
@@ -79,11 +78,8 @@ OGRPoint::OGRPoint(): x(0.0), y(0.0), z(0.0), m(0.0)
  * @param zIn z
  */
 
-OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
-    x(xIn),
-    y(yIn),
-    z(zIn),
-    m(0.0)
+OGRPoint::OGRPoint(double xIn, double yIn, double zIn)
+    : x(xIn), y(yIn), z(zIn), m(0.0)
 {
     flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D;
 }
@@ -98,11 +94,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
  * @param yIn y
  */
 
-OGRPoint::OGRPoint( double xIn, double yIn ) :
-    x(xIn),
-    y(yIn),
-    z(0.0),
-    m(0.0)
+OGRPoint::OGRPoint(double xIn, double yIn) : x(xIn), y(yIn), z(0.0), m(0.0)
 {
     flags = GetEmptyNonEmptyFlag(xIn, yIn);
 }
@@ -119,11 +111,8 @@ OGRPoint::OGRPoint( double xIn, double yIn ) :
  * @param mIn m
  */
 
-OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
-    x(xIn),
-    y(yIn),
-    z(zIn),
-    m(mIn)
+OGRPoint::OGRPoint(double xIn, double yIn, double zIn, double mIn)
+    : x(xIn), y(yIn), z(zIn), m(mIn)
 {
     flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D | OGR_G_MEASURED;
 }
@@ -140,7 +129,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
  * @since GDAL 3.1
  */
 
-OGRPoint* OGRPoint::createXYM( double x, double y, double m )
+OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 {
     auto p = new OGRPoint(x, y, 0, m);
     p->flags &= ~OGR_G_3D;
@@ -160,7 +149,7 @@ OGRPoint* OGRPoint::createXYM( double x, double y, double m )
  * @since GDAL 2.1
  */
 
-OGRPoint::OGRPoint( const OGRPoint& ) = default;
+OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /************************************************************************/
 /*                             ~OGRPoint()                              */
@@ -181,11 +170,11 @@ OGRPoint::~OGRPoint() = default;
  * @since GDAL 2.1
  */
 
-OGRPoint& OGRPoint::operator=( const OGRPoint& other )
+OGRPoint &OGRPoint::operator=(const OGRPoint &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
-        OGRGeometry::operator=( other );
+        OGRGeometry::operator=(other);
 
         x = other.x;
         y = other.y;
@@ -237,11 +226,11 @@ int OGRPoint::getDimension() const
 OGRwkbGeometryType OGRPoint::getGeometryType() const
 
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbPointZM;
-    else if( flags & OGR_G_MEASURED )
+    else if (flags & OGR_G_MEASURED)
         return wkbPointM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbPoint25D;
     else
         return wkbPoint;
@@ -251,7 +240,7 @@ OGRwkbGeometryType OGRPoint::getGeometryType() const
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRPoint::getGeometryName() const
+const char *OGRPoint::getGeometryName() const
 
 {
     return "POINT";
@@ -274,12 +263,12 @@ void OGRPoint::flattenTo2D()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRPoint::setCoordinateDimension( int nNewDimension )
+void OGRPoint::setCoordinateDimension(int nNewDimension)
 
 {
-    if( nNewDimension == 2 )
+    if (nNewDimension == 2)
         flattenTo2D();
-    else if( nNewDimension == 3 )
+    else if (nNewDimension == 3)
         flags |= OGR_G_3D;
 
     setMeasured(FALSE);
@@ -295,9 +284,9 @@ void OGRPoint::setCoordinateDimension( int nNewDimension )
 size_t OGRPoint::WkbSize() const
 
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return 37;
-    else if( (flags & OGR_G_3D) || (flags & OGR_G_MEASURED) )
+    else if ((flags & OGR_G_3D) || (flags & OGR_G_MEASURED))
         return 29;
     else
         return 21;
@@ -310,10 +299,9 @@ size_t OGRPoint::WkbSize() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
-                                size_t nSize,
-                                OGRwkbVariant eWkbVariant,
-                                size_t& nBytesConsumedOut )
+OGRErr OGRPoint::importFromWkb(const unsigned char *pabyData, size_t nSize,
+                               OGRwkbVariant eWkbVariant,
+                               size_t &nBytesConsumedOut)
 
 {
     nBytesConsumedOut = 0;
@@ -321,57 +309,57 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
 
     flags = 0;
     OGRErr eErr =
-        importPreambleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
+        importPreambleFromWkb(pabyData, nSize, eByteOrder, eWkbVariant);
     pabyData += 5;
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-    if( nSize != static_cast<size_t>(-1) )
+    if (nSize != static_cast<size_t>(-1))
     {
-        if( (nSize < 37) && ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED)) )
+        if ((nSize < 37) && ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED)))
             return OGRERR_NOT_ENOUGH_DATA;
-        else if( (nSize < 29) && ((flags & OGR_G_3D) ||
-                                  (flags & OGR_G_MEASURED)) )
+        else if ((nSize < 29) &&
+                 ((flags & OGR_G_3D) || (flags & OGR_G_MEASURED)))
             return OGRERR_NOT_ENOUGH_DATA;
-        else if( nSize < 21 )
+        else if (nSize < 21)
             return OGRERR_NOT_ENOUGH_DATA;
     }
 
-    nBytesConsumedOut = 5 + 8 * (2 + ((flags & OGR_G_3D) ? 1 : 0)+
-                                     ((flags & OGR_G_MEASURED) ? 1 : 0));
+    nBytesConsumedOut = 5 + 8 * (2 + ((flags & OGR_G_3D) ? 1 : 0) +
+                                 ((flags & OGR_G_MEASURED) ? 1 : 0));
 
-/* -------------------------------------------------------------------- */
-/*      Get the vertex.                                                 */
-/* -------------------------------------------------------------------- */
-    memcpy( &x, pabyData, 8 );
+    /* -------------------------------------------------------------------- */
+    /*      Get the vertex.                                                 */
+    /* -------------------------------------------------------------------- */
+    memcpy(&x, pabyData, 8);
     pabyData += 8;
-    memcpy( &y, pabyData, 8 );
+    memcpy(&y, pabyData, 8);
     pabyData += 8;
 
-    if( OGR_SWAP( eByteOrder ) )
+    if (OGR_SWAP(eByteOrder))
     {
-        CPL_SWAPDOUBLE( &x );
-        CPL_SWAPDOUBLE( &y );
+        CPL_SWAPDOUBLE(&x);
+        CPL_SWAPDOUBLE(&y);
     }
 
-    if( flags & OGR_G_3D )
+    if (flags & OGR_G_3D)
     {
-        memcpy( &z, pabyData, 8 );
+        memcpy(&z, pabyData, 8);
         pabyData += 8;
-        if( OGR_SWAP( eByteOrder ) )
-            CPL_SWAPDOUBLE( &z );
+        if (OGR_SWAP(eByteOrder))
+            CPL_SWAPDOUBLE(&z);
     }
     else
     {
         z = 0;
     }
-    if( flags & OGR_G_MEASURED )
+    if (flags & OGR_G_MEASURED)
     {
-        memcpy( &m, pabyData, 8 );
+        memcpy(&m, pabyData, 8);
         /*pabyData += 8; */
-        if( OGR_SWAP( eByteOrder ) )
+        if (OGR_SWAP(eByteOrder))
         {
-            CPL_SWAPDOUBLE( &m );
+            CPL_SWAPDOUBLE(&m);
         }
     }
     else
@@ -380,7 +368,7 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
     }
 
     // Detect coordinates are not NaN --> NOT EMPTY.
-    if( !(CPLIsNan(x) && CPLIsNan(y)) )
+    if (!(CPLIsNan(x) && CPLIsNan(y)))
         flags |= OGR_G_NOT_EMPTY_POINT;
 
     return OGRERR_NONE;
@@ -392,99 +380,102 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
-                              unsigned char * pabyData,
-                              OGRwkbVariant eWkbVariant ) const
+OGRErr OGRPoint::exportToWkb(OGRwkbByteOrder eByteOrder,
+                             unsigned char *pabyData,
+                             OGRwkbVariant eWkbVariant) const
 
 {
-/* -------------------------------------------------------------------- */
-/*      Set the byte order.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the byte order.                                             */
+    /* -------------------------------------------------------------------- */
     pabyData[0] =
         DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
     pabyData += 1;
 
-/* -------------------------------------------------------------------- */
-/*      Set the geometry feature type.                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the geometry feature type.                                  */
+    /* -------------------------------------------------------------------- */
 
     GUInt32 nGType = getGeometryType();
 
-    if( eWkbVariant == wkbVariantPostGIS1 )
+    if (eWkbVariant == wkbVariantPostGIS1)
     {
         nGType = wkbFlatten(nGType);
-        if( Is3D() )
+        if (Is3D())
             // Explicitly set wkb25DBit.
             nGType =
                 static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
-        if( IsMeasured() )
+        if (IsMeasured())
             nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
-    else if( eWkbVariant == wkbVariantIso )
+    else if (eWkbVariant == wkbVariantIso)
     {
         nGType = getIsoGeometryType();
     }
 
-    if( eByteOrder == wkbNDR )
+    if (eByteOrder == wkbNDR)
     {
-        CPL_LSBPTR32( &nGType );
+        CPL_LSBPTR32(&nGType);
     }
     else
     {
-        CPL_MSBPTR32( &nGType );
+        CPL_MSBPTR32(&nGType);
     }
 
-    memcpy( pabyData, &nGType, 4 );
+    memcpy(pabyData, &nGType, 4);
     pabyData += 4;
 
-/* -------------------------------------------------------------------- */
-/*      Copy in the raw data. Swap if needed.                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Copy in the raw data. Swap if needed.                           */
+    /* -------------------------------------------------------------------- */
 
-    if( IsEmpty() && eWkbVariant == wkbVariantIso )
+    if (IsEmpty() && eWkbVariant == wkbVariantIso)
     {
         const double dNan = std::numeric_limits<double>::quiet_NaN();
-        memcpy( pabyData, &dNan, 8 );
-        if( OGR_SWAP( eByteOrder ) )
-            CPL_SWAPDOUBLE( pabyData );
+        memcpy(pabyData, &dNan, 8);
+        if (OGR_SWAP(eByteOrder))
+            CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
-        memcpy( pabyData, &dNan, 8 );
-        if( OGR_SWAP( eByteOrder ) )
-            CPL_SWAPDOUBLE( pabyData );
+        memcpy(pabyData, &dNan, 8);
+        if (OGR_SWAP(eByteOrder))
+            CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
-        if( flags & OGR_G_3D ) {
-            memcpy( pabyData, &dNan, 8 );
-            if( OGR_SWAP( eByteOrder ) )
-                CPL_SWAPDOUBLE( pabyData );
+        if (flags & OGR_G_3D)
+        {
+            memcpy(pabyData, &dNan, 8);
+            if (OGR_SWAP(eByteOrder))
+                CPL_SWAPDOUBLE(pabyData);
             pabyData += 8;
         }
-        if( flags & OGR_G_MEASURED ) {
-            memcpy( pabyData, &dNan, 8 );
-            if( OGR_SWAP( eByteOrder ) )
-                CPL_SWAPDOUBLE( pabyData );
+        if (flags & OGR_G_MEASURED)
+        {
+            memcpy(pabyData, &dNan, 8);
+            if (OGR_SWAP(eByteOrder))
+                CPL_SWAPDOUBLE(pabyData);
         }
     }
     else
     {
-        memcpy( pabyData, &x, 8 );
-        if( OGR_SWAP( eByteOrder ) )
-            CPL_SWAPDOUBLE( pabyData );
+        memcpy(pabyData, &x, 8);
+        if (OGR_SWAP(eByteOrder))
+            CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
-        memcpy( pabyData, &y, 8 );
-        if( OGR_SWAP( eByteOrder ) )
-            CPL_SWAPDOUBLE( pabyData );
+        memcpy(pabyData, &y, 8);
+        if (OGR_SWAP(eByteOrder))
+            CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
-        if( flags & OGR_G_3D ) {
-            memcpy( pabyData, &z, 8 );
-            if( OGR_SWAP( eByteOrder ) )
-                CPL_SWAPDOUBLE( pabyData );
+        if (flags & OGR_G_3D)
+        {
+            memcpy(pabyData, &z, 8);
+            if (OGR_SWAP(eByteOrder))
+                CPL_SWAPDOUBLE(pabyData);
             pabyData += 8;
         }
-        if( flags & OGR_G_MEASURED )
+        if (flags & OGR_G_MEASURED)
         {
-            memcpy( pabyData, &m, 8 );
-            if( OGR_SWAP( eByteOrder ) )
-                CPL_SWAPDOUBLE( pabyData );
+            memcpy(pabyData, &m, 8);
+            if (OGR_SWAP(eByteOrder))
+                CPL_SWAPDOUBLE(pabyData);
         }
     }
 
@@ -498,7 +489,7 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      (x,y)''.                                                        */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
+OGRErr OGRPoint::importFromWkt(const char **ppszInput)
 
 {
     int bHasZ = FALSE;
@@ -506,11 +497,13 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
     bool bIsEmpty = false;
     OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
-    if( bHasZ ) flags |= OGR_G_3D;
-    if( bHasM ) flags |= OGR_G_MEASURED;
-    if( bIsEmpty )
+    if (bHasZ)
+        flags |= OGR_G_3D;
+    if (bHasM)
+        flags |= OGR_G_MEASURED;
+    if (bIsEmpty)
     {
         return OGRERR_NONE;
     }
@@ -521,9 +514,9 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 
     const char *pszInput = *ppszInput;
 
-/* -------------------------------------------------------------------- */
-/*      Read the point list which should consist of exactly one point.  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the point list which should consist of exactly one point.  */
+    /* -------------------------------------------------------------------- */
     OGRRawPoint *poPoints = nullptr;
     double *padfZ = nullptr;
     double *padfM = nullptr;
@@ -531,22 +524,21 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
     int nPoints = 0;
     int flagsFromInput = flags;
 
-    pszInput = OGRWktReadPointsM( pszInput, &poPoints, &padfZ, &padfM,
-                                  &flagsFromInput,
-                                  &nMaxPoint, &nPoints );
-    if( pszInput == nullptr || nPoints != 1 )
+    pszInput = OGRWktReadPointsM(pszInput, &poPoints, &padfZ, &padfM,
+                                 &flagsFromInput, &nMaxPoint, &nPoints);
+    if (pszInput == nullptr || nPoints != 1)
     {
-        CPLFree( poPoints );
-        CPLFree( padfZ );
-        CPLFree( padfM );
+        CPLFree(poPoints);
+        CPLFree(padfZ);
+        CPLFree(padfM);
         return OGRERR_CORRUPT_DATA;
     }
-    if( (flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D) )
+    if ((flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D))
     {
         flags |= OGR_G_3D;
         bHasZ = TRUE;
     }
-    if( (flagsFromInput & OGR_G_MEASURED) && !(flags & OGR_G_MEASURED) )
+    if ((flagsFromInput & OGR_G_MEASURED) && !(flags & OGR_G_MEASURED))
     {
         flags |= OGR_G_MEASURED;
         bHasM = TRUE;
@@ -555,21 +547,21 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
     x = poPoints[0].x;
     y = poPoints[0].y;
 
-    CPLFree( poPoints );
+    CPLFree(poPoints);
 
-    if( bHasZ )
+    if (bHasZ)
     {
-        if( padfZ != nullptr )
+        if (padfZ != nullptr)
             z = padfZ[0];
     }
-    if( bHasM )
+    if (bHasM)
     {
-        if( padfM != nullptr )
+        if (padfM != nullptr)
             m = padfM[0];
     }
 
-    CPLFree( padfZ );
-    CPLFree( padfM );
+    CPLFree(padfZ);
+    CPLFree(padfM);
 
     *ppszInput = pszInput;
 
@@ -583,10 +575,10 @@ OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 /*      equivalent.                                                     */
 /************************************************************************/
 
-std::string OGRPoint::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
+std::string OGRPoint::exportToWkt(const OGRWktOptions &opts, OGRErr *err) const
 {
     std::string wkt = getGeometryName() + wktTypeString(opts.variant);
-    if( IsEmpty() )
+    if (IsEmpty())
     {
         wkt += "EMPTY";
     }
@@ -609,7 +601,7 @@ std::string OGRPoint::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
+void OGRPoint::getEnvelope(OGREnvelope *psEnvelope) const
 
 {
     psEnvelope->MinX = getX();
@@ -622,7 +614,7 @@ void OGRPoint::getEnvelope( OGREnvelope * psEnvelope ) const
 /*                            getEnvelope()                             */
 /************************************************************************/
 
-void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
+void OGRPoint::getEnvelope(OGREnvelope3D *psEnvelope) const
 
 {
     psEnvelope->MinX = getX();
@@ -693,26 +685,25 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Equals( const OGRGeometry * poOther ) const
+OGRBoolean OGRPoint::Equals(const OGRGeometry *poOther) const
 
 {
-    if( poOther== this )
+    if (poOther == this)
         return TRUE;
 
-    if( poOther->getGeometryType() != getGeometryType() )
+    if (poOther->getGeometryType() != getGeometryType())
         return FALSE;
 
     const auto poOPoint = poOther->toPoint();
-    if( flags != poOPoint->flags )
+    if (flags != poOPoint->flags)
         return FALSE;
 
-    if( IsEmpty() )
+    if (IsEmpty())
         return TRUE;
 
     // Should eventually test the SRS.
-    if( poOPoint->getX() != getX()
-        || poOPoint->getY() != getY()
-        || poOPoint->getZ() != getZ() )
+    if (poOPoint->getX() != getX() || poOPoint->getY() != getY() ||
+        poOPoint->getZ() != getZ())
         return FALSE;
 
     return TRUE;
@@ -722,12 +713,12 @@ OGRBoolean OGRPoint::Equals( const OGRGeometry * poOther ) const
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
+OGRErr OGRPoint::transform(OGRCoordinateTransformation *poCT)
 
 {
-    if( poCT->Transform( 1, &x, &y, &z ) )
+    if (poCT->Transform(1, &x, &y, &z))
     {
-        assignSpatialReference( poCT->GetTargetCS() );
+        assignSpatialReference(poCT->GetTargetCS());
         return OGRERR_NONE;
     }
 
@@ -747,11 +738,11 @@ void OGRPoint::swapXY()
 /*                               Within()                               */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
+OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 
 {
-    if( !IsEmpty() && poOtherGeom != nullptr &&
-        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
+    if (!IsEmpty() && poOtherGeom != nullptr &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon)
     {
         const auto poCurve = poOtherGeom->toCurvePolygon();
         return poCurve->Contains(this);
@@ -764,11 +755,11 @@ OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
 /*                              Intersects()                            */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
+OGRBoolean OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const
 
 {
-    if( !IsEmpty() && poOtherGeom != nullptr &&
-        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
+    if (!IsEmpty() && poOtherGeom != nullptr &&
+        wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon)
     {
         const auto poCurve = poOtherGeom->toCurvePolygon();
         return poCurve->Intersects(this);

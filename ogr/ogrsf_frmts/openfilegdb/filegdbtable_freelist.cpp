@@ -56,56 +56,20 @@ constexpr int nPageHeaderSize = 2 * static_cast<int>(sizeof(uint32_t));
 
 // Fibonacci suite
 static const uint32_t anHoleSizes[] = {
-    0,
-    8,
-    16,
-    24,
-    40,
-    64,
-    104,
-    168,
-    272,
-    440,
-    712,
-    1152,
-    1864,
-    3016,
-    4880,
-    7896,
-    12776,
-    20672,
-    33448,
-    54120,
-    87568,
-    141688,
-    229256,
-    370944,
-    600200,
-    971144,
-    1571344,
-    2542488,
-    4113832,
-    6656320,
-    10770152,
-    17426472,
-    28196624,
-    45623096,
-    73819720,
-    119442816,
-    193262536,
-    312705352,
-    505967888,
-    818673240,
-    1324641128,
-    2143314368,
-    3467955496U
-};
+    0,          8,         16,        24,        40,         64,
+    104,        168,       272,       440,       712,        1152,
+    1864,       3016,      4880,      7896,      12776,      20672,
+    33448,      54120,     87568,     141688,    229256,     370944,
+    600200,     971144,    1571344,   2542488,   4113832,    6656320,
+    10770152,   17426472,  28196624,  45623096,  73819720,   119442816,
+    193262536,  312705352, 505967888, 818673240, 1324641128, 2143314368,
+    3467955496U};
 
 static int FindFreelistRangeSlot(uint32_t nSize)
 {
-    for( size_t i = 0; i < CPL_ARRAYSIZE(anHoleSizes) - 1; i++ )
+    for (size_t i = 0; i < CPL_ARRAYSIZE(anHoleSizes) - 1; i++)
     {
-        if( /* nSize >= anHoleSizes[i] && */ nSize < anHoleSizes[i+1] )
+        if (/* nSize >= anHoleSizes[i] && */ nSize < anHoleSizes[i + 1])
         {
             return static_cast<int>(i);
         }
@@ -121,28 +85,29 @@ static int FindFreelistRangeSlot(uint32_t nSize)
 
 void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 {
-    if( nSize < MINIMUM_SIZE_FOR_FREELIST )
+    if (nSize < MINIMUM_SIZE_FOR_FREELIST)
         return;
 
-    const std::string osFilename = CPLResetExtension(m_osFilename.c_str(),
-                                                     "freelist");
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb+");
-    if( fp == nullptr )
+    const std::string osFilename =
+        CPLResetExtension(m_osFilename.c_str(), "freelist");
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb+");
+    if (fp == nullptr)
     {
         // Initialize an empty .freelist file
         fp = VSIFOpenL(osFilename.c_str(), "wb+");
-        if( fp == nullptr )
+        if (fp == nullptr)
             return;
         std::vector<GByte> abyTrailer;
         WriteUInt32(abyTrailer, 1);
         WriteUInt32(abyTrailer, MINUS_ONE);
-        for( int i = 0; i < (nTrailerSize - nTrailerEntrySize) / nTrailerEntrySize; i++ )
+        for (int i = 0;
+             i < (nTrailerSize - nTrailerEntrySize) / nTrailerEntrySize; i++)
         {
             WriteUInt32(abyTrailer, MINUS_ONE);
             WriteUInt32(abyTrailer, 0);
         }
-        CPLAssert( static_cast<int>(abyTrailer.size()) == nTrailerSize );
-        if( VSIFWriteL( abyTrailer.data(), abyTrailer.size(), 1, fp ) != 1 )
+        CPLAssert(static_cast<int>(abyTrailer.size()) == nTrailerSize);
+        if (VSIFWriteL(abyTrailer.data(), abyTrailer.size(), 1, fp) != 1)
         {
             VSIFCloseL(fp);
             return;
@@ -154,7 +119,7 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
     // Read trailer
     VSIFSeekL(fp, 0, SEEK_END);
     auto nFileSize = VSIFTellL(fp);
-    if( (nFileSize % nPageSize) != nTrailerSize )
+    if ((nFileSize % nPageSize) != nTrailerSize)
     {
         VSIFCloseL(fp);
         return;
@@ -162,7 +127,7 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 
     VSIFSeekL(fp, nFileSize - nTrailerSize, SEEK_SET);
     std::vector<GByte> abyTrailer(nTrailerSize);
-    if( VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp ) != 1 )
+    if (VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp) != 1)
     {
         VSIFCloseL(fp);
         return;
@@ -170,24 +135,26 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 
     // Determine in which "slot" of hole size the new entry belongs to
     const int iSlot = FindFreelistRangeSlot(nSize);
-    if( iSlot < 0 )
+    if (iSlot < 0)
     {
         VSIFCloseL(fp);
         return;
     }
 
     // Read the last page index of the identified slot
-    uint32_t nPageIdx = GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot, 0);
+    uint32_t nPageIdx =
+        GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot, 0);
     uint32_t nPageCount;
 
     std::vector<GByte> abyPage;
     bool bRewriteTrailer = false;
 
-    const int nEntrySize = static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
+    const int nEntrySize =
+        static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
     const int nMaxEntriesPerPage = (nPageSize - nPageHeaderSize) / nEntrySize;
     int nNumEntries = 0;
 
-    if( nPageIdx == MINUS_ONE )
+    if (nPageIdx == MINUS_ONE)
     {
         // There's no allocate page for that range
         // So allocate one.
@@ -198,68 +165,72 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 
         // Update trailer
         bRewriteTrailer = true;
-        nPageIdx = static_cast<uint32_t>((nFileSize - nTrailerSize) / nPageSize);
+        nPageIdx =
+            static_cast<uint32_t>((nFileSize - nTrailerSize) / nPageSize);
         nPageCount = 1;
 
-        nFileSize += nPageSize; // virtual extension
+        nFileSize += nPageSize;  // virtual extension
     }
     else
     {
         nPageCount = GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot +
-                               sizeof(uint32_t), 0);
+                                   sizeof(uint32_t),
+                               0);
 
         VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
         abyPage.resize(nPageSize);
-        if( VSIFReadL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+        if (VSIFReadL(abyPage.data(), abyPage.size(), 1, fp) != 1)
         {
             VSIFCloseL(fp);
             return;
         }
 
         nNumEntries = GetUInt32(abyPage.data(), 0);
-        if( nNumEntries >= nMaxEntriesPerPage )
+        if (nNumEntries >= nMaxEntriesPerPage)
         {
             // Allocate new page
             abyPage.clear();
             nNumEntries = 0;
             WriteUInt32(abyPage, nNumEntries);
-            WriteUInt32(abyPage, nPageIdx); // Link to previous page
+            WriteUInt32(abyPage, nPageIdx);  // Link to previous page
             abyPage.resize(nPageSize);
 
             // Update trailer
             bRewriteTrailer = true;
-            nPageIdx = static_cast<uint32_t>((nFileSize - nTrailerSize) / nPageSize);
-            nPageCount ++;
+            nPageIdx =
+                static_cast<uint32_t>((nFileSize - nTrailerSize) / nPageSize);
+            nPageCount++;
 
-            nFileSize += nPageSize; // virtual extension
+            nFileSize += nPageSize;  // virtual extension
         }
     }
 
     // Add new entry into page
     WriteUInt32(abyPage, nSize, nPageHeaderSize + nNumEntries * nEntrySize);
-    WriteFeatureOffset(
-       nOffset,
-       abyPage.data() + nPageHeaderSize + nNumEntries * nEntrySize + sizeof(uint32_t));
+    WriteFeatureOffset(nOffset, abyPage.data() + nPageHeaderSize +
+                                    nNumEntries * nEntrySize +
+                                    sizeof(uint32_t));
 
     // Update page header
-    ++ nNumEntries;
+    ++nNumEntries;
     WriteUInt32(abyPage, nNumEntries, 0);
 
     // Flush page
     VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
-    if( VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+    if (VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp) != 1)
     {
         VSIFCloseL(fp);
         return;
     }
 
-    if( bRewriteTrailer )
+    if (bRewriteTrailer)
     {
         WriteUInt32(abyTrailer, nPageIdx, nTrailerEntrySize * iSlot);
-        WriteUInt32(abyTrailer, nPageCount, nTrailerEntrySize * iSlot + sizeof(uint32_t));
+        WriteUInt32(abyTrailer, nPageCount,
+                    nTrailerEntrySize * iSlot + sizeof(uint32_t));
 
         VSIFSeekL(fp, nFileSize - nTrailerSize, 0);
-        if( VSIFWriteL(abyTrailer.data(), abyTrailer.size(), 1, fp ) != 1 )
+        if (VSIFWriteL(abyTrailer.data(), abyTrailer.size(), 1, fp) != 1)
         {
             VSIFCloseL(fp);
             return;
@@ -277,21 +248,22 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 
 uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 {
-    if( nSize < MINIMUM_SIZE_FOR_FREELIST || m_nHasFreeList == FALSE || m_bFreelistCanBeDeleted )
+    if (nSize < MINIMUM_SIZE_FOR_FREELIST || m_nHasFreeList == FALSE ||
+        m_bFreelistCanBeDeleted)
         return OFFSET_MINUS_ONE;
 
-    const std::string osFilename = CPLResetExtension(m_osFilename.c_str(),
-                                                     "freelist");
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb+");
+    const std::string osFilename =
+        CPLResetExtension(m_osFilename.c_str(), "freelist");
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb+");
     m_nHasFreeList = fp != nullptr;
-    if( fp == nullptr )
+    if (fp == nullptr)
         return OFFSET_MINUS_ONE;
 
     // Read trailer
     VSIFSeekL(fp, 0, SEEK_END);
     auto nFileSize = VSIFTellL(fp);
 
-    if( (nFileSize % nPageSize) != nTrailerSize )
+    if ((nFileSize % nPageSize) != nTrailerSize)
     {
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
@@ -299,7 +271,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 
     VSIFSeekL(fp, nFileSize - nTrailerSize, SEEK_SET);
     std::vector<GByte> abyTrailer(nTrailerSize);
-    if( VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp ) != 1 )
+    if (VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp) != 1)
     {
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
@@ -307,15 +279,16 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 
     // Determine in which "slot" of hole size the new entry belongs to
     const int iSlot = FindFreelistRangeSlot(nSize);
-    if( iSlot < 0 )
+    if (iSlot < 0)
     {
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
     }
 
     // Read the last page index of the identified slot
-    uint32_t nPageIdx = GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot, 0);
-    if( nPageIdx == MINUS_ONE )
+    uint32_t nPageIdx =
+        GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot, 0);
+    if (nPageIdx == MINUS_ONE)
     {
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
@@ -323,14 +296,15 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 
     VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
     std::vector<GByte> abyPage(nPageSize);
-    if( VSIFReadL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+    if (VSIFReadL(abyPage.data(), abyPage.size(), 1, fp) != 1)
     {
         CPLDebug("OpenFileGDB", "Can't read freelist page %u", nPageIdx);
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
     }
 
-    const int nEntrySize = static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
+    const int nEntrySize =
+        static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
     const int nMaxEntriesPerPage = (nPageSize - nPageHeaderSize) / nEntrySize;
 
     // Index of page that links to us
@@ -345,28 +319,30 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
     std::vector<GByte> abyBestCandidateReferencingPage;
     std::vector<GByte> abyBestCandidatePage;
 
-    std::set<uint32_t> aSetReadPages = { nPageIdx };
-    while( true )
+    std::set<uint32_t> aSetReadPages = {nPageIdx};
+    while (true)
     {
         int nNumEntries = static_cast<int>(
             std::min(GetUInt32(abyPage.data(), 0),
                      static_cast<uint32_t>(nMaxEntriesPerPage)));
         bool bExactMatch = false;
-        for( int i = nNumEntries - 1; i >= 0; i-- )
+        for (int i = nNumEntries - 1; i >= 0; i--)
         {
-            const uint32_t nFreeAreaSize = GetUInt32(
-                abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
-            if( nFreeAreaSize < anHoleSizes[iSlot] ||
-                nFreeAreaSize >= anHoleSizes[iSlot+1] )
+            const uint32_t nFreeAreaSize =
+                GetUInt32(abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
+            if (nFreeAreaSize < anHoleSizes[iSlot] ||
+                nFreeAreaSize >= anHoleSizes[iSlot + 1])
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Page %u of %s contains free area of unexpected size at entry %d",
+                         "Page %u of %s contains free area of unexpected size "
+                         "at entry %d",
                          nPageIdx, osFilename.c_str(), i);
             }
-            else if( nFreeAreaSize == nSize ||
-                     (nFreeAreaSize > nSize && nFreeAreaSize < nBestCandidateSize) )
+            else if (nFreeAreaSize == nSize ||
+                     (nFreeAreaSize > nSize &&
+                      nFreeAreaSize < nBestCandidateSize))
             {
-                if( nBestCandidatePageIdx != nPageIdx )
+                if (nBestCandidatePageIdx != nPageIdx)
                 {
                     abyBestCandidatePage = abyPage;
                     abyBestCandidateReferencingPage = abyReferencingPage;
@@ -376,7 +352,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
                 iBestCandidateEntry = i;
                 nBestCandidateSize = nFreeAreaSize;
                 nBestCandidateNumEntries = nNumEntries;
-                if( nFreeAreaSize == nSize )
+                if (nFreeAreaSize == nSize)
                 {
                     bExactMatch = true;
                     break;
@@ -384,19 +360,19 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
             }
         }
 
-        if( !bExactMatch )
+        if (!bExactMatch)
         {
-            const uint32_t nPrevPage = GetUInt32(abyPage.data() + sizeof(uint32_t), 0);
-            if( nPrevPage == MINUS_ONE )
+            const uint32_t nPrevPage =
+                GetUInt32(abyPage.data() + sizeof(uint32_t), 0);
+            if (nPrevPage == MINUS_ONE)
             {
                 break;
             }
 
-            if( aSetReadPages.find(nPrevPage) != aSetReadPages.end() )
+            if (aSetReadPages.find(nPrevPage) != aSetReadPages.end())
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cyclic page refererencing in %s",
-                         osFilename.c_str());
+                         "Cyclic page refererencing in %s", osFilename.c_str());
                 VSIFCloseL(fp);
                 return OFFSET_MINUS_ONE;
             }
@@ -406,9 +382,10 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
             nReferencingPage = nPageIdx;
             nPageIdx = nPrevPage;
             VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
-            if( VSIFReadL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+            if (VSIFReadL(abyPage.data(), abyPage.size(), 1, fp) != 1)
             {
-                CPLDebug("OpenFileGDB", "Can't read freelist page %u", nPageIdx);
+                CPLDebug("OpenFileGDB", "Can't read freelist page %u",
+                         nPageIdx);
                 break;
             }
         }
@@ -418,7 +395,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         }
     }
 
-    if( nBestCandidatePageIdx == MINUS_ONE )
+    if (nBestCandidatePageIdx == MINUS_ONE)
     {
         // If we go here, it means that the trailer section references empty
         // pages or pages with features of unexpected size.
@@ -432,50 +409,57 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
     abyPage = std::move(abyBestCandidatePage);
     abyReferencingPage = std::move(abyBestCandidateReferencingPage);
 
-    uint64_t nCandidateOffset = ReadFeatureOffset(
-        abyPage.data() + nPageHeaderSize + iBestCandidateEntry * nEntrySize + sizeof(uint32_t));
+    uint64_t nCandidateOffset =
+        ReadFeatureOffset(abyPage.data() + nPageHeaderSize +
+                          iBestCandidateEntry * nEntrySize + sizeof(uint32_t));
 
     // Remove entry from page
-    if( iBestCandidateEntry < nBestCandidateNumEntries - 1 )
+    if (iBestCandidateEntry < nBestCandidateNumEntries - 1)
     {
-        memmove(abyPage.data() + nPageHeaderSize + iBestCandidateEntry * nEntrySize,
-                abyPage.data() + nPageHeaderSize + (iBestCandidateEntry + 1) * nEntrySize,
-                (nBestCandidateNumEntries - 1 - iBestCandidateEntry) * nEntrySize);
+        memmove(
+            abyPage.data() + nPageHeaderSize + iBestCandidateEntry * nEntrySize,
+            abyPage.data() + nPageHeaderSize +
+                (iBestCandidateEntry + 1) * nEntrySize,
+            (nBestCandidateNumEntries - 1 - iBestCandidateEntry) * nEntrySize);
     }
-    memset(abyPage.data() + nPageHeaderSize + (nBestCandidateNumEntries - 1) * nEntrySize,
-           0,
-           nEntrySize);
+    memset(abyPage.data() + nPageHeaderSize +
+               (nBestCandidateNumEntries - 1) * nEntrySize,
+           0, nEntrySize);
 
-    nBestCandidateNumEntries --;
+    nBestCandidateNumEntries--;
     WriteUInt32(abyPage, nBestCandidateNumEntries, 0);
 
-    if( nBestCandidateNumEntries > 0 )
+    if (nBestCandidateNumEntries > 0)
     {
         // Rewrite updated page
         VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
-        CPL_IGNORE_RET_VAL(VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp ));
+        CPL_IGNORE_RET_VAL(VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp));
     }
     else
     {
-        const uint32_t nPrevPage = GetUInt32(abyPage.data() + sizeof(uint32_t), 0);
+        const uint32_t nPrevPage =
+            GetUInt32(abyPage.data() + sizeof(uint32_t), 0);
 
         // Link this newly free page to the previous one
-        const uint32_t nLastFreePage = GetUInt32(abyTrailer.data() + sizeof(uint32_t), 0);
+        const uint32_t nLastFreePage =
+            GetUInt32(abyTrailer.data() + sizeof(uint32_t), 0);
         WriteUInt32(abyPage, nLastFreePage, sizeof(uint32_t));
 
         // Rewrite updated page
         VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
-        CPL_IGNORE_RET_VAL(VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp ));
+        CPL_IGNORE_RET_VAL(VSIFWriteL(abyPage.data(), abyPage.size(), 1, fp));
 
         // Update trailer to add a new free page
         WriteUInt32(abyTrailer, nPageIdx, sizeof(uint32_t));
 
-        if( nReferencingPage != MINUS_ONE )
+        if (nReferencingPage != MINUS_ONE)
         {
             // Links referencing page to previous page
             WriteUInt32(abyReferencingPage, nPrevPage, sizeof(uint32_t));
-            VSIFSeekL(fp, static_cast<uint64_t>(nReferencingPage) * nPageSize, 0);
-            CPL_IGNORE_RET_VAL(VSIFWriteL(abyReferencingPage.data(), abyReferencingPage.size(), 1, fp ));
+            VSIFSeekL(fp, static_cast<uint64_t>(nReferencingPage) * nPageSize,
+                      0);
+            CPL_IGNORE_RET_VAL(VSIFWriteL(abyReferencingPage.data(),
+                                          abyReferencingPage.size(), 1, fp));
         }
         else
         {
@@ -483,23 +467,29 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
             WriteUInt32(abyTrailer, nPrevPage, nTrailerEntrySize * iSlot);
         }
 
-        uint32_t nPageCount = GetUInt32(abyTrailer.data() + nTrailerEntrySize * iSlot + sizeof(uint32_t), 0);
-        if( nPageCount == 0 )
+        uint32_t nPageCount = GetUInt32(
+            abyTrailer.data() + nTrailerEntrySize * iSlot + sizeof(uint32_t),
+            0);
+        if (nPageCount == 0)
         {
             CPLDebug("OpenFileGDB", "Wrong page count for %s at slot %d",
                      osFilename.c_str(), iSlot);
         }
         else
         {
-            nPageCount --;
-            WriteUInt32(abyTrailer, nPageCount, nTrailerEntrySize * iSlot + sizeof(uint32_t));
-            if( nPageCount == 0 )
+            nPageCount--;
+            WriteUInt32(abyTrailer, nPageCount,
+                        nTrailerEntrySize * iSlot + sizeof(uint32_t));
+            if (nPageCount == 0)
             {
-                // Check if the freelist no longer contains pages with free slots
+                // Check if the freelist no longer contains pages with free
+                // slots
                 m_bFreelistCanBeDeleted = true;
-                for( int i = 1; i < nTrailerSize / nTrailerEntrySize; i++ )
+                for (int i = 1; i < nTrailerSize / nTrailerEntrySize; i++)
                 {
-                    if( GetUInt32(abyTrailer.data() + i * nTrailerEntrySize + sizeof(uint32_t), 0) != 0 )
+                    if (GetUInt32(abyTrailer.data() + i * nTrailerEntrySize +
+                                      sizeof(uint32_t),
+                                  0) != 0)
                     {
                         m_bFreelistCanBeDeleted = false;
                         break;
@@ -509,7 +499,8 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         }
 
         VSIFSeekL(fp, nFileSize - nTrailerSize, 0);
-        CPL_IGNORE_RET_VAL(VSIFWriteL(abyTrailer.data(), abyTrailer.size(), 1, fp ));
+        CPL_IGNORE_RET_VAL(
+            VSIFWriteL(abyTrailer.data(), abyTrailer.size(), 1, fp));
     }
 
     // Extra precaution: check that the uint32_t at offset nOffset is a
@@ -517,25 +508,25 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
     auto nOffset = nCandidateOffset;
     VSIFSeekL(m_fpTable, nOffset, 0);
     uint32_t nOldSize = 0;
-    if( !ReadUInt32(m_fpTable, nOldSize) || (nOldSize >> 31) == 0 )
+    if (!ReadUInt32(m_fpTable, nOldSize) || (nOldSize >> 31) == 0)
     {
         nOffset = OFFSET_MINUS_ONE;
     }
     else
     {
         nOldSize = static_cast<uint32_t>(-static_cast<int>(nOldSize));
-        if( nOldSize < nSize - sizeof(uint32_t) )
+        if (nOldSize < nSize - sizeof(uint32_t))
         {
             nOffset = OFFSET_MINUS_ONE;
         }
     }
-    if( nOffset == OFFSET_MINUS_ONE )
+    if (nOffset == OFFSET_MINUS_ONE)
     {
-        CPLDebug("OpenFileGDB", "%s references a free area at offset "
-                 CPL_FRMT_GUIB ", but it does not appear to match a deleted "
+        CPLDebug("OpenFileGDB",
+                 "%s references a free area at offset " CPL_FRMT_GUIB
+                 ", but it does not appear to match a deleted "
                  "feature",
-                 osFilename.c_str(),
-                 static_cast<GUIntBig>(nCandidateOffset));
+                 osFilename.c_str(), static_cast<GUIntBig>(nCandidateOffset));
     }
 
     VSIFCloseL(fp);
@@ -548,35 +539,33 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 
 bool FileGDBTable::CheckFreeListConsistency()
 {
-    const std::string osFilename = CPLResetExtension(m_osFilename.c_str(),
-                                                     "freelist");
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
-    if( fp == nullptr )
+    const std::string osFilename =
+        CPLResetExtension(m_osFilename.c_str(), "freelist");
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb");
+    if (fp == nullptr)
         return true;
 
     // Read trailer
     VSIFSeekL(fp, 0, SEEK_END);
     auto nFileSize = VSIFTellL(fp);
 
-    if( (nFileSize % nPageSize) != nTrailerSize )
+    if ((nFileSize % nPageSize) != nTrailerSize)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Bad file size");
+        CPLError(CE_Failure, CPLE_AppDefined, "Bad file size");
         VSIFCloseL(fp);
         return false;
     }
 
     VSIFSeekL(fp, nFileSize - nTrailerSize, SEEK_SET);
     std::vector<GByte> abyTrailer(nTrailerSize);
-    if( VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp ) != 1 )
+    if (VSIFReadL(abyTrailer.data(), abyTrailer.size(), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read trailer section");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read trailer section");
         VSIFCloseL(fp);
         return false;
     }
 
-    if( GetUInt32(abyTrailer.data(), 0) != 1 )
+    if (GetUInt32(abyTrailer.data(), 0) != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unexpected value for first uint32 of trailer section");
@@ -589,9 +578,9 @@ bool FileGDBTable::CheckFreeListConsistency()
 
     // Check free pages
     uint32_t nFreePage = GetUInt32(abyTrailer.data() + sizeof(uint32_t), 0);
-    while( nFreePage != MINUS_ONE )
+    while (nFreePage != MINUS_ONE)
     {
-        if( setVisitedPages.find(nFreePage) != setVisitedPages.end() )
+        if (setVisitedPages.find(nFreePage) != setVisitedPages.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cyclic page refererencing in free pages");
@@ -600,17 +589,17 @@ bool FileGDBTable::CheckFreeListConsistency()
         }
 
         VSIFSeekL(fp, static_cast<uint64_t>(nFreePage) * nPageSize, 0);
-        if( VSIFReadL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+        if (VSIFReadL(abyPage.data(), abyPage.size(), 1, fp) != 1)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Can't read freelist page %u", nFreePage);
+            CPLError(CE_Failure, CPLE_AppDefined, "Can't read freelist page %u",
+                     nFreePage);
             VSIFCloseL(fp);
             return false;
         }
 
         setVisitedPages.insert(nFreePage);
 
-        if( GetUInt32(abyPage.data(), 0) != 0 )
+        if (GetUInt32(abyPage.data(), 0) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected value for first uint32 of free page");
@@ -622,27 +611,30 @@ bool FileGDBTable::CheckFreeListConsistency()
     }
 
     // Check active pages
-    const int nEntrySize = static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
+    const int nEntrySize =
+        static_cast<int>(sizeof(uint32_t)) + m_nTablxOffsetSize;
     const int nMaxEntriesPerPage = (nPageSize - nPageHeaderSize) / nEntrySize;
 
     std::set<uint64_t> aSetOffsets;
 
-    for( int iSlot = 1; iSlot < (nTrailerSize / nTrailerEntrySize); iSlot++ )
+    for (int iSlot = 1; iSlot < (nTrailerSize / nTrailerEntrySize); iSlot++)
     {
-        uint32_t nPageIdx = GetUInt32(abyTrailer.data() + iSlot * nTrailerEntrySize, 0);
+        uint32_t nPageIdx =
+            GetUInt32(abyTrailer.data() + iSlot * nTrailerEntrySize, 0);
         uint32_t nActualCount = 0;
-        while( nPageIdx != MINUS_ONE )
+        while (nPageIdx != MINUS_ONE)
         {
-            if( setVisitedPages.find(nPageIdx) != setVisitedPages.end() )
+            if (setVisitedPages.find(nPageIdx) != setVisitedPages.end())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cyclic page refererencing or page referenced more than once");
+                         "Cyclic page refererencing or page referenced more "
+                         "than once");
                 VSIFCloseL(fp);
                 return false;
             }
 
             VSIFSeekL(fp, static_cast<uint64_t>(nPageIdx) * nPageSize, 0);
-            if( VSIFReadL(abyPage.data(), abyPage.size(), 1, fp ) != 1 )
+            if (VSIFReadL(abyPage.data(), abyPage.size(), 1, fp) != 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Can't read active page %u", nPageIdx);
@@ -651,57 +643,65 @@ bool FileGDBTable::CheckFreeListConsistency()
             }
 
             setVisitedPages.insert(nPageIdx);
-            nActualCount ++;
+            nActualCount++;
 
             const uint32_t nEntries = GetUInt32(abyPage.data(), 0);
-            if( nEntries == 0 || nEntries > static_cast<uint32_t>(nMaxEntriesPerPage) )
+            if (nEntries == 0 ||
+                nEntries > static_cast<uint32_t>(nMaxEntriesPerPage))
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unexpected value for entries count of active page %u: %d",
-                         nPageIdx, nEntries);
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Unexpected value for entries count of active page %u: %d",
+                    nPageIdx, nEntries);
                 VSIFCloseL(fp);
                 return false;
             }
 
-            for( uint32_t i = 0; i < nEntries; ++i )
+            for (uint32_t i = 0; i < nEntries; ++i)
             {
                 const uint32_t nFreeAreaSize = GetUInt32(
                     abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
-                if( nFreeAreaSize < anHoleSizes[iSlot] ||
-                    nFreeAreaSize >= anHoleSizes[iSlot+1] )
+                if (nFreeAreaSize < anHoleSizes[iSlot] ||
+                    nFreeAreaSize >= anHoleSizes[iSlot + 1])
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Page %u contains free area of unexpected size at entry %u",
+                             "Page %u contains free area of unexpected size at "
+                             "entry %u",
                              nPageIdx, i);
                     VSIFCloseL(fp);
                     return false;
                 }
 
-                const uint64_t nOffset = ReadFeatureOffset(
-                    abyPage.data() + nPageHeaderSize + i * nEntrySize + sizeof(uint32_t));
+                const uint64_t nOffset =
+                    ReadFeatureOffset(abyPage.data() + nPageHeaderSize +
+                                      i * nEntrySize + sizeof(uint32_t));
 
                 VSIFSeekL(m_fpTable, nOffset, 0);
                 uint32_t nOldSize = 0;
-                if( !ReadUInt32(m_fpTable, nOldSize) )
+                if (!ReadUInt32(m_fpTable, nOldSize))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Page %u contains free area that points to invalid offset " CPL_FRMT_GUIB,
+                             "Page %u contains free area that points to "
+                             "invalid offset " CPL_FRMT_GUIB,
                              nPageIdx, static_cast<GUIntBig>(nOffset));
                     VSIFCloseL(fp);
                     return false;
                 }
-                if( (nOldSize >> 31) == 0 ||
-                    (nOldSize = static_cast<uint32_t>(-static_cast<int>(nOldSize))) != nFreeAreaSize - sizeof(uint32_t) )
+                if ((nOldSize >> 31) == 0 ||
+                    (nOldSize = static_cast<uint32_t>(-static_cast<int>(
+                         nOldSize))) != nFreeAreaSize - sizeof(uint32_t))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to dead "
-                             "zone at offset " CPL_FRMT_GUIB " of unexpected size: %u",
-                             nPageIdx, static_cast<GUIntBig>(nOffset), nOldSize);
+                             "zone at offset " CPL_FRMT_GUIB
+                             " of unexpected size: %u",
+                             nPageIdx, static_cast<GUIntBig>(nOffset),
+                             nOldSize);
                     VSIFCloseL(fp);
                     return false;
                 }
 
-                if( aSetOffsets.find(nOffset) != aSetOffsets.end() )
+                if (aSetOffsets.find(nOffset) != aSetOffsets.end())
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to "
@@ -717,8 +717,9 @@ bool FileGDBTable::CheckFreeListConsistency()
         }
 
         const uint32_t nPageCount = GetUInt32(
-            abyTrailer.data() + iSlot * nTrailerEntrySize + sizeof(uint32_t), 0);
-        if( nPageCount != nActualCount )
+            abyTrailer.data() + iSlot * nTrailerEntrySize + sizeof(uint32_t),
+            0);
+        if (nPageCount != nActualCount)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected value for page count of slot %d: %u vs %u",
@@ -728,8 +729,8 @@ bool FileGDBTable::CheckFreeListConsistency()
         }
     }
 
-    const auto nExpectedPageCount = (nFileSize - nTrailerSize ) / nPageSize;
-    if( setVisitedPages.size() != nExpectedPageCount )
+    const auto nExpectedPageCount = (nFileSize - nTrailerSize) / nPageSize;
+    if (setVisitedPages.size() != nExpectedPageCount)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "%u pages have been visited, but there are %u pages in total",
@@ -751,7 +752,7 @@ void FileGDBTable::DeleteFreeList()
 {
     m_bFreelistCanBeDeleted = false;
     m_nHasFreeList = -1;
-    VSIUnlink( CPLResetExtension(m_osFilename.c_str(), "freelist") );
+    VSIUnlink(CPLResetExtension(m_osFilename.c_str(), "freelist"));
 }
 
 } /* namespace OpenFileGDB */

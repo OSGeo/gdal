@@ -47,21 +47,24 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderGeoEye: public GDALMDReaderBase
+class GDALMDReaderGeoEye : public GDALMDReaderBase
 {
-public:
+  public:
     GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderGeoEye();
     virtual bool HasRequiredFiles() const override;
-    virtual char** GetMetadataFiles() const override;
-protected:
+    virtual char **GetMetadataFiles() const override;
+
+  protected:
     virtual void LoadMetadata() override;
-    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig
+    GetAcquisitionTimeFromString(const char *pszDateTime) override;
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;
-protected:
+
+  protected:
     CPLString m_osIMDSourceFilename{};
     CPLString m_osRPBSourceFilename{};
 };
 
-#endif // READER_GEO_EYE_H_INCLUDED
+#endif  // READER_GEO_EYE_H_INCLUDED

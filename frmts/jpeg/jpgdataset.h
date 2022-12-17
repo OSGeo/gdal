@@ -41,7 +41,7 @@
 #include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 #include <setjmp.h>
 
@@ -59,9 +59,9 @@
 #include "gdal_priv.h"
 CPL_C_START
 #ifdef LIBJPEG_12_PATH
-#  include LIBJPEG_12_PATH
+#include LIBJPEG_12_PATH
 #else
-#  include "jpeglib.h"
+#include "jpeglib.h"
 #endif
 CPL_C_END
 #include "memdataset.h"
@@ -77,7 +77,7 @@ typedef struct
 
 // Ok to use setjmp().
 #ifdef _MSC_VER
-#  pragma warning(disable:4611)
+#pragma warning(disable : 4611)
 #endif
 
 typedef struct
@@ -94,19 +94,19 @@ class JPGDatasetCommon;
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 JPGDatasetCommon *JPEGDataset12Open(JPGDatasetOpenArgs *psArgs);
-GDALDataset *JPEGDataset12CreateCopy( const char *pszFilename,
-                                      GDALDataset *poSrcDS,
-                                      int bStrict, char **papszOptions,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData );
+GDALDataset *JPEGDataset12CreateCopy(const char *pszFilename,
+                                     GDALDataset *poSrcDS, int bStrict,
+                                     char **papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData);
 #endif
 
 // Do we want to do special processing suitable for when JSAMPLE is a
 // 16bit value?
 #if defined(JPEG_LIB_MK1)
-#  define JPEG_LIB_MK1_OR_12BIT 1
+#define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
-#  define JPEG_LIB_MK1_OR_12BIT 1
+#define JPEG_LIB_MK1_OR_12BIT 1
 #endif
 
 GDALRasterBand *JPGCreateBand(JPGDatasetCommon *poDS, int nBand);
@@ -115,34 +115,31 @@ typedef void (*my_jpeg_write_m_header)(void *cinfo, int marker,
                                        unsigned int datalen);
 typedef void (*my_jpeg_write_m_byte)(void *cinfo, int val);
 
-CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
-                      GDALProgressFunc pfnProgress, void *pProgressData );
-void   JPGAddEXIF        ( GDALDataType eWorkDT,
-                           GDALDataset *poSrcDS, char** papszOptions,
-                           void *cinfo,
-                           my_jpeg_write_m_header p_jpeg_write_m_header,
-                           my_jpeg_write_m_byte p_jpeg_write_m_byte,
-                           GDALDataset *(pCreateCopy)(
-                               const char *, GDALDataset *,
-                               int, char **,
-                               GDALProgressFunc pfnProgress,
-                               void *pProgressData ) );
-void JPGAddICCProfile( void *pInfo,
-                       const char *pszICCProfile,
-                       my_jpeg_write_m_header p_jpeg_write_m_header,
-                       my_jpeg_write_m_byte p_jpeg_write_m_byte);
+CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
+                     GDALProgressFunc pfnProgress, void *pProgressData);
+void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
+                void *cinfo, my_jpeg_write_m_header p_jpeg_write_m_header,
+                my_jpeg_write_m_byte p_jpeg_write_m_byte,
+                GDALDataset *(pCreateCopy)(const char *, GDALDataset *, int,
+                                           char **,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pProgressData));
+void JPGAddICCProfile(void *pInfo, const char *pszICCProfile,
+                      my_jpeg_write_m_header p_jpeg_write_m_header,
+                      my_jpeg_write_m_byte p_jpeg_write_m_byte);
 
 class GDALJPEGUserData
 {
-public:
-    jmp_buf     setjmp_buffer;
-    bool        bNonFatalErrorEncountered = false;
-    void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level) = nullptr;
-    int         nMaxScans;
+  public:
+    jmp_buf setjmp_buffer;
+    bool bNonFatalErrorEncountered = false;
+    void (*p_previous_emit_message)(j_common_ptr cinfo,
+                                    int msg_level) = nullptr;
+    int nMaxScans;
 
-    GDALJPEGUserData() :
-        nMaxScans(atoi(
-            CPLGetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "100")))
+    GDALJPEGUserData()
+        : nMaxScans(atoi(
+              CPLGetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "100")))
     {
         memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
     }
@@ -157,130 +154,127 @@ public:
 class JPGRasterBand;
 class JPGMaskBand;
 
-class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
+class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 {
   protected:
     friend class JPGDataset;
     friend class JPGRasterBand;
     friend class JPGMaskBand;
 
-    int           nScaleFactor;
-    bool          bHasInitInternalOverviews;
-    int           nInternalOverviewsCurrent;
-    int           nInternalOverviewsToFree;
+    int nScaleFactor;
+    bool bHasInitInternalOverviews;
+    int nInternalOverviewsCurrent;
+    int nInternalOverviewsToFree;
     GDALDataset **papoInternalOverviews;
-    JPGDatasetCommon* poActiveDS = nullptr; /* only valid in parent DS */
-    JPGDatasetCommon** ppoActiveDS = nullptr; /* &poActiveDS of poActiveDS from parentDS */
-    void          InitInternalOverviews();
-    GDALDataset  *InitEXIFOverview();
+    JPGDatasetCommon *poActiveDS = nullptr; /* only valid in parent DS */
+    JPGDatasetCommon **ppoActiveDS =
+        nullptr; /* &poActiveDS of poActiveDS from parentDS */
+    void InitInternalOverviews();
+    GDALDataset *InitEXIFOverview();
 
     OGRSpatialReference m_oSRS{};
-    bool   bGeoTransformValid;
+    bool bGeoTransformValid;
     double adfGeoTransform[6];
-    int    nGCPCount;
+    int nGCPCount;
     GDAL_GCP *pasGCPList;
 
-    VSILFILE   *m_fpImage;
+    VSILFILE *m_fpImage;
     GUIntBig nSubfileOffset;
 
-    int    nLoadedScanline;
-    GByte  *m_pabyScanline;
+    int nLoadedScanline;
+    GByte *m_pabyScanline;
 
-    bool   bHasReadEXIFMetadata;
-    bool   bHasReadXMPMetadata;
-    bool   bHasReadICCMetadata;
-    bool   bHasReadFLIRMetadata = false;
-    char   **papszMetadata;
-    int    nExifOffset;
-    int    nInterOffset;
-    int    nGPSOffset;
-    bool   bSwabflag;
-    int    nTiffDirStart;
-    int    nTIFFHEADER;
-    bool   bHasDoneJpegCreateDecompress;
-    bool   bHasDoneJpegStartDecompress;
+    bool bHasReadEXIFMetadata;
+    bool bHasReadXMPMetadata;
+    bool bHasReadICCMetadata;
+    bool bHasReadFLIRMetadata = false;
+    char **papszMetadata;
+    int nExifOffset;
+    int nInterOffset;
+    int nGPSOffset;
+    bool bSwabflag;
+    int nTiffDirStart;
+    int nTIFFHEADER;
+    bool bHasDoneJpegCreateDecompress;
+    bool bHasDoneJpegStartDecompress;
 
-    int    m_nSubdatasetCount = 0;
+    int m_nSubdatasetCount = 0;
 
     // FLIR raw thermal image
-    bool   m_bRawThermalLittleEndian = false;
-    int    m_nRawThermalImageWidth = 0;
-    int    m_nRawThermalImageHeight = 0;
+    bool m_bRawThermalLittleEndian = false;
+    int m_nRawThermalImageWidth = 0;
+    int m_nRawThermalImageHeight = 0;
     std::vector<GByte> m_abyRawThermalImage{};
 
-    virtual CPLErr LoadScanline(int, GByte* outBuffer = nullptr) = 0;
-    virtual void   StopDecompress() = 0;
+    virtual CPLErr LoadScanline(int, GByte *outBuffer = nullptr) = 0;
+    virtual void StopDecompress() = 0;
     virtual CPLErr Restart() = 0;
 
     virtual int GetDataPrecision() = 0;
     virtual int GetOutColorSpace() = 0;
 
-    bool   EXIFInit(VSILFILE *);
-    void   ReadICCProfile();
+    bool EXIFInit(VSILFILE *);
+    void ReadICCProfile();
 
-    void   CheckForMask();
-    void   DecompressMask();
+    void CheckForMask();
+    void DecompressMask();
 
-    void   LoadForMetadataDomain( const char *pszDomain );
+    void LoadForMetadataDomain(const char *pszDomain);
 
-    void   ReadEXIFMetadata();
-    void   ReadXMPMetadata();
-    void   ReadFLIRMetadata();
-    GDALDataset* OpenFLIRRawThermalImage();
+    void ReadEXIFMetadata();
+    void ReadXMPMetadata();
+    void ReadFLIRMetadata();
+    GDALDataset *OpenFLIRRawThermalImage();
 
-    bool   bHasCheckedForMask;
+    bool bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
-    GByte  *pabyBitMask;
-    bool   bMaskLSBOrder;
+    GByte *pabyBitMask;
+    bool bMaskLSBOrder;
 
-    GByte  *pabyCMask;
-    int    nCMaskSize;
+    GByte *pabyCMask;
+    int nCMaskSize;
 
     // Color space exposed by GDAL.  Not necessarily the in_color_space nor
     // the out_color_space of JPEG library.
     /*J_COLOR_SPACE*/ int eGDALColorSpace;
 
-    bool   bIsSubfile;
-    bool   bHasTriedLoadWorldFileOrTab;
-    void   LoadWorldFileOrTab();
+    bool bIsSubfile;
+    bool bHasTriedLoadWorldFileOrTab;
+    void LoadWorldFileOrTab();
     CPLString osWldFilename;
 
-    virtual int         CloseDependentDatasets() override;
+    virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr IBuildOverviews( const char *,
-                                    int, const int *,
-                                    int, const int *,
-                                    GDALProgressFunc, void *,
-                                    CSLConstList papszOptions ) override;
+    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
+                                   const int *, GDALProgressFunc, void *,
+                                   CSLConstList papszOptions) override;
 
   public:
-                 JPGDatasetCommon();
+    JPGDatasetCommon();
     virtual ~JPGDatasetCommon();
 
-    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
-                                   void *, int, int, GDALDataType,
-                                   int, int *,
-                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                   GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, int, int *, GSpacing nPixelSpace,
+                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr GetGeoTransform(double *) override;
 
-    virtual int    GetGCPCount() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override;
+    virtual int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual char  **GetMetadataDomainList() override;
-    virtual char  **GetMetadata( const char *pszDomain = "" ) override;
-    virtual const char *GetMetadataItem( const char *pszName,
-                                         const char *pszDomain = "" ) override;
+    virtual char **GetMetadataDomainList() override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain = "") override;
 
     virtual char **GetFileList(void) override;
 
     virtual void FlushCache(bool bAtClosing) override;
 
-    static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -289,45 +283,51 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGDataset final: public JPGDatasetCommon
+class JPGDataset final : public JPGDatasetCommon
 {
     GDALJPEGUserData sUserData;
 
     bool ErrorOutOnNonFatalError();
 
     static void EmitMessage(j_common_ptr cinfo, int msg_level);
-    static void ProgressMonitor (j_common_ptr cinfo );
+    static void ProgressMonitor(j_common_ptr cinfo);
 
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
     struct jpeg_progress_mgr sJProgress;
 
-    virtual CPLErr LoadScanline(int, GByte* outBuffer) override;
-    CPLErr         StartDecompress();
-    virtual void   StopDecompress() override;
+    virtual CPLErr LoadScanline(int, GByte *outBuffer) override;
+    CPLErr StartDecompress();
+    virtual void StopDecompress() override;
     virtual CPLErr Restart() override;
-    virtual int GetDataPrecision() override { return sDInfo.data_precision; }
-    virtual int GetOutColorSpace() override { return sDInfo.out_color_space; }
+    virtual int GetDataPrecision() override
+    {
+        return sDInfo.data_precision;
+    }
+    virtual int GetOutColorSpace() override
+    {
+        return sDInfo.out_color_space;
+    }
 
-    int    nQLevel;
+    int nQLevel;
 #if !defined(JPGDataset)
-    void   LoadDefaultTables(int);
+    void LoadDefaultTables(int);
 #endif
-    void   SetScaleNumAndDenom();
+    void SetScaleNumAndDenom();
 
-    static JPGDatasetCommon *OpenStage2( JPGDatasetOpenArgs *psArgs,
-                                    JPGDataset *&poDS );
+    static JPGDatasetCommon *OpenStage2(JPGDatasetOpenArgs *psArgs,
+                                        JPGDataset *&poDS);
 
   public:
-                 JPGDataset();
+    JPGDataset();
     virtual ~JPGDataset();
 
-    static JPGDatasetCommon *Open( JPGDatasetOpenArgs *psArgs );
-    static GDALDataset *CreateCopy( const char *pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char ** papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void *pProgressData );
+    static JPGDatasetCommon *Open(JPGDatasetOpenArgs *psArgs);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
     static GDALDataset *CreateCopyStage2(
         const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
         GDALProgressFunc pfnProgress, void *pProgressData, VSILFILE *fpImage,
@@ -343,7 +343,7 @@ class JPGDataset final: public JPGDatasetCommon
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGRasterBand final: public GDALPamRasterBand
+class JPGRasterBand final : public GDALPamRasterBand
 {
     friend class JPGDatasetCommon;
 
@@ -356,19 +356,24 @@ class JPGRasterBand final: public GDALPamRasterBand
 
   public:
     JPGRasterBand(JPGDatasetCommon *, int);
-    virtual ~JPGRasterBand() {}
+    virtual ~JPGRasterBand()
+    {
+    }
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern()
-        const override { return GSBAP_TOP_TO_BOTTOM; }
+    virtual GDALSuggestedBlockAccessPattern
+    GetSuggestedBlockAccessPattern() const override
+    {
+        return GSBAP_TOP_TO_BOTTOM;
+    }
 
     virtual GDALRasterBand *GetMaskBand() override;
-    virtual int             GetMaskFlags() override;
+    virtual int GetMaskFlags() override;
 
     virtual GDALRasterBand *GetOverview(int i) override;
-    virtual int             GetOverviewCount() override;
+    virtual int GetOverviewCount() override;
 };
 
 #if !defined(JPGDataset)
@@ -379,28 +384,32 @@ class JPGRasterBand final: public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGMaskBand final: public GDALRasterBand
+class JPGMaskBand final : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 
   public:
-    explicit JPGMaskBand( JPGDatasetCommon *poDS );
-    virtual ~JPGMaskBand() {}
+    explicit JPGMaskBand(JPGDatasetCommon *poDS);
+    virtual ~JPGMaskBand()
+    {
+    }
 };
 
 /************************************************************************/
 /*                         GDALRegister_JPEG()                          */
 /************************************************************************/
 
-class GDALJPGDriver final: public GDALDriver
+class GDALJPGDriver final : public GDALDriver
 {
   public:
-    GDALJPGDriver() {}
+    GDALJPGDriver()
+    {
+    }
 
-    char      **GetMetadata( const char *pszDomain = "" ) override;
-    const char *GetMetadataItem( const char *pszName,
-                                 const char *pszDomain = "" ) override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
 };
 
 #endif  // !defined(JPGDataset)

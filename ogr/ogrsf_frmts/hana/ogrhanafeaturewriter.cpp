@@ -29,9 +29,10 @@
 #include "ogrhanafeaturewriter.h"
 #include <limits>
 
-
-namespace OGRHANA {
-namespace {
+namespace OGRHANA
+{
+namespace
+{
 
 enum DataLengthIndicator
 {
@@ -42,15 +43,15 @@ enum DataLengthIndicator
     NULL_VALUE = 255
 };
 
-} // anonymous namespace
+}  // anonymous namespace
 
-OGRHanaFeatureWriter::OGRHanaFeatureWriter(OGRFeature& feature)
+OGRHanaFeatureWriter::OGRHanaFeatureWriter(OGRFeature &feature)
     : feature_(feature)
 {
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Long& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Long &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
@@ -58,8 +59,8 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, static_cast<GIntBig>(*value));
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Float& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Float &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
@@ -67,8 +68,8 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, static_cast<double>(*value));
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Decimal& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Decimal &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
@@ -76,8 +77,8 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, value->toString().c_str());
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::String& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::String &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
@@ -85,44 +86,41 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, value->c_str());
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Date& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Date &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
     else
-        feature_.SetField(
-            fieldIndex, value->year(), value->month(), value->day(), 0, 0, 0,
-            0);
+        feature_.SetField(fieldIndex, value->year(), value->month(),
+                          value->day(), 0, 0, 0, 0);
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Time& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Time &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
     else
-        feature_.SetField(
-            fieldIndex, 0, 0, 0, value->hour(), value->minute(),
-            static_cast<float>(value->second()), 0);
+        feature_.SetField(fieldIndex, 0, 0, 0, value->hour(), value->minute(),
+                          static_cast<float>(value->second()), 0);
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Timestamp& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Timestamp &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
     else
-        feature_.SetField(
-            fieldIndex, value->year(), value->month(), value->day(),
-            value->hour(), value->minute(),
-            static_cast<float>(
-                value->second() + value->milliseconds() / 1000.0),
-            0);
+        feature_.SetField(fieldIndex, value->year(), value->month(),
+                          value->day(), value->hour(), value->minute(),
+                          static_cast<float>(value->second() +
+                                             value->milliseconds() / 1000.0),
+                          0);
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const odbc::Binary& value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
+                                         const odbc::Binary &value)
 {
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
@@ -130,7 +128,7 @@ void OGRHanaFeatureWriter::SetFieldValue(
         SetFieldValue(fieldIndex, value->data(), value->size());
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char* value)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char *value)
 {
     if (value == nullptr)
         feature_.SetFieldNull(fieldIndex);
@@ -138,14 +136,13 @@ void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const char* value)
         feature_.SetField(fieldIndex, value);
 }
 
-void OGRHanaFeatureWriter::SetFieldValue(
-    int fieldIndex, const void* value, std::size_t size)
+void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex, const void *value,
+                                         std::size_t size)
 {
     if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Data size is larger than maximum integer value");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Data size is larger than maximum integer value");
         return;
     }
 
@@ -155,20 +152,20 @@ void OGRHanaFeatureWriter::SetFieldValue(
         feature_.SetField(fieldIndex, static_cast<int>(size), value);
 }
 
-void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
-    int fieldIndex, const odbc::Binary& value)
+void OGRHanaFeatureWriter::SetFieldValueAsStringArray(int fieldIndex,
+                                                      const odbc::Binary &value)
 {
-    if ( value.isNull() || value->size() == 0 )
+    if (value.isNull() || value->size() == 0)
     {
         feature_.SetFieldNull(fieldIndex);
         return;
     }
 
-    const char* ptr = value->data();
-    const uint32_t numElements = *reinterpret_cast<const uint32_t*>(ptr);
+    const char *ptr = value->data();
+    const uint32_t numElements = *reinterpret_cast<const uint32_t *>(ptr);
     ptr += sizeof(uint32_t);
 
-    char** values = nullptr;
+    char **values = nullptr;
 
     for (uint32_t i = 0; i < numElements; ++i)
     {
@@ -182,12 +179,12 @@ void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
         }
         else if (indicator == DataLengthIndicator::TWO_BYTE)
         {
-            len = *reinterpret_cast<const int16_t*>(ptr);
+            len = *reinterpret_cast<const int16_t *>(ptr);
             ptr += sizeof(int16_t);
         }
         else
         {
-            len = *reinterpret_cast<const int32_t*>(ptr);
+            len = *reinterpret_cast<const int32_t *>(ptr);
             ptr += sizeof(int32_t);
         }
 
@@ -203,7 +200,7 @@ void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
             }
             else
             {
-                char* val = static_cast<char*>(CPLMalloc(len + 1));
+                char *val = static_cast<char *>(CPLMalloc(len + 1));
                 memcpy(val, ptr, len);
                 val[len] = '\0';
                 values = CSLAddString(values, val);
@@ -218,4 +215,4 @@ void OGRHanaFeatureWriter::SetFieldValueAsStringArray(
     CSLDestroy(values);
 }
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA

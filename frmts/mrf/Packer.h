@@ -19,22 +19,26 @@ Contributors:  Lucian Plesea
 #include "marfa.h"
 
 NAMESPACE_MRF_START
-typedef struct storage_manager {
+typedef struct storage_manager
+{
     char *buffer;
     size_t size;
 } storage_manager;
-   
-// A base class that provides import and export functions based on storage managers
-// Default implementation is a straight copy
-class Packer {
-public:
-    virtual ~Packer() {}
+
+// A base class that provides import and export functions based on storage
+// managers Default implementation is a straight copy
+class Packer
+{
+  public:
+    virtual ~Packer()
+    {
+    }
     virtual int load(storage_manager *src, storage_manager *dst)
     {
         if (dst->size < src->size)
             return false;
         std::memcpy(dst->buffer, src->buffer, src->size);
-        dst->size -= src->size; // Adjust the destination size
+        dst->size -= src->size;  // Adjust the destination size
         return true;
     }
 

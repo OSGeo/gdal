@@ -41,18 +41,16 @@
 #include <fcntl.h>
 #endif
 
-
 /************************************************************************/
 /*                         OGRPGeoDataSource()                          */
 /************************************************************************/
 
-OGRPGeoDataSource::OGRPGeoDataSource() :
-    papoLayers(nullptr),
-    nLayers(0),
-    pszName(nullptr)
+OGRPGeoDataSource::OGRPGeoDataSource()
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr)
 {
-    // Retrieve numeric values from MS Access files using ODBC numeric types, to avoid
-    // loss of precision and missing values on Windows (see https://github.com/OSGeo/gdal/issues/3885)
+    // Retrieve numeric values from MS Access files using ODBC numeric types, to
+    // avoid loss of precision and missing values on Windows (see
+    // https://github.com/OSGeo/gdal/issues/3885)
     m_nStatementFlags |= CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble;
 }
 
@@ -63,12 +61,12 @@ OGRPGeoDataSource::OGRPGeoDataSource() :
 OGRPGeoDataSource::~OGRPGeoDataSource()
 
 {
-    CPLFree( pszName );
+    CPLFree(pszName);
 
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 }
 
 /************************************************************************/
@@ -78,10 +76,10 @@ OGRPGeoDataSource::~OGRPGeoDataSource()
 /* else                                                                 */
 /************************************************************************/
 
-static int CheckDSNStringTemplate(const char* pszStr)
+static int CheckDSNStringTemplate(const char *pszStr)
 {
     int nPercentSFound = FALSE;
-    while(*pszStr)
+    while (*pszStr)
     {
         if (*pszStr == '%')
         {
@@ -96,7 +94,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
                 nPercentSFound = TRUE;
             }
         }
-        pszStr ++;
+        pszStr++;
     }
     return TRUE;
 }
@@ -105,199 +103,213 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
+int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
 {
-    CPLAssert( nLayers == 0 );
+    CPLAssert(nLayers == 0);
 
-     const char * pszNewName = poOpenInfo->pszFilename;
-/* -------------------------------------------------------------------- */
-/*      If this is the name of an MDB file, then construct the          */
-/*      appropriate connection string.  Otherwise clip of PGEO: to      */
-/*      get the DSN.                                                    */
-/*                                                                      */
-/* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszNewName, "PGEO:") )
+    const char *pszNewName = poOpenInfo->pszFilename;
+    /* -------------------------------------------------------------------- */
+    /*      If this is the name of an MDB file, then construct the          */
+    /*      appropriate connection string.  Otherwise clip of PGEO: to      */
+    /*      get the DSN.                                                    */
+    /*                                                                      */
+    /* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszNewName, "PGEO:"))
     {
-        char *pszDSN = CPLStrdup( pszNewName + 5 );
-        CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
-        if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
+        char *pszDSN = CPLStrdup(pszNewName + 5);
+        CPLDebug("PGeo", "EstablishSession(%s)", pszDSN);
+        if (!oSession.EstablishSession(pszDSN, nullptr, nullptr))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to initialize ODBC connection to DSN for %s,\n"
-                      "%s", pszDSN, oSession.GetLastError() );
-            CPLFree( pszDSN );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to initialize ODBC connection to DSN for %s,\n"
+                     "%s",
+                     pszDSN, oSession.GetLastError());
+            CPLFree(pszDSN);
             return FALSE;
         }
     }
     else
     {
-        const char* pszDSNStringTemplate = CPLGetConfigOption( "PGEO_DRIVER_TEMPLATE", nullptr );
-        if( pszDSNStringTemplate && !CheckDSNStringTemplate(pszDSNStringTemplate))
+        const char *pszDSNStringTemplate =
+            CPLGetConfigOption("PGEO_DRIVER_TEMPLATE", nullptr);
+        if (pszDSNStringTemplate &&
+            !CheckDSNStringTemplate(pszDSNStringTemplate))
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Illegal value for PGEO_DRIVER_TEMPLATE option");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal value for PGEO_DRIVER_TEMPLATE option");
             return FALSE;
         }
-        if ( !oSession.ConnectToMsAccess( pszNewName, pszDSNStringTemplate ) )
+        if (!oSession.ConnectToMsAccess(pszNewName, pszDSNStringTemplate))
         {
             return FALSE;
         }
     }
 
-    pszName = CPLStrdup( pszNewName );
+    pszName = CPLStrdup(pszNewName);
 
-/* -------------------------------------------------------------------- */
-/*      Collect list of tables and their supporting info from           */
-/*      GDB_GeomColumns.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect list of tables and their supporting info from           */
+    /*      GDB_GeomColumns.                                                */
+    /* -------------------------------------------------------------------- */
     std::vector<char **> apapszGeomColumns;
-    CPLODBCStatement oStmt( &oSession );
+    CPLODBCStatement oStmt(&oSession);
 
-    oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ, HasM FROM GDB_GeomColumns" );
+    oStmt.Append(
+        "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, "
+        "ExtentBottom, ExtentTop, SRID, HasZ, HasM FROM GDB_GeomColumns");
 
-    if( !oStmt.ExecuteSQL() )
+    if (!oStmt.ExecuteSQL())
     {
-        CPLDebug( "PGEO",
-                  "SELECT on GDB_GeomColumns fails, perhaps not a personal geodatabase?\n%s",
-                  oSession.GetLastError() );
+        CPLDebug("PGEO",
+                 "SELECT on GDB_GeomColumns fails, perhaps not a personal "
+                 "geodatabase?\n%s",
+                 oSession.GetLastError());
         return FALSE;
     }
 
-    while( oStmt.Fetch() )
+    while (oStmt.Fetch())
     {
         int i, iNew = static_cast<int>(apapszGeomColumns.size());
         char **papszRecord = nullptr;
-        for( i = 0; i < 10; i++ )
-            papszRecord = CSLAddString( papszRecord,
-                                        oStmt.GetColData(i) );
-        apapszGeomColumns.resize(iNew+1);
+        for (i = 0; i < 10; i++)
+            papszRecord = CSLAddString(papszRecord, oStmt.GetColData(i));
+        apapszGeomColumns.resize(iNew + 1);
         apapszGeomColumns[iNew] = papszRecord;
     }
 
     const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
-            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
+        poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
 
-    // Collate a list of all tables in the data source, skipping over internal and system tables
-    CPLODBCStatement oTableList( &oSession );
-    std::vector< CPLString > aosTableNames;
-    if( oTableList.GetTables() )
+    // Collate a list of all tables in the data source, skipping over internal
+    // and system tables
+    CPLODBCStatement oTableList(&oSession);
+    std::vector<CPLString> aosTableNames;
+    if (oTableList.GetTables())
     {
-        while( oTableList.Fetch() )
+        while (oTableList.Fetch())
         {
-            const CPLString osTableName = CPLString( oTableList.GetColData(2) );
+            const CPLString osTableName = CPLString(oTableList.GetColData(2));
             const CPLString osLCTableName(CPLString(osTableName).tolower());
-            m_aosAllLCTableNames.insert( osLCTableName );
+            m_aosAllLCTableNames.insert(osLCTableName);
 
-            if( osLCTableName == "gdb_items" )
+            if (osLCTableName == "gdb_items")
             {
                 m_bHasGdbItemsTable = true;
             }
 
-            if( !osTableName.empty() && ( bListAllTables || !IsPrivateLayerName( osTableName ) ) )
+            if (!osTableName.empty() &&
+                (bListAllTables || !IsPrivateLayerName(osTableName)))
             {
-                aosTableNames.emplace_back( osTableName );
+                aosTableNames.emplace_back(osTableName);
             }
         }
     }
 
     // Create a layer for each spatial table.
-    papoLayers = (OGRPGeoLayer **) CPLCalloc(apapszGeomColumns.size(),
-                                             sizeof(void*));
+    papoLayers =
+        (OGRPGeoLayer **)CPLCalloc(apapszGeomColumns.size(), sizeof(void *));
 
     std::unordered_set<std::string> oSetSpatialTableNames;
-    for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for (unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++)
     {
         char **papszRecord = apapszGeomColumns[iTable];
-        if ( EQUAL(papszRecord[0], "GDB_Items"))
+        if (EQUAL(papszRecord[0], "GDB_Items"))
         {
             // don't expose this internal layer
-            CSLDestroy( papszRecord );
+            CSLDestroy(papszRecord);
             continue;
         }
 
-        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this, m_nStatementFlags );
+        OGRPGeoTableLayer *poLayer =
+            new OGRPGeoTableLayer(this, m_nStatementFlags);
 
-        if( poLayer->Initialize( papszRecord[0],         // TableName
-                                 papszRecord[1],         // FieldName
-                                 atoi(papszRecord[2]),   // ShapeType
-                                 CPLAtof(papszRecord[3]),   // ExtentLeft
-                                 CPLAtof(papszRecord[4]),   // ExtentRight
-                                 CPLAtof(papszRecord[5]),   // ExtentBottom
-                                 CPLAtof(papszRecord[6]),   // ExtentTop
-                                 atoi(papszRecord[7]),   // SRID
-                                 atoi(papszRecord[8]),  // HasZ
-                                 atoi(papszRecord[9]))  // HasM
-            != CE_None )
+        if (poLayer->Initialize(papszRecord[0],           // TableName
+                                papszRecord[1],           // FieldName
+                                atoi(papszRecord[2]),     // ShapeType
+                                CPLAtof(papszRecord[3]),  // ExtentLeft
+                                CPLAtof(papszRecord[4]),  // ExtentRight
+                                CPLAtof(papszRecord[5]),  // ExtentBottom
+                                CPLAtof(papszRecord[6]),  // ExtentTop
+                                atoi(papszRecord[7]),     // SRID
+                                atoi(papszRecord[8]),     // HasZ
+                                atoi(papszRecord[9]))     // HasM
+            != CE_None)
         {
             delete poLayer;
         }
         else
         {
             papoLayers[nLayers++] = poLayer;
-            oSetSpatialTableNames.insert( CPLString( papszRecord[ 0 ] ) );
+            oSetSpatialTableNames.insert(CPLString(papszRecord[0]));
         }
 
-        CSLDestroy( papszRecord );
+        CSLDestroy(papszRecord);
     }
 
-
     // Add non-spatial tables.
-    for ( const CPLString &osTableName : aosTableNames )
+    for (const CPLString &osTableName : aosTableNames)
     {
-        if( oSetSpatialTableNames.find( osTableName ) != oSetSpatialTableNames.end() )
+        if (oSetSpatialTableNames.find(osTableName) !=
+            oSetSpatialTableNames.end())
         {
             // a spatial table, already handled above
             continue;
         }
 
-        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this, m_nStatementFlags );
+        OGRPGeoTableLayer *poLayer =
+            new OGRPGeoTableLayer(this, m_nStatementFlags);
 
-        if( poLayer->Initialize( osTableName.c_str(),         // TableName
-                                 nullptr,         // FieldName
-                                 0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
-                                 0,   // ExtentLeft
-                                 0,   // ExtentRight
-                                 0,   // ExtentBottom
-                                 0,   // ExtentTop
-                                 0,   // SRID
-                                 0,   // HasZ
-                                 0)   // HasM
-            != CE_None )
+        if (poLayer->Initialize(osTableName.c_str(),  // TableName
+                                nullptr,              // FieldName
+                                0,  // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
+                                0,  // ExtentLeft
+                                0,  // ExtentRight
+                                0,  // ExtentBottom
+                                0,  // ExtentTop
+                                0,  // SRID
+                                0,  // HasZ
+                                0)  // HasM
+            != CE_None)
         {
             delete poLayer;
         }
         else
         {
-            papoLayers = static_cast< OGRPGeoLayer **>( CPLRealloc(papoLayers, sizeof(void*) * ( nLayers+1 ) ) );
+            papoLayers = static_cast<OGRPGeoLayer **>(
+                CPLRealloc(papoLayers, sizeof(void *) * (nLayers + 1)));
             papoLayers[nLayers++] = poLayer;
         }
     }
 
     // collect domains and relationships
-    if ( m_bHasGdbItemsTable )
+    if (m_bHasGdbItemsTable)
     {
-        CPLODBCStatement oItemsStmt( &oSession );
-        oItemsStmt.Append( "SELECT Definition FROM GDB_Items" );
-        if( oItemsStmt.ExecuteSQL() )
+        CPLODBCStatement oItemsStmt(&oSession);
+        oItemsStmt.Append("SELECT Definition FROM GDB_Items");
+        if (oItemsStmt.ExecuteSQL())
         {
-            while( oItemsStmt.Fetch() )
+            while (oItemsStmt.Fetch())
             {
-                const CPLString osDefinition = CPLString( oItemsStmt.GetColData(0, "") );
-                if( strstr(osDefinition, "GPCodedValueDomain2") != nullptr ||
-                    strstr(osDefinition, "GPRangeDomain2") != nullptr )
+                const CPLString osDefinition =
+                    CPLString(oItemsStmt.GetColData(0, ""));
+                if (strstr(osDefinition, "GPCodedValueDomain2") != nullptr ||
+                    strstr(osDefinition, "GPRangeDomain2") != nullptr)
                 {
-                    if( auto poDomain = ParseXMLFieldDomainDef(osDefinition) )
+                    if (auto poDomain = ParseXMLFieldDomainDef(osDefinition))
                     {
                         const auto domainName = poDomain->GetName();
                         m_oMapFieldDomains[domainName] = std::move(poDomain);
                     }
                 }
-                else if( strstr(osDefinition, "DERelationshipClassInfo") != nullptr )
+                else if (strstr(osDefinition, "DERelationshipClassInfo") !=
+                         nullptr)
                 {
-                    if( auto poRelationship = ParseXMLRelationshipDef(osDefinition) )
+                    if (auto poRelationship =
+                            ParseXMLRelationshipDef(osDefinition))
                     {
                         const auto relationshipName = poRelationship->GetName();
-                        m_osMapRelationships[relationshipName] = std::move(poRelationship);
+                        m_osMapRelationships[relationshipName] =
+                            std::move(poRelationship);
                     }
                 }
             }
@@ -311,13 +323,13 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRPGeoDataSource::TestCapability(CPL_UNUSED const char *pszCap)
 {
-    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+    if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
         return TRUE;
-    else if( EQUAL(pszCap,ODsCZGeometries) )
+    else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
 
     return FALSE;
@@ -327,50 +339,51 @@ int OGRPGeoDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPGeoDataSource::GetLayer( int iLayer )
+OGRLayer *OGRPGeoDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
     else
         return papoLayers[iLayer];
 }
 
-OGRLayer* OGRPGeoDataSource::GetLayerByName( const char* pszLayerName )
+OGRLayer *OGRPGeoDataSource::GetLayerByName(const char *pszLayerName)
 {
-  OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
-  if( poLayer != nullptr )
-      return poLayer;
+    OGRLayer *poLayer = GDALDataset::GetLayerByName(pszLayerName);
+    if (poLayer != nullptr)
+        return poLayer;
 
-  // if table name doesn't exist in database, don't try any further
-  const CPLString osLCTableName(CPLString(pszLayerName).tolower());
-  if ( m_aosAllLCTableNames.find( osLCTableName ) == m_aosAllLCTableNames.end() )
-      return nullptr;
+    // if table name doesn't exist in database, don't try any further
+    const CPLString osLCTableName(CPLString(pszLayerName).tolower());
+    if (m_aosAllLCTableNames.find(osLCTableName) == m_aosAllLCTableNames.end())
+        return nullptr;
 
-  for( const auto & poInvisibleLayer : m_apoInvisibleLayers )
-  {
-      if( EQUAL(poInvisibleLayer->GetName(), pszLayerName) )
-          return poInvisibleLayer.get();
-  }
+    for (const auto &poInvisibleLayer : m_apoInvisibleLayers)
+    {
+        if (EQUAL(poInvisibleLayer->GetName(), pszLayerName))
+            return poInvisibleLayer.get();
+    }
 
-  std::unique_ptr< OGRPGeoTableLayer > poInvisibleLayer( new OGRPGeoTableLayer( this, m_nStatementFlags ) );
+    std::unique_ptr<OGRPGeoTableLayer> poInvisibleLayer(
+        new OGRPGeoTableLayer(this, m_nStatementFlags));
 
-  if( poInvisibleLayer->Initialize( pszLayerName,         // TableName
-                           nullptr,         // FieldName
-                           0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
-                           0,   // ExtentLeft
-                           0,   // ExtentRight
-                           0,   // ExtentBottom
-                           0,   // ExtentTop
-                           0,   // SRID
-                           0,   // HasZ
-                           0)   // HasM
-      == CE_None )
-  {
-      m_apoInvisibleLayers.emplace_back( std::move( poInvisibleLayer ) );
-      poLayer = m_apoInvisibleLayers.back().get();
-  }
-  return poLayer;
+    if (poInvisibleLayer->Initialize(pszLayerName,  // TableName
+                                     nullptr,       // FieldName
+                                     0,  // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
+                                     0,  // ExtentLeft
+                                     0,  // ExtentRight
+                                     0,  // ExtentBottom
+                                     0,  // ExtentTop
+                                     0,  // SRID
+                                     0,  // HasZ
+                                     0)  // HasM
+        == CE_None)
+    {
+        m_apoInvisibleLayers.emplace_back(std::move(poInvisibleLayer));
+        poLayer = m_apoInvisibleLayers.back().get();
+    }
+    return poLayer;
 }
 
 /************************************************************************/
@@ -381,11 +394,18 @@ bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
 {
     const CPLString osLCTableName(CPLString(osName).tolower());
 
-    return ( (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
-         || osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
-         || (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
-         || osLCTableName == "selections" || osLCTableName == "selectedobjects" // found in older personal geodatabases
-        );
+    return (
+        (osLCTableName.size() >= 4 &&
+         osLCTableName.substr(0, 4) == "msys")  // MS Access internal tables
+        ||
+        osLCTableName.endsWith(
+            "_shape_index")  // gdb spatial index tables, internal details only
+        || (osLCTableName.size() >= 4 &&
+            osLCTableName.substr(0, 4) == "gdb_")  // gdb private tables
+        || osLCTableName == "selections" ||
+        osLCTableName ==
+            "selectedobjects"  // found in older personal geodatabases
+    );
 }
 
 /************************************************************************/
@@ -394,50 +414,56 @@ bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
 
 bool OGRPGeoDataSource::IsLayerPrivate(int iLayer) const
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return false;
 
-    const std::string osName( papoLayers[iLayer]->GetName() );
-    return IsPrivateLayerName( osName );
+    const std::string osName(papoLayers[iLayer]->GetName());
+    return IsPrivateLayerName(osName);
 }
 
 /************************************************************************/
 /*                      OGRPGeoSingleFeatureLayer                       */
 /************************************************************************/
 
-class OGRPGeoSingleFeatureLayer final: public OGRLayer
+class OGRPGeoSingleFeatureLayer final : public OGRLayer
 {
   private:
-    char               *pszVal;
-    OGRFeatureDefn     *poFeatureDefn;
-    int                 iNextShapeId;
+    char *pszVal;
+    OGRFeatureDefn *poFeatureDefn;
+    int iNextShapeId;
 
   public:
-                        OGRPGeoSingleFeatureLayer( const char* pszLayerName,
-                                                          const char *pszVal );
-               virtual ~OGRPGeoSingleFeatureLayer();
+    OGRPGeoSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
+    virtual ~OGRPGeoSingleFeatureLayer();
 
-    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual void ResetReading() override
+    {
+        iNextShapeId = 0;
+    }
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) override { return FALSE; }
+    virtual OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
+    virtual int TestCapability(const char *) override
+    {
+        return FALSE;
+    }
 };
 
 /************************************************************************/
 /*                       OGRPGeoSingleFeatureLayer()                    */
 /************************************************************************/
 
-OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(
-    const char* pszLayerName,
-    const char *pszValIn ) :
-    pszVal(pszValIn ? CPLStrdup(pszValIn) : nullptr),
-    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
-    iNextShapeId(0)
+OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(const char *pszLayerName,
+                                                     const char *pszValIn)
+    : pszVal(pszValIn ? CPLStrdup(pszValIn) : nullptr),
+      poFeatureDefn(new OGRFeatureDefn(pszLayerName)), iNextShapeId(0)
 {
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    OGRFieldDefn oField( "FIELD_1", OFTString );
-    poFeatureDefn->AddFieldDefn( &oField );
+    OGRFieldDefn oField("FIELD_1", OFTString);
+    poFeatureDefn->AddFieldDefn(&oField);
 }
 
 /************************************************************************/
@@ -446,7 +472,7 @@ OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(
 
 OGRPGeoSingleFeatureLayer::~OGRPGeoSingleFeatureLayer()
 {
-    if( poFeatureDefn != nullptr )
+    if (poFeatureDefn != nullptr)
         poFeatureDefn->Release();
     CPLFree(pszVal);
 }
@@ -455,15 +481,15 @@ OGRPGeoSingleFeatureLayer::~OGRPGeoSingleFeatureLayer()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature * OGRPGeoSingleFeatureLayer::GetNextFeature()
+OGRFeature *OGRPGeoSingleFeatureLayer::GetNextFeature()
 {
     if (iNextShapeId != 0)
         return nullptr;
 
-    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     if (pszVal)
         poFeature->SetField(0, pszVal);
-    poFeature->SetFID(iNextShapeId ++);
+    poFeature->SetFID(iNextShapeId++);
     return poFeature;
 }
 
@@ -471,117 +497,117 @@ OGRFeature * OGRPGeoSingleFeatureLayer::GetNextFeature()
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
-                                          OGRGeometry *poSpatialFilter,
-                                          const char *pszDialect )
+OGRLayer *OGRPGeoDataSource::ExecuteSQL(const char *pszSQLCommand,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect)
 
 {
 
-/* -------------------------------------------------------------------- */
-/*      Special case GetLayerDefinition                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Special case GetLayerDefinition                                 */
+    /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
-        OGRPGeoTableLayer* poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
-            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")) );
+        OGRPGeoTableLayer *poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")));
         if (poLayer)
         {
-            OGRLayer* poRet = new OGRPGeoSingleFeatureLayer(
-                "LayerDefinition", poLayer->GetXMLDefinition().c_str() );
+            OGRLayer *poRet = new OGRPGeoSingleFeatureLayer(
+                "LayerDefinition", poLayer->GetXMLDefinition().c_str());
             return poRet;
         }
 
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Special case GetLayerMetadata                                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Special case GetLayerMetadata                                   */
+    /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
-        OGRPGeoTableLayer* poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
-            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")) );
+        OGRPGeoTableLayer *poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")));
         if (poLayer)
         {
-            OGRLayer* poRet = new OGRPGeoSingleFeatureLayer(
-                "LayerMetadata", poLayer->GetXMLDocumentation().c_str() );
+            OGRLayer *poRet = new OGRPGeoSingleFeatureLayer(
+                "LayerMetadata", poLayer->GetXMLDocumentation().c_str());
             return poRet;
         }
 
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Use generic implementation for recognized dialects              */
-/* -------------------------------------------------------------------- */
-    if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                          poSpatialFilter,
-                                          pszDialect );
+    /* -------------------------------------------------------------------- */
+    /*      Use generic implementation for recognized dialects              */
+    /* -------------------------------------------------------------------- */
+    if (IsGenericSQLDialect(pszDialect))
+        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                         pszDialect);
 
-/* -------------------------------------------------------------------- */
-/*      Execute statement.                                              */
-/* -------------------------------------------------------------------- */
-    CPLODBCStatement *poStmt = new CPLODBCStatement( &oSession, m_nStatementFlags );
+    /* -------------------------------------------------------------------- */
+    /*      Execute statement.                                              */
+    /* -------------------------------------------------------------------- */
+    CPLODBCStatement *poStmt =
+        new CPLODBCStatement(&oSession, m_nStatementFlags);
 
-    poStmt->Append( pszSQLCommand );
-    if( !poStmt->ExecuteSQL() )
+    poStmt->Append(pszSQLCommand);
+    if (!poStmt->ExecuteSQL())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", oSession.GetLastError() );
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", oSession.GetLastError());
         delete poStmt;
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Are there result columns for this statement?                    */
-/* -------------------------------------------------------------------- */
-    if( poStmt->GetColCount() == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Are there result columns for this statement?                    */
+    /* -------------------------------------------------------------------- */
+    if (poStmt->GetColCount() == 0)
     {
         delete poStmt;
         CPLErrorReset();
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a results layer.  It will take ownership of the          */
-/*      statement.                                                      */
-/* -------------------------------------------------------------------- */
-    OGRPGeoSelectLayer* poLayer = new OGRPGeoSelectLayer( this, poStmt );
+    /* -------------------------------------------------------------------- */
+    /*      Create a results layer.  It will take ownership of the          */
+    /*      statement.                                                      */
+    /* -------------------------------------------------------------------- */
+    OGRPGeoSelectLayer *poLayer = new OGRPGeoSelectLayer(this, poStmt);
 
-    if( poSpatialFilter != nullptr )
-        poLayer->SetSpatialFilter( poSpatialFilter );
+    if (poSpatialFilter != nullptr)
+        poLayer->SetSpatialFilter(poSpatialFilter);
 
     return poLayer;
 }
-
 
 /************************************************************************/
 /*                        GetRelationshipNames()                        */
 /************************************************************************/
 
-std::vector<std::string> OGRPGeoDataSource::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+std::vector<std::string> OGRPGeoDataSource::GetRelationshipNames(
+    CPL_UNUSED CSLConstList papszOptions) const
 
 {
     std::vector<std::string> oasNames;
     oasNames.reserve(m_osMapRelationships.size());
-    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    for (auto it = m_osMapRelationships.begin();
+         it != m_osMapRelationships.end(); ++it)
     {
         oasNames.emplace_back(it->first);
     }
     return oasNames;
 }
 
-
 /************************************************************************/
 /*                        GetRelationship()                             */
 /************************************************************************/
 
-const GDALRelationship* OGRPGeoDataSource::GetRelationship(const std::string& name) const
+const GDALRelationship *
+OGRPGeoDataSource::GetRelationship(const std::string &name) const
 
 {
     auto it = m_osMapRelationships.find(name);
-    if (it==m_osMapRelationships.end())
+    if (it == m_osMapRelationships.end())
         return nullptr;
 
     return it->second.get();
@@ -591,7 +617,7 @@ const GDALRelationship* OGRPGeoDataSource::GetRelationship(const std::string& na
 /*                          ReleaseResultSet()                          */
 /************************************************************************/
 
-void OGRPGeoDataSource::ReleaseResultSet( OGRLayer * poLayer )
+void OGRPGeoDataSource::ReleaseResultSet(OGRLayer *poLayer)
 
 {
     delete poLayer;
@@ -609,18 +635,18 @@ bool OGRPGeoDataSource::CountStarWorking() const
     // SELECT COUNT(*) worked in mdbtools 0.9.0 to 0.9.2, but got broken in
     // 0.9.3. So test if it is working
     // See https://github.com/OSGeo/gdal/issues/4103
-    if( !m_COUNT_STAR_state_known )
+    if (!m_COUNT_STAR_state_known)
     {
         m_COUNT_STAR_state_known = true;
 
 #ifdef __linux
         // Temporarily redirect stderr to /dev/null
-        int new_fd = open("/dev/null", O_WRONLY|O_CREAT|O_TRUNC, 0666);
+        int new_fd = open("/dev/null", O_WRONLY | O_CREAT | O_TRUNC, 0666);
         int old_stderr = -1;
-        if( new_fd != -1 )
+        if (new_fd != -1)
         {
             old_stderr = dup(fileno(stderr));
-            if( old_stderr != -1 )
+            if (old_stderr != -1)
             {
                 dup2(new_fd, fileno(stderr));
             }
@@ -631,15 +657,15 @@ bool OGRPGeoDataSource::CountStarWorking() const
         CPLErrorHandlerPusher oErrorHandler(CPLErrorHandlerPusher);
         CPLErrorStateBackuper oStateBackuper;
 
-        CPLODBCStatement oStmt( &oSession );
-        oStmt.Append( "SELECT COUNT(*) FROM GDB_GeomColumns" );
-        if( oStmt.ExecuteSQL() && oStmt.Fetch() )
+        CPLODBCStatement oStmt(&oSession);
+        oStmt.Append("SELECT COUNT(*) FROM GDB_GeomColumns");
+        if (oStmt.ExecuteSQL() && oStmt.Fetch())
         {
             m_COUNT_STAR_working = true;
         }
 
 #ifdef __linux
-        if( old_stderr != -1 )
+        if (old_stderr != -1)
         {
             dup2(old_stderr, fileno(stderr));
             close(old_stderr);

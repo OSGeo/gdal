@@ -38,7 +38,6 @@
 #include "ogrlibkmlgeometry.h"
 #include "ogrsf_frmts.h"
 
-
 using kmldom::AliasPtr;
 using kmldom::CameraPtr;
 using kmldom::ElementPtr;
@@ -59,12 +58,9 @@ using kmldom::ResourceMapPtr;
 using kmldom::ScalePtr;
 using kmldom::ViewVolumePtr;
 
-static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
-                                 int iHeading,
-                                 int iTilt,
-                                 int iRoll,
-                                 OGRFeature * poOgrFeat,
-                                 KmlFactory * poKmlFactory )
+static CameraPtr feat2kmlcamera(const struct fieldconfig &oFC, int iHeading,
+                                int iTilt, int iRoll, OGRFeature *poOgrFeat,
+                                KmlFactory *poKmlFactory)
 {
     const int iCameraLongitudeField =
         poOgrFeat->GetFieldIndex(oFC.camera_longitude_field);
@@ -81,10 +77,10 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
         iCameraLatitudeField >= 0 &&
         poOgrFeat->IsFieldSetAndNotNull(iCameraLatitudeField) &&
         ((iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
-        (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
-        (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)));
+         (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
+         (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)));
 
-    if( !bNeedCamera )
+    if (!bNeedCamera)
         return nullptr;
 
     CameraPtr const camera = poKmlFactory->CreateCamera();
@@ -92,38 +88,38 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
     camera->set_longitude(poOgrFeat->GetFieldAsDouble(iCameraLongitudeField));
     int isGX = FALSE;
 
-    if( iCameraAltitudeModeField >= 0 &&
-        poOgrFeat->IsFieldSetAndNotNull(iCameraAltitudeModeField) )
+    if (iCameraAltitudeModeField >= 0 &&
+        poOgrFeat->IsFieldSetAndNotNull(iCameraAltitudeModeField))
     {
         const int nAltitudeMode = kmlAltitudeModeFromString(
             poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
         camera->set_altitudemode(nAltitudeMode);
     }
-    else if( CPLTestBool(
-                 CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+    else if (CPLTestBool(
+                 CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")))
     {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Camera should define altitudeMode != 'clampToGround'");
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Camera should define altitudeMode != 'clampToGround'");
     }
 
-    if( iCameraAltitudeField >= 0 &&
+    if (iCameraAltitudeField >= 0 &&
         poOgrFeat->IsFieldSetAndNotNull(iCameraAltitudeField))
     {
         camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
     }
-    else if( CPLTestBool(
-                 CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+    else if (CPLTestBool(
+                 CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Camera should have an altitude/Z");
         camera->set_altitude(0.0);
     }
 
-    if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
+    if (iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading))
         camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
-    if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
+    if (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt))
         camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
-    if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
+    if (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))
         camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
 
     return camera;
@@ -133,24 +129,21 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
 /*                 OGRLIBKMLReplaceXYLevelInURL()                       */
 /************************************************************************/
 
-static CPLString OGRLIBKMLReplaceLevelXYInURL( const char* pszURL,
-                                               int level, int x, int y )
+static CPLString OGRLIBKMLReplaceLevelXYInURL(const char *pszURL, int level,
+                                              int x, int y)
 {
     CPLString osRet(pszURL);
     size_t nPos = osRet.find("$[level]");
-    osRet =
-        osRet.substr(0, nPos) + CPLSPrintf("%d", level) +
-        osRet.substr(nPos + strlen("$[level]"));
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", level) +
+            osRet.substr(nPos + strlen("$[level]"));
 
     nPos = osRet.find("$[x]");
-    osRet =
-        osRet.substr(0, nPos) + CPLSPrintf("%d", x) +
-        osRet.substr(nPos + strlen("$[x]"));
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", x) +
+            osRet.substr(nPos + strlen("$[x]"));
 
     nPos = osRet.find("$[y]");
-    osRet =
-        osRet.substr(0, nPos) + CPLSPrintf("%d", y) +
-        osRet.substr(nPos + strlen("$[y]"));
+    osRet = osRet.substr(0, nPos) + CPLSPrintf("%d", y) +
+            osRet.substr(nPos + strlen("$[y]"));
 
     return osRet;
 }
@@ -159,9 +152,10 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL( const char* pszURL,
 /*                        IsPowerOf2                                    */
 /************************************************************************/
 
-static bool IsPowerOf2( int nVal )
+static bool IsPowerOf2(int nVal)
 {
-    if( nVal < 1 ) return false;
+    if (nVal < 1)
+        return false;
 
     const unsigned int nTmp = static_cast<unsigned int>(nVal);
 
@@ -172,25 +166,23 @@ static bool IsPowerOf2( int nVal )
 /*                    OGRLIBKMLGetMaxDimensions()                       */
 /************************************************************************/
 
-static void OGRLIBKMLGetMaxDimensions( const char* pszURL,
-                                       int nTileSize,
-                                       int* panMaxWidth,
-                                       int* panMaxHeight )
+static void OGRLIBKMLGetMaxDimensions(const char *pszURL, int nTileSize,
+                                      int *panMaxWidth, int *panMaxHeight)
 {
     VSIStatBufL sStat;
     int nMaxLevel = 0;
     *panMaxWidth = 0;
     *panMaxHeight = 0;
-    while( true )
+    while (true)
     {
         CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, 0);
-        if( strstr(osURL, ".kmz/") )
+        if (strstr(osURL, ".kmz/"))
             osURL = "/vsizip/" + osURL;
-        if( VSIStatL(osURL, &sStat) == 0 )
+        if (VSIStatL(osURL, &sStat) == 0)
             nMaxLevel++;
         else
         {
-            if( nMaxLevel == 0 )
+            if (nMaxLevel == 0)
                 return;
             break;
         }
@@ -199,26 +191,26 @@ static void OGRLIBKMLGetMaxDimensions( const char* pszURL,
 
     {
         int i = 0;  // Used after for.
-        for( ; ; i++ )
+        for (;; i++)
         {
             CPLString osURL =
                 OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, i + 1, 0);
-            if( strstr(osURL, ".kmz/") )
+            if (strstr(osURL, ".kmz/"))
                 osURL = "/vsizip/" + osURL;
-            if( VSIStatL(osURL, &sStat) != 0 )
+            if (VSIStatL(osURL, &sStat) != 0)
                 break;
         }
         *panMaxWidth = (i + 1) * nTileSize;
     }
 
     int i = 0;  // Used after for.
-    for( ; ; i++ )
+    for (;; i++)
     {
         CPLString osURL =
             OGRLIBKMLReplaceLevelXYInURL(pszURL, nMaxLevel, 0, i + 1);
-        if( strstr(osURL, ".kmz/") )
+        if (strstr(osURL, ".kmz/"))
             osURL = "/vsizip/" + osURL;
-        if( VSIStatL(osURL, &sStat) != 0 )
+        if (VSIStatL(osURL, &sStat) != 0)
             break;
     }
     *panMaxHeight = (i + 1) * nTileSize;
@@ -228,17 +220,14 @@ static void OGRLIBKMLGetMaxDimensions( const char* pszURL,
 /*                           feat2kml()                                 */
 /************************************************************************/
 
-FeaturePtr feat2kml(
-    OGRLIBKMLDataSource * poOgrDS,
-    OGRLIBKMLLayer * poOgrLayer,
-    OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory,
-    int bUseSimpleField )
+FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
+                    OGRFeature *poOgrFeat, KmlFactory *poKmlFactory,
+                    int bUseSimpleField)
 {
     FeaturePtr poKmlFeature = nullptr;
 
     struct fieldconfig oFC;
-    get_fieldconfig( &oFC );
+    get_fieldconfig(&oFC);
 
     /***** geometry *****/
     OGRGeometry *poOgrGeom = poOgrFeat->GetGeometryRef();
@@ -251,11 +240,11 @@ FeaturePtr feat2kml(
     CameraPtr camera = nullptr;
 
     // PhotoOverlay.
-    if( iPhotoOverlay >= 0 && poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlay) &&
+    if (iPhotoOverlay >= 0 && poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlay) &&
         poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
-        (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
-                                 poOgrFeat, poKmlFactory)) )
+        (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll, poOgrFeat,
+                                 poKmlFactory)))
     {
         const int iLeftFovField = poOgrFeat->GetFieldIndex(oFC.leftfovfield);
         const int iRightFovField = poOgrFeat->GetFieldIndex(oFC.rightfovfield);
@@ -264,7 +253,7 @@ FeaturePtr feat2kml(
         const int iTopFovField = poOgrFeat->GetFieldIndex(oFC.topfovfield);
         const int iNearField = poOgrFeat->GetFieldIndex(oFC.nearfield);
 
-        const char* pszURL = poOgrFeat->GetFieldAsString(iPhotoOverlay);
+        const char *pszURL = poOgrFeat->GetFieldAsString(iPhotoOverlay);
         const int iImagePyramidTileSize =
             poOgrFeat->GetFieldIndex(oFC.imagepyramid_tilesize_field);
         const int iImagePyramidMaxWidth =
@@ -280,30 +269,29 @@ FeaturePtr feat2kml(
         bool bIsTiledPhotoOverlay = false;
         bool bGridOriginIsUpperLeft = true;
         // OGC KML Abstract Test Case (ATC) 52 and 62
-        if( strstr(pszURL, "$[x]") &&
-            strstr(pszURL, "$[y]") &&
-            strstr(pszURL, "$[level]") )
+        if (strstr(pszURL, "$[x]") && strstr(pszURL, "$[y]") &&
+            strstr(pszURL, "$[level]"))
         {
             bIsTiledPhotoOverlay = true;
             bool bErrorEmitted = false;
-            if( iImagePyramidTileSize < 0 ||
-                !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidTileSize) )
+            if (iImagePyramidTileSize < 0 ||
+                !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidTileSize))
             {
                 CPLDebug("LIBKML",
                          "Missing ImagePyramid tileSize. Computing it");
                 CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, 0, 0, 0);
-                if( strstr(osURL, ".kmz/") )
+                if (strstr(osURL, ".kmz/"))
                     osURL = "/vsizip/" + osURL;
-                GDALDatasetH hDS = GDALOpen( osURL, GA_ReadOnly );
-                if( hDS != nullptr )
+                GDALDatasetH hDS = GDALOpen(osURL, GA_ReadOnly);
+                if (hDS != nullptr)
                 {
                     nTileSize = GDALGetRasterXSize(hDS);
-                    if( nTileSize != GDALGetRasterYSize(hDS) )
+                    if (nTileSize != GDALGetRasterYSize(hDS))
                     {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Non square tile : %dx%d",
-                            GDALGetRasterXSize(hDS), GDALGetRasterYSize(hDS));
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Non square tile : %dx%d",
+                                 GDALGetRasterXSize(hDS),
+                                 GDALGetRasterYSize(hDS));
                         nTileSize = 0;
                         bErrorEmitted = true;
                     }
@@ -311,9 +299,8 @@ FeaturePtr feat2kml(
                 }
                 else
                 {
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Cannot open %s", osURL.c_str());
+                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
+                             osURL.c_str());
                     bErrorEmitted = true;
                 }
             }
@@ -321,27 +308,25 @@ FeaturePtr feat2kml(
             {
                 nTileSize = poOgrFeat->GetFieldAsInteger(iImagePyramidTileSize);
             }
-            if( !bErrorEmitted && (nTileSize <= 1 || !IsPowerOf2(nTileSize)) )
+            if (!bErrorEmitted && (nTileSize <= 1 || !IsPowerOf2(nTileSize)))
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Tile size is not a power of two: %d", nTileSize);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Tile size is not a power of two: %d", nTileSize);
                 nTileSize = 0;
             }
 
-            if( nTileSize > 0 )
+            if (nTileSize > 0)
             {
-                if( iImagePyramidMaxWidth < 0 ||
+                if (iImagePyramidMaxWidth < 0 ||
                     !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxWidth) ||
                     iImagePyramidMaxHeight < 0 ||
-                    !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxHeight) )
+                    !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxHeight))
                 {
-                    CPLDebug(
-                        "LIBKML",
-                        "Missing ImagePyramid maxWidth and/or maxHeight. "
-                        "Computing it");
-                    OGRLIBKMLGetMaxDimensions(pszURL, nTileSize,
-                                              &nMaxWidth, &nMaxHeight);
+                    CPLDebug("LIBKML",
+                             "Missing ImagePyramid maxWidth and/or maxHeight. "
+                             "Computing it");
+                    OGRLIBKMLGetMaxDimensions(pszURL, nTileSize, &nMaxWidth,
+                                              &nMaxHeight);
                 }
                 else
                 {
@@ -351,7 +336,7 @@ FeaturePtr feat2kml(
                         poOgrFeat->GetFieldAsInteger(iImagePyramidMaxHeight);
                 }
 
-                if( nMaxWidth <= 0 || nMaxHeight <= 0)
+                if (nMaxWidth <= 0 || nMaxHeight <= 0)
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
@@ -360,16 +345,16 @@ FeaturePtr feat2kml(
                 }
             }
 
-            if( iImagePyramidGridOrigin >= 0 &&
-                poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin) )
+            if (iImagePyramidGridOrigin >= 0 &&
+                poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin))
             {
-                const char* pszGridOrigin =
+                const char *pszGridOrigin =
                     poOgrFeat->GetFieldAsString(iImagePyramidGridOrigin);
-                if( EQUAL(pszGridOrigin, "UpperLeft") )
+                if (EQUAL(pszGridOrigin, "UpperLeft"))
                 {
                     bGridOriginIsUpperLeft = true;
                 }
-                else if( EQUAL(pszGridOrigin, "BottomLeft") )
+                else if (EQUAL(pszGridOrigin, "BottomLeft"))
                 {
                     bGridOriginIsUpperLeft = false;
                 }
@@ -385,14 +370,14 @@ FeaturePtr feat2kml(
         }
         else
         {
-            if( (iImagePyramidTileSize >= 0 &&
+            if ((iImagePyramidTileSize >= 0 &&
                  poOgrFeat->IsFieldSetAndNotNull(iImagePyramidTileSize)) ||
                 (iImagePyramidMaxWidth >= 0 &&
                  poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxWidth)) ||
                 (iImagePyramidMaxHeight >= 0 &&
                  poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxHeight)) ||
                 (iImagePyramidGridOrigin >= 0 &&
-                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin)) )
+                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin)))
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
@@ -404,14 +389,17 @@ FeaturePtr feat2kml(
         // OGC KML Abstract Test Case (ATC) 19 & 35.
         double dfNear = 0.0;
 
-        if( (!bIsTiledPhotoOverlay ||
+        if ((!bIsTiledPhotoOverlay ||
              (nTileSize > 0 && nMaxWidth > 0 && nMaxHeight > 0)) &&
-            iLeftFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iLeftFovField) &&
-            iRightFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRightFovField) &&
-            iBottomFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iBottomFovField) &&
-            iTopFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTopFovField) &&
-            iNearField >= 0 &&
-            (dfNear = poOgrFeat->GetFieldAsDouble(iNearField)) > 0 )
+            iLeftFovField >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iLeftFovField) &&
+            iRightFovField >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iRightFovField) &&
+            iBottomFovField >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iBottomFovField) &&
+            iTopFovField >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iTopFovField) && iNearField >= 0 &&
+            (dfNear = poOgrFeat->GetFieldAsDouble(iNearField)) > 0)
         {
             const PhotoOverlayPtr poKmlPhotoOverlay =
                 poKmlFactory->CreatePhotoOverlay();
@@ -419,7 +407,7 @@ FeaturePtr feat2kml(
 
             const IconPtr poKmlIcon = poKmlFactory->CreateIcon();
             poKmlPhotoOverlay->set_icon(poKmlIcon);
-            poKmlIcon->set_href( pszURL );
+            poKmlIcon->set_href(pszURL);
 
             const ViewVolumePtr poKmlViewVolume =
                 poKmlFactory->CreateViewVolume();
@@ -438,7 +426,7 @@ FeaturePtr feat2kml(
             poKmlViewVolume->set_topfov(dfTopFov);
             poKmlViewVolume->set_near(dfNear);
 
-            if( bIsTiledPhotoOverlay )
+            if (bIsTiledPhotoOverlay)
             {
                 const ImagePyramidPtr poKmlImagePyramid =
                     poKmlFactory->CreateImagePyramid();
@@ -448,35 +436,34 @@ FeaturePtr feat2kml(
                 poKmlImagePyramid->set_maxwidth(nMaxWidth);
                 poKmlImagePyramid->set_maxheight(nMaxHeight);
                 poKmlImagePyramid->set_gridorigin(
-                    bGridOriginIsUpperLeft ?
-                    kmldom::GRIDORIGIN_UPPERLEFT :
-                    kmldom::GRIDORIGIN_LOWERLEFT );
+                    bGridOriginIsUpperLeft ? kmldom::GRIDORIGIN_UPPERLEFT
+                                           : kmldom::GRIDORIGIN_LOWERLEFT);
             }
 
             const int iPhotoOverlayShapeField =
                 poOgrFeat->GetFieldIndex(oFC.photooverlay_shape_field);
-            if( iPhotoOverlayShapeField >= 0 &&
-                poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlayShapeField) )
+            if (iPhotoOverlayShapeField >= 0 &&
+                poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlayShapeField))
             {
-                const char* pszShape =
+                const char *pszShape =
                     poOgrFeat->GetFieldAsString(iPhotoOverlayShapeField);
-                if( EQUAL(pszShape, "rectangle") )
+                if (EQUAL(pszShape, "rectangle"))
                     poKmlPhotoOverlay->set_shape(kmldom::SHAPE_RECTANGLE);
-                else if( EQUAL(pszShape, "cylinder") )
+                else if (EQUAL(pszShape, "cylinder"))
                     poKmlPhotoOverlay->set_shape(kmldom::SHAPE_CYLINDER);
-                else if( EQUAL(pszShape, "sphere") )
+                else if (EQUAL(pszShape, "sphere"))
                     poKmlPhotoOverlay->set_shape(kmldom::SHAPE_SPHERE);
             }
 
-            ElementPtr poKmlElement = geom2kml( poOgrGeom, -1, poKmlFactory );
+            ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
 
-            poKmlPhotoOverlay->set_point( AsPoint( poKmlElement ) );
+            poKmlPhotoOverlay->set_point(AsPoint(poKmlElement));
         }
     }
 
     // NetworkLink.
-    if( !poKmlFeature && iNetworkLink >= 0 &&
-        poOgrFeat->IsFieldSetAndNotNull(iNetworkLink) )
+    if (!poKmlFeature && iNetworkLink >= 0 &&
+        poOgrFeat->IsFieldSetAndNotNull(iNetworkLink))
     {
         const NetworkLinkPtr poKmlNetworkLink =
             poKmlFactory->CreateNetworkLink();
@@ -485,22 +472,22 @@ FeaturePtr feat2kml(
         const int iRefreshVisibility =
             poOgrFeat->GetFieldIndex(oFC.networklink_refreshvisibility_field);
 
-        if( iRefreshVisibility >= 0 &&
-            poOgrFeat->IsFieldSetAndNotNull(iRefreshVisibility) )
+        if (iRefreshVisibility >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iRefreshVisibility))
         {
-            poKmlNetworkLink->set_refreshvisibility(CPL_TO_BOOL(
-                poOgrFeat->GetFieldAsInteger(iRefreshVisibility)));
+            poKmlNetworkLink->set_refreshvisibility(
+                CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iRefreshVisibility)));
         }
 
         const int iFlyToView =
             poOgrFeat->GetFieldIndex(oFC.networklink_flytoview_field);
 
-        if( iFlyToView >= 0 && poOgrFeat->IsFieldSetAndNotNull(iFlyToView) )
-            poKmlNetworkLink->set_flytoview(CPL_TO_BOOL(
-                poOgrFeat->GetFieldAsInteger(iFlyToView)));
+        if (iFlyToView >= 0 && poOgrFeat->IsFieldSetAndNotNull(iFlyToView))
+            poKmlNetworkLink->set_flytoview(
+                CPL_TO_BOOL(poOgrFeat->GetFieldAsInteger(iFlyToView)));
 
         const LinkPtr poKmlLink = poKmlFactory->CreateLink();
-        poKmlLink->set_href( poOgrFeat->GetFieldAsString( iNetworkLink ) );
+        poKmlLink->set_href(poOgrFeat->GetFieldAsString(iNetworkLink));
         poKmlNetworkLink->set_link(poKmlLink);
 
         const int iRefreshMode =
@@ -519,84 +506,88 @@ FeaturePtr feat2kml(
             poOgrFeat->GetFieldIndex(oFC.networklink_httpQuery_field);
 
         double dfRefreshInterval = 0.0;
-        if( iRefreshInterval >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRefreshInterval) )
+        if (iRefreshInterval >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iRefreshInterval))
         {
             dfRefreshInterval = poOgrFeat->GetFieldAsDouble(iRefreshInterval);
-            if( dfRefreshInterval < 0 )
+            if (dfRefreshInterval < 0)
                 dfRefreshInterval = 0.0;
         }
 
         double dfViewRefreshTime = 0.0;
-        if( iViewRefreshTime >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewRefreshTime) )
+        if (iViewRefreshTime >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iViewRefreshTime))
         {
             dfViewRefreshTime = poOgrFeat->GetFieldAsDouble(iViewRefreshTime);
-            if( dfViewRefreshTime < 0 )
+            if (dfViewRefreshTime < 0)
                 dfViewRefreshTime = 0.0;
         }
 
-        if( dfRefreshInterval > 0 )  // ATC 51
+        if (dfRefreshInterval > 0)  // ATC 51
             poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONINTERVAL);
-        else if( iRefreshMode >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRefreshMode) )
+        else if (iRefreshMode >= 0 &&
+                 poOgrFeat->IsFieldSetAndNotNull(iRefreshMode))
         {
-            const char * const pszRefreshMode =
+            const char *const pszRefreshMode =
                 poOgrFeat->GetFieldAsString(iRefreshMode);
-            if( EQUAL(pszRefreshMode, "onChange") )
+            if (EQUAL(pszRefreshMode, "onChange"))
                 poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONCHANGE);
-            else if( EQUAL(pszRefreshMode, "onInterval") )
+            else if (EQUAL(pszRefreshMode, "onInterval"))
                 poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONINTERVAL);
-            else if( EQUAL(pszRefreshMode, "onExpire") )
+            else if (EQUAL(pszRefreshMode, "onExpire"))
                 poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONEXPIRE);
         }
 
-        if( dfRefreshInterval > 0 )  // ATC 9
+        if (dfRefreshInterval > 0)  // ATC 9
             poKmlLink->set_refreshinterval(dfRefreshInterval);
 
-        if( dfViewRefreshTime > 0 )  // ATC 51
+        if (dfViewRefreshTime > 0)  // ATC 51
             poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONSTOP);
-        else if( iViewRefreshMode >= 0 &&
-                 poOgrFeat->IsFieldSetAndNotNull(iViewRefreshMode) )
+        else if (iViewRefreshMode >= 0 &&
+                 poOgrFeat->IsFieldSetAndNotNull(iViewRefreshMode))
         {
-            const char * const pszViewRefreshMode =
+            const char *const pszViewRefreshMode =
                 poOgrFeat->GetFieldAsString(iViewRefreshMode);
-            if( EQUAL(pszViewRefreshMode, "never") )
+            if (EQUAL(pszViewRefreshMode, "never"))
                 poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_NEVER);
-            else if( EQUAL(pszViewRefreshMode, "onRequest") )
+            else if (EQUAL(pszViewRefreshMode, "onRequest"))
                 poKmlLink->set_viewrefreshmode(
                     kmldom::VIEWREFRESHMODE_ONREQUEST);
-            else if( EQUAL(pszViewRefreshMode, "onStop") )
+            else if (EQUAL(pszViewRefreshMode, "onStop"))
                 poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONSTOP);
-            else if( EQUAL(pszViewRefreshMode, "onRegion") )
+            else if (EQUAL(pszViewRefreshMode, "onRegion"))
                 poKmlLink->set_viewrefreshmode(
                     kmldom::VIEWREFRESHMODE_ONREGION);
         }
 
-        if( dfViewRefreshTime > 0 ) // ATC 9
+        if (dfViewRefreshTime > 0)  // ATC 9
             poKmlLink->set_viewrefreshtime(dfViewRefreshTime);
 
-        if( iViewBoundScale >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewBoundScale) )
+        if (iViewBoundScale >= 0 &&
+            poOgrFeat->IsFieldSetAndNotNull(iViewBoundScale))
         {
             const double dfViewBoundScale =
                 poOgrFeat->GetFieldAsDouble(iViewBoundScale);
-            if( dfViewBoundScale > 0 ) // ATC 9
+            if (dfViewBoundScale > 0)  // ATC 9
                 poKmlLink->set_viewboundscale(dfViewBoundScale);
         }
 
-        if( iViewFormat >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewFormat) )
+        if (iViewFormat >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewFormat))
         {
-            const char * const pszViewFormat =
+            const char *const pszViewFormat =
                 poOgrFeat->GetFieldAsString(iViewFormat);
-            if( pszViewFormat[0] != '\0' ) // ATC 46
+            if (pszViewFormat[0] != '\0')  // ATC 46
                 poKmlLink->set_viewformat(pszViewFormat);
         }
 
-        if( iHttpQuery >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHttpQuery) )
+        if (iHttpQuery >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHttpQuery))
         {
-            const char* const pszHttpQuery =
+            const char *const pszHttpQuery =
                 poOgrFeat->GetFieldAsString(iHttpQuery);
-            if( strstr(pszHttpQuery, "[clientVersion]") != nullptr ||
+            if (strstr(pszHttpQuery, "[clientVersion]") != nullptr ||
                 strstr(pszHttpQuery, "[kmlVersion]") != nullptr ||
                 strstr(pszHttpQuery, "[clientName]") != nullptr ||
-                strstr(pszHttpQuery, "[language]") != nullptr )  // ATC 47
+                strstr(pszHttpQuery, "[language]") != nullptr)  // ATC 47
             {
                 poKmlLink->set_httpquery(pszHttpQuery);
             }
@@ -604,61 +595,60 @@ FeaturePtr feat2kml(
     }
 
     // Model.
-    else if( !poKmlFeature &&
-             iModel >= 0 &&
-             poOgrFeat->IsFieldSetAndNotNull(iModel) &&
-             poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
-             wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
+    else if (!poKmlFeature && iModel >= 0 &&
+             poOgrFeat->IsFieldSetAndNotNull(iModel) && poOgrGeom != nullptr &&
+             !poOgrGeom->IsEmpty() &&
+             wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint)
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        const OGRPoint* const poOgrPoint = poOgrGeom->toPoint();
+        const OGRPoint *const poOgrPoint = poOgrGeom->toPoint();
         ModelPtr model = poKmlFactory->CreateModel();
 
         LocationPtr location = poKmlFactory->CreateLocation();
         model->set_location(location);
         location->set_latitude(poOgrPoint->getY());
         location->set_longitude(poOgrPoint->getX());
-        if( poOgrPoint->getCoordinateDimension() == 3 )
+        if (poOgrPoint->getCoordinateDimension() == 3)
             location->set_altitude(poOgrPoint->getZ());
 
         int isGX = FALSE;
         const int iAltitudeMode =
             poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
-        if( poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode) )
+        if (poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode))
         {
             const int nAltitudeMode = kmlAltitudeModeFromString(
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
             model->set_altitudemode(nAltitudeMode);
 
             // ATC 55
-            if( nAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
-                poOgrPoint->getCoordinateDimension() != 3 )
+            if (nAltitudeMode != kmldom::ALTITUDEMODE_CLAMPTOGROUND &&
+                poOgrPoint->getCoordinateDimension() != 3)
             {
-                if( CPLTestBool(
-                    CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+                if (CPLTestBool(
+                        CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")))
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Altitude should be defined");
             }
         }
 
-        if( (iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
+        if ((iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
             (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
-            (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)) )
+            (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)))
         {
             OrientationPtr const orientation =
                 poKmlFactory->CreateOrientation();
             model->set_orientation(orientation);
-            if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
+            if (iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading))
                 orientation->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
             else
                 orientation->set_heading(0);
-            if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
+            if (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt))
                 orientation->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
             else
                 orientation->set_tilt(0);
-            if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
+            if (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))
                 orientation->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
             else
                 orientation->set_roll(0);
@@ -669,37 +659,37 @@ FeaturePtr feat2kml(
 
         const ScalePtr scale = poKmlFactory->CreateScale();
         model->set_scale(scale);
-        if( iScaleX >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleX) )
+        if (iScaleX >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleX))
             scale->set_x(poOgrFeat->GetFieldAsDouble(iScaleX));
         else
             scale->set_x(1.0);
-        if( iScaleY >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleY) )
+        if (iScaleY >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleY))
             scale->set_y(poOgrFeat->GetFieldAsDouble(iScaleY));
         else
             scale->set_y(1.0);
-        if( iScaleZ >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleZ) )
+        if (iScaleZ >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleZ))
             scale->set_z(poOgrFeat->GetFieldAsDouble(iScaleZ));
         else
             scale->set_z(1.0);
 
         const LinkPtr link = poKmlFactory->CreateLink();
         model->set_link(link);
-        const char* const pszURL = poOgrFeat->GetFieldAsString(oFC.modelfield);
-        link->set_href( pszURL );
+        const char *const pszURL = poOgrFeat->GetFieldAsString(oFC.modelfield);
+        link->set_href(pszURL);
 
         // Collada 3D file?
-        if( EQUAL(CPLGetExtension(pszURL), "dae") &&
-            CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
+        if (EQUAL(CPLGetExtension(pszURL), "dae") &&
+            CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")))
         {
-            VSILFILE* fp = nullptr;
+            VSILFILE *fp = nullptr;
             bool bIsURL = false;
-            if( STARTS_WITH_CI(pszURL, "http://") ||
-                STARTS_WITH_CI(pszURL, "https://") )
+            if (STARTS_WITH_CI(pszURL, "http://") ||
+                STARTS_WITH_CI(pszURL, "https://"))
             {
                 bIsURL = true;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
             }
-            else if( strstr(pszURL, ".kmz/") != nullptr )
+            else if (strstr(pszURL, ".kmz/") != nullptr)
             {
                 fp = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszURL), "rb");
             }
@@ -707,44 +697,44 @@ FeaturePtr feat2kml(
             {
                 fp = VSIFOpenL(pszURL, "rb");
             }
-            if( fp != nullptr )
+            if (fp != nullptr)
             {
                 ResourceMapPtr resourceMap = nullptr;
-                const char* pszLine = nullptr;
-                while( (pszLine = CPLReadLineL(fp)) != nullptr )
+                const char *pszLine = nullptr;
+                while ((pszLine = CPLReadLineL(fp)) != nullptr)
                 {
-                    const char* pszInitFrom = strstr(pszLine, "<init_from>");
-                    if( pszInitFrom )
+                    const char *pszInitFrom = strstr(pszLine, "<init_from>");
+                    if (pszInitFrom)
                     {
                         pszInitFrom += strlen("<init_from>");
-                        const char* const pszInitFromEnd =
+                        const char *const pszInitFromEnd =
                             strstr(pszInitFrom, "</init_from>");
-                        if( pszInitFromEnd )
+                        if (pszInitFromEnd)
                         {
                             CPLString osImage(pszInitFrom);
                             osImage.resize(pszInitFromEnd - pszInitFrom);
-                            const char* const pszExtension =
+                            const char *const pszExtension =
                                 CPLGetExtension(osImage);
-                            if( EQUAL(pszExtension, "jpg") ||
+                            if (EQUAL(pszExtension, "jpg") ||
                                 EQUAL(pszExtension, "jpeg") ||
                                 EQUAL(pszExtension, "png") ||
-                                EQUAL(pszExtension, "gif") )
+                                EQUAL(pszExtension, "gif"))
                             {
-                                if( !resourceMap )
+                                if (!resourceMap)
                                     resourceMap =
                                         poKmlFactory->CreateResourceMap();
                                 const AliasPtr alias =
                                     poKmlFactory->CreateAlias();
-                                if( bIsURL && CPLIsFilenameRelative(osImage) )
+                                if (bIsURL && CPLIsFilenameRelative(osImage))
                                 {
-                                    if( STARTS_WITH(pszURL, "http") )
-                                        alias->set_targethref(
-                                            CPLSPrintf(
-                                                "%s/%s", CPLGetPath(pszURL),
-                                                osImage.c_str()));
+                                    if (STARTS_WITH(pszURL, "http"))
+                                        alias->set_targethref(CPLSPrintf(
+                                            "%s/%s", CPLGetPath(pszURL),
+                                            osImage.c_str()));
                                     else
-                                        alias->set_targethref(CPLFormFilename(
-                                            CPLGetPath(pszURL), osImage, nullptr));
+                                        alias->set_targethref(
+                                            CPLFormFilename(CPLGetPath(pszURL),
+                                                            osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);
@@ -754,163 +744,156 @@ FeaturePtr feat2kml(
                         }
                     }
                 }
-                if( resourceMap )
+                if (resourceMap)
                     model->set_resourcemap(resourceMap);
                 VSIFCloseL(fp);
             }
         }
 
-        poKmlPlacemark->set_geometry( AsGeometry( model ) );
+        poKmlPlacemark->set_geometry(AsGeometry(model));
     }
 
     // Camera.
-    else if( !poKmlFeature && poOgrGeom != nullptr &&
-             !poOgrGeom->IsEmpty() &&
+    else if (!poKmlFeature && poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
              poOgrFeat->GetFieldIndex(oFC.camera_longitude_field) < 0 &&
              ((iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
               (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
-              (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))) )
+              (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))))
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        const OGRPoint* const poOgrPoint = poOgrGeom->toPoint();
+        const OGRPoint *const poOgrPoint = poOgrGeom->toPoint();
         camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());
         int isGX = FALSE;
         const int iAltitudeMode =
             poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
-        if( poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode) )
+        if (poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode))
         {
             const int nAltitudeMode = kmlAltitudeModeFromString(
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
             camera->set_altitudemode(nAltitudeMode);
         }
-        else if( CPLTestBool(
-                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if (CPLTestBool(
+                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Camera should define altitudeMode != 'clampToGround'");
         }
 
-        if( poOgrPoint->getCoordinateDimension() == 3 )
+        if (poOgrPoint->getCoordinateDimension() == 3)
         {
             camera->set_altitude(poOgrPoint->getZ());
         }
-        else if( CPLTestBool(
-                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
+        else if (CPLTestBool(
+                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Camera should have an altitude/Z");
             camera->set_altitude(0.0);
         }
 
-        if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
+        if (iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading))
             camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
-        if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
+        if (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt))
             camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
-        if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
+        if (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))
             camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
         poKmlPlacemark->set_abstractview(camera);
     }
-    else if( !poKmlFeature )
+    else if (!poKmlFeature)
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        ElementPtr poKmlElement = geom2kml( poOgrGeom, -1, poKmlFactory );
+        ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
 
-        poKmlPlacemark->set_geometry( AsGeometry( poKmlElement ) );
+        poKmlPlacemark->set_geometry(AsGeometry(poKmlElement));
     }
 
-    if( !camera )
-        camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
-                                poOgrFeat, poKmlFactory);
-    if( camera )
+    if (!camera)
+        camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll, poOgrFeat,
+                                poKmlFactory);
+    if (camera)
         poKmlFeature->set_abstractview(camera);
 
     /***** style *****/
-    featurestyle2kml( poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
-                      poKmlFeature );
+    featurestyle2kml(poOgrDS, poOgrLayer, poOgrFeat, poKmlFactory,
+                     poKmlFeature);
 
     /***** fields *****/
-    field2kml( poOgrFeat, poOgrLayer, poKmlFactory,
-               poKmlFeature, bUseSimpleField );
+    field2kml(poOgrFeat, poOgrLayer, poKmlFactory, poKmlFeature,
+              bUseSimpleField);
 
     return poKmlFeature;
 }
 
-OGRFeature *kml2feat(
-    PlacemarkPtr poKmlPlacemark,
-    OGRLIBKMLDataSource * poOgrDS,
-    OGRLayer * poOgrLayer,
-    OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS )
+OGRFeature *kml2feat(PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
+                     OGRLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
+                     OGRSpatialReference *poOgrSRS)
 {
-    OGRFeature *poOgrFeat = new OGRFeature( poOgrFeatDefn );
+    OGRFeature *poOgrFeat = new OGRFeature(poOgrFeatDefn);
 
     /***** style *****/
-    kml2featurestyle( poKmlPlacemark, poOgrDS, poOgrLayer, poOgrFeat );
+    kml2featurestyle(poKmlPlacemark, poOgrDS, poOgrLayer, poOgrFeat);
 
     /***** geometry *****/
-    if( poKmlPlacemark->has_geometry() )
+    if (poKmlPlacemark->has_geometry())
     {
-        OGRGeometry * const poOgrGeom =
-            kml2geom( poKmlPlacemark->get_geometry(), poOgrSRS );
-        poOgrFeat->SetGeometryDirectly( poOgrGeom );
+        OGRGeometry *const poOgrGeom =
+            kml2geom(poKmlPlacemark->get_geometry(), poOgrSRS);
+        poOgrFeat->SetGeometryDirectly(poOgrGeom);
     }
-    else if( poKmlPlacemark->has_abstractview() &&
-             poKmlPlacemark->get_abstractview()->IsA( kmldom::Type_Camera) )
+    else if (poKmlPlacemark->has_abstractview() &&
+             poKmlPlacemark->get_abstractview()->IsA(kmldom::Type_Camera))
     {
-        const CameraPtr& camera = AsCamera(poKmlPlacemark->get_abstractview());
-        if( camera->has_longitude() && camera->has_latitude() )
+        const CameraPtr &camera = AsCamera(poKmlPlacemark->get_abstractview());
+        if (camera->has_longitude() && camera->has_latitude())
         {
-            if( camera->has_altitude() )
-                poOgrFeat->SetGeometryDirectly(
-                    new OGRPoint( camera->get_longitude(),
-                                  camera->get_latitude(),
-                                  camera->get_altitude() ) );
+            if (camera->has_altitude())
+                poOgrFeat->SetGeometryDirectly(new OGRPoint(
+                    camera->get_longitude(), camera->get_latitude(),
+                    camera->get_altitude()));
             else
-                poOgrFeat->SetGeometryDirectly(
-                    new OGRPoint( camera->get_longitude(),
-                                 camera->get_latitude() ) );
-            poOgrFeat->GetGeometryRef()->assignSpatialReference( poOgrSRS );
+                poOgrFeat->SetGeometryDirectly(new OGRPoint(
+                    camera->get_longitude(), camera->get_latitude()));
+            poOgrFeat->GetGeometryRef()->assignSpatialReference(poOgrSRS);
         }
     }
 
     /***** fields *****/
-    kml2field( poOgrFeat, AsFeature( poKmlPlacemark ) );
+    kml2field(poOgrFeat, AsFeature(poKmlPlacemark));
 
     return poOgrFeat;
 }
 
-OGRFeature *kmlgroundoverlay2feat(
-    GroundOverlayPtr poKmlOverlay,
-    OGRLIBKMLDataSource * /* poOgrDS */,
-    OGRLayer * /* poOgrLayer */,
-    OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS)
+OGRFeature *kmlgroundoverlay2feat(GroundOverlayPtr poKmlOverlay,
+                                  OGRLIBKMLDataSource * /* poOgrDS */,
+                                  OGRLayer * /* poOgrLayer */,
+                                  OGRFeatureDefn *poOgrFeatDefn,
+                                  OGRSpatialReference *poOgrSRS)
 {
-    OGRFeature *poOgrFeat = new OGRFeature( poOgrFeatDefn );
+    OGRFeature *poOgrFeat = new OGRFeature(poOgrFeatDefn);
 
     /***** geometry *****/
-    if( poKmlOverlay->has_latlonbox() )
+    if (poKmlOverlay->has_latlonbox())
     {
-        OGRGeometry * const poOgrGeom =
-            kml2geom_latlonbox( poKmlOverlay->get_latlonbox(), poOgrSRS );
-        poOgrFeat->SetGeometryDirectly( poOgrGeom );
+        OGRGeometry *const poOgrGeom =
+            kml2geom_latlonbox(poKmlOverlay->get_latlonbox(), poOgrSRS);
+        poOgrFeat->SetGeometryDirectly(poOgrGeom);
     }
-    else if( poKmlOverlay->has_gx_latlonquad() )
+    else if (poKmlOverlay->has_gx_latlonquad())
     {
-        OGRGeometry * const poOgrGeom =
-            kml2geom_latlonquad( poKmlOverlay->get_gx_latlonquad(), poOgrSRS );
-        poOgrFeat->SetGeometryDirectly( poOgrGeom );
+        OGRGeometry *const poOgrGeom =
+            kml2geom_latlonquad(poKmlOverlay->get_gx_latlonquad(), poOgrSRS);
+        poOgrFeat->SetGeometryDirectly(poOgrGeom);
     }
 
     /***** fields *****/
-    kml2field( poOgrFeat, AsFeature( poKmlOverlay ) );
+    kml2field(poOgrFeat, AsFeature(poKmlOverlay));
 
     return poOgrFeat;
 }

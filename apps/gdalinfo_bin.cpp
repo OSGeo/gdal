@@ -34,23 +34,25 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats | -approx_stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
-            "                [-listmdd] [-mdd domain|`all`] [-wkt_format WKT1|WKT2|...]*\n"
-            "                [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname\n" );
+    printf("Usage: gdalinfo [--help-general] [-json] [-mm] [-stats | "
+           "-approx_stats] [-hist] [-nogcp] [-nomd]\n"
+           "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
+           "                [-listmdd] [-mdd domain|`all`] [-wkt_format "
+           "WKT1|WKT2|...]*\n"
+           "                [-sd subdataset] [-oo NAME=VALUE]* [-if format]* "
+           "datasetname\n");
 
-    if( pszErrorMsg != nullptr )
+    if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit( 1 );
+    exit(1);
 }
 
 /************************************************************************/
@@ -67,9 +69,10 @@ static GDALInfoOptionsForBinary *GDALInfoOptionsForBinaryNew(void)
 /*                       GDALInfoOptionsForBinaryFree()                 */
 /************************************************************************/
 
-static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsForBinary )
+static void
+GDALInfoOptionsForBinaryFree(GDALInfoOptionsForBinary *psOptionsForBinary)
 {
-    if( psOptionsForBinary )
+    if (psOptionsForBinary)
     {
         CPLFree(psOptionsForBinary->pszFilename);
         CSLDestroy(psOptionsForBinary->papszOpenOptions);
@@ -89,34 +92,36 @@ MAIN_START(argc, argv)
 
     GDALAllRegister();
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-    for( int i = 0; argv != nullptr && argv[i] != nullptr; i++ )
+    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
     {
-        if( EQUAL(argv[i], "--utility_version") )
+        if (EQUAL(argv[i], "--utility_version"))
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage();
         }
     }
     argv = CSLAddString(argv, "-stdout");
 
-    GDALInfoOptionsForBinary* psOptionsForBinary = GDALInfoOptionsForBinaryNew();
+    GDALInfoOptionsForBinary *psOptionsForBinary =
+        GDALInfoOptionsForBinaryNew();
 
-    GDALInfoOptions *psOptions
-        = GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
-    if( psOptions == nullptr )
+    GDALInfoOptions *psOptions =
+        GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
+    if (psOptions == nullptr)
         Usage();
 
-    if( psOptionsForBinary->pszFilename == nullptr )
+    if (psOptionsForBinary->pszFilename == nullptr)
         Usage("No datasource specified.");
 
 /* -------------------------------------------------------------------- */
@@ -124,55 +129,63 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     int iIter = 0;
-    while (__AFL_LOOP(1000)) {
-        iIter ++;
+    while (__AFL_LOOP(1000))
+    {
+        iIter++;
 #endif
 
-    GDALDatasetH hDataset
-        = GDALOpenEx( psOptionsForBinary->pszFilename,
-                      GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-                      psOptionsForBinary->papszAllowInputDrivers,
-                      psOptionsForBinary->papszOpenOptions, nullptr );
+        GDALDatasetH hDataset = GDALOpenEx(
+            psOptionsForBinary->pszFilename,
+            GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+            psOptionsForBinary->papszAllowInputDrivers,
+            psOptionsForBinary->papszOpenOptions, nullptr);
 
-    if( hDataset == nullptr )
-    {
-#ifdef __AFL_HAVE_MANUAL_CONTROL
-        continue;
-#else
-        fprintf( stderr,
-                 "gdalinfo failed - unable to open '%s'.\n",
-                 psOptionsForBinary->pszFilename );
-
-/* -------------------------------------------------------------------- */
-/*      If argument is a VSIFILE, then print its contents               */
-/* -------------------------------------------------------------------- */
-        if ( STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") ||
-             STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/") )
+        if (hDataset == nullptr)
         {
-            const char* const apszOptions[] = { "NAME_AND_TYPE_ONLY=YES", nullptr };
-            VSIDIR* psDir = VSIOpenDir(psOptionsForBinary->pszFilename, -1, apszOptions);
-            if( psDir )
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+            continue;
+#else
+        fprintf(stderr, "gdalinfo failed - unable to open '%s'.\n",
+                psOptionsForBinary->pszFilename);
+
+        /* --------------------------------------------------------------------
+         */
+        /*      If argument is a VSIFILE, then print its contents */
+        /* --------------------------------------------------------------------
+         */
+        if (STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") ||
+            STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/"))
+        {
+            const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES",
+                                               nullptr};
+            VSIDIR *psDir =
+                VSIOpenDir(psOptionsForBinary->pszFilename, -1, apszOptions);
+            if (psDir)
             {
-                fprintf( stdout,
-                         "Unable to open source `%s' directly.\n"
-                         "The archive contains several files:\n",
-                         psOptionsForBinary->pszFilename );
+                fprintf(stdout,
+                        "Unable to open source `%s' directly.\n"
+                        "The archive contains several files:\n",
+                        psOptionsForBinary->pszFilename);
                 int nCount = 0;
-                while( auto psEntry = VSIGetNextDirEntry(psDir) )
+                while (auto psEntry = VSIGetNextDirEntry(psDir))
                 {
-                    if( VSI_ISDIR(psEntry->nMode) && psEntry->pszName[0] &&
-                        psEntry->pszName[strlen(psEntry->pszName)-1] != '/' )
+                    if (VSI_ISDIR(psEntry->nMode) && psEntry->pszName[0] &&
+                        psEntry->pszName[strlen(psEntry->pszName) - 1] != '/')
                     {
-                        fprintf( stdout, "       %s/%s/\n", psOptionsForBinary->pszFilename, psEntry->pszName );
+                        fprintf(stdout, "       %s/%s/\n",
+                                psOptionsForBinary->pszFilename,
+                                psEntry->pszName);
                     }
                     else
                     {
-                        fprintf( stdout, "       %s/%s\n", psOptionsForBinary->pszFilename, psEntry->pszName );
+                        fprintf(stdout, "       %s/%s\n",
+                                psOptionsForBinary->pszFilename,
+                                psEntry->pszName);
                     }
-                    nCount ++;
-                    if( nCount == 100 )
+                    nCount++;
+                    if (nCount == 100)
                     {
-                        fprintf( stdout, "[...trimmed...]\n" );
+                        fprintf(stdout, "[...trimmed...]\n");
                         break;
                     }
                 }
@@ -180,78 +193,81 @@ MAIN_START(argc, argv)
             }
         }
 
-        CSLDestroy( argv );
+        CSLDestroy(argv);
 
         GDALInfoOptionsForBinaryFree(psOptionsForBinary);
 
-        GDALInfoOptionsFree( psOptions );
+        GDALInfoOptionsFree(psOptions);
 
-        GDALDumpOpenDatasets( stderr );
+        GDALDumpOpenDatasets(stderr);
 
         GDALDestroyDriverManager();
 
-        CPLDumpSharedList( nullptr );
+        CPLDumpSharedList(nullptr);
 
-        exit( 1 );
+        exit(1);
 #endif
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read specified subdataset if requested.                         */
-/* -------------------------------------------------------------------- */
-    if ( psOptionsForBinary->nSubdataset > 0 )
-    {
-        char **papszSubdatasets = GDALGetMetadata( hDataset, "SUBDATASETS" );
-        int nSubdatasets = CSLCount( papszSubdatasets );
-
-        if ( nSubdatasets > 0 && psOptionsForBinary->nSubdataset <= nSubdatasets )
-        {
-            char szKeyName[1024];
-            char *pszSubdatasetName;
-
-            snprintf( szKeyName, sizeof(szKeyName),
-                      "SUBDATASET_%d_NAME", psOptionsForBinary->nSubdataset );
-            szKeyName[sizeof(szKeyName) - 1] = '\0';
-            pszSubdatasetName =
-                CPLStrdup( CSLFetchNameValue( papszSubdatasets, szKeyName ) );
-            GDALClose( hDataset );
-            hDataset = GDALOpen( pszSubdatasetName, GA_ReadOnly );
-            CPLFree( pszSubdatasetName );
         }
-        else
+
+        /* --------------------------------------------------------------------
+         */
+        /*      Read specified subdataset if requested. */
+        /* --------------------------------------------------------------------
+         */
+        if (psOptionsForBinary->nSubdataset > 0)
         {
-            fprintf( stderr,
-                     "gdalinfo warning: subdataset %d of %d requested. "
-                     "Reading the main dataset.\n",
-                     psOptionsForBinary->nSubdataset, nSubdatasets );
+            char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
+            int nSubdatasets = CSLCount(papszSubdatasets);
+
+            if (nSubdatasets > 0 &&
+                psOptionsForBinary->nSubdataset <= nSubdatasets)
+            {
+                char szKeyName[1024];
+                char *pszSubdatasetName;
+
+                snprintf(szKeyName, sizeof(szKeyName), "SUBDATASET_%d_NAME",
+                         psOptionsForBinary->nSubdataset);
+                szKeyName[sizeof(szKeyName) - 1] = '\0';
+                pszSubdatasetName =
+                    CPLStrdup(CSLFetchNameValue(papszSubdatasets, szKeyName));
+                GDALClose(hDataset);
+                hDataset = GDALOpen(pszSubdatasetName, GA_ReadOnly);
+                CPLFree(pszSubdatasetName);
+            }
+            else
+            {
+                fprintf(stderr,
+                        "gdalinfo warning: subdataset %d of %d requested. "
+                        "Reading the main dataset.\n",
+                        psOptionsForBinary->nSubdataset, nSubdatasets);
+            }
         }
-    }
 
-    char* pszGDALInfoOutput = GDALInfo( hDataset, psOptions );
+        char *pszGDALInfoOutput = GDALInfo(hDataset, psOptions);
 
-    if( pszGDALInfoOutput )
-        printf( "%s", pszGDALInfoOutput );
+        if (pszGDALInfoOutput)
+            printf("%s", pszGDALInfoOutput);
 
-    CPLFree( pszGDALInfoOutput );
+        CPLFree(pszGDALInfoOutput);
 
-    GDALClose( hDataset );
+        GDALClose(hDataset);
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     }
 #endif
 
     GDALInfoOptionsForBinaryFree(psOptionsForBinary);
 
-    GDALInfoOptionsFree( psOptions );
+    GDALInfoOptionsFree(psOptions);
 
-    CSLDestroy( argv );
+    CSLDestroy(argv);
 
-    GDALDumpOpenDatasets( stderr );
+    GDALDumpOpenDatasets(stderr);
 
     GDALDestroyDriverManager();
 
-    CPLDumpSharedList( nullptr );
+    CPLDumpSharedList(nullptr);
     GDALDestroy();
 
-    exit( 0 );
+    exit(0);
 }
 MAIN_END

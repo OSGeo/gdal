@@ -33,14 +33,13 @@
 
 #include <algorithm>
 
-
 constexpr int HEADER_SIZE = 1011;
 
 /************************************************************************/
 /*                            JDEMGetField()                            */
 /************************************************************************/
 
-static int JDEMGetField( const char *pszField, int nWidth )
+static int JDEMGetField(const char *pszField, int nWidth)
 
 {
     char szWork[32] = {};
@@ -56,7 +55,7 @@ static int JDEMGetField( const char *pszField, int nWidth )
 /*                            JDEMGetAngle()                            */
 /************************************************************************/
 
-static double JDEMGetAngle( const char *pszField )
+static double JDEMGetAngle(const char *pszField)
 
 {
     const int nAngle = JDEMGetField(pszField, 7);
@@ -80,23 +79,23 @@ static double JDEMGetAngle( const char *pszField )
 
 class JDEMRasterBand;
 
-class JDEMDataset final: public GDALPamDataset
+class JDEMDataset final : public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
-    VSILFILE           *m_fp = nullptr;
-    GByte               m_abyHeader[HEADER_SIZE];
+    VSILFILE *m_fp = nullptr;
+    GByte m_abyHeader[HEADER_SIZE];
     OGRSpatialReference m_oSRS{};
 
   public:
-                     JDEMDataset();
-                    ~JDEMDataset();
+    JDEMDataset();
+    ~JDEMDataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 
-    CPLErr GetGeoTransform( double * padfTransform ) override;
-    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -105,28 +104,28 @@ class JDEMDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JDEMRasterBand final: public GDALPamRasterBand
+class JDEMRasterBand final : public GDALPamRasterBand
 {
     friend class JDEMDataset;
 
-    int          m_nRecordSize = 0;
-    char        *m_pszRecord = nullptr;
-    bool         m_bBufferAllocFailed = false;
+    int m_nRecordSize = 0;
+    char *m_pszRecord = nullptr;
+    bool m_bBufferAllocFailed = false;
 
   public:
-                JDEMRasterBand( JDEMDataset *, int );
-               ~JDEMRasterBand();
+    JDEMRasterBand(JDEMDataset *, int);
+    ~JDEMRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/
 /*                           JDEMRasterBand()                            */
 /************************************************************************/
 
-JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
-    // Cannot overflow as nBlockXSize <= 999.
-    m_nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2)
+JDEMRasterBand::JDEMRasterBand(JDEMDataset *poDSIn, int nBandIn)
+    :  // Cannot overflow as nBlockXSize <= 999.
+      m_nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -141,15 +140,17 @@ JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
 /*                          ~JDEMRasterBand()                            */
 /************************************************************************/
 
-JDEMRasterBand::~JDEMRasterBand() { VSIFree(m_pszRecord); }
+JDEMRasterBand::~JDEMRasterBand()
+{
+    VSIFree(m_pszRecord);
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
-                                   int nBlockYOff,
-                                   void * pImage )
+CPLErr JDEMRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
+                                  void *pImage)
 
 {
     JDEMDataset *poGDS = cpl::down_cast<JDEMDataset *>(poDS);
@@ -170,14 +171,14 @@ CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
     CPL_IGNORE_RET_VAL(
         VSIFSeekL(poGDS->m_fp, 1011 + m_nRecordSize * nBlockYOff, SEEK_SET));
 
-    if( VSIFReadL(m_pszRecord, m_nRecordSize, 1, poGDS->m_fp) != 1 )
+    if (VSIFReadL(m_pszRecord, m_nRecordSize, 1, poGDS->m_fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot read scanline %d", nBlockYOff);
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot read scanline %d",
+                 nBlockYOff);
         return CE_Failure;
     }
 
-    if( !EQUALN(reinterpret_cast<char *>(poGDS->m_abyHeader), m_pszRecord, 6) )
+    if (!EQUALN(reinterpret_cast<char *>(poGDS->m_abyHeader), m_pszRecord, 6))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JDEM Scanline corrupt.  Perhaps file was not transferred "
@@ -185,7 +186,7 @@ CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
         return CE_Failure;
     }
 
-    if( JDEMGetField(m_pszRecord + 6, 3) != nBlockYOff + 1 )
+    if (JDEMGetField(m_pszRecord + 6, 3) != nBlockYOff + 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JDEM scanline out of order, JDEM driver does not "
@@ -193,7 +194,7 @@ CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
         return CE_Failure;
     }
 
-    for( int i = 0; i < nBlockXSize; i++ )
+    for (int i = 0; i < nBlockXSize; i++)
         static_cast<float *>(pImage)[i] =
             JDEMGetField(m_pszRecord + 9 + 5 * i, 5) * 0.1f;
 
@@ -214,7 +215,7 @@ JDEMDataset::JDEMDataset()
 {
     std::fill_n(m_abyHeader, CPL_ARRAYSIZE(m_abyHeader), static_cast<GByte>(0));
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_oSRS.importFromEPSG(4301); // Tokyo geographic CRS
+    m_oSRS.importFromEPSG(4301);  // Tokyo geographic CRS
 }
 
 /************************************************************************/
@@ -225,7 +226,7 @@ JDEMDataset::~JDEMDataset()
 
 {
     FlushCache(true);
-    if( m_fp != nullptr )
+    if (m_fp != nullptr)
         CPL_IGNORE_RET_VAL(VSIFCloseL(m_fp));
 }
 
@@ -233,7 +234,7 @@ JDEMDataset::~JDEMDataset()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr JDEMDataset::GetGeoTransform( double *padfTransform )
+CPLErr JDEMDataset::GetGeoTransform(double *padfTransform)
 
 {
     const char *psHeader = reinterpret_cast<const char *>(m_abyHeader);
@@ -268,22 +269,22 @@ const OGRSpatialReference *JDEMDataset::GetSpatialRef() const
 /*                              Identify()                              */
 /************************************************************************/
 
-int JDEMDataset::Identify( GDALOpenInfo *poOpenInfo )
+int JDEMDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->nHeaderBytes < HEADER_SIZE )
+    if (poOpenInfo->nHeaderBytes < HEADER_SIZE)
         return FALSE;
 
     // Confirm that the header has what appears to be dates in the
     // expected locations.
     // Check if century values seem reasonable.
     const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-    if( (!STARTS_WITH_CI(psHeader + 11, "19") &&
+    if ((!STARTS_WITH_CI(psHeader + 11, "19") &&
          !STARTS_WITH_CI(psHeader + 11, "20")) ||
         (!STARTS_WITH_CI(psHeader + 15, "19") &&
          !STARTS_WITH_CI(psHeader + 15, "20")) ||
         (!STARTS_WITH_CI(psHeader + 19, "19") &&
-         !STARTS_WITH_CI(psHeader + 19, "20")) )
+         !STARTS_WITH_CI(psHeader + 19, "20")))
     {
         return FALSE;
     }
@@ -294,12 +295,9 @@ int JDEMDataset::Identify( GDALOpenInfo *poOpenInfo )
     const double dfLLLong = JDEMGetAngle(psHeader + 36);
     const double dfURLat = JDEMGetAngle(psHeader + 43);
     const double dfURLong = JDEMGetAngle(psHeader + 50);
-    if( dfLLLat > 90 || dfLLLat < 0 ||
-        dfLLLong > 180 ||dfLLLong < 0 ||
-        dfURLat > 90 || dfURLat < 0 ||
-        dfURLong > 180 || dfURLong < 0 ||
-        dfLLLat > dfURLat ||
-        dfLLLong > dfURLong )
+    if (dfLLLat > 90 || dfLLLat < 0 || dfLLLong > 180 || dfLLLong < 0 ||
+        dfURLat > 90 || dfURLat < 0 || dfURLong > 180 || dfURLong < 0 ||
+        dfLLLat > dfURLat || dfLLLong > dfURLong)
     {
         return FALSE;
     }
@@ -311,7 +309,7 @@ int JDEMDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
+GDALDataset *JDEMDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     // Confirm that the header is compatible with a JDEM dataset.
@@ -319,7 +317,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
 
     // Confirm the requested access is supported.
-    if( poOpenInfo->eAccess == GA_Update )
+    if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The JDEM driver does not support update access to existing "
@@ -328,7 +326,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Check that the file pointer from GDALOpenInfo* is available.
-    if( poOpenInfo->fpL == nullptr )
+    if (poOpenInfo->fpL == nullptr)
     {
         return nullptr;
     }
@@ -346,7 +344,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
     const char *psHeader = reinterpret_cast<const char *>(poDS->m_abyHeader);
     poDS->nRasterXSize = JDEMGetField(psHeader + 23, 3);
     poDS->nRasterYSize = JDEMGetField(psHeader + 26, 3);
-    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         return nullptr;
     }
@@ -371,7 +369,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
 void GDALRegister_JDEM()
 
 {
-    if( GDALGetDriverByName("JDEM") != nullptr )
+    if (GDALGetDriverByName("JDEM") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();

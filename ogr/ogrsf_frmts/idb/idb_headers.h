@@ -37,4 +37,4 @@
 
 #include <it.h>
 
-#endif // IDB_HEADERS_H
+#endif  // IDB_HEADERS_H

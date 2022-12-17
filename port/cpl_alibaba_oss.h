@@ -43,83 +43,100 @@
 #include <map>
 #include "cpl_aws.h"
 
-class VSIOSSHandleHelper final: public IVSIS3LikeHandleHelper
+class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
 {
-        CPL_DISALLOW_COPY_ASSIGN(VSIOSSHandleHelper)
+    CPL_DISALLOW_COPY_ASSIGN(VSIOSSHandleHelper)
 
-        CPLString m_osURL{};
-        CPLString m_osSecretAccessKey{};
-        CPLString m_osAccessKeyId{};
-        CPLString m_osEndpoint{};
-        CPLString m_osBucket{};
-        CPLString m_osObjectKey{};
-        bool m_bUseHTTPS = false;
-        bool m_bUseVirtualHosting = false;
+    CPLString m_osURL{};
+    CPLString m_osSecretAccessKey{};
+    CPLString m_osAccessKeyId{};
+    CPLString m_osEndpoint{};
+    CPLString m_osBucket{};
+    CPLString m_osObjectKey{};
+    bool m_bUseHTTPS = false;
+    bool m_bUseVirtualHosting = false;
 
-        void RebuildURL() override;
+    void RebuildURL() override;
 
-        static bool GetConfiguration(const std::string& osPathForOption,
-                                     CSLConstList papszOptions,
-                                     CPLString& osSecretAccessKey,
-                                     CPLString& osAccessKeyId);
+    static bool GetConfiguration(const std::string &osPathForOption,
+                                 CSLConstList papszOptions,
+                                 CPLString &osSecretAccessKey,
+                                 CPLString &osAccessKeyId);
 
   protected:
+  public:
+    VSIOSSHandleHelper(const CPLString &osSecretAccessKey,
+                       const CPLString &osAccessKeyId,
+                       const CPLString &osEndpoint, const CPLString &osBucket,
+                       const CPLString &osObjectKey, bool bUseHTTPS,
+                       bool bUseVirtualHosting);
+    ~VSIOSSHandleHelper();
 
-    public:
-        VSIOSSHandleHelper(const CPLString& osSecretAccessKey,
-                    const CPLString& osAccessKeyId,
-                    const CPLString& osEndpoint,
-                    const CPLString& osBucket,
-                    const CPLString& osObjectKey,
-                    bool bUseHTTPS, bool bUseVirtualHosting);
-       ~VSIOSSHandleHelper();
+    static VSIOSSHandleHelper *
+    BuildFromURI(const char *pszURI, const char *pszFSPrefix,
+                 bool bAllowNoObject, CSLConstList papszOptions = nullptr);
+    static CPLString BuildURL(const CPLString &osEndpoint,
+                              const CPLString &osBucket,
+                              const CPLString &osObjectKey, bool bUseHTTPS,
+                              bool bUseVirtualHosting);
 
-        static VSIOSSHandleHelper* BuildFromURI(const char* pszURI,
-                                                const char* pszFSPrefix,
-                                                bool bAllowNoObject,
-                                                CSLConstList papszOptions = nullptr);
-        static CPLString BuildURL(const CPLString& osEndpoint,
-                                  const CPLString& osBucket,
-                                  const CPLString& osObjectKey,
-                                  bool bUseHTTPS, bool bUseVirtualHosting);
+    struct curl_slist *
+    GetCurlHeaders(const CPLString &osVerb,
+                   const struct curl_slist *psExistingHeaders,
+                   const void *pabyDataContent = nullptr,
+                   size_t nBytesContent = 0) const override;
 
-        struct curl_slist* GetCurlHeaders(
-            const CPLString& osVerb,
-            const struct curl_slist* psExistingHeaders,
-            const void *pabyDataContent = nullptr,
-            size_t nBytesContent = 0 ) const override;
+    bool CanRestartOnError(const char *, const char *pszHeaders, bool bSetError,
+                           bool *pbUpdateMap = nullptr) override;
 
-        bool CanRestartOnError(const char*, const char* pszHeaders,
-                               bool bSetError,
-                               bool* pbUpdateMap = nullptr) override;
+    const CPLString &GetURL() const override
+    {
+        return m_osURL;
+    }
+    const CPLString &GetBucket() const
+    {
+        return m_osBucket;
+    }
+    const CPLString &GetObjectKey() const
+    {
+        return m_osObjectKey;
+    }
+    const CPLString &GetEndpoint() const
+    {
+        return m_osEndpoint;
+    }
+    bool GetVirtualHosting() const
+    {
+        return m_bUseVirtualHosting;
+    }
 
-        const CPLString& GetURL() const override { return m_osURL; }
-        const CPLString& GetBucket() const { return m_osBucket; }
-        const CPLString& GetObjectKey() const { return m_osObjectKey; }
-        const CPLString& GetEndpoint()const  { return m_osEndpoint; }
-        bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
+    CPLString GetCopySourceHeader() const override
+    {
+        return "x-oss-copy-source";
+    }
 
-        CPLString GetCopySourceHeader() const override { return "x-oss-copy-source"; }
+    void SetEndpoint(const CPLString &osStr);
+    void SetVirtualHosting(bool b);
 
-        void SetEndpoint(const CPLString &osStr);
-        void SetVirtualHosting(bool b);
-
-        CPLString GetSignedURL(CSLConstList papszOptions);
+    CPLString GetSignedURL(CSLConstList papszOptions);
 };
 
 class VSIOSSUpdateParams
 {
-    public:
-        CPLString m_osEndpoint{};
+  public:
+    CPLString m_osEndpoint{};
 
-        VSIOSSUpdateParams() = default;
+    VSIOSSUpdateParams() = default;
 
-        explicit VSIOSSUpdateParams(const VSIOSSHandleHelper* poHelper) :
-            m_osEndpoint(poHelper->GetEndpoint()) {}
+    explicit VSIOSSUpdateParams(const VSIOSSHandleHelper *poHelper)
+        : m_osEndpoint(poHelper->GetEndpoint())
+    {
+    }
 
-        void UpdateHandlerHelper(VSIOSSHandleHelper* poHelper) {
-            poHelper->SetEndpoint(m_osEndpoint);
-        }
+    void UpdateHandlerHelper(VSIOSSHandleHelper *poHelper)
+    {
+        poHelper->SetEndpoint(m_osEndpoint);
+    }
 };
 
 #endif /* HAVE_CURL */

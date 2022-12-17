@@ -32,21 +32,18 @@
 #include "cpl_string.h"
 #include "ogr_nas.h"
 
-
 /************************************************************************/
 /*                           OGRNASLayer()                              */
 /************************************************************************/
 
-OGRNASLayer::OGRNASLayer( const char * pszName,
-                          OGRNASDataSource *poDSIn ) :
-    poFeatureDefn(new OGRFeatureDefn(
-        pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
-    iNextNASId(0),
-    poDS(poDSIn),
-    // Readers should get the corresponding GMLFeatureClass and cache it.
-    poFClass(poDS->GetReader()->GetClass( pszName ))
+OGRNASLayer::OGRNASLayer(const char *pszName, OGRNASDataSource *poDSIn)
+    : poFeatureDefn(new OGRFeatureDefn(
+          pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
+      iNextNASId(0), poDS(poDSIn),
+      // Readers should get the corresponding GMLFeatureClass and cache it.
+      poFClass(poDS->GetReader()->GetClass(pszName))
 {
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
 }
@@ -58,7 +55,7 @@ OGRNASLayer::OGRNASLayer( const char * pszName,
 OGRNASLayer::~OGRNASLayer()
 
 {
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 }
 
@@ -82,51 +79,57 @@ void OGRNASLayer::ResetReading()
 OGRFeature *OGRNASLayer::GetNextFeature()
 
 {
-    GMLFeature  *poNASFeature = nullptr;
+    GMLFeature *poNASFeature = nullptr;
 
-    if( iNextNASId == 0 )
+    if (iNextNASId == 0)
         ResetReading();
 
-/* ==================================================================== */
-/*      Loop till we find and translate a feature meeting all our       */
-/*      requirements.                                                   */
-/* ==================================================================== */
-    while( true )
+    /* ==================================================================== */
+    /*      Loop till we find and translate a feature meeting all our       */
+    /*      requirements.                                                   */
+    /* ==================================================================== */
+    while (true)
     {
-/* -------------------------------------------------------------------- */
-/*      Cleanup last feature, and get a new raw nas feature.            */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Cleanup last feature, and get a new raw nas feature. */
+        /* --------------------------------------------------------------------
+         */
         delete poNASFeature;
         poNASFeature = poDS->GetReader()->NextFeature();
-        if( poNASFeature == nullptr )
+        if (poNASFeature == nullptr)
             return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Is it of the proper feature class?                              */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Is it of the proper feature class? */
+        /* --------------------------------------------------------------------
+         */
 
         // We count reading low level NAS features as a feature read for
         // work checking purposes, though at least we didn't necessary
         // have to turn it into an OGRFeature.
         m_nFeaturesRead++;
 
-        if( poNASFeature->GetClass() != poFClass )
+        if (poNASFeature->GetClass() != poFClass)
             continue;
 
         iNextNASId++;
 
-/* -------------------------------------------------------------------- */
-/*      Does it satisfy the spatial query, if there is one?             */
-/* -------------------------------------------------------------------- */
-        const CPLXMLNode* const * papsGeometry =
-            poNASFeature->GetGeometryList();
+        /* --------------------------------------------------------------------
+         */
+        /*      Does it satisfy the spatial query, if there is one? */
+        /* --------------------------------------------------------------------
+         */
+        const CPLXMLNode *const *papsGeometry = poNASFeature->GetGeometryList();
 
-        std::vector < OGRGeometry * > poGeom( poNASFeature->GetGeometryCount() );
+        std::vector<OGRGeometry *> poGeom(poNASFeature->GetGeometryCount());
 
         bool bErrored = false, bFiltered = false;
         CPLString osLastErrorMsg;
-        for( int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom ) {
-            if ( papsGeometry[iGeom] == nullptr )
+        for (int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom)
+        {
+            if (papsGeometry[iGeom] == nullptr)
             {
                 poGeom[iGeom] = nullptr;
             }
@@ -134,20 +137,23 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
 
-                poGeom[iGeom] = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[iGeom]);
+                poGeom[iGeom] =
+                    (OGRGeometry *)OGR_G_CreateFromGMLTree(papsGeometry[iGeom]);
                 CPLPopErrorHandler();
-                if( poGeom[iGeom] == nullptr )
+                if (poGeom[iGeom] == nullptr)
                     osLastErrorMsg = CPLGetLastErrorMsg();
                 poGeom[iGeom] = NASReader::ConvertGeometry(poGeom[iGeom]);
-                poGeom[iGeom] = OGRGeometryFactory::forceTo(poGeom[iGeom], GetGeomType());
+                poGeom[iGeom] =
+                    OGRGeometryFactory::forceTo(poGeom[iGeom], GetGeomType());
                 // poGeom->dumpReadable( 0, "NAS: " );
 
-                if( poGeom[iGeom] == nullptr )
+                if (poGeom[iGeom] == nullptr)
                     bErrored = true;
             }
 
-            bFiltered = m_poFilterGeom != nullptr && !FilterGeometry( poGeom[iGeom] );
-            if( bErrored || bFiltered )
+            bFiltered =
+                m_poFilterGeom != nullptr && !FilterGeometry(poGeom[iGeom]);
+            if (bErrored || bFiltered)
             {
                 while (iGeom > 0)
                     delete poGeom[--iGeom];
@@ -157,17 +163,17 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             }
         }
 
-        if( bErrored ) {
+        if (bErrored)
+        {
 
             CPLString osGMLId;
-            if( poFClass->GetPropertyIndex("gml_id") == 0 )
+            if (poFClass->GetPropertyIndex("gml_id") == 0)
             {
-                const GMLProperty *psGMLProperty =
-                    poNASFeature->GetProperty( 0 );
-                if( psGMLProperty && psGMLProperty->nSubProperties == 1 )
+                const GMLProperty *psGMLProperty = poNASFeature->GetProperty(0);
+                if (psGMLProperty && psGMLProperty->nSubProperties == 1)
                 {
                     osGMLId.Printf("(gml_id=%s) ",
-                            psGMLProperty->papszSubProperties[0]);
+                                   psGMLProperty->papszSubProperties[0]);
                 }
             }
 
@@ -175,109 +181,115 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             poNASFeature = nullptr;
 
             const bool bGoOn = CPLTestBool(
-                    CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
+                CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
             CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
-                    "Geometry of feature %d %scannot be parsed: %s%s",
-                    iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
-                    bGoOn ? ". Skipping to next feature.":
-                    ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
-                    "configuration option to YES to skip to the next "
-                    "feature");
-            if( bGoOn )
+                     "Geometry of feature %d %scannot be parsed: %s%s",
+                     iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
+                     bGoOn ? ". Skipping to next feature."
+                           : ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
+                             "configuration option to YES to skip to the next "
+                             "feature");
+            if (bGoOn)
                 continue;
 
             return nullptr;
         }
 
-        if( bFiltered )
+        if (bFiltered)
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Convert the whole feature into an OGRFeature.                   */
-/* -------------------------------------------------------------------- */
-        OGRFeature *poOGRFeature = new OGRFeature( GetLayerDefn() );
+        /* --------------------------------------------------------------------
+         */
+        /*      Convert the whole feature into an OGRFeature. */
+        /* --------------------------------------------------------------------
+         */
+        OGRFeature *poOGRFeature = new OGRFeature(GetLayerDefn());
 
-        poOGRFeature->SetFID( iNextNASId );
+        poOGRFeature->SetFID(iNextNASId);
 
-        for( int iField = 0; iField < poFClass->GetPropertyCount(); iField++ )
+        for (int iField = 0; iField < poFClass->GetPropertyCount(); iField++)
         {
             const GMLProperty *psGMLProperty =
-                poNASFeature->GetProperty( iField );
-            if( psGMLProperty == nullptr || psGMLProperty->nSubProperties == 0 )
+                poNASFeature->GetProperty(iField);
+            if (psGMLProperty == nullptr || psGMLProperty->nSubProperties == 0)
                 continue;
 
-            switch( poFClass->GetProperty(iField)->GetType()  )
+            switch (poFClass->GetProperty(iField)->GetType())
             {
-              case GMLPT_Real:
-              {
-                  poOGRFeature->SetField(
-                      iField, CPLAtof(psGMLProperty->papszSubProperties[0]) );
-              }
-              break;
-
-              case GMLPT_IntegerList:
-              {
-                  int nCount = psGMLProperty->nSubProperties;
-                  int *panIntList = static_cast<int *>(
-                      CPLMalloc(sizeof(int) * nCount ) );
-
-                  for( int i = 0; i < nCount; i++ )
-                      panIntList[i] =
-                          atoi(psGMLProperty->papszSubProperties[i]);
-
-                  poOGRFeature->SetField( iField, nCount, panIntList );
-                  CPLFree( panIntList );
-              }
-              break;
-
-              case GMLPT_RealList:
-              {
-                  int nCount = psGMLProperty->nSubProperties;
-                  double *padfList = static_cast<double *>(
-                      CPLMalloc(sizeof(double)*nCount) );
-
-                  for( int i = 0; i < nCount; i++ )
-                      padfList[i] =
-                          CPLAtof(psGMLProperty->papszSubProperties[i]);
-
-                  poOGRFeature->SetField( iField, nCount, padfList );
-                  CPLFree( padfList );
-              }
-              break;
-
-              case GMLPT_StringList:
-              {
-                  poOGRFeature->SetField(
-                      iField, psGMLProperty->papszSubProperties );
-              }
-              break;
-
-              default:
-                poOGRFeature->SetField(
-                    iField, psGMLProperty->papszSubProperties[0] );
+                case GMLPT_Real:
+                {
+                    poOGRFeature->SetField(
+                        iField, CPLAtof(psGMLProperty->papszSubProperties[0]));
+                }
                 break;
+
+                case GMLPT_IntegerList:
+                {
+                    int nCount = psGMLProperty->nSubProperties;
+                    int *panIntList =
+                        static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
+
+                    for (int i = 0; i < nCount; i++)
+                        panIntList[i] =
+                            atoi(psGMLProperty->papszSubProperties[i]);
+
+                    poOGRFeature->SetField(iField, nCount, panIntList);
+                    CPLFree(panIntList);
+                }
+                break;
+
+                case GMLPT_RealList:
+                {
+                    int nCount = psGMLProperty->nSubProperties;
+                    double *padfList = static_cast<double *>(
+                        CPLMalloc(sizeof(double) * nCount));
+
+                    for (int i = 0; i < nCount; i++)
+                        padfList[i] =
+                            CPLAtof(psGMLProperty->papszSubProperties[i]);
+
+                    poOGRFeature->SetField(iField, nCount, padfList);
+                    CPLFree(padfList);
+                }
+                break;
+
+                case GMLPT_StringList:
+                {
+                    poOGRFeature->SetField(iField,
+                                           psGMLProperty->papszSubProperties);
+                }
+                break;
+
+                default:
+                    poOGRFeature->SetField(
+                        iField, psGMLProperty->papszSubProperties[0]);
+                    break;
             }
         }
 
-        for ( int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom ) {
+        for (int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom)
+        {
             poOGRFeature->SetGeomFieldDirectly(iGeom, poGeom[iGeom]);
             poGeom[iGeom] = nullptr;
         }
         poGeom.clear();
 
-/* -------------------------------------------------------------------- */
-/*      Test against the attribute query.                               */
-/* -------------------------------------------------------------------- */
-        if( m_poAttrQuery != nullptr
-            && !m_poAttrQuery->Evaluate( poOGRFeature ) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Test against the attribute query. */
+        /* --------------------------------------------------------------------
+         */
+        if (m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poOGRFeature))
         {
             delete poOGRFeature;
             continue;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Wow, we got our desired feature. Return it.                     */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Wow, we got our desired feature. Return it. */
+        /* --------------------------------------------------------------------
+         */
         delete poNASFeature;
 
         return poOGRFeature;
@@ -290,14 +302,14 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRNASLayer::GetFeatureCount( int bForce )
+GIntBig OGRNASLayer::GetFeatureCount(int bForce)
 
 {
-    if( poFClass == nullptr )
+    if (poFClass == nullptr)
         return 0;
 
-    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
-        return OGRLayer::GetFeatureCount( bForce );
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
+        return OGRLayer::GetFeatureCount(bForce);
 
     return poFClass->GetFeatureCount();
 }
@@ -306,7 +318,7 @@ GIntBig OGRNASLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce )
+OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
     double dfXMin = 0.0;
@@ -314,8 +326,8 @@ OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     double dfYMin = 0.0;
     double dfYMax = 0.0;
 
-    if( poFClass != nullptr &&
-        poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
+    if (poFClass != nullptr &&
+        poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax))
     {
         psExtent->MinX = dfXMin;
         psExtent->MaxX = dfXMax;
@@ -325,19 +337,19 @@ OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce )
         return OGRERR_NONE;
     }
 
-    return OGRLayer::GetExtent( psExtent, bForce );
+    return OGRLayer::GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNASLayer::TestCapability( const char * pszCap )
+int OGRNASLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCFastGetExtent) )
+    if (EQUAL(pszCap, OLCFastGetExtent))
     {
-        if( poFClass == nullptr )
+        if (poFClass == nullptr)
             return FALSE;
 
         double dfXMin = 0.0;
@@ -345,20 +357,19 @@ int OGRNASLayer::TestCapability( const char * pszCap )
         double dfYMin = 0.0;
         double dfYMax = 0.0;
 
-        return poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax );
+        return poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax);
     }
 
-    if( EQUAL(pszCap,OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
     {
-        if( poFClass == nullptr
-            || m_poFilterGeom != nullptr
-            || m_poAttrQuery != nullptr )
+        if (poFClass == nullptr || m_poFilterGeom != nullptr ||
+            m_poAttrQuery != nullptr)
             return FALSE;
 
         return poFClass->GetFeatureCount() != -1;
     }
 
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
     return FALSE;

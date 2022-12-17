@@ -11,22 +11,22 @@
  *  Copyright (c) 2016, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
+ *  of this software and associated documentation files (the "Software"), to
+ *deal in the Software without restriction, including without limitation the
+ *rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in all
- *  copies or substantial portions of the Software.
+ *  The above copyright notice and this permission notice shall be included in
+ *all copies or substantial portions of the Software.
  *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *IN THE SOFTWARE.
  *******************************************************************************/
 #ifndef OGR_CAD_H_INCLUDED
 #define OGR_CAD_H_INCLUDED
@@ -40,65 +40,75 @@
 
 #include <set>
 
-class OGRCADLayer final: public OGRLayer
+class OGRCADLayer final : public OGRLayer
 {
-    OGRFeatureDefn  *poFeatureDefn;
-    OGRSpatialReference * poSpatialRef;
-    GIntBig         nNextFID;
-    CADLayer        &poCADLayer;
-    int             nDWGEncoding;
+    OGRFeatureDefn *poFeatureDefn;
+    OGRSpatialReference *poSpatialRef;
+    GIntBig nNextFID;
+    CADLayer &poCADLayer;
+    int nDWGEncoding;
 
-public:
-    OGRCADLayer( CADLayer &poCADLayer, OGRSpatialReference *poSR, int nEncoding );
+  public:
+    OGRCADLayer(CADLayer &poCADLayer, OGRSpatialReference *poSR, int nEncoding);
     ~OGRCADLayer();
 
-    void            ResetReading() override;
-    OGRFeature      *GetNextFeature() override;
-    OGRFeature      *GetFeature( GIntBig nFID ) override;
-    GIntBig         GetFeatureCount( int /* bForce */ ) override;
-    OGRSpatialReference *GetSpatialRef() override { return poSpatialRef; }
-    OGRFeatureDefn  *GetLayerDefn() override { return poFeatureDefn; }
-    std::set< CPLString > asFeaturesAttributes;
-    int             TestCapability( const char * ) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    GIntBig GetFeatureCount(int /* bForce */) override;
+    OGRSpatialReference *GetSpatialRef() override
+    {
+        return poSpatialRef;
+    }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
+    std::set<CPLString> asFeaturesAttributes;
+    int TestCapability(const char *) override;
 };
 
-class GDALCADDataset final: public GDALDataset
+class GDALCADDataset final : public GDALDataset
 {
-    CPLString      osCADFilename;
-    CADFile       *poCADFile;
+    CPLString osCADFilename;
+    CADFile *poCADFile;
     // vector
-    OGRCADLayer  **papoLayers;
-    int            nLayers;
+    OGRCADLayer **papoLayers;
+    int nLayers;
     // raster
-    double         adfGeoTransform[6];
-    GDALDataset   *poRasterDS;
+    double adfGeoTransform[6];
+    GDALDataset *poRasterDS;
     mutable OGRSpatialReference *poSpatialReference;
 
-public:
+  public:
     GDALCADDataset();
     virtual ~GDALCADDataset();
 
-    int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
-                            long nSubRasterLayer = -1, long nSubRasterFID = -1 );
-    int            GetLayerCount() override { return nLayers; }
-    OGRLayer      *GetLayer( int ) override;
-    int            TestCapability( const char * ) override;
+    int Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
+             long nSubRasterLayer = -1, long nSubRasterFID = -1);
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
+    int TestCapability(const char *) override;
     virtual char **GetFileList() override;
-    const OGRSpatialReference* GetSpatialRef() const override;
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual int    GetGCPCount() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    virtual CPLErr GetGeoTransform(double *) override;
+    virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual int CloseDependentDatasets() override;
 
-protected:
-    const char* GetPrjFilePath() const;
-    void FillTransform(CADImage* pImage, double dfUnits);
+  protected:
+    const char *GetPrjFilePath() const;
+    void FillTransform(CADImage *pImage, double dfUnits);
     int GetCadEncoding() const;
-private:
+
+  private:
     CPL_DISALLOW_COPY_ASSIGN(GDALCADDataset)
 };
 
-CPLString CADRecode( const CPLString& sString, int CADEncoding );
+CPLString CADRecode(const CPLString &sString, int CADEncoding);
 
 #endif

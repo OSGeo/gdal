@@ -39,21 +39,21 @@
 /*                        OGRArrowWritableFile                          */
 /************************************************************************/
 
-class OGRArrowWritableFile final: public arrow::io::OutputStream
+class OGRArrowWritableFile final : public arrow::io::OutputStream
 {
-    VSILFILE*   m_fp;
+    VSILFILE *m_fp;
 
-    OGRArrowWritableFile(const OGRArrowWritableFile&) = delete;
-    OGRArrowWritableFile& operator= (const OGRArrowWritableFile&) = delete;
+    OGRArrowWritableFile(const OGRArrowWritableFile &) = delete;
+    OGRArrowWritableFile &operator=(const OGRArrowWritableFile &) = delete;
 
-public:
-    explicit OGRArrowWritableFile(VSILFILE* fp): m_fp(fp)
+  public:
+    explicit OGRArrowWritableFile(VSILFILE *fp) : m_fp(fp)
     {
     }
 
     ~OGRArrowWritableFile() override
     {
-        if( m_fp )
+        if (m_fp)
             VSIFCloseL(m_fp);
     }
 
@@ -61,7 +61,8 @@ public:
     {
         int ret = VSIFCloseL(m_fp);
         m_fp = nullptr;
-        return ret == 0 ? arrow::Status::OK() : arrow::Status::IOError("Error while closing");
+        return ret == 0 ? arrow::Status::OK()
+                        : arrow::Status::IOError("Error while closing");
     }
 
     arrow::Result<int64_t> Tell() const override
@@ -74,19 +75,19 @@ public:
         return m_fp == nullptr;
     }
 
-    arrow::Status Write(const void* data, int64_t nbytes) override
+    arrow::Status Write(const void *data, int64_t nbytes) override
     {
         CPLAssert(static_cast<int64_t>(static_cast<size_t>(nbytes)) == nbytes);
-        if( VSIFWriteL(data, 1, static_cast<size_t>(nbytes), m_fp) == static_cast<size_t>(nbytes) )
+        if (VSIFWriteL(data, 1, static_cast<size_t>(nbytes), m_fp) ==
+            static_cast<size_t>(nbytes))
             return arrow::Status::OK();
         return arrow::Status::IOError("Error while writing");
     }
 
-    arrow::Status Write(const std::shared_ptr<arrow::Buffer>& data) override
+    arrow::Status Write(const std::shared_ptr<arrow::Buffer> &data) override
     {
         return Write(data->data(), data->size());
     }
 };
 
-
-#endif // OGR_ARROW_WRITABLE_FILE_H
+#endif  // OGR_ARROW_WRITABLE_FILE_H

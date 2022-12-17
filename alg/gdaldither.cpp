@@ -68,26 +68,27 @@
 #ifdef USE_SSE2
 
 #include <emmintrin.h>
-#define CAST_PCT(x) reinterpret_cast<GByte*>(x)
-#define ALIGN_INT_ARRAY_ON_16_BYTE(x) \
-    ( ((reinterpret_cast<GUIntptr_t>(x) % 16) != 0 ) \
-      ? reinterpret_cast<int*>(reinterpret_cast<GByte*>(x) + 16 - (reinterpret_cast<GUIntptr_t>(x) % 16)) \
-      : (x) )
+#define CAST_PCT(x) reinterpret_cast<GByte *>(x)
+#define ALIGN_INT_ARRAY_ON_16_BYTE(x)                                          \
+    (((reinterpret_cast<GUIntptr_t>(x) % 16) != 0)                             \
+         ? reinterpret_cast<int *>(reinterpret_cast<GByte *>(x) + 16 -         \
+                                   (reinterpret_cast<GUIntptr_t>(x) % 16))     \
+         : (x))
 #else
 #define CAST_PCT(x) x
 #endif
 
 CPL_CVSID("$Id$")
 
-static int MAKE_COLOR_CODE( int r, int g, int b )
+static int MAKE_COLOR_CODE(int r, int g, int b)
 {
-  return r | (g << 8) | (b << 16);
+    return r | (g << 8) | (b << 16);
 }
 
-static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
-                              int nCLevels );
-static int FindNearestColor( int nColors, int *panPCT,
-                             int nRedValue, int nGreenValue, int nBlueValue );
+static void FindNearestColor(int nColors, int *panPCT, GByte *pabyColorMap,
+                             int nCLevels);
+static int FindNearestColor(int nColors, int *panPCT, int nRedValue,
+                            int nGreenValue, int nBlueValue);
 
 // Structure for a hashmap from a color code to a color index of the
 // color table.
@@ -100,10 +101,10 @@ typedef struct
     GUInt32 nColorCode;
     GUInt32 nColorCode2;
     GUInt32 nColorCode3;
-    GByte   nIndex;
-    GByte   nIndex2;
-    GByte   nIndex3;
-    GByte   nPadding;
+    GByte nIndex;
+    GByte nIndex2;
+    GByte nIndex3;
+    GByte nPadding;
 } ColorIndex;
 
 /************************************************************************/
@@ -114,7 +115,6 @@ static inline bool IsColorCodeSet(GUInt32 nColorCode)
 {
     return (nColorCode >> 31) == 0;
 }
-
 
 /**
  * 24bit to 8bit conversion with dithering.
@@ -143,95 +143,87 @@ static inline bool IsColorCodeSet(GUInt32 nColorCode)
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-int CPL_STDCALL
-GDALDitherRGB2PCT( GDALRasterBandH hRed,
-                   GDALRasterBandH hGreen,
-                   GDALRasterBandH hBlue,
-                   GDALRasterBandH hTarget,
-                   GDALColorTableH hColorTable,
-                   GDALProgressFunc pfnProgress,
-                   void * pProgressArg )
+int CPL_STDCALL GDALDitherRGB2PCT(GDALRasterBandH hRed, GDALRasterBandH hGreen,
+                                  GDALRasterBandH hBlue,
+                                  GDALRasterBandH hTarget,
+                                  GDALColorTableH hColorTable,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressArg)
 
 {
-    return GDALDitherRGB2PCTInternal( hRed, hGreen, hBlue, hTarget,
-                                      hColorTable, 5, nullptr, TRUE,
-                                      pfnProgress, pProgressArg );
+    return GDALDitherRGB2PCTInternal(hRed, hGreen, hBlue, hTarget, hColorTable,
+                                     5, nullptr, TRUE, pfnProgress,
+                                     pProgressArg);
 }
 
 int GDALDitherRGB2PCTInternal(
-    GDALRasterBandH hRed,
-    GDALRasterBandH hGreen,
-    GDALRasterBandH hBlue,
-    GDALRasterBandH hTarget,
-    GDALColorTableH hColorTable,
-    int nBits,
+    GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
+    GDALRasterBandH hTarget, GDALColorTableH hColorTable, int nBits,
     // NULL or at least 256 * 256 * 256 * sizeof(GInt16) bytes.
-    GInt16* pasDynamicColorMap,
-    int bDither,
-    GDALProgressFunc pfnProgress,
-    void* pProgressArg )
+    GInt16 *pasDynamicColorMap, int bDither, GDALProgressFunc pfnProgress,
+    void *pProgressArg)
 {
-    VALIDATE_POINTER1( hRed, "GDALDitherRGB2PCT", CE_Failure );
-    VALIDATE_POINTER1( hGreen, "GDALDitherRGB2PCT", CE_Failure );
-    VALIDATE_POINTER1( hBlue, "GDALDitherRGB2PCT", CE_Failure );
-    VALIDATE_POINTER1( hTarget, "GDALDitherRGB2PCT", CE_Failure );
-    VALIDATE_POINTER1( hColorTable, "GDALDitherRGB2PCT", CE_Failure );
+    VALIDATE_POINTER1(hRed, "GDALDitherRGB2PCT", CE_Failure);
+    VALIDATE_POINTER1(hGreen, "GDALDitherRGB2PCT", CE_Failure);
+    VALIDATE_POINTER1(hBlue, "GDALDitherRGB2PCT", CE_Failure);
+    VALIDATE_POINTER1(hTarget, "GDALDitherRGB2PCT", CE_Failure);
+    VALIDATE_POINTER1(hColorTable, "GDALDitherRGB2PCT", CE_Failure);
 
-/* -------------------------------------------------------------------- */
-/*      Validate parameters.                                            */
-/* -------------------------------------------------------------------- */
-    const int nXSize = GDALGetRasterBandXSize( hRed );
-    const int nYSize = GDALGetRasterBandYSize( hRed );
+    /* -------------------------------------------------------------------- */
+    /*      Validate parameters.                                            */
+    /* -------------------------------------------------------------------- */
+    const int nXSize = GDALGetRasterBandXSize(hRed);
+    const int nYSize = GDALGetRasterBandYSize(hRed);
 
-    if( GDALGetRasterBandXSize( hGreen ) != nXSize
-        || GDALGetRasterBandYSize( hGreen ) != nYSize
-        || GDALGetRasterBandXSize( hBlue ) != nXSize
-        || GDALGetRasterBandYSize( hBlue ) != nYSize )
+    if (GDALGetRasterBandXSize(hGreen) != nXSize ||
+        GDALGetRasterBandYSize(hGreen) != nYSize ||
+        GDALGetRasterBandXSize(hBlue) != nXSize ||
+        GDALGetRasterBandYSize(hBlue) != nYSize)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Green or blue band doesn't match size of red band." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Green or blue band doesn't match size of red band.");
 
         return CE_Failure;
     }
 
-    if( GDALGetRasterBandXSize( hTarget ) != nXSize
-        || GDALGetRasterBandYSize( hTarget ) != nYSize )
+    if (GDALGetRasterBandXSize(hTarget) != nXSize ||
+        GDALGetRasterBandYSize(hTarget) != nYSize)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALDitherRGB2PCT(): "
-                  "Target band doesn't match size of source bands." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALDitherRGB2PCT(): "
+                 "Target band doesn't match size of source bands.");
 
         return CE_Failure;
     }
 
-    if( pfnProgress == nullptr )
+    if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
 
-/* -------------------------------------------------------------------- */
-/*      Setup more direct colormap.                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup more direct colormap.                                     */
+    /* -------------------------------------------------------------------- */
     int iColor;
 #ifdef USE_SSE2
-    int anPCTUnaligned[256+4];  // 4 for alignment on 16-byte boundary.
-    int* anPCT = ALIGN_INT_ARRAY_ON_16_BYTE(anPCTUnaligned);
+    int anPCTUnaligned[256 + 4];  // 4 for alignment on 16-byte boundary.
+    int *anPCT = ALIGN_INT_ARRAY_ON_16_BYTE(anPCTUnaligned);
 #else
-    int anPCT[256*4] = {};
+    int anPCT[256 * 4] = {};
 #endif
-    const int nColors = GDALGetColorEntryCount( hColorTable );
+    const int nColors = GDALGetColorEntryCount(hColorTable);
 
-    if( nColors == 0 )
+    if (nColors == 0)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALDitherRGB2PCT(): "
-                  "Color table must not be empty." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALDitherRGB2PCT(): "
+                 "Color table must not be empty.");
 
         return CE_Failure;
     }
-    else if( nColors > 256 )
+    else if (nColors > 256)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALDitherRGB2PCT(): "
-                  "Color table cannot have more than 256 entries." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALDitherRGB2PCT(): "
+                 "Color table cannot have more than 256 entries.");
 
         return CE_Failure;
     }
@@ -241,34 +233,34 @@ int GDALDitherRGB2PCTInternal(
     {
         GDALColorEntry sEntry;
 
-        GDALGetColorEntryAsRGB( hColorTable, iColor, &sEntry );
-        CAST_PCT(anPCT)[4*iColor+0] = static_cast<GByte>(sEntry.c1);
-        CAST_PCT(anPCT)[4*iColor+1] = static_cast<GByte>(sEntry.c2);
-        CAST_PCT(anPCT)[4*iColor+2] = static_cast<GByte>(sEntry.c3);
-        CAST_PCT(anPCT)[4*iColor+3] = 0;
+        GDALGetColorEntryAsRGB(hColorTable, iColor, &sEntry);
+        CAST_PCT(anPCT)[4 * iColor + 0] = static_cast<GByte>(sEntry.c1);
+        CAST_PCT(anPCT)[4 * iColor + 1] = static_cast<GByte>(sEntry.c2);
+        CAST_PCT(anPCT)[4 * iColor + 2] = static_cast<GByte>(sEntry.c3);
+        CAST_PCT(anPCT)[4 * iColor + 3] = 0;
 
         iColor++;
-    } while( iColor < nColors );
+    } while (iColor < nColors);
 
 #ifdef USE_SSE2
     // Pad to multiple of 8 colors.
     const int nColorsMod8 = nColors % 8;
-    if( nColorsMod8 )
+    if (nColorsMod8)
     {
         int iDest = nColors;
-        for( iColor = 0; iColor < 8 - nColorsMod8 &&
-                         iDest < 256; iColor ++, iDest++)
+        for (iColor = 0; iColor < 8 - nColorsMod8 && iDest < 256;
+             iColor++, iDest++)
         {
-            anPCT[iDest] = anPCT[nColors-1];
+            anPCT[iDest] = anPCT[nColors - 1];
         }
     }
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Setup various variables.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup various variables.                                        */
+    /* -------------------------------------------------------------------- */
     int nCLevels = 1 << nBits;
-    ColorIndex* psColorIndexMap = nullptr;
+    ColorIndex *psColorIndexMap = nullptr;
 
     GByte *pabyRed = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
     GByte *pabyGreen = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
@@ -276,56 +268,56 @@ int GDALDitherRGB2PCTInternal(
 
     GByte *pabyIndex = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
 
-    int *panError = static_cast<int *>(
-        VSI_CALLOC_VERBOSE(sizeof(int), (nXSize + 2) * 3));
+    int *panError =
+        static_cast<int *>(VSI_CALLOC_VERBOSE(sizeof(int), (nXSize + 2) * 3));
 
-    if( pabyRed == nullptr ||
-        pabyGreen == nullptr ||
-        pabyBlue == nullptr ||
-        pabyIndex == nullptr ||
-        panError == nullptr )
+    if (pabyRed == nullptr || pabyGreen == nullptr || pabyBlue == nullptr ||
+        pabyIndex == nullptr || panError == nullptr)
     {
-        CPLFree( pabyRed );
-        CPLFree( pabyGreen );
-        CPLFree( pabyBlue );
-        CPLFree( pabyIndex );
-        CPLFree( panError );
+        CPLFree(pabyRed);
+        CPLFree(pabyGreen);
+        CPLFree(pabyBlue);
+        CPLFree(pabyIndex);
+        CPLFree(panError);
 
-        return  CE_Failure;
+        return CE_Failure;
     }
 
     GByte *pabyColorMap = nullptr;
-    if( pasDynamicColorMap == nullptr )
+    if (pasDynamicColorMap == nullptr)
     {
-/* -------------------------------------------------------------------- */
-/*      Build a 24bit to 8 bit color mapping.                           */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Build a 24bit to 8 bit color mapping. */
+        /* --------------------------------------------------------------------
+         */
 
         pabyColorMap = static_cast<GByte *>(
             VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels * sizeof(GByte)));
-        if( pabyColorMap == nullptr )
+        if (pabyColorMap == nullptr)
         {
-            CPLFree( pabyRed );
-            CPLFree( pabyGreen );
-            CPLFree( pabyBlue );
-            CPLFree( pabyIndex );
-            CPLFree( panError );
-            CPLFree( pabyColorMap );
+            CPLFree(pabyRed);
+            CPLFree(pabyGreen);
+            CPLFree(pabyBlue);
+            CPLFree(pabyIndex);
+            CPLFree(panError);
+            CPLFree(pabyColorMap);
 
             return CE_Failure;
         }
 
-        FindNearestColor( nColors, anPCT, pabyColorMap, nCLevels);
+        FindNearestColor(nColors, anPCT, pabyColorMap, nCLevels);
     }
     else
     {
         pabyColorMap = nullptr;
-        if( nBits == 8 && static_cast<GIntBig>(nXSize) * nYSize <= 65536 )
+        if (nBits == 8 && static_cast<GIntBig>(nXSize) * nYSize <= 65536)
         {
             // If the image is small enough, then the number of colors
             // will be limited and using a hashmap, rather than a full table
             // will be more efficient.
-            psColorIndexMap = reinterpret_cast<ColorIndex*>(pasDynamicColorMap);
+            psColorIndexMap =
+                reinterpret_cast<ColorIndex *>(pasDynamicColorMap);
             memset(psColorIndexMap, 0xFF, sizeof(ColorIndex) * PRIME_FOR_65536);
         }
         else
@@ -334,82 +326,88 @@ int GDALDitherRGB2PCTInternal(
         }
     }
 
-/* ==================================================================== */
-/*      Loop over all scanlines of data to process.                     */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Loop over all scanlines of data to process.                     */
+    /* ==================================================================== */
     CPLErr err = CE_None;
 
-    for( int iScanline = 0; iScanline < nYSize; iScanline++ )
+    for (int iScanline = 0; iScanline < nYSize; iScanline++)
     {
-/* -------------------------------------------------------------------- */
-/*      Report progress                                                 */
-/* -------------------------------------------------------------------- */
-        if( !pfnProgress( iScanline / static_cast<double>(nYSize),
-                          nullptr, pProgressArg ) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Report progress */
+        /* --------------------------------------------------------------------
+         */
+        if (!pfnProgress(iScanline / static_cast<double>(nYSize), nullptr,
+                         pProgressArg))
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
-            CPLFree( pabyRed );
-            CPLFree( pabyGreen );
-            CPLFree( pabyBlue );
-            CPLFree( pabyIndex );
-            CPLFree( panError );
-            CPLFree( pabyColorMap );
+            CPLError(CE_Failure, CPLE_UserInterrupt, "User Terminated");
+            CPLFree(pabyRed);
+            CPLFree(pabyGreen);
+            CPLFree(pabyBlue);
+            CPLFree(pabyIndex);
+            CPLFree(panError);
+            CPLFree(pabyColorMap);
 
             return CE_Failure;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Read source data.                                               */
-/* -------------------------------------------------------------------- */
-        CPLErr err1 =
-            GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1,
-                          pabyRed, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err1 == CE_None )
-            err1 = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1,
-                      pabyGreen, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err1 == CE_None )
-            err1 = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1,
-                      pabyBlue, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err1 != CE_None )
+        /* --------------------------------------------------------------------
+         */
+        /*      Read source data. */
+        /* --------------------------------------------------------------------
+         */
+        CPLErr err1 = GDALRasterIO(hRed, GF_Read, 0, iScanline, nXSize, 1,
+                                   pabyRed, nXSize, 1, GDT_Byte, 0, 0);
+        if (err1 == CE_None)
+            err1 = GDALRasterIO(hGreen, GF_Read, 0, iScanline, nXSize, 1,
+                                pabyGreen, nXSize, 1, GDT_Byte, 0, 0);
+        if (err1 == CE_None)
+            err1 = GDALRasterIO(hBlue, GF_Read, 0, iScanline, nXSize, 1,
+                                pabyBlue, nXSize, 1, GDT_Byte, 0, 0);
+        if (err1 != CE_None)
         {
-            CPLFree( pabyRed );
-            CPLFree( pabyGreen );
-            CPLFree( pabyBlue );
-            CPLFree( pabyIndex );
-            CPLFree( panError );
-            CPLFree( pabyColorMap );
+            CPLFree(pabyRed);
+            CPLFree(pabyGreen);
+            CPLFree(pabyBlue);
+            CPLFree(pabyIndex);
+            CPLFree(panError);
+            CPLFree(pabyColorMap);
 
             return err1;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Apply the error from the previous line to this one.             */
-/* -------------------------------------------------------------------- */
-        if( bDither )
+        /* --------------------------------------------------------------------
+         */
+        /*      Apply the error from the previous line to this one. */
+        /* --------------------------------------------------------------------
+         */
+        if (bDither)
         {
-          for( int i = 0; i < nXSize; i++ )
-          {
-              pabyRed[i] = static_cast<GByte>(
-                  std::max(0, std::min(255, (pabyRed[i] + panError[i*3+0+3]))));
-              pabyGreen[i] = static_cast<GByte>(
-                  std::max(0,
-                           std::min(255, (pabyGreen[i] + panError[i*3+1+3]))));
-              pabyBlue[i] = static_cast<GByte>(
-                  std::max(0, std::min(255,
-                                       (pabyBlue[i] + panError[i*3+2+3]))));
-          }
+            for (int i = 0; i < nXSize; i++)
+            {
+                pabyRed[i] = static_cast<GByte>(std::max(
+                    0, std::min(255, (pabyRed[i] + panError[i * 3 + 0 + 3]))));
+                pabyGreen[i] = static_cast<GByte>(std::max(
+                    0,
+                    std::min(255, (pabyGreen[i] + panError[i * 3 + 1 + 3]))));
+                pabyBlue[i] = static_cast<GByte>(std::max(
+                    0, std::min(255, (pabyBlue[i] + panError[i * 3 + 2 + 3]))));
+            }
 
-          memset( panError, 0, sizeof(int) * (nXSize+2) * 3 );
+            memset(panError, 0, sizeof(int) * (nXSize + 2) * 3);
         }
 
-/* -------------------------------------------------------------------- */
-/*      Figure out the nearest color to the RGB value.                  */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Figure out the nearest color to the RGB value. */
+        /* --------------------------------------------------------------------
+         */
         int nLastRedError = 0;
         int nLastGreenError = 0;
         int nLastBlueError = 0;
 
-        for( int i = 0; i < nXSize; i++ )
+        for (int i = 0; i < nXSize; i++)
         {
             const int nRedValue =
                 std::max(0, std::min(255, pabyRed[i] + nLastRedError));
@@ -421,52 +419,51 @@ int GDALDitherRGB2PCTInternal(
             int iIndex = 0;
             int nError = 0;
             int nSixth = 0;
-            if( psColorIndexMap )
+            if (psColorIndexMap)
             {
                 const GUInt32 nColorCode =
                     MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
                 GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
-                while( true )
+                while (true)
                 {
-                    if( psColorIndexMap[nIdx].nColorCode == nColorCode )
+                    if (psColorIndexMap[nIdx].nColorCode == nColorCode)
                     {
                         iIndex = psColorIndexMap[nIdx].nIndex;
                         break;
                     }
-                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode) )
+                    if (!IsColorCodeSet(psColorIndexMap[nIdx].nColorCode))
                     {
                         psColorIndexMap[nIdx].nColorCode = nColorCode;
-                        iIndex = FindNearestColor(
-                            nColors, anPCT, nRedValue, nGreenValue, nBlueValue);
+                        iIndex = FindNearestColor(nColors, anPCT, nRedValue,
+                                                  nGreenValue, nBlueValue);
                         psColorIndexMap[nIdx].nIndex =
                             static_cast<GByte>(iIndex);
                         break;
                     }
-                    if( psColorIndexMap[nIdx].nColorCode2 == nColorCode )
+                    if (psColorIndexMap[nIdx].nColorCode2 == nColorCode)
                     {
                         iIndex = psColorIndexMap[nIdx].nIndex2;
                         break;
                     }
-                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2) )
+                    if (!IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2))
                     {
                         psColorIndexMap[nIdx].nColorCode2 = nColorCode;
-                        iIndex = FindNearestColor(
-                            nColors, anPCT, nRedValue, nGreenValue, nBlueValue);
+                        iIndex = FindNearestColor(nColors, anPCT, nRedValue,
+                                                  nGreenValue, nBlueValue);
                         psColorIndexMap[nIdx].nIndex2 =
                             static_cast<GByte>(iIndex);
                         break;
                     }
-                    if( psColorIndexMap[nIdx].nColorCode3 == nColorCode )
+                    if (psColorIndexMap[nIdx].nColorCode3 == nColorCode)
                     {
                         iIndex = psColorIndexMap[nIdx].nIndex3;
                         break;
                     }
-                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3) )
+                    if (!IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3))
                     {
                         psColorIndexMap[nIdx].nColorCode3 = nColorCode;
-                        iIndex = FindNearestColor( nColors, anPCT,
-                                                   nRedValue, nGreenValue,
-                                                   nBlueValue );
+                        iIndex = FindNearestColor(nColors, anPCT, nRedValue,
+                                                  nGreenValue, nBlueValue);
                         psColorIndexMap[nIdx].nIndex3 =
                             static_cast<GByte>(iIndex);
                         break;
@@ -474,39 +471,36 @@ int GDALDitherRGB2PCTInternal(
 
                     do
                     {
-                        nIdx+=257;
-                        if( nIdx >= PRIME_FOR_65536 )
+                        nIdx += 257;
+                        if (nIdx >= PRIME_FOR_65536)
                             nIdx -= PRIME_FOR_65536;
-                    }
-                    while( IsColorCodeSet(psColorIndexMap[nIdx].nColorCode) &&
-                           psColorIndexMap[nIdx].nColorCode != nColorCode &&
-                           IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2) &&
-                           psColorIndexMap[nIdx].nColorCode2 != nColorCode&&
-                           IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3) &&
-                           psColorIndexMap[nIdx].nColorCode3 != nColorCode );
+                    } while (
+                        IsColorCodeSet(psColorIndexMap[nIdx].nColorCode) &&
+                        psColorIndexMap[nIdx].nColorCode != nColorCode &&
+                        IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2) &&
+                        psColorIndexMap[nIdx].nColorCode2 != nColorCode &&
+                        IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3) &&
+                        psColorIndexMap[nIdx].nColorCode3 != nColorCode);
                 }
             }
-            else if( pasDynamicColorMap == nullptr )
+            else if (pasDynamicColorMap == nullptr)
             {
-                const int iRed   = nRedValue *   nCLevels / 256;
+                const int iRed = nRedValue * nCLevels / 256;
                 const int iGreen = nGreenValue * nCLevels / 256;
-                const int iBlue  = nBlueValue *  nCLevels / 256;
+                const int iBlue = nBlueValue * nCLevels / 256;
 
-                iIndex = pabyColorMap[iRed + iGreen * nCLevels
-                                      + iBlue * nCLevels * nCLevels];
+                iIndex = pabyColorMap[iRed + iGreen * nCLevels +
+                                      iBlue * nCLevels * nCLevels];
             }
             else
             {
                 const GUInt32 nColorCode =
                     MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
-                GInt16* psIndex = &pasDynamicColorMap[nColorCode];
-                if( *psIndex < 0 )
+                GInt16 *psIndex = &pasDynamicColorMap[nColorCode];
+                if (*psIndex < 0)
                 {
-                    *psIndex = static_cast<GInt16>(
-                        FindNearestColor( nColors, anPCT,
-                                          nRedValue,
-                                          nGreenValue,
-                                          nBlueValue ));
+                    *psIndex = static_cast<GInt16>(FindNearestColor(
+                        nColors, anPCT, nRedValue, nGreenValue, nBlueValue));
                     iIndex = *psIndex;
                 }
                 else
@@ -516,25 +510,31 @@ int GDALDitherRGB2PCTInternal(
             }
 
             pabyIndex[i] = static_cast<GByte>(iIndex);
-            if( !bDither )
+            if (!bDither)
                 continue;
 
-/* -------------------------------------------------------------------- */
-/*      Compute Red error, and carry it on to the next error line.      */
-/* -------------------------------------------------------------------- */
+            /* --------------------------------------------------------------------
+             */
+            /*      Compute Red error, and carry it on to the next error line.
+             */
+            /* --------------------------------------------------------------------
+             */
             nError = nRedValue - CAST_PCT(anPCT)[4 * iIndex + 0];
             nSixth = nError / 6;
 
-            panError[i * 3    ] += nSixth;
+            panError[i * 3] += nSixth;
             panError[i * 3 + 6] = nSixth;
             panError[i * 3 + 3] += nError - 5 * nSixth;
 
             nLastRedError = 2 * nSixth;
 
-/* -------------------------------------------------------------------- */
-/*      Compute Green error, and carry it on to the next error line.    */
-/* -------------------------------------------------------------------- */
-            nError = nGreenValue - CAST_PCT(anPCT)[4*iIndex+1];
+            /* --------------------------------------------------------------------
+             */
+            /*      Compute Green error, and carry it on to the next error line.
+             */
+            /* --------------------------------------------------------------------
+             */
+            nError = nGreenValue - CAST_PCT(anPCT)[4 * iIndex + 1];
             nSixth = nError / 6;
 
             panError[i * 3 + 1] += nSixth;
@@ -543,10 +543,13 @@ int GDALDitherRGB2PCTInternal(
 
             nLastGreenError = 2 * nSixth;
 
-/* -------------------------------------------------------------------- */
-/*      Compute Blue error, and carry it on to the next error line.     */
-/* -------------------------------------------------------------------- */
-            nError = nBlueValue - CAST_PCT(anPCT)[4*iIndex+2];
+            /* --------------------------------------------------------------------
+             */
+            /*      Compute Blue error, and carry it on to the next error line.
+             */
+            /* --------------------------------------------------------------------
+             */
+            nError = nBlueValue - CAST_PCT(anPCT)[4 * iIndex + 2];
             nSixth = nError / 6;
 
             panError[i * 3 + 2] += nSixth;
@@ -556,40 +559,43 @@ int GDALDitherRGB2PCTInternal(
             nLastBlueError = 2 * nSixth;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Write results.                                                  */
-/* -------------------------------------------------------------------- */
-        err = GDALRasterIO( hTarget, GF_Write, 0, iScanline, nXSize, 1,
-                      pabyIndex, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err != CE_None )
+        /* --------------------------------------------------------------------
+         */
+        /*      Write results. */
+        /* --------------------------------------------------------------------
+         */
+        err = GDALRasterIO(hTarget, GF_Write, 0, iScanline, nXSize, 1,
+                           pabyIndex, nXSize, 1, GDT_Byte, 0, 0);
+        if (err != CE_None)
             break;
     }
 
-    pfnProgress( 1.0, nullptr, pProgressArg );
+    pfnProgress(1.0, nullptr, pProgressArg);
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    CPLFree( pabyRed );
-    CPLFree( pabyGreen );
-    CPLFree( pabyBlue );
-    CPLFree( pabyIndex );
-    CPLFree( panError );
-    CPLFree( pabyColorMap );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    CPLFree(pabyRed);
+    CPLFree(pabyGreen);
+    CPLFree(pabyBlue);
+    CPLFree(pabyIndex);
+    CPLFree(panError);
+    CPLFree(pabyColorMap);
 
     return err;
 }
 
-static int FindNearestColor( int nColors, int *panPCT,
-                             int nRedValue, int nGreenValue, int nBlueValue )
+static int FindNearestColor(int nColors, int *panPCT, int nRedValue,
+                            int nGreenValue, int nBlueValue)
 
 {
 #ifdef USE_SSE2
     int nBestDist = 768;
     int nBestIndex = 0;
 
-    int anDistanceUnaligned[16+4] = {};  // 4 for alignment on 16-byte boundary.
-    int* anDistance = ALIGN_INT_ARRAY_ON_16_BYTE(anDistanceUnaligned);
+    int anDistanceUnaligned[16 + 4] =
+        {};  // 4 for alignment on 16-byte boundary.
+    int *anDistance = ALIGN_INT_ARRAY_ON_16_BYTE(anDistanceUnaligned);
 
     const __m128i ff = _mm_set1_epi32(0xFFFFFFFF);
     const __m128i mask_low = _mm_srli_epi64(ff, 32);
@@ -601,63 +607,65 @@ static int FindNearestColor( int nColors, int *panPCT,
     const __m128i thisColor_low = _mm_srli_epi64(thisColor, 32);
     const __m128i thisColor_high = _mm_slli_epi64(thisColor, 32);
 
-    for( int iColor = 0; iColor < nColors; iColor+=8 )
+    for (int iColor = 0; iColor < nColors; iColor += 8)
     {
-        const __m128i pctColor = _mm_load_si128(reinterpret_cast<__m128i*>(&panPCT[iColor]));
-        const __m128i pctColor2 = _mm_load_si128(reinterpret_cast<__m128i*>(&panPCT[iColor+4]));
+        const __m128i pctColor =
+            _mm_load_si128(reinterpret_cast<__m128i *>(&panPCT[iColor]));
+        const __m128i pctColor2 =
+            _mm_load_si128(reinterpret_cast<__m128i *>(&panPCT[iColor + 4]));
 
         _mm_store_si128(
-            reinterpret_cast<__m128i*>(anDistance),
+            reinterpret_cast<__m128i *>(anDistance),
             _mm_sad_epu8(_mm_and_si128(pctColor, mask_low), thisColor_low));
         _mm_store_si128(
-            reinterpret_cast<__m128i*>(anDistance+4),
+            reinterpret_cast<__m128i *>(anDistance + 4),
             _mm_sad_epu8(_mm_and_si128(pctColor, mask_high), thisColor_high));
         _mm_store_si128(
-            reinterpret_cast<__m128i*>(anDistance+8),
+            reinterpret_cast<__m128i *>(anDistance + 8),
             _mm_sad_epu8(_mm_and_si128(pctColor2, mask_low), thisColor_low));
         _mm_store_si128(
-            reinterpret_cast<__m128i*>(anDistance+12),
+            reinterpret_cast<__m128i *>(anDistance + 12),
             _mm_sad_epu8(_mm_and_si128(pctColor2, mask_high), thisColor_high));
 
-        if( anDistance[0] < nBestDist )
+        if (anDistance[0] < nBestDist)
         {
             nBestIndex = iColor;
             nBestDist = anDistance[0];
         }
-        if( anDistance[4] < nBestDist )
+        if (anDistance[4] < nBestDist)
         {
             nBestIndex = iColor + 1;
             nBestDist = anDistance[4];
         }
-        if( anDistance[2] < nBestDist )
+        if (anDistance[2] < nBestDist)
         {
             nBestIndex = iColor + 2;
             nBestDist = anDistance[2];
         }
-        if( anDistance[6] < nBestDist )
+        if (anDistance[6] < nBestDist)
         {
             nBestIndex = iColor + 3;
             nBestDist = anDistance[6];
         }
-        if( anDistance[8 + 0] < nBestDist )
+        if (anDistance[8 + 0] < nBestDist)
         {
             nBestIndex = iColor + 4;
             nBestDist = anDistance[8 + 0];
         }
-        if( anDistance[8 + 4] < nBestDist )
+        if (anDistance[8 + 4] < nBestDist)
         {
             nBestIndex = iColor + 4 + 1;
             nBestDist = anDistance[8 + 4];
         }
-        if( anDistance[8 + 2] < nBestDist )
+        if (anDistance[8 + 2] < nBestDist)
         {
             nBestIndex = iColor + 4 + 2;
             nBestDist = anDistance[8 + 2];
         }
-        if( anDistance[8 + 6] < nBestDist )
+        if (anDistance[8 + 6] < nBestDist)
         {
             nBestIndex = iColor + 4 + 3;
-            nBestDist = anDistance[8  +  6];
+            nBestDist = anDistance[8 + 6];
         }
     }
     return nBestIndex;
@@ -665,14 +673,13 @@ static int FindNearestColor( int nColors, int *panPCT,
     int nBestDist = 768;
     int nBestIndex = 0;
 
-    for( int iColor = 0; iColor < nColors; iColor++ )
+    for (int iColor = 0; iColor < nColors; iColor++)
     {
-        const int nThisDist =
-            std::abs(nRedValue - panPCT[4*iColor + 0]) +
-            std::abs(nGreenValue - panPCT[4*iColor + 1]) +
-            std::abs(nBlueValue - panPCT[4*iColor + 2]);
+        const int nThisDist = std::abs(nRedValue - panPCT[4 * iColor + 0]) +
+                              std::abs(nGreenValue - panPCT[4 * iColor + 1]) +
+                              std::abs(nBlueValue - panPCT[4 * iColor + 2]);
 
-        if( nThisDist < nBestDist )
+        if (nThisDist < nBestDist)
         {
             nBestIndex = iColor;
             nBestDist = nThisDist;
@@ -688,28 +695,27 @@ static int FindNearestColor( int nColors, int *panPCT,
 /*      Finear near PCT color for any RGB color.                        */
 /************************************************************************/
 
-static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
-                              int nCLevels )
+static void FindNearestColor(int nColors, int *panPCT, GByte *pabyColorMap,
+                             int nCLevels)
 
 {
-/* -------------------------------------------------------------------- */
-/*  Loop over all the cells in the high density cube.                   */
-/* -------------------------------------------------------------------- */
-    for( int iBlue = 0; iBlue < nCLevels; iBlue++ )
+    /* -------------------------------------------------------------------- */
+    /*  Loop over all the cells in the high density cube.                   */
+    /* -------------------------------------------------------------------- */
+    for (int iBlue = 0; iBlue < nCLevels; iBlue++)
     {
-        for( int iGreen = 0; iGreen < nCLevels; iGreen++ )
+        for (int iGreen = 0; iGreen < nCLevels; iGreen++)
         {
-            for( int iRed = 0; iRed < nCLevels; iRed++ )
+            for (int iRed = 0; iRed < nCLevels; iRed++)
             {
-                const int nRedValue   = (iRed * 255) / (nCLevels - 1);
+                const int nRedValue = (iRed * 255) / (nCLevels - 1);
                 const int nGreenValue = (iGreen * 255) / (nCLevels - 1);
-                const int nBlueValue  = (iBlue * 255) / (nCLevels - 1);
+                const int nBlueValue = (iBlue * 255) / (nCLevels - 1);
 
-                const int nBestIndex =
-                    FindNearestColor( nColors, panPCT,
-                                      nRedValue, nGreenValue, nBlueValue );
-                pabyColorMap[iRed + iGreen*nCLevels
-                             + iBlue*nCLevels*nCLevels] =
+                const int nBestIndex = FindNearestColor(
+                    nColors, panPCT, nRedValue, nGreenValue, nBlueValue);
+                pabyColorMap[iRed + iGreen * nCLevels +
+                             iBlue * nCLevels * nCLevels] =
                     static_cast<GByte>(nBestIndex);
             }
         }

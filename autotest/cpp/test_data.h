@@ -45,7 +45,7 @@
 #define GDRIVERS_DIR GDAL_TEST_ROOT_DIR SEP "gdrivers" SEP
 
 #define TUT_ROOT_DATA_DIR GDAL_TEST_ROOT_DIR SEP "cpp" SEP "data"
-#define TUT_ROOT_TMP_DIR GDAL_TEST_ROOT_DIR  SEP "cpp" SEP "tmp"
+#define TUT_ROOT_TMP_DIR GDAL_TEST_ROOT_DIR SEP "cpp" SEP "tmp"
 
 #else
 
@@ -58,4 +58,4 @@
 
 #endif
 
-#endif //GDAL_TEST_DATA_H
+#endif  // GDAL_TEST_DATA_H

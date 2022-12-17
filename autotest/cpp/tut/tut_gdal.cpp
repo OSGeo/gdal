@@ -25,10 +25,10 @@
 
 #include "cpl_port.h"
 
-#include <tut.hpp> // TUT
+#include <tut.hpp>  // TUT
 #include <tut_gdal.h>
-#include "ogr_api.h" // GDAL
-#include <algorithm> // C++
+#include "ogr_api.h"  // GDAL
+#include <algorithm>  // C++
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -36,7 +36,8 @@
 namespace tut
 {
 
-void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
+void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs,
+                             double tolerance)
 {
     // Test raw pointers
     ensure("First geometry is NULL", nullptr != lhs);
@@ -45,13 +46,14 @@ void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double toleranc
 
     // Test basic properties
     ensure_equals("Geometry names do not match",
-        std::string(OGR_G_GetGeometryName(lhs)), std::string(OGR_G_GetGeometryName(rhs)));
+                  std::string(OGR_G_GetGeometryName(lhs)),
+                  std::string(OGR_G_GetGeometryName(rhs)));
 
     ensure_equals("Sub-geometry counts do not match",
-        OGR_G_GetGeometryCount(lhs), OGR_G_GetGeometryCount(rhs));
+                  OGR_G_GetGeometryCount(lhs), OGR_G_GetGeometryCount(rhs));
 
-    ensure_equals("Point counts do not match",
-        OGR_G_GetPointCount(lhs), OGR_G_GetPointCount(rhs));
+    ensure_equals("Point counts do not match", OGR_G_GetPointCount(lhs),
+                  OGR_G_GetPointCount(rhs));
 
     if (OGR_G_GetGeometryCount(lhs) > 0)
     {
@@ -60,17 +62,16 @@ void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double toleranc
         for (int i = 0; i < count; ++i)
         {
             ensure_equal_geometries(OGR_G_GetGeometryRef(lhs, i),
-                                    OGR_G_GetGeometryRef(rhs, i),
-                                    tolerance);
+                                    OGR_G_GetGeometryRef(rhs, i), tolerance);
         }
     }
     else
     {
         // Test geometry points
         const std::size_t csize = 3;
-        double a[csize] = { 0 };
-        double b[csize] = { 0 };
-        double d[csize] = { 0 };
+        double a[csize] = {0};
+        double b[csize] = {0};
+        double d[csize] = {0};
         double dmax = 0;
 
         const int count = OGR_G_GetPointCount(lhs);
@@ -85,7 +86,7 @@ void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double toleranc
                 d[c] = std::fabs(a[c] - b[c]);
             }
 
-            const double* pos = std::max_element(d, d + csize);
+            const double *pos = std::max_element(d, d + csize);
             dmax = *pos;
 
             std::ostringstream os;
@@ -96,4 +97,4 @@ void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double toleranc
     }
 }
 
-} // } // namespace tut
+}  // namespace tut

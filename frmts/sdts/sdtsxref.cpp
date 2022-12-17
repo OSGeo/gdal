@@ -28,16 +28,14 @@
 
 #include "sdts_al.h"
 
-
 /************************************************************************/
 /*                             SDTS_XREF()                              */
 /************************************************************************/
 
-SDTS_XREF::SDTS_XREF() :
-    pszSystemName(CPLStrdup("")),
-    pszDatum(CPLStrdup("")),
-    nZone(0)
-{}
+SDTS_XREF::SDTS_XREF()
+    : pszSystemName(CPLStrdup("")), pszDatum(CPLStrdup("")), nZone(0)
+{
+}
 
 /************************************************************************/
 /*                             ~SDTS_XREF()                             */
@@ -45,8 +43,8 @@ SDTS_XREF::SDTS_XREF() :
 
 SDTS_XREF::~SDTS_XREF()
 {
-    CPLFree( pszSystemName );
-    CPLFree( pszDatum );
+    CPLFree(pszSystemName);
+    CPLFree(pszDatum);
 }
 
 /************************************************************************/
@@ -55,39 +53,38 @@ SDTS_XREF::~SDTS_XREF()
 /*      Read the named file to initialize this structure.               */
 /************************************************************************/
 
-int SDTS_XREF::Read( const char * pszFilename )
+int SDTS_XREF::Read(const char *pszFilename)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Open the file, and read the header.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open the file, and read the header.                             */
+    /* -------------------------------------------------------------------- */
     DDFModule oXREFFile;
-    if( !oXREFFile.Open( pszFilename ) )
+    if (!oXREFFile.Open(pszFilename))
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Read the first record, and verify that this is an XREF record.  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the first record, and verify that this is an XREF record.  */
+    /* -------------------------------------------------------------------- */
     DDFRecord *poRecord = oXREFFile.ReadRecord();
-    if( poRecord == nullptr )
+    if (poRecord == nullptr)
         return FALSE;
 
-    if( poRecord->GetStringSubfield( "XREF", 0, "MODN", 0 ) == nullptr )
+    if (poRecord->GetStringSubfield("XREF", 0, "MODN", 0) == nullptr)
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Read fields of interest.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read fields of interest.                                        */
+    /* -------------------------------------------------------------------- */
 
-    CPLFree( pszSystemName );
+    CPLFree(pszSystemName);
     pszSystemName =
-        CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "RSNM", 0 ) );
+        CPLStrdup(poRecord->GetStringSubfield("XREF", 0, "RSNM", 0));
 
-    CPLFree( pszDatum );
-    pszDatum =
-        CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "HDAT", 0 ) );
+    CPLFree(pszDatum);
+    pszDatum = CPLStrdup(poRecord->GetStringSubfield("XREF", 0, "HDAT", 0));
 
-    nZone = poRecord->GetIntSubfield( "XREF", 0, "ZONE", 0 );
+    nZone = poRecord->GetIntSubfield("XREF", 0, "ZONE", 0);
 
     return TRUE;
 }

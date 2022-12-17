@@ -43,44 +43,48 @@
 
 class ARGVDestroyer
 {
-        char** m_papszList = nullptr;
-        ARGVDestroyer(const ARGVDestroyer&) = delete;
-        ARGVDestroyer& operator= (const ARGVDestroyer&) = delete;
+    char **m_papszList = nullptr;
+    ARGVDestroyer(const ARGVDestroyer &) = delete;
+    ARGVDestroyer &operator=(const ARGVDestroyer &) = delete;
 
-    public:
-        explicit ARGVDestroyer(char** papszList) : m_papszList(papszList) {}
-        ~ARGVDestroyer() { CSLDestroy(m_papszList); }
+  public:
+    explicit ARGVDestroyer(char **papszList) : m_papszList(papszList)
+    {
+    }
+    ~ARGVDestroyer()
+    {
+        CSLDestroy(m_papszList);
+    }
 };
 
-extern "C" int wmain( int argc, wchar_t ** argv_w, wchar_t ** /* envp */ );
+extern "C" int wmain(int argc, wchar_t **argv_w, wchar_t ** /* envp */);
 
-#define MAIN_START(argc, argv) \
-  extern "C" \
-  int wmain( int argc, wchar_t ** argv_w, wchar_t ** /* envp */ ) \
-  { \
-    char **argv = static_cast<char**>(CPLCalloc(argc + 1, sizeof(char*))); \
-    for( int i = 0; i < argc; i++ ) \
-    { \
-        argv[i] = CPLRecodeFromWChar( argv_w[i], CPL_ENC_UCS2, CPL_ENC_UTF8 ); \
-    } \
-    ARGVDestroyer argvDestroyer(argv);
+#define MAIN_START(argc, argv)                                                 \
+    extern "C" int wmain(int argc, wchar_t **argv_w, wchar_t ** /* envp */)    \
+    {                                                                          \
+        char **argv =                                                          \
+            static_cast<char **>(CPLCalloc(argc + 1, sizeof(char *)));         \
+        for (int i = 0; i < argc; i++)                                         \
+        {                                                                      \
+            argv[i] =                                                          \
+                CPLRecodeFromWChar(argv_w[i], CPL_ENC_UCS2, CPL_ENC_UTF8);     \
+        }                                                                      \
+        ARGVDestroyer argvDestroyer(argv);
 
 #define MAIN_END }
 
-#else // defined(WIN32)
+#else  // defined(WIN32)
 
-#define MAIN_START(argc, argv) \
-    int main( int argc, char ** argv )
+#define MAIN_START(argc, argv) int main(int argc, char **argv)
 
 #define MAIN_END
 
-#endif // defined(WIN32)
-#endif // defined(__cplusplus)
-
+#endif  // defined(WIN32)
+#endif  // defined(__cplusplus)
 
 CPL_C_START
 
-void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
+void CPL_DLL EarlySetConfigOptions(int argc, char **argv);
 
 CPL_C_END
 
@@ -89,9 +93,9 @@ CPL_C_END
 #include "cpl_string.h"
 #include <vector>
 
-std::vector<CPLString> CPL_DLL GetOutputDriversFor(const char* pszDestFilename,
+std::vector<CPLString> CPL_DLL GetOutputDriversFor(const char *pszDestFilename,
                                                    int nFlagRasterVector);
-CPLString CPL_DLL GetOutputDriverForRaster(const char* pszDestFilename);
+CPLString CPL_DLL GetOutputDriverForRaster(const char *pszDestFilename);
 
 #endif /* __cplusplus */
 

@@ -42,82 +42,79 @@
 #include "ogr_spatialref.h"
 #include "gmlcoverage.h"
 
-
 /************************************************************************/
 /*                        ParseGMLCoverageDesc()                        */
 /************************************************************************/
 
-CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
-                            int *pnXSize, int *pnYSize,
-                            double *padfGeoTransform,
-                            char **ppszProjection )
+CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
+                           double *padfGeoTransform, char **ppszProjection)
 
 {
-    CPLStripXMLNamespace( psXML, nullptr, TRUE );
+    CPLStripXMLNamespace(psXML, nullptr, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Isolate RectifiedGrid.  Eventually we will need to support      */
-/*      other georeferencing objects.                                   */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
+    /* -------------------------------------------------------------------- */
+    /*      Isolate RectifiedGrid.  Eventually we will need to support      */
+    /*      other georeferencing objects.                                   */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psRG = CPLSearchXMLNode(psXML, "=RectifiedGrid");
     CPLXMLNode *psOriginPoint = nullptr;
     const char *pszOffset1 = nullptr;
     const char *pszOffset2 = nullptr;
 
-    if( psRG != nullptr )
+    if (psRG != nullptr)
     {
-        psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
-        if( psOriginPoint == nullptr )
-            psOriginPoint = CPLGetXMLNode( psRG, "origin" );
+        psOriginPoint = CPLGetXMLNode(psRG, "origin.Point");
+        if (psOriginPoint == nullptr)
+            psOriginPoint = CPLGetXMLNode(psRG, "origin");
 
-        CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
-        if( psOffset1 != nullptr )
+        CPLXMLNode *psOffset1 = CPLGetXMLNode(psRG, "offsetVector");
+        if (psOffset1 != nullptr)
         {
-            pszOffset1 = CPLGetXMLValue( psOffset1, "", nullptr );
-            pszOffset2 = CPLGetXMLValue( psOffset1->psNext, "=offsetVector",
-                                         nullptr );
+            pszOffset1 = CPLGetXMLValue(psOffset1, "", nullptr);
+            pszOffset2 =
+                CPLGetXMLValue(psOffset1->psNext, "=offsetVector", nullptr);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we are missing any of the origin or 2 offsets then give up.  */
-/* -------------------------------------------------------------------- */
-    if( psRG == nullptr || psOriginPoint == nullptr
-        || pszOffset1 == nullptr || pszOffset2 == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      If we are missing any of the origin or 2 offsets then give up.  */
+    /* -------------------------------------------------------------------- */
+    if (psRG == nullptr || psOriginPoint == nullptr || pszOffset1 == nullptr ||
+        pszOffset2 == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find GML RectifiedGrid, origin or offset vectors");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to find GML RectifiedGrid, origin or offset vectors");
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Search for the GridEnvelope and derive the raster size.         */
-/* -------------------------------------------------------------------- */
-    char **papszLow = CSLTokenizeString(
-        CPLGetXMLValue( psRG, "limits.GridEnvelope.low", ""));
-    char **papszHigh = CSLTokenizeString(
-        CPLGetXMLValue( psRG, "limits.GridEnvelope.high",""));
+    /* -------------------------------------------------------------------- */
+    /*      Search for the GridEnvelope and derive the raster size.         */
+    /* -------------------------------------------------------------------- */
+    char **papszLow =
+        CSLTokenizeString(CPLGetXMLValue(psRG, "limits.GridEnvelope.low", ""));
+    char **papszHigh =
+        CSLTokenizeString(CPLGetXMLValue(psRG, "limits.GridEnvelope.high", ""));
 
-    if( CSLCount(papszLow) < 2 || CSLCount(papszHigh) < 2 )
+    if (CSLCount(papszLow) < 2 || CSLCount(papszHigh) < 2)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find or parse GridEnvelope.low/high." );
-        CSLDestroy( papszLow );
-        CSLDestroy( papszHigh );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to find or parse GridEnvelope.low/high.");
+        CSLDestroy(papszLow);
+        CSLDestroy(papszHigh);
         return CE_Failure;
     }
 
-    if( pnXSize != nullptr )
+    if (pnXSize != nullptr)
         *pnXSize = atoi(papszHigh[0]) - atoi(papszLow[0]) + 1;
-    if( pnYSize != nullptr )
+    if (pnYSize != nullptr)
         *pnYSize = atoi(papszHigh[1]) - atoi(papszLow[1]) + 1;
 
-    CSLDestroy( papszLow );
-    CSLDestroy( papszHigh );
+    CSLDestroy(papszLow);
+    CSLDestroy(papszHigh);
 
-/* -------------------------------------------------------------------- */
-/*      Extract origin location.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Extract origin location.                                        */
+    /* -------------------------------------------------------------------- */
     OGRPoint *poOriginGeometry = nullptr;
     const char *pszSRSName = nullptr;
 
@@ -126,17 +123,17 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
 
         // Old coverages (i.e. WCS) just have <pos> under <origin>, so we
         // may need to temporarily force <origin> to <Point>.
-        if( psOriginPoint->eType == CXT_Element
-            && EQUAL(psOriginPoint->pszValue, "origin") )
+        if (psOriginPoint->eType == CXT_Element &&
+            EQUAL(psOriginPoint->pszValue, "origin"))
         {
-            strcpy( psOriginPoint->pszValue, "Point");
+            strcpy(psOriginPoint->pszValue, "Point");
             bOldWrap = true;
         }
-        OGRGeometry* poGeom = reinterpret_cast<OGRGeometry *>(
-            OGR_G_CreateFromGMLTree( psOriginPoint ) );
+        OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(
+            OGR_G_CreateFromGMLTree(psOriginPoint));
 
-        if( poGeom != nullptr
-            && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+        if (poGeom != nullptr &&
+            wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
             poOriginGeometry = poGeom->toPoint();
         }
@@ -145,26 +142,25 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
             delete poGeom;
         }
 
-        if( bOldWrap )
-            strcpy( psOriginPoint->pszValue, "origin");
+        if (bOldWrap)
+            strcpy(psOriginPoint->pszValue, "origin");
 
         // SRS?
-        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", nullptr );
+        pszSRSName = CPLGetXMLValue(psOriginPoint, "srsName", nullptr);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Extract offset(s)                                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Extract offset(s)                                               */
+    /* -------------------------------------------------------------------- */
     bool bSuccess = false;
 
-    char** papszOffset1Tokens =
-        CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    char** papszOffset2Tokens =
-        CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
+    char **papszOffset1Tokens =
+        CSLTokenizeStringComplex(pszOffset1, " ,", FALSE, FALSE);
+    char **papszOffset2Tokens =
+        CSLTokenizeStringComplex(pszOffset2, " ,", FALSE, FALSE);
 
-    if( CSLCount(papszOffset1Tokens) >= 2
-        && CSLCount(papszOffset2Tokens) >= 2
-        && poOriginGeometry != nullptr )
+    if (CSLCount(papszOffset1Tokens) >= 2 &&
+        CSLCount(papszOffset2Tokens) >= 2 && poOriginGeometry != nullptr)
     {
         padfGeoTransform[0] = poOriginGeometry->getX();
         padfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
@@ -174,47 +170,46 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
         padfGeoTransform[5] = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
-        padfGeoTransform[0] -= padfGeoTransform[1]*0.5;
-        padfGeoTransform[0] -= padfGeoTransform[2]*0.5;
-        padfGeoTransform[3] -= padfGeoTransform[4]*0.5;
-        padfGeoTransform[3] -= padfGeoTransform[5]*0.5;
+        padfGeoTransform[0] -= padfGeoTransform[1] * 0.5;
+        padfGeoTransform[0] -= padfGeoTransform[2] * 0.5;
+        padfGeoTransform[3] -= padfGeoTransform[4] * 0.5;
+        padfGeoTransform[3] -= padfGeoTransform[5] * 0.5;
 
         bSuccess = true;
     }
 
-    CSLDestroy( papszOffset1Tokens );
-    CSLDestroy( papszOffset2Tokens );
+    CSLDestroy(papszOffset1Tokens);
+    CSLDestroy(papszOffset2Tokens);
 
-    if( poOriginGeometry != nullptr )
+    if (poOriginGeometry != nullptr)
         delete poOriginGeometry;
 
-/* -------------------------------------------------------------------- */
-/*      If we have gotten a geotransform, then try to interpret the     */
-/*      srsName.                                                        */
-/* -------------------------------------------------------------------- */
-    if( bSuccess && pszSRSName != nullptr
-        && (*ppszProjection == nullptr || strlen(*ppszProjection) == 0) )
+    /* -------------------------------------------------------------------- */
+    /*      If we have gotten a geotransform, then try to interpret the     */
+    /*      srsName.                                                        */
+    /* -------------------------------------------------------------------- */
+    if (bSuccess && pszSRSName != nullptr &&
+        (*ppszProjection == nullptr || strlen(*ppszProjection) == 0))
     {
-        if( STARTS_WITH_CI(pszSRSName, "epsg:") )
+        if (STARTS_WITH_CI(pszSRSName, "epsg:"))
         {
             OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
-                oSRS.exportToWkt( ppszProjection );
+            if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+                oSRS.exportToWkt(ppszProjection);
         }
-        else if( STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:") )
+        else if (STARTS_WITH_CI(pszSRSName, "urn:ogc:def:crs:"))
         {
             OGRSpatialReference oSRS;
-            if( oSRS.importFromURN( pszSRSName ) == OGRERR_NONE )
-                oSRS.exportToWkt( ppszProjection );
+            if (oSRS.importFromURN(pszSRSName) == OGRERR_NONE)
+                oSRS.exportToWkt(ppszProjection);
         }
         else
             *ppszProjection = CPLStrdup(pszSRSName);
     }
 
-    if( *ppszProjection )
-        CPLDebug( "GDALJP2Metadata",
-                  "Got projection from GML box: %s",
-                  *ppszProjection );
+    if (*ppszProjection)
+        CPLDebug("GDALJP2Metadata", "Got projection from GML box: %s",
+                 *ppszProjection);
 
     return CE_None;
 }

@@ -12,8 +12,7 @@ namespace tut
  */
 struct tut_error : public std::exception
 {
-    tut_error(const std::string& msg)
-        : err_msg(msg)
+    tut_error(const std::string &msg) : err_msg(msg)
     {
     }
 
@@ -22,7 +21,7 @@ struct tut_error : public std::exception
         return test_result::ex;
     }
 
-    const char* what() const throw() CPL_OVERRIDE
+    const char *what() const throw() CPL_OVERRIDE
     {
         return err_msg.c_str();
     }
@@ -31,8 +30,8 @@ struct tut_error : public std::exception
     {
     }
 
-private:
-    tut_error& operator=(const tut_error&);
+  private:
+    tut_error &operator=(const tut_error &);
     std::string err_msg;
 };
 
@@ -41,8 +40,7 @@ private:
  */
 struct no_such_group : public tut_error
 {
-    no_such_group(const std::string& grp)
-        : tut_error(grp)
+    no_such_group(const std::string &grp) : tut_error(grp)
     {
     }
 
@@ -57,8 +55,7 @@ struct no_such_group : public tut_error
  */
 struct bad_ctor : public tut_error
 {
-    bad_ctor(const std::string& msg)
-        : tut_error(msg)
+    bad_ctor(const std::string &msg) : tut_error(msg)
     {
     }
 
@@ -77,8 +74,7 @@ struct bad_ctor : public tut_error
  */
 struct failure : public tut_error
 {
-    failure(const std::string& msg)
-        : tut_error(msg)
+    failure(const std::string &msg) : tut_error(msg)
     {
     }
 
@@ -97,8 +93,7 @@ struct failure : public tut_error
  */
 struct warning : public tut_error
 {
-    warning(const std::string& msg)
-        : tut_error(msg)
+    warning(const std::string &msg) : tut_error(msg)
     {
     }
 
@@ -117,8 +112,7 @@ struct warning : public tut_error
  */
 struct seh : public tut_error
 {
-    seh(const std::string& msg)
-        : tut_error(msg)
+    seh(const std::string &msg) : tut_error(msg)
     {
     }
 
@@ -154,6 +148,6 @@ struct rethrown : public failure
     const test_result tr;
 };
 
-}
+}  // namespace tut
 
 #endif

@@ -54,11 +54,13 @@ class CPL_DLL CPLJSONObject
 {
     friend class CPLJSONArray;
     friend class CPLJSONDocument;
-public:
+
+  public:
     /**
      * Json object types
      */
-    enum class Type {
+    enum class Type
+    {
         Unknown,
         Null,
         Object,
@@ -73,27 +75,29 @@ public:
     /**
      * Json object format to string options
      */
-    enum class PrettyFormat {
-        Plain,  ///< No extra whitespace or formatting applied
-        Spaced, ///< Minimal whitespace inserted
-        Pretty  ///< Formatted output
+    enum class PrettyFormat
+    {
+        Plain,   ///< No extra whitespace or formatting applied
+        Spaced,  ///< Minimal whitespace inserted
+        Pretty   ///< Formatted output
     };
 
-public:
-/*! @cond Doxygen_Suppress */
+  public:
+    /*! @cond Doxygen_Suppress */
     CPLJSONObject();
-    explicit CPLJSONObject(const std::string &osName, const CPLJSONObject &oParent);
+    explicit CPLJSONObject(const std::string &osName,
+                           const CPLJSONObject &oParent);
     ~CPLJSONObject();
     CPLJSONObject(const CPLJSONObject &other);
     CPLJSONObject(CPLJSONObject &&other);
     CPLJSONObject &operator=(const CPLJSONObject &other);
     CPLJSONObject &operator=(CPLJSONObject &&other);
 
-private:
+  private:
     explicit CPLJSONObject(const std::string &osName, JSONObjectH poJsonObject);
-/*! @endcond */
+    /*! @endcond */
 
-public:
+  public:
     // setters
     void Add(const std::string &osName, const std::string &osValue);
     void Add(const std::string &osName, const char *pszValue);
@@ -114,12 +118,16 @@ public:
     void Set(const std::string &osName, bool bValue);
     void SetNull(const std::string &osName);
 
-/*! @cond Doxygen_Suppress */
-    JSONObjectH GetInternalHandle() const { return m_poJsonObject; }
-/*! @endcond */
+    /*! @cond Doxygen_Suppress */
+    JSONObjectH GetInternalHandle() const
+    {
+        return m_poJsonObject;
+    }
+    /*! @endcond */
 
     // getters
-    std::string GetString(const std::string &osName, const std::string &osDefault = "") const;
+    std::string GetString(const std::string &osName,
+                          const std::string &osDefault = "") const;
     double GetDouble(const std::string &osName, double dfDefault = 0.0) const;
     int GetInteger(const std::string &osName, int nDefault = 0) const;
     GInt64 GetLong(const std::string &osName, GInt64 nDefault = 0) const;
@@ -139,20 +147,24 @@ public:
     CPLJSONObject GetObj(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;
     Type GetType() const;
-/*! @cond Doxygen_Suppress */
-    std::string GetName() const { return m_osKey; }
-/*! @endcond */
+    /*! @cond Doxygen_Suppress */
+    std::string GetName() const
+    {
+        return m_osKey;
+    }
+    /*! @endcond */
 
     std::vector<CPLJSONObject> GetChildren() const;
     bool IsValid() const;
     void Deinit();
 
-protected:
-/*! @cond Doxygen_Suppress */
-    CPLJSONObject GetObjectByPath(const std::string &osPath, std::string &osName) const;
-/*! @endcond */
+  protected:
+    /*! @cond Doxygen_Suppress */
+    CPLJSONObject GetObjectByPath(const std::string &osPath,
+                                  std::string &osName) const;
+    /*! @endcond */
 
-private:
+  private:
     JSONObjectH m_poJsonObject = nullptr;
     std::string m_osKey{};
 };
@@ -164,36 +176,54 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
 {
     friend class CPLJSONObject;
     friend class CPLJSONDocument;
-public:
-/*! @cond Doxygen_Suppress */
+
+  public:
+    /*! @cond Doxygen_Suppress */
     CPLJSONArray();
     explicit CPLJSONArray(const std::string &osName);
     explicit CPLJSONArray(const CPLJSONObject &other);
 
-private:
+  private:
     explicit CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject);
 
     class CPL_DLL ConstIterator
     {
-            const CPLJSONArray& m_oSelf;
-            int m_nIdx;
-            mutable CPLJSONObject m_oObj{};
+        const CPLJSONArray &m_oSelf;
+        int m_nIdx;
+        mutable CPLJSONObject m_oObj{};
 
-        public:
-            ConstIterator(const CPLJSONArray& oSelf, bool bStart): m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size()) {}
-            ~ConstIterator() = default;
-            CPLJSONObject& operator*() const { m_oObj = m_oSelf[m_nIdx]; return m_oObj; }
-            ConstIterator& operator++() { m_nIdx ++; return *this; }
-            bool operator==(const ConstIterator& it) const { return m_nIdx == it.m_nIdx; }
-            bool operator!=(const ConstIterator& it) const { return m_nIdx != it.m_nIdx; }
+      public:
+        ConstIterator(const CPLJSONArray &oSelf, bool bStart)
+            : m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size())
+        {
+        }
+        ~ConstIterator() = default;
+        CPLJSONObject &operator*() const
+        {
+            m_oObj = m_oSelf[m_nIdx];
+            return m_oObj;
+        }
+        ConstIterator &operator++()
+        {
+            m_nIdx++;
+            return *this;
+        }
+        bool operator==(const ConstIterator &it) const
+        {
+            return m_nIdx == it.m_nIdx;
+        }
+        bool operator!=(const ConstIterator &it) const
+        {
+            return m_nIdx != it.m_nIdx;
+        }
     };
 
-/*! @endcond */
-public:
+    /*! @endcond */
+  public:
     int Size() const;
     void Add(const CPLJSONObject &oValue);
     void Add(const std::string &osValue);
-    void Add(const char* pszValue);
+    void Add(const char *pszValue);
     void Add(double dfValue);
     void Add(int nValue);
     void Add(GInt64 nValue);
@@ -202,9 +232,15 @@ public:
     const CPLJSONObject operator[](int nIndex) const;
 
     /** Iterator to first element */
-    ConstIterator begin() const { return ConstIterator(*this, true); }
+    ConstIterator begin() const
+    {
+        return ConstIterator(*this, true);
+    }
     /** Iterator to after last element */
-    ConstIterator end() const { return ConstIterator(*this, false); }
+    ConstIterator end() const
+    {
+        return ConstIterator(*this, false);
+    }
 };
 
 /**
@@ -212,36 +248,36 @@ public:
  */
 class CPL_DLL CPLJSONDocument
 {
-public:
-/*! @cond Doxygen_Suppress */
+  public:
+    /*! @cond Doxygen_Suppress */
     CPLJSONDocument();
     ~CPLJSONDocument();
     CPLJSONDocument(const CPLJSONDocument &other);
-    CPLJSONDocument& operator=(const CPLJSONDocument &other);
+    CPLJSONDocument &operator=(const CPLJSONDocument &other);
     CPLJSONDocument(CPLJSONDocument &&other);
-    CPLJSONDocument& operator=(CPLJSONDocument &&other);
-/*! @endcond */
+    CPLJSONDocument &operator=(CPLJSONDocument &&other);
+    /*! @endcond */
 
     bool Save(const std::string &osPath) const;
     std::string SaveAsString() const;
 
     CPLJSONObject GetRoot();
     const CPLJSONObject GetRoot() const;
-    void SetRoot(const CPLJSONObject& oRoot);
+    void SetRoot(const CPLJSONObject &oRoot);
     bool Load(const std::string &osPath);
     bool LoadMemory(const std::string &osStr);
     bool LoadMemory(const GByte *pabyData, int nLength = -1);
     bool LoadChunks(const std::string &osPath, size_t nChunkSize = 16384,
                     GDALProgressFunc pfnProgress = nullptr,
                     void *pProgressArg = nullptr);
-    bool LoadUrl(const std::string &osUrl, const char* const* papszOptions,
+    bool LoadUrl(const std::string &osUrl, const char *const *papszOptions,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
 
-private:
+  private:
     mutable JSONObjectH m_poRootJsonObject;
 };
 
 CPL_C_END
 
-#endif // CPL_JSON_H_INCLUDED
+#endif  // CPL_JSON_H_INCLUDED

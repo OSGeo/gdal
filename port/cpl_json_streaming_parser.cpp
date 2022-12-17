@@ -29,9 +29,9 @@
 /*! @cond Doxygen_Suppress */
 
 #include <assert.h>
-#include <ctype.h> // isdigit...
-#include <stdio.h> // snprintf
-#include <string.h> // strlen
+#include <ctype.h>   // isdigit...
+#include <stdio.h>   // snprintf
+#include <string.h>  // strlen
 #include <vector>
 #include <string>
 
@@ -98,32 +98,32 @@ void CPLJSonStreamingParser::Reset()
 /*                              AdvanceChar()                           */
 /************************************************************************/
 
-void CPLJSonStreamingParser::AdvanceChar(const char*& pStr, size_t& nLength)
+void CPLJSonStreamingParser::AdvanceChar(const char *&pStr, size_t &nLength)
 {
-    if( *pStr == 13 && m_nLastChar != 10 )
+    if (*pStr == 13 && m_nLastChar != 10)
     {
-        m_nLineCounter ++;
+        m_nLineCounter++;
         m_nCharCounter = 0;
     }
-    else if( *pStr == 10 && m_nLastChar != 13 )
+    else if (*pStr == 10 && m_nLastChar != 13)
     {
-        m_nLineCounter ++;
+        m_nLineCounter++;
         m_nCharCounter = 0;
     }
     m_nLastChar = *pStr;
 
-    pStr ++;
-    nLength --;
-    m_nCharCounter ++;
+    pStr++;
+    nLength--;
+    m_nCharCounter++;
 }
 
 /************************************************************************/
 /*                               SkipSpace()                            */
 /************************************************************************/
 
-void CPLJSonStreamingParser::SkipSpace(const char*& pStr, size_t& nLength)
+void CPLJSonStreamingParser::SkipSpace(const char *&pStr, size_t &nLength)
 {
-    while( nLength > 0 && isspace(*pStr) )
+    while (nLength > 0 && isspace(*pStr))
     {
         AdvanceChar(pStr, nLength);
     }
@@ -133,12 +133,12 @@ void CPLJSonStreamingParser::SkipSpace(const char*& pStr, size_t& nLength)
 /*                             EmitException()                          */
 /************************************************************************/
 
-bool CPLJSonStreamingParser::EmitException(const char* pszMessage)
+bool CPLJSonStreamingParser::EmitException(const char *pszMessage)
 {
     m_bExceptionOccurred = true;
     CPLString osMsg;
-    osMsg.Printf("At line %d, character %d: %s",
-                 m_nLineCounter, m_nCharCounter, pszMessage);
+    osMsg.Printf("At line %d, character %d: %s", m_nLineCounter, m_nCharCounter,
+                 pszMessage);
     Exception(osMsg.c_str());
     return false;
 }
@@ -148,18 +148,17 @@ bool CPLJSonStreamingParser::EmitException(const char* pszMessage)
 /************************************************************************/
 
 bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
-                                                const char* pszExpecting)
+                                                const char *pszExpecting)
 {
     char szMessage[64];
-    if( pszExpecting )
+    if (pszExpecting)
     {
         snprintf(szMessage, sizeof(szMessage),
-             "Unexpected character (%c). Expecting %s", ch, pszExpecting);
+                 "Unexpected character (%c). Expecting %s", ch, pszExpecting);
     }
     else
     {
-        snprintf(szMessage, sizeof(szMessage),
-                "Unexpected character (%c)", ch);
+        snprintf(szMessage, sizeof(szMessage), "Unexpected character (%c)", ch);
     }
     return EmitException(szMessage);
 }
@@ -170,21 +169,21 @@ bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
 
 static bool IsValidNewToken(char ch)
 {
-    return ch == '[' || ch == '{' || ch == '"' || ch == '-' ||
-           ch == '.' || isdigit(ch) || ch == 't' || ch == 'f' || ch == 'n' ||
-           ch == 'i' || ch == 'I' || ch == 'N';
+    return ch == '[' || ch == '{' || ch == '"' || ch == '-' || ch == '.' ||
+           isdigit(ch) || ch == 't' || ch == 'f' || ch == 'n' || ch == 'i' ||
+           ch == 'I' || ch == 'N';
 }
 
 /************************************************************************/
 /*                             StartNewToken()                          */
 /************************************************************************/
 
-bool CPLJSonStreamingParser::StartNewToken(const char*& pStr, size_t& nLength)
+bool CPLJSonStreamingParser::StartNewToken(const char *&pStr, size_t &nLength)
 {
     char ch = *pStr;
-    if( ch == '{' )
+    if (ch == '{')
     {
-        if( m_aState.size() == m_nMaxDepth )
+        if (m_aState.size() == m_nMaxDepth)
         {
             return EmitException("Too many nested objects and/or arrays");
         }
@@ -193,14 +192,14 @@ bool CPLJSonStreamingParser::StartNewToken(const char*& pStr, size_t& nLength)
         m_aState.push_back(OBJECT);
         AdvanceChar(pStr, nLength);
     }
-    else if( ch == '"' )
+    else if (ch == '"')
     {
         m_aState.push_back(STRING);
         AdvanceChar(pStr, nLength);
     }
-    else if( ch == '[' )
+    else if (ch == '[')
     {
-        if( m_aState.size() == m_nMaxDepth )
+        if (m_aState.size() == m_nMaxDepth)
         {
             return EmitException("Too many nested objects and/or arrays");
         }
@@ -209,26 +208,26 @@ bool CPLJSonStreamingParser::StartNewToken(const char*& pStr, size_t& nLength)
         m_aState.push_back(ARRAY);
         AdvanceChar(pStr, nLength);
     }
-    else if( ch == '-' || ch == '.' || isdigit(ch) ||
-             ch == 'i' || ch == 'I' || ch == 'N' )
+    else if (ch == '-' || ch == '.' || isdigit(ch) || ch == 'i' || ch == 'I' ||
+             ch == 'N')
     {
         m_aState.push_back(NUMBER);
     }
-    else if( ch == 't' )
+    else if (ch == 't')
     {
         m_aState.push_back(STATE_TRUE);
     }
-    else if( ch == 'f' )
+    else if (ch == 'f')
     {
         m_aState.push_back(STATE_FALSE);
     }
-    else if( ch == 'n' )
+    else if (ch == 'n')
     {
         m_aState.push_back(STATE_NULL); /* might be nan */
     }
     else
     {
-        assert( false );
+        assert(false);
     }
     return true;
 }
@@ -241,9 +240,9 @@ bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
 {
     State eCurState = currentState();
 
-    if( eCurState == STATE_TRUE )
+    if (eCurState == STATE_TRUE)
     {
-        if( m_osToken == "true" )
+        if (m_osToken == "true")
         {
             Boolean(true);
         }
@@ -252,9 +251,9 @@ bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
             return EmitUnexpectedChar(ch);
         }
     }
-    else if( eCurState == STATE_FALSE)
+    else if (eCurState == STATE_FALSE)
     {
-        if( m_osToken == "false" )
+        if (m_osToken == "false")
         {
             Boolean(false);
         }
@@ -265,7 +264,7 @@ bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
     }
     else /* if( eCurState == STATE_NULL ) */
     {
-        if( m_osToken == "null" )
+        if (m_osToken == "null")
         {
             Null();
         }
@@ -285,11 +284,11 @@ bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
 
 bool CPLJSonStreamingParser::CheckStackEmpty()
 {
-    if( !m_aeObjectState.empty() )
+    if (!m_aeObjectState.empty())
     {
         return EmitException("Unterminated object");
     }
-    else if( !m_abArrayState.empty() )
+    else if (!m_abArrayState.empty())
     {
         return EmitException("Unterminated array");
     }
@@ -329,8 +328,7 @@ static unsigned GetSurrogatePair(unsigned hi, unsigned lo)
 
 static bool IsHexDigit(char ch)
 {
-    return (ch >= '0' && ch <= '9') ||
-           (ch >= 'a' && ch <= 'f') ||
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') ||
            (ch >= 'A' && ch <= 'F');
 }
 
@@ -340,11 +338,11 @@ static bool IsHexDigit(char ch)
 
 static unsigned HexToDecimal(char ch)
 {
-    if( ch >= '0' && ch <= '9' )
+    if (ch >= '0' && ch <= '9')
         return ch - '0';
-    if (ch >= 'a' && ch <= 'f' )
+    if (ch >= 'a' && ch <= 'f')
         return 10 + ch - 'a';
-    //if (ch >= 'A' && ch <= 'F' )
+    // if (ch >= 'A' && ch <= 'F' )
     return 10 + ch - 'A';
 }
 
@@ -352,7 +350,7 @@ static unsigned HexToDecimal(char ch)
 /*                            getUCSChar()                              */
 /************************************************************************/
 
-static unsigned getUCSChar(const std::string& unicode4HexChar)
+static unsigned getUCSChar(const std::string &unicode4HexChar)
 {
     return (HexToDecimal(unicode4HexChar[0]) << 12) |
            (HexToDecimal(unicode4HexChar[1]) << 8) |
@@ -368,12 +366,12 @@ void CPLJSonStreamingParser::DecodeUnicode()
 {
     constexpr char szReplacementUTF8[] = "\xEF\xBF\xBD";
     unsigned nUCSChar;
-    if( m_osUnicodeHex.size() == 8 )
+    if (m_osUnicodeHex.size() == 8)
     {
         unsigned nUCSHigh = getUCSChar(m_osUnicodeHex);
-        assert( IsHighSurrogate(nUCSHigh) );
+        assert(IsHighSurrogate(nUCSHigh));
         unsigned nUCSLow = getUCSChar(m_osUnicodeHex.substr(4));
-        if( IsLowSurrogate(nUCSLow) )
+        if (IsLowSurrogate(nUCSLow))
         {
             nUCSChar = GetSurrogatePair(nUCSHigh, nUCSLow);
         }
@@ -385,21 +383,20 @@ void CPLJSonStreamingParser::DecodeUnicode()
     }
     else
     {
-        assert( m_osUnicodeHex.size() == 4 );
+        assert(m_osUnicodeHex.size() == 4);
         nUCSChar = getUCSChar(m_osUnicodeHex);
     }
 
-    if( nUCSChar < 0x80)
+    if (nUCSChar < 0x80)
     {
         m_osToken += static_cast<char>(nUCSChar);
     }
-    else if( nUCSChar < 0x800)
+    else if (nUCSChar < 0x800)
     {
         m_osToken += static_cast<char>(0xC0 | (nUCSChar >> 6));
         m_osToken += static_cast<char>(0x80 | (nUCSChar & 0x3F));
     }
-    else if (IsLowSurrogate(nUCSChar) ||
-             IsHighSurrogate(nUCSChar) )
+    else if (IsLowSurrogate(nUCSChar) || IsHighSurrogate(nUCSChar))
     {
         /* Invalid code point. Insert the replacement char */
         m_osToken += szReplacementUTF8;
@@ -431,45 +428,45 @@ void CPLJSonStreamingParser::DecodeUnicode()
 /*                              Parse()                                 */
 /************************************************************************/
 
-bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
+bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                                    bool bFinished)
 {
-    if( m_bExceptionOccurred )
+    if (m_bExceptionOccurred)
         return false;
 
-    while( true )
+    while (true)
     {
         State eCurState = currentState();
-        if( eCurState == INIT )
+        if (eCurState == INIT)
         {
             SkipSpace(pStr, nLength);
-            if( nLength == 0 )
+            if (nLength == 0)
                 return true;
-            if( m_bElementFound || !IsValidNewToken(*pStr) )
+            if (m_bElementFound || !IsValidNewToken(*pStr))
             {
                 return EmitUnexpectedChar(*pStr);
             }
-            if( !StartNewToken(pStr, nLength) )
+            if (!StartNewToken(pStr, nLength))
             {
                 return false;
             }
             m_bElementFound = true;
         }
-        else if( eCurState == NUMBER )
+        else if (eCurState == NUMBER)
         {
-            while(nLength)
+            while (nLength)
             {
                 char ch = *pStr;
-                if( ch == '+' || ch == '-' || isdigit(ch) ||
-                    ch == '.' || ch == 'e' || ch == 'E' )
+                if (ch == '+' || ch == '-' || isdigit(ch) || ch == '.' ||
+                    ch == 'e' || ch == 'E')
                 {
-                    if( m_osToken.size() == 1024 )
+                    if (m_osToken.size() == 1024)
                     {
                         return EmitException("Too many characters in number");
                     }
                     m_osToken += ch;
                 }
-                else if( isspace(ch) || ch == ',' || ch == '}' || ch == ']' )
+                else if (isspace(ch) || ch == ',' || ch == '}' || ch == ']')
                 {
                     SkipSpace(pStr, nLength);
                     break;
@@ -477,12 +474,12 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 else
                 {
                     CPLString extendedToken(m_osToken + ch);
-                    if( (STARTS_WITH_CI("Infinity", extendedToken) &&
-                          m_osToken.size() + 1 <= strlen("Infinity")) ||
-                         (STARTS_WITH_CI("-Infinity", extendedToken) &&
-                          m_osToken.size() + 1 <= strlen("-Infinity")) ||
-                         (STARTS_WITH_CI("NaN", extendedToken) &&
-                          m_osToken.size() + 1 <= strlen("NaN")) )
+                    if ((STARTS_WITH_CI("Infinity", extendedToken) &&
+                         m_osToken.size() + 1 <= strlen("Infinity")) ||
+                        (STARTS_WITH_CI("-Infinity", extendedToken) &&
+                         m_osToken.size() + 1 <= strlen("-Infinity")) ||
+                        (STARTS_WITH_CI("NaN", extendedToken) &&
+                         m_osToken.size() + 1 <= strlen("NaN")))
                     {
                         m_osToken += ch;
                     }
@@ -494,31 +491,31 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 AdvanceChar(pStr, nLength);
             }
 
-            if( nLength != 0 || bFinished )
+            if (nLength != 0 || bFinished)
             {
                 const char firstCh = m_osToken[0];
-                if( firstCh == 'i' || firstCh == 'I' )
+                if (firstCh == 'i' || firstCh == 'I')
                 {
-                    if( !EQUAL(m_osToken.c_str(), "Infinity") )
+                    if (!EQUAL(m_osToken.c_str(), "Infinity"))
                     {
                         return EmitException("Invalid number");
                     }
                 }
-                else if( firstCh == '-' )
+                else if (firstCh == '-')
                 {
-                    if( m_osToken[1] == 'i' || m_osToken[1] == 'I' )
+                    if (m_osToken[1] == 'i' || m_osToken[1] == 'I')
                     {
-                        if( !EQUAL(m_osToken.c_str(), "-Infinity") )
+                        if (!EQUAL(m_osToken.c_str(), "-Infinity"))
                         {
                             return EmitException("Invalid number");
                         }
                     }
                 }
-                else if( firstCh == 'n' || firstCh == 'N' )
+                else if (firstCh == 'n' || firstCh == 'N')
                 {
-                    if( m_osToken[1] == 'a' || m_osToken[1] == 'A' )
+                    if (m_osToken[1] == 'a' || m_osToken[1] == 'A')
                     {
-                        if( !EQUAL(m_osToken.c_str(), "NaN") )
+                        if (!EQUAL(m_osToken.c_str(), "NaN"))
                         {
                             return EmitException("Invalid number");
                         }
@@ -530,38 +527,38 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 m_aState.pop_back();
             }
 
-            if( nLength == 0 )
+            if (nLength == 0)
             {
-                if( bFinished )
+                if (bFinished)
                 {
                     return CheckStackEmpty();
                 }
                 return true;
             }
         }
-        else if( eCurState == STRING )
+        else if (eCurState == STRING)
         {
             bool bEOS = false;
-            while( nLength )
+            while (nLength)
             {
-                if( m_osToken.size() == m_nMaxStringSize )
+                if (m_osToken.size() == m_nMaxStringSize)
                 {
                     return EmitException("Too many characters in number");
                 }
 
                 char ch = *pStr;
-                if( m_bInUnicode)
+                if (m_bInUnicode)
                 {
-                    if( m_osUnicodeHex.size() == 8 )
+                    if (m_osUnicodeHex.size() == 8)
                     {
                         DecodeUnicode();
                     }
-                    else if( m_osUnicodeHex.size() == 4 )
+                    else if (m_osUnicodeHex.size() == 4)
                     {
                         /* Start of next surrogate pair ? */
-                        if( m_nLastChar == '\\' )
+                        if (m_nLastChar == '\\')
                         {
-                            if( ch == 'u' )
+                            if (ch == 'u')
                             {
                                 AdvanceChar(pStr, nLength);
                                 continue;
@@ -573,9 +570,9 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                                 m_bInStringEscape = true;
                             }
                         }
-                        else if( m_nLastChar == 'u' )
+                        else if (m_nLastChar == 'u')
                         {
-                            if( IsHexDigit(ch) )
+                            if (IsHexDigit(ch))
                             {
                                 m_osUnicodeHex += ch;
                             }
@@ -583,14 +580,15 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                             {
                                 char szMessage[64];
                                 snprintf(szMessage, sizeof(szMessage),
-                                    "Illegal character in unicode "
-                                    "sequence (\\%c)", ch);
+                                         "Illegal character in unicode "
+                                         "sequence (\\%c)",
+                                         ch);
                                 return EmitException(szMessage);
                             }
                             AdvanceChar(pStr, nLength);
                             continue;
                         }
-                        else if( ch == '\\' )
+                        else if (ch == '\\')
                         {
                             AdvanceChar(pStr, nLength);
                             continue;
@@ -603,11 +601,11 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                     }
                     else
                     {
-                        if( IsHexDigit(ch) )
+                        if (IsHexDigit(ch))
                         {
                             m_osUnicodeHex += ch;
-                            if( m_osUnicodeHex.size() == 4 &&
-                                !IsHighSurrogate(getUCSChar(m_osUnicodeHex)) )
+                            if (m_osUnicodeHex.size() == 4 &&
+                                !IsHighSurrogate(getUCSChar(m_osUnicodeHex)))
                             {
                                 DecodeUnicode();
                             }
@@ -616,8 +614,9 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                         {
                             char szMessage[64];
                             snprintf(szMessage, sizeof(szMessage),
-                                "Illegal character in unicode "
-                                "sequence (\\%c)", ch);
+                                     "Illegal character in unicode "
+                                     "sequence (\\%c)",
+                                     ch);
                             return EmitException(szMessage);
                         }
                         AdvanceChar(pStr, nLength);
@@ -625,21 +624,21 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                     }
                 }
 
-                if( m_bInStringEscape )
+                if (m_bInStringEscape)
                 {
-                    if( ch == '"' || ch == '\\' || ch == '/' )
+                    if (ch == '"' || ch == '\\' || ch == '/')
                         m_osToken += ch;
-                    else if( ch == 'b' )
+                    else if (ch == 'b')
                         m_osToken += '\b';
-                    else if( ch == 'f' )
+                    else if (ch == 'f')
                         m_osToken += '\f';
-                    else if( ch == 'n' )
+                    else if (ch == 'n')
                         m_osToken += '\n';
-                    else if( ch == 'r' )
+                    else if (ch == 'r')
                         m_osToken += '\r';
-                    else if( ch == 't' )
+                    else if (ch == 't')
                         m_osToken += '\t';
-                    else if( ch == 'u' )
+                    else if (ch == 'u')
                     {
                         m_bInUnicode = true;
                     }
@@ -654,20 +653,20 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                     AdvanceChar(pStr, nLength);
                     continue;
                 }
-                else if( ch == '\\' )
+                else if (ch == '\\')
                 {
                     m_bInStringEscape = true;
                     AdvanceChar(pStr, nLength);
                     continue;
                 }
-                else if( ch == '"' )
+                else if (ch == '"')
                 {
                     bEOS = true;
                     AdvanceChar(pStr, nLength);
                     SkipSpace(pStr, nLength);
 
-                    if( !m_aeObjectState.empty() &&
-                        m_aeObjectState.back() == IN_KEY )
+                    if (!m_aeObjectState.empty() &&
+                        m_aeObjectState.back() == IN_KEY)
                     {
                         StartObjectMember(m_osToken.c_str(), m_osToken.size());
                     }
@@ -685,11 +684,11 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 AdvanceChar(pStr, nLength);
             }
 
-            if( nLength == 0 )
+            if (nLength == 0)
             {
-                if( bFinished )
+                if (bFinished)
                 {
-                    if( !bEOS )
+                    if (!bEOS)
                     {
                         return EmitException("Unterminated string");
                     }
@@ -698,12 +697,12 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 return true;
             }
         }
-        else if( eCurState == ARRAY )
+        else if (eCurState == ARRAY)
         {
             SkipSpace(pStr, nLength);
-            if( nLength == 0 )
+            if (nLength == 0)
             {
-                if( bFinished )
+                if (bFinished)
                 {
                     return EmitException("Unterminated array");
                 }
@@ -711,18 +710,18 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
             }
 
             char ch = *pStr;
-            if( ch == ',' )
+            if (ch == ',')
             {
-                if( m_abArrayState.back() != ArrayState::AFTER_VALUE )
+                if (m_abArrayState.back() != ArrayState::AFTER_VALUE)
                 {
                     return EmitUnexpectedChar(ch, "','");
                 }
                 m_abArrayState.back() = ArrayState::AFTER_COMMA;
                 AdvanceChar(pStr, nLength);
             }
-            else if( ch == ']' )
+            else if (ch == ']')
             {
-                if( m_abArrayState.back() == ArrayState::AFTER_COMMA)
+                if (m_abArrayState.back() == ArrayState::AFTER_COMMA)
                 {
                     return EmitException("Missing value");
                 }
@@ -732,16 +731,17 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 m_abArrayState.pop_back();
                 m_aState.pop_back();
             }
-            else if( IsValidNewToken(ch) )
+            else if (IsValidNewToken(ch))
             {
-                if( m_abArrayState.back() == ArrayState::AFTER_VALUE )
+                if (m_abArrayState.back() == ArrayState::AFTER_VALUE)
                 {
-                    return EmitException("Unexpected state: ',' or ']' expected");
+                    return EmitException(
+                        "Unexpected state: ',' or ']' expected");
                 }
                 m_abArrayState.back() = ArrayState::AFTER_VALUE;
 
                 StartArrayMember();
-                if( !StartNewToken(pStr, nLength) )
+                if (!StartNewToken(pStr, nLength))
                 {
                     return false;
                 }
@@ -751,12 +751,12 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 return EmitUnexpectedChar(ch);
             }
         }
-        else if( eCurState == OBJECT )
+        else if (eCurState == OBJECT)
         {
             SkipSpace(pStr, nLength);
-            if( nLength == 0 )
+            if (nLength == 0)
             {
-                if( bFinished )
+                if (bFinished)
                 {
                     return EmitException("Unterminated object");
                 }
@@ -764,9 +764,9 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
             }
 
             char ch = *pStr;
-            if( ch == ',' )
+            if (ch == ',')
             {
-                if( m_aeObjectState.back() != IN_VALUE )
+                if (m_aeObjectState.back() != IN_VALUE)
                 {
                     return EmitUnexpectedChar(ch, "','");
                 }
@@ -774,19 +774,19 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 m_aeObjectState.back() = WAITING_KEY;
                 AdvanceChar(pStr, nLength);
             }
-            else if( ch == ':' )
+            else if (ch == ':')
             {
-                if( m_aeObjectState.back() != IN_KEY )
+                if (m_aeObjectState.back() != IN_KEY)
                 {
                     return EmitUnexpectedChar(ch, "':'");
                 }
                 m_aeObjectState.back() = KEY_FINISHED;
                 AdvanceChar(pStr, nLength);
             }
-            else if( ch == '}' )
+            else if (ch == '}')
             {
-                if( m_aeObjectState.back() == WAITING_KEY ||
-                    m_aeObjectState.back() == IN_VALUE )
+                if (m_aeObjectState.back() == WAITING_KEY ||
+                    m_aeObjectState.back() == IN_VALUE)
                 {
                     // nothing
                 }
@@ -800,17 +800,17 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 m_aeObjectState.pop_back();
                 m_aState.pop_back();
             }
-            else if( IsValidNewToken(ch) )
+            else if (IsValidNewToken(ch))
             {
-                if( m_aeObjectState.back() == WAITING_KEY )
+                if (m_aeObjectState.back() == WAITING_KEY)
                 {
-                    if( ch != '"' )
+                    if (ch != '"')
                     {
                         return EmitUnexpectedChar(ch, "'\"'");
                     }
-                     m_aeObjectState.back() = IN_KEY;
+                    m_aeObjectState.back() = IN_KEY;
                 }
-                else if( m_aeObjectState.back() == KEY_FINISHED )
+                else if (m_aeObjectState.back() == KEY_FINISHED)
                 {
                     m_aeObjectState.back() = IN_VALUE;
                 }
@@ -818,7 +818,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 {
                     return EmitException("Unexpected state");
                 }
-                if( !StartNewToken(pStr, nLength) )
+                if (!StartNewToken(pStr, nLength))
                 {
                     return false;
                 }
@@ -831,41 +831,41 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
         else /* if( eCurState == STATE_TRUE || eCurState == STATE_FALSE ||
                     eCurState == STATE_NULL ) */
         {
-            while(nLength)
+            while (nLength)
             {
                 char ch = *pStr;
-                if( eCurState == STATE_NULL && (ch == 'a' || ch == 'A') &&
-                    m_osToken.size() == 1 )
+                if (eCurState == STATE_NULL && (ch == 'a' || ch == 'A') &&
+                    m_osToken.size() == 1)
                 {
                     m_aState.back() = NUMBER;
                     break;
                 }
-                if( isalpha(ch) )
+                if (isalpha(ch))
                 {
                     m_osToken += ch;
-                    if( eCurState == STATE_TRUE &&
+                    if (eCurState == STATE_TRUE &&
                         (m_osToken.size() > strlen("true") ||
-                        memcmp(m_osToken.c_str(), "true",
-                               m_osToken.size()) != 0) )
+                         memcmp(m_osToken.c_str(), "true", m_osToken.size()) !=
+                             0))
                     {
                         return EmitUnexpectedChar(*pStr);
                     }
-                    else if( eCurState == STATE_FALSE &&
-                        (m_osToken.size() > strlen("false") ||
-                        memcmp(m_osToken.c_str(), "false",
-                               m_osToken.size()) != 0) )
+                    else if (eCurState == STATE_FALSE &&
+                             (m_osToken.size() > strlen("false") ||
+                              memcmp(m_osToken.c_str(), "false",
+                                     m_osToken.size()) != 0))
                     {
                         return EmitUnexpectedChar(*pStr);
                     }
-                    else if( eCurState == STATE_NULL &&
-                        (m_osToken.size() > strlen("null") ||
-                        memcmp(m_osToken.c_str(), "null",
-                               m_osToken.size()) != 0) )
+                    else if (eCurState == STATE_NULL &&
+                             (m_osToken.size() > strlen("null") ||
+                              memcmp(m_osToken.c_str(), "null",
+                                     m_osToken.size()) != 0))
                     {
                         return EmitUnexpectedChar(*pStr);
                     }
                 }
-                else if( isspace(ch) || ch == ',' || ch == '}' || ch == ']' )
+                else if (isspace(ch) || ch == ',' || ch == '}' || ch == ']')
                 {
                     SkipSpace(pStr, nLength);
                     break;
@@ -876,53 +876,52 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 }
                 AdvanceChar(pStr, nLength);
             }
-            if( m_aState.back() == NUMBER )
+            if (m_aState.back() == NUMBER)
             {
                 continue;
             }
-            if( nLength == 0 )
+            if (nLength == 0)
             {
-                if( bFinished )
+                if (bFinished)
                 {
-                    if( !CheckAndEmitTrueFalseOrNull(0) )
+                    if (!CheckAndEmitTrueFalseOrNull(0))
                         return false;
                     return CheckStackEmpty();
                 }
                 return true;
             }
 
-            if( !CheckAndEmitTrueFalseOrNull(*pStr) )
+            if (!CheckAndEmitTrueFalseOrNull(*pStr))
                 return false;
         }
     }
 }
 
-
 /************************************************************************/
 /*                       GetSerializedString()                          */
 /************************************************************************/
 
-std::string CPLJSonStreamingParser::GetSerializedString(const char* pszStr)
+std::string CPLJSonStreamingParser::GetSerializedString(const char *pszStr)
 {
     std::string osStr("\"");
-    for( int i = 0; pszStr[i]; i++ )
+    for (int i = 0; pszStr[i]; i++)
     {
         char ch = pszStr[i];
-        if( ch == '\b' )
+        if (ch == '\b')
             osStr += "\\b";
-        else if( ch == '\f' )
+        else if (ch == '\f')
             osStr += "\\f";
-        else if( ch == '\n' )
+        else if (ch == '\n')
             osStr += "\\n";
-        else if( ch == '\r' )
+        else if (ch == '\r')
             osStr += "\\r";
-        else if( ch == '\t' )
+        else if (ch == '\t')
             osStr += "\\t";
-        else if( ch == '"' )
+        else if (ch == '"')
             osStr += "\\\"";
-        else if( ch == '\\' )
+        else if (ch == '\\')
             osStr += "\\\\";
-        else if( static_cast<unsigned char>(ch) < ' ' )
+        else if (static_cast<unsigned char>(ch) < ' ')
             osStr += CPLSPrintf("\\u%04X", ch);
         else
             osStr += ch;

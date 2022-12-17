@@ -34,147 +34,179 @@
 
 namespace tut
 {
-    // Common fixture with test data
-    struct test_triangulation_data
+// Common fixture with test data
+struct test_triangulation_data
+{
+    GDALTriangulation *psDT;
+
+    test_triangulation_data() : psDT(nullptr)
     {
-        GDALTriangulation* psDT;
-
-        test_triangulation_data() : psDT(nullptr) {}
-        ~test_triangulation_data() { GDALTriangulationFree(psDT); }
-    };
-
-    // Register test group
-    typedef test_group<test_triangulation_data> group;
-    typedef group::object object;
-    group test_triangulation_group("Triangulation");
-
-    template<>
-    template<>
-    void object::test<1>()
-    {
-        if( GDALHasTriangulation() )
-        {
-            double adfX[] = { 0, -5, -5, 5, 5 };
-            double adfY[] = { 0, -5, 5, -5, 5 };
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
-            psDT = GDALTriangulationCreateDelaunay(2, adfX, adfY);
-            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
-            CPLPopErrorHandler();
-            ensure(psDT == nullptr);
-        }
     }
-
-    template<>
-    template<>
-    void object::test<2>()
+    ~test_triangulation_data()
     {
-        if( GDALHasTriangulation() )
-        {
-            double adfX[] = { 0, 1, 2, 3 };
-            double adfY[] = { 0, 1, 2, 3 };
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
-            psDT = GDALTriangulationCreateDelaunay(4, adfX, adfY);
-            CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
-            CPLPopErrorHandler();
-            ensure(psDT == nullptr);
-        }
+        GDALTriangulationFree(psDT);
     }
+};
 
-    template<>
-    template<>
-    void object::test<3>()
+// Register test group
+typedef test_group<test_triangulation_data> group;
+typedef group::object object;
+group test_triangulation_group("Triangulation");
+
+template <> template <> void object::test<1>()
+{
+    if (GDALHasTriangulation())
     {
-        if( GDALHasTriangulation() )
+        double adfX[] = {0, -5, -5, 5, 5};
+        double adfY[] = {0, -5, 5, -5, 5};
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
+        psDT = GDALTriangulationCreateDelaunay(2, adfX, adfY);
+        CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
+        CPLPopErrorHandler();
+        ensure(psDT == nullptr);
+    }
+}
+
+template <> template <> void object::test<2>()
+{
+    if (GDALHasTriangulation())
+    {
+        double adfX[] = {0, 1, 2, 3};
+        double adfY[] = {0, 1, 2, 3};
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", "YES");
+        psDT = GDALTriangulationCreateDelaunay(4, adfX, adfY);
+        CPLSetConfigOption("QHULL_LOG_TO_TEMP_FILE", nullptr);
+        CPLPopErrorHandler();
+        ensure(psDT == nullptr);
+    }
+}
+
+template <> template <> void object::test<3>()
+{
+    if (GDALHasTriangulation())
+    {
         {
+            double adfX[] = {0, -5, -5, 5, 5};
+            double adfY[] = {0, -5, 5, -5, 5};
+            int i, j;
+            psDT = GDALTriangulationCreateDelaunay(5, adfX, adfY);
+            ensure(psDT != nullptr);
+            ensure_equals(psDT->nFacets, 4);
+            for (i = 0; i < psDT->nFacets; i++)
             {
-                double adfX[] = { 0, -5, -5, 5, 5 };
-                double adfY[] = { 0, -5, 5, -5, 5 };
-                int i, j;
-                psDT = GDALTriangulationCreateDelaunay(5, adfX, adfY);
-                ensure(psDT != nullptr);
-                ensure_equals(psDT->nFacets, 4);
-                for(i=0;i<psDT->nFacets;i++)
+                for (j = 0; j < 3; j++)
                 {
-                    for(j=0;j<3;j++)
-                    {
-                        ensure(psDT->pasFacets[i].anVertexIdx[j] >= 0);
-                        ensure(psDT->pasFacets[i].anVertexIdx[j] <= 4);
-                        ensure(psDT->pasFacets[i].anNeighborIdx[j] >= -1);
-                        ensure(psDT->pasFacets[i].anNeighborIdx[j] <= 4);
-                    }
+                    ensure(psDT->pasFacets[i].anVertexIdx[j] >= 0);
+                    ensure(psDT->pasFacets[i].anVertexIdx[j] <= 4);
+                    ensure(psDT->pasFacets[i].anNeighborIdx[j] >= -1);
+                    ensure(psDT->pasFacets[i].anNeighborIdx[j] <= 4);
                 }
+            }
+            int face;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure_equals(
+                GDALTriangulationFindFacetDirected(psDT, 0, 0, 0, &face),
+                FALSE);
+            ensure_equals(
+                GDALTriangulationFindFacetBruteForce(psDT, 0, 0, &face), FALSE);
+            double l1, l2, l3;
+            ensure_equals(GDALTriangulationComputeBarycentricCoordinates(
+                              psDT, 0, 0, 0, &l1, &l2, &l3),
+                          FALSE);
+            CPLPopErrorHandler();
+            ensure_equals(GDALTriangulationComputeBarycentricCoefficients(
+                              psDT, adfX, adfY),
+                          TRUE);
+            ensure_equals(GDALTriangulationComputeBarycentricCoefficients(
+                              psDT, adfX, adfY),
+                          TRUE);
+        }
+
+        // Points inside
+        {
+            double adfX[] = {0.1, 0.9, 0.499, -0.9};
+            double adfY[] = {0.9, 0.1, -0.5, 0.1};
+            for (int i = 0; i < 4; i++)
+            {
+                double x = adfX[i];
+                double y = adfY[i];
+                int new_face;
                 int face;
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 0, 0, 0, &face), FALSE);
-                ensure_equals(GDALTriangulationFindFacetBruteForce(psDT, 0, 0, &face), FALSE);
+                ensure_equals(
+                    GDALTriangulationFindFacetDirected(psDT, 0, x, y, &face),
+                    TRUE);
+                ensure(face >= 0 && face < 4);
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 1, x, y,
+                                                                 &new_face),
+                              TRUE);
+                ensure_equals(face, new_face);
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 2, x, y,
+                                                                 &new_face),
+                              TRUE);
+                ensure_equals(face, new_face);
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 3, x, y,
+                                                                 &new_face),
+                              TRUE);
+                ensure_equals(face, new_face);
+                ensure_equals(
+                    GDALTriangulationFindFacetBruteForce(psDT, x, y, &new_face),
+                    TRUE);
+                ensure_equals(face, new_face);
+
                 double l1, l2, l3;
-                ensure_equals(GDALTriangulationComputeBarycentricCoordinates(psDT, 0, 0, 0, &l1, &l2, &l3), FALSE);
-                CPLPopErrorHandler();
-                ensure_equals(GDALTriangulationComputeBarycentricCoefficients(psDT, adfX, adfY) , TRUE);
-                ensure_equals(GDALTriangulationComputeBarycentricCoefficients(psDT, adfX, adfY) , TRUE);
+                GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y,
+                                                               &l1, &l2, &l3);
+                ensure(l1 >= 0 && l1 <= 1);
+                ensure(l2 >= 0 && l2 <= 1);
+                ensure(l3 >= 0 && l3 <= 1);
+                ensure_equals("", l3, 1.0 - l1 - l2, 1e-10);
             }
+        }
 
-            // Points inside
+        // Points outside
+        {
+            double adfX[] = {0, 10, 0, -10};
+            double adfY[] = {10, 0, -10, 0};
+            for (int i = 0; i < 4; i++)
             {
-                double adfX[] = { 0.1, 0.9, 0.499, -0.9 };
-                double adfY[] = { 0.9, 0.1, -0.5, 0.1 };
-                for(int i=0;i<4;i++)
-                {
-                    double x = adfX[i];
-                    double y = adfY[i];
-                    int new_face;
-                    int face;
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 0, x, y, &face), TRUE);
-                    ensure(face >= 0 && face < 4);
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 1, x, y, &new_face), TRUE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 2, x, y, &new_face), TRUE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 3, x, y, &new_face), TRUE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetBruteForce(psDT, x, y, &new_face), TRUE);
-                    ensure_equals(face, new_face);
+                double x = adfX[i];
+                double y = adfY[i];
+                int new_face;
+                int face;
+                ensure_equals(
+                    GDALTriangulationFindFacetDirected(psDT, 0, x, y, &face),
+                    FALSE);
+                ensure(face < 0 || (face >= 0 && face < 4));
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 1, x, y,
+                                                                 &new_face),
+                              FALSE);
+                ensure_equals(face, new_face);
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 2, x, y,
+                                                                 &new_face),
+                              FALSE);
+                ensure_equals(face, new_face);
+                ensure_equals(GDALTriangulationFindFacetDirected(psDT, 3, x, y,
+                                                                 &new_face),
+                              FALSE);
+                ensure_equals(face, new_face);
+                ensure_equals(
+                    GDALTriangulationFindFacetBruteForce(psDT, x, y, &new_face),
+                    FALSE);
+                ensure_equals(face, new_face);
 
-                    double l1, l2, l3;
-                    GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y, &l1, &l2, &l3);
-                    ensure(l1 >= 0 && l1 <= 1);
-                    ensure(l2 >= 0 && l2 <= 1);
-                    ensure(l3 >= 0 && l3 <= 1);
-                    ensure_equals("",l3, 1.0 -l1 - l2,1e-10);
-                }
-            }
-
-            // Points outside
-            {
-                double adfX[] = { 0, 10, 0, -10 };
-                double adfY[] = { 10, 0, -10, 0 };
-                for(int i=0;i<4;i++)
-                {
-                    double x = adfX[i];
-                    double y = adfY[i];
-                    int new_face;
-                    int face;
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 0, x, y, &face), FALSE);
-                    ensure(face < 0 || (face >= 0 && face < 4));
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 1, x, y, &new_face), FALSE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 2, x, y, &new_face), FALSE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetDirected(psDT, 3, x, y, &new_face), FALSE);
-                    ensure_equals(face, new_face);
-                    ensure_equals(GDALTriangulationFindFacetBruteForce(psDT, x, y, &new_face), FALSE);
-                    ensure_equals(face, new_face);
-
-                    double l1, l2, l3;
-                    if( face < 0 )
-                        face = 0;
-                    GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y, &l1, &l2, &l3);
-                    ensure("outside", !((l1 >= 0 && l1 <= 1) && (l2 >= 0 && l2 <= 1) && (l3 >= 0 && l3 <= 1)));
-                    ensure_equals("",l3, 1.0 -l1 - l2,1e-10);
-                }
+                double l1, l2, l3;
+                if (face < 0)
+                    face = 0;
+                GDALTriangulationComputeBarycentricCoordinates(psDT, face, x, y,
+                                                               &l1, &l2, &l3);
+                ensure("outside",
+                       !((l1 >= 0 && l1 <= 1) && (l2 >= 0 && l2 <= 1) &&
+                         (l3 >= 0 && l3 <= 1)));
+                ensure_equals("", l3, 1.0 - l1 - l2, 1e-10);
             }
         }
     }
-} // namespace tut
+}
+}  // namespace tut

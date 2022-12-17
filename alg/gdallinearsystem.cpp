@@ -51,82 +51,84 @@ CPL_CVSID("$Id$")
 #ifndef HAVE_ARMADILLO
 namespace
 {
-    // LU decomposition of the quadratic matrix A
-    // see https://en.wikipedia.org/wiki/LU_decomposition#C_code_examples
-    bool solve( GDALMatrix & A, GDALMatrix & RHS, GDALMatrix & X, double eps )
+// LU decomposition of the quadratic matrix A
+// see https://en.wikipedia.org/wiki/LU_decomposition#C_code_examples
+bool solve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X, double eps)
+{
+    assert(A.getNumRows() == A.getNumCols());
+    if (eps < 0)
+        return false;
+    int const m = A.getNumRows();
+    int const n = RHS.getNumCols();
+    // row permutations
+    std::vector<int> perm(m);
+    for (int iRow = 0; iRow < m; ++iRow)
+        perm[iRow] = iRow;
+
+    for (int step = 0; step < m - 1; ++step)
     {
-        assert(A.getNumRows() == A.getNumCols());
-        if(eps < 0) return false;
-        int const m = A.getNumRows();
-        int const n = RHS.getNumCols();
-        // row permutations
-        std::vector<int> perm(m);
-        for(int iRow = 0; iRow < m; ++iRow)
-            perm[iRow] = iRow;
-
-        for(int step = 0; step < m - 1; ++step)
+        // determine pivot element
+        int iMax = step;
+        double dMax = std::abs(A(step, step));
+        for (int i = step + 1; i < m; ++i)
         {
-            // determine pivot element
-            int iMax = step;
-            double dMax = std::abs(A(step, step));
-            for(int i = step + 1; i < m; ++i)
+            if (std::abs(A(i, step)) > dMax)
             {
-                if(std::abs(A(i, step)) > dMax)
-                {
-                    iMax = i;
-                    dMax = std::abs(A(i, step));
-                }
-            }
-            if(dMax <= eps)
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "GDALLinearSystemSolve: matrix not invertible" );
-                return false;
-            }
-            // swap rows
-            if(iMax != step)
-            {
-                std::swap(perm[iMax], perm[step]);
-                for(int iCol = 0; iCol < m; ++iCol)
-                {
-                    std::swap(A(iMax, iCol), A(step, iCol));
-                }
-            }
-            for(int iRow = step + 1; iRow < m; ++iRow)
-            {
-                A(iRow, step) /= A(step, step);
-            }
-            for(int iCol = step + 1; iCol < m; ++iCol)
-            {
-                for(int iRow = step + 1; iRow < m; ++iRow)
-                {
-                    A(iRow, iCol) -= A(iRow, step) * A(step, iCol);
-                }
+                iMax = i;
+                dMax = std::abs(A(i, step));
             }
         }
-
-        // LUP solve;
-        for(int iCol = 0; iCol < n; ++iCol)
+        if (dMax <= eps)
         {
-            for (int iRow = 0; iRow < m; ++iRow)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALLinearSystemSolve: matrix not invertible");
+            return false;
+        }
+        // swap rows
+        if (iMax != step)
+        {
+            std::swap(perm[iMax], perm[step]);
+            for (int iCol = 0; iCol < m; ++iCol)
             {
-                X(iRow, iCol) = RHS(perm[iRow], iCol);
-                for (int k = 0; k < iRow; ++k)
-                {
-                    X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
-                }
-            }
-            for (int iRow = m - 1; iRow >= 0; --iRow)
-            {
-                for (int k = iRow + 1; k < m; ++k)
-                {
-                    X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
-                }
-                X(iRow, iCol) /= A(iRow, iRow);
+                std::swap(A(iMax, iCol), A(step, iCol));
             }
         }
-        return true;
+        for (int iRow = step + 1; iRow < m; ++iRow)
+        {
+            A(iRow, step) /= A(step, step);
+        }
+        for (int iCol = step + 1; iCol < m; ++iCol)
+        {
+            for (int iRow = step + 1; iRow < m; ++iRow)
+            {
+                A(iRow, iCol) -= A(iRow, step) * A(step, iCol);
+            }
+        }
     }
+
+    // LUP solve;
+    for (int iCol = 0; iCol < n; ++iCol)
+    {
+        for (int iRow = 0; iRow < m; ++iRow)
+        {
+            X(iRow, iCol) = RHS(perm[iRow], iCol);
+            for (int k = 0; k < iRow; ++k)
+            {
+                X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
+            }
+        }
+        for (int iRow = m - 1; iRow >= 0; --iRow)
+        {
+            for (int k = iRow + 1; k < m; ++k)
+            {
+                X(iRow, iCol) -= A(iRow, k) * X(k, iCol);
+            }
+            X(iRow, iCol) /= A(iRow, iRow);
+        }
+    }
+    return true;
 }
+}  // namespace
 #endif
 /************************************************************************/
 /*                       GDALLinearSystemSolve()                        */
@@ -134,7 +136,7 @@ namespace
 /*   Solves the linear system A*X_i = RHS_i for each column i           */
 /*   where A is a square matrix.                                        */
 /************************************************************************/
-bool GDALLinearSystemSolve( GDALMatrix  & A, GDALMatrix  & RHS, GDALMatrix & X )
+bool GDALLinearSystemSolve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X)
 {
     assert(A.getNumRows() == RHS.getNumRows());
     assert(A.getNumCols() == X.getNumRows());
@@ -142,24 +144,28 @@ bool GDALLinearSystemSolve( GDALMatrix  & A, GDALMatrix  & RHS, GDALMatrix & X )
     try
     {
 #ifdef HAVE_ARMADILLO
-        arma::mat matA( A.data(), A.getNumRows(), A.getNumCols(), false, true );
-        arma::mat matRHS(RHS.data(), RHS.getNumRows(), RHS.getNumCols(), false, true );
+        arma::mat matA(A.data(), A.getNumRows(), A.getNumCols(), false, true);
+        arma::mat matRHS(RHS.data(), RHS.getNumRows(), RHS.getNumCols(), false,
+                         true);
         arma::mat matOut(X.data(), X.getNumRows(), X.getNumCols(), false, true);
-#if ARMA_VERSION_MAJOR > 6 || (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500 )
+#if ARMA_VERSION_MAJOR > 6 ||                                                  \
+    (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500)
         // Perhaps available in earlier versions, but didn't check
-        return arma::solve( matOut, matA, matRHS,
-          arma::solve_opts::equilibrate + arma::solve_opts::no_approx);
+        return arma::solve(matOut, matA, matRHS,
+                           arma::solve_opts::equilibrate +
+                               arma::solve_opts::no_approx);
 #else
-        return arma::solve( matOut, matA, matRHS );
+        return arma::solve(matOut, matA, matRHS);
 #endif
 
-#else //HAVE_ARMADILLO
+#else  // HAVE_ARMADILLO
         return solve(A, RHS, X, 0);
 #endif
     }
-    catch(std::exception const & e) {
-        CPLError( CE_Failure, CPLE_AppDefined,
-        "GDALLinearSystemSolve: %s", e.what() );
+    catch (std::exception const &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALLinearSystemSolve: %s",
+                 e.what());
         return false;
     }
 }

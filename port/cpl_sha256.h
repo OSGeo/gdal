@@ -33,7 +33,7 @@
 
 #include "cpl_port.h"
 
-#define CPL_SHA256_HASH_SIZE 32     /* 256 bit */
+#define CPL_SHA256_HASH_SIZE 32 /* 256 bit */
 #define CPL_SHA256_HASH_WORDS 8
 
 #ifndef GUInt64
@@ -42,37 +42,40 @@
 
 CPL_C_START
 
-struct _CPL_SHA256Context {
-        GUInt64 totalLength;
-        GUInt32 hash[CPL_SHA256_HASH_WORDS];
-        GUInt32 bufferLength;
-        union {
-                GUInt32 words[16];
-                GByte bytes[64];
-        } buffer;
+struct _CPL_SHA256Context
+{
+    GUInt64 totalLength;
+    GUInt32 hash[CPL_SHA256_HASH_WORDS];
+    GUInt32 bufferLength;
+    union
+    {
+        GUInt32 words[16];
+        GByte bytes[64];
+    } buffer;
 };
 typedef struct _CPL_SHA256Context CPL_SHA256Context;
 
-void CPL_DLL CPL_SHA256Init(CPL_SHA256Context * sc);
+void CPL_DLL CPL_SHA256Init(CPL_SHA256Context *sc);
 
-void CPL_DLL CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len);
+void CPL_DLL CPL_SHA256Update(CPL_SHA256Context *sc, const void *data,
+                              size_t len);
 
-void CPL_DLL CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE]);
+void CPL_DLL CPL_SHA256Final(CPL_SHA256Context *sc,
+                             GByte hash[CPL_SHA256_HASH_SIZE]);
 
-void CPL_DLL CPL_SHA256(const void *data, size_t len, GByte hash[CPL_SHA256_HASH_SIZE]);
+void CPL_DLL CPL_SHA256(const void *data, size_t len,
+                        GByte hash[CPL_SHA256_HASH_SIZE]);
 
 void CPL_DLL CPL_HMAC_SHA256(const void *pKey, size_t nKeyLen,
                              const void *pabyMessage, size_t nMessageLen,
                              GByte abyDigest[CPL_SHA256_HASH_SIZE]);
 
 // Not exported for now
-GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
-                                  const void* pabyData,
-                                  unsigned int nDataLen,
-                                  unsigned int* pnSignatureLen);
+GByte *CPL_RSA_SHA256_Sign(const char *pszPrivateKey, const void *pabyData,
+                           unsigned int nDataLen, unsigned int *pnSignatureLen);
 
 CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif  /* CPL_SHA256_INCLUDED_H */
+#endif /* CPL_SHA256_INCLUDED_H */

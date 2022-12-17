@@ -101,7 +101,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "avc.h"
-#include <ctype.h>      /* tolower() */
+#include <ctype.h> /* tolower() */
 
 static GBool _IsStringAlnum(const char *pszFname);
 
@@ -151,12 +151,12 @@ static GBool _IsStringAlnum(const char *pszFname);
  *
  * The handle will eventually have to be released with AVCE00ReadClose().
  **********************************************************************/
-AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
-                                AVCCoverType eNewCoverType, int nPrecision )
+AVCE00WritePtr AVCE00WriteOpen(const char *pszCoverPath,
+                               AVCCoverType eNewCoverType, int nPrecision)
 {
-    AVCE00WritePtr  psInfo;
-    int             i, nLen;
-    VSIStatBufL     sStatBuf;
+    AVCE00WritePtr psInfo;
+    int i, nLen;
+    VSIStatBufL sStatBuf;
 
     CPLErrorReset();
 
@@ -169,8 +169,8 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
                  "Invalid (empty) coverage directory name.");
         return nullptr;
     }
-    else if ( VSIStatL(pszCoverPath, &sStatBuf) == 0 &&
-              VSI_ISDIR(sStatBuf.st_mode) )
+    else if (VSIStatL(pszCoverPath, &sStatBuf) == 0 &&
+             VSI_ISDIR(sStatBuf.st_mode))
     {
         /*-------------------------------------------------------------
          * Directory already exists... make sure it is empty
@@ -178,14 +178,14 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          *------------------------------------------------------------*/
         char **papszFiles;
         papszFiles = VSIReadDir(pszCoverPath);
-        for(i=0; papszFiles && papszFiles[i]; i++)
+        for (i = 0; papszFiles && papszFiles[i]; i++)
         {
-            if (!EQUAL(".", papszFiles[i]) &&
-                !EQUAL("..", papszFiles[i]))
+            if (!EQUAL(".", papszFiles[i]) && !EQUAL("..", papszFiles[i]))
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "Cannot create coverage %s: directory already exists "
-                         "and is not empty.", pszCoverPath);
+                         "and is not empty.",
+                         pszCoverPath);
                 CSLDestroy(papszFiles);
                 papszFiles = nullptr;
                 return nullptr;
@@ -201,7 +201,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * Create new pszCoverPath directory.
          * This will fail if a file with the same name already exists.
          *------------------------------------------------------------*/
-        if( VSIMkdir(pszCoverPath, 0777) != 0 )
+        if (VSIMkdir(pszCoverPath, 0777) != 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to create coverage directory: %s.", pszCoverPath);
@@ -252,14 +252,14 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
      *----------------------------------------------------------------*/
     nLen = (int)strlen(pszCoverPath);
 
-    if (pszCoverPath[nLen-1] == '/' || pszCoverPath[nLen-1] == '\\')
+    if (pszCoverPath[nLen - 1] == '/' || pszCoverPath[nLen - 1] == '\\')
         psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
     else
     {
 #ifdef WIN32
-        psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\",pszCoverPath));
+        psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\", pszCoverPath));
 #else
-        psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/",pszCoverPath));
+        psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/", pszCoverPath));
 #endif
     }
 
@@ -271,25 +271,26 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
      * but for now we'll just produce an error if this happens.
      *----------------------------------------------------------------*/
     nLen = 0;
-    for( i = (int)strlen(psInfo->pszCoverPath)-1;
-        i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
-                psInfo->pszCoverPath[i-1] != '\\'&&
-                psInfo->pszCoverPath[i-1] != ':';
-        i-- )
+    for (i = (int)strlen(psInfo->pszCoverPath) - 1;
+         i > 0 && psInfo->pszCoverPath[i - 1] != '/' &&
+         psInfo->pszCoverPath[i - 1] != '\\' &&
+         psInfo->pszCoverPath[i - 1] != ':';
+         i--)
     {
         nLen++;
     }
 
     if (nLen > 0)
     {
-        psInfo->pszCoverName = CPLStrdup(psInfo->pszCoverPath+i);
+        psInfo->pszCoverName = CPLStrdup(psInfo->pszCoverPath + i);
         psInfo->pszCoverName[nLen] = '\0';
     }
     else
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Invalid coverage path (%s): "
-                 "coverage name must be included in path.", pszCoverPath);
+                 "coverage name must be included in path.",
+                 pszCoverPath);
 
         CPLFree(psInfo->pszCoverPath);
         CPLFree(psInfo);
@@ -297,7 +298,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
     }
 
     if (strlen(psInfo->pszCoverName) > 13 ||
-        !_IsStringAlnum(psInfo->pszCoverName) )
+        !_IsStringAlnum(psInfo->pszCoverName))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Invalid coverage name (%s): "
@@ -324,15 +325,15 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          * Lazy way to build the INFO path: simply add "../info/"...
          * this could probably be improved!
          *------------------------------------------------------------*/
-        size_t nInfoPathLen = strlen(psInfo->pszCoverPath)+9;
-        psInfo->pszInfoPath = (char*)CPLMalloc(nInfoPathLen);
+        size_t nInfoPathLen = strlen(psInfo->pszCoverPath) + 9;
+        psInfo->pszInfoPath = (char *)CPLMalloc(nInfoPathLen);
 #ifdef WIN32
-#  define AVC_INFOPATH "..\\info\\"
+#define AVC_INFOPATH "..\\info\\"
 #else
-#  define AVC_INFOPATH "../info/"
+#define AVC_INFOPATH "../info/"
 #endif
-        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s", psInfo->pszCoverPath,
-                                             AVC_INFOPATH);
+        snprintf(psInfo->pszInfoPath, nInfoPathLen, "%s%s",
+                 psInfo->pszCoverPath, AVC_INFOPATH);
 
         /*-------------------------------------------------------------
          * Check if the info directory exists and contains the "arc.dir"
@@ -345,21 +346,21 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
          *       should not, but this should not cause problems since the
          *       arc.dir is opened with "a+b" access.
          *------------------------------------------------------------*/
-        if ( VSIStatL(psInfo->pszInfoPath, &sStatBuf) == -1)
+        if (VSIStatL(psInfo->pszInfoPath, &sStatBuf) == -1)
         {
             VSILFILE *fp;
             char *pszArcDir;
             char *pszInfoDir;
 
-            pszArcDir = CPLStrdup(CPLSPrintf("%s%s",
-                                             psInfo->pszInfoPath, "arc.dir"));
+            pszArcDir =
+                CPLStrdup(CPLSPrintf("%s%s", psInfo->pszInfoPath, "arc.dir"));
 
             /* Remove the trailing "/" from pszInfoPath.  Most OSes are
              * forgiving, and allow mkdir to include the trailing character,
              * but some UNIXes are not. [GEH 2001/05/17]
              */
             pszInfoDir = CPLStrdup(psInfo->pszInfoPath);
-            pszInfoDir[strlen(pszInfoDir)-1] = '\0';
+            pszInfoDir[strlen(pszInfoDir) - 1] = '\0';
 
             VSIMkdir(pszInfoDir, 0777);
             fp = VSIFOpenL(pszArcDir, "a+b");
@@ -434,7 +435,6 @@ void AVCE00WriteClose(AVCE00WritePtr psInfo)
     CPLFree(psInfo);
 }
 
-
 /**********************************************************************
  *                          _IsStringAlnum()
  *
@@ -449,11 +449,11 @@ static GBool _IsStringAlnum(const char *pszFname)
 {
     GBool bOK = TRUE;
 
-    while(bOK && *pszFname != '\0')
+    while (bOK && *pszFname != '\0')
     {
         if (strchr(" \t.,/\\", (unsigned char)*pszFname) != nullptr)
             bOK = FALSE;
-        pszFname ++;
+        pszFname++;
     }
 
     return bOK;
@@ -470,36 +470,36 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
 {
     char szOldName[40], szOldExt[40], szNewName[40], *pszTmp;
     char szSysId[40], szUserId[40];
-    int  i;
+    int i;
 
-    if( psTableDef == nullptr )
+    if (psTableDef == nullptr)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return;
     }
 
     snprintf(szNewName, sizeof(szNewName), "%s", pszNewCoverName);
-    for(i=0; szNewName[i] != '\0'; i++)
-        szNewName[i] = (char) toupper(szNewName[i]);
+    for (i = 0; szNewName[i] != '\0'; i++)
+        szNewName[i] = (char)toupper(szNewName[i]);
 
     /*-----------------------------------------------------------------
      * Extract components from the current table name.
      *----------------------------------------------------------------*/
     strcpy(szOldName, psTableDef->szTableName);
 
-    if ( !EQUAL(psTableDef->szExternal, "XX") ||
-         (pszTmp = strchr(szOldName, '.')) == nullptr )
-        return;  /* We don't deal with that table */
+    if (!EQUAL(psTableDef->szExternal, "XX") ||
+        (pszTmp = strchr(szOldName, '.')) == nullptr)
+        return; /* We don't deal with that table */
 
     *pszTmp = '\0';
     pszTmp++;
 
     snprintf(szOldExt, sizeof(szOldExt), "%s", pszTmp);
-    if ( (pszTmp = strchr(szOldExt, ' ')) != nullptr )
+    if ((pszTmp = strchr(szOldExt, ' ')) != nullptr)
         *pszTmp = '\0';
 
     if (strlen(szOldExt) < 3)
-        return;  /* We don't deal with that table */
+        return; /* We don't deal with that table */
 
     /*-----------------------------------------------------------------
      * Look for system attributes with same name as table
@@ -513,25 +513,26 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
     if (strlen(szOldExt) == 3)
     {
         snprintf(szSysId, sizeof(szSysId), "%s#", szOldName);
-        snprintf(szUserId, sizeof(szUserId),"%s-ID", szOldName);
+        snprintf(szUserId, sizeof(szUserId), "%s-ID", szOldName);
 
-        for(i=0; i<psTableDef->numFields; i++)
+        for (i = 0; i < psTableDef->numFields; i++)
         {
             /* Remove trailing spaces */
-            if ((pszTmp=strchr(psTableDef->pasFieldDef[i].szName,' '))!=nullptr)
+            if ((pszTmp = strchr(psTableDef->pasFieldDef[i].szName, ' ')) !=
+                nullptr)
                 *pszTmp = '\0';
 
             if (EQUAL(psTableDef->pasFieldDef[i].szName, szSysId))
             {
                 snprintf(psTableDef->pasFieldDef[i].szName,
-                         sizeof(psTableDef->pasFieldDef[i].szName),
-                         "%s#", szNewName);
+                         sizeof(psTableDef->pasFieldDef[i].szName), "%s#",
+                         szNewName);
             }
             else if (EQUAL(psTableDef->pasFieldDef[i].szName, szUserId))
             {
                 snprintf(psTableDef->pasFieldDef[i].szName,
-                         sizeof(psTableDef->pasFieldDef[i].szName),
-                         "%s-ID", szNewName);
+                         sizeof(psTableDef->pasFieldDef[i].szName), "%s-ID",
+                         szNewName);
             }
         }
     }
@@ -539,9 +540,8 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
     /*-----------------------------------------------------------------
      * Build new table name
      *----------------------------------------------------------------*/
-    snprintf(psTableDef->szTableName,
-             sizeof(psTableDef->szTableName), "%s.%s", szNewName, szOldExt);
-
+    snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName), "%s.%s",
+             szNewName, szOldExt);
 }
 
 /**********************************************************************
@@ -558,12 +558,12 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
  * AVCWriteCloseCoverFile() will eventually have to be called to release the
  * resources used by the AVCBinFile structure.
  **********************************************************************/
-static
-int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
-                                 const char *pszLine, AVCTableDef *psTableDef)
+static int _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
+                                       const char *pszLine,
+                                       AVCTableDef *psTableDef)
 {
-    char        *pszPath, szFname[50]="";
-    int         i, nStatus = 0;
+    char *pszPath, szFname[50] = "";
+    int i, nStatus = 0;
 
     /* By now, new coverage precision should have been established */
     CPLAssert(psInfo->nPrecision != AVC_DEFAULT_PREC);
@@ -573,81 +573,82 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
      * contents of the header line.
      *----------------------------------------------------------------*/
     pszPath = psInfo->pszCoverPath;
-    switch(eType)
+    switch (eType)
     {
-      case AVCFileARC:
-        strcpy(szFname, "arc");
-        break;
-      case AVCFilePAL:
-        strcpy(szFname, "pal");
-        break;
-      case AVCFileCNT:
-        strcpy(szFname, "cnt");
-        break;
-      case AVCFileLAB:
-        strcpy(szFname, "lab");
-        break;
-      case AVCFileTOL:
-        if (psInfo->nPrecision == AVC_SINGLE_PREC)
-            strcpy(szFname, "tol");
-        else
-            strcpy(szFname, "par");
-        break;
-      case AVCFilePRJ:
-        strcpy(szFname, "prj");
-        break;
-      case AVCFileTXT:
-        strcpy(szFname, "txt");
-        break;
-      case AVCFileTX6:
-      /* For TX6/TX7: the filename is subclass_name.txt
-       */
+        case AVCFileARC:
+            strcpy(szFname, "arc");
+            break;
+        case AVCFilePAL:
+            strcpy(szFname, "pal");
+            break;
+        case AVCFileCNT:
+            strcpy(szFname, "cnt");
+            break;
+        case AVCFileLAB:
+            strcpy(szFname, "lab");
+            break;
+        case AVCFileTOL:
+            if (psInfo->nPrecision == AVC_SINGLE_PREC)
+                strcpy(szFname, "tol");
+            else
+                strcpy(szFname, "par");
+            break;
+        case AVCFilePRJ:
+            strcpy(szFname, "prj");
+            break;
+        case AVCFileTXT:
+            strcpy(szFname, "txt");
+            break;
+        case AVCFileTX6:
+            /* For TX6/TX7: the filename is subclass_name.txt
+             */
 
-        /* See bug 1261: It seems that empty subclass names are valid
-         * for TX7. In this case we'll default the filename to txt.txt
-         */
-        if (pszLine[0] == '\0')
-        {
-            strcpy(szFname, "txt.txt");
-        }
-        else if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
+            /* See bug 1261: It seems that empty subclass names are valid
+             * for TX7. In this case we'll default the filename to txt.txt
+             */
+            if (pszLine[0] == '\0')
+            {
+                strcpy(szFname, "txt.txt");
+            }
+            else if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid TX6/TX7 subclass name \"%s\"", pszLine);
+            else
+                snprintf(szFname, sizeof(szFname), "%s.txt", pszLine);
+            break;
+        case AVCFileRPL:
+            /* For RPL and RXP: the filename is region_name.pal or
+             * region_name.rxp
+             */
+            if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid RPL region name \"%s\"", pszLine);
+            else
+                snprintf(szFname, sizeof(szFname), "%s.pal", pszLine);
+            break;
+        case AVCFileRXP:
+            if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
+                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid RXP name \"%s\"",
+                         pszLine);
+            else
+                snprintf(szFname, sizeof(szFname), "%s.rxp", pszLine);
+            break;
+        case AVCFileTABLE:
+            /*-------------------------------------------------------------
+             * For tables, Filename will be based on info in the psTableDef
+             * but we need to rename the table and the system attributes
+             * based on the new coverage name.
+             *------------------------------------------------------------*/
+            if (psInfo->eCoverType != AVCCoverPC &&
+                psInfo->eCoverType != AVCCoverPC2)
+                pszPath = psInfo->pszInfoPath;
+            _AVCE00WriteRenameTable(psTableDef, psInfo->pszCoverName);
+            break;
+        default:
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Invalid TX6/TX7 subclass name \"%s\"", pszLine);
-        else
-            snprintf(szFname, sizeof(szFname), "%s.txt", pszLine);
-        break;
-      case AVCFileRPL:
-      /* For RPL and RXP: the filename is region_name.pal or region_name.rxp
-       */
-        if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Invalid RPL region name \"%s\"", pszLine);
-        else
-            snprintf(szFname, sizeof(szFname), "%s.pal", pszLine);
-        break;
-      case AVCFileRXP:
-        if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != nullptr)
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Invalid RXP name \"%s\"", pszLine);
-        else
-            snprintf(szFname, sizeof(szFname), "%s.rxp", pszLine);
-        break;
-      case AVCFileTABLE:
-        /*-------------------------------------------------------------
-         * For tables, Filename will be based on info in the psTableDef
-         * but we need to rename the table and the system attributes
-         * based on the new coverage name.
-         *------------------------------------------------------------*/
-        if (psInfo->eCoverType != AVCCoverPC &&
-            psInfo->eCoverType != AVCCoverPC2)
-            pszPath = psInfo->pszInfoPath;
-        _AVCE00WriteRenameTable(psTableDef, psInfo->pszCoverName);
-        break;
-      default:
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "_AVCE00WriteCreateCoverFile(): Unsupported file type!");
-        nStatus = -1;
-        break;
+                     "_AVCE00WriteCreateCoverFile(): Unsupported file type!");
+            nStatus = -1;
+            break;
     }
 
     /*-----------------------------------------------------------------
@@ -660,26 +661,22 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
     /*-----------------------------------------------------------------
      * Make sure filename is all lowercase and attempt to create the file
      *----------------------------------------------------------------*/
-    for(i=0; szFname[i] != '\0'; i++)
-        szFname[i] = (char) tolower(szFname[i]);
+    for (i = 0; szFname[i] != '\0'; i++)
+        szFname[i] = (char)tolower(szFname[i]);
 
     if (nStatus == 0)
     {
         psInfo->eCurFileType = eType;
 
         if (eType == AVCFileTABLE)
-            psInfo->hFile = AVCBinWriteCreateTable(pszPath,
-                                                   psInfo->pszCoverName,
-                                                   psTableDef,
-                                                   psInfo->eCoverType,
-                                                   psInfo->nPrecision,
-                                                   psInfo->psDBCSInfo);
+            psInfo->hFile = AVCBinWriteCreateTable(
+                pszPath, psInfo->pszCoverName, psTableDef, psInfo->eCoverType,
+                psInfo->nPrecision, psInfo->psDBCSInfo);
         else
 
-            psInfo->hFile = AVCBinWriteCreate(pszPath, szFname,
-                                              psInfo->eCoverType,
-                                              eType, psInfo->nPrecision,
-                                              psInfo->psDBCSInfo);
+            psInfo->hFile =
+                AVCBinWriteCreate(pszPath, szFname, psInfo->eCoverType, eType,
+                                  psInfo->nPrecision, psInfo->psDBCSInfo);
 
         if (psInfo->hFile == nullptr)
         {
@@ -699,8 +696,7 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
  * File should have been previously opened by _AVCE00WriteCreateCoverFile().
  *
  **********************************************************************/
-static
-void  _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
+static void _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
 {
     /*-----------------------------------------------------------------
      * PRJ sections behave differently... since there is only one "object"
@@ -731,7 +727,7 @@ void  _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
+int AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
 {
     /*-----------------------------------------------------------------
      * TODO: Update this call to use _AVCE00ReadNextLineE00(), if
@@ -763,15 +759,15 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * First check for a supersection header (TX6, RXP, IFO, ...)
          *------------------------------------------------------------*/
-        if ( AVCE00ParseSuperSectionHeader(psInfo->hParseInfo,
-                                           pszLine) == AVCFileUnknown )
+        if (AVCE00ParseSuperSectionHeader(psInfo->hParseInfo, pszLine) ==
+            AVCFileUnknown)
         {
             /*---------------------------------------------------------
              * This was not a supersection header... check if it is a simple
              * section header
              *--------------------------------------------------------*/
-            psInfo->eCurFileType=AVCE00ParseSectionHeader(psInfo->hParseInfo,
-                                                          pszLine);
+            psInfo->eCurFileType =
+                AVCE00ParseSectionHeader(psInfo->hParseInfo, pszLine);
         }
 
         /*-------------------------------------------------------------
@@ -806,14 +802,13 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
              *       of any output file... they just alter the psInfo state.
              *--------------------------------------------------------*/
 
-            nStatus = _AVCE00WriteCreateCoverFile(psInfo,
-                                                  psInfo->eCurFileType,
-                                       psInfo->hParseInfo->pszSectionHdrLine,
-                                                  nullptr);
+            nStatus = _AVCE00WriteCreateCoverFile(
+                psInfo, psInfo->eCurFileType,
+                psInfo->hParseInfo->pszSectionHdrLine, nullptr);
         }
     }
     else if (psInfo->eCurFileType == AVCFileTABLE &&
-             ! psInfo->hParseInfo->bTableHdrComplete )
+             !psInfo->hParseInfo->bTableHdrComplete)
     {
         /*-------------------------------------------------------------
          * We're reading a TABLE header... continue reading lines
@@ -824,14 +819,13 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
          * be the AVCTableDef, then data records will follow.
          *------------------------------------------------------------*/
         AVCTableDef *psTableDef;
-        psTableDef = (AVCTableDef*)AVCE00ParseNextLine(psInfo->hParseInfo,
-                                                       pszLine);
+        psTableDef =
+            (AVCTableDef *)AVCE00ParseNextLine(psInfo->hParseInfo, pszLine);
         if (psTableDef)
         {
-            nStatus = _AVCE00WriteCreateCoverFile(psInfo,
-                                                  psInfo->eCurFileType,
-                                       psInfo->hParseInfo->pszSectionHdrLine,
-                                                  psTableDef);
+            nStatus = _AVCE00WriteCreateCoverFile(
+                psInfo, psInfo->eCurFileType,
+                psInfo->hParseInfo->pszSectionHdrLine, psTableDef);
         }
     }
     else
@@ -862,7 +856,6 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
         }
     }
 
-
     if (psInfo->hParseInfo->bForceEndOfSection)
     {
         /*-------------------------------------------------------------
@@ -883,7 +876,6 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
     return nStatus;
 }
 
-
 /**********************************************************************
  *                          AVCE00DeleteCoverage()
  *
@@ -897,15 +889,15 @@ int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
  *
  * Returns 0 on success or -1 on error.
  **********************************************************************/
-int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
+int AVCE00DeleteCoverage(const char *pszCoverToDelete)
 {
     int i, j, nStatus = 0;
     char *pszInfoPath, *pszCoverPath, *pszCoverName;
     const char *pszFname;
-    char **papszTables=nullptr, **papszFiles=nullptr;
-    AVCE00ReadPtr   psInfo;
-    VSIStatBuf      sStatBuf;
-    AVCCoverType    eCoverType;
+    char **papszTables = nullptr, **papszFiles = nullptr;
+    AVCE00ReadPtr psInfo;
+    VSIStatBuf sStatBuf;
+    AVCCoverType eCoverType;
 
     CPLErrorReset();
 
@@ -937,16 +929,14 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
      * Delete files in cover directory.
      *----------------------------------------------------------------*/
     papszFiles = VSIReadDir(pszCoverPath);
-    for(i=0; nStatus==0 && papszFiles && papszFiles[i]; i++)
+    for (i = 0; nStatus == 0 && papszFiles && papszFiles[i]; i++)
     {
-        if (!EQUAL(".", papszFiles[i]) &&
-            !EQUAL("..", papszFiles[i]))
+        if (!EQUAL(".", papszFiles[i]) && !EQUAL("..", papszFiles[i]))
         {
             pszFname = CPLSPrintf("%s%s", pszCoverPath, papszFiles[i]);
             if (unlink(pszFname) != 0)
             {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed deleting %s%s",
+                CPLError(CE_Failure, CPLE_FileIO, "Failed deleting %s%s",
                          pszCoverPath, papszFiles[i]);
                 nStatus = -1;
                 break;
@@ -963,23 +953,21 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
      *----------------------------------------------------------------*/
     if (nStatus == 0 && eCoverType != AVCCoverPC && eCoverType != AVCCoverPC2)
     {
-        papszTables = AVCBinReadListTables(pszInfoPath, pszCoverName,
-                                           &papszFiles, eCoverType,
-                                           nullptr /*DBCSInfo*/);
+        papszTables =
+            AVCBinReadListTables(pszInfoPath, pszCoverName, &papszFiles,
+                                 eCoverType, nullptr /*DBCSInfo*/);
 
-        for(i=0; nStatus==0 && papszFiles && papszFiles[i]; i++)
+        for (i = 0; nStatus == 0 && papszFiles && papszFiles[i]; i++)
         {
             /* Convert table filename to lowercases */
-            for(j=0; papszFiles[i] && papszFiles[i][j]!='\0'; j++)
-                papszFiles[i][j] = (char) tolower(papszFiles[i][j]);
+            for (j = 0; papszFiles[i] && papszFiles[i][j] != '\0'; j++)
+                papszFiles[i][j] = (char)tolower(papszFiles[i][j]);
 
             /* Delete the .DAT file */
             pszFname = CPLSPrintf("%s%s.dat", pszInfoPath, papszFiles[i]);
-            if ( VSIStat(pszFname, &sStatBuf) != -1 &&
-                 unlink(pszFname) != 0)
+            if (VSIStat(pszFname, &sStatBuf) != -1 && unlink(pszFname) != 0)
             {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed deleting %s%s",
+                CPLError(CE_Failure, CPLE_FileIO, "Failed deleting %s%s",
                          pszInfoPath, papszFiles[i]);
                 nStatus = -1;
                 break;
@@ -987,11 +975,9 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
 
             /* Delete the .DAT file */
             pszFname = CPLSPrintf("%s%s.nit", pszInfoPath, papszFiles[i]);
-            if ( VSIStat(pszFname, &sStatBuf) != -1 &&
-                 unlink(pszFname) != 0)
+            if (VSIStat(pszFname, &sStatBuf) != -1 && unlink(pszFname) != 0)
             {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed deleting %s%s",
+                CPLError(CE_Failure, CPLE_FileIO, "Failed deleting %s%s",
                          pszInfoPath, papszFiles[i]);
                 nStatus = -1;
                 break;
@@ -1012,8 +998,8 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
     if (VSIRmdir(pszCoverPath) != 0)
     {
 #ifndef AVC_IGNORE_RMDIR_ERROR
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed deleting directory %s", pszCoverPath);
+        CPLError(CE_Failure, CPLE_FileIO, "Failed deleting directory %s",
+                 pszCoverPath);
         nStatus = -1;
 #endif
     }

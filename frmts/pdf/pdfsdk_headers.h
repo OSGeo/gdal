@@ -30,7 +30,8 @@
 #define PDFSDK_HEADERS_H
 
 /* We avoid to include cpl_port.h directly or indirectly */
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) &&               \
+     !defined(_MSC_VER))
 #pragma GCC system_header
 #endif
 
@@ -46,9 +47,11 @@
 #endif /* HAVE_PDFIUM */
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4244 ) /* conversion from 'const int' to 'Guchar', possible loss of data */
-#pragma warning( disable : 4267 ) /* conversion from 'size_t' to 'int', possible loss of data */
+#pragma warning(push)
+#pragma warning(disable : 4244) /* conversion from 'const int' to 'Guchar',    \
+                                   possible loss of data */
+#pragma warning(disable : 4267) /* conversion from 'size_t' to 'int', possible \
+                                   loss of data */
 #endif
 
 #if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 73)
@@ -71,11 +74,12 @@ typedef unsigned char Guchar;
 
 #include <Dict.h>
 
-#define private public /* Ugly! Catalog::optContent is private but we need it... */
+#define private                                                                \
+    public /* Ugly! Catalog::optContent is private but we need it... */
 #include <Catalog.h>
 #undef private
 
-#define private public  /* Ugly! PDFDoc::str is private but we need it... */
+#define private public /* Ugly! PDFDoc::str is private but we need it... */
 #include <PDFDoc.h>
 #undef private
 
@@ -88,7 +92,7 @@ typedef unsigned char Guchar;
 /* end of poppler xpdf includes */
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif /* HAVE_POPPLER */
@@ -105,20 +109,21 @@ typedef unsigned char Guchar;
 #endif
 
 #include "podofo.h"
-#endif // HAVE_PODOFO
+#endif  // HAVE_PODOFO
 
 #ifdef HAVE_PDFIUM
 #include "cpl_multiproc.h"
 
-#if (!defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD)) || defined(CPL_MULTIPROC_STUB) || defined(CPL_MULTIPROC_NONE)
+#if (!defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD)) ||      \
+    defined(CPL_MULTIPROC_STUB) || defined(CPL_MULTIPROC_NONE)
 #error PDF driver compiled with PDFium library requires working threads with mutex locking!
 #endif
 
 // Linux ignores timeout, Windows returns if not INFINITE
 #ifdef WIN32
-#define  PDFIUM_MUTEX_TIMEOUT     INFINITE
+#define PDFIUM_MUTEX_TIMEOUT INFINITE
 #else
-#define  PDFIUM_MUTEX_TIMEOUT     0.0f
+#define PDFIUM_MUTEX_TIMEOUT 0.0f
 #endif
 
 #include <cstring>
@@ -144,6 +149,6 @@ typedef unsigned char Guchar;
 #include "core/fxge/renderdevicedriver_iface.h"
 #include "fpdfsdk/cpdfsdk_helpers.h"
 #include "fpdfsdk/cpdfsdk_pauseadapter.h"
-#endif // HAVE_PDFIUM
+#endif  // HAVE_PDFIUM
 
 #endif

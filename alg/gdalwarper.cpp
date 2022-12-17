@@ -94,45 +94,40 @@ CPL_CVSID("$Id$")
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr CPL_STDCALL
-GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
-                    GDALDatasetH hDstDS, const char *pszDstWKT,
-                    GDALResampleAlg eResampleAlg,
-                    CPL_UNUSED double dfWarpMemoryLimit,
-                    double dfMaxError,
-                    GDALProgressFunc pfnProgress, void *pProgressArg,
-                    GDALWarpOptions *psOptions )
+CPLErr CPL_STDCALL GDALReprojectImage(
+    GDALDatasetH hSrcDS, const char *pszSrcWKT, GDALDatasetH hDstDS,
+    const char *pszDstWKT, GDALResampleAlg eResampleAlg,
+    CPL_UNUSED double dfWarpMemoryLimit, double dfMaxError,
+    GDALProgressFunc pfnProgress, void *pProgressArg,
+    GDALWarpOptions *psOptions)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Setup a reprojection based transformer.                         */
-/* -------------------------------------------------------------------- */
-    void *hTransformArg =
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
-                                         TRUE, 1000.0, 0 );
+    /* -------------------------------------------------------------------- */
+    /*      Setup a reprojection based transformer.                         */
+    /* -------------------------------------------------------------------- */
+    void *hTransformArg = GDALCreateGenImgProjTransformer(
+        hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, TRUE, 1000.0, 0);
 
-    if( hTransformArg == nullptr )
+    if (hTransformArg == nullptr)
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      Create a copy of the user provided options, or a defaulted      */
-/*      options structure.                                              */
-/* -------------------------------------------------------------------- */
-    GDALWarpOptions *psWOptions =
-        psOptions == nullptr
-        ? GDALCreateWarpOptions()
-        : GDALCloneWarpOptions( psOptions );
+    /* -------------------------------------------------------------------- */
+    /*      Create a copy of the user provided options, or a defaulted      */
+    /*      options structure.                                              */
+    /* -------------------------------------------------------------------- */
+    GDALWarpOptions *psWOptions = psOptions == nullptr
+                                      ? GDALCreateWarpOptions()
+                                      : GDALCloneWarpOptions(psOptions);
 
     psWOptions->eResampleAlg = eResampleAlg;
 
-/* -------------------------------------------------------------------- */
-/*      Set transform.                                                  */
-/* -------------------------------------------------------------------- */
-    if( dfMaxError > 0.0 )
+    /* -------------------------------------------------------------------- */
+    /*      Set transform.                                                  */
+    /* -------------------------------------------------------------------- */
+    if (dfMaxError > 0.0)
     {
-        psWOptions->pTransformerArg =
-            GDALCreateApproxTransformer( GDALGenImgProjTransform,
-                                         hTransformArg, dfMaxError );
+        psWOptions->pTransformerArg = GDALCreateApproxTransformer(
+            GDALGenImgProjTransform, hTransformArg, dfMaxError);
 
         psWOptions->pfnTransformer = GDALApproxTransform;
     }
@@ -142,91 +137,89 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
         psWOptions->pTransformerArg = hTransformArg;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set file and band mapping.                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set file and band mapping.                                      */
+    /* -------------------------------------------------------------------- */
     psWOptions->hSrcDS = hSrcDS;
     psWOptions->hDstDS = hDstDS;
 
     int nSrcBands = GDALGetRasterCount(hSrcDS);
     {
-        GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nSrcBands );
-        if( hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand )
+        GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, nSrcBands);
+        if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
         {
             psWOptions->nSrcAlphaBand = nSrcBands;
-            nSrcBands --;
+            nSrcBands--;
         }
     }
 
     int nDstBands = GDALGetRasterCount(hDstDS);
     {
-        GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, nDstBands );
-        if( hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand )
+        GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, nDstBands);
+        if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
         {
             psWOptions->nDstAlphaBand = nDstBands;
-            nDstBands --;
+            nDstBands--;
         }
     }
 
-    GDALWarpInitDefaultBandMapping(
-        psWOptions, std::min(nSrcBands, nDstBands));
+    GDALWarpInitDefaultBandMapping(psWOptions, std::min(nSrcBands, nDstBands));
 
-/* -------------------------------------------------------------------- */
-/*      Set source nodata values if the source dataset seems to have    */
-/*      any. Same for target nodata values                              */
-/* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
+    /* -------------------------------------------------------------------- */
+    /*      Set source nodata values if the source dataset seems to have    */
+    /*      any. Same for target nodata values                              */
+    /* -------------------------------------------------------------------- */
+    for (int iBand = 0; iBand < psWOptions->nBandCount; iBand++)
     {
-        GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, iBand+1 );
+        GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, iBand + 1);
 
         int bGotNoData = FALSE;
-        double dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
-        if( bGotNoData )
+        double dfNoDataValue = GDALGetRasterNoDataValue(hBand, &bGotNoData);
+        if (bGotNoData)
         {
             GDALWarpInitSrcNoDataReal(psWOptions, -1.1e20);
             psWOptions->padfSrcNoDataReal[iBand] = dfNoDataValue;
         }
 
         // Deal with target band.
-        hBand = GDALGetRasterBand( hDstDS, iBand+1 );
+        hBand = GDALGetRasterBand(hDstDS, iBand + 1);
 
-        dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
-        if( bGotNoData )
+        dfNoDataValue = GDALGetRasterNoDataValue(hBand, &bGotNoData);
+        if (bGotNoData)
         {
             GDALWarpInitDstNoDataReal(psWOptions, -1.1e20);
             psWOptions->padfDstNoDataReal[iBand] = dfNoDataValue;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the progress function.                                      */
-/* -------------------------------------------------------------------- */
-    if( pfnProgress != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Set the progress function.                                      */
+    /* -------------------------------------------------------------------- */
+    if (pfnProgress != nullptr)
     {
         psWOptions->pfnProgress = pfnProgress;
         psWOptions->pProgressArg = pProgressArg;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a warp options based on the options.                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a warp options based on the options.                     */
+    /* -------------------------------------------------------------------- */
     GDALWarpOperation oWarper;
-    CPLErr eErr = oWarper.Initialize( psWOptions );
+    CPLErr eErr = oWarper.Initialize(psWOptions);
 
-    if( eErr == CE_None )
-        eErr = oWarper.ChunkAndWarpImage( 0, 0,
-                                          GDALGetRasterXSize(hDstDS),
-                                          GDALGetRasterYSize(hDstDS) );
+    if (eErr == CE_None)
+        eErr = oWarper.ChunkAndWarpImage(0, 0, GDALGetRasterXSize(hDstDS),
+                                         GDALGetRasterYSize(hDstDS));
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup.                                                        */
-/* -------------------------------------------------------------------- */
-    GDALDestroyGenImgProjTransformer( hTransformArg );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup.                                                        */
+    /* -------------------------------------------------------------------- */
+    GDALDestroyGenImgProjTransformer(hTransformArg);
 
-    if( dfMaxError > 0.0 )
-        GDALDestroyApproxTransformer( psWOptions->pTransformerArg );
+    if (dfMaxError > 0.0)
+        GDALDestroyApproxTransformer(psWOptions->pTransformerArg);
 
-    GDALDestroyWarpOptions( psWOptions );
+    GDALDestroyWarpOptions(psWOptions);
 
     return eErr;
 }
@@ -239,22 +232,21 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
 /** Reproject an image and create the target reprojected image */
 CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
-    GDALDatasetH hSrcDS, const char *pszSrcWKT,
-    const char *pszDstFilename, const char *pszDstWKT,
-    GDALDriverH hDstDriver, char **papszCreateOptions,
+    GDALDatasetH hSrcDS, const char *pszSrcWKT, const char *pszDstFilename,
+    const char *pszDstWKT, GDALDriverH hDstDriver, char **papszCreateOptions,
     GDALResampleAlg eResampleAlg, double dfWarpMemoryLimit, double dfMaxError,
     GDALProgressFunc pfnProgress, void *pProgressArg,
-    GDALWarpOptions *psOptions )
+    GDALWarpOptions *psOptions)
 
 {
-    VALIDATE_POINTER1( hSrcDS, "GDALCreateAndReprojectImage", CE_Failure );
+    VALIDATE_POINTER1(hSrcDS, "GDALCreateAndReprojectImage", CE_Failure);
 
-/* -------------------------------------------------------------------- */
-/*      Default a few parameters.                                       */
-/* -------------------------------------------------------------------- */
-    if( hDstDriver == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Default a few parameters.                                       */
+    /* -------------------------------------------------------------------- */
+    if (hDstDriver == nullptr)
     {
-        hDstDriver = GDALGetDriverByName( "GTiff" );
+        hDstDriver = GDALGetDriverByName("GTiff");
         if (hDstDriver == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -263,65 +255,61 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
         }
     }
 
-    if( pszSrcWKT == nullptr )
-        pszSrcWKT = GDALGetProjectionRef( hSrcDS );
+    if (pszSrcWKT == nullptr)
+        pszSrcWKT = GDALGetProjectionRef(hSrcDS);
 
-    if( pszDstWKT == nullptr )
+    if (pszDstWKT == nullptr)
         pszDstWKT = pszSrcWKT;
 
-/* -------------------------------------------------------------------- */
-/*      Create a transformation object from the source to               */
-/*      destination coordinate system.                                  */
-/* -------------------------------------------------------------------- */
-    void *hTransformArg =
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, nullptr, pszDstWKT,
-                                         TRUE, 1000.0, 0 );
+    /* -------------------------------------------------------------------- */
+    /*      Create a transformation object from the source to               */
+    /*      destination coordinate system.                                  */
+    /* -------------------------------------------------------------------- */
+    void *hTransformArg = GDALCreateGenImgProjTransformer(
+        hSrcDS, pszSrcWKT, nullptr, pszDstWKT, TRUE, 1000.0, 0);
 
-    if( hTransformArg == nullptr )
+    if (hTransformArg == nullptr)
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      Get approximate output definition.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Get approximate output definition.                              */
+    /* -------------------------------------------------------------------- */
     double adfDstGeoTransform[6] = {};
     int nPixels = 0;
     int nLines = 0;
 
-    if( GDALSuggestedWarpOutput( hSrcDS,
-                                 GDALGenImgProjTransform, hTransformArg,
-                                 adfDstGeoTransform, &nPixels, &nLines )
-        != CE_None )
+    if (GDALSuggestedWarpOutput(hSrcDS, GDALGenImgProjTransform, hTransformArg,
+                                adfDstGeoTransform, &nPixels,
+                                &nLines) != CE_None)
         return CE_Failure;
 
-    GDALDestroyGenImgProjTransformer( hTransformArg );
+    GDALDestroyGenImgProjTransformer(hTransformArg);
 
-/* -------------------------------------------------------------------- */
-/*      Create the output file.                                         */
-/* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS =
-        GDALCreate( hDstDriver, pszDstFilename, nPixels, nLines,
-                    GDALGetRasterCount(hSrcDS),
-                    GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
-                    papszCreateOptions );
+    /* -------------------------------------------------------------------- */
+    /*      Create the output file.                                         */
+    /* -------------------------------------------------------------------- */
+    GDALDatasetH hDstDS = GDALCreate(
+        hDstDriver, pszDstFilename, nPixels, nLines, GDALGetRasterCount(hSrcDS),
+        GDALGetRasterDataType(GDALGetRasterBand(hSrcDS, 1)),
+        papszCreateOptions);
 
-    if( hDstDS == nullptr )
+    if (hDstDS == nullptr)
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      Write out the projection definition.                            */
-/* -------------------------------------------------------------------- */
-    GDALSetProjection( hDstDS, pszDstWKT );
-    GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+    /* -------------------------------------------------------------------- */
+    /*      Write out the projection definition.                            */
+    /* -------------------------------------------------------------------- */
+    GDALSetProjection(hDstDS, pszDstWKT);
+    GDALSetGeoTransform(hDstDS, adfDstGeoTransform);
 
-/* -------------------------------------------------------------------- */
-/*      Perform the reprojection.                                       */
-/* -------------------------------------------------------------------- */
-    CPLErr eErr =
-        GDALReprojectImage( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
-                            eResampleAlg, dfWarpMemoryLimit, dfMaxError,
-                            pfnProgress, pProgressArg, psOptions );
+    /* -------------------------------------------------------------------- */
+    /*      Perform the reprojection.                                       */
+    /* -------------------------------------------------------------------- */
+    CPLErr eErr = GDALReprojectImage(
+        hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, eResampleAlg, dfWarpMemoryLimit,
+        dfMaxError, pfnProgress, pProgressArg, psOptions);
 
-    GDALClose( hDstDS );
+    GDALClose(hDstDS);
 
     return eErr;
 }
@@ -330,16 +318,15 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /*                       GDALWarpNoDataMaskerT()                        */
 /************************************************************************/
 
-template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
-                                                       size_t nPixels,
-                                                       const T *pData ,
-                                                       GUInt32 *panValidityMask,
-                                                       int* pbOutAllValid )
+template <class T>
+static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
+                                    const T *pData, GUInt32 *panValidityMask,
+                                    int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
-    if( padfNoData[0] < std::numeric_limits<T>::min() ||
-        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001
-        || padfNoData[1] != 0.0 )
+    if (padfNoData[0] < std::numeric_limits<T>::min() ||
+        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001 ||
+        padfNoData[1] != 0.0)
     {
         *pbOutAllValid = TRUE;
         return CE_None;
@@ -347,9 +334,9 @@ template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
 
     const int nNoData = static_cast<int>(floor(padfNoData[0] + 0.000001));
     int bAllValid = TRUE;
-    for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
+    for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
     {
-        if( pData[iOffset] == nNoData )
+        if (pData[iOffset] == nNoData)
         {
             bAllValid = FALSE;
             CPLMaskClear(panValidityMask, iOffset);
@@ -367,21 +354,20 @@ template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
 /*      band based on a provided NODATA value.                          */
 /************************************************************************/
 
-CPLErr
-GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
-                      int /* nXOff */, int /* nYOff */, int nXSize, int nYSize,
-                      GByte **ppImageData,
-                      int bMaskIsFloat, void *pValidityMask,
-                      int* pbOutAllValid )
+CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
+                            GDALDataType eType, int /* nXOff */,
+                            int /* nYOff */, int nXSize, int nYSize,
+                            GByte **ppImageData, int bMaskIsFloat,
+                            void *pValidityMask, int *pbOutAllValid)
 
 {
-    const double *padfNoData = static_cast<double*>(pMaskFuncArg);
+    const double *padfNoData = static_cast<double *>(pMaskFuncArg);
     GUInt32 *panValidityMask = static_cast<GUInt32 *>(pValidityMask);
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     *pbOutAllValid = FALSE;
 
-    if( nBandCount != 1 || bMaskIsFloat )
+    if (nBandCount != 1 || bMaskIsFloat)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -389,119 +375,113 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
         return CE_Failure;
     }
 
-    switch( eType )
+    switch (eType)
     {
-      case GDT_Byte:
-          return
-              GDALWarpNoDataMaskerT(
-                  padfNoData, nPixels,
-                  *ppImageData,  // Already a GByte *.
-                  panValidityMask, pbOutAllValid );
+        case GDT_Byte:
+            return GDALWarpNoDataMaskerT(padfNoData, nPixels,
+                                         *ppImageData,  // Already a GByte *.
+                                         panValidityMask, pbOutAllValid);
 
-      case GDT_Int16:
-          return
-              GDALWarpNoDataMaskerT(
-                   padfNoData, nPixels,
-                   reinterpret_cast<GInt16*>(*ppImageData),
-                   panValidityMask, pbOutAllValid );
+        case GDT_Int16:
+            return GDALWarpNoDataMaskerT(
+                padfNoData, nPixels, reinterpret_cast<GInt16 *>(*ppImageData),
+                panValidityMask, pbOutAllValid);
 
-      case GDT_UInt16:
-          return GDALWarpNoDataMaskerT(
-                      padfNoData, nPixels,
-                      reinterpret_cast<GUInt16*>(*ppImageData),
-                      panValidityMask, pbOutAllValid );
+        case GDT_UInt16:
+            return GDALWarpNoDataMaskerT(
+                padfNoData, nPixels, reinterpret_cast<GUInt16 *>(*ppImageData),
+                panValidityMask, pbOutAllValid);
 
-      case GDT_Float32:
-      {
-          const float fNoData = static_cast<float>(padfNoData[0]);
-          const float *pafData = reinterpret_cast<float *>(*ppImageData);
-          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
+        case GDT_Float32:
+        {
+            const float fNoData = static_cast<float>(padfNoData[0]);
+            const float *pafData = reinterpret_cast<float *>(*ppImageData);
+            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
 
-          // Nothing to do if value is out of range.
-          if( padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
+            // Nothing to do if value is out of range.
+            if (padfNoData[1] != 0.0)
+            {
+                *pbOutAllValid = TRUE;
+                return CE_None;
+            }
 
-          int bAllValid = TRUE;
-          for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
-          {
-              float fVal = pafData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(fVal)) ||
-                  (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
-              {
-                  bAllValid = FALSE;
-                  CPLMaskClear(panValidityMask, iOffset);
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+            int bAllValid = TRUE;
+            for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
+            {
+                float fVal = pafData[iOffset];
+                if ((bIsNoDataNan && CPLIsNan(fVal)) ||
+                    (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)))
+                {
+                    bAllValid = FALSE;
+                    CPLMaskClear(panValidityMask, iOffset);
+                }
+            }
+            *pbOutAllValid = bAllValid;
+        }
+        break;
 
-      case GDT_Float64:
-      {
-          const double dfNoData = padfNoData[0];
-          const double *padfData =
-              reinterpret_cast<double *>(*ppImageData);
-          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
+        case GDT_Float64:
+        {
+            const double dfNoData = padfNoData[0];
+            const double *padfData = reinterpret_cast<double *>(*ppImageData);
+            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
 
-          // Nothing to do if value is out of range.
-          if( padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
+            // Nothing to do if value is out of range.
+            if (padfNoData[1] != 0.0)
+            {
+                *pbOutAllValid = TRUE;
+                return CE_None;
+            }
 
-          int bAllValid = TRUE;
-          for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
-          {
-              double dfVal = padfData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(dfVal)) ||
-                  (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
-              {
-                  bAllValid = FALSE;
-                  CPLMaskClear(panValidityMask, iOffset);
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+            int bAllValid = TRUE;
+            for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
+            {
+                double dfVal = padfData[iOffset];
+                if ((bIsNoDataNan && CPLIsNan(dfVal)) ||
+                    (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)))
+                {
+                    bAllValid = FALSE;
+                    CPLMaskClear(panValidityMask, iOffset);
+                }
+            }
+            *pbOutAllValid = bAllValid;
+        }
+        break;
 
-      default:
-      {
-          const int nWordSize = GDALGetDataTypeSizeBytes(eType);
+        default:
+        {
+            const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-          const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+            const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
 
-          double *padfWrk = static_cast<double *>(
-              CPLMalloc(nXSize * sizeof(double) * 2));
-          int bAllValid = TRUE;
-          for( int iLine = 0; iLine < nYSize; iLine++ )
-          {
-              GDALCopyWords( (*ppImageData)+nWordSize*iLine*nXSize,
-                             eType, nWordSize,
-                             padfWrk, GDT_CFloat64, 16, nXSize );
+            double *padfWrk =
+                static_cast<double *>(CPLMalloc(nXSize * sizeof(double) * 2));
+            int bAllValid = TRUE;
+            for (int iLine = 0; iLine < nYSize; iLine++)
+            {
+                GDALCopyWords((*ppImageData) + nWordSize * iLine * nXSize,
+                              eType, nWordSize, padfWrk, GDT_CFloat64, 16,
+                              nXSize);
 
-              for( int iPixel = 0; iPixel < nXSize; ++iPixel )
-              {
-                  if( ((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel*2])) ||
-                       (!bIsNoDataRealNan &&
-                         ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0]))))
-                  {
-                      size_t iOffset =
-                          iPixel + static_cast<size_t>(iLine) * nXSize;
+                for (int iPixel = 0; iPixel < nXSize; ++iPixel)
+                {
+                    if (((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel * 2])) ||
+                         (!bIsNoDataRealNan &&
+                          ARE_REAL_EQUAL(padfWrk[iPixel * 2], padfNoData[0]))))
+                    {
+                        size_t iOffset =
+                            iPixel + static_cast<size_t>(iLine) * nXSize;
 
-                      bAllValid = FALSE;
-                      CPLMaskClear(panValidityMask, iOffset);
-                  }
-              }
-          }
-          *pbOutAllValid = bAllValid;
+                        bAllValid = FALSE;
+                        CPLMaskClear(panValidityMask, iOffset);
+                    }
+                }
+            }
+            *pbOutAllValid = bAllValid;
 
-          CPLFree( padfWrk );
-      }
-      break;
+            CPLFree(padfWrk);
+        }
+        break;
     }
 
     return CE_None;
@@ -515,14 +495,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 /*      it.                                                             */
 /************************************************************************/
 
-CPLErr
-GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
-                        int /* nBandCount */,
-                        GDALDataType /* eType */,
-                        int nXOff, int nYOff, int nXSize, int nYSize,
-                        GByte ** /*ppImageData */,
-                        int bMaskIsFloat, void *pValidityMask,
-                        int* pbOutAllOpaque )
+CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
+                              GDALDataType /* eType */, int nXOff, int nYOff,
+                              int nXSize, int nYSize, GByte ** /*ppImageData */,
+                              int bMaskIsFloat, void *pValidityMask,
+                              int *pbOutAllOpaque)
 
 {
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
@@ -530,91 +507,96 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
     *pbOutAllOpaque = FALSE;
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
-/* -------------------------------------------------------------------- */
-/*      Do some minimal checking.                                       */
-/* -------------------------------------------------------------------- */
-    if( !bMaskIsFloat )
+    /* -------------------------------------------------------------------- */
+    /*      Do some minimal checking.                                       */
+    /* -------------------------------------------------------------------- */
+    if (!bMaskIsFloat)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
-    if( psWO == nullptr || psWO->nSrcAlphaBand < 1 )
+    if (psWO == nullptr || psWO->nSrcAlphaBand < 1)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the alpha band.                                            */
-/* -------------------------------------------------------------------- */
-    GDALRasterBandH hAlphaBand = GDALGetRasterBand( psWO->hSrcDS,
-                                                    psWO->nSrcAlphaBand );
+    /* -------------------------------------------------------------------- */
+    /*      Read the alpha band.                                            */
+    /* -------------------------------------------------------------------- */
+    GDALRasterBandH hAlphaBand =
+        GDALGetRasterBand(psWO->hSrcDS, psWO->nSrcAlphaBand);
     if (hAlphaBand == nullptr)
         return CE_Failure;
 
     // Rescale.
-    const float inv_alpha_max = static_cast<float>(1.0 / CPLAtof(
-      CSLFetchNameValueDef( psWO->papszWarpOptions, "SRC_ALPHA_MAX", "255" )));
+    const float inv_alpha_max = static_cast<float>(
+        1.0 / CPLAtof(CSLFetchNameValueDef(psWO->papszWarpOptions,
+                                           "SRC_ALPHA_MAX", "255")));
     bool bOutAllOpaque = true;
 
     size_t iPixel = 0;
     CPLErr eErr;
 
-
 #if (defined(__x86_64) || defined(_M_X64))
     GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
     // Make sure that pafMask is at least 8-byte aligned, which should
     // normally be always the case if being a ptr returned by malloc().
-    if( (eDT == GDT_Byte || eDT == GDT_UInt16) && CPL_IS_ALIGNED(pafMask, 8) )
+    if ((eDT == GDT_Byte || eDT == GDT_UInt16) && CPL_IS_ALIGNED(pafMask, 8))
     {
         // Read data.
-        eErr = GDALRasterIOEx( hAlphaBand, GF_Read,
-                               nXOff, nYOff, nXSize, nYSize,
-                               pafMask, nXSize, nYSize, eDT,
-                               static_cast<GSpacing>(sizeof(int)),
-                               static_cast<GSpacing>(sizeof(int)) * nXSize,
-                               nullptr );
+        eErr = GDALRasterIOEx(
+            hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, pafMask, nXSize,
+            nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
+            static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return eErr;
 
         // Make sure we have the correct alignment before doing SSE
         // On Linux x86_64, the alignment should be always correct due
         // the alignment of malloc() being 16 byte.
         const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
-        if( !CPL_IS_ALIGNED(pafMask, 16) )
+        if (!CPL_IS_ALIGNED(pafMask, 16))
         {
-            pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
-                                                    inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0f )
+            pafMask[iPixel] =
+                (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                inv_alpha_max;
+            if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
-            iPixel ++;
+            iPixel++;
         }
-        CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
+        CPLAssert(CPL_IS_ALIGNED(pafMask + iPixel, 16));
         const __m128 xmm_inverse_alpha_max = _mm_load1_ps(&inv_alpha_max);
         const float one_single = 1.0f;
         const __m128 xmm_one = _mm_load1_ps(&one_single);
-        const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
+        const __m128i xmm_i_mask = _mm_set1_epi32(mask);
         __m128 xmmMaskNonOpaque0 = _mm_setzero_ps();
         __m128 xmmMaskNonOpaque1 = _mm_setzero_ps();
         __m128 xmmMaskNonOpaque2 = _mm_setzero_ps();
-        for( ; iPixel + 6*4-1 < nPixels; iPixel+=6*4 )
+        for (; iPixel + 6 * 4 - 1 < nPixels; iPixel += 6 * 4)
         {
-            __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 0) )) );
-            __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 1) )) );
-            __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 2) )) );
-            __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 3) )) );
-            __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 4) )) );
-            __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 5) )) );
+            __m128 xmm_mask0 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 0))));
+            __m128 xmm_mask1 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 1))));
+            __m128 xmm_mask2 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 2))));
+            __m128 xmm_mask3 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 3))));
+            __m128 xmm_mask4 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 4))));
+            __m128 xmm_mask5 = _mm_cvtepi32_ps(_mm_and_si128(
+                xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                pafMask + iPixel + 4 * 5))));
             xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
             xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
             xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
@@ -646,16 +628,18 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
             _mm_store_ps(pafMask + iPixel + 4 * 4, xmm_mask4);
             _mm_store_ps(pafMask + iPixel + 4 * 5, xmm_mask5);
         }
-        if( _mm_movemask_ps(_mm_or_ps(_mm_or_ps(
-                  xmmMaskNonOpaque0, xmmMaskNonOpaque1), xmmMaskNonOpaque2))  )
+        if (_mm_movemask_ps(
+                _mm_or_ps(_mm_or_ps(xmmMaskNonOpaque0, xmmMaskNonOpaque1),
+                          xmmMaskNonOpaque2)))
         {
             bOutAllOpaque = false;
         }
-        for(; iPixel < nPixels; iPixel++ )
+        for (; iPixel < nPixels; iPixel++)
         {
-            pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
-                                                      inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0f )
+            pafMask[iPixel] =
+                (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                inv_alpha_max;
+            if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
@@ -665,41 +649,41 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 #endif
     {
         // Read data.
-        eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+        eErr = GDALRasterIO(hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                            pafMask, nXSize, nYSize, GDT_Float32, 0, 0);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return eErr;
 
         // TODO(rouault): Is loop unrolling by hand (r34564) actually helpful?
-        for( ; iPixel + 3 < nPixels; iPixel += 4 )
+        for (; iPixel + 3 < nPixels; iPixel += 4)
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0f )
+            if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+1] = pafMask[iPixel+1] * inv_alpha_max;
-            if( pafMask[iPixel+1] >= 1.0f )
-                pafMask[iPixel+1] = 1.0f;
+            pafMask[iPixel + 1] = pafMask[iPixel + 1] * inv_alpha_max;
+            if (pafMask[iPixel + 1] >= 1.0f)
+                pafMask[iPixel + 1] = 1.0f;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+2] = pafMask[iPixel+2] * inv_alpha_max;
-            if( pafMask[iPixel+2] >= 1.0f )
-                pafMask[iPixel+2] = 1.0f;
+            pafMask[iPixel + 2] = pafMask[iPixel + 2] * inv_alpha_max;
+            if (pafMask[iPixel + 2] >= 1.0f)
+                pafMask[iPixel + 2] = 1.0f;
             else
                 bOutAllOpaque = false;
-            pafMask[iPixel+3] = pafMask[iPixel+3] * inv_alpha_max;
-            if( pafMask[iPixel+3] >= 1.0f )
-                pafMask[iPixel+3] = 1.0f;
+            pafMask[iPixel + 3] = pafMask[iPixel + 3] * inv_alpha_max;
+            if (pafMask[iPixel + 3] >= 1.0f)
+                pafMask[iPixel + 3] = 1.0f;
             else
                 bOutAllOpaque = false;
         }
 
-        for( ; iPixel < nPixels; iPixel++ )
+        for (; iPixel < nPixels; iPixel++)
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0f )
+            if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
@@ -718,82 +702,78 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 /*      information and building a one bit validity mask.               */
 /************************************************************************/
 
-CPLErr
-GDALWarpSrcMaskMasker( void *pMaskFuncArg,
-                       int /* nBandCount */,
-                       GDALDataType /* eType */,
-                       int nXOff, int nYOff, int nXSize, int nYSize,
-                       GByte ** /*ppImageData */,
-                       int bMaskIsFloat, void *pValidityMask )
+CPLErr GDALWarpSrcMaskMasker(void *pMaskFuncArg, int /* nBandCount */,
+                             GDALDataType /* eType */, int nXOff, int nYOff,
+                             int nXSize, int nYSize, GByte ** /*ppImageData */,
+                             int bMaskIsFloat, void *pValidityMask)
 
 {
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
-    GUInt32  *panMask = static_cast<GUInt32 *>(pValidityMask);
+    GUInt32 *panMask = static_cast<GUInt32 *>(pValidityMask);
 
-/* -------------------------------------------------------------------- */
-/*      Do some minimal checking.                                       */
-/* -------------------------------------------------------------------- */
-    if( bMaskIsFloat )
+    /* -------------------------------------------------------------------- */
+    /*      Do some minimal checking.                                       */
+    /* -------------------------------------------------------------------- */
+    if (bMaskIsFloat)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
-    if( psWO == nullptr )
+    if (psWO == nullptr)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate a temporary buffer to read mask byte data into.        */
-/* -------------------------------------------------------------------- */
-    GByte *pabySrcMask = static_cast<GByte *>(
-        VSI_MALLOC2_VERBOSE(nXSize,nYSize));
-    if( pabySrcMask == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Allocate a temporary buffer to read mask byte data into.        */
+    /* -------------------------------------------------------------------- */
+    GByte *pabySrcMask =
+        static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nXSize, nYSize));
+    if (pabySrcMask == nullptr)
     {
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Fetch our mask band.                                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Fetch our mask band.                                            */
+    /* -------------------------------------------------------------------- */
     GDALRasterBandH hMaskBand = nullptr;
     GDALRasterBandH hSrcBand =
-        GDALGetRasterBand( psWO->hSrcDS, psWO->panSrcBands[0] );
-    if( hSrcBand != nullptr )
-        hMaskBand = GDALGetMaskBand( hSrcBand );
+        GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[0]);
+    if (hSrcBand != nullptr)
+        hMaskBand = GDALGetMaskBand(hSrcBand);
 
-    if( hMaskBand == nullptr )
+    if (hMaskBand == nullptr)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the mask band.                                             */
-/* -------------------------------------------------------------------- */
-    CPLErr eErr =
-        GDALRasterIO( hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                      pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0 );
+    /* -------------------------------------------------------------------- */
+    /*      Read the mask band.                                             */
+    /* -------------------------------------------------------------------- */
+    CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                               pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0);
 
-    if( eErr != CE_None )
+    if (eErr != CE_None)
     {
-        CPLFree( pabySrcMask );
+        CPLFree(pabySrcMask);
         return eErr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Pack into 1 bit per pixel for validity.                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Pack into 1 bit per pixel for validity.                         */
+    /* -------------------------------------------------------------------- */
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
-    for( size_t iPixel = 0; iPixel < nPixels; iPixel++ )
+    for (size_t iPixel = 0; iPixel < nPixels; iPixel++)
     {
-        if( pabySrcMask[iPixel] == 0 )
+        if (pabySrcMask[iPixel] == 0)
             CPLMaskClear(panMask, iPixel);
     }
 
-    CPLFree( pabySrcMask );
+    CPLFree(pabySrcMask);
 
     return CE_None;
 }
@@ -807,26 +787,25 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 /*      negative bandcount.                                             */
 /************************************************************************/
 
-CPLErr
-GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
-                        CPL_UNUSED GDALDataType /* eType */,
-                        int nXOff, int nYOff, int nXSize, int nYSize,
-                        GByte ** /*ppImageData */,
-                        int bMaskIsFloat, void *pValidityMask )
+CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
+                              CPL_UNUSED GDALDataType /* eType */, int nXOff,
+                              int nYOff, int nXSize, int nYSize,
+                              GByte ** /*ppImageData */, int bMaskIsFloat,
+                              void *pValidityMask)
 {
-/* -------------------------------------------------------------------- */
-/*      Do some minimal checking.                                       */
-/* -------------------------------------------------------------------- */
-    if( !bMaskIsFloat )
+    /* -------------------------------------------------------------------- */
+    /*      Do some minimal checking.                                       */
+    /* -------------------------------------------------------------------- */
+    if (!bMaskIsFloat)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
-    if( psWO == nullptr || psWO->nDstAlphaBand < 1 )
+    if (psWO == nullptr || psWO->nDstAlphaBand < 1)
     {
-        CPLAssert( false );
+        CPLAssert(false);
         return CE_Failure;
     }
 
@@ -834,86 +813,91 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     GDALRasterBandH hAlphaBand =
-        GDALGetRasterBand( psWO->hDstDS, psWO->nDstAlphaBand );
+        GDALGetRasterBand(psWO->hDstDS, psWO->nDstAlphaBand);
     if (hAlphaBand == nullptr)
         return CE_Failure;
 
     size_t iPixel = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Read alpha case.                                                */
-/* -------------------------------------------------------------------- */
-    if( nBandCount >= 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Read alpha case.                                                */
+    /* -------------------------------------------------------------------- */
+    if (nBandCount >= 0)
     {
         const char *pszInitDest =
-            CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" );
+            CSLFetchNameValue(psWO->papszWarpOptions, "INIT_DEST");
 
         // Special logic for destinations being initialized on-the-fly.
-        if( pszInitDest != nullptr )
+        if (pszInitDest != nullptr)
         {
-            memset( pafMask, 0, nPixels * sizeof(float) );
+            memset(pafMask, 0, nPixels * sizeof(float));
             return CE_None;
         }
 
         // Rescale.
-        const float inv_alpha_max =  static_cast<float>(1.0 / CPLAtof(
-            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
-                                  "255" ) ));
+        const float inv_alpha_max = static_cast<float>(
+            1.0 / CPLAtof(CSLFetchNameValueDef(psWO->papszWarpOptions,
+                                               "DST_ALPHA_MAX", "255")));
 
 #if (defined(__x86_64) || defined(_M_X64))
         const GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
         // Make sure that pafMask is at least 8-byte aligned, which should
         // normally be always the case if being a ptr returned by malloc().
-        if( (eDT == GDT_Byte || eDT == GDT_UInt16) &&
-            CPL_IS_ALIGNED(pafMask, 8) )
+        if ((eDT == GDT_Byte || eDT == GDT_UInt16) &&
+            CPL_IS_ALIGNED(pafMask, 8))
         {
             // Read data.
-            const CPLErr eErr =
-                GDALRasterIOEx( hAlphaBand, GF_Read,
-                                nXOff, nYOff, nXSize, nYSize,
-                                pafMask, nXSize, nYSize, eDT,
-                                static_cast<GSpacing>(sizeof(int)),
-                                static_cast<GSpacing>(sizeof(int)) * nXSize,
-                                nullptr );
+            const CPLErr eErr = GDALRasterIOEx(
+                hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, pafMask,
+                nXSize, nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
+                static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
 
-            if( eErr != CE_None )
+            if (eErr != CE_None)
                 return eErr;
 
             // Make sure we have the correct alignment before doing SSE
             // On Linux x86_64, the alignment should be always correct due
             // the alignment of malloc() being 16 byte.
             const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
-            if( !CPL_IS_ALIGNED(pafMask, 16) )
+            if (!CPL_IS_ALIGNED(pafMask, 16))
             {
-                pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
-                                                          inv_alpha_max;
-                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
-                iPixel ++;
+                pafMask[iPixel] =
+                    (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                    inv_alpha_max;
+                pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
+                iPixel++;
             }
-            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
-            const __m128 xmm_inverse_alpha_max =
-                                        _mm_load1_ps(&inv_alpha_max);
+            CPLAssert(CPL_IS_ALIGNED(pafMask + iPixel, 16));
+            const __m128 xmm_inverse_alpha_max = _mm_load1_ps(&inv_alpha_max);
             const float one_single = 1.0f;
             const __m128 xmm_one = _mm_load1_ps(&one_single);
-            const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
-            for( ; iPixel + 31 < nPixels; iPixel+=32 )
+            const __m128i xmm_i_mask = _mm_set1_epi32(mask);
+            for (; iPixel + 31 < nPixels; iPixel += 32)
             {
-                __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 0) )) );
-                __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 1) )) );
-                __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 2) )) );
-                __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 3) )) );
-                __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 4) )) );
-                __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 5) )) );
-                __m128 xmm_mask6 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 6) )) );
-                __m128 xmm_mask7 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 7) )) );
+                __m128 xmm_mask0 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 0))));
+                __m128 xmm_mask1 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 1))));
+                __m128 xmm_mask2 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 2))));
+                __m128 xmm_mask3 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 3))));
+                __m128 xmm_mask4 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 4))));
+                __m128 xmm_mask5 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 5))));
+                __m128 xmm_mask6 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 6))));
+                __m128 xmm_mask7 = _mm_cvtepi32_ps(_mm_and_si128(
+                    xmm_i_mask, _mm_load_si128(reinterpret_cast<__m128i *>(
+                                    pafMask + iPixel + 4 * 7))));
                 xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
                 xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
                 xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
@@ -939,11 +923,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 _mm_store_ps(pafMask + iPixel + 4 * 6, xmm_mask6);
                 _mm_store_ps(pafMask + iPixel + 4 * 7, xmm_mask7);
             }
-            for(; iPixel < nPixels; iPixel++ )
+            for (; iPixel < nPixels; iPixel++)
             {
-                pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
-                                                        inv_alpha_max;
-                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
+                pafMask[iPixel] =
+                    (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                    inv_alpha_max;
+                pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
             }
         }
         else
@@ -951,13 +936,13 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         {
             // Read data.
             const CPLErr eErr =
-                GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                              pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+                GDALRasterIO(hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0);
 
-            if( eErr != CE_None )
+            if (eErr != CE_None)
                 return eErr;
 
-            for(; iPixel < nPixels; iPixel++ )
+            for (; iPixel < nPixels; iPixel++)
             {
                 pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
                 pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
@@ -967,39 +952,40 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         return CE_None;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write alpha case.                                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write alpha case.                                               */
+    /* -------------------------------------------------------------------- */
     else
     {
         GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
-        const float cst_alpha_max = static_cast<float>(CPLAtof(
-            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
-                                  "255" ) )) +
-            (( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
-               eDT == GDT_Int32 || eDT == GDT_UInt32 ) ?
-                0.1f : 0.0f);
+        const float cst_alpha_max =
+            static_cast<float>(CPLAtof(CSLFetchNameValueDef(
+                psWO->papszWarpOptions, "DST_ALPHA_MAX", "255"))) +
+            ((eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
+              eDT == GDT_Int32 || eDT == GDT_UInt32)
+                 ? 0.1f
+                 : 0.0f);
 
         CPLErr eErr = CE_None;
 
 #if (defined(__x86_64) || defined(_M_X64))
         // Make sure that pafMask is at least 8-byte aligned, which should
         // normally be always the case if being a ptr returned by malloc()
-        if( (eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
-            CPL_IS_ALIGNED(pafMask, 8) )
+        if ((eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+            CPL_IS_ALIGNED(pafMask, 8))
         {
             // Make sure we have the correct alignment before doing SSE
             // On Linux x86_64, the alignment should be always correct due
             // the alignment of malloc() being 16 byte
-            if( !CPL_IS_ALIGNED(pafMask, 16) )
+            if (!CPL_IS_ALIGNED(pafMask, 16))
             {
-                reinterpret_cast<int*>(pafMask)[iPixel] =
+                reinterpret_cast<int *>(pafMask)[iPixel] =
                     static_cast<int>(pafMask[iPixel] * cst_alpha_max);
                 iPixel++;
             }
-            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
+            CPLAssert(CPL_IS_ALIGNED(pafMask + iPixel, 16));
             const __m128 xmm_alpha_max = _mm_load1_ps(&cst_alpha_max);
-            for( ; iPixel + 31 < nPixels; iPixel += 32 )
+            for (; iPixel + 31 < nPixels; iPixel += 32)
             {
                 __m128 xmm_mask0 = _mm_load_ps(pafMask + iPixel + 4 * 0);
                 __m128 xmm_mask1 = _mm_load_ps(pafMask + iPixel + 4 * 1);
@@ -1017,61 +1003,66 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_alpha_max);
                 xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_alpha_max);
                 xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_alpha_max);
-                 // Truncate to int.
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 0),
-                                _mm_cvttps_epi32(xmm_mask0));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 1),
-                                _mm_cvttps_epi32(xmm_mask1));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 2),
-                                _mm_cvttps_epi32(xmm_mask2));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 3),
-                                _mm_cvttps_epi32(xmm_mask3));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 4),
-                                _mm_cvttps_epi32(xmm_mask4));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 5),
-                                _mm_cvttps_epi32(xmm_mask5));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 6),
-                                _mm_cvttps_epi32(xmm_mask6));
-                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 7),
-                                _mm_cvttps_epi32(xmm_mask7));
+                // Truncate to int.
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 0),
+                    _mm_cvttps_epi32(xmm_mask0));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 1),
+                    _mm_cvttps_epi32(xmm_mask1));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 2),
+                    _mm_cvttps_epi32(xmm_mask2));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 3),
+                    _mm_cvttps_epi32(xmm_mask3));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 4),
+                    _mm_cvttps_epi32(xmm_mask4));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 5),
+                    _mm_cvttps_epi32(xmm_mask5));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 6),
+                    _mm_cvttps_epi32(xmm_mask6));
+                _mm_store_si128(
+                    reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 7),
+                    _mm_cvttps_epi32(xmm_mask7));
             }
-            for( ; iPixel < nPixels; iPixel++ )
-                reinterpret_cast<int*>(pafMask)[iPixel] =
-                  static_cast<int>(pafMask[iPixel] * cst_alpha_max);
+            for (; iPixel < nPixels; iPixel++)
+                reinterpret_cast<int *>(pafMask)[iPixel] =
+                    static_cast<int>(pafMask[iPixel] * cst_alpha_max);
 
             // Write data.
             // Assumes little endianness here.
-            eErr = GDALRasterIOEx( hAlphaBand, GF_Write,
-                                   nXOff, nYOff, nXSize, nYSize,
-                                   pafMask, nXSize, nYSize, eDT,
-                                   static_cast<GSpacing>(sizeof(int)),
-                                   static_cast<GSpacing>(sizeof(int)) * nXSize,
-                                   nullptr );
+            eErr = GDALRasterIOEx(
+                hAlphaBand, GF_Write, nXOff, nYOff, nXSize, nYSize, pafMask,
+                nXSize, nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
+                static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
         }
         else
 #endif
         {
-            for( ; iPixel + 3 < nPixels; iPixel+=4 )
+            for (; iPixel + 3 < nPixels; iPixel += 4)
             {
-                pafMask[iPixel+0] = static_cast<float>(
-                    static_cast<int>( pafMask[iPixel+0] * cst_alpha_max ));
-                pafMask[iPixel+1] = static_cast<float>(
-                    static_cast<int>( pafMask[iPixel+1] * cst_alpha_max ));
-                pafMask[iPixel+2] = static_cast<float>(
-                    static_cast<int>( pafMask[iPixel+2] * cst_alpha_max ));
-                pafMask[iPixel+3] = static_cast<float>(
-                    static_cast<int>( pafMask[iPixel+3] * cst_alpha_max ));
+                pafMask[iPixel + 0] = static_cast<float>(
+                    static_cast<int>(pafMask[iPixel + 0] * cst_alpha_max));
+                pafMask[iPixel + 1] = static_cast<float>(
+                    static_cast<int>(pafMask[iPixel + 1] * cst_alpha_max));
+                pafMask[iPixel + 2] = static_cast<float>(
+                    static_cast<int>(pafMask[iPixel + 2] * cst_alpha_max));
+                pafMask[iPixel + 3] = static_cast<float>(
+                    static_cast<int>(pafMask[iPixel + 3] * cst_alpha_max));
             }
-            for( ; iPixel < nPixels; iPixel++ )
+            for (; iPixel < nPixels; iPixel++)
                 pafMask[iPixel] = static_cast<float>(
-                    static_cast<int>(pafMask[iPixel] * cst_alpha_max ));
+                    static_cast<int>(pafMask[iPixel] * cst_alpha_max));
 
             // Write data.
 
-            eErr = GDALRasterIO( hAlphaBand, GF_Write,
-                                nXOff, nYOff, nXSize, nYSize,
-                                pafMask, nXSize, nYSize, GDT_Float32,
-                                0, 0 );
+            eErr =
+                GDALRasterIO(hAlphaBand, GF_Write, nXOff, nYOff, nXSize, nYSize,
+                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0);
         }
         return eErr;
     }
@@ -1117,8 +1108,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * <ul>
  * <li>When YES, all bands are considered as nodata if and only if, all bands
  *     match the corresponding nodata values.
- *     Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp /
- *     GDALWarp() with an explicit -srcnodata setting.
+ *     Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp
+ * / GDALWarp() with an explicit -srcnodata setting.
  *
  *     Example with nodata values at (1, 2, 3) and target alpha band requested.
  *     <ul>
@@ -1160,8 +1151,8 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * <li>CUTLINE: This may contain the WKT geometry for a cutline.  It will
  * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
  * to the GDALWarpOptions hCutline field. The coordinates must be expressed
- * in source pixel/line coordinates. Note: this is different from the assumptions
- * made for the -cutline option of the gdalwarp utility !</li>
+ * in source pixel/line coordinates. Note: this is different from the
+ * assumptions made for the -cutline option of the gdalwarp utility !</li>
  *
  * <li>CUTLINE_BLEND_DIST: This may be set with a distance in pixels which
  * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.</li>
@@ -1236,11 +1227,13 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * <li>SAMPLE_GRID=YES/NO: Setting this option to YES will force the sampling to
  * include internal points as well as edge points which can be important if
  * the transformation is esoteric inside out, or if large sections of the
- * destination image are not transformable into the source coordinate system.</li>
+ * destination image are not transformable into the source coordinate
+ * system.</li>
  *
  * <li>SAMPLE_STEPS: Modifies the density of the sampling grid.  The default
  * number of steps is 21.   Increasing this can increase the computational
- * cost, but improves the accuracy with which the source region is computed.</li>
+ * cost, but improves the accuracy with which the source region is
+ * computed.</li>
  *
  * <li>SOURCE_EXTRA: This is a number of extra pixels added around the source
  * window for a given request, and by default it is 1 to take care of rounding
@@ -1263,11 +1256,11 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  *
  * Must be deallocated with GDALDestroyWarpOptions()
  */
-GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
+GDALWarpOptions *CPL_STDCALL GDALCreateWarpOptions()
 
 {
-    GDALWarpOptions *psOptions = static_cast<GDALWarpOptions *>(
-        CPLCalloc(sizeof(GDALWarpOptions), 1));
+    GDALWarpOptions *psOptions =
+        static_cast<GDALWarpOptions *>(CPLCalloc(sizeof(GDALWarpOptions), 1));
 
     psOptions->nBandCount = 0;
     psOptions->eResampleAlg = GRA_NearestNeighbour;
@@ -1282,37 +1275,42 @@ GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 /************************************************************************/
 
 /** Destroy a warp options structure. */
-void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
+void CPL_STDCALL GDALDestroyWarpOptions(GDALWarpOptions *psOptions)
 
 {
-    if( psOptions == nullptr )
+    if (psOptions == nullptr)
         return;
 
-    CSLDestroy( psOptions->papszWarpOptions );
-    CPLFree( psOptions->panSrcBands );
-    CPLFree( psOptions->panDstBands );
-    CPLFree( psOptions->padfSrcNoDataReal );
-    CPLFree( psOptions->padfSrcNoDataImag );
-    CPLFree( psOptions->padfDstNoDataReal );
-    CPLFree( psOptions->padfDstNoDataImag );
-    CPLFree( psOptions->papfnSrcPerBandValidityMaskFunc );
-    CPLFree( psOptions->papSrcPerBandValidityMaskFuncArg );
+    CSLDestroy(psOptions->papszWarpOptions);
+    CPLFree(psOptions->panSrcBands);
+    CPLFree(psOptions->panDstBands);
+    CPLFree(psOptions->padfSrcNoDataReal);
+    CPLFree(psOptions->padfSrcNoDataImag);
+    CPLFree(psOptions->padfDstNoDataReal);
+    CPLFree(psOptions->padfDstNoDataImag);
+    CPLFree(psOptions->papfnSrcPerBandValidityMaskFunc);
+    CPLFree(psOptions->papSrcPerBandValidityMaskFuncArg);
 
-    if( psOptions->hCutline != nullptr )
-        OGR_G_DestroyGeometry( reinterpret_cast<OGRGeometryH>(psOptions->hCutline) );
+    if (psOptions->hCutline != nullptr)
+        OGR_G_DestroyGeometry(
+            reinterpret_cast<OGRGeometryH>(psOptions->hCutline));
 
-    CPLFree( psOptions );
+    CPLFree(psOptions);
 }
 
-#define COPY_MEM(target,type,count)                                     \
-   do { if( (psSrcOptions->target) != nullptr && (count) != 0 )            \
-   {                                                                    \
-       (psDstOptions->target) = static_cast<type *>(CPLMalloc(sizeof(type)*(count))); \
-       memcpy( (psDstOptions->target), (psSrcOptions->target),          \
-               sizeof(type) * (count) );                                \
-   } \
-   else \
-       (psDstOptions->target) = nullptr; } while( false )
+#define COPY_MEM(target, type, count)                                          \
+    do                                                                         \
+    {                                                                          \
+        if ((psSrcOptions->target) != nullptr && (count) != 0)                 \
+        {                                                                      \
+            (psDstOptions->target) =                                           \
+                static_cast<type *>(CPLMalloc(sizeof(type) * (count)));        \
+            memcpy((psDstOptions->target), (psSrcOptions->target),             \
+                   sizeof(type) * (count));                                    \
+        }                                                                      \
+        else                                                                   \
+            (psDstOptions->target) = nullptr;                                  \
+    } while (false)
 
 /************************************************************************/
 /*                        GDALCloneWarpOptions()                        */
@@ -1322,32 +1320,32 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
  *
  * Must be deallocated with GDALDestroyWarpOptions()
  */
-GDALWarpOptions * CPL_STDCALL
-GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
+GDALWarpOptions *CPL_STDCALL
+GDALCloneWarpOptions(const GDALWarpOptions *psSrcOptions)
 
 {
     GDALWarpOptions *psDstOptions = GDALCreateWarpOptions();
 
-    memcpy( psDstOptions, psSrcOptions, sizeof(GDALWarpOptions) );
+    memcpy(psDstOptions, psSrcOptions, sizeof(GDALWarpOptions));
 
-    if( psSrcOptions->papszWarpOptions != nullptr )
+    if (psSrcOptions->papszWarpOptions != nullptr)
         psDstOptions->papszWarpOptions =
-            CSLDuplicate( psSrcOptions->papszWarpOptions );
+            CSLDuplicate(psSrcOptions->papszWarpOptions);
 
-    COPY_MEM( panSrcBands, int, psSrcOptions->nBandCount );
-    COPY_MEM( panDstBands, int, psSrcOptions->nBandCount );
-    COPY_MEM( padfSrcNoDataReal, double, psSrcOptions->nBandCount );
-    COPY_MEM( padfSrcNoDataImag, double, psSrcOptions->nBandCount );
-    COPY_MEM( padfDstNoDataReal, double, psSrcOptions->nBandCount );
-    COPY_MEM( padfDstNoDataImag, double, psSrcOptions->nBandCount );
+    COPY_MEM(panSrcBands, int, psSrcOptions->nBandCount);
+    COPY_MEM(panDstBands, int, psSrcOptions->nBandCount);
+    COPY_MEM(padfSrcNoDataReal, double, psSrcOptions->nBandCount);
+    COPY_MEM(padfSrcNoDataImag, double, psSrcOptions->nBandCount);
+    COPY_MEM(padfDstNoDataReal, double, psSrcOptions->nBandCount);
+    COPY_MEM(padfDstNoDataImag, double, psSrcOptions->nBandCount);
     // cppcheck-suppress pointerSize
-    COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc,
-              psSrcOptions->nBandCount );
+    COPY_MEM(papfnSrcPerBandValidityMaskFunc, GDALMaskFunc,
+             psSrcOptions->nBandCount);
     psDstOptions->papSrcPerBandValidityMaskFuncArg = nullptr;
 
-    if( psSrcOptions->hCutline != nullptr )
+    if (psSrcOptions->hCutline != nullptr)
         psDstOptions->hCutline =
-            OGR_G_Clone( reinterpret_cast<OGRGeometryH>(psSrcOptions->hCutline) );
+            OGR_G_Clone(reinterpret_cast<OGRGeometryH>(psSrcOptions->hCutline));
     psDstOptions->dfCutlineBlendDist = psSrcOptions->dfCutlineBlendDist;
 
     return psDstOptions;
@@ -1355,21 +1353,26 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 
 namespace
 {
-    void InitNoData(int nBandCount, double ** ppdNoDataReal, double dDataReal)
+void InitNoData(int nBandCount, double **ppdNoDataReal, double dDataReal)
+{
+    if (nBandCount <= 0)
     {
-        if( nBandCount <= 0 ) { return; }
-        if( *ppdNoDataReal != nullptr ) { return; }
+        return;
+    }
+    if (*ppdNoDataReal != nullptr)
+    {
+        return;
+    }
 
-        *ppdNoDataReal = static_cast<double *>(
-            CPLMalloc(sizeof(double) * nBandCount));
+    *ppdNoDataReal =
+        static_cast<double *>(CPLMalloc(sizeof(double) * nBandCount));
 
-        for( int i = 0; i < nBandCount; ++i)
-        {
-            (*ppdNoDataReal)[i] = dDataReal;
-        }
+    for (int i = 0; i < nBandCount; ++i)
+    {
+        (*ppdNoDataReal)[i] = dDataReal;
     }
 }
-
+}  // namespace
 
 /************************************************************************/
 /*                      GDALWarpInitDstNoDataReal()                     */
@@ -1382,14 +1385,13 @@ namespace
  * @param dNoDataReal value to initialize to.
  *
  */
-void CPL_STDCALL
-GDALWarpInitDstNoDataReal( GDALWarpOptions * psOptionsIn, double dNoDataReal )
+void CPL_STDCALL GDALWarpInitDstNoDataReal(GDALWarpOptions *psOptionsIn,
+                                           double dNoDataReal)
 {
     VALIDATE_POINTER0(psOptionsIn, "GDALWarpInitDstNoDataReal");
-    InitNoData(
-        psOptionsIn->nBandCount, &psOptionsIn->padfDstNoDataReal, dNoDataReal);
+    InitNoData(psOptionsIn->nBandCount, &psOptionsIn->padfDstNoDataReal,
+               dNoDataReal);
 }
-
 
 /************************************************************************/
 /*                      GDALWarpInitSrcNoDataReal()                     */
@@ -1402,28 +1404,28 @@ GDALWarpInitDstNoDataReal( GDALWarpOptions * psOptionsIn, double dNoDataReal )
  * @param dNoDataReal value to initialize to.
  *
  */
-void CPL_STDCALL
-GDALWarpInitSrcNoDataReal( GDALWarpOptions * psOptionsIn, double dNoDataReal )
+void CPL_STDCALL GDALWarpInitSrcNoDataReal(GDALWarpOptions *psOptionsIn,
+                                           double dNoDataReal)
 {
     VALIDATE_POINTER0(psOptionsIn, "GDALWarpInitSrcNoDataReal");
-    InitNoData(
-        psOptionsIn->nBandCount, &psOptionsIn->padfSrcNoDataReal, dNoDataReal);
+    InitNoData(psOptionsIn->nBandCount, &psOptionsIn->padfSrcNoDataReal,
+               dNoDataReal);
 }
-
 
 /************************************************************************/
 /*                      GDALWarpInitNoDataReal()                        */
 /************************************************************************/
 
 /**
- * \brief Initialize padfSrcNoDataReal and padfDstNoDataReal with specified value.
+ * \brief Initialize padfSrcNoDataReal and padfDstNoDataReal with specified
+ * value.
  *
  * @param psOptionsIn options to initialize.
  * @param dNoDataReal value to initialize to.
  *
  */
-void CPL_STDCALL
-GDALWarpInitNoDataReal(GDALWarpOptions * psOptionsIn, double  dNoDataReal)
+void CPL_STDCALL GDALWarpInitNoDataReal(GDALWarpOptions *psOptionsIn,
+                                        double dNoDataReal)
 {
     GDALWarpInitDstNoDataReal(psOptionsIn, dNoDataReal);
     GDALWarpInitSrcNoDataReal(psOptionsIn, dNoDataReal);
@@ -1440,12 +1442,12 @@ GDALWarpInitNoDataReal(GDALWarpOptions * psOptionsIn, double  dNoDataReal)
  * @param dNoDataImag value to initialize to.
  *
  */
-void CPL_STDCALL
-GDALWarpInitDstNoDataImag( GDALWarpOptions * psOptionsIn, double dNoDataImag )
+void CPL_STDCALL GDALWarpInitDstNoDataImag(GDALWarpOptions *psOptionsIn,
+                                           double dNoDataImag)
 {
     VALIDATE_POINTER0(psOptionsIn, "GDALWarpInitDstNoDataImag");
-    InitNoData(
-        psOptionsIn->nBandCount, &psOptionsIn->padfDstNoDataImag, dNoDataImag);
+    InitNoData(psOptionsIn->nBandCount, &psOptionsIn->padfDstNoDataImag,
+               dNoDataImag);
 }
 
 /************************************************************************/
@@ -1459,12 +1461,12 @@ GDALWarpInitDstNoDataImag( GDALWarpOptions * psOptionsIn, double dNoDataImag )
  * @param dNoDataImag value to initialize to.
  *
  */
-void CPL_STDCALL
-GDALWarpInitSrcNoDataImag( GDALWarpOptions * psOptionsIn, double dNoDataImag )
+void CPL_STDCALL GDALWarpInitSrcNoDataImag(GDALWarpOptions *psOptionsIn,
+                                           double dNoDataImag)
 {
     VALIDATE_POINTER0(psOptionsIn, "GDALWarpInitSrcNoDataImag");
-    InitNoData(
-        psOptionsIn->nBandCount, &psOptionsIn->padfSrcNoDataImag, dNoDataImag);
+    InitNoData(psOptionsIn->nBandCount, &psOptionsIn->padfSrcNoDataImag,
+               dNoDataImag);
 }
 
 /************************************************************************/
@@ -1479,94 +1481,94 @@ GDALWarpInitSrcNoDataImag( GDALWarpOptions * psOptionsIn, double dNoDataImag )
  * @param psOptions options to initialize.
  *
  */
-void CPL_STDCALL
-GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
+void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
 {
-    if( psOptions == nullptr ) { return; }
-/* -------------------------------------------------------------------- */
-/*      If no working data type was provided, set one now.              */
-/*                                                                      */
-/*      Ensure that the working data type can encapsulate any value     */
-/*      in the target, source, and the no data for either.              */
-/* -------------------------------------------------------------------- */
-    if( psOptions->eWorkingDataType != GDT_Unknown ) { return; }
-
+    if (psOptions == nullptr)
+    {
+        return;
+    }
+    /* -------------------------------------------------------------------- */
+    /*      If no working data type was provided, set one now.              */
+    /*                                                                      */
+    /*      Ensure that the working data type can encapsulate any value     */
+    /*      in the target, source, and the no data for either.              */
+    /* -------------------------------------------------------------------- */
+    if (psOptions->eWorkingDataType != GDT_Unknown)
+    {
+        return;
+    }
 
     psOptions->eWorkingDataType = GDT_Byte;
 
-    for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+    for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
     {
-        if( psOptions->hDstDS != nullptr)
+        if (psOptions->hDstDS != nullptr)
         {
             GDALRasterBandH hDstBand = GDALGetRasterBand(
-                psOptions->hDstDS, psOptions->panDstBands[iBand] );
+                psOptions->hDstDS, psOptions->panDstBands[iBand]);
 
-            if( hDstBand != nullptr )
+            if (hDstBand != nullptr)
             {
                 psOptions->eWorkingDataType =
-                    GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                        GDALGetRasterDataType( hDstBand ) );
+                    GDALDataTypeUnion(psOptions->eWorkingDataType,
+                                      GDALGetRasterDataType(hDstBand));
             }
         }
-        else if( psOptions->hSrcDS != nullptr )
+        else if (psOptions->hSrcDS != nullptr)
         {
             GDALRasterBandH hSrcBand = GDALGetRasterBand(
-                psOptions->hSrcDS, psOptions->panSrcBands[iBand] );
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand]);
 
-            if( hSrcBand != nullptr)
+            if (hSrcBand != nullptr)
             {
                 psOptions->eWorkingDataType =
-                    GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                        GDALGetRasterDataType( hSrcBand ) );
+                    GDALDataTypeUnion(psOptions->eWorkingDataType,
+                                      GDALGetRasterDataType(hSrcBand));
             }
         }
 
-        if( psOptions->padfSrcNoDataReal != nullptr )
+        if (psOptions->padfSrcNoDataReal != nullptr)
         {
             psOptions->eWorkingDataType = GDALDataTypeUnionWithValue(
                 psOptions->eWorkingDataType,
-                psOptions->padfSrcNoDataReal[iBand],
-                false );
+                psOptions->padfSrcNoDataReal[iBand], false);
         }
 
-        if( psOptions->padfSrcNoDataImag != nullptr &&
-            psOptions->padfSrcNoDataImag[iBand] != 0.0 )
-        {
-           psOptions->eWorkingDataType = GDALDataTypeUnionWithValue(
-                psOptions->eWorkingDataType,
-                psOptions->padfSrcNoDataImag[iBand],
-                true );
-        }
-
-        if( psOptions->padfDstNoDataReal != nullptr )
+        if (psOptions->padfSrcNoDataImag != nullptr &&
+            psOptions->padfSrcNoDataImag[iBand] != 0.0)
         {
             psOptions->eWorkingDataType = GDALDataTypeUnionWithValue(
                 psOptions->eWorkingDataType,
-                psOptions->padfDstNoDataReal[iBand],
-                false );
+                psOptions->padfSrcNoDataImag[iBand], true);
         }
 
-        if( psOptions->padfDstNoDataImag != nullptr &&
-            psOptions->padfDstNoDataImag[iBand] != 0.0 )
+        if (psOptions->padfDstNoDataReal != nullptr)
         {
             psOptions->eWorkingDataType = GDALDataTypeUnionWithValue(
                 psOptions->eWorkingDataType,
-                psOptions->padfDstNoDataImag[iBand],
-                true );
+                psOptions->padfDstNoDataReal[iBand], false);
+        }
+
+        if (psOptions->padfDstNoDataImag != nullptr &&
+            psOptions->padfDstNoDataImag[iBand] != 0.0)
+        {
+            psOptions->eWorkingDataType = GDALDataTypeUnionWithValue(
+                psOptions->eWorkingDataType,
+                psOptions->padfDstNoDataImag[iBand], true);
         }
     }
 
     const bool bApplyVerticalShift = CPLFetchBool(
         psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
-    if( bApplyVerticalShift && GDALDataTypeIsInteger(psOptions->eWorkingDataType) )
+    if (bApplyVerticalShift &&
+        GDALDataTypeIsInteger(psOptions->eWorkingDataType))
     {
-        const double dfMultFactorVerticalShift = CPLAtof(
-            CSLFetchNameValueDef(psOptions->papszWarpOptions,
-                                 "MULT_FACTOR_VERTICAL_SHIFT", "1.0") );
-        if( dfMultFactorVerticalShift != 1 )
+        const double dfMultFactorVerticalShift = CPLAtof(CSLFetchNameValueDef(
+            psOptions->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT", "1.0"));
+        if (dfMultFactorVerticalShift != 1)
         {
             psOptions->eWorkingDataType =
-                GDALDataTypeUnion( psOptions->eWorkingDataType, GDT_Float32 );
+                GDALDataTypeUnion(psOptions->eWorkingDataType, GDT_Float32);
         }
     }
 }
@@ -1584,22 +1586,25 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
  * @param nBandCount bands to initialize for.
  *
  */
-void CPL_STDCALL
-GDALWarpInitDefaultBandMapping( GDALWarpOptions * psOptionsIn, int nBandCount )
+void CPL_STDCALL GDALWarpInitDefaultBandMapping(GDALWarpOptions *psOptionsIn,
+                                                int nBandCount)
 {
-    if( psOptionsIn->nBandCount != 0 ) { return; }
+    if (psOptionsIn->nBandCount != 0)
+    {
+        return;
+    }
 
     psOptionsIn->nBandCount = nBandCount;
 
-    psOptionsIn->panSrcBands = static_cast<int *>(
-        CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
-    psOptionsIn->panDstBands = static_cast<int *>(
-        CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
+    psOptionsIn->panSrcBands =
+        static_cast<int *>(CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
+    psOptionsIn->panDstBands =
+        static_cast<int *>(CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
 
-    for( int i = 0; i < psOptionsIn->nBandCount; i++ )
+    for (int i = 0; i < psOptionsIn->nBandCount; i++)
     {
-        psOptionsIn->panSrcBands[i] = i+1;
-        psOptionsIn->panDstBands[i] = i+1;
+        psOptionsIn->panSrcBands[i] = i + 1;
+        psOptionsIn->panDstBands[i] = i + 1;
     }
 }
 
@@ -1607,241 +1612,234 @@ GDALWarpInitDefaultBandMapping( GDALWarpOptions * psOptionsIn, int nBandCount )
 /*                      GDALSerializeWarpOptions()                      */
 /************************************************************************/
 
-CPLXMLNode * CPL_STDCALL
-GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
+CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Create root.                                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create root.                                                    */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psTree =
-        CPLCreateXMLNode( nullptr, CXT_Element, "GDALWarpOptions" );
+        CPLCreateXMLNode(nullptr, CXT_Element, "GDALWarpOptions");
 
-/* -------------------------------------------------------------------- */
-/*      WarpMemoryLimit                                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      WarpMemoryLimit                                                 */
+    /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue(
         psTree, "WarpMemoryLimit",
-        CPLString().Printf("%g", psWO->dfWarpMemoryLimit ) );
+        CPLString().Printf("%g", psWO->dfWarpMemoryLimit));
 
-/* -------------------------------------------------------------------- */
-/*      ResampleAlg                                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      ResampleAlg                                                     */
+    /* -------------------------------------------------------------------- */
     const char *pszAlgName = nullptr;
 
-    if( psWO->eResampleAlg == GRA_NearestNeighbour )
+    if (psWO->eResampleAlg == GRA_NearestNeighbour)
         pszAlgName = "NearestNeighbour";
-    else if( psWO->eResampleAlg == GRA_Bilinear )
+    else if (psWO->eResampleAlg == GRA_Bilinear)
         pszAlgName = "Bilinear";
-    else if( psWO->eResampleAlg == GRA_Cubic )
+    else if (psWO->eResampleAlg == GRA_Cubic)
         pszAlgName = "Cubic";
-    else if( psWO->eResampleAlg == GRA_CubicSpline )
+    else if (psWO->eResampleAlg == GRA_CubicSpline)
         pszAlgName = "CubicSpline";
-    else if( psWO->eResampleAlg == GRA_Lanczos )
+    else if (psWO->eResampleAlg == GRA_Lanczos)
         pszAlgName = "Lanczos";
-    else if( psWO->eResampleAlg == GRA_Average )
+    else if (psWO->eResampleAlg == GRA_Average)
         pszAlgName = "Average";
-    else if( psWO->eResampleAlg == GRA_RMS )
+    else if (psWO->eResampleAlg == GRA_RMS)
         pszAlgName = "RootMeanSquare";
-    else if( psWO->eResampleAlg == GRA_Mode )
+    else if (psWO->eResampleAlg == GRA_Mode)
         pszAlgName = "Mode";
-    else if( psWO->eResampleAlg == GRA_Max )
+    else if (psWO->eResampleAlg == GRA_Max)
         pszAlgName = "Maximum";
-    else if( psWO->eResampleAlg == GRA_Min )
+    else if (psWO->eResampleAlg == GRA_Min)
         pszAlgName = "Minimum";
-    else if( psWO->eResampleAlg == GRA_Med )
+    else if (psWO->eResampleAlg == GRA_Med)
         pszAlgName = "Median";
-    else if( psWO->eResampleAlg == GRA_Q1 )
+    else if (psWO->eResampleAlg == GRA_Q1)
         pszAlgName = "Quartile1";
-    else if( psWO->eResampleAlg == GRA_Q3 )
+    else if (psWO->eResampleAlg == GRA_Q3)
         pszAlgName = "Quartile3";
-    else if( psWO->eResampleAlg == GRA_Sum )
+    else if (psWO->eResampleAlg == GRA_Sum)
         pszAlgName = "Sum";
     else
         pszAlgName = "Unknown";
 
-    CPLCreateXMLElementAndValue(
-        psTree, "ResampleAlg", pszAlgName );
+    CPLCreateXMLElementAndValue(psTree, "ResampleAlg", pszAlgName);
 
-/* -------------------------------------------------------------------- */
-/*      Working Data Type                                               */
-/* -------------------------------------------------------------------- */
-    CPLCreateXMLElementAndValue(
-        psTree, "WorkingDataType",
-        GDALGetDataTypeName( psWO->eWorkingDataType ) );
+    /* -------------------------------------------------------------------- */
+    /*      Working Data Type                                               */
+    /* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue(psTree, "WorkingDataType",
+                                GDALGetDataTypeName(psWO->eWorkingDataType));
 
-/* -------------------------------------------------------------------- */
-/*      Name/value warp options.                                        */
-/* -------------------------------------------------------------------- */
-    for( int iWO = 0; psWO->papszWarpOptions != nullptr
-             && psWO->papszWarpOptions[iWO] != nullptr; iWO++ )
+    /* -------------------------------------------------------------------- */
+    /*      Name/value warp options.                                        */
+    /* -------------------------------------------------------------------- */
+    for (int iWO = 0; psWO->papszWarpOptions != nullptr &&
+                      psWO->papszWarpOptions[iWO] != nullptr;
+         iWO++)
     {
         char *pszName = nullptr;
         const char *pszValue =
-            CPLParseNameValue( psWO->papszWarpOptions[iWO], &pszName );
+            CPLParseNameValue(psWO->papszWarpOptions[iWO], &pszName);
 
         // EXTRA_ELTS is an internal detail that we will recover
         // no need to serialize it.
         // And CUTLINE is also serialized in a special way
-        if( pszName != nullptr &&
-            !EQUAL(pszName, "EXTRA_ELTS") && !EQUAL(pszName, "CUTLINE") )
+        if (pszName != nullptr && !EQUAL(pszName, "EXTRA_ELTS") &&
+            !EQUAL(pszName, "CUTLINE"))
         {
             CPLXMLNode *psOption =
-                CPLCreateXMLElementAndValue(
-                    psTree, "Option", pszValue );
+                CPLCreateXMLElementAndValue(psTree, "Option", pszValue);
 
-            CPLCreateXMLNode(
-                CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
-                CXT_Text, pszName );
+            CPLCreateXMLNode(CPLCreateXMLNode(psOption, CXT_Attribute, "name"),
+                             CXT_Text, pszName);
         }
 
         CPLFree(pszName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Source and Destination Data Source                              */
-/* -------------------------------------------------------------------- */
-    if( psWO->hSrcDS != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Source and Destination Data Source                              */
+    /* -------------------------------------------------------------------- */
+    if (psWO->hSrcDS != nullptr)
     {
-        CPLCreateXMLElementAndValue(
-            psTree, "SourceDataset",
-            GDALGetDescription( psWO->hSrcDS ) );
+        CPLCreateXMLElementAndValue(psTree, "SourceDataset",
+                                    GDALGetDescription(psWO->hSrcDS));
 
-        char** papszOpenOptions =
-            (static_cast<GDALDataset*>(psWO->hSrcDS))->GetOpenOptions();
+        char **papszOpenOptions =
+            (static_cast<GDALDataset *>(psWO->hSrcDS))->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 
-    if( psWO->hDstDS != nullptr && strlen(GDALGetDescription(psWO->hDstDS)) != 0 )
+    if (psWO->hDstDS != nullptr &&
+        strlen(GDALGetDescription(psWO->hDstDS)) != 0)
     {
-        CPLCreateXMLElementAndValue(
-            psTree, "DestinationDataset",
-            GDALGetDescription( psWO->hDstDS ) );
+        CPLCreateXMLElementAndValue(psTree, "DestinationDataset",
+                                    GDALGetDescription(psWO->hDstDS));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Serialize transformer.                                          */
-/* -------------------------------------------------------------------- */
-    if( psWO->pfnTransformer != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Serialize transformer.                                          */
+    /* -------------------------------------------------------------------- */
+    if (psWO->pfnTransformer != nullptr)
     {
         CPLXMLNode *psTransformerContainer =
-            CPLCreateXMLNode( psTree, CXT_Element, "Transformer" );
+            CPLCreateXMLNode(psTree, CXT_Element, "Transformer");
 
-        CPLXMLNode *psTransformerTree =
-            GDALSerializeTransformer( psWO->pfnTransformer,
-                                      psWO->pTransformerArg );
+        CPLXMLNode *psTransformerTree = GDALSerializeTransformer(
+            psWO->pfnTransformer, psWO->pTransformerArg);
 
-        if( psTransformerTree != nullptr )
-            CPLAddXMLChild( psTransformerContainer, psTransformerTree );
+        if (psTransformerTree != nullptr)
+            CPLAddXMLChild(psTransformerContainer, psTransformerTree);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Band count and lists.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Band count and lists.                                           */
+    /* -------------------------------------------------------------------- */
     CPLXMLNode *psBandList = nullptr;
 
-    if( psWO->nBandCount != 0 )
-        psBandList = CPLCreateXMLNode( psTree, CXT_Element, "BandList" );
+    if (psWO->nBandCount != 0)
+        psBandList = CPLCreateXMLNode(psTree, CXT_Element, "BandList");
 
-    for( int i = 0; i < psWO->nBandCount; i++ )
+    for (int i = 0; i < psWO->nBandCount; i++)
     {
         CPLXMLNode *psBand;
 
-        psBand = CPLCreateXMLNode( psBandList, CXT_Element, "BandMapping" );
-        if( psWO->panSrcBands != nullptr )
-            CPLCreateXMLNode(
-                CPLCreateXMLNode( psBand, CXT_Attribute, "src" ),
-                CXT_Text, CPLString().Printf( "%d", psWO->panSrcBands[i] ) );
-        if( psWO->panDstBands != nullptr )
-            CPLCreateXMLNode(
-                CPLCreateXMLNode( psBand, CXT_Attribute, "dst" ),
-                CXT_Text, CPLString().Printf( "%d", psWO->panDstBands[i] ) );
+        psBand = CPLCreateXMLNode(psBandList, CXT_Element, "BandMapping");
+        if (psWO->panSrcBands != nullptr)
+            CPLCreateXMLNode(CPLCreateXMLNode(psBand, CXT_Attribute, "src"),
+                             CXT_Text,
+                             CPLString().Printf("%d", psWO->panSrcBands[i]));
+        if (psWO->panDstBands != nullptr)
+            CPLCreateXMLNode(CPLCreateXMLNode(psBand, CXT_Attribute, "dst"),
+                             CXT_Text,
+                             CPLString().Printf("%d", psWO->panDstBands[i]));
 
-        if( psWO->padfSrcNoDataReal != nullptr )
+        if (psWO->padfSrcNoDataReal != nullptr)
         {
             if (CPLIsNan(psWO->padfSrcNoDataReal[i]))
                 CPLCreateXMLElementAndValue(psBand, "SrcNoDataReal", "nan");
             else
                 CPLCreateXMLElementAndValue(
                     psBand, "SrcNoDataReal",
-                    CPLString().Printf( "%.16g", psWO->padfSrcNoDataReal[i] ) );
+                    CPLString().Printf("%.16g", psWO->padfSrcNoDataReal[i]));
         }
 
-        if( psWO->padfSrcNoDataImag != nullptr )
+        if (psWO->padfSrcNoDataImag != nullptr)
         {
             if (CPLIsNan(psWO->padfSrcNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
                     psBand, "SrcNoDataImag",
-                    CPLString().Printf( "%.16g", psWO->padfSrcNoDataImag[i] ) );
+                    CPLString().Printf("%.16g", psWO->padfSrcNoDataImag[i]));
         }
         // Compatibility with GDAL <= 2.2: if we serialize a SrcNoDataReal,
         // it needs a SrcNoDataImag as well
-        else if( psWO->padfSrcNoDataReal != nullptr )
+        else if (psWO->padfSrcNoDataReal != nullptr)
         {
             CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "0");
         }
 
-        if( psWO->padfDstNoDataReal != nullptr )
+        if (psWO->padfDstNoDataReal != nullptr)
         {
             if (CPLIsNan(psWO->padfDstNoDataReal[i]))
                 CPLCreateXMLElementAndValue(psBand, "DstNoDataReal", "nan");
             else
                 CPLCreateXMLElementAndValue(
                     psBand, "DstNoDataReal",
-                    CPLString().Printf( "%.16g", psWO->padfDstNoDataReal[i] ) );
+                    CPLString().Printf("%.16g", psWO->padfDstNoDataReal[i]));
         }
 
-        if( psWO->padfDstNoDataImag != nullptr )
+        if (psWO->padfDstNoDataImag != nullptr)
         {
             if (CPLIsNan(psWO->padfDstNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
                     psBand, "DstNoDataImag",
-                    CPLString().Printf( "%.16g", psWO->padfDstNoDataImag[i] ) );
+                    CPLString().Printf("%.16g", psWO->padfDstNoDataImag[i]));
         }
         // Compatibility with GDAL <= 2.2: if we serialize a DstNoDataReal,
         // it needs a SrcNoDataImag as well
-        else if( psWO->padfDstNoDataReal != nullptr )
+        else if (psWO->padfDstNoDataReal != nullptr)
         {
             CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "0");
         }
-
     }
 
-/* -------------------------------------------------------------------- */
-/*      Alpha bands.                                                    */
-/* -------------------------------------------------------------------- */
-    if( psWO->nSrcAlphaBand > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Alpha bands.                                                    */
+    /* -------------------------------------------------------------------- */
+    if (psWO->nSrcAlphaBand > 0)
         CPLCreateXMLElementAndValue(
             psTree, "SrcAlphaBand",
-            CPLString().Printf( "%d", psWO->nSrcAlphaBand ) );
+            CPLString().Printf("%d", psWO->nSrcAlphaBand));
 
-    if( psWO->nDstAlphaBand > 0 )
+    if (psWO->nDstAlphaBand > 0)
         CPLCreateXMLElementAndValue(
             psTree, "DstAlphaBand",
-            CPLString().Printf( "%d", psWO->nDstAlphaBand ) );
+            CPLString().Printf("%d", psWO->nDstAlphaBand));
 
-/* -------------------------------------------------------------------- */
-/*      Cutline.                                                        */
-/* -------------------------------------------------------------------- */
-    if( psWO->hCutline != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Cutline.                                                        */
+    /* -------------------------------------------------------------------- */
+    if (psWO->hCutline != nullptr)
     {
         char *pszWKT = nullptr;
-        if( OGR_G_ExportToWkt( reinterpret_cast<OGRGeometryH>(psWO->hCutline), &pszWKT )
-            == OGRERR_NONE )
+        if (OGR_G_ExportToWkt(reinterpret_cast<OGRGeometryH>(psWO->hCutline),
+                              &pszWKT) == OGRERR_NONE)
         {
-            CPLCreateXMLElementAndValue( psTree, "Cutline", pszWKT );
+            CPLCreateXMLElementAndValue(psTree, "Cutline", pszWKT);
         }
-        CPLFree( pszWKT );
+        CPLFree(pszWKT);
     }
 
-    if( psWO->dfCutlineBlendDist != 0.0 )
+    if (psWO->dfCutlineBlendDist != 0.0)
         CPLCreateXMLElementAndValue(
             psTree, "CutlineBlendDist",
-            CPLString().Printf( "%.5g", psWO->dfCutlineBlendDist ) );
+            CPLString().Printf("%.5g", psWO->dfCutlineBlendDist));
 
     return psTree;
 }
@@ -1850,149 +1848,144 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /*                     GDALDeserializeWarpOptions()                     */
 /************************************************************************/
 
-GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
+GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
 
 {
     CPLErrorReset();
 
-/* -------------------------------------------------------------------- */
-/*      Verify this is the right kind of object.                        */
-/* -------------------------------------------------------------------- */
-    if( psTree == nullptr || psTree->eType != CXT_Element
-        || !EQUAL(psTree->pszValue, "GDALWarpOptions") )
+    /* -------------------------------------------------------------------- */
+    /*      Verify this is the right kind of object.                        */
+    /* -------------------------------------------------------------------- */
+    if (psTree == nullptr || psTree->eType != CXT_Element ||
+        !EQUAL(psTree->pszValue, "GDALWarpOptions"))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Wrong node, unable to deserialize GDALWarpOptions." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Wrong node, unable to deserialize GDALWarpOptions.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create pre-initialized warp options.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create pre-initialized warp options.                            */
+    /* -------------------------------------------------------------------- */
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
-/* -------------------------------------------------------------------- */
-/*      Warp memory limit.                                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Warp memory limit.                                              */
+    /* -------------------------------------------------------------------- */
     psWO->dfWarpMemoryLimit =
-        CPLAtof(CPLGetXMLValue(psTree,"WarpMemoryLimit", "0.0"));
+        CPLAtof(CPLGetXMLValue(psTree, "WarpMemoryLimit", "0.0"));
 
-/* -------------------------------------------------------------------- */
-/*      resample algorithm                                              */
-/* -------------------------------------------------------------------- */
-    const char *pszValue =
-        CPLGetXMLValue(psTree,"ResampleAlg","Default");
+    /* -------------------------------------------------------------------- */
+    /*      resample algorithm                                              */
+    /* -------------------------------------------------------------------- */
+    const char *pszValue = CPLGetXMLValue(psTree, "ResampleAlg", "Default");
 
-    if( EQUAL(pszValue,"NearestNeighbour") )
+    if (EQUAL(pszValue, "NearestNeighbour"))
         psWO->eResampleAlg = GRA_NearestNeighbour;
-    else if( EQUAL(pszValue, "Bilinear") )
+    else if (EQUAL(pszValue, "Bilinear"))
         psWO->eResampleAlg = GRA_Bilinear;
-    else if( EQUAL(pszValue, "Cubic") )
+    else if (EQUAL(pszValue, "Cubic"))
         psWO->eResampleAlg = GRA_Cubic;
-    else if( EQUAL(pszValue, "CubicSpline") )
+    else if (EQUAL(pszValue, "CubicSpline"))
         psWO->eResampleAlg = GRA_CubicSpline;
-    else if( EQUAL(pszValue, "Lanczos") )
+    else if (EQUAL(pszValue, "Lanczos"))
         psWO->eResampleAlg = GRA_Lanczos;
-    else if( EQUAL(pszValue, "Average") )
+    else if (EQUAL(pszValue, "Average"))
         psWO->eResampleAlg = GRA_Average;
-    else if( EQUAL(pszValue, "RootMeanSquare") )
+    else if (EQUAL(pszValue, "RootMeanSquare"))
         psWO->eResampleAlg = GRA_RMS;
-    else if( EQUAL(pszValue, "Mode") )
+    else if (EQUAL(pszValue, "Mode"))
         psWO->eResampleAlg = GRA_Mode;
-    else if( EQUAL(pszValue, "Maximum") )
+    else if (EQUAL(pszValue, "Maximum"))
         psWO->eResampleAlg = GRA_Max;
-    else if( EQUAL(pszValue, "Minimum") )
+    else if (EQUAL(pszValue, "Minimum"))
         psWO->eResampleAlg = GRA_Min;
-    else if( EQUAL(pszValue, "Median") )
+    else if (EQUAL(pszValue, "Median"))
         psWO->eResampleAlg = GRA_Med;
-    else if( EQUAL(pszValue, "Quartile1") )
+    else if (EQUAL(pszValue, "Quartile1"))
         psWO->eResampleAlg = GRA_Q1;
-    else if( EQUAL(pszValue, "Quartile3") )
+    else if (EQUAL(pszValue, "Quartile3"))
         psWO->eResampleAlg = GRA_Q3;
-    else if( EQUAL(pszValue, "Sum") )
+    else if (EQUAL(pszValue, "Sum"))
         psWO->eResampleAlg = GRA_Sum;
-    else if( EQUAL(pszValue, "Default") )
+    else if (EQUAL(pszValue, "Default"))
         /* leave as is */;
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognised ResampleAlg value '%s'.",
-                  pszValue );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unrecognised ResampleAlg value '%s'.", pszValue);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Working data type.                                              */
-/* -------------------------------------------------------------------- */
-    psWO->eWorkingDataType =
-        GDALGetDataTypeByName(
-            CPLGetXMLValue(psTree,"WorkingDataType","Unknown"));
+    /* -------------------------------------------------------------------- */
+    /*      Working data type.                                              */
+    /* -------------------------------------------------------------------- */
+    psWO->eWorkingDataType = GDALGetDataTypeByName(
+        CPLGetXMLValue(psTree, "WorkingDataType", "Unknown"));
 
-/* -------------------------------------------------------------------- */
-/*      Name/value warp options.                                        */
-/* -------------------------------------------------------------------- */
-    for( CPLXMLNode *psItem = psTree->psChild;
-         psItem != nullptr;
-         psItem = psItem->psNext )
+    /* -------------------------------------------------------------------- */
+    /*      Name/value warp options.                                        */
+    /* -------------------------------------------------------------------- */
+    for (CPLXMLNode *psItem = psTree->psChild; psItem != nullptr;
+         psItem = psItem->psNext)
     {
-        if( psItem->eType == CXT_Element
-            && EQUAL(psItem->pszValue, "Option") )
+        if (psItem->eType == CXT_Element && EQUAL(psItem->pszValue, "Option"))
         {
-            const char *pszName = CPLGetXMLValue(psItem, "Name", nullptr );
-            pszValue = CPLGetXMLValue(psItem, "", nullptr );
+            const char *pszName = CPLGetXMLValue(psItem, "Name", nullptr);
+            pszValue = CPLGetXMLValue(psItem, "", nullptr);
 
-            if( pszName != nullptr && pszValue != nullptr )
+            if (pszName != nullptr && pszValue != nullptr)
             {
                 psWO->papszWarpOptions =
-                    CSLSetNameValue( psWO->papszWarpOptions,
-                                     pszName, pszValue );
+                    CSLSetNameValue(psWO->papszWarpOptions, pszName, pszValue);
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Source Dataset.                                                 */
-/* -------------------------------------------------------------------- */
-    pszValue = CPLGetXMLValue(psTree,"SourceDataset",nullptr);
+    /* -------------------------------------------------------------------- */
+    /*      Source Dataset.                                                 */
+    /* -------------------------------------------------------------------- */
+    pszValue = CPLGetXMLValue(psTree, "SourceDataset", nullptr);
 
-    if( pszValue != nullptr )
+    if (pszValue != nullptr)
     {
-        CPLXMLNode* psGeoLocNode = CPLSearchXMLNode(psTree, "GeoLocTransformer");
-        if( psGeoLocNode )
+        CPLXMLNode *psGeoLocNode =
+            CPLSearchXMLNode(psTree, "GeoLocTransformer");
+        if (psGeoLocNode)
         {
-            CPLCreateXMLElementAndValue(psGeoLocNode, "SourceDataset", pszValue);
+            CPLCreateXMLElementAndValue(psGeoLocNode, "SourceDataset",
+                                        pszValue);
         }
 
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
 
-        char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
-        psWO->hSrcDS = GDALOpenEx(
-            pszValue, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-            nullptr,
-            papszOpenOptions, nullptr );
+        char **papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
+        psWO->hSrcDS =
+            GDALOpenEx(pszValue, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                       nullptr, papszOpenOptions, nullptr);
         CSLDestroy(papszOpenOptions);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Destination Dataset.                                            */
-/* -------------------------------------------------------------------- */
-    pszValue = CPLGetXMLValue(psTree, "DestinationDataset",nullptr);
+    /* -------------------------------------------------------------------- */
+    /*      Destination Dataset.                                            */
+    /* -------------------------------------------------------------------- */
+    pszValue = CPLGetXMLValue(psTree, "DestinationDataset", nullptr);
 
-    if( pszValue != nullptr )
+    if (pszValue != nullptr)
     {
-        psWO->hDstDS = GDALOpenShared( pszValue, GA_Update );
+        psWO->hDstDS = GDALOpenShared(pszValue, GA_Update);
     }
 
-/* -------------------------------------------------------------------- */
-/*      First, count band mappings so we can establish the bandcount.   */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psBandTree = CPLGetXMLNode( psTree, "BandList" );
+    /* -------------------------------------------------------------------- */
+    /*      First, count band mappings so we can establish the bandcount.   */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psBandTree = CPLGetXMLNode(psTree, "BandList");
 
     int nBandCount = 0;
     CPLXMLNode *psBand = psBandTree ? psBandTree->psChild : nullptr;
-    for( ; psBand != nullptr; psBand = psBand->psNext )
+    for (; psBand != nullptr; psBand = psBand->psNext)
     {
-        if( psBand->eType != CXT_Element
-            || !EQUAL(psBand->pszValue,"BandMapping") )
+        if (psBand->eType != CXT_Element ||
+            !EQUAL(psBand->pszValue, "BandMapping"))
             continue;
 
         nBandCount++;
@@ -2000,62 +1993,70 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     GDALWarpInitDefaultBandMapping(psWO, nBandCount);
 
-/* ==================================================================== */
-/*      Now actually process each bandmapping.                          */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Now actually process each bandmapping.                          */
+    /* ==================================================================== */
     int iBand = 0;
 
     psBand = psBandTree ? psBandTree->psChild : nullptr;
 
-    for( ; psBand != nullptr; psBand = psBand->psNext )
+    for (; psBand != nullptr; psBand = psBand->psNext)
     {
-        if( psBand->eType != CXT_Element
-            || !EQUAL(psBand->pszValue,"BandMapping") )
+        if (psBand->eType != CXT_Element ||
+            !EQUAL(psBand->pszValue, "BandMapping"))
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Source band                                                     */
-/* -------------------------------------------------------------------- */
-        pszValue = CPLGetXMLValue(psBand,"src",nullptr);
-        if( pszValue != nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Source band */
+        /* --------------------------------------------------------------------
+         */
+        pszValue = CPLGetXMLValue(psBand, "src", nullptr);
+        if (pszValue != nullptr)
             psWO->panSrcBands[iBand] = atoi(pszValue);
 
-/* -------------------------------------------------------------------- */
-/*      Destination band.                                               */
-/* -------------------------------------------------------------------- */
-        pszValue = CPLGetXMLValue(psBand,"dst",nullptr);
-        if( pszValue != nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Destination band. */
+        /* --------------------------------------------------------------------
+         */
+        pszValue = CPLGetXMLValue(psBand, "dst", nullptr);
+        if (pszValue != nullptr)
             psWO->panDstBands[iBand] = atoi(pszValue);
 
-/* -------------------------------------------------------------------- */
-/*      Source nodata.                                                  */
-/* -------------------------------------------------------------------- */
-        pszValue = CPLGetXMLValue(psBand,"SrcNoDataReal",nullptr);
-        if( pszValue != nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Source nodata. */
+        /* --------------------------------------------------------------------
+         */
+        pszValue = CPLGetXMLValue(psBand, "SrcNoDataReal", nullptr);
+        if (pszValue != nullptr)
         {
             GDALWarpInitSrcNoDataReal(psWO, -1.1e20);
             psWO->padfSrcNoDataReal[iBand] = CPLAtof(pszValue);
         }
 
-        pszValue = CPLGetXMLValue(psBand,"SrcNoDataImag",nullptr);
-        if( pszValue != nullptr )
+        pszValue = CPLGetXMLValue(psBand, "SrcNoDataImag", nullptr);
+        if (pszValue != nullptr)
         {
             GDALWarpInitSrcNoDataImag(psWO, 0);
             psWO->padfSrcNoDataImag[iBand] = CPLAtof(pszValue);
         }
 
-/* -------------------------------------------------------------------- */
-/*      Destination nodata.                                             */
-/* -------------------------------------------------------------------- */
-        pszValue = CPLGetXMLValue(psBand,"DstNoDataReal",nullptr);
-        if( pszValue != nullptr )
+        /* --------------------------------------------------------------------
+         */
+        /*      Destination nodata. */
+        /* --------------------------------------------------------------------
+         */
+        pszValue = CPLGetXMLValue(psBand, "DstNoDataReal", nullptr);
+        if (pszValue != nullptr)
         {
             GDALWarpInitDstNoDataReal(psWO, -1.1e20);
             psWO->padfDstNoDataReal[iBand] = CPLAtof(pszValue);
         }
 
-        pszValue = CPLGetXMLValue(psBand,"DstNoDataImag",nullptr);
-        if( pszValue != nullptr )
+        pszValue = CPLGetXMLValue(psBand, "DstNoDataImag", nullptr);
+        if (pszValue != nullptr)
         {
             GDALWarpInitDstNoDataImag(psWO, 0);
             psWO->padfDstNoDataImag[iBand] = CPLAtof(pszValue);
@@ -2064,61 +2065,59 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         iBand++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Alpha bands.                                                    */
-/* -------------------------------------------------------------------- */
-    psWO->nSrcAlphaBand =
-        atoi( CPLGetXMLValue( psTree, "SrcAlphaBand", "0" ) );
-    psWO->nDstAlphaBand =
-        atoi( CPLGetXMLValue( psTree, "DstAlphaBand", "0" ) );
+    /* -------------------------------------------------------------------- */
+    /*      Alpha bands.                                                    */
+    /* -------------------------------------------------------------------- */
+    psWO->nSrcAlphaBand = atoi(CPLGetXMLValue(psTree, "SrcAlphaBand", "0"));
+    psWO->nDstAlphaBand = atoi(CPLGetXMLValue(psTree, "DstAlphaBand", "0"));
 
-/* -------------------------------------------------------------------- */
-/*      Cutline.                                                        */
-/* -------------------------------------------------------------------- */
-    const char *pszWKT = CPLGetXMLValue( psTree, "Cutline", nullptr );
-    if( pszWKT )
+    /* -------------------------------------------------------------------- */
+    /*      Cutline.                                                        */
+    /* -------------------------------------------------------------------- */
+    const char *pszWKT = CPLGetXMLValue(psTree, "Cutline", nullptr);
+    if (pszWKT)
     {
-        char* pszWKTTemp = const_cast<char*>(pszWKT);
-        OGR_G_CreateFromWkt( &pszWKTTemp, nullptr,
-                             reinterpret_cast<OGRGeometryH *>(&psWO->hCutline) );
+        char *pszWKTTemp = const_cast<char *>(pszWKT);
+        OGR_G_CreateFromWkt(&pszWKTTemp, nullptr,
+                            reinterpret_cast<OGRGeometryH *>(&psWO->hCutline));
     }
 
     psWO->dfCutlineBlendDist =
-        CPLAtof( CPLGetXMLValue( psTree, "CutlineBlendDist", "0" ) );
+        CPLAtof(CPLGetXMLValue(psTree, "CutlineBlendDist", "0"));
 
-/* -------------------------------------------------------------------- */
-/*      Transformation.                                                 */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psTransformer = CPLGetXMLNode( psTree, "Transformer" );
+    /* -------------------------------------------------------------------- */
+    /*      Transformation.                                                 */
+    /* -------------------------------------------------------------------- */
+    CPLXMLNode *psTransformer = CPLGetXMLNode(psTree, "Transformer");
 
-    if( psTransformer != nullptr && psTransformer->psChild != nullptr )
+    if (psTransformer != nullptr && psTransformer->psChild != nullptr)
     {
-        GDALDeserializeTransformer( psTransformer->psChild,
-                                    &(psWO->pfnTransformer),
-                                    &(psWO->pTransformerArg) );
+        GDALDeserializeTransformer(psTransformer->psChild,
+                                   &(psWO->pfnTransformer),
+                                   &(psWO->pTransformerArg));
     }
 
-/* -------------------------------------------------------------------- */
-/*      If any error has occurred, cleanup else return success.          */
-/* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorType() != CE_None )
+    /* -------------------------------------------------------------------- */
+    /*      If any error has occurred, cleanup else return success.          */
+    /* -------------------------------------------------------------------- */
+    if (CPLGetLastErrorType() != CE_None)
     {
-        if ( psWO->pTransformerArg )
+        if (psWO->pTransformerArg)
         {
-            GDALDestroyTransformer( psWO->pTransformerArg );
+            GDALDestroyTransformer(psWO->pTransformerArg);
             psWO->pTransformerArg = nullptr;
         }
-        if( psWO->hSrcDS != nullptr )
+        if (psWO->hSrcDS != nullptr)
         {
-            GDALClose( psWO->hSrcDS );
+            GDALClose(psWO->hSrcDS);
             psWO->hSrcDS = nullptr;
         }
-        if( psWO->hDstDS != nullptr )
+        if (psWO->hDstDS != nullptr)
         {
-            GDALClose( psWO->hDstDS );
+            GDALClose(psWO->hDstDS);
             psWO->hDstDS = nullptr;
         }
-        GDALDestroyWarpOptions( psWO );
+        GDALDestroyWarpOptions(psWO);
         return nullptr;
     }
 

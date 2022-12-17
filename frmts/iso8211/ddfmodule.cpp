@@ -33,13 +33,12 @@
 #include <cstdio>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
-
 
 /************************************************************************/
 /*                             DDFModule()                              */
@@ -49,29 +48,16 @@
  * The constructor.
  */
 
-DDFModule::DDFModule() :
-    fpDDF(nullptr),
-    bReadOnly(TRUE),
-    nFirstRecordOffset(0),
-    _interchangeLevel('\0'),
-    _inlineCodeExtensionIndicator('\0'),
-    _versionNumber('\0'),
-    _appIndicator('\0'),
-    _fieldControlLength(9),
-    _recLength(0),
-    _leaderIden('L'),
-    _fieldAreaStart(0),
-    _sizeFieldLength(0),
-    _sizeFieldPos(0),
-    _sizeFieldTag(0),
-    nFieldDefnCount(0),
-    papoFieldDefns(nullptr),
-    poRecord(nullptr),
-    nCloneCount(0),
-    nMaxCloneCount(0),
-    papoClones(nullptr)
+DDFModule::DDFModule()
+    : fpDDF(nullptr), bReadOnly(TRUE), nFirstRecordOffset(0),
+      _interchangeLevel('\0'), _inlineCodeExtensionIndicator('\0'),
+      _versionNumber('\0'), _appIndicator('\0'), _fieldControlLength(9),
+      _recLength(0), _leaderIden('L'), _fieldAreaStart(0), _sizeFieldLength(0),
+      _sizeFieldPos(0), _sizeFieldTag(0), nFieldDefnCount(0),
+      papoFieldDefns(nullptr), poRecord(nullptr), nCloneCount(0),
+      nMaxCloneCount(0), papoClones(nullptr)
 {
-    strcpy( _extendedCharSet, " ! " );
+    strcpy(_extendedCharSet, " ! ");
 }
 
 /************************************************************************/
@@ -102,43 +88,43 @@ DDFModule::~DDFModule()
 void DDFModule::Close()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Close the file.                                                 */
-/* -------------------------------------------------------------------- */
-    if( fpDDF != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Close the file.                                                 */
+    /* -------------------------------------------------------------------- */
+    if (fpDDF != nullptr)
     {
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDDF));
         fpDDF = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup the working record.                                     */
-/* -------------------------------------------------------------------- */
-    if( poRecord != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup the working record.                                     */
+    /* -------------------------------------------------------------------- */
+    if (poRecord != nullptr)
     {
         delete poRecord;
         poRecord = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup the clones.                                             */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nCloneCount; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup the clones.                                             */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < nCloneCount; i++)
     {
         papoClones[i]->RemoveIsCloneFlag();
         delete papoClones[i];
     }
     nCloneCount = 0;
     nMaxCloneCount = 0;
-    CPLFree( papoClones );
+    CPLFree(papoClones);
     papoClones = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup the field definitions.                                  */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nFieldDefnCount; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup the field definitions.                                  */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < nFieldDefnCount; i++)
         delete papoFieldDefns[i];
-    CPLFree( papoFieldDefns );
+    CPLFree(papoFieldDefns);
     papoFieldDefns = nullptr;
     nFieldDefnCount = 0;
 }
@@ -164,197 +150,195 @@ void DDFModule::Close()
  * are issued internally with CPLError().
  */
 
-int DDFModule::Open( const char * pszFilename, int bFailQuietly )
+int DDFModule::Open(const char *pszFilename, int bFailQuietly)
 
 {
     constexpr int nLeaderSize = 24;
 
-/* -------------------------------------------------------------------- */
-/*      Close the existing file if there is one.                        */
-/* -------------------------------------------------------------------- */
-    if( fpDDF != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Close the existing file if there is one.                        */
+    /* -------------------------------------------------------------------- */
+    if (fpDDF != nullptr)
         Close();
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open the file.                                                  */
+    /* -------------------------------------------------------------------- */
     VSIStatBufL sStat;
-    if( VSIStatL(pszFilename, &sStat) == 0 && !VSI_ISDIR(sStat.st_mode) )
-        fpDDF = VSIFOpenL( pszFilename, "rb" );
+    if (VSIStatL(pszFilename, &sStat) == 0 && !VSI_ISDIR(sStat.st_mode))
+        fpDDF = VSIFOpenL(pszFilename, "rb");
 
-    if( fpDDF == nullptr )
+    if (fpDDF == nullptr)
     {
-        if( !bFailQuietly )
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unable to open DDF file `%s'.",
-                      pszFilename );
+        if (!bFailQuietly)
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Unable to open DDF file `%s'.", pszFilename);
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the 24 byte leader.                                        */
-/* -------------------------------------------------------------------- */
-    char        achLeader[nLeaderSize];
+    /* -------------------------------------------------------------------- */
+    /*      Read the 24 byte leader.                                        */
+    /* -------------------------------------------------------------------- */
+    char achLeader[nLeaderSize];
 
-    if( (int)VSIFReadL( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
+    if ((int)VSIFReadL(achLeader, 1, nLeaderSize, fpDDF) != nLeaderSize)
     {
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDDF));
         fpDDF = nullptr;
 
-        if( !bFailQuietly )
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Leader is short on DDF file `%s'.",
-                      pszFilename );
+        if (!bFailQuietly)
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Leader is short on DDF file `%s'.", pszFilename);
 
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Verify that this appears to be a valid DDF file.                */
-/* -------------------------------------------------------------------- */
-    int         i, bValid = TRUE;
+    /* -------------------------------------------------------------------- */
+    /*      Verify that this appears to be a valid DDF file.                */
+    /* -------------------------------------------------------------------- */
+    int i, bValid = TRUE;
 
-    for( i = 0; i < nLeaderSize; i++ )
+    for (i = 0; i < nLeaderSize; i++)
     {
-        if( achLeader[i] < 32 || achLeader[i] > 126 )
+        if (achLeader[i] < 32 || achLeader[i] > 126)
             bValid = FALSE;
     }
 
-    if( achLeader[5] != '1' && achLeader[5] != '2' && achLeader[5] != '3' )
+    if (achLeader[5] != '1' && achLeader[5] != '2' && achLeader[5] != '3')
         bValid = FALSE;
 
-    if( achLeader[6] != 'L' )
+    if (achLeader[6] != 'L')
         bValid = FALSE;
-    if( achLeader[8] != '1' && achLeader[8] != ' ' )
+    if (achLeader[8] != '1' && achLeader[8] != ' ')
         bValid = FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Extract information from leader.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Extract information from leader.                                */
+    /* -------------------------------------------------------------------- */
 
-    if( bValid )
+    if (bValid)
     {
-        _recLength                        = DDFScanInt( achLeader+0, 5 );
-        _interchangeLevel                 = achLeader[5];
-        _leaderIden                   = achLeader[6];
+        _recLength = DDFScanInt(achLeader + 0, 5);
+        _interchangeLevel = achLeader[5];
+        _leaderIden = achLeader[6];
         _inlineCodeExtensionIndicator = achLeader[7];
-        _versionNumber                = achLeader[8];
-        _appIndicator                 = achLeader[9];
-        _fieldControlLength           = DDFScanInt(achLeader+10,2);
-        _fieldAreaStart               = DDFScanInt(achLeader+12,5);
-        _extendedCharSet[0]           = achLeader[17];
-        _extendedCharSet[1]           = achLeader[18];
-        _extendedCharSet[2]           = achLeader[19];
-        _extendedCharSet[3]           = '\0';
-        _sizeFieldLength              = DDFScanInt(achLeader+20,1);
-        _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
-        _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
+        _versionNumber = achLeader[8];
+        _appIndicator = achLeader[9];
+        _fieldControlLength = DDFScanInt(achLeader + 10, 2);
+        _fieldAreaStart = DDFScanInt(achLeader + 12, 5);
+        _extendedCharSet[0] = achLeader[17];
+        _extendedCharSet[1] = achLeader[18];
+        _extendedCharSet[2] = achLeader[19];
+        _extendedCharSet[3] = '\0';
+        _sizeFieldLength = DDFScanInt(achLeader + 20, 1);
+        _sizeFieldPos = DDFScanInt(achLeader + 21, 1);
+        _sizeFieldTag = DDFScanInt(achLeader + 23, 1);
 
-        if( _recLength < nLeaderSize || _fieldControlLength <= 0
-            || _fieldAreaStart < 24 || _sizeFieldLength <= 0
-            || _sizeFieldPos <= 0 || _sizeFieldTag <= 0 )
+        if (_recLength < nLeaderSize || _fieldControlLength <= 0 ||
+            _fieldAreaStart < 24 || _sizeFieldLength <= 0 ||
+            _sizeFieldPos <= 0 || _sizeFieldTag <= 0)
         {
             bValid = FALSE;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If the header is invalid, then clean up, report the error       */
-/*      and return.                                                     */
-/* -------------------------------------------------------------------- */
-    if( !bValid )
+    /* -------------------------------------------------------------------- */
+    /*      If the header is invalid, then clean up, report the error       */
+    /*      and return.                                                     */
+    /* -------------------------------------------------------------------- */
+    if (!bValid)
     {
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpDDF));
         fpDDF = nullptr;
 
-        if( !bFailQuietly )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "File `%s' does not appear to have\n"
-                      "a valid ISO 8211 header.\n",
-                      pszFilename );
+        if (!bFailQuietly)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "File `%s' does not appear to have\n"
+                     "a valid ISO 8211 header.\n",
+                     pszFilename);
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the whole record info memory.                              */
-/* -------------------------------------------------------------------- */
-    char *pachRecord = (char *) CPLMalloc(_recLength);
-    memcpy( pachRecord, achLeader, nLeaderSize );
+    /* -------------------------------------------------------------------- */
+    /*      Read the whole record info memory.                              */
+    /* -------------------------------------------------------------------- */
+    char *pachRecord = (char *)CPLMalloc(_recLength);
+    memcpy(pachRecord, achLeader, nLeaderSize);
 
-    if( (int)VSIFReadL( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
-        != _recLength - nLeaderSize )
+    if ((int)VSIFReadL(pachRecord + nLeaderSize, 1, _recLength - nLeaderSize,
+                       fpDDF) != _recLength - nLeaderSize)
     {
-        if( !bFailQuietly )
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Header record is short on DDF file `%s'.",
-                      pszFilename );
+        if (!bFailQuietly)
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Header record is short on DDF file `%s'.", pszFilename);
 
-        CPLFree( pachRecord );
+        CPLFree(pachRecord);
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      First make a pass counting the directory entries.               */
-/* -------------------------------------------------------------------- */
-    int         nFieldEntryWidth, nFDCount = 0;
+    /* -------------------------------------------------------------------- */
+    /*      First make a pass counting the directory entries.               */
+    /* -------------------------------------------------------------------- */
+    int nFieldEntryWidth, nFDCount = 0;
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
 
-    for( i = nLeaderSize; i + nFieldEntryWidth <= _recLength; i += nFieldEntryWidth )
+    for (i = nLeaderSize; i + nFieldEntryWidth <= _recLength;
+         i += nFieldEntryWidth)
     {
-        if( pachRecord[i] == DDF_FIELD_TERMINATOR )
+        if (pachRecord[i] == DDF_FIELD_TERMINATOR)
             break;
 
         nFDCount++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate, and read field definitions.                           */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nFDCount; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Allocate, and read field definitions.                           */
+    /* -------------------------------------------------------------------- */
+    for (i = 0; i < nFDCount; i++)
     {
-        char    szTag[128];
-        int     nEntryOffset = nLeaderSize + i*nFieldEntryWidth;
-        int     nFieldLength, nFieldPos;
+        char szTag[128];
+        int nEntryOffset = nLeaderSize + i * nFieldEntryWidth;
+        int nFieldLength, nFieldPos;
 
-        strncpy( szTag, pachRecord+nEntryOffset, _sizeFieldTag );
+        strncpy(szTag, pachRecord + nEntryOffset, _sizeFieldTag);
         szTag[_sizeFieldTag] = '\0';
 
         nEntryOffset += _sizeFieldTag;
-        nFieldLength = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldLength );
+        nFieldLength = DDFScanInt(pachRecord + nEntryOffset, _sizeFieldLength);
 
         nEntryOffset += _sizeFieldLength;
-        nFieldPos = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldPos );
+        nFieldPos = DDFScanInt(pachRecord + nEntryOffset, _sizeFieldPos);
 
-        if (nFieldPos < 0 ||
-            nFieldPos > INT_MAX - _fieldAreaStart ||
-            nFieldLength < 2 || // DDFFieldDefn::Initialize() assumes at least 2 bytes
-            _recLength - (_fieldAreaStart+nFieldPos) < nFieldLength)
+        if (nFieldPos < 0 || nFieldPos > INT_MAX - _fieldAreaStart ||
+            nFieldLength <
+                2 ||  // DDFFieldDefn::Initialize() assumes at least 2 bytes
+            _recLength - (_fieldAreaStart + nFieldPos) < nFieldLength)
         {
-            if( !bFailQuietly )
-                CPLError( CE_Failure, CPLE_FileIO,
-                        "Header record invalid on DDF file `%s'.",
-                        pszFilename );
+            if (!bFailQuietly)
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Header record invalid on DDF file `%s'.",
+                         pszFilename);
 
-            CPLFree( pachRecord );
+            CPLFree(pachRecord);
             return FALSE;
         }
 
         DDFFieldDefn *poFDefn = new DDFFieldDefn();
-        if( poFDefn->Initialize( this, szTag, nFieldLength,
-                                 pachRecord+_fieldAreaStart+nFieldPos ) )
-            AddField( poFDefn );
+        if (poFDefn->Initialize(this, szTag, nFieldLength,
+                                pachRecord + _fieldAreaStart + nFieldPos))
+            AddField(poFDefn);
         else
             delete poFDefn;
     }
 
-    CPLFree( pachRecord );
+    CPLFree(pachRecord);
 
-/* -------------------------------------------------------------------- */
-/*      Record the current file offset, the beginning of the first      */
-/*      data record.                                                    */
-/* -------------------------------------------------------------------- */
-    nFirstRecordOffset = (long)VSIFTellL( fpDDF );
+    /* -------------------------------------------------------------------- */
+    /*      Record the current file offset, the beginning of the first      */
+    /*      data record.                                                    */
+    /* -------------------------------------------------------------------- */
+    nFirstRecordOffset = (long)VSIFTellL(fpDDF);
 
     return TRUE;
 }
@@ -363,15 +347,11 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /*                             Initialize()                             */
 /************************************************************************/
 
-int DDFModule::Initialize( char chInterchangeLevel,
-                           char chLeaderIden,
-                           char chCodeExtensionIndicator,
-                           char chVersionNumber,
-                           char chAppIndicator,
-                           const char *pszExtendedCharSet,
-                           int nSizeFieldLength,
-                           int nSizeFieldPos,
-                           int nSizeFieldTag )
+int DDFModule::Initialize(char chInterchangeLevel, char chLeaderIden,
+                          char chCodeExtensionIndicator, char chVersionNumber,
+                          char chAppIndicator, const char *pszExtendedCharSet,
+                          int nSizeFieldLength, int nSizeFieldPos,
+                          int nSizeFieldTag)
 
 {
     _interchangeLevel = chInterchangeLevel;
@@ -379,7 +359,8 @@ int DDFModule::Initialize( char chInterchangeLevel,
     _inlineCodeExtensionIndicator = chCodeExtensionIndicator;
     _versionNumber = chVersionNumber;
     _appIndicator = chAppIndicator;
-    snprintf( _extendedCharSet, sizeof(_extendedCharSet), "%s", pszExtendedCharSet );
+    snprintf(_extendedCharSet, sizeof(_extendedCharSet), "%s",
+             pszExtendedCharSet);
     _sizeFieldLength = nSizeFieldLength;
     _sizeFieldPos = nSizeFieldPos;
     _sizeFieldTag = nSizeFieldTag;
@@ -391,106 +372,115 @@ int DDFModule::Initialize( char chInterchangeLevel,
 /*                               Create()                               */
 /************************************************************************/
 
-int DDFModule::Create( const char *pszFilename )
+int DDFModule::Create(const char *pszFilename)
 
 {
-    CPLAssert( fpDDF == nullptr );
+    CPLAssert(fpDDF == nullptr);
 
-/* -------------------------------------------------------------------- */
-/*      Create the file on disk.                                        */
-/* -------------------------------------------------------------------- */
-    fpDDF = VSIFOpenL( pszFilename, "wb+" );
-    if( fpDDF == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Create the file on disk.                                        */
+    /* -------------------------------------------------------------------- */
+    fpDDF = VSIFOpenL(pszFilename, "wb+");
+    if (fpDDF == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create file %s, check path and permissions.",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Failed to create file %s, check path and permissions.",
+                 pszFilename);
         return FALSE;
     }
 
     bReadOnly = FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Prepare all the field definition information.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Prepare all the field definition information.                   */
+    /* -------------------------------------------------------------------- */
     int iField;
 
-    _recLength = 24
-        + nFieldDefnCount * (_sizeFieldLength+_sizeFieldPos+_sizeFieldTag)
-        + 1;
+    _recLength =
+        24 +
+        nFieldDefnCount * (_sizeFieldLength + _sizeFieldPos + _sizeFieldTag) +
+        1;
 
     _fieldAreaStart = _recLength;
 
-    for( iField=0; iField < nFieldDefnCount; iField++ )
+    for (iField = 0; iField < nFieldDefnCount; iField++)
     {
         int nLength;
 
-        papoFieldDefns[iField]->GenerateDDREntry( this, nullptr, &nLength );
+        papoFieldDefns[iField]->GenerateDDREntry(this, nullptr, &nLength);
         _recLength += nLength;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Setup 24 byte leader.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Setup 24 byte leader.                                           */
+    /* -------------------------------------------------------------------- */
     char achLeader[25];
 
-    snprintf( achLeader+0, sizeof(achLeader)-0, "%05d", (int) _recLength );
+    snprintf(achLeader + 0, sizeof(achLeader) - 0, "%05d", (int)_recLength);
     achLeader[5] = _interchangeLevel;
     achLeader[6] = _leaderIden;
     achLeader[7] = _inlineCodeExtensionIndicator;
     achLeader[8] = _versionNumber;
     achLeader[9] = _appIndicator;
-    snprintf( achLeader+10, sizeof(achLeader)-10, "%02d", (int) _fieldControlLength );
-    snprintf( achLeader+12, sizeof(achLeader)-12, "%05d", (int) _fieldAreaStart );
-    memcpy( achLeader+17, _extendedCharSet, 3 );
-    snprintf( achLeader+20, sizeof(achLeader)-20, "%1d", (int) _sizeFieldLength );
-    snprintf( achLeader+21, sizeof(achLeader)-21, "%1d", (int) _sizeFieldPos );
+    snprintf(achLeader + 10, sizeof(achLeader) - 10, "%02d",
+             (int)_fieldControlLength);
+    snprintf(achLeader + 12, sizeof(achLeader) - 12, "%05d",
+             (int)_fieldAreaStart);
+    memcpy(achLeader + 17, _extendedCharSet, 3);
+    snprintf(achLeader + 20, sizeof(achLeader) - 20, "%1d",
+             (int)_sizeFieldLength);
+    snprintf(achLeader + 21, sizeof(achLeader) - 21, "%1d", (int)_sizeFieldPos);
     achLeader[22] = '0';
-    snprintf( achLeader+23, sizeof(achLeader)-23, "%1d", (int) _sizeFieldTag );
-    int bRet = VSIFWriteL( achLeader, 24, 1, fpDDF ) > 0;
+    snprintf(achLeader + 23, sizeof(achLeader) - 23, "%1d", (int)_sizeFieldTag);
+    int bRet = VSIFWriteL(achLeader, 24, 1, fpDDF) > 0;
 
-/* -------------------------------------------------------------------- */
-/*      Write out directory entries.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write out directory entries.                                    */
+    /* -------------------------------------------------------------------- */
     int nOffset = 0;
-    for( iField=0; iField < nFieldDefnCount; iField++ )
+    for (iField = 0; iField < nFieldDefnCount; iField++)
     {
         char achDirEntry[255];
         char szFormat[32];
         int nLength;
 
-        CPLAssert(_sizeFieldLength + _sizeFieldPos + _sizeFieldTag < (int)sizeof(achDirEntry));
+        CPLAssert(_sizeFieldLength + _sizeFieldPos + _sizeFieldTag <
+                  (int)sizeof(achDirEntry));
 
-        papoFieldDefns[iField]->GenerateDDREntry( this, nullptr, &nLength );
+        papoFieldDefns[iField]->GenerateDDREntry(this, nullptr, &nLength);
 
-        CPLAssert( (int)strlen(papoFieldDefns[iField]->GetName()) == _sizeFieldTag );
-        snprintf( achDirEntry, sizeof(achDirEntry), "%s", papoFieldDefns[iField]->GetName() );
+        CPLAssert((int)strlen(papoFieldDefns[iField]->GetName()) ==
+                  _sizeFieldTag);
+        snprintf(achDirEntry, sizeof(achDirEntry), "%s",
+                 papoFieldDefns[iField]->GetName());
         snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldLength);
-        snprintf( achDirEntry + _sizeFieldTag, sizeof(achDirEntry) - _sizeFieldTag,
-                  szFormat, nLength );
+        snprintf(achDirEntry + _sizeFieldTag,
+                 sizeof(achDirEntry) - _sizeFieldTag, szFormat, nLength);
         snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldPos);
-        snprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength,
-                  sizeof(achDirEntry) - _sizeFieldTag - _sizeFieldLength,
-                  szFormat, nOffset );
+        snprintf(achDirEntry + _sizeFieldTag + _sizeFieldLength,
+                 sizeof(achDirEntry) - _sizeFieldTag - _sizeFieldLength,
+                 szFormat, nOffset);
         nOffset += nLength;
 
-        bRet &= VSIFWriteL( achDirEntry, _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1, fpDDF ) > 0;
+        bRet &= VSIFWriteL(achDirEntry,
+                           _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1,
+                           fpDDF) > 0;
     }
 
     char chUT = DDF_FIELD_TERMINATOR;
-    bRet &= VSIFWriteL( &chUT, 1, 1, fpDDF ) > 0;
+    bRet &= VSIFWriteL(&chUT, 1, 1, fpDDF) > 0;
 
-/* -------------------------------------------------------------------- */
-/*      Write out the field descriptions themselves.                    */
-/* -------------------------------------------------------------------- */
-    for( iField = 0; iField < nFieldDefnCount; iField++ )
+    /* -------------------------------------------------------------------- */
+    /*      Write out the field descriptions themselves.                    */
+    /* -------------------------------------------------------------------- */
+    for (iField = 0; iField < nFieldDefnCount; iField++)
     {
         char *pachData = nullptr;
         int nLength = 0;
 
-        papoFieldDefns[iField]->GenerateDDREntry( this, &pachData, &nLength );
-        bRet &= VSIFWriteL( pachData, nLength, 1, fpDDF ) > 0;
-        CPLFree( pachData );
+        papoFieldDefns[iField]->GenerateDDREntry(this, &pachData, &nLength);
+        bRet &= VSIFWriteL(pachData, nLength, 1, fpDDF) > 0;
+        CPLFree(pachData);
     }
 
     return bRet ? TRUE : FALSE;
@@ -510,27 +500,27 @@ int DDFModule::Create( const char *pszFilename )
  * @param fp The standard IO file handle to write to.  i.e. stderr.
  */
 
-void DDFModule::Dump( FILE * fp )
+void DDFModule::Dump(FILE *fp)
 
 {
-    fprintf( fp, "DDFModule:\n" );
-    fprintf( fp, "    _recLength = %d\n", _recLength );
-    fprintf( fp, "    _interchangeLevel = %c\n", _interchangeLevel );
-    fprintf( fp, "    _leaderIden = %c\n", _leaderIden );
-    fprintf( fp, "    _inlineCodeExtensionIndicator = %c\n",
-             _inlineCodeExtensionIndicator );
-    fprintf( fp, "    _versionNumber = %c\n", _versionNumber );
-    fprintf( fp, "    _appIndicator = %c\n", _appIndicator );
-    fprintf( fp, "    _extendedCharSet = `%s'\n", _extendedCharSet );
-    fprintf( fp, "    _fieldControlLength = %d\n", _fieldControlLength );
-    fprintf( fp, "    _fieldAreaStart = %d\n", _fieldAreaStart );
-    fprintf( fp, "    _sizeFieldLength = %d\n", _sizeFieldLength );
-    fprintf( fp, "    _sizeFieldPos = %d\n", _sizeFieldPos );
-    fprintf( fp, "    _sizeFieldTag = %d\n", _sizeFieldTag );
+    fprintf(fp, "DDFModule:\n");
+    fprintf(fp, "    _recLength = %d\n", _recLength);
+    fprintf(fp, "    _interchangeLevel = %c\n", _interchangeLevel);
+    fprintf(fp, "    _leaderIden = %c\n", _leaderIden);
+    fprintf(fp, "    _inlineCodeExtensionIndicator = %c\n",
+            _inlineCodeExtensionIndicator);
+    fprintf(fp, "    _versionNumber = %c\n", _versionNumber);
+    fprintf(fp, "    _appIndicator = %c\n", _appIndicator);
+    fprintf(fp, "    _extendedCharSet = `%s'\n", _extendedCharSet);
+    fprintf(fp, "    _fieldControlLength = %d\n", _fieldControlLength);
+    fprintf(fp, "    _fieldAreaStart = %d\n", _fieldAreaStart);
+    fprintf(fp, "    _sizeFieldLength = %d\n", _sizeFieldLength);
+    fprintf(fp, "    _sizeFieldPos = %d\n", _sizeFieldPos);
+    fprintf(fp, "    _sizeFieldTag = %d\n", _sizeFieldTag);
 
-    for( int i = 0; i < nFieldDefnCount; i++ )
+    for (int i = 0; i < nFieldDefnCount; i++)
     {
-        papoFieldDefns[i]->Dump( fp );
+        papoFieldDefns[i]->Dump(fp);
     }
 }
 
@@ -552,31 +542,31 @@ void DDFModule::Dump( FILE * fp )
  * the DDFModule, and should not be deleted by application code.
  */
 
-DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
+DDFFieldDefn *DDFModule::FindFieldDefn(const char *pszFieldName)
 
 {
-    int         i;
+    int i;
 
-/* -------------------------------------------------------------------- */
-/*      This pass tries to reduce the cost of comparing strings by      */
-/*      first checking the first character, and by using strcmp()       */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nFieldDefnCount; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      This pass tries to reduce the cost of comparing strings by      */
+    /*      first checking the first character, and by using strcmp()       */
+    /* -------------------------------------------------------------------- */
+    for (i = 0; i < nFieldDefnCount; i++)
     {
         const char *pszThisName = papoFieldDefns[i]->GetName();
 
-        if( *pszThisName == *pszFieldName && *pszFieldName != '\0'
-            && strcmp( pszFieldName+1, pszThisName+1) == 0 )
+        if (*pszThisName == *pszFieldName && *pszFieldName != '\0' &&
+            strcmp(pszFieldName + 1, pszThisName + 1) == 0)
             return papoFieldDefns[i];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Now do a more general check.  Application code may not          */
-/*      always use the correct name case.                               */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nFieldDefnCount; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Now do a more general check.  Application code may not          */
+    /*      always use the correct name case.                               */
+    /* -------------------------------------------------------------------- */
+    for (i = 0; i < nFieldDefnCount; i++)
     {
-        if( EQUAL(pszFieldName, papoFieldDefns[i]->GetName()) )
+        if (EQUAL(pszFieldName, papoFieldDefns[i]->GetName()))
             return papoFieldDefns[i];
     }
 
@@ -604,10 +594,10 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 DDFRecord *DDFModule::ReadRecord()
 
 {
-    if( poRecord == nullptr )
-        poRecord = new DDFRecord( this );
+    if (poRecord == nullptr)
+        poRecord = new DDFRecord(this);
 
-    if( poRecord->Read() )
+    if (poRecord->Read())
         return poRecord;
     else
         return nullptr;
@@ -627,13 +617,13 @@ DDFRecord *DDFModule::ReadRecord()
  * @param poNewFDefn definition to be added to the module.
  */
 
-void DDFModule::AddField( DDFFieldDefn *poNewFDefn )
+void DDFModule::AddField(DDFFieldDefn *poNewFDefn)
 
 {
     nFieldDefnCount++;
-    papoFieldDefns = (DDFFieldDefn **)
-        CPLRealloc(papoFieldDefns, sizeof(void*)*nFieldDefnCount);
-    papoFieldDefns[nFieldDefnCount-1] = poNewFDefn;
+    papoFieldDefns = (DDFFieldDefn **)CPLRealloc(
+        papoFieldDefns, sizeof(void *) * nFieldDefnCount);
+    papoFieldDefns[nFieldDefnCount - 1] = poNewFDefn;
 }
 
 /************************************************************************/
@@ -650,7 +640,7 @@ void DDFModule::AddField( DDFFieldDefn *poNewFDefn )
 DDFFieldDefn *DDFModule::GetField(int i)
 
 {
-    if( i < 0 || i >= nFieldDefnCount )
+    if (i < 0 || i >= nFieldDefnCount)
         return nullptr;
     else
         return papoFieldDefns[i];
@@ -663,22 +653,22 @@ DDFFieldDefn *DDFModule::GetField(int i)
 /*      them up when the module is destroyed.                           */
 /************************************************************************/
 
-void DDFModule::AddCloneRecord( DDFRecord * poRecordIn )
+void DDFModule::AddCloneRecord(DDFRecord *poRecordIn)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do we need to grow the container array?                         */
-/* -------------------------------------------------------------------- */
-    if( nCloneCount == nMaxCloneCount )
+    /* -------------------------------------------------------------------- */
+    /*      Do we need to grow the container array?                         */
+    /* -------------------------------------------------------------------- */
+    if (nCloneCount == nMaxCloneCount)
     {
-        nMaxCloneCount = nCloneCount*2 + 20;
-        papoClones = (DDFRecord **) CPLRealloc(papoClones,
-                                               nMaxCloneCount * sizeof(void*));
+        nMaxCloneCount = nCloneCount * 2 + 20;
+        papoClones = (DDFRecord **)CPLRealloc(papoClones,
+                                              nMaxCloneCount * sizeof(void *));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Add to the list.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add to the list.                                                */
+    /* -------------------------------------------------------------------- */
     papoClones[nCloneCount++] = poRecordIn;
 }
 
@@ -686,22 +676,22 @@ void DDFModule::AddCloneRecord( DDFRecord * poRecordIn )
 /*                         RemoveCloneRecord()                          */
 /************************************************************************/
 
-void DDFModule::RemoveCloneRecord( DDFRecord * poRecordIn )
+void DDFModule::RemoveCloneRecord(DDFRecord *poRecordIn)
 
 {
-    int         i;
+    int i;
 
-    for( i = 0; i < nCloneCount; i++ )
+    for (i = 0; i < nCloneCount; i++)
     {
-        if( papoClones[i] == poRecordIn )
+        if (papoClones[i] == poRecordIn)
         {
-            papoClones[i] = papoClones[nCloneCount-1];
+            papoClones[i] = papoClones[nCloneCount - 1];
             nCloneCount--;
             return;
         }
     }
 
-    CPLAssert( false );
+    CPLAssert(false);
 }
 
 /************************************************************************/
@@ -718,18 +708,18 @@ void DDFModule::RemoveCloneRecord( DDFRecord * poRecordIn )
  * data record.  Otherwise it is an absolute byte offset in the file.
  */
 
-void DDFModule::Rewind( long nOffset )
+void DDFModule::Rewind(long nOffset)
 
 {
-    if( nOffset == -1 )
+    if (nOffset == -1)
         nOffset = nFirstRecordOffset;
 
-    if( fpDDF == nullptr )
+    if (fpDDF == nullptr)
         return;
 
-    if( VSIFSeekL( fpDDF, nOffset, SEEK_SET ) < 0 )
+    if (VSIFSeekL(fpDDF, nOffset, SEEK_SET) < 0)
         return;
 
-    if( nOffset == nFirstRecordOffset && poRecord != nullptr )
+    if (nOffset == nFirstRecordOffset && poRecord != nullptr)
         poRecord->Clear();
 }

@@ -30,8 +30,14 @@
 
 int main()
 {
-    const char szGEOJSON[] = "{ \"type\": \"FeatureCollection\", \"features\":[ { \"type\": \"Feature\", \"properties\": { \"AREA\": 5268.813, \"EAS_ID\": 170, \"PRFEDEA\": \"35043413\" }, \"geometry\": { \"type\": \"Polygon\", \"coordinates\": [ [ [ 479750.6875, 4764702.0 ], [ 479658.59375, 4764670.0 ], [ 479640.09375, 4764721.0 ], [ 479735.90625, 4764752.0 ], [ 479750.6875, 4764702.0 ] ] ] } } ] }";
-    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szGEOJSON),
+    const char szGEOJSON[] =
+        "{ \"type\": \"FeatureCollection\", \"features\":[ { \"type\": "
+        "\"Feature\", \"properties\": { \"AREA\": 5268.813, \"EAS_ID\": 170, "
+        "\"PRFEDEA\": \"35043413\" }, \"geometry\": { \"type\": \"Polygon\", "
+        "\"coordinates\": [ [ [ 479750.6875, 4764702.0 ], [ 479658.59375, "
+        "4764670.0 ], [ 479640.09375, 4764721.0 ], [ 479735.90625, 4764752.0 "
+        "], [ 479750.6875, 4764702.0 ] ] ] } } ] }";
+    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t *>(szGEOJSON),
                            strlen(szGEOJSON));
     return 0;
 }

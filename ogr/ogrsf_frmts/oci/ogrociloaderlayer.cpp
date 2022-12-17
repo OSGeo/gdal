@@ -31,16 +31,14 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                         OGROCILoaderLayer()                          */
 /************************************************************************/
 
-OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
-                                      const char * pszTableName,
-                                      const char * pszGeomColIn,
-                                      int nSRIDIn,
-                                      const char *pszLoaderFilenameIn )
+OGROCILoaderLayer::OGROCILoaderLayer(OGROCIDataSource *poDSIn,
+                                     const char *pszTableName,
+                                     const char *pszGeomColIn, int nSRIDIn,
+                                     const char *pszLoaderFilenameIn)
 
 {
     poDS = poDSIn;
@@ -51,31 +49,31 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     bHeaderWritten = FALSE;
     nLDRMode = LDRM_UNKNOWN;
 
-    poFeatureDefn = new OGRFeatureDefn( pszTableName );
-    SetDescription( poFeatureDefn->GetName() );
+    poFeatureDefn = new OGRFeatureDefn(pszTableName);
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
 
-    pszGeomName = CPLStrdup( pszGeomColIn );
-    pszFIDName = (char*)CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+    pszGeomName = CPLStrdup(pszGeomColIn);
+    pszFIDName = (char *)CPLGetConfigOption("OCI_FID", "OGR_FID");
 
     nSRID = nSRIDIn;
-    poSRS = poDSIn->FetchSRS( nSRID );
+    poSRS = poDSIn->FetchSRS(nSRID);
 
-    if( poSRS != nullptr )
+    if (poSRS != nullptr)
         poSRS->Reference();
 
-/* -------------------------------------------------------------------- */
-/*      Open the loader file.                                           */
-/* -------------------------------------------------------------------- */
-    pszLoaderFilename = CPLStrdup( pszLoaderFilenameIn );
+    /* -------------------------------------------------------------------- */
+    /*      Open the loader file.                                           */
+    /* -------------------------------------------------------------------- */
+    pszLoaderFilename = CPLStrdup(pszLoaderFilenameIn);
 
     fpData = nullptr;
-    fpLoader = VSIFOpen( pszLoaderFilename, "wt" );
-    if( fpLoader == nullptr )
+    fpLoader = VSIFOpen(pszLoaderFilename, "wt");
+    if (fpLoader == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open SQL*Loader control file:%s",
-                  pszLoaderFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Failed to open SQL*Loader control file:%s",
+                 pszLoaderFilename);
         return;
     }
 }
@@ -87,18 +85,18 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
 OGROCILoaderLayer::~OGROCILoaderLayer()
 
 {
-    if( fpData != nullptr )
-        VSIFClose( fpData );
+    if (fpData != nullptr)
+        VSIFClose(fpData);
 
-    if( fpLoader != nullptr )
+    if (fpLoader != nullptr)
     {
-        VSIFClose( fpLoader );
+        VSIFClose(fpLoader);
         FinalizeNewLayer();
     }
 
-    CPLFree( pszLoaderFilename );
+    CPLFree(pszLoaderFilename);
 
-    if( poSRS != nullptr && poSRS->Dereference() == 0 )
+    if (poSRS != nullptr && poSRS->Dereference() == 0)
         delete poSRS;
 }
 
@@ -109,109 +107,106 @@ OGROCILoaderLayer::~OGROCILoaderLayer()
 void OGROCILoaderLayer::WriteLoaderHeader()
 
 {
-    if( bHeaderWritten )
+    if (bHeaderWritten)
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Determine name of geometry column to use.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Determine name of geometry column to use.                       */
+    /* -------------------------------------------------------------------- */
     const char *pszGeometryName =
-        CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
-    if( pszGeometryName == nullptr )
+        CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
+    if (pszGeometryName == nullptr)
         pszGeometryName = "ORA_GEOMETRY";
 
-/* -------------------------------------------------------------------- */
-/*      Determine our operation mode.                                   */
-/* -------------------------------------------------------------------- */
-    const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
+    /* -------------------------------------------------------------------- */
+    /*      Determine our operation mode.                                   */
+    /* -------------------------------------------------------------------- */
+    const char *pszLDRMode = CSLFetchNameValue(papszOptions, "LOADER_MODE");
 
-    if( pszLDRMode != nullptr && EQUAL(pszLDRMode,"VARIABLE") )
+    if (pszLDRMode != nullptr && EQUAL(pszLDRMode, "VARIABLE"))
         nLDRMode = LDRM_VARIABLE;
-    else if( pszLDRMode != nullptr && EQUAL(pszLDRMode,"BINARY") )
+    else if (pszLDRMode != nullptr && EQUAL(pszLDRMode, "BINARY"))
         nLDRMode = LDRM_BINARY;
     else
         nLDRMode = LDRM_STREAM;
 
-/* -------------------------------------------------------------------- */
-/*      Write loader header info.                                       */
-/* -------------------------------------------------------------------- */
-    VSIFPrintf( fpLoader, "LOAD DATA\n" );
-    if( nLDRMode == LDRM_STREAM )
+    /* -------------------------------------------------------------------- */
+    /*      Write loader header info.                                       */
+    /* -------------------------------------------------------------------- */
+    VSIFPrintf(fpLoader, "LOAD DATA\n");
+    if (nLDRMode == LDRM_STREAM)
     {
-        VSIFPrintf( fpLoader, "INFILE *\n" );
-        VSIFPrintf( fpLoader, "CONTINUEIF NEXT(1:1) = '#'\n" );
+        VSIFPrintf(fpLoader, "INFILE *\n");
+        VSIFPrintf(fpLoader, "CONTINUEIF NEXT(1:1) = '#'\n");
     }
-    else if( nLDRMode == LDRM_VARIABLE )
+    else if (nLDRMode == LDRM_VARIABLE)
     {
-        const char *pszDataFilename = CPLResetExtension( pszLoaderFilename,
-                                                         "dat" );
-        fpData = VSIFOpen( pszDataFilename, "wb" );
-        if( fpData == nullptr )
+        const char *pszDataFilename =
+            CPLResetExtension(pszLoaderFilename, "dat");
+        fpData = VSIFOpen(pszDataFilename, "wb");
+        if (fpData == nullptr)
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Unable to open data output file `%s'.",
-                      pszDataFilename );
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Unable to open data output file `%s'.", pszDataFilename);
             return;
         }
 
-        VSIFPrintf( fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename );
+        VSIFPrintf(fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename);
     }
-    const char *pszExpectedFIDName =
-        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+    const char *pszExpectedFIDName = CPLGetConfigOption("OCI_FID", "OGR_FID");
 
-    VSIFPrintf( fpLoader, "INTO TABLE \"%s\" REPLACE\n",
-                poFeatureDefn->GetName() );
-    VSIFPrintf( fpLoader, "FIELDS TERMINATED BY '|'\n" );
-    VSIFPrintf( fpLoader, "TRAILING NULLCOLS (\n" );
-    VSIFPrintf( fpLoader, "    %s INTEGER EXTERNAL,\n", pszExpectedFIDName );
-    VSIFPrintf( fpLoader, "    %s COLUMN OBJECT (\n",
-                pszGeometryName );
-    VSIFPrintf( fpLoader, "      SDO_GTYPE INTEGER EXTERNAL,\n" );
-    VSIFPrintf( fpLoader, "      SDO_ELEM_INFO VARRAY TERMINATED BY '|/'\n" );
-    VSIFPrintf( fpLoader, "        (elements INTEGER EXTERNAL),\n" );
-    VSIFPrintf( fpLoader, "      SDO_ORDINATES VARRAY TERMINATED BY '|/'\n" );
-    VSIFPrintf( fpLoader, "        (ordinates FLOAT EXTERNAL)\n" );
-    VSIFPrintf( fpLoader, "    ),\n" );
+    VSIFPrintf(fpLoader, "INTO TABLE \"%s\" REPLACE\n",
+               poFeatureDefn->GetName());
+    VSIFPrintf(fpLoader, "FIELDS TERMINATED BY '|'\n");
+    VSIFPrintf(fpLoader, "TRAILING NULLCOLS (\n");
+    VSIFPrintf(fpLoader, "    %s INTEGER EXTERNAL,\n", pszExpectedFIDName);
+    VSIFPrintf(fpLoader, "    %s COLUMN OBJECT (\n", pszGeometryName);
+    VSIFPrintf(fpLoader, "      SDO_GTYPE INTEGER EXTERNAL,\n");
+    VSIFPrintf(fpLoader, "      SDO_ELEM_INFO VARRAY TERMINATED BY '|/'\n");
+    VSIFPrintf(fpLoader, "        (elements INTEGER EXTERNAL),\n");
+    VSIFPrintf(fpLoader, "      SDO_ORDINATES VARRAY TERMINATED BY '|/'\n");
+    VSIFPrintf(fpLoader, "        (ordinates FLOAT EXTERNAL)\n");
+    VSIFPrintf(fpLoader, "    ),\n");
 
-/* -------------------------------------------------------------------- */
-/*      Write user field schema.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write user field schema.                                        */
+    /* -------------------------------------------------------------------- */
     int iField;
 
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    for (iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
 
-        if( poFldDefn->GetType() == OFTInteger )
+        if (poFldDefn->GetType() == OFTInteger)
         {
-            VSIFPrintf( fpLoader, "    \"%s\" INTEGER EXTERNAL",
-                        poFldDefn->GetNameRef() );
+            VSIFPrintf(fpLoader, "    \"%s\" INTEGER EXTERNAL",
+                       poFldDefn->GetNameRef());
         }
-        else if( poFldDefn->GetType() == OFTInteger64 )
+        else if (poFldDefn->GetType() == OFTInteger64)
         {
-            VSIFPrintf( fpLoader, "    \"%s\" LONGINTEGER EXTERNAL",
-                        poFldDefn->GetNameRef() );
+            VSIFPrintf(fpLoader, "    \"%s\" LONGINTEGER EXTERNAL",
+                       poFldDefn->GetNameRef());
         }
-        else if( poFldDefn->GetType() == OFTReal )
+        else if (poFldDefn->GetType() == OFTReal)
         {
-            VSIFPrintf( fpLoader, "    \"%s\" FLOAT EXTERNAL",
-                        poFldDefn->GetNameRef() );
+            VSIFPrintf(fpLoader, "    \"%s\" FLOAT EXTERNAL",
+                       poFldDefn->GetNameRef());
         }
         else /* if( poFldDefn->GetType() == OFTString ) or default case */
         {
-            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
-                        poFldDefn->GetNameRef() );
+            VSIFPrintf(fpLoader, "    \"%s\" VARCHARC(4)",
+                       poFldDefn->GetNameRef());
         }
 
-        if( iField < poFeatureDefn->GetFieldCount() - 1 )
-            VSIFPrintf( fpLoader, "," );
-        VSIFPrintf( fpLoader, "\n" );
+        if (iField < poFeatureDefn->GetFieldCount() - 1)
+            VSIFPrintf(fpLoader, ",");
+        VSIFPrintf(fpLoader, "\n");
     }
 
-    VSIFPrintf( fpLoader, ")\n" );
+    VSIFPrintf(fpLoader, ")\n");
 
-    if( nLDRMode == LDRM_STREAM )
-        VSIFPrintf( fpLoader, "begindata\n" );
+    if (nLDRMode == LDRM_STREAM)
+        VSIFPrintf(fpLoader, "begindata\n");
 
     bHeaderWritten = TRUE;
 }
@@ -228,8 +223,8 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 OGRFeature *OGROCILoaderLayer::GetNextFeature()
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "GetNextFeature() not supported for an OGROCILoaderLayer." );
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "GetNextFeature() not supported for an OGROCILoaderLayer.");
     return nullptr;
 }
 
@@ -247,128 +242,128 @@ void OGROCILoaderLayer::ResetReading()
 /*                       WriteFeatureStreamMode()                       */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::WriteFeatureStreamMode(OGRFeature *poFeature)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Write the FID.                                                  */
-/* -------------------------------------------------------------------- */
-    VSIFPrintf( fpLoader, " " CPL_FRMT_GIB "|", poFeature->GetFID() );
+    /* -------------------------------------------------------------------- */
+    /*      Write the FID.                                                  */
+    /* -------------------------------------------------------------------- */
+    VSIFPrintf(fpLoader, " " CPL_FRMT_GIB "|", poFeature->GetFID());
 
-/* -------------------------------------------------------------------- */
-/*      Set the geometry                                                */
-/* -------------------------------------------------------------------- */
-    int  nLineLen = 0;
-    if( poFeature->GetGeometryRef() != nullptr)
+    /* -------------------------------------------------------------------- */
+    /*      Set the geometry                                                */
+    /* -------------------------------------------------------------------- */
+    int nLineLen = 0;
+    if (poFeature->GetGeometryRef() != nullptr)
     {
         char szSRID[128];
-        int  nGType;
-        int  i;
+        int nGType;
+        int i;
 
-        if( nSRID == -1 )
-            strcpy( szSRID, "NULL" );
+        if (nSRID == -1)
+            strcpy(szSRID, "NULL");
         else
-            snprintf( szSRID, sizeof(szSRID), "%d", nSRID );
+            snprintf(szSRID, sizeof(szSRID), "%d", nSRID);
 
-        if( TranslateToSDOGeometry( poFeature->GetGeometryRef(), &nGType )
-            == OGRERR_NONE )
+        if (TranslateToSDOGeometry(poFeature->GetGeometryRef(), &nGType) ==
+            OGRERR_NONE)
         {
-            VSIFPrintf( fpLoader, "%d|", nGType );
-            for( i = 0; i < nElemInfoCount; i++ )
+            VSIFPrintf(fpLoader, "%d|", nGType);
+            for (i = 0; i < nElemInfoCount; i++)
             {
-                VSIFPrintf( fpLoader, "%d|", panElemInfo[i] );
-                if( ++nLineLen > 18 && i < nElemInfoCount-1 )
+                VSIFPrintf(fpLoader, "%d|", panElemInfo[i]);
+                if (++nLineLen > 18 && i < nElemInfoCount - 1)
                 {
-                    VSIFPrintf( fpLoader, "\n#" );
+                    VSIFPrintf(fpLoader, "\n#");
                     nLineLen = 0;
                 }
             }
-            VSIFPrintf( fpLoader, "/" );
+            VSIFPrintf(fpLoader, "/");
 
-            for( i = 0; i < nOrdinalCount; i++ )
+            for (i = 0; i < nOrdinalCount; i++)
             {
-                VSIFPrintf( fpLoader, "%.16g|", padfOrdinals[i] );
-                if( ++nLineLen > 6 && i < nOrdinalCount-1 )
+                VSIFPrintf(fpLoader, "%.16g|", padfOrdinals[i]);
+                if (++nLineLen > 6 && i < nOrdinalCount - 1)
                 {
-                    VSIFPrintf( fpLoader, "\n#" );
+                    VSIFPrintf(fpLoader, "\n#");
                     nLineLen = 0;
                 }
             }
-            VSIFPrintf( fpLoader, "/" );
+            VSIFPrintf(fpLoader, "/");
         }
         else
         {
-            VSIFPrintf( fpLoader, "0|/|/" );
+            VSIFPrintf(fpLoader, "0|/|/");
         }
     }
     else
     {
-        VSIFPrintf( fpLoader, "0|/|/" );
+        VSIFPrintf(fpLoader, "0|/|/");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the other fields.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the other fields.                                           */
+    /* -------------------------------------------------------------------- */
     int i;
 
     nLineLen = 0;
-    VSIFPrintf( fpLoader, "\n#" );
+    VSIFPrintf(fpLoader, "\n#");
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSetAndNotNull( i ) )
+        if (!poFeature->IsFieldSetAndNotNull(i))
         {
-            if( poFldDefn->GetType() != OFTInteger
-                && poFldDefn->GetType() != OFTInteger64
-                && poFldDefn->GetType() != OFTReal )
-                VSIFPrintf( fpLoader, "%04d", 0 );
+            if (poFldDefn->GetType() != OFTInteger &&
+                poFldDefn->GetType() != OFTInteger64 &&
+                poFldDefn->GetType() != OFTReal)
+                VSIFPrintf(fpLoader, "%04d", 0);
             continue;
         }
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( nLineLen > 70 )
+        if (nLineLen > 70)
         {
-            VSIFPrintf( fpLoader, "\n#" );
+            VSIFPrintf(fpLoader, "\n#");
             nLineLen = 0;
         }
 
         nLineLen += static_cast<int>(strlen(pszStrValue));
 
-        if( poFldDefn->GetType() == OFTInteger
-            || poFldDefn->GetType() == OFTInteger64
-            || poFldDefn->GetType() == OFTReal )
+        if (poFldDefn->GetType() == OFTInteger ||
+            poFldDefn->GetType() == OFTInteger64 ||
+            poFldDefn->GetType() == OFTReal)
         {
-            if( poFldDefn->GetWidth() > 0 && bPreservePrecision
-                && (int) strlen(pszStrValue) > poFldDefn->GetWidth() )
+            if (poFldDefn->GetWidth() > 0 && bPreservePrecision &&
+                (int)strlen(pszStrValue) > poFldDefn->GetWidth())
             {
-                ReportTruncation( poFldDefn );
-                VSIFPrintf( fpLoader, "|" );
+                ReportTruncation(poFldDefn);
+                VSIFPrintf(fpLoader, "|");
             }
             else
-                VSIFPrintf( fpLoader, "%s|", pszStrValue );
+                VSIFPrintf(fpLoader, "%s|", pszStrValue);
         }
         else
         {
             int nLength = static_cast<int>(strlen(pszStrValue));
 
-            if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
+            if (poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth())
             {
-                ReportTruncation( poFldDefn );
+                ReportTruncation(poFldDefn);
                 nLength = poFldDefn->GetWidth();
             }
 
-            VSIFPrintf( fpLoader, "%04d", nLength );
-            VSIFWrite( (void *) pszStrValue, 1, nLength, fpLoader );
+            VSIFPrintf(fpLoader, "%04d", nLength);
+            VSIFWrite((void *)pszStrValue, 1, nLength, fpLoader);
         }
     }
 
-    if( VSIFPrintf( fpLoader, "\n" ) == 0 )
+    if (VSIFPrintf(fpLoader, "\n") == 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Write to loader file failed, likely out of disk space." );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Write to loader file failed, likely out of disk space.");
         return OGRERR_FAILURE;
     }
     else
@@ -379,129 +374,129 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
 /*                      WriteFeatureVariableMode()                      */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::WriteFeatureVariableMode(OGRFeature *poFeature)
 
 {
     OGROCIStringBuf oLine;
 
-    if( fpData == nullptr )
+    if (fpData == nullptr)
         return OGRERR_FAILURE;
 
-/* -------------------------------------------------------------------- */
-/*      Write the FID.                                                  */
-/* -------------------------------------------------------------------- */
-    oLine.Append( "00000000" );
-    oLine.Appendf( 32, " " CPL_FRMT_GIB "|", poFeature->GetFID() );
+    /* -------------------------------------------------------------------- */
+    /*      Write the FID.                                                  */
+    /* -------------------------------------------------------------------- */
+    oLine.Append("00000000");
+    oLine.Appendf(32, " " CPL_FRMT_GIB "|", poFeature->GetFID());
 
-/* -------------------------------------------------------------------- */
-/*      Set the geometry                                                */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != nullptr)
+    /* -------------------------------------------------------------------- */
+    /*      Set the geometry                                                */
+    /* -------------------------------------------------------------------- */
+    if (poFeature->GetGeometryRef() != nullptr)
     {
         char szSRID[128];
-        int  nGType;
-        int  i;
+        int nGType;
+        int i;
 
-        if( nSRID == -1 )
-            strcpy( szSRID, "NULL" );
+        if (nSRID == -1)
+            strcpy(szSRID, "NULL");
         else
-            snprintf( szSRID, sizeof(szSRID), "%d", nSRID );
+            snprintf(szSRID, sizeof(szSRID), "%d", nSRID);
 
-        if( TranslateToSDOGeometry( poFeature->GetGeometryRef(), &nGType )
-            == OGRERR_NONE )
+        if (TranslateToSDOGeometry(poFeature->GetGeometryRef(), &nGType) ==
+            OGRERR_NONE)
         {
-            oLine.Appendf( 32, "%d|", nGType );
-            for( i = 0; i < nElemInfoCount; i++ )
+            oLine.Appendf(32, "%d|", nGType);
+            for (i = 0; i < nElemInfoCount; i++)
             {
-                oLine.Appendf( 32, "%d|", panElemInfo[i] );
+                oLine.Appendf(32, "%d|", panElemInfo[i]);
             }
-            oLine.Append( "/" );
+            oLine.Append("/");
 
-            for( i = 0; i < nOrdinalCount; i++ )
+            for (i = 0; i < nOrdinalCount; i++)
             {
-                oLine.Appendf( 32, "%.16g|", padfOrdinals[i] );
+                oLine.Appendf(32, "%.16g|", padfOrdinals[i]);
             }
-            oLine.Append( "/" );
+            oLine.Append("/");
         }
         else
         {
-            oLine.Append( "0|/|/" );
+            oLine.Append("0|/|/");
         }
     }
     else
     {
-        oLine.Append( "0|/|/" );
+        oLine.Append("0|/|/");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set the other fields.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the other fields.                                           */
+    /* -------------------------------------------------------------------- */
     int i;
 
-    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSetAndNotNull( i ) )
+        if (!poFeature->IsFieldSetAndNotNull(i))
         {
-            if( poFldDefn->GetType() != OFTInteger
-                && poFldDefn->GetType() != OFTInteger64
-                && poFldDefn->GetType() != OFTReal )
-                oLine.Append( "0000" );
+            if (poFldDefn->GetType() != OFTInteger &&
+                poFldDefn->GetType() != OFTInteger64 &&
+                poFldDefn->GetType() != OFTReal)
+                oLine.Append("0000");
             else
-                oLine.Append( "|" );
+                oLine.Append("|");
             continue;
         }
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( poFldDefn->GetType() == OFTInteger
-            || poFldDefn->GetType() == OFTInteger64
-            || poFldDefn->GetType() == OFTReal )
+        if (poFldDefn->GetType() == OFTInteger ||
+            poFldDefn->GetType() == OFTInteger64 ||
+            poFldDefn->GetType() == OFTReal)
         {
-            if( poFldDefn->GetWidth() > 0 && bPreservePrecision
-                && (int) strlen(pszStrValue) > poFldDefn->GetWidth() )
+            if (poFldDefn->GetWidth() > 0 && bPreservePrecision &&
+                (int)strlen(pszStrValue) > poFldDefn->GetWidth())
             {
-                ReportTruncation( poFldDefn );
-                oLine.Append( "|" );
+                ReportTruncation(poFldDefn);
+                oLine.Append("|");
             }
             else
             {
-                oLine.Append( pszStrValue );
-                oLine.Append( "|" );
+                oLine.Append(pszStrValue);
+                oLine.Append("|");
             }
         }
         else
         {
             int nLength = static_cast<int>(strlen(pszStrValue));
 
-            if( poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth() )
+            if (poFldDefn->GetWidth() > 0 && nLength > poFldDefn->GetWidth())
             {
-                ReportTruncation( poFldDefn );
+                ReportTruncation(poFldDefn);
                 nLength = poFldDefn->GetWidth();
-                ((char *) pszStrValue)[nLength] = '\0';
+                ((char *)pszStrValue)[nLength] = '\0';
             }
 
-            oLine.Appendf( 5, "%04d", nLength );
-            oLine.Append( pszStrValue );
+            oLine.Appendf(5, "%04d", nLength);
+            oLine.Append(pszStrValue);
         }
     }
 
-    oLine.Appendf( 3, "\n" );
+    oLine.Appendf(3, "\n");
 
-/* -------------------------------------------------------------------- */
-/*      Update the line's length, and write to disk.                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Update the line's length, and write to disk.                    */
+    /* -------------------------------------------------------------------- */
     char szLength[9] = {};
-    size_t  nStringLen = strlen(oLine.GetString());
+    size_t nStringLen = strlen(oLine.GetString());
 
-    snprintf( szLength, sizeof(szLength), "%08d", (int) (nStringLen-8) );
-    memcpy( oLine.GetString(), szLength, 8 );
+    snprintf(szLength, sizeof(szLength), "%08d", (int)(nStringLen - 8));
+    memcpy(oLine.GetString(), szLength, 8);
 
-    if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpData ) != nStringLen )
+    if (VSIFWrite(oLine.GetString(), 1, nStringLen, fpData) != nStringLen)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Write to loader file failed, likely out of disk space." );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Write to loader file failed, likely out of disk space.");
         return OGRERR_FAILURE;
     }
     else
@@ -512,7 +507,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /*                       WriteFeatureBinaryMode()                       */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature * /*poFeature*/ )
+OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode(OGRFeature * /*poFeature*/)
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -522,37 +517,37 @@ OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode( OGRFeature * /*poFeature*/ )
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGROCILoaderLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
     WriteLoaderHeader();
 
-/* -------------------------------------------------------------------- */
-/*      Set the FID.                                                    */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetFID() == OGRNullFID )
-        poFeature->SetFID( iNextFIDToWrite++ );
+    /* -------------------------------------------------------------------- */
+    /*      Set the FID.                                                    */
+    /* -------------------------------------------------------------------- */
+    if (poFeature->GetFID() == OGRNullFID)
+        poFeature->SetFID(iNextFIDToWrite++);
 
-/* -------------------------------------------------------------------- */
-/*      Add extents of this geometry to the existing layer extents.     */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Add extents of this geometry to the existing layer extents.     */
+    /* -------------------------------------------------------------------- */
+    if (poFeature->GetGeometryRef() != nullptr)
     {
-        OGREnvelope  sThisExtent;
+        OGREnvelope sThisExtent;
 
-        poFeature->GetGeometryRef()->getEnvelope( &sThisExtent );
-        sExtent.Merge( sThisExtent );
+        poFeature->GetGeometryRef()->getEnvelope(&sThisExtent);
+        sExtent.Merge(sThisExtent);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Call the mode specific write function.                          */
-/* -------------------------------------------------------------------- */
-    if( nLDRMode == LDRM_STREAM )
-        return WriteFeatureStreamMode( poFeature );
-    else if( nLDRMode == LDRM_VARIABLE )
-        return WriteFeatureVariableMode( poFeature );
-    else if( nLDRMode == LDRM_BINARY )
-        return WriteFeatureBinaryMode( poFeature );
+    /* -------------------------------------------------------------------- */
+    /*      Call the mode specific write function.                          */
+    /* -------------------------------------------------------------------- */
+    if (nLDRMode == LDRM_STREAM)
+        return WriteFeatureStreamMode(poFeature);
+    else if (nLDRMode == LDRM_VARIABLE)
+        return WriteFeatureVariableMode(poFeature);
+    else if (nLDRMode == LDRM_BINARY)
+        return WriteFeatureBinaryMode(poFeature);
     else
         return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -561,17 +556,17 @@ OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCILoaderLayer::TestCapability( const char * pszCap )
+int OGROCILoaderLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCSequentialWrite) )
+    if (EQUAL(pszCap, OLCSequentialWrite))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
+    else if (EQUAL(pszCap, OLCCreateField))
         return TRUE;
 
     else
-        return OGROCILayer::TestCapability( pszCap );
+        return OGROCILayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -583,7 +578,7 @@ int OGROCILoaderLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGROCILoaderLayer::GetFeatureCount( int /* bForce */ )
+GIntBig OGROCILoaderLayer::GetFeatureCount(int /* bForce */)
 
 {
     return iNextFIDToWrite - 1;
@@ -601,31 +596,32 @@ GIntBig OGROCILoaderLayer::GetFeatureCount( int /* bForce */ )
 void OGROCILoaderLayer::FinalizeNewLayer()
 
 {
-    OGROCIStringBuf  sDimUpdate;
+    OGROCIStringBuf sDimUpdate;
 
-/* -------------------------------------------------------------------- */
-/*      If the dimensions are degenerate (all zeros) then we assume     */
-/*      there were no geometries, and we don't bother setting the       */
-/*      dimensions.                                                     */
-/* -------------------------------------------------------------------- */
-    if( sExtent.MaxX == 0 && sExtent.MinX == 0
-        && sExtent.MaxY == 0 && sExtent.MinY == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      If the dimensions are degenerate (all zeros) then we assume     */
+    /*      there were no geometries, and we don't bother setting the       */
+    /*      dimensions.                                                     */
+    /* -------------------------------------------------------------------- */
+    if (sExtent.MaxX == 0 && sExtent.MinX == 0 && sExtent.MaxY == 0 &&
+        sExtent.MinY == 0)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Layer %s appears to have no geometry ... not setting SDO DIMINFO metadata.",
-                  poFeatureDefn->GetName() );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Layer %s appears to have no geometry ... not setting SDO "
+                 "DIMINFO metadata.",
+                 poFeatureDefn->GetName());
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Establish the extents and resolution to use.                    */
-/* -------------------------------------------------------------------- */
-    double           dfResSize;
-    double           dfXMin, dfXMax, dfXRes;
-    double           dfYMin, dfYMax, dfYRes;
-    double           dfZMin, dfZMax, dfZRes;
+    /* -------------------------------------------------------------------- */
+    /*      Establish the extents and resolution to use.                    */
+    /* -------------------------------------------------------------------- */
+    double dfResSize;
+    double dfXMin, dfXMax, dfXRes;
+    double dfYMin, dfYMax, dfYRes;
+    double dfZMin, dfZMax, dfZRes;
 
-    if( sExtent.MaxX - sExtent.MinX > 400 )
+    if (sExtent.MaxX - sExtent.MinX > 400)
         dfResSize = 0.001;
     else
         dfResSize = 0.0000001;
@@ -633,49 +629,46 @@ void OGROCILoaderLayer::FinalizeNewLayer()
     dfXMin = sExtent.MinX - dfResSize * 3;
     dfXMax = sExtent.MaxX + dfResSize * 3;
     dfXRes = dfResSize;
-    ParseDIMINFO( "DIMINFO_X", &dfXMin, &dfXMax, &dfXRes );
+    ParseDIMINFO("DIMINFO_X", &dfXMin, &dfXMax, &dfXRes);
 
     dfYMin = sExtent.MinY - dfResSize * 3;
     dfYMax = sExtent.MaxY + dfResSize * 3;
     dfYRes = dfResSize;
-    ParseDIMINFO( "DIMINFO_Y", &dfYMin, &dfYMax, &dfYRes );
+    ParseDIMINFO("DIMINFO_Y", &dfYMin, &dfYMax, &dfYRes);
 
     dfZMin = -100000.0;
     dfZMax = 100000.0;
     dfZRes = 0.002;
-    ParseDIMINFO( "DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes );
+    ParseDIMINFO("DIMINFO_Z", &dfZMin, &dfZMax, &dfZRes);
 
-/* -------------------------------------------------------------------- */
-/*      Prepare dimension update statement.                             */
-/* -------------------------------------------------------------------- */
-    sDimUpdate.Append( "UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = " );
-    sDimUpdate.Append( "MDSYS.SDO_DIM_ARRAY(" );
+    /* -------------------------------------------------------------------- */
+    /*      Prepare dimension update statement.                             */
+    /* -------------------------------------------------------------------- */
+    sDimUpdate.Append("UPDATE USER_SDO_GEOM_METADATA SET DIMINFO = ");
+    sDimUpdate.Append("MDSYS.SDO_DIM_ARRAY(");
 
-    sDimUpdate.Appendf(200,
-                       "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
-                       dfXMin, dfXMax, dfXRes );
-    sDimUpdate.Appendf(200,
-                       ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
-                       dfYMin, dfYMax, dfYRes );
+    sDimUpdate.Appendf(200, "MDSYS.SDO_DIM_ELEMENT('X',%.16g,%.16g,%.12g)",
+                       dfXMin, dfXMax, dfXRes);
+    sDimUpdate.Appendf(200, ",MDSYS.SDO_DIM_ELEMENT('Y',%.16g,%.16g,%.12g)",
+                       dfYMin, dfYMax, dfYRes);
 
-    if( nDimension == 3 )
+    if (nDimension == 3)
     {
-        sDimUpdate.Appendf(200,
-                           ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
-                           dfZMin, dfZMax, dfZRes );
+        sDimUpdate.Appendf(200, ",MDSYS.SDO_DIM_ELEMENT('Z',%.16g,%.16g,%.12g)",
+                           dfZMin, dfZMax, dfZRes);
     }
 
-    sDimUpdate.Append( ")" );
+    sDimUpdate.Append(")");
 
-    sDimUpdate.Appendf( static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
-                        " WHERE table_name = UPPER('%s')",
-                        poFeatureDefn->GetName() );
+    sDimUpdate.Appendf(static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
+                       " WHERE table_name = UPPER('%s')",
+                       poFeatureDefn->GetName());
 
-/* -------------------------------------------------------------------- */
-/*      Execute the metadata update.                                    */
-/* -------------------------------------------------------------------- */
-    OGROCIStatement oExecStatement( poDS->GetSession() );
+    /* -------------------------------------------------------------------- */
+    /*      Execute the metadata update.                                    */
+    /* -------------------------------------------------------------------- */
+    OGROCIStatement oExecStatement(poDS->GetSession());
 
-    if( oExecStatement.Execute( sDimUpdate.GetString() ) != CE_None )
+    if (oExecStatement.Execute(sDimUpdate.GetString()) != CE_None)
         return;
 }

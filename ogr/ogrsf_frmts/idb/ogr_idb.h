@@ -41,180 +41,193 @@
 
 class OGRIDBDataSource;
 
-class OGRIDBLayer CPL_NON_FINAL: public OGRLayer
+class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
 
-    ITCursor   *m_poCurr;
+    ITCursor *m_poCurr;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
-    int                 nSRSId;
+    int nSRSId;
 
-    int                 iNextShapeId;
+    int iNextShapeId;
 
-    OGRIDBDataSource    *poDS;
+    OGRIDBDataSource *poDS;
 
-    int                 bGeomColumnWKB;
-    char                *pszGeomColumn;
-    char                *pszFIDColumn;
+    int bGeomColumnWKB;
+    char *pszGeomColumn;
+    char *pszFIDColumn;
 
-    CPLErr              BuildFeatureDefn( const char *pszLayerName,
-                                          ITCursor *poCurr );
+    CPLErr BuildFeatureDefn(const char *pszLayerName, ITCursor *poCurr);
 
-    virtual ITCursor *  GetQuery() { return m_poCurr; }
+    virtual ITCursor *GetQuery()
+    {
+        return m_poCurr;
+    }
 
   public:
-                        OGRIDBLayer();
-    virtual             ~OGRIDBLayer();
+    OGRIDBLayer();
+    virtual ~OGRIDBLayer();
 
-    virtual void        ResetReading() override;
+    virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                           OGRIDBTableLayer                          */
 /************************************************************************/
 
-class OGRIDBTableLayer final: public OGRIDBLayer
+class OGRIDBTableLayer final : public OGRIDBLayer
 {
-    int                 bUpdateAccess;
+    int bUpdateAccess;
 
-    char                *pszQuery;
+    char *pszQuery;
 
-    int                 bHaveSpatialExtents;
+    int bHaveSpatialExtents;
 
-    void                ClearQuery();
-    OGRErr              ResetQuery();
+    void ClearQuery();
+    OGRErr ResetQuery();
 
-    virtual ITCursor *  GetQuery() override;
+    virtual ITCursor *GetQuery() override;
 
   public:
-    explicit            OGRIDBTableLayer( OGRIDBDataSource * );
-                        virtual ~OGRIDBTableLayer();
+    explicit OGRIDBTableLayer(OGRIDBDataSource *);
+    virtual ~OGRIDBTableLayer();
 
-    CPLErr              Initialize( const char *pszTableName,
-                                    const char *pszGeomCol,
-                                    int bUpdate
-                                  );
+    CPLErr Initialize(const char *pszTableName, const char *pszGeomCol,
+                      int bUpdate);
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr SetAttributeFilter(const char *) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
 #if 0
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 #endif
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                          OGRIDBSelectLayer                          */
 /************************************************************************/
 
-class OGRIDBSelectLayer final: public OGRIDBLayer
+class OGRIDBSelectLayer final : public OGRIDBLayer
 {
-    char                *pszBaseQuery;
+    char *pszBaseQuery;
 
-    void                ClearQuery();
-    OGRErr              ResetQuery();
+    void ClearQuery();
+    OGRErr ResetQuery();
 
-    virtual ITCursor *  GetQuery() override;
+    virtual ITCursor *GetQuery() override;
 
   public:
-                        OGRIDBSelectLayer( OGRIDBDataSource *,
-                                           ITCursor * );
-                        virtual ~OGRIDBSelectLayer();
+    OGRIDBSelectLayer(OGRIDBDataSource *, ITCursor *);
+    virtual ~OGRIDBSelectLayer();
 
-    virtual void        ResetReading() override;
-    virtual GIntBig     GetFeatureCount( int ) override;
+    virtual void ResetReading() override;
+    virtual GIntBig GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                           OGRIDBDataSource                          */
 /************************************************************************/
 
-class OGRIDBDataSource final: public OGRDataSource
+class OGRIDBDataSource final : public OGRDataSource
 {
-    OGRIDBLayer        **papoLayers;
-    int                 nLayers;
+    OGRIDBLayer **papoLayers;
+    int nLayers;
 
-    char               *pszName;
+    char *pszName;
 
-    int                 bDSUpdate;
-    ITConnection       *poConn;
+    int bDSUpdate;
+    ITConnection *poConn;
 
   public:
-                        OGRIDBDataSource();
-                        virtual ~OGRIDBDataSource();
+    OGRIDBDataSource();
+    virtual ~OGRIDBDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *pszTableName,
-                                   const char *pszGeomCol,
-                                   int bUpdate );
+    int Open(const char *, int bUpdate, int bTestOpen);
+    int OpenTable(const char *pszTableName, const char *pszGeomCol,
+                  int bUpdate);
 
-    const char          *GetName() override { return pszName; }
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer            *GetLayer( int ) override;
+    const char *GetName() override
+    {
+        return pszName;
+    }
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect ) override;
-    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
     // Internal use
-    ITConnection *      GetConnection() { return poConn; }
+    ITConnection *GetConnection()
+    {
+        return poConn;
+    }
 };
 
 /************************************************************************/
 /*                             OGRIDBDriver                            */
 /************************************************************************/
 
-class OGRIDBDriver final: public OGRSFDriver
+class OGRIDBDriver final : public OGRSFDriver
 {
-    public:
-                       ~OGRIDBDriver();
-        const char *    GetName() override;
-        OGRDataSource * Open( const char *, int ) override;
+  public:
+    ~OGRIDBDriver();
+    const char *GetName() override;
+    OGRDataSource *Open(const char *, int) override;
 
-        OGRDataSource * CreateDataSource( const char *pszName,
-                                          char ** = NULL ) override;
+    OGRDataSource *CreateDataSource(const char *pszName,
+                                    char ** = NULL) override;
 
-        int             TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 };
 
-ITCallbackResult
-IDBErrorHandler( const ITErrorManager &err, void * userdata, long errorlevel );
+ITCallbackResult IDBErrorHandler(const ITErrorManager &err, void *userdata,
+                                 long errorlevel);
 
 #endif /* ndef _OGR_idb_H_INCLUDED_ */

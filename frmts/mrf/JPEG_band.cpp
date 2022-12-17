@@ -1,59 +1,71 @@
 /*
-* Copyright (c) 2002-2012, California Institute of Technology.
-* All rights reserved.  Based on Government Sponsored Research under contracts NAS7-1407 and/or NAS7-03001.
-*
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-*   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-*   2. Redistributions in binary form must reproduce the above copyright notice,
-*      this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL),
-*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to
-*      endorse or promote products derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-* Copyright 2014-2021 Esri
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* Author: Lucian Plesea
-*
-*
-* JPEG band
-* JPEG page compression and decompression functions, file gets compiled twice
-* once directly and once through inclusion from JPEG12_band.cpp
-* LIBJPEG_12_H is defined if both 8 and 12 bit JPEG will be supported
-* JPEG12_ON    is defined only for the 12 bit versions
-*
-* The MRF JPEG codec implements the Zen (Zero ENhanced) JPEG extension
-* This extension, when supported by the decompressor, preserves the zero or non-zero state of all pixels
-* which allows zero pixels to be used as a non-data mask
-* Clients which don't support the Zen extension will read it as a normal JPEG
-*
-* On page writes, a mask of all fully zero pixels is built
-* If the mask has some zero pixels, it is written in a JPEG APP3 "Zen" marker
-* If the mask has no zero pixels, a zero length APP3 marker is inserted
-*
-* On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected,
-* the masked pixels with value of zero are set to 1 while the non-masked ones are set to zero
-*
-*/
+ * Copyright (c) 2002-2012, California Institute of Technology.
+ * All rights reserved.  Based on Government Sponsored Research under contracts
+ * NAS7-1407 and/or NAS7-03001.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *   3. Neither the name of the California Institute of Technology (Caltech),
+ * its operating division the Jet Propulsion Laboratory (JPL), the National
+ * Aeronautics and Space Administration (NASA), nor the names of its
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright 2014-2021 Esri
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Lucian Plesea
+ *
+ *
+ * JPEG band
+ * JPEG page compression and decompression functions, file gets compiled twice
+ * once directly and once through inclusion from JPEG12_band.cpp
+ * LIBJPEG_12_H is defined if both 8 and 12 bit JPEG will be supported
+ * JPEG12_ON    is defined only for the 12 bit versions
+ *
+ * The MRF JPEG codec implements the Zen (Zero ENhanced) JPEG extension
+ * This extension, when supported by the decompressor, preserves the zero or
+ * non-zero state of all pixels which allows zero pixels to be used as a
+ * non-data mask Clients which don't support the Zen extension will read it as a
+ * normal JPEG
+ *
+ * On page writes, a mask of all fully zero pixels is built
+ * If the mask has some zero pixels, it is written in a JPEG APP3 "Zen" marker
+ * If the mask has no zero pixels, a zero length APP3 marker is inserted
+ *
+ * On page reads, after the JPEG decompression, if a mask or a zero length APP3
+ * marker is detected, the masked pixels with value of zero are set to 1 while
+ * the non-masked ones are set to zero
+ *
+ */
 
 #include "marfa.h"
 #include <setjmp.h>
@@ -85,14 +97,19 @@ typedef BitMap2D<> BitMask;
 
 // Values for mask_state flag
 
-enum { NO_MASK = 0, MASK_LOADED, MASK_FULL };
+enum
+{
+    NO_MASK = 0,
+    MASK_LOADED,
+    MASK_FULL
+};
 
 extern char CHUNK_NAME[];
 extern size_t CHUNK_NAME_SIZE;
 
 typedef struct MRFJPEGStruct
 {
-    jmp_buf     setjmpBuffer;
+    jmp_buf setjmpBuffer;
     BitMask *mask;
     int mask_state;
 
@@ -105,18 +122,20 @@ typedef struct MRFJPEGStruct
 } MRFJPEGErrorStruct;
 
 /**
-*\brief Called when jpeg wants to report a warning
-* msgLevel can be:
-* -1 Corrupt data
-* 0 always display
-* 1... Trace level
-*/
+ *\brief Called when jpeg wants to report a warning
+ * msgLevel can be:
+ * -1 Corrupt data
+ * 0 always display
+ * 1... Trace level
+ */
 
 static void emitMessage(j_common_ptr cinfo, int msgLevel)
 {
-    if (msgLevel > 0) return; // No trace msgs
+    if (msgLevel > 0)
+        return;  // No trace msgs
     // There can be many warnings, just print the first one
-    if (cinfo->err->num_warnings++ >1) return;
+    if (cinfo->err->num_warnings++ > 1)
+        return;
     char buffer[JMSG_LENGTH_MAX];
     cinfo->err->format_message(cinfo, buffer);
     CPLError(CE_Failure, CPLE_AppDefined, "%s", buffer);
@@ -124,7 +143,7 @@ static void emitMessage(j_common_ptr cinfo, int msgLevel)
 
 static void errorExit(j_common_ptr cinfo)
 {
-    MRFJPEGStruct* psJPEGStruct = (MRFJPEGStruct* ) cinfo->client_data;
+    MRFJPEGStruct *psJPEGStruct = (MRFJPEGStruct *)cinfo->client_data;
     // format the warning message
     char buffer[JMSG_LENGTH_MAX];
 
@@ -135,15 +154,17 @@ static void errorExit(j_common_ptr cinfo)
 }
 
 /**
-*\brief Do nothing stub function for JPEG library, called
-*/
-static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
+ *\brief Do nothing stub function for JPEG library, called
+ */
+static void stub_source_dec(j_decompress_ptr /*cinfo*/)
+{
+}
 
 /**
-*\brief: This function is supposed to do refilling of the input buffer,
-* but as we provided everything at the beginning, if it is called, then
-* we have an error.
-*/
+ *\brief: This function is supposed to do refilling of the input buffer,
+ * but as we provided everything at the beginning, if it is called, then
+ * we have an error.
+ */
 static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid JPEG stream");
@@ -153,11 +174,13 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 }
 
 /**
-*\brief: Skips unknown chunks
-*/
-static void skip_input_data_dec(j_decompress_ptr cinfo, long l) {
+ *\brief: Skips unknown chunks
+ */
+static void skip_input_data_dec(j_decompress_ptr cinfo, long l)
+{
     struct jpeg_source_mgr *src = cinfo->src;
-    if (l > 0) {
+    if (l > 0)
+    {
         if (static_cast<size_t>(l) > src->bytes_in_buffer)
             l = static_cast<long>(src->bytes_in_buffer);
         src->bytes_in_buffer -= l;
@@ -166,26 +189,33 @@ static void skip_input_data_dec(j_decompress_ptr cinfo, long l) {
 }
 
 // Destination should be already set up
-static void init_or_terminate_destination(j_compress_ptr /*cinfo*/) {}
+static void init_or_terminate_destination(j_compress_ptr /*cinfo*/)
+{
+}
 
 // Called if the buffer provided is too small
-static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
+static boolean empty_output_buffer(j_compress_ptr /*cinfo*/)
+{
     std::cerr << "JPEG Output buffer empty called\n";
     return FALSE;
 }
 
-// Returns the number of zero pixels in the page, as well as clearing those bits in the mask
-template<typename T> static int update_mask(BitMask &mask, T *src, int nc) {
+// Returns the number of zero pixels in the page, as well as clearing those bits
+// in the mask
+template <typename T> static int update_mask(BitMask &mask, T *src, int nc)
+{
     int zeros = 0;
     int h = mask.getHeight();
     int w = mask.getWidth();
     for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++) {
+        for (int x = 0; x < w; x++)
+        {
             bool is_zero = true;
             for (int c = 0; c < nc; c++)
                 if (*src++ != 0)
                     is_zero = false;
-            if (is_zero) {
+            if (is_zero)
+            {
                 zeros++;
                 mask.clear(x, y);
             }
@@ -194,12 +224,12 @@ template<typename T> static int update_mask(BitMask &mask, T *src, int nc) {
 }
 
 /*
-*\brief Compress a JPEG page in memory
-*
-* It handles byte or 12 bit data, grayscale, RGB, YUV, and multispectral
-*
-* Returns the compressed size in dest.size
-*/
+ *\brief Compress a JPEG page in memory
+ *
+ * It handles byte or 12 bit data, grayscale, RGB, YUV, and multispectral
+ *
+ * Returns the compressed size in dest.size
+ */
 #if defined(JPEG12_ON)
 CPLErr JPEG_Codec::CompressJPEG12(buf_mgr &dst, buf_mgr &src)
 #else
@@ -207,8 +237,8 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 #endif
 
 {
-    // The cinfo should stay open and reside in the DS, since it can be left initialized
-    // It saves some time because it has the tables initialized
+    // The cinfo should stay open and reside in the DS, since it can be left
+    // initialized It saves some time because it has the tables initialized
     struct jpeg_compress_struct cinfo;
     MRFJPEGStruct sJPEGStruct;
     struct jpeg_error_mgr sJErr;
@@ -235,11 +265,16 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     cinfo.image_width = sz.x;
     cinfo.image_height = sz.y;
     cinfo.input_components = sz.c;
-    switch (cinfo.input_components) {
-    case 1:cinfo.in_color_space = JCS_GRAYSCALE; break;
-    case 3:cinfo.in_color_space = JCS_RGB; break;  // Stored as YCbCr 4:2:0 by default
-    default:
-        cinfo.in_color_space = JCS_UNKNOWN; // 2, 4-10 bands
+    switch (cinfo.input_components)
+    {
+        case 1:
+            cinfo.in_color_space = JCS_GRAYSCALE;
+            break;
+        case 3:
+            cinfo.in_color_space = JCS_RGB;
+            break;  // Stored as YCbCr 4:2:0 by default
+        default:
+            cinfo.in_color_space = JCS_UNKNOWN;  // 2, 4-10 bands
     }
 
     // Set all required fields and overwrite the ones we want to change
@@ -247,21 +282,26 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
     // Override certain settings
     jpeg_set_quality(&cinfo, img.quality, TRUE);
-    cinfo.dct_method = JDCT_FLOAT; // Pretty fast and precise
-    cinfo.optimize_coding = optimize; // Set "OPTIMIZE=TRUE" in OPTIONS, default for 12bit
+    cinfo.dct_method = JDCT_FLOAT;  // Pretty fast and precise
+    cinfo.optimize_coding =
+        optimize;  // Set "OPTIMIZE=TRUE" in OPTIONS, default for 12bit
 
     // Do we explicitly turn off the YCC color and downsampling?
 
-    if (cinfo.in_color_space == JCS_RGB) {
-        if (rgb) {  // Stored as RGB
+    if (cinfo.in_color_space == JCS_RGB)
+    {
+        if (rgb)
+        {                                          // Stored as RGB
             jpeg_set_colorspace(&cinfo, JCS_RGB);  // Huge files
         }
-        else if (sameres) { // YCC, somewhat larger files with improved color spatial detail
+        else if (sameres)
+        {  // YCC, somewhat larger files with improved color spatial detail
             cinfo.comp_info[0].h_samp_factor = 1;
             cinfo.comp_info[0].v_samp_factor = 1;
 
-            // Enabling these lines will make the color components use the same tables as Y, even larger file with slightly better color depth detail
-            // cinfo.comp_info[1].quant_tbl_no = 0;
+            // Enabling these lines will make the color components use the same
+            // tables as Y, even larger file with slightly better color depth
+            // detail cinfo.comp_info[1].quant_tbl_no = 0;
             // cinfo.comp_info[2].quant_tbl_no = 0;
 
             // cinfo.comp_info[1].dc_tbl_no = 0;
@@ -272,18 +312,21 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
         }
     }
 
-    int linesize = cinfo.image_width * cinfo.input_components * ((cinfo.data_precision == 8) ? 1 : 2);
-    JSAMPROW *rowp = (JSAMPROW *)CPLMalloc(sizeof(JSAMPROW)*sz.y);
-    if (!rowp) {
+    int linesize = cinfo.image_width * cinfo.input_components *
+                   ((cinfo.data_precision == 8) ? 1 : 2);
+    JSAMPROW *rowp = (JSAMPROW *)CPLMalloc(sizeof(JSAMPROW) * sz.y);
+    if (!rowp)
+    {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG compression error");
         jpeg_destroy_compress(&cinfo);
         return CE_Failure;
     }
 
     for (int i = 0; i < sz.y; i++)
-        rowp[i] = (JSAMPROW)(src.buffer + i*linesize);
+        rowp[i] = (JSAMPROW)(src.buffer + i * linesize);
 
-    if (setjmp(sJPEGStruct.setjmpBuffer)) {
+    if (setjmp(sJPEGStruct.setjmpBuffer))
+    {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG compression error");
         jpeg_destroy_compress(&cinfo);
         CPLFree(rowp);
@@ -291,26 +334,31 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     }
 
     // Build a bitmaps of the black pixels
-    // If there are any black pixels, write a compressed mask in APP3 "Zen" chunk
+    // If there are any black pixels, write a compressed mask in APP3 "Zen"
+    // chunk
 
     // Mask is initialized to all pixels valid
     BitMask mask(sz.x, sz.y);
-    storage_manager mbuffer = { CHUNK_NAME, CHUNK_NAME_SIZE };
+    storage_manager mbuffer = {CHUNK_NAME, CHUNK_NAME_SIZE};
 
-    int nzeros = (cinfo.data_precision == 8) ?
-        update_mask(mask, reinterpret_cast<GByte *>(src.buffer), sz.c) :
-        update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
+    int nzeros =
+        (cinfo.data_precision == 8)
+            ? update_mask(mask, reinterpret_cast<GByte *>(src.buffer), sz.c)
+            : update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
 
     // In case we need to build a Zen chunk
     char *buffer = nullptr;
 
-    if (nzeros != 0) { // build the Zen chunk
+    if (nzeros != 0)
+    {  // build the Zen chunk
         mbuffer.size = 2 * mask.size() + CHUNK_NAME_SIZE;
         buffer = reinterpret_cast<char *>(CPLMalloc(mbuffer.size));
-        if (!buffer) {
+        if (!buffer)
+        {
             jpeg_destroy_compress(&cinfo);
             CPLFree(rowp);
-            CPLError(CE_Failure, CPLE_OutOfMemory, "MRF: JPEG Zen mask compression");
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "MRF: JPEG Zen mask compression");
             return CE_Failure;
         }
 
@@ -320,22 +368,28 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
         RLEC3Packer c3;
         mask.set_packer(&c3);
-        if (!mask.store(&mbuffer)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG Zen mask compression");
+        if (!mask.store(&mbuffer))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "MRF: JPEG Zen mask compression");
             CPLFree(rowp);
             CPLFree(buffer);
             return CE_Failure;
         }
 
-        // Change the buffer pointer to include the signature, on output the size is the compressed size
+        // Change the buffer pointer to include the signature, on output the
+        // size is the compressed size
         mbuffer.buffer = buffer;
         mbuffer.size += CHUNK_NAME_SIZE;
 
         // Check that the size fits in one JPEG chunk
-        if (mbuffer.size + 2 + CHUNK_NAME_SIZE > 65535) {
-            // Should split it in multiple chunks, for now mark this tile as all data and emit a warning
-            CPLError(CE_Warning, CPLE_NotSupported, "MRF: JPEG Zen mask too large");
-            mbuffer.size = CHUNK_NAME_SIZE; // Write just the signature
+        if (mbuffer.size + 2 + CHUNK_NAME_SIZE > 65535)
+        {
+            // Should split it in multiple chunks, for now mark this tile as all
+            // data and emit a warning
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "MRF: JPEG Zen mask too large");
+            mbuffer.size = CHUNK_NAME_SIZE;  // Write just the signature
         }
     }
 
@@ -344,15 +398,15 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
     // Always write the Zen app chunk, App3
     jpeg_write_marker(&cinfo, JPEG_APP0 + 3,
-      reinterpret_cast<JOCTET *>(mbuffer.buffer),
-      static_cast<unsigned int>(mbuffer.size));
+                      reinterpret_cast<JOCTET *>(mbuffer.buffer),
+                      static_cast<unsigned int>(mbuffer.size));
 
     jpeg_write_scanlines(&cinfo, rowp, sz.y);
     jpeg_finish_compress(&cinfo);
     jpeg_destroy_compress(&cinfo);
 
     CPLFree(rowp);
-    CPLFree(buffer);     // Safe to call on null
+    CPLFree(buffer);  // Safe to call on null
 
     // Figure out the size of the JFIF
     dst.size -= jmgr.free_in_buffer;
@@ -365,7 +419,9 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
 /* Avoid the risk of denial-of-service on crafted JPEGs with an insane */
 /* number of scans. */
-/* See http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+/* See
+ * http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
+ */
 static void ProgressMonitor(j_common_ptr cinfo)
 {
     if (cinfo->is_decompressor)
@@ -376,11 +432,10 @@ static void ProgressMonitor(j_common_ptr cinfo)
         if (scan_no >= MAX_SCANS)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Scan number %d exceeds maximum scans (%d)",
-                     scan_no, MAX_SCANS);
+                     "Scan number %d exceeds maximum scans (%d)", scan_no,
+                     MAX_SCANS);
 
-            MRFJPEGStruct* psJPEGStruct =
-                (MRFJPEGStruct* ) cinfo->client_data;
+            MRFJPEGStruct *psJPEGStruct = (MRFJPEGStruct *)cinfo->client_data;
 
             // return control to the setjmp point
             longjmp(psJPEGStruct->setjmpBuffer, 1);
@@ -388,8 +443,10 @@ static void ProgressMonitor(j_common_ptr cinfo)
     }
 }
 
-// Returns the number of zero pixels, as well as clearing those bits int the mask
-template<typename T> static void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
+// Returns the number of zero pixels, as well as clearing those bits int the
+// mask
+template <typename T> static void apply_mask(MRFJPEGStruct &sJ, T *s, int nc)
+{
     if (NO_MASK == sJ.mask_state)
         return;
 
@@ -397,25 +454,33 @@ template<typename T> static void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
     int w = mask->getWidth();
     int h = mask->getHeight();
 
-    if (MASK_LOADED == sJ.mask_state) { // Partial map
+    if (MASK_LOADED == sJ.mask_state)
+    {  // Partial map
         for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++) {
-                if (mask->isSet(x, y)) { // Non zero pixel
-                    for (int c = 0; c < nc; c++, s++) {
+            for (int x = 0; x < w; x++)
+            {
+                if (mask->isSet(x, y))
+                {  // Non zero pixel
+                    for (int c = 0; c < nc; c++, s++)
+                    {
                         if (*s == 0)
                             *s = 1;
                     }
                 }
-                else { // Zero pixel
+                else
+                {  // Zero pixel
                     for (int c = 0; c < nc; c++)
                         *s++ = 0;
                 }
             }
     }
-    else if (MASK_FULL == sJ.mask_state) { // All non-zero
+    else if (MASK_FULL == sJ.mask_state)
+    {  // All non-zero
         for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++) {
-                for (int c = 0; c < nc; c++, s++) {
+            for (int x = 0; x < w; x++)
+            {
+                for (int c = 0; c < nc; c++, s++)
+                {
                     if (*s == 0)
                         *s = 1;
                 }
@@ -425,7 +490,8 @@ template<typename T> static void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
 
 // JPEG marker processor, for the Zen app3 marker
 // Can't return error, only works if the JPEG mask is all in the buffer
-static boolean MaskProcessor(j_decompress_ptr pcinfo) {
+static boolean MaskProcessor(j_decompress_ptr pcinfo)
+{
     struct jpeg_source_mgr *src = pcinfo->src;
     if (src->bytes_in_buffer < 2)
         ERREXIT(pcinfo, JERR_CANT_SUSPEND);
@@ -438,11 +504,13 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo) {
     // Check that it is safe to read the rest
     if (src->bytes_in_buffer < static_cast<size_t>(len))
         ERREXIT(pcinfo, JERR_CANT_SUSPEND);
-    MRFJPEGStruct *psJPEG = reinterpret_cast<MRFJPEGStruct *>(pcinfo->client_data);
+    MRFJPEGStruct *psJPEG =
+        reinterpret_cast<MRFJPEGStruct *>(pcinfo->client_data);
     BitMask *mask = psJPEG->mask;
     // caller doesn't want a mask or wrong chunk, skip the chunk and return
-    if (!mask || static_cast<size_t>(len) < CHUNK_NAME_SIZE
-        || !EQUALN(reinterpret_cast<const char *>(src->next_input_byte), CHUNK_NAME, CHUNK_NAME_SIZE))
+    if (!mask || static_cast<size_t>(len) < CHUNK_NAME_SIZE ||
+        !EQUALN(reinterpret_cast<const char *>(src->next_input_byte),
+                CHUNK_NAME, CHUNK_NAME_SIZE))
     {
         src->bytes_in_buffer -= len;
         src->next_input_byte += len;
@@ -453,18 +521,19 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo) {
     src->bytes_in_buffer -= CHUNK_NAME_SIZE;
     src->next_input_byte += CHUNK_NAME_SIZE;
     len -= static_cast<int>(CHUNK_NAME_SIZE);
-    if (len == 0) { // No mask content means mask is all full, just return
+    if (len == 0)
+    {  // No mask content means mask is all full, just return
         psJPEG->mask_state = MASK_FULL;
         return true;
     }
 
     // It is OK to use const cast, the mask doesn't touch the buffer
-    storage_manager msrc = {
-        const_cast<char *>(reinterpret_cast<const char *>(src->next_input_byte)),
-        static_cast<size_t>(len)
-    };
+    storage_manager msrc = {const_cast<char *>(reinterpret_cast<const char *>(
+                                src->next_input_byte)),
+                            static_cast<size_t>(len)};
 
-    if (!mask->load(&msrc)) { // Fatal error return, mask is not valid
+    if (!mask->load(&msrc))
+    {  // Fatal error return, mask is not valid
         ERREXIT(pcinfo, JERR_CANT_SUSPEND);
     }
 
@@ -475,16 +544,16 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo) {
 }
 
 /**
-*\brief In memory decompression of JPEG file
-*
-* @param data pointer to output buffer
-* @param png pointer to PNG in memory
-* @param sz if non-zero, test that uncompressed data fits in the buffer.
-*/
+ *\brief In memory decompression of JPEG file
+ *
+ * @param data pointer to output buffer
+ * @param png pointer to PNG in memory
+ * @param sz if non-zero, test that uncompressed data fits in the buffer.
+ */
 #if defined(JPEG12_ON)
 CPLErr JPEG_Codec::DecompressJPEG12(buf_mgr &dst, buf_mgr &isrc)
 #else
-CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
+CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 #endif
 
 {
@@ -508,7 +577,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
     sJErr.emit_message = emitMessage;
     cinfo.client_data = &sJPEGStruct;
 
-    src.next_input_byte = reinterpret_cast<JOCTET*>(isrc.buffer);
+    src.next_input_byte = reinterpret_cast<JOCTET *>(isrc.buffer);
     src.bytes_in_buffer = isrc.size;
     src.term_source = stub_source_dec;
     src.init_source = stub_source_dec;
@@ -518,7 +587,8 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 
     jpeg_create_decompress(&cinfo);
 
-    if (setjmp(sJPEGStruct.setjmpBuffer)) {
+    if (setjmp(sJPEGStruct.setjmpBuffer))
+    {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error reading JPEG page");
         jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
@@ -529,42 +599,45 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
     jpeg_read_header(&cinfo, TRUE);
 
     /* In some cases, libjpeg needs to allocate a lot of memory */
-    /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
-    if (jpeg_has_multiple_scans(&(cinfo))) {
+    /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
+     */
+    if (jpeg_has_multiple_scans(&(cinfo)))
+    {
         /* In this case libjpeg will need to allocate memory or backing */
         /* store for all coefficients */
         /* See call to jinit_d_coef_controller() from master_selection() */
         /* in libjpeg */
         vsi_l_offset nRequiredMemory =
-            static_cast<vsi_l_offset>(cinfo.image_width) *
-            cinfo.image_height * cinfo.num_components *
-            ((cinfo.data_precision+7)/8);
+            static_cast<vsi_l_offset>(cinfo.image_width) * cinfo.image_height *
+            cinfo.num_components * ((cinfo.data_precision + 7) / 8);
         /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
         /* to replicate the logic of jinit_d_coef_controller() */
-        if( cinfo.progressive_mode )
+        if (cinfo.progressive_mode)
             nRequiredMemory *= 3;
 
 #ifndef GDAL_LIBJPEG_LARGEST_MEM_ALLOC
 #define GDAL_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
 #endif
 
-        if( nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
-            CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
+        if (nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
+            CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) ==
+                nullptr)
         {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                    "Reading this image would require libjpeg to allocate "
-                    "at least " CPL_FRMT_GUIB " bytes. "
-                    "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
-                    "You may override this restriction by defining the "
-                    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
-                    "or recompile GDAL by defining the "
-                    "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                    "than " CPL_FRMT_GUIB,
-                    static_cast<GUIntBig>(nRequiredMemory),
-                    static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
-                    static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
-                jpeg_destroy_decompress(&cinfo);
-                return CE_Failure;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Reading this image would require libjpeg to allocate "
+                     "at least " CPL_FRMT_GUIB " bytes. "
+                     "This is disabled since above the " CPL_FRMT_GUIB
+                     " threshold. "
+                     "You may override this restriction by defining the "
+                     "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                     "or recompile GDAL by defining the "
+                     "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
+                     "than " CPL_FRMT_GUIB,
+                     static_cast<GUIntBig>(nRequiredMemory),
+                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
+                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
+            jpeg_destroy_decompress(&cinfo);
+            return CE_Failure;
         }
     }
 
@@ -583,8 +656,11 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
         cinfo.out_color_space = JCS_GRAYSCALE;
 
     const int datasize = ((cinfo.data_precision == 8) ? 1 : 2);
-    if (cinfo.image_width > static_cast<unsigned>(INT_MAX / (nbands * datasize))) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+    if (cinfo.image_width >
+        static_cast<unsigned>(INT_MAX / (nbands * datasize)))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: JPEG decompress buffer overflow");
         jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
@@ -592,15 +668,20 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 
     // We have a mismatch between the real and the declared data format
     // warn and fail if output buffer is too small
-    if (linesize > static_cast<int>(INT_MAX / cinfo.image_height)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+    if (linesize > static_cast<int>(INT_MAX / cinfo.image_height))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: JPEG decompress buffer overflow");
         jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
-    if (linesize*cinfo.image_height != dst.size) {
+    if (linesize * cinfo.image_height != dst.size)
+    {
         CPLError(CE_Warning, CPLE_AppDefined, "MRF: read JPEG size is wrong");
-        if (linesize*cinfo.image_height > dst.size) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+        if (linesize * cinfo.image_height > dst.size)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "MRF: JPEG decompress buffer overflow");
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
@@ -613,13 +694,15 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
     jpeg_start_decompress(&cinfo);
 
     // Decompress, two lines at a time is what libjpeg does
-    while (cinfo.output_scanline < cinfo.image_height) {
+    while (cinfo.output_scanline < cinfo.image_height)
+    {
         char *rp[2];
-        rp[0] = (char *)dst.buffer + linesize*cinfo.output_scanline;
+        rp[0] = (char *)dst.buffer + linesize * cinfo.output_scanline;
         rp[1] = rp[0] + linesize;
         // if this fails, it calls the error handler
         // which will report an error
-        if (jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0) {
+        if (jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0)
+        {
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
@@ -629,9 +712,11 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 
     // Apply the mask
     if (datasize == 1)
-      apply_mask(sJPEGStruct, reinterpret_cast<char *>(dst.buffer), img.pagesize.c);
+        apply_mask(sJPEGStruct, reinterpret_cast<char *>(dst.buffer),
+                   img.pagesize.c);
     else
-      apply_mask(sJPEGStruct, reinterpret_cast<GUInt16 *>(dst.buffer), img.pagesize.c);
+        apply_mask(sJPEGStruct, reinterpret_cast<GUInt16 *>(dst.buffer),
+                   img.pagesize.c);
 
     return CE_None;
 }
@@ -643,10 +728,11 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 char CHUNK_NAME[] = "Zen";
 size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
-const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
-const static GUInt32 BRUN_SIG = 0xd242040a; // Brunsli 4CC code, native
+const static GUInt32 JPEG_SIG = 0xe0ffd8ff;  // JPEG 4CC code
+const static GUInt32 BRUN_SIG = 0xd242040a;  // Brunsli 4CC code, native
 
-static bool isbrunsli(const buf_mgr& src) {
+static bool isbrunsli(const buf_mgr &src)
+{
     GUInt32 signature;
     memcpy(&signature, src.buffer, sizeof(signature));
     if (BRUN_SIG == CPL_LSBWORD32(signature))
@@ -654,7 +740,7 @@ static bool isbrunsli(const buf_mgr& src) {
     return false;
 }
 
-bool JPEG_Codec::IsJPEG(const buf_mgr& src)
+bool JPEG_Codec::IsJPEG(const buf_mgr &src)
 {
     if (isbrunsli(src))
         return true;
@@ -667,7 +753,8 @@ bool JPEG_Codec::IsJPEG(const buf_mgr& src)
 
 #if defined(BRUNSLI)
 // Append to end of out vector
-static size_t brunsli_fun_callback(void* out, const GByte* data, size_t size) {
+static size_t brunsli_fun_callback(void *out, const GByte *data, size_t size)
+{
     auto outv = static_cast<std::vector<GByte> *>(out);
     outv->insert(outv->end(), data, data + size);
     return size;
@@ -675,7 +762,8 @@ static size_t brunsli_fun_callback(void* out, const GByte* data, size_t size) {
 #endif
 
 // Type dependent dispachers
-CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
+CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
+{
 #if defined(LIBJPEG_12_H)
     if (GDT_Byte != img.dt)
         return codec.DecompressJPEG12(dst, src);
@@ -683,26 +771,32 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
     if (!isbrunsli(src))
         return codec.DecompressJPEG(dst, src);
 
-    // Need conversion to JFIF first
+        // Need conversion to JFIF first
 #if !defined(BRUNSLI)
-    CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL content, yet this GDAL was not compiled with BRUNSLI support");
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "MRF: JPEG-XL content, yet this GDAL was not compiled with "
+             "BRUNSLI support");
     return CE_Failure;
 #else
     std::vector<GByte> out;
     // Returns 0 on failure
-    if (!DecodeBrunsli(src.size, reinterpret_cast<uint8_t*>(src.buffer), &out, brunsli_fun_callback)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) tile decode failed");
+    if (!DecodeBrunsli(src.size, reinterpret_cast<uint8_t *>(src.buffer), &out,
+                       brunsli_fun_callback))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: JPEG-XL (brunsli) tile decode failed");
         return CE_Failure;
     }
 
     buf_mgr jfif_src;
     jfif_src.buffer = reinterpret_cast<char *>(out.data());
     jfif_src.size = out.size();
-    return Decompress(dst, jfif_src); // Call itself with JFIF JPEG source
-#endif // BRUNSLI
+    return Decompress(dst, jfif_src);  // Call itself with JFIF JPEG source
+#endif  // BRUNSLI
 }
 
-CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
+CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
+{
 #if defined(LIBJPEG_12_H)
     if (GDT_Byte != img.dt)
         return codec.CompressJPEG12(dst, src);
@@ -710,33 +804,36 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
 #if !defined(BRUNSLI)
     return codec.CompressJPEG(dst, src);
 #else
-    auto dst_size = dst.size; // Save the original size
+    auto dst_size = dst.size;          // Save the original size
     auto err_code = codec.CompressJPEG(dst, src);
     if (codec.JFIF || err_code != CE_None)
         return err_code;
 
     // The JFIF is in dst buffer
     std::vector<GByte> out;
-    if (!EncodeBrunsli(dst.size, reinterpret_cast<uint8_t*>(dst.buffer), &out, brunsli_fun_callback)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) tile encode failed");
+    if (!EncodeBrunsli(dst.size, reinterpret_cast<uint8_t *>(dst.buffer), &out,
+                       brunsli_fun_callback))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: JPEG-XL (brunsli) tile encode failed");
         return CE_Failure;
     }
     // Copy the brunsli to the dst buffer
-    if (out.size() > dst_size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) encoded tile too large");
+    if (out.size() > dst_size)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: JPEG-XL (brunsli) encoded tile too large");
         return CE_Failure;
     }
     memcpy(dst.buffer, out.data(), out.size());
     dst.size = out.size();
     return CE_None;
-#endif // BRUNSLI
+#endif  // BRUNSLI
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
-JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
-                      int b, int level ) :
-    MRFRasterBand(pDS, image, b, int(level)),
-    codec(image)
+JPEG_Band::JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
+    : MRFRasterBand(pDS, image, b, int(level)), codec(image)
 {
     const int nbands = image.pagesize.c;
     // Check behavior on signed 16bit.  Does the libjpeg sign extend?
@@ -751,9 +848,11 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
         return;
     }
 
-    if( nbands == 3 ) { // Only the 3 band JPEG has storage flavors
+    if (nbands == 3)
+    {  // Only the 3 band JPEG has storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL")
+        {  // Explicit RGB or MS
             codec.rgb = TRUE;
             codec.sameres = TRUE;
         }
@@ -761,12 +860,14 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
             codec.sameres = TRUE;
     }
 
-    if( GDT_Byte == image.dt ) {
+    if (GDT_Byte == image.dt)
+    {
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
         codec.JFIF = GetOptlist().FetchBoolean("JFIF", FALSE) != FALSE;
     }
-    else {
-        codec.optimize = true; // Required for 12bit
+    else
+    {
+        codec.optimize = true;  // Required for 12bit
     }
 }
 #endif

@@ -25,7 +25,7 @@
 #ifndef TUT_GDAL_H_INCLUDED
 #define TUT_GDAL_H_INCLUDED
 
-#include "ogr_api.h" // GDAL
+#include "ogr_api.h"  // GDAL
 #include <cassert>
 #include <sstream>
 #include <string>
@@ -44,26 +44,26 @@ namespace tut
 //
 // Template of attribute reading function and its specializations
 //
-template <typename T>
-inline void read_feature_attribute(OGRFeatureH , int , T& )
+template <typename T> inline void read_feature_attribute(OGRFeatureH, int, T &)
 {
     assert(!"Can't find read_feature_attribute specialization for given type");
 }
 
 template <>
-inline void read_feature_attribute(OGRFeatureH feature, int index, int& val)
+inline void read_feature_attribute(OGRFeatureH feature, int index, int &val)
 {
     val = OGR_F_GetFieldAsInteger(feature, index);
 }
 
 template <>
-inline void read_feature_attribute(OGRFeatureH feature, int index, double& val)
+inline void read_feature_attribute(OGRFeatureH feature, int index, double &val)
 {
     val = OGR_F_GetFieldAsDouble(feature, index);
 }
 
 template <>
-inline void read_feature_attribute(OGRFeatureH feature, int index, std::string& val)
+inline void read_feature_attribute(OGRFeatureH feature, int index,
+                                   std::string &val)
 {
     val = OGR_F_GetFieldAsString(feature, index);
 }
@@ -71,18 +71,20 @@ inline void read_feature_attribute(OGRFeatureH feature, int index, std::string& 
 //
 // Test equality of two OGR geometries according to passed tolerance.
 //
-void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance);
+void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs,
+                             double tolerance);
 
 //
 // Test layer attributes from given field against expected list of values
 //
 template <typename T>
-void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const& list)
+void ensure_equal_attributes(OGRLayerH layer, std::string const &field,
+                             T const &list)
 {
     ensure("Layer is NULL", nullptr != layer);
 
     OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(layer);
-    ensure("Layer schema is NULL",nullptr != featDefn);
+    ensure("Layer schema is NULL", nullptr != featDefn);
 
     int fldIndex = OGR_FD_GetFieldIndex(featDefn, field.c_str());
     std::ostringstream os;
@@ -99,7 +101,7 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
         feat = OGR_L_GetNextFeature(layer);
 
         fldDefn = OGR_F_GetFieldDefnRef(feat, fldIndex);
-        ensure("Field schema is NULL",nullptr != fldDefn);
+        ensure("Field schema is NULL", nullptr != fldDefn);
 
         read_feature_attribute(feat, fldIndex, attrVal);
 
@@ -117,15 +119,15 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
     ensure("Got more features than expected", notTooMany);
 }
 
-
-template <typename T>
-void ensure_approx_equals(T const& a, T const& b)
+template <typename T> void ensure_approx_equals(T const &a, T const &b)
 {
     std::ostringstream os;
     os << "Approx. equality failed: " << a << " != " << b;
-    ensure(os.str(), (a == 0.0 || b == 0.0) ? fabs(a-b) <= .00000000001 : fabs(1.0 * b / a - 1.0) <= .00000000001);
+    ensure(os.str(), (a == 0.0 || b == 0.0)
+                         ? fabs(a - b) <= .00000000001
+                         : fabs(1.0 * b / a - 1.0) <= .00000000001);
 }
 
-} // namespace tut
+}  // namespace tut
 
-#endif // TUT_GDAL_H_INCLUDED
+#endif  // TUT_GDAL_H_INCLUDED

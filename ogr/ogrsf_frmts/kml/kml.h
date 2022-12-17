@@ -54,18 +54,18 @@ typedef enum
 
 class KML
 {
-public:
+  public:
     KML();
     virtual ~KML();
-    bool open(const char* pszFilename);
+    bool open(const char *pszFilename);
     bool isValid();
-    bool isHandled(std::string const& elem) const;
-    virtual bool isLeaf(std::string const& elem) const;
-    virtual bool isFeature(std::string const& elem) const;
-    virtual bool isFeatureContainer(std::string const& elem) const;
-    virtual bool isContainer(std::string const& elem) const;
-    virtual bool isRest(std::string const& elem) const;
-    virtual void findLayers(KMLNode* poNode, int bKeepEmptyContainers);
+    bool isHandled(std::string const &elem) const;
+    virtual bool isLeaf(std::string const &elem) const;
+    virtual bool isFeature(std::string const &elem) const;
+    virtual bool isFeatureContainer(std::string const &elem) const;
+    virtual bool isContainer(std::string const &elem) const;
+    virtual bool isRest(std::string const &elem) const;
+    virtual void findLayers(KMLNode *poNode, int bKeepEmptyContainers);
 
     bool hasOnlyEmpty() const;
 
@@ -80,26 +80,27 @@ public:
     Nodetype getCurrentType() const;
     int is25D() const;
     int getNumFeatures();
-    Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
+    Feature *getFeature(std::size_t nNum, int &nLastAsked, int &nLastCount);
 
-    void unregisterLayerIfMatchingThisNode(KMLNode* poNode);
+    void unregisterLayerIfMatchingThisNode(KMLNode *poNode);
 
-protected:
+  protected:
     void checkValidity();
 
     static void XMLCALL startElement(void *, const char *, const char **);
-    static void XMLCALL startElementValidate(void *, const char *, const char **);
+    static void XMLCALL startElementValidate(void *, const char *,
+                                             const char **);
     static void XMLCALL dataHandler(void *, const char *, int);
     static void XMLCALL dataHandlerValidate(void *, const char *, int);
     static void XMLCALL endElement(void *, const char *);
 
     // Trunk of KMLnodes.
-    KMLNode* poTrunk_;
+    KMLNode *poTrunk_;
     // Number of layers.
     int nNumLayers_;
-    KMLNode** papoLayers_;
+    KMLNode **papoLayers_;
 
-private:
+  private:
     // Depth of the DOM.
     unsigned int nDepth_;
     // KML version number.
@@ -118,6 +119,6 @@ private:
     int nWithoutEventCounter;
 };
 
-#endif // HAVE_EXPAT
+#endif  // HAVE_EXPAT
 
 #endif /* OGR_KML_KML_H_INCLUDED */

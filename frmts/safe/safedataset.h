@@ -48,25 +48,25 @@
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFEDataset final: public GDALPamDataset
+class SAFEDataset final : public GDALPamDataset
 {
     CPLXMLNode *psManifest = nullptr;
 
-    int           nGCPCount = 0;
-    GDAL_GCP     *pasGCPList = nullptr;
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
     OGRSpatialReference m_oGCPSRS{};
-    char        **papszSubDatasets = nullptr;
-    double        adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
-    bool          bHaveGeoTransform = false;
-    char        **papszExtraFiles = nullptr;
+    char **papszSubDatasets = nullptr;
+    double adfGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    bool bHaveGeoTransform = false;
+    char **papszExtraFiles = nullptr;
 
   protected:
-    virtual int         CloseDependentDatasets() override;
+    virtual int CloseDependentDatasets() override;
 
-    static CPLXMLNode * GetMetaDataObject(CPLXMLNode *, const char *);
+    static CPLXMLNode *GetMetaDataObject(CPLXMLNode *, const char *);
 
-    static CPLXMLNode * GetDataObject(CPLXMLNode *, const char *);
-    static CPLXMLNode * GetDataObject(CPLXMLNode *, CPLXMLNode *, const char *);
+    static CPLXMLNode *GetDataObject(CPLXMLNode *, const char *);
+    static CPLXMLNode *GetDataObject(CPLXMLNode *, CPLXMLNode *, const char *);
 
     static void AddSubDataset(SAFEDataset *poDS, int iDSNum,
                               const CPLString &osName, const CPLString &osDesc);
@@ -75,21 +75,24 @@ class SAFEDataset final: public GDALPamDataset
     SAFEDataset();
     virtual ~SAFEDataset();
 
-    virtual int    GetGCPCount() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override;
+    virtual int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr GetGeoTransform(double *) override;
 
     virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char * pszDomain = "" ) override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
 
     virtual char **GetFileList(void) override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 
-    CPLXMLNode *GetManifest() { return psManifest; }
+    CPLXMLNode *GetManifest()
+    {
+        return psManifest;
+    }
 };
 
 /************************************************************************/
@@ -98,22 +101,19 @@ class SAFEDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFERasterBand final: public GDALPamRasterBand
+class SAFERasterBand final : public GDALPamRasterBand
 {
     std::unique_ptr<GDALDataset> poBandFile{};
 
   public:
-             SAFERasterBand(SAFEDataset *poDSIn,
-                            GDALDataType eDataTypeIn,
-                            const CPLString &osSwath,
-                            const CPLString &osPol,
-                            std::unique_ptr<GDALDataset>&& poBandFileIn);
+    SAFERasterBand(SAFEDataset *poDSIn, GDALDataType eDataTypeIn,
+                   const CPLString &osSwath, const CPLString &osPol,
+                   std::unique_ptr<GDALDataset> &&poBandFileIn);
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 };
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -132,7 +132,8 @@ class SAFESLCRasterBand : public GDALPamRasterBand
 
     SAFESLCRasterBand(SAFEDataset *poDSIn, GDALDataType eDataTypeIn,
                       const CPLString &osSwath, const CPLString &osPol,
-                      std::unique_ptr<GDALDataset>&& poBandFileIn, BandType eBandType);
+                      std::unique_ptr<GDALDataset> &&poBandFileIn,
+                      BandType eBandType);
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     static GDALDataset *Open(GDALOpenInfo *);
@@ -142,7 +143,6 @@ class SAFESLCRasterBand : public GDALPamRasterBand
     BandType m_eBandType = COMPLEX;
     GDALDataType m_eInputDataType = GDT_Unknown;
 };
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -161,8 +161,9 @@ class SAFECalibratedRasterBand : public GDALPamRasterBand
     } CalibrationType;
 
     SAFECalibratedRasterBand(SAFEDataset *poDSIn, GDALDataType eDataTypeIn,
-                             const CPLString &osSwath, const CPLString &osPolarization,
-                             std::unique_ptr<GDALDataset>&& poBandDatasetIn,
+                             const CPLString &osSwath,
+                             const CPLString &osPolarization,
+                             std::unique_ptr<GDALDataset> &&poBandDatasetIn,
                              const char *pszCalibrationFilename,
                              CalibrationType eCalibrationType);
 
@@ -187,9 +188,10 @@ class SAFECalibratedRasterBand : public GDALPamRasterBand
     CPLStringList m_oAzimuthList;
     CalibrationType m_eCalibrationType = SIGMA_NOUGHT;
 
-    static TimePoint getTimePoint(const char * pszTime);
+    static TimePoint getTimePoint(const char *pszTime);
     static double getTimeDiff(TimePoint oT1, TimePoint oT2);
-    static TimePoint getazTime(TimePoint oStart, TimePoint oStop, long nNumOfLines, int nOffset);
+    static TimePoint getazTime(TimePoint oStart, TimePoint oStop,
+                               long nNumOfLines, int nOffset);
 
     int getCalibrationVectorIndex(int nLineNo);
     int getPixelIndex(int nPixelNo);

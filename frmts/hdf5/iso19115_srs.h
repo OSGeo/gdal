@@ -37,7 +37,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
-                                   const char *pszISOXML );
+OGRErr OGR_SRS_ImportFromISO19115(OGRSpatialReference *poThis,
+                                  const char *pszISOXML);
 
 #endif  // ISO19155_SRS_H_INCLUDED_

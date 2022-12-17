@@ -37,7 +37,8 @@
 
 static void Usage()
 {
-    printf("Usage: bench_ogr_bach [-where filter] [-spat xmin ymin xmax ymax]\n");
+    printf(
+        "Usage: bench_ogr_bach [-where filter] [-spat xmin ymin xmax ymax]\n");
     printf("                      filename\n");
     exit(1);
 }
@@ -46,45 +47,40 @@ static void Usage()
 /*                               main()                                 */
 /************************************************************************/
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-/* -------------------------------------------------------------------- */
-/*      Process arguments.                                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Process arguments.                                              */
+    /* -------------------------------------------------------------------- */
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
-    if( argc < 1 )
+    if (argc < 1)
         exit(-argc);
 
-    const char* pszWhere = nullptr;
-    const char* pszDataset = nullptr;
+    const char *pszWhere = nullptr;
+    const char *pszDataset = nullptr;
     std::unique_ptr<OGRPolygon> poSpatialFilter;
-    for( int iArg = 1; iArg < argc; ++iArg )
+    for (int iArg = 1; iArg < argc; ++iArg)
     {
-        if( iArg + 1 < argc && strcmp(argv[iArg], "-where") == 0 )
+        if (iArg + 1 < argc && strcmp(argv[iArg], "-where") == 0)
         {
-            pszWhere = argv[iArg+1];
+            pszWhere = argv[iArg + 1];
             ++iArg;
         }
-        else if( iArg + 4 < argc && strcmp(argv[iArg], "-spat") == 0 )
+        else if (iArg + 4 < argc && strcmp(argv[iArg], "-spat") == 0)
         {
             OGRLinearRing oRing;
-            oRing.addPoint(CPLAtof(argv[iArg+1]),
-                           CPLAtof(argv[iArg+2]));
-            oRing.addPoint(CPLAtof(argv[iArg+1]),
-                           CPLAtof(argv[iArg+4]));
-            oRing.addPoint(CPLAtof(argv[iArg+3]),
-                           CPLAtof(argv[iArg+4]));
-            oRing.addPoint(CPLAtof(argv[iArg+3]),
-                           CPLAtof(argv[iArg+2]));
-            oRing.addPoint(CPLAtof(argv[iArg+1]),
-                           CPLAtof(argv[iArg+2]));
+            oRing.addPoint(CPLAtof(argv[iArg + 1]), CPLAtof(argv[iArg + 2]));
+            oRing.addPoint(CPLAtof(argv[iArg + 1]), CPLAtof(argv[iArg + 4]));
+            oRing.addPoint(CPLAtof(argv[iArg + 3]), CPLAtof(argv[iArg + 4]));
+            oRing.addPoint(CPLAtof(argv[iArg + 3]), CPLAtof(argv[iArg + 2]));
+            oRing.addPoint(CPLAtof(argv[iArg + 1]), CPLAtof(argv[iArg + 2]));
 
             poSpatialFilter = cpl::make_unique<OGRPolygon>();
             poSpatialFilter->addRing(&oRing);
 
             iArg += 4;
         }
-        else if( argv[iArg][0] == '-' )
+        else if (argv[iArg][0] == '-')
         {
             Usage();
         }
@@ -93,7 +89,7 @@ int main(int argc, char* argv[])
             pszDataset = argv[iArg];
         }
     }
-    if( pszDataset == nullptr )
+    if (pszDataset == nullptr)
     {
         Usage();
     }
@@ -101,30 +97,31 @@ int main(int argc, char* argv[])
     GDALAllRegister();
 
     auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDataset));
-    if( poDS == nullptr)
+    if (poDS == nullptr)
     {
         fprintf(stderr, "Cannot open %s\n", pszDataset);
         CSLDestroy(argv);
         exit(1);
     }
 
-    OGRLayer* poLayer = poDS->GetLayer(0);
-    if( poLayer == nullptr )
+    OGRLayer *poLayer = poDS->GetLayer(0);
+    if (poLayer == nullptr)
     {
         fprintf(stderr, "Cannot find layer\n");
         CSLDestroy(argv);
         exit(1);
     }
-    if( pszWhere )
+    if (pszWhere)
         poLayer->SetAttributeFilter(pszWhere);
-    if( poSpatialFilter )
+    if (poSpatialFilter)
         poLayer->SetSpatialFilter(poSpatialFilter.get());
 
     OGRLayerH hLayer = OGRLayer::ToHandle(poLayer);
     struct ArrowArrayStream stream;
-    if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
+    if (!OGR_L_GetArrowStream(hLayer, &stream, nullptr))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "OGR_L_GetArrowStream() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_L_GetArrowStream() failed\n");
         CSLDestroy(argv);
         exit(1);
     }
@@ -140,11 +137,10 @@ int main(int argc, char* argv[])
 #if 0
     int64_t lastId = 0;
 #endif
-    while( true )
+    while (true)
     {
         struct ArrowArray array;
-        if( stream.get_next(&stream, &array) != 0 ||
-            array.release == nullptr )
+        if (stream.get_next(&stream, &array) != 0 || array.release == nullptr)
         {
             break;
         }

@@ -45,5 +45,4 @@ void CPL_DLL RegisterGNMFile();
 void CPL_DLL RegisterGNMDatabase();
 CPL_C_END
 
-#endif // GNM_FRMTS
-
+#endif  // GNM_FRMTS
