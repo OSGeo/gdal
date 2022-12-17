@@ -29,12 +29,11 @@
 #include "ogr_odbc.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                     OGRODBCDriverIdentify()                          */
 /************************************************************************/
 
-static int OGRODBCDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRODBCDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
@@ -42,26 +41,26 @@ static int OGRODBCDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     }
 
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:") )
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:"))
         return TRUE;
 
-    const char* psExtension(CPLGetExtension(poOpenInfo->pszFilename));
-    if( EQUAL(psExtension,"mdb") )
-        return -1; // Could potentially be a PGeo MDB database
+    const char *psExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    if (EQUAL(psExtension, "mdb"))
+        return -1;  // Could potentially be a PGeo MDB database
 
-    if ( OGRODBCDataSource::IsSupportedMsAccessFileExtension( psExtension ) )
-        return TRUE; // An Access database which isn't a .MDB file (we checked that above), so this is the only candidate driver
+    if (OGRODBCDataSource::IsSupportedMsAccessFileExtension(psExtension))
+        return TRUE;  // An Access database which isn't a .MDB file (we checked
+                      // that above), so this is the only candidate driver
 
     // doesn't start with "ODBC:", and isn't an access database => not supported
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                      OGRODBCDriverOpen()                             */
 /************************************************************************/
 
-static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRODBCDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     if (OGRODBCDriverIdentify(poOpenInfo) == FALSE)
@@ -69,7 +68,7 @@ static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
-    if( !poDS->Open( poOpenInfo ) )
+    if (!poDS->Open(poOpenInfo))
     {
         delete poDS;
         return nullptr;
@@ -78,7 +77,6 @@ static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
         return poDS;
 }
 
-
 /************************************************************************/
 /*                           RegisterOGRODBC()                            */
 /************************************************************************/
@@ -86,28 +84,33 @@ static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRODBC()
 
 {
-    if( GDALGetDriverByName( "ODBC" ) != nullptr )
+    if (GDALGetDriverByName("ODBC") != nullptr)
         return;
 
-    GDALDriver* poDriver = new GDALDriver;
+    GDALDriver *poDriver = new GDALDriver;
 
-    poDriver->SetDescription( "ODBC" );
+    poDriver->SetDescription("ODBC");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "ODBC:");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mdb accdb" );
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mdb accdb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/odbc.html");
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
+                              "NATIVE OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as MSys* tables) should be listed' default='NO'>"
-"    <Value>YES</Value>"
-"    <Value>NO</Value>"
-"  </Option>"
-"</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' "
+        "description='Whether all tables, including system and internal tables "
+        "(such as MSys* tables) should be listed' default='NO'>"
+        "    <Value>YES</Value>"
+        "    <Value>NO</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRODBCDriverOpen;
     poDriver->pfnIdentify = OGRODBCDriverIdentify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
