@@ -34,24 +34,25 @@
 #include <cstdlib>
 #include <ctime>
 
-int main(int /* argc */, char* /* argv */ [])
+int main(int /* argc */, char * /* argv */[])
 {
-    void* in = calloc(1, 256 * 256 * 16);
-    void* out = malloc(256 * 256 * 16);
+    void *in = calloc(1, 256 * 256 * 16);
+    void *out = malloc(256 * 256 * 16);
 
     int i;
     int intype, outtype;
 
     clock_t start, end;
 
-    for(intype=GDT_Byte; intype<GDT_TypeCount;intype++)
+    for (intype = GDT_Byte; intype < GDT_TypeCount; intype++)
     {
-        for(outtype=GDT_Byte;outtype<GDT_TypeCount;outtype++)
+        for (outtype = GDT_Byte; outtype < GDT_TypeCount; outtype++)
         {
             start = clock();
 
-            for(i=0;i<1000;i++)
-                GDALCopyWords(in, (GDALDataType)intype, 16, out, (GDALDataType)outtype, 16, 256 * 256);
+            for (i = 0; i < 1000; i++)
+                GDALCopyWords(in, (GDALDataType)intype, 16, out,
+                              (GDALDataType)outtype, 16, 256 * 256);
 
             end = clock();
 
@@ -62,12 +63,10 @@ int main(int /* argc */, char* /* argv */ [])
 
             start = clock();
 
-            for(i=0;i<1000;i++)
-                GDALCopyWords(in,
-                              (GDALDataType)intype,
+            for (i = 0; i < 1000; i++)
+                GDALCopyWords(in, (GDALDataType)intype,
                               GDALGetDataTypeSize((GDALDataType)intype) / 8,
-                              out,
-                              (GDALDataType)outtype,
+                              out, (GDALDataType)outtype,
                               GDALGetDataTypeSize((GDALDataType)outtype) / 8,
                               256 * 256);
 
@@ -80,9 +79,9 @@ int main(int /* argc */, char* /* argv */ [])
         }
     }
 
-    for(int k=0;k<2;k++)
+    for (int k = 0; k < 2; k++)
     {
-        if( k == 1 )
+        if (k == 1)
         {
             printf("Disabling SSSE3\n");
             CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
@@ -90,27 +89,27 @@ int main(int /* argc */, char* /* argv */ [])
 
         // 2 byte stride --> packed byte
         start = clock();
-        for(i=0;i<100000;i++)
+        for (i = 0; i < 100000; i++)
             GDALCopyWords(in, GDT_Byte, 2, out, GDT_Byte, 1, 256 * 256);
         end = clock();
         printf("2-byte stride Byte ->packed Byte : %.2f\n",
-                (end - start) * 1.0 / CLOCKS_PER_SEC);
+               (end - start) * 1.0 / CLOCKS_PER_SEC);
 
         // 3 byte stride --> packed byte
         start = clock();
-        for(i=0;i<100000;i++)
+        for (i = 0; i < 100000; i++)
             GDALCopyWords(in, GDT_Byte, 3, out, GDT_Byte, 1, 256 * 256);
         end = clock();
         printf("3-byte stride Byte ->packed Byte : %.2f\n",
-                (end - start) * 1.0 / CLOCKS_PER_SEC);
+               (end - start) * 1.0 / CLOCKS_PER_SEC);
 
         // 4 byte stride --> packed byte
         start = clock();
-        for(i=0;i<100000;i++)
+        for (i = 0; i < 100000; i++)
             GDALCopyWords(in, GDT_Byte, 4, out, GDT_Byte, 1, 256 * 256);
         end = clock();
         printf("4-byte stride Byte ->packed Byte : %.2f\n",
-                (end - start) * 1.0 / CLOCKS_PER_SEC);
+               (end - start) * 1.0 / CLOCKS_PER_SEC);
     }
     CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
 
