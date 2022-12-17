@@ -31,30 +31,28 @@
 
 #include <memory>
 
-
 /************************************************************************/
 /*                         OGRHanaDriverIdentify()                      */
 /************************************************************************/
 
-static int OGRHanaDriverIdentify(GDALOpenInfo* openInfo)
+static int OGRHanaDriverIdentify(GDALOpenInfo *openInfo)
 {
-    return STARTS_WITH_CI(
-        openInfo->pszFilename, OGRHanaDataSource::GetPrefix());
+    return STARTS_WITH_CI(openInfo->pszFilename,
+                          OGRHanaDataSource::GetPrefix());
 }
 
 /************************************************************************/
 /*                         OGRHanaDriverOpen()                          */
 /************************************************************************/
 
-static GDALDataset* OGRHanaDriverOpen(GDALOpenInfo* openInfo)
+static GDALDataset *OGRHanaDriverOpen(GDALOpenInfo *openInfo)
 {
     if (!OGRHanaDriverIdentify(openInfo))
         return nullptr;
 
     auto ds = cpl::make_unique<OGRHanaDataSource>();
-    if (!ds->Open(
-            openInfo->pszFilename, openInfo->papszOpenOptions,
-            openInfo->eAccess == GA_Update))
+    if (!ds->Open(openInfo->pszFilename, openInfo->papszOpenOptions,
+                  openInfo->eAccess == GA_Update))
         return nullptr;
     return ds.release();
 }
@@ -63,21 +61,18 @@ static GDALDataset* OGRHanaDriverOpen(GDALOpenInfo* openInfo)
 /*                        OGRHanaDriverCreate()                         */
 /************************************************************************/
 
-static GDALDataset* OGRHanaDriverCreate(
-    const char* name,
-    CPL_UNUSED int nBands,
-    CPL_UNUSED int nXSize,
-    CPL_UNUSED int nYSize,
-    CPL_UNUSED GDALDataType eDT,
-    CPL_UNUSED char** options)
+static GDALDataset *OGRHanaDriverCreate(const char *name, CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        CPL_UNUSED char **options)
 {
     auto ds = cpl::make_unique<OGRHanaDataSource>();
     if (!ds->Open(name, options, TRUE))
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "HANA driver doesn't currently support database creation.\n"
-            "Please create a database with SAP HANA tools before using.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HANA driver doesn't currently support database creation.\n"
+                 "Please create a database with SAP HANA tools before using.");
 
         return nullptr;
     }
@@ -106,24 +101,24 @@ void RegisterOGRHANA()
     driver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
     driver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
     driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/hana.html");
-    driver->SetMetadataItem(
-        GDAL_DMD_CONNECTION_PREFIX, OGRHanaDataSource::GetPrefix());
-    driver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST, OGRHanaDataSource::GetOpenOptions());
-    driver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
-    driver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        OGRHanaDataSource::GetLayerCreationOptions());
-    driver->SetMetadataItem(
-        GDAL_DMD_CREATIONFIELDDATATYPES,
-        OGRHanaDataSource::GetSupportedDataTypes());
+    driver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX,
+                            OGRHanaDataSource::GetPrefix());
+    driver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
+                            OGRHanaDataSource::GetOpenOptions());
+    driver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+                            "<CreationOptionList/>");
+    driver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                            OGRHanaDataSource::GetLayerCreationOptions());
+    driver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
+                            OGRHanaDataSource::GetSupportedDataTypes());
 
-    driver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default");
+    driver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
+                            "Name Type WidthPrecision Nullable Default");
 
     driver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "YES");
     driver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "YES");
-    driver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
+    driver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
+                            "NATIVE OGRSQL SQLITE");
 
     driver->pfnOpen = OGRHanaDriverOpen;
     driver->pfnIdentify = OGRHanaDriverIdentify;
