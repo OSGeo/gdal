@@ -27,7 +27,6 @@ struct group_base
     virtual bool run_test(int n, test_result &tr) = 0;
 };
 
-
 /**
  * Test runner callback interface.
  * Can be implemented by caller to update
@@ -62,7 +61,7 @@ struct callback
      * Called when a group started
      * @param name Name of the group
      */
-    virtual void group_started(const std::string& name)
+    virtual void group_started(const std::string &name)
     {
         (void)name;
     }
@@ -71,7 +70,7 @@ struct callback
      * Called when a test finished.
      * @param tr Test results.
      */
-    virtual void test_completed(const test_result& tr)
+    virtual void test_completed(const test_result &tr)
     {
         (void)tr;
     }
@@ -80,7 +79,7 @@ struct callback
      * Called when a group is completed
      * @param name Name of the group
      */
-    virtual void group_completed(const std::string& name)
+    virtual void group_completed(const std::string &name)
     {
         (void)name;
     }
@@ -91,16 +90,17 @@ struct callback
     virtual void run_completed()
     {
     }
-private:
+
+  private:
     callback(const callback &);
-    void operator=(const callback&);
+    void operator=(const callback &);
 };
 
 /**
  * Typedef for runner::list_groups()
  */
 typedef std::vector<std::string> groupnames;
-typedef std::set<callback*> callbacks;
+typedef std::set<callback *> callbacks;
 
 /**
  * Test runner.
@@ -108,8 +108,7 @@ typedef std::set<callback*> callbacks;
 class test_runner
 {
 
-public:
-
+  public:
     /**
      * Constructor
      */
@@ -120,7 +119,7 @@ public:
     /**
      * Stores another group for getting by name.
      */
-    void register_group(const std::string& name, group_base* gr)
+    void register_group(const std::string &name, group_base *gr)
     {
         if (gr == nullptr)
         {
@@ -136,7 +135,7 @@ public:
             throw tut_error(msg);
         }
 
-        groups_.insert( std::make_pair(name, gr) );
+        groups_.insert(std::make_pair(name, gr));
     }
 
     void set_callback(callback *cb)
@@ -148,15 +147,15 @@ public:
     /**
      * Stores callback object.
      */
-    void insert_callback(callback* cb)
+    void insert_callback(callback *cb)
     {
-        if(cb != nullptr)
+        if (cb != nullptr)
         {
             callbacks_.insert(cb);
         }
     }
 
-    void erase_callback(callback* cb)
+    void erase_callback(callback *cb)
     {
         callbacks_.erase(cb);
     }
@@ -219,7 +218,7 @@ public:
     /**
      * Runs all tests in specified group.
      */
-    void run_tests(const std::string& group_name) const
+    void run_tests(const std::string &group_name) const
     {
         cb_run_started_();
 
@@ -239,7 +238,7 @@ public:
     /**
      * Runs one test in specified group.
      */
-    bool run_test(const std::string& group_name, int n, test_result &tr) const
+    bool run_test(const std::string &group_name, int n, test_result &tr) const
     {
         cb_run_started_();
 
@@ -254,7 +253,7 @@ public:
 
         bool t = i->second->run_test(n, tr);
 
-        if(t && tr.result != test_result::dummy)
+        if (t && tr.result != test_result::dummy)
         {
             cb_test_completed_(tr);
         }
@@ -265,21 +264,21 @@ public:
         return t;
     }
 
-protected:
-
-    typedef std::map<std::string, group_base*> groups;
+  protected:
+    typedef std::map<std::string, group_base *> groups;
     typedef groups::iterator iterator;
     typedef groups::const_iterator const_iterator;
     groups groups_;
 
     callbacks callbacks_;
 
-private:
+  private:
     friend class restartable_wrapper;
 
     void cb_run_started_() const
     {
-        for(callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
+        for (callbacks::const_iterator i = callbacks_.begin();
+             i != callbacks_.end(); ++i)
         {
             (*i)->run_started();
         }
@@ -287,7 +286,8 @@ private:
 
     void cb_run_completed_() const
     {
-        for(callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
+        for (callbacks::const_iterator i = callbacks_.begin();
+             i != callbacks_.end(); ++i)
         {
             (*i)->run_completed();
         }
@@ -295,7 +295,8 @@ private:
 
     void cb_group_started_(const std::string &group_name) const
     {
-        for(callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
+        for (callbacks::const_iterator i = callbacks_.begin();
+             i != callbacks_.end(); ++i)
         {
             (*i)->group_started(group_name);
         }
@@ -303,7 +304,8 @@ private:
 
     void cb_group_completed_(const std::string &group_name) const
     {
-        for(callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
+        for (callbacks::const_iterator i = callbacks_.begin();
+             i != callbacks_.end(); ++i)
         {
             (*i)->group_completed(group_name);
         }
@@ -311,7 +313,8 @@ private:
 
     void cb_test_completed_(const test_result &tr) const
     {
-        for(callbacks::const_iterator i = callbacks_.begin(); i != callbacks_.end(); ++i)
+        for (callbacks::const_iterator i = callbacks_.begin();
+             i != callbacks_.end(); ++i)
         {
             (*i)->test_completed(tr);
         }
@@ -322,9 +325,9 @@ private:
         i->second->rewind();
 
         test_result tr;
-        while(i->second->run_next(tr))
+        while (i->second->run_next(tr))
         {
-            if(tr.result != test_result::dummy)
+            if (tr.result != test_result::dummy)
             {
                 cb_test_completed_(tr);
             }
@@ -345,9 +348,8 @@ private:
  */
 class test_runner_singleton
 {
-public:
-
-    static test_runner& get()
+  public:
+    static test_runner &get()
     {
         static test_runner tr;
         return tr;
@@ -356,6 +358,6 @@ public:
 
 extern test_runner_singleton runner;
 
-}
+}  // namespace tut
 
 #endif

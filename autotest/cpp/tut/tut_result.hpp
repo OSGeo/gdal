@@ -14,8 +14,7 @@ namespace tut
 #if defined(TUT_USE_POSIX)
 struct test_result_posix
 {
-    test_result_posix()
-        : pid(getpid())
+    test_result_posix() : pid(getpid())
     {
     }
 
@@ -80,55 +79,40 @@ struct test_result : public test_result_posix
     /**
      * Default constructor.
      */
-    test_result()
-        : test(0),
-          result(ok)
+    test_result() : test(0), result(ok)
     {
     }
 
     /**
      * Constructor.
      */
-    test_result(const std::string& grp, int pos,
-                const std::string& test_name, result_type res)
-        : group(grp),
-          test(pos),
-          name(test_name),
-          result(res)
+    test_result(const std::string &grp, int pos, const std::string &test_name,
+                result_type res)
+        : group(grp), test(pos), name(test_name), result(res)
     {
     }
 
     /**
      * Constructor with exception.
      */
-    test_result(const std::string& grp,int pos,
-                const std::string& test_name, result_type res,
-                const std::exception& exIn)
-        : group(grp),
-          test(pos),
-          name(test_name),
-          result(res),
-          message(exIn.what()),
-          exception_typeid(typeid(exIn).name())
+    test_result(const std::string &grp, int pos, const std::string &test_name,
+                result_type res, const std::exception &exIn)
+        : group(grp), test(pos), name(test_name), result(res),
+          message(exIn.what()), exception_typeid(typeid(exIn).name())
     {
     }
 
     /** Constructor with typeid.
-    */
-    test_result(const std::string& grp,int pos,
-                const std::string& test_name, result_type res,
-                const std::string& ex_typeid,
-                const std::string& msg)
-        : group(grp),
-          test(pos),
-          name(test_name),
-          result(res),
-          message(msg),
+     */
+    test_result(const std::string &grp, int pos, const std::string &test_name,
+                result_type res, const std::string &ex_typeid,
+                const std::string &msg)
+        : group(grp), test(pos), name(test_name), result(res), message(msg),
           exception_typeid(ex_typeid)
     {
     }
 };
 
-}
+}  // namespace tut
 
 #endif
