@@ -37,7 +37,6 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 
-
 static bool bInGDALGlobalDestructor = false;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
@@ -74,7 +73,7 @@ void CPLFinalizeTLS();
 static bool bGDALDestroyAlreadyCalled = FALSE;
 void GDALDestroy(void)
 {
-    if( bGDALDestroyAlreadyCalled )
+    if (bGDALDestroyAlreadyCalled)
         return;
     bGDALDestroyAlreadyCalled = true;
 
@@ -106,7 +105,7 @@ void GDALDestroy(void)
 /************************************************************************/
 #ifdef __GNUC__
 
-static void GDALInitialize() __attribute__ ((constructor)) ;
+static void GDALInitialize() __attribute__((constructor));
 
 /************************************************************************/
 /* Called when GDAL is loaded by loader or by dlopen(),                 */
@@ -116,15 +115,15 @@ static void GDALInitialize() __attribute__ ((constructor)) ;
 static void GDALInitialize()
 {
     // nothing to do
-    //CPLDebug("GDAL", "Library loaded");
+    // CPLDebug("GDAL", "Library loaded");
 #ifdef DEBUG
-    const char* pszLocale = CPLGetConfigOption("GDAL_LOCALE", nullptr);
-    if( pszLocale )
-        CPLsetlocale( LC_ALL, pszLocale );
+    const char *pszLocale = CPLGetConfigOption("GDAL_LOCALE", nullptr);
+    if (pszLocale)
+        CPLsetlocale(LC_ALL, pszLocale);
 #endif
 }
 
-#endif // __GNUC__
+#endif  // __GNUC__
 
 /************************************************************************/
 /*  The library set-up/clean-up routine implemented as DllMain entry    */
@@ -135,9 +134,8 @@ static void GDALInitialize()
 
 #include <windows.h>
 
-extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
-                               DWORD dwReason,
-                               LPVOID /* lpReserved */ )
+extern "C" int WINAPI DllMain(HINSTANCE /* hInstance */, DWORD dwReason,
+                              LPVOID /* lpReserved */)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
@@ -156,8 +154,8 @@ extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
         GDALDestroy();
     }
 
-    return 1; // ignored for all reasons but DLL_PROCESS_ATTACH
+    return 1;  // ignored for all reasons but DLL_PROCESS_ATTACH
 }
 
-#endif // CPL_DISABLE_DLL
-#endif // _MSC_VER
+#endif  // CPL_DISABLE_DLL
+#endif  // _MSC_VER

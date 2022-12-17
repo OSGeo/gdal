@@ -37,37 +37,35 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 
-
 /**
  * GDALMDReaderRapidEye()
  */
 GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                           char **papszSiblingFiles)
+    : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    const char* pszDirName = CPLGetDirname(pszPath);
-    const char* pszBaseName = CPLGetBasename(pszPath);
+    const char *pszDirName = CPLGetDirname(pszPath);
+    const char *pszBaseName = CPLGetBasename(pszPath);
 
-    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                        CPLSPrintf("%s_metadata",
-                                                        pszBaseName), "xml" );
+    CPLString osIMDSourceFilename = CPLFormFilename(
+        pszDirName, CPLSPrintf("%s_metadata", pszBaseName), "xml");
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osXMLSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        osIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                CPLSPrintf("%s_METADATA",
-                                                pszBaseName), "XML" );
+        osIMDSourceFilename = CPLFormFilename(
+            pszDirName, CPLSPrintf("%s_METADATA", pszBaseName), "XML");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osXMLSourceFilename = osIMDSourceFilename;
         }
     }
 
-    if(!m_osXMLSourceFilename.empty() )
-        CPLDebug( "MDReaderRapidEye", "XML Filename: %s",
-              m_osXMLSourceFilename.c_str() );
+    if (!m_osXMLSourceFilename.empty())
+        CPLDebug("MDReaderRapidEye", "XML Filename: %s",
+                 m_osXMLSourceFilename.c_str());
 }
 
 /**
@@ -84,7 +82,7 @@ bool GDALMDReaderRapidEye::HasRequiredFiles() const
 {
     // check re:EarthObservation
     if (!m_osXMLSourceFilename.empty() &&
-            GDALCheckFileHeader(m_osXMLSourceFilename, "re:EarthObservation"))
+        GDALCheckFileHeader(m_osXMLSourceFilename, "re:EarthObservation"))
         return true;
 
     return false;
@@ -93,11 +91,11 @@ bool GDALMDReaderRapidEye::HasRequiredFiles() const
 /**
  * GetMetadataFiles()
  */
-char** GDALMDReaderRapidEye::GetMetadataFiles() const
+char **GDALMDReaderRapidEye::GetMetadataFiles() const
 {
     char **papszFileList = nullptr;
-    if(!m_osXMLSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osXMLSourceFilename );
+    if (!m_osXMLSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osXMLSourceFilename);
 
     return papszFileList;
 }
@@ -107,16 +105,17 @@ char** GDALMDReaderRapidEye::GetMetadataFiles() const
  */
 void GDALMDReaderRapidEye::LoadMetadata()
 {
-    if(m_bIsMetadataLoad)
+    if (m_bIsMetadataLoad)
         return;
 
-    CPLXMLNode* psNode = CPLParseXMLFile(m_osXMLSourceFilename);
+    CPLXMLNode *psNode = CPLParseXMLFile(m_osXMLSourceFilename);
 
-    if(psNode != nullptr)
+    if (psNode != nullptr)
     {
-        CPLXMLNode* pRootNode = CPLSearchXMLNode(psNode, "=re:EarthObservation");
+        CPLXMLNode *pRootNode =
+            CPLSearchXMLNode(psNode, "=re:EarthObservation");
 
-        if(pRootNode != nullptr)
+        if (pRootNode != nullptr)
         {
             m_papszIMDMD = ReadXMLToList(pRootNode->psChild, m_papszIMDMD);
         }
@@ -127,37 +126,42 @@ void GDALMDReaderRapidEye::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
-    if(nullptr == m_papszIMDMD)
+    if (nullptr == m_papszIMDMD)
     {
         return;
     }
 
-    //extract imagery metadata
-    const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
-    "gml:using.eop:EarthObservationEquipment.eop:platform.eop:Platform.eop:serialIdentifier");
-    if(nullptr != pszSatId)
+    // extract imagery metadata
+    const char *pszSatId = CSLFetchNameValue(
+        m_papszIMDMD, "gml:using.eop:EarthObservationEquipment.eop:platform."
+                      "eop:Platform.eop:serialIdentifier");
+    if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_SATELLITE, CPLStripQuotes(pszSatId));
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+                                           CPLStripQuotes(pszSatId));
     }
 
-    const char* pszDateTime = CSLFetchNameValue(m_papszIMDMD,
-    "gml:using.eop:EarthObservationEquipment.eop:acquisitionParameters.re:Acquisition.re:acquisitionDateTime");
-    if(nullptr != pszDateTime)
+    const char *pszDateTime = CSLFetchNameValue(
+        m_papszIMDMD,
+        "gml:using.eop:EarthObservationEquipment.eop:acquisitionParameters.re:"
+        "Acquisition.re:acquisitionDateTime");
+    if (nullptr != pszDateTime)
     {
         char buffer[80];
         GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
         struct tm tmBuf;
-        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, buffer);
+        strftime(buffer, 80, MD_DATETIMEFORMAT,
+                 CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
     }
 
-    const char* pszCC = CSLFetchNameValue(m_papszIMDMD,
-    "gml:resultOf.re:EarthObservationResult.opt:cloudCoverPercentage");
-    if(nullptr != pszSatId)
+    const char *pszCC = CSLFetchNameValue(
+        m_papszIMDMD,
+        "gml:resultOf.re:EarthObservationResult.opt:cloudCoverPercentage");
+    if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_CLOUDCOVER, pszCC);
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, pszCC);
     }
 }

@@ -30,7 +30,6 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-
 /**
  * \class GDALRelationship
  *
@@ -44,7 +43,6 @@
  *
  * @since GDAL 3.6
  */
-
 
 /************************************************************************/
 /*                  GDALRelationshipCreate()                            */
@@ -65,22 +63,17 @@
  *         or NULL in case of error.
  */
 GDALRelationshipH
-GDALRelationshipCreate( const char* pszName,
-                        const char* pszLeftTableName,
-                        const char* pszRightTableName,
-                        GDALRelationshipCardinality eCardinality )
+GDALRelationshipCreate(const char *pszName, const char *pszLeftTableName,
+                       const char *pszRightTableName,
+                       GDALRelationshipCardinality eCardinality)
 {
     VALIDATE_POINTER1(pszName, __func__, nullptr);
     VALIDATE_POINTER1(pszLeftTableName, __func__, nullptr);
     VALIDATE_POINTER1(pszRightTableName, __func__, nullptr);
 
     return GDALRelationship::ToHandle(new GDALRelationship(
-                                          pszName,
-                                          pszLeftTableName,
-                                          pszRightTableName,
-                                          eCardinality));
+        pszName, pszLeftTableName, pszRightTableName, eCardinality));
 }
-
 
 /************************************************************************/
 /*                  GDALDestroyRelationship()                           */
@@ -92,10 +85,9 @@ GDALRelationshipCreate( const char* pszName,
  * This function is the same as the C++ method
  * GDALRelationship::~GDALRelationship()
  */
-void CPL_STDCALL
-GDALDestroyRelationship( GDALRelationshipH hRelationship )
+void CPL_STDCALL GDALDestroyRelationship(GDALRelationshipH hRelationship)
 {
-    if( hRelationship != nullptr )
+    if (hRelationship != nullptr)
         delete GDALRelationship::FromHandle(hRelationship);
 }
 
@@ -111,10 +103,9 @@ GDALDestroyRelationship( GDALRelationshipH hRelationship )
  *
  * @return name.
  */
-const char *
-GDALRelationshipGetName( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetName(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetName", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetName", nullptr);
 
     return GDALRelationship::FromHandle(hRelationship)->GetName().c_str();
 }
@@ -132,7 +123,7 @@ GDALRelationshipGetName( GDALRelationshipH hRelationship )
  * @return cardinality.
  */
 GDALRelationshipCardinality
-GDALRelationshipGetCardinality( GDALRelationshipH hRelationship )
+GDALRelationshipGetCardinality(GDALRelationshipH hRelationship)
 {
     return GDALRelationship::FromHandle(hRelationship)->GetCardinality();
 }
@@ -149,12 +140,14 @@ GDALRelationshipGetCardinality( GDALRelationshipH hRelationship )
  *
  * @return left table name.
  */
-const char *
-GDALRelationshipGetLeftTableName( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetLeftTableName(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetLeftTableName", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetLeftTableName",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetLeftTableName().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetLeftTableName()
+        .c_str();
 }
 
 /************************************************************************/
@@ -162,19 +155,22 @@ GDALRelationshipGetLeftTableName( GDALRelationshipH hRelationship )
 /************************************************************************/
 
 /**
- * \brief Get the name of the right (or related/destination) table in the relationship.
+ * \brief Get the name of the right (or related/destination) table in the
+ * relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetRightTableName().
  *
  * @return right table name.
  */
-const char *
-GDALRelationshipGetRightTableName( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetRightTableName(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetRightTableName", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetRightTableName",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetRightTableName().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetRightTableName()
+        .c_str();
 }
 
 /************************************************************************/
@@ -191,12 +187,14 @@ GDALRelationshipGetRightTableName( GDALRelationshipH hRelationship )
  *
  * @see GDALRelationshipSetMappingTableName
  */
-const char *
-GDALRelationshipGetMappingTableName( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetMappingTableName(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetMappingTableName", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetMappingTableName",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetMappingTableName().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetMappingTableName()
+        .c_str();
 }
 
 /************************************************************************/
@@ -205,14 +203,17 @@ GDALRelationshipGetMappingTableName( GDALRelationshipH hRelationship )
 /**
  * \brief Sets the name of the mapping table for many-to-many relationships.
  *
- * This function is the same as the CPP method OGRFieldDefn::SetMappingTableName().
+ * This function is the same as the CPP method
+ * OGRFieldDefn::SetMappingTableName().
  *
- * @param hRelationship handle to the relationship to apply the new mapping name to.
+ * @param hRelationship handle to the relationship to apply the new mapping name
+ * to.
  * @param pszName the mapping table name to set.
  *
  * @see GDALRelationshipGetMappingTableName
  */
-void GDALRelationshipSetMappingTableName( GDALRelationshipH hRelationship, const char *pszName )
+void GDALRelationshipSetMappingTableName(GDALRelationshipH hRelationship,
+                                         const char *pszName)
 
 {
     GDALRelationship::FromHandle(hRelationship)->SetMappingTableName(pszName);
@@ -223,7 +224,8 @@ void GDALRelationshipSetMappingTableName( GDALRelationshipH hRelationship, const
 /************************************************************************/
 
 /**
- * \brief Get the names of the participating fields from the left table in the relationship.
+ * \brief Get the names of the participating fields from the left table in the
+ * relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetLeftTableFields().
@@ -233,14 +235,15 @@ void GDALRelationshipSetMappingTableName( GDALRelationshipH hRelationship, const
  * @see GDALRelationshipGetRightTableFields
  * @see GDALRelationshipSetLeftTableFields
  */
-char **
-GDALRelationshipGetLeftTableFields( GDALRelationshipH hRelationship )
+char **GDALRelationshipGetLeftTableFields(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetLeftTableFields", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetLeftTableFields",
+                      nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)->GetLeftTableFields();
+    auto fields =
+        GDALRelationship::FromHandle(hRelationship)->GetLeftTableFields();
     CPLStringList res;
-    for( const auto& field: fields )
+    for (const auto &field : fields)
     {
         res.AddString(field.c_str());
     }
@@ -252,7 +255,8 @@ GDALRelationshipGetLeftTableFields( GDALRelationshipH hRelationship )
 /************************************************************************/
 
 /**
- * \brief Get the names of the participating fields from the right table in the relationship.
+ * \brief Get the names of the participating fields from the right table in the
+ * relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetRightTableFields().
@@ -262,14 +266,15 @@ GDALRelationshipGetLeftTableFields( GDALRelationshipH hRelationship )
  * @see GDALRelationshipGetLeftTableFields
  * @see GDALRelationshipSetRightTableFields
  */
-char **
-GDALRelationshipGetRightTableFields( GDALRelationshipH hRelationship )
+char **GDALRelationshipGetRightTableFields(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetRightTableFields", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetRightTableFields",
+                      nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)->GetRightTableFields();
+    auto fields =
+        GDALRelationship::FromHandle(hRelationship)->GetRightTableFields();
     CPLStringList res;
-    for( const auto& field: fields )
+    for (const auto &field : fields)
     {
         res.AddString(field.c_str());
     }
@@ -281,24 +286,26 @@ GDALRelationshipGetRightTableFields( GDALRelationshipH hRelationship )
 /************************************************************************/
 
 /**
- * \brief Sets the names of the participating fields from the left table in the relationship.
+ * \brief Sets the names of the participating fields from the left table in the
+ * relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetLeftTableFields().
  *
- * @param hRelationship handle to the relationship to apply the left table fields to.
+ * @param hRelationship handle to the relationship to apply the left table
+ * fields to.
  * @param papszFields the names of the fields.
  *
  * @see GDALRelationshipGetLeftTableFields
  * @see GDALRelationshipSetRightTableFields
  */
-void
-GDALRelationshipSetLeftTableFields( GDALRelationshipH hRelationship, CSLConstList papszFields )
+void GDALRelationshipSetLeftTableFields(GDALRelationshipH hRelationship,
+                                        CSLConstList papszFields)
 {
     std::vector<std::string> aosFields;
-    if( papszFields )
+    if (papszFields)
     {
-        for( auto papszIter = papszFields; *papszIter; ++papszIter )
+        for (auto papszIter = papszFields; *papszIter; ++papszIter)
         {
             aosFields.emplace_back(*papszIter);
         }
@@ -311,24 +318,26 @@ GDALRelationshipSetLeftTableFields( GDALRelationshipH hRelationship, CSLConstLis
 /************************************************************************/
 
 /**
- * \brief Sets the names of the participating fields from the right table in the relationship.
+ * \brief Sets the names of the participating fields from the right table in the
+ * relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::SetRightTableFields().
  *
- * @param hRelationship handle to the relationship to apply the right table fields to.
+ * @param hRelationship handle to the relationship to apply the right table
+ * fields to.
  * @param papszFields the names of the fields.
  *
  * @see GDALRelationshipGetRightTableFields
  * @see GDALRelationshipSetLeftTableFields
  */
-void
-GDALRelationshipSetRightTableFields( GDALRelationshipH hRelationship, CSLConstList papszFields )
+void GDALRelationshipSetRightTableFields(GDALRelationshipH hRelationship,
+                                         CSLConstList papszFields)
 {
     std::vector<std::string> aosFields;
-    if( papszFields )
+    if (papszFields)
     {
-        for( auto papszIter = papszFields; *papszIter; ++papszIter )
+        for (auto papszIter = papszFields; *papszIter; ++papszIter)
         {
             aosFields.emplace_back(*papszIter);
         }
@@ -341,7 +350,8 @@ GDALRelationshipSetRightTableFields( GDALRelationshipH hRelationship, CSLConstLi
 /************************************************************************/
 
 /**
- * \brief Get the names of the mapping table fields which correspond to the participating fields from the left table in the relationship.
+ * \brief Get the names of the mapping table fields which correspond to the
+ * participating fields from the left table in the relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetLeftMappingTableFields().
@@ -352,13 +362,15 @@ GDALRelationshipSetRightTableFields( GDALRelationshipH hRelationship, CSLConstLi
  * @see GDALRelationshipSetLeftMappingTableFields
  */
 char **
-GDALRelationshipGetLeftMappingTableFields( GDALRelationshipH hRelationship )
+GDALRelationshipGetLeftMappingTableFields(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetLeftMappingTableFields", nullptr );
+    VALIDATE_POINTER1(hRelationship,
+                      "GDALRelationshipGetLeftMappingTableFields", nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)->GetLeftMappingTableFields();
+    auto fields = GDALRelationship::FromHandle(hRelationship)
+                      ->GetLeftMappingTableFields();
     CPLStringList res;
-    for( const auto& field: fields )
+    for (const auto &field : fields)
     {
         res.AddString(field.c_str());
     }
@@ -370,7 +382,8 @@ GDALRelationshipGetLeftMappingTableFields( GDALRelationshipH hRelationship )
 /************************************************************************/
 
 /**
- * \brief Get the names of the mapping table fields which correspond to the participating fields from the right table in the relationship.
+ * \brief Get the names of the mapping table fields which correspond to the
+ * participating fields from the right table in the relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::GetRightMappingTableFields().
@@ -381,13 +394,15 @@ GDALRelationshipGetLeftMappingTableFields( GDALRelationshipH hRelationship )
  * @see GDALRelationshipSetRightMappingTableFields
  */
 char **
-GDALRelationshipGetRightMappingTableFields( GDALRelationshipH hRelationship )
+GDALRelationshipGetRightMappingTableFields(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetRightMappingTableFields", nullptr );
+    VALIDATE_POINTER1(hRelationship,
+                      "GDALRelationshipGetRightMappingTableFields", nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)->GetRightMappingTableFields();
+    auto fields = GDALRelationship::FromHandle(hRelationship)
+                      ->GetRightMappingTableFields();
     CPLStringList res;
-    for( const auto& field: fields )
+    for (const auto &field : fields)
     {
         res.AddString(field.c_str());
     }
@@ -399,29 +414,32 @@ GDALRelationshipGetRightMappingTableFields( GDALRelationshipH hRelationship )
 /************************************************************************/
 
 /**
- * \brief Sets the names of the mapping table fields which correspond to the participating fields from the left table in the relationship.
+ * \brief Sets the names of the mapping table fields which correspond to the
+ * participating fields from the left table in the relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::SetLeftMappingTableFields().
  *
- * @param hRelationship handle to the relationship to apply the left table fields to.
+ * @param hRelationship handle to the relationship to apply the left table
+ * fields to.
  * @param papszFields the names of the fields.
  *
  * @see GDALRelationshipGetLeftMappingTableFields
  * @see GDALRelationshipSetRightMappingTableFields
  */
-void
-GDALRelationshipSetLeftMappingTableFields( GDALRelationshipH hRelationship, CSLConstList papszFields )
+void GDALRelationshipSetLeftMappingTableFields(GDALRelationshipH hRelationship,
+                                               CSLConstList papszFields)
 {
     std::vector<std::string> aosFields;
-    if( papszFields )
+    if (papszFields)
     {
-        for( auto papszIter = papszFields; *papszIter; ++papszIter )
+        for (auto papszIter = papszFields; *papszIter; ++papszIter)
         {
             aosFields.emplace_back(*papszIter);
         }
     }
-    GDALRelationship::FromHandle(hRelationship)->SetLeftMappingTableFields(aosFields);
+    GDALRelationship::FromHandle(hRelationship)
+        ->SetLeftMappingTableFields(aosFields);
 }
 
 /************************************************************************/
@@ -429,29 +447,32 @@ GDALRelationshipSetLeftMappingTableFields( GDALRelationshipH hRelationship, CSLC
 /************************************************************************/
 
 /**
- * \brief Sets the names of the mapping table fields which correspond to the participating fields from the right table in the relationship.
+ * \brief Sets the names of the mapping table fields which correspond to the
+ * participating fields from the right table in the relationship.
  *
  * This function is the same as the C++ method
  * GDALRelationship::SetRightMappingTableFields().
  *
- * @param hRelationship handle to the relationship to apply the right table fields to.
+ * @param hRelationship handle to the relationship to apply the right table
+ * fields to.
  * @param papszFields the names of the fields.
  *
  * @see GDALRelationshipGetRightMappingTableFields
  * @see GDALRelationshipSetLeftMappingTableFields
  */
-void
-GDALRelationshipSetRightMappingTableFields( GDALRelationshipH hRelationship, CSLConstList papszFields )
+void GDALRelationshipSetRightMappingTableFields(GDALRelationshipH hRelationship,
+                                                CSLConstList papszFields)
 {
     std::vector<std::string> aosFields;
-    if( papszFields )
+    if (papszFields)
     {
-        for( auto papszIter = papszFields; *papszIter; ++papszIter )
+        for (auto papszIter = papszFields; *papszIter; ++papszIter)
         {
             aosFields.emplace_back(*papszIter);
         }
     }
-    GDALRelationship::FromHandle(hRelationship)->SetRightMappingTableFields(aosFields);
+    GDALRelationship::FromHandle(hRelationship)
+        ->SetRightMappingTableFields(aosFields);
 }
 
 /************************************************************************/
@@ -468,8 +489,7 @@ GDALRelationshipSetRightMappingTableFields( GDALRelationshipH hRelationship, CSL
  *
  * @see GDALRelationshipSetType
  */
-GDALRelationshipType
-GDALRelationshipGetType( GDALRelationshipH hRelationship )
+GDALRelationshipType GDALRelationshipGetType(GDALRelationshipH hRelationship)
 {
     return GDALRelationship::FromHandle(hRelationship)->GetType();
 }
@@ -486,12 +506,11 @@ GDALRelationshipGetType( GDALRelationshipH hRelationship )
  *
  * @see GDALRelationshipGetType
  */
-void
-GDALRelationshipSetType( GDALRelationshipH hRelationship, GDALRelationshipType eType )
+void GDALRelationshipSetType(GDALRelationshipH hRelationship,
+                             GDALRelationshipType eType)
 {
-    return GDALRelationship::FromHandle(hRelationship)->SetType( eType );
+    return GDALRelationship::FromHandle(hRelationship)->SetType(eType);
 }
-
 
 /************************************************************************/
 /*                  GDALRelationshipGetForwardPathLabel()               */
@@ -504,25 +523,28 @@ GDALRelationshipSetType( GDALRelationshipH hRelationship, GDALRelationshipType e
  * GDALRelationship::GetForwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
- * which can be used to generate descriptions of the relationship between features
- * from the right and left tables.
+ * which can be used to generate descriptions of the relationship between
+ * features from the right and left tables.
  *
  * E.g. when the left table contains buildings and the right table contains
  * furniture, the forward path label could be "contains" and the backward path
  * label could be "is located within". A client could then generate a
- * user friendly description string such as "fire hose 1234 is located within building 15a".
+ * user friendly description string such as "fire hose 1234 is located within
+ * building 15a".
  *
  * @return forward path label
  *
  * @see GDALRelationshipSetForwardPathLabel()
  * @see GDALRelationshipGetBackwardPathLabel()
  */
-const char *
-GDALRelationshipGetForwardPathLabel( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetForwardPathLabel(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetForwardPathLabel", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetForwardPathLabel",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetForwardPathLabel().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetForwardPathLabel()
+        .c_str();
 }
 
 /************************************************************************/
@@ -531,16 +553,18 @@ GDALRelationshipGetForwardPathLabel( GDALRelationshipH hRelationship )
 /**
  * \brief Sets the label of the forward path for the relationship.
  *
- * This function is the same as the CPP method OGRFieldDefn::SetForwardPathLabel().
+ * This function is the same as the CPP method
+ * OGRFieldDefn::SetForwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
- * which can be used to generate descriptions of the relationship between features
- * from the right and left tables.
+ * which can be used to generate descriptions of the relationship between
+ * features from the right and left tables.
  *
  * E.g. when the left table contains buildings and the right table contains
  * furniture, the forward path label could be "contains" and the backward path
  * label could be "is located within". A client could then generate a
- * user friendly description string such as "fire hose 1234 is located within building 15a".
+ * user friendly description string such as "fire hose 1234 is located within
+ * building 15a".
  *
  * @param hRelationship handle to the relationship to apply the new label to.
  * @param pszLabel the label to set.
@@ -548,12 +572,12 @@ GDALRelationshipGetForwardPathLabel( GDALRelationshipH hRelationship )
  * @see GDALRelationshipGetForwardPathLabel
  * @see GDALRelationshipSetBackwardPathLabel
  */
-void GDALRelationshipSetForwardPathLabel( GDALRelationshipH hRelationship, const char *pszLabel )
+void GDALRelationshipSetForwardPathLabel(GDALRelationshipH hRelationship,
+                                         const char *pszLabel)
 
 {
     GDALRelationship::FromHandle(hRelationship)->SetForwardPathLabel(pszLabel);
 }
-
 
 /************************************************************************/
 /*                  GDALRelationshipGetForwardPathLabel()               */
@@ -566,13 +590,14 @@ void GDALRelationshipSetForwardPathLabel( GDALRelationshipH hRelationship, const
  * GDALRelationship::GetBackwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
- * which can be used to generate descriptions of the relationship between features
- * from the right and left tables.
+ * which can be used to generate descriptions of the relationship between
+ * features from the right and left tables.
  *
  * E.g. when the left table contains buildings and the right table contains
  * furniture, the forward path label could be "contains" and the backward path
  * label could be "is located within". A client could then generate a
- * user friendly description string such as "fire hose 1234 is located within building 15a".
+ * user friendly description string such as "fire hose 1234 is located within
+ * building 15a".
  *
  * @return backward path label
  *
@@ -580,11 +605,14 @@ void GDALRelationshipSetForwardPathLabel( GDALRelationshipH hRelationship, const
  * @see GDALRelationshipGetForwardPathLabel()
  */
 const char *
-GDALRelationshipGetBackwardPathLabel( GDALRelationshipH hRelationship )
+GDALRelationshipGetBackwardPathLabel(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetBackwardPathLabel", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetBackwardPathLabel",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetBackwardPathLabel().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetBackwardPathLabel()
+        .c_str();
 }
 
 /************************************************************************/
@@ -593,16 +621,18 @@ GDALRelationshipGetBackwardPathLabel( GDALRelationshipH hRelationship )
 /**
  * \brief Sets the label of the backward path for the relationship.
  *
- * This function is the same as the CPP method OGRFieldDefn::SetBackwardPathLabel().
+ * This function is the same as the CPP method
+ * OGRFieldDefn::SetBackwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
- * which can be used to generate descriptions of the relationship between features
- * from the right and left tables.
+ * which can be used to generate descriptions of the relationship between
+ * features from the right and left tables.
  *
  * E.g. when the left table contains buildings and the right table contains
  * furniture, the forward path label could be "contains" and the backward path
  * label could be "is located within". A client could then generate a
- * user friendly description string such as "fire hose 1234 is located within building 15a".
+ * user friendly description string such as "fire hose 1234 is located within
+ * building 15a".
  *
  * @param hRelationship handle to the relationship to apply the new label to.
  * @param pszLabel the label to set.
@@ -610,7 +640,8 @@ GDALRelationshipGetBackwardPathLabel( GDALRelationshipH hRelationship )
  * @see GDALRelationshipGetBackwardPathLabel
  * @see GDALRelationshipSetForwardPathLabel
  */
-void GDALRelationshipSetBackwardPathLabel( GDALRelationshipH hRelationship, const char *pszLabel )
+void GDALRelationshipSetBackwardPathLabel(GDALRelationshipH hRelationship,
+                                          const char *pszLabel)
 {
     GDALRelationship::FromHandle(hRelationship)->SetBackwardPathLabel(pszLabel);
 }
@@ -626,20 +657,23 @@ void GDALRelationshipSetBackwardPathLabel( GDALRelationshipH hRelationship, cons
  * GDALRelationship::GetRelatedTableType().
  *
  * This a free-form string representing the type of related features, where the
- * exact interpretation is format dependent. For instance, table types from GeoPackage
- * relationships will directly reflect the categories from the GeoPackage related
- * tables extension (i.e. "media", "simple attributes", "features", "attributes" and "tiles").
+ * exact interpretation is format dependent. For instance, table types from
+ * GeoPackage relationships will directly reflect the categories from the
+ * GeoPackage related tables extension (i.e. "media", "simple attributes",
+ * "features", "attributes" and "tiles").
  *
  * @return related table type
  *
  * @see GDALRelationshipSetRelatedTableType
  */
-const char *
-GDALRelationshipGetRelatedTableType( GDALRelationshipH hRelationship )
+const char *GDALRelationshipGetRelatedTableType(GDALRelationshipH hRelationship)
 {
-    VALIDATE_POINTER1( hRelationship, "GDALRelationshipGetRelatedTableType", nullptr );
+    VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetRelatedTableType",
+                      nullptr);
 
-    return GDALRelationship::FromHandle(hRelationship)->GetRelatedTableType().c_str();
+    return GDALRelationship::FromHandle(hRelationship)
+        ->GetRelatedTableType()
+        .c_str();
 }
 
 /************************************************************************/
@@ -648,19 +682,22 @@ GDALRelationshipGetRelatedTableType( GDALRelationshipH hRelationship )
 /**
  * \brief Sets the type string of the related table.
  *
- * This function is the same as the CPP method OGRFieldDefn::SetRelatedTableType().
+ * This function is the same as the CPP method
+ * OGRFieldDefn::SetRelatedTableType().
  *
  * This a free-form string representing the type of related features, where the
- * exact interpretation is format dependent. For instance, table types from GeoPackage
- * relationships will directly reflect the categories from the GeoPackage related
- * tables extension (i.e. "media", "simple attributes", "features", "attributes" and "tiles").
+ * exact interpretation is format dependent. For instance, table types from
+ * GeoPackage relationships will directly reflect the categories from the
+ * GeoPackage related tables extension (i.e. "media", "simple attributes",
+ * "features", "attributes" and "tiles").
  *
  * @param hRelationship handle to the relationship to apply the new type to.
  * @param pszType the type to set.
  *
  * @see GDALRelationshipGetRelatedTableType
  */
-void GDALRelationshipSetRelatedTableType( GDALRelationshipH hRelationship, const char *pszType )
+void GDALRelationshipSetRelatedTableType(GDALRelationshipH hRelationship,
+                                         const char *pszType)
 {
     GDALRelationship::FromHandle(hRelationship)->SetRelatedTableType(pszType);
 }

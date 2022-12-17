@@ -31,8 +31,8 @@
 
 #include "cpl_worker_thread_pool.h"
 
-CPLWorkerThreadPool CPL_DLL* GDALGetGlobalThreadPool(int nThreads);
+CPLWorkerThreadPool CPL_DLL *GDALGetGlobalThreadPool(int nThreads);
 
 void GDALDestroyGlobalThreadPool();
 
-#endif // GDAL_THREAD_POOL_H
+#endif  // GDAL_THREAD_POOL_H

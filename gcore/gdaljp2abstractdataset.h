@@ -34,37 +34,41 @@
 //! @cond Doxygen_Suppress
 #include "gdalgeorefpamdataset.h"
 
-class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
+class CPL_DLL GDALJP2AbstractDataset : public GDALGeorefPamDataset
 {
-    char*               pszWldFilename = nullptr;
+    char *pszWldFilename = nullptr;
 
-    GDALDataset*        poMemDS = nullptr;
-    char**              papszMetadataFiles = nullptr;
-    int                 m_nWORLDFILEIndex = -1;
-    CPLStringList       m_aosImageStructureMetadata{};
+    GDALDataset *poMemDS = nullptr;
+    char **papszMetadataFiles = nullptr;
+    int m_nWORLDFILEIndex = -1;
+    CPLStringList m_aosImageStructureMetadata{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2AbstractDataset)
 
   protected:
     int CloseDependentDatasets() override;
-    virtual VSILFILE* GetFileHandle() { return nullptr; }
+    virtual VSILFILE *GetFileHandle()
+    {
+        return nullptr;
+    }
 
   public:
     GDALJP2AbstractDataset();
     ~GDALJP2AbstractDataset() override;
 
-    void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                          const char* pszOverrideFilename = nullptr,
-                          VSILFILE* fpBox = nullptr);
-    void LoadVectorLayers( int bOpenRemoteResources = FALSE );
+    void LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
+                         const char *pszOverrideFilename = nullptr,
+                         VSILFILE *fpBox = nullptr);
+    void LoadVectorLayers(int bOpenRemoteResources = FALSE);
 
-    char **GetFileList( void ) override;
+    char **GetFileList(void) override;
 
-    char**      GetMetadata(const char * pszDomain = "" ) override;
-    const char* GetMetadataItem(const char* pszName, const char * pszDomain = "" ) override;
+    char **GetMetadata(const char *pszDomain = "") override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
 
     int GetLayerCount() override;
-    OGRLayer *GetLayer( int i ) override;
+    OGRLayer *GetLayer(int i) override;
 };
 //! @endcond
 
