@@ -38,23 +38,23 @@
 #include "gdal_priv.h"
 #include "ogr_core.h"
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRGPXDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRGPXDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr )
+    if (poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr)
         return nullptr;
 
-    if( strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<gpx") == nullptr )
+    if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "<gpx") == nullptr)
         return nullptr;
 
-    OGRGPXDataSource   *poDS = new OGRGPXDataSource();
+    OGRGPXDataSource *poDS = new OGRGPXDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, FALSE ) )
+    if (!poDS->Open(poOpenInfo->pszFilename, FALSE))
     {
         delete poDS;
         poDS = nullptr;
@@ -67,16 +67,14 @@ static GDALDataset *OGRGPXDriverOpen( GDALOpenInfo* poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-static GDALDataset *OGRGPXDriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
-                                        CPL_UNUSED char **papszOptions )
+static GDALDataset *
+OGRGPXDriverCreate(const char *pszName, CPL_UNUSED int nBands,
+                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                   CPL_UNUSED GDALDataType eDT, CPL_UNUSED char **papszOptions)
 {
-    OGRGPXDataSource   *poDS = new OGRGPXDataSource();
+    OGRGPXDataSource *poDS = new OGRGPXDataSource();
 
-    if( !poDS->Create( pszName, papszOptions ) )
+    if (!poDS->Create(pszName, papszOptions))
     {
         delete poDS;
         poDS = nullptr;
@@ -89,10 +87,10 @@ static GDALDataset *OGRGPXDriverCreate( const char * pszName,
 /*                               Delete()                               */
 /************************************************************************/
 
-static CPLErr OGRGPXDriverDelete( const char *pszFilename )
+static CPLErr OGRGPXDriverDelete(const char *pszFilename)
 
 {
-    if( VSIUnlink( pszFilename ) == 0 )
+    if (VSIUnlink(pszFilename) == 0)
         return CE_None;
     else
         return CE_Failure;
@@ -105,52 +103,64 @@ static CPLErr OGRGPXDriverDelete( const char *pszFilename )
 void RegisterOGRGPX()
 
 {
-    if( !GDAL_CHECK_VERSION("OGR/GPX driver") )
+    if (!GDAL_CHECK_VERSION("OGR/GPX driver"))
         return;
 
-    if( GDALGetDriverByName( "GPX" ) != nullptr )
+    if (GDALGetDriverByName("GPX") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GPX" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPX" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpx" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpx.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetDescription("GPX");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GPX");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gpx");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/gpx.html");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
 #ifdef WIN32
-"  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='CRLF'>"
+        "  <Option name='LINEFORMAT' type='string-select' "
+        "description='end-of-line sequence' default='CRLF'>"
 #else
-"  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='LF'>"
+        "  <Option name='LINEFORMAT' type='string-select' "
+        "description='end-of-line sequence' default='LF'>"
 #endif
-"    <Value>CRLF</Value>"
-"    <Value>LF</Value>"
-"  </Option>"
-"  <Option name='GPX_USE_EXTENSIONS' type='boolean' description='Whether to write non-GPX attributes in an &lt;extensions&gt; tag' default='NO'/>"
-"  <Option name='GPX_EXTENSIONS_NS' type='string' description='Namespace value used for extension tags' default='ogr'/>"
-"  <Option name='GPX_EXTENSIONS_NS_URL' type='string' description='Namespace URI' default='http://osgeo.org/gdal'/>"
-"</CreationOptionList>");
+        "    <Value>CRLF</Value>"
+        "    <Value>LF</Value>"
+        "  </Option>"
+        "  <Option name='GPX_USE_EXTENSIONS' type='boolean' "
+        "description='Whether to write non-GPX attributes in an "
+        "&lt;extensions&gt; tag' default='NO'/>"
+        "  <Option name='GPX_EXTENSIONS_NS' type='string' "
+        "description='Namespace value used for extension tags' default='ogr'/>"
+        "  <Option name='GPX_EXTENSIONS_NS_URL' type='string' "
+        "description='Namespace URI' default='http://osgeo.org/gdal'/>"
+        "</CreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-"<LayerCreationOptionList>"
-"  <Option name='FORCE_GPX_TRACK' type='boolean' description='Whether to force layers with geometries of type wkbLineString as tracks' default='NO'/>"
-"  <Option name='FORCE_GPX_ROUTE' type='boolean' description='Whether to force layers with geometries of type wkbMultiLineString (with single line string in them) as routes' default='NO'/>"
-"</LayerCreationOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "  <Option name='FORCE_GPX_TRACK' type='boolean' description='Whether "
+        "to force layers with geometries of type wkbLineString as tracks' "
+        "default='NO'/>"
+        "  <Option name='FORCE_GPX_ROUTE' type='boolean' description='Whether "
+        "to force layers with geometries of type wkbMultiLineString (with "
+        "single line string in them) as routes' default='NO'/>"
+        "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
 
     poDriver->pfnOpen = OGRGPXDriverOpen;
     poDriver->pfnCreate = OGRGPXDriverCreate;
     poDriver->pfnDelete = OGRGPXDriverDelete;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
