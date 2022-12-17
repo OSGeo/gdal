@@ -37,18 +37,18 @@ namespace cpl
 {
 template <class T> class ThreadSafeQueue
 {
-private:
-    mutable std::mutex      m_mutex{};
+  private:
+    mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
-    std::queue<T>           m_queue{};
+    std::queue<T> m_queue{};
 
-public:
+  public:
     ThreadSafeQueue() = default;
 
     void clear()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        while( !m_queue.empty() )
+        while (!m_queue.empty())
             m_queue.pop();
     }
 
@@ -64,14 +64,14 @@ public:
         return m_queue.size();
     }
 
-    void push(const T& value)
+    void push(const T &value)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_queue.push(value);
         m_cv.notify_one();
     }
 
-    void push(T&& value)
+    void push(T &&value)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_queue.push(std::move(value));
@@ -81,7 +81,7 @@ public:
     T get_and_pop_front()
     {
         std::unique_lock<std::mutex> lock(m_mutex);
-        while( m_queue.empty() )
+        while (m_queue.empty())
         {
             m_cv.wait(lock);
         }
@@ -91,6 +91,6 @@ public:
     }
 };
 
-} // namespace cpl
+}  // namespace cpl
 
-#endif // CPL_THREADSAFE_QUEUE_INCLUDED
+#endif  // CPL_THREADSAFE_QUEUE_INCLUDED

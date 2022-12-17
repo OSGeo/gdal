@@ -53,31 +53,43 @@
 /************************************************************************/
 
 /** Virtual file handle */
-class CPL_DLL VSIVirtualHandle {
+class CPL_DLL VSIVirtualHandle
+{
   public:
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
+    virtual int Seek(vsi_l_offset nOffset, int nWhence) = 0;
     virtual vsi_l_offset Tell() = 0;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nCount ) = 0;
-    virtual int       ReadMultiRange( int nRanges, void ** ppData,
-                                      const vsi_l_offset* panOffsets,
-                                      const size_t* panSizes );
-    virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nCount)=0;
-    virtual int       Eof() = 0;
-    virtual int       Flush() {return 0;}
-    virtual int       Close() = 0;
+    virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) = 0;
+    virtual int ReadMultiRange(int nRanges, void **ppData,
+                               const vsi_l_offset *panOffsets,
+                               const size_t *panSizes);
+    virtual size_t Write(const void *pBuffer, size_t nSize, size_t nCount) = 0;
+    virtual int Eof() = 0;
+    virtual int Flush()
+    {
+        return 0;
+    }
+    virtual int Close() = 0;
     // Base implementation that only supports file extension.
-    virtual int       Truncate( vsi_l_offset nNewSize );
-    virtual void     *GetNativeFileDescriptor() { return nullptr; }
-    virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
-                                           CPL_UNUSED vsi_l_offset nLength )
-                                          { return VSI_RANGE_STATUS_UNKNOWN; }
-    virtual bool      HasPRead() const;
-    virtual size_t    PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const;
+    virtual int Truncate(vsi_l_offset nNewSize);
+    virtual void *GetNativeFileDescriptor()
+    {
+        return nullptr;
+    }
+    virtual VSIRangeStatus GetRangeStatus(CPL_UNUSED vsi_l_offset nOffset,
+                                          CPL_UNUSED vsi_l_offset nLength)
+    {
+        return VSI_RANGE_STATUS_UNKNOWN;
+    }
+    virtual bool HasPRead() const;
+    virtual size_t PRead(void *pBuffer, size_t nSize,
+                         vsi_l_offset nOffset) const;
 
     // NOTE: when adding new methods, besides the "actual" implementations,
     // also consider the VSICachedFile one.
 
-    virtual           ~VSIVirtualHandle() { }
+    virtual ~VSIVirtualHandle()
+    {
+    }
 };
 
 /************************************************************************/
@@ -85,69 +97,138 @@ class CPL_DLL VSIVirtualHandle {
 /************************************************************************/
 
 #ifndef DOXYGEN_SKIP
-class CPL_DLL VSIFilesystemHandler {
+class CPL_DLL VSIFilesystemHandler
+{
 
-public:
+  public:
+    virtual ~VSIFilesystemHandler()
+    {
+    }
 
-    virtual ~VSIFilesystemHandler() {}
+    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess);
 
-    VSIVirtualHandle *Open( const char *pszFilename,
-                            const char *pszAccess );
+    virtual VSIVirtualHandle *Open(const char *pszFilename,
+                                   const char *pszAccess, bool bSetError,
+                                   CSLConstList papszOptions) = 0;
+    virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
+                     int nFlags) = 0;
+    virtual int Unlink(const char *pszFilename)
+    {
+        (void)pszFilename;
+        errno = ENOENT;
+        return -1;
+    }
+    virtual int *UnlinkBatch(CSLConstList papszFiles);
+    virtual int Mkdir(const char *pszDirname, long nMode)
+    {
+        (void)pszDirname;
+        (void)nMode;
+        errno = ENOENT;
+        return -1;
+    }
+    virtual int Rmdir(const char *pszDirname)
+    {
+        (void)pszDirname;
+        errno = ENOENT;
+        return -1;
+    }
+    virtual int RmdirRecursive(const char *pszDirname);
+    virtual char **ReadDir(const char *pszDirname)
+    {
+        (void)pszDirname;
+        return nullptr;
+    }
+    virtual char **ReadDirEx(const char *pszDirname, int /* nMaxFiles */)
+    {
+        return ReadDir(pszDirname);
+    }
+    virtual char **SiblingFiles(const char * /*pszFilename*/)
+    {
+        return nullptr;
+    }
+    virtual int Rename(const char *oldpath, const char *newpath)
+    {
+        (void)oldpath;
+        (void)newpath;
+        errno = ENOENT;
+        return -1;
+    }
+    virtual int IsCaseSensitive(const char *pszFilename)
+    {
+        (void)pszFilename;
+        return TRUE;
+    }
+    virtual GIntBig GetDiskFreeSpace(const char * /* pszDirname */)
+    {
+        return -1;
+    }
+    virtual int SupportsSparseFiles(const char * /* pszPath */)
+    {
+        return FALSE;
+    }
+    virtual int HasOptimizedReadMultiRange(const char * /* pszPath */)
+    {
+        return FALSE;
+    }
+    virtual const char *GetActualURL(const char * /*pszFilename*/)
+    {
+        return nullptr;
+    }
+    virtual const char *GetOptions()
+    {
+        return nullptr;
+    }
+    virtual char *GetSignedURL(const char * /*pszFilename*/,
+                               CSLConstList /* papszOptions */)
+    {
+        return nullptr;
+    }
+    virtual bool Sync(const char *pszSource, const char *pszTarget,
+                      const char *const *papszOptions,
+                      GDALProgressFunc pProgressFunc, void *pProgressData,
+                      char ***ppapszOutputs);
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError,
-                                    CSLConstList papszOptions ) = 0;
-    virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
-    virtual int Unlink( const char *pszFilename )
-                      { (void) pszFilename; errno=ENOENT; return -1; }
-    virtual int* UnlinkBatch( CSLConstList papszFiles );
-    virtual int Mkdir( const char *pszDirname, long nMode )
-                      {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
-    virtual int Rmdir( const char *pszDirname )
-                      { (void) pszDirname; errno=ENOENT; return -1; }
-    virtual int RmdirRecursive( const char *pszDirname );
-    virtual char **ReadDir( const char *pszDirname )
-                      { (void) pszDirname; return nullptr; }
-    virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
-                      { return ReadDir(pszDirname); }
-    virtual char **SiblingFiles( const char * /*pszFilename*/ )
-                      { return nullptr; }
-    virtual int Rename( const char *oldpath, const char *newpath )
-                      { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
-    virtual int IsCaseSensitive( const char* pszFilename )
-                      { (void) pszFilename; return TRUE; }
-    virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
-    virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
-    virtual int HasOptimizedReadMultiRange(const char* /* pszPath */) { return FALSE; }
-    virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
-    virtual const char* GetOptions() { return nullptr; }
-    virtual char* GetSignedURL(const char* /*pszFilename*/, CSLConstList /* papszOptions */) { return nullptr; }
-    virtual bool Sync( const char* pszSource, const char* pszTarget,
-                            const char* const * papszOptions,
-                            GDALProgressFunc pProgressFunc,
-                            void *pProgressData,
-                            char*** ppapszOutputs  );
+    virtual VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
+                            const char *const *papszOptions);
 
-    virtual VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
-                             const char* const *papszOptions);
+    virtual char **GetFileMetadata(const char *pszFilename,
+                                   const char *pszDomain,
+                                   CSLConstList papszOptions);
 
-    virtual char** GetFileMetadata( const char * pszFilename, const char* pszDomain,
-                                    CSLConstList papszOptions );
+    virtual bool SetFileMetadata(const char *pszFilename,
+                                 CSLConstList papszMetadata,
+                                 const char *pszDomain,
+                                 CSLConstList papszOptions);
 
-    virtual bool   SetFileMetadata( const char * pszFilename,
-                                    CSLConstList papszMetadata,
-                                    const char* pszDomain,
-                                    CSLConstList papszOptions );
+    virtual bool AbortPendingUploads(const char * /*pszFilename*/)
+    {
+        return true;
+    }
 
-    virtual bool    AbortPendingUploads(const char* /*pszFilename*/) { return true;}
+    virtual std::string
+    GetStreamingFilename(const std::string &osFilename) const
+    {
+        return osFilename;
+    }
 
-    virtual std::string GetStreamingFilename(const std::string& osFilename) const { return osFilename; }
-
-    virtual bool    IsLocal( const char* /* pszPath */ ) { return true; }
-    virtual bool    SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) { return true; }
-    virtual bool    SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) { return true; }
-    virtual bool    SupportsRead( const char* /* pszPath */ ) { return true; }
+    virtual bool IsLocal(const char * /* pszPath */)
+    {
+        return true;
+    }
+    virtual bool SupportsSequentialWrite(const char * /* pszPath */,
+                                         bool /* bAllowLocalTempFile */)
+    {
+        return true;
+    }
+    virtual bool SupportsRandomWrite(const char * /* pszPath */,
+                                     bool /* bAllowLocalTempFile */)
+    {
+        return true;
+    }
+    virtual bool SupportsRead(const char * /* pszPath */)
+    {
+        return true;
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -158,7 +239,7 @@ public:
 #ifndef DOXYGEN_SKIP
 class CPL_DLL VSIFileManager
 {
-private:
+  private:
     VSIFilesystemHandler *poDefaultHandler = nullptr;
     std::map<std::string, VSIFilesystemHandler *> oHandlers{};
 
@@ -168,16 +249,16 @@ private:
 
     CPL_DISALLOW_COPY_ASSIGN(VSIFileManager)
 
-public:
+  public:
     ~VSIFileManager();
 
-    static VSIFilesystemHandler *GetHandler( const char * );
-    static void InstallHandler( const std::string& osPrefix,
-                                VSIFilesystemHandler * );
+    static VSIFilesystemHandler *GetHandler(const char *);
+    static void InstallHandler(const std::string &osPrefix,
+                               VSIFilesystemHandler *);
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
 
-    static char** GetPrefixes();
+    static char **GetPrefixes();
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -191,79 +272,97 @@ public:
 
 class VSIArchiveEntryFileOffset
 {
-    public:
-        virtual ~VSIArchiveEntryFileOffset();
+  public:
+    virtual ~VSIArchiveEntryFileOffset();
 };
 
 typedef struct
 {
-    char         *fileName;
-    vsi_l_offset  uncompressed_size;
-    VSIArchiveEntryFileOffset*      file_pos;
-    int           bIsDir;
-    GIntBig       nModifiedTime;
+    char *fileName;
+    vsi_l_offset uncompressed_size;
+    VSIArchiveEntryFileOffset *file_pos;
+    int bIsDir;
+    GIntBig nModifiedTime;
 } VSIArchiveEntry;
 
 class VSIArchiveContent
 {
-public:
-    time_t       mTime = 0;
+  public:
+    time_t mTime = 0;
     vsi_l_offset nFileSize = 0;
     int nEntries = 0;
-    VSIArchiveEntry* entries = nullptr;
+    VSIArchiveEntry *entries = nullptr;
 
     ~VSIArchiveContent();
 };
 
 class VSIArchiveReader
 {
-    public:
-        virtual ~VSIArchiveReader();
+  public:
+    virtual ~VSIArchiveReader();
 
-        virtual int GotoFirstFile() = 0;
-        virtual int GotoNextFile() = 0;
-        virtual VSIArchiveEntryFileOffset* GetFileOffset() = 0;
-        virtual GUIntBig GetFileSize() = 0;
-        virtual CPLString GetFileName() = 0;
-        virtual GIntBig GetModifiedTime() = 0;
-        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) = 0;
+    virtual int GotoFirstFile() = 0;
+    virtual int GotoNextFile() = 0;
+    virtual VSIArchiveEntryFileOffset *GetFileOffset() = 0;
+    virtual GUIntBig GetFileSize() = 0;
+    virtual CPLString GetFileName() = 0;
+    virtual GIntBig GetModifiedTime() = 0;
+    virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) = 0;
 };
 
 class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIArchiveFilesystemHandler)
 
-protected:
-    CPLMutex* hMutex = nullptr;
-    /* We use a cache that contains the list of files contained in a VSIArchive file as */
-    /* unarchive.c is quite inefficient in listing them. This speeds up access to VSIArchive files */
+  protected:
+    CPLMutex *hMutex = nullptr;
+    /* We use a cache that contains the list of files contained in a VSIArchive
+     * file as */
+    /* unarchive.c is quite inefficient in listing them. This speeds up access
+     * to VSIArchive files */
     /* containing ~1000 files like a CADRG product */
-    std::map<CPLString,VSIArchiveContent*>   oFileList{};
+    std::map<CPLString, VSIArchiveContent *> oFileList{};
 
-    virtual const char* GetPrefix() = 0;
+    virtual const char *GetPrefix() = 0;
     virtual std::vector<CPLString> GetExtensions() = 0;
-    virtual VSIArchiveReader* CreateReader(const char* pszArchiveFileName) = 0;
+    virtual VSIArchiveReader *CreateReader(const char *pszArchiveFileName) = 0;
 
-public:
+  public:
     VSIArchiveFilesystemHandler();
     virtual ~VSIArchiveFilesystemHandler();
 
-    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-              int nFlags ) override;
-    int Unlink( const char *pszFilename ) override;
-    int Rename( const char *oldpath, const char *newpath ) override;
-    int Mkdir( const char *pszDirname, long nMode ) override;
-    int Rmdir( const char *pszDirname ) override;
-    char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
+             int nFlags) override;
+    int Unlink(const char *pszFilename) override;
+    int Rename(const char *oldpath, const char *newpath) override;
+    int Mkdir(const char *pszDirname, long nMode) override;
+    int Rmdir(const char *pszDirname) override;
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 
-    virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = nullptr);
-    virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
-    virtual VSIArchiveReader* OpenArchiveFile(const char* archiveFilename, const char* fileInArchiveName);
-    virtual int FindFileInArchive(const char* archiveFilename, const char* fileInArchiveName, const VSIArchiveEntry** archiveEntry);
+    virtual const VSIArchiveContent *
+    GetContentOfArchive(const char *archiveFilename,
+                        VSIArchiveReader *poReader = nullptr);
+    virtual char *SplitFilename(const char *pszFilename,
+                                CPLString &osFileInArchive,
+                                int bCheckMainFileExists);
+    virtual VSIArchiveReader *OpenArchiveFile(const char *archiveFilename,
+                                              const char *fileInArchiveName);
+    virtual int FindFileInArchive(const char *archiveFilename,
+                                  const char *fileInArchiveName,
+                                  const VSIArchiveEntry **archiveEntry);
 
-    virtual bool    IsLocal( const char* pszPath ) override;
-    virtual bool    SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return false; }
-    virtual bool    SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return false; }
+    virtual bool IsLocal(const char *pszPath) override;
+    virtual bool
+    SupportsSequentialWrite(const char * /* pszPath */,
+                            bool /* bAllowLocalTempFile */) override
+    {
+        return false;
+    }
+    virtual bool SupportsRandomWrite(const char * /* pszPath */,
+                                     bool /* bAllowLocalTempFile */) override
+    {
+        return false;
+    }
 };
 
 /************************************************************************/
@@ -275,26 +374,32 @@ struct CPL_DLL VSIDIR
     VSIDIR() = default;
     virtual ~VSIDIR();
 
-    virtual const VSIDIREntry* NextDirEntry() = 0;
+    virtual const VSIDIREntry *NextDirEntry() = 0;
 
   private:
-    VSIDIR(const VSIDIR&) = delete;
-    VSIDIR& operator=(const VSIDIR&) = delete;
+    VSIDIR(const VSIDIR &) = delete;
+    VSIDIR &operator=(const VSIDIR &) = delete;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-VSIVirtualHandle CPL_DLL *VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
-VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
-                                                const GByte* pabyBeginningContent,
-                                                vsi_l_offset nCheatFileSize);
-VSIVirtualHandle CPL_DLL *VSICreateCachedFile( VSIVirtualHandle* poBaseHandle, size_t nChunkSize = 32768, size_t nCacheSize = 0 );
+VSIVirtualHandle CPL_DLL *
+VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle);
+VSIVirtualHandle *
+VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle,
+                              const GByte *pabyBeginningContent,
+                              vsi_l_offset nCheatFileSize);
+VSIVirtualHandle CPL_DLL *VSICreateCachedFile(VSIVirtualHandle *poBaseHandle,
+                                              size_t nChunkSize = 32768,
+                                              size_t nCacheSize = 0);
 
 const int CPL_DEFLATE_TYPE_GZIP = 0;
 const int CPL_DEFLATE_TYPE_ZLIB = 1;
 const int CPL_DEFLATE_TYPE_RAW_DEFLATE = 2;
-VSIVirtualHandle CPL_DLL *VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle, int nDeflateType, int bAutoCloseBaseHandle );
+VSIVirtualHandle CPL_DLL *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
+                                                int nDeflateType,
+                                                int bAutoCloseBaseHandle);
 
-VSIVirtualHandle *VSICreateUploadOnCloseFile( VSIVirtualHandle* poBaseHandle );
+VSIVirtualHandle *VSICreateUploadOnCloseFile(VSIVirtualHandle *poBaseHandle);
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */

@@ -30,25 +30,22 @@
 
 #include "cpl_conv.h"
 
-
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * )
-    CPL_RETURNS_NONNULL;
-extern char *CPLRecodeFromWCharIconv( const wchar_t *,
-                                      const char *, const char * );
-extern wchar_t *CPLRecodeToWCharIconv( const char *,
-                                       const char *, const char * );
+extern char *CPLRecodeIconv(const char *, const char *,
+                            const char *) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeFromWCharIconv(const wchar_t *, const char *,
+                                     const char *);
+extern wchar_t *CPLRecodeToWCharIconv(const char *, const char *, const char *);
 #endif  // CPL_RECODE_ICONV
 
 extern void CPLClearRecodeStubWarningFlags();
-extern char *CPLRecodeStub( const char *, const char *, const char * )
-    CPL_RETURNS_NONNULL;
-extern char *CPLRecodeFromWCharStub( const wchar_t *,
-                                     const char *, const char * );
-extern wchar_t *CPLRecodeToWCharStub( const char *,
-                                      const char *, const char * );
-extern int CPLIsUTF8Stub( const char *, int );
+extern char *CPLRecodeStub(const char *, const char *,
+                           const char *) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeFromWCharStub(const wchar_t *, const char *,
+                                    const char *);
+extern wchar_t *CPLRecodeToWCharStub(const char *, const char *, const char *);
+extern int CPLIsUTF8Stub(const char *, int);
 
 /************************************************************************/
 /*                             CPLRecode()                              */
@@ -77,77 +74,76 @@ extern int CPLIsUTF8Stub( const char *, int );
  * @since GDAL 1.6.0
  */
 
-char CPL_DLL *CPLRecode( const char *pszSource,
-                         const char *pszSrcEncoding,
-                         const char *pszDstEncoding )
+char CPL_DLL *CPLRecode(const char *pszSource, const char *pszSrcEncoding,
+                        const char *pszDstEncoding)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Handle a few common short cuts.                                 */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszSrcEncoding, pszDstEncoding) )
+    /* -------------------------------------------------------------------- */
+    /*      Handle a few common short cuts.                                 */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(pszSrcEncoding, pszDstEncoding))
         return CPLStrdup(pszSource);
 
-    if( EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
-        && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8)
-             || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
+    if (EQUAL(pszSrcEncoding, CPL_ENC_ASCII) &&
+        (EQUAL(pszDstEncoding, CPL_ENC_UTF8) ||
+         EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1)))
         return CPLStrdup(pszSource);
 
-/* -------------------------------------------------------------------- */
-/*      For ZIP file handling                                           */
-/*      (CP437 might be missing even on some iconv, like on Mac)        */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszSrcEncoding, "CP437") &&
-        EQUAL(pszDstEncoding, CPL_ENC_UTF8) ) //
+    /* -------------------------------------------------------------------- */
+    /*      For ZIP file handling                                           */
+    /*      (CP437 might be missing even on some iconv, like on Mac)        */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(pszSrcEncoding, "CP437") &&
+        EQUAL(pszDstEncoding, CPL_ENC_UTF8))  //
     {
         bool bIsAllPrintableASCII = true;
         const size_t nCharCount = strlen(pszSource);
-        for( size_t i = 0; i <nCharCount; i++ )
+        for (size_t i = 0; i < nCharCount; i++)
         {
-            if( pszSource[i] < 32 || pszSource[i] > 126 )
+            if (pszSource[i] < 32 || pszSource[i] > 126)
             {
                 bIsAllPrintableASCII = false;
                 break;
             }
         }
-        if( bIsAllPrintableASCII )
+        if (bIsAllPrintableASCII)
         {
             return CPLStrdup(pszSource);
         }
     }
 
 #ifdef CPL_RECODE_ICONV
-/* -------------------------------------------------------------------- */
-/*      CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8                               */
-/*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are handled   */
-/*      very well by the stub implementation which is faster than the   */
-/*      iconv() route. Use a stub for these two ones and iconv()        */
-/*      everything else.                                                */
-/* -------------------------------------------------------------------- */
-    if( ( EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1)
-          && EQUAL(pszDstEncoding, CPL_ENC_UTF8) )
-        || ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
-             && EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
+    /* -------------------------------------------------------------------- */
+    /*      CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8                               */
+    /*      and CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1 conversions are handled   */
+    /*      very well by the stub implementation which is faster than the   */
+    /*      iconv() route. Use a stub for these two ones and iconv()        */
+    /*      everything else.                                                */
+    /* -------------------------------------------------------------------- */
+    if ((EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1) &&
+         EQUAL(pszDstEncoding, CPL_ENC_UTF8)) ||
+        (EQUAL(pszSrcEncoding, CPL_ENC_UTF8) &&
+         EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1)))
     {
-        return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
+        return CPLRecodeStub(pszSource, pszSrcEncoding, pszDstEncoding);
     }
 #ifdef _WIN32
-    else if( ( (EQUAL(pszSrcEncoding, "CP_ACP") ||
-                EQUAL(pszSrcEncoding, "CP_OEMCP"))
-              && EQUAL(pszDstEncoding, CPL_ENC_UTF8) )
-            || ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
-                 && (EQUAL(pszDstEncoding, "CP_ACP")||
-                     EQUAL(pszDstEncoding, "CP_OEMCP")) ) )
+    else if (((EQUAL(pszSrcEncoding, "CP_ACP") ||
+               EQUAL(pszSrcEncoding, "CP_OEMCP")) &&
+              EQUAL(pszDstEncoding, CPL_ENC_UTF8)) ||
+             (EQUAL(pszSrcEncoding, CPL_ENC_UTF8) &&
+              (EQUAL(pszDstEncoding, "CP_ACP") ||
+               EQUAL(pszDstEncoding, "CP_OEMCP"))))
     {
-        return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
+        return CPLRecodeStub(pszSource, pszSrcEncoding, pszDstEncoding);
     }
 #endif
     else
     {
-        return CPLRecodeIconv( pszSource, pszSrcEncoding, pszDstEncoding );
+        return CPLRecodeIconv(pszSource, pszSrcEncoding, pszDstEncoding);
     }
-#else  // CPL_RECODE_STUB
-    return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
+#else   // CPL_RECODE_STUB
+    return CPLRecodeStub(pszSource, pszSrcEncoding, pszDstEncoding);
 #endif  // CPL_RECODE_ICONV
 }
 
@@ -179,33 +175,31 @@ char CPL_DLL *CPLRecode( const char *pszSource,
  * @since GDAL 1.6.0
  */
 
-char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
-                                  const char *pszSrcEncoding,
-                                  const char *pszDstEncoding )
+char CPL_DLL *CPLRecodeFromWChar(const wchar_t *pwszSource,
+                                 const char *pszSrcEncoding,
+                                 const char *pszDstEncoding)
 
 {
 #ifdef CPL_RECODE_ICONV
-/* -------------------------------------------------------------------- */
-/*      Conversions from CPL_ENC_UCS2                                   */
-/*      to CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well   */
-/*      handled by the stub implementation.                             */
-/* -------------------------------------------------------------------- */
-    if( (EQUAL(pszSrcEncoding, CPL_ENC_UCS2) ||
-         EQUAL(pszSrcEncoding, "WCHAR_T"))
-         && ( EQUAL(pszDstEncoding, CPL_ENC_UTF8)
-              || EQUAL(pszDstEncoding, CPL_ENC_ASCII)
-              || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
+    /* -------------------------------------------------------------------- */
+    /*      Conversions from CPL_ENC_UCS2                                   */
+    /*      to CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well   */
+    /*      handled by the stub implementation.                             */
+    /* -------------------------------------------------------------------- */
+    if ((EQUAL(pszSrcEncoding, CPL_ENC_UCS2) ||
+         EQUAL(pszSrcEncoding, "WCHAR_T")) &&
+        (EQUAL(pszDstEncoding, CPL_ENC_UTF8) ||
+         EQUAL(pszDstEncoding, CPL_ENC_ASCII) ||
+         EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1)))
     {
-        return CPLRecodeFromWCharStub( pwszSource,
-                                       pszSrcEncoding, pszDstEncoding );
+        return CPLRecodeFromWCharStub(pwszSource, pszSrcEncoding,
+                                      pszDstEncoding);
     }
 
-    return CPLRecodeFromWCharIconv( pwszSource,
-                                    pszSrcEncoding, pszDstEncoding );
+    return CPLRecodeFromWCharIconv(pwszSource, pszSrcEncoding, pszDstEncoding);
 
-#else  // CPL_RECODE_STUB
-    return CPLRecodeFromWCharStub( pwszSource,
-                                   pszSrcEncoding, pszDstEncoding );
+#else   // CPL_RECODE_STUB
+    return CPLRecodeFromWCharStub(pwszSource, pszSrcEncoding, pszDstEncoding);
 #endif  // CPL_RECODE_ICONV
 }
 
@@ -238,32 +232,30 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
  * @since GDAL 1.6.0
  */
 
-wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
-                                   const char *pszSrcEncoding,
-                                   const char *pszDstEncoding )
+wchar_t CPL_DLL *CPLRecodeToWChar(const char *pszSource,
+                                  const char *pszSrcEncoding,
+                                  const char *pszDstEncoding)
 
 {
 #ifdef CPL_RECODE_ICONV
-/* -------------------------------------------------------------------- */
-/*      Conversions to CPL_ENC_UCS2                                     */
-/*      from CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well */
-/*      handled by the stub implementation.                             */
-/* -------------------------------------------------------------------- */
-    if( (EQUAL(pszDstEncoding, CPL_ENC_UCS2)
-         || EQUAL(pszDstEncoding, "WCHAR_T"))
-        && ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
-             || EQUAL(pszSrcEncoding, CPL_ENC_ASCII)
-             || EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1) ) )
+    /* -------------------------------------------------------------------- */
+    /*      Conversions to CPL_ENC_UCS2                                     */
+    /*      from CPL_ENC_UTF8, CPL_ENC_ISO8859_1 and CPL_ENC_ASCII are well */
+    /*      handled by the stub implementation.                             */
+    /* -------------------------------------------------------------------- */
+    if ((EQUAL(pszDstEncoding, CPL_ENC_UCS2) ||
+         EQUAL(pszDstEncoding, "WCHAR_T")) &&
+        (EQUAL(pszSrcEncoding, CPL_ENC_UTF8) ||
+         EQUAL(pszSrcEncoding, CPL_ENC_ASCII) ||
+         EQUAL(pszSrcEncoding, CPL_ENC_ISO8859_1)))
     {
-        return CPLRecodeToWCharStub( pszSource,
-                                     pszSrcEncoding, pszDstEncoding );
+        return CPLRecodeToWCharStub(pszSource, pszSrcEncoding, pszDstEncoding);
     }
 
-    return CPLRecodeToWCharIconv( pszSource,
-                                  pszSrcEncoding, pszDstEncoding );
+    return CPLRecodeToWCharIconv(pszSource, pszSrcEncoding, pszDstEncoding);
 
-#else  // CPL_RECODE_STUB
-    return CPLRecodeToWCharStub( pszSource, pszSrcEncoding, pszDstEncoding );
+#else   // CPL_RECODE_STUB
+    return CPLRecodeToWCharStub(pszSource, pszSrcEncoding, pszDstEncoding);
 #endif  // CPL_RECODE_ICONV
 }
 
@@ -281,9 +273,9 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
  *
  * @since GDAL 1.7.0
  */
-int CPLIsUTF8( const char* pabyData, int nLen )
+int CPLIsUTF8(const char *pabyData, int nLen)
 {
-    return CPLIsUTF8Stub( pabyData, nLen );
+    return CPLIsUTF8Stub(pabyData, nLen);
 }
 
 /************************************************************************/
@@ -300,13 +292,13 @@ int CPLIsUTF8( const char* pabyData, int nLen )
  *
  * @since GDAL 3.6.0
  */
-bool CPLIsASCII( const char* pabyData, size_t nLen )
+bool CPLIsASCII(const char *pabyData, size_t nLen)
 {
-    if( nLen == static_cast<size_t>(-1) )
+    if (nLen == static_cast<size_t>(-1))
         nLen = strlen(pabyData);
-    for( size_t i = 0; i < nLen; ++i )
+    for (size_t i = 0; i < nLen; ++i)
     {
-        if( static_cast<unsigned char>(pabyData[i]) > 127 )
+        if (static_cast<unsigned char>(pabyData[i]) > 127)
             return false;
     }
     return true;
@@ -332,16 +324,16 @@ bool CPLIsASCII( const char* pabyData, size_t nLen )
  *
  * @since GDAL 1.7.0
  */
-char CPL_DLL *CPLForceToASCII( const char* pabyData, int nLen,
-                               char chReplacementChar )
+char CPL_DLL *CPLForceToASCII(const char *pabyData, int nLen,
+                              char chReplacementChar)
 {
-    if( nLen < 0 )
+    if (nLen < 0)
         nLen = static_cast<int>(strlen(pabyData));
-    char* pszOutputString = static_cast<char *>( CPLMalloc(nLen + 1) );
-    for( int i=0;i < nLen; i++ )
+    char *pszOutputString = static_cast<char *>(CPLMalloc(nLen + 1));
+    for (int i = 0; i < nLen; i++)
     {
-        if( reinterpret_cast<unsigned char *>(
-                const_cast<char *>( pabyData ) ) [i] > 127 )
+        if (reinterpret_cast<unsigned char *>(const_cast<char *>(pabyData))[i] >
+            127)
             pszOutputString[i] = chReplacementChar;
         else
             pszOutputString[i] = pabyData[i];
@@ -374,22 +366,21 @@ char CPL_DLL *CPLForceToASCII( const char* pabyData, int nLen,
  * unknown.
  */
 
-int CPLEncodingCharSize( const char *pszEncoding )
+int CPLEncodingCharSize(const char *pszEncoding)
 
 {
-    if( EQUAL(pszEncoding, CPL_ENC_UTF8) )
+    if (EQUAL(pszEncoding, CPL_ENC_UTF8))
         return 1;
-    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) ||
-             EQUAL(pszEncoding, "UTF-16LE") )
+    else if (EQUAL(pszEncoding, CPL_ENC_UTF16) ||
+             EQUAL(pszEncoding, "UTF-16LE"))
         return 2;
-    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) ||
-             EQUAL(pszEncoding, "UCS-2LE") )
+    else if (EQUAL(pszEncoding, CPL_ENC_UCS2) || EQUAL(pszEncoding, "UCS-2LE"))
         return 2;
-    else if( EQUAL(pszEncoding, CPL_ENC_UCS4) )
+    else if (EQUAL(pszEncoding, CPL_ENC_UCS4))
         return 4;
-    else if( EQUAL(pszEncoding, CPL_ENC_ASCII) )
+    else if (EQUAL(pszEncoding, CPL_ENC_ASCII))
         return 1;
-    else if( STARTS_WITH_CI(pszEncoding, "ISO-8859-") )
+    else if (STARTS_WITH_CI(pszEncoding, "ISO-8859-"))
         return 1;
 
     return -1;
@@ -421,12 +412,12 @@ void CPLClearRecodeWarningFlags()
  * @return the number of UTF-8 characters.
  */
 
-int CPLStrlenUTF8( const char *pszUTF8Str )
+int CPLStrlenUTF8(const char *pszUTF8Str)
 {
     int nCharacterCount = 0;
-    for( int i = 0; pszUTF8Str[i] != '\0'; ++i )
+    for (int i = 0; pszUTF8Str[i] != '\0'; ++i)
     {
-        if( (pszUTF8Str[i] & 0xc0) != 0x80 )
+        if ((pszUTF8Str[i] & 0xc0) != 0x80)
             ++nCharacterCount;
     }
     return nCharacterCount;
@@ -447,25 +438,24 @@ int CPLStrlenUTF8( const char *pszUTF8Str )
  *
  * @since GDAL 3.1.0
  */
-int CPLCanRecode(const char *pszTestStr,
-                 const char *pszSrcEncoding,
+int CPLCanRecode(const char *pszTestStr, const char *pszSrcEncoding,
                  const char *pszDstEncoding)
 {
     CPLClearRecodeWarningFlags();
     CPLErrorReset();
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    char* pszRec( CPLRecode( pszTestStr, pszSrcEncoding, pszDstEncoding ) );
+    char *pszRec(CPLRecode(pszTestStr, pszSrcEncoding, pszDstEncoding));
     CPLPopErrorHandler();
 
-    if( pszRec == nullptr )
+    if (pszRec == nullptr)
     {
         return FALSE;
     }
 
-    CPLFree( pszRec );
+    CPLFree(pszRec);
 
-    if( CPLGetLastErrorType() != 0 )
+    if (CPLGetLastErrorType() != 0)
     {
         return FALSE;
     }
