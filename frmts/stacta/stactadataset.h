@@ -40,7 +40,8 @@
 #include <memory>
 #include <vector>
 
-namespace {
+namespace
+{
 struct Limits
 {
     int min_tile_col = 0;
@@ -48,7 +49,7 @@ struct Limits
     int min_tile_row = 0;
     int max_tile_row = 0;
 };
-}
+}  // namespace
 /************************************************************************/
 /* ==================================================================== */
 /*                          STACTADataset                               */
@@ -57,47 +58,45 @@ struct Limits
 
 class STACTARawDataset;
 
-class STACTADataset final: public GDALPamDataset
+class STACTADataset final : public GDALPamDataset
 {
-        friend class STACTARasterBand;
-        friend class STACTARawDataset;
-        friend class STACTARawRasterBand;
+    friend class STACTARasterBand;
+    friend class STACTARawDataset;
+    friend class STACTARawRasterBand;
 
-        std::array<double, 6> m_adfGeoTransform = {{0.0,1.0,0,0.0,0.0,1.0}};
-        OGRSpatialReference m_oSRS{};
-        std::unique_ptr<GDALDataset> m_poDS{};
-        // Array of overview datasets, that are guaranteed to have the same
-        // georeferenced extent as m_poDS (and this dataset), for compliance
-        // with the GDAL data model. They are thus possibly VRT subsets of
-        // the STACTARawDataset stored in m_apoIntermediaryDS
-        std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
-        std::vector<std::unique_ptr<GDALDataset>> m_apoIntermediaryDS{};
+    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    OGRSpatialReference m_oSRS{};
+    std::unique_ptr<GDALDataset> m_poDS{};
+    // Array of overview datasets, that are guaranteed to have the same
+    // georeferenced extent as m_poDS (and this dataset), for compliance
+    // with the GDAL data model. They are thus possibly VRT subsets of
+    // the STACTARawDataset stored in m_apoIntermediaryDS
+    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
+    std::vector<std::unique_ptr<GDALDataset>> m_apoIntermediaryDS{};
 
-        // Cache of tile datasets
-        lru11::Cache<std::string, std::unique_ptr<GDALDataset>> m_oCacheTileDS{32};
+    // Cache of tile datasets
+    lru11::Cache<std::string, std::unique_ptr<GDALDataset>> m_oCacheTileDS{32};
 
-        bool m_bDownloadWholeMetaTile = false;
-        bool m_bSkipMissingMetaTile = false;
+    bool m_bDownloadWholeMetaTile = false;
+    bool m_bSkipMissingMetaTile = false;
 
-        bool Open(GDALOpenInfo* poOpenInfo);
+    bool Open(GDALOpenInfo *poOpenInfo);
 
-    public:
-        static int Identify(GDALOpenInfo* poOpenInfo);
-        static GDALDataset* OpenStatic(GDALOpenInfo* poOpenInfo);
+  public:
+    static int Identify(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
 
-        ~STACTADataset() override;
+    ~STACTADataset() override;
 
-        const OGRSpatialReference* GetSpatialRef() const override;
-        CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg) override;
-        void FlushCache(bool bAtClosing) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount, int *panBandMap,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    void FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/
@@ -106,24 +105,26 @@ class STACTADataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class STACTARasterBand final: public GDALRasterBand
+class STACTARasterBand final : public GDALRasterBand
 {
-        GDALColorInterp m_eColorInterp = GCI_Undefined;
-        int             m_bHasNoDataValue = false;
-        double          m_dfNoData = 0;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
+    int m_bHasNoDataValue = false;
+    double m_dfNoData = 0;
 
-    public:
-        STACTARasterBand(STACTADataset* poDSIn, int nBandIn,
-                         GDALRasterBand* poProtoBand);
-        CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
-        CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                      void *, int, int, GDALDataType,
-                      GSpacing, GSpacing,
-                      GDALRasterIOExtraArg* psExtraArg ) override;
-        GDALColorInterp GetColorInterpretation() override { return m_eColorInterp; }
-        int GetOverviewCount() override;
-        GDALRasterBand* GetOverview(int nIdx) override;
-        double GetNoDataValue(int* pbHasNoData = nullptr) override;
+  public:
+    STACTARasterBand(STACTADataset *poDSIn, int nBandIn,
+                     GDALRasterBand *poProtoBand);
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    GDALColorInterp GetColorInterpretation() override
+    {
+        return m_eColorInterp;
+    }
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int nIdx) override;
+    double GetNoDataValue(int *pbHasNoData = nullptr) override;
 };
 
 /************************************************************************/
@@ -132,40 +133,38 @@ class STACTARasterBand final: public GDALRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class STACTARawDataset final: public GDALDataset
+class STACTARawDataset final : public GDALDataset
 {
-        friend class STACTADataset;
-        friend class STACTARawRasterBand;
+    friend class STACTADataset;
+    friend class STACTARawRasterBand;
 
-        CPLString m_osURLTemplate{};
-        int m_nMinMetaTileCol = 0;
-        int m_nMinMetaTileRow = 0;
-        int m_nMetaTileWidth = 0;
-        int m_nMetaTileHeight = 0;
-        STACTADataset  *m_poMasterDS = nullptr;
+    CPLString m_osURLTemplate{};
+    int m_nMinMetaTileCol = 0;
+    int m_nMinMetaTileRow = 0;
+    int m_nMetaTileWidth = 0;
+    int m_nMetaTileHeight = 0;
+    STACTADataset *m_poMasterDS = nullptr;
 
-        std::array<double, 6> m_adfGeoTransform = {{0.0,1.0,0,0.0,0.0,1.0}};
-        OGRSpatialReference m_oSRS{};
+    std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    OGRSpatialReference m_oSRS{};
 
-    public:
+  public:
+    bool InitRaster(GDALDataset *poProtoDS, const gdal::TileMatrixSet *poTMS,
+                    const std::string &osTMId,
+                    const gdal::TileMatrixSet::TileMatrix &oTM,
+                    const std::map<CPLString, Limits> &oMapLimits);
 
-        bool InitRaster(GDALDataset* poProtoDS,
-                        const gdal::TileMatrixSet* poTMS,
-                        const std::string& osTMId,
-                        const gdal::TileMatrixSet::TileMatrix& oTM,
-                        const std::map<CPLString, Limits>& oMapLimits);
-
-        const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
-        CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg) override;
-
+    const OGRSpatialReference *GetSpatialRef() const override
+    {
+        return &m_oSRS;
+    }
+    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount, int *panBandMap,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -174,24 +173,26 @@ class STACTARawDataset final: public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class STACTARawRasterBand final: public GDALRasterBand
+class STACTARawRasterBand final : public GDALRasterBand
 {
-        GDALColorInterp m_eColorInterp = GCI_Undefined;
-        int             m_bHasNoDataValue = false;
-        double          m_dfNoData = 0;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
+    int m_bHasNoDataValue = false;
+    double m_dfNoData = 0;
 
-    public:
-        STACTARawRasterBand(STACTARawDataset* poDSIn, int nBandIn,
-                            GDALRasterBand* poProtoBand);
-        CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
-        CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GDALRasterIOExtraArg* psExtraArg) override;
-        GDALColorInterp GetColorInterpretation() override { return m_eColorInterp; }
-        double GetNoDataValue(int* pbHasNoData = nullptr) override;
+  public:
+    STACTARawRasterBand(STACTARawDataset *poDSIn, int nBandIn,
+                        GDALRasterBand *poProtoBand);
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+    GDALColorInterp GetColorInterpretation() override
+    {
+        return m_eColorInterp;
+    }
+    double GetNoDataValue(int *pbHasNoData = nullptr) override;
 };
 
-#endif // STACTADATASET_H
+#endif  // STACTADATASET_H
