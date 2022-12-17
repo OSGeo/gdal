@@ -30,12 +30,11 @@
 #include "cpl_conv.h"
 #include <cassert>
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
+OGRDataSource *OGRWAsPDriver::Open(const char *pszFilename, int bUpdate)
 
 {
     if (bUpdate)
@@ -48,15 +47,16 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
         return nullptr;
     }
 
-    VSILFILE * fh = VSIFOpenL( pszFilename, "r" );
-    if ( !fh )
+    VSILFILE *fh = VSIFOpenL(pszFilename, "r");
+    if (!fh)
     {
-        /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );*/
+        /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename
+         * );*/
         return nullptr;
     }
-    auto pDataSource = cpl::make_unique<OGRWAsPDataSource>( pszFilename, fh );
+    auto pDataSource = cpl::make_unique<OGRWAsPDataSource>(pszFilename, fh);
 
-    if ( pDataSource->Load(true) != OGRERR_NONE )
+    if (pDataSource->Load(true) != OGRERR_NONE)
     {
         return nullptr;
     }
@@ -67,37 +67,37 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWAsPDriver::TestCapability( const char * pszCap )
+int OGRWAsPDriver::TestCapability(const char *pszCap)
 
 {
-    return EQUAL(pszCap,ODrCCreateDataSource)
-        || EQUAL(pszCap,ODrCDeleteDataSource);
+    return EQUAL(pszCap, ODrCCreateDataSource) ||
+           EQUAL(pszCap, ODrCDeleteDataSource);
 }
 
 /************************************************************************/
 /*                           CreateDataSource()                           */
 /************************************************************************/
 
-OGRDataSource * OGRWAsPDriver::CreateDataSource( const char *pszName, char ** )
+OGRDataSource *OGRWAsPDriver::CreateDataSource(const char *pszName, char **)
 
 {
-    VSILFILE * fh = VSIFOpenL( pszName, "w" );
-    if ( !fh )
+    VSILFILE *fh = VSIFOpenL(pszName, "w");
+    if (!fh)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszName );
+        CPLError(CE_Failure, CPLE_FileIO, "cannot open file %s", pszName);
         return nullptr;
     }
-    return new OGRWAsPDataSource( pszName, fh );
+    return new OGRWAsPDataSource(pszName, fh);
 }
 
 /************************************************************************/
 /*                           DeleteDataSource()                         */
 /************************************************************************/
 
-OGRErr OGRWAsPDriver::DeleteDataSource (const char *pszName)
+OGRErr OGRWAsPDriver::DeleteDataSource(const char *pszName)
 
 {
-    return VSIUnlink( pszName ) == 0 ? OGRERR_NONE : OGRERR_FAILURE;
+    return VSIUnlink(pszName) == 0 ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -107,18 +107,18 @@ OGRErr OGRWAsPDriver::DeleteDataSource (const char *pszName)
 void RegisterOGRWAsP()
 
 {
-    OGRSFDriver* poDriver = new OGRWAsPDriver;
+    OGRSFDriver *poDriver = new OGRWAsPDriver;
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WAsP .map format" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/wasp.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "WAsP .map format");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "map");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/wasp.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
