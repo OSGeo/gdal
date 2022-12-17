@@ -29,46 +29,45 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                       OGRDXFDriverIdentify()                         */
 /************************************************************************/
 
-static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRDXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0 )
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
         return FALSE;
-    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dxf"))
         return TRUE;
-    const char* pszIter = (const char*)poOpenInfo->pabyHeader;
+    const char *pszIter = (const char *)poOpenInfo->pabyHeader;
     bool bFoundZero = false;
     int i = 0;  // Used after for.
-    for( ; pszIter[i]; i++ )
+    for (; pszIter[i]; i++)
     {
-        if( pszIter[i] == '0' )
+        if (pszIter[i] == '0')
         {
-            int j = i-1;  // Used after for.
-            for( ; j >= 0; j-- )
+            int j = i - 1;  // Used after for.
+            for (; j >= 0; j--)
             {
-                if( pszIter[j] != ' ' )
+                if (pszIter[j] != ' ')
                     break;
             }
-            if( j < 0 || pszIter[j] == '\n'|| pszIter[j] == '\r' )
+            if (j < 0 || pszIter[j] == '\n' || pszIter[j] == '\r')
             {
                 bFoundZero = true;
                 break;
             }
         }
     }
-    if( !bFoundZero )
+    if (!bFoundZero)
         return FALSE;
     i++;
-    while( pszIter[i] == ' ' )
+    while (pszIter[i] == ' ')
         i++;
-    while( pszIter[i] == '\n' || pszIter[i] == '\r' )
+    while (pszIter[i] == '\n' || pszIter[i] == '\r')
         i++;
-    if( !STARTS_WITH_CI(pszIter + i, "SECTION") )
+    if (!STARTS_WITH_CI(pszIter + i, "SECTION"))
         return FALSE;
     i += static_cast<int>(strlen("SECTION"));
     return pszIter[i] == '\n' || pszIter[i] == '\r';
@@ -78,15 +77,15 @@ static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRDXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !OGRDXFDriverIdentify(poOpenInfo) )
+    if (!OGRDXFDriverIdentify(poOpenInfo))
         return nullptr;
 
     OGRDXFDataSource *poDS = new OGRDXFDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename ) )
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
         delete poDS;
         poDS = nullptr;
@@ -99,16 +98,14 @@ static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
 /*                              Create()                                */
 /************************************************************************/
 
-static GDALDataset *OGRDXFDriverCreate( const char * pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
-                                        char **papszOptions )
+static GDALDataset *
+OGRDXFDriverCreate(const char *pszName, CPL_UNUSED int nBands,
+                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
 {
     OGRDXFWriterDS *poDS = new OGRDXFWriterDS();
 
-    if( poDS->Open( pszName, papszOptions ) )
+    if (poDS->Open(pszName, papszOptions))
         return poDS;
     else
     {
@@ -124,37 +121,41 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
 void RegisterOGRDXF()
 
 {
-    if( GDALGetDriverByName( "DXF" ) != nullptr )
+    if (GDALGetDriverByName("DXF") != nullptr)
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "DXF" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD DXF" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dxf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dxf.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetDescription("DXF");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "AutoCAD DXF");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dxf");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/dxf.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
-"  <Option name='HEADER' type='string' description='Template header file' default='header.dxf'/>"
-"  <Option name='TRAILER' type='string' description='Template trailer file' default='trailer.dxf'/>"
-"  <Option name='FIRST_ENTITY' type='int' description='Identifier of first entity'/>"
-"</CreationOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='HEADER' type='string' description='Template header "
+        "file' default='header.dxf'/>"
+        "  <Option name='TRAILER' type='string' description='Template trailer "
+        "file' default='trailer.dxf'/>"
+        "  <Option name='FIRST_ENTITY' type='int' description='Identifier of "
+        "first entity'/>"
+        "</CreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-                               "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                              "<LayerCreationOptionList/>");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
 
     poDriver->pfnOpen = OGRDXFDriverOpen;
     poDriver->pfnIdentify = OGRDXFDriverIdentify;
     poDriver->pfnCreate = OGRDXFDriverCreate;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -38,55 +38,54 @@
 
 class DXFSmoothPolylineVertex
 {
-public:
+  public:
     double x;
     double y;
     double z;
     double bulge;
 
     DXFSmoothPolylineVertex()
-        {
-            x = y = z = bulge = 0.0;
-        }
+    {
+        x = y = z = bulge = 0.0;
+    }
 
-    DXFSmoothPolylineVertex( double dfX, double dfY, double dfZ,
-                             double dfBulge )
-        {
-            set(dfX, dfY, dfZ, dfBulge);
-        }
+    DXFSmoothPolylineVertex(double dfX, double dfY, double dfZ, double dfBulge)
+    {
+        set(dfX, dfY, dfZ, dfBulge);
+    }
 
-    void set( double dfX, double dfY, double dfZ, double dfBulge )
-        {
-            x = dfX;
-            y = dfY;
-            z = dfZ;
-            bulge = dfBulge;
-        }
+    void set(double dfX, double dfY, double dfZ, double dfBulge)
+    {
+        x = dfX;
+        y = dfY;
+        z = dfZ;
+        bulge = dfBulge;
+    }
 
     void scale(double s)
-        {
-            x *= s;
-            y *= s;
-        }
+    {
+        x *= s;
+        y *= s;
+    }
 
     double length() const
-        {
-            return (sqrt(x*x + y*y));
-        }
+    {
+        return (sqrt(x * x + y * y));
+    }
 
     void normalize()
-        {
-            const double len = length();
-            assert(len != 0.0);
+    {
+        const double len = length();
+        assert(len != 0.0);
 
-            x /= len;
-            y /= len;
-        }
+        x /= len;
+        y /= len;
+    }
 
-    bool shares_2D_pos(const DXFSmoothPolylineVertex& v) const
-        {
-            return (x == v.x && y == v.y);
-        }
+    bool shares_2D_pos(const DXFSmoothPolylineVertex &v) const
+    {
+        return (x == v.x && y == v.y);
+    }
 };
 
 class DXFSmoothPolyline
@@ -96,44 +95,61 @@ class DXFSmoothPolyline
     // We treat Z as constant over the entire string; this may
     // change in the future.
 
-private:
+  private:
     std::vector<DXFSmoothPolylineVertex> m_vertices;
-    mutable bool                         m_blinestringstarted;
-    bool                                 m_bClosed;
-    int                                  m_dim;
-    bool                                 m_bUseMaxGapWhenTessellatingArcs;
+    mutable bool m_blinestringstarted;
+    bool m_bClosed;
+    int m_dim;
+    bool m_bUseMaxGapWhenTessellatingArcs;
 
-public:
-    DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
-                          m_dim(2), m_bUseMaxGapWhenTessellatingArcs(false) { }
+  public:
+    DXFSmoothPolyline()
+        : m_blinestringstarted(false), m_bClosed(false), m_dim(2),
+          m_bUseMaxGapWhenTessellatingArcs(false)
+    {
+    }
 
-    OGRGeometry* Tessellate() const;
+    OGRGeometry *Tessellate() const;
 
-    size_t size() const { return m_vertices.size(); }
+    size_t size() const
+    {
+        return m_vertices.size();
+    }
 
-    void SetSize( int n ) { m_vertices.reserve(n); }
+    void SetSize(int n)
+    {
+        m_vertices.reserve(n);
+    }
 
     void AddPoint(double dfX, double dfY, double dfZ, double dfBulge)
-        {
-            m_vertices.push_back(DXFSmoothPolylineVertex(dfX, dfY, dfZ, dfBulge));
-        }
+    {
+        m_vertices.push_back(DXFSmoothPolylineVertex(dfX, dfY, dfZ, dfBulge));
+    }
 
     void Close();
 
-    bool IsEmpty() const { return m_vertices.empty(); }
+    bool IsEmpty() const
+    {
+        return m_vertices.empty();
+    }
 
-    void setCoordinateDimension( int n ) { m_dim = n; }
+    void setCoordinateDimension(int n)
+    {
+        m_dim = n;
+    }
 
-    void SetUseMaxGapWhenTessellatingArcs( bool bVal )
-    { m_bUseMaxGapWhenTessellatingArcs = bVal; }
+    void SetUseMaxGapWhenTessellatingArcs(bool bVal)
+    {
+        m_bUseMaxGapWhenTessellatingArcs = bVal;
+    }
 
-private:
-    void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                 double radius, double len, double saggita,
-                 OGRLineString*, double dfZ = 0.0) const;
+  private:
+    void EmitArc(const DXFSmoothPolylineVertex &,
+                 const DXFSmoothPolylineVertex &, double radius, double len,
+                 double saggita, OGRLineString *, double dfZ = 0.0) const;
 
-    void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                  OGRLineString*) const;
+    void EmitLine(const DXFSmoothPolylineVertex &,
+                  const DXFSmoothPolylineVertex &, OGRLineString *) const;
 };
 
-#endif  /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */
+#endif /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */
