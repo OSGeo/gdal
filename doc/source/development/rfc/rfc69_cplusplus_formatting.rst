@@ -13,7 +13,7 @@ Contact:    schwehr@google.com / schwehr@gmail.com
 Co-Author:  Alessandro Pasotti
 Contact:    elpaso@itopen.it
 Started:    2017-May-04
-Status:     *Work-In-Progress*
+Status:     Adpoted, implemented
 =========== ======================================
 
 This RFC is based on `GEOS RFC
@@ -223,3 +223,8 @@ References
 -  `https://zed0.co.uk/clang-format-configurator/ <https://zed0.co.uk/clang-format-configurator/>`__
 -  `https://trac.osgeo.org/geos/wiki/RFC4 <https://trac.osgeo.org/geos/wiki/RFC4>`__
 - [git_blame_ignore] `Ignore Commits in Blame View` <Git https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view>`__
+
+Voting history
+------------------
+
++1 from PSC members KurtS and EvenR
