@@ -40,178 +40,173 @@
 #include <memory>
 #include <vector>
 
-class GDALPDFComposerWriter final: public GDALPDFBaseWriter
+class GDALPDFComposerWriter final : public GDALPDFBaseWriter
 {
-        CPLString m_osJPEG2000Driver{};
-        struct TreeOfOCG
+    CPLString m_osJPEG2000Driver{};
+    struct TreeOfOCG
+    {
+        GDALPDFObjectNum m_nNum{};
+        bool m_bInitiallyVisible{true};
+        std::vector<std::unique_ptr<TreeOfOCG>> m_children{};
+    };
+    bool m_bDisplayLayersOnlyOnVisiblePages = false;
+    TreeOfOCG m_oTreeOfOGC{};
+    std::map<CPLString, std::vector<GDALPDFObjectNum>>
+        m_oMapExclusiveOCGIdToOCGs{};
+
+    std::map<CPLString, GDALPDFObjectNum> m_oMapLayerIdToOCG{};
+
+    struct xyPair
+    {
+        double x = 0;
+        double y = 0;
+        explicit xyPair(double xin = 0.0, double yin = 0.0) : x(xin), y(yin)
         {
-            GDALPDFObjectNum                        m_nNum{};
-            bool                                    m_bInitiallyVisible{true};
-            std::vector<std::unique_ptr<TreeOfOCG>> m_children{};
-        };
-        bool m_bDisplayLayersOnlyOnVisiblePages = false;
-        TreeOfOCG m_oTreeOfOGC{};
-        std::map<CPLString, std::vector<GDALPDFObjectNum>> m_oMapExclusiveOCGIdToOCGs{};
+        }
+    };
 
-        std::map<CPLString, GDALPDFObjectNum> m_oMapLayerIdToOCG{};
+    struct Georeferencing
+    {
+        CPLString m_osID{};
+        OGRSpatialReference m_oSRS{};
+        double m_bboxX1{};
+        double m_bboxY1{};
+        double m_bboxX2{};
+        double m_bboxY2{};
+        double m_adfGT[6]{0, 1, 0, 0, 0, 1};
+    };
 
-        struct xyPair
-        {
-            double x = 0;
-            double y = 0;
-            explicit xyPair(double xin = 0.0, double yin = 0.0): x(xin), y(yin) {}
-        };
+    std::vector<GDALPDFObjectNum> m_anParentElements;
+    std::vector<GDALPDFObjectNum> m_anFeatureLayerId;
+    std::map<CPLString, GDALPDFObjectNum> m_oMapPageIdToObjectNum;
+    struct PageContext
+    {
+        double m_dfWidthInUserUnit = 0;
+        double m_dfHeightInUserUnit = 0;
+        CPLString m_osDrawingStream{};
+        std::vector<GDALPDFObjectNum> m_anFeatureUserProperties;
+        int m_nMCID = 0;
+        PDFCompressMethod m_eStreamCompressMethod = COMPRESS_DEFLATE;
+        std::map<CPLString, GDALPDFObjectNum> m_oXObjects{};
+        std::map<CPLString, GDALPDFObjectNum> m_oProperties{};
+        std::map<CPLString, GDALPDFObjectNum> m_oExtGState{};
+        std::vector<GDALPDFObjectNum> m_anAnnotationsId{};
+        std::map<CPLString, Georeferencing> m_oMapGeoreferencedId{};
+    };
 
-        struct Georeferencing
-        {
-            CPLString           m_osID{};
-            OGRSpatialReference m_oSRS{};
-            double              m_bboxX1{};
-            double              m_bboxY1{};
-            double              m_bboxX2{};
-            double              m_bboxY2{};
-            double              m_adfGT[6]{0,1,0,0,0,1};
-        };
+    bool CreateLayerTree(const CPLXMLNode *psNode,
+                         const GDALPDFObjectNum &nParentId, TreeOfOCG *parent);
 
-        std::vector<GDALPDFObjectNum> m_anParentElements;
-        std::vector<GDALPDFObjectNum> m_anFeatureLayerId;
-        std::map<CPLString, GDALPDFObjectNum> m_oMapPageIdToObjectNum;
-        struct PageContext
-        {
-            double m_dfWidthInUserUnit = 0;
-            double m_dfHeightInUserUnit = 0;
-            CPLString m_osDrawingStream{};
-            std::vector<GDALPDFObjectNum> m_anFeatureUserProperties;
-            int m_nMCID = 0;
-            PDFCompressMethod m_eStreamCompressMethod = COMPRESS_DEFLATE;
-            std::map<CPLString, GDALPDFObjectNum> m_oXObjects{};
-            std::map<CPLString, GDALPDFObjectNum> m_oProperties{};
-            std::map<CPLString, GDALPDFObjectNum> m_oExtGState{};
-            std::vector<GDALPDFObjectNum> m_anAnnotationsId{};
-            std::map<CPLString, Georeferencing> m_oMapGeoreferencedId{};
-        };
+    struct Action
+    {
+        virtual ~Action() = default;
+    };
 
-        bool CreateLayerTree(const CPLXMLNode* psNode,
-                             const GDALPDFObjectNum& nParentId,
-                             TreeOfOCG* parent);
+    struct GotoPageAction final : public Action
+    {
+        GDALPDFObjectNum m_nPageDestId{};
+        double m_dfX1 = 0;
+        double m_dfX2 = 0;
+        double m_dfY1 = 0;
+        double m_dfY2 = 0;
+    };
 
-        struct Action
-        {
-            virtual ~Action() = default;
-        };
+    struct SetLayerStateAction final : public Action
+    {
+        std::set<GDALPDFObjectNum> m_anONLayers{};
+        std::set<GDALPDFObjectNum> m_anOFFLayers{};
+    };
 
-        struct GotoPageAction final: public Action
-        {
-            GDALPDFObjectNum m_nPageDestId{};
-            double m_dfX1 = 0;
-            double m_dfX2 = 0;
-            double m_dfY1 = 0;
-            double m_dfY2 = 0;
-        };
+    struct JavascriptAction final : public Action
+    {
+        CPLString m_osScript{};
+    };
 
-        struct SetLayerStateAction final: public Action
-        {
-            std::set<GDALPDFObjectNum> m_anONLayers{};
-            std::set<GDALPDFObjectNum> m_anOFFLayers{};
-        };
+    bool ParseActions(const CPLXMLNode *psNode,
+                      std::vector<std::unique_ptr<Action>> &actions);
+    static GDALPDFDictionaryRW *
+    SerializeActions(GDALPDFDictionaryRW *poDictForDest,
+                     const std::vector<std::unique_ptr<Action>> &actions);
 
-        struct JavascriptAction final: public Action
-        {
-            CPLString m_osScript{};
-        };
+    struct OutlineItem
+    {
+        GDALPDFObjectNum m_nObjId{};
+        CPLString m_osName{};
+        bool m_bOpen = true;
+        int m_nFlags = 0;
+        std::vector<std::unique_ptr<Action>> m_aoActions{};
+        std::vector<std::unique_ptr<OutlineItem>> m_aoKids{};
+        int m_nKidsRecCount = 0;
+    };
+    GDALPDFObjectNum m_nOutlinesId{};
 
-        bool ParseActions(const CPLXMLNode* psNode,
-                            std::vector<std::unique_ptr<Action>>& actions);
-        static GDALPDFDictionaryRW* SerializeActions(
-                        GDALPDFDictionaryRW* poDictForDest,
-                        const std::vector<std::unique_ptr<Action>>& actions);
+    bool CreateOutlineFirstPass(const CPLXMLNode *psNode,
+                                OutlineItem *poParentItem);
+    bool SerializeOutlineKids(const OutlineItem *poParentItem);
+    bool CreateOutline(const CPLXMLNode *psNode);
 
-        struct OutlineItem
-        {
-            GDALPDFObjectNum m_nObjId{};
-            CPLString m_osName{};
-            bool m_bOpen = true;
-            int m_nFlags = 0;
-            std::vector<std::unique_ptr<Action>> m_aoActions{};
-            std::vector<std::unique_ptr<OutlineItem>> m_aoKids{};
-            int m_nKidsRecCount = 0;
-        };
-        GDALPDFObjectNum m_nOutlinesId{};
+    void WritePages();
 
-        bool CreateOutlineFirstPass(const CPLXMLNode* psNode,
-                                    OutlineItem* poParentItem);
-        bool SerializeOutlineKids(const OutlineItem* poParentItem);
-        bool CreateOutline(const CPLXMLNode* psNode);
+    static GDALPDFArrayRW *CreateOCGOrder(const TreeOfOCG *parent);
+    static void CollectOffOCG(std::vector<GDALPDFObjectNum> &ar,
+                              const TreeOfOCG *parent);
+    bool GeneratePage(const CPLXMLNode *psPage);
+    bool GenerateGeoreferencing(const CPLXMLNode *psGeoreferencing,
+                                double dfWidthInUserUnit,
+                                double dfHeightInUserUnit,
+                                GDALPDFObjectNum &nViewportId,
+                                GDALPDFObjectNum &nLGIDictId,
+                                Georeferencing &georeferencing);
 
-        void WritePages();
+    GDALPDFObjectNum GenerateISO32000_Georeferencing(
+        OGRSpatialReferenceH hSRS, double bboxX1, double bboxY1, double bboxX2,
+        double bboxY2, const std::vector<GDAL_GCP> &aGCPs,
+        const std::vector<xyPair> &aBoundingPolygon);
 
-        static GDALPDFArrayRW* CreateOCGOrder(const TreeOfOCG* parent);
-        static void CollectOffOCG(std::vector<GDALPDFObjectNum>& ar,
-                                          const TreeOfOCG* parent);
-        bool GeneratePage(const CPLXMLNode* psPage);
-        bool GenerateGeoreferencing(const CPLXMLNode* psGeoreferencing,
-                                    double dfWidthInUserUnit,
-                                    double dfHeightInUserUnit,
-                                    GDALPDFObjectNum& nViewportId,
-                                    GDALPDFObjectNum& nLGIDictId,
-                                    Georeferencing& georeferencing);
+    GDALPDFObjectNum
+    GenerateOGC_BP_Georeferencing(OGRSpatialReferenceH hSRS, double bboxX1,
+                                  double bboxY1, double bboxX2, double bboxY2,
+                                  const std::vector<GDAL_GCP> &aGCPs,
+                                  const std::vector<xyPair> &aBoundingPolygon);
 
-        GDALPDFObjectNum GenerateISO32000_Georeferencing(
-            OGRSpatialReferenceH hSRS,
-            double bboxX1, double bboxY1, double bboxX2, double bboxY2,
-            const std::vector<GDAL_GCP>& aGCPs,
-            const std::vector<xyPair>& aBoundingPolygon);
+    bool ExploreContent(const CPLXMLNode *psNode, PageContext &oPageContext);
+    bool WriteRaster(const CPLXMLNode *psNode, PageContext &oPageContext);
+    bool WriteVector(const CPLXMLNode *psNode, PageContext &oPageContext);
+    bool WriteVectorLabel(const CPLXMLNode *psNode, PageContext &oPageContext);
+    void StartBlending(const CPLXMLNode *psNode, PageContext &oPageContext,
+                       double &dfOpacity);
+    static void EndBlending(const CPLXMLNode *psNode,
+                            PageContext &oPageContext);
 
-        GDALPDFObjectNum GenerateOGC_BP_Georeferencing(
-            OGRSpatialReferenceH hSRS,
-            double bboxX1, double bboxY1, double bboxX2, double bboxY2,
-            const std::vector<GDAL_GCP>& aGCPs,
-            const std::vector<xyPair>& aBoundingPolygon);
-
-        bool ExploreContent(const CPLXMLNode* psNode, PageContext& oPageContext);
-        bool WriteRaster(const CPLXMLNode* psNode, PageContext& oPageContext);
-        bool WriteVector(const CPLXMLNode* psNode, PageContext& oPageContext);
-        bool WriteVectorLabel(const CPLXMLNode* psNode, PageContext& oPageContext);
-        void StartBlending(const CPLXMLNode* psNode, PageContext& oPageContext,
-                           double& dfOpacity);
-        static void EndBlending(const CPLXMLNode* psNode, PageContext& oPageContext);
-
-        static bool SetupVectorGeoreferencing(
-            const char* pszGeoreferencingId,
-            OGRLayer* poLayer,
-            const PageContext& oPageContext,
-            double& dfClippingMinX,
-            double& dfClippingMinY,
-            double& dfClippingMaxX,
-            double& dfClippingMaxY,
-            double adfMatrix[4],
-            std::unique_ptr<OGRCoordinateTransformation>& poCT);
+    static bool SetupVectorGeoreferencing(
+        const char *pszGeoreferencingId, OGRLayer *poLayer,
+        const PageContext &oPageContext, double &dfClippingMinX,
+        double &dfClippingMinY, double &dfClippingMaxX, double &dfClippingMaxY,
+        double adfMatrix[4],
+        std::unique_ptr<OGRCoordinateTransformation> &poCT);
 
 #ifdef HAVE_PDF_READ_SUPPORT
-        bool WritePDF(const CPLXMLNode* psNode, PageContext& oPageContext);
+    bool WritePDF(const CPLXMLNode *psNode, PageContext &oPageContext);
 
-        typedef std::map< std::pair<int, int>, GDALPDFObjectNum> RemapType;
-        GDALPDFObjectNum EmitNewObject(GDALPDFObject* poObj,
-                                       RemapType& oRemapObjectRefs);
-        GDALPDFObjectNum SerializeAndRenumber(GDALPDFObject* poObj);
-        bool SerializeAndRenumber(CPLString& osStr,
-            GDALPDFObject* poObj,
-            RemapType& oRemapObjectRefs);
-        bool SerializeAndRenumberIgnoreRef(CPLString& osStr,
-            GDALPDFObject* poObj,
-            RemapType& oRemapObjectRefs);
+    typedef std::map<std::pair<int, int>, GDALPDFObjectNum> RemapType;
+    GDALPDFObjectNum EmitNewObject(GDALPDFObject *poObj,
+                                   RemapType &oRemapObjectRefs);
+    GDALPDFObjectNum SerializeAndRenumber(GDALPDFObject *poObj);
+    bool SerializeAndRenumber(CPLString &osStr, GDALPDFObject *poObj,
+                              RemapType &oRemapObjectRefs);
+    bool SerializeAndRenumberIgnoreRef(CPLString &osStr, GDALPDFObject *poObj,
+                                       RemapType &oRemapObjectRefs);
 #endif
 
-    public:
-        explicit GDALPDFComposerWriter(VSILFILE* fp);
-        ~GDALPDFComposerWriter();
+  public:
+    explicit GDALPDFComposerWriter(VSILFILE *fp);
+    ~GDALPDFComposerWriter();
 
-        bool Generate(const CPLXMLNode* psComposition);
-        void Close();
+    bool Generate(const CPLXMLNode *psComposition);
+    void Close();
 };
 
-GDALDataset* GDALPDFCreateFromCompositionFile(const char* pszPDFFilename,
+GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,
                                               const char *pszXMLFilename);
 
-
-#endif // PDFCREATEFROMCOMPOSITION_H_INCLUDED
+#endif  // PDFCREATEFROMCOMPOSITION_H_INCLUDED
