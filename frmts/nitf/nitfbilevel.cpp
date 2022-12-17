@@ -43,77 +43,76 @@ CPL_C_START
 CPL_C_END
 #include "tifvsi.h"
 
-
 /************************************************************************/
 /*                       NITFUncompressBILEVEL()                        */
 /************************************************************************/
 
-int NITFUncompressBILEVEL( NITFImage *psImage,
-                           GByte *pabyInputData, int nInputBytes,
-                           GByte *pabyOutputImage )
+int NITFUncompressBILEVEL(NITFImage *psImage, GByte *pabyInputData,
+                          int nInputBytes, GByte *pabyOutputImage)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Write memory TIFF with the bilevel data.                        */
-/* -------------------------------------------------------------------- */
-    const int nOutputBytes= (psImage->nBlockWidth * psImage->nBlockHeight + 7)/8;
+    /* -------------------------------------------------------------------- */
+    /*      Write memory TIFF with the bilevel data.                        */
+    /* -------------------------------------------------------------------- */
+    const int nOutputBytes =
+        (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8;
 
     CPLString osFilename;
 
-    osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
+    osFilename.Printf("/vsimem/nitf-wrk-%ld.tif", (long)CPLGetPID());
 
-    VSILFILE* fpL = VSIFOpenL(osFilename, "w+");
-    if( fpL == nullptr )
+    VSILFILE *fpL = VSIFOpenL(osFilename, "w+");
+    if (fpL == nullptr)
         return FALSE;
-    TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+", fpL );
+    TIFF *hTIFF = VSI_TIFFOpen(osFilename, "w+", fpL);
     if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
     }
 
-    TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH,    psImage->nBlockWidth );
-    TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH,   psImage->nBlockHeight );
-    TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 1 );
-    TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT,  SAMPLEFORMAT_UINT );
-    TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG,  PLANARCONFIG_CONTIG );
-    TIFFSetField( hTIFF, TIFFTAG_FILLORDER,     FILLORDER_MSB2LSB );
+    TIFFSetField(hTIFF, TIFFTAG_IMAGEWIDTH, psImage->nBlockWidth);
+    TIFFSetField(hTIFF, TIFFTAG_IMAGELENGTH, psImage->nBlockHeight);
+    TIFFSetField(hTIFF, TIFFTAG_BITSPERSAMPLE, 1);
+    TIFFSetField(hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+    TIFFSetField(hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+    TIFFSetField(hTIFF, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
 
-    TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP,  psImage->nBlockHeight );
-    TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1 );
-    TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
-    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_CCITTFAX3 );
+    TIFFSetField(hTIFF, TIFFTAG_ROWSPERSTRIP, psImage->nBlockHeight);
+    TIFFSetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, 1);
+    TIFFSetField(hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+    TIFFSetField(hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_CCITTFAX3);
 
-    if( psImage->szCOMRAT[0] == '2' )
-        TIFFSetField( hTIFF, TIFFTAG_GROUP3OPTIONS, GROUP3OPT_2DENCODING );
+    if (psImage->szCOMRAT[0] == '2')
+        TIFFSetField(hTIFF, TIFFTAG_GROUP3OPTIONS, GROUP3OPT_2DENCODING);
 
-    TIFFWriteRawStrip( hTIFF, 0, pabyInputData, nInputBytes );
-    TIFFWriteDirectory( hTIFF );
+    TIFFWriteRawStrip(hTIFF, 0, pabyInputData, nInputBytes);
+    TIFFWriteDirectory(hTIFF);
 
-    TIFFClose( hTIFF );
+    TIFFClose(hTIFF);
 
-/* -------------------------------------------------------------------- */
-/*      Now open and read it back.                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Now open and read it back.                                      */
+    /* -------------------------------------------------------------------- */
     bool bResult = true;
 
-    hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
+    hTIFF = VSI_TIFFOpen(osFilename, "r", fpL);
     if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
     }
 
-    if( TIFFReadEncodedStrip( hTIFF, 0, pabyOutputImage, nOutputBytes ) == -1 )
+    if (TIFFReadEncodedStrip(hTIFF, 0, pabyOutputImage, nOutputBytes) == -1)
     {
-        memset( pabyOutputImage, 0, nOutputBytes );
+        memset(pabyOutputImage, 0, nOutputBytes);
         bResult = false;
     }
 
-    TIFFClose( hTIFF );
+    TIFFClose(hTIFF);
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
 
-    VSIUnlink( osFilename );
+    VSIUnlink(osFilename);
 
     return bResult;
 }

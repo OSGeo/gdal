@@ -36,7 +36,7 @@
 #include <climits>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 #include <algorithm>
 #include <map>
@@ -53,42 +53,42 @@
 #include "gdal_priv.h"
 #include "nitflib.h"
 
-
-
 /************************************************************************/
 /*                       NITFMakeColorTable()                           */
 /************************************************************************/
 
-static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBandInfo)
+static GDALColorTable *NITFMakeColorTable(NITFImage *psImage,
+                                          NITFBandInfo *psBandInfo)
 {
-    GDALColorTable* poColorTable = nullptr;
+    GDALColorTable *poColorTable = nullptr;
 
-    if( psBandInfo->nSignificantLUTEntries > 0 )
+    if (psBandInfo->nSignificantLUTEntries > 0)
     {
         poColorTable = new GDALColorTable();
 
-        for( int iColor = 0; iColor < psBandInfo->nSignificantLUTEntries; iColor++)
+        for (int iColor = 0; iColor < psBandInfo->nSignificantLUTEntries;
+             iColor++)
         {
             GDALColorEntry sEntry;
-            sEntry.c1 = psBandInfo->pabyLUT[  0 + iColor];
+            sEntry.c1 = psBandInfo->pabyLUT[0 + iColor];
             sEntry.c2 = psBandInfo->pabyLUT[256 + iColor];
             sEntry.c3 = psBandInfo->pabyLUT[512 + iColor];
             sEntry.c4 = 255;
 
-            poColorTable->SetColorEntry( iColor, &sEntry );
+            poColorTable->SetColorEntry(iColor, &sEntry);
         }
 
         if (psImage->bNoDataSet)
         {
-            GDALColorEntry sEntry = { 0, 0, 0, 0 };
-            poColorTable->SetColorEntry( psImage->nNoDataValue, &sEntry );
+            GDALColorEntry sEntry = {0, 0, 0, 0};
+            poColorTable->SetColorEntry(psImage->nNoDataValue, &sEntry);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      We create a color table for 1 bit data too...                   */
-/* -------------------------------------------------------------------- */
-    if( poColorTable == nullptr && psImage->nBitsPerSample == 1 )
+    /* -------------------------------------------------------------------- */
+    /*      We create a color table for 1 bit data too...                   */
+    /* -------------------------------------------------------------------- */
+    if (poColorTable == nullptr && psImage->nBitsPerSample == 1)
     {
         poColorTable = new GDALColorTable();
 
@@ -97,13 +97,13 @@ static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBa
         sEntry.c2 = 0;
         sEntry.c3 = 0;
         sEntry.c4 = 255;
-        poColorTable->SetColorEntry( 0, &sEntry );
+        poColorTable->SetColorEntry(0, &sEntry);
 
         sEntry.c1 = 255;
         sEntry.c2 = 255;
         sEntry.c3 = 255;
         sEntry.c4 = 255;
-        poColorTable->SetColorEntry( 1, &sEntry );
+        poColorTable->SetColorEntry(1, &sEntry);
     }
 
     return poColorTable;
@@ -117,28 +117,28 @@ static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBa
 
 NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
 {
-    std::map<CPLString, char**>::iterator oIter = oMDMap.begin();
-    while(oIter != oMDMap.end())
+    std::map<CPLString, char **>::iterator oIter = oMDMap.begin();
+    while (oIter != oMDMap.end())
     {
         CSLDestroy(oIter->second);
         ++oIter;
     }
 }
 
-char **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
+char **NITFProxyPamRasterBand::GetMetadata(const char *pszDomain)
 {
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
         /* Let's merge metadata of PAM and the underlying band */
         /* PAM metadata should override underlying band metadata */
-        char** papszMD = CSLDuplicate(_poSrcBand->GetMetadata( pszDomain ));
-        papszMD = CSLMerge( papszMD, GDALPamRasterBand::GetMetadata(pszDomain) );
+        char **papszMD = CSLDuplicate(_poSrcBand->GetMetadata(pszDomain));
+        papszMD = CSLMerge(papszMD, GDALPamRasterBand::GetMetadata(pszDomain));
 
         if (pszDomain == nullptr)
             pszDomain = "";
 
-        std::map<CPLString, char**>::iterator oIter = oMDMap.find(pszDomain);
+        std::map<CPLString, char **>::iterator oIter = oMDMap.find(pszDomain);
         if (oIter != oMDMap.end())
             CSLDestroy(oIter->second);
         oMDMap[pszDomain] = papszMD;
@@ -150,46 +150,47 @@ char **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
     return GDALPamRasterBand::GetMetadata(pszDomain);
 }
 
-const char *NITFProxyPamRasterBand::GetMetadataItem( const char * pszName,
-                                                     const char * pszDomain )
+const char *NITFProxyPamRasterBand::GetMetadataItem(const char *pszName,
+                                                    const char *pszDomain)
 {
-    const char* pszRet = GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
+    const char *pszRet = GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
     if (pszRet)
         return pszRet;
 
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
-        pszRet = _poSrcBand->GetMetadataItem( pszName, pszDomain );
+        pszRet = _poSrcBand->GetMetadataItem(pszName, pszDomain);
         UnrefUnderlyingRasterBand(_poSrcBand);
     }
 
     return pszRet;
 }
 
-CPLErr NITFProxyPamRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev )
+CPLErr NITFProxyPamRasterBand::GetStatistics(int bApproxOK, int bForce,
+                                             double *pdfMin, double *pdfMax,
+                                             double *pdfMean, double *pdfStdDev)
 {
-/* -------------------------------------------------------------------- */
-/*      Do we already have metadata items for the requested values?     */
-/* -------------------------------------------------------------------- */
-    if( (pdfMin == nullptr || GetMetadataItem("STATISTICS_MINIMUM") != nullptr)
-     && (pdfMax == nullptr || GetMetadataItem("STATISTICS_MAXIMUM") != nullptr)
-     && (pdfMean == nullptr || GetMetadataItem("STATISTICS_MEAN") != nullptr)
-     && (pdfStdDev == nullptr || GetMetadataItem("STATISTICS_STDDEV") != nullptr) )
+    /* -------------------------------------------------------------------- */
+    /*      Do we already have metadata items for the requested values?     */
+    /* -------------------------------------------------------------------- */
+    if ((pdfMin == nullptr ||
+         GetMetadataItem("STATISTICS_MINIMUM") != nullptr) &&
+        (pdfMax == nullptr ||
+         GetMetadataItem("STATISTICS_MAXIMUM") != nullptr) &&
+        (pdfMean == nullptr || GetMetadataItem("STATISTICS_MEAN") != nullptr) &&
+        (pdfStdDev == nullptr ||
+         GetMetadataItem("STATISTICS_STDDEV") != nullptr))
     {
-        return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
-                                                 pdfMin, pdfMax,
-                                                 pdfMean, pdfStdDev);
+        return GDALPamRasterBand::GetStatistics(bApproxOK, bForce, pdfMin,
+                                                pdfMax, pdfMean, pdfStdDev);
     }
 
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
-        CPLErr ret = _poSrcBand->GetStatistics( bApproxOK, bForce,
-                                                pdfMin, pdfMax, pdfMean,
-                                                pdfStdDev);
+        CPLErr ret = _poSrcBand->GetStatistics(bApproxOK, bForce, pdfMin,
+                                               pdfMax, pdfMean, pdfStdDev);
         if (ret == CE_None)
         {
             /* Report underlying statistics at PAM level */
@@ -209,17 +210,15 @@ CPLErr NITFProxyPamRasterBand::GetStatistics( int bApproxOK, int bForce,
     return CE_Failure;
 }
 
-CPLErr NITFProxyPamRasterBand::ComputeStatistics( int bApproxOK,
-                                        double *pdfMin, double *pdfMax,
-                                        double *pdfMean, double *pdfStdDev,
-                                        GDALProgressFunc pfn, void *pProgressData )
+CPLErr NITFProxyPamRasterBand::ComputeStatistics(
+    int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean,
+    double *pdfStdDev, GDALProgressFunc pfn, void *pProgressData)
 {
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
+    GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
-        CPLErr ret = _poSrcBand->ComputeStatistics( bApproxOK, pdfMin, pdfMax,
-                                                    pdfMean, pdfStdDev,
-                                                    pfn, pProgressData);
+        CPLErr ret = _poSrcBand->ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfn, pProgressData);
         if (ret == CE_None)
         {
             /* Report underlying statistics at PAM level */
@@ -239,122 +238,136 @@ CPLErr NITFProxyPamRasterBand::ComputeStatistics( int bApproxOK,
     return CE_Failure;
 }
 
-#define RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(methodName) \
-double NITFProxyPamRasterBand::methodName( int *pbSuccess ) \
-{ \
-    int bSuccess = FALSE; \
-    double dfRet = GDALPamRasterBand::methodName(&bSuccess); \
-    if (bSuccess) \
-    { \
-        if (pbSuccess) \
-            *pbSuccess = TRUE; \
-        return dfRet; \
-    } \
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
-    if (_poSrcBand) \
-    { \
-        dfRet = _poSrcBand->methodName( pbSuccess ); \
-        UnrefUnderlyingRasterBand(_poSrcBand); \
-    } \
-    else \
-    { \
-        dfRet = 0; \
-    } \
-    return dfRet; \
-}
+#define RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(methodName)                       \
+    double NITFProxyPamRasterBand::methodName(int *pbSuccess)                  \
+    {                                                                          \
+        int bSuccess = FALSE;                                                  \
+        double dfRet = GDALPamRasterBand::methodName(&bSuccess);               \
+        if (bSuccess)                                                          \
+        {                                                                      \
+            if (pbSuccess)                                                     \
+                *pbSuccess = TRUE;                                             \
+            return dfRet;                                                      \
+        }                                                                      \
+        GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();                \
+        if (_poSrcBand)                                                        \
+        {                                                                      \
+            dfRet = _poSrcBand->methodName(pbSuccess);                         \
+            UnrefUnderlyingRasterBand(_poSrcBand);                             \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            dfRet = 0;                                                         \
+        }                                                                      \
+        return dfRet;                                                          \
+    }
 
 RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetNoDataValue)
 RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMinimum)
 RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(GetMaximum)
 
-#define RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(retType, retErrValue, methodName, underlyingMethodName, argList, argParams) \
-retType NITFProxyPamRasterBand::methodName argList \
-{ \
-    retType ret; \
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
-    if (_poSrcBand) \
-    { \
-        ret = _poSrcBand->underlyingMethodName argParams; \
-        UnrefUnderlyingRasterBand(_poSrcBand); \
-    } \
-    else \
-    { \
-        ret = retErrValue; \
-    } \
-    return ret; \
-}
+#define RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(                        \
+    retType, retErrValue, methodName, underlyingMethodName, argList,           \
+    argParams)                                                                 \
+    retType NITFProxyPamRasterBand::methodName argList                         \
+    {                                                                          \
+        retType ret;                                                           \
+        GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();                \
+        if (_poSrcBand)                                                        \
+        {                                                                      \
+            ret = _poSrcBand->underlyingMethodName argParams;                  \
+            UnrefUnderlyingRasterBand(_poSrcBand);                             \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            ret = retErrValue;                                                 \
+        }                                                                      \
+        return ret;                                                            \
+    }
 
-RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IReadBlock, ReadBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage),
-                                (nXBlockOff, nYBlockOff, pImage) )
-RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IWriteBlock, WriteBlock,
-                                ( int nXBlockOff, int nYBlockOff, void* pImage),
-                                (nXBlockOff, nYBlockOff, pImage) )
-RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IRasterIO, RasterIO,
-                        ( GDALRWFlag eRWFlag,
-                                int nXOff, int nYOff, int nXSize, int nYSize,
-                                void * pData, int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg ),
-                        (eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace, psExtraArg ) )
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IReadBlock,
+                                               ReadBlock,
+                                               (int nXBlockOff, int nYBlockOff,
+                                                void *pImage),
+                                               (nXBlockOff, nYBlockOff, pImage))
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(CPLErr, CE_Failure, IWriteBlock,
+                                               WriteBlock,
+                                               (int nXBlockOff, int nYBlockOff,
+                                                void *pImage),
+                                               (nXBlockOff, nYBlockOff, pImage))
+RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(
+    CPLErr, CE_Failure, IRasterIO, RasterIO,
+    (GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+     GSpacing nPixelSpace, GSpacing nLineSpace,
+     GDALRasterIOExtraArg *psExtraArg),
+    (eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+     eBufType, nPixelSpace, nLineSpace, psExtraArg))
 
-#define RB_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
-retType NITFProxyPamRasterBand::methodName argList \
-{ \
-    retType ret; \
-    GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand(); \
-    if (_poSrcBand) \
-    { \
-        ret = _poSrcBand->methodName argParams; \
-        UnrefUnderlyingRasterBand(_poSrcBand); \
-    } \
-    else \
-    { \
-        ret = retErrValue; \
-    } \
-    return ret; \
-}
+#define RB_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList,    \
+                                 argParams)                                    \
+    retType NITFProxyPamRasterBand::methodName argList                         \
+    {                                                                          \
+        retType ret;                                                           \
+        GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();                \
+        if (_poSrcBand)                                                        \
+        {                                                                      \
+            ret = _poSrcBand->methodName argParams;                            \
+            UnrefUnderlyingRasterBand(_poSrcBand);                             \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            ret = retErrValue;                                                 \
+        }                                                                      \
+        return ret;                                                            \
+    }
 
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (bool bAtClosing), (bAtClosing))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (bool bAtClosing),
+                         (bAtClosing))
 
-RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALColorTable*, nullptr, GetColorTable, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation,
+                         (), ())
+RB_PROXY_METHOD_WITH_RET(GDALColorTable *, nullptr, GetColorTable, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
-                        (double dfRealValue, double dfImaginaryValue),
-                        (dfRealValue, dfImaginaryValue))
+                         (double dfRealValue, double dfImaginaryValue),
+                         (dfRealValue, dfImaginaryValue))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
-                        ( int arg1, double* arg2 ), (arg1, arg2))
+                         (int arg1, double *arg2), (arg1, arg2))
 
 RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
-RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetOverview, (int arg1), (arg1))
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetRasterSampleOverview,
-                        (GUIntBig arg1), (arg1))
+RB_PROXY_METHOD_WITH_RET(int, 0, GetOverviewCount, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetOverview, (int arg1),
+                         (arg1))
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetRasterSampleOverview,
+                         (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
-                        (const char * arg1, int arg2, const int *arg3,
-                        GDALProgressFunc arg4, void * arg5, CSLConstList papszOptions),
-                        (arg1, arg2, arg3, arg4, arg5, papszOptions))
+                         (const char *arg1, int arg2, const int *arg3,
+                          GDALProgressFunc arg4, void *arg5,
+                          CSLConstList papszOptions),
+                         (arg1, arg2, arg3, arg4, arg5, papszOptions))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
-                        ( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize,
-                        GDALDataType eDT, char **papszOptions ),
-                        (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT, papszOptions))
+                         (int nXOff, int nYOff, int nXSize, int nYSize,
+                          int nBufXSize, int nBufYSize, GDALDataType eDT,
+                          char **papszOptions),
+                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                          eDT, papszOptions))
 
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr, GetMaskBand, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, (int nFlagsIn),
+                         (nFlagsIn))
 
 /************************************************************************/
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/
 
-void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand) {}
+void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(
+    CPL_UNUSED GDALRasterBand *poUnderlyingRasterBand)
+{
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -366,11 +379,9 @@ void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand
 /*                           NITFRasterBand()                           */
 /************************************************************************/
 
-NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
-    psImage(poDSIn->psImage),
-    poColorTable(nullptr),
-    pUnpackData(nullptr),
-    bScanlineAccess(FALSE)
+NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
+    : psImage(poDSIn->psImage), poColorTable(nullptr), pUnpackData(nullptr),
+      bScanlineAccess(FALSE)
 {
     NITFBandInfo *psBandInfo = poDSIn->psImage->pasBandInfo + nBandIn - 1;
 
@@ -378,40 +389,37 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
     nBand = nBandIn;
     eAccess = poDSIn->eAccess;
 
-/* -------------------------------------------------------------------- */
-/*      Translate data type(s).                                         */
-/* -------------------------------------------------------------------- */
-    if( psImage->nBitsPerSample <= 8 )
+    /* -------------------------------------------------------------------- */
+    /*      Translate data type(s).                                         */
+    /* -------------------------------------------------------------------- */
+    if (psImage->nBitsPerSample <= 8)
         eDataType = GDT_Byte;
-    else if( psImage->nBitsPerSample == 16
-             && EQUAL(psImage->szPVType,"SI") )
+    else if (psImage->nBitsPerSample == 16 && EQUAL(psImage->szPVType, "SI"))
         eDataType = GDT_Int16;
-    else if( psImage->nBitsPerSample == 16 )
+    else if (psImage->nBitsPerSample == 16)
         eDataType = GDT_UInt16;
-    else if( psImage->nBitsPerSample == 12 )
+    else if (psImage->nBitsPerSample == 12)
         eDataType = GDT_UInt16;
-    else if( psImage->nBitsPerSample == 32
-             && EQUAL(psImage->szPVType,"SI") )
+    else if (psImage->nBitsPerSample == 32 && EQUAL(psImage->szPVType, "SI"))
         eDataType = GDT_Int32;
-    else if( psImage->nBitsPerSample == 32
-             && EQUAL(psImage->szPVType,"R") )
+    else if (psImage->nBitsPerSample == 32 && EQUAL(psImage->szPVType, "R"))
         eDataType = GDT_Float32;
-    else if( psImage->nBitsPerSample == 32 )
+    else if (psImage->nBitsPerSample == 32)
         eDataType = GDT_UInt32;
-    else if( psImage->nBitsPerSample == 64
-             && EQUAL(psImage->szPVType,"R") )
+    else if (psImage->nBitsPerSample == 64 && EQUAL(psImage->szPVType, "R"))
         eDataType = GDT_Float64;
-    else if( psImage->nBitsPerSample == 64
-              && EQUAL(psImage->szPVType,"C") )
+    else if (psImage->nBitsPerSample == 64 && EQUAL(psImage->szPVType, "C"))
         eDataType = GDT_CFloat32;
-    /* ERO : note I'm not sure if CFloat64 can be transmitted as NBPP is only 2 characters */
+    /* ERO : note I'm not sure if CFloat64 can be transmitted as NBPP is only 2
+     * characters */
     else
     {
-        int bOpenUnderlyingDS = CPLTestBool(
-                CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
-        if (!bOpenUnderlyingDS && psImage->nBitsPerSample > 8 && psImage->nBitsPerSample < 16)
+        int bOpenUnderlyingDS =
+            CPLTestBool(CPLGetConfigOption("NITF_OPEN_UNDERLYING_DS", "YES"));
+        if (!bOpenUnderlyingDS && psImage->nBitsPerSample > 8 &&
+            psImage->nBitsPerSample < 16)
         {
-            if (EQUAL(psImage->szPVType,"SI"))
+            if (EQUAL(psImage->szPVType, "SI"))
                 eDataType = GDT_Int16;
             else
                 eDataType = GDT_UInt16;
@@ -419,20 +427,18 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
         else
         {
             eDataType = GDT_Unknown;
-            CPLError( CE_Warning, CPLE_AppDefined,
-                    "Unsupported combination of PVTYPE(%s) and NBPP(%d).",
-                    psImage->szPVType, psImage->nBitsPerSample );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unsupported combination of PVTYPE(%s) and NBPP(%d).",
+                     psImage->szPVType, psImage->nBitsPerSample);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Work out block size. If the image is all one big block we       */
-/*      handle via the scanline access API.                             */
-/* -------------------------------------------------------------------- */
-    if( psImage->nBlocksPerRow == 1
-        && psImage->nBlocksPerColumn == 1
-        && psImage->nBitsPerSample >= 8
-        && EQUAL(psImage->szIC,"NC") )
+    /* -------------------------------------------------------------------- */
+    /*      Work out block size. If the image is all one big block we       */
+    /*      handle via the scanline access API.                             */
+    /* -------------------------------------------------------------------- */
+    if (psImage->nBlocksPerRow == 1 && psImage->nBlocksPerColumn == 1 &&
+        psImage->nBitsPerSample >= 8 && EQUAL(psImage->szIC, "NC"))
     {
         bScanlineAccess = TRUE;
         nBlockXSize = psImage->nBlockWidth;
@@ -445,33 +451,30 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
         nBlockYSize = psImage->nBlockHeight;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a color table?                                       */
-/* -------------------------------------------------------------------- */
-    poColorTable = NITFMakeColorTable(psImage,
-                                      psBandInfo);
+    /* -------------------------------------------------------------------- */
+    /*      Do we have a color table?                                       */
+    /* -------------------------------------------------------------------- */
+    poColorTable = NITFMakeColorTable(psImage, psBandInfo);
 
-    if( psImage->nBitsPerSample == 1
-    ||  psImage->nBitsPerSample == 3
-    ||  psImage->nBitsPerSample == 5
-    ||  psImage->nBitsPerSample == 6
-    ||  psImage->nBitsPerSample == 7
-    ||  psImage->nBitsPerSample == 12 )
-        SetMetadataItem( "NBITS", CPLString().Printf("%d", psImage->nBitsPerSample), "IMAGE_STRUCTURE" );
+    if (psImage->nBitsPerSample == 1 || psImage->nBitsPerSample == 3 ||
+        psImage->nBitsPerSample == 5 || psImage->nBitsPerSample == 6 ||
+        psImage->nBitsPerSample == 7 || psImage->nBitsPerSample == 12)
+        SetMetadataItem("NBITS",
+                        CPLString().Printf("%d", psImage->nBitsPerSample),
+                        "IMAGE_STRUCTURE");
 
-    if (psImage->nBitsPerSample == 3
-    ||  psImage->nBitsPerSample == 5
-    ||  psImage->nBitsPerSample == 6
-    ||  psImage->nBitsPerSample == 7)
+    if (psImage->nBitsPerSample == 3 || psImage->nBitsPerSample == 5 ||
+        psImage->nBitsPerSample == 6 || psImage->nBitsPerSample == 7)
     {
-        if( nBlockXSize > (INT_MAX - 7) / nBlockYSize )
+        if (nBlockXSize > (INT_MAX - 7) / nBlockYSize)
         {
             eDataType = GDT_Unknown;
         }
         else
         {
-            pUnpackData = static_cast<GByte*>(VSI_MALLOC_VERBOSE(((nBlockXSize*nBlockYSize+7)/8)*8));
-            if( pUnpackData == nullptr )
+            pUnpackData = static_cast<GByte *>(
+                VSI_MALLOC_VERBOSE(((nBlockXSize * nBlockYSize + 7) / 8) * 8));
+            if (pUnpackData == nullptr)
                 eDataType = GDT_Unknown;
         }
     }
@@ -484,7 +487,7 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
 NITFRasterBand::~NITFRasterBand()
 
 {
-    if( poColorTable != nullptr )
+    if (poColorTable != nullptr)
         delete poColorTable;
 
     VSIFree(pUnpackData);
@@ -494,41 +497,38 @@ NITFRasterBand::~NITFRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+CPLErr NITFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>( poDS );
+    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
 
-/* -------------------------------------------------------------------- */
-/*      Special case for JPEG blocks.                                   */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(psImage->szIC,"C3") || EQUAL(psImage->szIC,"M3") )
+    /* -------------------------------------------------------------------- */
+    /*      Special case for JPEG blocks.                                   */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(psImage->szIC, "C3") || EQUAL(psImage->szIC, "M3"))
     {
-        CPLErr eErr = poGDS->ReadJPEGBlock( nBlockXOff, nBlockYOff );
-        const int nBlockBandSize =
-            psImage->nBlockWidth * psImage->nBlockHeight *
-            GDALGetDataTypeSizeBytes(eDataType);
+        CPLErr eErr = poGDS->ReadJPEGBlock(nBlockXOff, nBlockYOff);
+        const int nBlockBandSize = psImage->nBlockWidth *
+                                   psImage->nBlockHeight *
+                                   GDALGetDataTypeSizeBytes(eDataType);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return eErr;
 
-        memcpy( pImage,
-                poGDS->pabyJPEGBlock + (nBand - 1) * nBlockBandSize,
-                nBlockBandSize );
+        memcpy(pImage, poGDS->pabyJPEGBlock + (nBand - 1) * nBlockBandSize,
+               nBlockBandSize);
 
         return eErr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the line/block                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the line/block                                             */
+    /* -------------------------------------------------------------------- */
     int nBlockResult;
 
-    if( bScanlineAccess )
+    if (bScanlineAccess)
     {
-        nBlockResult =
-            NITFReadImageLine(psImage, nBlockYOff, nBand, pImage);
+        nBlockResult = NITFReadImageLine(psImage, nBlockYOff, nBand, pImage);
     }
     else
     {
@@ -536,28 +536,30 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             NITFReadImageBlock(psImage, nBlockXOff, nBlockYOff, nBand, pImage);
     }
 
-    if( nBlockResult == BLKREAD_OK )
+    if (nBlockResult == BLKREAD_OK)
     {
-        if( psImage->nBitsPerSample % 8 )
-            Unpack( reinterpret_cast<GByte *>( pImage ) );
+        if (psImage->nBitsPerSample % 8)
+            Unpack(reinterpret_cast<GByte *>(pImage));
 
         return CE_None;
     }
 
-    if( nBlockResult == BLKREAD_FAIL )
+    if (nBlockResult == BLKREAD_FAIL)
         return CE_Failure;
 
-/* -------------------------------------------------------------------- */
-/*      If we got a null/missing block, try to fill it in with the      */
-/*      nodata value.  It seems this only really works properly for     */
-/*      8bit.                                                           */
-/* -------------------------------------------------------------------- */
-    if( psImage->bNoDataSet )
-        memset( pImage, psImage->nNoDataValue,
-                psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+    /* -------------------------------------------------------------------- */
+    /*      If we got a null/missing block, try to fill it in with the      */
+    /*      nodata value.  It seems this only really works properly for     */
+    /*      8bit.                                                           */
+    /* -------------------------------------------------------------------- */
+    if (psImage->bNoDataSet)
+        memset(pImage, psImage->nNoDataValue,
+               psImage->nWordSize * psImage->nBlockWidth *
+                   psImage->nBlockHeight);
     else
-        memset( pImage, 0,
-                psImage->nWordSize*psImage->nBlockWidth*psImage->nBlockHeight);
+        memset(pImage, 0,
+               psImage->nWordSize * psImage->nBlockWidth *
+                   psImage->nBlockHeight);
 
     return CE_None;
 }
@@ -566,27 +568,25 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+CPLErr NITFRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Write the line/block                                            */
-/* -------------------------------------------------------------------- */
-    int  nBlockResult;
+    /* -------------------------------------------------------------------- */
+    /*      Write the line/block                                            */
+    /* -------------------------------------------------------------------- */
+    int nBlockResult;
 
-    if( bScanlineAccess )
+    if (bScanlineAccess)
     {
-        nBlockResult =
-            NITFWriteImageLine(psImage, nBlockYOff, nBand, pImage);
+        nBlockResult = NITFWriteImageLine(psImage, nBlockYOff, nBand, pImage);
     }
     else
     {
         nBlockResult =
-            NITFWriteImageBlock(psImage, nBlockXOff, nBlockYOff, nBand,pImage);
+            NITFWriteImageBlock(psImage, nBlockXOff, nBlockYOff, nBand, pImage);
     }
 
-    if( nBlockResult == BLKREAD_OK )
+    if (nBlockResult == BLKREAD_OK)
         return CE_None;
 
     return CE_Failure;
@@ -596,16 +596,16 @@ CPLErr NITFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double NITFRasterBand::GetNoDataValue( int *pbSuccess )
+double NITFRasterBand::GetNoDataValue(int *pbSuccess)
 
 {
-    if( pbSuccess != nullptr )
+    if (pbSuccess != nullptr)
         *pbSuccess = psImage->bNoDataSet;
 
-    if( psImage->bNoDataSet )
+    if (psImage->bNoDataSet)
         return psImage->nNoDataValue;
 
-    return GDALPamRasterBand::GetNoDataValue( pbSuccess );
+    return GDALPamRasterBand::GetNoDataValue(pbSuccess);
 }
 
 /************************************************************************/
@@ -617,22 +617,22 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 {
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
 
-    if( poColorTable != nullptr )
+    if (poColorTable != nullptr)
         return GCI_PaletteIndex;
 
-    if( EQUAL(psBandInfo->szIREPBAND,"R") )
+    if (EQUAL(psBandInfo->szIREPBAND, "R"))
         return GCI_RedBand;
-    if( EQUAL(psBandInfo->szIREPBAND,"G") )
+    if (EQUAL(psBandInfo->szIREPBAND, "G"))
         return GCI_GreenBand;
-    if( EQUAL(psBandInfo->szIREPBAND,"B") )
+    if (EQUAL(psBandInfo->szIREPBAND, "B"))
         return GCI_BlueBand;
-    if( EQUAL(psBandInfo->szIREPBAND,"M") )
+    if (EQUAL(psBandInfo->szIREPBAND, "M"))
         return GCI_GrayIndex;
-    if( EQUAL(psBandInfo->szIREPBAND,"Y") )
+    if (EQUAL(psBandInfo->szIREPBAND, "Y"))
         return GCI_YCbCr_YBand;
-    if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
+    if (EQUAL(psBandInfo->szIREPBAND, "Cb"))
         return GCI_YCbCr_CbBand;
-    if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
+    if (EQUAL(psBandInfo->szIREPBAND, "Cr"))
         return GCI_YCbCr_CrBand;
 
     return GCI_Undefined;
@@ -642,63 +642,62 @@ GDALColorInterp NITFRasterBand::GetColorInterpretation()
 /*                     NITFSetColorInterpretation()                     */
 /************************************************************************/
 
-CPLErr NITFSetColorInterpretation( NITFImage *psImage,
-                                   int nBand,
-                                   GDALColorInterp eInterp )
+CPLErr NITFSetColorInterpretation(NITFImage *psImage, int nBand,
+                                  GDALColorInterp eInterp)
 
 {
     const char *pszREP = nullptr;
 
-    if( eInterp == GCI_RedBand )
+    if (eInterp == GCI_RedBand)
         pszREP = "R";
-    else if( eInterp == GCI_GreenBand )
+    else if (eInterp == GCI_GreenBand)
         pszREP = "G";
-    else if( eInterp == GCI_BlueBand )
+    else if (eInterp == GCI_BlueBand)
         pszREP = "B";
-    else if( eInterp == GCI_GrayIndex )
+    else if (eInterp == GCI_GrayIndex)
         pszREP = "M";
-    else if( eInterp == GCI_YCbCr_YBand )
+    else if (eInterp == GCI_YCbCr_YBand)
         pszREP = "Y";
-    else if( eInterp == GCI_YCbCr_CbBand )
+    else if (eInterp == GCI_YCbCr_CbBand)
         pszREP = "Cb";
-    else if( eInterp == GCI_YCbCr_CrBand )
+    else if (eInterp == GCI_YCbCr_CrBand)
         pszREP = "Cr";
-    else if( eInterp == GCI_Undefined )
+    else if (eInterp == GCI_Undefined)
         return CE_None;
 
-    if( pszREP == nullptr )
+    if (pszREP == nullptr)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Requested color interpretation (%s) not supported in NITF.",
-                  GDALGetColorInterpretationName( eInterp ) );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Requested color interpretation (%s) not supported in NITF.",
+                 GDALGetColorInterpretationName(eInterp));
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Where does this go in the file?                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Where does this go in the file?                                 */
+    /* -------------------------------------------------------------------- */
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
-    strcpy( psBandInfo->szIREPBAND, pszREP );
-    GUIntBig nOffset = NITFIHFieldOffset( psImage, "IREPBAND" );
+    strcpy(psBandInfo->szIREPBAND, pszREP);
+    GUIntBig nOffset = NITFIHFieldOffset(psImage, "IREPBAND");
 
-    if( nOffset != 0 )
+    if (nOffset != 0)
         nOffset += (nBand - 1) * 13;
 
-/* -------------------------------------------------------------------- */
-/*      write it (space padded).                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      write it (space padded).                                        */
+    /* -------------------------------------------------------------------- */
     char szPadded[4];
-    strcpy( szPadded, pszREP );
-    strcat( szPadded, " " );
+    strcpy(szPadded, pszREP);
+    strcat(szPadded, " ");
 
-    if( nOffset != 0 )
+    if (nOffset != 0)
     {
-        if( VSIFSeekL( psImage->psFile->fp, nOffset, SEEK_SET ) != 0
-            || VSIFWriteL( reinterpret_cast<void *>( szPadded ), 1, 2,
-                           psImage->psFile->fp ) != 2 )
+        if (VSIFSeekL(psImage->psFile->fp, nOffset, SEEK_SET) != 0 ||
+            VSIFWriteL(reinterpret_cast<void *>(szPadded), 1, 2,
+                       psImage->psFile->fp) != 2)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "IO failure writing new IREPBAND value to NITF file." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "IO failure writing new IREPBAND value to NITF file.");
             return CE_Failure;
         }
     }
@@ -710,10 +709,10 @@ CPLErr NITFSetColorInterpretation( NITFImage *psImage,
 /*                       SetColorInterpretation()                       */
 /************************************************************************/
 
-CPLErr NITFRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
+CPLErr NITFRasterBand::SetColorInterpretation(GDALColorInterp eInterp)
 
 {
-    return NITFSetColorInterpretation( psImage, nBand, eInterp );
+    return NITFSetColorInterpretation(psImage, nBand, eInterp);
 }
 
 /************************************************************************/
@@ -730,31 +729,31 @@ GDALColorTable *NITFRasterBand::GetColorTable()
 /*                           SetColorTable()                            */
 /************************************************************************/
 
-CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
+CPLErr NITFRasterBand::SetColorTable(GDALColorTable *poNewCT)
 
 {
-    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>( poDS );
-    if( poGDS->bInLoadXML )
+    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
+    if (poGDS->bInLoadXML)
         return GDALPamRasterBand::SetColorTable(poNewCT);
 
-    if( poNewCT == nullptr )
+    if (poNewCT == nullptr)
         return CE_Failure;
 
     GByte abyNITFLUT[768];
-    memset( abyNITFLUT, 0, 768 );
+    memset(abyNITFLUT, 0, 768);
 
     const int nCount = std::min(256, poNewCT->GetColorEntryCount());
-    for( int i = 0; i < nCount; i++ )
+    for (int i = 0; i < nCount; i++)
     {
         GDALColorEntry sEntry;
 
-        poNewCT->GetColorEntryAsRGB( i, &sEntry );
-        abyNITFLUT[i    ] = (GByte) sEntry.c1;
-        abyNITFLUT[i+256] = (GByte) sEntry.c2;
-        abyNITFLUT[i+512] = (GByte) sEntry.c3;
+        poNewCT->GetColorEntryAsRGB(i, &sEntry);
+        abyNITFLUT[i] = (GByte)sEntry.c1;
+        abyNITFLUT[i + 256] = (GByte)sEntry.c2;
+        abyNITFLUT[i + 512] = (GByte)sEntry.c3;
     }
 
-    if( NITFWriteLUT( psImage, nBand, nCount, abyNITFLUT ) )
+    if (NITFWriteLUT(psImage, nBand, nCount, abyNITFLUT))
         return CE_None;
 
     return CE_Failure;
@@ -764,201 +763,233 @@ CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
 /*                           Unpack()                                   */
 /************************************************************************/
 
-void NITFRasterBand::Unpack( GByte* pData )
+void NITFRasterBand::Unpack(GByte *pData)
 {
-  const int n = nBlockXSize*nBlockYSize;
+    const int n = nBlockXSize * nBlockYSize;
 
-  GByte abyTempData[7] = {0, 0, 0, 0, 0, 0, 0};
-  const GByte* pDataSrc = pData;
-  if (n < psImage->nBitsPerSample &&
-      psImage->nBitsPerSample < 8)
-  {
-      memcpy(abyTempData, pData, n);
-      pDataSrc = abyTempData;
-  }
-
-  switch (psImage->nBitsPerSample)
-  {
-    case 1:
+    GByte abyTempData[7] = {0, 0, 0, 0, 0, 0, 0};
+    const GByte *pDataSrc = pData;
+    if (n < psImage->nBitsPerSample && psImage->nBitsPerSample < 8)
     {
-      // unpack 1-bit in-place in reverse
-      // DANGER: Non-standard decrement of counter in the test section of for.
-      for( int i = n; --i >= 0; )
-        pData[i] = (pData[i>>3] & (0x80 >> (i&7))) != 0;
-
-      break;
+        memcpy(abyTempData, pData, n);
+        pDataSrc = abyTempData;
     }
-    case 2:
+
+    switch (psImage->nBitsPerSample)
     {
-      constexpr int s_Shift2[] = {6, 4, 2, 0};
-      // unpack 2-bit in-place in reverse
-      // DANGER: Non-standard decrement of counter in the test section of for.
-      for (int i = n; --i >= 0; )
-        pData[i] = (pData[i>>2] >> (GByte)s_Shift2[i&3]) & 0x03;
+        case 1:
+        {
+            // unpack 1-bit in-place in reverse
+            // DANGER: Non-standard decrement of counter in the test section of
+            // for.
+            for (int i = n; --i >= 0;)
+                pData[i] = (pData[i >> 3] & (0x80 >> (i & 7))) != 0;
 
-      break;
-    }
-    case 4:
-    {
-      constexpr int s_Shift4[] = {4, 0};
-      // unpack 4-bit in-place in reverse
-      // DANGER: Non-standard decrement of counter in the test section of for.
-      for( int i = n; --i >= 0; )
-        pData[i] = (pData[i>>1] >> (GByte)s_Shift4[i&1]) & 0x0f;
+            break;
+        }
+        case 2:
+        {
+            constexpr int s_Shift2[] = {6, 4, 2, 0};
+            // unpack 2-bit in-place in reverse
+            // DANGER: Non-standard decrement of counter in the test section of
+            // for.
+            for (int i = n; --i >= 0;)
+                pData[i] = (pData[i >> 2] >> (GByte)s_Shift2[i & 3]) & 0x03;
 
-      break;
-    }
-    case 3:
-    {
-      // unpacks 8 pixels (3 bytes) at time
-      int i = 0;
-      int k = 0;
-      for( ; i + 7 < n; i += 8, k += 3 )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
-        pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
-        pUnpackData[i+2] = ((pDataSrc[k+0] << 1) & 0x07) | (pDataSrc[k+1] >> 7);
-        pUnpackData[i+3] = ((pDataSrc[k+1] >> 4) & 0x07);
-        pUnpackData[i+4] = ((pDataSrc[k+1] >> 1) & 0x07);
-        pUnpackData[i+5] = ((pDataSrc[k+1] << 2) & 0x07) | (pDataSrc[k+2] >> 6);
-        pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
-        pUnpackData[i+7] = ((pDataSrc[k+2]) & 0x7);
-      }
-      if( i < n )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
-        if( i + 1 < n )
-            pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
-        if( i + 2 < n )
-            pUnpackData[i+2] = ((pDataSrc[k+0] << 1) & 0x07) | (pDataSrc[k+1] >> 7);
-        if( i + 3 < n )
-            pUnpackData[i+3] = ((pDataSrc[k+1] >> 4) & 0x07);
-        if( i + 4 < n )
-            pUnpackData[i+4] = ((pDataSrc[k+1] >> 1) & 0x07);
-        if( i + 5 < n )
-            pUnpackData[i+5] = ((pDataSrc[k+1] << 2) & 0x07) | (pDataSrc[k+2] >> 6);
-        if( i + 6 < n )
-            pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
-      }
+            break;
+        }
+        case 4:
+        {
+            constexpr int s_Shift4[] = {4, 0};
+            // unpack 4-bit in-place in reverse
+            // DANGER: Non-standard decrement of counter in the test section of
+            // for.
+            for (int i = n; --i >= 0;)
+                pData[i] = (pData[i >> 1] >> (GByte)s_Shift4[i & 1]) & 0x0f;
 
-      memcpy(pData, pUnpackData, n);
-      break;
-    }
-    case 5:
-    {
-      // unpacks 8 pixels (5 bytes) at time
-      int i = 0;
-      int k = 0;
-      for( ; i + 7 < n; i += 8, k += 5 )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
-        pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
-        pUnpackData[i+2] = ((pDataSrc[k+1] >> 1) & 0x1f);
-        pUnpackData[i+3] = ((pDataSrc[k+1] << 4) & 0x1f) | (pDataSrc[k+2] >> 4);
-        pUnpackData[i+4] = ((pDataSrc[k+2] << 1) & 0x1f) | (pDataSrc[k+3] >> 7);
-        pUnpackData[i+5] = ((pDataSrc[k+3] >> 2) & 0x1f);
-        pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
-        pUnpackData[i+7] = ((pDataSrc[k+4]) & 0x1f);
-      }
-      if( i < n )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
-        if( i + 1 < n )
-            pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
-        if( i + 2 < n )
-            pUnpackData[i+2] = ((pDataSrc[k+1] >> 1) & 0x1f);
-        if( i + 3 < n )
-            pUnpackData[i+3] = ((pDataSrc[k+1] << 4) & 0x1f) | (pDataSrc[k+2] >> 4);
-        if( i + 4 < n )
-            pUnpackData[i+4] = ((pDataSrc[k+2] << 1) & 0x1f) | (pDataSrc[k+3] >> 7);
-        if( i + 5 < n )
-            pUnpackData[i+5] = ((pDataSrc[k+3] >> 2) & 0x1f);
-        if( i + 6 < n )
-            pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
-      }
+            break;
+        }
+        case 3:
+        {
+            // unpacks 8 pixels (3 bytes) at time
+            int i = 0;
+            int k = 0;
+            for (; i + 7 < n; i += 8, k += 3)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 5));
+                pUnpackData[i + 1] = ((pDataSrc[k + 0] >> 2) & 0x07);
+                pUnpackData[i + 2] =
+                    ((pDataSrc[k + 0] << 1) & 0x07) | (pDataSrc[k + 1] >> 7);
+                pUnpackData[i + 3] = ((pDataSrc[k + 1] >> 4) & 0x07);
+                pUnpackData[i + 4] = ((pDataSrc[k + 1] >> 1) & 0x07);
+                pUnpackData[i + 5] =
+                    ((pDataSrc[k + 1] << 2) & 0x07) | (pDataSrc[k + 2] >> 6);
+                pUnpackData[i + 6] = ((pDataSrc[k + 2] >> 3) & 0x07);
+                pUnpackData[i + 7] = ((pDataSrc[k + 2]) & 0x7);
+            }
+            if (i < n)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 5));
+                if (i + 1 < n)
+                    pUnpackData[i + 1] = ((pDataSrc[k + 0] >> 2) & 0x07);
+                if (i + 2 < n)
+                    pUnpackData[i + 2] = ((pDataSrc[k + 0] << 1) & 0x07) |
+                                         (pDataSrc[k + 1] >> 7);
+                if (i + 3 < n)
+                    pUnpackData[i + 3] = ((pDataSrc[k + 1] >> 4) & 0x07);
+                if (i + 4 < n)
+                    pUnpackData[i + 4] = ((pDataSrc[k + 1] >> 1) & 0x07);
+                if (i + 5 < n)
+                    pUnpackData[i + 5] = ((pDataSrc[k + 1] << 2) & 0x07) |
+                                         (pDataSrc[k + 2] >> 6);
+                if (i + 6 < n)
+                    pUnpackData[i + 6] = ((pDataSrc[k + 2] >> 3) & 0x07);
+            }
 
-      memcpy(pData, pUnpackData, n);
-      break;
-    }
-    case 6:
-    {
-      // unpacks 4 pixels (3 bytes) at time
-      int i = 0;
-      int k = 0;
-      for( ; i + 3 < n; i += 4, k += 3 )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
-        pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
-        pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
-        pUnpackData[i+3] = ((pDataSrc[k+2]) & 0x3f);
-      }
-      if( i < n )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
-        if( i + 1 < n )
-            pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
-        if( i + 2 < n )
-            pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
-      }
+            memcpy(pData, pUnpackData, n);
+            break;
+        }
+        case 5:
+        {
+            // unpacks 8 pixels (5 bytes) at time
+            int i = 0;
+            int k = 0;
+            for (; i + 7 < n; i += 8, k += 5)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 3));
+                pUnpackData[i + 1] =
+                    ((pDataSrc[k + 0] << 2) & 0x1f) | (pDataSrc[k + 1] >> 6);
+                pUnpackData[i + 2] = ((pDataSrc[k + 1] >> 1) & 0x1f);
+                pUnpackData[i + 3] =
+                    ((pDataSrc[k + 1] << 4) & 0x1f) | (pDataSrc[k + 2] >> 4);
+                pUnpackData[i + 4] =
+                    ((pDataSrc[k + 2] << 1) & 0x1f) | (pDataSrc[k + 3] >> 7);
+                pUnpackData[i + 5] = ((pDataSrc[k + 3] >> 2) & 0x1f);
+                pUnpackData[i + 6] =
+                    ((pDataSrc[k + 3] << 3) & 0x1f) | (pDataSrc[k + 4] >> 5);
+                pUnpackData[i + 7] = ((pDataSrc[k + 4]) & 0x1f);
+            }
+            if (i < n)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 3));
+                if (i + 1 < n)
+                    pUnpackData[i + 1] = ((pDataSrc[k + 0] << 2) & 0x1f) |
+                                         (pDataSrc[k + 1] >> 6);
+                if (i + 2 < n)
+                    pUnpackData[i + 2] = ((pDataSrc[k + 1] >> 1) & 0x1f);
+                if (i + 3 < n)
+                    pUnpackData[i + 3] = ((pDataSrc[k + 1] << 4) & 0x1f) |
+                                         (pDataSrc[k + 2] >> 4);
+                if (i + 4 < n)
+                    pUnpackData[i + 4] = ((pDataSrc[k + 2] << 1) & 0x1f) |
+                                         (pDataSrc[k + 3] >> 7);
+                if (i + 5 < n)
+                    pUnpackData[i + 5] = ((pDataSrc[k + 3] >> 2) & 0x1f);
+                if (i + 6 < n)
+                    pUnpackData[i + 6] = ((pDataSrc[k + 3] << 3) & 0x1f) |
+                                         (pDataSrc[k + 4] >> 5);
+            }
 
-      memcpy(pData, pUnpackData, n);
-      break;
-    }
-    case 7:
-    {
-      // unpacks 8 pixels (7 bytes) at time
-      int i = 0;
-      int k = 0;
-      for( ; i + 7 < n; i += 8, k += 7 )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
-        pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
-        pUnpackData[i+2] = ((pDataSrc[k+1] << 5) & 0x7f) | (pDataSrc[k+2] >> 3) ;
-        pUnpackData[i+3] = ((pDataSrc[k+2] << 4) & 0x7f) | (pDataSrc[k+3] >> 4);
-        pUnpackData[i+4] = ((pDataSrc[k+3] << 3) & 0x7f) | (pDataSrc[k+4] >> 5);
-        pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
-        pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
-        pUnpackData[i+7] = ((pDataSrc[k+6]) & 0x7f);
-      }
-      if( i < n )
-      {
-        pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
-        if( i + 1 < n )
-            pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
-        if( i + 2 < n )
-            pUnpackData[i+2] = ((pDataSrc[k+1] << 5) & 0x7f) | (pDataSrc[k+2] >> 3) ;
-        if( i + 3 < n )
-            pUnpackData[i+3] = ((pDataSrc[k+2] << 4) & 0x7f) | (pDataSrc[k+3] >> 4);
-        if( i + 4 < n )
-            pUnpackData[i+4] = ((pDataSrc[k+3] << 3) & 0x7f) | (pDataSrc[k+4] >> 5);
-        if( i + 5 < n )
-            pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
-        if( i + 6 < n )
-            pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
-      }
+            memcpy(pData, pUnpackData, n);
+            break;
+        }
+        case 6:
+        {
+            // unpacks 4 pixels (3 bytes) at time
+            int i = 0;
+            int k = 0;
+            for (; i + 3 < n; i += 4, k += 3)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 2));
+                pUnpackData[i + 1] =
+                    ((pDataSrc[k + 0] << 4) & 0x3f) | (pDataSrc[k + 1] >> 4);
+                pUnpackData[i + 2] =
+                    ((pDataSrc[k + 1] << 2) & 0x3f) | (pDataSrc[k + 2] >> 6);
+                pUnpackData[i + 3] = ((pDataSrc[k + 2]) & 0x3f);
+            }
+            if (i < n)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 2));
+                if (i + 1 < n)
+                    pUnpackData[i + 1] = ((pDataSrc[k + 0] << 4) & 0x3f) |
+                                         (pDataSrc[k + 1] >> 4);
+                if (i + 2 < n)
+                    pUnpackData[i + 2] = ((pDataSrc[k + 1] << 2) & 0x3f) |
+                                         (pDataSrc[k + 2] >> 6);
+            }
 
-      memcpy(pData, pUnpackData, n);
-      break;
-    }
-    case 12:
-    {
-      GByte *pabyImage = reinterpret_cast<GByte *>( pData );
-      GUInt16 *panImage  = reinterpret_cast<GUInt16 *>( pData );
-      // DANGER: Non-standard decrement of counter in the test section of for.
-      for( int i = n; --i >= 0; )
-      {
-        const long iOffset = i*3 / 2;
-        if (i % 2 == 0)
-          panImage[i] = pabyImage[iOffset] + (pabyImage[iOffset+1] & 0xf0) * 16;
-        else
-          panImage[i] = (pabyImage[iOffset]   & 0x0f) * 16
-                      + (pabyImage[iOffset+1] & 0xf0) / 16
-                      + (pabyImage[iOffset+1] & 0x0f) * 256;
-      }
+            memcpy(pData, pUnpackData, n);
+            break;
+        }
+        case 7:
+        {
+            // unpacks 8 pixels (7 bytes) at time
+            int i = 0;
+            int k = 0;
+            for (; i + 7 < n; i += 8, k += 7)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 1));
+                pUnpackData[i + 1] =
+                    ((pDataSrc[k + 0] << 6) & 0x7f) | (pDataSrc[k + 1] >> 2);
+                pUnpackData[i + 2] =
+                    ((pDataSrc[k + 1] << 5) & 0x7f) | (pDataSrc[k + 2] >> 3);
+                pUnpackData[i + 3] =
+                    ((pDataSrc[k + 2] << 4) & 0x7f) | (pDataSrc[k + 3] >> 4);
+                pUnpackData[i + 4] =
+                    ((pDataSrc[k + 3] << 3) & 0x7f) | (pDataSrc[k + 4] >> 5);
+                pUnpackData[i + 5] =
+                    ((pDataSrc[k + 4] << 2) & 0x7f) | (pDataSrc[k + 5] >> 6);
+                pUnpackData[i + 6] =
+                    ((pDataSrc[k + 5] << 1) & 0x7f) | (pDataSrc[k + 6] >> 7);
+                pUnpackData[i + 7] = ((pDataSrc[k + 6]) & 0x7f);
+            }
+            if (i < n)
+            {
+                pUnpackData[i + 0] = ((pDataSrc[k + 0] >> 1));
+                if (i + 1 < n)
+                    pUnpackData[i + 1] = ((pDataSrc[k + 0] << 6) & 0x7f) |
+                                         (pDataSrc[k + 1] >> 2);
+                if (i + 2 < n)
+                    pUnpackData[i + 2] = ((pDataSrc[k + 1] << 5) & 0x7f) |
+                                         (pDataSrc[k + 2] >> 3);
+                if (i + 3 < n)
+                    pUnpackData[i + 3] = ((pDataSrc[k + 2] << 4) & 0x7f) |
+                                         (pDataSrc[k + 3] >> 4);
+                if (i + 4 < n)
+                    pUnpackData[i + 4] = ((pDataSrc[k + 3] << 3) & 0x7f) |
+                                         (pDataSrc[k + 4] >> 5);
+                if (i + 5 < n)
+                    pUnpackData[i + 5] = ((pDataSrc[k + 4] << 2) & 0x7f) |
+                                         (pDataSrc[k + 5] >> 6);
+                if (i + 6 < n)
+                    pUnpackData[i + 6] = ((pDataSrc[k + 5] << 1) & 0x7f) |
+                                         (pDataSrc[k + 6] >> 7);
+            }
 
-      break;
+            memcpy(pData, pUnpackData, n);
+            break;
+        }
+        case 12:
+        {
+            GByte *pabyImage = reinterpret_cast<GByte *>(pData);
+            GUInt16 *panImage = reinterpret_cast<GUInt16 *>(pData);
+            // DANGER: Non-standard decrement of counter in the test section of
+            // for.
+            for (int i = n; --i >= 0;)
+            {
+                const long iOffset = i * 3 / 2;
+                if (i % 2 == 0)
+                    panImage[i] = pabyImage[iOffset] +
+                                  (pabyImage[iOffset + 1] & 0xf0) * 16;
+                else
+                    panImage[i] = (pabyImage[iOffset] & 0x0f) * 16 +
+                                  (pabyImage[iOffset + 1] & 0xf0) / 16 +
+                                  (pabyImage[iOffset + 1] & 0x0f) * 256;
+            }
+
+            break;
+        }
     }
-  }
 }
 
 /************************************************************************/
@@ -971,16 +1002,15 @@ void NITFRasterBand::Unpack( GByte* pData )
 /*                      NITFWrapperRasterBand()                         */
 /************************************************************************/
 
-NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
-                                              GDALRasterBand* poBaseBandIn,
-                                              int nBandIn) :
-    poBaseBand(poBaseBandIn),
-    poColorTable(nullptr),
-    eInterp(poBaseBandIn->GetColorInterpretation()),
-    bIsJPEG(poBaseBandIn->GetDataset() != nullptr &&
-            poBaseBandIn->GetDataset()->GetDriver() != nullptr &&
-            EQUAL(poBaseBandIn->GetDataset()->GetDriver()->GetDescription(),
-                  "JPEG"))
+NITFWrapperRasterBand::NITFWrapperRasterBand(NITFDataset *poDSIn,
+                                             GDALRasterBand *poBaseBandIn,
+                                             int nBandIn)
+    : poBaseBand(poBaseBandIn), poColorTable(nullptr),
+      eInterp(poBaseBandIn->GetColorInterpretation()),
+      bIsJPEG(poBaseBandIn->GetDataset() != nullptr &&
+              poBaseBandIn->GetDataset()->GetDriver() != nullptr &&
+              EQUAL(poBaseBandIn->GetDataset()->GetDriver()->GetDescription(),
+                    "JPEG"))
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -994,7 +1024,7 @@ NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
 
 NITFWrapperRasterBand::~NITFWrapperRasterBand()
 {
-    if( poColorTable != nullptr )
+    if (poColorTable != nullptr)
         delete poColorTable;
 }
 
@@ -1003,7 +1033,7 @@ NITFWrapperRasterBand::~NITFWrapperRasterBand()
 /************************************************************************/
 
 /* We don't need ref-counting. Just return the base band */
-GDALRasterBand* NITFWrapperRasterBand::RefUnderlyingRasterBand()
+GDALRasterBand *NITFWrapperRasterBand::RefUnderlyingRasterBand()
 {
     return poBaseBand;
 }
@@ -1023,7 +1053,7 @@ GDALColorTable *NITFWrapperRasterBand::GetColorTable()
 
 void NITFWrapperRasterBand::SetColorTableFromNITFBandInfo()
 {
-    NITFDataset* poGDS = reinterpret_cast<NITFDataset *>( poDS );
+    NITFDataset *poGDS = reinterpret_cast<NITFDataset *>(poDS);
     poColorTable = NITFMakeColorTable(poGDS->psImage,
                                       poGDS->psImage->pasBandInfo + nBand - 1);
 }
@@ -1041,13 +1071,14 @@ GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
 /*                        SetColorInterpretation()                      */
 /************************************************************************/
 
-CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn)
+CPLErr NITFWrapperRasterBand::SetColorInterpretation(GDALColorInterp eInterpIn)
 {
     this->eInterp = eInterpIn;
-    if( poBaseBand->GetDataset() != nullptr &&
+    if (poBaseBand->GetDataset() != nullptr &&
         poBaseBand->GetDataset()->GetDriver() != nullptr &&
-        EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(), "JP2ECW") )
-        poBaseBand->SetColorInterpretation( eInterp );
+        EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(),
+              "JP2ECW"))
+        poBaseBand->SetColorInterpretation(eInterp);
     return CE_None;
 }
 
@@ -1057,9 +1088,10 @@ CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn)
 
 int NITFWrapperRasterBand::GetOverviewCount()
 {
-    if( bIsJPEG )
+    if (bIsJPEG)
     {
-        if( (reinterpret_cast<NITFDataset *>( poDS) )->ExposeUnderlyingJPEGDatasetOverviews() )
+        if ((reinterpret_cast<NITFDataset *>(poDS))
+                ->ExposeUnderlyingJPEGDatasetOverviews())
             return NITFProxyPamRasterBand::GetOverviewCount();
 
         return GDALPamRasterBand::GetOverviewCount();
@@ -1072,11 +1104,12 @@ int NITFWrapperRasterBand::GetOverviewCount()
 /*                             GetOverview()                            */
 /************************************************************************/
 
-GDALRasterBand * NITFWrapperRasterBand::GetOverview(int iOverview)
+GDALRasterBand *NITFWrapperRasterBand::GetOverview(int iOverview)
 {
-    if( bIsJPEG )
+    if (bIsJPEG)
     {
-        if( (reinterpret_cast<NITFDataset *>( poDS ) )->ExposeUnderlyingJPEGDatasetOverviews() )
+        if ((reinterpret_cast<NITFDataset *>(poDS))
+                ->ExposeUnderlyingJPEGDatasetOverviews())
             return NITFProxyPamRasterBand::GetOverview(iOverview);
 
         return GDALPamRasterBand::GetOverview(iOverview);
