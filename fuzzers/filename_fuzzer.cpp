@@ -35,13 +35,13 @@
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
 {
-    const char* exe_path = (*argv)[0];
-    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    const char *exe_path = (*argv)[0];
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr)
     {
         CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     }
@@ -53,7 +53,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
-    CPLSetConfigOption("GDAL_CACHEMAX", "1000"); // Limit to 1 GB
+    CPLSetConfigOption("GDAL_CACHEMAX", "1000");  // Limit to 1 GB
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
@@ -68,36 +68,40 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    VSIFCloseL(VSIFileFromMemBuffer( "/vsimem/input.tar",
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE ));
+    VSIFCloseL(VSIFileFromMemBuffer(
+        "/vsimem/input.tar",
+        reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)), len, FALSE));
 
     CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
 
-    GByte* paby = nullptr;
+    GByte *paby = nullptr;
     vsi_l_offset nSize = 0;
-    if( !VSIIngestFile(nullptr, "/vsitar//vsimem/input.tar/filename", &paby, &nSize, -1) )
+    if (!VSIIngestFile(nullptr, "/vsitar//vsimem/input.tar/filename", &paby,
+                       &nSize, -1))
     {
         VSIUnlink("/vsimem/input.tar");
         return 0;
     }
-    const std::string osFilename(reinterpret_cast<const char*>(paby));
+    const std::string osFilename(reinterpret_cast<const char *>(paby));
     VSIFree(paby);
 
     paby = nullptr;
     nSize = 0;
-    int ret = VSIIngestFile(nullptr, "/vsitar//vsimem/input.tar/content", &paby, &nSize, -1);
+    int ret = VSIIngestFile(nullptr, "/vsitar//vsimem/input.tar/content", &paby,
+                            &nSize, -1);
     VSIUnlink("/vsimem/input.tar");
-    if( !ret )
+    if (!ret)
     {
         return 0;
     }
 
     const std::string osRealFilename("/vsimem/" + osFilename);
-    VSIFCloseL(VSIFileFromMemBuffer(osRealFilename.c_str(), paby, static_cast<size_t>(nSize), TRUE ));
+    VSIFCloseL(VSIFileFromMemBuffer(osRealFilename.c_str(), paby,
+                                    static_cast<size_t>(nSize), TRUE));
 
-    delete GDALDataset::Open( osRealFilename.c_str() );
+    delete GDALDataset::Open(osRealFilename.c_str());
 
-    VSIUnlink( osRealFilename.c_str() );
+    VSIUnlink(osRealFilename.c_str());
 
     return 0;
 }

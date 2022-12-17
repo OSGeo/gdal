@@ -34,9 +34,9 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     return 0;
 }
@@ -47,20 +47,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     OGRGeometryH hGeom = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGR_G_CreateFromWkb( const_cast<unsigned char*>(buf), nullptr, &hGeom,
-                         static_cast<int>(len) );
-    if( hGeom )
+    OGR_G_CreateFromWkb(const_cast<unsigned char *>(buf), nullptr, &hGeom,
+                        static_cast<int>(len));
+    if (hGeom)
     {
         const int nWKBSize = OGR_G_WkbSize(hGeom);
-        if( nWKBSize )
+        if (nWKBSize)
         {
-            GByte* pabyWKB = new GByte[nWKBSize];
+            GByte *pabyWKB = new GByte[nWKBSize];
             OGR_G_ExportToWkb(hGeom, wkbNDR, pabyWKB);
             OGR_G_ExportToIsoWkb(hGeom, wkbNDR, pabyWKB);
             delete[] pabyWKB;
         }
 
-        char* pszWKT = nullptr;
+        char *pszWKT = nullptr;
         OGR_G_ExportToWkt(hGeom, &pszWKT);
         CPLFree(pszWKT);
 
@@ -70,7 +70,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
         CPLFree(OGR_G_ExportToGML(hGeom));
 
-        char** papszOptions = CSLSetNameValue(nullptr, "FORMAT", "GML3");
+        char **papszOptions = CSLSetNameValue(nullptr, "FORMAT", "GML3");
         CPLFree(OGR_G_ExportToGMLEx(hGeom, papszOptions));
         CSLDestroy(papszOptions);
 

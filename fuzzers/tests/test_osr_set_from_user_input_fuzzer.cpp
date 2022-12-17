@@ -31,7 +31,7 @@
 int main()
 {
     const char szPROJ4[] = "+proj=longlat +datum=WGS84 +nodefs";
-    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szPROJ4),
+    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t *>(szPROJ4),
                            strlen(szPROJ4));
     return 0;
 }

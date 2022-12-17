@@ -32,43 +32,45 @@
 
 extern "C"
 {
-int LLVMFuzzerTestOneInput(const void *buf, size_t len);
-int LLVMFuzzerInitialize(int* argc, char*** argv);
+    int LLVMFuzzerTestOneInput(const void *buf, size_t len);
+    int LLVMFuzzerInitialize(int *argc, char ***argv);
 }
 
-template<class T> static void CPL_IGNORE_RET_VAL(T) {}
+template <class T> static void CPL_IGNORE_RET_VAL(T)
+{
+}
 
-static void Usage(int, char* argv[])
+static void Usage(int, char *argv[])
 {
     fprintf(stderr, "%s [--help] [-repeat N] filename.\n", argv[0]);
     exit(1);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     LLVMFuzzerInitialize(&argc, &argv);
 
     int nRet = 0;
-    void* buf = nullptr;
+    void *buf = nullptr;
     int nLen = 0;
     int nLoops = 1;
-    const char* pszFilename = nullptr;
-    for(int i = 1; i < argc; i++ )
+    const char *pszFilename = nullptr;
+    for (int i = 1; i < argc; i++)
     {
-        if( i + 1 < argc && strcmp(argv[i], "-repeat") == 0 )
+        if (i + 1 < argc && strcmp(argv[i], "-repeat") == 0)
         {
-            nLoops = atoi(argv[i+1]);
+            nLoops = atoi(argv[i + 1]);
             i++;
         }
-        else if( strcmp(argv[i], "-dummy") == 0 )
+        else if (strcmp(argv[i], "-dummy") == 0)
         {
             return LLVMFuzzerTestOneInput(" ", 1);
         }
-        else if( strcmp(argv[i], "--help") == 0 )
+        else if (strcmp(argv[i], "--help") == 0)
         {
             Usage(argc, argv);
         }
-        else if( argv[i][0] == '-' )
+        else if (argv[i][0] == '-')
         {
             fprintf(stderr, "Unrecognized option: %s", argv[i]);
             Usage(argc, argv);
@@ -78,13 +80,13 @@ int main(int argc, char* argv[])
             pszFilename = argv[i];
         }
     }
-    if( pszFilename == nullptr )
+    if (pszFilename == nullptr)
     {
         fprintf(stderr, "No filename specified\n");
         Usage(argc, argv);
     }
-    FILE* f = fopen(pszFilename, "rb");
-    if( !f )
+    FILE *f = fopen(pszFilename, "rb");
+    if (!f)
     {
         fprintf(stderr, "%s does not exist.\n", pszFilename);
         exit(1);
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
     nLen = (int)ftell(f);
     fseek(f, 0, SEEK_SET);
     buf = malloc(nLen);
-    if( !buf )
+    if (!buf)
     {
         fprintf(stderr, "malloc failed.\n");
         fclose(f);
@@ -101,10 +103,10 @@ int main(int argc, char* argv[])
     }
     CPL_IGNORE_RET_VAL(fread(buf, nLen, 1, f));
     fclose(f);
-    for( int i = 0; i < nLoops; i++ )
+    for (int i = 0; i < nLoops; i++)
     {
         nRet = LLVMFuzzerTestOneInput(buf, nLen);
-        if( nRet != 0 )
+        if (nRet != 0)
             break;
     }
     free(buf);
