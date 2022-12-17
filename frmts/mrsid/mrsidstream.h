@@ -41,8 +41,8 @@ class LTIVSIStream : public LTIOStreamInf
 {
   public:
     LTIVSIStream();
-    LT_STATUS initialize( const char *, const char * );
-    LT_STATUS initialize( LTIVSIStream* ltiVSIStream );
+    LT_STATUS initialize(const char *, const char *);
+    LT_STATUS initialize(LTIVSIStream *ltiVSIStream);
     ~LTIVSIStream();
 
     bool isEOF() override;
@@ -51,24 +51,23 @@ class LTIVSIStream : public LTIOStreamInf
     LT_STATUS open() override;
     LT_STATUS close() override;
 
-    lt_uint32 read( lt_uint8 *, lt_uint32 ) override;
-    lt_uint32 write( const lt_uint8 *, lt_uint32 ) override;
+    lt_uint32 read(lt_uint8 *, lt_uint32) override;
+    lt_uint32 write(const lt_uint8 *, lt_uint32) override;
 
-    LT_STATUS seek( lt_int64, LTIOSeekDir ) override;
+    LT_STATUS seek(lt_int64, LTIOSeekDir) override;
     lt_int64 tell() override;
 
-    LTIOStreamInf* duplicate() override;
+    LTIOStreamInf *duplicate() override;
 
     LT_STATUS getLastError() const override;
 
-    const char* getID() const override;
+    const char *getID() const override;
 
   private:
-    VSIVirtualHandle    *poFileHandle;
-    int                 nError;
-    int                 *pnRefCount;
-    int                 bIsOpen;
+    VSIVirtualHandle *poFileHandle;
+    int nError;
+    int *pnRefCount;
+    int bIsOpen;
 };
 
 #endif /* MRSIDSTREAM_H_INCLUDED */
-
