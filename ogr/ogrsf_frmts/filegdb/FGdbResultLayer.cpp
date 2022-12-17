@@ -1,36 +1,35 @@
 /******************************************************************************
-*
-* Project:  OpenGIS Simple Features Reference Implementation
-* Purpose:  Implements FileGDB OGR result layer.
-* Author:   Even Rouault, <even dot rouault at spatialys.com>
-*
-******************************************************************************
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  Implements FileGDB OGR result layer.
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
+ *
+ ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-****************************************************************************/
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 
 #include "ogr_fgdb.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "FGdbUtils.h"
-
 
 using std::string;
 using std::wstring;
@@ -38,12 +37,11 @@ using std::wstring;
 /************************************************************************/
 /*                         FGdbResultLayer()                            */
 /************************************************************************/
-FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
-                                 const char* pszSQL,
-                                 EnumRows* pEnumRows)
+FGdbResultLayer::FGdbResultLayer(FGdbDataSource *pParentDataSource,
+                                 const char *pszSQL, EnumRows *pEnumRows)
 {
     m_pFeatureDefn = new OGRFeatureDefn("result");
-    SetDescription( m_pFeatureDefn->GetName() );
+    SetDescription(m_pFeatureDefn->GetName());
     m_pFeatureDefn->Reference();
     m_pEnumRows = pEnumRows;
     m_pDS = pParentDataSource;
@@ -59,15 +57,15 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
     for (int i = 0; i < fieldCount; i++)
     {
         FieldType fieldType;
-        string    strFieldType;
-        wstring   fieldName;
+        string strFieldType;
+        wstring fieldName;
         fieldInfo.GetFieldType(i, fieldType);
         fieldInfo.GetFieldName(i, fieldName);
 
         OGRFieldType eType = OFTString;
         int bSkip = FALSE;
 
-        switch(fieldType)
+        switch (fieldType)
         {
             case fieldTypeSmallInteger:
             case fieldTypeInteger:
@@ -128,7 +126,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
             m_pFeatureDefn->AddFieldDefn(&oFieldDefn);
 
             m_vOGRFieldToESRIField.push_back(fieldName);
-            m_vOGRFieldToESRIFieldType.push_back( strFieldType );
+            m_vOGRFieldToESRIFieldType.push_back(strFieldType);
         }
     }
 }
@@ -149,8 +147,8 @@ void FGdbResultLayer::ResetReading()
 {
     m_pEnumRows->Close();
     long hr;
-    if (FAILED(hr = m_pDS->GetGDB()->ExecuteSQL(
-                                    StringToWString(osSQL), true, *m_pEnumRows)))
+    if (FAILED(hr = m_pDS->GetGDB()->ExecuteSQL(StringToWString(osSQL), true,
+                                                *m_pEnumRows)))
     {
         GDBErr(hr, CPLSPrintf("Failed at executing '%s'", osSQL.c_str()));
     }
@@ -160,7 +158,7 @@ void FGdbResultLayer::ResetReading()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FGdbResultLayer::TestCapability( const char * )
+int FGdbResultLayer::TestCapability(const char *)
 {
     return FALSE;
 }
