@@ -2211,26 +2211,28 @@ void VSIGZipWriteHandleMT::DeflateCompress(void *inData)
     sStream.next_out =
         reinterpret_cast<Bytef *>(&psJob->sCompressedData_[0]) + nRealSize;
 
-    // Do a Z_SYNC_FLUSH and Z_FULL_FLUSH, so as to have two markers when
-    // independent as pigz 2.3.4 or later. The following 9 byte sequence will be
-    // found: 0x00 0x00 0xff 0xff 0x00 0x00 0x00 0xff 0xff
-    // Z_FULL_FLUSH only is sufficient, but it is not obvious if a
-    // 0x00 0x00 0xff 0xff marker in the codestream is just a SYNC_FLUSH (
-    // without dictionary reset) or a FULL_FLUSH (with dictionary reset)
-    {
-        const int zlibRet = deflate(&sStream, Z_SYNC_FLUSH);
-        CPLAssertAlwaysEval(zlibRet == Z_OK);
-    }
-
-    {
-        const int zlibRet = deflate(&sStream, Z_FULL_FLUSH);
-        CPLAssertAlwaysEval(zlibRet == Z_OK);
-    }
-
     if (psJob->bFinish_)
     {
         const int zlibRet = deflate(&sStream, Z_FINISH);
         CPLAssertAlwaysEval(zlibRet == Z_STREAM_END);
+    }
+    else
+    {
+        // Do a Z_SYNC_FLUSH and Z_FULL_FLUSH, so as to have two markers when
+        // independent as pigz 2.3.4 or later. The following 9 byte sequence
+        // will be found: 0x00 0x00 0xff 0xff 0x00 0x00 0x00 0xff 0xff
+        // Z_FULL_FLUSH only is sufficient, but it is not obvious if a
+        // 0x00 0x00 0xff 0xff marker in the codestream is just a SYNC_FLUSH (
+        // without dictionary reset) or a FULL_FLUSH (with dictionary reset)
+        {
+            const int zlibRet = deflate(&sStream, Z_SYNC_FLUSH);
+            CPLAssertAlwaysEval(zlibRet == Z_OK);
+        }
+
+        {
+            const int zlibRet = deflate(&sStream, Z_FULL_FLUSH);
+            CPLAssertAlwaysEval(zlibRet == Z_OK);
+        }
     }
 
     nRealSize += static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
