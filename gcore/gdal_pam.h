@@ -213,10 +213,13 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 //! @cond Doxygen_Suppress
 
 constexpr double GDAL_PAM_DEFAULT_NODATA_VALUE = 0;
+// Parenthesis for external code around std::numeric_limits<>::min/max,
+// for external Windows code that might have includes <windows.h> before
+// without defining NOMINMAX
 constexpr int64_t GDAL_PAM_DEFAULT_NODATA_VALUE_INT64 =
-    std::numeric_limits<int64_t>::min();
+    (std::numeric_limits<int64_t>::min)();
 constexpr uint64_t GDAL_PAM_DEFAULT_NODATA_VALUE_UINT64 =
-    std::numeric_limits<uint64_t>::max();
+    (std::numeric_limits<uint64_t>::max)();
 
 /* ==================================================================== */
 /*      GDALRasterBandPamInfo                                           */
