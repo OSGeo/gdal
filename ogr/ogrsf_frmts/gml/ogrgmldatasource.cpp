@@ -247,6 +247,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
 bool OGRGMLDataSource::CheckHeader(const char *pszStr)
 {
+    if (strstr(pszStr, "<wfs:FeatureCollection ") != nullptr)
+        return true;
+
     if (strstr(pszStr, "opengis.net/gml") == nullptr &&
         strstr(pszStr, "<csw:GetRecordsResponse") == nullptr)
     {
