@@ -281,8 +281,13 @@ def test_vsifile_vsicache_read_error():
             gdal.VSIFTruncateL(f, 1000 * 1000)
 
             # Read again
+            # Note: reading after truncating / extending seems to not play
+            # very well with FILE* and depends on the libc implementation,
+            # in particular musl seems to behave differently from glibc and BSDs
             gdal.VSIFSeekL(f2, 500 * 1000, 0)
-            assert len(gdal.VSIFReadL(1, 50 * 1000, f2)) == 50 * 1000
+            # just test we don't crash
+            gdal.VSIFReadL(1, 50 * 1000, f2)
+            # assert len(gdal.VSIFReadL(1, 50 * 1000, f2)) == 50 * 1000
 
             # Truncate the file to simulate a read error
             gdal.VSIFTruncateL(f, 10)

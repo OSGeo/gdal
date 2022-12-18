@@ -296,10 +296,17 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
     const size_t nDataRead =
         m_poBase->Read(pabyWorkBuffer, 1, nBlockCount * m_nChunkSize);
 
-    if (nBlockCount * m_nChunkSize > nDataRead + m_nChunkSize - 1)
-        nBlockCount = (nDataRead + m_nChunkSize - 1) / m_nChunkSize;
-
     bool ret = true;
+    if (nBlockCount * m_nChunkSize > nDataRead + m_nChunkSize - 1)
+    {
+        size_t nNewBlockCount = (nDataRead + m_nChunkSize - 1) / m_nChunkSize;
+        if (nNewBlockCount < nBlockCount)
+        {
+            nBlockCount = nNewBlockCount;
+            ret = false;
+        }
+    }
+
     for (size_t i = 0; i < nBlockCount; i++)
     {
         const vsi_l_offset iBlock = nStartBlock + i;
@@ -368,7 +375,8 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
                 nBlocksToLoad++;
             }
 
-            LoadBlocks(iBlock, nBlocksToLoad, pBuffer, nRequestedBytes);
+            if (!LoadBlocks(iBlock, nBlocksToLoad, pBuffer, nRequestedBytes))
+                break;
         }
     }
 
