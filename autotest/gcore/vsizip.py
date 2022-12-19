@@ -772,6 +772,19 @@ def test_vsizip_byte_copyfile_regular():
         assert gdal.CopyFile("data/byte.tif", dstfilename) == 0
         assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
 
+        md = gdal.GetFileMetadata(dstfilename, "ZIP")
+        assert md is not None
+        assert md.keys() == {
+            "START_DATA_OFFSET",
+            "COMPRESSION_METHOD",
+            "COMPRESSED_SIZE",
+            "UNCOMPRESSED_SIZE",
+        }
+        assert md["START_DATA_OFFSET"] == "38"
+        assert md["COMPRESSION_METHOD"] == "8 (DEFLATE)"
+        assert md["UNCOMPRESSED_SIZE"] == str(gdal.VSIStatL(dstfilename).size)
+        assert int(md["COMPRESSED_SIZE"]) < int(md["UNCOMPRESSED_SIZE"])
+
         # The file already exists:
         with gdaltest.error_handler():
             assert gdal.CopyFile("data/byte.tif", dstfilename) == -1
@@ -787,11 +800,36 @@ def test_vsizip_byte_copyfile_srcfilename_is_none():
     try:
         srcfilename = "/vsimem/test.bin"
         f = gdal.VSIFOpenL(srcfilename, "wb+")
-        gdal.VSIFTruncateL(f, 1000 * 1000)
+        gdal.VSIFTruncateL(f, 5 * 1000 * 1000)
         assert gdal.CopyFile(None, dstfilename, f) == 0
         gdal.VSIFCloseL(f)
         gdal.Unlink(srcfilename)
-        assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
+        assert gdal.VSIStatL(dstfilename).size == 5 * 1000 * 1000
+        md = gdal.GetFileMetadata(dstfilename, "ZIP")
+        assert md is not None
+        assert md.keys() == {
+            "START_DATA_OFFSET",
+            "COMPRESSION_METHOD",
+            "COMPRESSED_SIZE",
+            "UNCOMPRESSED_SIZE",
+            "SEEK_OPTIMIZED_FOUND",
+            "SOZIP_VERSION",
+            "SOZIP_OFFSET_SIZE",
+            "SOZIP_CHUNK_SIZE",
+            "SOZIP_START_DATA_OFFSET",
+            "SEEK_OPTIMIZED_VALID",
+        }
+        assert md["START_DATA_OFFSET"] == "38"
+        assert md["COMPRESSION_METHOD"] == "8 (DEFLATE)"
+        assert md["UNCOMPRESSED_SIZE"] == str(gdal.VSIStatL(dstfilename).size)
+        assert int(md["COMPRESSED_SIZE"]) < int(md["UNCOMPRESSED_SIZE"])
+        assert md["SEEK_OPTIMIZED_FOUND"] == "YES"
+        assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+        assert md["SOZIP_VERSION"] == "1"
+        assert md["SOZIP_OFFSET_SIZE"] == "4"
+        assert md["SOZIP_CHUNK_SIZE"] == "32768"
+        assert int(md["SOZIP_START_DATA_OFFSET"]) > int(md["START_DATA_OFFSET"])
+
     finally:
         gdal.Unlink(zipfilename)
 
