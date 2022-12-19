@@ -837,7 +837,8 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
 /**
  * \brief Get metadata on files.
  *
- * Implemented currently only for network-like filesystems.
+ * Implemented currently only for network-like filesystems, or starting
+ * with GDAL 3.7 for /vsizip/
  *
  * @param pszFilename the path of the filesystem object to be queried.
  * UTF-8 encoded.
@@ -859,6 +860,8 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
  * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to
  * https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata.
  * Note: this will be a subset of what pszDomain=HEADERS returns</li>
+ * <li>ZIP: specific to /vsizip/: to obtain ZIP specific metadata, in particular
+ * if a file is seek-optimized (SEEK_OPTIMIZED=YES)</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
  *

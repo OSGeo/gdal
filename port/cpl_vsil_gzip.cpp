@@ -3516,6 +3516,9 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
                            bool bSetError,
                            CSLConstList /* papszOptions */) override;
 
+    char **GetFileMetadata(const char *pszFilename, const char *pszDomain,
+                           CSLConstList papszOptions) override;
+
     VSIVirtualHandle *OpenForWrite(const char *pszFilename,
                                    const char *pszAccess);
 
@@ -4212,6 +4215,73 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
         // seeks.
         return VSICreateBufferedReaderHandle(poGZIPHandle);
     }
+}
+
+/************************************************************************/
+/*                          GetFileMetadata()                           */
+/************************************************************************/
+
+char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
+                                                const char *pszDomain,
+                                                CSLConstList /*papszOptions*/)
+{
+    if (pszDomain != nullptr && EQUAL(pszDomain, "ZIP"))
+    {
+        VSIFileInZipInfo info;
+        if (!GetFileInfo(pszFilename, info))
+            return nullptr;
+
+        CPLStringList aosMetadata;
+        aosMetadata.SetNameValue(
+            "START_DATA_OFFSET",
+            CPLSPrintf(CPL_FRMT_GUIB,
+                       static_cast<GUIntBig>(info.nStartDataStream)));
+
+        if (info.nCompressionMethod == 0)
+            aosMetadata.SetNameValue("COMPRESSION_METHOD", "0 (STORED)");
+        else if (info.nCompressionMethod == 8)
+            aosMetadata.SetNameValue("COMPRESSION_METHOD", "8 (DEFLATE)");
+        else
+        {
+            aosMetadata.SetNameValue("COMPRESSION_METHOD",
+                                     CPLSPrintf("%d", info.nCompressionMethod));
+        }
+        aosMetadata.SetNameValue(
+            "COMPRESSED_SIZE",
+            CPLSPrintf(CPL_FRMT_GUIB,
+                       static_cast<GUIntBig>(info.nCompressedSize)));
+        aosMetadata.SetNameValue(
+            "UNCOMPRESSED_SIZE",
+            CPLSPrintf(CPL_FRMT_GUIB,
+                       static_cast<GUIntBig>(info.nUncompressedSize)));
+
+        if (info.bSOZipIndexFound)
+        {
+            aosMetadata.SetNameValue("SEEK_OPTIMIZED_FOUND", "YES");
+
+            aosMetadata.SetNameValue("SOZIP_VERSION",
+                                     CPLSPrintf("%u", info.nSOZIPVersion));
+
+            aosMetadata.SetNameValue("SOZIP_OFFSET_SIZE",
+                                     CPLSPrintf("%u", info.nSOZIPOffsetSize));
+
+            aosMetadata.SetNameValue("SOZIP_CHUNK_SIZE",
+                                     CPLSPrintf("%u", info.nSOZIPChunkSize));
+
+            aosMetadata.SetNameValue(
+                "SOZIP_START_DATA_OFFSET",
+                CPLSPrintf(CPL_FRMT_GUIB,
+                           static_cast<GUIntBig>(info.nSOZIPStartData)));
+
+            if (info.bSOZipIndexValid)
+            {
+                aosMetadata.SetNameValue("SEEK_OPTIMIZED_VALID", "YES");
+            }
+        }
+
+        return aosMetadata.StealList();
+    }
+    return nullptr;
 }
 
 /************************************************************************/
