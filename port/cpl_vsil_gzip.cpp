@@ -3519,6 +3519,11 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     VSIVirtualHandle *OpenForWrite(const char *pszFilename,
                                    const char *pszAccess);
 
+    int CopyFile(const char *pszSource, const char *pszTarget,
+                 VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                 const char *const *papszOptions,
+                 GDALProgressFunc pProgressFunc, void *pProgressData) override;
+
     int Mkdir(const char *pszDirname, long nMode) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
@@ -4430,6 +4435,88 @@ const char *VSIZipFilesystemHandler::GetOptions()
            "description='Chunk of uncompressed data for parallelization. "
            "Use K(ilobytes) or M(egabytes) suffix' default='1M'/>"
            "</Options>";
+}
+
+/************************************************************************/
+/*                           CopyFile()                                 */
+/************************************************************************/
+
+int VSIZipFilesystemHandler::CopyFile(const char *pszSource,
+                                      const char *pszTarget, VSILFILE *fpSource,
+                                      vsi_l_offset /* nSourceSize */,
+                                      CSLConstList papszOptions,
+                                      GDALProgressFunc pProgressFunc,
+                                      void *pProgressData)
+{
+    CPLString osZipInFileName;
+
+    char *zipFilename = SplitFilename(pszTarget, osZipInFileName, FALSE);
+    if (zipFilename == nullptr)
+        return -1;
+    CPLString osZipFilename = zipFilename;
+    CPLFree(zipFilename);
+    zipFilename = nullptr;
+    if (osZipInFileName.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Target filename should be of the form "
+                 "/vsizip/path_to.zip/filename_within_zip");
+        return -1;
+    }
+
+    // Invalidate cached file list.
+    auto oIterFileList = oFileList.find(osZipFilename);
+    if (oIterFileList != oFileList.end())
+    {
+        delete oIterFileList->second;
+
+        oFileList.erase(oIterFileList);
+    }
+
+    const auto oIter = oMapZipWriteHandles.find(osZipFilename);
+    if (oIter != oMapZipWriteHandles.end())
+    {
+        VSIZipWriteHandle *poZIPHandle = oIter->second;
+
+        if (poZIPHandle->GetChildInWriting() != nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create %s while another file is being "
+                     "written in the .zip",
+                     osZipInFileName.c_str());
+            return -1;
+        }
+
+        if (CPLAddFileInZip(poZIPHandle->GetHandle(), osZipInFileName.c_str(),
+                            pszSource, fpSource, papszOptions, pProgressFunc,
+                            pProgressData) != CE_None)
+        {
+            return -1;
+        }
+        return 0;
+    }
+    else
+    {
+        CPLStringList aosOptionsCreateZip;
+        VSIStatBufL sBuf;
+        if (VSIStatExL(osZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0)
+            aosOptionsCreateZip.SetNameValue("APPEND", "TRUE");
+
+        void *hZIP = CPLCreateZip(osZipFilename, aosOptionsCreateZip.List());
+
+        if (hZIP == nullptr)
+            return -1;
+
+        if (CPLAddFileInZip(hZIP, osZipInFileName.c_str(), pszSource, fpSource,
+                            papszOptions, pProgressFunc,
+                            pProgressData) != CE_None)
+        {
+            CPLCloseZip(hZIP);
+            return -1;
+        }
+        CPLCloseZip(hZIP);
+        return 0;
+    }
 }
 
 /************************************************************************/

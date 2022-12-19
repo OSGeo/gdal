@@ -503,6 +503,9 @@ int VSIRename(const char *oldpath, const char *newpath)
 /**
  * \brief Copy a source file into a target file.
  *
+ * For a /vsizip/foo.zip/bar target, the options available are those of
+ * CPLAddFileInZip()
+ *
  * @param pszSource Source filename. UTF-8 encoded. May be NULL if fpSource is
  * not NULL.
  * @param pszTarget Target filename.  UTF-8 encoded. Must not be NULL
