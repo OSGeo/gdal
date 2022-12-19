@@ -1148,3 +1148,66 @@ def test_vsifile_vsimem_truncate_zeroize():
     gdal.VSIFSeekL(f, 0, 0)
     assert gdal.VSIFReadL(1, 1, f) == b"\x00"
     gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test VSICopyFile()
+
+
+def test_vsifile_copyfile():
+
+    # Most simple invokation
+    dstfilename = "/vsimem/test_vsifile_copyfile.tif"
+    assert gdal.CopyFile("data/byte.tif", dstfilename) == 0
+    assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
+
+    # Test srcfilename passed to None
+    srcfilename = "/vsimem/test.bin"
+    f = gdal.VSIFOpenL(srcfilename, "wb+")
+    gdal.VSIFTruncateL(f, 1000 * 1000)
+    assert gdal.CopyFile(None, dstfilename, f) == 0
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(srcfilename)
+    assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
+
+    # Test progress callback
+    srcfilename = "/vsimem/test.bin"
+    f = gdal.VSIFOpenL(srcfilename, "wb+")
+    gdal.VSIFTruncateL(f, 1000 * 1000)
+    gdal.VSIFCloseL(f)
+
+    def progress(pct, msg, user_data):
+        user_data.append(pct)
+        return 1
+
+    tab = []
+    assert (
+        gdal.CopyFile(srcfilename, dstfilename, callback=progress, callback_data=tab)
+        == 0
+    )
+    assert tab[-1] == 1.0
+    gdal.Unlink(srcfilename)
+    assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
+
+    # Test progress callback in error situation
+    srcfilename = "/vsimem/test.bin"
+    f = gdal.VSIFOpenL(srcfilename, "wb+")
+    gdal.VSIFTruncateL(f, 1000 * 1000)
+    gdal.VSIFCloseL(f)
+
+    def progress(pct, msg, user_data):
+        if pct > 0.5:
+            return 0
+        user_data.append(pct)
+        return 1
+
+    tab = []
+    assert (
+        gdal.CopyFile(srcfilename, dstfilename, callback=progress, callback_data=tab)
+        != 0
+    )
+    assert tab[-1] != 1.0
+    gdal.Unlink(srcfilename)
+    assert gdal.VSIStatL(dstfilename).size != 1000 * 1000
+
+    gdal.Unlink(dstfilename)
