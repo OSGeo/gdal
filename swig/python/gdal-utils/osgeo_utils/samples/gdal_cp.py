@@ -49,49 +49,15 @@ def Usage():
     return 2
 
 
-class TermProgress(object):
-    def __init__(self):
-        self.nLastTick = -1
-        self.nThisTick = 0
-
-    def Progress(self, dfComplete, message):
-        # pylint: disable=unused-argument
-        self.nThisTick = int(dfComplete * 40.0)
-        if self.nThisTick > 40:
-            self.nThisTick = 40
-
-        # // Have we started a new progress run?
-        if self.nThisTick < self.nLastTick and self.nLastTick >= 39:
-            self.nLastTick = -1
-
-        if self.nThisTick <= self.nLastTick:
-            return True
-
-        while self.nThisTick > self.nLastTick:
-            self.nLastTick = self.nLastTick + 1
-            if self.nLastTick % 4 == 0:
-                val = int((self.nLastTick / 4) * 10)
-                sys.stdout.write("%d" % val)
-            else:
-                sys.stdout.write(".")
-
-        if self.nThisTick == 40:
-            print(" - done.")
-
-        sys.stdout.flush()
-
-        return True
-
-
 class ScaledProgress(object):
     def __init__(self, dfMin, dfMax, UnderlyingProgress):
         self.dfMin = dfMin
         self.dfMax = dfMax
         self.UnderlyingProgress = UnderlyingProgress
 
-    def Progress(self, dfComplete, message):
-        return self.UnderlyingProgress.Progress(
-            dfComplete * (self.dfMax - self.dfMin) + self.dfMin, message
+    def Progress(self, dfComplete, message, user_data):
+        return self.UnderlyingProgress(
+            dfComplete * (self.dfMax - self.dfMin) + self.dfMin, message, user_data
         )
 
 
@@ -115,55 +81,9 @@ def gdal_cp_single(srcfile, targetfile, progress):
         print("Cannot open %s" % srcfile)
         return -1
 
-    fout = gdal.VSIFOpenL(targetfile, "wb")
-    if fout is None:
-        print("Cannot create %s" % targetfile)
-        gdal.VSIFCloseL(fin)
-        return -1
-
-    version_num = int(gdal.VersionInfo("VERSION_NUM"))
-    total_size = 0
-    if version_num < 1900 or progress is not None:
-        gdal.VSIFSeekL(fin, 0, 2)
-        total_size = gdal.VSIFTellL(fin)
-        gdal.VSIFSeekL(fin, 0, 0)
-
-    buf_max_size = 4096
-    copied = 0
-    ret = 0
-    # print('Copying %s...' % srcfile)
-    if progress is not None:
-        if not progress.Progress(0.0, "Copying %s" % srcfile):
-            print("Copy stopped by user")
-            ret = -2
-
-    while ret == 0:
-        if total_size != 0 and copied + buf_max_size > total_size:
-            to_read = total_size - copied
-        else:
-            to_read = buf_max_size
-        buf = gdal.VSIFReadL(1, to_read, fin)
-        if buf is None:
-            if copied == 0:
-                print("Cannot read %d bytes in %s" % (to_read, srcfile))
-                ret = -1
-            break
-        buf_size = len(buf)
-        if gdal.VSIFWriteL(buf, 1, buf_size, fout) != buf_size:
-            print("Error writing %d bytes" % buf_size)
-            ret = -1
-            break
-        copied += buf_size
-        if progress is not None and total_size != 0:
-            if not progress.Progress(copied * 1.0 / total_size, "Copying %s" % srcfile):
-                print("Copy stopped by user")
-                ret = -2
-                break
-        if to_read < buf_max_size or buf_size != buf_max_size:
-            break
+    ret = gdal.CopyFile(srcfile, targetfile, fin, callback=progress)
 
     gdal.VSIFCloseL(fin)
-    gdal.VSIFCloseL(fout)
 
     return ret
 
@@ -243,7 +163,7 @@ def gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure):
                 dfMax = (cursize + filesizelst[i]) * 1.0 / total_size
                 scaled_progress = ScaledProgress(dfMin, dfMax, progress)
 
-                ret = gdal_cp_single(srcfile, targetfile, scaled_progress)
+                ret = gdal_cp_single(srcfile, targetfile, scaled_progress.Progress)
                 if ret == -2 or (ret == -1 and not skip_failure):
                     return ret
 
@@ -272,14 +192,8 @@ def gdal_cp(argv, progress=None):
 
     for i in range(1, len(argv)):
         if argv[i] == "-progress":
-            progress = TermProgress()
+            progress = gdal.TermProgress_nocb
         elif argv[i] == "-r":
-            version_num = int(gdal.VersionInfo("VERSION_NUM"))
-            if version_num < 1900:
-                print(
-                    "ERROR: Python bindings of GDAL 1.9.0 or later required for -r option"
-                )
-                return -1
             recurse = True
         elif len(argv[i]) >= 5 and argv[i][0:5] == "-skip":
             skip_failure = True
@@ -342,10 +256,6 @@ def gdal_cp(argv, progress=None):
 
 
 def main(argv=sys.argv):
-    version_num = int(gdal.VersionInfo("VERSION_NUM"))
-    if version_num < 1800:
-        print("ERROR: Python bindings of GDAL 1.8.0 or later required")
-        return 1
     return gdal_cp(argv)
 
 
