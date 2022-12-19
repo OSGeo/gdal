@@ -428,6 +428,10 @@ int CPL_DLL VSIRmdirRecursive(const char *pszDirname);
 int CPL_DLL VSIUnlink(const char *pszFilename);
 int CPL_DLL *VSIUnlinkBatch(CSLConstList papszFiles);
 int CPL_DLL VSIRename(const char *oldpath, const char *newpath);
+int CPL_DLL VSICopyFile(const char *pszSource, const char *pszTarget,
+                        VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                        const char *const *papszOptions,
+                        GDALProgressFunc pProgressFunc, void *pProgressData);
 int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
                     const char *const *papszOptions,
                     GDALProgressFunc pProgressFunc, void *pProgressData,

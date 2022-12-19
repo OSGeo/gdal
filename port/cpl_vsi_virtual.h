@@ -48,6 +48,11 @@
 #undef GetDiskFreeSpace
 #endif
 
+// To avoid aliasing to CopyFile to CopyFileA on Windows
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 /************************************************************************/
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
@@ -206,6 +211,11 @@ class CPL_DLL VSIFilesystemHandler
                       const char *const *papszOptions,
                       GDALProgressFunc pProgressFunc, void *pProgressData,
                       char ***ppapszOutputs);
+
+    virtual int CopyFile(const char *pszSource, const char *pszTarget,
+                         VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                         const char *const *papszOptions,
+                         GDALProgressFunc pProgressFunc, void *pProgressData);
 
     virtual VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
                             const char *const *papszOptions);

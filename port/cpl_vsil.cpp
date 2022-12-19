@@ -497,6 +497,53 @@ int VSIRename(const char *oldpath, const char *newpath)
 }
 
 /************************************************************************/
+/*                             VSICopyFile()                            */
+/************************************************************************/
+
+/**
+ * \brief Copy a source file into a target file.
+ *
+ * @param pszSource Source filename. UTF-8 encoded. May be NULL if fpSource is
+ * not NULL.
+ * @param pszTarget Target filename.  UTF-8 encoded. Must not be NULL
+ * @param fpSource File handle on the source file. May be NULL if pszSource is
+ * not NULL.
+ * @param nSourceSize Size of the source file. Only used for progress callback.
+ * If set to -1, and progress callback is used, VSIStatL() will be used on
+ * pszSource to retrieve the source size.
+ * @param papszOptions Null terminated list of options, or NULL.
+ * @param pProgressFunc Progress callback, or NULL.
+ * @param pProgressData User data of progress callback, or NULL.
+ *
+ * @return 0 on success.
+ * @since GDAL 3.7
+ */
+
+int VSICopyFile(const char *pszSource, const char *pszTarget,
+                VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                const char *const *papszOptions, GDALProgressFunc pProgressFunc,
+                void *pProgressData)
+
+{
+    if (pszSource == nullptr && fpSource == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "pszSource == nullptr && fpSource == nullptr");
+        return -1;
+    }
+    if (pszTarget == nullptr || pszTarget[0] == '\0')
+    {
+        return -1;
+    }
+
+    VSIFilesystemHandler *poFSHandlerTarget =
+        VSIFileManager::GetHandler(pszTarget);
+    return poFSHandlerTarget->CopyFile(pszSource, pszTarget, fpSource,
+                                       nSourceSize, papszOptions, pProgressFunc,
+                                       pProgressData);
+}
+
+/************************************************************************/
 /*                             VSISync()                                */
 /************************************************************************/
 
@@ -1178,6 +1225,99 @@ VSIVirtualHandle *VSIFilesystemHandler::Open(const char *pszFilename,
                                              const char *pszAccess)
 {
     return Open(pszFilename, pszAccess, false, nullptr);
+}
+
+/************************************************************************/
+/*                             CopyFile()                               */
+/************************************************************************/
+
+int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
+                                   VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                   CSLConstList papszOptions,
+                                   GDALProgressFunc pProgressFunc,
+                                   void *pProgressData)
+{
+    struct VirtualHandleCloser
+    {
+        void operator()(VSIVirtualHandle *poHandle)
+        {
+            if (poHandle)
+                poHandle->Close();
+        }
+    };
+
+    std::unique_ptr<VSIVirtualHandle, VirtualHandleCloser>
+        poFileHandleAutoClose;
+    if (fpSource == nullptr)
+    {
+        fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
+        if (fpSource == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
+            return -1;
+        }
+        poFileHandleAutoClose.reset(
+            reinterpret_cast<VSIVirtualHandle *>(fpSource));
+    }
+    if (nSourceSize == static_cast<vsi_l_offset>(-1) &&
+        pProgressFunc != nullptr && pszSource != nullptr)
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(pszSource, &sStat) == 0)
+        {
+            nSourceSize = sStat.st_size;
+        }
+    }
+
+    VSILFILE *fpOut = VSIFOpenEx2L(pszTarget, "wb", TRUE, papszOptions);
+    if (fpOut == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszTarget);
+        return -1;
+    }
+
+    CPLString osMsg;
+    if (pszSource)
+        osMsg.Printf("Copying of %s", pszSource);
+
+    int ret = 0;
+    constexpr size_t nBufferSize = 10 * 4096;
+    std::vector<GByte> abyBuffer(nBufferSize, 0);
+    GUIntBig nOffset = 0;
+    while (true)
+    {
+        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
+        size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
+        if (nWritten != nRead)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Copying of %s to %s failed",
+                     pszSource, pszTarget);
+            ret = -1;
+            break;
+        }
+        nOffset += nRead;
+        if (pProgressFunc &&
+            !pProgressFunc(nSourceSize == 0 ? 1.0
+                           : nSourceSize > 0 &&
+                                   nSourceSize != static_cast<vsi_l_offset>(-1)
+                               ? double(nOffset) / nSourceSize
+                               : 0.0,
+                           pszSource ? osMsg.c_str() : nullptr, pProgressData))
+        {
+            ret = -1;
+            break;
+        }
+        if (nRead < nBufferSize)
+        {
+            break;
+        }
+    }
+
+    if (VSIFCloseL(fpOut) != 0)
+    {
+        ret = -1;
+    }
+    return ret;
 }
 
 /************************************************************************/

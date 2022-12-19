@@ -49,6 +49,11 @@
 #include <mutex>
 #include <thread>
 
+// To avoid aliasing to CopyFile to CopyFileA on Windows
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 //! @cond Doxygen_Suppress
 
 // Leave it for backward compatibility, but deprecate.
@@ -521,10 +526,6 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
-    bool CopyFile(VSILFILE *fpIn, vsi_l_offset nSourceSize,
-                  const char *pszSource, const char *pszTarget,
-                  CSLConstList papszOptions, GDALProgressFunc pProgressFunc,
-                  void *pProgressData);
     virtual int MkdirInternal(const char *pszDirname, long nMode,
                               bool bDoStatCheck);
 
@@ -555,6 +556,12 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
     int Rename(const char *oldpath, const char *newpath) override;
+
+    virtual int CopyFile(const char *pszSource, const char *pszTarget,
+                         VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                         const char *const *papszOptions,
+                         GDALProgressFunc pProgressFunc,
+                         void *pProgressData) override;
 
     virtual int DeleteObject(const char *pszFilename);
 
