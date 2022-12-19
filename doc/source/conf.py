@@ -398,6 +398,13 @@ man_pages = [
         [],
         1,
     ),
+    (
+        "programs/sozip",
+        "sozip",
+        "Generate a seek-optimized (SOZip) file.",
+        [author_evenr],
+        1,
+    ),
 ]
 
 
