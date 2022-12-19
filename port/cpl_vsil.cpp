@@ -531,10 +531,11 @@ int VSIRename(const char *oldpath, const char *newpath)
  * Currently accepted options are:
  * <ul>
  * <li>RECURSIVE=NO (the default is YES)</li>
- * <li>SYNC_STRATEGY=TIMESTAMP/ETAG/OVERWRITE. Determines which criterion is
- * used to determine if a target file must be replaced when it already exists
- * and has the same file size as the source. Only applies for a source or target
- * being a network filesystem.
+ * <li>SYNC_STRATEGY=TIMESTAMP/ETAG/OVERWRITE.
+ *
+ *     Determines which criterion is used to determine if a target file must be
+ *     replaced when it already exists and has the same file size as the source.
+ *     Only applies for a source or target being a network filesystem.
  *
  *     The default is TIMESTAMP (similarly to how 'aws s3 sync' works), that is
  *     to say that for an upload operation, a remote file is
@@ -550,7 +551,7 @@ int VSIRename(const char *oldpath, const char *newpath)
  *     MD5Sum as ETAG.
  *
  *     The OVERWRITE strategy (GDAL >= 3.2) will always overwrite the target
- * file with the source one.
+ *     file with the source one.
  * </li>
  * <li>NUM_THREADS=integer. (GDAL >= 3.1) Number of threads to use for parallel
  * file copying. Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in
