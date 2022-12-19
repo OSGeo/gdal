@@ -912,3 +912,63 @@ def test_vsizip_byte_copyfile_file_already_open():
     finally:
         gdal.VSIFCloseL(fmain)
         gdal.Unlink(zipfilename)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "options", [[], ["SOZIP_OFFSET_SIZE=4"], ["SOZIP_OFFSET_SIZE=8"]]
+)
+def test_vsizip_byte_sozip(options):
+
+    zipfilename = "/vsimem/test_vsizip_byte_sozip.zip"
+    dstfilename = f"/vsizip/{zipfilename}/test.tif"
+    try:
+        options += ["SEEK_OPTIMIZED=YES", "SOZIP_CHUNK_SIZE=128"]
+        assert gdal.CopyFile("data/byte.tif", dstfilename, options=options) == 0
+        assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
+
+        md = gdal.GetFileMetadata(dstfilename, "ZIP")
+        assert md is not None
+        assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+        assert md["SOZIP_CHUNK_SIZE"] == "128"
+        assert md["SOZIP_OFFSET_SIZE"] == (
+            "8" if "SOZIP_OFFSET_SIZE=8" in options else "4"
+        ), options
+
+        ds = gdal.Open(dstfilename)
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+    finally:
+        gdal.Unlink(zipfilename)
+
+
+###############################################################################
+
+
+def test_vsizip_sozip_of_file_bigger_than_4GB():
+
+    md = gdal.GetFileMetadata(
+        "/vsizip/{data/zero_5GB_sozip_of_sozip.zip}/zero_5GB.bin.zip", "ZIP"
+    )
+    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_CHUNK_SIZE"] == "32768"
+
+    md = gdal.GetFileMetadata(
+        "/vsizip/{/vsizip/{data/zero_5GB_sozip_of_sozip.zip}/zero_5GB.bin.zip}/zero_5GB.bin",
+        "ZIP",
+    )
+    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_CHUNK_SIZE"] == "10485760"
+
+    f = gdal.VSIFOpenL(
+        "/vsizip/{/vsizip/{data/zero_5GB_sozip_of_sozip.zip}/zero_5GB.bin.zip}/zero_5GB.bin",
+        "rb",
+    )
+    assert f is not None
+    try:
+        assert gdal.VSIFSeekL(f, 5 * 1024 * 1024 * 1024 - 1, 0) == 0
+        assert gdal.VSIFReadL(1, 2, f) == b"\x00"
+    finally:
+        gdal.VSIFCloseL(f)
