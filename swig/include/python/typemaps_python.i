@@ -2189,6 +2189,31 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     GDALPythonFreeCStr($1, bToFree$argnum);
 }
 
+%typemap(in) (const char *utf8_path_or_none) (int bToFree = 0)
+{
+    /* %typemap(in) (const char *utf8_path_or_none) */
+    if( $input == Py_None )
+    {
+        $1 = NULL;
+    }
+    else
+    {
+        $1 = GDALPythonObjectToCStr( $input, &bToFree );
+        if ($1 == NULL)
+        {
+            PyErr_SetString( PyExc_RuntimeError, "not a string" );
+            SWIG_fail;
+        }
+        }
+}
+
+%typemap(freearg)(const char *utf8_path_or_none)
+{
+    /* %typemap(freearg) (const char *utf8_path_or_none) */
+    if( $1 != NULL )
+        GDALPythonFreeCStr($1, bToFree$argnum);
+}
+
 /*
  * Typemap argout of StatBuf * used in VSIStatL( )
  */

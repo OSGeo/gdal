@@ -4091,6 +4091,21 @@ bool wrapper_VSISync(const char* pszSource,
 }
 
 
+int wrapper_VSICopyFile(const char* pszSource,
+                        const char* pszTarget,
+                        VSILFILE* fpSource = NULL,
+                        GIntBig nSourceSize = -1,
+                        char** options = NULL,
+                        GDALProgressFunc callback=NULL,
+                        void* callback_data=NULL)
+{
+    return VSICopyFile(
+        pszSource, pszTarget, fpSource,
+        nSourceSize < 0 ? static_cast<vsi_l_offset>(-1) : static_cast<vsi_l_offset>(nSourceSize),
+        options, callback, callback_data );
+}
+
+
 retStringAndCPLFree* wrapper_VSIGetSignedURL(const char * utf8_path, char** options = NULL )
 {
     return VSIGetSignedURL( utf8_path, options );
@@ -12076,6 +12091,200 @@ fail:
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CopyFile(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  VSILFILE *arg3 = (VSILFILE *) NULL ;
+  GIntBig arg4 = (GIntBig) -1 ;
+  char **arg5 = (char **) NULL ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
+  void *arg7 = (void *) NULL ;
+  int bToFree1 = 0 ;
+  int bToFree2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  char * kwnames[] = {
+    (char *)"pszSource",  (char *)"pszTarget",  (char *)"fpSource",  (char *)"nSourceSize",  (char *)"options",  (char *)"callback",  (char *)"callback_data",  NULL 
+  };
+  int result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OOOOO:CopyFile", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4, &obj5, &obj6)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path_or_none) */
+    if( obj0 == Py_None )
+    {
+      arg1 = NULL;
+    }
+    else
+    {
+      arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+      if (arg1 == NULL)
+      {
+        PyErr_SetString( PyExc_RuntimeError, "not a string" );
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg2 = GDALPythonObjectToCStr( obj1, &bToFree2 );
+    if (arg2 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  if (obj2) {
+    res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_VSILFILE, 0 |  0 );
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "CopyFile" "', argument " "3"" of type '" "VSILFILE *""'"); 
+    }
+    arg3 = reinterpret_cast< VSILFILE * >(argp3);
+  }
+  if (obj3) {
+    {
+      arg4 = (GIntBig)PyLong_AsLongLong(obj3);
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj5) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj5) || PyInt_Check(obj5) )
+      {
+        if( PyLong_AsLong(obj5) == 0 )
+        {
+          obj5 = Py_None;
+        }
+      }
+      
+      if (obj5 && obj5 != Py_None ) {
+        void* cbfunction = NULL;
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj5,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg6 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj5)) {
+            PyErr_SetString( PyExc_RuntimeError,
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj5;
+          arg6 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj6 ;
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)wrapper_VSICopyFile((char const *)arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path_or_none) */
+    if( arg1 != NULL )
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path_or_none) */
+    if( arg1 != NULL )
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
   }
   return NULL;
 }
@@ -46886,6 +47095,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Rename", _wrap_Rename, METH_VARARGS, "Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"},
 	 { "Sync", (PyCFunction)(void(*)(void))_wrap_Sync, METH_VARARGS|METH_KEYWORDS, "Sync(char const * pszSource, char const * pszTarget, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> bool"},
 	 { "AbortPendingUploads", _wrap_AbortPendingUploads, METH_O, "AbortPendingUploads(char const * utf8_path) -> bool"},
+	 { "CopyFile", (PyCFunction)(void(*)(void))_wrap_CopyFile, METH_VARARGS|METH_KEYWORDS, "CopyFile(char const * pszSource, char const * pszTarget, VSILFILE fpSource=None, GIntBig nSourceSize=-1, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { "GetActualURL", _wrap_GetActualURL, METH_O, "GetActualURL(char const * utf8_path) -> char const *"},
 	 { "GetSignedURL", _wrap_GetSignedURL, METH_VARARGS, "GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"},
 	 { "GetFileSystemsPrefixes", _wrap_GetFileSystemsPrefixes, METH_NOARGS, "GetFileSystemsPrefixes() -> char **"},

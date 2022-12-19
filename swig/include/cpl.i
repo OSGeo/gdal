@@ -657,6 +657,37 @@ bool VSIAbortPendingUploads(const char *utf8_path );
 
 #endif
 
+%rename (CopyFile) wrapper_VSICopyFile;
+#if defined(SWIGPYTHON)
+%apply (const char* utf8_path_or_none) {(const char* pszSource)};
+#else
+%apply (const char* utf8_path) {(const char* pszSource)};
+#endif
+%apply (const char* utf8_path) {(const char* pszTarget)};
+
+#if defined(SWIGPYTHON)
+%feature( "kwargs" ) wrapper_VSICopyFile;
+#endif
+
+%inline {
+int wrapper_VSICopyFile(const char* pszSource,
+                        const char* pszTarget,
+                        VSILFILE* fpSource = NULL,
+                        GIntBig nSourceSize = -1,
+                        char** options = NULL,
+                        GDALProgressFunc callback=NULL,
+                        void* callback_data=NULL)
+{
+    return VSICopyFile(
+        pszSource, pszTarget, fpSource,
+        nSourceSize < 0 ? static_cast<vsi_l_offset>(-1) : static_cast<vsi_l_offset>(nSourceSize),
+        options, callback, callback_data );
+}
+}
+
+%clear (const char* pszSource);
+%clear (const char* pszTarget);
+
 const char* VSIGetActualURL(const char * utf8_path);
 
 %inline {
