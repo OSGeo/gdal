@@ -1104,6 +1104,23 @@ class CompositeCT : public OGRCoordinateTransformation
                        : nullptr;
     }
 
+    virtual bool GetEmitErrors() const override
+    {
+        if (poCT1)
+            return poCT1->GetEmitErrors();
+        if (poCT2)
+            return poCT2->GetEmitErrors();
+        return true;
+    }
+
+    virtual void SetEmitErrors(bool bEmitErrors) override
+    {
+        if (poCT1)
+            poCT1->SetEmitErrors(bEmitErrors);
+        if (poCT2)
+            poCT2->SetEmitErrors(bEmitErrors);
+    }
+
     virtual int Transform(int nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess) override
     {
