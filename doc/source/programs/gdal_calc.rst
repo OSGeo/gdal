@@ -23,7 +23,7 @@ Synopsis
 
 Command line raster calculator with numpy syntax. Use any basic
 arithmetic supported by numpy arrays such as ``+``, ``-``, ``*``, and
-``\`` along with logical operators such as ``>``.
+``/`` along with logical operators such as ``>``.
 Note that all files must have the same dimensions (unless extent option is used),
 but no projection checking is performed (unless projectionCheck option is used).
 
@@ -79,7 +79,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --type=<datatype>
 
-    Output datatype, must be one of [``Byte``, ``UInt16``, ``Int16``, ``UInt32``, ``Int32``, ``UInt64``, ``Int64``, ``Float64``, ``Float32``, ``CInt16``, ``CInt32``, ``CFloat64``, ``CFloat32``].
+    Output datatype, must be one of [``Byte``, ``Int8``, ``UInt16``, ``Int16``, ``UInt32``, ``Int32``, ``UInt64``, ``Int64``, ``Float64``, ``Float32``, ``CInt16``, ``CInt32``, ``CFloat64``, ``CFloat32``].
 
     .. note::
 
@@ -89,6 +89,7 @@ but no projection checking is performed (unless projectionCheck option is used).
     .. note::
 
         UInt64, Int64, CInt16, CInt32, CFloat32, CFloat64 have been added in GDAL 3.5.3
+        Int8 has been added in GDAL 3.7
 
 .. option:: --format=<gdal_format>
 

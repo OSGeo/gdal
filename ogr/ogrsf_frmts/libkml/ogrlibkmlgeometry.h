@@ -44,10 +44,8 @@ returns:
 
 *******************************************************************************/
 
-kmldom::ElementPtr geom2kml (
-    OGRGeometry * poOgrGeom,
-    int extra,
-    kmldom::KmlFactory * poKmlFactory );
+kmldom::ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra,
+                            kmldom::KmlFactory *poKmlFactory);
 
 /******************************************************************************
  Function to read a kml geometry and translate to ogr.
@@ -61,16 +59,13 @@ Returns:
 
 ******************************************************************************/
 
-OGRGeometry *kml2geom (
-    kmldom::GeometryPtr poKmlGeometry,
-    OGRSpatialReference *poOgrSRS );
+OGRGeometry *kml2geom(kmldom::GeometryPtr poKmlGeometry,
+                      OGRSpatialReference *poOgrSRS);
 
-OGRGeometry *kml2geom_latlonbox (
-    kmldom::LatLonBoxPtr poKmlLatLonBox,
-    OGRSpatialReference *poOgrSRS );
+OGRGeometry *kml2geom_latlonbox(kmldom::LatLonBoxPtr poKmlLatLonBox,
+                                OGRSpatialReference *poOgrSRS);
 
-OGRGeometry *kml2geom_latlonquad (
-    kmldom::GxLatLonQuadPtr poKmlLatLonQuad,
-    OGRSpatialReference *poOgrSRS );
+OGRGeometry *kml2geom_latlonquad(kmldom::GxLatLonQuadPtr poKmlLatLonQuad,
+                                 OGRSpatialReference *poOgrSRS);
 
 #endif  // OGR_LIBKML_GEOMETRY_H

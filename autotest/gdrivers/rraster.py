@@ -32,8 +32,11 @@
 import pprint
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("RRASTER")
 
 ###############################################################################
 # Perform simple read test.
@@ -317,10 +320,7 @@ def test_rraster_signedbyte():
     gdal.Translate(filename2, filename, format="RRASTER")
 
     ds = gdal.Open(filename2)
-    assert (
-        ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
-        == "SIGNEDBYTE"
-    )
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
     assert ds.GetRasterBand(1).GetMinimum() == -124
     ds = None
 

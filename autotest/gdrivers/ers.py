@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ERS")
+
 ###############################################################################
 # Perform simple read test.
 
@@ -98,9 +100,7 @@ def test_ers_4():
 def test_ers_5():
 
     ds = gdal.Open("data/ers/8s.ers")
-    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
-
-    assert md["PIXELTYPE"] == "SIGNEDBYTE", "Failed to detect SIGNEDBYTE"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
 
     ds = None
 
@@ -116,10 +116,7 @@ def test_ers_6():
     src_ds = gdal.Open("data/ers/8s.ers")
 
     ds = drv.CreateCopy("tmp/8s.ers", src_ds)
-
-    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
-
-    assert md["PIXELTYPE"] == "SIGNEDBYTE", "Failed to detect SIGNEDBYTE"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
 
     ds = None
 

@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ISIS3")
+
 ###############################################################################
 # Perform simple read test on isis3 detached dataset.
 

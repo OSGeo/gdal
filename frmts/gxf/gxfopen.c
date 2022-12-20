@@ -34,13 +34,11 @@
 #include <ctype.h>
 #include "gxfopen.h"
 
-
-
 /* this is also defined in gdal.h which we avoid in this separable component */
-#define CPLE_WrongFormat	200
+#define CPLE_WrongFormat 200
 
-#define MAX_LINE_COUNT_PER_HEADER       1000
-#define MAX_HEADER_COUNT                1000
+#define MAX_LINE_COUNT_PER_HEADER 1000
+#define MAX_HEADER_COUNT 1000
 
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
@@ -49,129 +47,137 @@
 /*      value in clean form.                                            */
 /************************************************************************/
 
-static char **GXFReadHeaderValue( VSILFILE * fp, char * pszHTitle )
+static char **GXFReadHeaderValue(VSILFILE *fp, char *pszHTitle)
 
 {
-    const char	*pszLine;
-    char	**papszReturn = NULL;
-    int		i;
-    int     nLineCount = 0, nReturnLineCount = 0;
-    int     bContinuedLine = FALSE;
+    const char *pszLine;
+    char **papszReturn = NULL;
+    int i;
+    int nLineCount = 0, nReturnLineCount = 0;
+    int bContinuedLine = FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Try to read a line.  If we fail or if this isn't a proper       */
-/*      header value then return the failure.                           */
-/* -------------------------------------------------------------------- */
-    pszLine = CPLReadLineL( fp );
-    if( pszLine == NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Try to read a line.  If we fail or if this isn't a proper       */
+    /*      header value then return the failure.                           */
+    /* -------------------------------------------------------------------- */
+    pszLine = CPLReadLineL(fp);
+    if (pszLine == NULL)
     {
-        strcpy( pszHTitle, "#EOF" );
-        return( NULL );
+        strcpy(pszHTitle, "#EOF");
+        return (NULL);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Extract the title.  It should be terminated by some sort of     */
-/*      white space.                                                    */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < 70 && !isspace((unsigned char)pszLine[i]) && pszLine[i] != '\0'; i++ ) {}
+    /* -------------------------------------------------------------------- */
+    /*      Extract the title.  It should be terminated by some sort of     */
+    /*      white space.                                                    */
+    /* -------------------------------------------------------------------- */
+    for (i = 0;
+         i < 70 && !isspace((unsigned char)pszLine[i]) && pszLine[i] != '\0';
+         i++)
+    {
+    }
 
-    strncpy( pszHTitle, pszLine, i );
+    strncpy(pszHTitle, pszLine, i);
     pszHTitle[i] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      If this is #GRID, then return ... we are at the end of the      */
-/*      header.                                                         */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszHTitle,"#GRID") )
+    /* -------------------------------------------------------------------- */
+    /*      If this is #GRID, then return ... we are at the end of the      */
+    /*      header.                                                         */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(pszHTitle, "#GRID"))
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Skip white space.                                               */
-/* -------------------------------------------------------------------- */
-    while( isspace((unsigned char)pszLine[i]) )
+    /* -------------------------------------------------------------------- */
+    /*      Skip white space.                                               */
+    /* -------------------------------------------------------------------- */
+    while (isspace((unsigned char)pszLine[i]))
         i++;
 
-/* -------------------------------------------------------------------- */
-/*    If we have reached the end of the line, try to read another line. */
-/* -------------------------------------------------------------------- */
-    if( pszLine[i] == '\0' )
+    /* -------------------------------------------------------------------- */
+    /*    If we have reached the end of the line, try to read another line. */
+    /* -------------------------------------------------------------------- */
+    if (pszLine[i] == '\0')
     {
-        pszLine = CPLReadLineL( fp );
-        if( pszLine == NULL )
+        pszLine = CPLReadLineL(fp);
+        if (pszLine == NULL)
         {
-            strcpy( pszHTitle, "#EOF" );
-            return( NULL );
+            strcpy(pszHTitle, "#EOF");
+            return (NULL);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Keeping adding the value stuff as new lines till we reach a     */
-/*      `#' mark at the beginning of a new line.                        */
-/* -------------------------------------------------------------------- */
-    do {
-        vsi_l_offset    nCurPos;
-        char            chNextChar = 0;
-        char		*pszTrimmedLine;
-        size_t      nLen = strlen(pszLine);
+    /* -------------------------------------------------------------------- */
+    /*      Keeping adding the value stuff as new lines till we reach a     */
+    /*      `#' mark at the beginning of a new line.                        */
+    /* -------------------------------------------------------------------- */
+    do
+    {
+        vsi_l_offset nCurPos;
+        char chNextChar = 0;
+        char *pszTrimmedLine;
+        size_t nLen = strlen(pszLine);
 
         /* Lines are supposed to be limited to 80 characters */
-        if( nLen > 1024 )
+        if (nLen > 1024)
         {
             CSLDestroy(papszReturn);
             return NULL;
         }
 
-        pszTrimmedLine = CPLStrdup( pszLine );
+        pszTrimmedLine = CPLStrdup(pszLine);
 
-        for( i = ((int)nLen)-1; i >= 0 && pszLine[i] == ' '; i-- )
+        for (i = ((int)nLen) - 1; i >= 0 && pszLine[i] == ' '; i--)
             pszTrimmedLine[i] = '\0';
 
-        if( bContinuedLine )
+        if (bContinuedLine)
         {
-            char* pszTmp = (char*) VSIMalloc(strlen(papszReturn[nReturnLineCount-1]) + strlen(pszTrimmedLine) + 1);
-            if( pszTmp == NULL )
+            char *pszTmp =
+                (char *)VSIMalloc(strlen(papszReturn[nReturnLineCount - 1]) +
+                                  strlen(pszTrimmedLine) + 1);
+            if (pszTmp == NULL)
             {
                 CSLDestroy(papszReturn);
                 CPLFree(pszTrimmedLine);
                 return NULL;
             }
-            strcpy(pszTmp, papszReturn[nReturnLineCount-1]);
-            if( pszTrimmedLine[0] == '\0' )
-                pszTmp[strlen(papszReturn[nReturnLineCount-1]) - 1] = 0;
+            strcpy(pszTmp, papszReturn[nReturnLineCount - 1]);
+            if (pszTrimmedLine[0] == '\0')
+                pszTmp[strlen(papszReturn[nReturnLineCount - 1]) - 1] = 0;
             else
-                strcpy(pszTmp + (strlen(papszReturn[nReturnLineCount-1]) - 1), pszTrimmedLine);
-            CPLFree(papszReturn[nReturnLineCount-1]);
-            papszReturn[nReturnLineCount-1] = pszTmp;
+                strcpy(pszTmp + (strlen(papszReturn[nReturnLineCount - 1]) - 1),
+                       pszTrimmedLine);
+            CPLFree(papszReturn[nReturnLineCount - 1]);
+            papszReturn[nReturnLineCount - 1] = pszTmp;
         }
         else
         {
-            papszReturn = CSLAddString( papszReturn, pszTrimmedLine );
-            nReturnLineCount ++;
+            papszReturn = CSLAddString(papszReturn, pszTrimmedLine);
+            nReturnLineCount++;
         }
 
         /* Is it a continued line ? */
-        bContinuedLine = ( i >= 0 && pszTrimmedLine[i] == '\\' );
+        bContinuedLine = (i >= 0 && pszTrimmedLine[i] == '\\');
 
-        CPLFree( pszTrimmedLine );
+        CPLFree(pszTrimmedLine);
 
         nCurPos = VSIFTellL(fp);
-        if( VSIFReadL(&chNextChar, 1, 1, fp) != 1 )
+        if (VSIFReadL(&chNextChar, 1, 1, fp) != 1)
         {
             CSLDestroy(papszReturn);
             return NULL;
         }
         VSIFSeekL(fp, nCurPos, SEEK_SET);
 
-        if( chNextChar == '#' )
+        if (chNextChar == '#')
             pszLine = NULL;
         else
         {
-            pszLine = CPLReadLineL( fp );
-            nLineCount ++;
+            pszLine = CPLReadLineL(fp);
+            nLineCount++;
         }
-    } while( pszLine != NULL && nLineCount < MAX_LINE_COUNT_PER_HEADER );
+    } while (pszLine != NULL && nLineCount < MAX_LINE_COUNT_PER_HEADER);
 
-    return( papszReturn );
+    return (papszReturn);
 }
 
 /************************************************************************/
@@ -187,37 +193,37 @@ static char **GXFReadHeaderValue( VSILFILE * fp, char * pszHTitle )
  * will be NULL if the access fails.
  */
 
-GXFHandle GXFOpen( const char * pszFilename )
+GXFHandle GXFOpen(const char *pszFilename)
 
 {
-    VSILFILE	*fp;
-    GXFInfo_t	*psGXF;
-    char	szTitle[71];
-    char	**papszList;
-    int     nHeaderCount = 0;
+    VSILFILE *fp;
+    GXFInfo_t *psGXF;
+    char szTitle[71];
+    char **papszList;
+    int nHeaderCount = 0;
 
-/* -------------------------------------------------------------------- */
-/*      We open in binary to ensure that we can efficiently seek()      */
-/*      to any location when reading scanlines randomly.  If we         */
-/*      opened as text we might still be able to seek(), but I          */
-/*      believe that on Windows, the C library has to read through      */
-/*      all the data to find the right spot taking into account DOS     */
-/*      CRs.                                                            */
-/* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "rb" );
+    /* -------------------------------------------------------------------- */
+    /*      We open in binary to ensure that we can efficiently seek()      */
+    /*      to any location when reading scanlines randomly.  If we         */
+    /*      opened as text we might still be able to seek(), but I          */
+    /*      believe that on Windows, the C library has to read through      */
+    /*      all the data to find the right spot taking into account DOS     */
+    /*      CRs.                                                            */
+    /* -------------------------------------------------------------------- */
+    fp = VSIFOpenL(pszFilename, "rb");
 
-    if( fp == NULL )
+    if (fp == NULL)
     {
         /* how to effectively communicate this error out? */
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to open file: %s\n", pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to open file: %s\n",
+                 pszFilename);
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the GXF Information object.                              */
-/* -------------------------------------------------------------------- */
-    psGXF = (GXFInfo_t *) VSICalloc( sizeof(GXFInfo_t), 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Create the GXF Information object.                              */
+    /* -------------------------------------------------------------------- */
+    psGXF = (GXFInfo_t *)VSICalloc(sizeof(GXFInfo_t), 1);
     psGXF->fp = fp;
     psGXF->dfTransformScale = 1.0;
     psGXF->nSense = GXFS_LL_RIGHT;
@@ -228,186 +234,186 @@ GXFHandle GXFOpen( const char * pszFilename )
     psGXF->dfUnitToMeter = 1.0;
     psGXF->pszTitle = VSIStrdup("");
 
-/* -------------------------------------------------------------------- */
-/*      Read the header, one line at a time.                            */
-/* -------------------------------------------------------------------- */
-    while( (papszList = GXFReadHeaderValue( fp, szTitle)) != NULL && nHeaderCount < MAX_HEADER_COUNT )
+    /* -------------------------------------------------------------------- */
+    /*      Read the header, one line at a time.                            */
+    /* -------------------------------------------------------------------- */
+    while ((papszList = GXFReadHeaderValue(fp, szTitle)) != NULL &&
+           nHeaderCount < MAX_HEADER_COUNT)
     {
-        if( STARTS_WITH_CI(szTitle, "#TITL") )
+        if (STARTS_WITH_CI(szTitle, "#TITL"))
         {
-            CPLFree( psGXF->pszTitle );
-            psGXF->pszTitle = CPLStrdup( papszList[0] );
+            CPLFree(psGXF->pszTitle);
+            psGXF->pszTitle = CPLStrdup(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#POIN") )
+        else if (STARTS_WITH_CI(szTitle, "#POIN"))
         {
             psGXF->nRawXSize = atoi(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#ROWS") )
+        else if (STARTS_WITH_CI(szTitle, "#ROWS"))
         {
             psGXF->nRawYSize = atoi(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#PTSE") )
+        else if (STARTS_WITH_CI(szTitle, "#PTSE"))
         {
             psGXF->dfXPixelSize = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#RWSE") )
+        else if (STARTS_WITH_CI(szTitle, "#RWSE"))
         {
             psGXF->dfYPixelSize = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#DUMM") )
+        else if (STARTS_WITH_CI(szTitle, "#DUMM"))
         {
-            memset( psGXF->szDummy, 0, sizeof(psGXF->szDummy));
-            strncpy( psGXF->szDummy, papszList[0], sizeof(psGXF->szDummy) - 1);
+            memset(psGXF->szDummy, 0, sizeof(psGXF->szDummy));
+            strncpy(psGXF->szDummy, papszList[0], sizeof(psGXF->szDummy) - 1);
             psGXF->dfSetDummyTo = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#XORI") )
+        else if (STARTS_WITH_CI(szTitle, "#XORI"))
         {
             psGXF->dfXOrigin = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#YORI") )
+        else if (STARTS_WITH_CI(szTitle, "#YORI"))
         {
             psGXF->dfYOrigin = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#ZMIN") )
+        else if (STARTS_WITH_CI(szTitle, "#ZMIN"))
         {
             psGXF->dfZMinimum = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#ZMAX") )
+        else if (STARTS_WITH_CI(szTitle, "#ZMAX"))
         {
             psGXF->dfZMaximum = CPLAtof(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle, "#SENS") )
+        else if (STARTS_WITH_CI(szTitle, "#SENS"))
         {
             psGXF->nSense = atoi(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle,"#MAP_PROJECTION") &&
-                 psGXF->papszMapProjection == NULL )
+        else if (STARTS_WITH_CI(szTitle, "#MAP_PROJECTION") &&
+                 psGXF->papszMapProjection == NULL)
         {
             psGXF->papszMapProjection = papszList;
             papszList = NULL;
         }
-        else if( STARTS_WITH_CI(szTitle,"#MAP_D") &&
-                 psGXF->papszMapDatumTransform == NULL  )
+        else if (STARTS_WITH_CI(szTitle, "#MAP_D") &&
+                 psGXF->papszMapDatumTransform == NULL)
         {
             psGXF->papszMapDatumTransform = papszList;
             papszList = NULL;
         }
-        else if( STARTS_WITH_CI(szTitle, "#UNIT") &&
-                 psGXF->pszUnitName == NULL )
+        else if (STARTS_WITH_CI(szTitle, "#UNIT") && psGXF->pszUnitName == NULL)
         {
-            char	**papszFields;
+            char **papszFields;
 
-            papszFields = CSLTokenizeStringComplex( papszList[0], ", ",
-                                                    TRUE, TRUE );
+            papszFields =
+                CSLTokenizeStringComplex(papszList[0], ", ", TRUE, TRUE);
 
-            if( CSLCount(papszFields) > 1 )
+            if (CSLCount(papszFields) > 1)
             {
-                psGXF->pszUnitName = VSIStrdup( papszFields[0] );
-                psGXF->dfUnitToMeter = CPLAtof( papszFields[1] );
-                if( psGXF->dfUnitToMeter == 0.0 )
+                psGXF->pszUnitName = VSIStrdup(papszFields[0]);
+                psGXF->dfUnitToMeter = CPLAtof(papszFields[1]);
+                if (psGXF->dfUnitToMeter == 0.0)
                     psGXF->dfUnitToMeter = 1.0;
             }
 
-            CSLDestroy( papszFields );
+            CSLDestroy(papszFields);
         }
-        else if( STARTS_WITH_CI(szTitle, "#TRAN") &&
-                 psGXF->pszTransformName == NULL )
+        else if (STARTS_WITH_CI(szTitle, "#TRAN") &&
+                 psGXF->pszTransformName == NULL)
         {
-            char	**papszFields;
+            char **papszFields;
 
-            papszFields = CSLTokenizeStringComplex( papszList[0], ", ",
-                                                    TRUE, TRUE );
+            papszFields =
+                CSLTokenizeStringComplex(papszList[0], ", ", TRUE, TRUE);
 
-            if( CSLCount(papszFields) > 1 )
+            if (CSLCount(papszFields) > 1)
             {
                 psGXF->dfTransformScale = CPLAtof(papszFields[0]);
                 psGXF->dfTransformOffset = CPLAtof(papszFields[1]);
             }
 
-            if( CSLCount(papszFields) > 2 )
-                psGXF->pszTransformName = CPLStrdup( papszFields[2] );
+            if (CSLCount(papszFields) > 2)
+                psGXF->pszTransformName = CPLStrdup(papszFields[2]);
 
-            CSLDestroy( papszFields );
+            CSLDestroy(papszFields);
         }
-        else if( STARTS_WITH_CI(szTitle,"#GTYPE") )
+        else if (STARTS_WITH_CI(szTitle, "#GTYPE"))
         {
             psGXF->nGType = atoi(papszList[0]);
-            if( psGXF->nGType < 0 || psGXF->nGType > 20 )
+            if (psGXF->nGType < 0 || psGXF->nGType > 20)
             {
-                CSLDestroy( papszList );
-                GXFClose( psGXF );
+                CSLDestroy(papszList);
+                GXFClose(psGXF);
                 return NULL;
             }
         }
 
-        CSLDestroy( papszList );
-        nHeaderCount ++;
+        CSLDestroy(papszList);
+        nHeaderCount++;
     }
 
-    CSLDestroy( papszList );
+    CSLDestroy(papszList);
 
-/* -------------------------------------------------------------------- */
-/*      Did we find the #GRID?                                          */
-/* -------------------------------------------------------------------- */
-    if( !STARTS_WITH_CI(szTitle, "#GRID") )
+    /* -------------------------------------------------------------------- */
+    /*      Did we find the #GRID?                                          */
+    /* -------------------------------------------------------------------- */
+    if (!STARTS_WITH_CI(szTitle, "#GRID"))
     {
-        GXFClose( psGXF );
-        CPLError( CE_Failure, CPLE_WrongFormat,
-                  "Didn't parse through to #GRID successfully in.\n"
-                  "file `%s'.\n",
-                  pszFilename );
+        GXFClose(psGXF);
+        CPLError(CE_Failure, CPLE_WrongFormat,
+                 "Didn't parse through to #GRID successfully in.\n"
+                 "file `%s'.\n",
+                 pszFilename);
 
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Allocate, and initialize the raw scanline offset array.         */
-/* -------------------------------------------------------------------- */
-    if( psGXF->nRawYSize <= 0 || psGXF->nRawYSize >= INT_MAX )
+    /* -------------------------------------------------------------------- */
+    /*      Allocate, and initialize the raw scanline offset array.         */
+    /* -------------------------------------------------------------------- */
+    if (psGXF->nRawYSize <= 0 || psGXF->nRawYSize >= INT_MAX)
     {
-        GXFClose( psGXF );
+        GXFClose(psGXF);
         return NULL;
     }
 
     /* Avoid excessive memory allocation */
-    if( psGXF->nRawYSize >= 1000000 )
+    if (psGXF->nRawYSize >= 1000000)
     {
         vsi_l_offset nCurOffset;
         vsi_l_offset nFileSize;
-        nCurOffset = VSIFTellL( psGXF->fp );
-        VSIFSeekL( psGXF->fp, 0, SEEK_END );
-        nFileSize = VSIFTellL( psGXF->fp );
-        VSIFSeekL( psGXF->fp, nCurOffset, SEEK_SET );
-        if( (vsi_l_offset)psGXF->nRawYSize > nFileSize )
+        nCurOffset = VSIFTellL(psGXF->fp);
+        VSIFSeekL(psGXF->fp, 0, SEEK_END);
+        nFileSize = VSIFTellL(psGXF->fp);
+        VSIFSeekL(psGXF->fp, nCurOffset, SEEK_SET);
+        if ((vsi_l_offset)psGXF->nRawYSize > nFileSize)
         {
-            GXFClose( psGXF );
+            GXFClose(psGXF);
             return NULL;
         }
     }
 
-    psGXF->panRawLineOffset = (vsi_l_offset *)
-        VSICalloc( sizeof(vsi_l_offset), psGXF->nRawYSize+1 );
-    if( psGXF->panRawLineOffset == NULL )
+    psGXF->panRawLineOffset =
+        (vsi_l_offset *)VSICalloc(sizeof(vsi_l_offset), psGXF->nRawYSize + 1);
+    if (psGXF->panRawLineOffset == NULL)
     {
-        GXFClose( psGXF );
+        GXFClose(psGXF);
         return NULL;
     }
 
-    psGXF->panRawLineOffset[0] = VSIFTellL( psGXF->fp );
+    psGXF->panRawLineOffset[0] = VSIFTellL(psGXF->fp);
 
-/* -------------------------------------------------------------------- */
-/*      Update the zmin/zmax values to take into account #TRANSFORM     */
-/*      information.                                                    */
-/* -------------------------------------------------------------------- */
-    if( psGXF->dfZMinimum != 0.0 || psGXF->dfZMaximum != 0.0 )
+    /* -------------------------------------------------------------------- */
+    /*      Update the zmin/zmax values to take into account #TRANSFORM     */
+    /*      information.                                                    */
+    /* -------------------------------------------------------------------- */
+    if (psGXF->dfZMinimum != 0.0 || psGXF->dfZMaximum != 0.0)
     {
-        psGXF->dfZMinimum = (psGXF->dfZMinimum * psGXF->dfTransformScale)
-            			+ psGXF->dfTransformOffset;
-        psGXF->dfZMaximum = (psGXF->dfZMaximum * psGXF->dfTransformScale)
-            			+ psGXF->dfTransformOffset;
+        psGXF->dfZMinimum = (psGXF->dfZMinimum * psGXF->dfTransformScale) +
+                            psGXF->dfTransformOffset;
+        psGXF->dfZMaximum = (psGXF->dfZMaximum * psGXF->dfTransformScale) +
+                            psGXF->dfTransformOffset;
     }
 
-    return( (GXFHandle) psGXF );
+    return ((GXFHandle)psGXF);
 }
 
 /************************************************************************/
@@ -420,23 +426,23 @@ GXFHandle GXFOpen( const char * pszFilename )
  * @param hGXF handle to GXF file.
  */
 
-void GXFClose( GXFHandle hGXF )
+void GXFClose(GXFHandle hGXF)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
 
-    CPLFree( psGXF->panRawLineOffset );
-    CPLFree( psGXF->pszUnitName );
-    CSLDestroy( psGXF->papszMapDatumTransform );
-    CSLDestroy( psGXF->papszMapProjection );
-    CPLFree( psGXF->pszTitle );
-    CPLFree( psGXF->pszTransformName );
+    CPLFree(psGXF->panRawLineOffset);
+    CPLFree(psGXF->pszUnitName);
+    CSLDestroy(psGXF->papszMapDatumTransform);
+    CSLDestroy(psGXF->papszMapProjection);
+    CPLFree(psGXF->pszTitle);
+    CPLFree(psGXF->pszTransformName);
 
-    VSIFCloseL( psGXF->fp );
+    VSIFCloseL(psGXF->fp);
 
-    CPLReadLineL( NULL );
+    CPLReadLineL(NULL);
 
-    CPLFree( psGXF );
+    CPLFree(psGXF);
 }
 
 /************************************************************************/
@@ -447,65 +453,71 @@ void GXFClose( GXFHandle hGXF )
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static
-double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
-                       int bScale )
+static double GXFParseBase90(GXFInfo_t *psGXF, const char *pszText, int bScale)
 
 {
-    int		i = 0;
+    int i = 0;
     unsigned int nValue = 0;
 
-    while( i < psGXF->nGType )
+    while (i < psGXF->nGType)
     {
-        nValue = nValue*90U + (unsigned)(pszText[i] - 37);
+        nValue = nValue * 90U + (unsigned)(pszText[i] - 37);
         i++;
     }
 
-    if( bScale )
-        return( (nValue * psGXF->dfTransformScale) + psGXF->dfTransformOffset);
+    if (bScale)
+        return ((nValue * psGXF->dfTransformScale) + psGXF->dfTransformOffset);
     else
-        return( nValue );
+        return (nValue);
 }
-
 
 /************************************************************************/
 /*                       GXFReadRawScanlineFrom()                       */
 /************************************************************************/
 
-static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, vsi_l_offset iOffset,
-                                      vsi_l_offset * pnNewOffset, double * padfLineBuf )
+static CPLErr GXFReadRawScanlineFrom(GXFInfo_t *psGXF, vsi_l_offset iOffset,
+                                     vsi_l_offset *pnNewOffset,
+                                     double *padfLineBuf)
 
 {
-    const char	*pszLine;
-    int		nValuesRead = 0, nValuesSought = psGXF->nRawXSize;
+    const char *pszLine;
+    int nValuesRead = 0, nValuesSought = psGXF->nRawXSize;
 
-    if( VSIFSeekL( psGXF->fp, iOffset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(psGXF->fp, iOffset, SEEK_SET) != 0)
         return CE_Failure;
 
-    while( nValuesRead < nValuesSought )
+    while (nValuesRead < nValuesSought)
     {
-        pszLine = CPLReadLineL( psGXF->fp );
-        if( pszLine == NULL )
+        pszLine = CPLReadLineL(psGXF->fp);
+        if (pszLine == NULL)
             break;
 
-/* -------------------------------------------------------------------- */
-/*      Uncompressed case.                                              */
-/* -------------------------------------------------------------------- */
-        if( psGXF->nGType == 0 )
+        /* --------------------------------------------------------------------
+         */
+        /*      Uncompressed case. */
+        /* --------------------------------------------------------------------
+         */
+        if (psGXF->nGType == 0)
         {
             /* we could just tokenize the line, but that's pretty expensive.
                Instead I will parse on white space ``by hand''. */
-            while( *pszLine != '\0' && nValuesRead < nValuesSought )
+            while (*pszLine != '\0' && nValuesRead < nValuesSought)
             {
-                int		i;
+                int i;
 
                 /* skip leading white space */
-                for( ; isspace((unsigned char)*pszLine); pszLine++ ) {}
+                for (; isspace((unsigned char)*pszLine); pszLine++)
+                {
+                }
 
                 /* Skip the data value (non white space) */
-                for( i = 0; pszLine[i] != '\0' && !isspace((unsigned char)pszLine[i]); i++) {}
+                for (i = 0;
+                     pszLine[i] != '\0' && !isspace((unsigned char)pszLine[i]);
+                     i++)
+                {
+                }
 
-                if( strncmp(pszLine,psGXF->szDummy,i) == 0 )
+                if (strncmp(pszLine, psGXF->szDummy, i) == 0)
                 {
                     padfLineBuf[nValuesRead++] = psGXF->dfSetDummyTo;
                 }
@@ -515,78 +527,83 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, vsi_l_offset iOffset,
                 }
 
                 /* skip further whitespace */
-                for( pszLine += i; isspace((unsigned char)*pszLine); pszLine++ ) {}
+                for (pszLine += i; isspace((unsigned char)*pszLine); pszLine++)
+                {
+                }
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Compressed case.                                                */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Compressed case. */
+        /* --------------------------------------------------------------------
+         */
         else
         {
             size_t nLineLenOri = strlen(pszLine);
             int nLineLen = (int)nLineLenOri;
 
-            while( *pszLine != '\0' && nValuesRead < nValuesSought )
+            while (*pszLine != '\0' && nValuesRead < nValuesSought)
             {
-                if( nLineLen < psGXF->nGType )
+                if (nLineLen < psGXF->nGType)
                     return CE_Failure;
 
-                if( pszLine[0] == '!' )
+                if (pszLine[0] == '!')
                 {
                     padfLineBuf[nValuesRead++] = psGXF->dfSetDummyTo;
                 }
-                else if( pszLine[0] == '"' )
+                else if (pszLine[0] == '"')
                 {
-                    int		nCount, i;
-                    double	dfValue;
+                    int nCount, i;
+                    double dfValue;
 
                     pszLine += psGXF->nGType;
                     nLineLen -= psGXF->nGType;
-                    if( nLineLen < psGXF->nGType )
+                    if (nLineLen < psGXF->nGType)
                     {
-                        pszLine = CPLReadLineL( psGXF->fp );
-                        if( pszLine == NULL )
+                        pszLine = CPLReadLineL(psGXF->fp);
+                        if (pszLine == NULL)
                             return CE_Failure;
                         nLineLenOri = strlen(pszLine);
                         nLineLen = (int)nLineLenOri;
-                        if( nLineLen < psGXF->nGType )
+                        if (nLineLen < psGXF->nGType)
                             return CE_Failure;
                     }
 
-                    nCount = (int) GXFParseBase90( psGXF, pszLine, FALSE);
+                    nCount = (int)GXFParseBase90(psGXF, pszLine, FALSE);
                     pszLine += psGXF->nGType;
                     nLineLen -= psGXF->nGType;
 
-                    if( nLineLen < psGXF->nGType )
+                    if (nLineLen < psGXF->nGType)
                     {
-                        pszLine = CPLReadLineL( psGXF->fp );
-                        if( pszLine == NULL )
+                        pszLine = CPLReadLineL(psGXF->fp);
+                        if (pszLine == NULL)
                             return CE_Failure;
                         nLineLenOri = strlen(pszLine);
                         nLineLen = (int)nLineLenOri;
-                        if( nLineLen < psGXF->nGType )
+                        if (nLineLen < psGXF->nGType)
                             return CE_Failure;
                     }
 
-                    if( *pszLine == '!' )
+                    if (*pszLine == '!')
                         dfValue = psGXF->dfSetDummyTo;
                     else
-                        dfValue = GXFParseBase90( psGXF, pszLine, TRUE );
+                        dfValue = GXFParseBase90(psGXF, pszLine, TRUE);
 
-                    if( nValuesRead + nCount > nValuesSought )
+                    if (nValuesRead + nCount > nValuesSought)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined, "Wrong count value");
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Wrong count value");
                         return CE_Failure;
                     }
 
-                    for( i=0; i < nCount && nValuesRead < nValuesSought; i++ )
+                    for (i = 0; i < nCount && nValuesRead < nValuesSought; i++)
                         padfLineBuf[nValuesRead++] = dfValue;
                 }
                 else
                 {
                     padfLineBuf[nValuesRead++] =
-                        GXFParseBase90( psGXF, pszLine, TRUE );
+                        GXFParseBase90(psGXF, pszLine, TRUE);
                 }
 
                 pszLine += psGXF->nGType;
@@ -595,12 +612,12 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, vsi_l_offset iOffset,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Return the new offset, if requested.                            */
-/* -------------------------------------------------------------------- */
-    if( pnNewOffset != NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Return the new offset, if requested.                            */
+    /* -------------------------------------------------------------------- */
+    if (pnNewOffset != NULL)
     {
-        *pnNewOffset = VSIFTellL( psGXF->fp );
+        *pnNewOffset = VSIFTellL(psGXF->fp);
     }
 
     return CE_None;
@@ -630,48 +647,46 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, vsi_l_offset iOffset,
  * @return CE_None if access succeeds or CE_Failure if something goes wrong.
  */
 
-CPLErr GXFGetScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
+CPLErr GXFGetScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    CPLErr	nErr;
-    int		iRawScanline;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    CPLErr nErr;
+    int iRawScanline;
 
-    if( psGXF->nSense == GXFS_LL_RIGHT
-        || psGXF->nSense == GXFS_LR_LEFT )
+    if (psGXF->nSense == GXFS_LL_RIGHT || psGXF->nSense == GXFS_LR_LEFT)
     {
         iRawScanline = psGXF->nRawYSize - iScanline - 1;
     }
 
-    else if( psGXF->nSense == GXFS_UL_RIGHT
-             || psGXF->nSense == GXFS_UR_LEFT )
+    else if (psGXF->nSense == GXFS_UL_RIGHT || psGXF->nSense == GXFS_UR_LEFT)
     {
         iRawScanline = iScanline;
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to support vertically oriented images." );
-        return( CE_Failure );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to support vertically oriented images.");
+        return (CE_Failure);
     }
 
-    nErr = GXFGetRawScanline( hGXF, iRawScanline, padfLineBuf );
+    nErr = GXFGetRawScanline(hGXF, iRawScanline, padfLineBuf);
 
-    if( nErr == CE_None
-        && (psGXF->nSense == GXFS_LR_LEFT || psGXF->nSense == GXFS_UR_LEFT) )
+    if (nErr == CE_None &&
+        (psGXF->nSense == GXFS_LR_LEFT || psGXF->nSense == GXFS_UR_LEFT))
     {
-        int	i;
-        double	dfTemp;
+        int i;
+        double dfTemp;
 
-        for( i = psGXF->nRawXSize / 2 - 1; i >= 0; i-- )
+        for (i = psGXF->nRawXSize / 2 - 1; i >= 0; i--)
         {
             dfTemp = padfLineBuf[i];
-            padfLineBuf[i] = padfLineBuf[psGXF->nRawXSize-i-1];
-            padfLineBuf[psGXF->nRawXSize-i-1] = dfTemp;
+            padfLineBuf[i] = padfLineBuf[psGXF->nRawXSize - i - 1];
+            padfLineBuf[psGXF->nRawXSize - i - 1] = dfTemp;
         }
     }
 
-    return( nErr );
+    return (nErr);
 }
 
 /************************************************************************/
@@ -697,51 +712,50 @@ CPLErr GXFGetScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
  * @return CE_None if access succeeds or CE_Failure if something goes wrong.
  */
 
-CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
+CPLErr GXFGetRawScanline(GXFHandle hGXF, int iScanline, double *padfLineBuf)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    CPLErr	eErr;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    CPLErr eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Validate scanline.                                              */
-/* -------------------------------------------------------------------- */
-    if( iScanline < 0 || iScanline >= psGXF->nRawYSize )
+    /* -------------------------------------------------------------------- */
+    /*      Validate scanline.                                              */
+    /* -------------------------------------------------------------------- */
+    if (iScanline < 0 || iScanline >= psGXF->nRawYSize)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GXFGetRawScanline(): Scanline `%d' does not exist.\n",
-                  iScanline );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GXFGetRawScanline(): Scanline `%d' does not exist.\n",
+                 iScanline);
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we don't have the requested scanline, fetch preceding        */
-/*      scanlines to find the pointer to this scanline.                 */
-/* -------------------------------------------------------------------- */
-    if( psGXF->panRawLineOffset[iScanline] == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      If we don't have the requested scanline, fetch preceding        */
+    /*      scanlines to find the pointer to this scanline.                 */
+    /* -------------------------------------------------------------------- */
+    if (psGXF->panRawLineOffset[iScanline] == 0)
     {
-        int		i;
+        int i;
 
-        CPLAssert( iScanline > 0 );
+        CPLAssert(iScanline > 0);
 
-        for( i = 0; i < iScanline; i++ )
+        for (i = 0; i < iScanline; i++)
         {
-            if( psGXF->panRawLineOffset[i+1] == 0 )
+            if (psGXF->panRawLineOffset[i + 1] == 0)
             {
-                eErr = GXFGetRawScanline( hGXF, i, padfLineBuf );
-                if( eErr != CE_None )
-                    return( eErr );
+                eErr = GXFGetRawScanline(hGXF, i, padfLineBuf);
+                if (eErr != CE_None)
+                    return (eErr);
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Get this scanline, and update the offset for the next line.     */
-/* -------------------------------------------------------------------- */
-    eErr =
-        GXFReadRawScanlineFrom( psGXF, psGXF->panRawLineOffset[iScanline],
-                                psGXF->panRawLineOffset+iScanline+1,
-                                padfLineBuf );
+    /* -------------------------------------------------------------------- */
+    /*      Get this scanline, and update the offset for the next line.     */
+    /* -------------------------------------------------------------------- */
+    eErr = GXFReadRawScanlineFrom(psGXF, psGXF->panRawLineOffset[iScanline],
+                                  psGXF->panRawLineOffset + iScanline + 1,
+                                  padfLineBuf);
 
     return eErr;
 }
@@ -754,43 +768,43 @@ CPLErr GXFGetRawScanline( GXFHandle hGXF, int iScanline, double * padfLineBuf )
 /*      it.                                                             */
 /************************************************************************/
 
-static void GXFScanForZMinMax( GXFHandle hGXF )
+static void GXFScanForZMinMax(GXFHandle hGXF)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    int		iLine, iPixel;
-    double	*padfScanline;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    int iLine, iPixel;
+    double *padfScanline;
 
-    padfScanline = (double *) VSICalloc(sizeof(double),psGXF->nRawXSize);
-    if( padfScanline == NULL )
+    padfScanline = (double *)VSICalloc(sizeof(double), psGXF->nRawXSize);
+    if (padfScanline == NULL)
         return;
 
     psGXF->dfZMinimum = 1e50;
     psGXF->dfZMaximum = -1e50;
 
-    for( iLine = 0; iLine < psGXF->nRawYSize; iLine++ )
+    for (iLine = 0; iLine < psGXF->nRawYSize; iLine++)
     {
-        if( GXFGetRawScanline( hGXF, iLine, padfScanline ) != CE_None )
+        if (GXFGetRawScanline(hGXF, iLine, padfScanline) != CE_None)
             break;
 
-        for( iPixel = 0; iPixel < psGXF->nRawXSize; iPixel++ )
+        for (iPixel = 0; iPixel < psGXF->nRawXSize; iPixel++)
         {
-            if( padfScanline[iPixel] != psGXF->dfSetDummyTo )
+            if (padfScanline[iPixel] != psGXF->dfSetDummyTo)
             {
                 psGXF->dfZMinimum =
-                    MIN(psGXF->dfZMinimum,padfScanline[iPixel]);
+                    MIN(psGXF->dfZMinimum, padfScanline[iPixel]);
                 psGXF->dfZMaximum =
-                    MAX(psGXF->dfZMaximum,padfScanline[iPixel]);
+                    MAX(psGXF->dfZMaximum, padfScanline[iPixel]);
             }
         }
     }
 
-    VSIFree( padfScanline );
+    VSIFree(padfScanline);
 
-/* -------------------------------------------------------------------- */
-/*      Did we get any real data points?                                */
-/* -------------------------------------------------------------------- */
-    if( psGXF->dfZMinimum > psGXF->dfZMaximum )
+    /* -------------------------------------------------------------------- */
+    /*      Did we get any real data points?                                */
+    /* -------------------------------------------------------------------- */
+    if (psGXF->dfZMinimum > psGXF->dfZMaximum)
     {
         psGXF->dfZMinimum = 0.0;
         psGXF->dfZMaximum = 0.0;
@@ -840,38 +854,37 @@ static void GXFScanForZMinMax( GXFHandle hGXF )
  * value.
  */
 
-CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
-                      int * pnSense, double * pdfZMin, double * pdfZMax,
-                      double * pdfDummy )
+CPLErr GXFGetRawInfo(GXFHandle hGXF, int *pnXSize, int *pnYSize, int *pnSense,
+                     double *pdfZMin, double *pdfZMax, double *pdfDummy)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
 
-    if( pnXSize != NULL )
+    if (pnXSize != NULL)
         *pnXSize = psGXF->nRawXSize;
 
-    if( pnYSize != NULL )
+    if (pnYSize != NULL)
         *pnYSize = psGXF->nRawYSize;
 
-    if( pnSense != NULL )
+    if (pnSense != NULL)
         *pnSense = psGXF->nSense;
 
-    if( (pdfZMin != NULL || pdfZMax != NULL)
-        && psGXF->dfZMinimum == 0.0 && psGXF->dfZMaximum == 0.0 )
+    if ((pdfZMin != NULL || pdfZMax != NULL) && psGXF->dfZMinimum == 0.0 &&
+        psGXF->dfZMaximum == 0.0)
     {
-        GXFScanForZMinMax( hGXF );
+        GXFScanForZMinMax(hGXF);
     }
 
-    if( pdfZMin != NULL )
+    if (pdfZMin != NULL)
         *pdfZMin = psGXF->dfZMinimum;
 
-    if( pdfZMax != NULL )
+    if (pdfZMax != NULL)
         *pdfZMax = psGXF->dfZMaximum;
 
-    if( pdfDummy != NULL )
+    if (pdfDummy != NULL)
         *pdfDummy = psGXF->dfSetDummyTo;
 
-    return( CE_None );
+    return (CE_None);
 }
 
 /************************************************************************/
@@ -890,10 +903,10 @@ CPLErr GXFGetRawInfo( GXFHandle hGXF, int *pnXSize, int *pnYSize,
  * should not be modified or freed by the caller.
  */
 
-char **GXFGetMapProjection( GXFHandle hGXF )
+char **GXFGetMapProjection(GXFHandle hGXF)
 
 {
-    return( ((GXFInfo_t *) hGXF)->papszMapProjection );
+    return (((GXFInfo_t *)hGXF)->papszMapProjection);
 }
 
 /************************************************************************/
@@ -912,10 +925,10 @@ char **GXFGetMapProjection( GXFHandle hGXF )
  * should not be modified or freed by the caller.
  */
 
-char **GXFGetMapDatumTransform( GXFHandle hGXF )
+char **GXFGetMapDatumTransform(GXFHandle hGXF)
 
 {
-    return( ((GXFInfo_t *) hGXF)->papszMapDatumTransform );
+    return (((GXFInfo_t *)hGXF)->papszMapDatumTransform);
 }
 
 /************************************************************************/
@@ -947,33 +960,30 @@ char **GXFGetMapDatumTransform( GXFHandle hGXF )
  * information was found in the file.
  */
 
-
-CPLErr GXFGetRawPosition( GXFHandle hGXF,
-                          double * pdfXOrigin, double * pdfYOrigin,
-                          double * pdfXPixelSize, double * pdfYPixelSize,
-                          double * pdfRotation )
+CPLErr GXFGetRawPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
+                         double *pdfXPixelSize, double *pdfYPixelSize,
+                         double *pdfRotation)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
 
-    if( pdfXOrigin != NULL )
+    if (pdfXOrigin != NULL)
         *pdfXOrigin = psGXF->dfXOrigin;
-    if( pdfYOrigin != NULL )
+    if (pdfYOrigin != NULL)
         *pdfYOrigin = psGXF->dfYOrigin;
-    if( pdfXPixelSize != NULL )
+    if (pdfXPixelSize != NULL)
         *pdfXPixelSize = psGXF->dfXPixelSize;
-    if( pdfYPixelSize != NULL )
+    if (pdfYPixelSize != NULL)
         *pdfYPixelSize = psGXF->dfYPixelSize;
-    if( pdfRotation != NULL )
+    if (pdfRotation != NULL)
         *pdfRotation = psGXF->dfRotation;
 
-    if( psGXF->dfXOrigin == 0.0 && psGXF->dfYOrigin == 0.0
-        && psGXF->dfXPixelSize == 0.0 && psGXF->dfYPixelSize == 0.0 )
-        return( CE_Failure );
+    if (psGXF->dfXOrigin == 0.0 && psGXF->dfYOrigin == 0.0 &&
+        psGXF->dfXPixelSize == 0.0 && psGXF->dfYPixelSize == 0.0)
+        return (CE_Failure);
     else
-        return( CE_None );
+        return (CE_None);
 }
-
 
 /************************************************************************/
 /*                           GXFGetPosition()                           */
@@ -1006,70 +1016,69 @@ CPLErr GXFGetRawPosition( GXFHandle hGXF,
  * information was found in the file.
  */
 
-
-CPLErr GXFGetPosition( GXFHandle hGXF,
-                       double * pdfXOrigin, double * pdfYOrigin,
-                       double * pdfXPixelSize, double * pdfYPixelSize,
-                       double * pdfRotation )
+CPLErr GXFGetPosition(GXFHandle hGXF, double *pdfXOrigin, double *pdfYOrigin,
+                      double *pdfXPixelSize, double *pdfYPixelSize,
+                      double *pdfRotation)
 
 {
-    GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
-    double	dfCXOrigin, dfCYOrigin, dfCXPixelSize, dfCYPixelSize;
+    GXFInfo_t *psGXF = (GXFInfo_t *)hGXF;
+    double dfCXOrigin, dfCYOrigin, dfCXPixelSize, dfCYPixelSize;
 
-    switch( psGXF->nSense )
+    switch (psGXF->nSense)
     {
-      case GXFS_UL_RIGHT:
-        dfCXOrigin = psGXF->dfXOrigin;
-        dfCYOrigin = psGXF->dfYOrigin;
-        dfCXPixelSize = psGXF->dfXPixelSize;
-        dfCYPixelSize = psGXF->dfYPixelSize;
-        break;
+        case GXFS_UL_RIGHT:
+            dfCXOrigin = psGXF->dfXOrigin;
+            dfCYOrigin = psGXF->dfYOrigin;
+            dfCXPixelSize = psGXF->dfXPixelSize;
+            dfCYPixelSize = psGXF->dfYPixelSize;
+            break;
 
-      case GXFS_UR_LEFT:
-        dfCXOrigin = psGXF->dfXOrigin
-            	     - (psGXF->nRawXSize-1) * psGXF->dfXPixelSize;
-        dfCYOrigin = psGXF->dfYOrigin;
-        dfCXPixelSize = psGXF->dfXPixelSize;
-        dfCYPixelSize = psGXF->dfYPixelSize;
-        break;
+        case GXFS_UR_LEFT:
+            dfCXOrigin =
+                psGXF->dfXOrigin - (psGXF->nRawXSize - 1) * psGXF->dfXPixelSize;
+            dfCYOrigin = psGXF->dfYOrigin;
+            dfCXPixelSize = psGXF->dfXPixelSize;
+            dfCYPixelSize = psGXF->dfYPixelSize;
+            break;
 
-      case GXFS_LL_RIGHT:
-        dfCXOrigin = psGXF->dfXOrigin;
-        dfCYOrigin = psGXF->dfYOrigin
-                     + (psGXF->nRawYSize-1) * psGXF->dfYPixelSize;
-        dfCXPixelSize = psGXF->dfXPixelSize;
-        dfCYPixelSize = psGXF->dfYPixelSize;
-        break;
+        case GXFS_LL_RIGHT:
+            dfCXOrigin = psGXF->dfXOrigin;
+            dfCYOrigin =
+                psGXF->dfYOrigin + (psGXF->nRawYSize - 1) * psGXF->dfYPixelSize;
+            dfCXPixelSize = psGXF->dfXPixelSize;
+            dfCYPixelSize = psGXF->dfYPixelSize;
+            break;
 
-      case GXFS_LR_LEFT:
-        dfCXOrigin = psGXF->dfXOrigin
-            	     - (psGXF->nRawXSize-1) * psGXF->dfXPixelSize;
-        dfCYOrigin = psGXF->dfYOrigin
-                     + (psGXF->nRawYSize-1) * psGXF->dfYPixelSize;
-        dfCXPixelSize = psGXF->dfXPixelSize;
-        dfCYPixelSize = psGXF->dfYPixelSize;
-        break;
+        case GXFS_LR_LEFT:
+            dfCXOrigin =
+                psGXF->dfXOrigin - (psGXF->nRawXSize - 1) * psGXF->dfXPixelSize;
+            dfCYOrigin =
+                psGXF->dfYOrigin + (psGXF->nRawYSize - 1) * psGXF->dfYPixelSize;
+            dfCXPixelSize = psGXF->dfXPixelSize;
+            dfCYPixelSize = psGXF->dfYPixelSize;
+            break;
 
-      default:
-        CPLError( CE_Failure, CPLE_AppDefined,
-           "GXFGetPosition() doesn't support vertically organized images." );
-        return CE_Failure;
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GXFGetPosition() doesn't support vertically organized "
+                     "images.");
+            return CE_Failure;
     }
 
-    if( pdfXOrigin != NULL )
+    if (pdfXOrigin != NULL)
         *pdfXOrigin = dfCXOrigin;
-    if( pdfYOrigin != NULL )
+    if (pdfYOrigin != NULL)
         *pdfYOrigin = dfCYOrigin;
-    if( pdfXPixelSize != NULL )
+    if (pdfXPixelSize != NULL)
         *pdfXPixelSize = dfCXPixelSize;
-    if( pdfYPixelSize != NULL )
+    if (pdfYPixelSize != NULL)
         *pdfYPixelSize = dfCYPixelSize;
-    if( pdfRotation != NULL )
+    if (pdfRotation != NULL)
         *pdfRotation = psGXF->dfRotation;
 
-    if( psGXF->dfXOrigin == 0.0 && psGXF->dfYOrigin == 0.0
-        && psGXF->dfXPixelSize == 0.0 && psGXF->dfYPixelSize == 0.0 )
-        return( CE_Failure );
+    if (psGXF->dfXOrigin == 0.0 && psGXF->dfYOrigin == 0.0 &&
+        psGXF->dfXPixelSize == 0.0 && psGXF->dfYPixelSize == 0.0)
+        return (CE_Failure);
     else
-        return( CE_None );
+        return (CE_None);
 }

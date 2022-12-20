@@ -150,12 +150,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
-          && tar -xzf install-ubuntu2004-rev5106.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-ubuntu2004-rev5461.tar.gz \
+          && tar -xzf install-ubuntu2004-rev5461.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev5106.tar.gz install \
+          && sudo rm -rf install-ubuntu2004-rev5461.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -187,6 +187,18 @@ jobs:
         ar r libFuzzingEngine.a fuzzingengine.o
         CXX=g++ CXXFLAGS="${CXXFLAGS} -I$PWD/gdal/port -I$PWD/gdal/gcore -L$PWD" LIBGDAL="-L$PWD/gdal -lgdal" SRC=/tmp OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_google_oss_fuzzers.sh
         OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_seed_corpus.sh
+    - name: test autotest/cpp/gdallimits
+      run: |
+        sudo apt-get install -y numactl
+        #
+        echo "Limits without restrictions:"
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/superbuild/build $GITHUB_WORKSPACE/superbuild/build/gdal/autotest/cpp/gdallimits
+        #
+        echo "Limits with ulimit -m 100000; numactl -C 0"
+        (ulimit -m 100000; LD_LIBRARY_PATH=$GITHUB_WORKSPACE/superbuild/build numactl -C 0 $GITHUB_WORKSPACE/superbuild/build/gdal/autotest/cpp/gdallimits) > out.txt
+        cat out.txt
+        grep "CPLGetNumCPUs = 1" out.txt >/dev/null
+        grep "CPLGetUsablePhysicalRAM = 97 MB" out.txt >/dev/null
     - name: test (with command targets)
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)
@@ -269,6 +281,7 @@ jobs:
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
+        rm -f CMakeCache.txt
         cmake  ${CMAKE_OPTIONS} .. \
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_TESTING=OFF \
@@ -453,9 +466,14 @@ jobs:
     - name: Install pdfium
       shell: bash -l {0}
       run: |
-        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-win10-vs2019-x64-rev5106.zip
-        unzip install-win10-vs2019-x64-rev5106.zip
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-win10-vs2019-x64-rev5461.zip
+        unzip install-win10-vs2019-x64-rev5461.zip
         mv install install-pdfium
+
+    - name: Remove conflicting libraries
+      shell: cmd
+      run: |
+          rd /s /q C:\Strawberry
 
     - name: Configure
       shell: bash -l {0}
@@ -524,34 +542,39 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache
+        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache pytest pytest-env lxml
+        cd $CONDA_PREFIX/Library/share/proj
+        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
+        tar xvzf proj-datumgrid-1.8.tar.gz
+        cd $OLDPWD
     - name: Configure
       shell: bash -l {0}
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        export CONDA_PREFIX_BACKUP=${CONDA_PREFIX}
-        conda deactivate
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
     - name: Configure with even less dependencies
       shell: bash -l {0}
       run: |
-        export CONDA_PREFIX_BACKUP=${CONDA_PREFIX}
-        conda deactivate
         rm -f build/CMakeCache.txt
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Configure with even less dependencies, and disabling all optional drivers
       shell: bash -l {0}
       run: |
-        export CONDA_PREFIX_BACKUP=${CONDA_PREFIX}
-        conda deactivate
         rm -f build/CMakeCache.txt
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" "-DPROJ_INCLUDE_DIR=${CONDA_PREFIX_BACKUP}/Library/include" "-DPROJ_LIBRARY=${CONDA_PREFIX_BACKUP}/Library/lib/proj.lib" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C RelWithDebInfo -V -j 3
+      env:
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -559,7 +582,11 @@ jobs:
   build-mac:
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl
+      # Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
+      # that cause Illegal instruction error when running tests. I suspect the
+      # Arrow/Parquet libraries to be built with AVX2 support but the VM worker
+      # doesn't support it.
+      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_ARROW=OFF -DGDAL_USE_PARQUET=OFF
       cache-name: cmake-macos
     steps:
     - name: Setup xcode

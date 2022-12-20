@@ -49,14 +49,20 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
     CPLErrorNum no;
     CPLString msg{};
 
-    CPLErrorHandlerAccumulatorStruct() : type(CE_None), no(CPLE_None) {}
-    CPLErrorHandlerAccumulatorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
-        type(eErrIn), no(noIn), msg(msgIn) {}
+    CPLErrorHandlerAccumulatorStruct() : type(CE_None), no(CPLE_None)
+    {
+    }
+    CPLErrorHandlerAccumulatorStruct(CPLErr eErrIn, CPLErrorNum noIn,
+                                     const char *msgIn)
+        : type(eErrIn), no(noIn), msg(msgIn)
+    {
+    }
 };
 
-void CPL_DLL CPLInstallErrorHandlerAccumulator(std::vector<CPLErrorHandlerAccumulatorStruct>& aoErrors);
+void CPL_DLL CPLInstallErrorHandlerAccumulator(
+    std::vector<CPLErrorHandlerAccumulatorStruct> &aoErrors);
 void CPL_DLL CPLUninstallErrorHandlerAccumulator();
 
 #endif
 
-#endif // CPL_ERROR_INTERNAL_H_INCLUDED
+#endif  // CPL_ERROR_INTERNAL_H_INCLUDED

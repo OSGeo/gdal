@@ -19,6 +19,7 @@ This driver also supports geometry columns using the GeoParquet specification.
 
 .. note:: The driver should be considered experimental as the GeoParquet specification is not finalized yet.
 
+The GeoParquet 1.0.0-beta1 specification is supported since GDAL 3.6.2
 
 Driver capabilities
 -------------------
@@ -93,6 +94,16 @@ maximum number of available CPUs returned by :cpp:func:`CPLGetNumCPUs()` if
 it is lower by 4). This number can be configured with the configuration option
 :decl_configoption:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
+
+Conda-forge package
+-------------------
+
+The driver can be installed as a plugin for the ``libgdal`` conda-forge package with:
+
+::
+
+    conda install -c conda-forge libgdal-arrow-parquet
+
 
 Links
 -----

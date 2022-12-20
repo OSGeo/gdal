@@ -431,6 +431,60 @@ def UseExceptions(*args) -> "void":
 def DontUseExceptions(*args) -> "void":
     r"""DontUseExceptions()"""
     return _ogr.DontUseExceptions(*args)
+
+class ExceptionMgr(object):
+    """
+    Context manager to manage Python Exception state
+    for GDAL/OGR/OSR/GNM.
+
+    Separate exception state is maintained for each
+    module (gdal, ogr, etc), and this class appears independently
+    in all of them. This is built in top of calls to the older
+    UseExceptions()/DontUseExceptions() functions.
+
+    Example::
+
+        >>> print(gdal.GetUseExceptions())
+        0
+        >>> with gdal.ExceptionMgr(useExceptions=True):
+        ...     # Exceptions are now in use
+        ...     print(gdal.GetUseExceptions())
+        1
+        >>>
+        >>> # Exception state has now been restored
+        >>> print(gdal.GetUseExceptions())
+        0
+
+    """
+    def __init__(self, useExceptions):
+        """
+        Save whether or not this context will be using exceptions
+        """
+        self.requestedUseExceptions = useExceptions
+
+    def __enter__(self):
+        """
+        On context entry, save the current GDAL exception state, and
+        set it to the state requested for the context
+
+        """
+        self.currentUseExceptions = (GetUseExceptions() != 0)
+
+        if self.requestedUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        On exit, restore the GDAL/OGR/OSR/GNM exception state which was
+        current on entry to the context
+        """
+        if self.currentUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
 from . import osr
 class MajorObject(object):
     r"""Proxy of C++ GDALMajorObjectShadow class."""
@@ -2149,6 +2203,14 @@ class Layer(MajorObject):
 
         """
         return _ogr.Layer_GetGeometryTypes(self, *args, **kwargs)
+
+    def GetSupportedSRSList(self, *args, **kwargs) -> "void":
+        r"""GetSupportedSRSList(Layer self, int geom_field=0)"""
+        return _ogr.Layer_GetSupportedSRSList(self, *args, **kwargs)
+
+    def SetActiveSRS(self, *args) -> "OGRErr":
+        r"""SetActiveSRS(Layer self, int geom_field, SpatialReference srs) -> OGRErr"""
+        return _ogr.Layer_SetActiveSRS(self, *args)
 
     def Reference(self):
       "For backwards compatibility only."
@@ -6796,7 +6858,7 @@ class Geometry(object):
       self.thisown = 0
 
     def __str__(self):
-      return self.ExportToWkt()
+      return self.ExportToIsoWkt()
 
     def __copy__(self):
       return self.Clone()

@@ -44,133 +44,137 @@ enum ImageType
 
 struct ImageHeader
 {
-    GByte     nIDLength;
-    bool      bHasColorMap;
+    GByte nIDLength;
+    bool bHasColorMap;
     ImageType eImageType;
-    GUInt16   nColorMapFirstIdx;
-    GUInt16   nColorMapLength;
-    GByte     nColorMapEntrySize;
-    GUInt16   nXOrigin;
-    GUInt16   nYOrigin;
-    GByte     nPixelDepth;
-    GByte     nImageDescriptor;
+    GUInt16 nColorMapFirstIdx;
+    GUInt16 nColorMapLength;
+    GByte nColorMapEntrySize;
+    GUInt16 nXOrigin;
+    GUInt16 nYOrigin;
+    GByte nPixelDepth;
+    GByte nImageDescriptor;
 };
 
 /************************************************************************/
 /*                         GDALTGADataset                               */
 /************************************************************************/
 
-class GDALTGADataset final: public GDALPamDataset
+class GDALTGADataset final : public GDALPamDataset
 {
-        friend class GDALTGARasterBand;
+    friend class GDALTGARasterBand;
 
-        struct ScanlineState
-        {
-            // Offset in the file of the start of the scanline
-            vsi_l_offset        nOffset = 0;
-            bool                bRemainingPixelsAreRLERun = false;
-            // Number of pixels remaining from a previous scanline.
-            // See https://en.wikipedia.org/wiki/Truevision_TGA#Specification_discrepancies
-            // TGA v2.0 specification states  "Run-length Packets should never encode pixels from more than one scan line."
-            // but earlier specification said the contrary.
-            int                 nRemainingPixelsPrevScanline = 0;
-            // Value of pixels remaining from a previous RLE run
-            std::vector<GByte>  abyDataPrevRLERun{};
-        };
+    struct ScanlineState
+    {
+        // Offset in the file of the start of the scanline
+        vsi_l_offset nOffset = 0;
+        bool bRemainingPixelsAreRLERun = false;
+        // Number of pixels remaining from a previous scanline.
+        // See
+        // https://en.wikipedia.org/wiki/Truevision_TGA#Specification_discrepancies
+        // TGA v2.0 specification states  "Run-length Packets should never
+        // encode pixels from more than one scan line." but earlier
+        // specification said the contrary.
+        int nRemainingPixelsPrevScanline = 0;
+        // Value of pixels remaining from a previous RLE run
+        std::vector<GByte> abyDataPrevRLERun{};
+    };
 
-        ImageHeader m_sImageHeader;
-        VSILFILE   *m_fpImage;
-        unsigned    m_nImageDataOffset = 0;
-        std::vector<ScanlineState> m_aoScanlineState{};
-        int         m_nLastLineKnownOffset = 0;
-        bool        m_bFourthChannelIsAlpha = false;
+    ImageHeader m_sImageHeader;
+    VSILFILE *m_fpImage;
+    unsigned m_nImageDataOffset = 0;
+    std::vector<ScanlineState> m_aoScanlineState{};
+    int m_nLastLineKnownOffset = 0;
+    bool m_bFourthChannelIsAlpha = false;
 
-    public:
-        GDALTGADataset(const ImageHeader& sHeader, VSILFILE* fpImage);
-        ~GDALTGADataset() override;
+  public:
+    GDALTGADataset(const ImageHeader &sHeader, VSILFILE *fpImage);
+    ~GDALTGADataset() override;
 
-        static int Identify(GDALOpenInfo* poOpenInfo);
-        static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
+    static int Identify(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };
 
 /************************************************************************/
 /*                        GDALTGARasterBand                             */
 /************************************************************************/
 
-class GDALTGARasterBand final: public GDALPamRasterBand
+class GDALTGARasterBand final : public GDALPamRasterBand
 {
-        std::unique_ptr<GDALColorTable> m_poColorTable{};
-        bool                            m_bHasNoDataValue = false;
-        double                          m_dfNoDataValue = 0;
+    std::unique_ptr<GDALColorTable> m_poColorTable{};
+    bool m_bHasNoDataValue = false;
+    double m_dfNoDataValue = 0;
 
-    public:
-        GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
-                          GDALDataType eDataTypeIn);
+  public:
+    GDALTGARasterBand(GDALTGADataset *poDSIn, int nBandIn,
+                      GDALDataType eDataTypeIn);
 
-        CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
+    CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 
-        GDALColorTable* GetColorTable() override { return m_poColorTable.get(); }
+    GDALColorTable *GetColorTable() override
+    {
+        return m_poColorTable.get();
+    }
 
-        GDALColorInterp GetColorInterpretation() override
-        {
-            if( m_poColorTable )
-                return GCI_PaletteIndex;
-            GDALTGADataset* poGDS = reinterpret_cast<GDALTGADataset*>(poDS);
-            if( poGDS->GetRasterCount() == 1 )
-                return GCI_GrayIndex;
-            if( nBand == 4 )
-                return poGDS->m_bFourthChannelIsAlpha ? GCI_AlphaBand : GCI_Undefined;
-            return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
-        }
+    GDALColorInterp GetColorInterpretation() override
+    {
+        if (m_poColorTable)
+            return GCI_PaletteIndex;
+        GDALTGADataset *poGDS = reinterpret_cast<GDALTGADataset *>(poDS);
+        if (poGDS->GetRasterCount() == 1)
+            return GCI_GrayIndex;
+        if (nBand == 4)
+            return poGDS->m_bFourthChannelIsAlpha ? GCI_AlphaBand
+                                                  : GCI_Undefined;
+        return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
+    }
 
-        double GetNoDataValue(int* pbHasNoData) override
-        {
-            if( pbHasNoData )
-                *pbHasNoData = m_bHasNoDataValue;
-            return m_dfNoDataValue;
-        }
+    double GetNoDataValue(int *pbHasNoData) override
+    {
+        if (pbHasNoData)
+            *pbHasNoData = m_bHasNoDataValue;
+        return m_dfNoDataValue;
+    }
 };
 
 /************************************************************************/
 /*                            Identify()                                */
 /************************************************************************/
 
-int GDALTGADataset::Identify(GDALOpenInfo* poOpenInfo)
+int GDALTGADataset::Identify(GDALOpenInfo *poOpenInfo)
 {
-    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 18 )
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 18)
         return FALSE;
     const GByte nColorType = poOpenInfo->pabyHeader[1];
-    if( nColorType > 1 )
+    if (nColorType > 1)
         return FALSE;
     const GByte nImageType = poOpenInfo->pabyHeader[2];
-    if( nImageType != UNCOMPRESSED_COLORMAP &&
+    if (nImageType != UNCOMPRESSED_COLORMAP &&
         nImageType != UNCOMPRESSED_TRUE_COLOR &&
-        nImageType != UNCOMPRESSED_GRAYSCALE &&
-        nImageType != RLE_COLORMAP &&
-        nImageType != RLE_TRUE_COLOR &&
-        nImageType != RLE_GRAYSCALE )
+        nImageType != UNCOMPRESSED_GRAYSCALE && nImageType != RLE_COLORMAP &&
+        nImageType != RLE_TRUE_COLOR && nImageType != RLE_GRAYSCALE)
         return FALSE;
-    if( nImageType == UNCOMPRESSED_COLORMAP || nImageType == RLE_COLORMAP )
+    if (nImageType == UNCOMPRESSED_COLORMAP || nImageType == RLE_COLORMAP)
     {
-        if( nColorType != 1 )
+        if (nColorType != 1)
             return FALSE;
     }
     else
     {
-        if( nColorType != 0 )
+        if (nColorType != 0)
             return FALSE;
     }
 
     // Mostly useful for fuzzing purposes to be able to fuzz TGA on small files
     // without relying on the tga extension
-    if( poOpenInfo->nHeaderBytes > 26 &&
+    if (poOpenInfo->nHeaderBytes > 26 &&
         memcmp(poOpenInfo->pabyHeader + poOpenInfo->nHeaderBytes - 26,
-               "TRUEVISION-XFILE.\x00", 18) == 0 )
+               "TRUEVISION-XFILE.\x00", 18) == 0)
     {
         return TRUE;
     }
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tga") )
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tga"))
         return FALSE;
     return TRUE;
 }
@@ -179,14 +183,14 @@ int GDALTGADataset::Identify(GDALOpenInfo* poOpenInfo)
 /*                           GDALTGADataset()                           */
 /************************************************************************/
 
-GDALTGADataset::GDALTGADataset(const ImageHeader& sHeader, VSILFILE* fpImage):
-            m_sImageHeader(sHeader), m_fpImage(fpImage)
+GDALTGADataset::GDALTGADataset(const ImageHeader &sHeader, VSILFILE *fpImage)
+    : m_sImageHeader(sHeader), m_fpImage(fpImage)
 {
     m_nImageDataOffset = 18 + m_sImageHeader.nIDLength;
-    if( m_sImageHeader.bHasColorMap )
+    if (m_sImageHeader.bHasColorMap)
     {
         m_nImageDataOffset += m_sImageHeader.nColorMapLength *
-            ((m_sImageHeader.nColorMapEntrySize + 7) / 8);
+                              ((m_sImageHeader.nColorMapEntrySize + 7) / 8);
     }
 }
 
@@ -196,7 +200,7 @@ GDALTGADataset::GDALTGADataset(const ImageHeader& sHeader, VSILFILE* fpImage):
 
 GDALTGADataset::~GDALTGADataset()
 {
-    if( m_fpImage )
+    if (m_fpImage)
         VSIFCloseL(m_fpImage);
 }
 
@@ -204,7 +208,7 @@ GDALTGADataset::~GDALTGADataset()
 /*                         GDALTGARasterBand()                          */
 /************************************************************************/
 
-GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
+GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset *poDSIn, int nBandIn,
                                      GDALDataType eDataTypeIn)
 {
     poDS = poDSIn;
@@ -212,17 +216,20 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
     eDataType = eDataTypeIn;
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
-    if( poDSIn->m_sImageHeader.bHasColorMap )
+    if (poDSIn->m_sImageHeader.bHasColorMap)
     {
-        VSIFSeekL(poDSIn->m_fpImage, 18 + poDSIn->m_sImageHeader.nIDLength, SEEK_SET);
+        VSIFSeekL(poDSIn->m_fpImage, 18 + poDSIn->m_sImageHeader.nIDLength,
+                  SEEK_SET);
         m_poColorTable.reset(new GDALColorTable());
-        const int nColorTableByteCount = poDSIn->m_sImageHeader.nColorMapLength *
+        const int nColorTableByteCount =
+            poDSIn->m_sImageHeader.nColorMapLength *
             ((poDSIn->m_sImageHeader.nColorMapEntrySize + 7) / 8);
         std::vector<GByte> abyData(nColorTableByteCount);
         VSIFReadL(&abyData[0], 1, abyData.size(), poDSIn->m_fpImage);
-        if( poDSIn->m_sImageHeader.nColorMapEntrySize == 24 )
+        if (poDSIn->m_sImageHeader.nColorMapEntrySize == 24)
         {
-            for( unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength; ++i )
+            for (unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength;
+                 ++i)
             {
                 GDALColorEntry sEntry;
                 sEntry.c1 = abyData[3 * i + 2];
@@ -233,11 +240,12 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
                     poDSIn->m_sImageHeader.nColorMapFirstIdx + i, &sEntry);
             }
         }
-        else if( poDSIn->m_sImageHeader.nColorMapEntrySize == 32 )
+        else if (poDSIn->m_sImageHeader.nColorMapEntrySize == 32)
         {
             unsigned nCountAlpha0 = 0;
             unsigned nAlphaIdx = 0;
-            for( unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength; ++i )
+            for (unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength;
+                 ++i)
             {
                 GDALColorEntry sEntry;
                 sEntry.c1 = abyData[4 * i + 2];
@@ -246,22 +254,23 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
                 sEntry.c4 = abyData[4 * i + 3];
                 m_poColorTable->SetColorEntry(
                     poDSIn->m_sImageHeader.nColorMapFirstIdx + i, &sEntry);
-                if( sEntry.c4 == 0 )
+                if (sEntry.c4 == 0)
                 {
-                    nCountAlpha0 ++;
+                    nCountAlpha0++;
                     nAlphaIdx = poDSIn->m_sImageHeader.nColorMapFirstIdx + i;
                 }
             }
-            if( nCountAlpha0 == 1 )
+            if (nCountAlpha0 == 1)
             {
                 m_dfNoDataValue = nAlphaIdx;
                 m_bHasNoDataValue = true;
             }
         }
-        else if( poDSIn->m_sImageHeader.nColorMapEntrySize == 15 ||
-                 poDSIn->m_sImageHeader.nColorMapEntrySize == 16 )
+        else if (poDSIn->m_sImageHeader.nColorMapEntrySize == 15 ||
+                 poDSIn->m_sImageHeader.nColorMapEntrySize == 16)
         {
-            for( unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength; ++i )
+            for (unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength;
+                 ++i)
             {
                 GUInt16 nVal = (abyData[2 * i + 1] << 8) | abyData[2 * i];
                 GDALColorEntry sEntry;
@@ -280,100 +289,106 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
 /*                            IReadBlock()                              */
 /************************************************************************/
 
-CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void* pImage)
+CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
+                                     void *pImage)
 {
-    GDALTGADataset* poGDS = reinterpret_cast<GDALTGADataset*>(poDS);
+    GDALTGADataset *poGDS = reinterpret_cast<GDALTGADataset *>(poDS);
 
     const int nBands = poGDS->GetRasterCount();
-    const int nLine = (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5)) ?
-                            nBlockYOff : nRasterYSize - 1 - nBlockYOff;
+    const int nLine = (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5))
+                          ? nBlockYOff
+                          : nRasterYSize - 1 - nBlockYOff;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    if( !poGDS->m_aoScanlineState.empty() ) // RLE
+    if (!poGDS->m_aoScanlineState.empty())  // RLE
     {
-        if( poGDS->m_aoScanlineState[nLine].nOffset == 0 )
+        if (poGDS->m_aoScanlineState[nLine].nOffset == 0)
         {
-            for( int i = poGDS->m_nLastLineKnownOffset; i < nLine; i++ )
+            for (int i = poGDS->m_nLastLineKnownOffset; i < nLine; i++)
             {
-                if( IReadBlock(0,
-                           (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5)) ?
-                                i : nRasterYSize - 1 - i,
-                           nullptr) != CE_None )
+                if (IReadBlock(
+                        0,
+                        (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5))
+                            ? i
+                            : nRasterYSize - 1 - i,
+                        nullptr) != CE_None)
                 {
                     return CE_Failure;
                 }
             }
         }
-        VSIFSeekL(poGDS->m_fpImage, poGDS->m_aoScanlineState[nLine].nOffset, SEEK_SET);
+        VSIFSeekL(poGDS->m_fpImage, poGDS->m_aoScanlineState[nLine].nOffset,
+                  SEEK_SET);
         int x = 0;
         std::vector<GByte> abyData;
-        const int nBytesPerPixel =
-            (nBands == 1) ? nDTSize : (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
+        const int nBytesPerPixel = (nBands == 1) ? nDTSize
+                                   : (nBands == 4)
+                                       ? 4
+                                       : poGDS->m_sImageHeader.nPixelDepth / 8;
 
         // Deal with a run from a previous scanline that continues on next
         // one(s)
         bool bRLERun = false;
         int nRemainingPixelsPrevScanline =
             poGDS->m_aoScanlineState[nLine].nRemainingPixelsPrevScanline;
-        while( x < nRasterXSize )
+        while (x < nRasterXSize)
         {
             int nPixelsToFillUnclamped;
-            if( nRemainingPixelsPrevScanline != 0 )
+            if (nRemainingPixelsPrevScanline != 0)
             {
                 abyData = poGDS->m_aoScanlineState[nLine].abyDataPrevRLERun;
-                bRLERun = poGDS->m_aoScanlineState[nLine].bRemainingPixelsAreRLERun;
+                bRLERun =
+                    poGDS->m_aoScanlineState[nLine].bRemainingPixelsAreRLERun;
                 nPixelsToFillUnclamped = nRemainingPixelsPrevScanline;
             }
             else
             {
                 GByte nRepeatCount = 0;
                 VSIFReadL(&nRepeatCount, 1, 1, poGDS->m_fpImage);
-                bRLERun = ( nRepeatCount & 0x80 ) != 0;
+                bRLERun = (nRepeatCount & 0x80) != 0;
                 nPixelsToFillUnclamped = (nRepeatCount & 0x7f) + 1;
             }
-            const int nPixelsToFill = std::min(nRasterXSize - x,
-                                               nPixelsToFillUnclamped);
-            if( bRLERun )
+            const int nPixelsToFill =
+                std::min(nRasterXSize - x, nPixelsToFillUnclamped);
+            if (bRLERun)
             {
-                if( nBands == 1 )
+                if (nBands == 1)
                 {
-                    if( nRemainingPixelsPrevScanline == 0 )
+                    if (nRemainingPixelsPrevScanline == 0)
                     {
                         abyData.resize(nDTSize);
-                        VSIFReadL(&abyData[0],
-                                  1,
-                                  nDTSize,
-                                  poGDS->m_fpImage);
+                        VSIFReadL(&abyData[0], 1, nDTSize, poGDS->m_fpImage);
                     }
-                    if( pImage != nullptr )
+                    if (pImage != nullptr)
                     {
-                        GDALCopyWords(&abyData[0],
-                                    eDataType,
-                                    0,
-                                    static_cast<GByte*>(pImage) + x * nDTSize,
-                                    eDataType,
-                                    nDTSize,
-                                    nPixelsToFill);
+                        GDALCopyWords(&abyData[0], eDataType, 0,
+                                      static_cast<GByte *>(pImage) +
+                                          x * nDTSize,
+                                      eDataType, nDTSize, nPixelsToFill);
                     }
                 }
                 else
                 {
-                    if( nRemainingPixelsPrevScanline == 0 )
+                    if (nRemainingPixelsPrevScanline == 0)
                     {
                         abyData.resize(4);
-                        VSIFReadL(&abyData[0], 1, nBytesPerPixel, poGDS->m_fpImage);
+                        VSIFReadL(&abyData[0], 1, nBytesPerPixel,
+                                  poGDS->m_fpImage);
                     }
-                    if( pImage != nullptr )
+                    if (pImage != nullptr)
                     {
-                        if( poGDS->m_sImageHeader.nPixelDepth == 16 )
+                        if (poGDS->m_sImageHeader.nPixelDepth == 16)
                         {
-                            const GUInt16 nValue = abyData[0] | (abyData[1] << 8);
-                            const GByte nByteVal = ((nValue >> (5 * (3 - nBand))) & 31) << 3;
-                            memset(static_cast<GByte*>(pImage) + x, nByteVal, nPixelsToFill);
+                            const GUInt16 nValue =
+                                abyData[0] | (abyData[1] << 8);
+                            const GByte nByteVal =
+                                ((nValue >> (5 * (3 - nBand))) & 31) << 3;
+                            memset(static_cast<GByte *>(pImage) + x, nByteVal,
+                                   nPixelsToFill);
                         }
                         else
                         {
-                            memset(static_cast<GByte*>(pImage) + x,
-                                   abyData[nBand <= 3 ? 3 - nBand: 3],
+                            memset(static_cast<GByte *>(pImage) + x,
+                                   abyData[nBand <= 3 ? 3 - nBand : 3],
                                    nPixelsToFill);
                         }
                     }
@@ -381,47 +396,48 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
             }
             else
             {
-                if( pImage == nullptr )
+                if (pImage == nullptr)
                 {
-                    VSIFSeekL(poGDS->m_fpImage, nPixelsToFill * nBytesPerPixel, SEEK_CUR);
+                    VSIFSeekL(poGDS->m_fpImage, nPixelsToFill * nBytesPerPixel,
+                              SEEK_CUR);
                 }
                 else
                 {
-                    if( nBands == 1 )
+                    if (nBands == 1)
                     {
-                        VSIFReadL(static_cast<GByte*>(pImage) + x * nDTSize,
-                                  1,
-                                  nPixelsToFill * nDTSize,
-                                  poGDS->m_fpImage);
+                        VSIFReadL(static_cast<GByte *>(pImage) + x * nDTSize, 1,
+                                  nPixelsToFill * nDTSize, poGDS->m_fpImage);
                     }
                     else
                     {
-                        abyData.resize( nBytesPerPixel * nPixelsToFill );
-                        VSIFReadL(&abyData[0], 1, abyData.size(), poGDS->m_fpImage);
-                        if( poGDS->m_sImageHeader.nPixelDepth == 16 )
+                        abyData.resize(nBytesPerPixel * nPixelsToFill);
+                        VSIFReadL(&abyData[0], 1, abyData.size(),
+                                  poGDS->m_fpImage);
+                        if (poGDS->m_sImageHeader.nPixelDepth == 16)
                         {
-                            for(int i = 0; i < nPixelsToFill; i++ )
+                            for (int i = 0; i < nPixelsToFill; i++)
                             {
-                                const GUInt16 nValue = abyData[2 * i] | (abyData[2 * i + 1] << 8);
-                                static_cast<GByte*>(pImage)[x + i] =
+                                const GUInt16 nValue =
+                                    abyData[2 * i] | (abyData[2 * i + 1] << 8);
+                                static_cast<GByte *>(pImage)[x + i] =
                                     ((nValue >> (5 * (3 - nBand))) & 31) << 3;
                             }
                         }
                         else
                         {
-                            if( nBand <= 3 )
+                            if (nBand <= 3)
                             {
-                                for(int i = 0; i < nPixelsToFill; i++ )
+                                for (int i = 0; i < nPixelsToFill; i++)
                                 {
-                                    static_cast<GByte*>(pImage)[x + i] =
+                                    static_cast<GByte *>(pImage)[x + i] =
                                         abyData[3 - nBand + nBytesPerPixel * i];
                                 }
                             }
                             else
                             {
-                                for(int i = 0; i < nPixelsToFill; i++ )
+                                for (int i = 0; i < nPixelsToFill; i++)
                                 {
-                                    static_cast<GByte*>(pImage)[x + i] =
+                                    static_cast<GByte *>(pImage)[x + i] =
                                         abyData[3 + nBytesPerPixel * i];
                                 }
                             }
@@ -430,21 +446,25 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
                 }
             }
             x += nPixelsToFill;
-            nRemainingPixelsPrevScanline = nPixelsToFillUnclamped - nPixelsToFill;
+            nRemainingPixelsPrevScanline =
+                nPixelsToFillUnclamped - nPixelsToFill;
         }
 
-        if( nLine + 1 < nRasterYSize )
+        if (nLine + 1 < nRasterYSize)
         {
-            poGDS->m_aoScanlineState[nLine + 1].nOffset = VSIFTellL(poGDS->m_fpImage);
-            poGDS->m_aoScanlineState[nLine + 1].bRemainingPixelsAreRLERun = bRLERun;
-            poGDS->m_aoScanlineState[nLine + 1].nRemainingPixelsPrevScanline = nRemainingPixelsPrevScanline;
-            if( nRemainingPixelsPrevScanline )
+            poGDS->m_aoScanlineState[nLine + 1].nOffset =
+                VSIFTellL(poGDS->m_fpImage);
+            poGDS->m_aoScanlineState[nLine + 1].bRemainingPixelsAreRLERun =
+                bRLERun;
+            poGDS->m_aoScanlineState[nLine + 1].nRemainingPixelsPrevScanline =
+                nRemainingPixelsPrevScanline;
+            if (nRemainingPixelsPrevScanline)
                 poGDS->m_aoScanlineState[nLine + 1].abyDataPrevRLERun = abyData;
         }
-        if( pImage && nBands == 1 )
+        if (pImage && nBands == 1)
         {
 #ifdef CPL_MSB
-            if( nDTSize > 1 )
+            if (nDTSize > 1)
             {
                 GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
             }
@@ -453,17 +473,18 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
         return CE_None;
     }
 
-    if( pImage == nullptr )
+    if (pImage == nullptr)
         return CE_Failure;
 
-    if( nBands == 1 )
+    if (nBands == 1)
     {
-        vsi_l_offset nOffset = poGDS->m_nImageDataOffset +
+        vsi_l_offset nOffset =
+            poGDS->m_nImageDataOffset +
             static_cast<vsi_l_offset>(nLine) * nRasterXSize * nDTSize;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
         VSIFReadL(pImage, 1, nRasterXSize * nDTSize, poGDS->m_fpImage);
 #ifdef CPL_MSB
-        if( nDTSize > 1 )
+        if (nDTSize > 1)
         {
             GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
         }
@@ -471,35 +492,42 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
     }
     else
     {
-        const int nBytesPerPixel = (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
+        const int nBytesPerPixel =
+            (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         std::vector<GByte> abyData;
-        abyData.resize( nBytesPerPixel * nRasterXSize );
-        vsi_l_offset nOffset = poGDS->m_nImageDataOffset +
+        abyData.resize(nBytesPerPixel * nRasterXSize);
+        vsi_l_offset nOffset =
+            poGDS->m_nImageDataOffset +
             static_cast<vsi_l_offset>(nLine) * nRasterXSize * nBytesPerPixel;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
-        VSIFReadL(&abyData[0], 1, nRasterXSize * nBytesPerPixel, poGDS->m_fpImage);
-        if( poGDS->m_sImageHeader.nPixelDepth == 16 )
+        VSIFReadL(&abyData[0], 1, nRasterXSize * nBytesPerPixel,
+                  poGDS->m_fpImage);
+        if (poGDS->m_sImageHeader.nPixelDepth == 16)
         {
-            for(int i = 0; i < nRasterXSize; i++ )
+            for (int i = 0; i < nRasterXSize; i++)
             {
-                const GUInt16 nValue = abyData[2 * i] | (abyData[2 * i + 1] << 8);
-                static_cast<GByte*>(pImage)[i] = ((nValue >> (5 * (3 - nBand))) & 31) << 3;
+                const GUInt16 nValue =
+                    abyData[2 * i] | (abyData[2 * i + 1] << 8);
+                static_cast<GByte *>(pImage)[i] =
+                    ((nValue >> (5 * (3 - nBand))) & 31) << 3;
             }
         }
         else
         {
-            if( nBand <= 3 )
+            if (nBand <= 3)
             {
-                for(int i = 0; i < nRasterXSize; i++ )
+                for (int i = 0; i < nRasterXSize; i++)
                 {
-                    static_cast<GByte*>(pImage)[i] = abyData[3 - nBand + nBytesPerPixel * i];
+                    static_cast<GByte *>(pImage)[i] =
+                        abyData[3 - nBand + nBytesPerPixel * i];
                 }
             }
             else
             {
-                for(int i = 0; i < nRasterXSize; i++ )
+                for (int i = 0; i < nRasterXSize; i++)
                 {
-                    static_cast<GByte*>(pImage)[i] = abyData[3 + nBytesPerPixel * i];
+                    static_cast<GByte *>(pImage)[i] =
+                        abyData[3 + nBytesPerPixel * i];
                 }
             }
         }
@@ -512,11 +540,11 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
 /*                              Open()                                  */
 /************************************************************************/
 
-GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
+GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if( !Identify(poOpenInfo) )
+    if (!Identify(poOpenInfo))
         return nullptr;
-    if( poOpenInfo->eAccess == GA_Update )
+    if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Update of existing TGA file not supported");
@@ -534,17 +562,17 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
     sHeader.nYOrigin = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 10);
     const GUInt16 nWidth = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 12);
     const GUInt16 nHeight = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 14);
-    if( nWidth == 0 || nHeight == 0 )
+    if (nWidth == 0 || nHeight == 0)
         return nullptr;
     sHeader.nPixelDepth = poOpenInfo->pabyHeader[16];
     sHeader.nImageDescriptor = poOpenInfo->pabyHeader[17];
 
-    if( sHeader.bHasColorMap )
+    if (sHeader.bHasColorMap)
     {
-        if( sHeader.nColorMapEntrySize != 15 &&
+        if (sHeader.nColorMapEntrySize != 15 &&
             sHeader.nColorMapEntrySize != 16 &&
             sHeader.nColorMapEntrySize != 24 &&
-            sHeader.nColorMapEntrySize != 32 )
+            sHeader.nColorMapEntrySize != 32)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Color map entry size %d not supported",
@@ -553,7 +581,7 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
         }
     }
 
-    GDALTGADataset* poDS = new GDALTGADataset(sHeader, poOpenInfo->fpL);
+    GDALTGADataset *poDS = new GDALTGADataset(sHeader, poOpenInfo->fpL);
 
     VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
     const auto nSize = VSIFTellL(poOpenInfo->fpL);
@@ -562,72 +590,80 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
     bool fourthChannelIsAlpha = hasFourthChannel;
 
     // Detect presence of optional TGA file footer.
-    if( nSize >= 26 )
+    if (nSize >= 26)
     {
         VSIFSeekL(poOpenInfo->fpL, nSize - 26, SEEK_SET);
         GByte abyTail[26];
         VSIFReadL(abyTail, 1, 26, poOpenInfo->fpL);
-        if( memcmp(abyTail + 8, "TRUEVISION-XFILE.\x00", 18) == 0 )
+        if (memcmp(abyTail + 8, "TRUEVISION-XFILE.\x00", 18) == 0)
         {
             const unsigned nExtensionAreaOffset = CPL_LSBUINT32PTR(abyTail);
-            if( nExtensionAreaOffset > 0 )
+            if (nExtensionAreaOffset > 0)
             {
                 VSIFSeekL(poOpenInfo->fpL, nExtensionAreaOffset, SEEK_SET);
                 std::vector<GByte> abyExtendedData(495);
                 VSIFReadL(&abyExtendedData[0], 1, abyExtendedData.size(),
                           poOpenInfo->fpL);
                 const GUInt16 nExtSize = CPL_LSBUINT16PTR(&abyExtendedData[0]);
-                if( nExtSize >= 495 )
+                if (nExtSize >= 495)
                 {
-                    if( abyExtendedData[2] != ' ' && abyExtendedData[2] != '\0' )
+                    if (abyExtendedData[2] != ' ' && abyExtendedData[2] != '\0')
                     {
                         std::string osAuthorName;
                         osAuthorName.assign(
-                            reinterpret_cast<const char*>(&abyExtendedData[2]), 40);
+                            reinterpret_cast<const char *>(&abyExtendedData[2]),
+                            40);
                         osAuthorName.resize(strlen(osAuthorName.c_str()));
-                        while( !osAuthorName.empty() && osAuthorName.back() == ' ' )
+                        while (!osAuthorName.empty() &&
+                               osAuthorName.back() == ' ')
                         {
-                            osAuthorName.resize(osAuthorName.size()-1);
+                            osAuthorName.resize(osAuthorName.size() - 1);
                         }
-                        poDS->GDALDataset::SetMetadataItem("AUTHOR_NAME", osAuthorName.c_str());
+                        poDS->GDALDataset::SetMetadataItem(
+                            "AUTHOR_NAME", osAuthorName.c_str());
                     }
 
-                    if( abyExtendedData[43] != ' ' && abyExtendedData[43] != '\0' )
+                    if (abyExtendedData[43] != ' ' &&
+                        abyExtendedData[43] != '\0')
                     {
                         std::string osComments;
-                        for( int i = 0; i < 4; i++ )
+                        for (int i = 0; i < 4; i++)
                         {
-                            if( abyExtendedData[43 + 81 * i] == '\0' )
+                            if (abyExtendedData[43 + 81 * i] == '\0')
                             {
                                 break;
                             }
                             std::string osLine;
-                            osLine.assign(reinterpret_cast<const char*>(
-                                &abyExtendedData[43 + 81 * i]), 80);
+                            osLine.assign(reinterpret_cast<const char *>(
+                                              &abyExtendedData[43 + 81 * i]),
+                                          80);
                             osLine.resize(strlen(osLine.c_str()));
-                            while( !osLine.empty() && osLine.back() == ' ' )
+                            while (!osLine.empty() && osLine.back() == ' ')
                             {
-                                osLine.resize(osLine.size()-1);
+                                osLine.resize(osLine.size() - 1);
                             }
-                            if( i > 0 )
+                            if (i > 0)
                                 osComments += '\n';
                             osComments += osLine;
                         }
-                        poDS->GDALDataset::SetMetadataItem("COMMENTS", osComments.c_str());
+                        poDS->GDALDataset::SetMetadataItem("COMMENTS",
+                                                           osComments.c_str());
                     }
 
-                    // const GUInt32 nOffsetToScanlineTable = CPL_LSBUINT32PTR(&abyExtendedData[490]);
-                    // Did not find yet an image using a scanline table
+                    // const GUInt32 nOffsetToScanlineTable =
+                    // CPL_LSBUINT32PTR(&abyExtendedData[490]); Did not find yet
+                    // an image using a scanline table
 
                     const GByte nAttributeType = abyExtendedData[494];
-                    if( nAttributeType == 1 )
+                    if (nAttributeType == 1)
                     {
                         // undefined data in the Alpha field, can be ignored
                         hasFourthChannel = false;
                     }
-                    else if( nAttributeType == 2 )
+                    else if (nAttributeType == 2)
                     {
-                        // undefined data in the Alpha field, but should be retained
+                        // undefined data in the Alpha field, but should be
+                        // retained
                         fourthChannelIsAlpha = false;
                     }
                 }
@@ -635,11 +671,12 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
         }
     }
 
-    if( sHeader.nIDLength > 0 && 18 + sHeader.nIDLength <= poOpenInfo->nHeaderBytes )
+    if (sHeader.nIDLength > 0 &&
+        18 + sHeader.nIDLength <= poOpenInfo->nHeaderBytes)
     {
         std::string osID;
-        osID.assign( reinterpret_cast<const char*>(poOpenInfo->pabyHeader + 18),
-                     sHeader.nIDLength );
+        osID.assign(reinterpret_cast<const char *>(poOpenInfo->pabyHeader + 18),
+                    sHeader.nIDLength);
         poDS->GDALDataset::SetMetadataItem("IMAGE_ID", osID.c_str());
     }
 
@@ -647,61 +684,61 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
     poDS->m_bFourthChannelIsAlpha = fourthChannelIsAlpha;
-    if( sHeader.eImageType == RLE_COLORMAP ||
+    if (sHeader.eImageType == RLE_COLORMAP ||
         sHeader.eImageType == RLE_GRAYSCALE ||
-        sHeader.eImageType == RLE_TRUE_COLOR )
+        sHeader.eImageType == RLE_TRUE_COLOR)
     {
         // nHeight is a GUInt16, so well bounded...
         // coverity[tainted_data]
         poDS->m_aoScanlineState.resize(nHeight);
         poDS->m_aoScanlineState[0].nOffset = poDS->m_nImageDataOffset;
     }
-    if( sHeader.eImageType == UNCOMPRESSED_COLORMAP ||
+    if (sHeader.eImageType == UNCOMPRESSED_COLORMAP ||
         sHeader.eImageType == RLE_COLORMAP ||
         sHeader.eImageType == UNCOMPRESSED_GRAYSCALE ||
-        sHeader.eImageType == RLE_GRAYSCALE )
+        sHeader.eImageType == RLE_GRAYSCALE)
     {
-        if( sHeader.nPixelDepth != 8 &&
-            sHeader.nPixelDepth != 16 )
+        if (sHeader.nPixelDepth != 8 && sHeader.nPixelDepth != 16)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Pixel depth %d not supported", sHeader.nPixelDepth);
             delete poDS;
             return nullptr;
         }
-        poDS->SetBand(1, new GDALTGARasterBand(poDS, 1,
-            sHeader.nPixelDepth == 16 ? GDT_UInt16 : GDT_Byte));
+        poDS->SetBand(
+            1, new GDALTGARasterBand(
+                   poDS, 1, sHeader.nPixelDepth == 16 ? GDT_UInt16 : GDT_Byte));
     }
     else
     {
-        if( sHeader.nPixelDepth != 16 &&
-            sHeader.nPixelDepth != 24 &&
-            sHeader.nPixelDepth != 32 )
+        if (sHeader.nPixelDepth != 16 && sHeader.nPixelDepth != 24 &&
+            sHeader.nPixelDepth != 32)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Pixel depth %d not supported", sHeader.nPixelDepth);
             delete poDS;
             return nullptr;
         }
-        int l_nBands = sHeader.nPixelDepth == 16 ? 3 : (3 + (hasFourthChannel ? 1 : 0));
-        for( int iBand = 1; iBand <= l_nBands; iBand++ )
+        int l_nBands =
+            sHeader.nPixelDepth == 16 ? 3 : (3 + (hasFourthChannel ? 1 : 0));
+        for (int iBand = 1; iBand <= l_nBands; iBand++)
         {
             poDS->SetBand(iBand, new GDALTGARasterBand(poDS, iBand, GDT_Byte));
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
 
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
 
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -712,19 +749,18 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
 void GDALRegister_TGA()
 
 {
-    if( GDALGetDriverByName("TGA") != nullptr )
+    if (GDALGetDriverByName("TGA") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("TGA");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "TGA/TARGA Image File Format");
-    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-tga" );
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "TGA/TARGA Image File Format");
+    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/x-tga");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/tga.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "tga");
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GDALTGADataset::Open;
     poDriver->pfnIdentify = GDALTGADataset::Identify;

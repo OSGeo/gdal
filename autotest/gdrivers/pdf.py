@@ -77,7 +77,10 @@ def poppler_or_pdfium(request):
 
 
 def have_read_support():
-    md = gdal.GetDriverByName("PDF").GetMetadata()
+    drv = gdal.GetDriverByName("PDF")
+    if drv is None:
+        return False
+    md = drv.GetMetadata()
     return "HAVE_POPPLER" in md or "HAVE_PDFIUM" in md or "HAVE_PODOFO" in md
 
 

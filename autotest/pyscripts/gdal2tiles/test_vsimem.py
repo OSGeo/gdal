@@ -29,11 +29,16 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 from osgeo_utils import gdal2tiles
 
 
 def test_gdal2tiles_vsimem():
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     gdal2tiles.main(argv=["-q", "../../gcore/data/byte.tif", "/vsimem/gdal2tiles"])
 

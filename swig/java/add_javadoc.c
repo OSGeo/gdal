@@ -215,7 +215,7 @@ begin:
 
         while(fgets(szLine, 1023, fSrc))
         {
-            char szMethodName[1024];
+            char szMethodName[2048];
             char* szOriLine = strdup(szLine);
             if (strstr(szLine, "package"))
             {

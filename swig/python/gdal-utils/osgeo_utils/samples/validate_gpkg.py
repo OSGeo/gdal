@@ -764,6 +764,7 @@ class GPKGChecker(object):
             "SELECT %s FROM %s " % (_esc_id(geom_column_name), _esc_id(table_name))
         )
         found_geom_types = set()
+        warning_messages = set()
         for (blob,) in c.fetchall():
             if blob is None:
                 continue
@@ -787,16 +788,15 @@ class GPKGChecker(object):
                 env_ind <= 4, 19, "Invalid geometry: invalid envelope indicator code"
             )
             endian_prefix = ">" if big_endian else "<"
-            geom_srs_id = struct.unpack((endian_prefix + "I") * 1, blob[4:8])[0]
-            self._assert(
-                srs_id == geom_srs_id,
-                33,
-                (
+            geom_srs_id = struct.unpack((endian_prefix + "i") * 1, blob[4:8])[0]
+            if srs_id != geom_srs_id:
+                warning_msg = (
                     "table %s has geometries with SRID %d, "
                     + "whereas only %d is expected"
-                )
-                % (table_name, geom_srs_id, srs_id),
-            )
+                ) % (table_name, geom_srs_id, srs_id)
+                if warning_msg not in warning_messages:
+                    warning_messages.add(warning_msg)
+                    self._assert(False, 33, warning_msg)
 
             self._assert(
                 not (empty_flag and env_ind != 0), 152, "Invalid empty geometry"
@@ -878,8 +878,8 @@ class GPKGChecker(object):
             self._assert(
                 not found_geom_types or found_geom_types == set([geometry_type_name]),
                 32,
-                "in table %s, found geometry types %s"
-                % (table_name, str(found_geom_types)),
+                "in table %s, found geometry types %s whereas %s was expected"
+                % (table_name, str(found_geom_types), geometry_type_name),
             )
         elif geometry_type_name == "GEOMETRYCOLLECTION":
             self._assert(
@@ -2006,6 +2006,8 @@ class GPKGChecker(object):
         ]
         for geom_name in GPKGChecker.EXT_GEOM_TYPES:
             KNOWN_EXTENSIONS += ["gpkg_geom_" + geom_name]
+        if self.version < (1, 2):
+            KNOWN_EXTENSIONS += ["gpkg_geometry_type_trigger", "gpkg_srs_id_trigger"]
 
         for (extension_name,) in rows:
 
@@ -2440,14 +2442,24 @@ class GPKGChecker(object):
 
         c.execute("PRAGMA table_info(gpkg_data_column_constraints)")
         columns = c.fetchall()
+
+        # GPKG 1.1 uses min_is_inclusive/max_is_inclusive but GPKG 1.0 had
+        # minIsInclusive/maxIsInclusive
+        min_is_inclusive = (
+            "min_is_inclusive" if self.version >= (1, 1) else "minIsInclusive"
+        )
+        max_is_inclusive = (
+            "max_is_inclusive" if self.version >= (1, 1) else "maxIsInclusive"
+        )
+
         expected_columns = [
             (0, "constraint_name", "TEXT", 1, None, 0),
             (1, "constraint_type", "TEXT", 1, None, 0),
             (2, "value", "TEXT", 0, None, 0),
             (3, "min", "NUMERIC", 0, None, 0),
-            (4, "min_is_inclusive", "BOOLEAN", 0, None, 0),
+            (4, min_is_inclusive, "BOOLEAN", 0, None, 0),
             (5, "max", "NUMERIC", 0, None, 0),
-            (6, "max_is_inclusive", "BOOLEAN", 0, None, 0),
+            (6, max_is_inclusive, "BOOLEAN", 0, None, 0),
             (7, "description", "TEXT", 0, None, 0),
         ]
         self._check_structure(
@@ -2531,7 +2543,7 @@ class GPKGChecker(object):
 
         c.execute(
             "SELECT 1 FROM gpkg_data_column_constraints WHERE "
-            + "constraint_type = 'range' AND min_is_inclusive NOT IN (0,1)"
+            + f"constraint_type = 'range' AND {min_is_inclusive} NOT IN (0,1)"
         )
         if c.fetchone() is not None:
             self._assert(
@@ -2544,7 +2556,7 @@ class GPKGChecker(object):
 
         c.execute(
             "SELECT 1 FROM gpkg_data_column_constraints WHERE "
-            + "constraint_type = 'range' AND max_is_inclusive NOT IN (0,1)"
+            + f"constraint_type = 'range' AND {max_is_inclusive} NOT IN (0,1)"
         )
         if c.fetchone() is not None:
             self._assert(
@@ -2555,7 +2567,7 @@ class GPKGChecker(object):
                 + "not 0 or 1",
             )
 
-        for col_name in ("min", "min_is_inclusive", "max", "max_is_inclusive"):
+        for col_name in ("min", min_is_inclusive, "max", max_is_inclusive):
             c.execute(
                 "SELECT 1 FROM gpkg_data_column_constraints WHERE "
                 + "constraint_type IN ('enum', 'glob') AND "
@@ -2742,8 +2754,11 @@ class GPKGChecker(object):
                 ("Wrong application_id: %s. " + "Expected one of GP10, GP11, GPKG")
                 % str(application_id),
             )
-
-            if application_id == gpkg:
+            if application_id == gp10:
+                self.version = (1, 0)
+            elif application_id == gp11:
+                self.version = (1, 1)
+            elif application_id == gpkg:
                 f.seek(60, 0)
                 user_version = f.read(4)
                 expected_version = 10200
@@ -2754,6 +2769,13 @@ class GPKGChecker(object):
                     "Wrong user_version: %d. Expected >= %d"
                     % (user_version, expected_version),
                 )
+                self.version = (
+                    expected_version // 10000,
+                    (expected_version % 10000) // 100,
+                    expected_version % 100,
+                )
+            else:
+                self.version = (99, 99)
 
         conn = sqlite3.connect(":memory:")
         c = conn.cursor()

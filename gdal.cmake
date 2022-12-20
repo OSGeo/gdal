@@ -217,8 +217,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL
     }")
   check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP)
   if( NOT _TEST_LINK_STDCPP )
-      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS AND CMAKE_MODULE_LINKER_FLAGS")
+      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS, CMAKE_SHARED_LINKER_FLAGS and CMAKE_MODULE_LINKER_FLAGS")
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++")
+      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lstdc++")
       set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -lstdc++")
 
       check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP_AGAIN)
@@ -488,7 +489,11 @@ if (GDAL_USE_JPEG_INTERNAL)
   mark_as_advanced(RENAME_INTERNAL_JPEG_SYMBOLS)
   add_subdirectory(frmts/jpeg/libjpeg)
 endif ()
-option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
+if (NOT HAVE_JPEGTURBO_DUAL_MODE_8_12)
+    option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" ON)
+else()
+    option(GDAL_USE_JPEG12_INTERNAL "Set ON to use internal libjpeg12 support" OFF)
+endif()
 if (GDAL_USE_JPEG12_INTERNAL)
   add_subdirectory(frmts/jpeg/libjpeg12)
 endif ()
@@ -645,6 +650,7 @@ set(GDAL_DATA_FILES
     data/epsg.wkt
     data/esri_StatePlane_extra.wkt
     data/gdalicon.png
+    data/gdalinfo_output.schema.json
     data/gdalmdiminfo_output.schema.json
     data/gdalvrt.xsd
     data/gml_registry.xml
@@ -752,6 +758,7 @@ set(GDAL_DATA_FILES
     data/nitf_spec.xsd
     data/ogrvrt.xsd
     data/osmconf.ini
+    data/ogrinfo_output.schema.json
     data/ozi_datum.csv
     data/ozi_ellips.csv
     data/pci_datum.txt

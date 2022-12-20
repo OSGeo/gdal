@@ -124,6 +124,9 @@ Spatialite, are also available :
    in gpkg_spatial_ref_sys, starting with GDAL 3.2, it will be interpreted as
    a EPSG code.
 
+The raster SQL functions mentioned at :ref:`raster.gpkg.raster`
+are also available.
+
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -151,6 +154,11 @@ Relationships
 Relationship retrieval is supported, respecting the OGC GeoPackage Related Tables Extension.
 If the Related Tables Extension is not in use then relationships will be reported for tables
 which utilize FOREIGN KEY constraints.
+
+Relationship creation, deletion and updating is supported since GDAL 3.7. Relationships can
+only be updated to change their base or related table fields, or the relationship related
+table type. It is not permissible to change the base or related table itself, or the mapping
+table details. If this is desired then a new relationship should be created instead.
 
 Dataset open options
 --------------------

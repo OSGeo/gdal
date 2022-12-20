@@ -840,16 +840,19 @@ def test_ogr_geom_segmentize():
         )
         == 0
     )
+    assert str(geom) == geom.ExportToIsoWkt()
 
     # 2D + M
     geom = ogr.CreateGeometryFromWkt("LINESTRING M(0 0 1,0 10 2)")
     geom.Segmentize(5)
     assert geom.ExportToIsoWkt() == "LINESTRING M (0 0 1,0 5 2,0 10 2)"
+    assert str(geom) == geom.ExportToIsoWkt()
 
     # 2D + ZM
     geom = ogr.CreateGeometryFromWkt("LINESTRING ZM(0 0 1 2,0 10 1 2)")
     geom.Segmentize(5)
     assert geom.ExportToIsoWkt() == "LINESTRING ZM (0 0 1 2,0 5 1 2,0 10 1 2)"
+    assert str(geom) == geom.ExportToIsoWkt()
 
     # Test distance between points <<<< segmentization threshold
     # https://github.com/OSGeo/gdal/issues/1414
@@ -4014,8 +4017,6 @@ def test_ogr_geom_makevalid():
             == 0
         ), g.ExportToWkt()
 
-    return "success"
-
 
 ###############################################################################
 
@@ -4028,8 +4029,6 @@ def test_ogr_geom_normalize():
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 1,1 1,1 0,0 0,0 1))")
     g = g.Normalize()
     assert g is None or g.ExportToWkt() == "POLYGON ((0 0,0 1,1 1,1 0,0 0))"
-
-    return "success"
 
 
 ###############################################################################

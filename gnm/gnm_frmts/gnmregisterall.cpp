@@ -30,7 +30,6 @@
 
 #include "gnm_frmts.h"
 
-
 void GNMRegisterAllInternal()
 {
 #ifdef GNMFILE_ENABLED
@@ -41,10 +40,10 @@ void GNMRegisterAllInternal()
     RegisterGNMDatabase();
 #endif
 
-//TODO:
-// * pgRouting driver
-// * OSRM driver
-// * GraphHopper driver
-// * ArcGIS geometric networks
+    // TODO:
+    //  * pgRouting driver
+    //  * OSRM driver
+    //  * GraphHopper driver
+    //  * ArcGIS geometric networks
 
 } /* GNMRegisterAll */

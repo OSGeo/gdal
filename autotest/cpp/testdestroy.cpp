@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Test GDALCopyWords().
+ * Purpose:  Test GDALDestroy().
  * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -29,7 +29,14 @@
 
 #include "gdal.h"
 
-int main()
+#include "gtest_include.h"
+
+namespace
+{
+
+// ---------------------------------------------------------------------------
+
+TEST(testdestroy, test)
 {
     GDALAllRegister();
     /* See corresponding bug reports: */
@@ -38,5 +45,6 @@ int main()
     CPLError(CE_None, CPLE_AppDefined,
              "Expected, CPLError called to trigger hErrorMutex allocation");
     GDALDestroy();
-    return 0;
 }
+
+}  // namespace

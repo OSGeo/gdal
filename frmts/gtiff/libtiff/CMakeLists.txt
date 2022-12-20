@@ -50,6 +50,7 @@ add_library(
   tif_predict.c
   tif_version.c
   tif_lerc.c
+  tif_hash_set.c
   tiffio.h)
 target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_definitions(libtiff PRIVATE -DDONT_DEPRECATE_SPRINTF -DHOST_FILLORDER=FILLORDER_LSB2MSB)
@@ -102,6 +103,8 @@ if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
   gdal_target_link_libraries(libtiff_jpeg PRIVATE JPEG::JPEG)
   if (GDAL_USE_JPEG12_INTERNAL)
     target_compile_definitions(libtiff_jpeg PRIVATE -DJPEG_DUAL_MODE_8_12)
+  elseif (HAVE_JPEGTURBO_DUAL_MODE_8_12)
+    target_compile_definitions(libtiff_jpeg PRIVATE HAVE_JPEGTURBO_DUAL_MODE_8_12)
   endif ()
   if (RENAME_INTERNAL_TIFF_SYMBOLS)
     target_compile_definitions(libtiff_jpeg PRIVATE -DRENAME_INTERNAL_LIBTIFF_SYMBOLS)
@@ -121,6 +124,10 @@ if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND GDAL_USE_JPEG12_INTERNAL)
   target_sources(libtiff PRIVATE tif_jpeg_12.c)
   target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
+elseif (GDAL_USE_JPEG AND HAVE_JPEGTURBO_DUAL_MODE_8_12)
+  target_sources(libtiff PRIVATE tif_jpeg_12.c)
+  target_compile_definitions(libtiff PRIVATE HAVE_JPEGTURBO_DUAL_MODE_8_12)
+  gdal_target_link_libraries(libtiff PRIVATE JPEG::JPEG)
 endif ()
 
 if (GDAL_USE_LIBLZMA)

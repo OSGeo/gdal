@@ -248,6 +248,10 @@ def test_virtualmem_2():
 # Test virtual mem auto with a raw driver
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
 def test_virtualmem_3():
+
+    if gdal.GetDriverByName("EHdr") is None:
+        pytest.skip("EHdr driver missing")
+
     for tmpfile in ["tmp/virtualmem_3.img", "/vsimem/virtualmem_3.img"]:
         ds = gdal.GetDriverByName("EHdr").Create(tmpfile, 400, 300, 2)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)

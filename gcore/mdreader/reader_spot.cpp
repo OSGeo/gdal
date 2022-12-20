@@ -40,18 +40,19 @@
 
 #include "gdal_mdreader.h"
 
-
 /**
  * GDALMDReaderSpot()
  */
 GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
+                                   char **papszSiblingFiles)
+    : GDALMDReaderPleiades(pszPath, papszSiblingFiles)
 {
-    const char* pszDirName = CPLGetDirname(pszPath);
+    const char *pszDirName = CPLGetDirname(pszPath);
 
-    if(m_osIMDSourceFilename.empty())
+    if (m_osIMDSourceFilename.empty())
     {
-        CPLString osIMDSourceFilename = CPLFormFilename( pszDirName, "METADATA.DIM", nullptr );
+        CPLString osIMDSourceFilename =
+            CPLFormFilename(pszDirName, "METADATA.DIM", nullptr);
 
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
@@ -59,7 +60,8 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         }
         else
         {
-            osIMDSourceFilename = CPLFormFilename( pszDirName, "metadata.dim", nullptr );
+            osIMDSourceFilename =
+                CPLFormFilename(pszDirName, "metadata.dim", nullptr);
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
                 m_osIMDSourceFilename = osIMDSourceFilename;
@@ -70,12 +72,12 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     // if the file name ended on METADATA.DIM
     // Linux specific
     // example: R2_CAT_091028105025131_1\METADATA.DIM
-    if(m_osIMDSourceFilename.empty())
+    if (m_osIMDSourceFilename.empty())
     {
-        if(EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
+        if (EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
         {
-            CPLString osIMDSourceFilename = CPLSPrintf( "%s\\METADATA.DIM",
-                                                           CPLGetPath(pszPath));
+            CPLString osIMDSourceFilename =
+                CPLSPrintf("%s\\METADATA.DIM", CPLGetPath(pszPath));
 
             if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
             {
@@ -83,8 +85,8 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
             }
             else
             {
-                osIMDSourceFilename = CPLSPrintf( "%s\\metadata.dim",
-                                                           CPLGetPath(pszPath));
+                osIMDSourceFilename =
+                    CPLSPrintf("%s\\metadata.dim", CPLGetPath(pszPath));
                 if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = osIMDSourceFilename;
@@ -93,9 +95,9 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         }
     }
 
-    if(!m_osIMDSourceFilename.empty() )
-        CPLDebug( "MDReaderSpot", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
+    if (!m_osIMDSourceFilename.empty())
+        CPLDebug("MDReaderSpot", "IMD Filename: %s",
+                 m_osIMDSourceFilename.c_str());
 }
 
 /**
@@ -110,18 +112,18 @@ GDALMDReaderSpot::~GDALMDReaderSpot()
  */
 void GDALMDReaderSpot::LoadMetadata()
 {
-    if(m_bIsMetadataLoad)
+    if (m_bIsMetadataLoad)
         return;
 
     if (!m_osIMDSourceFilename.empty())
     {
-        CPLXMLNode* psNode = CPLParseXMLFile(m_osIMDSourceFilename);
+        CPLXMLNode *psNode = CPLParseXMLFile(m_osIMDSourceFilename);
 
-        if(psNode != nullptr)
+        if (psNode != nullptr)
         {
-            CPLXMLNode* psisdNode = CPLSearchXMLNode(psNode, "=Dimap_Document");
+            CPLXMLNode *psisdNode = CPLSearchXMLNode(psNode, "=Dimap_Document");
 
-            if(psisdNode != nullptr)
+            if (psisdNode != nullptr)
             {
                 m_papszIMDMD = ReadXMLToList(psisdNode->psChild, m_papszIMDMD);
             }
@@ -129,108 +131,118 @@ void GDALMDReaderSpot::LoadMetadata()
         }
     }
 
-    m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "DIMAP");
+    m_papszDEFAULTMD =
+        CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "DIMAP");
 
     m_bIsMetadataLoad = true;
 
-    if(nullptr == m_papszIMDMD)
+    if (nullptr == m_papszIMDMD)
     {
         return;
     }
 
-    //extract imagery metadata
+    // extract imagery metadata
     int nCounter = -1;
-    const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD,
-                  "Dataset_Sources.Source_Information.Scene_Source.MISSION");
-    if(nullptr == pszSatId1)
+    const char *pszSatId1 = CSLFetchNameValue(
+        m_papszIMDMD,
+        "Dataset_Sources.Source_Information.Scene_Source.MISSION");
+    if (nullptr == pszSatId1)
     {
         nCounter = 1;
-        for(int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
-            pszSatId1 = CSLFetchNameValue(m_papszIMDMD,
-            CPLSPrintf("Dataset_Sources.Source_Information_%d.Scene_Source.MISSION",
-                       nCounter));
-            if(nullptr != pszSatId1)
+            pszSatId1 = CSLFetchNameValue(
+                m_papszIMDMD, CPLSPrintf("Dataset_Sources.Source_Information_%"
+                                         "d.Scene_Source.MISSION",
+                                         nCounter));
+            if (nullptr != pszSatId1)
                 break;
             nCounter++;
         }
     }
 
-    const char* pszSatId2;
-    if(nCounter == -1)
-        pszSatId2 = CSLFetchNameValue(m_papszIMDMD,
+    const char *pszSatId2;
+    if (nCounter == -1)
+        pszSatId2 = CSLFetchNameValue(
+            m_papszIMDMD,
             "Dataset_Sources.Source_Information.Scene_Source.MISSION_INDEX");
     else
-        pszSatId2 = CSLFetchNameValue(m_papszIMDMD, CPLSPrintf(
-            "Dataset_Sources.Source_Information_%d.Scene_Source.MISSION_INDEX",
-            nCounter));
+        pszSatId2 = CSLFetchNameValue(
+            m_papszIMDMD, CPLSPrintf("Dataset_Sources.Source_Information_%d."
+                                     "Scene_Source.MISSION_INDEX",
+                                     nCounter));
 
-    if(nullptr != pszSatId1 && nullptr != pszSatId2)
+    if (nullptr != pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                           MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
-                           CPLStripQuotes(pszSatId1).c_str(),
-                           CPLStripQuotes(pszSatId2).c_str()));
+        m_papszIMAGERYMD = CSLAddNameValue(
+            m_papszIMAGERYMD, MD_NAME_SATELLITE,
+            CPLSPrintf("%s %s", CPLStripQuotes(pszSatId1).c_str(),
+                       CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(nullptr != pszSatId1 && nullptr == pszSatId2)
+    else if (nullptr != pszSatId1 && nullptr == pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+                                           CPLStripQuotes(pszSatId1));
     }
-    else if(nullptr == pszSatId1 && nullptr != pszSatId2)
+    else if (nullptr == pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+                                           CPLStripQuotes(pszSatId2));
     }
 
-    const char* pszDate;
-    if(nCounter == -1)
-        pszDate = CSLFetchNameValue(m_papszIMDMD,
-             "Dataset_Sources.Source_Information.Scene_Source.IMAGING_DATE");
+    const char *pszDate;
+    if (nCounter == -1)
+        pszDate = CSLFetchNameValue(
+            m_papszIMDMD,
+            "Dataset_Sources.Source_Information.Scene_Source.IMAGING_DATE");
     else
-        pszDate = CSLFetchNameValue(m_papszIMDMD, CPLSPrintf(
-             "Dataset_Sources.Source_Information_%d.Scene_Source.IMAGING_DATE",
-             nCounter));
+        pszDate = CSLFetchNameValue(
+            m_papszIMDMD, CPLSPrintf("Dataset_Sources.Source_Information_%d."
+                                     "Scene_Source.IMAGING_DATE",
+                                     nCounter));
 
-    if(nullptr != pszDate)
+    if (nullptr != pszDate)
     {
-        const char* pszTime;
-        if(nCounter == -1)
-            pszTime = CSLFetchNameValue(m_papszIMDMD,
-             "Dataset_Sources.Source_Information.Scene_Source.IMAGING_TIME");
+        const char *pszTime;
+        if (nCounter == -1)
+            pszTime = CSLFetchNameValue(
+                m_papszIMDMD,
+                "Dataset_Sources.Source_Information.Scene_Source.IMAGING_TIME");
         else
-            pszTime = CSLFetchNameValue(m_papszIMDMD, CPLSPrintf(
-             "Dataset_Sources.Source_Information_%d.Scene_Source.IMAGING_TIME",
-             nCounter));
+            pszTime = CSLFetchNameValue(
+                m_papszIMDMD, CPLSPrintf("Dataset_Sources.Source_Information_%"
+                                         "d.Scene_Source.IMAGING_TIME",
+                                         nCounter));
 
-        if(nullptr == pszTime)
+        if (nullptr == pszTime)
             pszTime = "00:00:00.0Z";
 
         char buffer[80];
-        GIntBig timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
-                                                     pszDate, pszTime));
+        GIntBig timeMid =
+            GetAcquisitionTimeFromString(CPLSPrintf("%sT%s", pszDate, pszTime));
         struct tm tmBuf;
-        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, buffer);
+        strftime(buffer, 80, MD_DATETIMEFORMAT,
+                 CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
     }
 
-    m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
-                                       MD_CLOUDCOVER_NA);
+    m_papszIMAGERYMD =
+        CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
 }
 
 /**
  * ReadXMLToList()
  */
-char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
-                                          const char* pszName)
+char **GDALMDReaderSpot::ReadXMLToList(CPLXMLNode *psNode, char **papszList,
+                                       const char *pszName)
 {
-    if(nullptr == psNode)
+    if (nullptr == psNode)
         return papszList;
 
     if (psNode->eType == CXT_Text)
     {
-        if(!EQUAL(pszName, ""))
+        if (!EQUAL(pszName, ""))
             return AddXMLNameValueToList(papszList, pszName, psNode->pszValue);
     }
 
@@ -238,28 +250,29 @@ char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
     {
         int nAddIndex = 0;
         bool bReset = false;
-        for(CPLXMLNode* psChildNode = psNode->psChild; nullptr != psChildNode;
-            psChildNode = psChildNode->psNext)
+        for (CPLXMLNode *psChildNode = psNode->psChild; nullptr != psChildNode;
+             psChildNode = psChildNode->psNext)
         {
             if (psChildNode->eType == CXT_Element)
             {
                 // check name duplicates
-                if(nullptr != psChildNode->psNext)
+                if (nullptr != psChildNode->psNext)
                 {
-                    if(bReset)
+                    if (bReset)
                     {
                         bReset = false;
                         nAddIndex = 0;
                     }
 
-                    if(EQUAL(psChildNode->pszValue, psChildNode->psNext->pszValue))
+                    if (EQUAL(psChildNode->pszValue,
+                              psChildNode->psNext->pszValue))
                     {
                         nAddIndex++;
                     }
                     else
-                    { // the name changed
+                    {  // the name changed
 
-                        if(nAddIndex > 0)
+                        if (nAddIndex > 0)
                         {
                             bReset = true;
                             nAddIndex++;
@@ -268,17 +281,17 @@ char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                 }
                 else
                 {
-                    if(nAddIndex > 0)
+                    if (nAddIndex > 0)
                     {
                         nAddIndex++;
                     }
                 }
 
                 char szName[512];
-                if(nAddIndex > 0)
+                if (nAddIndex > 0)
                 {
-                    CPLsnprintf( szName, 511, "%s_%d", psChildNode->pszValue,
-                                 nAddIndex);
+                    CPLsnprintf(szName, 511, "%s_%d", psChildNode->pszValue,
+                                nAddIndex);
                 }
                 else
                 {
@@ -286,13 +299,15 @@ char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                 }
 
                 char szNameNew[512];
-                if(CPLStrnlen( pszName, 511 ) > 0) //if no prefix just set name to node name
+                if (CPLStrnlen(pszName, 511) >
+                    0)  // if no prefix just set name to node name
                 {
-                    CPLsnprintf( szNameNew, 511, "%s.%s", pszName, szName );
+                    CPLsnprintf(szNameNew, 511, "%s.%s", pszName, szName);
                 }
                 else
                 {
-                    CPLsnprintf( szNameNew, 511, "%s.%s", psNode->pszValue, szName );
+                    CPLsnprintf(szNameNew, 511, "%s.%s", psNode->pszValue,
+                                szName);
                 }
 
                 papszList = ReadXMLToList(psChildNode, papszList, szNameNew);
@@ -300,9 +315,10 @@ char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
             else
             {
                 // Text nodes should always have name
-                if(EQUAL(pszName, ""))
+                if (EQUAL(pszName, ""))
                 {
-                    papszList = ReadXMLToList(psChildNode, papszList, psNode->pszValue);
+                    papszList =
+                        ReadXMLToList(psChildNode, papszList, psNode->pszValue);
                 }
                 else
                 {
@@ -314,9 +330,9 @@ char** GDALMDReaderSpot::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
     // proceed next only on top level
 
-    if(nullptr != psNode->psNext && EQUAL(pszName, ""))
+    if (nullptr != psNode->psNext && EQUAL(pszName, ""))
     {
-         papszList = ReadXMLToList(psNode->psNext, papszList, pszName);
+        papszList = ReadXMLToList(psNode->psNext, papszList, pszName);
     }
 
     return papszList;

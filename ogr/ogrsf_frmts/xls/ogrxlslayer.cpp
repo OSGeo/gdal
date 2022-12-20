@@ -32,26 +32,17 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                            OGRXLSLayer()                             */
 /************************************************************************/
 
-OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
-                          const char* pszSheetname,
-                          int iSheetIn,
-                          int nRowsIn,
-                          unsigned short nColsIn ) :
-    poDS(poDSIn),
-    poFeatureDefn(nullptr),
-    pszName(CPLStrdup(pszSheetname)),
-    iSheet(iSheetIn),
-    bFirstLineIsHeaders(false),
-    nRows(nRowsIn),
-    nCols(nColsIn),
-    nNextFID(0)
+OGRXLSLayer::OGRXLSLayer(OGRXLSDataSource *poDSIn, const char *pszSheetname,
+                         int iSheetIn, int nRowsIn, unsigned short nColsIn)
+    : poDS(poDSIn), poFeatureDefn(nullptr), pszName(CPLStrdup(pszSheetname)),
+      iSheet(iSheetIn), bFirstLineIsHeaders(false), nRows(nRowsIn),
+      nCols(nColsIn), nNextFID(0)
 {
-    SetDescription( pszName );
+    SetDescription(pszName);
 }
 
 /************************************************************************/
@@ -62,7 +53,7 @@ OGRXLSLayer::~OGRXLSLayer()
 
 {
     CPLFree(pszName);
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 }
 
@@ -83,13 +74,13 @@ void OGRXLSLayer::ResetReading()
 /*                          DetectHeaderLine()                          */
 /************************************************************************/
 
-void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
+void OGRXLSLayer::DetectHeaderLine(const void *xlshandle)
 
 {
     FreeXL_CellValue sCellValue;
     int nCountTextOnSecondLine = 0;
     unsigned short i = 0;  // Used after for.
-    for( ; i < nCols && nRows >= 2; i++ )
+    for (; i < nCols && nRows >= 2; i++)
     {
         if (freexl_get_cell_value(xlshandle, 0, i, &sCellValue) == FREEXL_OK)
         {
@@ -106,19 +97,20 @@ void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
             if (sCellValue.type == FREEXL_CELL_TEXT ||
                 sCellValue.type == FREEXL_CELL_SST_TEXT)
             {
-                /* If there are only text values on the second line, then we cannot */
+                /* If there are only text values on the second line, then we
+                 * cannot */
                 /* know if it is a header line or just a regular line */
-                nCountTextOnSecondLine ++;
+                nCountTextOnSecondLine++;
             }
         }
     }
 
-    const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
-    if( EQUAL(pszXLSHeaders, "FORCE") )
+    const char *pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
+    if (EQUAL(pszXLSHeaders, "FORCE"))
         bFirstLineIsHeaders = true;
-    else if( EQUAL(pszXLSHeaders, "DISABLE") )
+    else if (EQUAL(pszXLSHeaders, "DISABLE"))
         bFirstLineIsHeaders = false;
-    else if( i == nCols && nCountTextOnSecondLine != nCols )
+    else if (i == nCols && nCountTextOnSecondLine != nCols)
         bFirstLineIsHeaders = true;
 }
 
@@ -126,16 +118,16 @@ void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
 /*                         DetectColumnTypes()                          */
 /************************************************************************/
 
-void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
-                                    int* paeFieldTypes)
+void OGRXLSLayer::DetectColumnTypes(const void *xlshandle, int *paeFieldTypes)
 
 {
     FreeXL_CellValue sCellValue;
-    for( int j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j++ )
+    for (int j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j++)
     {
-        for( unsigned short i = 0; i < nCols; i ++)
+        for (unsigned short i = 0; i < nCols; i++)
         {
-            if (freexl_get_cell_value(xlshandle, j, i, &sCellValue) == FREEXL_OK)
+            if (freexl_get_cell_value(xlshandle, j, i, &sCellValue) ==
+                FREEXL_OK)
             {
                 int eType = paeFieldTypes[i];
                 switch (sCellValue.type)
@@ -174,10 +166,11 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
                     if ((paeFieldTypes[i] == OFTDate ||
                          paeFieldTypes[i] == OFTTime ||
                          paeFieldTypes[i] == OFTDateTime) &&
-                        (eType == OFTDate || eType == OFTTime || eType == OFTDateTime))
+                        (eType == OFTDate || eType == OFTTime ||
+                         eType == OFTDateTime))
                         paeFieldTypes[i] = OFTDateTime;
                     else if (paeFieldTypes[i] == OFTReal && eType == OFTInteger)
-                        /* nothing */ ;
+                        /* nothing */;
                     else if (paeFieldTypes[i] == OFTInteger && eType == OFTReal)
                         paeFieldTypes[i] = OFTReal;
                     else
@@ -192,16 +185,16 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
+OGRFeatureDefn *OGRXLSLayer::GetLayerDefn()
 {
     if (poFeatureDefn)
         return poFeatureDefn;
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn = new OGRFeatureDefn(pszName);
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( wkbNone );
+    poFeatureDefn->SetGeomType(wkbNone);
 
-    const void* xlshandle = poDS->GetXLSHandle();
+    const void *xlshandle = poDS->GetXLSHandle();
     if (xlshandle == nullptr)
         return poFeatureDefn;
 
@@ -214,35 +207,34 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
         DetectHeaderLine(xlshandle);
 
-        int* paeFieldTypes = (int* )
-                            CPLMalloc(nCols * sizeof(int));
-        for( unsigned short i = 0; i < nCols; i++ )
+        int *paeFieldTypes = (int *)CPLMalloc(nCols * sizeof(int));
+        for (unsigned short i = 0; i < nCols; i++)
         {
             paeFieldTypes[i] = -1;
         }
 
-        const char* pszXLSFieldTypes =
-                        CPLGetConfigOption("OGR_XLS_FIELD_TYPES", "");
+        const char *pszXLSFieldTypes =
+            CPLGetConfigOption("OGR_XLS_FIELD_TYPES", "");
         if (!EQUAL(pszXLSFieldTypes, "STRING"))
             DetectColumnTypes(xlshandle, paeFieldTypes);
 
-        for( unsigned short i = 0; i < nCols; i++ )
+        for (unsigned short i = 0; i < nCols; i++)
         {
-            OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
+            OGRFieldType eType = (OGRFieldType)paeFieldTypes[i];
             if (paeFieldTypes[i] < 0)
                 eType = OFTString;
-            if( bFirstLineIsHeaders &&
-                freexl_get_cell_value(xlshandle,
-                                      0, i, &sCellValue) == FREEXL_OK &&
+            if (bFirstLineIsHeaders &&
+                freexl_get_cell_value(xlshandle, 0, i, &sCellValue) ==
+                    FREEXL_OK &&
                 (sCellValue.type == FREEXL_CELL_TEXT ||
-                 sCellValue.type == FREEXL_CELL_SST_TEXT) )
+                 sCellValue.type == FREEXL_CELL_SST_TEXT))
             {
                 OGRFieldDefn oField(sCellValue.value.text_value, eType);
                 poFeatureDefn->AddFieldDefn(&oField);
             }
             else
             {
-                OGRFieldDefn oField(CPLSPrintf("Field%d", i+1),  eType);
+                OGRFieldDefn oField(CPLSPrintf("Field%d", i + 1), eType);
                 poFeatureDefn->AddFieldDefn(&oField);
             }
         }
@@ -259,12 +251,12 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRXLSLayer::GetFeatureCount( int bForce )
+GIntBig OGRXLSLayer::GetFeatureCount(int bForce)
 {
-    if( m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */ )
+    if (m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */)
     {
-        const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
-        if(EQUAL(pszXLSHeaders, "DISABLE"))
+        const char *pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
+        if (EQUAL(pszXLSHeaders, "DISABLE"))
             return nRows;
 
         GetLayerDefn();
@@ -285,18 +277,20 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
     if (nNextFID == nRows)
         return nullptr;
 
-    const void* xlshandle = poDS->GetXLSHandle();
+    const void *xlshandle = poDS->GetXLSHandle();
     if (xlshandle == nullptr)
         return nullptr;
 
     freexl_select_active_worksheet(xlshandle, (unsigned short)iSheet);
 
-    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
     FreeXL_CellValue sCellValue;
-    for(unsigned short i=0;i<(unsigned short )poFeatureDefn->GetFieldCount(); i++)
+    for (unsigned short i = 0;
+         i < (unsigned short)poFeatureDefn->GetFieldCount(); i++)
     {
-        if (freexl_get_cell_value(xlshandle, nNextFID, i, &sCellValue) == FREEXL_OK)
+        if (freexl_get_cell_value(xlshandle, nNextFID, i, &sCellValue) ==
+            FREEXL_OK)
         {
             switch (sCellValue.type)
             {
@@ -325,7 +319,7 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
     }
 
     poFeature->SetFID(nNextFID + 1);
-    nNextFID ++;
+    nNextFID++;
 
     return poFeature;
 }
@@ -334,12 +328,12 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSLayer::TestCapability( const char * pszCap )
+int OGRXLSLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap, OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */;
-    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
     return FALSE;

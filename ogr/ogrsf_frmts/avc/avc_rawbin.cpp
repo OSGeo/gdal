@@ -113,7 +113,7 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
 {
     AVCRawBinFile *psFile;
 
-    psFile = (AVCRawBinFile*)CPLCalloc(1, sizeof(AVCRawBinFile));
+    psFile = (AVCRawBinFile *)CPLCalloc(1, sizeof(AVCRawBinFile));
 
     /*-----------------------------------------------------------------
      * Validate access mode and open/create file.
@@ -156,8 +156,8 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
      *----------------------------------------------------------------*/
     if (psFile->fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open file %s", pszFname);
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s",
+                 pszFname);
         CPLFree(psFile);
         return nullptr;
     }
@@ -247,7 +247,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         (psFile->eAccess != AVCRead && psFile->eAccess != AVCReadWrite))
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                "AVCRawBinReadBytes(): call not compatible with access mode.");
+                 "AVCRawBinReadBytes(): call not compatible with access mode.");
         return;
     }
 
@@ -256,7 +256,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
      */
     if (psFile->nCurPos + nBytesToRead <= psFile->nCurSize)
     {
-        memcpy(pBuf, psFile->abyBuf+psFile->nCurPos, nBytesToRead);
+        memcpy(pBuf, psFile->abyBuf + psFile->nCurPos, nBytesToRead);
         psFile->nCurPos += nBytesToRead;
         return;
     }
@@ -264,7 +264,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
     /* This is the long method... it supports reading data that
      * overlaps the input buffer boundaries.
      */
-    while(nBytesToRead > 0)
+    while (nBytesToRead > 0)
     {
         /* If we reached the end of our memory buffer then read another
          * chunk from the file
@@ -273,8 +273,9 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         if (psFile->nCurPos == psFile->nCurSize)
         {
             psFile->nOffset += psFile->nCurSize;
-            psFile->nCurSize = (int)VSIFReadL(psFile->abyBuf, sizeof(GByte),
-                                        AVCRAWBIN_READBUFSIZE, psFile->fp);
+            psFile->nCurSize =
+                (int)VSIFReadL(psFile->abyBuf, sizeof(GByte),
+                               AVCRAWBIN_READBUFSIZE, psFile->fp);
             psFile->nCurPos = 0;
         }
 
@@ -293,7 +294,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
                 CPLError(CE_Failure, CPLE_FileIO,
                          "EOF encountered in %s after reading %d bytes while "
                          "trying to read %d bytes. File may be corrupt.",
-                         psFile->pszFname, nTotalBytesToRead-nBytesToRead,
+                         psFile->pszFname, nTotalBytesToRead - nBytesToRead,
                          nTotalBytesToRead);
             return;
         }
@@ -305,8 +306,8 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         if (psFile->nCurPos + nBytesToRead > psFile->nCurSize)
         {
             int nBytes;
-            nBytes = psFile->nCurSize-psFile->nCurPos;
-            memcpy(pBuf, psFile->abyBuf+psFile->nCurPos, nBytes);
+            nBytes = psFile->nCurSize - psFile->nCurPos;
+            memcpy(pBuf, psFile->abyBuf + psFile->nCurPos, nBytes);
             psFile->nCurPos += nBytes;
             pBuf += nBytes;
             nBytesToRead -= nBytes;
@@ -316,10 +317,10 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
             /* All the requested bytes are now in the buffer...
              * simply copy them and return.
              */
-            memcpy(pBuf, psFile->abyBuf+psFile->nCurPos, nBytesToRead);
+            memcpy(pBuf, psFile->abyBuf + psFile->nCurPos, nBytesToRead);
             psFile->nCurPos += nBytesToRead;
 
-            nBytesToRead = 0;   /* Terminate the loop */
+            nBytesToRead = 0; /* Terminate the loop */
         }
     }
 }
@@ -341,9 +342,8 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 
     pBuf[nBytesToRead] = '\0';
 
-    pszConvBuf = AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo,
-                                          pBuf,
-                                          nBytesToRead);
+    pszConvBuf =
+        AVCE00ConvertFromArcDBCS(psFile->psDBCSInfo, pBuf, nBytesToRead);
 
     if (pszConvBuf != pBuf)
     {
@@ -362,7 +362,7 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
  **********************************************************************/
 void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
 {
-    int  nTarget = 0;
+    int nTarget = 0;
 
     CPLAssert(nFrom == SEEK_SET || nFrom == SEEK_CUR);
 
@@ -379,7 +379,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
         nTargetBig = static_cast<GIntBig>(nOffset) - psFile->nOffset;
     else /* if (nFrom == SEEK_CUR) */
         nTargetBig = static_cast<GIntBig>(nOffset) + psFile->nCurPos;
-    if( nTargetBig > INT_MAX )
+    if (nTargetBig > INT_MAX)
         return;
     nTarget = static_cast<int>(nTargetBig);
 
@@ -394,8 +394,8 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
     }
     else
     {
-        if( (nTarget > 0 && psFile->nOffset > INT_MAX - nTarget) ||
-            psFile->nOffset+nTarget < 0 )
+        if ((nTarget > 0 && psFile->nOffset > INT_MAX - nTarget) ||
+            psFile->nOffset + nTarget < 0)
         {
             return;
         }
@@ -406,11 +406,10 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
          */
         psFile->nCurPos = 0;
         psFile->nCurSize = 0;
-        psFile->nOffset = psFile->nOffset+nTarget;
-        if( VSIFSeekL(psFile->fp, psFile->nOffset, SEEK_SET) < 0 )
+        psFile->nOffset = psFile->nOffset + nTarget;
+        if (VSIFSeekL(psFile->fp, psFile->nOffset, SEEK_SET) < 0)
             return;
     }
-
 }
 
 /**********************************************************************
@@ -434,7 +433,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
      * passed that point yet...
      */
     if (psFile->nFileDataSize > 0 &&
-        (psFile->nOffset+psFile->nCurPos) >= psFile->nFileDataSize)
+        (psFile->nOffset + psFile->nCurPos) >= psFile->nFileDataSize)
         return TRUE;
 
     /* If the file pointer has been moved by AVCRawBinFSeek(), then
@@ -465,10 +464,8 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
             AVCRawBinFSeek(psFile, -1, SEEK_CUR);
     }
 
-    return (psFile->nCurPos == psFile->nCurSize &&
-            VSIFEofL(psFile->fp));
+    return (psFile->nCurPos == psFile->nCurSize && VSIFEofL(psFile->fp));
 }
-
 
 /**********************************************************************
  *                          AVCRawBinRead<datatype>()
@@ -478,11 +475,11 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
  * and return a value with the bytes ordered properly for the current
  * platform.
  **********************************************************************/
-GInt16  AVCRawBinReadInt16(AVCRawBinFile *psFile)
+GInt16 AVCRawBinReadInt16(AVCRawBinFile *psFile)
 {
     GInt16 n16Value = 0;
 
-    AVCRawBinReadBytes(psFile, 2, (GByte*)(&n16Value));
+    AVCRawBinReadBytes(psFile, 2, (GByte *)(&n16Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
@@ -492,11 +489,11 @@ GInt16  AVCRawBinReadInt16(AVCRawBinFile *psFile)
     return n16Value;
 }
 
-GInt32  AVCRawBinReadInt32(AVCRawBinFile *psFile)
+GInt32 AVCRawBinReadInt32(AVCRawBinFile *psFile)
 {
     GInt32 n32Value = 0;
 
-    AVCRawBinReadBytes(psFile, 4, (GByte*)(&n32Value));
+    AVCRawBinReadBytes(psFile, 4, (GByte *)(&n32Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
@@ -506,25 +503,25 @@ GInt32  AVCRawBinReadInt32(AVCRawBinFile *psFile)
     return n32Value;
 }
 
-float   AVCRawBinReadFloat(AVCRawBinFile *psFile)
+float AVCRawBinReadFloat(AVCRawBinFile *psFile)
 {
     float fValue = 0.0f;
 
-    AVCRawBinReadBytes(psFile, 4, (GByte*)(&fValue));
+    AVCRawBinReadBytes(psFile, 4, (GByte *)(&fValue));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        CPL_SWAP32PTR( &fValue );
+        CPL_SWAP32PTR(&fValue);
     }
 
     return fValue;
 }
 
-double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
+double AVCRawBinReadDouble(AVCRawBinFile *psFile)
 {
     double dValue = 0.0;
 
-    AVCRawBinReadBytes(psFile, 8, (GByte*)(&dValue));
+    AVCRawBinReadBytes(psFile, 8, (GByte *)(&dValue));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
@@ -533,8 +530,6 @@ double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
 
     return dValue;
 }
-
-
 
 /**********************************************************************
  *                          AVCRawBinWriteBytes()
@@ -554,14 +549,15 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
     if (psFile == nullptr ||
         (psFile->eAccess != AVCWrite && psFile->eAccess != AVCReadWrite))
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-              "AVCRawBinWriteBytes(): call not compatible with access mode.");
+        CPLError(
+            CE_Failure, CPLE_FileIO,
+            "AVCRawBinWriteBytes(): call not compatible with access mode.");
         return;
     }
 
-    if (VSIFWriteL((void*)pBuf, nBytesToWrite, 1, psFile->fp) != 1)
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Writing to %s failed.", psFile->pszFname);
+    if (VSIFWriteL((void *)pBuf, nBytesToWrite, 1, psFile->fp) != 1)
+        CPLError(CE_Failure, CPLE_FileIO, "Writing to %s failed.",
+                 psFile->pszFname);
 
     /*----------------------------------------------------------------
      * In write mode, we keep track of current file position ( =nbr of
@@ -569,7 +565,6 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
      *---------------------------------------------------------------*/
     psFile->nCurPos += nBytesToWrite;
 }
-
 
 /**********************************************************************
  *                          AVCRawBinWrite<datatype>()
@@ -582,46 +577,45 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
  * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
-void  AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
+void AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
         n16Value = (GInt16)CPL_SWAP16(n16Value);
     }
 
-    AVCRawBinWriteBytes(psFile, 2, (GByte*)&n16Value);
+    AVCRawBinWriteBytes(psFile, 2, (GByte *)&n16Value);
 }
 
-void  AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value)
+void AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
         n32Value = (GInt32)CPL_SWAP32(n32Value);
     }
 
-    AVCRawBinWriteBytes(psFile, 4, (GByte*)&n32Value);
+    AVCRawBinWriteBytes(psFile, 4, (GByte *)&n32Value);
 }
 
-void  AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue)
+void AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        CPL_SWAP32PTR( &fValue );
+        CPL_SWAP32PTR(&fValue);
     }
 
-    AVCRawBinWriteBytes(psFile, 4, (GByte*)&fValue);
+    AVCRawBinWriteBytes(psFile, 4, (GByte *)&fValue);
 }
 
-void  AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue)
+void AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
         CPL_SWAPDOUBLE(&dValue);
     }
 
-    AVCRawBinWriteBytes(psFile, 8, (GByte*)&dValue);
+    AVCRawBinWriteBytes(psFile, 8, (GByte *)&dValue);
 }
-
 
 /**********************************************************************
  *                          AVCRawBinWriteZeros()
@@ -640,10 +634,10 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
 
     /* Write by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
-    for(i=0; i< nBytesToWrite; i+=8)
+    for (i = 0; i < nBytesToWrite; i += 8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8,(nBytesToWrite-i)),
-                            (GByte*)acZeros);
+        AVCRawBinWriteBytes(psFile, MIN(8, (nBytesToWrite - i)),
+                            (GByte *)acZeros);
     }
 }
 
@@ -666,8 +660,8 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
     /* If we're on a system with a multibyte codepage then we have to
      * convert strings to the proper multibyte encoding.
      */
-    pszString = AVCE00Convert2ArcDBCS(psFile->psDBCSInfo,
-                                      pszString, nFieldSize);
+    pszString =
+        AVCE00Convert2ArcDBCS(psFile->psDBCSInfo, pszString, nFieldSize);
 
     nLen = (int)strlen((const char *)pszString);
     nLen = MIN(nLen, nFieldSize);
@@ -678,9 +672,8 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
 
     /* Write spaces by 8 bytes chunks.  The last chunk may be less than 8 bytes
      */
-    for(i=0; i< numSpaces; i+=8)
+    for (i = 0; i < numSpaces; i += 8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8,(numSpaces-i)),
-                            (GByte*)acSpaces);
+        AVCRawBinWriteBytes(psFile, MIN(8, (numSpaces - i)), (GByte *)acSpaces);
     }
 }

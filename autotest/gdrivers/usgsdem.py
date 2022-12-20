@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("USGSDEM")
+
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/022gdeme
 

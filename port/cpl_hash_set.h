@@ -52,47 +52,47 @@ CPL_C_START
 typedef struct _CPLHashSet CPLHashSet;
 
 /** CPLHashSetHashFunc */
-typedef unsigned long (*CPLHashSetHashFunc)(const void* elt);
+typedef unsigned long (*CPLHashSetHashFunc)(const void *elt);
 
 /** CPLHashSetEqualFunc */
-typedef int          (*CPLHashSetEqualFunc)(const void* elt1, const void* elt2);
+typedef int (*CPLHashSetEqualFunc)(const void *elt1, const void *elt2);
 
 /** CPLHashSetFreeEltFunc */
-typedef void         (*CPLHashSetFreeEltFunc)(void* elt);
+typedef void (*CPLHashSetFreeEltFunc)(void *elt);
 
 /** CPLHashSetIterEltFunc */
-typedef int          (*CPLHashSetIterEltFunc)(void* elt, void* user_data);
+typedef int (*CPLHashSetIterEltFunc)(void *elt, void *user_data);
 
 /* Functions */
 
-CPLHashSet CPL_DLL * CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
-                                   CPLHashSetEqualFunc fnEqualFunc,
-                                   CPLHashSetFreeEltFunc fnFreeEltFunc);
+CPLHashSet CPL_DLL *CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
+                                  CPLHashSetEqualFunc fnEqualFunc,
+                                  CPLHashSetFreeEltFunc fnFreeEltFunc);
 
-void         CPL_DLL CPLHashSetDestroy(CPLHashSet* set);
+void CPL_DLL CPLHashSetDestroy(CPLHashSet *set);
 
-void         CPL_DLL CPLHashSetClear(CPLHashSet* set);
+void CPL_DLL CPLHashSetClear(CPLHashSet *set);
 
-int          CPL_DLL CPLHashSetSize(const CPLHashSet* set);
+int CPL_DLL CPLHashSetSize(const CPLHashSet *set);
 
-void         CPL_DLL CPLHashSetForeach(CPLHashSet* set,
-                                       CPLHashSetIterEltFunc fnIterFunc,
-                                       void* user_data);
+void CPL_DLL CPLHashSetForeach(CPLHashSet *set,
+                               CPLHashSetIterEltFunc fnIterFunc,
+                               void *user_data);
 
-int          CPL_DLL CPLHashSetInsert(CPLHashSet* set, void* elt);
+int CPL_DLL CPLHashSetInsert(CPLHashSet *set, void *elt);
 
-void         CPL_DLL * CPLHashSetLookup(CPLHashSet* set, const void* elt);
+void CPL_DLL *CPLHashSetLookup(CPLHashSet *set, const void *elt);
 
-int          CPL_DLL CPLHashSetRemove(CPLHashSet* set, const void* elt);
-int          CPL_DLL CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt);
+int CPL_DLL CPLHashSetRemove(CPLHashSet *set, const void *elt);
+int CPL_DLL CPLHashSetRemoveDeferRehash(CPLHashSet *set, const void *elt);
 
-unsigned long CPL_DLL CPLHashSetHashPointer(const void* elt);
+unsigned long CPL_DLL CPLHashSetHashPointer(const void *elt);
 
-int          CPL_DLL CPLHashSetEqualPointer(const void* elt1, const void* elt2);
+int CPL_DLL CPLHashSetEqualPointer(const void *elt1, const void *elt2);
 
-unsigned long CPL_DLL CPLHashSetHashStr(const void * pszStr);
+unsigned long CPL_DLL CPLHashSetHashStr(const void *pszStr);
 
-int          CPL_DLL CPLHashSetEqualStr(const void* pszStr1, const void* pszStr2);
+int CPL_DLL CPLHashSetEqualStr(const void *pszStr1, const void *pszStr2);
 
 CPL_C_END
 

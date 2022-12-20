@@ -1108,6 +1108,34 @@ def test_netcdf_27():
 
 
 ###############################################################################
+# check support for GDAL_NETCDF_ASSUME_LONGLAT configuration option
+
+
+def test_netcdf_assume_longlat():
+
+    # test default config
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "YES"):
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc")
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc")
+        assert ds.GetSpatialRef() is None
+
+    # test open option and config overrides
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "YES"):
+        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=NO"])
+        srs = ds.GetSpatialRef()
+        assert srs is None
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
+        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=YES"])
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
+
+
+###############################################################################
 # check support for writing multi-dimensional files (helper function)
 
 
@@ -3624,7 +3652,7 @@ def test_netcdf_expanded_form_of_grid_mapping():
 
 init_list = [
     ("byte.tif", 4672, []),
-    ("gtiff/byte_signed.tif", 4672, ["PIXELTYPE=SIGNEDBYTE"]),
+    ("gtiff/int8.tif", 1046, []),
     ("int16.tif", 4672, []),
     ("int32.tif", 4672, []),
     ("float32.tif", 4672, []),
@@ -6165,6 +6193,46 @@ def test_netcdf_read_missing_value_text_non_numeric():
 
     ds = gdal.Open("data/netcdf/missing_value_text_non_numeric.nc")
     assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
+###############################################################################
+
+
+def test_netcdf_read_cf_xy_latlon_crs_wkt():
+
+    # note: contains dummy values in lat and lon variables
+    ds = gdal.Open("data/netcdf/cf_xy_latlon_crs_wkt.nc")
+    assert ds.GetGeoTransform() == (3500000.0, 1000.0, 0.0, 2102000.0, 0.0, -1000.0)
+
+
+###############################################################################
+# Test that a user receives a warning when it queries
+# GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+
+
+def test_netcdf_warning_get_metadata_item_PIXELTYPE():
+
+    ds = gdal.Open("data/netcdf/byte_no_cf.nc")
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+    assert (
+        gdal.GetLastErrorMsg()
+        == "Starting with GDAL 3.7, PIXELTYPE=SIGNEDBYTE is no longer used to signal signed 8-bit raster. Change your code to test for the new GDT_Int8 data type instead."
+    )
+
+
+###############################################################################
+
+
+def test_netcdf_read_actual_range_with_order_different_than_latitude():
+
+    ds = gdal.Open("data/netcdf/actual_range_with_order_different_than_latitude.nc")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-150.4, 0.05, 0.0, -16.85, 0.0, -0.05), rel=1e-4
+    )
+    assert struct.unpack("d" * 4, ds.ReadRaster()) == pytest.approx(
+        (-1.51, -1.53, -1.54, -1.55)
+    )
 
 
 def test_clean_tmp():

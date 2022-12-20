@@ -36,6 +36,8 @@ The following creation options are supported:
    into account.
 -  PIXELTYPE=SIGNEDBYTE. To write Byte bands as signed byte instead of
    unsigned byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 
 Driver capabilities
 -------------------

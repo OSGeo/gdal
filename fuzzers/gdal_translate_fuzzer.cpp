@@ -33,13 +33,13 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
 {
-    const char* exe_path = (*argv)[0];
-    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    const char *exe_path = (*argv)[0];
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr)
     {
         CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     }
@@ -51,20 +51,21 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
-    CPLSetConfigOption("GDAL_CACHEMAX", "1000"); // Limit to 1 GB
+    CPLSetConfigOption("GDAL_CACHEMAX", "1000");  // Limit to 1 GB
     GDALAllRegister();
     return 0;
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test.tar",
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        "/vsimem/test.tar",
+        reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)), len, FALSE);
     VSIFCloseL(fp);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    char** papszArgv = nullptr;
+    char **papszArgv = nullptr;
 
     // Prevent generating too big output raster. Make sure they are set at
     // the beginning to avoid being accidentally eaten by invalid arguments
@@ -73,12 +74,12 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     papszArgv = CSLAddString(papszArgv, "1000000");
 
     fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
-    if( fp != nullptr )
+    if (fp != nullptr)
     {
-        const char* pszLine = nullptr;
-        while( (pszLine = CPLReadLineL(fp)) != nullptr )
+        const char *pszLine = nullptr;
+        while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
-            if( !EQUAL(pszLine, "-limit_outsize") )
+            if (!EQUAL(pszLine, "-limit_outsize"))
                 papszArgv = CSLAddString(papszArgv, pszLine);
         }
         VSIFCloseL(fp);
@@ -93,54 +94,61 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     int nBlockYSize = 0;
     bool bStatsEnabled = false;
     bool bHFA = false;
-    if( papszArgv != nullptr )
+    if (papszArgv != nullptr)
     {
         int nCount = CSLCount(papszArgv);
-        for( int i = 0; i < nCount; i++ )
+        for (int i = 0; i < nCount; i++)
         {
-            if( EQUAL(papszArgv[i], "-outsize") && i + 2 < nCount )
+            if (EQUAL(papszArgv[i], "-outsize") && i + 2 < nCount)
             {
-                nXDim = atoi(papszArgv[i+1]);
-                bXDimPct = (papszArgv[i+1][0] != '\0' &&
-                            papszArgv[i+1][strlen(papszArgv[i+1])-1] == '%');
-                nYDim = atoi(papszArgv[i+2]);
-                bYDimPct = (papszArgv[i+2][0] != '\0' &&
-                            papszArgv[i+2][strlen(papszArgv[i+2])-1] == '%');
+                nXDim = atoi(papszArgv[i + 1]);
+                bXDimPct =
+                    (papszArgv[i + 1][0] != '\0' &&
+                     papszArgv[i + 1][strlen(papszArgv[i + 1]) - 1] == '%');
+                nYDim = atoi(papszArgv[i + 2]);
+                bYDimPct =
+                    (papszArgv[i + 2][0] != '\0' &&
+                     papszArgv[i + 2][strlen(papszArgv[i + 2]) - 1] == '%');
             }
-            else if( EQUAL(papszArgv[i], "-r") && i + 1 < nCount )
+            else if (EQUAL(papszArgv[i], "-r") && i + 1 < nCount)
             {
-                bNonNearestResampling = !STARTS_WITH_CI(papszArgv[i+1], "NEAR");
+                bNonNearestResampling =
+                    !STARTS_WITH_CI(papszArgv[i + 1], "NEAR");
             }
-            else if( EQUAL(papszArgv[i], "-co") && i + 1 < nCount )
+            else if (EQUAL(papszArgv[i], "-co") && i + 1 < nCount)
             {
-                if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKSIZE=") )
+                if (STARTS_WITH_CI(papszArgv[i + 1], "BLOCKSIZE="))
                 {
-                    nBlockXSize = std::max(nBlockXSize,
-                                atoi(papszArgv[i+1]+strlen("BLOCKSIZE=")));
-                    nBlockYSize = std::max(nBlockYSize,
-                                atoi(papszArgv[i+1]+strlen("BLOCKSIZE=")));
+                    nBlockXSize =
+                        std::max(nBlockXSize,
+                                 atoi(papszArgv[i + 1] + strlen("BLOCKSIZE=")));
+                    nBlockYSize =
+                        std::max(nBlockYSize,
+                                 atoi(papszArgv[i + 1] + strlen("BLOCKSIZE=")));
                 }
-                else if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKXSIZE=") )
+                else if (STARTS_WITH_CI(papszArgv[i + 1], "BLOCKXSIZE="))
                 {
-                    nBlockXSize = std::max(nBlockXSize,
-                                atoi(papszArgv[i+1]+strlen("BLOCKXSIZE=")));
+                    nBlockXSize =
+                        std::max(nBlockXSize, atoi(papszArgv[i + 1] +
+                                                   strlen("BLOCKXSIZE=")));
                 }
-                else if( STARTS_WITH_CI(papszArgv[i+1], "BLOCKYSIZE=") )
+                else if (STARTS_WITH_CI(papszArgv[i + 1], "BLOCKYSIZE="))
                 {
-                    nBlockYSize = std::max(nBlockYSize,
-                                atoi(papszArgv[i+1]+strlen("BLOCKYSIZE=")));
+                    nBlockYSize =
+                        std::max(nBlockYSize, atoi(papszArgv[i + 1] +
+                                                   strlen("BLOCKYSIZE=")));
                 }
             }
-            else if( EQUAL(papszArgv[i], "-stats") )
+            else if (EQUAL(papszArgv[i], "-stats"))
             {
                 bStatsEnabled = true;
             }
-            else if( EQUAL(papszArgv[i], "-of") && i + 1 < nCount )
+            else if (EQUAL(papszArgv[i], "-of") && i + 1 < nCount)
             {
-                bHFA = EQUAL( papszArgv[i+1], "HFA" );
+                bHFA = EQUAL(papszArgv[i + 1], "HFA");
             }
         }
-        if( bHFA )
+        if (bHFA)
         {
             // Disable statistics computation for HFA, as it can be time
             // consuming.
@@ -150,89 +158,94 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
     }
 
-    if( papszArgv != nullptr )
+    if (papszArgv != nullptr)
     {
-        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, nullptr);
-        if( psOptions )
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(papszArgv, nullptr);
+        if (psOptions)
         {
-            GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
-            if( hSrcDS != nullptr )
+            GDALDatasetH hSrcDS =
+                GDALOpen("/vsitar//vsimem/test.tar/in", GA_ReadOnly);
+            if (hSrcDS != nullptr)
             {
                 // Also check that reading the source doesn't involve too
                 // much memory
-                GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDS);
+                GDALDataset *poSrcDS = reinterpret_cast<GDALDataset *>(hSrcDS);
                 const int nBands = poSrcDS->GetRasterCount();
                 const int nXSize = poSrcDS->GetRasterXSize();
                 const int nYSize = poSrcDS->GetRasterYSize();
-                if( nBands < 10 )
+                if (nBands < 10)
                 {
                     // Prevent excessive downsampling which might require huge
                     // memory allocation
                     bool bOKForResampling = true;
-                    if( bNonNearestResampling && nXDim >= 0 && nYDim >= 0 )
+                    if (bNonNearestResampling && nXDim >= 0 && nYDim >= 0)
                     {
-                        if( bXDimPct && nXDim > 0 )
+                        if (bXDimPct && nXDim > 0)
                         {
-                            nXDim = static_cast<int>(
-                                nXSize / 100.0 * nXDim);
+                            nXDim = static_cast<int>(nXSize / 100.0 * nXDim);
                         }
-                        if( bYDimPct && nYDim > 0 )
+                        if (bYDimPct && nYDim > 0)
                         {
-                            nYDim = static_cast<int>(
-                                nYSize / 100.0 * nYDim);
+                            nYDim = static_cast<int>(nYSize / 100.0 * nYDim);
                         }
-                        if( nXDim > 0 && nXSize / nXDim > 100 )
+                        if (nXDim > 0 && nXSize / nXDim > 100)
                             bOKForResampling = false;
-                        if( nYDim > 0 && nYSize / nYDim > 100 )
+                        if (nYDim > 0 && nYSize / nYDim > 100)
                             bOKForResampling = false;
                     }
 
                     bool bOKForSrc = true;
-                    if( nBands > 0 )
+                    if (nBands > 0)
                     {
                         const int nDTSize = GDALGetDataTypeSizeBytes(
-                            poSrcDS->GetRasterBand(1)->GetRasterDataType() );
-                        if( nXSize > 0 && nYSize > 0 &&
-                            nBands * nDTSize > 10 * 1024 * 1024 / nXSize / nYSize )
+                            poSrcDS->GetRasterBand(1)->GetRasterDataType());
+                        if (nXSize > 0 && nYSize > 0 &&
+                            nBands * nDTSize >
+                                10 * 1024 * 1024 / nXSize / nYSize)
                         {
                             bOKForSrc = false;
                         }
 
                         int nBXSize = 0, nBYSize = 0;
-                        GDALGetBlockSize( GDALGetRasterBand(hSrcDS, 1), &nBXSize,
-                                          &nBYSize );
-                        const char* pszInterleave =
-                            GDALGetMetadataItem( hSrcDS, "INTERLEAVE",
-                                                 "IMAGE_STRUCTURE" );
+                        GDALGetBlockSize(GDALGetRasterBand(hSrcDS, 1), &nBXSize,
+                                         &nBYSize);
+                        const char *pszInterleave = GDALGetMetadataItem(
+                            hSrcDS, "INTERLEAVE", "IMAGE_STRUCTURE");
                         int nSimultaneousBands =
-                            (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
-                                        nBands : 1;
-                        if( static_cast<GIntBig>(nSimultaneousBands)*
-                                nBXSize * nBYSize * nDTSize > 10 * 1024 * 1024 )
+                            (pszInterleave && EQUAL(pszInterleave, "PIXEL"))
+                                ? nBands
+                                : 1;
+                        if (static_cast<GIntBig>(nSimultaneousBands) * nBXSize *
+                                nBYSize * nDTSize >
+                            10 * 1024 * 1024)
                         {
                             bOKForSrc = false;
                         }
 
-                        if( static_cast<GIntBig>(nBlockXSize) * nBlockYSize
-                                    > 10 * 1024 * 1024 / (nBands * nDTSize) )
+                        if (static_cast<GIntBig>(nBlockXSize) * nBlockYSize >
+                            10 * 1024 * 1024 / (nBands * nDTSize))
                         {
                             bOKForSrc = false;
                         }
                     }
 
                     bool bOKForStats = true;
-                    if( nBands && bStatsEnabled )
+                    if (nBands && bStatsEnabled)
                     {
-                        // Other types might be too slow with sanitization enabled
-                        // See https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=10029
-                        bOKForStats = poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte;
+                        // Other types might be too slow with sanitization
+                        // enabled See
+                        // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=10029
+                        bOKForStats =
+                            poSrcDS->GetRasterBand(1)->GetRasterDataType() ==
+                            GDT_Byte;
                     }
 
-                    if( bOKForSrc && bOKForResampling && bOKForStats )
+                    if (bOKForSrc && bOKForResampling && bOKForStats)
                     {
-                        GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
-                                                            psOptions, nullptr);
-                        if( hOutDS )
+                        GDALDatasetH hOutDS = GDALTranslate(
+                            "/vsimem/out", hSrcDS, psOptions, nullptr);
+                        if (hOutDS)
                             GDALClose(hOutDS);
                     }
                 }

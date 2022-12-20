@@ -31,6 +31,7 @@
 
 #include <cmath>
 #include <cfloat>
+#include <limits>
 
 #include "tilematrixset.hpp"
 
@@ -45,18 +46,17 @@ namespace gdal
 
 std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
 {
-    std::set<std::string> l{ "GoogleMapsCompatible",
-                             "InspireCRS84Quad" };
-    const char* pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
-    if( pszSomeFile )
+    std::set<std::string> l{"GoogleMapsCompatible", "InspireCRS84Quad"};
+    const char *pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
+    if (pszSomeFile)
     {
         CPLStringList aosList(VSIReadDir(CPLGetDirname(pszSomeFile)));
-        for( int i = 0; i < aosList.size(); i++ )
+        for (int i = 0; i < aosList.size(); i++)
         {
             const size_t nLen = strlen(aosList[i]);
-            if( nLen > strlen("tms_") + strlen(".json") &&
+            if (nLen > strlen("tms_") + strlen(".json") &&
                 STARTS_WITH(aosList[i], "tms_") &&
-                EQUAL(aosList[i] + nLen - strlen(".json"), ".json") )
+                EQUAL(aosList[i] + nLen - strlen(".json"), ".json"))
             {
                 std::string id(aosList[i] + strlen("tms_"),
                                nLen - (strlen("tms_") + strlen(".json")));
@@ -71,15 +71,16 @@ std::set<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
 /*                              parse()                                 */
 /************************************************************************/
 
-std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
+std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
 {
     CPLJSONDocument oDoc;
     std::unique_ptr<TileMatrixSet> poTMS(new TileMatrixSet());
 
     constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
-    if( EQUAL(fileOrDef, "GoogleMapsCompatible") )
+    if (EQUAL(fileOrDef, "GoogleMapsCompatible"))
     {
-        /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0), Annex E.4 */
+        /* See http://portal.opengeospatial.org/files/?artifact_id=35326
+         * (WMTS 1.0), Annex E.4 */
         poTMS->mTitle = "GoogleMapsCompatible";
         poTMS->mIdentifier = "GoogleMapsCompatible";
         poTMS->mCrs = "http://www.opengis.net/def/crs/EPSG/0/3857";
@@ -88,8 +89,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
         poTMS->mBbox.mLowerCornerY = -HALF_CIRCUMFERENCE;
         poTMS->mBbox.mUpperCornerX = HALF_CIRCUMFERENCE;
         poTMS->mBbox.mUpperCornerY = HALF_CIRCUMFERENCE;
-        poTMS->mWellKnownScaleSet = "http://www.opengis.net/def/wkss/OGC/1.0/GoogleMapsCompatible";
-        for( int i = 0; i < 25; i++ )
+        poTMS->mWellKnownScaleSet =
+            "http://www.opengis.net/def/wkss/OGC/1.0/GoogleMapsCompatible";
+        for (int i = 0; i < 25; i++)
         {
             TileMatrix tm;
             tm.mId = CPLSPrintf("%d", i);
@@ -107,11 +109,14 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
         return poTMS;
     }
 
-    if( EQUAL(fileOrDef, "InspireCRS84Quad") )
+    if (EQUAL(fileOrDef, "InspireCRS84Quad"))
     {
-        /* See InspireCRS84Quad at http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf */
+        /* See InspireCRS84Quad at
+         * http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf
+         */
         /* This is exactly the same as PseudoTMS_GlobalGeodetic */
-        /* See global-geodetic at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
+        /* See global-geodetic at
+         * http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
         // See also http://docs.opengeospatial.org/is/17-083r2/17-083r2.html#76
         poTMS->mTitle = "InspireCRS84Quad";
         poTMS->mIdentifier = "InspireCRS84Quad";
@@ -121,14 +126,16 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
         poTMS->mBbox.mLowerCornerY = -90;
         poTMS->mBbox.mUpperCornerX = 180;
         poTMS->mBbox.mUpperCornerY = 90;
-        poTMS->mWellKnownScaleSet = "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad";
-        for( int i = 0; i < 18; i++ )
+        poTMS->mWellKnownScaleSet =
+            "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad";
+        for (int i = 0; i < 18; i++)
         {
             TileMatrix tm;
             tm.mId = CPLSPrintf("%d", i);
             tm.mResX = 180. / 256 / (1 << i);
             tm.mResY = tm.mResX;
-            tm.mScaleDenominator = tm.mResX * (HALF_CIRCUMFERENCE / 180) / 0.28e-3;
+            tm.mScaleDenominator =
+                tm.mResX * (HALF_CIRCUMFERENCE / 180) / 0.28e-3;
             tm.mTopLeftX = -180;
             tm.mTopLeftY = 90;
             tm.mTileWidth = 256;
@@ -141,54 +148,55 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     }
 
     bool loadOk = false;
-    if( (strstr(fileOrDef, "\"type\"") != nullptr &&
+    if ((strstr(fileOrDef, "\"type\"") != nullptr &&
          strstr(fileOrDef, "\"TileMatrixSetType\"") != nullptr) ||
         (strstr(fileOrDef, "\"identifier\"") != nullptr &&
          strstr(fileOrDef, "\"boundingBox\"") != nullptr &&
          (strstr(fileOrDef, "\"tileMatrix\"") != nullptr ||
-          strstr(fileOrDef, "\"tileMatrices\"") != nullptr)) )
+          strstr(fileOrDef, "\"tileMatrices\"") != nullptr)))
     {
         loadOk = oDoc.LoadMemory(fileOrDef);
     }
-    else if( STARTS_WITH_CI(fileOrDef, "http://") ||
-             STARTS_WITH_CI(fileOrDef, "https://") )
+    else if (STARTS_WITH_CI(fileOrDef, "http://") ||
+             STARTS_WITH_CI(fileOrDef, "https://"))
     {
-        const char* const apszOptions[] = { "MAX_FILE_SIZE=1000000", nullptr };
+        const char *const apszOptions[] = {"MAX_FILE_SIZE=1000000", nullptr};
         loadOk = oDoc.LoadUrl(fileOrDef, apszOptions);
     }
     else
     {
         VSIStatBufL sStat;
-        if( VSIStatL( fileOrDef, &sStat ) == 0 )
+        if (VSIStatL(fileOrDef, &sStat) == 0)
         {
             loadOk = oDoc.Load(fileOrDef);
         }
         else
         {
-            const char* pszFilename = CPLFindFile( "gdal",
-                (std::string("tms_") + fileOrDef + ".json").c_str() );
-            if( pszFilename )
+            const char *pszFilename = CPLFindFile(
+                "gdal", (std::string("tms_") + fileOrDef + ".json").c_str());
+            if (pszFilename)
             {
                 loadOk = oDoc.Load(pszFilename);
             }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Invalid tiling matrix set name");
+                         "Invalid tiling matrix set name");
             }
         }
     }
-    if( !loadOk )
+    if (!loadOk)
     {
         return nullptr;
     }
 
     auto oRoot = oDoc.GetRoot();
-    if( oRoot.GetString("type") != "TileMatrixSetType" &&
+    if (oRoot.GetString("type") != "TileMatrixSetType" &&
         !oRoot.GetObj("tileMatrix").IsValid() &&
-        !oRoot.GetObj("tileMatrices").IsValid() )
+        !oRoot.GetObj("tileMatrices").IsValid())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Expected type = TileMatrixSetType");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Expected type = TileMatrixSetType");
         return nullptr;
     }
 
@@ -196,17 +204,17 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     poTMS->mTitle = oRoot.GetString("title");
     poTMS->mAbstract = oRoot.GetString("abstract");
     const auto oBbox = oRoot.GetObj("boundingBox");
-    if( oBbox.IsValid() )
+    if (oBbox.IsValid())
     {
         poTMS->mBbox.mCrs = oBbox.GetString("crs");
         const auto oLowerCorner = oBbox.GetArray("lowerCorner");
-        if( oLowerCorner.IsValid() && oLowerCorner.Size() == 2 )
+        if (oLowerCorner.IsValid() && oLowerCorner.Size() == 2)
         {
             poTMS->mBbox.mLowerCornerX = oLowerCorner[0].ToDouble(NaN);
             poTMS->mBbox.mLowerCornerY = oLowerCorner[1].ToDouble(NaN);
         }
         const auto oUpperCorner = oBbox.GetArray("upperCorner");
-        if( oUpperCorner.IsValid() && oUpperCorner.Size() == 2 )
+        if (oUpperCorner.IsValid() && oUpperCorner.Size() == 2)
         {
             poTMS->mBbox.mUpperCornerX = oUpperCorner[0].ToDouble(NaN);
             poTMS->mBbox.mUpperCornerY = oUpperCorner[1].ToDouble(NaN);
@@ -216,48 +224,51 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     poTMS->mWellKnownScaleSet = oRoot.GetString("wellKnownScaleSet");
 
     OGRSpatialReference oCrs;
-    if( oCrs.SetFromUserInput(poTMS->mCrs.c_str(),
-                              OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
+    if (oCrs.SetFromUserInput(
+            poTMS->mCrs.c_str(),
+            OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) !=
+        OGRERR_NONE)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot parse CRS %s", poTMS->mCrs.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse CRS %s",
+                 poTMS->mCrs.c_str());
         return nullptr;
     }
     double dfMetersPerUnit = 1.0;
-    if( oCrs.IsProjected() )
+    if (oCrs.IsProjected())
     {
         dfMetersPerUnit = oCrs.GetLinearUnits();
     }
-    else if( oCrs.IsGeographic() )
+    else if (oCrs.IsGeographic())
     {
         dfMetersPerUnit = oCrs.GetSemiMajor() * M_PI / 180;
     }
 
-    const auto oTileMatrix = oRoot.GetObj("tileMatrix").IsValid() ?
-        oRoot.GetArray("tileMatrix") :
-        oRoot.GetArray("tileMatrices");
-    if( oTileMatrix.IsValid() )
+    const auto oTileMatrix = oRoot.GetObj("tileMatrix").IsValid()
+                                 ? oRoot.GetArray("tileMatrix")
+                                 : oRoot.GetArray("tileMatrices");
+    if (oTileMatrix.IsValid())
     {
         double dfLastScaleDenominator = std::numeric_limits<double>::max();
-        for( const auto& oTM: oTileMatrix )
+        for (const auto &oTM : oTileMatrix)
         {
             TileMatrix tm;
             tm.mId = oTM.GetString("identifier");
             tm.mScaleDenominator = oTM.GetDouble("scaleDenominator");
-            if( tm.mScaleDenominator >= dfLastScaleDenominator ||
-                tm.mScaleDenominator <= 0 )
+            if (tm.mScaleDenominator >= dfLastScaleDenominator ||
+                tm.mScaleDenominator <= 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Invalid scale denominator or non-decreasing series "
-                        "of scale denominators");
+                         "Invalid scale denominator or non-decreasing series "
+                         "of scale denominators");
                 return nullptr;
             }
             dfLastScaleDenominator = tm.mScaleDenominator;
-            // See note g of Table 2 of http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
+            // See note g of Table 2 of
+            // http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
             tm.mResX = tm.mScaleDenominator * 0.28e-3 / dfMetersPerUnit;
             tm.mResY = tm.mResX;
             const auto oTopLeftCorner = oTM.GetArray("topLeftCorner");
-            if( oTopLeftCorner.IsValid() && oTopLeftCorner.Size() == 2 )
+            if (oTopLeftCorner.IsValid() && oTopLeftCorner.Size() == 2)
             {
                 tm.mTopLeftX = oTopLeftCorner[0].ToDouble(NaN);
                 tm.mTopLeftY = oTopLeftCorner[1].ToDouble(NaN);
@@ -267,12 +278,13 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
             tm.mMatrixWidth = oTM.GetInteger("matrixWidth");
             tm.mMatrixHeight = oTM.GetInteger("matrixHeight");
 
-            const auto oVariableMatrixWidth = oTM.GetObj("variableMatrixWidth").IsValid() ?
-                oTM.GetArray("variableMatrixWidth") :
-                oTM.GetArray("variableMatrixWidths");
-            if( oVariableMatrixWidth.IsValid() )
+            const auto oVariableMatrixWidth =
+                oTM.GetObj("variableMatrixWidth").IsValid()
+                    ? oTM.GetArray("variableMatrixWidth")
+                    : oTM.GetArray("variableMatrixWidths");
+            if (oVariableMatrixWidth.IsValid())
             {
-                for( const auto& oVMW: oVariableMatrixWidth )
+                for (const auto &oVMW : oVariableMatrixWidth)
                 {
                     TileMatrix::VariableMatrixWidth vmw;
                     vmw.mCoalesce = oVMW.GetInteger("coalesce");
@@ -285,10 +297,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
             poTMS->mTileMatrixList.emplace_back(std::move(tm));
         }
     }
-    if( poTMS->mTileMatrixList.empty() )
+    if (poTMS->mTileMatrixList.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "No tileMatrix defined");
+        CPLError(CE_Failure, CPLE_AppDefined, "No tileMatrix defined");
         return nullptr;
     }
 
@@ -301,10 +312,10 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
 
 bool TileMatrixSet::haveAllLevelsSameTopLeft() const
 {
-    for( const auto& oTM: mTileMatrixList )
+    for (const auto &oTM : mTileMatrixList)
     {
-        if( oTM.mTopLeftX != mTileMatrixList[0].mTopLeftX ||
-            oTM.mTopLeftY != mTileMatrixList[0].mTopLeftY )
+        if (oTM.mTopLeftX != mTileMatrixList[0].mTopLeftX ||
+            oTM.mTopLeftY != mTileMatrixList[0].mTopLeftY)
         {
             return false;
         }
@@ -318,10 +329,10 @@ bool TileMatrixSet::haveAllLevelsSameTopLeft() const
 
 bool TileMatrixSet::haveAllLevelsSameTileSize() const
 {
-    for( const auto& oTM: mTileMatrixList )
+    for (const auto &oTM : mTileMatrixList)
     {
-        if( oTM.mTileWidth != mTileMatrixList[0].mTileWidth ||
-            oTM.mTileHeight != mTileMatrixList[0].mTileHeight )
+        if (oTM.mTileWidth != mTileMatrixList[0].mTileWidth ||
+            oTM.mTileHeight != mTileMatrixList[0].mTileHeight)
         {
             return false;
         }
@@ -335,11 +346,12 @@ bool TileMatrixSet::haveAllLevelsSameTileSize() const
 
 bool TileMatrixSet::hasOnlyPowerOfTwoVaryingScales() const
 {
-    for( size_t i = 1; i < mTileMatrixList.size(); i++ )
+    for (size_t i = 1; i < mTileMatrixList.size(); i++)
     {
-        if( mTileMatrixList[i].mScaleDenominator == 0 ||
-            std::fabs(mTileMatrixList[i-1].mScaleDenominator /
-                        mTileMatrixList[i].mScaleDenominator - 2) > 1e-10 )
+        if (mTileMatrixList[i].mScaleDenominator == 0 ||
+            std::fabs(mTileMatrixList[i - 1].mScaleDenominator /
+                          mTileMatrixList[i].mScaleDenominator -
+                      2) > 1e-10)
         {
             return false;
         }
@@ -353,9 +365,9 @@ bool TileMatrixSet::hasOnlyPowerOfTwoVaryingScales() const
 
 bool TileMatrixSet::hasVariableMatrixWidth() const
 {
-    for( const auto& oTM: mTileMatrixList )
+    for (const auto &oTM : mTileMatrixList)
     {
-        if( !oTM.mVariableMatrixWidthList.empty() )
+        if (!oTM.mVariableMatrixWidthList.empty())
         {
             return true;
         }
@@ -363,6 +375,6 @@ bool TileMatrixSet::hasVariableMatrixWidth() const
     return false;
 }
 
-} // namespace gdal
+}  // namespace gdal
 
 //! @endcond

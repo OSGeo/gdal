@@ -29,6 +29,7 @@
 
 import array
 import os
+import platform
 import shutil
 import struct
 import sys
@@ -717,6 +718,11 @@ def test_tiff_GTModelTypeGeoKey_only():
 )
 def test_tiff_12bitjpeg():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     old_accum = gdal.GetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
     gdal.ErrorReset()
@@ -1331,6 +1337,10 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
     ds.GetRasterBand(1).Checksum()
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
+
+    # Getting (hidden) overview band requires JPEG driver availability
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -3304,6 +3314,11 @@ def test_tiff_read_one_band_from_two_bands():
 
 def test_tiff_read_jpeg_cloud_optimized():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     for i in range(4):
         ds = gdal.Open("data/byte_ovr_jpeg_tablesmode%d.tif" % i)
         cs0 = ds.GetRasterBand(1).Checksum()
@@ -3319,6 +3334,11 @@ def test_tiff_read_jpeg_cloud_optimized():
 
 
 def test_tiff_read_corrupted_jpeg_cloud_optimized():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     ds = gdal.Open("data/byte_ovr_jpeg_tablesmode_not_correctly_set_on_ovr.tif")
     cs0 = ds.GetRasterBand(1).Checksum()
@@ -3850,6 +3870,11 @@ def test_tiff_read_stripoffset_types():
 
 def test_tiff_read_progressive_jpeg_denial_of_service():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     if not check_libtiff_internal_or_at_least(4, 0, 9):
         pytest.skip()
 
@@ -3934,6 +3959,11 @@ def test_tiff_read_mmap_interface():
 
 
 def test_tiff_read_jpeg_too_big_last_stripe():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
         pytest.skip()
@@ -4819,15 +4849,11 @@ def test_tiff_read_multi_threaded(
 
 
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
+@pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
 def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
 
     if not check_libtiff_internal_or_at_least(4, 0, 11):
         pytest.skip()
-
-    if gdaltest.is_travis_branch("macos_build") or gdaltest.is_travis_branch(
-        "MacOS build"
-    ):
-        pytest.skip("fails randomly")
 
     if gdal.GetDriverByName("HTTP") is None:
         pytest.skip()
@@ -4899,3 +4925,19 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
         webserver.server_stop(webserver_process, webserver_port)
 
         gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test that a user receives a warning when it queries
+# GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+
+
+def test_tiff_warning_get_metadata_item_PIXELTYPE():
+
+    ds = gdal.Open("data/byte.tif")
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+    assert (
+        gdal.GetLastErrorMsg()
+        == "Starting with GDAL 3.7, PIXELTYPE=SIGNEDBYTE is no longer used to signal signed 8-bit raster. Change your code to test for the new GDT_Int8 data type instead."
+    )

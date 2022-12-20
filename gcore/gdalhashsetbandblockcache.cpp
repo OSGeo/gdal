@@ -39,7 +39,6 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-
 //! @cond Doxygen_Suppress
 
 /* ******************************************************************** */
@@ -53,43 +52,43 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
         // Do not change this comparator, because this order is assumed by
         // tests like tiff_write_133 for flushing from top to bottom, left
         // to right.
-        bool operator() (const GDALRasterBlock* const& lhs,
-                         const GDALRasterBlock* const& rhs) const
+        bool operator()(const GDALRasterBlock *const &lhs,
+                        const GDALRasterBlock *const &rhs) const
         {
-            if( lhs->GetYOff() < rhs->GetYOff() )
+            if (lhs->GetYOff() < rhs->GetYOff())
                 return true;
-            if( lhs->GetYOff() > rhs->GetYOff() )
+            if (lhs->GetYOff() > rhs->GetYOff())
                 return false;
             return lhs->GetXOff() < rhs->GetXOff();
         }
     };
 
-    std::set<GDALRasterBlock*, BlockComparator> m_oSet{};
-    CPLLock        *hLock = nullptr;
+    std::set<GDALRasterBlock *, BlockComparator> m_oSet{};
+    CPLLock *hLock = nullptr;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALHashSetBandBlockCache)
 
   public:
-    explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
+    explicit GDALHashSetBandBlockCache(GDALRasterBand *poBand);
     ~GDALHashSetBandBlockCache() override;
 
     bool Init() override;
     bool IsInitOK() override;
     CPLErr FlushCache() override;
-    CPLErr AdoptBlock( GDALRasterBlock * ) override;
-    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
-                                           int nYBlockYOff ) override;
-    CPLErr UnreferenceBlock( GDALRasterBlock* poBlock ) override;
-    CPLErr FlushBlock( int nXBlockOff, int nYBlockOff,
-                       int bWriteDirtyBlock ) override;
+    CPLErr AdoptBlock(GDALRasterBlock *) override;
+    GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
+                                          int nYBlockYOff) override;
+    CPLErr UnreferenceBlock(GDALRasterBlock *poBlock) override;
+    CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
+                      int bWriteDirtyBlock) override;
 };
 
 /************************************************************************/
 /*                     GDALHashSetBandBlockCacheCreate()                */
 /************************************************************************/
 
-GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(
-    GDALRasterBand* poBand )
+GDALAbstractBandBlockCache *
+GDALHashSetBandBlockCacheCreate(GDALRasterBand *poBand)
 {
     return new GDALHashSetBandBlockCache(poBand);
 }
@@ -98,12 +97,12 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(
 /*                       GDALHashSetBandBlockCache()                    */
 /************************************************************************/
 
-GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
-    GDALRasterBand* poBandIn ) :
-    GDALAbstractBandBlockCache(poBandIn),
+GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(GDALRasterBand *poBandIn)
+    : GDALAbstractBandBlockCache(poBandIn),
 
-    hLock(CPLCreateLock(LOCK_ADAPTIVE_MUTEX))
-{}
+      hLock(CPLCreateLock(LOCK_ADAPTIVE_MUTEX))
+{
+}
 
 /************************************************************************/
 /*                      ~GDALHashSetBandBlockCache()                    */
@@ -137,12 +136,12 @@ bool GDALHashSetBandBlockCache::IsInitOK()
 /*                            AdoptBlock()                              */
 /************************************************************************/
 
-CPLErr GDALHashSetBandBlockCache::AdoptBlock( GDALRasterBlock * poBlock )
+CPLErr GDALHashSetBandBlockCache::AdoptBlock(GDALRasterBlock *poBlock)
 
 {
     FreeDanglingBlocks();
 
-    CPLLockHolderOptionalLockD( hLock );
+    CPLLockHolderOptionalLockD(hLock);
     m_oSet.insert(poBlock);
 
     return CE_None;
@@ -158,20 +157,21 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
     CPLErr eGlobalErr = poBand->eFlushBlockErr;
 
-    std::set<GDALRasterBlock*, BlockComparator> oOldSet;
+    std::set<GDALRasterBlock *, BlockComparator> oOldSet;
     {
-        CPLLockHolderOptionalLockD( hLock );
+        CPLLockHolderOptionalLockD(hLock);
         oOldSet = std::move(m_oSet);
     }
 
     StartDirtyBlockFlushingLog();
-    for( auto& poBlock: oOldSet )
+    for (auto &poBlock : oOldSet)
     {
-        if( poBlock->DropLockForRemovalFromStorage() )
+        if (poBlock->DropLockForRemovalFromStorage())
         {
             CPLErr eErr = CE_None;
 
-            if( m_bWriteDirtyBlocks && eGlobalErr == CE_None && poBlock->GetDirty() )
+            if (m_bWriteDirtyBlocks && eGlobalErr == CE_None &&
+                poBlock->GetDirty())
             {
                 UpdateDirtyBlockFlushingLog();
                 eErr = poBlock->Write();
@@ -179,7 +179,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
             delete poBlock;
 
-            if( eErr != CE_None )
+            if (eErr != CE_None)
                 eGlobalErr = eErr;
         }
     }
@@ -187,18 +187,18 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
     WaitCompletionPendingTasks();
 
-    return( eGlobalErr );
+    return (eGlobalErr);
 }
 
 /************************************************************************/
 /*                        UnreferenceBlock()                            */
 /************************************************************************/
 
-CPLErr GDALHashSetBandBlockCache::UnreferenceBlock( GDALRasterBlock* poBlock )
+CPLErr GDALHashSetBandBlockCache::UnreferenceBlock(GDALRasterBlock *poBlock)
 {
     UnreferenceBlockBase();
 
-    CPLLockHolderOptionalLockD( hLock );
+    CPLLockHolderOptionalLockD(hLock);
     m_oSet.erase(poBlock);
     return CE_None;
 }
@@ -207,27 +207,27 @@ CPLErr GDALHashSetBandBlockCache::UnreferenceBlock( GDALRasterBlock* poBlock )
 /*                            FlushBlock()                              */
 /************************************************************************/
 
-CPLErr GDALHashSetBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
-                                              int bWriteDirtyBlock )
+CPLErr GDALHashSetBandBlockCache::FlushBlock(int nXBlockOff, int nYBlockOff,
+                                             int bWriteDirtyBlock)
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock = nullptr;
+    GDALRasterBlock *poBlock = nullptr;
     {
-        CPLLockHolderOptionalLockD( hLock );
+        CPLLockHolderOptionalLockD(hLock);
         auto oIter = m_oSet.find(&oBlockForLookup);
-        if( oIter == m_oSet.end() )
+        if (oIter == m_oSet.end())
             return CE_None;
         poBlock = *oIter;
         m_oSet.erase(oIter);
     }
 
-    if( !poBlock->DropLockForRemovalFromStorage() )
+    if (!poBlock->DropLockForRemovalFromStorage())
         return CE_None;
 
     CPLErr eErr = CE_None;
 
-    if( m_bWriteDirtyBlocks && bWriteDirtyBlock && poBlock->GetDirty() )
+    if (m_bWriteDirtyBlocks && bWriteDirtyBlock && poBlock->GetDirty())
         eErr = poBlock->Write();
 
     delete poBlock;
@@ -239,20 +239,20 @@ CPLErr GDALHashSetBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
 /*                        TryGetLockedBlockRef()                        */
 /************************************************************************/
 
-GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
-    int nXBlockOff, int nYBlockOff )
+GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(int nXBlockOff,
+                                                                 int nYBlockOff)
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock;
+    GDALRasterBlock *poBlock;
     {
-        CPLLockHolderOptionalLockD( hLock );
+        CPLLockHolderOptionalLockD(hLock);
         auto oIter = m_oSet.find(&oBlockForLookup);
-        if( oIter == m_oSet.end() )
+        if (oIter == m_oSet.end())
             return nullptr;
         poBlock = *oIter;
     }
-    if( !poBlock->TakeLock()  )
+    if (!poBlock->TakeLock())
         return nullptr;
     return poBlock;
 }

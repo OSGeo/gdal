@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 
-CPLXMLNode* GDALGMLJP2GenerateMetadata(const CPLString& osTemplateFile,
-                                       const CPLString& osSourceFile);
+CPLXMLNode *GDALGMLJP2GenerateMetadata(const CPLString &osTemplateFile,
+                                       const CPLString &osSourceFile);
 
 #endif /* GDAL_JP2METADATA_GENERATOR_H_INCLUDED */

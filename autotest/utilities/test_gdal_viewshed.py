@@ -51,9 +51,10 @@ oz = [100, 10]
 
 
 def make_viewshed_input(output=viewshed_in):
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
-        + " -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.dt0 "
+        + " -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.tif "
         + output
     )
 
@@ -140,7 +141,7 @@ def test_gdal_viewshed_alternative_modes():
     ds = None
     gdal.Unlink(viewshed_in)
     gdal.Unlink(viewshed_out)
-    assert cs == 8364
+    assert cs == 8381
     assert nodata is None
 
 
@@ -170,7 +171,7 @@ def test_gdal_viewshed_api():
         options=["UNUSED=YES"],
     )
     gdal.Unlink(viewshed_in)
-    assert ds.GetRasterBand(1).Checksum() == 8364
+    assert ds.GetRasterBand(1).Checksum() == 8381
 
 
 ###############################################################################
@@ -258,7 +259,7 @@ def test_gdal_viewshed_invalid_band():
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox 0 -oy 0 -b 2 ../gdrivers/data/n43.dt0 tmp/tmp.tif"
+        + " -ox 0 -oy 0 -b 2 ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     assert "Illegal band" in err
 
@@ -270,7 +271,7 @@ def test_gdal_viewshed_invalid_observer_point():
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox 0 -oy 0 ../gdrivers/data/n43.dt0 tmp/tmp.tif"
+        + " -ox 0 -oy 0 ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     gdal.Unlink("tmp/tmp.tif")
     assert "The observer location falls outside of the DEM area" in err
@@ -283,7 +284,7 @@ def test_gdal_viewshed_invalid_output_driver():
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox -79.5 -oy 43.5 -of FOOBAR ../gdrivers/data/n43.dt0 tmp/tmp.tif"
+        + " -ox -79.5 -oy 43.5 -of FOOBAR ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     assert "Cannot get driver" in err
 
@@ -295,6 +296,6 @@ def test_gdal_viewshed_invalid_output_filename():
 
     _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox -79.5 -oy 43.5 ../gdrivers/data/n43.dt0 i/do_not/exist.tif"
+        + " -ox -79.5 -oy 43.5 ../gdrivers/data/n43.tif i/do_not/exist.tif"
     )
     assert "Cannot create dataset" in err

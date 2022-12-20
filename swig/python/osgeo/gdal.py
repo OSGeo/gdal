@@ -162,6 +162,60 @@ def DontUseExceptions(*args) -> "void":
     r"""DontUseExceptions()"""
     return _gdal.DontUseExceptions(*args)
 
+class ExceptionMgr(object):
+    """
+    Context manager to manage Python Exception state
+    for GDAL/OGR/OSR/GNM.
+
+    Separate exception state is maintained for each
+    module (gdal, ogr, etc), and this class appears independently
+    in all of them. This is built in top of calls to the older
+    UseExceptions()/DontUseExceptions() functions.
+
+    Example::
+
+        >>> print(gdal.GetUseExceptions())
+        0
+        >>> with gdal.ExceptionMgr(useExceptions=True):
+        ...     # Exceptions are now in use
+        ...     print(gdal.GetUseExceptions())
+        1
+        >>>
+        >>> # Exception state has now been restored
+        >>> print(gdal.GetUseExceptions())
+        0
+
+    """
+    def __init__(self, useExceptions):
+        """
+        Save whether or not this context will be using exceptions
+        """
+        self.requestedUseExceptions = useExceptions
+
+    def __enter__(self):
+        """
+        On context entry, save the current GDAL exception state, and
+        set it to the state requested for the context
+
+        """
+        self.currentUseExceptions = (GetUseExceptions() != 0)
+
+        if self.requestedUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        On exit, restore the GDAL/OGR/OSR/GNM exception state which was
+        current on entry to the context
+        """
+        if self.currentUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
+
 def VSIFReadL(*args) -> "void **":
     r"""VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"""
     return _gdal.VSIFReadL(*args)
@@ -191,6 +245,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
         if '-json' in new_options:
             format = 'json'
         if computeMinMax:
@@ -228,7 +284,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
     return (GDALInfoOptions(new_options), format, deserialize)
 
 def Info(ds, **kwargs):
-    """Return information on a dataset.
+    """Return information on a raster dataset.
 
     Parameters
     ----------
@@ -246,6 +302,113 @@ def Info(ds, **kwargs):
     if isinstance(ds, str):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
+    if format == 'json' and deserialize:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
+def VectorInfoOptions(options=None,
+                      format='text',
+                      deserialize=True,
+                      layers=None,
+                      dumpFeatures=False,
+                      featureCount=True,
+                      extent=True,
+                      SQLStatement=None,
+                      SQLDialect=None,
+                      where=None,
+                      wktFormat=None):
+    """ Create a VectorInfoOptions() object that can be passed to gdal.VectorInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords.
+
+        Parameters
+        ----------
+        options:
+            can be be an array of strings, a string or let empty and filled from other keywords.
+        format:
+            "text" or "json"
+        deserialize:
+            if JSON output should be returned as a Python dictionary. Otherwise as a serialized representation.
+        SQLStatement:
+            SQL statement to apply to the source dataset
+        SQLDialect:
+            SQL dialect ('OGRSQL', 'SQLITE', ...)
+        where:
+            WHERE clause to apply to source layer(s)
+        layers:
+            list of layers of interest
+        featureCount:
+            whether to compute and display the feature count
+        extent:
+            whether to compute and display the layer extent
+        dumpFeatures:
+            set to True to get the dump of all features
+    """
+
+    options = [] if options is None else options
+    deserialize=True
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+        format = 'text'
+        if '-json' in new_options:
+            format = 'json'
+    else:
+        new_options = options
+        if format == 'json':
+            new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
+        if '-json' in new_options:
+            format = 'json'
+        if SQLStatement:
+            new_options += ['-sql', SQLStatement]
+        if SQLDialect:
+            new_options += ['-dialect', SQLDialect]
+        if where:
+            new_options += ['-where', where]
+        if wktFormat:
+            new_options += ['-wkt_format', wktFormat]
+        if not featureCount:
+            new_options += ['-nocount']
+        if not extent:
+            new_options += ['-noextent']
+        if layers:
+            new_options += ["dummy_dataset_name"]
+            for layer in layers:
+                new_options += [layer]
+        else:
+            new_options += ["-al"]
+        if format == 'json':
+            if dumpFeatures:
+                new_options += ["-features"]
+        else:
+            if not dumpFeatures:
+                new_options += ["-so"]
+
+    return (GDALVectorInfoOptions(new_options), format, deserialize)
+
+
+def VectorInfo(ds, **kwargs):
+    """Return information on a vector dataset.
+
+    Parameters
+    ----------
+    ds:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.VectorInfoOptions(), string or array of strings
+        other keywords arguments of gdal.VectorInfoOptions().
+        If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
+    """
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, format, deserialize) = VectorInfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if isinstance(ds, str):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
+    ret = VectorInfoInternal(ds, opts)
     if format == 'json' and deserialize:
         import json
         ret = json.loads(ret)
@@ -2195,6 +2358,14 @@ def NetworkStatsGetAsSerializedJSON(*args) -> "retStringAndCPLFree *":
 def ParseCommandLine(*args) -> "char **":
     r"""ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)
+
+def GetNumCPUs(*args) -> "int":
+    r"""GetNumCPUs() -> int"""
+    return _gdal.GetNumCPUs(*args)
+
+def GetUsablePhysicalRAM(*args) -> "GIntBig":
+    r"""GetUsablePhysicalRAM() -> GIntBig"""
+    return _gdal.GetUsablePhysicalRAM(*args)
 class MajorObject(object):
     r"""Proxy of C++ GDALMajorObjectShadow class."""
 
@@ -3339,6 +3510,7 @@ class MDArray(object):
            count is None and buffer_stride is None and buffer_datatype is None:
             map_typecode_itemsize_to_gdal = {
                ('B', 1): GDT_Byte,
+               ('b', 1): GDT_Int8,
                ('h', 2): GDT_Int16,
                ('H', 2): GDT_UInt16,
                ('i', 4): GDT_Int32,
@@ -3570,7 +3742,7 @@ class Attribute(object):
               return s
           return self.ReadAsStringArray()
       if dt_class == GEDTC_NUMERIC:
-          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
               if self.GetTotalElementsCount() == 1:
                   return self.ReadAsInt()
               else:
@@ -4075,6 +4247,10 @@ class Band(MajorObject):
     def AsMDArray(self, *args) -> "GDALMDArrayHS *":
         r"""AsMDArray(Band self) -> MDArray"""
         return _gdal.Band_AsMDArray(self, *args)
+
+    def _EnablePixelTypeSignedByteWarning(self, *args) -> "void":
+        r"""_EnablePixelTypeSignedByteWarning(Band self, bool b)"""
+        return _gdal.Band__EnablePixelTypeSignedByteWarning(self, *args)
 
     def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
@@ -4691,6 +4867,10 @@ def GetJPEG2000StructureAsString(*args) -> "retStringAndCPLFree *":
     r"""GetJPEG2000StructureAsString(char const * pszFilename, char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.GetJPEG2000StructureAsString(*args)
 
+def HasTriangulation(*args) -> "int":
+    r"""HasTriangulation() -> int"""
+    return _gdal.HasTriangulation(*args)
+
 def GetDriverCount(*args) -> "int":
     r"""GetDriverCount() -> int"""
     return _gdal.GetDriverCount(*args)
@@ -4747,6 +4927,24 @@ _gdal.GDALInfoOptions_swigregister(GDALInfoOptions)
 def InfoInternal(*args) -> "retStringAndCPLFree *":
     r"""InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"""
     return _gdal.InfoInternal(*args)
+class GDALVectorInfoOptions(object):
+    r"""Proxy of C++ GDALVectorInfoOptions class."""
+
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        r"""__init__(GDALVectorInfoOptions self, char ** options) -> GDALVectorInfoOptions"""
+        _gdal.GDALVectorInfoOptions_swiginit(self, _gdal.new_GDALVectorInfoOptions(*args))
+    __swig_destroy__ = _gdal.delete_GDALVectorInfoOptions
+
+# Register GDALVectorInfoOptions in _gdal:
+_gdal.GDALVectorInfoOptions_swigregister(GDALVectorInfoOptions)
+
+
+def VectorInfoInternal(*args) -> "retStringAndCPLFree *":
+    r"""VectorInfoInternal(Dataset hDataset, GDALVectorInfoOptions infoOptions) -> retStringAndCPLFree *"""
+    return _gdal.VectorInfoInternal(*args)
 class GDALMultiDimInfoOptions(object):
     r"""Proxy of C++ GDALMultiDimInfoOptions class."""
 

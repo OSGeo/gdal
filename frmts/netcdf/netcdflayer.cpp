@@ -32,56 +32,36 @@
 #include "netcdflayersg.h"
 #include "cpl_time.h"
 
-
 /************************************************************************/
 /*                            netCDFLayer()                             */
 /************************************************************************/
 
-netCDFLayer::netCDFLayer(netCDFDataset *poDS,
-                         int nLayerCDFId,
-                         const char *pszName,
-                         OGRwkbGeometryType eGeomType,
-                         OGRSpatialReference *poSRS) :
-        m_poDS(poDS),
-        m_nLayerCDFId(nLayerCDFId),
-        m_poFeatureDefn(new OGRFeatureDefn(pszName)),
-        m_osRecordDimName("record"),
-        m_nRecordDimID(-1),
-        m_nDefaultWidth(10),
-        m_bAutoGrowStrings(true),
-        m_nDefaultMaxWidthDimId(-1),
-        m_nXVarID(-1),
-        m_nYVarID(-1),
-        m_nZVarID(-1),
-        m_nXVarNCDFType(NC_NAT),
-        m_nYVarNCDFType(NC_NAT),
-        m_nZVarNCDFType(NC_NAT),
-        m_osWKTVarName("ogc_wkt"),
-        m_nWKTMaxWidth(10000),
-        m_nWKTMaxWidthDimId(-1),
-        m_nWKTVarID(-1),
-        m_nWKTNCDFType(NC_NAT),
-        m_bLegacyCreateMode(true),
-        m_nCurFeatureId(1),
-        m_bWriteGDALTags(true),
-        m_bUseStringInNC4(true),
-        m_bNCDumpCompat(true),
-        m_nProfileDimID(-1),
-        m_nProfileVarID(-1),
-        m_bProfileVarUnlimited(false),
-        m_nParentIndexVarID(-1),
-        layerVID_alloc(poDS->cdfid == m_nLayerCDFId ? nullptr : new nccfdriver::netCDFVID(m_nLayerCDFId)),
-        layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
-        m_SGeometryFeatInd(0),
-        m_poLayerConfig(nullptr),
-        m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType),
-                      poDS->vcdf, poDS->GeometryScribe)
+netCDFLayer::netCDFLayer(netCDFDataset *poDS, int nLayerCDFId,
+                         const char *pszName, OGRwkbGeometryType eGeomType,
+                         OGRSpatialReference *poSRS)
+    : m_poDS(poDS), m_nLayerCDFId(nLayerCDFId),
+      m_poFeatureDefn(new OGRFeatureDefn(pszName)), m_osRecordDimName("record"),
+      m_nRecordDimID(-1), m_nDefaultWidth(10), m_bAutoGrowStrings(true),
+      m_nDefaultMaxWidthDimId(-1), m_nXVarID(-1), m_nYVarID(-1), m_nZVarID(-1),
+      m_nXVarNCDFType(NC_NAT), m_nYVarNCDFType(NC_NAT), m_nZVarNCDFType(NC_NAT),
+      m_osWKTVarName("ogc_wkt"), m_nWKTMaxWidth(10000), m_nWKTMaxWidthDimId(-1),
+      m_nWKTVarID(-1), m_nWKTNCDFType(NC_NAT), m_bLegacyCreateMode(true),
+      m_nCurFeatureId(1), m_bWriteGDALTags(true), m_bUseStringInNC4(true),
+      m_bNCDumpCompat(true), m_nProfileDimID(-1), m_nProfileVarID(-1),
+      m_bProfileVarUnlimited(false), m_nParentIndexVarID(-1),
+      layerVID_alloc(poDS->cdfid == m_nLayerCDFId
+                         ? nullptr
+                         : new nccfdriver::netCDFVID(m_nLayerCDFId)),
+      layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
+      m_SGeometryFeatInd(0), m_poLayerConfig(nullptr),
+      m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType), poDS->vcdf,
+                    poDS->GeometryScribe)
 {
     m_uXVarNoData.nVal64 = 0;
     m_uYVarNoData.nVal64 = 0;
     m_uZVarNoData.nVal64 = 0;
     m_poFeatureDefn->SetGeomType(eGeomType);
-    if( eGeomType != wkbNone )
+    if (eGeomType != wkbNone)
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     m_poFeatureDefn->Reference();
     SetDescription(pszName);
@@ -104,33 +84,33 @@ void netCDFLayer::netCDFWriteAttributesFromConf(
     int cdfid, int varid,
     const std::vector<netCDFWriterConfigAttribute> &aoAttributes)
 {
-    for(size_t i = 0; i < aoAttributes.size(); i++)
+    for (size_t i = 0; i < aoAttributes.size(); i++)
     {
         try
         {
             const netCDFWriterConfigAttribute &oAtt = aoAttributes[i];
             int status = NC_NOERR;
-            if( oAtt.m_osValue.empty() )
+            if (oAtt.m_osValue.empty())
             {
                 int attid = -1;
                 status = nc_inq_attid(cdfid, varid, oAtt.m_osName, &attid);
-                if( status == NC_NOERR )
+                if (status == NC_NOERR)
                     status = nc_del_att(cdfid, varid, oAtt.m_osName);
                 else
                     status = NC_NOERR;
             }
-            else if( EQUAL(oAtt.m_osType, "string") )
+            else if (EQUAL(oAtt.m_osType, "string"))
             {
                 layerVID.nc_put_vatt_text(varid, oAtt.m_osName, oAtt.m_osValue);
             }
 
-            else if( EQUAL(oAtt.m_osType, "integer") )
+            else if (EQUAL(oAtt.m_osType, "integer"))
             {
                 int nVal = atoi(oAtt.m_osValue);
                 layerVID.nc_put_vatt_int(varid, oAtt.m_osName, &nVal);
             }
 
-            else if( EQUAL(oAtt.m_osType, "double") )
+            else if (EQUAL(oAtt.m_osType, "double"))
             {
                 double dfVal = CPLAtof(oAtt.m_osValue);
                 layerVID.nc_put_vatt_double(varid, oAtt.m_osName, &dfVal);
@@ -139,7 +119,7 @@ void netCDFLayer::netCDFWriteAttributesFromConf(
             NCDF_ERR(status);
         }
 
-        catch(nccfdriver::SG_Exception& e)
+        catch (nccfdriver::SG_Exception &e)
         {
             CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
         }
@@ -155,7 +135,7 @@ bool netCDFLayer::Create(char **papszOptions,
 {
     m_poDS->SetDefineMode(true);
 
-    if(m_poDS->bSGSupport)
+    if (m_poDS->bSGSupport)
     {
         m_bLegacyCreateMode = false;
     }
@@ -166,25 +146,27 @@ bool netCDFLayer::Create(char **papszOptions,
     }
 
     long long newbufsize = 0;
-    const char * memorySizeLimitation = CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
+    const char *memorySizeLimitation =
+        CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
     std::string memorySizeLimitation_s = std::string(memorySizeLimitation);
-    if(memorySizeLimitation_s != "")
+    if (memorySizeLimitation_s != "")
     {
         newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
     }
 
-    const char * singleDatumMode = CSLFetchNameValueDef(papszOptions, "GROUPLESS_WRITE_BACK", "NO");
+    const char *singleDatumMode =
+        CSLFetchNameValueDef(papszOptions, "GROUPLESS_WRITE_BACK", "NO");
 
-    if(CPLTestBool(singleDatumMode))
+    if (CPLTestBool(singleDatumMode))
     {
         m_poDS->GeometryScribe.setSingleDatumMode(true);
         m_poDS->FieldScribe.setSingleDatumMode(true);
     }
 
-    if(m_bLegacyCreateMode)
+    if (m_bLegacyCreateMode)
     {
-        m_osRecordDimName = CSLFetchNameValueDef(papszOptions, "RECORD_DIM_NAME",
-                                             m_osRecordDimName.c_str());
+        m_osRecordDimName = CSLFetchNameValueDef(
+            papszOptions, "RECORD_DIM_NAME", m_osRecordDimName.c_str());
     }
 
     m_bAutoGrowStrings =
@@ -199,15 +181,15 @@ bool netCDFLayer::Create(char **papszOptions,
     m_bNCDumpCompat =
         CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "NCDUMP_COMPAT", TRUE));
 
-    std::vector<std::pair<CPLString, int> > aoAutoVariables;
+    std::vector<std::pair<CPLString, int>> aoAutoVariables;
 
     const char *pszFeatureType =
         CSLFetchNameValue(papszOptions, "FEATURE_TYPE");
-    if( pszFeatureType != nullptr )
+    if (pszFeatureType != nullptr)
     {
-        if( EQUAL(pszFeatureType, "POINT") )
+        if (EQUAL(pszFeatureType, "POINT"))
         {
-            if( wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint )
+            if (wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "FEATURE_TYPE=POINT only supported for Point layer "
@@ -215,9 +197,9 @@ bool netCDFLayer::Create(char **papszOptions,
             }
         }
 
-        else if( EQUAL(pszFeatureType, "PROFILE") )
+        else if (EQUAL(pszFeatureType, "PROFILE"))
         {
-            if( wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint )
+            if (wkbFlatten(m_poFeatureDefn->GetGeomType()) != wkbPoint)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "FEATURE_TYPE=PROFILE only supported for Point layer "
@@ -225,7 +207,8 @@ bool netCDFLayer::Create(char **papszOptions,
             }
             else
             {
-                // Cf http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
+                // Cf
+                // http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
 
                 m_osProfileDimName = CSLFetchNameValueDef(
                     papszOptions, "PROFILE_DIM_NAME", "profile");
@@ -243,13 +226,13 @@ bool netCDFLayer::Create(char **papszOptions,
                 int status = nc_def_dim(m_nLayerCDFId, m_osProfileDimName,
                                         nProfileInitSize, &m_nProfileDimID);
                 NCDF_ERR(status);
-                if( status != NC_NOERR )
+                if (status != NC_NOERR)
                     return false;
 
                 status = nc_def_var(m_nLayerCDFId, m_osProfileDimName, NC_INT,
                                     1, &m_nProfileDimID, &m_nProfileVarID);
                 NCDF_ERR(status);
-                if( status != NC_NOERR )
+                if (status != NC_NOERR)
                     return false;
 
                 aoAutoVariables.push_back(std::pair<CPLString, int>(
@@ -261,7 +244,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 NCDF_ERR(status);
             }
         }
-        else if( !EQUAL(pszFeatureType, "AUTO") )
+        else if (!EQUAL(pszFeatureType, "AUTO"))
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "FEATURE_TYPE=%s not supported.", pszFeatureType);
@@ -269,8 +252,8 @@ bool netCDFLayer::Create(char **papszOptions,
     }
 
     OGRSpatialReference *poSRS = nullptr;
-        if( m_poFeatureDefn->GetGeomFieldCount() )
-            poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
+    if (m_poFeatureDefn->GetGeomFieldCount())
+        poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 
     int status;
     if (m_bLegacyCreateMode)
@@ -278,24 +261,24 @@ bool netCDFLayer::Create(char **papszOptions,
 
         if (m_bWriteGDALTags)
         {
-                status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_name",
-                    strlen(m_poFeatureDefn->GetName()),
-                    m_poFeatureDefn->GetName());
-                NCDF_ERR(status);
+            status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_name",
+                                     strlen(m_poFeatureDefn->GetName()),
+                                     m_poFeatureDefn->GetName());
+            NCDF_ERR(status);
         }
 
-        status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName,
-        NC_UNLIMITED, &m_nRecordDimID);
+        status = nc_def_dim(m_nLayerCDFId, m_osRecordDimName, NC_UNLIMITED,
+                            &m_nRecordDimID);
         NCDF_ERR(status);
         if (status != NC_NOERR)
-        return false;
+            return false;
 
-        if( !m_osProfileDimName.empty() )
+        if (!m_osProfileDimName.empty())
         {
-            status = nc_def_var(m_nLayerCDFId, "parentIndex", NC_INT,
-                                1, &m_nRecordDimID, &m_nParentIndexVarID);
+            status = nc_def_var(m_nLayerCDFId, "parentIndex", NC_INT, 1,
+                                &m_nRecordDimID, &m_nParentIndexVarID);
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
                 return false;
 
             aoAutoVariables.push_back(
@@ -316,13 +299,14 @@ bool netCDFLayer::Create(char **papszOptions,
         {
             const int nPointDim =
                 !m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
-            const bool bIsGeographic = (poSRS == nullptr || poSRS->IsGeographic());
+            const bool bIsGeographic =
+                (poSRS == nullptr || poSRS->IsGeographic());
 
             const char *pszXVarName =
                 bIsGeographic ? CF_LONGITUDE_VAR_NAME : CF_PROJ_X_VAR_NAME;
 
             status = nc_def_var(m_nLayerCDFId, pszXVarName, NC_DOUBLE, 1,
-                &nPointDim, &m_nXVarID);
+                                &nPointDim, &m_nXVarID);
 
             NCDF_ERR(status);
             if (status != NC_NOERR)
@@ -334,7 +318,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 bIsGeographic ? CF_LATITUDE_VAR_NAME : CF_PROJ_Y_VAR_NAME;
 
             status = nc_def_var(m_nLayerCDFId, pszYVarName, NC_DOUBLE, 1,
-                &nPointDim, &m_nYVarID);
+                                &nPointDim, &m_nYVarID);
             NCDF_ERR(status);
             if (status != NC_NOERR)
             {
@@ -359,15 +343,13 @@ bool netCDFLayer::Create(char **papszOptions,
             {
                 // Deal with potentional issues of multiple groups
                 NCDFWriteLonLatVarsAttributes(layerVID, m_nXVarID, m_nYVarID);
-
             }
 
             else if (poSRS->IsProjected())
             {
                 // Deal with potentional issues of multiple groups
                 NCDFWriteXYVarsAttributes(layerVID, m_nXVarID, m_nYVarID,
-                    poSRS);
-
+                                          poSRS);
             }
 
             if (m_poFeatureDefn->GetGeomType() == wkbPoint25D)
@@ -375,7 +357,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 const char *pszZVarName = "z";
 
                 status = nc_def_var(m_nLayerCDFId, pszZVarName, NC_DOUBLE, 1,
-                    &m_nRecordDimID, &m_nZVarID);
+                                    &m_nRecordDimID, &m_nZVarID);
                 NCDF_ERR(status);
                 if (status != NC_NOERR)
                 {
@@ -388,20 +370,21 @@ bool netCDFLayer::Create(char **papszOptions,
                 m_nZVarNCDFType = NC_DOUBLE;
                 m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
 
-                status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_LNG_NAME,
-                    strlen("z coordinate"), "z coordinate");
+                status =
+                    nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_LNG_NAME,
+                                    strlen("z coordinate"), "z coordinate");
                 NCDF_ERR(status);
 
                 status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_STD_NAME,
-                    strlen("height"), "height");
+                                         strlen("height"), "height");
                 NCDF_ERR(status);
 
                 status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_AXIS,
-                    strlen("Z"), "Z");
+                                         strlen("Z"), "Z");
                 NCDF_ERR(status);
 
                 status = nc_put_att_text(m_nLayerCDFId, m_nZVarID, CF_UNITS,
-                    strlen("m"), "m");
+                                         strlen("m"), "m");
                 NCDF_ERR(status);
 
                 m_osCoordinatesValue += " ";
@@ -411,43 +394,45 @@ bool netCDFLayer::Create(char **papszOptions,
             const char *pszFeatureTypeVal =
                 !m_osProfileDimName.empty() ? "profile" : "point";
 
-            status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
-                strlen(pszFeatureTypeVal), pszFeatureTypeVal);
+            status =
+                nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
+                                strlen(pszFeatureTypeVal), pszFeatureTypeVal);
 
             NCDF_ERR(status);
         }
-        else if( m_poFeatureDefn->GetGeomType() != wkbNone)
+        else if (m_poFeatureDefn->GetGeomType() != wkbNone)
         {
-    #ifdef NETCDF_HAS_NC4
-            if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
+#ifdef NETCDF_HAS_NC4
+            if (m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4)
             {
                 m_nWKTNCDFType = NC_STRING;
-                status = nc_def_var(m_nLayerCDFId, m_osWKTVarName.c_str(),
-                                    NC_STRING, 1, &m_nRecordDimID, &m_nWKTVarID);
+                status =
+                    nc_def_var(m_nLayerCDFId, m_osWKTVarName.c_str(), NC_STRING,
+                               1, &m_nRecordDimID, &m_nWKTVarID);
             }
             else
-    #endif
+#endif
             {
                 m_nWKTNCDFType = NC_CHAR;
                 m_nWKTMaxWidth = atoi(CSLFetchNameValueDef(
                     papszOptions, "WKT_DEFAULT_WIDTH",
                     CPLSPrintf("%d", m_bAutoGrowStrings ? 1000 : 10000)));
-                status =
-                    nc_def_dim(m_nLayerCDFId,
-                            CPLSPrintf("%s_max_width", m_osWKTVarName.c_str()),
-                            m_nWKTMaxWidth, &m_nWKTMaxWidthDimId);
+                status = nc_def_dim(
+                    m_nLayerCDFId,
+                    CPLSPrintf("%s_max_width", m_osWKTVarName.c_str()),
+                    m_nWKTMaxWidth, &m_nWKTMaxWidthDimId);
                 NCDF_ERR(status);
-                if( status != NC_NOERR )
+                if (status != NC_NOERR)
                 {
                     return false;
                 }
 
-                int anDims[2] = { m_nRecordDimID, m_nWKTMaxWidthDimId };
-                status = nc_def_var(m_nLayerCDFId, m_osWKTVarName.c_str(), NC_CHAR,
-                                    2, anDims, &m_nWKTVarID);
+                int anDims[2] = {m_nRecordDimID, m_nWKTMaxWidthDimId};
+                status = nc_def_var(m_nLayerCDFId, m_osWKTVarName.c_str(),
+                                    NC_CHAR, 2, anDims, &m_nWKTVarID);
             }
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 return false;
             }
@@ -456,8 +441,8 @@ bool netCDFLayer::Create(char **papszOptions,
                 std::pair<CPLString, int>(m_osWKTVarName, m_nWKTVarID));
 
             status = nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_LNG_NAME,
-                                    strlen("Geometry as ISO WKT"),
-                                    "Geometry as ISO WKT");
+                                     strlen("Geometry as ISO WKT"),
+                                     "Geometry as ISO WKT");
             NCDF_ERR(status);
 
             // nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_UNITS,
@@ -465,33 +450,36 @@ bool netCDFLayer::Create(char **papszOptions,
 
             if (m_bWriteGDALTags)
             {
-                status =
-                    nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_geometry_field",
-                        m_osWKTVarName.size(), m_osWKTVarName.c_str());
+                status = nc_put_att_text(
+                    m_nLayerCDFId, NC_GLOBAL, "ogr_geometry_field",
+                    m_osWKTVarName.size(), m_osWKTVarName.c_str());
                 NCDF_ERR(status);
 
                 CPLString osGeometryType =
                     OGRToOGCGeomType(m_poFeatureDefn->GetGeomType());
                 if (wkbHasZ(m_poFeatureDefn->GetGeomType()))
                     osGeometryType += " Z";
-                status =
-                    nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "ogr_layer_type",
-                        osGeometryType.size(), osGeometryType.c_str());
+                status = nc_put_att_text(
+                    m_nLayerCDFId, NC_GLOBAL, "ogr_layer_type",
+                    osGeometryType.size(), osGeometryType.c_str());
                 NCDF_ERR(status);
             }
         }
     }
 
-    if( poSRS != nullptr )
+    if (poSRS != nullptr)
     {
         char *pszCFProjection = nullptr;
-        m_sgCRSname = m_bLegacyCreateMode ? "" : std::string(this->GetName()) + std::string("_crs");
+        m_sgCRSname = m_bLegacyCreateMode
+                          ? ""
+                          : std::string(this->GetName()) + std::string("_crs");
 
-        int nSRSVarId = NCDFWriteSRSVariable(
-            m_nLayerCDFId, poSRS, &pszCFProjection, m_bWriteGDALTags, m_sgCRSname);
-        if( nSRSVarId < 0 )
+        int nSRSVarId =
+            NCDFWriteSRSVariable(m_nLayerCDFId, poSRS, &pszCFProjection,
+                                 m_bWriteGDALTags, m_sgCRSname);
+        if (nSRSVarId < 0)
             return false;
-        if( pszCFProjection != nullptr )
+        if (pszCFProjection != nullptr)
         {
             aoAutoVariables.push_back(
                 std::pair<CPLString, int>(pszCFProjection, nSRSVarId));
@@ -500,7 +488,7 @@ bool netCDFLayer::Create(char **papszOptions,
             CPLFree(pszCFProjection);
         }
 
-        if( m_nWKTVarID >= 0 && !m_osGridMapping.empty() )
+        if (m_nWKTVarID >= 0 && !m_osGridMapping.empty())
         {
             status = nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_GRD_MAPPING,
                                      m_osGridMapping.size(),
@@ -509,36 +497,36 @@ bool netCDFLayer::Create(char **papszOptions,
         }
     }
 
-    if( m_poDS->oWriterConfig.m_bIsValid )
+    if (m_poDS->oWriterConfig.m_bIsValid)
     {
         m_poLayerConfig = poLayerConfig;
 
         netCDFWriteAttributesFromConf(m_nLayerCDFId, NC_GLOBAL,
                                       m_poDS->oWriterConfig.m_aoAttributes);
-        if( poLayerConfig != nullptr )
+        if (poLayerConfig != nullptr)
         {
             netCDFWriteAttributesFromConf(m_nLayerCDFId, NC_GLOBAL,
                                           poLayerConfig->m_aoAttributes);
         }
 
-        for( size_t i = 0; i < aoAutoVariables.size(); i++ )
+        for (size_t i = 0; i < aoAutoVariables.size(); i++)
         {
             const netCDFWriterConfigField *poConfig = nullptr;
             CPLString osLookup = "__" + aoAutoVariables[i].first;
             std::map<CPLString, netCDFWriterConfigField>::const_iterator oIter;
-            if( m_poLayerConfig != nullptr &&
+            if (m_poLayerConfig != nullptr &&
                 (oIter = m_poLayerConfig->m_oFields.find(osLookup)) !=
-                    m_poLayerConfig->m_oFields.end() )
+                    m_poLayerConfig->m_oFields.end())
             {
                 poConfig = &(oIter->second);
             }
-            else if( (oIter = m_poDS->oWriterConfig.m_oFields.find(osLookup)) !=
-                     m_poDS->oWriterConfig.m_oFields.end() )
+            else if ((oIter = m_poDS->oWriterConfig.m_oFields.find(osLookup)) !=
+                     m_poDS->oWriterConfig.m_oFields.end())
             {
                 poConfig = &(oIter->second);
             }
 
-            if( poConfig != nullptr )
+            if (poConfig != nullptr)
             {
                 netCDFWriteAttributesFromConf(m_nLayerCDFId,
                                               aoAutoVariables[i].second,
@@ -552,55 +540,71 @@ bool netCDFLayer::Create(char **papszOptions,
         if (!m_bLegacyCreateMode)
         {
             // Write a geometry container
-            OGRwkbGeometryType geometryContainerType = m_poFeatureDefn->GetGeomType();
+            OGRwkbGeometryType geometryContainerType =
+                m_poFeatureDefn->GetGeomType();
             std::vector<std::string> coordNames;
-            std::string strXVarName = std::string(this->GetName()) + std::string("_coordX");
-            std::string strYVarName = std::string(this->GetName()) + std::string("_coordY");
+            std::string strXVarName =
+                std::string(this->GetName()) + std::string("_coordX");
+            std::string strYVarName =
+                std::string(this->GetName()) + std::string("_coordY");
             coordNames.push_back(strXVarName);
             coordNames.push_back(strYVarName);
 
-            if(nccfdriver::OGRHasZandSupported(geometryContainerType))
+            if (nccfdriver::OGRHasZandSupported(geometryContainerType))
             {
-                std::string strZVarName = std::string(this->GetName()) + std::string("_coordZ");
+                std::string strZVarName =
+                    std::string(this->GetName()) + std::string("_coordZ");
                 coordNames.push_back(strZVarName);
             }
 
-            if(m_layerSGDefn.getWritableType() == nccfdriver::NONE)
+            if (m_layerSGDefn.getWritableType() == nccfdriver::NONE)
             {
                 throw nccfdriver::SG_Exception_BadFeature();
             }
 
-            int writableSGContVarID = nccfdriver::write_Geometry_Container(m_poDS->cdfid, this->GetName(), m_layerSGDefn.getWritableType(), coordNames);
+            int writableSGContVarID = nccfdriver::write_Geometry_Container(
+                m_poDS->cdfid, this->GetName(), m_layerSGDefn.getWritableType(),
+                coordNames);
             m_layerSGDefn.initializeNewContainer(writableSGContVarID);
 
-            if(newbufsize >= 4096)
+            if (newbufsize >= 4096)
             {
                 m_poDS->bufManager.adjustLimit(newbufsize);
             }
 
-            // Set record dim ID; POINT it's the node coordinate dim ID and everything else it's node count:
-            if(m_layerSGDefn.getWritableType() == nccfdriver::POINT)
+            // Set record dim ID; POINT it's the node coordinate dim ID and
+            // everything else it's node count:
+            if (m_layerSGDefn.getWritableType() == nccfdriver::POINT)
             {
                 m_nRecordDimID = m_layerSGDefn.get_node_coord_dimID();
-                m_osRecordDimName =  std::string(this->GetName()) + std::string("_") + std::string(CF_SG_NODE_COORDINATES);
+                m_osRecordDimName = std::string(this->GetName()) +
+                                    std::string("_") +
+                                    std::string(CF_SG_NODE_COORDINATES);
             }
             else
             {
                 m_nRecordDimID = m_layerSGDefn.get_node_count_dimID();
-                m_osRecordDimName = std::string(this->GetName()) + std::string("_") + std::string(CF_SG_NODE_COUNT);
+                m_osRecordDimName = std::string(this->GetName()) +
+                                    std::string("_") +
+                                    std::string(CF_SG_NODE_COUNT);
             }
 
             // Write the grid mapping, if it exists:
             if (poSRS != nullptr)
             {
-                status = nc_put_att_text(m_nLayerCDFId, m_layerSGDefn.get_containerRealID(), CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()), m_sgCRSname.c_str());
+                status = nc_put_att_text(
+                    m_nLayerCDFId, m_layerSGDefn.get_containerRealID(),
+                    CF_GRD_MAPPING, strlen(m_sgCRSname.c_str()),
+                    m_sgCRSname.c_str());
 
-                if(status != NC_NOERR)
+                if (status != NC_NOERR)
                 {
-                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(m_layerSGDefn.get_containerName().c_str(), CF_GRD_MAPPING, "attribute");
+                    throw nccfdriver::SGWriter_Exception_NCWriteFailure(
+                        m_layerSGDefn.get_containerName().c_str(),
+                        CF_GRD_MAPPING, "attribute");
                 }
 
-                std::vector<int>& ncv = m_layerSGDefn.get_nodeCoordVarIDs();
+                std::vector<int> &ncv = m_layerSGDefn.get_nodeCoordVarIDs();
                 int xVar = ncv[0];
                 int yVar = ncv[1];
 
@@ -616,9 +620,12 @@ bool netCDFLayer::Create(char **papszOptions,
             }
         }
     }
-    catch(nccfdriver::SG_Exception& sge)
+    catch (nccfdriver::SG_Exception &sge)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while writing metadata to the netCDF file.\n%s", sge.get_err_msg());
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "An error occurred while writing metadata to the netCDF file.\n%s",
+            sge.get_err_msg());
         return false;
     }
 
@@ -644,16 +651,16 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
 /*                            GetFillValue()                            */
 /************************************************************************/
 
-CPLErr netCDFLayer::GetFillValue( int nVarId, char **ppszValue )
+CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
 {
-    if( NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, ppszValue) == CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, ppszValue) == CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", ppszValue);
 }
 
-CPLErr netCDFLayer::GetFillValue( int nVarId, double *pdfValue )
+CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
 {
-    if( NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, pdfValue) == CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, pdfValue) == CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", pdfValue);
 }
@@ -662,10 +669,10 @@ CPLErr netCDFLayer::GetFillValue( int nVarId, double *pdfValue )
 /*                         GetNoDataValueForFloat()                     */
 /************************************************************************/
 
-void netCDFLayer::GetNoDataValueForFloat( int nVarId, NCDFNoDataUnion *puNoData )
+void netCDFLayer::GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData)
 {
     double dfValue;
-    if( GetFillValue(nVarId, &dfValue) == CE_None )
+    if (GetFillValue(nVarId, &dfValue) == CE_None)
         puNoData->fVal = static_cast<float>(dfValue);
     else
         puNoData->fVal = NC_FILL_FLOAT;
@@ -675,10 +682,10 @@ void netCDFLayer::GetNoDataValueForFloat( int nVarId, NCDFNoDataUnion *puNoData 
 /*                        GetNoDataValueForDouble()                     */
 /************************************************************************/
 
-void netCDFLayer::GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion *puNoData )
+void netCDFLayer::GetNoDataValueForDouble(int nVarId, NCDFNoDataUnion *puNoData)
 {
     double dfValue;
-    if( GetFillValue(nVarId, &dfValue) == CE_None )
+    if (GetFillValue(nVarId, &dfValue) == CE_None)
         puNoData->dfVal = dfValue;
     else
         puNoData->dfVal = NC_FILL_DOUBLE;
@@ -688,12 +695,12 @@ void netCDFLayer::GetNoDataValueForDouble( int nVarId, NCDFNoDataUnion *puNoData
 /*                            GetNoDataValue()                          */
 /************************************************************************/
 
-void netCDFLayer::GetNoDataValue( int nVarId, nc_type nVarType,
-                                  NCDFNoDataUnion *puNoData )
+void netCDFLayer::GetNoDataValue(int nVarId, nc_type nVarType,
+                                 NCDFNoDataUnion *puNoData)
 {
-    if( nVarType == NC_DOUBLE )
+    if (nVarType == NC_DOUBLE)
         GetNoDataValueForDouble(nVarId, puNoData);
-    else if( nVarType == NC_FLOAT )
+    else if (nVarType == NC_FLOAT)
         GetNoDataValueForFloat(nVarId, puNoData);
 }
 
@@ -709,8 +716,8 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
 
     nc_inq_vartype(m_nLayerCDFId, m_nXVarID, &m_nXVarNCDFType);
     nc_inq_vartype(m_nLayerCDFId, m_nYVarID, &m_nYVarNCDFType);
-    if( (m_nXVarNCDFType != NC_FLOAT && m_nXVarNCDFType != NC_DOUBLE) ||
-        (m_nYVarNCDFType != NC_FLOAT && m_nYVarNCDFType != NC_DOUBLE) )
+    if ((m_nXVarNCDFType != NC_FLOAT && m_nXVarNCDFType != NC_DOUBLE) ||
+        (m_nYVarNCDFType != NC_FLOAT && m_nYVarNCDFType != NC_DOUBLE))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "X or Y variable of type X=%d,Y=%d not handled",
@@ -718,10 +725,10 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
         m_nXVarID = -1;
         m_nYVarID = -1;
     }
-    if( m_nZVarID >= 0 )
+    if (m_nZVarID >= 0)
     {
         nc_inq_vartype(m_nLayerCDFId, m_nZVarID, &m_nZVarNCDFType);
-        if( m_nZVarNCDFType != NC_FLOAT && m_nZVarNCDFType != NC_DOUBLE )
+        if (m_nZVarNCDFType != NC_FLOAT && m_nZVarNCDFType != NC_DOUBLE)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Z variable of type %d not handled", m_nZVarNCDFType);
@@ -729,7 +736,7 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
         }
     }
 
-    if( m_nXVarID >= 0 && m_nYVarID >= 0 )
+    if (m_nXVarID >= 0 && m_nYVarID >= 0)
     {
         char szVarName[NC_MAX_NAME + 1];
         szVarName[0] = '\0';
@@ -741,7 +748,7 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
         m_osCoordinatesValue += " ";
         m_osCoordinatesValue += szVarName;
 
-        if( m_nZVarID >= 0 )
+        if (m_nZVarID >= 0)
         {
             szVarName[0] = '\0';
             CPL_IGNORE_RET_VAL(
@@ -751,11 +758,11 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
         }
     }
 
-    if( m_nXVarID >= 0 )
+    if (m_nXVarID >= 0)
         GetNoDataValue(m_nXVarID, m_nXVarNCDFType, &m_uXVarNoData);
-    if( m_nYVarID >= 0 )
+    if (m_nYVarID >= 0)
         GetNoDataValue(m_nYVarID, m_nYVarNCDFType, &m_uYVarNoData);
-    if( m_nZVarID >= 0 )
+    if (m_nZVarID >= 0)
         GetNoDataValue(m_nZVarID, m_nZVarNCDFType, &m_uZVarNoData);
 }
 
@@ -767,17 +774,17 @@ void netCDFLayer::SetWKTGeometryField(const char *pszWKTVarName)
 {
     m_nWKTVarID = -1;
     nc_inq_varid(m_nLayerCDFId, pszWKTVarName, &m_nWKTVarID);
-    if( m_nWKTVarID < 0 )
+    if (m_nWKTVarID < 0)
         return;
     int nd;
     nc_inq_varndims(m_nLayerCDFId, m_nWKTVarID, &nd);
     nc_inq_vartype(m_nLayerCDFId, m_nWKTVarID, &m_nWKTNCDFType);
 #ifdef NETCDF_HAS_NC4
-    if( nd == 1 && m_nWKTNCDFType == NC_STRING )
+    if (nd == 1 && m_nWKTNCDFType == NC_STRING)
     {
         int nDimID;
-        if( nc_inq_vardimid(m_nLayerCDFId, m_nWKTVarID, &nDimID ) != NC_NOERR ||
-            nDimID != m_nRecordDimID )
+        if (nc_inq_vardimid(m_nLayerCDFId, m_nWKTVarID, &nDimID) != NC_NOERR ||
+            nDimID != m_nRecordDimID)
         {
             m_nWKTVarID = -1;
             return;
@@ -785,13 +792,13 @@ void netCDFLayer::SetWKTGeometryField(const char *pszWKTVarName)
     }
     else
 #endif
-    if (nd == 2 && m_nWKTNCDFType == NC_CHAR )
+        if (nd == 2 && m_nWKTNCDFType == NC_CHAR)
     {
-        int anDimIds [2] = { -1, -1 };
+        int anDimIds[2] = {-1, -1};
         size_t nLen = 0;
-        if( nc_inq_vardimid(m_nLayerCDFId, m_nWKTVarID, anDimIds) != NC_NOERR ||
+        if (nc_inq_vardimid(m_nLayerCDFId, m_nWKTVarID, anDimIds) != NC_NOERR ||
             anDimIds[0] != m_nRecordDimID ||
-            nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nLen) != NC_NOERR )
+            nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nLen) != NC_NOERR)
         {
             m_nWKTVarID = -1;
             return;
@@ -825,7 +832,7 @@ void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
 {
     m_nProfileDimID = nProfileDimID;
     m_nParentIndexVarID = nParentIndexVarID;
-    if( m_nProfileDimID >= 0 )
+    if (m_nProfileDimID >= 0)
     {
         char szTemp[NC_MAX_NAME + 1];
         szTemp[0] = 0;
@@ -845,7 +852,7 @@ void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
 
 void netCDFLayer::ResetReading()
 {
-    if( !m_bLegacyCreateMode )
+    if (!m_bLegacyCreateMode)
     {
         m_SGeometryFeatInd = 0;
     }
@@ -859,26 +866,26 @@ void netCDFLayer::ResetReading()
 /*                           Get1DVarAsDouble()                         */
 /************************************************************************/
 
-double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
-                                      size_t nIndex, NCDFNoDataUnion noDataVal,
-                                      bool *pbIsNoData )
+double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
+                                     size_t nIndex, NCDFNoDataUnion noDataVal,
+                                     bool *pbIsNoData)
 {
     double dfVal = 0;
-    if( nVarType == NC_DOUBLE )
+    if (nVarType == NC_DOUBLE)
     {
         nc_get_var1_double(m_nLayerCDFId, nVarId, &nIndex, &dfVal);
-        if( pbIsNoData )
+        if (pbIsNoData)
             *pbIsNoData = dfVal == noDataVal.dfVal;
     }
-    else if( nVarType == NC_FLOAT )
+    else if (nVarType == NC_FLOAT)
     {
         float fVal = 0.f;
         nc_get_var1_float(m_nLayerCDFId, nVarId, &nIndex, &fVal);
-        if( pbIsNoData )
+        if (pbIsNoData)
             *pbIsNoData = fVal == noDataVal.fVal;
         dfVal = fVal;
     }
-    else if( pbIsNoData )
+    else if (pbIsNoData)
         *pbIsNoData = true;
     return dfVal;
 }
@@ -890,23 +897,25 @@ double netCDFLayer::Get1DVarAsDouble( int nVarId, nc_type nVarType,
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
 
-    if(m_simpleGeometryReader.get() != nullptr)
+    if (m_simpleGeometryReader.get() != nullptr)
     {
-        if(m_SGeometryFeatInd >= m_simpleGeometryReader->get_geometry_count())
+        if (m_SGeometryFeatInd >= m_simpleGeometryReader->get_geometry_count())
         {
             return nullptr;
         }
 
-        OGRFeature* ft = nullptr;
+        OGRFeature *ft = nullptr;
 
         try
         {
             ft = buildSGeometryFeature(m_SGeometryFeatInd);
             m_SGeometryFeatInd++;
         }
-        catch(nccfdriver::SG_Exception& sge)
+        catch (nccfdriver::SG_Exception &sge)
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "An error occurred while retrieving a feature.\n%s", sge.get_err_msg());
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "An error occurred while retrieving a feature.\n%s",
+                     sge.get_err_msg());
         }
 
         return ft;
@@ -918,26 +927,26 @@ OGRFeature *netCDFLayer::GetNextRawFeature()
     // beyond the end of dimension
     size_t nDimLen = 0;
     nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
-    if( m_nCurFeatureId > static_cast<GIntBig>(nDimLen) )
+    if (m_nCurFeatureId > static_cast<GIntBig>(nDimLen))
         return nullptr;
 
     OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
 
-    if( m_nParentIndexVarID >= 0 )
+    if (m_nParentIndexVarID >= 0)
     {
         int nProfileIdx = 0;
         size_t nIdx = static_cast<size_t>(m_nCurFeatureId - 1);
-        int status = nc_get_var1_int(m_nLayerCDFId, m_nParentIndexVarID,
-                                     &nIdx, &nProfileIdx);
-        if( status == NC_NOERR && nProfileIdx >= 0 )
+        int status = nc_get_var1_int(m_nLayerCDFId, m_nParentIndexVarID, &nIdx,
+                                     &nProfileIdx);
+        if (status == NC_NOERR && nProfileIdx >= 0)
         {
             nIdx = static_cast<size_t>(nProfileIdx);
             FillFeatureFromVar(poFeature, m_nProfileDimID, nIdx);
         }
     }
 
-    if( !FillFeatureFromVar(poFeature, m_nRecordDimID,
-                            static_cast<size_t>(m_nCurFeatureId - 1)) )
+    if (!FillFeatureFromVar(poFeature, m_nRecordDimID,
+                            static_cast<size_t>(m_nCurFeatureId - 1)))
     {
         m_nCurFeatureId++;
         delete poFeature;
@@ -961,291 +970,294 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
     anIndex[0] = nIndex;
     anIndex[1] = 0;
 
-    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
     {
-        if( m_aoFieldDesc[i].nMainDimId != nMainDimId && m_bLegacyCreateMode)
+        if (m_aoFieldDesc[i].nMainDimId != nMainDimId && m_bLegacyCreateMode)
             continue;
 
-        switch( m_aoFieldDesc[i].nType )
+        switch (m_aoFieldDesc[i].nType)
         {
-        case NC_CHAR:
-        {
-            if( m_aoFieldDesc[i].nDimCount == 1 )
+            case NC_CHAR:
             {
-                char szVal[2] = { 0, 0 };
-                int status = nc_get_var1_text(
-                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, szVal);
-                if( status != NC_NOERR )
+                if (m_aoFieldDesc[i].nDimCount == 1)
                 {
-                    NCDF_ERR(status);
-                    continue;
+                    char szVal[2] = {0, 0};
+                    int status = nc_get_var1_text(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, szVal);
+                    if (status != NC_NOERR)
+                    {
+                        NCDF_ERR(status);
+                        continue;
+                    }
+                    poFeature->SetField(i, szVal);
                 }
-                poFeature->SetField(i, szVal);
-            }
-            else
-            {
-                size_t anCount[2];
-                anCount[0] = 1;
-                anCount[1] = 0;
-                nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
-                              &(anCount[1]));
-                char *pszVal = (char *)CPLCalloc(1, anCount[1] + 1);
-                int status =
-                    nc_get_vara_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                     anIndex, anCount, pszVal);
-                if( status != NC_NOERR )
+                else
                 {
-                    NCDF_ERR(status);
+                    size_t anCount[2];
+                    anCount[0] = 1;
+                    anCount[1] = 0;
+                    nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
+                                  &(anCount[1]));
+                    char *pszVal = (char *)CPLCalloc(1, anCount[1] + 1);
+                    int status =
+                        nc_get_vara_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                         anIndex, anCount, pszVal);
+                    if (status != NC_NOERR)
+                    {
+                        NCDF_ERR(status);
+                        CPLFree(pszVal);
+                        continue;
+                    }
+                    poFeature->SetField(i, pszVal);
                     CPLFree(pszVal);
+                }
+                break;
+            }
+
+#ifdef NETCDF_HAS_NC4
+            case NC_STRING:
+            {
+                char *pszVal = nullptr;
+                int status = nc_get_var1_string(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &pszVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
                     continue;
                 }
-                poFeature->SetField(i, pszVal);
-                CPLFree(pszVal);
+                if (pszVal != nullptr)
+                {
+                    poFeature->SetField(i, pszVal);
+                    nc_free_string(1, &pszVal);
+                }
+                break;
             }
-            break;
-        }
-
-#ifdef NETCDF_HAS_NC4
-        case NC_STRING:
-        {
-            char *pszVal = nullptr;
-            int status = nc_get_var1_string(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &pszVal);
-            if( status != NC_NOERR )
-            {
-                NCDF_ERR(status);
-                continue;
-            }
-            if( pszVal != nullptr )
-            {
-                poFeature->SetField(i, pszVal);
-                nc_free_string(1, &pszVal);
-            }
-            break;
-        }
 #endif
 
-        case NC_BYTE:
-        {
-            signed char chVal = 0;
-            int status = nc_get_var1_schar(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &chVal);
-            if( status != NC_NOERR )
+            case NC_BYTE:
             {
-                NCDF_ERR(status);
-                continue;
+                signed char chVal = 0;
+                int status = nc_get_var1_schar(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &chVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (chVal == m_aoFieldDesc[i].uNoData.chVal)
+                    continue;
+                poFeature->SetField(i, static_cast<int>(chVal));
+                break;
             }
-            if( chVal == m_aoFieldDesc[i].uNoData.chVal )
-                continue;
-            poFeature->SetField(i, static_cast<int>(chVal));
-            break;
-        }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_UBYTE:
-        {
-            unsigned char uchVal = 0;
-            int status = nc_get_var1_uchar(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &uchVal);
-            if( status != NC_NOERR )
+            case NC_UBYTE:
             {
-                NCDF_ERR(status);
-                continue;
+                unsigned char uchVal = 0;
+                int status = nc_get_var1_uchar(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &uchVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (uchVal == m_aoFieldDesc[i].uNoData.uchVal)
+                    continue;
+                poFeature->SetField(i, static_cast<int>(uchVal));
+                break;
             }
-            if( uchVal == m_aoFieldDesc[i].uNoData.uchVal )
-                continue;
-            poFeature->SetField(i, static_cast<int>(uchVal));
-            break;
-        }
 #endif
 
-        case NC_SHORT:
-        {
-            short sVal = 0;
-            int status = nc_get_var1_short(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &sVal);
-
-            if( status != NC_NOERR )
+            case NC_SHORT:
             {
-                NCDF_ERR(status);
-                continue;
+                short sVal = 0;
+                int status = nc_get_var1_short(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &sVal);
+
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (sVal == m_aoFieldDesc[i].uNoData.sVal)
+                    continue;
+                poFeature->SetField(i, static_cast<int>(sVal));
+                break;
             }
-            if( sVal == m_aoFieldDesc[i].uNoData.sVal )
-                continue;
-            poFeature->SetField(i, static_cast<int>(sVal));
-            break;
-        }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_USHORT:
-        {
-            unsigned short usVal = 0;
-            int status = nc_get_var1_ushort(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &usVal);
-            if( status != NC_NOERR )
+            case NC_USHORT:
             {
-                NCDF_ERR(status);
-                continue;
+                unsigned short usVal = 0;
+                int status = nc_get_var1_ushort(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &usVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (usVal == m_aoFieldDesc[i].uNoData.usVal)
+                    continue;
+                poFeature->SetField(i, static_cast<int>(usVal));
+                break;
             }
-            if( usVal == m_aoFieldDesc[i].uNoData.usVal )
-                continue;
-            poFeature->SetField(i, static_cast<int>(usVal));
-            break;
-        }
 #endif
 
-        case NC_INT:
-        {
-            int nVal = 0;
-            int status = nc_get_var1_int(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                         anIndex, &nVal);
-            if( status != NC_NOERR )
+            case NC_INT:
             {
-                NCDF_ERR(status);
-                continue;
+                int nVal = 0;
+                int status = nc_get_var1_int(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (nVal == m_aoFieldDesc[i].uNoData.nVal)
+                    continue;
+                if (m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
+                    m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
+                {
+                    struct tm brokendowntime;
+                    GIntBig nVal64 = static_cast<GIntBig>(nVal);
+                    if (m_aoFieldDesc[i].bIsDays)
+                        nVal64 *= 86400;
+                    CPLUnixTimeToYMDHMS(nVal64, &brokendowntime);
+                    poFeature->SetField(
+                        i, brokendowntime.tm_year + 1900,
+                        brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
+                        brokendowntime.tm_hour, brokendowntime.tm_min,
+                        static_cast<float>(brokendowntime.tm_sec), 0);
+                }
+                else
+                {
+                    poFeature->SetField(i, nVal);
+                }
+                break;
             }
-            if( nVal == m_aoFieldDesc[i].uNoData.nVal )
-                continue;
-            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
-                m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
+
+#ifdef NETCDF_HAS_NC4
+            case NC_UINT:
             {
-                struct tm brokendowntime;
-                GIntBig nVal64 = static_cast<GIntBig>(nVal);
-                if( m_aoFieldDesc[i].bIsDays )
-                    nVal64 *= 86400;
-                CPLUnixTimeToYMDHMS(nVal64, &brokendowntime);
-                poFeature->SetField(
-                    i, brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1,
-                    brokendowntime.tm_mday, brokendowntime.tm_hour,
-                    brokendowntime.tm_min,
-                    static_cast<float>(brokendowntime.tm_sec), 0);
+                unsigned int unVal = 0;
+                // nc_get_var1_uint() doesn't work on old netCDF version when
+                // the returned value is > INT_MAX
+                // https://bugtracking.unidata.ucar.edu/browse/NCF-226
+                // nc_get_vara_uint() has not this bug
+                size_t nCount = 1;
+                int status =
+                    nc_get_vara_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                     anIndex, &nCount, &unVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (unVal == m_aoFieldDesc[i].uNoData.unVal)
+                    continue;
+                poFeature->SetField(i, static_cast<GIntBig>(unVal));
+                break;
             }
-            else
+#endif
+
+#ifdef NETCDF_HAS_NC4
+            case NC_INT64:
             {
+                GIntBig nVal = 0;
+                int status = nc_get_var1_longlong(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (nVal == m_aoFieldDesc[i].uNoData.nVal64)
+                    continue;
                 poFeature->SetField(i, nVal);
+                break;
             }
-            break;
-        }
 
-#ifdef NETCDF_HAS_NC4
-        case NC_UINT:
-        {
-            unsigned int unVal = 0;
-            // nc_get_var1_uint() doesn't work on old netCDF version when
-            // the returned value is > INT_MAX
-            // https://bugtracking.unidata.ucar.edu/browse/NCF-226
-            // nc_get_vara_uint() has not this bug
-            size_t nCount = 1;
-            int status =
-                nc_get_vara_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                 anIndex, &nCount, &unVal);
-            if( status != NC_NOERR )
+            case NC_UINT64:
             {
-                NCDF_ERR(status);
-                continue;
+                GUIntBig nVal = 0;
+                int status = nc_get_var1_ulonglong(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (nVal == m_aoFieldDesc[i].uNoData.unVal64)
+                    continue;
+                poFeature->SetField(i, static_cast<double>(nVal));
+                break;
             }
-            if( unVal == m_aoFieldDesc[i].uNoData.unVal )
-                continue;
-            poFeature->SetField(i, static_cast<GIntBig>(unVal));
-            break;
-        }
 #endif
 
-#ifdef NETCDF_HAS_NC4
-        case NC_INT64:
-        {
-            GIntBig nVal = 0;
-            int status = nc_get_var1_longlong(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
-            if( status != NC_NOERR )
+            case NC_FLOAT:
             {
-                NCDF_ERR(status);
-                continue;
+                float fVal = 0.f;
+                int status = nc_get_var1_float(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &fVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (fVal == m_aoFieldDesc[i].uNoData.fVal)
+                    continue;
+                poFeature->SetField(i, static_cast<double>(fVal));
+                break;
             }
-            if( nVal == m_aoFieldDesc[i].uNoData.nVal64 )
-                continue;
-            poFeature->SetField(i, nVal);
-            break;
-        }
 
-        case NC_UINT64:
-        {
-            GUIntBig nVal = 0;
-            int status = nc_get_var1_ulonglong(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
-            if( status != NC_NOERR )
+            case NC_DOUBLE:
             {
-                NCDF_ERR(status);
-                continue;
+                double dfVal = 0.0;
+                int status = nc_get_var1_double(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &dfVal);
+                if (status != NC_NOERR)
+                {
+                    NCDF_ERR(status);
+                    continue;
+                }
+                if (dfVal == m_aoFieldDesc[i].uNoData.dfVal)
+                    continue;
+                if (m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
+                    m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
+                {
+                    if (m_aoFieldDesc[i].bIsDays)
+                        dfVal *= 86400.0;
+                    struct tm brokendowntime;
+                    GIntBig nVal = static_cast<GIntBig>(floor(dfVal));
+                    CPLUnixTimeToYMDHMS(nVal, &brokendowntime);
+                    poFeature->SetField(
+                        i, brokendowntime.tm_year + 1900,
+                        brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
+                        brokendowntime.tm_hour, brokendowntime.tm_min,
+                        static_cast<float>(brokendowntime.tm_sec +
+                                           (dfVal - nVal)),
+                        0);
+                }
+                else
+                {
+                    poFeature->SetField(i, dfVal);
+                }
+                break;
             }
-            if( nVal == m_aoFieldDesc[i].uNoData.unVal64 )
-                continue;
-            poFeature->SetField(i, static_cast<double>(nVal));
-            break;
-        }
-#endif
 
-        case NC_FLOAT:
-        {
-            float fVal = 0.f;
-            int status = nc_get_var1_float(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &fVal);
-            if( status != NC_NOERR )
-            {
-                NCDF_ERR(status);
-                continue;
-            }
-            if( fVal == m_aoFieldDesc[i].uNoData.fVal )
-                continue;
-            poFeature->SetField(i, static_cast<double>(fVal));
-            break;
-        }
-
-        case NC_DOUBLE:
-        {
-            double dfVal = 0.0;
-            int status = nc_get_var1_double(
-                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &dfVal);
-            if( status != NC_NOERR )
-            {
-                NCDF_ERR(status);
-                continue;
-            }
-            if( dfVal == m_aoFieldDesc[i].uNoData.dfVal )
-                continue;
-            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
-                m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
-            {
-                if( m_aoFieldDesc[i].bIsDays )
-                    dfVal *= 86400.0;
-                struct tm brokendowntime;
-                GIntBig nVal = static_cast<GIntBig>(floor(dfVal));
-                CPLUnixTimeToYMDHMS(nVal, &brokendowntime);
-                poFeature->SetField(
-                    i, brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1,
-                    brokendowntime.tm_mday, brokendowntime.tm_hour,
-                    brokendowntime.tm_min,
-                    static_cast<float>(brokendowntime.tm_sec + (dfVal - nVal)),
-                    0);
-            }
-            else
-            {
-                poFeature->SetField(i, dfVal);
-            }
-            break;
-        }
-
-        default:
-            break;
+            default:
+                break;
         }
     }
 
     // For CF-1.8 simple geometry specifically
     // Only need fields to be set here
-    if( !m_bLegacyCreateMode) return true; // todo: remove this, refactor to allow for CF-1.6 CF-1.8 mixed datasets (multi group)
+    if (!m_bLegacyCreateMode)
+        return true;  // todo: remove this, refactor to allow for CF-1.6 CF-1.8
+                      // mixed datasets (multi group)
 
-    if( m_nXVarID >= 0 && m_nYVarID >= 0 &&
-        (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID) )
+    if (m_nXVarID >= 0 && m_nYVarID >= 0 &&
+        (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID))
     {
         bool bXIsNoData = false;
         const double dfX = Get1DVarAsDouble(
@@ -1254,16 +1266,16 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
         const double dfY = Get1DVarAsDouble(
             m_nYVarID, m_nYVarNCDFType, anIndex[0], m_uYVarNoData, &bYIsNoData);
 
-        if( !bXIsNoData && !bYIsNoData )
+        if (!bXIsNoData && !bYIsNoData)
         {
             OGRPoint *poPoint = nullptr;
-            if( m_nZVarID >= 0 && m_osProfileDimName.empty() )
+            if (m_nZVarID >= 0 && m_osProfileDimName.empty())
             {
                 bool bZIsNoData = false;
                 const double dfZ =
                     Get1DVarAsDouble(m_nZVarID, m_nZVarNCDFType, anIndex[0],
                                      m_uZVarNoData, &bZIsNoData);
-                if( bZIsNoData )
+                if (bZIsNoData)
                     poPoint = new OGRPoint(dfX, dfY);
                 else
                     poPoint = new OGRPoint(dfX, dfY, dfZ);
@@ -1274,37 +1286,38 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
             poFeature->SetGeometryDirectly(poPoint);
         }
     }
-    else if( m_nXVarID >= 0 && m_nYVarID >= 0 && m_nZVarID >= 0 &&
-             !m_osProfileDimName.empty() && nMainDimId == m_nRecordDimID )
+    else if (m_nXVarID >= 0 && m_nYVarID >= 0 && m_nZVarID >= 0 &&
+             !m_osProfileDimName.empty() && nMainDimId == m_nRecordDimID)
     {
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
-        if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+        if (poGeom != nullptr &&
+            wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
             bool bZIsNoData = false;
             const double dfZ =
                 Get1DVarAsDouble(m_nZVarID, m_nZVarNCDFType, anIndex[0],
                                  m_uZVarNoData, &bZIsNoData);
-            if( !bZIsNoData )
+            if (!bZIsNoData)
                 poGeom->toPoint()->setZ(dfZ);
         }
     }
-    else if( m_nWKTVarID >= 0 )
+    else if (m_nWKTVarID >= 0)
     {
         char *pszWKT = nullptr;
-        if( m_nWKTNCDFType == NC_CHAR )
+        if (m_nWKTNCDFType == NC_CHAR)
         {
             size_t anCount[2];
             anCount[0] = 1;
             anCount[1] = m_nWKTMaxWidth;
             pszWKT = (char *)CPLCalloc(1, anCount[1] + 1);
-            int status = nc_get_vara_text(m_nLayerCDFId, m_nWKTVarID,
-                                          anIndex, anCount, pszWKT);
-            if( status == NC_EINVALCOORDS || status == NC_EEDGE )
+            int status = nc_get_vara_text(m_nLayerCDFId, m_nWKTVarID, anIndex,
+                                          anCount, pszWKT);
+            if (status == NC_EINVALCOORDS || status == NC_EEDGE)
             {
                 CPLFree(pszWKT);
                 return false;
             }
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 NCDF_ERR(status);
                 CPLFree(pszWKT);
@@ -1312,32 +1325,32 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
             }
         }
 #ifdef NETCDF_HAS_NC4
-        else if( m_nWKTNCDFType == NC_STRING )
+        else if (m_nWKTNCDFType == NC_STRING)
         {
             char *pszVal = nullptr;
-            int status = nc_get_var1_string(m_nLayerCDFId, m_nWKTVarID,
-                                            anIndex, &pszVal);
-            if( status == NC_EINVALCOORDS || status == NC_EEDGE )
+            int status = nc_get_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
+                                            &pszVal);
+            if (status == NC_EINVALCOORDS || status == NC_EEDGE)
             {
                 return false;
             }
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 NCDF_ERR(status);
             }
-            else if( pszVal != nullptr )
+            else if (pszVal != nullptr)
             {
                 pszWKT = CPLStrdup(pszVal);
                 nc_free_string(1, &pszVal);
             }
         }
 #endif
-        if( pszWKT != nullptr )
+        if (pszWKT != nullptr)
         {
             OGRGeometry *poGeom = nullptr;
             CPL_IGNORE_RET_VAL(
                 OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom));
-            if( poGeom != nullptr )
+            if (poGeom != nullptr)
             {
                 poGeom->assignSpatialReference(GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
@@ -1355,16 +1368,15 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 
 OGRFeature *netCDFLayer::GetNextFeature()
 {
-    while( true )
+    while (true)
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == nullptr )
+        if (poFeature == nullptr)
             return nullptr;
 
-        if( (m_poFilterGeom == nullptr
-            || FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ))
-            && (m_poAttrQuery == nullptr
-                || m_poAttrQuery->Evaluate(poFeature)) )
+        if ((m_poFilterGeom == nullptr ||
+             FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
+            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
 
         delete poFeature;
@@ -1375,7 +1387,10 @@ OGRFeature *netCDFLayer::GetNextFeature()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn *netCDFLayer::GetLayerDefn() { return m_poFeatureDefn; }
+OGRFeatureDefn *netCDFLayer::GetLayerDefn()
+{
+    return m_poFeatureDefn;
+}
 
 /************************************************************************/
 /*                           ICreateFeature()                           */
@@ -1388,59 +1403,61 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
     size_t nFeatureIdx = 0;
     nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nFeatureIdx);
 
-    if( !m_bLegacyCreateMode )
+    if (!m_bLegacyCreateMode)
     {
         // Detects: append mode
-        if(m_layerSGDefn.get_containerRealID() == nccfdriver::INVALID_VAR_ID)
+        if (m_layerSGDefn.get_containerRealID() == nccfdriver::INVALID_VAR_ID)
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Append mode is not supported for CF-1.8 datasets.");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Append mode is not supported for CF-1.8 datasets.");
             return OGRERR_UNSUPPORTED_OPERATION;
         }
     }
 
-    if( m_nProfileDimID >= 0 )
+    if (m_nProfileDimID >= 0)
     {
         size_t nProfileCount = 0;
         nc_inq_dimlen(m_nLayerCDFId, m_nProfileDimID, &nProfileCount);
 
         OGRFeature *poProfileToLookup = poFeature->Clone();
         poProfileToLookup->SetFID(-1);
-        for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
+        for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
         {
-            if( !(poProfileToLookup->IsFieldSetAndNotNull(i)) ||
-                m_aoFieldDesc[i].nMainDimId != m_nProfileDimID )
+            if (!(poProfileToLookup->IsFieldSetAndNotNull(i)) ||
+                m_aoFieldDesc[i].nMainDimId != m_nProfileDimID)
             {
                 poProfileToLookup->UnsetField(i);
                 continue;
             }
         }
         OGRGeometry *poGeom = poProfileToLookup->GetGeometryRef();
-        if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+        if (poGeom != nullptr &&
+            wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
             poGeom->toPoint()->setZ(0);
         }
 
         size_t nProfileIdx = 0;
         bool bFoundProfile = false;
-        for( ; nProfileIdx < nProfileCount; nProfileIdx++ )
+        for (; nProfileIdx < nProfileCount; nProfileIdx++)
         {
             int nId = NC_FILL_INT;
             int status = nc_get_var1_int(m_nLayerCDFId, m_nProfileVarID,
                                          &nProfileIdx, &nId);
             NCDF_ERR(status);
-            if( nId == NC_FILL_INT )
+            if (nId == NC_FILL_INT)
                 break;
 
             OGRFeature *poIterFeature = new OGRFeature(m_poFeatureDefn);
-            if( FillFeatureFromVar(poIterFeature, m_nProfileDimID, nProfileIdx) )
+            if (FillFeatureFromVar(poIterFeature, m_nProfileDimID, nProfileIdx))
             {
                 poGeom = poIterFeature->GetGeometryRef();
-                if( poGeom != nullptr &&
-                    wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+                if (poGeom != nullptr &&
+                    wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
                 {
                     poGeom->toPoint()->setZ(0);
                 }
-                if( poIterFeature->Equal(poProfileToLookup) )
+                if (poIterFeature->Equal(poProfileToLookup))
                 {
                     bFoundProfile = true;
                     delete poIterFeature;
@@ -1450,16 +1467,16 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
             delete poIterFeature;
         }
 
-        if( !bFoundProfile )
+        if (!bFoundProfile)
         {
-            if( !m_bProfileVarUnlimited && nProfileIdx == nProfileCount )
+            if (!m_bProfileVarUnlimited && nProfileIdx == nProfileCount)
             {
                 size_t nNewSize = 1 + nProfileCount + nProfileCount / 3;
                 m_poDS->GrowDim(m_nLayerCDFId, m_nProfileDimID, nNewSize);
             }
 
-            if( !FillVarFromFeature(poProfileToLookup, m_nProfileDimID,
-                                    nProfileIdx) )
+            if (!FillVarFromFeature(poProfileToLookup, m_nProfileDimID,
+                                    nProfileIdx))
             {
                 delete poProfileToLookup;
                 return OGRERR_FAILURE;
@@ -1467,9 +1484,9 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
         }
 
         int nProfileIdIdx = m_poFeatureDefn->GetFieldIndex(m_osProfileDimName);
-        if( nProfileIdIdx < 0 ||
+        if (nProfileIdIdx < 0 ||
             m_poFeatureDefn->GetFieldDefn(nProfileIdIdx)->GetType() !=
-                OFTInteger )
+                OFTInteger)
         {
             int nVal = static_cast<int>(nProfileIdx);
             int status = nc_put_var1_int(m_nLayerCDFId, m_nProfileVarID,
@@ -1485,7 +1502,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
         delete poProfileToLookup;
     }
 
-    if( !FillVarFromFeature(poFeature, m_nRecordDimID, nFeatureIdx) )
+    if (!FillVarFromFeature(poFeature, m_nRecordDimID, nFeatureIdx))
         return OGRERR_FAILURE;
 
     poFeature->SetFID(nFeatureIdx + 1);
@@ -1504,15 +1521,15 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     anIndex[0] = nIndex;
     anIndex[1] = 0;
 
-    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
     {
-        if( m_aoFieldDesc[i].nMainDimId != nMainDimId )
+        if (m_aoFieldDesc[i].nMainDimId != nMainDimId)
             continue;
 
-        if( !(poFeature->IsFieldSetAndNotNull(i)) && m_bLegacyCreateMode )
+        if (!(poFeature->IsFieldSetAndNotNull(i)) && m_bLegacyCreateMode)
         {
 #ifdef NETCDF_HAS_NC4
-            if( m_bNCDumpCompat && m_aoFieldDesc[i].nType == NC_STRING )
+            if (m_bNCDumpCompat && m_aoFieldDesc[i].nType == NC_STRING)
             {
                 const char *pszVal = "";
                 int status = nc_put_var1_string(
@@ -1524,377 +1541,428 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         }
 
         int status = NC_NOERR;
-        switch( m_aoFieldDesc[i].nType )
+        switch (m_aoFieldDesc[i].nType)
         {
-        case NC_CHAR:
-        {
-            const char *pszVal = poFeature->GetFieldAsString(i);
-            if( m_aoFieldDesc[i].nDimCount == 1 )
+            case NC_CHAR:
             {
-                if( strlen(pszVal) > 1 &&
-                    !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
+                const char *pszVal = poFeature->GetFieldAsString(i);
+                if (m_aoFieldDesc[i].nDimCount == 1)
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Content of field %s exceeded the 1 character "
-                             "limit and will be truncated",
-                             m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-                    m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
-                }
-                if(m_poDS->HasInfiniteRecordDim())
-                {
-                    status = nc_put_var1_text(
-                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, pszVal);
-                }
-                else
-                {
-                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Char_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
-                }
-            }
-            else
-            {
-                size_t anCount[2];
-                anCount[0] = 1;
-                anCount[1] = strlen(pszVal);
-                size_t nWidth = 0;
-
-                if(m_bLegacyCreateMode)
-                {
-                    nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
-                                  &nWidth);
-                }
-                else
-                {
-                    nWidth = layerVID.virtualDIDToDim(m_aoFieldDesc[i].nSecDimId).getLen();
-                }
-
-                if( anCount[1] > nWidth )
-                {
-                    // Always grow the dim if not writing to WKT- it's rather inexpensive in CF-1.8
-
-                    if( (m_bAutoGrowStrings &&
-                         m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0) || !m_bLegacyCreateMode)
+                    if (strlen(pszVal) > 1 &&
+                        !m_aoFieldDesc[i].bHasWarnedAboutTruncation)
                     {
-                        size_t nNewSize = anCount[1] + anCount[1] / 3;
-
-                        CPLDebug("GDAL_netCDF", "Growing %s from %u to %u",
-                                 m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                 static_cast<unsigned>(nWidth),
-                                 static_cast<unsigned>(nNewSize));
-
-                        if(m_bLegacyCreateMode)
-                        {
-                            m_poDS->GrowDim(m_nLayerCDFId,
-                                            m_aoFieldDesc[i].nSecDimId, nNewSize);
-                        }
-                        else
-                        {
-                            layerVID.nc_resize_vdim(m_aoFieldDesc[i].nSecDimId, nNewSize);
-                        }
-
-                        pszVal = poFeature->GetFieldAsString(i);
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Content of field %s exceeded the 1 character "
+                            "limit and will be truncated",
+                            m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+                        m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
+                    }
+                    if (m_poDS->HasInfiniteRecordDim())
+                    {
+                        status = nc_put_var1_text(m_nLayerCDFId,
+                                                  m_aoFieldDesc[i].nVarId,
+                                                  anIndex, pszVal);
                     }
                     else
                     {
-                        anCount[1] = nWidth;
-                        if( !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
-                        {
-                            CPLError(
-                                CE_Warning, CPLE_AppDefined,
-                                "Content of field %s exceeded the %u character "
-                                "limit and will be truncated",
-                                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                static_cast<unsigned int>(nWidth));
-                            m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
-                        }
+                        m_poDS->FieldScribe.enqueue_transaction(
+                            nccfdriver::MTPtr(
+                                new nccfdriver::OGR_SGFS_NC_Char_Transaction(
+                                    m_aoFieldDesc[i].nVarId, pszVal)));
                     }
-                }
-
-                if(m_poDS->HasInfiniteRecordDim())
-                {
-                    status = nc_put_vara_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                     anIndex, anCount, pszVal);
                 }
                 else
                 {
-                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_CharA_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
+                    size_t anCount[2];
+                    anCount[0] = 1;
+                    anCount[1] = strlen(pszVal);
+                    size_t nWidth = 0;
+
+                    if (m_bLegacyCreateMode)
+                    {
+                        nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
+                                      &nWidth);
+                    }
+                    else
+                    {
+                        nWidth =
+                            layerVID.virtualDIDToDim(m_aoFieldDesc[i].nSecDimId)
+                                .getLen();
+                    }
+
+                    if (anCount[1] > nWidth)
+                    {
+                        // Always grow the dim if not writing to WKT- it's
+                        // rather inexpensive in CF-1.8
+
+                        if ((m_bAutoGrowStrings &&
+                             m_poFeatureDefn->GetFieldDefn(i)->GetWidth() ==
+                                 0) ||
+                            !m_bLegacyCreateMode)
+                        {
+                            size_t nNewSize = anCount[1] + anCount[1] / 3;
+
+                            CPLDebug(
+                                "GDAL_netCDF", "Growing %s from %u to %u",
+                                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                static_cast<unsigned>(nWidth),
+                                static_cast<unsigned>(nNewSize));
+
+                            if (m_bLegacyCreateMode)
+                            {
+                                m_poDS->GrowDim(m_nLayerCDFId,
+                                                m_aoFieldDesc[i].nSecDimId,
+                                                nNewSize);
+                            }
+                            else
+                            {
+                                layerVID.nc_resize_vdim(
+                                    m_aoFieldDesc[i].nSecDimId, nNewSize);
+                            }
+
+                            pszVal = poFeature->GetFieldAsString(i);
+                        }
+                        else
+                        {
+                            anCount[1] = nWidth;
+                            if (!m_aoFieldDesc[i].bHasWarnedAboutTruncation)
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Content of field %s exceeded the %u "
+                                         "character "
+                                         "limit and will be truncated",
+                                         m_poFeatureDefn->GetFieldDefn(i)
+                                             ->GetNameRef(),
+                                         static_cast<unsigned int>(nWidth));
+                                m_aoFieldDesc[i].bHasWarnedAboutTruncation =
+                                    true;
+                            }
+                        }
+                    }
+
+                    if (m_poDS->HasInfiniteRecordDim())
+                    {
+                        status = nc_put_vara_text(m_nLayerCDFId,
+                                                  m_aoFieldDesc[i].nVarId,
+                                                  anIndex, anCount, pszVal);
+                    }
+                    else
+                    {
+                        m_poDS->FieldScribe.enqueue_transaction(
+                            nccfdriver::MTPtr(
+                                new nccfdriver::OGR_SGFS_NC_CharA_Transaction(
+                                    m_aoFieldDesc[i].nVarId, pszVal)));
+                    }
                 }
+                break;
             }
-            break;
-        }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_STRING:
-        {
-            const char *pszVal = poFeature->GetFieldAsString(i);
-
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_STRING:
             {
-                status = nc_put_var1_string(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &pszVal);
-            }
+                const char *pszVal = poFeature->GetFieldAsString(i);
 
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_String_Transaction(m_aoFieldDesc[i].nVarId, pszVal)));
-            }
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_string(m_nLayerCDFId,
+                                                m_aoFieldDesc[i].nVarId,
+                                                anIndex, &pszVal);
+                }
 
-            break;
-        }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_String_Transaction(
+                            m_aoFieldDesc[i].nVarId, pszVal)));
+                }
+
+                break;
+            }
 #endif
 
-        case NC_BYTE:
-        {
-            int nVal = poFeature->GetFieldAsInteger(i);
-            signed char chVal = static_cast<signed char>(nVal);
-
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_BYTE:
             {
-                status = nc_put_var1_schar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                           anIndex, &chVal);
-            }
+                int nVal = poFeature->GetFieldAsInteger(i);
+                signed char chVal = static_cast<signed char>(nVal);
 
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Byte_Transaction(m_aoFieldDesc[i].nVarId, chVal)));
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_schar(m_nLayerCDFId,
+                                               m_aoFieldDesc[i].nVarId, anIndex,
+                                               &chVal);
+                }
+
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Byte_Transaction(
+                            m_aoFieldDesc[i].nVarId, chVal)));
+                }
+                break;
             }
-            break;
-        }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_UBYTE:
-        {
-            int nVal = poFeature->GetFieldAsInteger(i);
-            unsigned char uchVal = static_cast<unsigned char>(nVal);
-
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_UBYTE:
             {
-                status = nc_put_var1_uchar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                           anIndex, &uchVal);
-            }
+                int nVal = poFeature->GetFieldAsInteger(i);
+                unsigned char uchVal = static_cast<unsigned char>(nVal);
 
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UByte_Transaction(m_aoFieldDesc[i].nVarId, uchVal)));
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_uchar(m_nLayerCDFId,
+                                               m_aoFieldDesc[i].nVarId, anIndex,
+                                               &uchVal);
+                }
+
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_UByte_Transaction(
+                            m_aoFieldDesc[i].nVarId, uchVal)));
+                }
+                break;
             }
-            break;
-        }
 #endif
 
-        case NC_SHORT:
-        {
-            int nVal = poFeature->GetFieldAsInteger(i);
-            short sVal = static_cast<short>(nVal);
+            case NC_SHORT:
+            {
+                int nVal = poFeature->GetFieldAsInteger(i);
+                short sVal = static_cast<short>(nVal);
 
-            if (m_poDS->HasInfiniteRecordDim())
-            {
-                status = nc_put_var1_short(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                           anIndex, &sVal);
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_short(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &sVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Short_Transaction(
+                            m_aoFieldDesc[i].nVarId, sVal)));
+                }
+                break;
             }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Short_Transaction(m_aoFieldDesc[i].nVarId, sVal)));
-            }
-            break;
-        }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_USHORT:
-        {
-            int nVal = poFeature->GetFieldAsInteger(i);
-            unsigned short usVal = static_cast<unsigned short>(nVal);
-
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_USHORT:
             {
-                status = nc_put_var1_ushort(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &usVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UShort_Transaction(m_aoFieldDesc[i].nVarId, usVal)));
-            }
+                int nVal = poFeature->GetFieldAsInteger(i);
+                unsigned short usVal = static_cast<unsigned short>(nVal);
 
-            break;
-        }
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_ushort(m_nLayerCDFId,
+                                                m_aoFieldDesc[i].nVarId,
+                                                anIndex, &usVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_UShort_Transaction(
+                            m_aoFieldDesc[i].nVarId, usVal)));
+                }
+
+                break;
+            }
 #endif
 
-        case NC_INT:
-        {
-            int nVal;
-            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
+            case NC_INT:
             {
-                int nYear;
-                int nMonth;
-                int nDay;
-                int nHour;
-                int nMinute;
-                float fSecond;
-                int nTZ;
-                poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                              &nHour, &nMinute, &fSecond, &nTZ);
-                struct tm brokendowntime;
-                brokendowntime.tm_year = nYear - 1900;
-                brokendowntime.tm_mon = nMonth - 1;
-                brokendowntime.tm_mday = nDay;
-                brokendowntime.tm_hour = 0;
-                brokendowntime.tm_min = 0;
-                brokendowntime.tm_sec = 0;
-                GIntBig nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
-                if( m_aoFieldDesc[i].bIsDays )
-                    nVal64 /= 86400;
-                nVal = static_cast<int>(nVal64);
-            }
-            else
-            {
-                nVal = poFeature->GetFieldAsInteger(i);
-            }
+                int nVal;
+                if (m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate)
+                {
+                    int nYear;
+                    int nMonth;
+                    int nDay;
+                    int nHour;
+                    int nMinute;
+                    float fSecond;
+                    int nTZ;
+                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                                  &nHour, &nMinute, &fSecond,
+                                                  &nTZ);
+                    struct tm brokendowntime;
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon = nMonth - 1;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = 0;
+                    brokendowntime.tm_min = 0;
+                    brokendowntime.tm_sec = 0;
+                    GIntBig nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
+                    if (m_aoFieldDesc[i].bIsDays)
+                        nVal64 /= 86400;
+                    nVal = static_cast<int>(nVal64);
+                }
+                else
+                {
+                    nVal = poFeature->GetFieldAsInteger(i);
+                }
 
-            if (m_poDS->HasInfiniteRecordDim())
-            {
-                status = nc_put_var1_int(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                    anIndex, &nVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Int_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
-            }
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_int(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Int_Transaction(
+                            m_aoFieldDesc[i].nVarId, nVal)));
+                }
 
-            break;
-        }
+                break;
+            }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_UINT:
-        {
-            GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-            unsigned int unVal = static_cast<unsigned int>(nVal);
-
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_UINT:
             {
-                status = nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                          anIndex, &unVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UInt_Transaction(m_aoFieldDesc[i].nVarId, unVal)));
-            }
+                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+                unsigned int unVal = static_cast<unsigned int>(nVal);
 
-            break;
-        }
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status =
+                        nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                         anIndex, &unVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_UInt_Transaction(
+                            m_aoFieldDesc[i].nVarId, unVal)));
+                }
+
+                break;
+            }
 #endif
 
 #ifdef NETCDF_HAS_NC4
-        case NC_INT64:
-        {
-            GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_INT64:
             {
-                status = nc_put_var1_longlong(
-                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Int64_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
-            }
-            break;
-        }
-
-        case NC_UINT64:
-        {
-            double dfVal = poFeature->GetFieldAsDouble(i);
-            GUIntBig nVal = static_cast<GUIntBig>(dfVal);
-
-            if (m_poDS->HasInfiniteRecordDim())
-            {
-                status = nc_put_var1_ulonglong(
-                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_UInt64_Transaction(m_aoFieldDesc[i].nVarId, nVal)));
+                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_longlong(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Int64_Transaction(
+                            m_aoFieldDesc[i].nVarId, nVal)));
+                }
+                break;
             }
 
-            break;
-        }
+            case NC_UINT64:
+            {
+                double dfVal = poFeature->GetFieldAsDouble(i);
+                GUIntBig nVal = static_cast<GUIntBig>(dfVal);
+
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_ulonglong(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_UInt64_Transaction(
+                            m_aoFieldDesc[i].nVarId, nVal)));
+                }
+
+                break;
+            }
 #endif
 
-        case NC_FLOAT:
-        {
-            double dfVal = poFeature->GetFieldAsDouble(i);
-            float fVal = static_cast<float>(dfVal);
+            case NC_FLOAT:
+            {
+                double dfVal = poFeature->GetFieldAsDouble(i);
+                float fVal = static_cast<float>(dfVal);
 
-            if (m_poDS->HasInfiniteRecordDim())
-            {
-                status = nc_put_var1_float(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                    anIndex, &fVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Float_Transaction(m_aoFieldDesc[i].nVarId, fVal)));
-            }
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_float(
+                        m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &fVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Float_Transaction(
+                            m_aoFieldDesc[i].nVarId, fVal)));
+                }
 
-            break;
-        }
-
-        case NC_DOUBLE:
-        {
-            double dfVal;
-            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
-                m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
-            {
-                int nYear;
-                int nMonth;
-                int nDay;
-                int nHour;
-                int nMinute;
-                float fSecond;
-                int nTZ;
-                poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                              &nHour, &nMinute, &fSecond, &nTZ);
-                struct tm brokendowntime;
-                brokendowntime.tm_year = nYear - 1900;
-                brokendowntime.tm_mon = nMonth - 1;
-                brokendowntime.tm_mday = nDay;
-                brokendowntime.tm_hour = nHour;
-                brokendowntime.tm_min = nMinute;
-                brokendowntime.tm_sec = static_cast<int>(fSecond);
-                GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
-                dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
-                if( m_aoFieldDesc[i].bIsDays )
-                    dfVal /= 86400.0;
-            }
-            else
-            {
-                dfVal = poFeature->GetFieldAsDouble(i);
+                break;
             }
 
-            if (m_poDS->HasInfiniteRecordDim())
+            case NC_DOUBLE:
             {
-                status = nc_put_var1_double(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                    anIndex, &dfVal);
-            }
-            else
-            {
-                m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(new nccfdriver::OGR_SGFS_NC_Double_Transaction(m_aoFieldDesc[i].nVarId, dfVal)));
+                double dfVal;
+                if (m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
+                    m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
+                {
+                    int nYear;
+                    int nMonth;
+                    int nDay;
+                    int nHour;
+                    int nMinute;
+                    float fSecond;
+                    int nTZ;
+                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                                  &nHour, &nMinute, &fSecond,
+                                                  &nTZ);
+                    struct tm brokendowntime;
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon = nMonth - 1;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = nHour;
+                    brokendowntime.tm_min = nMinute;
+                    brokendowntime.tm_sec = static_cast<int>(fSecond);
+                    GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
+                    dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
+                    if (m_aoFieldDesc[i].bIsDays)
+                        dfVal /= 86400.0;
+                }
+                else
+                {
+                    dfVal = poFeature->GetFieldAsDouble(i);
+                }
+
+                if (m_poDS->HasInfiniteRecordDim())
+                {
+                    status = nc_put_var1_double(m_nLayerCDFId,
+                                                m_aoFieldDesc[i].nVarId,
+                                                anIndex, &dfVal);
+                }
+                else
+                {
+                    m_poDS->FieldScribe.enqueue_transaction(nccfdriver::MTPtr(
+                        new nccfdriver::OGR_SGFS_NC_Double_Transaction(
+                            m_aoFieldDesc[i].nVarId, dfVal)));
+                }
+
+                break;
             }
 
-            break;
-        }
-
-        default:
-            break;
+            default:
+                break;
         }
 
         NCDF_ERR(status);
-        if( status != NC_NOERR )
+        if (status != NC_NOERR)
         {
             return false;
         }
     }
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    if( wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint &&
-        poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint && m_bLegacyCreateMode )
+    if (wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint &&
+        poGeom != nullptr &&
+        wkbFlatten(poGeom->getGeometryType()) == wkbPoint &&
+        m_bLegacyCreateMode)
     {
-        if( m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID )
+        if (m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID)
         {
             auto poPoint = poGeom->toPoint();
             double dfX = poPoint->getX();
@@ -1902,7 +1970,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
             int status;
 
-            if( m_nXVarNCDFType == NC_DOUBLE )
+            if (m_nXVarNCDFType == NC_DOUBLE)
                 status =
                     nc_put_var1_double(m_nLayerCDFId, m_nXVarID, anIndex, &dfX);
             else
@@ -1912,12 +1980,12 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     nc_put_var1_float(m_nLayerCDFId, m_nXVarID, anIndex, &fX);
             }
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 return false;
             }
 
-            if( m_nYVarNCDFType == NC_DOUBLE )
+            if (m_nYVarNCDFType == NC_DOUBLE)
                 status =
                     nc_put_var1_double(m_nLayerCDFId, m_nYVarID, anIndex, &dfY);
             else
@@ -1927,18 +1995,18 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     nc_put_var1_float(m_nLayerCDFId, m_nYVarID, anIndex, &fY);
             }
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 return false;
             }
         }
 
-        if( m_poFeatureDefn->GetGeomType() == wkbPoint25D &&
-            (m_osProfileDimName.empty() || nMainDimId == m_nRecordDimID) )
+        if (m_poFeatureDefn->GetGeomType() == wkbPoint25D &&
+            (m_osProfileDimName.empty() || nMainDimId == m_nRecordDimID))
         {
             int status;
             double dfZ = poGeom->toPoint()->getZ();
-            if( m_nZVarNCDFType == NC_DOUBLE )
+            if (m_nZVarNCDFType == NC_DOUBLE)
                 status =
                     nc_put_var1_double(m_nLayerCDFId, m_nZVarID, anIndex, &dfZ);
             else
@@ -1948,24 +2016,24 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     nc_put_var1_float(m_nLayerCDFId, m_nZVarID, anIndex, &fZ);
             }
             NCDF_ERR(status);
-            if( status != NC_NOERR )
+            if (status != NC_NOERR)
             {
                 return false;
             }
         }
     }
-    else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom != nullptr && m_bLegacyCreateMode )
+    else if (m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
+             poGeom != nullptr && m_bLegacyCreateMode)
     {
         char *pszWKT = nullptr;
         poGeom->exportToWkt(&pszWKT, wkbVariantIso);
         int status;
 #ifdef NETCDF_HAS_NC4
-        if( m_nWKTNCDFType == NC_STRING )
+        if (m_nWKTNCDFType == NC_STRING)
         {
             const char *pszWKTConst = pszWKT;
-            status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID,
-                                        anIndex, &pszWKTConst);
+            status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
+                                        &pszWKTConst);
         }
         else
 #endif
@@ -1973,9 +2041,9 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             size_t anCount[2];
             anCount[0] = 1;
             anCount[1] = strlen(pszWKT);
-            if( anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth) )
+            if (anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth))
             {
-                if( m_bAutoGrowStrings )
+                if (m_bAutoGrowStrings)
                 {
                     size_t nNewSize = anCount[1] + anCount[1] / 3;
 
@@ -2002,24 +2070,25 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             }
             else
             {
-                status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID,
-                                          anIndex, anCount, pszWKT);
+                status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID, anIndex,
+                                          anCount, pszWKT);
             }
         }
         CPLFree(pszWKT);
         NCDF_ERR(status);
-        if( status != NC_NOERR )
+        if (status != NC_NOERR)
         {
             return false;
         }
     }
 #ifdef NETCDF_HAS_NC4
-    else if( m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
-             poGeom == nullptr && m_nWKTNCDFType == NC_STRING && m_bNCDumpCompat && m_bLegacyCreateMode )
+    else if (m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
+             poGeom == nullptr && m_nWKTNCDFType == NC_STRING &&
+             m_bNCDumpCompat && m_bLegacyCreateMode)
     {
         const char *pszWKTConst = "";
-        int status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID,
-                                        anIndex, &pszWKTConst);
+        int status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
+                                        &pszWKTConst);
         NCDF_ERR(status);
     }
 #endif
@@ -2032,7 +2101,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             nccfdriver::SGeometry_Feature featWithMetaData(*poFeature);
 
             // Check if ready to dump buffer to LOG
-            if(m_poDS->bufManager.isOverQuota())
+            if (m_poDS->bufManager.isOverQuota())
             {
                 m_poDS->SGLogPendingTransaction();
             }
@@ -2042,9 +2111,12 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         }
     }
 
-    catch(nccfdriver::SG_Exception& sge)
+    catch (nccfdriver::SG_Exception &sge)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "An error occurred while attempting to write a feature to the target netCDF file.\n%s", sge.get_err_msg());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An error occurred while attempting to write a feature to the "
+                 "target netCDF file.\n%s",
+                 sge.get_err_msg());
         return false;
     }
 
@@ -2057,7 +2129,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 
 bool netCDFLayer::AddField(int nVarID)
 {
-    if( nVarID == m_nWKTVarID )
+    if (nVarID == m_nWKTVarID)
         return false;
 
     char szName[NC_MAX_NAME + 1];
@@ -2075,9 +2147,9 @@ bool netCDFLayer::AddField(int nVarID)
     memset(&nodata, 0, sizeof(nodata));
     int nDimCount = 1;
     nc_inq_varndims(m_nLayerCDFId, nVarID, &nDimCount);
-    int anDimIds[2] = { -1, -1 };
-    if( (vartype == NC_CHAR && nDimCount <= 2) ||
-        (vartype != NC_CHAR && nDimCount == 1) )
+    int anDimIds[2] = {-1, -1};
+    if ((vartype == NC_CHAR && nDimCount <= 2) ||
+        (vartype != NC_CHAR && nDimCount == 1))
     {
         nc_inq_vardimid(m_nLayerCDFId, nVarID, anDimIds);
     }
@@ -2086,210 +2158,214 @@ bool netCDFLayer::AddField(int nVarID)
         return false;
     }
 
-    switch( vartype )
+    switch (vartype)
     {
-    case NC_BYTE:
-    {
-        eType = OFTInteger;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.chVal = static_cast<signed char>(atoi(pszValue));
-        else
-            nodata.chVal = NC_FILL_BYTE;
-        CPLFree(pszValue);
-        break;
-    }
-
-#ifdef NETCDF_HAS_NC4
-    case NC_UBYTE:
-    {
-        eType = OFTInteger;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.uchVal = static_cast<unsigned char>(atoi(pszValue));
-        else
-            nodata.uchVal = NC_FILL_UBYTE;
-        CPLFree(pszValue);
-        break;
-    }
-#endif
-
-    case NC_CHAR:
-    {
-        eType = OFTString;
-        if( nDimCount == 1 )
+        case NC_BYTE:
         {
-            nWidth = 1;
+            eType = OFTInteger;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.chVal = static_cast<signed char>(atoi(pszValue));
+            else
+                nodata.chVal = NC_FILL_BYTE;
+            CPLFree(pszValue);
+            break;
         }
-        else if( nDimCount == 2 )
+
+#ifdef NETCDF_HAS_NC4
+        case NC_UBYTE:
         {
-            size_t nDimLen = 0;
-            nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nDimLen);
-            nWidth = static_cast<int>(nDimLen);
+            eType = OFTInteger;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.uchVal = static_cast<unsigned char>(atoi(pszValue));
+            else
+                nodata.uchVal = NC_FILL_UBYTE;
+            CPLFree(pszValue);
+            break;
         }
-        break;
-    }
-
-#ifdef NETCDF_HAS_NC4
-    case NC_STRING:
-    {
-        eType = OFTString;
-        break;
-    }
 #endif
 
-    case NC_SHORT:
-    {
-        eType = OFTInteger;
-        eSubType = OFSTInt16;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.sVal = static_cast<short>(atoi(pszValue));
-        else
-            nodata.sVal = NC_FILL_SHORT;
-        CPLFree(pszValue);
-        break;
-    }
-
-#ifdef NETCDF_HAS_NC4
-    case NC_USHORT:
-    {
-        eType = OFTInteger;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.usVal = static_cast<unsigned short>(atoi(pszValue));
-        else
-            nodata.usVal = NC_FILL_USHORT;
-        CPLFree(pszValue);
-        break;
-    }
-#endif
-
-    case NC_INT:
-    {
-        eType = OFTInteger;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.nVal = atoi(pszValue);
-        else
-            nodata.nVal = NC_FILL_INT;
-        CPLFree(pszValue);
-        break;
-    }
-
-#ifdef NETCDF_HAS_NC4
-    case NC_UINT:
-    {
-        eType = OFTInteger64;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.unVal = static_cast<unsigned int>(CPLAtoGIntBig(pszValue));
-        else
-            nodata.unVal = NC_FILL_UINT;
-        CPLFree(pszValue);
-        break;
-    }
-#endif
-
-#ifdef NETCDF_HAS_NC4
-    case NC_INT64:
-    {
-        eType = OFTInteger64;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
-            nodata.nVal64 = CPLAtoGIntBig(pszValue);
-        else
-            nodata.nVal64 = NC_FILL_INT64;
-        CPLFree(pszValue);
-        break;
-    }
-
-    case NC_UINT64:
-    {
-        eType = OFTReal;
-        char *pszValue = nullptr;
-        if( GetFillValue(nVarID, &pszValue) == CE_None )
+        case NC_CHAR:
         {
-            nodata.unVal64 = 0;
-            for( int i = 0; pszValue[i] != '\0'; i++ )
+            eType = OFTString;
+            if (nDimCount == 1)
             {
-                nodata.unVal64 = nodata.unVal64 * 10 + (pszValue[i] - '0');
+                nWidth = 1;
             }
+            else if (nDimCount == 2)
+            {
+                size_t nDimLen = 0;
+                nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nDimLen);
+                nWidth = static_cast<int>(nDimLen);
+            }
+            break;
         }
-        else
-            nodata.unVal64 = NC_FILL_UINT64;
-        CPLFree(pszValue);
-        break;
-    }
+
+#ifdef NETCDF_HAS_NC4
+        case NC_STRING:
+        {
+            eType = OFTString;
+            break;
+        }
 #endif
 
-    case NC_FLOAT:
-    {
-        eType = OFTReal;
-        eSubType = OFSTFloat32;
-        double dfValue;
-        if( GetFillValue(nVarID, &dfValue) == CE_None )
-            nodata.fVal = static_cast<float>(dfValue);
-        else
-            nodata.fVal = NC_FILL_FLOAT;
-        break;
-    }
+        case NC_SHORT:
+        {
+            eType = OFTInteger;
+            eSubType = OFSTInt16;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.sVal = static_cast<short>(atoi(pszValue));
+            else
+                nodata.sVal = NC_FILL_SHORT;
+            CPLFree(pszValue);
+            break;
+        }
 
-    case NC_DOUBLE:
-    {
-        eType = OFTReal;
-        double dfValue;
-        if( GetFillValue(nVarID, &dfValue) == CE_None )
-            nodata.dfVal = dfValue;
-        else
-            nodata.dfVal = NC_FILL_DOUBLE;
-        break;
-    }
+#ifdef NETCDF_HAS_NC4
+        case NC_USHORT:
+        {
+            eType = OFTInteger;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.usVal = static_cast<unsigned short>(atoi(pszValue));
+            else
+                nodata.usVal = NC_FILL_USHORT;
+            CPLFree(pszValue);
+            break;
+        }
+#endif
 
-    default:
-    {
-        CPLDebug("GDAL_netCDF", "Variable %s has type %d, which is unhandled",
-                 szName, vartype);
-        return false;
-    }
+        case NC_INT:
+        {
+            eType = OFTInteger;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.nVal = atoi(pszValue);
+            else
+                nodata.nVal = NC_FILL_INT;
+            CPLFree(pszValue);
+            break;
+        }
+
+#ifdef NETCDF_HAS_NC4
+        case NC_UINT:
+        {
+            eType = OFTInteger64;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.unVal =
+                    static_cast<unsigned int>(CPLAtoGIntBig(pszValue));
+            else
+                nodata.unVal = NC_FILL_UINT;
+            CPLFree(pszValue);
+            break;
+        }
+#endif
+
+#ifdef NETCDF_HAS_NC4
+        case NC_INT64:
+        {
+            eType = OFTInteger64;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+                nodata.nVal64 = CPLAtoGIntBig(pszValue);
+            else
+                nodata.nVal64 = NC_FILL_INT64;
+            CPLFree(pszValue);
+            break;
+        }
+
+        case NC_UINT64:
+        {
+            eType = OFTReal;
+            char *pszValue = nullptr;
+            if (GetFillValue(nVarID, &pszValue) == CE_None)
+            {
+                nodata.unVal64 = 0;
+                for (int i = 0; pszValue[i] != '\0'; i++)
+                {
+                    nodata.unVal64 = nodata.unVal64 * 10 + (pszValue[i] - '0');
+                }
+            }
+            else
+                nodata.unVal64 = NC_FILL_UINT64;
+            CPLFree(pszValue);
+            break;
+        }
+#endif
+
+        case NC_FLOAT:
+        {
+            eType = OFTReal;
+            eSubType = OFSTFloat32;
+            double dfValue;
+            if (GetFillValue(nVarID, &dfValue) == CE_None)
+                nodata.fVal = static_cast<float>(dfValue);
+            else
+                nodata.fVal = NC_FILL_FLOAT;
+            break;
+        }
+
+        case NC_DOUBLE:
+        {
+            eType = OFTReal;
+            double dfValue;
+            if (GetFillValue(nVarID, &dfValue) == CE_None)
+                nodata.dfVal = dfValue;
+            else
+                nodata.dfVal = NC_FILL_DOUBLE;
+            break;
+        }
+
+        default:
+        {
+            CPLDebug("GDAL_netCDF",
+                     "Variable %s has type %d, which is unhandled", szName,
+                     vartype);
+            return false;
+        }
     }
 
     bool bIsDays = false;
 
     char *pszValue = nullptr;
-    if( NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_type", &pszValue) ==
-        CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_type", &pszValue) ==
+        CE_None)
     {
-        if( (eType == OFTInteger || eType == OFTReal) && EQUAL(pszValue, "Date") )
+        if ((eType == OFTInteger || eType == OFTReal) &&
+            EQUAL(pszValue, "Date"))
         {
             eType = OFTDate;
             // cppcheck-suppress knownConditionTrueFalse
             bIsDays = (eType == OFTInteger);
         }
-        else if( (eType == OFTInteger || eType == OFTReal) &&
-                 EQUAL(pszValue, "DateTime") )
+        else if ((eType == OFTInteger || eType == OFTReal) &&
+                 EQUAL(pszValue, "DateTime"))
             eType = OFTDateTime;
-        else if( eType == OFTReal && EQUAL(pszValue, "Integer64") )
+        else if (eType == OFTReal && EQUAL(pszValue, "Integer64"))
             eType = OFTInteger64;
-        else if( eType == OFTInteger && EQUAL(pszValue, "Integer(Boolean)") )
+        else if (eType == OFTInteger && EQUAL(pszValue, "Integer(Boolean)"))
             eSubType = OFSTBoolean;
     }
     CPLFree(pszValue);
     pszValue = nullptr;
 
-    if( NCDFGetAttr(m_nLayerCDFId, nVarID, "units", &pszValue) == CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, "units", &pszValue) == CE_None)
     {
-        if( (eType == OFTInteger || eType == OFTReal || eType == OFTDate) &&
+        if ((eType == OFTInteger || eType == OFTReal || eType == OFTDate) &&
             (EQUAL(pszValue, "seconds since 1970-1-1 0:0:0") ||
-             EQUAL(pszValue, "seconds since 1970-01-01 00:00:00")) )
+             EQUAL(pszValue, "seconds since 1970-01-01 00:00:00")))
         {
-            if( eType != OFTDate )
+            if (eType != OFTDate)
                 eType = OFTDateTime;
             bIsDays = false;
         }
-        else if( (eType == OFTInteger || eType == OFTReal || eType == OFTDate) &&
+        else if ((eType == OFTInteger || eType == OFTReal ||
+                  eType == OFTDate) &&
                  (EQUAL(pszValue, "days since 1970-1-1") ||
-                  EQUAL(pszValue, "days since 1970-01-01")) )
+                  EQUAL(pszValue, "days since 1970-01-01")))
         {
             eType = OFTDate;
             bIsDays = true;
@@ -2298,16 +2374,16 @@ bool netCDFLayer::AddField(int nVarID)
     CPLFree(pszValue);
     pszValue = nullptr;
 
-    if( NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_name", &pszValue) ==
-        CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_name", &pszValue) ==
+        CE_None)
     {
         snprintf(szName, sizeof(szName), "%s", pszValue);
     }
     CPLFree(pszValue);
     pszValue = nullptr;
 
-    if( NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_width", &pszValue) ==
-        CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_width", &pszValue) ==
+        CE_None)
     {
         nWidth = atoi(pszValue);
     }
@@ -2315,8 +2391,8 @@ bool netCDFLayer::AddField(int nVarID)
     pszValue = nullptr;
 
     int nPrecision = 0;
-    if( NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_precision", &pszValue) ==
-        CE_None )
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_precision", &pszValue) ==
+        CE_None)
     {
         nPrecision = atoi(pszValue);
     }
@@ -2355,26 +2431,27 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
     int status;
 
     const netCDFWriterConfigField *poConfig = nullptr;
-    if( m_poDS->oWriterConfig.m_bIsValid )
+    if (m_poDS->oWriterConfig.m_bIsValid)
     {
         std::map<CPLString, netCDFWriterConfigField>::const_iterator oIter;
-        if( m_poLayerConfig != nullptr &&
-            (oIter = m_poLayerConfig->m_oFields.find(
-                 poFieldDefn->GetNameRef())) != m_poLayerConfig->m_oFields.end() )
+        if (m_poLayerConfig != nullptr &&
+            (oIter =
+                 m_poLayerConfig->m_oFields.find(poFieldDefn->GetNameRef())) !=
+                m_poLayerConfig->m_oFields.end())
         {
             poConfig = &(oIter->second);
         }
-        else if( (oIter = m_poDS->oWriterConfig.m_oFields.find(
+        else if ((oIter = m_poDS->oWriterConfig.m_oFields.find(
                       poFieldDefn->GetNameRef())) !=
-                 m_poDS->oWriterConfig.m_oFields.end() )
+                 m_poDS->oWriterConfig.m_oFields.end())
         {
             poConfig = &(oIter->second);
         }
     }
 
-    if( !m_osProfileDimName.empty() &&
+    if (!m_osProfileDimName.empty() &&
         EQUAL(poFieldDefn->GetNameRef(), m_osProfileDimName) &&
-        poFieldDefn->GetType() == OFTInteger )
+        poFieldDefn->GetType() == OFTInteger)
     {
         FieldDesc fieldDesc;
         fieldDesc.uNoData.nVal = NC_FILL_INT;
@@ -2394,35 +2471,35 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     // Try to use the field name as variable name, but detects conflict first
     CPLString osVarName(poConfig != nullptr
-                           ? poConfig->m_osNetCDFName
-                           : CPLString(poFieldDefn->GetNameRef()));
+                            ? poConfig->m_osNetCDFName
+                            : CPLString(poFieldDefn->GetNameRef()));
 
-    if(!m_bLegacyCreateMode && m_bWriteGDALTags)
+    if (!m_bLegacyCreateMode && m_bWriteGDALTags)
     {
         // To help avoid naming conflicts, append the layer name as a prefix
-        const char * prefix = this->GetName();
-        const char * fprefix = "_field_";
+        const char *prefix = this->GetName();
+        const char *fprefix = "_field_";
 
         osVarName = CPLString(prefix) + CPLString(fprefix) + osVarName;
-
     }
 
     bool vCDFHas = false;
-    if(!m_bLegacyCreateMode)
+    if (!m_bLegacyCreateMode)
     {
         vCDFHas = layerVID.virtualVarNameDefined(osVarName);
     }
 
     // Also check the real
     status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-    if( status == NC_NOERR || vCDFHas)
+    if (status == NC_NOERR || vCDFHas)
     {
-        for( int i = 1; i <= 100; i++ )
+        for (int i = 1; i <= 100; i++)
         {
             osVarName = CPLSPrintf("%s%d", poFieldDefn->GetNameRef(), i);
             status = nc_inq_varid(m_nLayerCDFId, osVarName, &nVarID);
-            if(!m_bLegacyCreateMode) vCDFHas = layerVID.virtualVarNameDefined(osVarName);
-            if( status != NC_NOERR && !vCDFHas )
+            if (!m_bLegacyCreateMode)
+                vCDFHas = layerVID.virtualVarNameDefined(osVarName);
+            if (status != NC_NOERR && !vCDFHas)
                 break;
         }
 
@@ -2442,34 +2519,35 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     // Find which is the dimension that this variable should be indexed against
     int nMainDimId = m_nRecordDimID;
-    if( !m_osProfileVariables.empty() )
+    if (!m_osProfileVariables.empty())
     {
         char **papszTokens =
             CSLTokenizeString2(m_osProfileVariables, ",", CSLT_HONOURSTRINGS);
-        if( CSLFindString(papszTokens, poFieldDefn->GetNameRef()) >= 0 )
+        if (CSLFindString(papszTokens, poFieldDefn->GetNameRef()) >= 0)
             nMainDimId = m_nProfileDimID;
         CSLDestroy(papszTokens);
     }
-    if( poConfig != nullptr && !poConfig->m_osMainDim.empty() && m_bLegacyCreateMode)
+    if (poConfig != nullptr && !poConfig->m_osMainDim.empty() &&
+        m_bLegacyCreateMode)
     {
         int ndims = 0;
         status = nc_inq_ndims(m_nLayerCDFId, &ndims);
         NCDF_ERR(status);
         bool bFound = false;
-        for( int idim = 0; idim < ndims; idim++ )
+        for (int idim = 0; idim < ndims; idim++)
         {
             char szDimName[NC_MAX_NAME + 1];
             szDimName[0] = 0;
             status = nc_inq_dimname(m_poDS->cdfid, idim, szDimName);
             NCDF_ERR(status);
-            if( strcmp(poConfig->m_osMainDim, szDimName) == 0 )
+            if (strcmp(poConfig->m_osMainDim, szDimName) == 0)
             {
                 nMainDimId = idim;
                 bFound = true;
                 break;
             }
         }
-        if( !bFound )
+        if (!bFound)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Dimension '%s' does not exist",
@@ -2479,138 +2557,148 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     try
     {
-        switch( eType )
+        switch (eType)
         {
-        case OFTString:
-        case OFTStringList:
-        case OFTIntegerList:
-        case OFTRealList:
-        {
-            if( poFieldDefn->GetWidth() == 1 )
+            case OFTString:
+            case OFTStringList:
+            case OFTIntegerList:
+            case OFTRealList:
             {
-                nType = NC_CHAR;
-                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            }
-    #ifdef NETCDF_HAS_NC4
-            else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
-            {
-                nType = NC_STRING;
-                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            }
-    #endif
-            else
-            {
-                if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
+                if (poFieldDefn->GetWidth() == 1)
                 {
-                    if( m_nDefaultMaxWidthDimId < 0 )
-                    {
-                        m_nDefaultMaxWidthDimId = layerVID.nc_def_vdim("string_default_max_width", m_nDefaultWidth);
-                    }
-
-                    nSecDimId = m_nDefaultMaxWidthDimId;
+                    nType = NC_CHAR;
+                    nVarID =
+                        layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
                 }
+#ifdef NETCDF_HAS_NC4
+                else if (m_poDS->eFormat == NCDF_FORMAT_NC4 &&
+                         m_bUseStringInNC4)
+                {
+                    nType = NC_STRING;
+                    nVarID =
+                        layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                }
+#endif
                 else
                 {
-                    size_t nDim = poFieldDefn->GetWidth() == 0
-                                    ? m_nDefaultWidth
-                                    : poFieldDefn->GetWidth();
+                    if (poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings)
+                    {
+                        if (m_nDefaultMaxWidthDimId < 0)
+                        {
+                            m_nDefaultMaxWidthDimId = layerVID.nc_def_vdim(
+                                "string_default_max_width", m_nDefaultWidth);
+                        }
 
-                    std::string ndimname = std::string(pszVarName) + std::string("_max_width");
-                    nSecDimId = layerVID.nc_def_vdim(ndimname.c_str(), nDim);
+                        nSecDimId = m_nDefaultMaxWidthDimId;
+                    }
+                    else
+                    {
+                        size_t nDim = poFieldDefn->GetWidth() == 0
+                                          ? m_nDefaultWidth
+                                          : poFieldDefn->GetWidth();
+
+                        std::string ndimname =
+                            std::string(pszVarName) + std::string("_max_width");
+                        nSecDimId =
+                            layerVID.nc_def_vdim(ndimname.c_str(), nDim);
+                    }
+
+                    nDimCount = 2;
+                    int anDims[2] = {nMainDimId, nSecDimId};
+                    nType = NC_CHAR;
+                    nVarID = layerVID.nc_def_vvar(pszVarName, nType, 2, anDims);
                 }
 
-                nDimCount = 2;
-                int anDims[2] = {nMainDimId, nSecDimId};
-                nType = NC_CHAR;
-                nVarID = layerVID.nc_def_vvar(pszVarName, nType, 2, anDims);
+                break;
             }
 
-            break;
-        }
+            case OFTInteger:
+            {
+                nType = eSubType == OFSTBoolean   ? NC_BYTE
+                        : (eSubType == OFSTInt16) ? NC_SHORT
+                                                  : NC_INT;
 
-        case OFTInteger:
-        {
-            nType = eSubType == OFSTBoolean
-                        ? NC_BYTE
-                        : (eSubType == OFSTInt16) ? NC_SHORT : NC_INT;
+                if (nType == NC_BYTE)
+                    nodata.chVal = NC_FILL_BYTE;
+                else if (nType == NC_SHORT)
+                    nodata.sVal = NC_FILL_SHORT;
+                else if (nType == NC_INT)
+                    nodata.nVal = NC_FILL_INT;
 
-            if( nType == NC_BYTE )
-                nodata.chVal = NC_FILL_BYTE;
-            else if( nType == NC_SHORT )
-                nodata.sVal = NC_FILL_SHORT;
-            else if( nType == NC_INT )
+                nVarID =
+                    layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+
+                if (eSubType == OFSTBoolean)
+                {
+                    if (m_bLegacyCreateMode)
+                    {
+                        signed char anRange[2] = {0, 1};
+                        nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range",
+                                         NC_BYTE, 2, anRange);
+                    }
+                }
+
+                break;
+            }
+
+            case OFTInteger64:
+            {
+                nType = NC_DOUBLE;
+                nodata.dfVal = NC_FILL_DOUBLE;
+#ifdef NETCDF_HAS_NC4
+                if (m_poDS->eFormat == NCDF_FORMAT_NC4)
+                {
+                    nType = NC_INT64;
+                    nodata.nVal64 = NC_FILL_INT64;
+                }
+#endif
+
+                nVarID =
+                    layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                break;
+            }
+
+            case OFTReal:
+            {
+                nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
+                if (eSubType == OFSTFloat32)
+                    nodata.fVal = NC_FILL_FLOAT;
+                else
+                    nodata.dfVal = NC_FILL_DOUBLE;
+
+                nVarID =
+                    layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
+                break;
+            }
+
+            case OFTDate:
+            {
+                nType = NC_INT;
+
+                nVarID =
+                    layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
                 nodata.nVal = NC_FILL_INT;
 
-            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-
-            if( eSubType == OFSTBoolean )
-            {
-                if(m_bLegacyCreateMode)
-                {
-                    signed char anRange[2] = { 0, 1 };
-                    nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
-                                anRange);
-                }
+                layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
+                                          "days since 1970-1-1");
+                break;
             }
 
-            break;
-        }
-
-        case OFTInteger64:
-        {
-            nType = NC_DOUBLE;
-            nodata.dfVal = NC_FILL_DOUBLE;
-    #ifdef NETCDF_HAS_NC4
-            if( m_poDS->eFormat == NCDF_FORMAT_NC4 )
+            case OFTDateTime:
             {
-                nType = NC_INT64;
-                nodata.nVal64 = NC_FILL_INT64;
-            }
-    #endif
+                nType = NC_DOUBLE;
+                nVarID =
+                    layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
 
-            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            break;
-        }
-
-        case OFTReal:
-        {
-            nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
-            if( eSubType == OFSTFloat32 )
-                nodata.fVal = NC_FILL_FLOAT;
-            else
                 nodata.dfVal = NC_FILL_DOUBLE;
 
-            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            break;
-        }
+                layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
+                                          "seconds since 1970-1-1 0:0:0");
+                break;
+            }
 
-        case OFTDate:
-        {
-            nType = NC_INT;
-
-            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-            nodata.nVal = NC_FILL_INT;
-
-            layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
-                                    "days since 1970-1-1");
-            break;
-        }
-
-        case OFTDateTime:
-        {
-            nType = NC_DOUBLE;
-            nVarID = layerVID.nc_def_vvar(pszVarName, nType, 1, &nMainDimId);
-
-            nodata.dfVal = NC_FILL_DOUBLE;
-
-            layerVID.nc_put_vatt_text(nVarID, CF_UNITS,
-                                                    "seconds since 1970-1-1 0:0:0");
-            break;
-        }
-
-
-        default:
-            return OGRERR_FAILURE;
+            default:
+                return OGRERR_FAILURE;
         }
 
         FieldDesc fieldDesc;
@@ -2624,35 +2712,39 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         fieldDesc.bIsDays = (eType == OFTDate);
         m_aoFieldDesc.push_back(fieldDesc);
 
-        const char *pszLongName = CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
+        const char *pszLongName =
+            CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
 
         layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszLongName);
 
         std::string ct_name(m_layerSGDefn.get_containerName());
         layerVID.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
 
-        if( m_bWriteGDALTags )
+        if (m_bWriteGDALTags)
         {
-            layerVID.nc_put_vatt_text(nVarID, "ogr_field_name", poFieldDefn->GetNameRef());
+            layerVID.nc_put_vatt_text(nVarID, "ogr_field_name",
+                                      poFieldDefn->GetNameRef());
 
             const char *pszType = OGRFieldDefn::GetFieldTypeName(eType);
-            if( eSubType != OFSTNone )
+            if (eSubType != OFSTNone)
             {
-                pszType = CPLSPrintf("%s(%s)", pszType,
-                                    OGRFieldDefn::GetFieldSubTypeName(eSubType));
+                pszType =
+                    CPLSPrintf("%s(%s)", pszType,
+                               OGRFieldDefn::GetFieldSubTypeName(eSubType));
             }
 
             layerVID.nc_put_vatt_text(nVarID, "ogr_field_type", pszType);
 
             const int nWidth = poFieldDefn->GetWidth();
-            if(nWidth || nType == NC_CHAR)
+            if (nWidth || nType == NC_CHAR)
             {
                 layerVID.nc_put_vatt_int(nVarID, "ogr_field_width", &nWidth);
 
                 const int nPrecision = poFieldDefn->GetPrecision();
-                if( nPrecision )
+                if (nPrecision)
                 {
-                    layerVID.nc_put_vatt_int(nVarID, "ogr_field_precision", &nPrecision);
+                    layerVID.nc_put_vatt_int(nVarID, "ogr_field_precision",
+                                             &nPrecision);
                 }
             }
         }
@@ -2660,25 +2752,26 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         // nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
         //                 strlen("none"), "none");
 
-        if( !m_osGridMapping.empty() && nMainDimId == m_nRecordDimID )
+        if (!m_osGridMapping.empty() && nMainDimId == m_nRecordDimID)
         {
-            layerVID.nc_put_vatt_text(nVarID, CF_GRD_MAPPING, m_osGridMapping.c_str());
+            layerVID.nc_put_vatt_text(nVarID, CF_GRD_MAPPING,
+                                      m_osGridMapping.c_str());
         }
 
-        if( !m_osCoordinatesValue.empty() && nMainDimId == m_nRecordDimID )
+        if (!m_osCoordinatesValue.empty() && nMainDimId == m_nRecordDimID)
         {
-            layerVID.nc_put_vatt_text(nVarID, CF_COORDINATES, m_osCoordinatesValue.c_str());
+            layerVID.nc_put_vatt_text(nVarID, CF_COORDINATES,
+                                      m_osCoordinatesValue.c_str());
         }
 
-
-        if( poConfig != nullptr )
+        if (poConfig != nullptr)
         {
             netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarID,
-                                      poConfig->m_aoAttributes);
+                                          poConfig->m_aoAttributes);
         }
     }
 
-    catch(nccfdriver::SG_Exception& e)
+    catch (nccfdriver::SG_Exception &e)
     {
         CPLError(CE_Failure, CPLE_FileIO, "%s", e.get_err_msg());
         return OGRERR_FAILURE;
@@ -2694,9 +2787,9 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
 GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
-    if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
-        if( !m_bLegacyCreateMode )
+        if (!m_bLegacyCreateMode)
         {
             return m_simpleGeometryReader->get_geometry_count();
         }
@@ -2714,13 +2807,13 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 
 int netCDFLayer::TestCapability(const char *pszCap)
 {
-    if( EQUAL(pszCap, OLCSequentialWrite) )
+    if (EQUAL(pszCap, OLCSequentialWrite))
         return m_poDS->GetAccess() == GA_Update;
-    if( EQUAL(pszCap, OLCCreateField) )
+    if (EQUAL(pszCap, OLCCreateField))
         return m_poDS->GetAccess() == GA_Update;
-    if( EQUAL(pszCap, OLCFastFeatureCount) )
+    if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
-    if( EQUAL(pszCap, OLCZGeometries) )
+    if (EQUAL(pszCap, OLCZGeometries))
         return true;
     return false;
 }

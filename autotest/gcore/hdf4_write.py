@@ -30,6 +30,7 @@ import pytest
 
 init_list = [
     ("byte.tif", 4672),
+    ("../../gdrivers/data/gtiff/int8.tif", 1046),
     ("int16.tif", 4672),
     ("uint16.tif", 4672),
     ("int32.tif", 4672),

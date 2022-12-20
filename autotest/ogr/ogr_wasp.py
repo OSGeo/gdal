@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("WAsP")
+
 ###############################################################################
 # Create wasp datasource
 

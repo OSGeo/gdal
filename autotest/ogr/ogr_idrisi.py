@@ -33,6 +33,8 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("Idrisi")
+
 ###############################################################################
 # Test point layer
 

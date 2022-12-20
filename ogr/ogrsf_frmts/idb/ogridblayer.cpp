@@ -32,7 +32,6 @@
 #include "ogr_idb.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                            OGRIDBLayer()                            */
 /************************************************************************/
@@ -51,7 +50,7 @@ OGRIDBLayer::OGRIDBLayer()
     iNextShapeId = 0;
 
     poSRS = nullptr;
-    nSRSId = -2; // we haven't even queried the database for it yet.
+    nSRSId = -2;  // we haven't even queried the database for it yet.
     poFeatureDefn = nullptr;
 }
 
@@ -62,26 +61,26 @@ OGRIDBLayer::OGRIDBLayer()
 OGRIDBLayer::~OGRIDBLayer()
 
 {
-    if( m_poCurr != nullptr )
+    if (m_poCurr != nullptr)
     {
         m_poCurr->Close();
         delete m_poCurr;
         m_poCurr = nullptr;
     }
 
-    if( pszGeomColumn )
-        CPLFree( pszGeomColumn );
+    if (pszGeomColumn)
+        CPLFree(pszGeomColumn);
 
-    if(pszFIDColumn)
-        CPLFree( pszFIDColumn );
+    if (pszFIDColumn)
+        CPLFree(pszFIDColumn);
 
-    if( poFeatureDefn )
+    if (poFeatureDefn)
     {
         poFeatureDefn->Release();
         poFeatureDefn = nullptr;
     }
 
-    if( poSRS )
+    if (poSRS)
         poSRS->Release();
 }
 
@@ -92,98 +91,93 @@ OGRIDBLayer::~OGRIDBLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
-                                    ITCursor *poCurr )
+CPLErr OGRIDBLayer::BuildFeatureDefn(const char *pszLayerName, ITCursor *poCurr)
 
 {
-    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
-    SetDescription( poFeatureDefn->GetName() );
-    const ITTypeInfo * poInfo = poCurr->RowType();
-    int    nRawColumns = poInfo->ColumnCount();
+    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    SetDescription(poFeatureDefn->GetName());
+    const ITTypeInfo *poInfo = poCurr->RowType();
+    int nRawColumns = poInfo->ColumnCount();
 
     poFeatureDefn->Reference();
 
-    for( int iCol = 0; iCol < nRawColumns; iCol++ )
+    for (int iCol = 0; iCol < nRawColumns; iCol++)
     {
-        const char * pszColName = poInfo->ColumnName(iCol);
-        const ITTypeInfo * poTI = poInfo->ColumnType(iCol);
-        const char * pszTypName = poTI->Name();
+        const char *pszColName = poInfo->ColumnName(iCol);
+        const ITTypeInfo *poTI = poInfo->ColumnType(iCol);
+        const char *pszTypName = poTI->Name();
 
-        OGRFieldDefn    oField( pszColName, OFTString );
+        OGRFieldDefn oField(pszColName, OFTString);
 
-        oField.SetWidth( MAX(0,poTI->Bound()) );
+        oField.SetWidth(MAX(0, poTI->Bound()));
 
-        if ( pszGeomColumn != nullptr && EQUAL(pszColName,pszGeomColumn) )
+        if (pszGeomColumn != nullptr && EQUAL(pszColName, pszGeomColumn))
             continue;
 
-        if ( STARTS_WITH_CI(pszTypName, "st_") && pszGeomColumn == nullptr )
+        if (STARTS_WITH_CI(pszTypName, "st_") && pszGeomColumn == nullptr)
         {
             // We found spatial column!
             pszGeomColumn = CPLStrdup(pszColName);
 
-            if ( EQUAL("st_point", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbPoint );
-            else if ( EQUAL("st_linestring", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbLineString );
-            else if ( EQUAL("st_polygon", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbPolygon );
-            else if ( EQUAL("st_multipoint", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbMultiPoint );
-            else if ( EQUAL("st_multilinestring", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbMultiLineString );
-            else if ( EQUAL("st_multipolygon", pszTypName) )
-                poFeatureDefn->SetGeomType( wkbMultiPolygon );
+            if (EQUAL("st_point", pszTypName))
+                poFeatureDefn->SetGeomType(wkbPoint);
+            else if (EQUAL("st_linestring", pszTypName))
+                poFeatureDefn->SetGeomType(wkbLineString);
+            else if (EQUAL("st_polygon", pszTypName))
+                poFeatureDefn->SetGeomType(wkbPolygon);
+            else if (EQUAL("st_multipoint", pszTypName))
+                poFeatureDefn->SetGeomType(wkbMultiPoint);
+            else if (EQUAL("st_multilinestring", pszTypName))
+                poFeatureDefn->SetGeomType(wkbMultiLineString);
+            else if (EQUAL("st_multipolygon", pszTypName))
+                poFeatureDefn->SetGeomType(wkbMultiPolygon);
 
             continue;
         }
 
         // Check other field types
-        if ( EQUAL( pszTypName, "blob" ) ||
-             EQUAL( pszTypName, "byte" ) ||
-             EQUAL( pszTypName, "opaque" ) ||
-             EQUAL( pszTypName, "text" ) ||
-             STARTS_WITH_CI(pszTypName, "list") ||
-             STARTS_WITH_CI(pszTypName, "collection") ||
-             STARTS_WITH_CI(pszTypName, "row") ||
-             STARTS_WITH_CI(pszTypName, "set") )
+        if (EQUAL(pszTypName, "blob") || EQUAL(pszTypName, "byte") ||
+            EQUAL(pszTypName, "opaque") || EQUAL(pszTypName, "text") ||
+            STARTS_WITH_CI(pszTypName, "list") ||
+            STARTS_WITH_CI(pszTypName, "collection") ||
+            STARTS_WITH_CI(pszTypName, "row") ||
+            STARTS_WITH_CI(pszTypName, "set"))
         {
-            CPLDebug( "OGR_IDB", "'%s' column type not supported yet. Column '%s'",
-                      pszTypName, pszColName );
+            CPLDebug("OGR_IDB",
+                     "'%s' column type not supported yet. Column '%s'",
+                     pszTypName, pszColName);
             continue;
         }
 
-        if ( STARTS_WITH_CI(pszTypName, "st_") )
+        if (STARTS_WITH_CI(pszTypName, "st_"))
         {
-            oField.SetType( OFTBinary );
+            oField.SetType(OFTBinary);
         }
-        else if ( EQUAL( pszTypName, "date" ) )
+        else if (EQUAL(pszTypName, "date"))
         {
-            oField.SetType( OFTDate );
+            oField.SetType(OFTDate);
         }
-        else if ( EQUAL( pszTypName, "datetime" ) )
+        else if (EQUAL(pszTypName, "datetime"))
         {
-            oField.SetType( OFTDateTime );
+            oField.SetType(OFTDateTime);
         }
-        else if ( EQUAL( pszTypName, "decimal" ) ||
-                  EQUAL( pszTypName, "money" ) ||
-                  EQUAL( pszTypName, "float" ) ||
-                  EQUAL( pszTypName, "smallfloat" ) )
+        else if (EQUAL(pszTypName, "decimal") || EQUAL(pszTypName, "money") ||
+                 EQUAL(pszTypName, "float") || EQUAL(pszTypName, "smallfloat"))
         {
-            oField.SetType( OFTReal );
-            oField.SetPrecision( MAX( 0, poTI->Scale() ) ); // -1 for numeric
+            oField.SetType(OFTReal);
+            oField.SetPrecision(MAX(0, poTI->Scale()));  // -1 for numeric
         }
-        else if ( EQUAL( pszTypName, "integer" ) ||
-                  EQUAL( pszTypName, "serial" ) )
+        else if (EQUAL(pszTypName, "integer") || EQUAL(pszTypName, "serial"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
             // 10 as hardcoded max int32 value length + 1 sig bit
-            oField.SetWidth( 11 );
+            oField.SetWidth(11);
         }
-        else if ( EQUAL( pszTypName, "smallint" ) )
+        else if (EQUAL(pszTypName, "smallint"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
             // 5 as hardcoded max int16 value length + 1 sig bit
-            oField.SetWidth( 6 );
+            oField.SetWidth(6);
         }
         else
         {
@@ -192,26 +186,26 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
             // interval. int8, serial8
         }
 
-        poFeatureDefn->AddFieldDefn( &oField );
+        poFeatureDefn->AddFieldDefn(&oField);
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we don't already have an FID, check if there is a special    */
-/*      FID named column available.                                     */
-/* -------------------------------------------------------------------- */
-    if( pszFIDColumn == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      If we don't already have an FID, check if there is a special    */
+    /*      FID named column available.                                     */
+    /* -------------------------------------------------------------------- */
+    if (pszFIDColumn == nullptr)
     {
-        const char *pszOGR_FID = CPLGetConfigOption("IDB_OGR_FID","OGR_FID");
-        if( poFeatureDefn->GetFieldIndex( pszOGR_FID ) != -1 )
+        const char *pszOGR_FID = CPLGetConfigOption("IDB_OGR_FID", "OGR_FID");
+        if (poFeatureDefn->GetFieldIndex(pszOGR_FID) != -1)
             pszFIDColumn = CPLStrdup(pszOGR_FID);
     }
 
-    if( pszFIDColumn != nullptr )
-        CPLDebug( "OGR_IDB", "Using column %s as FID for table %s.",
-                  pszFIDColumn, poFeatureDefn->GetName() );
+    if (pszFIDColumn != nullptr)
+        CPLDebug("OGR_IDB", "Using column %s as FID for table %s.",
+                 pszFIDColumn, poFeatureDefn->GetName());
     else
-        CPLDebug( "OGR_IDB", "Table %s has no identified FID column.",
-                  poFeatureDefn->GetName() );
+        CPLDebug("OGR_IDB", "Table %s has no identified FID column.",
+                 poFeatureDefn->GetName());
 
     return CE_None;
 }
@@ -233,18 +227,17 @@ void OGRIDBLayer::ResetReading()
 OGRFeature *OGRIDBLayer::GetNextFeature()
 
 {
-    while( true )
+    while (true)
     {
-        OGRFeature      *poFeature;
+        OGRFeature *poFeature;
 
         poFeature = GetNextRawFeature();
-        if( poFeature == nullptr )
+        if (poFeature == nullptr)
             return nullptr;
 
-        if( (m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == nullptr
-                || m_poAttrQuery->Evaluate( poFeature )) )
+        if ((m_poFilterGeom == nullptr ||
+             FilterGeometry(poFeature->GetGeometryRef())) &&
+            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
 
         delete poFeature;
@@ -258,14 +251,14 @@ OGRFeature *OGRIDBLayer::GetNextFeature()
 OGRFeature *OGRIDBLayer::GetNextRawFeature()
 
 {
-    if( GetQuery() == nullptr )
+    if (GetQuery() == nullptr)
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      If we are marked to restart then do so, and fetch a record.     */
-/* -------------------------------------------------------------------- */
-    ITRow * row = m_poCurr->NextRow();
-    if ( ! row )
+    /* -------------------------------------------------------------------- */
+    /*      If we are marked to restart then do so, and fetch a record.     */
+    /* -------------------------------------------------------------------- */
+    ITRow *row = m_poCurr->NextRow();
+    if (!row)
     {
         delete m_poCurr;
         m_poCurr = nullptr;
@@ -275,64 +268,68 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
     iNextShapeId++;
     m_nFeaturesRead++;
 
-/* -------------------------------------------------------------------- */
-/*      Create a feature from the current result.                       */
-/* -------------------------------------------------------------------- */
-    int         iField;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    /* -------------------------------------------------------------------- */
+    /*      Create a feature from the current result.                       */
+    /* -------------------------------------------------------------------- */
+    int iField;
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
-    const ITTypeInfo * poRowType = m_poCurr->RowType();
+    const ITTypeInfo *poRowType = m_poCurr->RowType();
     int nFieldCount = poRowType->ColumnCount();
 
-    for ( iField = 0; iField < nFieldCount; iField++ )
+    for (iField = 0; iField < nFieldCount; iField++)
     {
-/* -------------------------------------------------------------------- */
-/*      Handle FID column                                               */
-/* -------------------------------------------------------------------- */
-        if ( pszFIDColumn != nullptr &&
-             EQUAL( poRowType->ColumnName( iField ), pszFIDColumn ) )
-            poFeature->SetFID( atoi( row->Column( iField )->Printable() ) );
+        /* --------------------------------------------------------------------
+         */
+        /*      Handle FID column */
+        /* --------------------------------------------------------------------
+         */
+        if (pszFIDColumn != nullptr &&
+            EQUAL(poRowType->ColumnName(iField), pszFIDColumn))
+            poFeature->SetFID(atoi(row->Column(iField)->Printable()));
 
-/* -------------------------------------------------------------------- */
-/*      Handle geometry                                                 */
-/* -------------------------------------------------------------------- */
-        if( pszGeomColumn != nullptr &&
-            EQUAL( poRowType->ColumnName( iField ), pszGeomColumn ) )
+        /* --------------------------------------------------------------------
+         */
+        /*      Handle geometry */
+        /* --------------------------------------------------------------------
+         */
+        if (pszGeomColumn != nullptr &&
+            EQUAL(poRowType->ColumnName(iField), pszGeomColumn))
         {
             OGRGeometry *poGeom = nullptr;
             OGRErr eErr = OGRERR_NONE;
 
-            ITValue * v = row->Column( iField );
+            ITValue *v = row->Column(iField);
 
-            if( ! v->IsNull() && ! bGeomColumnWKB )
+            if (!v->IsNull() && !bGeomColumnWKB)
             {
                 const char *pszGeomText = v->Printable();
-                if ( pszGeomText != nullptr )
-                eErr =
-                    OGRGeometryFactory::createFromWkt(pszGeomText,
-                                                    poSRS, &poGeom);
+                if (pszGeomText != nullptr)
+                    eErr = OGRGeometryFactory::createFromWkt(pszGeomText, poSRS,
+                                                             &poGeom);
             }
-            else if( ! v->IsNull() && bGeomColumnWKB )
+            else if (!v->IsNull() && bGeomColumnWKB)
             {
                 ITDatum *rv = nullptr;
-                if ( v->QueryInterface( ITDatumIID, (void **) &rv ) ==
-                     IT_QUERYINTERFACE_SUCCESS )
+                if (v->QueryInterface(ITDatumIID, (void **)&rv) ==
+                    IT_QUERYINTERFACE_SUCCESS)
                 {
                     int nLength = rv->DataLength();
-                    unsigned char * wkb = (unsigned char *)rv->Data();
+                    unsigned char *wkb = (unsigned char *)rv->Data();
 
-                    eErr = OGRGeometryFactory::createFromWkb( wkb, poSRS, &poGeom, nLength);
+                    eErr = OGRGeometryFactory::createFromWkb(wkb, poSRS,
+                                                             &poGeom, nLength);
                     rv->Release();
                 }
             }
 
             v->Release();
 
-            if ( eErr != OGRERR_NONE )
+            if (eErr != OGRERR_NONE)
             {
                 const char *pszMessage;
 
-                switch ( eErr )
+                switch (eErr)
                 {
                     case OGRERR_NOT_ENOUGH_DATA:
                         pszMessage = "Not enough data to deserialize";
@@ -346,38 +343,40 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
                     default:
                         pszMessage = "Unrecognized error";
                 }
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "GetNextRawFeature(): %s", pszMessage);
+                CPLError(CE_Failure, CPLE_AppDefined, "GetNextRawFeature(): %s",
+                         pszMessage);
             }
 
-            if( poGeom != nullptr )
+            if (poGeom != nullptr)
             {
-                poFeature->SetGeometryDirectly( poGeom );
+                poFeature->SetGeometryDirectly(poGeom);
             }
 
             continue;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Transfer regular data fields.                                   */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Transfer regular data fields. */
+        /* --------------------------------------------------------------------
+         */
         int iOGRField =
-            poFeatureDefn->GetFieldIndex( poRowType->ColumnName( iField ) );
+            poFeatureDefn->GetFieldIndex(poRowType->ColumnName(iField));
 
-        if( iOGRField < 0 )
+        if (iOGRField < 0)
             continue;
 
-        const char * pszColData = row->Column( iField )->Printable();
+        const char *pszColData = row->Column(iField)->Printable();
 
-        if( ! pszColData  )
+        if (!pszColData)
             continue;
 
-        if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTBinary )
-            poFeature->SetField( iOGRField,
-                                 poRowType->ColumnType( iField )->Size(),
-                                 (GByte *) pszColData );
+        if (poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTBinary)
+            poFeature->SetField(iOGRField,
+                                poRowType->ColumnType(iField)->Size(),
+                                (GByte *)pszColData);
         else
-            poFeature->SetField( iOGRField, pszColData );
+            poFeature->SetField(iOGRField, pszColData);
     }
 
     row->Release();
@@ -388,19 +387,19 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRIDBLayer::GetFeature(GIntBig nFeatureId)
 
 {
     /* This should be implemented directly! */
 
-    return OGRLayer::GetFeature( nFeatureId );
+    return OGRLayer::GetFeature(nFeatureId);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability( const char * /*pszCap*/ )
+int OGRIDBLayer::TestCapability(const char * /*pszCap*/)
 
 {
     return FALSE;
@@ -423,7 +422,7 @@ OGRSpatialReference *OGRIDBLayer::GetSpatialRef()
 const char *OGRIDBLayer::GetFIDColumn()
 
 {
-    if( pszFIDColumn != nullptr )
+    if (pszFIDColumn != nullptr)
         return pszFIDColumn;
     else
         return "";
@@ -436,7 +435,7 @@ const char *OGRIDBLayer::GetFIDColumn()
 const char *OGRIDBLayer::GetGeometryColumn()
 
 {
-    if( pszGeomColumn != nullptr )
+    if (pszGeomColumn != nullptr)
         return pszGeomColumn;
     else
         return "";

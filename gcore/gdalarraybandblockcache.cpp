@@ -44,8 +44,7 @@
 
 constexpr int SUBBLOCK_SIZE = 64;
 #define TO_SUBBLOCK(x) ((x) >> 6)
-#define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
-
+#define WITHIN_SUBBLOCK(x) ((x)&0x3f)
 
 /* ******************************************************************** */
 /*                        GDALArrayBandBlockCache                       */
@@ -53,39 +52,42 @@ constexpr int SUBBLOCK_SIZE = 64;
 
 class GDALArrayBandBlockCache final : public GDALAbstractBandBlockCache
 {
-    bool              bSubBlockingActive = false;
-    int               nSubBlocksPerRow = 0;
-    int               nSubBlocksPerColumn = 0;
+    bool bSubBlockingActive = false;
+    int nSubBlocksPerRow = 0;
+    int nSubBlocksPerColumn = 0;
     union u
     {
         GDALRasterBlock **papoBlocks;
         GDALRasterBlock ***papapoBlocks;
 
-        u(): papoBlocks(nullptr) {}
+        u() : papoBlocks(nullptr)
+        {
+        }
     } u{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALArrayBandBlockCache)
 
   public:
-    explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
+    explicit GDALArrayBandBlockCache(GDALRasterBand *poBand);
     ~GDALArrayBandBlockCache() override;
 
     bool Init() override;
     bool IsInitOK() override;
     CPLErr FlushCache() override;
-    CPLErr AdoptBlock( GDALRasterBlock * )  override;
-    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
-                                           int nYBlockYOff ) override;
-    CPLErr UnreferenceBlock( GDALRasterBlock* poBlock ) override;
-    CPLErr FlushBlock( int nXBlockOff, int nYBlockOff,
-                       int bWriteDirtyBlock ) override;
+    CPLErr AdoptBlock(GDALRasterBlock *) override;
+    GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
+                                          int nYBlockYOff) override;
+    CPLErr UnreferenceBlock(GDALRasterBlock *poBlock) override;
+    CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
+                      int bWriteDirtyBlock) override;
 };
 
 /************************************************************************/
 /*                     GDALArrayBandBlockCacheCreate()                 */
 /************************************************************************/
 
-GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand)
+GDALAbstractBandBlockCache *
+GDALArrayBandBlockCacheCreate(GDALRasterBand *poBand)
 {
     return new (std::nothrow) GDALArrayBandBlockCache(poBand);
 }
@@ -94,8 +96,8 @@ GDALAbstractBandBlockCache* GDALArrayBandBlockCacheCreate(GDALRasterBand* poBand
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand* poBandIn) :
-    GDALAbstractBandBlockCache(poBandIn)
+GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand *poBandIn)
+    : GDALAbstractBandBlockCache(poBandIn)
 {
 }
 
@@ -107,10 +109,10 @@ GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 {
     GDALArrayBandBlockCache::FlushCache();
 
-    if( !bSubBlockingActive )
-        CPLFree( u.papoBlocks );
+    if (!bSubBlockingActive)
+        CPLFree(u.papoBlocks);
     else
-        CPLFree( u.papapoBlocks );
+        CPLFree(u.papapoBlocks);
 }
 
 /************************************************************************/
@@ -119,27 +121,27 @@ GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 
 bool GDALArrayBandBlockCache::Init()
 {
-    if( poBand->nBlocksPerRow < SUBBLOCK_SIZE/2 )
+    if (poBand->nBlocksPerRow < SUBBLOCK_SIZE / 2)
     {
         bSubBlockingActive = false;
 
         if (poBand->nBlocksPerRow < INT_MAX / poBand->nBlocksPerColumn)
         {
             u.papoBlocks = static_cast<GDALRasterBlock **>(
-                VSICalloc( sizeof(void*),
-                           poBand->nBlocksPerRow * poBand->nBlocksPerColumn ) );
-            if( u.papoBlocks == nullptr )
+                VSICalloc(sizeof(void *),
+                          poBand->nBlocksPerRow * poBand->nBlocksPerColumn));
+            if (u.papoBlocks == nullptr)
             {
-                poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
-                                    "Out of memory in InitBlockInfo()." );
+                poBand->ReportError(CE_Failure, CPLE_OutOfMemory,
+                                    "Out of memory in InitBlockInfo().");
                 return false;
             }
         }
         else
         {
-            poBand->ReportError( CE_Failure, CPLE_NotSupported,
-                                 "Too many blocks : %d x %d",
-                                 poBand->nBlocksPerRow, poBand->nBlocksPerColumn );
+            poBand->ReportError(
+                CE_Failure, CPLE_NotSupported, "Too many blocks : %d x %d",
+                poBand->nBlocksPerRow, poBand->nBlocksPerColumn);
             return false;
         }
     }
@@ -148,25 +150,25 @@ bool GDALArrayBandBlockCache::Init()
         bSubBlockingActive = true;
 
         nSubBlocksPerRow = DIV_ROUND_UP(poBand->nBlocksPerRow, SUBBLOCK_SIZE);
-        nSubBlocksPerColumn = DIV_ROUND_UP(poBand->nBlocksPerColumn, SUBBLOCK_SIZE);
+        nSubBlocksPerColumn =
+            DIV_ROUND_UP(poBand->nBlocksPerColumn, SUBBLOCK_SIZE);
 
         if (nSubBlocksPerRow < INT_MAX / nSubBlocksPerColumn)
         {
-            u.papapoBlocks = static_cast<GDALRasterBlock ***>(
-                VSICalloc( sizeof(void*),
-                           nSubBlocksPerRow * nSubBlocksPerColumn ) );
-            if( u.papapoBlocks == nullptr )
+            u.papapoBlocks = static_cast<GDALRasterBlock ***>(VSICalloc(
+                sizeof(void *), nSubBlocksPerRow * nSubBlocksPerColumn));
+            if (u.papapoBlocks == nullptr)
             {
-                poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
-                                    "Out of memory in InitBlockInfo()." );
+                poBand->ReportError(CE_Failure, CPLE_OutOfMemory,
+                                    "Out of memory in InitBlockInfo().");
                 return false;
             }
         }
         else
         {
-            poBand->ReportError( CE_Failure, CPLE_NotSupported,
-                                 "Too many subblocks : %d x %d",
-                                 nSubBlocksPerRow, nSubBlocksPerColumn );
+            poBand->ReportError(CE_Failure, CPLE_NotSupported,
+                                "Too many subblocks : %d x %d",
+                                nSubBlocksPerRow, nSubBlocksPerColumn);
             return false;
         }
     }
@@ -180,15 +182,15 @@ bool GDALArrayBandBlockCache::Init()
 
 bool GDALArrayBandBlockCache::IsInitOK()
 {
-    return (!bSubBlockingActive) ?
-        u.papoBlocks != nullptr : u.papapoBlocks != nullptr;
+    return (!bSubBlockingActive) ? u.papoBlocks != nullptr
+                                 : u.papapoBlocks != nullptr;
 }
 
 /************************************************************************/
 /*                            AdoptBlock()                              */
 /************************************************************************/
 
-CPLErr GDALArrayBandBlockCache::AdoptBlock( GDALRasterBlock * poBlock )
+CPLErr GDALArrayBandBlockCache::AdoptBlock(GDALRasterBlock *poBlock)
 
 {
     const int nXBlockOff = poBlock->GetXOff();
@@ -196,50 +198,55 @@ CPLErr GDALArrayBandBlockCache::AdoptBlock( GDALRasterBlock * poBlock )
 
     FreeDanglingBlocks();
 
-/* -------------------------------------------------------------------- */
-/*      Simple case without subblocking.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Simple case without subblocking.                                */
+    /* -------------------------------------------------------------------- */
 
-    if( !bSubBlockingActive )
+    if (!bSubBlockingActive)
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
-        CPLAssert( u.papoBlocks[nBlockIndex] == nullptr );
+        CPLAssert(u.papoBlocks[nBlockIndex] == nullptr);
         u.papoBlocks[nBlockIndex] = poBlock;
     }
     else
     {
-/* -------------------------------------------------------------------- */
-/*      Identify the subblock in which our target occurs, and create    */
-/*      it if necessary.                                                */
-/* -------------------------------------------------------------------- */
-        const int nSubBlock = TO_SUBBLOCK(nXBlockOff)
-            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+        /* --------------------------------------------------------------------
+         */
+        /*      Identify the subblock in which our target occurs, and create */
+        /*      it if necessary. */
+        /* --------------------------------------------------------------------
+         */
+        const int nSubBlock = TO_SUBBLOCK(nXBlockOff) +
+                              TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-        if( u.papapoBlocks[nSubBlock] == nullptr )
+        if (u.papapoBlocks[nSubBlock] == nullptr)
         {
             const int nSubGridSize =
-                sizeof(GDALRasterBlock*) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
+                sizeof(GDALRasterBlock *) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
 
-            u.papapoBlocks[nSubBlock] = static_cast<GDALRasterBlock **>(
-                VSICalloc(1, nSubGridSize) );
-            if( u.papapoBlocks[nSubBlock] == nullptr )
+            u.papapoBlocks[nSubBlock] =
+                static_cast<GDALRasterBlock **>(VSICalloc(1, nSubGridSize));
+            if (u.papapoBlocks[nSubBlock] == nullptr)
             {
-                poBand->ReportError( CE_Failure, CPLE_OutOfMemory,
-                        "Out of memory in AdoptBlock()." );
+                poBand->ReportError(CE_Failure, CPLE_OutOfMemory,
+                                    "Out of memory in AdoptBlock().");
                 return CE_Failure;
             }
         }
 
-/* -------------------------------------------------------------------- */
-/*      Check within subblock.                                          */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Check within subblock. */
+        /* --------------------------------------------------------------------
+         */
         GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
 
-        const int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+        const int nBlockInSubBlock =
+            WITHIN_SUBBLOCK(nXBlockOff) +
+            WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-        CPLAssert( papoSubBlockGrid[nBlockInSubBlock] == nullptr );
+        CPLAssert(papoSubBlockGrid[nBlockInSubBlock] == nullptr);
         papoSubBlockGrid[nBlockInSubBlock] = poBlock;
     }
 
@@ -258,54 +265,55 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 
     StartDirtyBlockFlushingLog();
 
-/* -------------------------------------------------------------------- */
-/*      Flush all blocks in memory ... this case is without subblocking.*/
-/* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive && u.papoBlocks != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Flush all blocks in memory ... this case is without subblocking.*/
+    /* -------------------------------------------------------------------- */
+    if (!bSubBlockingActive && u.papoBlocks != nullptr)
     {
         const int nBlocksPerColumn = poBand->nBlocksPerColumn;
         const int nBlocksPerRow = poBand->nBlocksPerRow;
-        for( int iY = 0; iY < nBlocksPerColumn; iY++ )
+        for (int iY = 0; iY < nBlocksPerColumn; iY++)
         {
-            for( int iX = 0; iX < nBlocksPerRow; iX++ )
+            for (int iX = 0; iX < nBlocksPerRow; iX++)
             {
-                if( u.papoBlocks[iX + iY*nBlocksPerRow] != nullptr )
+                if (u.papoBlocks[iX + iY * nBlocksPerRow] != nullptr)
                 {
-                    CPLErr eErr = FlushBlock( iX, iY, eGlobalErr == CE_None );
+                    CPLErr eErr = FlushBlock(iX, iY, eGlobalErr == CE_None);
 
-                    if( eErr != CE_None )
+                    if (eErr != CE_None)
                         eGlobalErr = eErr;
                 }
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      With subblocking.  We can short circuit missing subblocks.      */
-/* -------------------------------------------------------------------- */
-    else if( u.papapoBlocks != nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      With subblocking.  We can short circuit missing subblocks.      */
+    /* -------------------------------------------------------------------- */
+    else if (u.papapoBlocks != nullptr)
     {
-        for( int iSBY = 0; iSBY < nSubBlocksPerColumn; iSBY++ )
+        for (int iSBY = 0; iSBY < nSubBlocksPerColumn; iSBY++)
         {
-            for( int iSBX = 0; iSBX < nSubBlocksPerRow; iSBX++ )
+            for (int iSBX = 0; iSBX < nSubBlocksPerRow; iSBX++)
             {
                 const int nSubBlock = iSBX + iSBY * nSubBlocksPerRow;
 
-                GDALRasterBlock **papoSubBlockGrid =  u.papapoBlocks[nSubBlock];
+                GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
 
-                if( papoSubBlockGrid == nullptr )
+                if (papoSubBlockGrid == nullptr)
                     continue;
 
-                for( int iY = 0; iY < SUBBLOCK_SIZE; iY++ )
+                for (int iY = 0; iY < SUBBLOCK_SIZE; iY++)
                 {
-                    for( int iX = 0; iX < SUBBLOCK_SIZE; iX++ )
+                    for (int iX = 0; iX < SUBBLOCK_SIZE; iX++)
                     {
-                        if( papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE] != nullptr )
+                        if (papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE] !=
+                            nullptr)
                         {
-                            CPLErr eErr = FlushBlock( iX + iSBX * SUBBLOCK_SIZE,
-                                                      iY + iSBY * SUBBLOCK_SIZE,
-                                                      eGlobalErr == CE_None );
-                            if( eErr != CE_None )
+                            CPLErr eErr = FlushBlock(iX + iSBX * SUBBLOCK_SIZE,
+                                                     iY + iSBY * SUBBLOCK_SIZE,
+                                                     eGlobalErr == CE_None);
+                            if (eErr != CE_None)
                                 eGlobalErr = eErr;
                         }
                     }
@@ -314,7 +322,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
                 // We might as well get rid of this grid chunk since we know
                 // it is now empty.
                 u.papapoBlocks[nSubBlock] = nullptr;
-                CPLFree( papoSubBlockGrid );
+                CPLFree(papoSubBlockGrid);
             }
         }
     }
@@ -323,47 +331,50 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 
     WaitCompletionPendingTasks();
 
-    return( eGlobalErr );
+    return (eGlobalErr);
 }
 
 /************************************************************************/
 /*                        UnreferenceBlock()                            */
 /************************************************************************/
 
-CPLErr GDALArrayBandBlockCache::UnreferenceBlock( GDALRasterBlock* poBlock )
+CPLErr GDALArrayBandBlockCache::UnreferenceBlock(GDALRasterBlock *poBlock)
 {
     const int nXBlockOff = poBlock->GetXOff();
     const int nYBlockOff = poBlock->GetYOff();
 
     UnreferenceBlockBase();
 
-/* -------------------------------------------------------------------- */
-/*      Simple case for single level caches.                            */
-/* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
+    /* -------------------------------------------------------------------- */
+    /*      Simple case for single level caches.                            */
+    /* -------------------------------------------------------------------- */
+    if (!bSubBlockingActive)
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
         u.papoBlocks[nBlockIndex] = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Identify our subblock.                                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Identify our subblock.                                          */
+    /* -------------------------------------------------------------------- */
     else
     {
-        const int nSubBlock = TO_SUBBLOCK(nXBlockOff)
-            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+        const int nSubBlock = TO_SUBBLOCK(nXBlockOff) +
+                              TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-/* -------------------------------------------------------------------- */
-/*      Check within subblock.                                          */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Check within subblock. */
+        /* --------------------------------------------------------------------
+         */
         GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
-        if( papoSubBlockGrid == nullptr )
+        if (papoSubBlockGrid == nullptr)
             return CE_None;
 
-        const int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+        const int nBlockInSubBlock =
+            WITHIN_SUBBLOCK(nXBlockOff) +
+            WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
         papoSubBlockGrid[nBlockInSubBlock] = nullptr;
     }
@@ -375,16 +386,16 @@ CPLErr GDALArrayBandBlockCache::UnreferenceBlock( GDALRasterBlock* poBlock )
 /*                            FlushBlock()                              */
 /************************************************************************/
 
-CPLErr GDALArrayBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
-                                             int bWriteDirtyBlock )
+CPLErr GDALArrayBandBlockCache::FlushBlock(int nXBlockOff, int nYBlockOff,
+                                           int bWriteDirtyBlock)
 
 {
     GDALRasterBlock *poBlock = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Simple case for single level caches.                            */
-/* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
+    /* -------------------------------------------------------------------- */
+    /*      Simple case for single level caches.                            */
+    /* -------------------------------------------------------------------- */
+    if (!bSubBlockingActive)
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
@@ -393,51 +404,54 @@ CPLErr GDALArrayBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
         u.papoBlocks[nBlockIndex] = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Identify our subblock.                                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Identify our subblock.                                          */
+    /* -------------------------------------------------------------------- */
     else
     {
-        const int nSubBlock = TO_SUBBLOCK(nXBlockOff)
-            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+        const int nSubBlock = TO_SUBBLOCK(nXBlockOff) +
+                              TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-/* -------------------------------------------------------------------- */
-/*      Check within subblock.                                          */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Check within subblock. */
+        /* --------------------------------------------------------------------
+         */
         GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
-        if( papoSubBlockGrid == nullptr )
+        if (papoSubBlockGrid == nullptr)
             return CE_None;
 
-        const int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+        const int nBlockInSubBlock =
+            WITHIN_SUBBLOCK(nXBlockOff) +
+            WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
         poBlock = papoSubBlockGrid[nBlockInSubBlock];
         papoSubBlockGrid[nBlockInSubBlock] = nullptr;
     }
 
-    if( poBlock == nullptr )
+    if (poBlock == nullptr)
         return CE_None;
 
-    if( !poBlock->DropLockForRemovalFromStorage() )
+    if (!poBlock->DropLockForRemovalFromStorage())
         return CE_None;
 
-/* -------------------------------------------------------------------- */
-/*      Is the target block dirty?  If so we need to write it.          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Is the target block dirty?  If so we need to write it.          */
+    /* -------------------------------------------------------------------- */
     poBlock->Detach();
 
     CPLErr eErr = CE_None;
 
-    if( m_bWriteDirtyBlocks && bWriteDirtyBlock && poBlock->GetDirty() )
+    if (m_bWriteDirtyBlocks && bWriteDirtyBlock && poBlock->GetDirty())
     {
         UpdateDirtyBlockFlushingLog();
 
         eErr = poBlock->Write();
     }
 
-/* -------------------------------------------------------------------- */
-/*      Deallocate the block;                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Deallocate the block;                                           */
+    /* -------------------------------------------------------------------- */
     delete poBlock;
 
     return eErr;
@@ -447,42 +461,47 @@ CPLErr GDALArrayBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
 /*                        TryGetLockedBlockRef()                        */
 /************************************************************************/
 
-GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
-                                                                 int nYBlockOff )
+GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef(int nXBlockOff,
+                                                               int nYBlockOff)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Simple case for single level caches.                            */
-/* -------------------------------------------------------------------- */
-    if( !bSubBlockingActive )
+    /* -------------------------------------------------------------------- */
+    /*      Simple case for single level caches.                            */
+    /* -------------------------------------------------------------------- */
+    if (!bSubBlockingActive)
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
-        GDALRasterBlock* poBlock = u.papoBlocks[nBlockIndex];
-        if( poBlock == nullptr || !poBlock->TakeLock() )
+        GDALRasterBlock *poBlock = u.papoBlocks[nBlockIndex];
+        if (poBlock == nullptr || !poBlock->TakeLock())
             return nullptr;
         return poBlock;
     }
     else
     {
-/* -------------------------------------------------------------------- */
-/*      Identify our subblock.                                          */
-/* -------------------------------------------------------------------- */
-        const int nSubBlock = TO_SUBBLOCK(nXBlockOff)
-            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+        /* --------------------------------------------------------------------
+         */
+        /*      Identify our subblock. */
+        /* --------------------------------------------------------------------
+         */
+        const int nSubBlock = TO_SUBBLOCK(nXBlockOff) +
+                              TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
 
-/* -------------------------------------------------------------------- */
-/*      Check within subblock.                                          */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Check within subblock. */
+        /* --------------------------------------------------------------------
+         */
         GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
-        if( papoSubBlockGrid == nullptr )
+        if (papoSubBlockGrid == nullptr)
             return nullptr;
 
-        const int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
-            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+        const int nBlockInSubBlock =
+            WITHIN_SUBBLOCK(nXBlockOff) +
+            WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-        GDALRasterBlock* poBlock = papoSubBlockGrid[nBlockInSubBlock];
-        if( poBlock == nullptr || !poBlock->TakeLock() )
+        GDALRasterBlock *poBlock = papoSubBlockGrid[nBlockInSubBlock];
+        if (poBlock == nullptr || !poBlock->TakeLock())
             return nullptr;
         return poBlock;
     }

@@ -48,8 +48,8 @@ Vector drivers
    geojson
    geojsonseq
    georss
-   gmlas
    gml
+   gmlas
    gmt
    gpkg
    gpsbabel

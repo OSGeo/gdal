@@ -867,7 +867,7 @@ def Usage():
     print("        [-v] [-q] [-co NAME=VALUE]* [-of out_format]")
     print("        [-ps pixelWidth pixelHeight]")
     print("        [-overlap val_in_pixel]")
-    print("        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/")
+    print("        [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/")
     print("               CInt16/CInt32/CFloat32/CFloat64}]")
     print("        [ -tileIndex tileIndexName [-tileIndexField fieldName]]")
     print("        [ -csv fileName [-csvDelim delimiter]]")

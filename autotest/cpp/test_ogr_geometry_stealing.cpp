@@ -31,79 +31,85 @@
 #include "gdal.h"
 #include "ogr_api.h"
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
 
-    // Test data
-    struct test_ogr_geometry_stealing_data
+// Test data
+struct test_ogr_geometry_stealing : public ::testing::Test
+{
+    GDALDatasetH hDS = nullptr;
+    OGRLayerH hLayer = nullptr;
+
+    test_ogr_geometry_stealing()
     {
-        GDALDatasetH hDS;
-        OGRLayerH hLayer;
+        // Build data file path name
+        std::string test_data_file_name(tut::common::data_basedir);
+        test_data_file_name += SEP;
+        test_data_file_name += "multi_geom.csv";
 
-        test_ogr_geometry_stealing_data()
+        // Open data file with multi geometries feature layer
+        const char *const papszOpenOptions[] = {
+            "AUTODETECT_TYPE=YES", "GEOM_POSSIBLE_NAMES=point,linestring",
+            "KEEP_GEOM_COLUMNS=NO", nullptr};
+        hDS = GDALOpenEx(test_data_file_name.c_str(), GDAL_OF_VECTOR, nullptr,
+                         papszOpenOptions, nullptr);
+        if (hDS == nullptr)
         {
-            // Build data file path name
-            std::string test_data_file_name(tut::common::data_basedir);
-            test_data_file_name += SEP;
-            test_data_file_name += "multi_geom.csv";
-
-            // Open data file with multi geometries feature layer
-            const char *const papszOpenOptions[] = {"AUTODETECT_TYPE=YES", "GEOM_POSSIBLE_NAMES=point,linestring", "KEEP_GEOM_COLUMNS=NO", nullptr};
-            hDS = GDALOpenEx(test_data_file_name.c_str(), GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr);
-            if (hDS == nullptr)
-            {
-                printf("Can't open layer file %s.\n", test_data_file_name.c_str());
-                exit(1);
-            }
-            hLayer = GDALDatasetGetLayer(hDS, 0);
-            if (hLayer == nullptr)
-            {
-                printf("Can't get layer in file %s.\n", test_data_file_name.c_str());
-                exit(1);
-            }
+            printf("Can't open layer file %s.\n", test_data_file_name.c_str());
+            return;
         }
-
-        ~test_ogr_geometry_stealing_data()
+        hLayer = GDALDatasetGetLayer(hDS, 0);
+        if (hLayer == nullptr)
         {
-            GDALClose(hDS);
+            printf("Can't get layer in file %s.\n",
+                   test_data_file_name.c_str());
+            return;
         }
-    };
-
-    // Register test group
-    typedef test_group<test_ogr_geometry_stealing_data> group;
-    typedef group::object object;
-    group test_ogr_geometry_stealing_group("OGR::GeomStealing");
-
-    // Test 1st geometry stealing from a multigeom csv file
-    template <>
-    template <>
-    void object::test<1>()
-    {
-        set_test_name("Steal 1st geometry");
-        OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
-        OGRGeometryH hGeometryOrig = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
-        OGRGeometryH hGeometryStolen = OGR_F_StealGeometry(hFeature);
-        ensure_equal_geometries(hGeometryOrig, hGeometryStolen, 0.000000001);
-        ensure(OGR_F_GetGeometryRef(hFeature) == nullptr);
-        OGR_G_DestroyGeometry(hGeometryOrig);
-        OGR_G_DestroyGeometry(hGeometryStolen);
-        OGR_F_Destroy(hFeature);
     }
 
-    // Test 2nd geometry stealing from a multigeom csv file
-    template <>
-    template <>
-    void object::test<2>()
+    ~test_ogr_geometry_stealing()
     {
-        set_test_name("Steal 2nd geometry");
-        OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
-        OGRGeometryH hGeometryOrig = OGR_G_Clone(OGR_F_GetGeomFieldRef(hFeature, 1));
-        OGRGeometryH hGeometryStolen = OGR_F_StealGeometryEx(hFeature, 1);
-        ensure_equal_geometries(hGeometryOrig, hGeometryStolen, 0.000000001);
-        ensure(OGR_F_GetGeomFieldRef(hFeature, 1) == nullptr);
-        OGR_G_DestroyGeometry(hGeometryOrig);
-        OGR_G_DestroyGeometry(hGeometryStolen);
-        OGR_F_Destroy(hFeature);
+        GDALClose(hDS);
     }
 
-} // namespace tut
+    void SetUp() override
+    {
+        if (hLayer == nullptr)
+            GTEST_SKIP() << "Cannot open source file";
+    }
+};
+
+// Test 1st geometry stealing from a multigeom csv file
+TEST_F(test_ogr_geometry_stealing, first_geometry)
+{
+    OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+    OGRGeometryH hGeometryOrig = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
+    OGRGeometryH hGeometryStolen = OGR_F_StealGeometry(hFeature);
+    ASSERT_TRUE(hGeometryOrig);
+    ASSERT_TRUE(hGeometryStolen);
+    ASSERT_TRUE(OGR_G_Equals(hGeometryOrig, hGeometryStolen));
+    ASSERT_TRUE(OGR_F_GetGeometryRef(hFeature) == nullptr);
+    OGR_G_DestroyGeometry(hGeometryOrig);
+    OGR_G_DestroyGeometry(hGeometryStolen);
+    OGR_F_Destroy(hFeature);
+}
+
+// Test 2nd geometry stealing from a multigeom csv file
+TEST_F(test_ogr_geometry_stealing, second_geometry)
+{
+    OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+    OGRGeometryH hGeometryOrig =
+        OGR_G_Clone(OGR_F_GetGeomFieldRef(hFeature, 1));
+    OGRGeometryH hGeometryStolen = OGR_F_StealGeometryEx(hFeature, 1);
+    ASSERT_TRUE(hGeometryOrig);
+    ASSERT_TRUE(hGeometryStolen);
+    ASSERT_TRUE(OGR_G_Equals(hGeometryOrig, hGeometryStolen));
+    ASSERT_TRUE(OGR_F_GetGeomFieldRef(hFeature, 1) == nullptr);
+    OGR_G_DestroyGeometry(hGeometryOrig);
+    OGR_G_DestroyGeometry(hGeometryStolen);
+    OGR_F_Destroy(hFeature);
+}
+
+}  // namespace

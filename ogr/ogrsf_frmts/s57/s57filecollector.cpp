@@ -32,149 +32,147 @@
 #include "cpl_string.h"
 #include "s57.h"
 
-
 /************************************************************************/
 /*                          S57FileCollector()                          */
 /************************************************************************/
 
-char **S57FileCollector( const char *pszDataset )
+char **S57FileCollector(const char *pszDataset)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Stat the dataset, and fail if it isn't a file or directory.     */
-/* -------------------------------------------------------------------- */
-    VSIStatBuf  sStatBuf;
-    if( CPLStat( pszDataset, &sStatBuf ) )
+    /* -------------------------------------------------------------------- */
+    /*      Stat the dataset, and fail if it isn't a file or directory.     */
+    /* -------------------------------------------------------------------- */
+    VSIStatBuf sStatBuf;
+    if (CPLStat(pszDataset, &sStatBuf))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "No S-57 files found, %s\nisn't a directory or a file.\n",
-                  pszDataset );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "No S-57 files found, %s\nisn't a directory or a file.\n",
+                 pszDataset);
 
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      We handle directories by scanning for all S-57 data files in    */
-/*      them, but not for catalogs.                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      We handle directories by scanning for all S-57 data files in    */
+    /*      them, but not for catalogs.                                     */
+    /* -------------------------------------------------------------------- */
     char **papszRetList = nullptr;
 
-    if( VSI_ISDIR(sStatBuf.st_mode) )
+    if (VSI_ISDIR(sStatBuf.st_mode))
     {
-        char    **papszDirFiles = VSIReadDir( pszDataset );
+        char **papszDirFiles = VSIReadDir(pszDataset);
         DDFModule oModule;
 
-        for( int iFile = 0;
+        for (int iFile = 0;
              papszDirFiles != nullptr && papszDirFiles[iFile] != nullptr;
-             iFile++ )
+             iFile++)
         {
             char *pszFullFile = CPLStrdup(
-                CPLFormFilename( pszDataset, papszDirFiles[iFile], nullptr ) );
+                CPLFormFilename(pszDataset, papszDirFiles[iFile], nullptr));
 
             // Add to list if it is an S-57 _data_ file.
-            if( VSIStat( pszFullFile, &sStatBuf ) == 0
-                && VSI_ISREG( sStatBuf.st_mode )
-                && oModule.Open( pszFullFile, TRUE ) )
+            if (VSIStat(pszFullFile, &sStatBuf) == 0 &&
+                VSI_ISREG(sStatBuf.st_mode) && oModule.Open(pszFullFile, TRUE))
             {
-                if( oModule.FindFieldDefn("DSID") != nullptr )
-                    papszRetList = CSLAddString( papszRetList, pszFullFile );
+                if (oModule.FindFieldDefn("DSID") != nullptr)
+                    papszRetList = CSLAddString(papszRetList, pszFullFile);
             }
 
-            CPLFree( pszFullFile );
+            CPLFree(pszFullFile);
         }
 
         return papszRetList;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If this is a regular file, but not a catalog just return it.    */
-/*      Note that the caller may still open it and fail.                */
-/* -------------------------------------------------------------------- */
-    DDFModule   oModule;
+    /* -------------------------------------------------------------------- */
+    /*      If this is a regular file, but not a catalog just return it.    */
+    /*      Note that the caller may still open it and fail.                */
+    /* -------------------------------------------------------------------- */
+    DDFModule oModule;
 
-    if( !oModule.Open(pszDataset) )
+    if (!oModule.Open(pszDataset))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "The file %s isn't an S-57 data file, or catalog.\n",
-                  pszDataset );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The file %s isn't an S-57 data file, or catalog.\n",
+                 pszDataset);
 
         return nullptr;
     }
 
     DDFRecord *poRecord = oModule.ReadRecord();
-    if( poRecord == nullptr )
+    if (poRecord == nullptr)
         return nullptr;
 
-    if( poRecord->FindField( "CATD" ) == nullptr
-        || oModule.FindFieldDefn("CATD")->FindSubfieldDefn( "IMPL" ) == nullptr )
+    if (poRecord->FindField("CATD") == nullptr ||
+        oModule.FindFieldDefn("CATD")->FindSubfieldDefn("IMPL") == nullptr)
     {
-        papszRetList = CSLAddString( papszRetList, pszDataset );
+        papszRetList = CSLAddString(papszRetList, pszDataset);
         return papszRetList;
     }
 
-/* -------------------------------------------------------------------- */
-/*      We presumably have a catalog.  It contains paths to files       */
-/*      that generally lack the ENC_ROOT component.  Try to find the    */
-/*      correct name for the ENC_ROOT directory if available and        */
-/*      build a base path for our purposes.                             */
-/* -------------------------------------------------------------------- */
-    char        *pszCatDir = CPLStrdup( CPLGetPath( pszDataset ) );
-    char        *pszRootDir = nullptr;
+    /* -------------------------------------------------------------------- */
+    /*      We presumably have a catalog.  It contains paths to files       */
+    /*      that generally lack the ENC_ROOT component.  Try to find the    */
+    /*      correct name for the ENC_ROOT directory if available and        */
+    /*      build a base path for our purposes.                             */
+    /* -------------------------------------------------------------------- */
+    char *pszCatDir = CPLStrdup(CPLGetPath(pszDataset));
+    char *pszRootDir = nullptr;
 
-    if( CPLStat( CPLFormFilename(pszCatDir,"ENC_ROOT",nullptr), &sStatBuf ) == 0
-        && VSI_ISDIR(sStatBuf.st_mode) )
+    if (CPLStat(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr), &sStatBuf) ==
+            0 &&
+        VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "ENC_ROOT", nullptr ));
+        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "ENC_ROOT", nullptr));
     }
-    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", nullptr ),
-                      &sStatBuf ) == 0 && VSI_ISDIR(sStatBuf.st_mode) )
+    else if (CPLStat(CPLFormFilename(pszCatDir, "enc_root", nullptr),
+                     &sStatBuf) == 0 &&
+             VSI_ISDIR(sStatBuf.st_mode))
     {
-        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "enc_root", nullptr ));
+        pszRootDir = CPLStrdup(CPLFormFilename(pszCatDir, "enc_root", nullptr));
     }
 
-    if( pszRootDir )
-        CPLDebug( "S57", "Found root directory to be %s.",
-                  pszRootDir );
+    if (pszRootDir)
+        CPLDebug("S57", "Found root directory to be %s.", pszRootDir);
 
-/* -------------------------------------------------------------------- */
-/*      We have a catalog.  Scan it for data files, those with an       */
-/*      IMPL of BIN.  Is there be a better way of testing               */
-/*      whether a file is a data file or another catalog file?          */
-/* -------------------------------------------------------------------- */
-    for( ; poRecord != nullptr; poRecord = oModule.ReadRecord() )
+    /* -------------------------------------------------------------------- */
+    /*      We have a catalog.  Scan it for data files, those with an       */
+    /*      IMPL of BIN.  Is there be a better way of testing               */
+    /*      whether a file is a data file or another catalog file?          */
+    /* -------------------------------------------------------------------- */
+    for (; poRecord != nullptr; poRecord = oModule.ReadRecord())
     {
-        if( poRecord->FindField( "CATD" ) != nullptr
-            && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
+        if (poRecord->FindField("CATD") != nullptr &&
+            EQUAL(poRecord->GetStringSubfield("CATD", 0, "IMPL", 0), "BIN"))
         {
-            const char  *pszFile
-                = poRecord->GetStringSubfield("CATD", 0, "FILE", 0);
+            const char *pszFile =
+                poRecord->GetStringSubfield("CATD", 0, "FILE", 0);
 
             // Often there is an extra ENC_ROOT in the path, try finding
             // this file.
 
-            const char  *pszWholePath
-                = CPLFormFilename( pszCatDir, pszFile, nullptr );
-            if( CPLStat( pszWholePath, &sStatBuf ) != 0
-                && pszRootDir != nullptr )
+            const char *pszWholePath =
+                CPLFormFilename(pszCatDir, pszFile, nullptr);
+            if (CPLStat(pszWholePath, &sStatBuf) != 0 && pszRootDir != nullptr)
             {
-                pszWholePath = CPLFormFilename( pszRootDir, pszFile, nullptr );
+                pszWholePath = CPLFormFilename(pszRootDir, pszFile, nullptr);
             }
 
-            if( CPLStat( pszWholePath, &sStatBuf ) != 0 )
+            if (CPLStat(pszWholePath, &sStatBuf) != 0)
             {
-                CPLError( CE_Warning, CPLE_OpenFailed,
-                          "Can't find file %s from catalog %s.",
-                          pszFile, pszDataset );
+                CPLError(CE_Warning, CPLE_OpenFailed,
+                         "Can't find file %s from catalog %s.", pszFile,
+                         pszDataset);
                 continue;
             }
 
-            papszRetList = CSLAddString( papszRetList, pszWholePath );
-            CPLDebug( "S57", "Got path %s from CATALOG.", pszWholePath );
+            papszRetList = CSLAddString(papszRetList, pszWholePath);
+            CPLDebug("S57", "Got path %s from CATALOG.", pszWholePath);
         }
     }
 
-    CPLFree( pszCatDir );
-    CPLFree( pszRootDir );
+    CPLFree(pszCatDir);
+    CPLFree(pszRootDir);
 
     return papszRetList;
 }

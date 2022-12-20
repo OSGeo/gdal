@@ -339,6 +339,37 @@ def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
 
 
 ###############################################################################
+# Test GDAL_HTTP_HEADERS
+
+
+def test_vsigs_GDAL_HTTP_HEADERS(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_http_header_file/resource",
+        200,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={"Authorization": "Bearer MY_BEARER"},
+    )
+    with webserver.install_http_handler(handler):
+
+        with gdaltest.config_options(
+            {
+                "GDAL_HTTP_HEADERS": "Authorization: Bearer MY_BEARER",
+            }
+        ):
+            f = open_for_read("/vsigs/gs_fake_bucket_http_header_file/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
 

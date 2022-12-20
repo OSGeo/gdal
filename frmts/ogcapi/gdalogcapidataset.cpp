@@ -33,23 +33,28 @@
 #include "tilematrixset.hpp"
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
+
+#ifdef OGR_ENABLE_DRIVER_GML
 #include "parsexsd.h"
+#endif
 
 #include <algorithm>
 #include <memory>
 #include <vector>
 
-// g++ -Wall -Wextra -std=c++11 -Wall -g -fPIC frmts/ogcapi/gdalogcapidataset.cpp -shared -o gdal_OGCAPI.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iapps -L. -lgdal
+// g++ -Wall -Wextra -std=c++11 -Wall -g -fPIC
+// frmts/ogcapi/gdalogcapidataset.cpp -shared -o gdal_OGCAPI.so -Iport -Igcore
+// -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iapps -L. -lgdal
 
 extern "C" void GDALRegister_OGCAPI();
 
-#define MEDIA_TYPE_OAPI_3_0      "application/vnd.oai.openapi+json;version=3.0"
-#define MEDIA_TYPE_OAPI_3_0_ALT  "application/openapi+json;version=3.0"
-#define MEDIA_TYPE_JSON          "application/json"
-#define MEDIA_TYPE_GEOJSON       "application/geo+json"
-#define MEDIA_TYPE_TEXT_XML      "text/xml"
+#define MEDIA_TYPE_OAPI_3_0 "application/vnd.oai.openapi+json;version=3.0"
+#define MEDIA_TYPE_OAPI_3_0_ALT "application/openapi+json;version=3.0"
+#define MEDIA_TYPE_JSON "application/json"
+#define MEDIA_TYPE_GEOJSON "application/geo+json"
+#define MEDIA_TYPE_TEXT_XML "text/xml"
 #define MEDIA_TYPE_APPLICATION_XML "application/xml"
-#define MEDIA_TYPE_JSON_SCHEMA     "application/schema+json"
+#define MEDIA_TYPE_JSON_SCHEMA "application/schema+json"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -57,98 +62,93 @@ extern "C" void GDALRegister_OGCAPI();
 /* ==================================================================== */
 /************************************************************************/
 
-class OGCAPIDataset final: public GDALDataset
+class OGCAPIDataset final : public GDALDataset
 {
-        friend class OGCAPIMapWrapperBand;
-        friend class OGCAPITilesWrapperBand;
-        friend class OGCAPITiledLayer;
+    friend class OGCAPIMapWrapperBand;
+    friend class OGCAPITilesWrapperBand;
+    friend class OGCAPITiledLayer;
 
-        bool      m_bMustCleanPersistent = false;
-        CPLString m_osRootURL{};
-        CPLString m_osUserPwd{};
-        CPLString m_osUserQueryParams{};
-        double    m_adfGeoTransform[6];
+    bool m_bMustCleanPersistent = false;
+    CPLString m_osRootURL{};
+    CPLString m_osUserPwd{};
+    CPLString m_osUserQueryParams{};
+    double m_adfGeoTransform[6];
 
-        OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oSRS{};
 
-        // Classic OGC API features /items access
-        std::unique_ptr<GDALDataset> m_poOAPIFDS{};
+    // Classic OGC API features /items access
+    std::unique_ptr<GDALDataset> m_poOAPIFDS{};
 
-        // Map API
-        std::unique_ptr<GDALDataset> m_poWMSDS{};
+    // Map API
+    std::unique_ptr<GDALDataset> m_poWMSDS{};
 
-        // Tiles API
-        std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsElementary{};
-        std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsAssembled{};
-        std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsCropped{};
+    // Tiles API
+    std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsElementary{};
+    std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsAssembled{};
+    std::vector<std::unique_ptr<GDALDataset>> m_apoDatasetsCropped{};
 
-        std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
+    std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
 
-        CPLString BuildURL(const std::string& href) const;
-        void SetRootURLFromURL(const std::string& osURL);
+    CPLString BuildURL(const std::string &href) const;
+    void SetRootURLFromURL(const std::string &osURL);
 
-        bool InitFromFile(GDALOpenInfo* poOpenInfo);
-        bool InitFromURL(GDALOpenInfo* poOpenInfo);
-        bool InitFromCollection(GDALOpenInfo* poOpenInfo,
-                                CPLJSONDocument& oDoc);
-        bool Download(
-            const CPLString& osURL,
-            const char* pszPostContent,
-            const char* pszAccept,
-            CPLString& osResult,
-            CPLString& osContentType,
-            bool bEmptyContentOK,
-            CPLStringList* paosHeaders );
+    bool InitFromFile(GDALOpenInfo *poOpenInfo);
+    bool InitFromURL(GDALOpenInfo *poOpenInfo);
+    bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
+    bool Download(const CPLString &osURL, const char *pszPostContent,
+                  const char *pszAccept, CPLString &osResult,
+                  CPLString &osContentType, bool bEmptyContentOK,
+                  CPLStringList *paosHeaders);
 
-        bool                    DownloadJSon(
-            const CPLString& osURL,
-            CPLJSONDocument& oDoc,
-            const char* pszPostContent = nullptr,
-            const char* pszAccept = MEDIA_TYPE_GEOJSON ", " MEDIA_TYPE_JSON,
-            CPLStringList* paosHeaders = nullptr);
+    bool DownloadJSon(const CPLString &osURL, CPLJSONDocument &oDoc,
+                      const char *pszPostContent = nullptr,
+                      const char *pszAccept = MEDIA_TYPE_GEOJSON
+                      ", " MEDIA_TYPE_JSON,
+                      CPLStringList *paosHeaders = nullptr);
 
-        bool InitWithMapAPI(GDALOpenInfo* poOpenInfo,
-                            const CPLString& osMapURL,
-                            double dfXMin, double dfYMin,
-                            double dfXMax, double dfYMax);
-        bool InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
-                              const CPLString& osTilesURL,
-                              double dfXMin, double dfYMin,
-                              double dfXMax, double dfYMax,
-                              const CPLJSONObject& oJsonCollection);
-        bool InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
-                              const CPLString& osTilesURL,
-                              double dfXMin, double dfYMin,
-                              double dfXMax, double dfYMax,
-                              const CPLJSONObject& oJsonCollection);
+    bool InitWithMapAPI(GDALOpenInfo *poOpenInfo,
+                        const CPLJSONObject &oCollection, double dfXMin,
+                        double dfYMin, double dfXMax, double dfYMax);
+    bool InitWithTilesAPI(GDALOpenInfo *poOpenInfo, const CPLString &osTilesURL,
+                          bool bIsMap, double dfXMin, double dfYMin,
+                          double dfXMax, double dfYMax,
+                          const CPLJSONObject &oJsonCollection);
+    bool InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
+                             const CPLString &osTilesURL, double dfXMin,
+                             double dfYMin, double dfXMax, double dfYMax,
+                             const CPLJSONObject &oJsonCollection);
 
   protected:
-        CPLErr      IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg) override;
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount, int *panBandMap,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
-        int         CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
-    public:
-        OGCAPIDataset();
-        ~OGCAPIDataset();
+  public:
+    OGCAPIDataset();
+    ~OGCAPIDataset();
 
-        CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-        int GetLayerCount() override {
-            return m_poOAPIFDS ? m_poOAPIFDS->GetLayerCount() : static_cast<int>(m_apoLayers.size()); }
-        OGRLayer* GetLayer(int idx) override {
-            return m_poOAPIFDS ? m_poOAPIFDS->GetLayer(idx) :
-                   idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr; }
+    int GetLayerCount() override
+    {
+        return m_poOAPIFDS ? m_poOAPIFDS->GetLayerCount()
+                           : static_cast<int>(m_apoLayers.size());
+    }
+    OGRLayer *GetLayer(int idx) override
+    {
+        return m_poOAPIFDS                         ? m_poOAPIFDS->GetLayer(idx)
+               : idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get()
+                                                   : nullptr;
+    }
 
-        static int Identify(GDALOpenInfo* poOpenInfo);
-        static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
+    static int Identify(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };
 
 /************************************************************************/
@@ -157,21 +157,21 @@ class OGCAPIDataset final: public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class OGCAPIMapWrapperBand final: public GDALRasterBand
+class OGCAPIMapWrapperBand final : public GDALRasterBand
 {
   public:
-                  OGCAPIMapWrapperBand(OGCAPIDataset* poDS, int nBand);
+    OGCAPIMapWrapperBand(OGCAPIDataset *poDS, int nBand);
 
-    virtual GDALRasterBand* GetOverview(int nLevel) override;
+    virtual GDALRasterBand *GetOverview(int nLevel) override;
     virtual int GetOverviewCount() override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
   protected:
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage) override;
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing, GSpacing,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
+                              void *pImage) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing, GSpacing,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -180,21 +180,21 @@ class OGCAPIMapWrapperBand final: public GDALRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class OGCAPITilesWrapperBand final: public GDALRasterBand
+class OGCAPITilesWrapperBand final : public GDALRasterBand
 {
   public:
-                  OGCAPITilesWrapperBand(OGCAPIDataset* poDS, int nBand);
+    OGCAPITilesWrapperBand(OGCAPIDataset *poDS, int nBand);
 
-    virtual GDALRasterBand* GetOverview(int nLevel) override;
+    virtual GDALRasterBand *GetOverview(int nLevel) override;
     virtual int GetOverviewCount() override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
   protected:
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage) override;
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing, GSpacing,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
+                              void *pImage) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing, GSpacing,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -205,85 +205,106 @@ class OGCAPITilesWrapperBand final: public GDALRasterBand
 
 class OGCAPITiledLayer;
 
-class OGCAPITiledLayerFeatureDefn final: public OGRFeatureDefn
+class OGCAPITiledLayerFeatureDefn final : public OGRFeatureDefn
 {
-        OGCAPITiledLayer* m_poLayer = nullptr;
-    public:
-        OGCAPITiledLayerFeatureDefn(OGCAPITiledLayer* poLayer, const char* pszName):
-            OGRFeatureDefn(pszName), m_poLayer(poLayer) {}
-        int GetFieldCount() const override;
-        void InvalidateLayer() { m_poLayer = nullptr; }
+    OGCAPITiledLayer *m_poLayer = nullptr;
+
+  public:
+    OGCAPITiledLayerFeatureDefn(OGCAPITiledLayer *poLayer, const char *pszName)
+        : OGRFeatureDefn(pszName), m_poLayer(poLayer)
+    {
+    }
+    int GetFieldCount() const override;
+    void InvalidateLayer()
+    {
+        m_poLayer = nullptr;
+    }
 };
 
-class OGCAPITiledLayer final: public OGRLayer,
-                              public OGRGetNextFeatureThroughRaw<OGCAPITiledLayer>
+class OGCAPITiledLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<OGCAPITiledLayer>
 {
-                OGCAPIDataset* m_poDS = nullptr;
-                bool m_bFeatureDefnEstablished = false;
-                OGCAPITiledLayerFeatureDefn* m_poFeatureDefn = nullptr;
-                OGREnvelope m_sEnvelope{};
-                CPLString m_osTileData{};
-                std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
-                OGRLayer* m_poUnderlyingLayer = nullptr;
-                int m_nCurY = 0;
-                int m_nCurX = 0;
+    OGCAPIDataset *m_poDS = nullptr;
+    bool m_bFeatureDefnEstablished = false;
+    OGCAPITiledLayerFeatureDefn *m_poFeatureDefn = nullptr;
+    OGREnvelope m_sEnvelope{};
+    CPLString m_osTileData{};
+    std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
+    OGRLayer *m_poUnderlyingLayer = nullptr;
+    int m_nCurY = 0;
+    int m_nCurX = 0;
 
-                CPLString m_osTileURL{};
-                bool  m_bIsMVT = false;
+    CPLString m_osTileURL{};
+    bool m_bIsMVT = false;
 
-                const gdal::TileMatrixSet::TileMatrix m_oTileMatrix{};
-                bool  m_bInvertAxis = false;
+    const gdal::TileMatrixSet::TileMatrix m_oTileMatrix{};
+    bool m_bInvertAxis = false;
 
-                // absolute bounds
-                int m_nMinX = 0;
-                int m_nMaxX = 0;
-                int m_nMinY = 0;
-                int m_nMaxY = 0;
+    // absolute bounds
+    int m_nMinX = 0;
+    int m_nMaxX = 0;
+    int m_nMinY = 0;
+    int m_nMaxY = 0;
 
-                // depends on spatial filter
-                int m_nCurMinX = 0;
-                int m_nCurMaxX = 0;
-                int m_nCurMinY = 0;
-                int m_nCurMaxY = 0;
+    // depends on spatial filter
+    int m_nCurMinX = 0;
+    int m_nCurMaxX = 0;
+    int m_nCurMinY = 0;
+    int m_nCurMaxY = 0;
 
-                int GetCoalesceFactorForRow(int nRow) const;
-                bool IncrementTileIndices();
-                OGRFeature* GetNextRawFeature();
-                GDALDataset* OpenTile(int nX, int nY, bool& bEmptyContent);
-                void FinalizeFeatureDefnWithLayer(OGRLayer* poUnderlyingLayer);
-                OGRFeature* BuildFeature(OGRFeature* poSrcFeature, int nX, int nY);
+    int GetCoalesceFactorForRow(int nRow) const;
+    bool IncrementTileIndices();
+    OGRFeature *GetNextRawFeature();
+    GDALDataset *OpenTile(int nX, int nY, bool &bEmptyContent);
+    void FinalizeFeatureDefnWithLayer(OGRLayer *poUnderlyingLayer);
+    OGRFeature *BuildFeature(OGRFeature *poSrcFeature, int nX, int nY);
 
-    protected:
-                friend class OGCAPITiledLayerFeatureDefn;
-                void EstablishFields();
+  protected:
+    friend class OGCAPITiledLayerFeatureDefn;
+    void EstablishFields();
 
-    public:
-                OGCAPITiledLayer(OGCAPIDataset* poDS,
-                                 bool bInvertAxis,
-                                 const CPLString& osTileURL,
-                                 bool bIsMVT,
-                                 const gdal::TileMatrixSet::TileMatrix& tileMatrix,
-                                 OGRwkbGeometryType eGeomType);
-                ~OGCAPITiledLayer();
+  public:
+    OGCAPITiledLayer(OGCAPIDataset *poDS, bool bInvertAxis,
+                     const CPLString &osTileURL, bool bIsMVT,
+                     const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+                     OGRwkbGeometryType eGeomType);
+    ~OGCAPITiledLayer();
 
-                void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
-                void SetFields(const std::vector<std::unique_ptr<OGRFieldDefn>>& apoFields);
-                void SetMinMaxXY(int minCol, int minRow, int maxCol, int maxRow);
+    void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
+    void SetFields(const std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields);
+    void SetMinMaxXY(int minCol, int minRow, int maxCol, int maxRow);
 
-                void ResetReading() override;
-                OGRFeatureDefn* GetLayerDefn() override { return m_poFeatureDefn; }
-                const char* GetName() override { return m_poFeatureDefn->GetName(); }
-                OGRwkbGeometryType GetGeomType() override { return m_poFeatureDefn->GetGeomType(); }
-                DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGCAPITiledLayer)
-                GIntBig GetFeatureCount( int /* bForce */ ) override { return -1; }
-                OGRErr GetExtent( OGREnvelope *psExtent, int bForce ) override;
-                OGRErr GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce ) override
-                            { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-                void SetSpatialFilter( OGRGeometry * ) override;
-                void SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                    { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-                OGRFeature *GetFeature(GIntBig nFID) override;
-                int TestCapability(const char*) override;
+    void ResetReading() override;
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return m_poFeatureDefn;
+    }
+    const char *GetName() override
+    {
+        return m_poFeatureDefn->GetName();
+    }
+    OGRwkbGeometryType GetGeomType() override
+    {
+        return m_poFeatureDefn->GetGeomType();
+    }
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGCAPITiledLayer)
+    GIntBig GetFeatureCount(int /* bForce */) override
+    {
+        return -1;
+    }
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+    void SetSpatialFilter(OGRGeometry *) override;
+    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
+    OGRFeature *GetFeature(GIntBig nFID) override;
+    int TestCapability(const char *) override;
 };
 
 /************************************************************************/
@@ -292,7 +313,7 @@ class OGCAPITiledLayer final: public OGRLayer,
 
 int OGCAPITiledLayerFeatureDefn::GetFieldCount() const
 {
-    if( m_poLayer )
+    if (m_poLayer)
     {
         m_poLayer->EstablishFields();
     }
@@ -319,11 +340,10 @@ OGCAPIDataset::OGCAPIDataset()
 
 OGCAPIDataset::~OGCAPIDataset()
 {
-    if( m_bMustCleanPersistent )
+    if (m_bMustCleanPersistent)
     {
-        char **papszOptions =
-            CSLSetNameValue(
-                nullptr, "CLOSE_PERSISTENT", CPLSPrintf("OGCAPI:%p", this));
+        char **papszOptions = CSLSetNameValue(nullptr, "CLOSE_PERSISTENT",
+                                              CPLSPrintf("OGCAPI:%p", this));
         CPLHTTPDestroyResult(CPLHTTPFetch(m_osRootURL, papszOptions));
         CSLDestroy(papszOptions);
     }
@@ -337,7 +357,7 @@ OGCAPIDataset::~OGCAPIDataset()
 
 int OGCAPIDataset::CloseDependentDatasets()
 {
-    if( m_apoDatasetsElementary.empty() )
+    if (m_apoDatasetsElementary.empty())
         return false;
 
     // in this order
@@ -351,7 +371,7 @@ int OGCAPIDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr OGCAPIDataset::GetGeoTransform(double* padfGeoTransform)
+CPLErr OGCAPIDataset::GetGeoTransform(double *padfGeoTransform)
 {
     memcpy(padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double));
     return CE_None;
@@ -361,7 +381,7 @@ CPLErr OGCAPIDataset::GetGeoTransform(double* padfGeoTransform)
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const OGRSpatialReference* OGCAPIDataset::GetSpatialRef() const
+const OGRSpatialReference *OGCAPIDataset::GetSpatialRef() const
 {
     return !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
 }
@@ -372,23 +392,24 @@ const OGRSpatialReference* OGCAPIDataset::GetSpatialRef() const
 
 // We may ask for "application/openapi+json;version=3.0"
 // and the server returns "application/openapi+json; charset=utf-8; version=3.0"
-static bool CheckContentType(const char* pszGotContentType,
-                             const char* pszExpectedContentType)
+static bool CheckContentType(const char *pszGotContentType,
+                             const char *pszExpectedContentType)
 {
     CPLStringList aosGotTokens(CSLTokenizeString2(pszGotContentType, "; ", 0));
-    CPLStringList aosExpectedTokens(CSLTokenizeString2(pszExpectedContentType, "; ", 0));
-    for( int i = 0; i < aosExpectedTokens.size(); i++ )
+    CPLStringList aosExpectedTokens(
+        CSLTokenizeString2(pszExpectedContentType, "; ", 0));
+    for (int i = 0; i < aosExpectedTokens.size(); i++)
     {
         bool bFound = false;
-        for( int j = 0; j < aosGotTokens.size(); j++ )
+        for (int j = 0; j < aosGotTokens.size(); j++)
         {
-            if( EQUAL(aosExpectedTokens[i], aosGotTokens[j]) )
+            if (EQUAL(aosExpectedTokens[i], aosGotTokens[j]))
             {
                 bFound = true;
                 break;
             }
         }
-        if( !bFound )
+        if (!bFound)
             return false;
     }
     return true;
@@ -398,48 +419,45 @@ static bool CheckContentType(const char* pszGotContentType,
 /*                              Download()                              */
 /************************************************************************/
 
-bool OGCAPIDataset::Download(
-            const CPLString& osURL,
-            const char* pszPostContent,
-            const char* pszAccept,
-            CPLString& osResult,
-            CPLString& osContentType,
-            bool bEmptyContentOK,
-            CPLStringList* paosHeaders )
+bool OGCAPIDataset::Download(const CPLString &osURL, const char *pszPostContent,
+                             const char *pszAccept, CPLString &osResult,
+                             CPLString &osContentType, bool bEmptyContentOK,
+                             CPLStringList *paosHeaders)
 {
-    char** papszOptions = nullptr;
+    char **papszOptions = nullptr;
     CPLString osHeaders;
-    if( pszAccept )
+    if (pszAccept)
     {
         osHeaders += "Accept: ";
         osHeaders += pszAccept;
     }
-    if( pszPostContent )
+    if (pszPostContent)
     {
-        if( !osHeaders.empty() )
+        if (!osHeaders.empty())
         {
             osHeaders += "\r\n";
         }
         osHeaders += "Content-Type: application/json";
     }
-    if( !osHeaders.empty() )
+    if (!osHeaders.empty())
     {
-        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
+        papszOptions =
+            CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
     }
-    if( !m_osUserPwd.empty() )
+    if (!m_osUserPwd.empty())
     {
-        papszOptions = CSLSetNameValue(papszOptions,
-                                       "USERPWD", m_osUserPwd.c_str());
+        papszOptions =
+            CSLSetNameValue(papszOptions, "USERPWD", m_osUserPwd.c_str());
     }
     m_bMustCleanPersistent = true;
     papszOptions =
         CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=OGCAPI:%p", this));
     CPLString osURLWithQueryParameters(osURL);
-    if( !m_osUserQueryParams.empty() &&
+    if (!m_osUserQueryParams.empty() &&
         osURL.find('?' + m_osUserQueryParams) == std::string::npos &&
-        osURL.find('&' + m_osUserQueryParams) == std::string::npos )
+        osURL.find('&' + m_osUserQueryParams) == std::string::npos)
     {
-        if( osURL.find('?') == std::string::npos )
+        if (osURL.find('?') == std::string::npos)
         {
             osURLWithQueryParameters += '?';
         }
@@ -449,91 +467,95 @@ bool OGCAPIDataset::Download(
         }
         osURLWithQueryParameters += m_osUserQueryParams;
     }
-    if( pszPostContent )
+    if (pszPostContent)
     {
-        papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS", pszPostContent);
+        papszOptions =
+            CSLSetNameValue(papszOptions, "POSTFIELDS", pszPostContent);
     }
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURLWithQueryParameters, papszOptions);
+    CPLHTTPResult *psResult =
+        CPLHTTPFetch(osURLWithQueryParameters, papszOptions);
     CSLDestroy(papszOptions);
-    if( !psResult )
+    if (!psResult)
         return false;
 
-    if( paosHeaders )
+    if (paosHeaders)
     {
         *paosHeaders = CSLDuplicate(psResult->papszHeaders);
     }
 
-    if( psResult->pszErrBuf != nullptr )
+    if (psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                psResult->pabyData ?
-                    reinterpret_cast<const char*>(psResult->pabyData) :
-                psResult->pszErrBuf);
+                 psResult->pabyData
+                     ? reinterpret_cast<const char *>(psResult->pabyData)
+                     : psResult->pszErrBuf);
         CPLHTTPDestroyResult(psResult);
         return false;
     }
 
-    if( psResult->pszContentType )
+    if (psResult->pszContentType)
         osContentType = psResult->pszContentType;
 
-    if( pszAccept != nullptr )
+    if (pszAccept != nullptr)
     {
         bool bFoundExpectedContentType = false;
-        if( strstr(pszAccept, "xml") &&
-            psResult->pszContentType != nullptr &&
+        if (strstr(pszAccept, "xml") && psResult->pszContentType != nullptr &&
             (CheckContentType(psResult->pszContentType, MEDIA_TYPE_TEXT_XML) ||
-            CheckContentType(psResult->pszContentType, MEDIA_TYPE_APPLICATION_XML)) )
+             CheckContentType(psResult->pszContentType,
+                              MEDIA_TYPE_APPLICATION_XML)))
         {
             bFoundExpectedContentType = true;
         }
 
-        if( strstr(pszAccept, MEDIA_TYPE_JSON_SCHEMA) &&
+        if (strstr(pszAccept, MEDIA_TYPE_JSON_SCHEMA) &&
             psResult->pszContentType != nullptr &&
             (CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON) ||
-            CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON_SCHEMA)) )
+             CheckContentType(psResult->pszContentType,
+                              MEDIA_TYPE_JSON_SCHEMA)))
         {
             bFoundExpectedContentType = true;
         }
 
-        for( const char* pszMediaType : { MEDIA_TYPE_JSON,
-                                        MEDIA_TYPE_GEOJSON,
-                                        MEDIA_TYPE_OAPI_3_0,
-                                        })
+        for (const char *pszMediaType : {
+                 MEDIA_TYPE_JSON,
+                 MEDIA_TYPE_GEOJSON,
+                 MEDIA_TYPE_OAPI_3_0,
+             })
         {
-            if( strstr(pszAccept, pszMediaType) &&
+            if (strstr(pszAccept, pszMediaType) &&
                 psResult->pszContentType != nullptr &&
-                CheckContentType(psResult->pszContentType, pszMediaType) )
+                CheckContentType(psResult->pszContentType, pszMediaType))
             {
                 bFoundExpectedContentType = true;
                 break;
             }
         }
 
-        if( !bFoundExpectedContentType )
+        if (!bFoundExpectedContentType)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Unexpected Content-Type: %s",
-                    psResult->pszContentType ?
-                        psResult->pszContentType : "(null)" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected Content-Type: %s",
+                     psResult->pszContentType ? psResult->pszContentType
+                                              : "(null)");
             CPLHTTPDestroyResult(psResult);
             return false;
         }
     }
 
-    if( psResult->pabyData == nullptr )
+    if (psResult->pabyData == nullptr)
     {
         osResult.clear();
-        if( !bEmptyContentOK )
+        if (!bEmptyContentOK)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Empty content returned by server");
+                     "Empty content returned by server");
             CPLHTTPDestroyResult(psResult);
             return false;
         }
     }
     else
     {
-        osResult.assign(reinterpret_cast<const char*>(psResult->pabyData), psResult->nDataLen);
+        osResult.assign(reinterpret_cast<const char *>(psResult->pabyData),
+                        psResult->nDataLen);
 #ifdef DEBUG_VERBOSE
         CPLDebug("OGCAPI", "%s", osResult.c_str());
 #endif
@@ -546,28 +568,28 @@ bool OGCAPIDataset::Download(
 /*                           DownloadJSon()                             */
 /************************************************************************/
 
-bool OGCAPIDataset::DownloadJSon(const CPLString& osURL,
-                                 CPLJSONDocument& oDoc,
-                                 const char* pszPostContent,
-                                 const char* pszAccept,
-                                 CPLStringList* paosHeaders)
+bool OGCAPIDataset::DownloadJSon(const CPLString &osURL, CPLJSONDocument &oDoc,
+                                 const char *pszPostContent,
+                                 const char *pszAccept,
+                                 CPLStringList *paosHeaders)
 {
     CPLString osResult;
     CPLString osContentType;
-    if( !Download(osURL, pszPostContent, pszAccept, osResult, osContentType, false, paosHeaders) )
+    if (!Download(osURL, pszPostContent, pszAccept, osResult, osContentType,
+                  false, paosHeaders))
         return false;
-    return oDoc.LoadMemory( osResult );
+    return oDoc.LoadMemory(osResult);
 }
 
 /************************************************************************/
 /*                            Identify()                                */
 /************************************************************************/
 
-int OGCAPIDataset::Identify(GDALOpenInfo* poOpenInfo)
+int OGCAPIDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") )
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
         return TRUE;
-    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw") )
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw"))
         return TRUE;
     return FALSE;
 }
@@ -576,9 +598,9 @@ int OGCAPIDataset::Identify(GDALOpenInfo* poOpenInfo)
 /*                            BuildURL()                                */
 /************************************************************************/
 
-CPLString OGCAPIDataset::BuildURL(const std::string& href) const
+CPLString OGCAPIDataset::BuildURL(const std::string &href) const
 {
-    if( !href.empty() && href[0] == '/' )
+    if (!href.empty() && href[0] == '/')
         return m_osRootURL + href;
     return href;
 }
@@ -587,16 +609,16 @@ CPLString OGCAPIDataset::BuildURL(const std::string& href) const
 /*                         SetRootURLFromURL()                          */
 /************************************************************************/
 
-void OGCAPIDataset::SetRootURLFromURL(const std::string& osURL)
+void OGCAPIDataset::SetRootURLFromURL(const std::string &osURL)
 {
-    const char* pszStr = osURL.c_str();
-    const char* pszPtr = pszStr;
-    if( STARTS_WITH(pszPtr, "http://") )
+    const char *pszStr = osURL.c_str();
+    const char *pszPtr = pszStr;
+    if (STARTS_WITH(pszPtr, "http://"))
         pszPtr += strlen("http://");
-    else if( STARTS_WITH(pszPtr, "https://") )
+    else if (STARTS_WITH(pszPtr, "https://"))
         pszPtr += strlen("https://");
     pszPtr = strchr(pszPtr, '/');
-    if( pszPtr )
+    if (pszPtr)
         m_osRootURL.assign(pszStr, pszPtr - pszStr);
 }
 
@@ -604,13 +626,13 @@ void OGCAPIDataset::SetRootURLFromURL(const std::string& osURL)
 /*                           InitFromFile()                             */
 /************************************************************************/
 
-bool OGCAPIDataset::InitFromFile(GDALOpenInfo* poOpenInfo)
+bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 {
     CPLJSONDocument oDoc;
-    if( !oDoc.Load(poOpenInfo->pszFilename) )
+    if (!oDoc.Load(poOpenInfo->pszFilename))
         return false;
     auto oProcess = oDoc.GetRoot()["process"];
-    if( oProcess.GetType() != CPLJSONObject::Type::String )
+    if (oProcess.GetType() != CPLJSONObject::Type::String)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find 'process' key in .moaw file");
@@ -620,13 +642,14 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo* poOpenInfo)
     const CPLString osURLProcess(oProcess.ToString());
     SetRootURLFromURL(osURLProcess);
 
-    GByte* pabyContent = nullptr;
+    GByte *pabyContent = nullptr;
     vsi_l_offset nSize = 0;
-    if( !VSIIngestFile(poOpenInfo->fpL, nullptr, &pabyContent, &nSize, 1024 * 1024) )
+    if (!VSIIngestFile(poOpenInfo->fpL, nullptr, &pabyContent, &nSize,
+                       1024 * 1024))
         return false;
-    CPLString osPostContent( reinterpret_cast<const char*>(pabyContent) );
+    CPLString osPostContent(reinterpret_cast<const char *>(pabyContent));
     CPLFree(pabyContent);
-    if( !DownloadJSon(osURLProcess.c_str(), oDoc, osPostContent.c_str()) )
+    if (!DownloadJSon(osURLProcess.c_str(), oDoc, osPostContent.c_str()))
         return false;
 
     return InitFromCollection(poOpenInfo, oDoc);
@@ -636,45 +659,50 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo* poOpenInfo)
 /*                        InitFromCollection()                          */
 /************************************************************************/
 
-bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
-                                       CPLJSONDocument& oDoc)
+bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
+                                       CPLJSONDocument &oDoc)
 {
-    auto osTitle = oDoc.GetRoot().GetString("title");
-    if( !osTitle.empty() )
+    const CPLJSONObject oRoot = oDoc.GetRoot();
+    auto osTitle = oRoot.GetString("title");
+    if (!osTitle.empty())
     {
         SetMetadataItem("TITLE", osTitle.c_str());
     }
 
-    auto oLinks = oDoc.GetRoot().GetArray("links");
-    if( !oLinks.IsValid() )
+    auto oLinks = oRoot.GetArray("links");
+    if (!oLinks.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing links");
         return false;
     }
-    auto oBboxes = oDoc.GetRoot()["extent"]["spatial"]["bbox"].ToArray();
-    if( oBboxes.Size() != 1 )
+    auto oBboxes = oRoot["extent"]["spatial"]["bbox"].ToArray();
+    if (oBboxes.Size() != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing bbox");
         return false;
     }
     auto oBbox = oBboxes[0].ToArray();
-    if( oBbox.Size() != 4 )
+    if (oBbox.Size() != 4)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid bbox");
         return false;
     }
-    const double dfXMin = CPLAtof(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MINX", CPLSPrintf("%.18g", oBbox[0].ToDouble())));
-    const double dfYMin = CPLAtof(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MINY", CPLSPrintf("%.18g", oBbox[1].ToDouble())));
-    const double dfXMax = CPLAtof(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MAXX", CPLSPrintf("%.18g", oBbox[2].ToDouble())));
-    const double dfYMax = CPLAtof(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MAXY", CPLSPrintf("%.18g", oBbox[3].ToDouble())));
+    const double dfXMin =
+        CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINX",
+                                     CPLSPrintf("%.18g", oBbox[0].ToDouble())));
+    const double dfYMin =
+        CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINY",
+                                     CPLSPrintf("%.18g", oBbox[1].ToDouble())));
+    const double dfXMax =
+        CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXX",
+                                     CPLSPrintf("%.18g", oBbox[2].ToDouble())));
+    const double dfYMax =
+        CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXY",
+                                     CPLSPrintf("%.18g", oBbox[3].ToDouble())));
 
-    auto oScaleDenominator = oDoc.GetRoot()["scaleDenominator"];
-    double dfRes = 1e-8; // arbitrary
-    if( oScaleDenominator.IsValid() )
+    auto oScaleDenominator = oRoot["scaleDenominator"];
+    double dfRes = 1e-8;  // arbitrary
+    if (oScaleDenominator.IsValid())
     {
         const double dfScaleDenominator = oScaleDenominator.ToDouble();
         constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
@@ -683,94 +711,119 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
 
     double dfXSize = (dfXMax - dfXMin) / dfRes;
     double dfYSize = (dfYMax - dfYMin) / dfRes;
-    while( dfXSize > INT_MAX || dfYSize > INT_MAX )
+    while (dfXSize > INT_MAX || dfYSize > INT_MAX)
     {
         dfXSize /= 2;
         dfYSize /= 2;
     }
 
-    nRasterXSize = std::max(1, static_cast<int>(0+5 + dfXSize));
+    nRasterXSize = std::max(1, static_cast<int>(0 + 5 + dfXSize));
     nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
     m_adfGeoTransform[0] = dfXMin;
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
     m_adfGeoTransform[3] = dfYMax;
     m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
 
-    CPLString osMapURL;
-    CPLString osTilesURL;
+    bool bFoundMap = false;
+    CPLString osTilesetsMapURL;
+    CPLString osTilesetsVectorURL;
     CPLString osCoverageURL;
     bool bCoverageGeotiff = false;
     CPLString osItemsJsonURL;
     CPLString osSelfURL;
-    for( const auto& oLink: oLinks )
+    for (const auto &oLink : oLinks)
     {
         const auto osRel = oLink.GetString("rel");
         const auto osType = oLink.GetString("type");
-        if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-            osType == "application/json" )
+        if ((osRel == "http://www.opengis.net/def/rel/ogc/1.0/map" ||
+             osRel == "[ogc-rel:map]") &&
+            (osType == "image/png" || osType == "image/jpeg"))
         {
-            osMapURL = BuildURL(oLink["href"].ToString());
+            bFoundMap = true;
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/tilesets" &&
-                 osType == "application/json" )
+        else if ((osRel ==
+                      "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map" ||
+                  osRel == "[ogc-rel:tilesets-map]") &&
+                 osType == "application/json")
         {
-            osTilesURL = BuildURL(oLink["href"].ToString());
+            osTilesetsMapURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
+        else if ((osRel == "http://www.opengis.net/def/rel/ogc/1.0/"
+                           "tilesets-vector" ||
+                  osRel == "[ogc-rel:tilesets-vector]") &&
+                 osType == "application/json")
+        {
+            osTilesetsVectorURL = BuildURL(oLink["href"].ToString());
+        }
+        else if ((osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" ||
+                  osRel == "[ogc-rel:coverage]") &&
                  (osType == "image/tiff; application=geotiff" ||
-                  osType == "application/x-geotiff") )
+                  osType == "application/x-geotiff"))
         {
-            if( !bCoverageGeotiff )
+            if (!bCoverageGeotiff)
             {
                 osCoverageURL = BuildURL(oLink["href"].ToString());
                 bCoverageGeotiff = true;
             }
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
-                 osType.empty() )
+        else if ((osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" ||
+                  osRel == "[ogc-rel:coverage]") &&
+                 osType.empty())
         {
             osCoverageURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "items" &&
-                 (osType == "application/geo+json" ||
-                  osType == "application/json") )
+        else if (osRel == "items" && (osType == "application/geo+json" ||
+                                      osType == "application/json"))
         {
             osItemsJsonURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "self" && osType == "application/json" )
+        else if (osRel == "self" && osType == "application/json")
         {
             osSelfURL = BuildURL(oLink["href"].ToString());
         }
     }
 
-    if( osMapURL.empty() && osTilesURL.empty() && osCoverageURL.empty() &&
-        osSelfURL.empty() && osItemsJsonURL.empty() )
+    if (!bFoundMap && osTilesetsMapURL.empty() && osTilesetsVectorURL.empty() &&
+        osCoverageURL.empty() && osSelfURL.empty() && osItemsJsonURL.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing map, tilesets, coverage or items relation in links");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing map, tilesets, coverage or items relation in links");
         return false;
     }
 
-    const char* pszAPI = CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "API", "AUTO");
-    if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "COVERAGE")) && !osCoverageURL.empty() )
+    const char *pszAPI =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API", "AUTO");
+    if ((EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "COVERAGE")) &&
+        !osCoverageURL.empty())
     {
-        return InitWithCoverageAPI(poOpenInfo, osCoverageURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        return InitWithCoverageAPI(poOpenInfo, osCoverageURL, dfXMin, dfYMin,
+                                   dfXMax, dfYMax, oDoc.GetRoot());
     }
-    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) && !osTilesURL.empty() )
+    else if ((EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) &&
+             (!osTilesetsMapURL.empty() || !osTilesetsVectorURL.empty()))
     {
-        return InitWithTilesAPI(poOpenInfo, osTilesURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        bool bRet = false;
+        if (!osTilesetsMapURL.empty())
+            bRet = InitWithTilesAPI(poOpenInfo, osTilesetsMapURL, true, dfXMin,
+                                    dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        if (!osTilesetsVectorURL.empty())
+            bRet =
+                InitWithTilesAPI(poOpenInfo, osTilesetsVectorURL, false, dfXMin,
+                                 dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        return bRet;
     }
-    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && !osMapURL.empty() )
+    else if ((EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && bFoundMap)
     {
-        return InitWithMapAPI(poOpenInfo, osMapURL, dfXMin, dfYMin, dfXMax, dfYMax);
+        return InitWithMapAPI(poOpenInfo, oRoot, dfXMin, dfYMin, dfXMax,
+                              dfYMax);
     }
-    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "ITEMS")) &&
+    else if ((EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "ITEMS")) &&
              !osSelfURL.empty() && !osItemsJsonURL.empty() &&
-             (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+             (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
     {
-        m_poOAPIFDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(("OAPIF_COLLECTION:" + osSelfURL).c_str(), GDAL_OF_VECTOR));
-        if( m_poOAPIFDS )
+        m_poOAPIFDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            ("OAPIF_COLLECTION:" + osSelfURL).c_str(), GDAL_OF_VECTOR));
+        if (m_poOAPIFDS)
             return true;
     }
 
@@ -783,43 +836,43 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
 /*                               InitFromURL()                          */
 /************************************************************************/
 
-bool OGCAPIDataset::InitFromURL(GDALOpenInfo* poOpenInfo)
+bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
 {
-    CPLAssert( STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") );
+    CPLAssert(STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"));
     CPLJSONDocument oDoc;
     CPLString osURL(poOpenInfo->pszFilename + strlen("OGCAPI:"));
-    if( !DownloadJSon(osURL, oDoc) )
+    if (!DownloadJSon(osURL, oDoc))
         return false;
 
     SetRootURLFromURL(osURL);
 
     auto oCollections = oDoc.GetRoot().GetArray("collections");
-    if( !oCollections.IsValid() )
+    if (!oCollections.IsValid())
     {
-        if( !oDoc.GetRoot().GetArray("extent").IsValid() )
+        if (!oDoc.GetRoot().GetArray("extent").IsValid())
         {
             // If there is no "colletions" or "extent" member, then it is
             // perhaps a landing page
             const auto oLinks = oDoc.GetRoot().GetArray("links");
             osURL.clear();
-            for( const auto& oLink: oLinks )
+            for (const auto &oLink : oLinks)
             {
-                if( oLink["rel"].ToString() == "data" &&
-                    oLink["type"].ToString() == "application/json" )
+                if (oLink["rel"].ToString() == "data" &&
+                    oLink["type"].ToString() == "application/json")
                 {
                     osURL = BuildURL(oLink["href"].ToString());
                     break;
                 }
             }
-            if( !osURL.empty() )
+            if (!osURL.empty())
             {
-                if( !DownloadJSon(osURL, oDoc) )
+                if (!DownloadJSon(osURL, oDoc))
                     return false;
                 oCollections = oDoc.GetRoot().GetArray("collections");
             }
         }
 
-        if( !oCollections.IsValid() )
+        if (!oCollections.IsValid())
         {
             // This is hopefully a /collections/{id} response
             return InitFromCollection(poOpenInfo, oDoc);
@@ -828,51 +881,51 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo* poOpenInfo)
 
     // This is a /collections response
     CPLStringList aosSubdatasets;
-    for( const auto& oCollection: oCollections )
+    for (const auto &oCollection : oCollections)
     {
         const auto osTitle = oCollection.GetString("title");
         const auto osLayerDataType = oCollection.GetString("layerDataType");
-        // CPLDebug("OGCAPI", "%s: %s", osTitle.c_str(), osLayerDataType.c_str());
-        if( !osLayerDataType.empty() &&
+        // CPLDebug("OGCAPI", "%s: %s", osTitle.c_str(),
+        // osLayerDataType.c_str());
+        if (!osLayerDataType.empty() &&
             (EQUAL(osLayerDataType.c_str(), "Raster") ||
              EQUAL(osLayerDataType.c_str(), "Coverage")) &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0)
         {
             continue;
         }
-        if( !osLayerDataType.empty() &&
+        if (!osLayerDataType.empty() &&
             EQUAL(osLayerDataType.c_str(), "Vector") &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0)
         {
             continue;
         }
         osURL.clear();
         const auto oLinks = oCollection.GetArray("links");
-        for( const auto& oLink: oLinks )
+        for (const auto &oLink : oLinks)
         {
-            if( oLink["rel"].ToString() == "self" &&
-                oLink["type"].ToString() == "application/json" )
+            if (oLink["rel"].ToString() == "self" &&
+                oLink["type"].ToString() == "application/json")
             {
                 osURL = BuildURL(oLink["href"].ToString());
                 break;
             }
-            else if( oLink["rel"].ToString() == "self" &&
-                     oLink.GetString("type").empty() )
+            else if (oLink["rel"].ToString() == "self" &&
+                     oLink.GetString("type").empty())
             {
                 osURL = BuildURL(oLink["href"].ToString());
             }
         }
-        if( osURL.empty() )
+        if (osURL.empty())
         {
             continue;
         }
         const int nIdx = 1 + aosSubdatasets.size() / 2;
+        aosSubdatasets.AddNameValue(CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
+                                    CPLSPrintf("OGCAPI:%s", osURL.c_str()));
         aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
-                    CPLSPrintf("OGCAPI:%s", osURL.c_str()));
-        aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
-                    CPLSPrintf("Collection %s", osTitle.c_str()));
+            CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
+            CPLSPrintf("Collection %s", osTitle.c_str()));
     }
     SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
 
@@ -883,20 +936,19 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo* poOpenInfo)
 /*                          SelectImageURL()                            */
 /************************************************************************/
 
-static const CPLString SelectImageURL(const char* const* papszOptionOptions,
-                                      const CPLString& osPNG_URL,
-                                      const CPLString& osJPEG_URL)
+static const CPLString SelectImageURL(const char *const *papszOptionOptions,
+                                      const CPLString &osPNG_URL,
+                                      const CPLString &osJPEG_URL)
 {
-    const char* pszFormat = CSLFetchNameValueDef(papszOptionOptions,
-                                                      "IMAGE_FORMAT",
-                                                      "AUTO");
-    if( EQUAL(pszFormat, "AUTO") || EQUAL(pszFormat, "PNG_PREFERRED") )
+    const char *pszFormat =
+        CSLFetchNameValueDef(papszOptionOptions, "IMAGE_FORMAT", "AUTO");
+    if (EQUAL(pszFormat, "AUTO") || EQUAL(pszFormat, "PNG_PREFERRED"))
         return !osPNG_URL.empty() ? osPNG_URL : osJPEG_URL;
-    else if( EQUAL(pszFormat, "PNG") )
+    else if (EQUAL(pszFormat, "PNG"))
         return osPNG_URL;
-    else if( EQUAL(pszFormat, "JPEG") )
+    else if (EQUAL(pszFormat, "JPEG"))
         return osJPEG_URL;
-    else if ( EQUAL(pszFormat, "JPEG_PREFERRED") )
+    else if (EQUAL(pszFormat, "JPEG_PREFERRED"))
         return !osJPEG_URL.empty() ? osJPEG_URL : osPNG_URL;
     return CPLString();
 }
@@ -905,20 +957,20 @@ static const CPLString SelectImageURL(const char* const* papszOptionOptions,
 /*                        SelectVectorFormatURL()                       */
 /************************************************************************/
 
-static const CPLString SelectVectorFormatURL(const char* const* papszOptionOptions,
-                                             const CPLString& osMVT_URL,
-                                             const CPLString& osGEOJSON_URL)
+static const CPLString
+SelectVectorFormatURL(const char *const *papszOptionOptions,
+                      const CPLString &osMVT_URL,
+                      const CPLString &osGEOJSON_URL)
 {
-    const char* pszFormat = CSLFetchNameValueDef(papszOptionOptions,
-                                                 "VECTOR_FORMAT",
-                                                 "AUTO");
-    if( EQUAL(pszFormat, "AUTO") || EQUAL(pszFormat, "MVT_PREFERRED") )
+    const char *pszFormat =
+        CSLFetchNameValueDef(papszOptionOptions, "VECTOR_FORMAT", "AUTO");
+    if (EQUAL(pszFormat, "AUTO") || EQUAL(pszFormat, "MVT_PREFERRED"))
         return !osMVT_URL.empty() ? osMVT_URL : osGEOJSON_URL;
-    else if( EQUAL(pszFormat, "MVT") )
+    else if (EQUAL(pszFormat, "MVT"))
         return osMVT_URL;
-    else if( EQUAL(pszFormat, "GEOJSON") )
+    else if (EQUAL(pszFormat, "GEOJSON"))
         return osGEOJSON_URL;
-    else if ( EQUAL(pszFormat, "GEOJSON_PREFERRED") )
+    else if (EQUAL(pszFormat, "GEOJSON_PREFERRED"))
         return !osGEOJSON_URL.empty() ? osGEOJSON_URL : osMVT_URL;
     return CPLString();
 }
@@ -927,66 +979,33 @@ static const CPLString SelectVectorFormatURL(const char* const* papszOptionOptio
 /*                          InitWithMapAPI()                            */
 /************************************************************************/
 
-bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
-                                   const CPLString& osMapURL,
-                                   double dfXMin, double dfYMin,
-                                   double dfXMax, double dfYMax)
+bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
+                                   const CPLJSONObject &oRoot, double dfXMin,
+                                   double dfYMin, double dfXMax, double dfYMax)
 {
-    CPLJSONDocument oDoc;
-    if( !DownloadJSon(osMapURL.c_str(), oDoc) )
-        return false;
-
-    auto oStyles = oDoc.GetRoot()["styles"].ToArray();
-    if( oStyles.Size() == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find styles");
-        return false;
-    }
-    CPLString osStyleId;
+    auto oLinks = oRoot["links"].ToArray();
     CPLString osPNG_URL;
     CPLString osJPEG_URL;
-    for( const auto& oStyle: oStyles )
+
+    for (const auto &oLink : oLinks)
     {
-        const auto osId = oStyle["id"].ToString();
-        if (osId.empty() )
+        if (oLink["rel"].ToString() ==
+                "http://www.opengis.net/def/rel/ogc/1.0/map" &&
+            oLink["type"].ToString() == "image/png")
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Missing style id");
-            return false;
+            osPNG_URL = BuildURL(oLink["href"].ToString());
         }
-        if( osId == "default" || osStyleId.empty() )
+        else if (oLink["rel"].ToString() ==
+                     "http://www.opengis.net/def/rel/ogc/1.0/map" &&
+                 oLink["type"].ToString() == "image/jpeg")
         {
-            osStyleId = osId;
-            auto oLinks = oStyle["links"].ToArray();
-            if( oLinks.Size() == 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Missing links in style");
-                return false;
-            }
-            for( const auto& oLink: oLinks )
-            {
-                if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-                    oLink["type"].ToString() == "image/png" )
-                {
-                    osPNG_URL = BuildURL(oLink["href"].ToString());
-                }
-                else if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-                         oLink["type"].ToString() == "image/jpeg" )
-                {
-                    osJPEG_URL = BuildURL(oLink["href"].ToString());
-                }
-            }
+            osJPEG_URL = BuildURL(oLink["href"].ToString());
         }
-    }
-    if( osStyleId.empty() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find a style");
-        return false;
     }
 
-    CPLString osImageURL = SelectImageURL(poOpenInfo->papszOpenOptions,
-                                  osPNG_URL,
-                                  osJPEG_URL);
-    if( osImageURL.empty() )
+    CPLString osImageURL =
+        SelectImageURL(poOpenInfo->papszOpenOptions, osPNG_URL, osJPEG_URL);
+    if (osImageURL.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find link to PNG or JPEG images");
@@ -996,58 +1015,52 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
 
     int nOverviewCount = 0;
     int nLargestDim = std::max(nRasterXSize, nRasterYSize);
-    while( nLargestDim > 256 )
+    while (nLargestDim > 256)
     {
-        nOverviewCount ++;
+        nOverviewCount++;
         nLargestDim /= 2;
     }
 
     m_oSRS.importFromEPSG(4326);
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "CACHE", "YES"));
-    const int nMaxConnections = atoi(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
-        CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
+    const bool bCache = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "YES"));
+    const int nMaxConnections = atoi(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
+                             CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
     CPLString osWMS_XML;
-    char* pszEscapedURL = CPLEscapeString(osImageURL, -1, CPLES_XML);
-    osWMS_XML.Printf(
-        "<GDAL_WMS>"
-        "    <Service name=\"OGCAPIMaps\">"
-        "        <ServerUrl>%s</ServerUrl>"
-        "    </Service>"
-        "    <DataWindow>"
-        "        <UpperLeftX>%.18g</UpperLeftX>"
-        "        <UpperLeftY>%.18g</UpperLeftY>"
-        "        <LowerRightX>%.18g</LowerRightX>"
-        "        <LowerRightY>%.18g</LowerRightY>"
-        "        <SizeX>%d</SizeX>"
-        "        <SizeY>%d</SizeY>"
-        "    </DataWindow>"
-        "    <OverviewCount>%d</OverviewCount>"
-        "    <BlockSizeX>256</BlockSizeX>"
-        "    <BlockSizeY>256</BlockSizeY>"
-        "    <BandsCount>%d</BandsCount>"
-        "    <MaxConnections>%d</MaxConnections>"
-        "    %s"
-        "</GDAL_WMS>",
-        pszEscapedURL,
-        dfXMin, dfYMax,
-        dfXMax, dfYMin,
-        nRasterXSize,
-        nRasterYSize,
-        nOverviewCount,
-        l_nBands,
-        nMaxConnections,
-        bCache ? "<Cache />" : "");
+    char *pszEscapedURL = CPLEscapeString(osImageURL, -1, CPLES_XML);
+    osWMS_XML.Printf("<GDAL_WMS>"
+                     "    <Service name=\"OGCAPIMaps\">"
+                     "        <ServerUrl>%s</ServerUrl>"
+                     "    </Service>"
+                     "    <DataWindow>"
+                     "        <UpperLeftX>%.18g</UpperLeftX>"
+                     "        <UpperLeftY>%.18g</UpperLeftY>"
+                     "        <LowerRightX>%.18g</LowerRightX>"
+                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <SizeX>%d</SizeX>"
+                     "        <SizeY>%d</SizeY>"
+                     "    </DataWindow>"
+                     "    <OverviewCount>%d</OverviewCount>"
+                     "    <BlockSizeX>256</BlockSizeX>"
+                     "    <BlockSizeY>256</BlockSizeY>"
+                     "    <BandsCount>%d</BandsCount>"
+                     "    <MaxConnections>%d</MaxConnections>"
+                     "    %s"
+                     "</GDAL_WMS>",
+                     pszEscapedURL, dfXMin, dfYMax, dfXMax, dfYMin,
+                     nRasterXSize, nRasterYSize, nOverviewCount, l_nBands,
+                     nMaxConnections, bCache ? "<Cache />" : "");
     CPLFree(pszEscapedURL);
     CPLDebug("OGCAPI", "%s", osWMS_XML.c_str());
-    m_poWMSDS.reset(GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
-    if( m_poWMSDS == nullptr )
+    m_poWMSDS.reset(
+        GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+    if (m_poWMSDS == nullptr)
         return false;
 
-    for( int i = 1; i <= m_poWMSDS->GetRasterCount(); i++ )
+    for (int i = 1; i <= m_poWMSDS->GetRasterCount(); i++)
     {
         SetBand(i, new OGCAPIMapWrapperBand(this, i));
     }
@@ -1060,47 +1073,48 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
 /*                        InitWithCoverageAPI()                         */
 /************************************************************************/
 
-bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
-                                        const CPLString& osCoverageURL,
+bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
+                                        const CPLString &osCoverageURL,
                                         double dfXMin, double dfYMin,
                                         double dfXMax, double dfYMax,
-                                        const CPLJSONObject& oJsonCollection
-                                        )
+                                        const CPLJSONObject &oJsonCollection)
 {
     int l_nBands = 1;
     GDALDataType eDT = GDT_Float32;
 
     auto oRangeType = oJsonCollection["rangeType"];
-    if( !oRangeType.IsValid() )
+    if (!oRangeType.IsValid())
         oRangeType = oJsonCollection["rangetype"];
 
     auto oDomainSet = oJsonCollection["domainset"];
-    if( !oDomainSet.IsValid() )
+    if (!oDomainSet.IsValid())
         oDomainSet = oJsonCollection["domainSet"];
 
-    if( !oRangeType.IsValid() || !oDomainSet.IsValid() )
+    if (!oRangeType.IsValid() || !oDomainSet.IsValid())
     {
         auto oLinks = oJsonCollection.GetArray("links");
-        for( const auto& oLink: oLinks )
+        for (const auto &oLink : oLinks)
         {
             const auto osRel = oLink.GetString("rel");
             const auto osType = oLink.GetString("type");
-            if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-domainset" &&
-                (osType == "application/json" || osType.empty()) )
+            if (osRel == "http://www.opengis.net/def/rel/ogc/1.0/"
+                         "coverage-domainset" &&
+                (osType == "application/json" || osType.empty()))
             {
                 CPLString osURL = BuildURL(oLink["href"].ToString());
                 CPLJSONDocument oDoc;
-                if( DownloadJSon(osURL.c_str(), oDoc) )
+                if (DownloadJSon(osURL.c_str(), oDoc))
                 {
                     oDomainSet = oDoc.GetRoot();
                 }
             }
-            else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-rangetype" &&
-                     (osType == "application/json" || osType.empty()) )
+            else if (osRel == "http://www.opengis.net/def/rel/ogc/1.0/"
+                              "coverage-rangetype" &&
+                     (osType == "application/json" || osType.empty()))
             {
                 CPLString osURL = BuildURL(oLink["href"].ToString());
                 CPLJSONDocument oDoc;
-                if( DownloadJSon(osURL.c_str(), oDoc) )
+                if (DownloadJSon(osURL.c_str(), oDoc))
                 {
                     oRangeType = oDoc.GetRoot();
                 }
@@ -1108,36 +1122,39 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         }
     }
 
-    if( oRangeType.IsValid() )
+    if (oRangeType.IsValid())
     {
         auto oField = oRangeType.GetArray("field");
-        if( oField.IsValid() )
+        if (oField.IsValid())
         {
             l_nBands = oField.Size();
             const auto osDefinition = oField[0].GetString("definition");
             static const std::map<CPLString, GDALDataType> oMapTypes = {
                 // https://edc-oapi.dev.hub.eox.at/oapi/collections/S2L2A
-                { "UINT8", GDT_Byte },
-                { "INT16", GDT_Int16 },
-                { "UINT16", GDT_UInt16 },
-                { "INT32", GDT_Int32 },
-                { "UINT32", GDT_UInt32 },
-                { "FLOAT32", GDT_Float32 },
-                { "FLOAT64", GDT_Float64 },
+                {"UINT8", GDT_Byte},
+                {"INT16", GDT_Int16},
+                {"UINT16", GDT_UInt16},
+                {"INT32", GDT_Int32},
+                {"UINT32", GDT_UInt32},
+                {"FLOAT32", GDT_Float32},
+                {"FLOAT64", GDT_Float64},
                 // https://test.cubewerx.com/cubewerx/cubeserv/demo/ogcapi/Daraa/collections/Daraa_DTED/coverage/rangetype?f=json
-                { "ogcType:unsignedByte", GDT_Byte },
-                { "ogcType:signedShort", GDT_Int16 },
-                { "ogcType:unsignedShort", GDT_UInt16 },
-                { "ogcType:signedInt", GDT_Int32 },
-                { "ogcType:unsignedInt", GDT_UInt32 },
-                { "ogcType:float32", GDT_Float32 },
-                { "ogcType:float64", GDT_Float64 },
-                { "ogcType:double", GDT_Float64 },
+                {"ogcType:unsignedByte", GDT_Byte},
+                {"ogcType:signedShort", GDT_Int16},
+                {"ogcType:unsignedShort", GDT_UInt16},
+                {"ogcType:signedInt", GDT_Int32},
+                {"ogcType:unsignedInt", GDT_UInt32},
+                {"ogcType:float32", GDT_Float32},
+                {"ogcType:float64", GDT_Float64},
+                {"ogcType:double", GDT_Float64},
             };
-            // 08-094r1_SWE_Common_Data_Model_2.0_Submission_Package.pdf page 112
+            // 08-094r1_SWE_Common_Data_Model_2.0_Submission_Package.pdf page
+            // 112
             auto oIter = oMapTypes.find(
-                CPLString(osDefinition).replaceAll("http://www.opengis.net/ def/dataType/OGC/0/", "ogcType:"));
-            if( oIter != oMapTypes.end() )
+                CPLString(osDefinition)
+                    .replaceAll("http://www.opengis.net/ def/dataType/OGC/0/",
+                                "ogcType:"));
+            if (oIter != oMapTypes.end())
             {
                 eDT = oIter->second;
             }
@@ -1151,17 +1168,17 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
 
     CPLString osXAxisName;
     CPLString osYAxisName;
-    if( oDomainSet.IsValid() )
+    if (oDomainSet.IsValid())
     {
         auto oAxisLabels = oDomainSet["generalGrid"]["axisLabels"].ToArray();
-        if( oAxisLabels.IsValid() && oAxisLabels.Size() >= 2 )
+        if (oAxisLabels.IsValid() && oAxisLabels.Size() >= 2)
         {
             osXAxisName = oAxisLabels[0].ToString();
             osYAxisName = oAxisLabels[1].ToString();
         }
 
         auto oAxis = oDomainSet["generalGrid"]["axis"].ToArray();
-        if( oAxis.IsValid() && oAxis.Size() >= 2 )
+        if (oAxis.IsValid() && oAxis.Size() >= 2)
         {
             double dfXRes = std::abs(oAxis[0].GetDouble("resolution"));
             double dfYRes = std::abs(oAxis[1].GetDouble("resolution"));
@@ -1171,16 +1188,16 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
             dfYMin = oAxis[1].GetDouble("lowerBound");
             dfYMax = oAxis[1].GetDouble("upperBound");
 
-            if( osXAxisName == "Lat" )
+            if (osXAxisName == "Lat")
             {
-                std::swap( dfXRes, dfYRes );
-                std::swap( dfXMin, dfYMin );
-                std::swap( dfXMax, dfYMax );
+                std::swap(dfXRes, dfYRes);
+                std::swap(dfXMin, dfYMin);
+                std::swap(dfXMax, dfYMax);
             }
 
             double dfXSize = (dfXMax - dfXMin) / dfXRes;
             double dfYSize = (dfYMax - dfYMin) / dfYRes;
-            while( dfXSize > INT_MAX || dfYSize > INT_MAX )
+            while (dfXSize > INT_MAX || dfYSize > INT_MAX)
             {
                 dfXSize /= 2;
                 dfYSize /= 2;
@@ -1195,42 +1212,48 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         }
 
         OGRSpatialReference oSRS;
-        std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
+        std::string srsName(oDomainSet["generalGrid"].GetString("srsName"));
         bool bSwap = false;
 
         // Strip of time component, as found in
         // OGCAPI:https://maps.ecere.com/ogcapi/collections/blueMarble
-        if( STARTS_WITH(srsName.c_str(),
+        if (STARTS_WITH(srsName.c_str(),
                         "http://www.opengis.net/def/crs-compound?1=") &&
-            srsName.find("&2=http://www.opengis.net/def/crs/OGC/0/") != std::string::npos )
+            srsName.find("&2=http://www.opengis.net/def/crs/OGC/0/") !=
+                std::string::npos)
         {
-            srsName = srsName.substr(strlen("http://www.opengis.net/def/crs-compound?1="));
+            srsName = srsName.substr(
+                strlen("http://www.opengis.net/def/crs-compound?1="));
             srsName.resize(srsName.find("&2="));
         }
 
-        if( oSRS.SetFromUserInput( srsName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+        if (oSRS.SetFromUserInput(
+                srsName.c_str(),
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+            OGRERR_NONE)
         {
-            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+            if (oSRS.EPSGTreatsAsLatLong() ||
+                oSRS.EPSGTreatsAsNorthingEasting())
             {
                 bSwap = true;
             }
         }
-        else if( srsName == "https://ows.rasdaman.org/def/crs/EPSG/0/4326" ) // HACK
+        else if (srsName ==
+                 "https://ows.rasdaman.org/def/crs/EPSG/0/4326")  // HACK
         {
             bSwap = true;
         }
-        if( bSwap )
+        if (bSwap)
         {
-            std::swap( osXAxisName, osYAxisName );
+            std::swap(osXAxisName, osYAxisName);
         }
-
     }
 
     int nOverviewCount = 0;
     int nLargestDim = std::max(nRasterXSize, nRasterYSize);
-    while( nLargestDim > 256 )
+    while (nLargestDim > 256)
     {
-        nOverviewCount ++;
+        nOverviewCount++;
         nLargestDim /= 2;
     }
 
@@ -1238,8 +1261,8 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     CPLString osCoverageURLModified(osCoverageURL);
-    if( osCoverageURLModified.find('&') == std::string::npos &&
-        osCoverageURLModified.find('?') == std::string::npos )
+    if (osCoverageURLModified.find('&') == std::string::npos &&
+        osCoverageURLModified.find('?') == std::string::npos)
     {
         osCoverageURLModified += '?';
     }
@@ -1248,69 +1271,62 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         osCoverageURLModified += '&';
     }
 
-    if( !osXAxisName.empty() && !osYAxisName.empty() )
+    if (!osXAxisName.empty() && !osYAxisName.empty())
     {
-        osCoverageURLModified += CPLSPrintf(
-            "subset=%s(${minx}:${maxx}),%s(${miny}:${maxy})&scaleSize=%s(${width}),%s(${height})",
-            osXAxisName.c_str(),
-            osYAxisName.c_str(),
-            osXAxisName.c_str(),
-            osYAxisName.c_str());
+        osCoverageURLModified +=
+            CPLSPrintf("subset=%s(${minx}:${maxx}),%s(${miny}:${maxy})&"
+                       "scaleSize=%s(${width}),%s(${height})",
+                       osXAxisName.c_str(), osYAxisName.c_str(),
+                       osXAxisName.c_str(), osYAxisName.c_str());
     }
     else
     {
         // FIXME
-        osCoverageURLModified += "bbox=${minx},${miny},${maxx},${maxy}&scaleSize=Lat(${height}),Long(${width})";
+        osCoverageURLModified += "bbox=${minx},${miny},${maxx},${maxy}&"
+                                 "scaleSize=Lat(${height}),Long(${width})";
     }
 
-    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "CACHE", "YES"));
-    const int nMaxConnections = atoi(CSLFetchNameValueDef(
-        poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
-        CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
+    const bool bCache = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "YES"));
+    const int nMaxConnections = atoi(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
+                             CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
     CPLString osWMS_XML;
-    char* pszEscapedURL = CPLEscapeString(osCoverageURLModified, -1, CPLES_XML);
+    char *pszEscapedURL = CPLEscapeString(osCoverageURLModified, -1, CPLES_XML);
     std::string osAccept("<Accept>image/tiff;application=geotiff</Accept>");
-    osWMS_XML.Printf(
-        "<GDAL_WMS>"
-        "    <Service name=\"OGCAPICoverage\">"
-        "        <ServerUrl>%s</ServerUrl>"
-        "    </Service>"
-        "    <DataWindow>"
-        "        <UpperLeftX>%.18g</UpperLeftX>"
-        "        <UpperLeftY>%.18g</UpperLeftY>"
-        "        <LowerRightX>%.18g</LowerRightX>"
-        "        <LowerRightY>%.18g</LowerRightY>"
-        "        <SizeX>%d</SizeX>"
-        "        <SizeY>%d</SizeY>"
-        "    </DataWindow>"
-        "    <OverviewCount>%d</OverviewCount>"
-        "    <BlockSizeX>256</BlockSizeX>"
-        "    <BlockSizeY>256</BlockSizeY>"
-        "    <BandsCount>%d</BandsCount>"
-        "    <DataType>%s</DataType>"
-        "    <MaxConnections>%d</MaxConnections>"
-        "    %s"
-        "    %s"
-        "</GDAL_WMS>",
-        pszEscapedURL,
-        dfXMin, dfYMax,
-        dfXMax, dfYMin,
-        nRasterXSize,
-        nRasterYSize,
-        nOverviewCount,
-        l_nBands,
-        GDALGetDataTypeName(eDT),
-        nMaxConnections,
-        osAccept.c_str(),
-        bCache ? "<Cache />" : "");
+    osWMS_XML.Printf("<GDAL_WMS>"
+                     "    <Service name=\"OGCAPICoverage\">"
+                     "        <ServerUrl>%s</ServerUrl>"
+                     "    </Service>"
+                     "    <DataWindow>"
+                     "        <UpperLeftX>%.18g</UpperLeftX>"
+                     "        <UpperLeftY>%.18g</UpperLeftY>"
+                     "        <LowerRightX>%.18g</LowerRightX>"
+                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <SizeX>%d</SizeX>"
+                     "        <SizeY>%d</SizeY>"
+                     "    </DataWindow>"
+                     "    <OverviewCount>%d</OverviewCount>"
+                     "    <BlockSizeX>256</BlockSizeX>"
+                     "    <BlockSizeY>256</BlockSizeY>"
+                     "    <BandsCount>%d</BandsCount>"
+                     "    <DataType>%s</DataType>"
+                     "    <MaxConnections>%d</MaxConnections>"
+                     "    %s"
+                     "    %s"
+                     "</GDAL_WMS>",
+                     pszEscapedURL, dfXMin, dfYMax, dfXMax, dfYMin,
+                     nRasterXSize, nRasterYSize, nOverviewCount, l_nBands,
+                     GDALGetDataTypeName(eDT), nMaxConnections,
+                     osAccept.c_str(), bCache ? "<Cache />" : "");
     CPLFree(pszEscapedURL);
     CPLDebug("OGCAPI", "%s", osWMS_XML.c_str());
-    m_poWMSDS.reset(GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
-    if( m_poWMSDS == nullptr )
+    m_poWMSDS.reset(
+        GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+    if (m_poWMSDS == nullptr)
         return false;
 
-    for( int i = 1; i <= m_poWMSDS->GetRasterCount(); i++ )
+    for (int i = 1; i <= m_poWMSDS->GetRasterCount(); i++)
     {
         SetBand(i, new OGCAPIMapWrapperBand(this, i));
     }
@@ -1323,41 +1339,40 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
 /*                      OGCAPIMapWrapperBand()                          */
 /************************************************************************/
 
-OGCAPIMapWrapperBand::OGCAPIMapWrapperBand( OGCAPIDataset* poDSIn, int nBandIn )
+OGCAPIMapWrapperBand::OGCAPIMapWrapperBand(OGCAPIDataset *poDSIn, int nBandIn)
 {
     poDS = poDSIn;
     nBand = nBandIn;
     eDataType = poDSIn->m_poWMSDS->GetRasterBand(nBand)->GetRasterDataType();
-    poDSIn->m_poWMSDS->GetRasterBand(nBand)->
-        GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poDSIn->m_poWMSDS->GetRasterBand(nBand)->GetBlockSize(&nBlockXSize,
+                                                          &nBlockYSize);
 }
 
 /************************************************************************/
 /*                            IReadBlock()                              */
 /************************************************************************/
 
-CPLErr OGCAPIMapWrapperBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
+CPLErr OGCAPIMapWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                        void *pImage)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_poWMSDS->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
+    return poGDS->m_poWMSDS->GetRasterBand(nBand)->ReadBlock(
+        nBlockXOff, nBlockYOff, pImage);
 }
 
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGCAPIMapWrapperBand::IRasterIO( GDALRWFlag eRWFlag,
-                            int nXOff, int nYOff, int nXSize, int nYSize,
-                            void * pData, int nBufXSize, int nBufYSize,
-                            GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg* psExtraArg )
+CPLErr OGCAPIMapWrapperBand::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return poGDS->m_poWMSDS->GetRasterBand(nBand)->RasterIO(
-                                         eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg );
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nPixelSpace, nLineSpace, psExtraArg);
 }
 
 /************************************************************************/
@@ -1366,7 +1381,7 @@ CPLErr OGCAPIMapWrapperBand::IRasterIO( GDALRWFlag eRWFlag,
 
 int OGCAPIMapWrapperBand::GetOverviewCount()
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetOverviewCount();
 }
 
@@ -1374,9 +1389,9 @@ int OGCAPIMapWrapperBand::GetOverviewCount()
 /*                              GetOverview()                           */
 /************************************************************************/
 
-GDALRasterBand* OGCAPIMapWrapperBand::GetOverview(int nLevel)
+GDALRasterBand *OGCAPIMapWrapperBand::GetOverview(int nLevel)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetOverview(nLevel);
 }
 
@@ -1386,10 +1401,10 @@ GDALRasterBand* OGCAPIMapWrapperBand::GetOverview(int nLevel)
 
 GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     // The WMS driver returns Grey-Alpha for 2 band, RGB(A) for 3 or 4 bands
     // Restrict that behavior to Byte only data.
-    if( eDataType == GDT_Byte )
+    if (eDataType == GDT_Byte)
         return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
     return GCI_Undefined;
 }
@@ -1398,38 +1413,38 @@ GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 /*                           ParseXMLSchema()                           */
 /************************************************************************/
 
-static bool ParseXMLSchema(
-    const std::string& osURL,
-    std::vector<std::unique_ptr<OGRFieldDefn>>& apoFields,
-    OGRwkbGeometryType& eGeomType)
+#ifdef OGR_ENABLE_DRIVER_GML
+static bool
+ParseXMLSchema(const std::string &osURL,
+               std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields,
+               OGRwkbGeometryType &eGeomType)
 {
     CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
     CPLErrorStateBackuper oErrorStateBackuper;
 
-    std::vector<GMLFeatureClass*> apoClasses;
+    std::vector<GMLFeatureClass *> apoClasses;
     bool bFullyUnderstood = false;
-    bool bHaveSchema = GMLParseXSD( osURL.c_str(), apoClasses,
-                                    bFullyUnderstood );
+    bool bHaveSchema = GMLParseXSD(osURL.c_str(), apoClasses, bFullyUnderstood);
     if (bHaveSchema && apoClasses.size() == 1)
     {
         auto poGMLFeatureClass = apoClasses[0];
-        if( poGMLFeatureClass->GetGeometryPropertyCount() == 1 &&
-            poGMLFeatureClass->GetGeometryProperty(0)->GetType() != wkbUnknown )
+        if (poGMLFeatureClass->GetGeometryPropertyCount() == 1 &&
+            poGMLFeatureClass->GetGeometryProperty(0)->GetType() != wkbUnknown)
         {
-            eGeomType =
-                static_cast<OGRwkbGeometryType>(
-                    poGMLFeatureClass->GetGeometryProperty(0)->GetType());
+            eGeomType = static_cast<OGRwkbGeometryType>(
+                poGMLFeatureClass->GetGeometryProperty(0)->GetType());
         }
 
         const int nPropertyCount = poGMLFeatureClass->GetPropertyCount();
-        for( int iField = 0; iField < nPropertyCount; iField++ )
+        for (int iField = 0; iField < nPropertyCount; iField++)
         {
-            const auto poProperty = poGMLFeatureClass->GetProperty( iField );
+            const auto poProperty = poGMLFeatureClass->GetProperty(iField);
             OGRFieldSubType eSubType = OFSTNone;
-            const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
+            const OGRFieldType eFType =
+                GML_GetOGRFieldType(poProperty->GetType(), eSubType);
 
-            const char* pszName = poProperty->GetName();
-            auto poField = cpl::make_unique<OGRFieldDefn>( pszName, eFType );
+            const char *pszName = poProperty->GetName();
+            auto poField = cpl::make_unique<OGRFieldDefn>(pszName, eFType);
             poField->SetSubType(eSubType);
             apoFields.emplace_back(std::move(poField));
         }
@@ -1437,106 +1452,108 @@ static bool ParseXMLSchema(
         return true;
     }
 
-    for( auto poFeatureClass: apoClasses )
+    for (auto poFeatureClass : apoClasses)
         delete poFeatureClass;
 
     return false;
 }
+#endif
 
 /************************************************************************/
 /*                         InitWithTilesAPI()                           */
 /************************************************************************/
 
-bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
-                                     const CPLString& osTilesURL,
+bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
+                                     const CPLString &osTilesURL, bool bIsMap,
                                      double dfXMin, double dfYMin,
                                      double dfXMax, double dfYMax,
-                                     const CPLJSONObject& oJsonCollection)
+                                     const CPLJSONObject &oJsonCollection)
 {
     CPLJSONDocument oDoc;
-    if( !DownloadJSon(osTilesURL.c_str(), oDoc) )
+    if (!DownloadJSon(osTilesURL.c_str(), oDoc))
         return false;
 
     auto oTilesets = oDoc.GetRoot()["tilesets"].ToArray();
-    if( oTilesets.Size() == 0 )
+    if (oTilesets.Size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find tilesets");
         return false;
     }
-    const char* pszRequiredTileMatrixSet = CSLFetchNameValue(
-        poOpenInfo->papszOpenOptions, "TILEMATRIXSET");
-    const char* pszPreferredTileMatrixSet = CSLFetchNameValue(
+    const char *pszRequiredTileMatrixSet =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEMATRIXSET");
+    const char *pszPreferredTileMatrixSet = CSLFetchNameValue(
         poOpenInfo->papszOpenOptions, "PREFERRED_TILEMATRIXSET");
     CPLString osTilesetURL;
-    for(const auto& oTileset: oTilesets)
+    for (const auto &oTileset : oTilesets)
     {
         const auto oTileMatrixSetURI = oTileset.GetString("tileMatrixSetURI");
-        const auto oTileMatrixSetDefinition = oTileset.GetString("tileMatrixSetDefinition");
         const auto oLinks = oTileset.GetArray("links");
-        if( !oLinks.IsValid() )
+        if (bIsMap)
+        {
+            if (oTileset.GetString("dataType") != "map")
+                continue;
+        }
+        else
+        {
+            if (oTileset.GetString("dataType") != "vector")
+                continue;
+        }
+        if (!oLinks.IsValid())
         {
             CPLDebug("OGCAPI", "Missing links for a tileset");
             continue;
         }
-        if( pszRequiredTileMatrixSet != nullptr &&
-            oTileMatrixSetURI.find(pszRequiredTileMatrixSet) == std::string::npos &&
-            oTileMatrixSetDefinition.find(pszRequiredTileMatrixSet) == std::string::npos )
+        if (pszRequiredTileMatrixSet != nullptr &&
+            oTileMatrixSetURI.find(pszRequiredTileMatrixSet) ==
+                std::string::npos)
         {
             continue;
         }
         CPLString osCandidateTilesetURL;
-        for( const auto& oLink: oLinks )
+        for (const auto &oLink : oLinks)
         {
-            if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/tileset" &&
-                oLink["type"].ToString() == "application/json" )
+            if (oLink["rel"].ToString() == "self" &&
+                oLink["type"].ToString() == "application/json")
             {
                 osCandidateTilesetURL = BuildURL(oLink["href"].ToString());
                 break;
             }
         }
-        if( pszRequiredTileMatrixSet != nullptr )
+        if (pszRequiredTileMatrixSet != nullptr)
         {
             osTilesetURL = osCandidateTilesetURL;
             break;
         }
-        if( pszPreferredTileMatrixSet != nullptr &&
+        if (pszPreferredTileMatrixSet != nullptr &&
             !osCandidateTilesetURL.empty() &&
-            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) != std::string::npos ||
-             oTileMatrixSetDefinition.find(pszPreferredTileMatrixSet) != std::string::npos) )
+            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) !=
+             std::string::npos))
         {
             osTilesetURL = osCandidateTilesetURL;
             break;
         }
 
-        if( oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos ||
-            oTileMatrixSetDefinition.find("WorldCRS84Quad") != std::string::npos )
+        if (oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos)
         {
             osTilesetURL = osCandidateTilesetURL;
         }
-        else if( osTilesetURL.empty() )
+        else if (osTilesetURL.empty())
         {
             osTilesetURL = osCandidateTilesetURL;
         }
     }
-    if( osTilesetURL.empty() )
+    if (osTilesetURL.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find tilematrixset");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find tilematrixset");
         return false;
     }
 
     // Download and parse selected tileset definition
-    if( !DownloadJSon(osTilesetURL.c_str(), oDoc) )
+    if (!DownloadJSon(osTilesetURL.c_str(), oDoc))
         return false;
 
-    const auto oTileMatrixSetDefinition = oDoc.GetRoot().GetString("tileMatrixSetDefinition");
-    if( oTileMatrixSetDefinition.empty() )
-    {
-         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find tileMatrixSetDefinition");
-         return false;
-    }
     const auto oLinks = oDoc.GetRoot().GetArray("links");
-    if( !oLinks.IsValid() )
+    if (!oLinks.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing links for tileset");
         return false;
@@ -1545,34 +1562,53 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     CPLString osJPEG_URL;
     CPLString osMVT_URL;
     CPLString osGEOJSON_URL;
-    for( const auto& oLink: oLinks )
+    CPLString osTilingSchemeURL;
+    for (const auto &oLink : oLinks)
     {
         const auto osRel = oLink.GetString("rel");
         const auto osType = oLink.GetString("type");
-        if( osRel == "item" &&
-            osType == "image/png" )
+
+        if (osRel == "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme" &&
+            osType == "application/json")
         {
-            osPNG_URL = BuildURL(oLink["href"].ToString());
+            osTilingSchemeURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "item" &&
-                 osType == "image/jpeg" )
+        else if (bIsMap)
         {
-            osJPEG_URL = BuildURL(oLink["href"].ToString());
+            if (osRel == "item" && osType == "image/png")
+            {
+                osPNG_URL = BuildURL(oLink["href"].ToString());
+            }
+            else if (osRel == "item" && osType == "image/jpeg")
+            {
+                osJPEG_URL = BuildURL(oLink["href"].ToString());
+            }
         }
-        else if( osRel == "item" &&
-                 osType == "application/vnd.mapbox-vector-tile" )
+        else
         {
-            osMVT_URL = BuildURL(oLink["href"].ToString());
-        }
-        else if( osRel == "item" &&
-                 osType == "application/geo+json" )
-        {
-            osGEOJSON_URL = BuildURL(oLink["href"].ToString());
+            if (osRel == "item" &&
+                osType == "application/vnd.mapbox-vector-tile")
+            {
+                osMVT_URL = BuildURL(oLink["href"].ToString());
+            }
+            else if (osRel == "item" && osType == "application/geo+json")
+            {
+                osGEOJSON_URL = BuildURL(oLink["href"].ToString());
+            }
         }
     }
 
+    if (osTilingSchemeURL.empty())
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot find http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme");
+        return false;
+    }
+
     // Parse tile matrix set limits.
-    const auto oTileMatrixSetLimits = oDoc.GetRoot().GetArray("tileMatrixSetLimits");
+    const auto oTileMatrixSetLimits =
+        oDoc.GetRoot().GetArray("tileMatrixSetLimits");
     struct Limits
     {
         int minTileRow;
@@ -1581,51 +1617,48 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
         int maxTileCol;
     };
     std::map<CPLString, Limits> oMapTileMatrixSetLimits;
-    if( CPLTestBool(CPLGetConfigOption("GDAL_OGCAPI_TILEMATRIXSET_LIMITS", "YES")) )
+    if (CPLTestBool(
+            CPLGetConfigOption("GDAL_OGCAPI_TILEMATRIXSET_LIMITS", "YES")))
     {
-        for( const auto& jsonLimit: oTileMatrixSetLimits )
+        for (const auto &jsonLimit : oTileMatrixSetLimits)
         {
             const auto osTileMatrix = jsonLimit.GetString("tileMatrix");
-            if( !osTileMatrix.empty() )
+            if (!osTileMatrix.empty())
             {
                 Limits limits;
                 limits.minTileRow = jsonLimit.GetInteger("minTileRow");
                 limits.maxTileRow = jsonLimit.GetInteger("maxTileRow");
                 limits.minTileCol = jsonLimit.GetInteger("minTileCol");
                 limits.maxTileCol = jsonLimit.GetInteger("maxTileCol");
-                if( limits.minTileRow > limits.maxTileRow )
-                    continue; // shouldn't happen on valid data
+                if (limits.minTileRow > limits.maxTileRow)
+                    continue;  // shouldn't happen on valid data
                 oMapTileMatrixSetLimits[osTileMatrix] = limits;
             }
         }
     }
 
     const CPLString osRasterURL =
-        SelectImageURL(poOpenInfo->papszOpenOptions,
-                                          osPNG_URL,
-                                          osJPEG_URL);
-    const CPLString osVectorURL =
-        SelectVectorFormatURL(poOpenInfo->papszOpenOptions,
-                                          osMVT_URL,
-                                          osGEOJSON_URL);
-    if( osRasterURL.empty() && osVectorURL.empty() )
+        SelectImageURL(poOpenInfo->papszOpenOptions, osPNG_URL, osJPEG_URL);
+    const CPLString osVectorURL = SelectVectorFormatURL(
+        poOpenInfo->papszOpenOptions, osMVT_URL, osGEOJSON_URL);
+    if (osRasterURL.empty() && osVectorURL.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find link to PNG, JPEG, MVT or GeoJSON tiles");
         return false;
     }
 
-    for( const char* pszNeedle : { "{tileMatrix}", "{tileRow}", "{tileCol}" } )
+    for (const char *pszNeedle : {"{tileMatrix}", "{tileRow}", "{tileCol}"})
     {
-        if( !osRasterURL.empty() &&
-            osRasterURL.find(pszNeedle) == std::string::npos )
+        if (!osRasterURL.empty() &&
+            osRasterURL.find(pszNeedle) == std::string::npos)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s missing in tile URL %s",
                      pszNeedle, osRasterURL.c_str());
             return false;
         }
-        if( !osVectorURL.empty() &&
-            osVectorURL.find(pszNeedle) == std::string::npos )
+        if (!osVectorURL.empty() &&
+            osVectorURL.find(pszNeedle) == std::string::npos)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s missing in tile URL %s",
                      pszNeedle, osVectorURL.c_str());
@@ -1634,36 +1667,40 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     }
 
     // Download and parse tile matrix set definition
-    if( !DownloadJSon(oTileMatrixSetDefinition.c_str(), oDoc, nullptr, MEDIA_TYPE_JSON) )
+    if (!DownloadJSon(osTilingSchemeURL.c_str(), oDoc, nullptr,
+                      MEDIA_TYPE_JSON))
         return false;
     auto tms = gdal::TileMatrixSet::parse(oDoc.SaveAsString().c_str());
-    if( tms == nullptr )
+    if (tms == nullptr)
         return false;
 
-    if( m_oSRS.SetFromUserInput(tms->crs().c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+    if (m_oSRS.SetFromUserInput(
+            tms->crs().c_str(),
+            OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+        OGRERR_NONE)
         return false;
-    const bool bInvertAxis =
-            m_oSRS.EPSGTreatsAsLatLong() != FALSE ||
-            m_oSRS.EPSGTreatsAsNorthingEasting() != FALSE;
+    const bool bInvertAxis = m_oSRS.EPSGTreatsAsLatLong() != FALSE ||
+                             m_oSRS.EPSGTreatsAsNorthingEasting() != FALSE;
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     bool bFoundSomething = false;
-    if( !osVectorURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+#ifdef OGR_ENABLE_DRIVER_GML
+    if (!osVectorURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
     {
         const auto osVectorType = oJsonCollection.GetString("vectorType");
         OGRwkbGeometryType eGeomType = wkbUnknown;
-        if( osVectorType == "Points" )
+        if (osVectorType == "Points")
             eGeomType = wkbPoint;
-        else if( osVectorType == "Lines" )
+        else if (osVectorType == "Lines")
             eGeomType = wkbMultiLineString;
-        else if( osVectorType == "Polygons" )
+        else if (osVectorType == "Polygons")
             eGeomType = wkbMultiPolygon;
 
         CPLString osXMLSchemaURL;
-        for( const auto& oLink: oJsonCollection.GetArray("links") )
+        for (const auto &oLink : oJsonCollection.GetArray("links"))
         {
-            if( oLink["rel"].ToString() == "describedBy" &&
-                oLink["type"].ToString() == "text/xml" )
+            if (oLink["rel"].ToString() == "describedBy" &&
+                oLink["type"].ToString() == "text/xml")
             {
                 osXMLSchemaURL = BuildURL(oLink["href"].ToString());
             }
@@ -1671,85 +1708,96 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
 
         std::vector<std::unique_ptr<OGRFieldDefn>> apoFields;
         bool bGotSchema = false;
-        if( !osXMLSchemaURL.empty() )
+        if (!osXMLSchemaURL.empty())
         {
             bGotSchema = ParseXMLSchema(osXMLSchemaURL, apoFields, eGeomType);
         }
 
-        for(const auto& tileMatrix: tms->tileMatrixList() )
+        for (const auto &tileMatrix : tms->tileMatrixList())
         {
-            const double dfOriX = bInvertAxis ? tileMatrix.mTopLeftY : tileMatrix.mTopLeftX;
-            const double dfOriY = bInvertAxis ? tileMatrix.mTopLeftX : tileMatrix.mTopLeftY;
+            const double dfOriX =
+                bInvertAxis ? tileMatrix.mTopLeftY : tileMatrix.mTopLeftX;
+            const double dfOriY =
+                bInvertAxis ? tileMatrix.mTopLeftX : tileMatrix.mTopLeftY;
 
             auto oLimitsIter = oMapTileMatrixSetLimits.find(tileMatrix.mId);
-            if( !oMapTileMatrixSetLimits.empty() &&
-                oLimitsIter == oMapTileMatrixSetLimits.end() )
+            if (!oMapTileMatrixSetLimits.empty() &&
+                oLimitsIter == oMapTileMatrixSetLimits.end())
             {
                 // Tile matrix level not in known limits
                 continue;
             }
-            int minCol = std::max(0,
-                static_cast<int>((dfXMin - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
-            int maxCol = std::min(tileMatrix.mMatrixWidth - 1,
-                static_cast<int>((dfXMax - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
-            int minRow = std::max(0,
-                static_cast<int>((dfOriY - dfYMax) / tileMatrix.mResY / tileMatrix.mTileHeight));
-            int maxRow = std::min(tileMatrix.mMatrixHeight - 1,
-                static_cast<int>((dfOriY - dfYMin) / tileMatrix.mResY / tileMatrix.mTileHeight));
-            if( oLimitsIter != oMapTileMatrixSetLimits.end() )
+            int minCol = std::max(
+                0, static_cast<int>((dfXMin - dfOriX) / tileMatrix.mResX /
+                                    tileMatrix.mTileWidth));
+            int maxCol =
+                std::min(tileMatrix.mMatrixWidth - 1,
+                         static_cast<int>((dfXMax - dfOriX) / tileMatrix.mResX /
+                                          tileMatrix.mTileWidth));
+            int minRow = std::max(
+                0, static_cast<int>((dfOriY - dfYMax) / tileMatrix.mResY /
+                                    tileMatrix.mTileHeight));
+            int maxRow =
+                std::min(tileMatrix.mMatrixHeight - 1,
+                         static_cast<int>((dfOriY - dfYMin) / tileMatrix.mResY /
+                                          tileMatrix.mTileHeight));
+            if (oLimitsIter != oMapTileMatrixSetLimits.end())
             {
                 // Take into account tileMatrixSetLimits
                 minCol = std::max(minCol, oLimitsIter->second.minTileCol);
                 minRow = std::max(minRow, oLimitsIter->second.minTileRow);
                 maxCol = std::min(maxCol, oLimitsIter->second.maxTileCol);
                 maxRow = std::min(maxRow, oLimitsIter->second.maxTileRow);
-                if( minCol > maxCol || minRow > maxRow )
+                if (minCol > maxCol || minRow > maxRow)
                 {
                     continue;
                 }
             }
-            auto poLayer = std::unique_ptr<OGCAPITiledLayer>(
-                new OGCAPITiledLayer(this, bInvertAxis,
-                                     osVectorURL, osVectorURL == osMVT_URL,
-                                     tileMatrix, eGeomType));
+            auto poLayer =
+                std::unique_ptr<OGCAPITiledLayer>(new OGCAPITiledLayer(
+                    this, bInvertAxis, osVectorURL, osVectorURL == osMVT_URL,
+                    tileMatrix, eGeomType));
             poLayer->SetMinMaxXY(minCol, minRow, maxCol, maxRow);
             poLayer->SetExtent(dfXMin, dfYMin, dfXMax, dfYMax);
-            if( bGotSchema )
+            if (bGotSchema)
                 poLayer->SetFields(apoFields);
             m_apoLayers.emplace_back(std::move(poLayer));
         }
 
         bFoundSomething = true;
     }
+#else
+    CPL_IGNORE_RET_VAL(oJsonCollection);
+#endif
 
-    if( !osRasterURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 )
+    if (!osRasterURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
     {
-        const bool bCache = CPLTestBool(CSLFetchNameValueDef(
-            poOpenInfo->papszOpenOptions, "CACHE", "YES"));
+        const bool bCache = CPLTestBool(
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "YES"));
         const int nMaxConnections = atoi(CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
             CPLGetConfigOption("GDAL_WMS_MAX_CONNECTIONS", "5")));
-        const char* pszTileMatrix = CSLFetchNameValue(
-            poOpenInfo->papszOpenOptions, "TILEMATRIX");
+        const char *pszTileMatrix =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEMATRIX");
         const int l_nBands = ((osRasterURL == osPNG_URL) ? 4 : 3);
 
-        for(const auto& tileMatrix: tms->tileMatrixList() )
+        for (const auto &tileMatrix : tms->tileMatrixList())
         {
-            if( pszTileMatrix && !EQUAL(tileMatrix.mId.c_str(), pszTileMatrix) )
+            if (pszTileMatrix && !EQUAL(tileMatrix.mId.c_str(), pszTileMatrix))
             {
                 continue;
             }
-            if( tileMatrix.mTileWidth == 0 ||
+            if (tileMatrix.mTileWidth == 0 ||
                 tileMatrix.mMatrixWidth > INT_MAX / tileMatrix.mTileWidth ||
                 tileMatrix.mTileHeight == 0 ||
-                tileMatrix.mMatrixHeight> INT_MAX / tileMatrix.mTileHeight )
+                tileMatrix.mMatrixHeight > INT_MAX / tileMatrix.mTileHeight)
             {
                 // Too resoluted for GDAL limits
                 break;
             }
             auto oLimitsIter = oMapTileMatrixSetLimits.find(tileMatrix.mId);
-            if( !oMapTileMatrixSetLimits.empty() &&
-                oLimitsIter == oMapTileMatrixSetLimits.end() )
+            if (!oMapTileMatrixSetLimits.empty() &&
+                oLimitsIter == oMapTileMatrixSetLimits.end())
             {
                 // Tile matrix level not in known limits
                 continue;
@@ -1759,34 +1807,39 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             osURL.replaceAll("{tileRow}", "${y}");
             osURL.replaceAll("{tileCol}", "${x}");
 
-            const double dfOriX = bInvertAxis ? tileMatrix.mTopLeftY : tileMatrix.mTopLeftX;
-            const double dfOriY = bInvertAxis ? tileMatrix.mTopLeftX : tileMatrix.mTopLeftY;
+            const double dfOriX =
+                bInvertAxis ? tileMatrix.mTopLeftY : tileMatrix.mTopLeftX;
+            const double dfOriY =
+                bInvertAxis ? tileMatrix.mTopLeftX : tileMatrix.mTopLeftY;
 
-            const auto CreateWMS_XML = [=, &tileMatrix](
-                int minRow, int rowCount, int nCoalesce,
-                double& dfStripMinY, double& dfStripMaxY)
+            const auto CreateWMS_XML =
+                [=, &tileMatrix](int minRow, int rowCount, int nCoalesce,
+                                 double &dfStripMinY, double &dfStripMaxY)
             {
                 int minCol = 0;
                 int maxCol = tileMatrix.mMatrixWidth - 1;
                 int maxRow = minRow + rowCount - 1;
-                if( oLimitsIter != oMapTileMatrixSetLimits.end() )
+                if (oLimitsIter != oMapTileMatrixSetLimits.end())
                 {
                     // Take into account tileMatrixSetLimits
                     minCol = std::max(minCol, oLimitsIter->second.minTileCol);
                     minRow = std::max(minRow, oLimitsIter->second.minTileRow);
                     maxCol = std::min(maxCol, oLimitsIter->second.maxTileCol);
                     maxRow = std::min(maxRow, oLimitsIter->second.maxTileRow);
-                    if( minCol > maxCol || minRow > maxRow )
+                    if (minCol > maxCol || minRow > maxRow)
                         return CPLString();
                 }
-                double dfStripMinX = dfOriX +
-                    minCol * tileMatrix.mTileWidth * tileMatrix.mResX;
-                double dfStripMaxX = dfOriX +
-                    (maxCol + 1) * tileMatrix.mTileWidth * tileMatrix.mResX;
-                dfStripMaxY = dfOriY - minRow * tileMatrix.mTileHeight * tileMatrix.mResY;
-                dfStripMinY = dfOriY - (maxRow + 1) * tileMatrix.mTileHeight * tileMatrix.mResY;
+                double dfStripMinX =
+                    dfOriX + minCol * tileMatrix.mTileWidth * tileMatrix.mResX;
+                double dfStripMaxX = dfOriX + (maxCol + 1) *
+                                                  tileMatrix.mTileWidth *
+                                                  tileMatrix.mResX;
+                dfStripMaxY =
+                    dfOriY - minRow * tileMatrix.mTileHeight * tileMatrix.mResY;
+                dfStripMinY = dfOriY - (maxRow + 1) * tileMatrix.mTileHeight *
+                                           tileMatrix.mResY;
                 CPLString osWMS_XML;
-                char* pszEscapedURL = CPLEscapeString(osURL, -1, CPLES_XML);
+                char *pszEscapedURL = CPLEscapeString(osURL, -1, CPLES_XML);
                 osWMS_XML.Printf(
                     "<GDAL_WMS>"
                     "    <Service name=\"TMS\">"
@@ -1810,126 +1863,118 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                     "    <MaxConnections>%d</MaxConnections>"
                     "    %s"
                     "</GDAL_WMS>",
-                    pszEscapedURL,
-                    nCoalesce,
-                    dfStripMinX,
-                    dfStripMaxY,
-                    dfStripMaxX,
-                    dfStripMinY,
-                    minRow,
+                    pszEscapedURL, nCoalesce, dfStripMinX, dfStripMaxY,
+                    dfStripMaxX, dfStripMinY, minRow,
                     (maxCol - minCol + 1) / nCoalesce * tileMatrix.mTileWidth,
-                    rowCount * tileMatrix.mTileHeight,
-                    tileMatrix.mTileWidth,
-                    tileMatrix.mTileHeight,
-                    l_nBands,
-                    nMaxConnections,
+                    rowCount * tileMatrix.mTileHeight, tileMatrix.mTileWidth,
+                    tileMatrix.mTileHeight, l_nBands, nMaxConnections,
                     bCache ? "<Cache />" : "");
                 CPLFree(pszEscapedURL);
                 return osWMS_XML;
             };
 
             auto vmwl = tileMatrix.mVariableMatrixWidthList;
-            if( vmwl.empty() )
+            if (vmwl.empty())
             {
                 double dfIgnored1, dfIgnored2;
-                CPLString osWMS_XML(CreateWMS_XML(0, tileMatrix.mMatrixHeight, 1, dfIgnored1, dfIgnored2));
-                if( osWMS_XML.empty() )
+                CPLString osWMS_XML(CreateWMS_XML(0, tileMatrix.mMatrixHeight,
+                                                  1, dfIgnored1, dfIgnored2));
+                if (osWMS_XML.empty())
                     continue;
-                std::unique_ptr<GDALDataset> poDS(GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
-                if( !poDS )
+                std::unique_ptr<GDALDataset> poDS(GDALDataset::Open(
+                    osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+                if (!poDS)
                     return false;
                 m_apoDatasetsAssembled.emplace_back(std::move(poDS));
             }
             else
             {
                 std::sort(vmwl.begin(), vmwl.end(),
-                    [](const gdal::TileMatrixSet::TileMatrix::VariableMatrixWidth& a,
-                        const gdal::TileMatrixSet::TileMatrix::VariableMatrixWidth& b)
-                    {
-                        return a.mMinTileRow < b.mMinTileRow;
-                    }
-                );
+                          [](const gdal::TileMatrixSet::TileMatrix::
+                                 VariableMatrixWidth &a,
+                             const gdal::TileMatrixSet::TileMatrix::
+                                 VariableMatrixWidth &b)
+                          { return a.mMinTileRow < b.mMinTileRow; });
                 std::vector<GDALDatasetH> apoStrippedDS;
                 // For each variable matrix width, create a separate WMS dataset
                 // with the correspond strip
-                for( size_t i = 0; i < vmwl.size(); i++)
+                for (size_t i = 0; i < vmwl.size(); i++)
                 {
-                    if( vmwl[i].mCoalesce <= 0 ||
-                        (tileMatrix.mMatrixWidth % vmwl[i].mCoalesce) != 0 )
+                    if (vmwl[i].mCoalesce <= 0 ||
+                        (tileMatrix.mMatrixWidth % vmwl[i].mCoalesce) != 0)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                "Invalid coalesce factor (%d) w.r.t matrix width (%d)",
-                                vmwl[i].mCoalesce,
-                                tileMatrix.mMatrixWidth);
+                                 "Invalid coalesce factor (%d) w.r.t matrix "
+                                 "width (%d)",
+                                 vmwl[i].mCoalesce, tileMatrix.mMatrixWidth);
                         return false;
                     }
                     {
                         double dfStripMinY = 0;
                         double dfStripMaxY = 0;
                         CPLString osWMS_XML(CreateWMS_XML(
-                            vmwl[i].mMinTileRow ,
+                            vmwl[i].mMinTileRow,
                             vmwl[i].mMaxTileRow - vmwl[i].mMinTileRow + 1,
-                            vmwl[i].mCoalesce,
-                            dfStripMinY, dfStripMaxY));
-                        if( osWMS_XML.empty() )
+                            vmwl[i].mCoalesce, dfStripMinY, dfStripMaxY));
+                        if (osWMS_XML.empty())
                             continue;
-                        if( dfStripMinY < dfYMax && dfStripMaxY > dfYMin )
+                        if (dfStripMinY < dfYMax && dfStripMaxY > dfYMin)
                         {
-                            std::unique_ptr<GDALDataset> poDS(
-                                GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
-                            if( !poDS )
+                            std::unique_ptr<GDALDataset> poDS(GDALDataset::Open(
+                                osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+                            if (!poDS)
                                 return false;
-                            m_apoDatasetsElementary.emplace_back(std::move(poDS));
-                            apoStrippedDS.emplace_back(
-                                GDALDataset::ToHandle(m_apoDatasetsElementary.back().get()));
+                            m_apoDatasetsElementary.emplace_back(
+                                std::move(poDS));
+                            apoStrippedDS.emplace_back(GDALDataset::ToHandle(
+                                m_apoDatasetsElementary.back().get()));
                         }
                     }
 
                     // Add a strip for non-coalesced tiles
-                    if( i + 1 < vmwl.size() &&
-                        vmwl[i].mMaxTileRow + 1 != vmwl[i+1].mMinTileRow )
+                    if (i + 1 < vmwl.size() &&
+                        vmwl[i].mMaxTileRow + 1 != vmwl[i + 1].mMinTileRow)
                     {
                         double dfStripMinY = 0;
                         double dfStripMaxY = 0;
                         CPLString osWMS_XML(CreateWMS_XML(
                             vmwl[i].mMaxTileRow + 1,
-                            vmwl[i+1].mMinTileRow - vmwl[i].mMaxTileRow - 1,
+                            vmwl[i + 1].mMinTileRow - vmwl[i].mMaxTileRow - 1,
                             1, dfStripMinY, dfStripMaxY));
-                        if( osWMS_XML.empty() )
+                        if (osWMS_XML.empty())
                             continue;
-                        if( dfStripMinY < dfYMax && dfStripMaxY > dfYMin )
+                        if (dfStripMinY < dfYMax && dfStripMaxY > dfYMin)
                         {
-                            std::unique_ptr<GDALDataset> poDS(
-                                GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
-                            if( !poDS )
+                            std::unique_ptr<GDALDataset> poDS(GDALDataset::Open(
+                                osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+                            if (!poDS)
                                 return false;
-                            m_apoDatasetsElementary.emplace_back(std::move(poDS));
-                            apoStrippedDS.emplace_back(
-                                GDALDataset::ToHandle(m_apoDatasetsElementary.back().get()));
+                            m_apoDatasetsElementary.emplace_back(
+                                std::move(poDS));
+                            apoStrippedDS.emplace_back(GDALDataset::ToHandle(
+                                m_apoDatasetsElementary.back().get()));
                         }
                     }
                 }
 
-                if( apoStrippedDS.empty() )
+                if (apoStrippedDS.empty())
                     return false;
 
                 // Assemble the strips in a single VRT
                 CPLStringList argv;
                 argv.AddString("-resolution");
                 argv.AddString("highest");
-                GDALBuildVRTOptions* psOptions = GDALBuildVRTOptionsNew(argv.List(), nullptr);
-                GDALDatasetH hAssembledDS = GDALBuildVRT("",
-                                                        static_cast<int>(apoStrippedDS.size()),
-                                                        &apoStrippedDS[0],
-                                                        nullptr,
-                                                        psOptions,
-                                                        nullptr);
+                GDALBuildVRTOptions *psOptions =
+                    GDALBuildVRTOptionsNew(argv.List(), nullptr);
+                GDALDatasetH hAssembledDS = GDALBuildVRT(
+                    "", static_cast<int>(apoStrippedDS.size()),
+                    &apoStrippedDS[0], nullptr, psOptions, nullptr);
                 GDALBuildVRTOptionsFree(psOptions);
-                if( hAssembledDS == nullptr )
+                if (hAssembledDS == nullptr)
                     return false;
-                m_apoDatasetsAssembled.emplace_back(GDALDataset::FromHandle(hAssembledDS));
+                m_apoDatasetsAssembled.emplace_back(
+                    GDALDataset::FromHandle(hAssembledDS));
             }
-
 
             CPLStringList argv;
             argv.AddString("-of");
@@ -1939,28 +1984,29 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             argv.AddString(CPLSPrintf("%.18g", dfYMax));
             argv.AddString(CPLSPrintf("%.18g", dfXMax));
             argv.AddString(CPLSPrintf("%.18g", dfYMin));
-            GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(argv.List(), nullptr);
-            GDALDatasetH hCroppedDS = GDALTranslate("",
-                                                    GDALDataset::ToHandle(m_apoDatasetsAssembled.back().get()),
-                                                    psOptions,
-                                                    nullptr);
+            GDALTranslateOptions *psOptions =
+                GDALTranslateOptionsNew(argv.List(), nullptr);
+            GDALDatasetH hCroppedDS = GDALTranslate(
+                "", GDALDataset::ToHandle(m_apoDatasetsAssembled.back().get()),
+                psOptions, nullptr);
             GDALTranslateOptionsFree(psOptions);
-            if( hCroppedDS == nullptr )
+            if (hCroppedDS == nullptr)
                 return false;
-            m_apoDatasetsCropped.emplace_back(GDALDataset::FromHandle(hCroppedDS));
+            m_apoDatasetsCropped.emplace_back(
+                GDALDataset::FromHandle(hCroppedDS));
 
-            if( tileMatrix.mResX <= m_adfGeoTransform[1] )
+            if (tileMatrix.mResX <= m_adfGeoTransform[1])
                 break;
         }
-        if( !m_apoDatasetsCropped.empty() )
+        if (!m_apoDatasetsCropped.empty())
         {
             std::reverse(std::begin(m_apoDatasetsCropped),
-                        std::end(m_apoDatasetsCropped));
+                         std::end(m_apoDatasetsCropped));
             nRasterXSize = m_apoDatasetsCropped[0]->GetRasterXSize();
             nRasterYSize = m_apoDatasetsCropped[0]->GetRasterYSize();
             m_apoDatasetsCropped[0]->GetGeoTransform(m_adfGeoTransform);
 
-            for( int i = 1; i <= m_apoDatasetsCropped[0]->GetRasterCount(); i++ )
+            for (int i = 1; i <= m_apoDatasetsCropped[0]->GetRasterCount(); i++)
             {
                 SetBand(i, new OGCAPITilesWrapperBand(this, i));
             }
@@ -1977,57 +2023,55 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
 /*                      OGCAPITilesWrapperBand()                        */
 /************************************************************************/
 
-OGCAPITilesWrapperBand::OGCAPITilesWrapperBand( OGCAPIDataset* poDSIn, int nBandIn )
+OGCAPITilesWrapperBand::OGCAPITilesWrapperBand(OGCAPIDataset *poDSIn,
+                                               int nBandIn)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = poDSIn->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->GetRasterDataType();
-    poDSIn->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->
-        GetBlockSize(&nBlockXSize, &nBlockYSize);
+    eDataType = poDSIn->m_apoDatasetsCropped[0]
+                    ->GetRasterBand(nBand)
+                    ->GetRasterDataType();
+    poDSIn->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->GetBlockSize(
+        &nBlockXSize, &nBlockYSize);
 }
 
 /************************************************************************/
 /*                            IReadBlock()                              */
 /************************************************************************/
 
-CPLErr OGCAPITilesWrapperBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
+CPLErr OGCAPITilesWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                          void *pImage)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff, pImage);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
+    return poGDS->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->ReadBlock(
+        nBlockXOff, nBlockYOff, pImage);
 }
 
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGCAPITilesWrapperBand::IRasterIO( GDALRWFlag eRWFlag,
-                            int nXOff, int nYOff, int nXSize, int nYSize,
-                            void * pData, int nBufXSize, int nBufYSize,
-                            GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg* psExtraArg )
+CPLErr OGCAPITilesWrapperBand::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
 
-    if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && poGDS->m_apoDatasetsCropped.size() > 1 && eRWFlag == GF_Read )
+    if ((nBufXSize < nXSize || nBufYSize < nYSize) &&
+        poGDS->m_apoDatasetsCropped.size() > 1 && eRWFlag == GF_Read)
     {
         int bTried;
-        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
-                                    nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType,
-                                    nPixelSpace, nLineSpace,
-                                    psExtraArg,
-                                    &bTried );
-        if( bTried )
+        CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg, &bTried);
+        if (bTried)
             return eErr;
     }
 
     return poGDS->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->RasterIO(
-                                         eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg );
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nPixelSpace, nLineSpace, psExtraArg);
 }
 
 /************************************************************************/
@@ -2036,7 +2080,7 @@ CPLErr OGCAPITilesWrapperBand::IRasterIO( GDALRWFlag eRWFlag,
 
 int OGCAPITilesWrapperBand::GetOverviewCount()
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return static_cast<int>(poGDS->m_apoDatasetsCropped.size() - 1);
 }
 
@@ -2044,12 +2088,12 @@ int OGCAPITilesWrapperBand::GetOverviewCount()
 /*                              GetOverview()                           */
 /************************************************************************/
 
-GDALRasterBand* OGCAPITilesWrapperBand::GetOverview(int nLevel)
+GDALRasterBand *OGCAPITilesWrapperBand::GetOverview(int nLevel)
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    if( nLevel < 0 || nLevel >= GetOverviewCount() )
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
+    if (nLevel < 0 || nLevel >= GetOverviewCount())
         return nullptr;
-    return poGDS->m_apoDatasetsCropped[nLevel+1]->GetRasterBand(nBand);
+    return poGDS->m_apoDatasetsCropped[nLevel + 1]->GetRasterBand(nBand);
 }
 
 /************************************************************************/
@@ -2058,89 +2102,76 @@ GDALRasterBand* OGCAPITilesWrapperBand::GetOverview(int nLevel)
 
 GDALColorInterp OGCAPITilesWrapperBand::GetColorInterpretation()
 {
-    OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_apoDatasetsCropped[0]->GetRasterBand(nBand)->GetColorInterpretation();
+    OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
+    return poGDS->m_apoDatasetsCropped[0]
+        ->GetRasterBand(nBand)
+        ->GetColorInterpretation();
 }
-
 
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGCAPIDataset::IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                               GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg)
+CPLErr OGCAPIDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                int nXSize, int nYSize, void *pData,
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType, int nBandCount,
+                                int *panBandMap, GSpacing nPixelSpace,
+                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                GDALRasterIOExtraArg *psExtraArg)
 {
-    if( !m_apoDatasetsCropped.empty() )
+    if (!m_apoDatasetsCropped.empty())
     {
         // Tiles API
-        if( (nBufXSize < nXSize || nBufYSize < nYSize)
-            && m_apoDatasetsCropped.size() > 1 && eRWFlag == GF_Read )
+        if ((nBufXSize < nXSize || nBufYSize < nYSize) &&
+            m_apoDatasetsCropped.size() > 1 && eRWFlag == GF_Read)
         {
             int bTried;
-            CPLErr eErr = TryOverviewRasterIO( eRWFlag,
-                                        nXOff, nYOff, nXSize, nYSize,
-                                        pData, nBufXSize, nBufYSize,
-                                        eBufType,
-                                        nBandCount, panBandMap,
-                                        nPixelSpace, nLineSpace,
-                                        nBandSpace,
-                                        psExtraArg,
-                                        &bTried );
-            if( bTried )
+            CPLErr eErr = TryOverviewRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nBandCount, panBandMap, nPixelSpace,
+                nLineSpace, nBandSpace, psExtraArg, &bTried);
+            if (bTried)
                 return eErr;
         }
 
-        return m_apoDatasetsCropped[0]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType, nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    psExtraArg );
+        return m_apoDatasetsCropped[0]->RasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
+            nBandSpace, psExtraArg);
     }
-    else if( m_poWMSDS )
+    else if (m_poWMSDS)
     {
         // Maps API
-        return m_poWMSDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType, nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    psExtraArg );
+        return m_poWMSDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                   nBufXSize, nBufYSize, eBufType, nBandCount,
+                                   panBandMap, nPixelSpace, nLineSpace,
+                                   nBandSpace, psExtraArg);
     }
 
     // Should not be hit
-    return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType, nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    psExtraArg );
+    return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nBandCount,
+                                  panBandMap, nPixelSpace, nLineSpace,
+                                  nBandSpace, psExtraArg);
 }
 
 /************************************************************************/
 /*                         OGCAPITiledLayer()                           */
 /************************************************************************/
 
-OGCAPITiledLayer::OGCAPITiledLayer(OGCAPIDataset* poDS,
-                                   bool bInvertAxis,
-                                   const CPLString& osTileURL,
-                                   bool bIsMVT,
-                                   const gdal::TileMatrixSet::TileMatrix& tileMatrix,
-                                   OGRwkbGeometryType eGeomType):
-    m_poDS(poDS),
-    m_osTileURL(osTileURL),
-    m_bIsMVT(bIsMVT),
-    m_oTileMatrix(tileMatrix),
-    m_bInvertAxis(bInvertAxis)
+OGCAPITiledLayer::OGCAPITiledLayer(
+    OGCAPIDataset *poDS, bool bInvertAxis, const CPLString &osTileURL,
+    bool bIsMVT, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
+    OGRwkbGeometryType eGeomType)
+    : m_poDS(poDS), m_osTileURL(osTileURL), m_bIsMVT(bIsMVT),
+      m_oTileMatrix(tileMatrix), m_bInvertAxis(bInvertAxis)
 {
     m_poFeatureDefn = new OGCAPITiledLayerFeatureDefn(
         this, ("Zoom level " + tileMatrix.mId).c_str());
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(eGeomType);
-    if( eGeomType != wkbNone )
+    if (eGeomType != wkbNone)
     {
         auto poClonedSRS = poDS->m_oSRS.Clone();
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poClonedSRS);
@@ -2166,9 +2197,9 @@ OGCAPITiledLayer::~OGCAPITiledLayer()
 int OGCAPITiledLayer::GetCoalesceFactorForRow(int nRow) const
 {
     int nCoalesce = 1;
-    for( const auto& vmw: m_oTileMatrix.mVariableMatrixWidthList )
+    for (const auto &vmw : m_oTileMatrix.mVariableMatrixWidthList)
     {
-        if( nRow >= vmw.mMinTileRow && nRow <= vmw.mMaxTileRow )
+        if (nRow >= vmw.mMinTileRow && nRow <= vmw.mMaxTileRow)
         {
             nCoalesce = vmw.mCoalesce;
             break;
@@ -2183,7 +2214,7 @@ int OGCAPITiledLayer::GetCoalesceFactorForRow(int nRow) const
 
 void OGCAPITiledLayer::ResetReading()
 {
-    if( m_nCurX == m_nCurMinX && m_nCurY == m_nCurMinY && m_poUnderlyingLayer )
+    if (m_nCurX == m_nCurMinX && m_nCurY == m_nCurMinY && m_poUnderlyingLayer)
     {
         m_poUnderlyingLayer->ResetReading();
     }
@@ -2200,13 +2231,13 @@ void OGCAPITiledLayer::ResetReading()
 /*                             OpenTile()                               */
 /************************************************************************/
 
-GDALDataset* OGCAPITiledLayer::OpenTile(int nX, int nY, bool& bEmptyContent)
+GDALDataset *OGCAPITiledLayer::OpenTile(int nX, int nY, bool &bEmptyContent)
 {
     bEmptyContent = false;
     CPLString osURL(m_osTileURL);
 
     int nCoalesce = GetCoalesceFactorForRow(nY);
-    if( nCoalesce <= 0 )
+    if (nCoalesce <= 0)
         return nullptr;
     nX = (nX / nCoalesce) * nCoalesce;
 
@@ -2214,40 +2245,48 @@ GDALDataset* OGCAPITiledLayer::OpenTile(int nX, int nY, bool& bEmptyContent)
     osURL.replaceAll("{tileRow}", CPLSPrintf("%d", nY));
 
     CPLString osContentType;
-    if( !m_poDS->Download(osURL, nullptr, nullptr, m_osTileData, osContentType,
-                          true, nullptr) )
+    if (!m_poDS->Download(osURL, nullptr, nullptr, m_osTileData, osContentType,
+                          true, nullptr))
     {
         return nullptr;
     }
     bEmptyContent = m_osTileData.empty();
-    if( bEmptyContent )
+    if (bEmptyContent)
         return nullptr;
 
     CPLString osTempFile;
     osTempFile.Printf("/vsimem/ogcapi/%p", this);
     VSIFCloseL(VSIFileFromMemBuffer(osTempFile.c_str(),
-                                    reinterpret_cast<GByte*>(&m_osTileData[0]),
-                                    m_osTileData.size(),
-                                    false));
+                                    reinterpret_cast<GByte *>(&m_osTileData[0]),
+                                    m_osTileData.size(), false));
 
-    GDALDataset* poTileDS;
-    if( m_bIsMVT )
+    GDALDataset *poTileDS;
+    if (m_bIsMVT)
     {
         CPLStringList aosOpenOptions;
-        const double dfOriX = m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
-        const double dfOriY = m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
-        aosOpenOptions.SetNameValue("@GEOREF_TOPX",
+        const double dfOriX =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
+        const double dfOriY =
+            m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
+        aosOpenOptions.SetNameValue(
+            "@GEOREF_TOPX",
+            CPLSPrintf("%.18g", dfOriX + nX * m_oTileMatrix.mResX *
+                                             m_oTileMatrix.mTileWidth));
+        aosOpenOptions.SetNameValue(
+            "@GEOREF_TOPY",
+            CPLSPrintf("%.18g", dfOriY - nY * m_oTileMatrix.mResY *
+                                             m_oTileMatrix.mTileHeight));
+        aosOpenOptions.SetNameValue(
+            "@GEOREF_TILEDIMX",
+            CPLSPrintf("%.18g", nCoalesce * m_oTileMatrix.mResX *
+                                    m_oTileMatrix.mTileWidth));
+        aosOpenOptions.SetNameValue(
+            "@GEOREF_TILEDIMY",
             CPLSPrintf("%.18g",
-                dfOriX + nX * m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth));
-        aosOpenOptions.SetNameValue("@GEOREF_TOPY",
-            CPLSPrintf("%.18g",
-                dfOriY - nY * m_oTileMatrix.mResY * m_oTileMatrix.mTileHeight));
-        aosOpenOptions.SetNameValue("@GEOREF_TILEDIMX",
-            CPLSPrintf("%.18g", nCoalesce * m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth));
-        aosOpenOptions.SetNameValue("@GEOREF_TILEDIMY",
-            CPLSPrintf("%.18g", m_oTileMatrix.mResY * m_oTileMatrix.mTileWidth));
-        poTileDS = GDALDataset::Open(("MVT:" + osTempFile).c_str(), GDAL_OF_VECTOR,
-                                nullptr, aosOpenOptions.List());
+                       m_oTileMatrix.mResY * m_oTileMatrix.mTileWidth));
+        poTileDS =
+            GDALDataset::Open(("MVT:" + osTempFile).c_str(), GDAL_OF_VECTOR,
+                              nullptr, aosOpenOptions.List());
     }
     else
     {
@@ -2261,14 +2300,14 @@ GDALDataset* OGCAPITiledLayer::OpenTile(int nX, int nY, bool& bEmptyContent)
 /*                      FinalizeFeatureDefnWithLayer()                  */
 /************************************************************************/
 
-void OGCAPITiledLayer::FinalizeFeatureDefnWithLayer(OGRLayer* poUnderlyingLayer)
+void OGCAPITiledLayer::FinalizeFeatureDefnWithLayer(OGRLayer *poUnderlyingLayer)
 {
-    if( !m_bFeatureDefnEstablished )
+    if (!m_bFeatureDefnEstablished)
     {
         m_bFeatureDefnEstablished = true;
         const auto poSrcFieldDefn = poUnderlyingLayer->GetLayerDefn();
         const int nFieldCount = poSrcFieldDefn->GetFieldCount();
-        for(int i = 0; i < nFieldCount; i++ )
+        for (int i = 0; i < nFieldCount; i++)
         {
             m_poFeatureDefn->AddFieldDefn(poSrcFieldDefn->GetFieldDefn(i));
         }
@@ -2279,27 +2318,27 @@ void OGCAPITiledLayer::FinalizeFeatureDefnWithLayer(OGRLayer* poUnderlyingLayer)
 /*                            BuildFeature()                            */
 /************************************************************************/
 
-OGRFeature* OGCAPITiledLayer::BuildFeature(OGRFeature* poSrcFeature, int nX, int nY)
+OGRFeature *OGCAPITiledLayer::BuildFeature(OGRFeature *poSrcFeature, int nX,
+                                           int nY)
 {
     int nCoalesce = GetCoalesceFactorForRow(nY);
-    if( nCoalesce <= 0 )
+    if (nCoalesce <= 0)
         return nullptr;
     nX = (nX / nCoalesce) * nCoalesce;
 
-    OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
-    const GIntBig nFID =
-        nY * m_oTileMatrix.mMatrixWidth + nX +
-        poSrcFeature->GetFID() *
-            m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight;
+    OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
+    const GIntBig nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
+                         poSrcFeature->GetFID() * m_oTileMatrix.mMatrixWidth *
+                             m_oTileMatrix.mMatrixHeight;
     auto poGeom = poSrcFeature->StealGeometry();
-    if( poGeom && m_poFeatureDefn->GetGeomType() != wkbUnknown )
+    if (poGeom && m_poFeatureDefn->GetGeomType() != wkbUnknown)
     {
-        poGeom = OGRGeometryFactory::forceTo(poGeom,
-                                             m_poFeatureDefn->GetGeomType());
+        poGeom =
+            OGRGeometryFactory::forceTo(poGeom, m_poFeatureDefn->GetGeomType());
     }
     poFeature->SetFrom(poSrcFeature, true);
     poFeature->SetFID(nFID);
-    if( poGeom && m_poFeatureDefn->GetGeomFieldCount() > 0 )
+    if (poGeom && m_poFeatureDefn->GetGeomFieldCount() > 0)
     {
         poGeom->assignSpatialReference(
             m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef());
@@ -2317,16 +2356,16 @@ bool OGCAPITiledLayer::IncrementTileIndices()
 {
 
     const int nCoalesce = GetCoalesceFactorForRow(m_nCurY);
-    if( nCoalesce <= 0 )
+    if (nCoalesce <= 0)
         return false;
-    if( m_nCurX / nCoalesce < m_nCurMaxX / nCoalesce )
+    if (m_nCurX / nCoalesce < m_nCurMaxX / nCoalesce)
     {
         m_nCurX += nCoalesce;
     }
-    else if( m_nCurY < m_nCurMaxY )
+    else if (m_nCurY < m_nCurMaxY)
     {
         m_nCurX = m_nCurMinX;
-        m_nCurY ++;
+        m_nCurY++;
     }
     else
     {
@@ -2340,30 +2379,30 @@ bool OGCAPITiledLayer::IncrementTileIndices()
 /*                          GetNextRawFeature()                         */
 /************************************************************************/
 
-OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
+OGRFeature *OGCAPITiledLayer::GetNextRawFeature()
 {
-    while( true )
+    while (true)
     {
-        if( m_poUnderlyingLayer == nullptr )
+        if (m_poUnderlyingLayer == nullptr)
         {
-            if( m_nCurY < 0 )
+            if (m_nCurY < 0)
             {
                 return nullptr;
             }
             bool bEmptyContent = false;
             m_poUnderlyingDS.reset(OpenTile(m_nCurX, m_nCurY, bEmptyContent));
-            if( bEmptyContent )
+            if (bEmptyContent)
             {
-                if( !IncrementTileIndices() )
+                if (!IncrementTileIndices())
                     return nullptr;
                 continue;
             }
-            if( m_poUnderlyingDS == nullptr )
+            if (m_poUnderlyingDS == nullptr)
             {
                 return nullptr;
             }
             m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
-            if( m_poUnderlyingLayer == nullptr )
+            if (m_poUnderlyingLayer == nullptr)
             {
                 return nullptr;
             }
@@ -2371,7 +2410,7 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
         }
 
         auto poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
-        if( poSrcFeature != nullptr )
+        if (poSrcFeature != nullptr)
         {
             return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
         }
@@ -2379,7 +2418,7 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
         m_poUnderlyingDS.reset();
         m_poUnderlyingLayer = nullptr;
 
-        if( !IncrementTileIndices() )
+        if (!IncrementTileIndices())
             return nullptr;
     }
 }
@@ -2388,24 +2427,27 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature* OGCAPITiledLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGCAPITiledLayer::GetFeature(GIntBig nFID)
 {
-    if( nFID < 0 )
+    if (nFID < 0)
         return nullptr;
-    const GIntBig nFIDInTile = nFID / (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
-    const GIntBig nTileID = nFID % (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
+    const GIntBig nFIDInTile =
+        nFID / (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
+    const GIntBig nTileID =
+        nFID % (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
     const int nY = static_cast<int>(nTileID / m_oTileMatrix.mMatrixWidth);
     const int nX = static_cast<int>(nTileID % m_oTileMatrix.mMatrixWidth);
     bool bEmptyContent = false;
-    std::unique_ptr<GDALDataset> poUnderlyingDS(OpenTile(nX, nY, bEmptyContent));
-    if( poUnderlyingDS == nullptr )
+    std::unique_ptr<GDALDataset> poUnderlyingDS(
+        OpenTile(nX, nY, bEmptyContent));
+    if (poUnderlyingDS == nullptr)
         return nullptr;
-    OGRLayer* poUnderlyingLayer = poUnderlyingDS->GetLayer(0);
-    if( poUnderlyingLayer == nullptr )
+    OGRLayer *poUnderlyingLayer = poUnderlyingDS->GetLayer(0);
+    if (poUnderlyingLayer == nullptr)
         return nullptr;
     FinalizeFeatureDefnWithLayer(poUnderlyingLayer);
-    OGRFeature* poSrcFeature = poUnderlyingLayer->GetFeature(nFIDInTile);
-    if( poSrcFeature == nullptr )
+    OGRFeature *poSrcFeature = poUnderlyingLayer->GetFeature(nFIDInTile);
+    if (poSrcFeature == nullptr)
         return nullptr;
     return BuildFeature(poSrcFeature, nX, nY);
 }
@@ -2416,7 +2458,7 @@ OGRFeature* OGCAPITiledLayer::GetFeature(GIntBig nFID)
 
 void OGCAPITiledLayer::EstablishFields()
 {
-    if( !m_bFeatureDefnEstablished )
+    if (!m_bFeatureDefnEstablished)
     {
         m_bFeatureDefnEstablished = true;
         delete GetNextRawFeature();
@@ -2428,8 +2470,8 @@ void OGCAPITiledLayer::EstablishFields()
 /*                            SetExtent()                               */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin,
-                                 double dfXMax, double dfYMax)
+void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
+                                 double dfYMax)
 {
     m_sEnvelope.MinX = dfXMin;
     m_sEnvelope.MinY = dfYMin;
@@ -2441,7 +2483,7 @@ void OGCAPITiledLayer::SetExtent(double dfXMin, double dfYMin,
 /*                            GetExtent()                               */
 /************************************************************************/
 
-OGRErr OGCAPITiledLayer::GetExtent( OGREnvelope *psExtent, int /* bForce */ )
+OGRErr OGCAPITiledLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
 {
     *psExtent = m_sEnvelope;
     return OGRERR_NONE;
@@ -2451,32 +2493,38 @@ OGRErr OGCAPITiledLayer::GetExtent( OGREnvelope *psExtent, int /* bForce */ )
 /*                         SetSpatialFilter()                           */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+void OGCAPITiledLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 {
     OGRLayer::SetSpatialFilter(poGeomIn);
 
     OGREnvelope sEnvelope;
-    if( m_poFilterGeom != nullptr )
+    if (m_poFilterGeom != nullptr)
         sEnvelope = m_sFilterEnvelope;
     else
         sEnvelope = m_sEnvelope;
 
     const double dfTileDim = m_oTileMatrix.mResX * m_oTileMatrix.mTileWidth;
-    const double dfOriX = m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
-    const double dfOriY = m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
-    if( sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
+    const double dfOriX =
+        m_bInvertAxis ? m_oTileMatrix.mTopLeftY : m_oTileMatrix.mTopLeftX;
+    const double dfOriY =
+        m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
+    if (sEnvelope.MinX - dfOriX >= -10 * dfTileDim &&
         dfOriY - sEnvelope.MinY >= -10 * dfTileDim &&
         sEnvelope.MaxX - dfOriX <= 10 * dfTileDim &&
-        dfOriY - sEnvelope.MaxY <= 10 * dfTileDim )
+        dfOriY - sEnvelope.MaxY <= 10 * dfTileDim)
     {
-        m_nCurMinX = std::max(m_nMinX, static_cast<int>(
-            floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
-        m_nCurMinY = std::max(m_nMinY, static_cast<int>(
-            floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
-        m_nCurMaxX = std::min(m_nMaxX, static_cast<int>(
-            floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
-        m_nCurMaxY = std::min(m_nMaxY, static_cast<int>(
-            floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
+        m_nCurMinX = std::max(
+            m_nMinX,
+            static_cast<int>(floor((sEnvelope.MinX - dfOriX) / dfTileDim)));
+        m_nCurMinY = std::max(
+            m_nMinY,
+            static_cast<int>(floor((dfOriY - sEnvelope.MaxY) / dfTileDim)));
+        m_nCurMaxX = std::min(
+            m_nMaxX,
+            static_cast<int>(floor((sEnvelope.MaxX - dfOriX) / dfTileDim)));
+        m_nCurMaxY = std::min(
+            m_nMaxY,
+            static_cast<int>(floor((dfOriY - sEnvelope.MinY) / dfTileDim)));
     }
     else
     {
@@ -2493,15 +2541,15 @@ void OGCAPITiledLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                          TestCapability()                            */
 /************************************************************************/
 
-int OGCAPITiledLayer::TestCapability(const char* pszCap)
+int OGCAPITiledLayer::TestCapability(const char *pszCap)
 {
-    if( EQUAL(pszCap, OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return true;
-    if( EQUAL(pszCap, OLCFastGetExtent) )
+    if (EQUAL(pszCap, OLCFastGetExtent))
         return true;
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
-    if( EQUAL(pszCap, OLCFastSpatialFilter) )
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
         return true;
     return false;
 }
@@ -2510,7 +2558,8 @@ int OGCAPITiledLayer::TestCapability(const char* pszCap)
 /*                            SetMinMaxXY()                             */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetMinMaxXY(int minCol, int minRow, int maxCol, int maxRow)
+void OGCAPITiledLayer::SetMinMaxXY(int minCol, int minRow, int maxCol,
+                                   int maxRow)
 {
     m_nMinX = minCol;
     m_nMinY = minRow;
@@ -2527,10 +2576,11 @@ void OGCAPITiledLayer::SetMinMaxXY(int minCol, int minRow, int maxCol, int maxRo
 /*                             SetFields()                              */
 /************************************************************************/
 
-void OGCAPITiledLayer::SetFields(const std::vector<std::unique_ptr<OGRFieldDefn>>& apoFields)
+void OGCAPITiledLayer::SetFields(
+    const std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields)
 {
     m_bFeatureDefnEstablished = true;
-    for( const auto& poField: apoFields )
+    for (const auto &poField : apoFields)
     {
         m_poFeatureDefn->AddFieldDefn(poField.get());
     }
@@ -2540,19 +2590,19 @@ void OGCAPITiledLayer::SetFields(const std::vector<std::unique_ptr<OGRFieldDefn>
 /*                              Open()                                  */
 /************************************************************************/
 
-GDALDataset* OGCAPIDataset::Open(GDALOpenInfo* poOpenInfo)
+GDALDataset *OGCAPIDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if( !Identify(poOpenInfo) )
+    if (!Identify(poOpenInfo))
         return nullptr;
     auto poDS = cpl::make_unique<OGCAPIDataset>();
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") )
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
     {
-        if( !poDS->InitFromURL(poOpenInfo) )
+        if (!poDS->InitFromURL(poOpenInfo))
             return nullptr;
     }
     else
     {
-        if( !poDS->InitFromFile(poOpenInfo) )
+        if (!poDS->InitFromFile(poOpenInfo))
             return nullptr;
     }
     return poDS.release();
@@ -2565,63 +2615,67 @@ GDALDataset* OGCAPIDataset::Open(GDALOpenInfo* poOpenInfo)
 void GDALRegister_OGCAPI()
 
 {
-    if( GDALGetDriverByName( "OGCAPI" ) != nullptr )
+    if (GDALGetDriverByName("OGCAPI") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "OGCAPI" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "OGCAPI" );
+    poDriver->SetDescription("OGCAPI");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGCAPI");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionList>"
-"  <Option name='API' type='string-select' "
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='API' type='string-select' "
         "description='Which API to use to access data' default='AUTO'>"
-"       <Value>AUTO</Value>"
-"       <Value>MAP</Value>"
-"       <Value>TILES</Value>"
-"       <Value>COVERAGE</Value>"
-"       <Value>ITEMS</Value>"
-"  </Option>"
-"  <Option name='IMAGE_FORMAT' type='string-select' "
-        "description='Which format to use for pixel acquisition' default='AUTO'>"
-"       <Value>AUTO</Value>"
-"       <Value>PNG</Value>"
-"       <Value>PNG_PREFERRED</Value>"
-"       <Value>JPEG</Value>"
-"       <Value>JPEG_PREFERRED</Value>"
-"  </Option>"
-"  <Option name='VECTOR_FORMAT' type='string-select' "
-        "description='Which format to use for vector data acquisition' default='AUTO'>"
-"       <Value>AUTO</Value>"
-"       <Value>GEOJSON</Value>"
-"       <Value>GEOJSON_PREFERRED</Value>"
-"       <Value>MVT</Value>"
-"       <Value>MVT_PREFERRED</Value>"
-"  </Option>"
-"  <Option name='TILEMATRIXSET' type='string' "
+        "       <Value>AUTO</Value>"
+        "       <Value>MAP</Value>"
+        "       <Value>TILES</Value>"
+        "       <Value>COVERAGE</Value>"
+        "       <Value>ITEMS</Value>"
+        "  </Option>"
+        "  <Option name='IMAGE_FORMAT' type='string-select' "
+        "description='Which format to use for pixel acquisition' "
+        "default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>PNG</Value>"
+        "       <Value>PNG_PREFERRED</Value>"
+        "       <Value>JPEG</Value>"
+        "       <Value>JPEG_PREFERRED</Value>"
+        "  </Option>"
+        "  <Option name='VECTOR_FORMAT' type='string-select' "
+        "description='Which format to use for vector data acquisition' "
+        "default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>GEOJSON</Value>"
+        "       <Value>GEOJSON_PREFERRED</Value>"
+        "       <Value>MVT</Value>"
+        "       <Value>MVT_PREFERRED</Value>"
+        "  </Option>"
+        "  <Option name='TILEMATRIXSET' type='string' "
         "description='Identifier of the required tile matrix set'/>"
-"  <Option name='PREFERRED_TILEMATRIXSET' type='string' "
-        "description='dentifier of the preferred tile matrix set' default='WorldCRS84Quad'/>"
-"  <Option name='TILEMATRIX' type='string' description='Tile matrix identifier.'/>"
-"  <Option name='CACHE' type='boolean' "
+        "  <Option name='PREFERRED_TILEMATRIXSET' type='string' "
+        "description='dentifier of the preferred tile matrix set' "
+        "default='WorldCRS84Quad'/>"
+        "  <Option name='TILEMATRIX' type='string' description='Tile matrix "
+        "identifier.'/>"
+        "  <Option name='CACHE' type='boolean' "
         "description='Whether to enable block/tile caching' default='YES'/>"
-"  <Option name='MAX_CONNECTIONS' type='int' "
+        "  <Option name='MAX_CONNECTIONS' type='int' "
         "description='Maximum number of connections' default='5'/>"
-"  <Option name='MINX' type='float' "
+        "  <Option name='MINX' type='float' "
         "description='Minimum value (in SRS of TileMatrixSet) of X'/>"
-"  <Option name='MINY' type='float' "
+        "  <Option name='MINY' type='float' "
         "description='Minimum value (in SRS of TileMatrixSet) of Y'/>"
-"  <Option name='MAXX' type='float' "
+        "  <Option name='MAXX' type='float' "
         "description='Maximum value (in SRS of TileMatrixSet) of X'/>"
-"  <Option name='MAXY' type='float' "
+        "  <Option name='MAXY' type='float' "
         "description='Maximum value (in SRS of TileMatrixSet) of Y'/>"
-"</OpenOptionList>");
+        "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGCAPIDataset::Identify;
     poDriver->pfnOpen = OGCAPIDataset::Open;

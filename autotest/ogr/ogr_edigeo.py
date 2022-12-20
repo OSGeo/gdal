@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("Edigeo")
+
 ###############################################################################
 
 

@@ -32,19 +32,15 @@
 #include "cpl_string.h"
 #include "ogr_mysql.h"
 
-
 /************************************************************************/
 /*                         OGRMySQLTableLayer()                         */
 /************************************************************************/
 
-OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
-                                        CPL_UNUSED const char * pszTableName,
-                                        int bUpdate, int nSRSIdIn ) :
-    bUpdateAccess(bUpdate),
-    pszQuery(nullptr),
-    pszWHERE(CPLStrdup("")),
-    bLaunderColumnNames(TRUE),
-    bPreservePrecision(FALSE)
+OGRMySQLTableLayer::OGRMySQLTableLayer(OGRMySQLDataSource *poDSIn,
+                                       CPL_UNUSED const char *pszTableName,
+                                       int bUpdate, int nSRSIdIn)
+    : bUpdateAccess(bUpdate), pszQuery(nullptr), pszWHERE(CPLStrdup("")),
+      bLaunderColumnNames(TRUE), bPreservePrecision(FALSE)
 {
     poDS = poDSIn;
 
@@ -56,7 +52,7 @@ OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
 
     poFeatureDefn = nullptr;
 
-    SetDescription( pszTableName );
+    SetDescription(pszTableName);
 }
 
 /************************************************************************/
@@ -66,8 +62,8 @@ OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
 OGRMySQLTableLayer::~OGRMySQLTableLayer()
 
 {
-    CPLFree( pszQuery );
-    CPLFree( pszWHERE );
+    CPLFree(pszQuery);
+    CPLFree(pszWHERE);
 }
 
 /************************************************************************/
@@ -78,9 +74,9 @@ OGRMySQLTableLayer::~OGRMySQLTableLayer()
 /*      the MySQLTableLayer, make sure to do pLayer->Initialize()       */
 /************************************************************************/
 
-OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
+OGRErr OGRMySQLTableLayer::Initialize(const char *pszTableName)
 {
-    poFeatureDefn = ReadTableDefinition( pszTableName );
+    poFeatureDefn = ReadTableDefinition(pszTableName);
     if (poFeatureDefn)
     {
         ResetReading();
@@ -99,228 +95,229 @@ OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
 /*      catalog.                                                        */
 /************************************************************************/
 
-OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
+OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
 
 {
-    MYSQL_RES    *hResult;
-    CPLString     osCommand;
+    MYSQL_RES *hResult;
+    CPLString osCommand;
 
-/* -------------------------------------------------------------------- */
-/*      Fire off commands to get back the schema of the table.          */
-/* -------------------------------------------------------------------- */
-    osCommand.Printf("DESCRIBE `%s`", pszTable );
+    /* -------------------------------------------------------------------- */
+    /*      Fire off commands to get back the schema of the table.          */
+    /* -------------------------------------------------------------------- */
+    osCommand.Printf("DESCRIBE `%s`", pszTable);
     pszGeomColumnTable = CPLStrdup(pszTable);
-    if( mysql_query( poDS->GetConn(), osCommand ) )
+    if (mysql_query(poDS->GetConn(), osCommand))
     {
-        poDS->ReportError( "DESCRIBE Failed" );
+        poDS->ReportError("DESCRIBE Failed");
         return nullptr;
     }
 
-    hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult == nullptr )
+    hResult = mysql_store_result(poDS->GetConn());
+    if (hResult == nullptr)
     {
-        poDS->ReportError( "mysql_store_result() failed on DESCRIBE result." );
+        poDS->ReportError("mysql_store_result() failed on DESCRIBE result.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Parse the returned table information.                           */
-/* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
-    char           **papszRow;
+    /* -------------------------------------------------------------------- */
+    /*      Parse the returned table information.                           */
+    /* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn(pszTable);
+    char **papszRow;
     OGRwkbGeometryType eForcedGeomType = wkbUnknown;
     int bGeomColumnNotNullable = FALSE;
 
     poDefn->Reference();
 
-    while( (papszRow = mysql_fetch_row( hResult )) != nullptr )
+    while ((papszRow = mysql_fetch_row(hResult)) != nullptr)
     {
-        OGRFieldDefn    oField( papszRow[0], OFTString);
+        OGRFieldDefn oField(papszRow[0], OFTString);
 
         const char *pszType = papszRow[1];
-        if( pszType == nullptr )
+        if (pszType == nullptr)
             continue;
 
         int nLenType = (int)strlen(pszType);
 
-        if( EQUAL(pszType,"varbinary")
-            || (nLenType>=4 && EQUAL(pszType+nLenType-4,"blob")))
+        if (EQUAL(pszType, "varbinary") ||
+            (nLenType >= 4 && EQUAL(pszType + nLenType - 4, "blob")))
         {
-            oField.SetType( OFTBinary );
+            oField.SetType(OFTBinary);
         }
-        else if( EQUAL(pszType,"varchar")
-                 || (nLenType>=4 && EQUAL(pszType+nLenType-4,"enum"))
-                 || (nLenType>=3 && EQUAL(pszType+nLenType-3,"set")) )
+        else if (EQUAL(pszType, "varchar") ||
+                 (nLenType >= 4 && EQUAL(pszType + nLenType - 4, "enum")) ||
+                 (nLenType >= 3 && EQUAL(pszType + nLenType - 3, "set")))
         {
-            oField.SetType( OFTString );
+            oField.SetType(OFTString);
         }
-        else if( STARTS_WITH_CI(pszType, "char")  )
+        else if (STARTS_WITH_CI(pszType, "char"))
         {
-            oField.SetType( OFTString );
-            char ** papszTokens;
+            oField.SetType(OFTString);
+            char **papszTokens;
 
-            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            papszTokens = CSLTokenizeString2(pszType, "(),", 0);
             if (CSLCount(papszTokens) >= 2)
             {
                 /* width is the second */
                 oField.SetWidth(atoi(papszTokens[1]));
             }
 
-            CSLDestroy( papszTokens );
-            oField.SetType( OFTString );
+            CSLDestroy(papszTokens);
+            oField.SetType(OFTString);
         }
 
-        if(nLenType>=4 && EQUAL(pszType+nLenType-4,"text"))
+        if (nLenType >= 4 && EQUAL(pszType + nLenType - 4, "text"))
         {
-            oField.SetType( OFTString );
+            oField.SetType(OFTString);
         }
-        else if( STARTS_WITH_CI(pszType,"varchar")  )
+        else if (STARTS_WITH_CI(pszType, "varchar"))
         {
             /*
                pszType is usually in the form "varchar(15)"
                so we'll split it up and get the width and precision
             */
 
-            oField.SetType( OFTString );
-            char ** papszTokens;
+            oField.SetType(OFTString);
+            char **papszTokens;
 
-            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            papszTokens = CSLTokenizeString2(pszType, "(),", 0);
             if (CSLCount(papszTokens) >= 2)
             {
                 /* width is the second */
                 oField.SetWidth(atoi(papszTokens[1]));
             }
 
-            CSLDestroy( papszTokens );
-            oField.SetType( OFTString );
+            CSLDestroy(papszTokens);
+            oField.SetType(OFTString);
         }
-        else if( STARTS_WITH_CI(pszType, "int") )
+        else if (STARTS_WITH_CI(pszType, "int"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
         }
-        else if( STARTS_WITH_CI(pszType, "tinyint") )
+        else if (STARTS_WITH_CI(pszType, "tinyint"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
         }
-        else if( STARTS_WITH_CI(pszType, "smallint") )
+        else if (STARTS_WITH_CI(pszType, "smallint"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
         }
-        else if( STARTS_WITH_CI(pszType, "mediumint") )
+        else if (STARTS_WITH_CI(pszType, "mediumint"))
         {
-            oField.SetType( OFTInteger );
+            oField.SetType(OFTInteger);
         }
-        else if( STARTS_WITH_CI(pszType, "bigint") )
+        else if (STARTS_WITH_CI(pszType, "bigint"))
         {
-            oField.SetType( OFTInteger64 );
+            oField.SetType(OFTInteger64);
         }
-        else if( STARTS_WITH_CI(pszType, "decimal") )
+        else if (STARTS_WITH_CI(pszType, "decimal"))
         {
             /*
                pszType is usually in the form "decimal(15,2)"
                so we'll split it up and get the width and precision
             */
-            oField.SetType( OFTReal );
-            char ** papszTokens;
+            oField.SetType(OFTReal);
+            char **papszTokens;
 
-            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            papszTokens = CSLTokenizeString2(pszType, "(),", 0);
             if (CSLCount(papszTokens) >= 3)
             {
                 /* width is the second and precision is the third */
                 oField.SetWidth(atoi(papszTokens[1]));
                 oField.SetPrecision(atoi(papszTokens[2]));
             }
-            CSLDestroy( papszTokens );
+            CSLDestroy(papszTokens);
         }
-        else if( STARTS_WITH_CI(pszType, "float") )
+        else if (STARTS_WITH_CI(pszType, "float"))
         {
-            oField.SetType( OFTReal );
+            oField.SetType(OFTReal);
         }
-        else if( EQUAL(pszType,"double") )
+        else if (EQUAL(pszType, "double"))
         {
-            oField.SetType( OFTReal );
+            oField.SetType(OFTReal);
         }
-        else if( STARTS_WITH_CI(pszType, "double") )
+        else if (STARTS_WITH_CI(pszType, "double"))
         {
             // double can also be double(15,2)
             // so we'll handle this case here after
             // we check for just a regular double
             // without a width and precision specified
 
-            char ** papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            char **papszTokens = CSLTokenizeString2(pszType, "(),", 0);
             if (CSLCount(papszTokens) >= 3)
             {
                 /* width is the second and precision is the third */
                 oField.SetWidth(atoi(papszTokens[1]));
                 oField.SetPrecision(atoi(papszTokens[2]));
             }
-            CSLDestroy( papszTokens );
+            CSLDestroy(papszTokens);
 
-            oField.SetType( OFTReal );
+            oField.SetType(OFTReal);
         }
-        else if( EQUAL(pszType,"decimal") )
+        else if (EQUAL(pszType, "decimal"))
         {
-            oField.SetType( OFTReal );
+            oField.SetType(OFTReal);
         }
-        else if( EQUAL(pszType, "date") )
+        else if (EQUAL(pszType, "date"))
         {
-            oField.SetType( OFTDate );
+            oField.SetType(OFTDate);
         }
-        else if( EQUAL(pszType, "time") )
+        else if (EQUAL(pszType, "time"))
         {
-            oField.SetType( OFTTime );
+            oField.SetType(OFTTime);
         }
-        else if( EQUAL(pszType, "datetime")
-                 || EQUAL(pszType, "timestamp") )
+        else if (EQUAL(pszType, "datetime") || EQUAL(pszType, "timestamp"))
         {
-            oField.SetType( OFTDateTime );
+            oField.SetType(OFTDateTime);
         }
-        else if( EQUAL(pszType, "year") )
+        else if (EQUAL(pszType, "year"))
         {
-            oField.SetType( OFTString );
-            oField.SetWidth( 10 );
+            oField.SetType(OFTString);
+            oField.SetWidth(10);
         }
-        else if( EQUAL(pszType, "geometry") ||
+        else if (EQUAL(pszType, "geometry") ||
                  OGRFromOGCGeomType(pszType) != wkbUnknown)
         {
             if (pszGeomColumn == nullptr)
             {
                 pszGeomColumn = CPLStrdup(papszRow[0]);
                 eForcedGeomType = OGRFromOGCGeomType(pszType);
-                bGeomColumnNotNullable = ( papszRow[2] != nullptr && EQUAL(papszRow[2], "NO") );
+                bGeomColumnNotNullable =
+                    (papszRow[2] != nullptr && EQUAL(papszRow[2], "NO"));
             }
             else
             {
                 CPLDebug("MYSQL",
-                         "Ignoring %s as geometry column. Another one(%s) has already been found before",
+                         "Ignoring %s as geometry column. Another one(%s) has "
+                         "already been found before",
                          papszRow[0], pszGeomColumn);
             }
             continue;
         }
         // Is this an integer primary key field?
-        if( !bHasFid && papszRow[3] != nullptr && EQUAL(papszRow[3],"PRI")
-            && (oField.GetType() == OFTInteger || oField.GetType() == OFTInteger64) )
+        if (!bHasFid && papszRow[3] != nullptr && EQUAL(papszRow[3], "PRI") &&
+            (oField.GetType() == OFTInteger ||
+             oField.GetType() == OFTInteger64))
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
-            if( oField.GetType() == OFTInteger64 )
+            if (oField.GetType() == OFTInteger64)
                 SetMetadataItem(OLMD_FID64, "YES");
             continue;
         }
 
         // Is not nullable ?
-        if( papszRow[2] != nullptr && EQUAL(papszRow[2], "NO") )
+        if (papszRow[2] != nullptr && EQUAL(papszRow[2], "NO"))
             oField.SetNullable(FALSE);
 
         // Has default ?
-        const char* pszDefault = papszRow[4];
-        if( pszDefault != nullptr )
+        const char *pszDefault = papszRow[4];
+        if (pszDefault != nullptr)
         {
-            if( !EQUAL(pszDefault, "NULL") &&
+            if (!EQUAL(pszDefault, "NULL") &&
                 !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
-                pszDefault[0] != '(' &&
-                pszDefault[0] != '\'' &&
-                CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
+                pszDefault[0] != '(' && pszDefault[0] != '\'' &&
+                CPLGetValueType(pszDefault) == CPL_VALUE_STRING)
             {
                 int nYear = 0;
                 int nMonth = 0;
@@ -328,17 +325,18 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 int nHour = 0;
                 int nMinute = 0;
                 float fSecond = 0.0f;
-                if( oField.GetType() == OFTDateTime &&
-                    sscanf(pszDefault, "%d-%d-%d %d:%d:%f", &nYear, &nMonth, &nDay,
-                                &nHour, &nMinute, &fSecond) == 6 )
+                if (oField.GetType() == OFTDateTime &&
+                    sscanf(pszDefault, "%d-%d-%d %d:%d:%f", &nYear, &nMonth,
+                           &nDay, &nHour, &nMinute, &fSecond) == 6)
                 {
-                    oField.SetDefault(CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
-                                            nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5)));
+                    oField.SetDefault(CPLSPrintf(
+                        "'%04d/%02d/%02d %02d:%02d:%02d'", nYear, nMonth, nDay,
+                        nHour, nMinute, (int)(fSecond + 0.5)));
                 }
                 else
                 {
                     CPLString osDefault("'");
-                    char* pszTmp = CPLEscapeString(pszDefault, -1, CPLES_SQL);
+                    char *pszTmp = CPLEscapeString(pszDefault, -1, CPLES_SQL);
                     osDefault += pszTmp;
                     CPLFree(pszTmp);
                     osDefault += "'";
@@ -347,74 +345,78 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             }
             else
             {
-                if( EQUAL(pszDefault, "CURRENT_TIMESTAMP()") )
+                if (EQUAL(pszDefault, "CURRENT_TIMESTAMP()"))
                     oField.SetDefault("CURRENT_TIMESTAMP");
                 else
                     oField.SetDefault(pszDefault);
             }
         }
 
-        poDefn->AddFieldDefn( &oField );
+        poDefn->AddFieldDefn(&oField);
     }
 
     // set to none for now... if we have a geometry column it will be set layer.
-    poDefn->SetGeomType( wkbNone );
+    poDefn->SetGeomType(wkbNone);
 
-    mysql_free_result( hResult );
+    mysql_free_result(hResult);
     hResult = nullptr;
 
-    if( bHasFid )
-        CPLDebug( "MySQL", "table %s has FID column %s.",
-                  pszTable, pszFIDColumn );
+    if (bHasFid)
+        CPLDebug("MySQL", "table %s has FID column %s.", pszTable,
+                 pszFIDColumn);
     else
-        CPLDebug( "MySQL",
-                  "table %s has no FID column, FIDs will not be reliable!",
-                  pszTable );
+        CPLDebug("MySQL",
+                 "table %s has no FID column, FIDs will not be reliable!",
+                 pszTable);
 
     if (pszGeomColumn)
     {
-        char*        pszType=nullptr;
+        char *pszType = nullptr;
 
         // set to unknown first
-        poDefn->SetGeomType( wkbUnknown );
-        poDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
+        poDefn->SetGeomType(wkbUnknown);
+        poDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
 
-        if( poDS->GetMajorVersion() < 8 || poDS->IsMariaDB() )
-            osCommand.Printf("SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
+        if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
+            osCommand.Printf("SELECT type, coord_dimension FROM "
+                             "geometry_columns WHERE f_table_name='%s'",
                              pszTable);
 
         else
-            osCommand.Printf("SELECT GEOMETRY_TYPE_NAME FROM INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS "
-                             "WHERE TABLE_NAME = '%s'", pszTable);
+            osCommand.Printf("SELECT GEOMETRY_TYPE_NAME FROM "
+                             "INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS "
+                             "WHERE TABLE_NAME = '%s'",
+                             pszTable);
 
-        if( !mysql_query( poDS->GetConn(), osCommand ) )
-            hResult = mysql_store_result( poDS->GetConn() );
+        if (!mysql_query(poDS->GetConn(), osCommand))
+            hResult = mysql_store_result(poDS->GetConn());
 
         papszRow = nullptr;
-        if( hResult != nullptr )
-            papszRow = mysql_fetch_row( hResult );
+        if (hResult != nullptr)
+            papszRow = mysql_fetch_row(hResult);
 
-        if( papszRow != nullptr && papszRow[0] != nullptr )
+        if (papszRow != nullptr && papszRow[0] != nullptr)
         {
 
             pszType = papszRow[0];
 
             OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
-            if( poDS->GetMajorVersion() < 8 || poDS->IsMariaDB() )
-                if( papszRow[1] != nullptr && atoi(papszRow[1]) == 3 )
+            if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
+                if (papszRow[1] != nullptr && atoi(papszRow[1]) == 3)
                     l_nGeomType = wkbSetZ(l_nGeomType);
 
-            poDefn->SetGeomType( l_nGeomType );
+            poDefn->SetGeomType(l_nGeomType);
         }
         else if (eForcedGeomType != wkbUnknown)
             poDefn->SetGeomType(eForcedGeomType);
 
-        if( bGeomColumnNotNullable )
+        if (bGeomColumnNotNullable)
             poDefn->GetGeomFieldDefn(0)->SetNullable(FALSE);
 
-        if( hResult != nullptr )
-            mysql_free_result( hResult );   //Free our query results for finding type.
+        if (hResult != nullptr)
+            mysql_free_result(
+                hResult);  // Free our query results for finding type.
         hResult = nullptr;
     }
 
@@ -427,10 +429,10 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+void OGRMySQLTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
 {
-    if( !InstallFilter( poGeomIn ) )
+    if (!InstallFilter(poGeomIn))
         return;
 
     BuildWhere();
@@ -448,52 +450,49 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRMySQLTableLayer::BuildWhere()
 
 {
-    CPLFree( pszWHERE );
+    CPLFree(pszWHERE);
     const size_t nWHERELen = 500 + ((pszQuery) ? strlen(pszQuery) : 0);
-    pszWHERE = (char*)CPLMalloc(nWHERELen);
+    pszWHERE = (char *)CPLMalloc(nWHERELen);
     pszWHERE[0] = '\0';
 
-    if( m_poFilterGeom != nullptr && pszGeomColumn )
+    if (m_poFilterGeom != nullptr && pszGeomColumn)
     {
         char szEnvelope[400];
-        OGREnvelope  sEnvelope;
+        OGREnvelope sEnvelope;
         szEnvelope[0] = '\0';
 
-        //POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
-        m_poFilterGeom->getEnvelope( &sEnvelope );
+        // POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
+        m_poFilterGeom->getEnvelope(&sEnvelope);
 
         CPLsnprintf(szEnvelope, sizeof(szEnvelope),
-                "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g))",
-                sEnvelope.MinX, sEnvelope.MinY,
-                sEnvelope.MaxX, sEnvelope.MinY,
-                sEnvelope.MaxX, sEnvelope.MaxY,
-                sEnvelope.MinX, sEnvelope.MaxY,
-                sEnvelope.MinX, sEnvelope.MinY);
+                    "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g "
+                    "%.18g, %.18g %.18g))",
+                    sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX,
+                    sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY,
+                    sEnvelope.MinX, sEnvelope.MaxY, sEnvelope.MinX,
+                    sEnvelope.MinY);
 
-        const char* pszAxisOrder = "";
-        OGRSpatialReference* l_poSRS = GetSpatialRef();
-        if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
-            l_poSRS && l_poSRS->IsGeographic() )
+        const char *pszAxisOrder = "";
+        OGRSpatialReference *l_poSRS = GetSpatialRef();
+        if (poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() && l_poSRS &&
+            l_poSRS->IsGeographic())
         {
             pszAxisOrder = ", 'axis-order=long-lat'";
         }
 
-        snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(%s('%s', %d%s), `%s`)",
-                 poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeomFromText",
-                 szEnvelope,
-                 nSRSId,
-                 pszAxisOrder,
-                 pszGeomColumn);
+        snprintf(
+            pszWHERE, nWHERELen, "WHERE MBRIntersects(%s('%s', %d%s), `%s`)",
+            poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeomFromText",
+            szEnvelope, nSRSId, pszAxisOrder, pszGeomColumn);
     }
 
-    if( pszQuery != nullptr )
+    if (pszQuery != nullptr)
     {
-        if( strlen(pszWHERE) == 0 )
-            snprintf( pszWHERE, nWHERELen, "WHERE %s ", pszQuery  );
+        if (strlen(pszWHERE) == 0)
+            snprintf(pszWHERE, nWHERELen, "WHERE %s ", pszQuery);
         else
-            snprintf( pszWHERE+strlen(pszWHERE),
-                      nWHERELen - strlen(pszWHERE), "&& (%s) ", pszQuery );
+            snprintf(pszWHERE + strlen(pszWHERE), nWHERELen - strlen(pszWHERE),
+                     "&& (%s) ", pszQuery);
     }
 }
 
@@ -504,24 +503,24 @@ void OGRMySQLTableLayer::BuildWhere()
 void OGRMySQLTableLayer::BuildFullQueryStatement()
 
 {
-    if( pszQueryStatement != nullptr )
+    if (pszQueryStatement != nullptr)
     {
-        CPLFree( pszQueryStatement );
+        CPLFree(pszQueryStatement);
         pszQueryStatement = nullptr;
     }
 
     char *pszFields = BuildFields();
 
-    pszQueryStatement = (char *)
-        CPLMalloc(strlen(pszFields)+strlen(pszWHERE)
-                  +strlen(poFeatureDefn->GetName()) + 40);
-    snprintf( pszQueryStatement,
-              strlen(pszFields)+strlen(pszWHERE)
-                  +strlen(poFeatureDefn->GetName()) + 40,
-             "SELECT %s FROM `%s` %s",
-             pszFields, poFeatureDefn->GetName(), pszWHERE );
+    pszQueryStatement =
+        (char *)CPLMalloc(strlen(pszFields) + strlen(pszWHERE) +
+                          strlen(poFeatureDefn->GetName()) + 40);
+    snprintf(pszQueryStatement,
+             strlen(pszFields) + strlen(pszWHERE) +
+                 strlen(poFeatureDefn->GetName()) + 40,
+             "SELECT %s FROM `%s` %s", pszFields, poFeatureDefn->GetName(),
+             pszWHERE);
 
-    CPLFree( pszFields );
+    CPLFree(pszFields);
 }
 
 /************************************************************************/
@@ -547,48 +546,49 @@ char *OGRMySQLTableLayer::BuildFields()
 
 {
     size_t nSize = 25;
-    if( pszGeomColumn )
+    if (pszGeomColumn)
         nSize += strlen(pszGeomColumn);
 
-    if( bHasFid )
+    if (bHasFid)
         nSize += strlen(pszFIDColumn);
 
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 6;
 
-    char *pszFieldList = (char *) CPLMalloc(nSize);
+    char *pszFieldList = (char *)CPLMalloc(nSize);
     pszFieldList[0] = '\0';
 
-    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
-        snprintf( pszFieldList, nSize, "`%s`", pszFIDColumn );
+    if (bHasFid && poFeatureDefn->GetFieldIndex(pszFIDColumn) == -1)
+        snprintf(pszFieldList, nSize, "`%s`", pszFIDColumn);
 
-    if( pszGeomColumn )
+    if (pszGeomColumn)
     {
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if (strlen(pszFieldList) > 0)
+            strcat(pszFieldList, ", ");
 
         /* ------------------------------------------------------------ */
         /*      Geometry returned from MySQL is as WKB, with the        */
         /*      first 4 bytes being an int that defines the SRID        */
         /*      and the rest being the WKB.                             */
         /* ------------------------------------------------------------ */
-        snprintf( pszFieldList+strlen(pszFieldList), nSize-strlen(pszFieldList),
-                 "`%s` `%s`", pszGeomColumn, pszGeomColumn );
+        snprintf(pszFieldList + strlen(pszFieldList),
+                 nSize - strlen(pszFieldList), "`%s` `%s`", pszGeomColumn,
+                 pszGeomColumn);
     }
 
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(pszFieldList) > 0 )
-            strcat( pszFieldList, ", " );
+        if (strlen(pszFieldList) > 0)
+            strcat(pszFieldList, ", ");
 
-        strcat( pszFieldList, "`");
-        strcat( pszFieldList, pszName );
-        strcat( pszFieldList, "`");
+        strcat(pszFieldList, "`");
+        strcat(pszFieldList, pszName);
+        strcat(pszFieldList, "`");
     }
 
-    CPLAssert( strlen(pszFieldList) < nSize );
+    CPLAssert(strlen(pszFieldList) < nSize);
 
     return pszFieldList;
 }
@@ -597,18 +597,18 @@ char *OGRMySQLTableLayer::BuildFields()
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQueryIn )
+OGRErr OGRMySQLTableLayer::SetAttributeFilter(const char *pszQueryIn)
 
 {
     CPLFree(m_pszAttrQueryString);
     m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : nullptr;
 
-    CPLFree( pszQuery );
+    CPLFree(pszQuery);
 
-    if( pszQueryIn == nullptr || strlen(pszQueryIn) == 0 )
+    if (pszQueryIn == nullptr || strlen(pszQueryIn) == 0)
         pszQuery = nullptr;
     else
-        pszQuery = CPLStrdup( pszQueryIn );
+        pszQuery = CPLStrdup(pszQueryIn);
 
     BuildWhere();
 
@@ -621,37 +621,37 @@ OGRErr OGRMySQLTableLayer::SetAttributeFilter( const char *pszQueryIn )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLTableLayer::TestCapability( const char * pszCap )
+int OGRMySQLTableLayer::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    if (EQUAL(pszCap, OLCRandomRead))
         return bHasFid;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if (EQUAL(pszCap, OLCFastFeatureCount))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    else if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
+    else if (EQUAL(pszCap, OLCCreateField))
         return bUpdateAccess;
 
-    else if( EQUAL(pszCap,OLCDeleteFeature) )
+    else if (EQUAL(pszCap, OLCDeleteFeature))
         return bUpdateAccess;
 
-    else if( EQUAL(pszCap,OLCRandomWrite) )
+    else if (EQUAL(pszCap, OLCRandomWrite))
         return bUpdateAccess;
 
-    else if( EQUAL(pszCap,OLCSequentialWrite) )
+    else if (EQUAL(pszCap, OLCSequentialWrite))
         return bUpdateAccess;
 
-    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+    else if (EQUAL(pszCap, OLCMeasuredGeometries))
         return TRUE;
 
-    else if( EQUAL(pszCap,OLCZGeometries) )
+    else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
 
     else
@@ -666,114 +666,118 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
 /*      new one with the provided feature id.                           */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::ISetFeature( OGRFeature *poFeature )
+OGRErr OGRMySQLTableLayer::ISetFeature(OGRFeature *poFeature)
 
 {
     OGRErr eErr;
 
-    if( poFeature->GetFID() == OGRNullFID )
+    if (poFeature->GetFID() == OGRNullFID)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "FID required on features given to SetFeature()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FID required on features given to SetFeature().");
         return OGRERR_FAILURE;
     }
 
-    eErr = DeleteFeature( poFeature->GetFID() );
-    if( eErr != OGRERR_NONE )
+    eErr = DeleteFeature(poFeature->GetFID());
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-    return CreateFeature( poFeature );
+    return CreateFeature(poFeature);
 }
 
 /************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
+OGRErr OGRMySQLTableLayer::DeleteFeature(GIntBig nFID)
 
 {
-    MYSQL_RES           *hResult=nullptr;
-    CPLString           osCommand;
+    MYSQL_RES *hResult = nullptr;
+    CPLString osCommand;
 
-/* -------------------------------------------------------------------- */
-/*      We can only delete features if we have a well defined FID       */
-/*      column to target.                                               */
-/* -------------------------------------------------------------------- */
-    if( !bHasFid )
+    /* -------------------------------------------------------------------- */
+    /*      We can only delete features if we have a well defined FID       */
+    /*      column to target.                                               */
+    /* -------------------------------------------------------------------- */
+    if (!bHasFid)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature(" CPL_FRMT_GIB ") failed.  Unable to delete features "
-                  "in tables without\n a recognised FID column.",
-                  nFID );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeleteFeature(" CPL_FRMT_GIB
+                 ") failed.  Unable to delete features "
+                 "in tables without\n a recognised FID column.",
+                 nFID);
         return OGRERR_FAILURE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Form the statement to drop the record.                          */
-/* -------------------------------------------------------------------- */
-    osCommand.Printf( "DELETE FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
-                      poFeatureDefn->GetName(), pszFIDColumn, nFID );
+    /* -------------------------------------------------------------------- */
+    /*      Form the statement to drop the record.                          */
+    /* -------------------------------------------------------------------- */
+    osCommand.Printf("DELETE FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
+                     poFeatureDefn->GetName(), pszFIDColumn, nFID);
 
-/* -------------------------------------------------------------------- */
-/*      Execute the delete.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Execute the delete.                                             */
+    /* -------------------------------------------------------------------- */
     poDS->InterruptLongResult();
-    if( mysql_query(poDS->GetConn(), osCommand.c_str() ) ){
-        poDS->ReportError(  osCommand.c_str() );
+    if (mysql_query(poDS->GetConn(), osCommand.c_str()))
+    {
+        poDS->ReportError(osCommand.c_str());
         return OGRERR_FAILURE;
     }
 
     // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult != nullptr )
-        mysql_free_result( hResult );
+    hResult = mysql_store_result(poDS->GetConn());
+    if (hResult != nullptr)
+        mysql_free_result(hResult);
     hResult = nullptr;
 
-    return mysql_affected_rows( poDS->GetConn() ) > 0 ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    return mysql_affected_rows(poDS->GetConn()) > 0
+               ? OGRERR_NONE
+               : OGRERR_NON_EXISTING_FEATURE;
 }
 
 /************************************************************************/
 /*                       ICreateFeature()                                */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
     int bNeedComma = FALSE;
     CPLString osCommand;
 
-/* -------------------------------------------------------------------- */
-/*      Form the INSERT command.                                        */
-/* -------------------------------------------------------------------- */
-    osCommand.Printf( "INSERT INTO `%s` (", poFeatureDefn->GetName() );
+    /* -------------------------------------------------------------------- */
+    /*      Form the INSERT command.                                        */
+    /* -------------------------------------------------------------------- */
+    osCommand.Printf("INSERT INTO `%s` (", poFeatureDefn->GetName());
 
-    if( poFeature->GetGeometryRef() != nullptr )
+    if (poFeature->GetGeometryRef() != nullptr)
     {
         osCommand = osCommand + "`" + pszGeomColumn + "` ";
         bNeedComma = TRUE;
     }
 
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr )
+    if (poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr)
     {
-        if( bNeedComma )
+        if (bNeedComma)
             osCommand += ", ";
 
         osCommand = osCommand + "`" + pszFIDColumn + "` ";
         bNeedComma = TRUE;
     }
 
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if (!poFeature->IsFieldSet(i))
             continue;
 
-        if( !bNeedComma )
+        if (!bNeedComma)
             bNeedComma = TRUE;
         else
             osCommand += ", ";
 
-        osCommand = osCommand + "`"
-             + poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "`";
+        osCommand = osCommand + "`" +
+                    poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "`";
     }
 
     osCommand += ") VALUES (";
@@ -781,108 +785,109 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
     // Set the geometry
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     bNeedComma = poGeom != nullptr;
-    if( poGeom != nullptr)
+    if (poGeom != nullptr)
     {
-        char    *pszWKT = nullptr;
+        char *pszWKT = nullptr;
         poGeom->closeRings();
         poGeom->flattenTo2D();
-        poGeom->exportToWkt( &pszWKT );
+        poGeom->exportToWkt(&pszWKT);
 
-        if( pszWKT != nullptr )
+        if (pszWKT != nullptr)
         {
-            const char* pszAxisOrder = "";
-            OGRSpatialReference* l_poSRS = GetSpatialRef();
-            if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() &&
-                l_poSRS && l_poSRS->IsGeographic() )
+            const char *pszAxisOrder = "";
+            OGRSpatialReference *l_poSRS = GetSpatialRef();
+            if (poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() && l_poSRS &&
+                l_poSRS->IsGeographic())
             {
                 pszAxisOrder = ", 'axis-order=long-lat'";
             }
 
-            osCommand +=
-                CPLString().Printf(
-                    "%s('%s',%d%s) ",
-                    poDS->GetMajorVersion() >= 8 ? "ST_GeomFromText" : "GeometryFromText",
-                    pszWKT, nSRSId, pszAxisOrder );
+            osCommand += CPLString().Printf("%s('%s',%d%s) ",
+                                            poDS->GetMajorVersion() >= 8
+                                                ? "ST_GeomFromText"
+                                                : "GeometryFromText",
+                                            pszWKT, nSRSId, pszAxisOrder);
 
-            CPLFree( pszWKT );
+            CPLFree(pszWKT);
         }
         else
             osCommand += "''";
     }
 
     // Set the FID
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr )
+    if (poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr)
     {
         GIntBig nFID = poFeature->GetFID();
-        if( !CPL_INT64_FITS_ON_INT32(nFID) &&
-            GetMetadataItem(OLMD_FID64) == nullptr )
+        if (!CPL_INT64_FITS_ON_INT32(nFID) &&
+            GetMetadataItem(OLMD_FID64) == nullptr)
         {
             CPLString osCommand2;
-            osCommand2.Printf(
-                     "ALTER TABLE `%s` MODIFY COLUMN `%s` BIGINT UNIQUE NOT NULL AUTO_INCREMENT",
-                     poFeatureDefn->GetName(), pszFIDColumn );
+            osCommand2.Printf("ALTER TABLE `%s` MODIFY COLUMN `%s` BIGINT "
+                              "UNIQUE NOT NULL AUTO_INCREMENT",
+                              poFeatureDefn->GetName(), pszFIDColumn);
 
-            if( mysql_query(poDS->GetConn(), osCommand2 ) )
+            if (mysql_query(poDS->GetConn(), osCommand2))
             {
-                poDS->ReportError( osCommand2 );
+                poDS->ReportError(osCommand2);
                 return OGRERR_FAILURE;
             }
 
             // make sure to attempt to free results of successful queries
-            MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
-            if( hResult != nullptr )
-                mysql_free_result( hResult );
+            MYSQL_RES *hResult = mysql_store_result(poDS->GetConn());
+            if (hResult != nullptr)
+                mysql_free_result(hResult);
             hResult = nullptr;
 
             SetMetadataItem(OLMD_FID64, "YES");
         }
 
-        if( bNeedComma )
+        if (bNeedComma)
             osCommand += ", ";
-        osCommand += CPLString().Printf( CPL_FRMT_GIB, nFID );
+        osCommand += CPLString().Printf(CPL_FRMT_GIB, nFID);
         bNeedComma = TRUE;
     }
 
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if (!poFeature->IsFieldSet(i))
             continue;
 
-        if( bNeedComma )
+        if (bNeedComma)
             osCommand += ", ";
         else
             bNeedComma = TRUE;
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( poFeature->IsFieldNull(i) )
+        if (poFeature->IsFieldNull(i))
         {
             osCommand += "NULL";
         }
-        else if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
-                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64
-                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
-                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary )
+        else if (poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger &&
+                 poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64 &&
+                 poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal &&
+                 poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary)
         {
             // We need to quote and escape string fields.
             osCommand += "'";
 
-            for( int iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            for (int iChar = 0; pszStrValue[iChar] != '\0'; iChar++)
             {
-                if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
-                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64List
-                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
-                    && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                if (poFeatureDefn->GetFieldDefn(i)->GetType() !=
+                        OFTIntegerList &&
+                    poFeatureDefn->GetFieldDefn(i)->GetType() !=
+                        OFTInteger64List &&
+                    poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList &&
+                    poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0 &&
+                    iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth())
                 {
-                    CPLDebug( "MYSQL",
-                              "Truncated %s field value, it was too long.",
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                    CPLDebug("MYSQL",
+                             "Truncated %s field value, it was too long.",
+                             poFeatureDefn->GetFieldDefn(i)->GetNameRef());
                     break;
                 }
 
-                if( pszStrValue[iChar] == '\\'
-                    || pszStrValue[iChar] == '\'' )
+                if (pszStrValue[iChar] == '\\' || pszStrValue[iChar] == '\'')
                 {
                     osCommand += '\\';
                     osCommand += pszStrValue[iChar];
@@ -893,17 +898,17 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
             osCommand += "'";
         }
-        else if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTBinary )
+        else if (poFeatureDefn->GetFieldDefn(i)->GetType() == OFTBinary)
         {
             int binaryCount = 0;
-            GByte* binaryData = poFeature->GetFieldAsBinary(i, &binaryCount);
-            char* pszHexValue = CPLBinaryToHex( binaryCount, binaryData );
+            GByte *binaryData = poFeature->GetFieldAsBinary(i, &binaryCount);
+            char *pszHexValue = CPLBinaryToHex(binaryCount, binaryData);
 
             osCommand += "x'";
             osCommand += pszHexValue;
             osCommand += "'";
 
-            CPLFree( pszHexValue );
+            CPLFree(pszHexValue);
         }
         else
         {
@@ -913,42 +918,46 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     osCommand += ")";
 
-    //CPLDebug("MYSQL", "%s", osCommand.c_str());
-    int nQueryResult = mysql_query(poDS->GetConn(), osCommand.c_str() );
-    const my_ulonglong nFID = mysql_insert_id( poDS->GetConn() );
+    // CPLDebug("MYSQL", "%s", osCommand.c_str());
+    int nQueryResult = mysql_query(poDS->GetConn(), osCommand.c_str());
+    const my_ulonglong nFID = mysql_insert_id(poDS->GetConn());
 
-    if( nQueryResult ){
+    if (nQueryResult)
+    {
         int eErrorCode = mysql_errno(poDS->GetConn());
-        if (eErrorCode == 1153) {//ER_NET_PACKET_TOO_LARGE)
-            poDS->ReportError("CreateFeature failed because the MySQL server " \
-                              "cannot read the entire query statement.  Increase " \
-                              "the size of statements your server will allow by " \
-                              "altering the 'max_allowed_packet' parameter in "\
-                              "your MySQL server configuration.");
+        if (eErrorCode == 1153)
+        {  // ER_NET_PACKET_TOO_LARGE)
+            poDS->ReportError(
+                "CreateFeature failed because the MySQL server "
+                "cannot read the entire query statement.  Increase "
+                "the size of statements your server will allow by "
+                "altering the 'max_allowed_packet' parameter in "
+                "your MySQL server configuration.");
         }
         else
         {
-        CPLDebug("MYSQL","Error number %d", eErrorCode);
-            poDS->ReportError(  osCommand.c_str() );
+            CPLDebug("MYSQL", "Error number %d", eErrorCode);
+            poDS->ReportError(osCommand.c_str());
         }
 
         // make sure to attempt to free results
-        MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
-        if( hResult != nullptr )
-            mysql_free_result( hResult );
+        MYSQL_RES *hResult = mysql_store_result(poDS->GetConn());
+        if (hResult != nullptr)
+            mysql_free_result(hResult);
         hResult = nullptr;
 
         return OGRERR_FAILURE;
     }
 
-    if( nFID > 0 ) {
-        poFeature->SetFID( nFID );
+    if (nFID > 0)
+    {
+        poFeature->SetFID(nFID);
     }
 
     // make sure to attempt to free results of successful queries
-    MYSQL_RES *hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult != nullptr )
-        mysql_free_result( hResult );
+    MYSQL_RES *hResult = mysql_store_result(poDS->GetConn());
+    if (hResult != nullptr)
+        mysql_free_result(hResult);
     hResult = nullptr;
 
     return OGRERR_NONE;
@@ -958,136 +967,139 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
+OGRErr OGRMySQLTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
 
 {
 
-    MYSQL_RES           *hResult=nullptr;
-    CPLString            osCommand;
+    MYSQL_RES *hResult = nullptr;
+    CPLString osCommand;
 
-    char                szFieldType[256];
-    OGRFieldDefn        oField( poFieldIn );
+    char szFieldType[256];
+    OGRFieldDefn oField(poFieldIn);
 
-/* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into Postgres          */
-/*      friendly format?                                                */
-/* -------------------------------------------------------------------- */
-    if( bLaunderColumnNames )
+    /* -------------------------------------------------------------------- */
+    /*      Do we want to "launder" the column names into Postgres          */
+    /*      friendly format?                                                */
+    /* -------------------------------------------------------------------- */
+    if (bLaunderColumnNames)
     {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+        char *pszSafeName = poDS->LaunderName(oField.GetNameRef());
 
-        oField.SetName( pszSafeName );
-        CPLFree( pszSafeName );
-
+        oField.SetName(pszSafeName);
+        CPLFree(pszSafeName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Work out the MySQL type.                                        */
-/* -------------------------------------------------------------------- */
-    if( oField.GetType() == OFTInteger )
+    /* -------------------------------------------------------------------- */
+    /*      Work out the MySQL type.                                        */
+    /* -------------------------------------------------------------------- */
+    if (oField.GetType() == OFTInteger)
     {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)", oField.GetWidth() );
+        if (oField.GetWidth() > 0 && bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)",
+                     oField.GetWidth());
         else
-            strcpy( szFieldType, "INTEGER" );
+            strcpy(szFieldType, "INTEGER");
     }
-    else if( oField.GetType() == OFTInteger64 )
+    else if (oField.GetType() == OFTInteger64)
     {
-        if( oField.GetWidth() > 0 && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)", oField.GetWidth() );
+        if (oField.GetWidth() > 0 && bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "DECIMAL(%d,0)",
+                     oField.GetWidth());
         else
-            strcpy( szFieldType, "BIGINT" );
+            strcpy(szFieldType, "BIGINT");
     }
-    else if( oField.GetType() == OFTReal )
+    else if (oField.GetType() == OFTReal)
     {
-        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
-            && bPreservePrecision )
-            snprintf( szFieldType, sizeof(szFieldType), "DOUBLE(%d,%d)",
-                     oField.GetWidth(), oField.GetPrecision() );
+        if (oField.GetWidth() > 0 && oField.GetPrecision() > 0 &&
+            bPreservePrecision)
+            snprintf(szFieldType, sizeof(szFieldType), "DOUBLE(%d,%d)",
+                     oField.GetWidth(), oField.GetPrecision());
         else
-            strcpy( szFieldType, "DOUBLE" );
+            strcpy(szFieldType, "DOUBLE");
     }
 
-    else if( oField.GetType() == OFTDate )
+    else if (oField.GetType() == OFTDate)
     {
         oField.SetDefault(nullptr);
-        snprintf( szFieldType, sizeof(szFieldType), "DATE" );
+        snprintf(szFieldType, sizeof(szFieldType), "DATE");
     }
 
-    else if( oField.GetType() == OFTDateTime )
+    else if (oField.GetType() == OFTDateTime)
     {
-        if( oField.GetDefault() != nullptr && STARTS_WITH_CI(oField.GetDefault(), "CURRENT_TIMESTAMP") )
-            snprintf( szFieldType, sizeof(szFieldType), "TIMESTAMP" );
+        if (oField.GetDefault() != nullptr &&
+            STARTS_WITH_CI(oField.GetDefault(), "CURRENT_TIMESTAMP"))
+            snprintf(szFieldType, sizeof(szFieldType), "TIMESTAMP");
         else
-            snprintf( szFieldType, sizeof(szFieldType), "DATETIME" );
+            snprintf(szFieldType, sizeof(szFieldType), "DATETIME");
     }
 
-    else if( oField.GetType() == OFTTime )
+    else if (oField.GetType() == OFTTime)
     {
         oField.SetDefault(nullptr);
-        snprintf( szFieldType, sizeof(szFieldType), "TIME" );
+        snprintf(szFieldType, sizeof(szFieldType), "TIME");
     }
 
-    else if( oField.GetType() == OFTBinary )
+    else if (oField.GetType() == OFTBinary)
     {
-        snprintf( szFieldType, sizeof(szFieldType), "LONGBLOB" );
+        snprintf(szFieldType, sizeof(szFieldType), "LONGBLOB");
     }
 
-    else if( oField.GetType() == OFTString )
+    else if (oField.GetType() == OFTString)
     {
-        if( oField.GetWidth() == 0 || !bPreservePrecision )
+        if (oField.GetWidth() == 0 || !bPreservePrecision)
         {
-            if( oField.GetDefault() != nullptr )
-                strcpy( szFieldType, "VARCHAR(256)" );
+            if (oField.GetDefault() != nullptr)
+                strcpy(szFieldType, "VARCHAR(256)");
             else
-                strcpy( szFieldType, "TEXT" );
+                strcpy(szFieldType, "TEXT");
         }
         else
-            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR(%d)", oField.GetWidth() );
+            snprintf(szFieldType, sizeof(szFieldType), "VARCHAR(%d)",
+                     oField.GetWidth());
     }
-    else if( bApproxOK )
+    else if (bApproxOK)
     {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on MySQL layers.  Creating as TEXT.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "TEXT" );
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Can't create field %s with type %s on MySQL layers.  "
+                 "Creating as TEXT.",
+                 oField.GetNameRef(),
+                 OGRFieldDefn::GetFieldTypeName(oField.GetType()));
+        strcpy(szFieldType, "TEXT");
         oField.SetWidth(0);
         oField.SetPrecision(0);
     }
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s with type %s on MySQL layers.",
-                  oField.GetNameRef(),
-                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Can't create field %s with type %s on MySQL layers.",
+                 oField.GetNameRef(),
+                 OGRFieldDefn::GetFieldTypeName(oField.GetType()));
 
         return OGRERR_FAILURE;
     }
 
-    osCommand.Printf(
-             "ALTER TABLE `%s` ADD COLUMN `%s` %s%s",
-             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType,
-             (!oField.IsNullable()) ? " NOT NULL" : "");
-    if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
+    osCommand.Printf("ALTER TABLE `%s` ADD COLUMN `%s` %s%s",
+                     poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType,
+                     (!oField.IsNullable()) ? " NOT NULL" : "");
+    if (oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific())
     {
         osCommand += " DEFAULT ";
         osCommand += oField.GetDefault();
     }
 
-    if( mysql_query(poDS->GetConn(), osCommand ) )
+    if (mysql_query(poDS->GetConn(), osCommand))
     {
-        poDS->ReportError( osCommand );
+        poDS->ReportError(osCommand);
         return OGRERR_FAILURE;
     }
 
     // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult != nullptr )
-        mysql_free_result( hResult );
+    hResult = mysql_store_result(poDS->GetConn());
+    if (hResult != nullptr)
+        mysql_free_result(hResult);
     hResult = nullptr;
 
-    poFeatureDefn->AddFieldDefn( &oField );
+    poFeatureDefn->AddFieldDefn(&oField);
 
     return OGRERR_NONE;
 }
@@ -1096,72 +1108,71 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMySQLTableLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRMySQLTableLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    if( pszFIDColumn == nullptr )
-        return OGRMySQLLayer::GetFeature( nFeatureId );
+    if (pszFIDColumn == nullptr)
+        return OGRMySQLLayer::GetFeature(nFeatureId);
 
-/* -------------------------------------------------------------------- */
-/*      Discard any existing resultset.                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Discard any existing resultset.                                 */
+    /* -------------------------------------------------------------------- */
     ResetReading();
 
-/* -------------------------------------------------------------------- */
-/*      Prepare query command that will just fetch the one record of    */
-/*      interest.                                                       */
-/* -------------------------------------------------------------------- */
-    char        *pszFieldList = BuildFields();
-    CPLString    osCommand;
+    /* -------------------------------------------------------------------- */
+    /*      Prepare query command that will just fetch the one record of    */
+    /*      interest.                                                       */
+    /* -------------------------------------------------------------------- */
+    char *pszFieldList = BuildFields();
+    CPLString osCommand;
 
-    osCommand.Printf(
-             "SELECT %s FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
-             pszFieldList, poFeatureDefn->GetName(), pszFIDColumn,
-             nFeatureId );
-    CPLFree( pszFieldList );
+    osCommand.Printf("SELECT %s FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
+                     pszFieldList, poFeatureDefn->GetName(), pszFIDColumn,
+                     nFeatureId);
+    CPLFree(pszFieldList);
 
-/* -------------------------------------------------------------------- */
-/*      Issue the command.                                              */
-/* -------------------------------------------------------------------- */
-    if( mysql_query( poDS->GetConn(), osCommand ) )
+    /* -------------------------------------------------------------------- */
+    /*      Issue the command.                                              */
+    /* -------------------------------------------------------------------- */
+    if (mysql_query(poDS->GetConn(), osCommand))
     {
-        poDS->ReportError( osCommand );
+        poDS->ReportError(osCommand);
         return nullptr;
     }
 
-    hResultSet = mysql_store_result( poDS->GetConn() );
-    if( hResultSet == nullptr )
+    hResultSet = mysql_store_result(poDS->GetConn());
+    if (hResultSet == nullptr)
     {
-        poDS->ReportError( "mysql_store_result() failed on query." );
+        poDS->ReportError("mysql_store_result() failed on query.");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Fetch the result record.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Fetch the result record.                                        */
+    /* -------------------------------------------------------------------- */
     char **papszRow;
     unsigned long *panLengths;
 
-    papszRow = mysql_fetch_row( hResultSet );
-    if( papszRow == nullptr )
+    papszRow = mysql_fetch_row(hResultSet);
+    if (papszRow == nullptr)
         return nullptr;
 
-    panLengths = mysql_fetch_lengths( hResultSet );
+    panLengths = mysql_fetch_lengths(hResultSet);
 
-/* -------------------------------------------------------------------- */
-/*      Transform into a feature.                                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Transform into a feature.                                       */
+    /* -------------------------------------------------------------------- */
     iNextShapeId = nFeatureId;
 
-    OGRFeature *poFeature = RecordToFeature( papszRow, panLengths );
+    OGRFeature *poFeature = RecordToFeature(papszRow, panLengths);
 
     iNextShapeId = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    if( hResultSet != nullptr )
-        mysql_free_result( hResultSet );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    if (hResultSet != nullptr)
+        mysql_free_result(hResultSet);
     hResultSet = nullptr;
 
     return poFeature;
@@ -1176,45 +1187,45 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( GIntBig nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRMySQLTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
+GIntBig OGRMySQLTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
-/* -------------------------------------------------------------------- */
-/*      Ensure any active long result is interrupted.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Ensure any active long result is interrupted.                   */
+    /* -------------------------------------------------------------------- */
     poDS->InterruptLongResult();
 
-/* -------------------------------------------------------------------- */
-/*      Issue the appropriate select command.                           */
-/* -------------------------------------------------------------------- */
-    MYSQL_RES    *hResult;
-    const char         *pszCommand;
+    /* -------------------------------------------------------------------- */
+    /*      Issue the appropriate select command.                           */
+    /* -------------------------------------------------------------------- */
+    MYSQL_RES *hResult;
+    const char *pszCommand;
 
-    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM `%s` %s",
-                             poFeatureDefn->GetName(), pszWHERE );
+    pszCommand = CPLSPrintf("SELECT COUNT(*) FROM `%s` %s",
+                            poFeatureDefn->GetName(), pszWHERE);
 
-    if( mysql_query( poDS->GetConn(), pszCommand ) )
+    if (mysql_query(poDS->GetConn(), pszCommand))
     {
-        poDS->ReportError( pszCommand );
+        poDS->ReportError(pszCommand);
         return FALSE;
     }
 
-    hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult == nullptr )
+    hResult = mysql_store_result(poDS->GetConn());
+    if (hResult == nullptr)
     {
-        poDS->ReportError( "mysql_store_result() failed on SELECT COUNT(*)." );
+        poDS->ReportError("mysql_store_result() failed on SELECT COUNT(*).");
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Capture the result.                                             */
-/* -------------------------------------------------------------------- */
-    char **papszRow = mysql_fetch_row( hResult );
+    /* -------------------------------------------------------------------- */
+    /*      Capture the result.                                             */
+    /* -------------------------------------------------------------------- */
+    char **papszRow = mysql_fetch_row(hResult);
     GIntBig nCount = 0;
 
-    if( papszRow != nullptr && papszRow[0] != nullptr )
+    if (papszRow != nullptr && papszRow[0] != nullptr)
         nCount = CPLAtoGIntBig(papszRow[0]);
 
-    mysql_free_result( hResult );
+    mysql_free_result(hResult);
 
     return nCount;
 }
@@ -1227,9 +1238,10 @@ GIntBig OGRMySQLTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
 /*      like PostgreSQL.                                                */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce )
+OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent,
+                                     CPL_UNUSED int bForce)
 {
-    if( GetLayerDefn()->GetGeomType() == wkbNone )
+    if (GetLayerDefn()->GetGeomType() == wkbNone)
     {
         psExtent->MinX = 0.0;
         psExtent->MaxX = 0.0;
@@ -1242,25 +1254,27 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
     ResetReading();
 
     OGREnvelope oEnv;
-    CPLString   osCommand;
-    GBool       bExtentSet = FALSE;
+    CPLString osCommand;
+    GBool bExtentSet = FALSE;
 
-    if( poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB() )
+    if (poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB())
     {
         // ST_Envelope() does not work on geographic SRS, so force to 0
-        osCommand.Printf( "SELECT ST_Envelope(ST_SRID(`%s`,0)) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+        osCommand.Printf("SELECT ST_Envelope(ST_SRID(`%s`,0)) FROM `%s`;",
+                         pszGeomColumn, pszGeomColumnTable);
     }
     else
     {
-        osCommand.Printf( "SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn, pszGeomColumnTable);
+        osCommand.Printf("SELECT Envelope(`%s`) FROM `%s`;", pszGeomColumn,
+                         pszGeomColumnTable);
     }
 
     if (mysql_query(poDS->GetConn(), osCommand) == 0)
     {
-        MYSQL_RES* result = mysql_use_result(poDS->GetConn());
-        if ( result == nullptr )
+        MYSQL_RES *result = mysql_use_result(poDS->GetConn());
+        if (result == nullptr)
         {
-            poDS->ReportError( "mysql_use_result() failed on extents query." );
+            poDS->ReportError("mysql_use_result() failed on extents query.");
             return OGRERR_FAILURE;
         }
 
@@ -1270,22 +1284,22 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
         {
             if (panLengths == nullptr)
             {
-                panLengths = mysql_fetch_lengths( result );
-                if ( panLengths == nullptr )
+                panLengths = mysql_fetch_lengths(result);
+                if (panLengths == nullptr)
                 {
-                    poDS->ReportError( "mysql_fetch_lengths() failed on extents query." );
+                    poDS->ReportError(
+                        "mysql_fetch_lengths() failed on extents query.");
                     return OGRERR_FAILURE;
                 }
             }
 
             OGRGeometry *poGeometry = nullptr;
             // Geometry columns will have the first 4 bytes contain the SRID.
-            OGRGeometryFactory::createFromWkb(row[0] + 4,
-                                              nullptr,
-                                              &poGeometry,
-                                              static_cast<int>(panLengths[0] - 4) );
+            OGRGeometryFactory::createFromWkb(
+                row[0] + 4, nullptr, &poGeometry,
+                static_cast<int>(panLengths[0] - 4));
 
-            if ( poGeometry != nullptr )
+            if (poGeometry != nullptr)
             {
                 if (!bExtentSet)
                 {
@@ -1312,7 +1326,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
     }
     else
     {
-        poDS->ReportError(  osCommand.c_str() );
+        poDS->ReportError(osCommand.c_str());
     }
 
     return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;

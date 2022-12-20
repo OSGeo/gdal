@@ -1,8 +1,8 @@
 /******************************************************************************
  * Project:  GDAL
- * Author:   Raul Alonso Reyes <raul dot alonsoreyes at satcen dot europa dot eu>
- * Author:   Even Rouault, <even dot rouault at spatialys dot com>
- * Purpose:  JPEG-2000 driver based on Lurawave library, driver developed by SatCen
+ * Author:   Raul Alonso Reyes <raul dot alonsoreyes at satcen dot europa dot
+ *eu> Author:   Even Rouault, <even dot rouault at spatialys dot com> Purpose:
+ *JPEG-2000 driver based on Lurawave library, driver developed by SatCen
  *
  ******************************************************************************
  * Copyright (c) 2016, SatCen - European Union Satellite Centre
@@ -35,8 +35,7 @@
 /************************************************************************/
 
 JP2LuraRasterBand::JP2LuraRasterBand(JP2LuraDataset *poDSIn, int nBandIn,
-                                     GDALDataType eDataTypeIn,
-                                     int nBits,
+                                     GDALDataType eDataTypeIn, int nBits,
                                      int nBlockXSizeIn, int nBlockYSizeIn)
 
 {
@@ -50,9 +49,11 @@ JP2LuraRasterBand::JP2LuraRasterBand(JP2LuraDataset *poDSIn, int nBandIn,
 
     if (nRasterXSize == nBlockXSize && nRasterYSize == nBlockYSize)
     {
-    /* -------------------------------------------------------------------- */
-    /*      Use a 2048x128 "virtual" block size unless the file is small.   */
-    /* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Use a 2048x128 "virtual" block size unless the file is small. */
+        /* --------------------------------------------------------------------
+         */
         if (nRasterXSize >= 2048)
         {
             nBlockXSize = 2048;
@@ -72,14 +73,13 @@ JP2LuraRasterBand::JP2LuraRasterBand(JP2LuraDataset *poDSIn, int nBandIn,
         }
     }
 
-    if( (nBits % 8) != 0 )
+    if ((nBits % 8) != 0)
     {
-        GDALRasterBand::SetMetadataItem("NBITS",
-                        CPLString().Printf("%d",nBits),
-                        "IMAGE_STRUCTURE" );
+        GDALRasterBand::SetMetadataItem(
+            "NBITS", CPLString().Printf("%d", nBits), "IMAGE_STRUCTURE");
     }
     GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
-                    "IMAGE_STRUCTURE" );
+                                    "IMAGE_STRUCTURE");
 
     bForceCachedIO = FALSE;
 }
@@ -97,81 +97,74 @@ JP2LuraRasterBand::~JP2LuraRasterBand()
 /************************************************************************/
 
 CPLErr JP2LuraRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                     void * pImage)
+                                     void *pImage)
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
 #ifdef DEBUG_VERBOSE
-    CPLDebug("JP2Lura", "IReadBlock(nBand=%d,nLevel=%d %d,%d)",
-             nBand, poGDS->iLevel, nBlockXOff, nBlockYOff);
+    CPLDebug("JP2Lura", "IReadBlock(nBand=%d,nLevel=%d %d,%d)", nBand,
+             poGDS->iLevel, nBlockXOff, nBlockYOff);
 #endif
     int nXOff = nBlockXOff * nBlockXSize;
     int nYOff = nBlockYOff * nBlockYSize;
     int nXSize = nBlockXSize;
     int nYSize = nBlockYSize;
-    if( nXOff + nXSize > nRasterXSize )
+    if (nXOff + nXSize > nRasterXSize)
         nXSize = nRasterXSize - nXOff;
-    if( nYOff + nYSize > nRasterYSize )
+    if (nYOff + nYSize > nRasterYSize)
         nYSize = nRasterYSize - nYOff;
     GDALRasterIOExtraArg sExtraArgs;
     INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
     const int nDTSizeBytes = GDALGetDataTypeSizeBytes(eDataType);
-    CPLErr eErr = IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                            pImage, nXSize, nYSize,
-                            eDataType,
-                            nDTSizeBytes,
-                            nDTSizeBytes * nXSize,
-                            &sExtraArgs);
+    CPLErr eErr =
+        IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pImage, nXSize, nYSize,
+                  eDataType, nDTSizeBytes, nDTSizeBytes * nXSize, &sExtraArgs);
 
     // Unpack previously packed buffer if needed
-    if( eErr == CE_None && nXSize < nBlockXSize )
+    if (eErr == CE_None && nXSize < nBlockXSize)
     {
-        GByte* pabyData = reinterpret_cast<GByte*>(pImage);
-        for( int j = nYSize - 1; j >= 0; --j )
+        GByte *pabyData = reinterpret_cast<GByte *>(pImage);
+        for (int j = nYSize - 1; j >= 0; --j)
         {
-            memmove( pabyData + j * nBlockXSize * nDTSizeBytes,
-                     pabyData + j * nXSize * nDTSizeBytes,
-                     nXSize * nDTSizeBytes );
+            memmove(pabyData + j * nBlockXSize * nDTSizeBytes,
+                    pabyData + j * nXSize * nDTSizeBytes,
+                    nXSize * nDTSizeBytes);
         }
     }
 
     // Caching other bands while we have the cached buffer valid
-    for( int iBand = 1;eErr == CE_None && iBand <= poGDS->nBands; iBand++ )
+    for (int iBand = 1; eErr == CE_None && iBand <= poGDS->nBands; iBand++)
     {
-        if( iBand == nBand )
+        if (iBand == nBand)
             continue;
-        JP2LuraRasterBand* poOtherBand =
-            reinterpret_cast<JP2LuraRasterBand*>(poGDS->GetRasterBand(iBand));
-        GDALRasterBlock* poBlock = poOtherBand->
-                                TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
+        JP2LuraRasterBand *poOtherBand =
+            reinterpret_cast<JP2LuraRasterBand *>(poGDS->GetRasterBand(iBand));
+        GDALRasterBlock *poBlock =
+            poOtherBand->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
         if (poBlock != nullptr)
         {
             poBlock->DropLock();
             continue;
         }
 
-        poBlock = poOtherBand->
-                            GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+        poBlock = poOtherBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
         if (poBlock == nullptr)
         {
             continue;
         }
 
-        GByte* pabyData = reinterpret_cast<GByte*>(poBlock->GetDataRef());
-        eErr = poOtherBand->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                        pabyData, nXSize, nYSize,
-                        eDataType,
-                        nDTSizeBytes,
-                        nDTSizeBytes * nXSize,
-                        &sExtraArgs);
+        GByte *pabyData = reinterpret_cast<GByte *>(poBlock->GetDataRef());
+        eErr = poOtherBand->IRasterIO(
+            GF_Read, nXOff, nYOff, nXSize, nYSize, pabyData, nXSize, nYSize,
+            eDataType, nDTSizeBytes, nDTSizeBytes * nXSize, &sExtraArgs);
 
         // Unpack previously packed buffer if needed
-        if( eErr == CE_None && nXSize < nBlockXSize )
+        if (eErr == CE_None && nXSize < nBlockXSize)
         {
-            for( int j = nYSize - 1; j >= 0; --j )
+            for (int j = nYSize - 1; j >= 0; --j)
             {
-                memmove( pabyData + j * nBlockXSize * nDTSizeBytes,
+                memmove(pabyData + j * nBlockXSize * nDTSizeBytes,
                         pabyData + j * nXSize * nDTSizeBytes,
-                        nXSize * nDTSizeBytes );
+                        nXSize * nDTSizeBytes);
             }
         }
 
@@ -185,12 +178,12 @@ CPLErr JP2LuraRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
-                                    int nXOff, int nYOff, int nXSize, int nYSize,
-                                    void * pData, int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType,
-                                    GSpacing nPixelSpace, GSpacing nLineSpace,
-                                    GDALRasterIOExtraArg* psExtraArg)
+CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                    int nXSize, int nYSize, void *pData,
+                                    int nBufXSize, int nBufYSize,
+                                    GDALDataType eBufType, GSpacing nPixelSpace,
+                                    GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg *psExtraArg)
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
     const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
@@ -200,26 +193,25 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("JP2Lura", "RasterIO(nBand=%d,nLevel=%d %d,%d,%dx%d -> %dx%d)",
-             nBand, poGDS->iLevel, nXOff, nYOff, nXSize, nYSize,
-             nBufXSize, nBufYSize);
+             nBand, poGDS->iLevel, nXOff, nYOff, nXSize, nYSize, nBufXSize,
+             nBufYSize);
 #endif
-    if( eBufType != eDataType ||
-        nPixelSpace != nBufTypeSize ||
-        nLineSpace != nPixelSpace * nBufXSize )
+    if (eBufType != eDataType || nPixelSpace != nBufTypeSize ||
+        nLineSpace != nPixelSpace * nBufXSize)
     {
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                        pData, nBufXSize, nBufYSize, eBufType,
-                                        nPixelSpace, nLineSpace, psExtraArg);
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nPixelSpace, nLineSpace, psExtraArg);
     }
 
     // Use cached data
-    if( poGDS->sOutputData.nXOff == nXOff &&
+    if (poGDS->sOutputData.nXOff == nXOff &&
         poGDS->sOutputData.nYOff == nYOff &&
         poGDS->sOutputData.nXSize == nXSize &&
         poGDS->sOutputData.nYSize == nYSize &&
         poGDS->sOutputData.nBufXSize == nBufXSize &&
         poGDS->sOutputData.nBufYSize == nBufYSize &&
-        poGDS->sOutputData.eBufType == eBufType )
+        poGDS->sOutputData.eBufType == eBufType)
     {
         if (poGDS->sOutputData.pDatacache[nBand - 1] != nullptr)
         {
@@ -227,7 +219,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
             CPLDebug("JP2Lura", "Using cached data");
 #endif
             memcpy(pData, poGDS->sOutputData.pDatacache[nBand - 1],
-                   static_cast<size_t>(nBufXSize)*nBufYSize*nBufTypeSize);
+                   static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
             return CE_None;
         }
     }
@@ -236,35 +228,33 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     /*      Do we have overviews that would be appropriate to satisfy       */
     /*      this request?                                                   */
     /* ==================================================================== */
-    if ((nBufXSize < nXSize || nBufYSize < nYSize)
-            && GetOverviewCount() > 0)
+    if ((nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0)
     {
-        int         nOverview;
+        int nOverview;
         GDALRasterIOExtraArg sExtraArg;
 
         GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
-        nOverview = GDALBandGetBestOverviewLevel2(
-                                        this, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize, &sExtraArg);
+        nOverview =
+            GDALBandGetBestOverviewLevel2(this, nXOff, nYOff, nXSize, nYSize,
+                                          nBufXSize, nBufYSize, &sExtraArg);
         if (nOverview >= 0)
         {
-            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+            GDALRasterBand *poOverviewBand = GetOverview(nOverview);
             if (poOverviewBand == nullptr)
-                    return CE_Failure;
+                return CE_Failure;
 
             return poOverviewBand->RasterIO(
-                                eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                pData, nBufXSize, nBufYSize, eBufType,
-                                nPixelSpace, nLineSpace, &sExtraArg);
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nPixelSpace, nLineSpace, &sExtraArg);
         }
     }
 
-    if( nBufXSize != nXSize || nBufYSize != nYSize )
+    if (nBufXSize != nXSize || nBufYSize != nYSize)
     {
         return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                        pData, nBufXSize, nBufYSize, eBufType,
-                                        nPixelSpace, nLineSpace, psExtraArg);
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nPixelSpace, nLineSpace, psExtraArg);
     }
 
     JP2_Error error = 0;
@@ -278,15 +268,14 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     error = JP2_Decompress_SetProp(poGDS->sOutputData.handle,
                                    cJP2_Prop_Scale_Down, factor);
-    if( error )
+    if (error)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Internal library error (%s).",
+        CPLError(CE_Failure, CPLE_AppDefined, "Internal library error (%s).",
                  JP2LuraDataset::GetErrorMessage(error));
         return CE_Failure;
     }
 
-    poGDS->sOutputData.pimage = reinterpret_cast<unsigned char*>(pData);
+    poGDS->sOutputData.pimage = reinterpret_cast<unsigned char *>(pData);
 
     poGDS->sOutputData.nXOff = nXOff;
     poGDS->sOutputData.nYOff = nYOff;
@@ -298,10 +287,10 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     poGDS->sOutputData.nBand = nBand;
     poGDS->sOutputData.nBands = poGDS->nBands;
-    if( poGDS->sOutputData.pDatacache == nullptr )
+    if (poGDS->sOutputData.pDatacache == nullptr)
     {
-        poGDS->sOutputData.pDatacache = reinterpret_cast<unsigned char**>
-                            (CPLCalloc( poGDS->nBands, sizeof(unsigned char*)));
+        poGDS->sOutputData.pDatacache = reinterpret_cast<unsigned char **>(
+            CPLCalloc(poGDS->nBands, sizeof(unsigned char *)));
     }
 
     for (int i = 0; i < poGDS->nBands; i++)
@@ -311,42 +300,40 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
             VSIFree(poGDS->sOutputData.pDatacache[i]);
             poGDS->sOutputData.pDatacache[i] = nullptr;
         }
-        if (i == nBand-1)
+        if (i == nBand - 1)
             continue;
         poGDS->sOutputData.pDatacache[i] =
-            reinterpret_cast<unsigned char*>(VSIMalloc(
-                        static_cast<size_t>(nBufXSize)*nBufYSize*nBufTypeSize));
+            reinterpret_cast<unsigned char *>(VSIMalloc(
+                static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize));
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
     /* Set the callback function and parameter      */
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
 
-    error = JP2_Decompress_SetProp(poGDS->sOutputData.handle,
-                cJP2_Prop_Output_Parameter,
-                reinterpret_cast<JP2_Property_Value>(&(poGDS->sOutputData)));
-    if( error )
+    error = JP2_Decompress_SetProp(
+        poGDS->sOutputData.handle, cJP2_Prop_Output_Parameter,
+        reinterpret_cast<JP2_Property_Value>(&(poGDS->sOutputData)));
+    if (error)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Internal library error (%s).",
+        CPLError(CE_Failure, CPLE_AppDefined, "Internal library error (%s).",
                  JP2LuraDataset::GetErrorMessage(error));
         return CE_Failure;
     }
 
     error = JP2_Decompress_SetProp(poGDS->sOutputData.handle,
-                    cJP2_Prop_Output_Function,
-                    reinterpret_cast<JP2_Property_Value>(
-                                    GDALJP2Lura_Callback_Decompress_Write));
-    if( error )
+                                   cJP2_Prop_Output_Function,
+                                   reinterpret_cast<JP2_Property_Value>(
+                                       GDALJP2Lura_Callback_Decompress_Write));
+    if (error)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Internal library error (%s).",
+        CPLError(CE_Failure, CPLE_AppDefined, "Internal library error (%s).",
                  JP2LuraDataset::GetErrorMessage(error));
         return CE_Failure;
     }
 
     error = JP2_Decompress_Region(poGDS->sOutputData.handle, comp_region);
-    if( error )
+    if (error)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error during decompress region (%s).",
@@ -371,7 +358,7 @@ int JP2LuraRasterBand::GetOverviewCount()
 /*                            GetOverview()                             */
 /************************************************************************/
 
-GDALRasterBand* JP2LuraRasterBand::GetOverview(int iOvrLevel)
+GDALRasterBand *JP2LuraRasterBand::GetOverview(int iOvrLevel)
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
     if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
@@ -388,21 +375,21 @@ GDALColorInterp JP2LuraRasterBand::GetColorInterpretation()
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
 
-    if( poGDS->poCT )
+    if (poGDS->poCT)
         return GCI_PaletteIndex;
 
-    if( nBand == poGDS->nAlphaIndex + 1 )
+    if (nBand == poGDS->nAlphaIndex + 1)
         return GCI_AlphaBand;
 
     if (poGDS->nBands <= 2 && poGDS->eColorspace == cJP2_Colorspace_Gray)
         return GCI_GrayIndex;
     else if (poGDS->eColorspace == cJP2_Colorspace_RGBa)
     {
-        if( nBand == poGDS->nRedIndex + 1 )
+        if (nBand == poGDS->nRedIndex + 1)
             return GCI_RedBand;
-        if( nBand == poGDS->nGreenIndex + 1 )
+        if (nBand == poGDS->nGreenIndex + 1)
             return GCI_GreenBand;
-        if( nBand == poGDS->nBlueIndex + 1 )
+        if (nBand == poGDS->nBlueIndex + 1)
             return GCI_BlueBand;
     }
 
@@ -413,7 +400,7 @@ GDALColorInterp JP2LuraRasterBand::GetColorInterpretation()
 /*                          GetColorTable()                             */
 /************************************************************************/
 
-GDALColorTable* JP2LuraRasterBand::GetColorTable()
+GDALColorTable *JP2LuraRasterBand::GetColorTable()
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
     return poGDS->poCT;

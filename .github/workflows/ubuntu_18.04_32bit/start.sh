@@ -95,6 +95,8 @@ export CPL_ENABLE_USERFAULTFD=NO
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
 
+cd build
+
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
 

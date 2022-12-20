@@ -41,7 +41,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
-            zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
+            zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff5-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
@@ -191,12 +191,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
-  && tar -xzf install-ubuntu2004-rev5106.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-ubuntu2004-rev5461.tar.gz \
+  && tar -xzf install-ubuntu2004-rev5461.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev5106.tar.gz install \
+  && rm -rf install-ubuntu2004-rev5461.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   && rm -rf /var/lib/apt/lists/* \
@@ -227,7 +227,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=10.0.0-1 libparquet-dev${APT_ARCH_SUFFIX}=10.0.0-1 libarrow-dataset-dev${APT_ARCH_SUFFIX}=10.0.0-1 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=10.0.1-1 libparquet-dev${APT_ARCH_SUFFIX}=10.0.1-1 libarrow-dataset-dev${APT_ARCH_SUFFIX}=10.0.1-1 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \

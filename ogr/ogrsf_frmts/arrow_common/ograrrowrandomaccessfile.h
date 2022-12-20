@@ -39,33 +39,37 @@
 /*                        OGRArrowRandomAccessFile                      */
 /************************************************************************/
 
-class OGRArrowRandomAccessFile final: public arrow::io::RandomAccessFile
+class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile
 {
-    int64_t     m_nSize = -1;
-    VSILFILE*   m_fp;
-    bool        m_bOwnFP;
+    int64_t m_nSize = -1;
+    VSILFILE *m_fp;
+    bool m_bOwnFP;
 
-    OGRArrowRandomAccessFile(const OGRArrowRandomAccessFile&) = delete;
-    OGRArrowRandomAccessFile& operator= (const OGRArrowRandomAccessFile&) = delete;
+    OGRArrowRandomAccessFile(const OGRArrowRandomAccessFile &) = delete;
+    OGRArrowRandomAccessFile &
+    operator=(const OGRArrowRandomAccessFile &) = delete;
 
-public:
-    explicit OGRArrowRandomAccessFile(VSILFILE* fp, bool bOwnFP = true): m_fp(fp), m_bOwnFP(bOwnFP)
+  public:
+    explicit OGRArrowRandomAccessFile(VSILFILE *fp, bool bOwnFP = true)
+        : m_fp(fp), m_bOwnFP(bOwnFP)
     {
     }
 
     ~OGRArrowRandomAccessFile() override
     {
-        if( m_fp  && m_bOwnFP )
+        if (m_fp && m_bOwnFP)
             VSIFCloseL(m_fp);
     }
 
     arrow::Status Close() override
     {
-        if( !m_bOwnFP )
-            return arrow::Status::IOError("Cannot close a file that we don't own");
+        if (!m_bOwnFP)
+            return arrow::Status::IOError(
+                "Cannot close a file that we don't own");
         int ret = VSIFCloseL(m_fp);
         m_fp = nullptr;
-        return ret == 0 ? arrow::Status::OK() : arrow::Status::IOError("Error while closing");
+        return ret == 0 ? arrow::Status::OK()
+                        : arrow::Status::IOError("Error while closing");
     }
 
     arrow::Result<int64_t> Tell() const override
@@ -80,12 +84,12 @@ public:
 
     arrow::Status Seek(int64_t position) override
     {
-        if( VSIFSeekL(m_fp, static_cast<vsi_l_offset>(position), SEEK_SET) == 0 )
+        if (VSIFSeekL(m_fp, static_cast<vsi_l_offset>(position), SEEK_SET) == 0)
             return arrow::Status::OK();
         return arrow::Status::IOError("Error while seeking");
     }
 
-    arrow::Result<int64_t> Read(int64_t nbytes, void* out) override
+    arrow::Result<int64_t> Read(int64_t nbytes, void *out) override
     {
         CPLAssert(static_cast<int64_t>(static_cast<size_t>(nbytes)) == nbytes);
         return static_cast<int64_t>(
@@ -99,15 +103,16 @@ public:
         {
             return buffer;
         }
-        uint8_t* buffer_data = (*buffer)->mutable_data();
+        uint8_t *buffer_data = (*buffer)->mutable_data();
         auto nread = Read(nbytes, buffer_data);
-        CPL_IGNORE_RET_VAL((*buffer)->Resize(*nread)); // shrink --> cannot fail
+        CPL_IGNORE_RET_VAL(
+            (*buffer)->Resize(*nread));  // shrink --> cannot fail
         return buffer;
     }
 
     arrow::Result<int64_t> GetSize() override
     {
-        if( m_nSize < 0 )
+        if (m_nSize < 0)
         {
             const auto nPos = VSIFTellL(m_fp);
             VSIFSeekL(m_fp, 0, SEEK_END);
@@ -118,4 +123,4 @@ public:
     }
 };
 
-#endif // OGR_ARROW_RANDOM_ACCESS_FILE_H
+#endif  // OGR_ARROW_RANDOM_ACCESS_FILE_H

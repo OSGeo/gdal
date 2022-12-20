@@ -30,7 +30,6 @@
 #include "ogrogdi.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                           ~OGROGDIDriver()                           */
 /************************************************************************/
@@ -57,9 +56,9 @@ const char *OGROGDIDriver::GetName()
 #if OGDI_RELEASEDATE >= 20160705
 static int MyOGDIReportErrorFunction(int errorcode, const char *error_message)
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "OGDI error %d: %s",
-             errorcode, error_message);
-    return FALSE; // go on
+    CPLError(CE_Failure, CPLE_AppDefined, "OGDI error %d: %s", errorcode,
+             error_message);
+    return FALSE;  // go on
 }
 #endif
 
@@ -67,31 +66,30 @@ static int MyOGDIReportErrorFunction(int errorcode, const char *error_message)
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+OGRDataSource *OGROGDIDriver::Open(const char *pszFilename, int bUpdate)
 
 {
-    if( !STARTS_WITH_CI(pszFilename, "gltp:") )
+    if (!STARTS_WITH_CI(pszFilename, "gltp:"))
         return nullptr;
 
 #if OGDI_RELEASEDATE >= 20160705
     // Available only in post OGDI 3.2.0beta2
     // and only called if env variable OGDI_STOP_ON_ERROR is set to NO
-    ecs_SetReportErrorFunction( MyOGDIReportErrorFunction );
+    ecs_SetReportErrorFunction(MyOGDIReportErrorFunction);
 #endif
 
     OGROGDIDataSource *poDS = new OGROGDIDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if (!poDS->Open(pszFilename))
     {
         delete poDS;
         poDS = nullptr;
     }
 
-    if ( poDS != nullptr && bUpdate )
+    if (poDS != nullptr && bUpdate)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "OGDI Driver doesn't support update." );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "OGDI Driver doesn't support update.");
         delete poDS;
         poDS = nullptr;
     }
@@ -103,7 +101,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROGDIDriver::TestCapability( CPL_UNUSED const char * pszCap )
+int OGROGDIDriver::TestCapability(CPL_UNUSED const char *pszCap)
 
 {
     return FALSE;
@@ -116,15 +114,15 @@ int OGROGDIDriver::TestCapability( CPL_UNUSED const char * pszCap )
 void RegisterOGROGDI()
 
 {
-    if( !GDAL_CHECK_VERSION("OGR/OGDI driver") )
+    if (!GDAL_CHECK_VERSION("OGR/OGDI driver"))
         return;
 
-    OGRSFDriver* poDriver = new OGROGDIDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "OGDI Vectors (VPF, VMAP, DCW)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    OGRSFDriver *poDriver = new OGROGDIDriver;
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "OGDI Vectors (VPF, VMAP, DCW)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

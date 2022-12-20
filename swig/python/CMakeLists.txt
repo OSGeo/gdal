@@ -181,6 +181,10 @@ elseif (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     DEPENDS ${GDAL_PYTHON_CSOURCES_SRC})
 endif ()
 
+add_custom_target(python_generated_files
+  DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 function (symlink_or_copy source destination)
 
   if (CMAKE_VERSION VERSION_GREATER 3.14)

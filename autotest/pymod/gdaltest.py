@@ -881,17 +881,20 @@ class GDALTest(object):
         ysize = src_ds.RasterYSize
 
         new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        dt = src_ds.GetRasterBand(self.band).DataType
         new_ds = self.driver.Create(
             new_filename,
             xsize,
             ysize,
             1,
-            src_ds.GetRasterBand(self.band).DataType,
+            dt,
             options=self.options,
         )
         assert new_ds is not None, "Failed to create test file using Create method."
 
-        if self.options is None or "PIXELTYPE=SIGNEDBYTE" not in self.options:
+        if dt == gdal.GDT_Int8:
+            nodata = -11
+        elif self.options is None or "PIXELTYPE=SIGNEDBYTE" not in self.options:
             nodata = 130
         else:
             nodata = 11

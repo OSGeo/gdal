@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal, ogr
 
+pytestmark = pytest.mark.require_driver("VICAR")
+
 ###############################################################################
 # Read truncated VICAR file
 

@@ -174,6 +174,9 @@ def test_vrt_read_4():
 
 def test_vrt_read_5():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     src_ds = gdal.Open("data/testserialization.asc")
     ds = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrt_read_5.vrt", src_ds)
     src_ds = None
@@ -1197,6 +1200,9 @@ def test_vrt_read_30():
 
 def test_vrt_read_31():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/in.asc",
         """ncols        2
@@ -1435,6 +1441,14 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4873
     assert ds.GetRasterBand(3).Checksum() == 4672
+
+    ds = gdal.Open("vrt://data/byte.tif?bands=1&a_srs=EPSG:3031")
+    crs = ds.GetSpatialRef()
+    assert crs.GetAuthorityCode(None) == "3031"
+
+    ds = gdal.Open("vrt://data/byte.tif?a_ullr=0,10,20,0")
+    geotransform = ds.GetGeoTransform()
+    assert geotransform == (0.0, 1.0, 0.0, 10.0, 0.0, -0.5)
 
 
 def test_vrt_source_no_dstrect():

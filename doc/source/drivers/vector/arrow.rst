@@ -74,6 +74,16 @@ Layer creation options
   layer creation option of the Arrow driver (unless ``-lco FID=`` is used to
   set an empty name)
 
+Conda-forge package
+-------------------
+
+The driver can be installed as a plugin for the ``libgdal`` conda-forge package with:
+
+::
+
+    conda install -c conda-forge libgdal-arrow-parquet
+
+
 Links
 -----
 

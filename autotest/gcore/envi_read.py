@@ -33,18 +33,17 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("ENVI")
+
 ###############################################################################
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
 
 def test_envi_1():
 
-    gdal.SetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1")
-
-    ds = gdal.Open("data/utmsmall.raw")
+    with gdaltest.config_option("GDAL_READDIR_LIMIT_ON_OPEN", "1"):
+        ds = gdal.Open("data/utmsmall.raw")
     filelist = ds.GetFileList()
-
-    gdal.SetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", None)
 
     assert len(filelist) == 2, "did not get expected file list."
 
@@ -71,7 +70,6 @@ init_list = [
     init_list,
     ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver("ENVI")
 def test_envi_open(filename, checksum):
     ut = gdaltest.GDALTest("ENVI", filename, 1, checksum)
     ut.testOpen()

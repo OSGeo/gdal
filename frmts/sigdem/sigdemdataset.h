@@ -44,8 +44,9 @@
 
 class SIGDEMRasterBand;
 
-class SIGDEMHeader {
-public:
+class SIGDEMHeader
+{
+  public:
     int16_t version = 1;
     int32_t nCoordinateSystemId = 0;
     double dfOffsetX = 0;
@@ -67,17 +68,18 @@ public:
 
     SIGDEMHeader();
 
-    bool Read(const GByte* pabyHeader);
+    bool Read(const GByte *pabyHeader);
 
     bool Write(VSILFILE *fp);
 };
 
-class SIGDEMDataset final: public GDALPamDataset {
+class SIGDEMDataset final : public GDALPamDataset
+{
     friend class SIGDEMRasterBand;
 
     VSILFILE *fpImage;  // image data file.
 
-    double adfGeoTransform[6] { 0, 1, 0, 0, 0, 1 };
+    double adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     OGRSpatialReference m_oSRS{};
 
     SIGDEMHeader sHeader;
@@ -86,49 +88,45 @@ class SIGDEMDataset final: public GDALPamDataset {
 
     CPL_DISALLOW_COPY_ASSIGN(SIGDEMDataset)
 
-public:
-    explicit SIGDEMDataset(const SIGDEMHeader& sHeaderIn);
+  public:
+    explicit SIGDEMDataset(const SIGDEMHeader &sHeaderIn);
     ~SIGDEMDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
-    const OGRSpatialReference* GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    static GDALDataset *CreateCopy(
-        const char *pszFilename,
-        GDALDataset *poSrcDS,
-        int bStrict,
-        char **papszOptions,
-        GDALProgressFunc pfnProgress,
-        void *pProgressData);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
 };
 
-class SIGDEMRasterBand final: public GDALPamRasterBand {
+class SIGDEMRasterBand final : public GDALPamRasterBand
+{
     friend class SIGDEMDataset;
 
     CPL_DISALLOW_COPY_ASSIGN(SIGDEMRasterBand)
 
-private:
-    double dfOffsetZ { };
-    double dfScaleFactorZ { };
-    VSILFILE* fpRawL { };
-    int nBlockSizeBytes { };
+  private:
+    double dfOffsetZ{};
+    double dfScaleFactorZ{};
+    VSILFILE *fpRawL{};
+    int nBlockSizeBytes{};
     int nLoadedBlockIndex = -1;
-    int32_t* pBlockBuffer { };
+    int32_t *pBlockBuffer{};
 
-public:
-    SIGDEMRasterBand(
-        SIGDEMDataset *poDS,
-        VSILFILE *fpRaw,
-        double dfMinZ,
-        double dfMaxZ);
+  public:
+    SIGDEMRasterBand(SIGDEMDataset *poDS, VSILFILE *fpRaw, double dfMinZ,
+                     double dfMaxZ);
     ~SIGDEMRasterBand() override;
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
 
-    CPLErr IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff, void *pImage)
-            override;
+    CPLErr IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                       void *pImage) override;
 };
 
 #endif  // GDAL_FRMTS_SIGDEMDATASET_H_INCLUDED

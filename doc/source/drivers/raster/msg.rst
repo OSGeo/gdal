@@ -38,7 +38,7 @@ Build Instructions
 CMake builds
 ++++++++++++
 
-See the ``GDAL_USE_PUBLICDECOMPWT`` option of :ref:`build_hints`.
+See the ``GDAL_USE_PUBLICDECOMPWT`` option of :ref:`building_from_source`.
 
 Other build systems
 +++++++++++++++++++

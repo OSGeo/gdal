@@ -31,7 +31,6 @@
 #include "gnmdb.h"
 #include "gnm_priv.h"
 
-
 GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 {
     m_poDS = nullptr;
@@ -48,32 +47,33 @@ CPLErr GNMDatabaseNetwork::Open(GDALOpenInfo *poOpenInfo)
 {
     FormName(poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions);
 
-    if(CSLFindName(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES") == -1)
+    if (CSLFindName(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES") == -1)
         poOpenInfo->papszOpenOptions = CSLAddNameValue(
-                    poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES");
+            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES");
 
-    m_poDS = (GDALDataset*) GDALOpenEx( m_soNetworkFullName, GDAL_OF_VECTOR |
-                     GDAL_OF_UPDATE, nullptr, nullptr, poOpenInfo->papszOpenOptions );
+    m_poDS = (GDALDataset *)GDALOpenEx(m_soNetworkFullName,
+                                       GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr,
+                                       nullptr, poOpenInfo->papszOpenOptions);
 
-    if( nullptr == m_poDS )
+    if (nullptr == m_poDS)
     {
-    CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' failed",
-              m_soNetworkFullName.c_str() );
-    return CE_Failure;
+        CPLError(CE_Failure, CPLE_OpenFailed, "Open '%s' failed",
+                 m_soNetworkFullName.c_str());
+        return CE_Failure;
     }
 
     // There should be only one schema so no schema name can be in table name
-    if(LoadMetadataLayer(m_poDS) != CE_None)
+    if (LoadMetadataLayer(m_poDS) != CE_None)
     {
         return CE_Failure;
     }
 
-    if(LoadGraphLayer(m_poDS) != CE_None)
+    if (LoadGraphLayer(m_poDS) != CE_None)
     {
         return CE_Failure;
     }
 
-    if(LoadFeaturesLayer(m_poDS) != CE_None)
+    if (LoadFeaturesLayer(m_poDS) != CE_None)
     {
         return CE_Failure;
     }
@@ -81,55 +81,56 @@ CPLErr GNMDatabaseNetwork::Open(GDALOpenInfo *poOpenInfo)
     return CE_None;
 }
 
-CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions )
+CPLErr GNMDatabaseNetwork::Create(const char *pszFilename, char **papszOptions)
 {
     FormName(pszFilename, papszOptions);
 
-    if(m_soName.empty() || m_soNetworkFullName.empty())
+    if (m_soName.empty() || m_soNetworkFullName.empty())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "The network name should be present" );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "The network name should be present");
         return CE_Failure;
     }
 
-    if(nullptr == m_poDS)
+    if (nullptr == m_poDS)
     {
-        m_poDS = (GDALDataset*) GDALOpenEx( m_soNetworkFullName, GDAL_OF_VECTOR |
-                                       GDAL_OF_UPDATE, nullptr, nullptr, papszOptions );
+        m_poDS = (GDALDataset *)GDALOpenEx(m_soNetworkFullName,
+                                           GDAL_OF_VECTOR | GDAL_OF_UPDATE,
+                                           nullptr, nullptr, papszOptions);
     }
 
-    if( nullptr == m_poDS )
+    if (nullptr == m_poDS)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' failed",
-                  m_soNetworkFullName.c_str() );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Open '%s' failed",
+                 m_soNetworkFullName.c_str());
         return CE_Failure;
     }
 
     GDALDriver *l_poDriver = m_poDS->GetDriver();
-    if(nullptr == l_poDriver)
+    if (nullptr == l_poDriver)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "Get dataset driver failed");
+        CPLError(CE_Failure, CPLE_OpenFailed, "Get dataset driver failed");
         return CE_Failure;
     }
 
-    if(!CheckStorageDriverSupport(l_poDriver->GetDescription()))
+    if (!CheckStorageDriverSupport(l_poDriver->GetDescription()))
     {
         return CE_Failure;
     }
 
     // check required options
 
-    const char* pszNetworkDescription = CSLFetchNameValue(papszOptions,
-                                                         GNM_MD_DESCR);
-    if(nullptr != pszNetworkDescription)
+    const char *pszNetworkDescription =
+        CSLFetchNameValue(papszOptions, GNM_MD_DESCR);
+    if (nullptr != pszNetworkDescription)
         sDescription = pszNetworkDescription;
 
     // check Spatial reference
-    const char* pszSRS = CSLFetchNameValue(papszOptions, GNM_MD_SRS);
-    if( nullptr == pszSRS )
+    const char *pszSRS = CSLFetchNameValue(papszOptions, GNM_MD_SRS);
+    if (nullptr == pszSRS)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "The network spatial reference should be present" );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "The network spatial reference should be present");
         return CE_Failure;
     }
     else
@@ -138,8 +139,8 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
         spatialRef.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (spatialRef.SetFromUserInput(pszSRS) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "The network spatial reference should be present" );
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "The network spatial reference should be present");
             return CE_Failure;
         }
 
@@ -148,9 +149,9 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
 
     int nResult = CheckNetworkExist(pszFilename, papszOptions);
 
-    if(TRUE == nResult)
+    if (TRUE == nResult)
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The network already exist" );
+        CPLError(CE_Failure, CPLE_IllegalArg, "The network already exist");
         return CE_Failure;
     }
 
@@ -160,16 +161,17 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
 
     CPLErr eResult = CreateMetadataLayer(m_poDS, GNM_VERSION_NUM);
 
-    if(CE_None != eResult)
+    if (CE_None != eResult)
     {
-        //an error message should come from function
-        return CE_Failure;    }
+        // an error message should come from function
+        return CE_Failure;
+    }
 
     // Create graph layer
 
     eResult = CreateGraphLayer(m_poDS);
 
-    if(CE_None != eResult)
+    if (CE_None != eResult)
     {
         DeleteMetadataLayer();
         return CE_Failure;
@@ -179,7 +181,7 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
 
     eResult = CreateFeaturesLayer(m_poDS);
 
-    if(CE_None != eResult)
+    if (CE_None != eResult)
     {
         DeleteMetadataLayer();
         DeleteGraphLayer();
@@ -189,50 +191,52 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
     return CE_None;
 }
 
-int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptions)
+int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename,
+                                          char **papszOptions)
 {
     // check if path exist
     // if path exist check if network already present and OVERWRITE option
     // else create the path
 
-    if(FormName(pszFilename, papszOptions) != CE_None)
+    if (FormName(pszFilename, papszOptions) != CE_None)
     {
         return TRUE;
     }
 
-    if(nullptr == m_poDS)
+    if (nullptr == m_poDS)
     {
-        m_poDS = (GDALDataset*) GDALOpenEx( m_soNetworkFullName, GDAL_OF_VECTOR |
-                                      GDAL_OF_UPDATE, nullptr, nullptr, papszOptions );
+        m_poDS = (GDALDataset *)GDALOpenEx(m_soNetworkFullName,
+                                           GDAL_OF_VECTOR | GDAL_OF_UPDATE,
+                                           nullptr, nullptr, papszOptions);
     }
 
     const bool bOverwrite = CPLFetchBool(papszOptions, "OVERWRITE", false);
 
     std::vector<int> anDeleteLayers;
     int i;
-    for(i = 0; i < m_poDS->GetLayerCount(); ++i)
+    for (i = 0; i < m_poDS->GetLayerCount(); ++i)
     {
-        OGRLayer* poLayer = m_poDS->GetLayer(i);
-        if(nullptr == poLayer)
+        OGRLayer *poLayer = m_poDS->GetLayer(i);
+        if (nullptr == poLayer)
             continue;
 
-        if(EQUAL(poLayer->GetName(), GNM_SYSLAYER_META) ||
-           EQUAL(poLayer->GetName(), GNM_SYSLAYER_GRAPH) ||
-           EQUAL(poLayer->GetName(), GNM_SYSLAYER_FEATURES) )
+        if (EQUAL(poLayer->GetName(), GNM_SYSLAYER_META) ||
+            EQUAL(poLayer->GetName(), GNM_SYSLAYER_GRAPH) ||
+            EQUAL(poLayer->GetName(), GNM_SYSLAYER_FEATURES))
         {
             anDeleteLayers.push_back(i);
         }
     }
 
-    if(anDeleteLayers.empty())
+    if (anDeleteLayers.empty())
         return FALSE;
 
-    if( bOverwrite )
+    if (bOverwrite)
     {
-        for(i = (int)anDeleteLayers.size(); i > 0; i--)
+        for (i = (int)anDeleteLayers.size(); i > 0; i--)
         {
             CPLDebug("GNM", "Delete layer: %d", i);
-            if(m_poDS->DeleteLayer(anDeleteLayers[i - 1]) != OGRERR_NONE)
+            if (m_poDS->DeleteLayer(anDeleteLayers[i - 1]) != OGRERR_NONE)
                 return TRUE;
         }
         return FALSE;
@@ -258,32 +262,32 @@ CPLErr GNMDatabaseNetwork::DeleteFeaturesLayer()
     return DeleteLayerByName(GNM_SYSLAYER_FEATURES);
 }
 
-CPLErr GNMDatabaseNetwork::DeleteLayerByName(const char* pszLayerName)
+CPLErr GNMDatabaseNetwork::DeleteLayerByName(const char *pszLayerName)
 {
-    if(nullptr == m_poDS)
+    if (nullptr == m_poDS)
         return CE_Failure;
 
-    for(int i = 0; i < m_poDS->GetLayerCount(); ++i)
+    for (int i = 0; i < m_poDS->GetLayerCount(); ++i)
     {
-        OGRLayer* poLayer = m_poDS->GetLayer(i);
-        if(nullptr == poLayer)
+        OGRLayer *poLayer = m_poDS->GetLayer(i);
+        if (nullptr == poLayer)
             continue;
 
-        if(EQUAL(poLayer->GetName(), pszLayerName))
+        if (EQUAL(poLayer->GetName(), pszLayerName))
             return m_poDS->DeleteLayer(i) == OGRERR_NONE ? CE_None : CE_Failure;
     }
 
     CPLError(CE_Failure, CPLE_IllegalArg, "The layer %s not exist",
-             pszLayerName );
+             pszLayerName);
     return CE_Failure;
 }
 
 CPLErr GNMDatabaseNetwork::DeleteNetworkLayers()
 {
-    while(GetLayerCount() > 0)
+    while (GetLayerCount() > 0)
     {
         OGRErr eErr = DeleteLayer(0);
-        if(eErr != OGRERR_NONE)
+        if (eErr != OGRERR_NONE)
             return CE_Failure;
     }
     return CE_None;
@@ -292,23 +296,23 @@ CPLErr GNMDatabaseNetwork::DeleteNetworkLayers()
 CPLErr GNMDatabaseNetwork::LoadNetworkLayer(const char *pszLayername)
 {
     // check if not loaded
-    for(size_t i = 0; i < m_apoLayers.size(); ++i)
+    for (size_t i = 0; i < m_apoLayers.size(); ++i)
     {
-        if(EQUAL(m_apoLayers[i]->GetName(), pszLayername))
+        if (EQUAL(m_apoLayers[i]->GetName(), pszLayername))
             return CE_None;
     }
 
-    OGRLayer* poLayer = m_poDS->GetLayerByName(pszLayername);
-    if(nullptr == poLayer)
+    OGRLayer *poLayer = m_poDS->GetLayerByName(pszLayername);
+    if (nullptr == poLayer)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "Layer '%s' is not exist",
-                  pszLayername );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Layer '%s' is not exist",
+                 pszLayername);
         return CE_Failure;
     }
 
     CPLDebug("GNM", "Layer '%s' loaded", poLayer->GetName());
 
-    GNMGenericLayer* pGNMLayer = new GNMGenericLayer(poLayer, this);
+    GNMGenericLayer *pGNMLayer = new GNMGenericLayer(poLayer, this);
     m_apoLayers.push_back(pGNMLayer);
 
     return CE_None;
@@ -316,21 +320,23 @@ CPLErr GNMDatabaseNetwork::LoadNetworkLayer(const char *pszLayername)
 
 bool GNMDatabaseNetwork::CheckStorageDriverSupport(const char *pszDriverName)
 {
-    if(EQUAL(pszDriverName, "PostgreSQL"))
+    if (EQUAL(pszDriverName, "PostgreSQL"))
         return true;
-    //TODO: expand this list with supported OGR direvers
+    // TODO: expand this list with supported OGR direvers
     return false;
 }
 
-CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename, char **papszOptions)
+CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename,
+                                    char **papszOptions)
 {
-    if(m_soNetworkFullName.empty())
+    if (m_soNetworkFullName.empty())
         m_soNetworkFullName = pszFilename;
 
-    if(m_soName.empty())
+    if (m_soName.empty())
     {
-        const char* pszNetworkName = CSLFetchNameValue(papszOptions, GNM_MD_NAME);
-        if(nullptr != pszNetworkName)
+        const char *pszNetworkName =
+            CSLFetchNameValue(papszOptions, GNM_MD_NAME);
+        if (nullptr != pszNetworkName)
         {
             m_soName = pszNetworkName;
         }
@@ -338,27 +344,30 @@ CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename, char **papszOptions
         char *pszActiveSchemaStart;
         pszActiveSchemaStart = (char *)strstr(pszFilename, "active_schema=");
         if (pszActiveSchemaStart == nullptr)
-            pszActiveSchemaStart = (char *)strstr(pszFilename, "ACTIVE_SCHEMA=");
+            pszActiveSchemaStart =
+                (char *)strstr(pszFilename, "ACTIVE_SCHEMA=");
         if (pszActiveSchemaStart != nullptr)
         {
-            char           *pszActiveSchema;
+            char *pszActiveSchema;
 
-            pszActiveSchema = CPLStrdup( pszActiveSchemaStart + strlen("active_schema=") );
+            pszActiveSchema =
+                CPLStrdup(pszActiveSchemaStart + strlen("active_schema="));
 
-            const char* pszEnd = strchr(pszActiveSchemaStart, ' ');
-            if( pszEnd == nullptr )
+            const char *pszEnd = strchr(pszActiveSchemaStart, ' ');
+            if (pszEnd == nullptr)
                 pszEnd = pszFilename + strlen(pszFilename);
 
-            pszActiveSchema[pszEnd - pszActiveSchemaStart - strlen("active_schema=")] = '\0';
+            pszActiveSchema[pszEnd - pszActiveSchemaStart -
+                            strlen("active_schema=")] = '\0';
 
             m_soName = pszActiveSchema;
             CPLFree(pszActiveSchema);
         }
         else
         {
-            if(!m_soName.empty())
+            if (!m_soName.empty())
             {
-                //add active schema
+                // add active schema
                 m_soNetworkFullName += "ACTIVE_SCHEMA=" + m_soName;
             }
             else
@@ -367,35 +376,35 @@ CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename, char **papszOptions
             }
         }
 
-        CPLDebug( "GNM", "Network name: %s", m_soName.c_str() );
+        CPLDebug("GNM", "Network name: %s", m_soName.c_str());
     }
     return CE_None;
 }
 
 OGRErr GNMDatabaseNetwork::DeleteLayer(int nIndex)
 {
-    if(nullptr == m_poDS)
+    if (nullptr == m_poDS)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Network not opened." );
+        CPLError(CE_Failure, CPLE_FileIO, "Network not opened.");
         return OGRERR_FAILURE;
     }
 
-    OGRLayer* poNetworkLayer = GetLayer(nIndex);
+    OGRLayer *poNetworkLayer = GetLayer(nIndex);
 
     CPLDebug("GNM", "Delete network layer '%s'", poNetworkLayer->GetName());
 
     int nDeleteIndex = -1;
-    for(int i = 0; i < m_poDS->GetLayerCount(); ++i)
+    for (int i = 0; i < m_poDS->GetLayerCount(); ++i)
     {
-        OGRLayer* poLayer = m_poDS->GetLayer(i);
-        if(EQUAL(poNetworkLayer->GetName(), poLayer->GetName()))
+        OGRLayer *poLayer = m_poDS->GetLayer(i);
+        if (EQUAL(poNetworkLayer->GetName(), poLayer->GetName()))
         {
             nDeleteIndex = i;
             break;
         }
     }
 
-    if(m_poDS->DeleteLayer(nDeleteIndex) != OGRERR_NONE)
+    if (m_poDS->DeleteLayer(nDeleteIndex) != OGRERR_NONE)
     {
         return OGRERR_FAILURE;
     }
@@ -403,48 +412,51 @@ OGRErr GNMDatabaseNetwork::DeleteLayer(int nIndex)
     return GNMGenericNetwork::DeleteLayer(nIndex);
 }
 
-OGRLayer *GNMDatabaseNetwork::ICreateLayer(const char *pszName,
-                                OGRSpatialReference * /*poSpatialRef*/,
-                                OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+GNMDatabaseNetwork::ICreateLayer(const char *pszName,
+                                 OGRSpatialReference * /*poSpatialRef*/,
+                                 OGRwkbGeometryType eGType, char **papszOptions)
 {
-    //check if layer with such name exist
-    for(int i = 0; i < GetLayerCount(); ++i)
+    // check if layer with such name exist
+    for (int i = 0; i < GetLayerCount(); ++i)
     {
-        OGRLayer* pLayer = GetLayer(i);
-        if(nullptr == pLayer)
+        OGRLayer *pLayer = GetLayer(i);
+        if (nullptr == pLayer)
             continue;
-        if(EQUAL(pLayer->GetName(), pszName))
+        if (EQUAL(pLayer->GetName(), pszName))
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "The network layer '%s' already exist.", pszName );
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "The network layer '%s' already exist.", pszName);
             return nullptr;
         }
     }
 
     OGRSpatialReference oSpaRef(m_oSRS);
 
-    OGRLayer *poLayer = m_poDS->CreateLayer( pszName, &oSpaRef, eGType, papszOptions );
-    if( poLayer == nullptr )
+    OGRLayer *poLayer =
+        m_poDS->CreateLayer(pszName, &oSpaRef, eGType, papszOptions);
+    if (poLayer == nullptr)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Layer creation failed." );
+        CPLError(CE_Failure, CPLE_FileIO, "Layer creation failed.");
         return nullptr;
     }
 
-    OGRFieldDefn oField( GNM_SYSFIELD_GFID, GNMGFIDInt );
-    if( poLayer->CreateField( &oField ) != OGRERR_NONE )
+    OGRFieldDefn oField(GNM_SYSFIELD_GFID, GNMGFIDInt);
+    if (poLayer->CreateField(&oField) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Creating global identificator field failed." );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Creating global identificator field failed.");
         return nullptr;
     }
 
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
-    if( poLayer->CreateField( &oFieldBlock ) != OGRERR_NONE )
+    if (poLayer->CreateField(&oFieldBlock) != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Creating is blocking field failed." );
+        CPLError(CE_Failure, CPLE_FileIO, "Creating is blocking field failed.");
         return nullptr;
     }
 
-    GNMGenericLayer* pGNMLayer = new GNMGenericLayer(poLayer, this);
+    GNMGenericLayer *pGNMLayer = new GNMGenericLayer(poLayer, this);
     m_apoLayers.push_back(pGNMLayer);
     return pGNMLayer;
 }

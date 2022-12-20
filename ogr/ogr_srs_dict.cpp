@@ -39,7 +39,6 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
-
 /************************************************************************/
 /*                           importFromDict()                           */
 /************************************************************************/
@@ -66,16 +65,16 @@
  * found, and OGRERR_SRS_FAILURE if something more dramatic goes wrong.
  */
 
-OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
-                                            const char *pszCode )
+OGRErr OGRSpatialReference::importFromDict(const char *pszDictFile,
+                                           const char *pszCode)
 
 {
     CPLString osWKT(lookupInDict(pszDictFile, pszCode));
-    if( osWKT.empty() )
+    if (osWKT.empty())
         return OGRERR_UNSUPPORTED_SRS;
 
-    OGRErr eErr = importFromWkt( osWKT );
-    if( eErr == OGRERR_NONE && strstr(pszDictFile, "esri_") == nullptr )
+    OGRErr eErr = importFromWkt(osWKT);
+    if (eErr == OGRERR_NONE && strstr(pszDictFile, "esri_") == nullptr)
     {
         morphFromESRI();
     }
@@ -87,57 +86,57 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /*                          lookupInDict()                              */
 /************************************************************************/
 
-CPLString OGRSpatialReference::lookupInDict( const char *pszDictFile,
-                                             const char *pszCode )
+CPLString OGRSpatialReference::lookupInDict(const char *pszDictFile,
+                                            const char *pszCode)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Find and open file.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Find and open file.                                             */
+    /* -------------------------------------------------------------------- */
     CPLString osDictFile(pszDictFile);
-    const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
-    if( pszFilename == nullptr )
+    const char *pszFilename = CPLFindFile("gdal", pszDictFile);
+    if (pszFilename == nullptr)
         return CPLString();
 
-    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == nullptr )
+    VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == nullptr)
         return CPLString();
 
-/* -------------------------------------------------------------------- */
-/*      Process lines.                                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Process lines.                                                  */
+    /* -------------------------------------------------------------------- */
     CPLString osWKT;
     const char *pszLine = nullptr;
 
-    while( (pszLine = CPLReadLineL(fp)) != nullptr )
+    while ((pszLine = CPLReadLineL(fp)) != nullptr)
 
     {
-        if( pszLine[0] == '#' )
+        if (pszLine[0] == '#')
             continue;
 
-        if( STARTS_WITH_CI(pszLine, "include ") )
+        if (STARTS_WITH_CI(pszLine, "include "))
         {
-            osWKT = lookupInDict( pszLine + 8, pszCode );
-            if( !osWKT.empty() )
+            osWKT = lookupInDict(pszLine + 8, pszCode);
+            if (!osWKT.empty())
                 break;
             continue;
         }
 
-        if( strstr(pszLine, ",") == nullptr )
+        if (strstr(pszLine, ",") == nullptr)
             continue;
 
-        if( EQUALN(pszLine, pszCode, strlen(pszCode))
-            && pszLine[strlen(pszCode)] == ',' )
+        if (EQUALN(pszLine, pszCode, strlen(pszCode)) &&
+            pszLine[strlen(pszCode)] == ',')
         {
-            osWKT = pszLine + strlen(pszCode)+1;
+            osWKT = pszLine + strlen(pszCode) + 1;
             break;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
+    VSIFCloseL(fp);
 
     return osWKT;
 }
@@ -171,13 +170,12 @@ CPLString OGRSpatialReference::lookupInDict( const char *pszDictFile,
  * found, and OGRERR_SRS_FAILURE if something more dramatic goes wrong.
  */
 
-OGRErr OSRImportFromDict( OGRSpatialReferenceH hSRS,
-                          const char *pszDictFile,
-                          const char *pszCode )
+OGRErr OSRImportFromDict(OGRSpatialReferenceH hSRS, const char *pszDictFile,
+                         const char *pszCode)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromDict", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRImportFromDict", OGRERR_FAILURE);
 
-    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
-        importFromDict( pszDictFile, pszCode );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->importFromDict(
+        pszDictFile, pszCode);
 }

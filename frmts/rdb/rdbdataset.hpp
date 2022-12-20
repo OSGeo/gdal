@@ -36,6 +36,7 @@
 #include <riegl/rdb.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -71,7 +72,7 @@ template <typename T> struct RDBCoordinatesPlusData
     T data;
 };
 
-class RDBDataset final: public GDALPamDataset
+class RDBDataset final : public GDALPamDataset
 {
     friend class RDBRasterBand;
     template <typename T> friend class RDBRasterBandInternal;
@@ -127,7 +128,7 @@ class RDBDataset final: public GDALPamDataset
     void ReadGeoreferencing();
 };
 
-class RDBRasterBand CPL_NON_FINAL: public GDALPamRasterBand
+class RDBRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
   protected:
     CPLString osAttributeName;

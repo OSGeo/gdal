@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("CSV")
+
 ###############################################################################
 
 
@@ -1872,8 +1874,8 @@ def test_ogr_csv_37():
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_csv_37.csv",
         """id,y,other,x,z
-1,49,a,2,100
-2,50,b,3,
+1,49,a,2,"100,5"
+2,"50,5",b,"3,5",
 3,49,c,
 4,0,d,0,0
 """,
@@ -1892,12 +1894,12 @@ def test_ogr_csv_37():
         or f["x"] != 2
         or f["y"] != 49
         or f["other"] != "a"
-        or f["z"] != "100"
+        or f["z"] != "100,5"
     ):
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != "POINT (3 50)":
+    if f.GetGeometryRef().ExportToWkt() != "POINT (3.5 50.5)":
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
@@ -1923,17 +1925,17 @@ def test_ogr_csv_37():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if (
-        f.GetGeometryRef().ExportToWkt() != "POINT (2 49 100)"
+        f.GetGeometryRef().ExportToWkt() != "POINT (2 49 100.5)"
         or f["id"] != "1"
         or f["x"] != 2
         or f["y"] != 49
         or f["other"] != "a"
-        or f["z"] != 100
+        or f["z"] != 100.5
     ):
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != "POINT (3 50)":
+    if f.GetGeometryRef().ExportToWkt() != "POINT (3.5 50.5)":
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
@@ -2748,3 +2750,24 @@ def test_ogr_csv_iter_and_set_feature():
     gdal.Unlink("/vsimem/ogr_csv_iter_and_set_feature.csv")
 
     assert count == 2
+
+
+###############################################################################
+
+
+def test_ogr_csv_pipe_separated():
+    gdal.FileFromMemBuffer(
+        "/vsimem/test_ogr_csv_pipe_separated.psv",
+        """id|str
+1|foo
+""",
+    )
+
+    ds = gdal.OpenEx("/vsimem/test_ogr_csv_pipe_separated.psv")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["id"] == "1"
+    assert f["str"] == "foo"
+    ds = None
+
+    gdal.Unlink("/vsimem/test_ogr_csv_pipe_separated.psv")

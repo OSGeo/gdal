@@ -17,21 +17,6 @@ then
     exit 0;
 fi
 
-export CI_PLAT=""
-if grep -q "windows" <<< "$PLATFORM"; then
-    CI_PLAT="win"
-fi
-
-if grep -q "ubuntu" <<< "$PLATFORM"; then
-    CI_PLAT="linux"
-fi
-
-if grep -q "macos" <<< "$PLATFORM"; then
-    CI_PLAT="osx"
-fi
-
-
-
 echo "Anaconda token is available, attempting to upload"
 conda install -c conda-forge anaconda-client -y
 

@@ -3795,18 +3795,18 @@ def test_ogr_sqlite_relationships():
         ds = None
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
-        assert ds.GetRelationshipNames() == ["test_relation_b_test_relation_a"]
+        assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
         assert ds.GetRelationship("xxx") is None
-        rel = ds.GetRelationship("test_relation_b_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_b")
         assert rel is not None
-        assert rel.GetName() == "test_relation_b_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_b"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_b"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_b"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
-        assert rel.GetLeftTableFields() == ["trackartist"]
-        assert rel.GetRightTableFields() == ["artistid"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid"]
+        assert rel.GetRightTableFields() == ["trackartist"]
+        assert rel.GetRelatedTableType() == "features"
 
         # test a multi-column join
         ds.ExecuteSQL(
@@ -3817,19 +3817,19 @@ def test_ogr_sqlite_relationships():
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         assert ds.GetRelationshipNames() == [
-            "test_relation_b_test_relation_a",
-            "test_relation_c_test_relation_a",
+            "test_relation_a_test_relation_b",
+            "test_relation_a_test_relation_c",
         ]
-        rel = ds.GetRelationship("test_relation_c_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_c")
         assert rel is not None
-        assert rel.GetName() == "test_relation_c_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_c"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_c"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_c"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
-        assert rel.GetLeftTableFields() == ["trackartist", "trackartistname"]
-        assert rel.GetRightTableFields() == ["artistid", "artistname"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid", "artistname"]
+        assert rel.GetRightTableFields() == ["trackartist", "trackartistname"]
+        assert rel.GetRelatedTableType() == "features"
 
         # a table with two joins
         ds.ExecuteSQL(
@@ -3839,32 +3839,32 @@ def test_ogr_sqlite_relationships():
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         assert ds.GetRelationshipNames() == [
-            "test_relation_b_test_relation_a",
-            "test_relation_c_test_relation_a",
-            "test_relation_d_test_relation_a",
-            "test_relation_d_test_relation_b_2",
+            "test_relation_a_test_relation_b",
+            "test_relation_a_test_relation_c",
+            "test_relation_a_test_relation_d",
+            "test_relation_b_test_relation_d_2",
         ]
-        rel = ds.GetRelationship("test_relation_d_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_d")
         assert rel is not None
-        assert rel.GetName() == "test_relation_d_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_d"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_d"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_d"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
-        assert rel.GetLeftTableFields() == ["trackartist", "trackartistname"]
-        assert rel.GetRightTableFields() == ["artistid", "artistname"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid", "artistname"]
+        assert rel.GetRightTableFields() == ["trackartist", "trackartistname"]
+        assert rel.GetRelatedTableType() == "features"
 
-        rel = ds.GetRelationship("test_relation_d_test_relation_b_2")
+        rel = ds.GetRelationship("test_relation_b_test_relation_d_2")
         assert rel is not None
-        assert rel.GetName() == "test_relation_d_test_relation_b_2"
-        assert rel.GetLeftTableName() == "test_relation_d"
-        assert rel.GetRightTableName() == "test_relation_b"
+        assert rel.GetName() == "test_relation_b_test_relation_d_2"
+        assert rel.GetLeftTableName() == "test_relation_b"
+        assert rel.GetRightTableName() == "test_relation_d"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
         assert rel.GetLeftTableFields() == ["trackname"]
         assert rel.GetRightTableFields() == ["trackname"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetRelatedTableType() == "features"
 
         # with on delete cascade
         ds.ExecuteSQL(
@@ -3873,25 +3873,257 @@ def test_ogr_sqlite_relationships():
         ds = None
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         assert ds.GetRelationshipNames() == [
-            "test_relation_b_test_relation_a",
-            "test_relation_c_test_relation_a",
-            "test_relation_d_test_relation_a",
-            "test_relation_d_test_relation_b_2",
-            "test_relation_e_test_relation_a",
+            "test_relation_a_test_relation_b",
+            "test_relation_a_test_relation_c",
+            "test_relation_a_test_relation_d",
+            "test_relation_a_test_relation_e",
+            "test_relation_b_test_relation_d_2",
         ]
-        rel = ds.GetRelationship("test_relation_e_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_e")
         assert rel is not None
-        assert rel.GetName() == "test_relation_e_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_e"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_e"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_e"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_COMPOSITE
-        assert rel.GetLeftTableFields() == ["trackartist"]
-        assert rel.GetRightTableFields() == ["artistid"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid"]
+        assert rel.GetRightTableFields() == ["trackartist"]
+        assert rel.GetRelatedTableType() == "features"
 
     finally:
         gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test support for altering relationships
+
+
+def test_ogr_sqlite_alter_relations():
+    def clone_relationship(relationship):
+        res = gdal.Relationship(
+            relationship.GetName(),
+            relationship.GetLeftTableName(),
+            relationship.GetRightTableName(),
+            relationship.GetCardinality(),
+        )
+        res.SetLeftTableFields(relationship.GetLeftTableFields())
+        res.SetRightTableFields(relationship.GetRightTableFields())
+        res.SetMappingTableName(relationship.GetMappingTableName())
+        res.SetLeftMappingTableFields(relationship.GetLeftMappingTableFields())
+        res.SetRightMappingTableFields(relationship.GetRightMappingTableFields())
+        res.SetType(relationship.GetType())
+        res.SetForwardPathLabel(relationship.GetForwardPathLabel())
+        res.SetBackwardPathLabel(relationship.GetBackwardPathLabel())
+        res.SetRelatedTableType(relationship.GetRelatedTableType())
+
+        return res
+
+    filename = "/vsimem/test_ogr_sqlite_relation_create.db"
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(filename)
+
+    def get_query_row_count(query):
+        sql_lyr = ds.ExecuteSQL(query)
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table", "dest_table", gdal.GRC_ONE_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    # no tables yet
+    assert not ds.AddRelationship(relationship)
+
+    lyr = ds.CreateLayer("origin_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("o_pkey2", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    assert not ds.AddRelationship(relationship)
+
+    lyr = ds.CreateLayer("dest_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("dest_pkey2", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    # add some features to the layers to ensure that they don't get modified/lost during the
+    # relationship creation
+    layer_origin = ds.GetLayerByName("origin_table")
+    layer_dest = ds.GetLayerByName("dest_table")
+
+    feat = ogr.Feature(feature_def=layer_origin.GetLayerDefn())
+    feat.SetField("o_pkey", 1)
+    assert layer_origin.CreateFeature(feat) == 0
+
+    feat = ogr.Feature(feature_def=layer_origin.GetLayerDefn())
+    feat.SetField("o_pkey", 2)
+    assert layer_origin.CreateFeature(feat) == 0
+
+    feat = ogr.Feature(feature_def=layer_dest.GetLayerDefn())
+    feat.SetField("id", 1)
+    feat.SetField("dest_pkey", 1)
+    assert layer_dest.CreateFeature(feat) == 0
+
+    feat = ogr.Feature(feature_def=layer_dest.GetLayerDefn())
+    feat.SetField("id", 2)
+    feat.SetField("dest_pkey", 1)
+    assert layer_dest.CreateFeature(feat) == 0
+
+    feat = ogr.Feature(feature_def=layer_dest.GetLayerDefn())
+    feat.SetField("id", 3)
+    feat.SetField("dest_pkey", 2)
+    assert layer_dest.CreateFeature(feat) == 0
+
+    # left table fields must be set, only one field
+    relationship.SetLeftTableFields([])
+    assert not ds.AddRelationship(relationship)
+    relationship.SetLeftTableFields(["o_pkey", "another"])
+    assert not ds.AddRelationship(relationship)
+    # left table field must exist
+    relationship.SetLeftTableFields(["o_pkey_nope"])
+    assert not ds.AddRelationship(relationship)
+
+    relationship.SetLeftTableFields(["o_pkey"])
+
+    # right table fields must be set, only one field
+    relationship.SetRightTableFields([])
+    assert not ds.AddRelationship(relationship)
+    relationship.SetRightTableFields(["dest_pkey", "another"])
+    assert not ds.AddRelationship(relationship)
+    # right table field must exist
+    relationship.SetRightTableFields(["dest_pkey_nope"])
+    assert not ds.AddRelationship(relationship)
+
+    relationship.SetRightTableFields(["dest_pkey"])
+
+    assert not ds.AddRelationship(relationship)
+
+    # a unique index is required on base table key
+
+    ds.ExecuteSQL("CREATE UNIQUE INDEX origin_table_o_pkey_idx ON origin_table(o_pkey)")
+
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {"origin_table_dest_table"}
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "features"
+    assert retrieved_rel.GetMappingTableName() == ""
+    assert retrieved_rel.GetLeftMappingTableFields() is None
+    assert retrieved_rel.GetRightMappingTableFields() is None
+
+    # try again, should fail because relationship already exists
+    assert not ds.AddRelationship(relationship)
+
+    # reopen and ensure that existing features remain unmodified in layers
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    layer_origin = ds.GetLayerByName("origin_table")
+    layer_dest = ds.GetLayerByName("dest_table")
+
+    feat_read = layer_origin.GetNextFeature()
+    assert feat_read.GetField("o_pkey") == 1
+    feat_read = layer_origin.GetNextFeature()
+    assert feat_read.GetField("o_pkey") == 2
+    feat_read = layer_origin.GetNextFeature()
+    assert feat_read is None
+    layer_origin.ResetReading()
+
+    feat_read = layer_dest.GetNextFeature()
+    assert feat_read.GetField("id") == 1
+    assert feat_read.GetField("dest_pkey") == 1
+    feat_read = layer_dest.GetNextFeature()
+    assert feat_read.GetField("id") == 2
+    assert feat_read.GetField("dest_pkey") == 1
+    feat_read = layer_dest.GetNextFeature()
+    assert feat_read.GetField("id") == 3
+    assert feat_read.GetField("dest_pkey") == 2
+    feat_read = layer_dest.GetNextFeature()
+    assert feat_read is None
+    layer_dest.ResetReading()
+
+    lyr = ds.CreateLayer("origin_table2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("dest_table2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    # only one-to-many relationships are supported
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_ONE_TO_ONE
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_MANY_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_MANY_TO_ONE
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    # add second relationship of composition type
+    lyr = ds.CreateLayer("origin_table3", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("dest_table3", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table3", "dest_table3", gdal.GRC_ONE_TO_MANY
+    )
+    relationship.SetType(gdal.GRT_COMPOSITE)
+
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    ds.ExecuteSQL(
+        "CREATE UNIQUE INDEX origin_table3_o_pkey_idx ON origin_table3(o_pkey)"
+    )
+
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table",
+        "origin_table3_dest_table3",
+    }
+    retrieved_rel = ds.GetRelationship("origin_table3_dest_table3")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
+    assert retrieved_rel.GetLeftTableName() == "origin_table3"
+    assert retrieved_rel.GetRightTableName() == "dest_table3"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "features"
+
+    gdal.Unlink(filename)
 
 
 ###############################################################################

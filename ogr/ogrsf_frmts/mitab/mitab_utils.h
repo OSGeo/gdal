@@ -34,17 +34,16 @@
 
 #include "ogr_geometry.h"
 
-#define COLOR_R(color) ((color&0xff0000)/0x10000)
-#define COLOR_G(color) ((color&0xff00)/0x100)
-#define COLOR_B(color) (color&0xff)
+#define COLOR_R(color) ((color & 0xff0000) / 0x10000)
+#define COLOR_G(color) ((color & 0xff00) / 0x100)
+#define COLOR_B(color) (color & 0xff)
 
 /*=====================================================================
                         Function prototypes
  =====================================================================*/
 
-int TABGenerateArc(OGRLineString *poLine, int numPoints,
-                   double dCenterX, double dCenterY,
-                   double dXRadius, double dYRadius,
+int TABGenerateArc(OGRLineString *poLine, int numPoints, double dCenterX,
+                   double dCenterY, double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle);
 int TABCloseRing(OGRLineString *poRing);
 
@@ -58,9 +57,9 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
 char *TABCleanFieldName(const char *pszSrcName);
 
 const char *TABUnitIdToString(int nId);
-int   TABUnitIdFromString(const char *pszName);
+int TABUnitIdFromString(const char *pszName);
 
-void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd);
+void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd);
 GInt16 TABInt16Diff(int a, int b);
 
 #endif /* MITAB_UTILS_H_INCLUDED_ */

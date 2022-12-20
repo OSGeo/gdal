@@ -38,18 +38,18 @@
 /* -------------------------------------------------------------------- */
 /*      Various Functions.                                              */
 /* -------------------------------------------------------------------- */
-CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding,
-    bool bIsMText );
+CPLString ACTextUnescape(const char *pszInput, const char *pszEncoding,
+                         bool bIsMText);
 
-const unsigned char *ACGetColorTable( void );
+const unsigned char *ACGetColorTable(void);
 
-const int* ACGetKnownDimStyleCodes( void );
+const int *ACGetKnownDimStyleCodes(void);
 
-const char *ACGetDimStylePropertyName( const int iDimStyleCode );
+const char *ACGetDimStylePropertyName(const int iDimStyleCode);
 
-const char *ACGetDimStylePropertyDefault( const int iDimStyleCode );
+const char *ACGetDimStylePropertyDefault(const int iDimStyleCode);
 
-void ACAdjustText( const double dfAngle, const double dfScaleX,
-    const double dfScaleY, OGRFeature* const poFeature );
+void ACAdjustText(const double dfAngle, const double dfScaleX,
+                  const double dfScaleY, OGRFeature *const poFeature);
 
 #endif /* ndef OGR_AUTOCAD_SERVICES_H_INCLUDED */

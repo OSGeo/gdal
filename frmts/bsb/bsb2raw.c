@@ -32,74 +32,68 @@
 #include "cpl_conv.h"
 #include "bsb_read.h"
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char **papszArgv )
+int main(int nArgc, char **papszArgv)
 
 {
-    BSBInfo	*psInfo;
-    int		iLine, i;
-    GByte	*pabyScanline;
-    FILE	*fp;
-    int         nError = 0;
+    BSBInfo *psInfo;
+    int iLine, i;
+    GByte *pabyScanline;
+    FILE *fp;
+    int nError = 0;
 
-    if( nArgc < 3 )
+    if (nArgc < 3)
     {
-        fprintf( stderr, "Usage: bsb2raw src_file dst_file\n" );
-        exit( 1 );
+        fprintf(stderr, "Usage: bsb2raw src_file dst_file\n");
+        exit(1);
     }
 
-    psInfo = BSBOpen( papszArgv[1] );
-    if( psInfo == NULL )
-        exit( 1 );
+    psInfo = BSBOpen(papszArgv[1]);
+    if (psInfo == NULL)
+        exit(1);
 
-    fp = VSIFOpen( papszArgv[2], "wb" );
-    if( fp == NULL )
+    fp = VSIFOpen(papszArgv[2], "wb");
+    if (fp == NULL)
     {
-        perror( "open" );
-        exit( 1 );
+        perror("open");
+        exit(1);
     }
 
-    pabyScanline = (GByte *) CPLMalloc(psInfo->nXSize);
-    for( iLine = 0; iLine < psInfo->nYSize; iLine++ )
+    pabyScanline = (GByte *)CPLMalloc(psInfo->nXSize);
+    for (iLine = 0; iLine < psInfo->nYSize; iLine++)
     {
-        if( !BSBReadScanline( psInfo, iLine, pabyScanline ) )
+        if (!BSBReadScanline(psInfo, iLine, pabyScanline))
             nError++;
 
-        VSIFWrite( pabyScanline, 1, psInfo->nXSize, fp );
+        VSIFWrite(pabyScanline, 1, psInfo->nXSize, fp);
     }
 
-    VSIFClose( fp );
+    VSIFClose(fp);
 
-    if( nError > 0 )
-        fprintf( stderr, "Read failed for %d scanlines out of %d.\n",
-                 nError, psInfo->nYSize );
+    if (nError > 0)
+        fprintf(stderr, "Read failed for %d scanlines out of %d.\n", nError,
+                psInfo->nYSize);
 
-/* -------------------------------------------------------------------- */
-/*      Write .aux file.                                                */
-/* -------------------------------------------------------------------- */
-    fp = VSIFOpen( CPLResetExtension( papszArgv[2], "aux" ), "wt" );
+    /* -------------------------------------------------------------------- */
+    /*      Write .aux file.                                                */
+    /* -------------------------------------------------------------------- */
+    fp = VSIFOpen(CPLResetExtension(papszArgv[2], "aux"), "wt");
 
-    fprintf( fp, "AuxilaryTarget: %s\n",
-             CPLGetFilename(papszArgv[2]) );
+    fprintf(fp, "AuxilaryTarget: %s\n", CPLGetFilename(papszArgv[2]));
 
-    fprintf( fp, "RawDefinition: %d %d 1\n",
-             psInfo->nXSize, psInfo->nYSize );
+    fprintf(fp, "RawDefinition: %d %d 1\n", psInfo->nXSize, psInfo->nYSize);
 
-    fprintf( fp, "ChanDefinition-1: 8U 0 1 %d Swapped\n",
-             psInfo->nXSize );
+    fprintf(fp, "ChanDefinition-1: 8U 0 1 %d Swapped\n", psInfo->nXSize);
 
-    for( i = 0; i < psInfo->nPCTSize; i++ )
-        fprintf( fp, "METADATA_IMG_1_Class_%d_Color: (RGB:%d %d %d)\n",
-                 i,
-                 psInfo->pabyPCT[i*3 + 0],
-                 psInfo->pabyPCT[i*3 + 1],
-                 psInfo->pabyPCT[i*3 + 2] );
+    for (i = 0; i < psInfo->nPCTSize; i++)
+        fprintf(fp, "METADATA_IMG_1_Class_%d_Color: (RGB:%d %d %d)\n", i,
+                psInfo->pabyPCT[i * 3 + 0], psInfo->pabyPCT[i * 3 + 1],
+                psInfo->pabyPCT[i * 3 + 2]);
 
-    VSIFClose( fp );
+    VSIFClose(fp);
 
-    exit( 0 );
+    exit(0);
 }

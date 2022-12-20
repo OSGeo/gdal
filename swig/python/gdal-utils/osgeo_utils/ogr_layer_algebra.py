@@ -80,6 +80,9 @@ def CreateLayer(
         print('Cannot create layer "%s"' % output_lyr_name)
         return None
 
+    if input_fields == "ALL" and method_fields == "ALL":
+        return output_lyr
+
     input_prefix = ""
     method_prefix = ""
     for val in opt:

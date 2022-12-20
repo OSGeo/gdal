@@ -31,23 +31,28 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-int main(int /* argc */, char* /* argv */[])
+#include "gtest_include.h"
+
+namespace
 {
-    const char* logname = "log_with_âccent.txt";
+
+// ---------------------------------------------------------------------------
+
+TEST(testlog, test)
+{
+    const char *logname = "log_with_âccent.txt";
     CPLSetConfigOption("CPL_LOG", logname);
     CPLError(CE_Failure, CPLE_AppDefined, "test");
-    VSILFILE* fp = VSIFOpenL(logname, "rb");
-    char szExpected[20 + 1];
-    size_t nRead = VSIFReadL(szExpected, 1, 20, fp);
-    szExpected[nRead] = 0;
+    VSILFILE *fp = VSIFOpenL(logname, "rb");
+    char szGot[20 + 1];
+    size_t nRead = VSIFReadL(szGot, 1, 20, fp);
+    szGot[nRead] = 0;
     VSIFCloseL(fp);
     CPLCleanupErrorMutex();
     VSIUnlink(logname);
 
-    if( strncmp(szExpected, "ERROR 1: test", strlen("ERROR 1: test")) != 0 )
-    {
-        fprintf(stderr, "Did not get expected log: '%s'\n", szExpected);
-    }
-
-    return 0;
+    EXPECT_TRUE(strstr(szGot, "ERROR 1") != nullptr) << szGot;
+    EXPECT_TRUE(strstr(szGot, "test") != nullptr) << szGot;
 }
+
+}  // namespace

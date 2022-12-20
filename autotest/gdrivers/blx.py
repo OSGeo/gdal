@@ -29,8 +29,11 @@
 ###############################################################################
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("BLX")
 
 ###############################################################################
 # Test reading a little-endian BLX

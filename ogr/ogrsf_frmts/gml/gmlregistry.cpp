@@ -33,38 +33,37 @@
 
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                           Parse()                                    */
 /************************************************************************/
 
 bool GMLRegistry::Parse()
 {
-    if( osRegistryPath.empty() )
+    if (osRegistryPath.empty())
     {
         const char *pszFilename = CPLFindFile("gdal", "gml_registry.xml");
-        if( pszFilename )
+        if (pszFilename)
             osRegistryPath = pszFilename;
     }
-    if( osRegistryPath.empty() )
+    if (osRegistryPath.empty())
         return false;
     CPLXMLNode *psRootNode = CPLParseXMLFile(osRegistryPath);
-    if( psRootNode == nullptr )
+    if (psRootNode == nullptr)
         return false;
     CPLXMLNode *psRegistryNode = CPLGetXMLNode(psRootNode, "=gml_registry");
-    if( psRegistryNode == nullptr )
+    if (psRegistryNode == nullptr)
     {
         CPLDestroyXMLNode(psRootNode);
         return false;
     }
     CPLXMLNode *psIter = psRegistryNode->psChild;
-    while( psIter != nullptr )
+    while (psIter != nullptr)
     {
-        if( psIter->eType == CXT_Element &&
-            strcmp(psIter->pszValue, "namespace") == 0 )
+        if (psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "namespace") == 0)
         {
             GMLRegistryNamespace oNameSpace;
-            if( oNameSpace.Parse(osRegistryPath, psIter) )
+            if (oNameSpace.Parse(osRegistryPath, psIter))
             {
                 aoNamespaces.push_back(oNameSpace);
             }
@@ -84,24 +83,24 @@ bool GMLRegistryNamespace::Parse(const char *pszRegistryFilename,
 {
     const char *pszPrefix = CPLGetXMLValue(psNode, "prefix", "");
     const char *pszURI = CPLGetXMLValue(psNode, "uri", nullptr);
-    if( pszURI == nullptr )
+    if (pszURI == nullptr)
         return false;
     osPrefix = pszPrefix;
     osURI = pszURI;
     const char *pszUseGlobalSRSName =
         CPLGetXMLValue(psNode, "useGlobalSRSName", nullptr);
-    if( pszUseGlobalSRSName != nullptr &&
-        strcmp(pszUseGlobalSRSName, "true") == 0 )
+    if (pszUseGlobalSRSName != nullptr &&
+        strcmp(pszUseGlobalSRSName, "true") == 0)
         bUseGlobalSRSName = true;
 
     CPLXMLNode *psIter = psNode->psChild;
-    while( psIter != nullptr )
+    while (psIter != nullptr)
     {
-        if( psIter->eType == CXT_Element &&
-            strcmp(psIter->pszValue, "featureType") == 0 )
+        if (psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "featureType") == 0)
         {
             GMLRegistryFeatureType oFeatureType;
-            if( oFeatureType.Parse(pszRegistryFilename, psIter) )
+            if (oFeatureType.Parse(pszRegistryFilename, psIter))
             {
                 aoFeatureTypes.push_back(oFeatureType);
             }
@@ -123,29 +122,30 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
         CPLGetXMLValue(psNode, "schemaLocation", nullptr);
     const char *pszGFSSchemaLocation =
         CPLGetXMLValue(psNode, "gfsSchemaLocation", nullptr);
-    if( pszElementName == nullptr ||
-        (pszSchemaLocation == nullptr && pszGFSSchemaLocation == nullptr) )
+    if (pszElementName == nullptr ||
+        (pszSchemaLocation == nullptr && pszGFSSchemaLocation == nullptr))
         return false;
 
-    const char *pszElementValue = CPLGetXMLValue(psNode, "elementValue", nullptr);
+    const char *pszElementValue =
+        CPLGetXMLValue(psNode, "elementValue", nullptr);
     osElementName = pszElementName;
 
-    if( pszSchemaLocation != nullptr )
+    if (pszSchemaLocation != nullptr)
     {
-        if( !STARTS_WITH(pszSchemaLocation, "http://") &&
+        if (!STARTS_WITH(pszSchemaLocation, "http://") &&
             !STARTS_WITH(pszSchemaLocation, "https://") &&
-            CPLIsFilenameRelative(pszSchemaLocation) )
+            CPLIsFilenameRelative(pszSchemaLocation))
         {
-            pszSchemaLocation = CPLFormFilename(
-                CPLGetPath(pszRegistryFilename), pszSchemaLocation, nullptr );
+            pszSchemaLocation = CPLFormFilename(CPLGetPath(pszRegistryFilename),
+                                                pszSchemaLocation, nullptr);
         }
         osSchemaLocation = pszSchemaLocation;
     }
-    else if( pszGFSSchemaLocation != nullptr )
+    else if (pszGFSSchemaLocation != nullptr)
     {
-        if( !STARTS_WITH(pszGFSSchemaLocation, "http://") &&
+        if (!STARTS_WITH(pszGFSSchemaLocation, "http://") &&
             !STARTS_WITH(pszGFSSchemaLocation, "https://") &&
-            CPLIsFilenameRelative(pszGFSSchemaLocation) )
+            CPLIsFilenameRelative(pszGFSSchemaLocation))
         {
             pszGFSSchemaLocation = CPLFormFilename(
                 CPLGetPath(pszRegistryFilename), pszGFSSchemaLocation, nullptr);
@@ -153,7 +153,7 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
         osGFSSchemaLocation = pszGFSSchemaLocation;
     }
 
-    if ( pszElementValue != nullptr )
+    if (pszElementValue != nullptr)
     {
         osElementValue = pszElementValue;
     }

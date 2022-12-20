@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("XYZ")
+
 ###############################################################################
 # Test CreateCopy() of byte.tif
 
@@ -439,4 +441,119 @@ def test_xyz_floating_point_step_organized_by_columns_float32():
             150.0,
             300.0,
             450.0,
+        )
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/6736
+
+
+def test_xyz_looks_like_organized_by_columns_but_is_not():
+
+    content = """X Y Z
+371999.50 5806917.50 1
+371999.50 5806918.50 2
+371998.50 5806919.50 3
+371999.50 5806919.50 4
+"""
+
+    with gdaltest.tempfile("/vsimem/grid.xyz", content):
+        ds = gdal.Open("/vsimem/grid.xyz")
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx(
+            (371998.0, 1.0, 0.0, 5806917.0, 0.0, 1.0)
+        )
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert struct.unpack("b" * (2 * 3), ds.ReadRaster()) == (0, 1, 0, 2, 3, 4)
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/6736
+
+
+def test_xyz_looks_like_organized_by_columns_but_is_not_case2():
+
+    content = """X Y Z
+395999.50 5807443.50 1
+395999.50 5807444.50 2
+395999.50 5807445.50 3
+395998.50 5807446.50 4
+395999.50 5807446.50 5
+395998.50 5807447.50 6
+395999.50 5807447.50 7
+"""
+
+    with gdaltest.tempfile("/vsimem/grid.xyz", content):
+        ds = gdal.Open("/vsimem/grid.xyz")
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 5
+        assert ds.GetGeoTransform() == pytest.approx(
+            (395998.0, 1.0, 0.0, 5807443.0, 0.0, 1.0)
+        )
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert struct.unpack("b" * (2 * 5), ds.ReadRaster()) == (
+            0,
+            1,
+            0,
+            2,
+            0,
+            3,
+            4,
+            5,
+            6,
+            7,
+        )
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/6736
+
+
+def test_xyz_looks_like_missing_lines():
+
+    content = """X Y Z
+98.50 91.50 1
+99.50 91.50 2
+97.50 92.50 3
+98.50 92.50 4
+99.50 92.50 5
+99.50 93.50 6
+98.50 95.50 7
+99.50 98.50 8
+98.50 99.50 9
+99.50 99.50 10
+"""
+
+    with gdaltest.tempfile("/vsimem/grid.xyz", content):
+        ds = gdal.Open("/vsimem/grid.xyz")
+        assert ds.RasterXSize == 3 and ds.RasterYSize == 9
+        assert ds.GetGeoTransform() == pytest.approx((97.0, 1.0, 0.0, 91.0, 0.0, 1.0))
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert struct.unpack("b" * (3 * 9), ds.ReadRaster()) == (
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0,
+            0,
+            7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8,
+            0,
+            9,
+            10,
         )

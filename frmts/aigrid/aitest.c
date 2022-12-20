@@ -29,55 +29,54 @@
 
 #include "aigrid.h"
 
-
 /************************************************************************/
 /*                             DumpMagic()                              */
 /*                                                                      */
 /*      Dump the magic ``block type byte'' for each existing block.     */
 /************************************************************************/
 
-static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
+static void DumpMagic(AIGInfo_t *psInfo, int bVerbose)
 
 {
-    int		i;
+    int i;
     AIGTileInfo *psTInfo = psInfo->pasTileInfo + 0;
 
-    for( i = 0; i < psTInfo->nBlocks; i++ )
+    for (i = 0; i < psTInfo->nBlocks; i++)
     {
-        GByte	byMagic;
-        int	bReport = bVerbose;
+        GByte byMagic;
+        int bReport = bVerbose;
         unsigned char abyBlockSize[2];
         const char *pszMessage = "";
 
-        if( psTInfo->panBlockSize[i] == 0 )
+        if (psTInfo->panBlockSize[i] == 0)
             continue;
 
-        VSIFSeekL( psTInfo->fpGrid, psTInfo->panBlockOffset[i], SEEK_SET );
-        VSIFReadL( abyBlockSize, 2, 1, psTInfo->fpGrid );
+        VSIFSeekL(psTInfo->fpGrid, psTInfo->panBlockOffset[i], SEEK_SET);
+        VSIFReadL(abyBlockSize, 2, 1, psTInfo->fpGrid);
 
-        if( psInfo->nCellType == AIG_CELLTYPE_INT && psInfo->bCompressed )
+        if (psInfo->nCellType == AIG_CELLTYPE_INT && psInfo->bCompressed)
         {
-            VSIFReadL( &byMagic, 1, 1, psTInfo->fpGrid );
+            VSIFReadL(&byMagic, 1, 1, psTInfo->fpGrid);
 
-            if( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
-                && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7
-                && byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc
-                && byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41
-                && byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0
-                && byMagic != 0xcf && byMagic != 0x01 )
+            if (byMagic != 0 && byMagic != 0x43 && byMagic != 0x04 &&
+                byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 &&
+                byMagic != 0xdf && byMagic != 0xe0 && byMagic != 0xfc &&
+                byMagic != 0xf8 && byMagic != 0xff && byMagic != 0x41 &&
+                byMagic != 0x40 && byMagic != 0x42 && byMagic != 0xf0 &&
+                byMagic != 0xcf && byMagic != 0x01)
             {
                 pszMessage = "(unhandled magic number)";
                 bReport = TRUE;
             }
 
-            if( byMagic == 0 && psTInfo->panBlockSize[i] > 8 )
+            if (byMagic == 0 && psTInfo->panBlockSize[i] > 8)
             {
                 pszMessage = "(wrong size for 0x00 block, should be 8 bytes)";
                 bReport = TRUE;
             }
 
-            if( (abyBlockSize[0] * 256 + abyBlockSize[1])*2 !=
-                psTInfo->panBlockSize[i] )
+            if ((abyBlockSize[0] * 256 + abyBlockSize[1]) * 2 !=
+                psTInfo->panBlockSize[i])
             {
                 pszMessage = "(block size in data doesn't match index)";
                 bReport = TRUE;
@@ -85,50 +84,48 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         }
         else
         {
-            if( psTInfo->panBlockSize[i] !=
-                psInfo->nBlockXSize*psInfo->nBlockYSize*sizeof(float) )
+            if (psTInfo->panBlockSize[i] !=
+                psInfo->nBlockXSize * psInfo->nBlockYSize * sizeof(float))
             {
                 pszMessage = "(floating point block size is wrong)";
                 bReport = TRUE;
             }
         }
 
-        if( bReport )
+        if (bReport)
         {
-            printf( " %02x %5d %5d @ %u %s\n", byMagic, i,
-                    psTInfo->panBlockSize[i],
-                    psTInfo->panBlockOffset[i],
-                    pszMessage );
+            printf(" %02x %5d %5d @ %u %s\n", byMagic, i,
+                   psTInfo->panBlockSize[i], psTInfo->panBlockOffset[i],
+                   pszMessage);
         }
     }
 }
-
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+int main(int argc, char **argv)
 
 {
-    AIGInfo_t	*psInfo;
-    GInt32 	*panRaster;
-    int		i, j;
-    int		bMagic = FALSE, bSuppressMagic = FALSE;
-    int         iTestTileX = 0, iTestTileY = 0;
+    AIGInfo_t *psInfo;
+    GInt32 *panRaster;
+    int i, j;
+    int bMagic = FALSE, bSuppressMagic = FALSE;
+    int iTestTileX = 0, iTestTileY = 0;
 
-/* -------------------------------------------------------------------- */
-/*      Process arguments.                                              */
-/* -------------------------------------------------------------------- */
-    while( argc > 1 && argv[1][0] == '-' )
+    /* -------------------------------------------------------------------- */
+    /*      Process arguments.                                              */
+    /* -------------------------------------------------------------------- */
+    while (argc > 1 && argv[1][0] == '-')
     {
-        if( EQUAL(argv[1],"-magic") )
+        if (EQUAL(argv[1], "-magic"))
             bMagic = TRUE;
 
-        else if( EQUAL(argv[1],"-nomagic") )
+        else if (EQUAL(argv[1], "-nomagic"))
             bSuppressMagic = TRUE;
 
-        else if( EQUAL(argv[1],"-t") && argc > 2 )
+        else if (EQUAL(argv[1], "-t") && argc > 2)
         {
             iTestTileX = atoi(argv[2]);
             iTestTileY = atoi(argv[3]);
@@ -140,106 +137,100 @@ int main( int argc, char ** argv )
         argv++;
     }
 
-    if( argc < 2 ) {
-        printf( "Usage: aitest [-magic] coverage [block numbers...]\n" );
-        exit( 1 );
+    if (argc < 2)
+    {
+        printf("Usage: aitest [-magic] coverage [block numbers...]\n");
+        exit(1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open dataset.                                                   */
-/* -------------------------------------------------------------------- */
-    psInfo = AIGOpen( argv[1], "r" );
-    if( psInfo == NULL )
-        exit( 1 );
+    /* -------------------------------------------------------------------- */
+    /*      Open dataset.                                                   */
+    /* -------------------------------------------------------------------- */
+    psInfo = AIGOpen(argv[1], "r");
+    if (psInfo == NULL)
+        exit(1);
 
-    AIGAccessTile( psInfo, iTestTileX, iTestTileY );
+    AIGAccessTile(psInfo, iTestTileX, iTestTileY);
 
-/* -------------------------------------------------------------------- */
-/*      Dump general information                                        */
-/* -------------------------------------------------------------------- */
-    printf( "%d pixels x %d lines.\n", psInfo->nPixels, psInfo->nLines );
-    printf( "Lower Left = (%f,%f)   Upper Right = (%f,%f)\n",
-            psInfo->dfLLX,
-            psInfo->dfLLY,
-            psInfo->dfURX,
-            psInfo->dfURY );
+    /* -------------------------------------------------------------------- */
+    /*      Dump general information                                        */
+    /* -------------------------------------------------------------------- */
+    printf("%d pixels x %d lines.\n", psInfo->nPixels, psInfo->nLines);
+    printf("Lower Left = (%f,%f)   Upper Right = (%f,%f)\n", psInfo->dfLLX,
+           psInfo->dfLLY, psInfo->dfURX, psInfo->dfURY);
 
-    if( psInfo->nCellType == AIG_CELLTYPE_INT )
-        printf( "%s Integer coverage, %dx%d blocks.\n",
-                psInfo->bCompressed ? "Compressed" : "Uncompressed",
-                psInfo->nBlockXSize, psInfo->nBlockYSize );
+    if (psInfo->nCellType == AIG_CELLTYPE_INT)
+        printf("%s Integer coverage, %dx%d blocks.\n",
+               psInfo->bCompressed ? "Compressed" : "Uncompressed",
+               psInfo->nBlockXSize, psInfo->nBlockYSize);
     else
-        printf( "%s Floating point coverage, %dx%d blocks.\n",
-                psInfo->bCompressed ? "Compressed" : "Uncompressed",
-                psInfo->nBlockXSize, psInfo->nBlockYSize );
+        printf("%s Floating point coverage, %dx%d blocks.\n",
+               psInfo->bCompressed ? "Compressed" : "Uncompressed",
+               psInfo->nBlockXSize, psInfo->nBlockYSize);
 
-    printf( "Stats - Min=%f, Max=%f, Mean=%f, StdDev=%f\n",
-            psInfo->dfMin,
-            psInfo->dfMax,
-            psInfo->dfMean,
-            psInfo->dfStdDev );
+    printf("Stats - Min=%f, Max=%f, Mean=%f, StdDev=%f\n", psInfo->dfMin,
+           psInfo->dfMax, psInfo->dfMean, psInfo->dfStdDev);
 
-/* -------------------------------------------------------------------- */
-/*      Do we want a dump of all the ``magic'' numbers for              */
-/*      instantiated blocks?                                            */
-/* -------------------------------------------------------------------- */
-    if( !bSuppressMagic )
-        DumpMagic( psInfo, bMagic );
+    /* -------------------------------------------------------------------- */
+    /*      Do we want a dump of all the ``magic'' numbers for              */
+    /*      instantiated blocks?                                            */
+    /* -------------------------------------------------------------------- */
+    if (!bSuppressMagic)
+        DumpMagic(psInfo, bMagic);
 
-/* -------------------------------------------------------------------- */
-/*      Read a block, and report its contents.                          */
-/* -------------------------------------------------------------------- */
-    panRaster = (GInt32 *)
-        CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
+    /* -------------------------------------------------------------------- */
+    /*      Read a block, and report its contents.                          */
+    /* -------------------------------------------------------------------- */
+    panRaster =
+        (GInt32 *)CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
 
-    while( argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0') )
+    while (argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0'))
     {
-        int	nBlock = atoi(argv[2]);
-        CPLErr  eErr;
+        int nBlock = atoi(argv[2]);
+        CPLErr eErr;
         AIGTileInfo *psTInfo = psInfo->pasTileInfo + 0;
 
         argv++;
         argc--;
 
-        eErr = AIGReadBlock( psTInfo->fpGrid,
-                             psTInfo->panBlockOffset[nBlock],
-                             psTInfo->panBlockSize[nBlock],
-                             psInfo->nBlockXSize, psInfo->nBlockYSize,
-                             panRaster, psInfo->nCellType, psInfo->bCompressed);
+        eErr = AIGReadBlock(psTInfo->fpGrid, psTInfo->panBlockOffset[nBlock],
+                            psTInfo->panBlockSize[nBlock], psInfo->nBlockXSize,
+                            psInfo->nBlockYSize, panRaster, psInfo->nCellType,
+                            psInfo->bCompressed);
 
-        printf( "\nBlock %d:\n", nBlock );
+        printf("\nBlock %d:\n", nBlock);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
         {
-            printf( "  Error! Skipping block.\n" );
+            printf("  Error! Skipping block.\n");
             continue;
         }
 
-        for( j = 0; j < psInfo->nBlockYSize; j++ )
+        for (j = 0; j < psInfo->nBlockYSize; j++)
         {
-            for( i = 0; i < psInfo->nBlockXSize; i++ )
+            for (i = 0; i < psInfo->nBlockXSize; i++)
             {
-                if( i > 18 )
+                if (i > 18)
                 {
-                    printf( "..." );
+                    printf("...");
                     break;
                 }
 
-                if( panRaster[i+j*psInfo->nBlockXSize] == ESRI_GRID_NO_DATA )
-                    printf( "-*- " );
-                else if( psInfo->nCellType == AIG_CELLTYPE_FLOAT )
-                    printf( "%f ",
-                            ((float *) panRaster)[i+j*psInfo->nBlockXSize] );
+                if (panRaster[i + j * psInfo->nBlockXSize] == ESRI_GRID_NO_DATA)
+                    printf("-*- ");
+                else if (psInfo->nCellType == AIG_CELLTYPE_FLOAT)
+                    printf("%f ",
+                           ((float *)panRaster)[i + j * psInfo->nBlockXSize]);
                 else
-                    printf( "%3d ", panRaster[i+j*psInfo->nBlockXSize] );
+                    printf("%3d ", panRaster[i + j * psInfo->nBlockXSize]);
             }
-            printf( "\n" );
+            printf("\n");
         }
     }
 
-    CPLFree( panRaster );
+    CPLFree(panRaster);
 
-    AIGClose( psInfo );
+    AIGClose(psInfo);
 
-    exit( 0 );
+    exit(0);
 }

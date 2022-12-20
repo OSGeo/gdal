@@ -34,6 +34,8 @@ import shutil
 import pytest
 import test_py_scripts
 
+from osgeo import gdal
+
 ###############################################################################
 # Simple test
 
@@ -97,6 +99,9 @@ def test_gdalinfo_py_4():
     script_path = test_py_scripts.get_py_script("gdalinfo")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("GIF") is None:
+        pytest.skip("GIF driver is missing")
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -227,6 +232,9 @@ def test_gdalinfo_py_9():
     script_path = test_py_scripts.get_py_script("gdalinfo")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("NITF") is None:
+        pytest.skip("NITF driver is missing")
 
     ret = test_py_scripts.run_py_script(
         script_path,

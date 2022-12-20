@@ -39,37 +39,28 @@
 
 #include <utility>
 
-toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
-                            int nXSize, int nYSize,
-                            int nBitsPerPixel, int nPlanarConfig, int nSamples,
-                            int nBlockXSize, int nBlockYSize,
-                            int bTiled, int nCompressFlag, int nPhotometric,
-                            int nSampleFormat,
-                            int nPredictor,
-                            unsigned short *panRed,
-                            unsigned short *panGreen,
-                            unsigned short *panBlue,
-                            int nExtraSamples,
-                            unsigned short *panExtraSampleValues,
-                            const char *pszMetadata,
-                            const char* pszJPEGQuality,
-                            const char* pszJPEGTablesMode,
-                            const char* pszNoData,
-                            const uint32_t* panLercAddCompressionAndVersion,
-                            bool bDeferStrileArrayWriting );
+toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
+                           int nYSize, int nBitsPerPixel, int nPlanarConfig,
+                           int nSamples, int nBlockXSize, int nBlockYSize,
+                           int bTiled, int nCompressFlag, int nPhotometric,
+                           int nSampleFormat, int nPredictor,
+                           unsigned short *panRed, unsigned short *panGreen,
+                           unsigned short *panBlue, int nExtraSamples,
+                           unsigned short *panExtraSampleValues,
+                           const char *pszMetadata, const char *pszJPEGQuality,
+                           const char *pszJPEGTablesMode, const char *pszNoData,
+                           const uint32_t *panLercAddCompressionAndVersion,
+                           bool bDeferStrileArrayWriting);
 
-void GTIFFBuildOverviewMetadata( const char *pszResampling,
-                                 GDALDataset *poBaseDS,
-                                 CPLString &osMetadata );
+void GTIFFBuildOverviewMetadata(const char *pszResampling,
+                                GDALDataset *poBaseDS, CPLString &osMetadata);
 
-CPLErr
-GTIFFBuildOverviewsEx( const char * pszFilename,
-                       int nBands, GDALRasterBand * const* papoBandList,
-                       int nOverviews,
-                       const int * panOverviewList,
-                       const std::pair<int, int>* pasOverviewSize,
-                       const char * pszResampling,
-                       const char* const* papszOptions,
-                       GDALProgressFunc pfnProgress, void * pProgressData );
+CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
+                             GDALRasterBand *const *papoBandList,
+                             int nOverviews, const int *panOverviewList,
+                             const std::pair<int, int> *pasOverviewSize,
+                             const char *pszResampling,
+                             const char *const *papszOptions,
+                             GDALProgressFunc pfnProgress, void *pProgressData);
 
 #endif

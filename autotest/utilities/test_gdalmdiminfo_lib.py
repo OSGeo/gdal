@@ -46,8 +46,6 @@ def _validate(res):
         import jsonschema
     except ImportError:
         return
-    if int(jsonschema.__version__.split(".")[0]) < 3:
-        return
 
     if isinstance(res, str):
         res = json.loads(res)

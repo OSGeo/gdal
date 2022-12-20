@@ -30,6 +30,9 @@
 
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("ISIS2")
 
 ###############################################################################
 # Read a truncated and modified version of arvidson_original.cub from

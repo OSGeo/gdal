@@ -345,6 +345,9 @@ def test_ogr_join_14():
 
 def test_ogr_join_15():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.GetDriverByName("CSV").CreateDataSource("/vsimem/ogr_join_14")
     lyr = ds.CreateLayer("first")
     ogrtest.quick_create_layer_def(lyr, [["id"]])

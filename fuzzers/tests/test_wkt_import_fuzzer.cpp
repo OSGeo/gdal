@@ -31,7 +31,7 @@
 int main()
 {
     const char szJUNK[] = "junk";
-    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szJUNK),
+    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t *>(szJUNK),
                            strlen(szJUNK));
     return 0;
 }

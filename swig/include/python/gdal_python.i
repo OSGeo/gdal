@@ -22,6 +22,7 @@ static int getAlignment(GDALDataType ntype)
         case GDT_Unknown:
             break; // shouldn't happen
         case GDT_Byte:
+        case GDT_Int8:
             return 1;
         case GDT_Int16:
         case GDT_UInt16:
@@ -728,8 +729,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 {
     *buf = NULL;
 
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
+    int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype;
     if ( buf_type != 0 ) {
       ntype = *buf_type;
@@ -1178,6 +1179,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
          count is None and buffer_stride is None and buffer_datatype is None:
           map_typecode_itemsize_to_gdal = {
              ('B', 1): GDT_Byte,
+             ('b', 1): GDT_Int8,
              ('h', 2): GDT_Int16,
              ('H', 2): GDT_UInt16,
              ('i', 4): GDT_Int32,
@@ -1324,7 +1326,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             return s
         return self.ReadAsStringArray()
     if dt_class == GEDTC_NUMERIC:
-        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt()
             else:
@@ -1389,6 +1391,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
         if '-json' in new_options:
             format = 'json'
         if computeMinMax:
@@ -1426,7 +1430,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
     return (GDALInfoOptions(new_options), format, deserialize)
 
 def Info(ds, **kwargs):
-    """Return information on a dataset.
+    """Return information on a raster dataset.
 
     Parameters
     ----------
@@ -1444,6 +1448,113 @@ def Info(ds, **kwargs):
     if isinstance(ds, str):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
+    if format == 'json' and deserialize:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
+def VectorInfoOptions(options=None,
+                      format='text',
+                      deserialize=True,
+                      layers=None,
+                      dumpFeatures=False,
+                      featureCount=True,
+                      extent=True,
+                      SQLStatement=None,
+                      SQLDialect=None,
+                      where=None,
+                      wktFormat=None):
+    """ Create a VectorInfoOptions() object that can be passed to gdal.VectorInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords.
+
+        Parameters
+        ----------
+        options:
+            can be be an array of strings, a string or let empty and filled from other keywords.
+        format:
+            "text" or "json"
+        deserialize:
+            if JSON output should be returned as a Python dictionary. Otherwise as a serialized representation.
+        SQLStatement:
+            SQL statement to apply to the source dataset
+        SQLDialect:
+            SQL dialect ('OGRSQL', 'SQLITE', ...)
+        where:
+            WHERE clause to apply to source layer(s)
+        layers:
+            list of layers of interest
+        featureCount:
+            whether to compute and display the feature count
+        extent:
+            whether to compute and display the layer extent
+        dumpFeatures:
+            set to True to get the dump of all features
+    """
+
+    options = [] if options is None else options
+    deserialize=True
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+        format = 'text'
+        if '-json' in new_options:
+            format = 'json'
+    else:
+        new_options = options
+        if format == 'json':
+            new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
+        if '-json' in new_options:
+            format = 'json'
+        if SQLStatement:
+            new_options += ['-sql', SQLStatement]
+        if SQLDialect:
+            new_options += ['-dialect', SQLDialect]
+        if where:
+            new_options += ['-where', where]
+        if wktFormat:
+            new_options += ['-wkt_format', wktFormat]
+        if not featureCount:
+            new_options += ['-nocount']
+        if not extent:
+            new_options += ['-noextent']
+        if layers:
+            new_options += ["dummy_dataset_name"]
+            for layer in layers:
+                new_options += [layer]
+        else:
+            new_options += ["-al"]
+        if format == 'json':
+            if dumpFeatures:
+                new_options += ["-features"]
+        else:
+            if not dumpFeatures:
+                new_options += ["-so"]
+
+    return (GDALVectorInfoOptions(new_options), format, deserialize)
+
+
+def VectorInfo(ds, **kwargs):
+    """Return information on a vector dataset.
+
+    Parameters
+    ----------
+    ds:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.VectorInfoOptions(), string or array of strings
+        other keywords arguments of gdal.VectorInfoOptions().
+        If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
+    """
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, format, deserialize) = VectorInfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if isinstance(ds, str):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
+    ret = VectorInfoInternal(ds, opts)
     if format == 'json' and deserialize:
         import json
         ret = json.loads(ret)

@@ -29,18 +29,27 @@
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 
-static void thread_func(void* ptr)
+#include "gtest_include.h"
+
+namespace
 {
-    int num = *(int*)ptr;
-    GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
-    GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test_ref", GA_ReadOnly);
-    GDALDataset* poDS = poDriver->Create(CPLSPrintf("/vsimem/test%d", num), 100, 2000, 1, GDT_Byte, nullptr);
-    GDALRasterBand* poBand = poDS->GetRasterBand(1);
-    GDALRasterBand* poBandRef = poDSRef->GetRasterBand(1);
-    for(int i=0; i<2000; i++)
+
+// ---------------------------------------------------------------------------
+
+static void thread_func(void *ptr)
+{
+    int num = *(int *)ptr;
+    GDALDriver *poDriver = (GDALDriver *)GDALGetDriverByName("ENVI");
+    GDALDataset *poDSRef =
+        (GDALDataset *)GDALOpen("/vsimem/test_ref", GA_ReadOnly);
+    GDALDataset *poDS = poDriver->Create(CPLSPrintf("/vsimem/test%d", num), 100,
+                                         2000, 1, GDT_Byte, nullptr);
+    GDALRasterBand *poBand = poDS->GetRasterBand(1);
+    GDALRasterBand *poBandRef = poDSRef->GetRasterBand(1);
+    for (int i = 0; i < 2000; i++)
     {
-        GDALRasterBlock* poBlockRef = poBandRef->GetLockedBlockRef(0, i);
-        GDALRasterBlock* poBlockRW = poBand->GetLockedBlockRef(0, i);
+        GDALRasterBlock *poBlockRef = poBandRef->GetLockedBlockRef(0, i);
+        GDALRasterBlock *poBlockRW = poBand->GetLockedBlockRef(0, i);
         poBlockRW->MarkDirty();
         memset(poBlockRW->GetDataRef(), 0xFF, 100);
         poBlockRef->DropLock();
@@ -50,30 +59,35 @@ static void thread_func(void* ptr)
     GDALClose(poDSRef);
 }
 
-int main(int argc, char** argv)
+TEST(testmultithreadedwriting, test)
 {
-    bool bEndlessLoop = false;
-    if( argc == 2 && EQUAL(argv[1], "-endlessloops") )
-        bEndlessLoop = true;
+    bool bEndlessLoop = CPLTestBool(CPLGetConfigOption("ENDLESS_LOOPS", "NO"));
 
-    CPLJoinableThread* hThread1;
-    CPLJoinableThread* hThread2;
+    CPLJoinableThread *hThread1;
+    CPLJoinableThread *hThread2;
 
     GDALAllRegister();
     GDALSetCacheMax(10000);
 
     int one = 1;
     int two = 2;
-    GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
-    GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
+    GDALDriver *poDriver = (GDALDriver *)GDALGetDriverByName("ENVI");
+    if (poDriver == nullptr)
+    {
+        GTEST_SKIP() << "ENVI driver missing";
+        return;
+    }
+    GDALDataset *poDS =
+        poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
     GDALClose(poDS);
 
     int counter = 0;
-    int cs = 0;
-    do
+    const int nloops = bEndlessLoop ? 2 * 1000 * 1000 * 1000 : 1;
+    for (int i = 0; i < nloops; ++i)
     {
-        ++counter;
-        if( (counter % 20) == 0 ) printf("%d\n", counter);
+        ++i;
+        if ((i % 20) == 0)
+            printf("%d\n", counter);
 
         hThread1 = CPLCreateJoinableThread(thread_func, &one);
         hThread2 = CPLCreateJoinableThread(thread_func, &two);
@@ -81,23 +95,20 @@ int main(int argc, char** argv)
         CPLJoinThread(hThread1);
         CPLJoinThread(hThread2);
 
-        GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test1", GA_ReadOnly);
-        cs = GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
-        if( cs != 29689 )
-        {
-            printf("Got cs=%d, expected=%d\n", cs, 29689);
-            break;
-        }
+        GDALDataset *poDSRef =
+            (GDALDataset *)GDALOpen("/vsimem/test1", GA_ReadOnly);
+        const int cs =
+            GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
+        EXPECT_EQ(cs, 29689);
         GDALClose(poDSRef);
 
         poDriver->Delete("/vsimem/test1");
         poDriver->Delete("/vsimem/test2");
     }
-    while( bEndlessLoop );
 
     poDriver->Delete("/vsimem/test_ref");
 
     GDALDestroyDriverManager();
-
-    return (cs == 29689) ? 0 : 1;
 }
+
+}  // namespace

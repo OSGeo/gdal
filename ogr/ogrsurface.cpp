@@ -30,7 +30,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-
 /**
  * \fn double OGRSurface::get_Area() const;
  *
@@ -73,7 +72,7 @@
  * @return new geometry.
  */
 
-OGRPolygon* OGRSurface::CastToPolygon( OGRSurface* poSurface )
+OGRPolygon *OGRSurface::CastToPolygon(OGRSurface *poSurface)
 {
     OGRSurfaceCasterToPolygon pfn = poSurface->GetCasterToPolygon();
     return pfn(poSurface);
@@ -93,7 +92,7 @@ OGRPolygon* OGRSurface::CastToPolygon( OGRSurface* poSurface )
  * @return new geometry.
  */
 
-OGRCurvePolygon* OGRSurface::CastToCurvePolygon( OGRSurface* poSurface )
+OGRCurvePolygon *OGRSurface::CastToCurvePolygon(OGRSurface *poSurface)
 {
     OGRSurfaceCasterToCurvePolygon pfn = poSurface->GetCasterToCurvePolygon();
     return pfn(poSurface);

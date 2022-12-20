@@ -43,14 +43,14 @@ if(NOT BLOSC_FOUND)
   mark_as_advanced(BLOSC_INCLUDE_DIR BLOSC_LIBRARY)
   if(BLOSC_INCLUDE_DIR)
     file(STRINGS ${BLOSC_INCLUDE_DIR}/blosc.h _ver_strings
-      REGEX "BLOSC_VERSION_[^ ]* [0-9]+"
+      REGEX "BLOSC_VERSION_[^ ]*[ \t]*[0-9]+"
     )
     foreach(v IN LISTS _ver_strings)
-      string(REGEX MATCH "BLOSC_VERSION_([^ ]+) ([0-9]+)" v "${v}")
+      string(REGEX MATCH "BLOSC_VERSION_([^ ]*)[ \t]*([0-9]+)" v "${v}")
       set(BLOSC_VERSION_${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
     endforeach()
     set(BLOSC_VERSION
-      ${BLOSC_VERSION_MAJOR}.${BLOSC_VERSION_MINOR}.${BLOSC_VERSION_PATCH}
+      ${BLOSC_VERSION_MAJOR}.${BLOSC_VERSION_MINOR}.${BLOSC_VERSION_RELEASE}
     )
   endif()
 

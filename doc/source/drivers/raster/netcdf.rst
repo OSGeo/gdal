@@ -283,6 +283,12 @@ The following open options are available:
    same dimensions, then they should be reported as multiple bands of a same dataset.
    Default is NO (that is each variable will be reported as a separate
    subdataset)
+   
+-  **ASSUME_LONGLAT=[YES/NO]** :  (GDAL >= 3.7) Whether a Geographic CRS should
+    be assumed and applied when, none has otherwise been found, a meaningful 
+    geotransform has been found, and that geotransform is within the bounds 
+    -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
+
 
 Creation Issues
 ---------------
@@ -431,6 +437,8 @@ Creation Options
 
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 
 -  **WRITE_GDAL_VERSION=[YES/NO]**: (GDAL >= 3.5.0)
    Define if a "GDAL" text global attribute should be added on file creation
@@ -508,6 +516,11 @@ Configuration Options
    should be always considered as geospatial axis, even if the lack
    conventional attributes confirming it. Default is NO.
 
+-  **GDAL_NETCDF_ASSUME_LONGLAT=[YES/NO]** :  GDAL >= 3.7) Whether a Geographic CRS should
+    be assumed and applied when, none has otherwise been found, a meaningful 
+    geotransform has been found, and that geotransform is within the bounds 
+    -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
+    
 VSI Virtual File System API support
 -----------------------------------
 

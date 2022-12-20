@@ -32,9 +32,8 @@
 #include "ogrsf_frmts.h"
 
 #ifdef GNM_ENABLED
-   #include "gnm_frmts.h"
+#include "gnm_frmts.h"
 #endif
-
 
 #ifdef notdef
 // we may have a use for this some day
@@ -113,7 +112,7 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
 #ifdef FRMT_aigrid
-//    GDALRegister_AIGrid2();
+    //    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
 #endif
 
@@ -391,12 +390,12 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_rdb
     GDALRegister_RDB();
 #endif
-/* -------------------------------------------------------------------- */
-/*      Put raw formats at the end of the list. These drivers support   */
-/*      various ASCII-header labeled formats, so the driver could be    */
-/*      confused if you have files in some of above formats and such    */
-/*      ASCII-header in the same directory.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Put raw formats at the end of the list. These drivers support   */
+    /*      various ASCII-header labeled formats, so the driver could be    */
+    /*      confused if you have files in some of above formats and such    */
+    /*      ASCII-header in the same directory.                             */
+    /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
     GDALRegister_PNM();
@@ -424,6 +423,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ROIPAC();
     GDALRegister_RRASTER();
     GDALRegister_BYN();
+    GDALRegister_NOAA_B();
     GDALRegister_NSIDCbin();
 #endif
 
@@ -431,10 +431,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ARG();
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Our test for the following is weak or expensive so we try       */
-/*      them last.                                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Our test for the following is weak or expensive so we try       */
+    /*      them last.                                                      */
+    /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_rik
     GDALRegister_RIK();
@@ -581,10 +581,10 @@ void CPL_STDCALL GDALAllRegister()
 
     OGRRegisterAllInternal();
 
-/* -------------------------------------------------------------------- */
-/*      Put here drivers that absolutely need to look for side car      */
-/*      files in their Identify()/Open() procedure.                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Put here drivers that absolutely need to look for side car      */
+    /*      files in their Identify()/Open() procedure.                     */
+    /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
     GDALRegister_GenBin();
@@ -607,10 +607,10 @@ void CPL_STDCALL GDALAllRegister()
 
     poDriverManager->AutoLoadPythonDrivers();
 
-/* -------------------------------------------------------------------- */
-/*      Deregister any drivers explicitly marked as suppressed by the   */
-/*      GDAL_SKIP environment variable.                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Deregister any drivers explicitly marked as suppressed by the   */
+    /*      GDAL_SKIP environment variable.                                 */
+    /* -------------------------------------------------------------------- */
     poDriverManager->AutoSkipDrivers();
 
     poDriverManager->ReorderDrivers();

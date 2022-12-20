@@ -39,6 +39,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ENVI")
+
 ###############################################################################
 # Perform simple read test.
 
@@ -876,3 +878,84 @@ def test_envi_write_data_gain_values():
     gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
 
     assert "data gain values = {1, 10, 1}" in content, content
+
+
+###############################################################################
+# Test direct access to BIP scanlines
+
+
+@pytest.mark.parametrize("byte_order", ["LITTLE_ENDIAN", "BIG_ENDIAN"])
+def test_envi_read_direct_access(byte_order):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    filename = "/vsimem/test.bin"
+    gdal.Translate(
+        filename,
+        src_ds,
+        format="ENVI",
+        outputType=gdal.GDT_UInt16,
+        creationOptions=["INTERLEAVE=BIP", "@BYTE_ORDER=" + byte_order],
+    )
+    ds = gdal.Open(filename)
+
+    # Using optimization
+    assert ds.ReadRaster(
+        0,
+        0,
+        ds.RasterXSize,
+        ds.RasterYSize,
+        buf_type=gdal.GDT_UInt16,
+        buf_pixel_space=2 * ds.RasterCount,
+        buf_band_space=2,
+    ) == src_ds.ReadRaster(
+        0,
+        0,
+        ds.RasterXSize,
+        ds.RasterYSize,
+        buf_type=gdal.GDT_UInt16,
+        buf_pixel_space=2 * ds.RasterCount,
+        buf_band_space=2,
+    )
+
+    assert ds.ReadRaster(
+        1,
+        2,
+        3,
+        4,
+        buf_type=gdal.GDT_UInt16,
+        buf_pixel_space=2 * ds.RasterCount,
+        buf_band_space=2,
+    ) == src_ds.ReadRaster(
+        1,
+        2,
+        3,
+        4,
+        buf_type=gdal.GDT_UInt16,
+        buf_pixel_space=2 * ds.RasterCount,
+        buf_band_space=2,
+    )
+
+    # Non-optimized (at time of writing...)
+
+    # buffer type != native data type
+    assert ds.ReadRaster(
+        1,
+        2,
+        3,
+        4,
+        buf_type=gdal.GDT_Byte,
+        buf_pixel_space=ds.RasterCount,
+        buf_band_space=1,
+    ) == src_ds.ReadRaster(
+        1,
+        2,
+        3,
+        4,
+        buf_type=gdal.GDT_Byte,
+        buf_pixel_space=ds.RasterCount,
+        buf_band_space=1,
+    )
+
+    ds = None
+
+    gdal.GetDriverByName("ENVI").Delete(filename)

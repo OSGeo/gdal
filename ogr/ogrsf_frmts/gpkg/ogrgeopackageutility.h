@@ -50,13 +50,19 @@ typedef struct
     size_t nHeaderLen;
 } GPkgHeader;
 
-OGRFieldType        GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType, int& nMaxWidth);
-const char*         GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType, int nMaxWidth);
-OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM);
+OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType &eSubType,
+                            int &nMaxWidth);
+const char *GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
+                             int nMaxWidth);
+OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ,
+                                         bool bHasM);
 
-GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pnWkbLen);
-OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatialReference *poSrs);
+GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
+                           size_t *pnWkbLen);
+OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
+                               OGRSpatialReference *poSrs);
 
-OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poHeader);
+OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
+                         GPkgHeader *poHeader);
 
 #endif

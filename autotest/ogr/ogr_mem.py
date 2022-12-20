@@ -972,3 +972,14 @@ def test_ogr_mem_upsert_feature():
 
     # Verify that we have created a feature
     assert lyr.GetFeature(1) is not None
+
+
+###############################################################################
+
+
+def test_ogr_mem_get_supported_srs_list():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    assert lyr.GetSupportedSRSList() is None
+    assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE

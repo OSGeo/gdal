@@ -93,3 +93,5 @@ RFC list
     rfc84_cmake
     rfc85_policy_code_additions
     rfc86_column_oriented_api
+    rfc87_signed_int8
+    rfc88_googletest

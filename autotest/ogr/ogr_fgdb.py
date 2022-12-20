@@ -1030,18 +1030,14 @@ def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
     fgdb_drv.Register()
     openfilegdb_drv.Register()
 
-    ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
-    if ds is None:
-        ret = "fail"
-    else:
-        ret = "success"
+    try:
+        ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        assert ds is not None
+    finally:
+        # Deregister OpenFileGDB again
+        openfilegdb_drv.Deregister()
 
-    # Deregister OpenFileGDB again
-    openfilegdb_drv.Deregister()
-
-    shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
-
-    return ret
+        shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
 
 
 ###############################################################################
@@ -3139,3 +3135,36 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetForwardPathLabel() == "attachment"
     assert rel.GetBackwardPathLabel() == "object"
     assert rel.GetRelatedTableType() == "media"
+
+
+###############################################################################
+# Test inserting geometries of type incompatible with the layer geometry type
+
+
+@pytest.mark.parametrize(
+    "layer_geom_type,wkt",
+    [
+        (ogr.wkbLineString, "POLYGON((0 0,0 1,1 1,0 0))"),
+        (ogr.wkbPolygon, "LINESTRING(0 0,1 1)"),
+        (ogr.wkbPoint, "MULTIPOINT((0 0))"),
+        (ogr.wkbMultiPoint, "POINT(0 0)"),
+    ],
+)
+def test_ogr_filegdb_incompatible_geometry_types(fgdb_drv, layer_geom_type, wkt):
+
+    dirname = "tmp/test_ogr_filegdb_incompatible_geometry_types.gdb"
+    ds = fgdb_drv.CreateDataSource(dirname)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=layer_geom_type)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass

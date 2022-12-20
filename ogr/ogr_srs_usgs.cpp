@@ -42,55 +42,54 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-
 /************************************************************************/
 /*  GCTP projection codes.                                              */
 /************************************************************************/
 
-constexpr long GEO    = 0L;   // Geographic
-constexpr long UTM    = 1L;   // Universal Transverse Mercator (UTM)
-constexpr long SPCS   = 2L;   // State Plane Coordinates
+constexpr long GEO = 0L;      // Geographic
+constexpr long UTM = 1L;      // Universal Transverse Mercator (UTM)
+constexpr long SPCS = 2L;     // State Plane Coordinates
 constexpr long ALBERS = 3L;   // Albers Conical Equal Area
-constexpr long LAMCC  = 4L;   // Lambert Conformal Conic
+constexpr long LAMCC = 4L;    // Lambert Conformal Conic
 constexpr long MERCAT = 5L;   // Mercator
-constexpr long PS     = 6L;   // Polar Stereographic
-constexpr long POLYC  = 7L;   // Polyconic
+constexpr long PS = 6L;       // Polar Stereographic
+constexpr long POLYC = 7L;    // Polyconic
 constexpr long EQUIDC = 8L;   // Equidistant Conic
-constexpr long TM     = 9L;   // Transverse Mercator
+constexpr long TM = 9L;       // Transverse Mercator
 constexpr long STEREO = 10L;  // Stereographic
-constexpr long LAMAZ  = 11L;  // Lambert Azimuthal Equal Area
+constexpr long LAMAZ = 11L;   // Lambert Azimuthal Equal Area
 constexpr long AZMEQD = 12L;  // Azimuthal Equidistant
 constexpr long GNOMON = 13L;  // Gnomonic
-constexpr long ORTHO  = 14L;  // Orthographic
+constexpr long ORTHO = 14L;   // Orthographic
 // constexpr long GVNSP  = 15L;  // General Vertical Near-Side Perspective
 constexpr long SNSOID = 16L;  // Sinusiodal
 constexpr long EQRECT = 17L;  // Equirectangular
 constexpr long MILLER = 18L;  // Miller Cylindrical
 constexpr long VGRINT = 19L;  // Van der Grinten
-constexpr long HOM    = 20L;  // (Hotine) Oblique Mercator
-constexpr long ROBIN  = 21L;  // Robinson
+constexpr long HOM = 20L;     // (Hotine) Oblique Mercator
+constexpr long ROBIN = 21L;   // Robinson
 // constexpr long SOM    = 22L;  // Space Oblique Mercator (SOM)
 // constexpr long ALASKA = 23L;  // Alaska Conformal
 // constexpr long GOODE  = 24L;  // Interrupted Goode Homolosine
-constexpr long MOLL   = 25L;  // Mollweide
+constexpr long MOLL = 25L;  // Mollweide
 // constexpr long IMOLL  = 26L;  // Interrupted Mollweide
 // constexpr long HAMMER = 27L;  // Hammer
-constexpr long WAGIV  = 28L;  // Wagner IV
+constexpr long WAGIV = 28L;   // Wagner IV
 constexpr long WAGVII = 29L;  // Wagner VII
 // constexpr long OBEQA  = 30L;  // Oblated Equal Area
 // constexpr long ISINUS1 = 31L; // Integerized Sinusoidal Grid (the same as 99)
 // constexpr long CEA    = 97L;  // Cylindrical Equal Area (Grid corners set
-                                 // in meters for EASE grid)
+// in meters for EASE grid)
 // constexpr long BCEA   = 98L;  // Cylindrical Equal Area (Grid corners set
-                                 // in DMS degs for EASE grid)
+// in DMS degs for EASE grid)
 // constexpr long ISINUS = 99L;  // Integerized Sinusoidal Grid
-                                 // (added by Raj Gejjagaraguppe ARC for MODIS)
+// (added by Raj Gejjagaraguppe ARC for MODIS)
 
 /************************************************************************/
 /*  GCTP ellipsoid codes.                                               */
 /************************************************************************/
 
-constexpr long CLARKE1866         = 0L;
+constexpr long CLARKE1866 = 0L;
 // constexpr long CLARKE1880         = 1L;
 // constexpr long BESSEL             = 2L;
 // constexpr long INTERNATIONAL1967  = 3L;
@@ -98,11 +97,11 @@ constexpr long CLARKE1866         = 0L;
 // constexpr long WGS72              = 5L;
 // constexpr long EVEREST            = 6L;
 // constexpr long WGS66              = 7L;
-constexpr long GRS1980            = 8L;
+constexpr long GRS1980 = 8L;
 // constexpr long AIRY               = 9L;
 // constexpr long MODIFIED_EVEREST   = 10L;
 // constexpr long MODIFIED_AIRY      = 11L;
-constexpr long WGS84              = 12L;
+constexpr long WGS84 = 12L;
 // constexpr long SOUTHEAST_ASIA     = 13L;
 // constexpr long AUSTRALIAN_NATIONAL= 14L;
 // constexpr long KRASSOVSKY         = 15L;
@@ -115,42 +114,41 @@ constexpr long WGS84              = 12L;
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
-constexpr int aoEllips[] =
-{
-    7008,   // Clarke, 1866 (NAD1927)
-    7034,   // Clarke, 1880
-    7004,   // Bessel, 1841
-    0,      // FIXME: New International, 1967 --- skipped
-    7022,   // International, 1924 (Hayford, 1909) XXX?
-    7043,   // WGS, 1972
-    7042,   // Everest, 1830
-    7025,   // FIXME: WGS, 1966
-    7019,   // GRS, 1980 (NAD1983)
-    7001,   // Airy, 1830
-    7018,   // Modified Everest
-    7002,   // Modified Airy
-    7030,   // WGS, 1984 (GPS)
-    0,      // FIXME: Southeast Asia --- skipped
-    7003,   // Australian National, 1965
-    7024,   // Krassovsky, 1940
-    7053,   // Hough
-    0,      // FIXME: Mercury, 1960 --- skipped
-    0,      // FIXME: Modified Mercury, 1968 --- skipped
-    7047,   // Sphere, rad 6370997 m (normal sphere)
-    7006,   // Bessel, 1841 (Namibia)
-    7016,   // Everest (Sabah & Sarawak)
-    7044,   // Everest, 1956
-    7056,   // Everest, Malaysia 1969
-    7018,   // Everest, Malay & Singapr 1948
-    0,      // FIXME: Everest, Pakistan --- skipped
-    7022,   // Hayford (International 1924) XXX?
-    7020,   // Helmert 1906
-    7021,   // Indonesian, 1974
-    7036,   // South American, 1969
-    0       // FIXME: WGS 60 --- skipped
+constexpr int aoEllips[] = {
+    7008,  // Clarke, 1866 (NAD1927)
+    7034,  // Clarke, 1880
+    7004,  // Bessel, 1841
+    0,     // FIXME: New International, 1967 --- skipped
+    7022,  // International, 1924 (Hayford, 1909) XXX?
+    7043,  // WGS, 1972
+    7042,  // Everest, 1830
+    7025,  // FIXME: WGS, 1966
+    7019,  // GRS, 1980 (NAD1983)
+    7001,  // Airy, 1830
+    7018,  // Modified Everest
+    7002,  // Modified Airy
+    7030,  // WGS, 1984 (GPS)
+    0,     // FIXME: Southeast Asia --- skipped
+    7003,  // Australian National, 1965
+    7024,  // Krassovsky, 1940
+    7053,  // Hough
+    0,     // FIXME: Mercury, 1960 --- skipped
+    0,     // FIXME: Modified Mercury, 1968 --- skipped
+    7047,  // Sphere, rad 6370997 m (normal sphere)
+    7006,  // Bessel, 1841 (Namibia)
+    7016,  // Everest (Sabah & Sarawak)
+    7044,  // Everest, 1956
+    7056,  // Everest, Malaysia 1969
+    7018,  // Everest, Malay & Singapr 1948
+    0,     // FIXME: Everest, Pakistan --- skipped
+    7022,  // Hayford (International 1924) XXX?
+    7020,  // Helmert 1906
+    7021,  // Indonesian, 1974
+    7036,  // South American, 1969
+    0      // FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS    static_cast<int>(CPL_ARRAYSIZE(aoEllips))
+#define NUMBER_OF_ELLIPSOIDS static_cast<int>(CPL_ARRAYSIZE(aoEllips))
 
 /************************************************************************/
 /*                         OSRImportFromUSGS()                          */
@@ -161,23 +159,22 @@ constexpr int aoEllips[] =
  *
  * This function is the same as OGRSpatialReference::importFromUSGS().
  */
-OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
-                          long iZone, double *padfPrjParams, long iDatum )
+OGRErr OSRImportFromUSGS(OGRSpatialReferenceH hSRS, long iProjsys, long iZone,
+                         double *padfPrjParams, long iDatum)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromUSGS", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRImportFromUSGS", OGRERR_FAILURE);
 
-    return OGRSpatialReference::FromHandle(hSRS)->importFromUSGS( iProjsys, iZone,
-                                                           padfPrjParams,
-                                                           iDatum );
+    return OGRSpatialReference::FromHandle(hSRS)->importFromUSGS(
+        iProjsys, iZone, padfPrjParams, iDatum);
 }
 
-static double OGRSpatialReferenceUSGSUnpackNoOp( double dfVal )
+static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
 {
     return dfVal;
 }
 
-static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
+static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
 {
     return dfVal * 180.0 / M_PI;
 }
@@ -418,370 +415,361 @@ Supported Datums are:
 @return OGRERR_NONE on success or an error code in case of failure.
  */
 
-OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
-                                            double *padfPrjParams,
-                                            long iDatum,
-                                            int nUSGSAngleFormat )
+OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
+                                           double *padfPrjParams, long iDatum,
+                                           int nUSGSAngleFormat)
 
 {
-    if( !padfPrjParams )
+    if (!padfPrjParams)
         return OGRERR_CORRUPT_DATA;
 
     double (*pfnUnpackAnglesFn)(double) = nullptr;
 
-    if( nUSGSAngleFormat == USGS_ANGLE_DECIMALDEGREES )
+    if (nUSGSAngleFormat == USGS_ANGLE_DECIMALDEGREES)
         pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackNoOp;
-    else if( nUSGSAngleFormat == USGS_ANGLE_RADIANS )
+    else if (nUSGSAngleFormat == USGS_ANGLE_RADIANS)
         pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackRadian;
     else
         pfnUnpackAnglesFn = CPLPackedDMSToDec;
 
-/* -------------------------------------------------------------------- */
-/*      Operate on the basis of the projection code.                    */
-/* -------------------------------------------------------------------- */
-    switch( iProjSys )
+    /* -------------------------------------------------------------------- */
+    /*      Operate on the basis of the projection code.                    */
+    /* -------------------------------------------------------------------- */
+    switch (iProjSys)
     {
         case GEO:
             break;
 
         case UTM:
+        {
+            int bNorth = TRUE;
+
+            if (!iZone)
             {
-                int bNorth = TRUE;
-
-                if( !iZone )
+                if (padfPrjParams[2] != 0.0)
                 {
-                    if( padfPrjParams[2] != 0.0 )
-                    {
-                        iZone = static_cast<long>(padfPrjParams[2]);
-                    }
-                    else if( padfPrjParams[0] != 0.0 &&
-                             padfPrjParams[1] != 0.0 )
-                    {
-                        const double dfUnpackedAngle =
-                            pfnUnpackAnglesFn(padfPrjParams[0]);
-                        iZone = static_cast<long>(
-                            ((dfUnpackedAngle + 180.0) / 6.0) + 1.0);
-                        if( dfUnpackedAngle < 0 )
-                            bNorth = FALSE;
-                    }
+                    iZone = static_cast<long>(padfPrjParams[2]);
                 }
-
-                if( iZone < -60 || iZone > 60 )
-                    return OGRERR_CORRUPT_DATA;
-
-                if( iZone < 0 )
+                else if (padfPrjParams[0] != 0.0 && padfPrjParams[1] != 0.0)
                 {
-                    iZone = -iZone;
-                    bNorth = FALSE;
+                    const double dfUnpackedAngle =
+                        pfnUnpackAnglesFn(padfPrjParams[0]);
+                    iZone = static_cast<long>(
+                        ((dfUnpackedAngle + 180.0) / 6.0) + 1.0);
+                    if (dfUnpackedAngle < 0)
+                        bNorth = FALSE;
                 }
-                SetUTM( static_cast<int>(iZone), bNorth );
             }
-            break;
+
+            if (iZone < -60 || iZone > 60)
+                return OGRERR_CORRUPT_DATA;
+
+            if (iZone < 0)
+            {
+                iZone = -iZone;
+                bNorth = FALSE;
+            }
+            SetUTM(static_cast<int>(iZone), bNorth);
+        }
+        break;
 
         case SPCS:
-            {
-                int bNAD83 = TRUE;
+        {
+            int bNAD83 = TRUE;
 
-                if( iDatum == 0 )
-                    bNAD83 = FALSE;
-                else if( iDatum != 8 )
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "Wrong datum for State Plane projection %d. "
-                              "Should be 0 or 8.", static_cast<int>(iDatum) );
+            if (iDatum == 0)
+                bNAD83 = FALSE;
+            else if (iDatum != 8)
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Wrong datum for State Plane projection %d. "
+                         "Should be 0 or 8.",
+                         static_cast<int>(iDatum));
 
-                SetStatePlane( static_cast<int>(iZone), bNAD83 );
-            }
-            break;
+            SetStatePlane(static_cast<int>(iZone), bNAD83);
+        }
+        break;
 
         case ALBERS:
-            SetACEA( pfnUnpackAnglesFn(padfPrjParams[2]),
-                     pfnUnpackAnglesFn(padfPrjParams[3]),
-                     pfnUnpackAnglesFn(padfPrjParams[5]),
-                     pfnUnpackAnglesFn(padfPrjParams[4]),
-                     padfPrjParams[6], padfPrjParams[7] );
+            SetACEA(pfnUnpackAnglesFn(padfPrjParams[2]),
+                    pfnUnpackAnglesFn(padfPrjParams[3]),
+                    pfnUnpackAnglesFn(padfPrjParams[5]),
+                    pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                    padfPrjParams[7]);
             break;
 
         case LAMCC:
-            SetLCC( pfnUnpackAnglesFn(padfPrjParams[2]),
-                    pfnUnpackAnglesFn(padfPrjParams[3]),
-                    pfnUnpackAnglesFn(padfPrjParams[5]),
-                    pfnUnpackAnglesFn(padfPrjParams[4]),
-                    padfPrjParams[6], padfPrjParams[7] );
+            SetLCC(pfnUnpackAnglesFn(padfPrjParams[2]),
+                   pfnUnpackAnglesFn(padfPrjParams[3]),
+                   pfnUnpackAnglesFn(padfPrjParams[5]),
+                   pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                   padfPrjParams[7]);
             break;
 
         case MERCAT:
-            SetMercator( pfnUnpackAnglesFn(padfPrjParams[5]),
-                         pfnUnpackAnglesFn(padfPrjParams[4]),
-                         1.0,
-                         padfPrjParams[6], padfPrjParams[7] );
+            SetMercator(pfnUnpackAnglesFn(padfPrjParams[5]),
+                        pfnUnpackAnglesFn(padfPrjParams[4]), 1.0,
+                        padfPrjParams[6], padfPrjParams[7]);
             break;
 
         case PS:
-            SetPS( pfnUnpackAnglesFn(padfPrjParams[5]),
-                   pfnUnpackAnglesFn(padfPrjParams[4]),
-                   1.0,
-                   padfPrjParams[6], padfPrjParams[7] );
+            SetPS(pfnUnpackAnglesFn(padfPrjParams[5]),
+                  pfnUnpackAnglesFn(padfPrjParams[4]), 1.0, padfPrjParams[6],
+                  padfPrjParams[7]);
 
             break;
 
         case POLYC:
-            SetPolyconic( pfnUnpackAnglesFn(padfPrjParams[5]),
-                          pfnUnpackAnglesFn(padfPrjParams[4]),
-                          padfPrjParams[6], padfPrjParams[7] );
+            SetPolyconic(pfnUnpackAnglesFn(padfPrjParams[5]),
+                         pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                         padfPrjParams[7]);
             break;
 
         case EQUIDC:
-            if( padfPrjParams[8] != 0.0 )
+            if (padfPrjParams[8] != 0.0)
             {
-                SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
-                       pfnUnpackAnglesFn(padfPrjParams[3]),
-                       pfnUnpackAnglesFn(padfPrjParams[5]),
-                       pfnUnpackAnglesFn(padfPrjParams[4]),
-                       padfPrjParams[6], padfPrjParams[7] );
+                SetEC(pfnUnpackAnglesFn(padfPrjParams[2]),
+                      pfnUnpackAnglesFn(padfPrjParams[3]),
+                      pfnUnpackAnglesFn(padfPrjParams[5]),
+                      pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                      padfPrjParams[7]);
             }
             else
             {
-                SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
-                       pfnUnpackAnglesFn(padfPrjParams[2]),
-                       pfnUnpackAnglesFn(padfPrjParams[5]),
-                       pfnUnpackAnglesFn(padfPrjParams[4]),
-                       padfPrjParams[6], padfPrjParams[7] );
+                SetEC(pfnUnpackAnglesFn(padfPrjParams[2]),
+                      pfnUnpackAnglesFn(padfPrjParams[2]),
+                      pfnUnpackAnglesFn(padfPrjParams[5]),
+                      pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                      padfPrjParams[7]);
             }
             break;
 
         case TM:
-            SetTM( pfnUnpackAnglesFn(padfPrjParams[5]),
-                   pfnUnpackAnglesFn(padfPrjParams[4]),
-                   padfPrjParams[2],
-                   padfPrjParams[6], padfPrjParams[7] );
+            SetTM(pfnUnpackAnglesFn(padfPrjParams[5]),
+                  pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[2],
+                  padfPrjParams[6], padfPrjParams[7]);
             break;
 
         case STEREO:
-            SetStereographic( pfnUnpackAnglesFn(padfPrjParams[5]),
-                              pfnUnpackAnglesFn(padfPrjParams[4]),
-                              1.0,
-                              padfPrjParams[6], padfPrjParams[7] );
+            SetStereographic(pfnUnpackAnglesFn(padfPrjParams[5]),
+                             pfnUnpackAnglesFn(padfPrjParams[4]), 1.0,
+                             padfPrjParams[6], padfPrjParams[7]);
             break;
 
         case LAMAZ:
-            SetLAEA( pfnUnpackAnglesFn(padfPrjParams[5]),
-                     pfnUnpackAnglesFn(padfPrjParams[4]),
-                     padfPrjParams[6], padfPrjParams[7] );
+            SetLAEA(pfnUnpackAnglesFn(padfPrjParams[5]),
+                    pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                    padfPrjParams[7]);
             break;
 
         case AZMEQD:
-            SetAE( pfnUnpackAnglesFn(padfPrjParams[5]),
-                   pfnUnpackAnglesFn(padfPrjParams[4]),
-                   padfPrjParams[6], padfPrjParams[7] );
+            SetAE(pfnUnpackAnglesFn(padfPrjParams[5]),
+                  pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                  padfPrjParams[7]);
             break;
 
         case GNOMON:
-            SetGnomonic( pfnUnpackAnglesFn(padfPrjParams[5]),
-                         pfnUnpackAnglesFn(padfPrjParams[4]),
-                         padfPrjParams[6], padfPrjParams[7] );
+            SetGnomonic(pfnUnpackAnglesFn(padfPrjParams[5]),
+                        pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                        padfPrjParams[7]);
             break;
 
         case ORTHO:
-            SetOrthographic( pfnUnpackAnglesFn(padfPrjParams[5]),
-                             pfnUnpackAnglesFn(padfPrjParams[4]),
-                             padfPrjParams[6], padfPrjParams[7] );
+            SetOrthographic(pfnUnpackAnglesFn(padfPrjParams[5]),
+                            pfnUnpackAnglesFn(padfPrjParams[4]),
+                            padfPrjParams[6], padfPrjParams[7]);
             break;
 
-        // FIXME: GVNSP --- General Vertical Near-Side Perspective skipped.
+            // FIXME: GVNSP --- General Vertical Near-Side Perspective skipped.
 
         case SNSOID:
-            SetSinusoidal( pfnUnpackAnglesFn(padfPrjParams[4]),
-                           padfPrjParams[6], padfPrjParams[7] );
+            SetSinusoidal(pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                          padfPrjParams[7]);
             break;
 
         case EQRECT:
-            SetEquirectangular2( 0.0,
-                                 pfnUnpackAnglesFn(padfPrjParams[4]),
-                                 pfnUnpackAnglesFn(padfPrjParams[5]),
-                                 padfPrjParams[6], padfPrjParams[7] );
+            SetEquirectangular2(0.0, pfnUnpackAnglesFn(padfPrjParams[4]),
+                                pfnUnpackAnglesFn(padfPrjParams[5]),
+                                padfPrjParams[6], padfPrjParams[7]);
             break;
 
         case MILLER:
-            SetMC( pfnUnpackAnglesFn(padfPrjParams[5]),
-                   pfnUnpackAnglesFn(padfPrjParams[4]),
-                   padfPrjParams[6], padfPrjParams[7] );
+            SetMC(pfnUnpackAnglesFn(padfPrjParams[5]),
+                  pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                  padfPrjParams[7]);
             break;
 
         case VGRINT:
-            SetVDG( pfnUnpackAnglesFn(padfPrjParams[4]),
-                    padfPrjParams[6], padfPrjParams[7] );
+            SetVDG(pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                   padfPrjParams[7]);
             break;
 
         case HOM:
-            if( padfPrjParams[12] != 0.0 )
+            if (padfPrjParams[12] != 0.0)
             {
-                SetHOM( pfnUnpackAnglesFn(padfPrjParams[5]),
-                        pfnUnpackAnglesFn(padfPrjParams[4]),
-                        pfnUnpackAnglesFn(padfPrjParams[3]),
-                        0.0, padfPrjParams[2],
-                        padfPrjParams[6], padfPrjParams[7] );
+                SetHOM(pfnUnpackAnglesFn(padfPrjParams[5]),
+                       pfnUnpackAnglesFn(padfPrjParams[4]),
+                       pfnUnpackAnglesFn(padfPrjParams[3]), 0.0,
+                       padfPrjParams[2], padfPrjParams[6], padfPrjParams[7]);
             }
             else
             {
-                SetHOM2PNO( pfnUnpackAnglesFn(padfPrjParams[5]),
-                            pfnUnpackAnglesFn(padfPrjParams[9]),
-                            pfnUnpackAnglesFn(padfPrjParams[8]),
-                            pfnUnpackAnglesFn(padfPrjParams[11]),
-                            pfnUnpackAnglesFn(padfPrjParams[10]),
-                            padfPrjParams[2],
-                            padfPrjParams[6], padfPrjParams[7] );
+                SetHOM2PNO(pfnUnpackAnglesFn(padfPrjParams[5]),
+                           pfnUnpackAnglesFn(padfPrjParams[9]),
+                           pfnUnpackAnglesFn(padfPrjParams[8]),
+                           pfnUnpackAnglesFn(padfPrjParams[11]),
+                           pfnUnpackAnglesFn(padfPrjParams[10]),
+                           padfPrjParams[2], padfPrjParams[6],
+                           padfPrjParams[7]);
             }
             break;
 
         case ROBIN:
-            SetRobinson( pfnUnpackAnglesFn(padfPrjParams[4]),
-                         padfPrjParams[6], padfPrjParams[7] );
+            SetRobinson(pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                        padfPrjParams[7]);
             break;
 
-        // FIXME: SOM --- Space Oblique Mercator skipped.
-        // FIXME: ALASKA --- Alaska Conformal skipped.
-        // FIXME: GOODE --- Interrupted Goode skipped.
+            // FIXME: SOM --- Space Oblique Mercator skipped.
+            // FIXME: ALASKA --- Alaska Conformal skipped.
+            // FIXME: GOODE --- Interrupted Goode skipped.
 
         case MOLL:
-            SetMollweide( pfnUnpackAnglesFn(padfPrjParams[4]),
-                          padfPrjParams[6], padfPrjParams[7] );
+            SetMollweide(pfnUnpackAnglesFn(padfPrjParams[4]), padfPrjParams[6],
+                         padfPrjParams[7]);
             break;
 
-        // FIXME: IMOLL --- Interrupted Mollweide skipped.
-        // FIXME: HAMMER --- Hammer skipped.
+            // FIXME: IMOLL --- Interrupted Mollweide skipped.
+            // FIXME: HAMMER --- Hammer skipped.
 
         case WAGIV:
-            SetWagner( 4, 0.0, padfPrjParams[6], padfPrjParams[7] );
+            SetWagner(4, 0.0, padfPrjParams[6], padfPrjParams[7]);
             break;
 
         case WAGVII:
-            SetWagner( 7, 0.0, padfPrjParams[6], padfPrjParams[7] );
+            SetWagner(7, 0.0, padfPrjParams[6], padfPrjParams[7]);
             break;
 
-        // FIXME: OBEQA --- Oblated Equal Area skipped.
-        // FIXME: ISINUS1 --- Integerized Sinusoidal Grid (the same as 99).
-        // FIXME: CEA --- Cylindrical Equal Area skipped (Grid corners set in
-        // meters for EASE grid).
-        // FIXME: BCEA --- Cylindrical Equal Area skipped (Grid corners set in
-        // DMS degs for EASE grid).
-        // FIXME: ISINUS --- Integrized Sinusoidal skipped.
+            // FIXME: OBEQA --- Oblated Equal Area skipped.
+            // FIXME: ISINUS1 --- Integerized Sinusoidal Grid (the same as 99).
+            // FIXME: CEA --- Cylindrical Equal Area skipped (Grid corners set
+            // in meters for EASE grid).
+            // FIXME: BCEA --- Cylindrical Equal Area skipped (Grid corners set
+            // in DMS degs for EASE grid).
+            // FIXME: ISINUS --- Integrized Sinusoidal skipped.
 
         default:
-            CPLDebug( "OSR_USGS", "Unsupported projection: %ld", iProjSys );
-            SetLocalCS( CPLString().Printf("GCTP projection number %ld",
-                                           iProjSys) );
+            CPLDebug("OSR_USGS", "Unsupported projection: %ld", iProjSys);
+            SetLocalCS(
+                CPLString().Printf("GCTP projection number %ld", iProjSys));
             break;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to translate the datum/spheroid.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try to translate the datum/spheroid.                            */
+    /* -------------------------------------------------------------------- */
 
-    if( !IsLocal() )
+    if (!IsLocal())
     {
         char *pszName = nullptr;
         double dfSemiMajor = 0.0;
         double dfInvFlattening = 0.0;
 
-        if( iDatum < 0 ) // Use specified ellipsoid parameters.
+        if (iDatum < 0)  // Use specified ellipsoid parameters.
         {
-            if( padfPrjParams[0] > 0.0 )
+            if (padfPrjParams[0] > 0.0)
             {
-                if( padfPrjParams[1] > 1.0 )
+                if (padfPrjParams[1] > 1.0)
                 {
                     dfInvFlattening = OSRCalcInvFlattening(padfPrjParams[0],
                                                            padfPrjParams[1]);
                 }
-                else if( padfPrjParams[1] > 0.0 )
+                else if (padfPrjParams[1] > 0.0)
                 {
                     dfInvFlattening =
-                        1.0 / ( 1.0 - sqrt(1.0 - padfPrjParams[1]) );
+                        1.0 / (1.0 - sqrt(1.0 - padfPrjParams[1]));
                 }
                 else
                 {
                     dfInvFlattening = 0.0;
                 }
 
-                SetGeogCS( "Unknown datum based upon the custom spheroid",
-                           "Not specified (based on custom spheroid)",
-                           "Custom spheroid", padfPrjParams[0], dfInvFlattening,
-                           nullptr, 0, nullptr, 0 );
+                SetGeogCS("Unknown datum based upon the custom spheroid",
+                          "Not specified (based on custom spheroid)",
+                          "Custom spheroid", padfPrjParams[0], dfInvFlattening,
+                          nullptr, 0, nullptr, 0);
             }
-            else if( padfPrjParams[1] > 0.0 )  // Clarke 1866.
+            else if (padfPrjParams[1] > 0.0)  // Clarke 1866.
             {
-                if( OSRGetEllipsoidInfo( 7008, &pszName, &dfSemiMajor,
-                                          &dfInvFlattening ) == OGRERR_NONE )
+                if (OSRGetEllipsoidInfo(7008, &pszName, &dfSemiMajor,
+                                        &dfInvFlattening) == OGRERR_NONE)
                 {
-                    SetGeogCS( CPLString().Printf(
-                                    "Unknown datum based upon the %s ellipsoid",
-                                    pszName ),
-                               CPLString().Printf(
-                                    "Not specified (based on %s spheroid)",
-                                    pszName ),
-                               pszName, dfSemiMajor, dfInvFlattening,
-                               nullptr, 0.0, nullptr, 0.0 );
-                    SetAuthority( "SPHEROID", "EPSG", 7008 );
+                    SetGeogCS(
+                        CPLString().Printf(
+                            "Unknown datum based upon the %s ellipsoid",
+                            pszName),
+                        CPLString().Printf(
+                            "Not specified (based on %s spheroid)", pszName),
+                        pszName, dfSemiMajor, dfInvFlattening, nullptr, 0.0,
+                        nullptr, 0.0);
+                    SetAuthority("SPHEROID", "EPSG", 7008);
                 }
             }
-            else                              // Sphere, rad 6370997 m
+            else  // Sphere, rad 6370997 m
             {
-                if( OSRGetEllipsoidInfo( 7047, &pszName, &dfSemiMajor,
-                                         &dfInvFlattening ) == OGRERR_NONE )
+                if (OSRGetEllipsoidInfo(7047, &pszName, &dfSemiMajor,
+                                        &dfInvFlattening) == OGRERR_NONE)
                 {
-                    SetGeogCS( CPLString().Printf(
-                                    "Unknown datum based upon the %s ellipsoid",
-                                    pszName ),
-                               CPLString().Printf(
-                                    "Not specified (based on %s spheroid)",
-                                    pszName ),
-                               pszName, dfSemiMajor, dfInvFlattening,
-                               nullptr, 0.0, nullptr, 0.0 );
-                    SetAuthority( "SPHEROID", "EPSG", 7047 );
+                    SetGeogCS(
+                        CPLString().Printf(
+                            "Unknown datum based upon the %s ellipsoid",
+                            pszName),
+                        CPLString().Printf(
+                            "Not specified (based on %s spheroid)", pszName),
+                        pszName, dfSemiMajor, dfInvFlattening, nullptr, 0.0,
+                        nullptr, 0.0);
+                    SetAuthority("SPHEROID", "EPSG", 7047);
                 }
             }
         }
-        else if( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
+        else if (iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum])
         {
-            if( OSRGetEllipsoidInfo( aoEllips[iDatum], &pszName,
-                                     &dfSemiMajor,
-                                     &dfInvFlattening ) == OGRERR_NONE )
+            if (OSRGetEllipsoidInfo(aoEllips[iDatum], &pszName, &dfSemiMajor,
+                                    &dfInvFlattening) == OGRERR_NONE)
             {
-                SetGeogCS( CPLString().Printf(
-                               "Unknown datum based upon the %s ellipsoid",
-                               pszName),
-                           CPLString().Printf(
-                               "Not specified (based on %s spheroid)",
-                               pszName),
-                           pszName, dfSemiMajor, dfInvFlattening,
-                           nullptr, 0.0, nullptr, 0.0 );
-                SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
+                SetGeogCS(
+                    CPLString().Printf(
+                        "Unknown datum based upon the %s ellipsoid", pszName),
+                    CPLString().Printf("Not specified (based on %s spheroid)",
+                                       pszName),
+                    pszName, dfSemiMajor, dfInvFlattening, nullptr, 0.0,
+                    nullptr, 0.0);
+                SetAuthority("SPHEROID", "EPSG", aoEllips[iDatum]);
             }
             else
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup datum code %d. "
-                          "Falling back to use WGS84.",
-                          static_cast<int>(iDatum) );
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Failed to lookup datum code %d. "
+                         "Falling back to use WGS84.",
+                         static_cast<int>(iDatum));
                 SetWellKnownGeogCS("WGS84");
             }
         }
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Wrong datum code %d. Supported datums 0--%d only.  "
-                      "Setting WGS84 as a fallback.",
-                      static_cast<int>(iDatum), NUMBER_OF_ELLIPSOIDS );
-            SetWellKnownGeogCS( "WGS84" );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Wrong datum code %d. Supported datums 0--%d only.  "
+                     "Setting WGS84 as a fallback.",
+                     static_cast<int>(iDatum), NUMBER_OF_ELLIPSOIDS);
+            SetWellKnownGeogCS("WGS84");
         }
 
-        CPLFree( pszName );
+        CPLFree(pszName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Grid units translation                                          */
-/* -------------------------------------------------------------------- */
-    if( IsLocal() || IsProjected() )
-        SetLinearUnits( SRS_UL_METER, 1.0 );
+    /* -------------------------------------------------------------------- */
+    /*      Grid units translation                                          */
+    /* -------------------------------------------------------------------- */
+    if (IsLocal() || IsProjected())
+        SetLinearUnits(SRS_UL_METER, 1.0);
 
     return OGRERR_NONE;
 }
@@ -795,18 +783,16 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
  * This function is the same as OGRSpatialReference::exportToUSGS().
  */
 
-OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
-                        long *piProjSys, long *piZone,
-                        double **ppadfPrjParams, long *piDatum )
+OGRErr OSRExportToUSGS(OGRSpatialReferenceH hSRS, long *piProjSys, long *piZone,
+                       double **ppadfPrjParams, long *piDatum)
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToUSGS", OGRERR_FAILURE );
+    VALIDATE_POINTER1(hSRS, "OSRExportToUSGS", OGRERR_FAILURE);
 
     *ppadfPrjParams = nullptr;
 
-    return OGRSpatialReference::FromHandle(hSRS)->exportToUSGS( piProjSys, piZone,
-                                                         ppadfPrjParams,
-                                                         piDatum );
+    return OGRSpatialReference::FromHandle(hSRS)->exportToUSGS(
+        piProjSys, piZone, ppadfPrjParams, piDatum);
 }
 
 /************************************************************************/
@@ -834,329 +820,328 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
  * @return OGRERR_NONE on success or an error code on failure.
  */
 
-OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
-                                          double **ppadfPrjParams,
-                                          long *piDatum ) const
+OGRErr OGRSpatialReference::exportToUSGS(long *piProjSys, long *piZone,
+                                         double **ppadfPrjParams,
+                                         long *piDatum) const
 
 {
     const char *pszProjection = GetAttrValue("PROJECTION");
 
-/* -------------------------------------------------------------------- */
-/*      Fill all projection parameters with zero.                       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Fill all projection parameters with zero.                       */
+    /* -------------------------------------------------------------------- */
     *ppadfPrjParams = static_cast<double *>(CPLMalloc(15 * sizeof(double)));
-    for( int i = 0; i < 15; i++ )
+    for (int i = 0; i < 15; i++)
         (*ppadfPrjParams)[i] = 0.0;
 
     *piZone = 0L;
 
-/* ==================================================================== */
-/*      Handle the projection definition.                               */
-/* ==================================================================== */
-    if( IsLocal() )
+    /* ==================================================================== */
+    /*      Handle the projection definition.                               */
+    /* ==================================================================== */
+    if (IsLocal())
         *piProjSys = GEO;
 
-    else if( pszProjection == nullptr )
+    else if (pszProjection == nullptr)
     {
 #ifdef DEBUG
-        CPLDebug( "OSR_USGS",
-                  "Empty projection definition, considered as Geographic" );
+        CPLDebug("OSR_USGS",
+                 "Empty projection definition, considered as Geographic");
 #endif
         *piProjSys = GEO;
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
+    else if (EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA))
     {
         *piProjSys = ALBERS;
-        (*ppadfPrjParams)[2] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
-        (*ppadfPrjParams)[3] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[2] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        (*ppadfPrjParams)[3] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    else if (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP))
     {
         *piProjSys = LAMCC;
-        (*ppadfPrjParams)[2] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
-        (*ppadfPrjParams)[3] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[2] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        (*ppadfPrjParams)[3] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
+    else if (EQUAL(pszProjection, SRS_PT_MERCATOR_1SP))
     {
         *piProjSys = MERCAT;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
+    else if (EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
     {
         *piProjSys = PS;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_POLYCONIC) )
+    else if (EQUAL(pszProjection, SRS_PT_POLYCONIC))
     {
         *piProjSys = POLYC;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
+    else if (EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC))
     {
         *piProjSys = EQUIDC;
-        (*ppadfPrjParams)[2] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
-        (*ppadfPrjParams)[3] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[2] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        (*ppadfPrjParams)[3] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
         (*ppadfPrjParams)[8] = 1.0;
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
+    else if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
     {
         int bNorth;
 
-        *piZone = GetUTMZone( &bNorth );
+        *piZone = GetUTMZone(&bNorth);
 
-        if( *piZone != 0 )
+        if (*piZone != 0)
         {
             *piProjSys = UTM;
-            if( !bNorth )
-                *piZone = - *piZone;
+            if (!bNorth)
+                *piZone = -*piZone;
         }
         else
         {
             *piProjSys = TM;
-            (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
+            (*ppadfPrjParams)[2] = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
             (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-                GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
             (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-                GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-            (*ppadfPrjParams)[6] =
-                GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-            (*ppadfPrjParams)[7] =
-                GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+                GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+            (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+            (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
         }
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC) )
+    else if (EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC))
     {
         *piProjSys = STEREO;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
+    else if (EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA))
     {
         *piProjSys = LAMAZ;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_AZIMUTHAL_EQUIDISTANT) )
+    else if (EQUAL(pszProjection, SRS_PT_AZIMUTHAL_EQUIDISTANT))
     {
         *piProjSys = AZMEQD;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_GNOMONIC) )
+    else if (EQUAL(pszProjection, SRS_PT_GNOMONIC))
     {
         *piProjSys = GNOMON;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC) )
+    else if (EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC))
     {
         *piProjSys = ORTHO;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
+    else if (EQUAL(pszProjection, SRS_PT_SINUSOIDAL))
     {
         *piProjSys = SNSOID;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
+    else if (EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR))
     {
         *piProjSys = EQRECT;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_MILLER_CYLINDRICAL) )
+    else if (EQUAL(pszProjection, SRS_PT_MILLER_CYLINDRICAL))
     {
         *piProjSys = MILLER;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_VANDERGRINTEN) )
+    else if (EQUAL(pszProjection, SRS_PT_VANDERGRINTEN))
     {
         *piProjSys = VGRINT;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+    else if (EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR))
     {
         *piProjSys = HOM;
-        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
-        (*ppadfPrjParams)[3] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_AZIMUTH, 0.0 ) );
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[2] = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        (*ppadfPrjParams)[3] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_AZIMUTH, 0.0));
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
         (*ppadfPrjParams)[12] = 1.0;
     }
 
-    else if( EQUAL(pszProjection,
-                   SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
+    else if (EQUAL(pszProjection,
+                   SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN))
     {
         *piProjSys = HOM;
-        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 );
-        (*ppadfPrjParams)[5] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[2] = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        (*ppadfPrjParams)[5] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
         (*ppadfPrjParams)[8] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_POINT_1, 0.0 ) );
-        (*ppadfPrjParams)[9] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_POINT_1, 0.0 ) );
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0));
+        (*ppadfPrjParams)[9] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0.0));
         (*ppadfPrjParams)[10] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_POINT_2, 0.0 ) );
-        (*ppadfPrjParams)[11] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LATITUDE_OF_POINT_2, 0.0 ) );
+            GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0.0));
+        (*ppadfPrjParams)[11] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0.0));
         (*ppadfPrjParams)[12] = 0.0;
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_ROBINSON) )
+    else if (EQUAL(pszProjection, SRS_PT_ROBINSON))
     {
         *piProjSys = ROBIN;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_MOLLWEIDE) )
+    else if (EQUAL(pszProjection, SRS_PT_MOLLWEIDE))
     {
         *piProjSys = MOLL;
-        (*ppadfPrjParams)[4] = CPLDecToPackedDMS(
-            GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[4] =
+            CPLDecToPackedDMS(GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_WAGNER_IV) )
+    else if (EQUAL(pszProjection, SRS_PT_WAGNER_IV))
     {
         *piProjSys = WAGIV;
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
 
-    else if( EQUAL(pszProjection, SRS_PT_WAGNER_VII) )
+    else if (EQUAL(pszProjection, SRS_PT_WAGNER_VII))
     {
         *piProjSys = WAGVII;
-        (*ppadfPrjParams)[6] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-        (*ppadfPrjParams)[7] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
+        (*ppadfPrjParams)[6] = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        (*ppadfPrjParams)[7] = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
     }
     // Projection unsupported by GCTP.
     else
     {
-        CPLDebug( "OSR_USGS",
-                  "Projection \"%s\" unsupported by USGS GCTP. "
-                  "Geographic system will be used.", pszProjection );
+        CPLDebug("OSR_USGS",
+                 "Projection \"%s\" unsupported by USGS GCTP. "
+                 "Geographic system will be used.",
+                 pszProjection);
         *piProjSys = GEO;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Translate the datum.                                            */
-/* -------------------------------------------------------------------- */
-    const char *pszDatum = GetAttrValue( "DATUM" );
+    /* -------------------------------------------------------------------- */
+    /*      Translate the datum.                                            */
+    /* -------------------------------------------------------------------- */
+    const char *pszDatum = GetAttrValue("DATUM");
 
-    if( pszDatum )
+    if (pszDatum)
     {
-        if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
+        if (EQUAL(pszDatum, SRS_DN_NAD27))
         {
             *piDatum = CLARKE1866;
         }
-        else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
+        else if (EQUAL(pszDatum, SRS_DN_NAD83))
         {
             *piDatum = GRS1980;
         }
-        else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
+        else if (EQUAL(pszDatum, SRS_DN_WGS84))
         {
             *piDatum = WGS84;
         }
@@ -1167,45 +1152,46 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
             const double dfInvFlattening = GetInvFlattening();
 
 #ifdef DEBUG
-            CPLDebug( "OSR_USGS",
-                      "Datum \"%s\" unsupported by USGS GCTP. "
-                      "Try to translate ellipsoid definition.", pszDatum );
+            CPLDebug("OSR_USGS",
+                     "Datum \"%s\" unsupported by USGS GCTP. "
+                     "Try to translate ellipsoid definition.",
+                     pszDatum);
 #endif
 
             int i = 0;  // Used after for.
-            for( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
+            for (; i < NUMBER_OF_ELLIPSOIDS; i++)
             {
                 double dfSM = 0.0;
                 double dfIF = 0.0;
 
-                if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
-                                         &dfSM, &dfIF ) == OGRERR_NONE
-                    && CPLIsEqual( dfSemiMajor, dfSM )
-                    && CPLIsEqual( dfInvFlattening, dfIF ) )
+                if (OSRGetEllipsoidInfo(aoEllips[i], nullptr, &dfSM, &dfIF) ==
+                        OGRERR_NONE &&
+                    CPLIsEqual(dfSemiMajor, dfSM) &&
+                    CPLIsEqual(dfInvFlattening, dfIF))
                 {
                     *piDatum = i;
                     break;
                 }
             }
 
-            if( i == NUMBER_OF_ELLIPSOIDS )  // Didn't found matches; set
-            {                                // custom ellipsoid parameters.
+            if (i == NUMBER_OF_ELLIPSOIDS)  // Didn't found matches; set
+            {                               // custom ellipsoid parameters.
 #ifdef DEBUG
-                CPLDebug( "OSR_USGS",
-                          "Ellipsoid \"%s\" unsupported by USGS GCTP. "
-                          "Custom ellipsoid definition will be used.",
-                          pszDatum );
+                CPLDebug("OSR_USGS",
+                         "Ellipsoid \"%s\" unsupported by USGS GCTP. "
+                         "Custom ellipsoid definition will be used.",
+                         pszDatum);
 #endif
                 *piDatum = -1;
                 (*ppadfPrjParams)[0] = dfSemiMajor;
-                if( std::abs( dfInvFlattening ) < 0.000000000001 )
+                if (std::abs(dfInvFlattening) < 0.000000000001)
                 {
                     (*ppadfPrjParams)[1] = dfSemiMajor;
                 }
                 else
                 {
                     (*ppadfPrjParams)[1] =
-                        dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+                        dfSemiMajor * (1.0 - 1.0 / dfInvFlattening);
                 }
             }
         }

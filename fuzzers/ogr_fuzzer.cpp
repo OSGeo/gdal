@@ -54,13 +54,13 @@
 #define GDAL_FILENAME MEM_FILENAME
 #endif
 
-extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
 {
-    const char* exe_path = (*argv)[0];
-    if( CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr )
+    const char *exe_path = (*argv)[0];
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) == nullptr)
     {
         CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     }
@@ -70,8 +70,11 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     // To avoid timeouts. See https://github.com/OSGeo/gdal/issues/502
     CPLSetConfigOption("DXF_MAX_BSPLINE_CONTROL_POINTS", "100");
-    CPLSetConfigOption("NAS_INDICATOR","NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite");
-    CPLSetConfigOption("USERNAME", "unknown"); // see GMLASConfiguration::GetBaseCacheDirectory()
+    CPLSetConfigOption("NAS_INDICATOR",
+                       "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite");
+    CPLSetConfigOption(
+        "USERNAME",
+        "unknown");  // see GMLASConfiguration::GetBaseCacheDirectory()
 
 #ifdef OGR_SKIP
     CPLSetConfigOption("OGR_SKIP", OGR_SKIP);
@@ -85,34 +88,34 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
 #ifdef USE_FILESYSTEM
     char szTempFilename[64];
-    snprintf(szTempFilename, sizeof(szTempFilename),
-             "/tmp/gdal_fuzzer_%d.%s",
+    snprintf(szTempFilename, sizeof(szTempFilename), "/tmp/gdal_fuzzer_%d.%s",
              (int)getpid(), EXTENSION);
-    VSILFILE* fp = VSIFOpenL(szTempFilename, "wb");
-    if( !fp )
+    VSILFILE *fp = VSIFOpenL(szTempFilename, "wb");
+    if (!fp)
     {
         fprintf(stderr, "Cannot create %s\n", szTempFilename);
         return 1;
     }
-    VSIFWriteL( buf, 1, len, fp );
+    VSIFWriteL(buf, 1, len, fp);
 #else
-    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        MEM_FILENAME, reinterpret_cast<GByte *>(const_cast<uint8_t *>(buf)),
+        len, FALSE);
 #endif
     VSIFCloseL(fp);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
-    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, nullptr );
+    OGRDataSourceH hDS = OGROpen(szTempFilename, FALSE, nullptr);
 #else
-    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, nullptr );
+    OGRDataSourceH hDS = OGROpen(GDAL_FILENAME, FALSE, nullptr);
 #endif
-    if( hDS )
+    if (hDS)
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
         time_t nStartTime = time(nullptr);
         bool bStop = false;
-        for( int i = 0; !bStop && i < 10 && i < nLayers; i++ )
+        for (int i = 0; !bStop && i < 10 && i < nLayers; i++)
         {
             OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
             OGR_L_GetSpatialRef(hLayer);
@@ -121,36 +124,38 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
             OGRFeatureH hFeaturePrev = nullptr;
-            for( int j = 0; j < 1000 && !bStop &&
-                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr; j++ )
+            for (int j = 0;
+                 j < 1000 && !bStop &&
+                 (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr;
+                 j++)
             {
                 // Limit runtime to 20 seconds if features returned are
                 // different. Otherwise this may be a sign of a bug in the
                 // reader and we want the infinite loop to be revealed.
-                if( time(nullptr) - nStartTime > 20 )
+                if (time(nullptr) - nStartTime > 20)
                 {
                     bool bIsSameAsPrevious =
                         (hFeaturePrev != nullptr &&
                          OGR_F_Equal(hFeature, hFeaturePrev));
-                    if( !bIsSameAsPrevious )
+                    if (!bIsSameAsPrevious)
                     {
                         bStop = true;
                     }
                 }
-                if( hFeaturePrev )
+                if (hFeaturePrev)
                     OGR_F_Destroy(hFeaturePrev);
                 hFeaturePrev = hFeature;
             }
-            if( hFeaturePrev )
+            if (hFeaturePrev)
                 OGR_F_Destroy(hFeaturePrev);
         }
         OGR_DS_Destroy(hDS);
     }
     CPLPopErrorHandler();
 #ifdef USE_FILESYSTEM
-    VSIUnlink( szTempFilename );
+    VSIUnlink(szTempFilename);
 #else
-    VSIUnlink( MEM_FILENAME );
+    VSIUnlink(MEM_FILENAME);
 #endif
     return 0;
 }

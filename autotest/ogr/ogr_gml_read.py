@@ -39,6 +39,7 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("GML")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")

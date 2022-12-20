@@ -44,17 +44,16 @@
  * @param size number of bits
  * @param default_value initial value of bits
  */
-inline
-GUInt32* CPLMaskCreate(std::size_t size, bool default_value) {
+inline GUInt32 *CPLMaskCreate(std::size_t size, bool default_value)
+{
     std::size_t nBytes = (size + 31) / 8;
-    void* buf = VSI_MALLOC_VERBOSE(nBytes);
-    if (buf == nullptr) {
+    void *buf = VSI_MALLOC_VERBOSE(nBytes);
+    if (buf == nullptr)
+    {
         return nullptr;
     }
-    std::memset(buf,
-                default_value ? 0xff : 0,
-                nBytes);
-    return static_cast<GUInt32*>(buf);
+    std::memset(buf, default_value ? 0xff : 0, nBytes);
+    return static_cast<GUInt32 *>(buf);
 }
 
 /**
@@ -64,8 +63,8 @@ GUInt32* CPLMaskCreate(std::size_t size, bool default_value) {
  * @param i index of bit
  * @return `true` if bit is set
  */
-inline
-bool CPLMaskGet(GUInt32* mask, std::size_t i) {
+inline bool CPLMaskGet(GUInt32 *mask, std::size_t i)
+{
     return mask[i >> 5] & (0x01 << (i & 0x1f));
 }
 
@@ -75,8 +74,8 @@ bool CPLMaskGet(GUInt32* mask, std::size_t i) {
  * @param mask bit mask
  * @param i index of bit to clear
  */
-inline
-void CPLMaskClear(GUInt32* mask, std::size_t i) {
+inline void CPLMaskClear(GUInt32 *mask, std::size_t i)
+{
     mask[i >> 5] &= ~(0x01 << (i & 0x1f));
 }
 
@@ -86,8 +85,8 @@ void CPLMaskClear(GUInt32* mask, std::size_t i) {
  * @param mask bit mask
  * @param size number of bits in mask
  */
-inline
-void CPLMaskClearAll(GUInt32* mask, std::size_t size) {
+inline void CPLMaskClearAll(GUInt32 *mask, std::size_t size)
+{
     auto nBytes = (size + 31) / 8;
     std::memset(mask, 0, nBytes);
 }
@@ -98,8 +97,8 @@ void CPLMaskClearAll(GUInt32* mask, std::size_t size) {
  * @param mask bit mask
  * @param i index of bit to set
  */
-inline
-void CPLMaskSet(GUInt32* mask, std::size_t i) {
+inline void CPLMaskSet(GUInt32 *mask, std::size_t i)
+{
     mask[i >> 5] |= (0x01 << (i & 0x1f));
 }
 
@@ -109,8 +108,8 @@ void CPLMaskSet(GUInt32* mask, std::size_t i) {
  * @param mask bit mask
  * @param size number of bits in mask
  */
-inline
-void CPLMaskSetAll(GUInt32* mask, std::size_t size) {
+inline void CPLMaskSetAll(GUInt32 *mask, std::size_t size)
+{
     auto nBytes = (size + 31) / 8;
     std::memset(mask, 0xff, nBytes);
 }
@@ -122,15 +121,16 @@ void CPLMaskSetAll(GUInt32* mask, std::size_t size) {
  * @param mask2 source mask
  * @param n number of bits in masks (must be same)
  */
-inline
-void CPLMaskMerge(GUInt32* mask1, GUInt32* mask2, std::size_t n) {
+inline void CPLMaskMerge(GUInt32 *mask1, GUInt32 *mask2, std::size_t n)
+{
     std::size_t nBytes = (n + 31) / 8;
     std::size_t nIter = nBytes / 4;
-    for (std::size_t i = 0; i < nIter; i++) {
+    for (std::size_t i = 0; i < nIter; i++)
+    {
         mask1[i] |= mask2[i];
     }
 }
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
-#endif // CPL_MASK_H
+#endif  // CPL_MASK_H

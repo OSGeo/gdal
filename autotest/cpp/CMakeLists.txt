@@ -1,10 +1,75 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
+
+find_package(GTest 1.10.0)
+if(GTest_FOUND)
+  option(USE_EXTERNAL_GTEST "Compile against external GTest" ON)
+else()
+  option(USE_EXTERNAL_GTEST "Compile against external GTest" OFF)
+endif()
+
+if(USE_EXTERNAL_GTEST)
+
+    if(NOT GTest_FOUND)
+        message(FATAL_ERROR "External GTest >= 1.10.0 not found")
+    endif()
+    message(STATUS "Using external GTest")
+
+    # CMake < 3.20.0 uses GTest::GTest
+    # CMake >= 3.20 uses GTest::gtest
+    add_library(gtest_for_gdal INTERFACE IMPORTED)
+    if(NOT TARGET GTest::gtest)
+        set_target_properties(gtest_for_gdal PROPERTIES
+                              INTERFACE_LINK_LIBRARIES "GTest::GTest")
+    else()
+        set_target_properties(gtest_for_gdal PROPERTIES
+                              INTERFACE_LINK_LIBRARIES "GTest::gtest")
+    endif()
+
+else()
+
+    message(STATUS "Using internal GTest")
+
+    #
+    # Build Google Test
+    #
+    # Source https://github.com/google/googletest/blob/master/googletest/README.md
+    # Download and unpack googletest at configure time
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/googletest/CMakeLists.txt.in
+      ${CMAKE_CURRENT_BINARY_DIR}/googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download)
+    if(result)
+      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download)
+    if(result)
+      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+    # Prevent overriding the parent project's compiler/linker
+    # settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    # Add googletest directly to our build. This defines
+    # the gtest and gtest_main targets.
+    #option(INSTALL_GTEST "Enable installation of googletest" OFF)
+    add_subdirectory(
+      ${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+      ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+      EXCLUDE_FROM_ALL)
+
+    add_library(gtest_for_gdal ALIAS gtest)
+
+endif()  # USE_EXTERNAL_GTEST
+
+
 set(GDAL_ROOT_TEST_DIR "${PROJECT_SOURCE_DIR}/autotest")
 
 add_executable(
   gdal_unit_test
-  tut/tut_gdal.cpp
   gdal_unit_test.cpp
   test_alg.cpp
   test_cpl.cpp
@@ -30,7 +95,7 @@ add_executable(
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(TARGET gdal_unit_test PROPERTY UNITY_BUILD OFF)
 endif ()
-
+target_link_libraries(gdal_unit_test PRIVATE gtest_for_gdal)
 target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(gdal_unit_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
@@ -40,9 +105,27 @@ gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 target_include_directories(
-  gdal_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/tut
-                         $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
+  gdal_unit_test PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
+if (GDAL_USE_GEOS)
+  target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_GEOS=1)
+  target_link_libraries(gdal_unit_test PRIVATE ${GEOS_TARGET})
+endif ()
+if (GDAL_USE_CURL)
+  target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_CURL)
+endif ()
+
+# gtest with lots of assertion can be very slow to build in optimized mode.
+# As we don't need optimizations for that unit test, override it with -O0 for gcc-style compilers
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # -D_FORTIFY_SOURCE can't be used with -O0
+    string(REPLACE "-D_FORTIFY_SOURCE=2" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+    target_compile_options(gdal_unit_test PRIVATE -O0)
+endif()
+
+add_executable(gdallimits gdallimits.c)
+gdal_standard_includes(gdallimits)
+target_link_libraries(gdallimits PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 
 include(GdalSetRuntimeEnv)
 gdal_set_runtime_env(TEST_ENV)
@@ -79,18 +162,11 @@ endmacro ()
 
 register_test(test-unit gdal_unit_test)
 
-macro (gdal_test_target _target _source)
-  add_executable(${_target} ${_source})
-  target_link_libraries(${_target} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-  gdal_standard_includes(${_target})
-  target_compile_options(${_target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS}>
-                                            $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
-  target_include_directories(${_target} PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
-  target_compile_definitions(${_target} PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
-  add_dependencies(${_target} ${GDAL_LIB_TARGET_NAME} gdal_plugins)
-endmacro ()
+include(GdalTestTarget)
 
 gdal_test_target(testblockcache testblockcache.cpp)
+target_sources(testblockcache PRIVATE main_gtest.cpp)
+target_link_libraries(testblockcache PRIVATE gtest_for_gdal)
 
 register_test(
   test-block-cache-1
@@ -180,10 +256,16 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86_64|AMD64)" AND CMAKE_SIZEOF_VOID_P
   endif ()
 endif ()
 
-macro (gdal_autotest_target _target testlabel _source options)
+macro (gdal_autotest_target _target testlabel _source)
   gdal_test_target(${_target} ${_source})
-  register_test(${testlabel} ${_target} ${options})
+  register_test(${testlabel} ${_target} ${ARGN})
 endmacro ()
+
+function (gdal_gtest_target _target testlabel _source)
+  gdal_autotest_target(${_target} ${testlabel} ${_source} ${ARGN})
+  target_sources(${_target} PRIVATE main_gtest.cpp)
+  target_link_libraries(${_target} PRIVATE gtest_for_gdal)
+endfunction ()
 
 set(QUICKTEST_LIST
     test-unit
@@ -204,22 +286,27 @@ set(QUICKTEST_LIST
     test-bug1488
     test-log)
 
-gdal_autotest_target(testcopywords test-copy-words testcopywords.cpp "")
-gdal_autotest_target(testclosedondestroydm test-closed-on-destroy-DM testclosedondestroydm.cpp "")
-gdal_autotest_target(testthreadcond test-threaded-condition testthreadcond.cpp "")
-gdal_autotest_target(testvirtualmem test-virtual-memory testvirtualmem.cpp "")
-gdal_autotest_target(testblockcachewrite test-block-cache-write testblockcachewrite.cpp "--debug ON")
-gdal_autotest_target(testblockcachelimits test-block-cache-limit testblockcachelimits.cpp "--debug ON")
-gdal_autotest_target(testmultithreadedwriting test-multi-threaded-writing testmultithreadedwriting.cpp "")
-gdal_autotest_target(testdestroy test-destroy testdestroy.cpp "")
+gdal_gtest_target(testcopywords test-copy-words testcopywords.cpp)
+gdal_gtest_target(testclosedondestroydm test-closed-on-destroy-DM testclosedondestroydm.cpp)
+gdal_gtest_target(testthreadcond test-threaded-condition testthreadcond.cpp)
+gdal_gtest_target(testvirtualmem test-virtual-memory testvirtualmem.cpp)
+gdal_gtest_target(testblockcachewrite test-block-cache-write testblockcachewrite.cpp --debug ON)
+gdal_gtest_target(testblockcachelimits test-block-cache-limit testblockcachelimits.cpp --debug ON)
+gdal_gtest_target(testmultithreadedwriting test-multi-threaded-writing testmultithreadedwriting.cpp)
+gdal_gtest_target(testdestroy test-destroy testdestroy.cpp)
 gdal_autotest_target(test_include_from_c_file test-include-from-C-file test_include_from_c_file.c "")
 gdal_autotest_target(test_c_include_from_cpp_file test-C-include-from-CPP-file test_c_include_from_cpp_file.cpp "")
-gdal_autotest_target(testperfcopywords test-performance-copy-words testperfcopywords.cpp "")
-gdal_autotest_target(testperfdeinterleave test-performance-deinterleave testperfdeinterleave.cpp "")
-gdal_autotest_target(bug1488 test-bug1488 bug1488.cpp "")
-gdal_autotest_target(testlog test-log testlog.cpp "")
+gdal_gtest_target(bug1488 test-bug1488 bug1488.cpp)
+gdal_gtest_target(testlog test-log testlog.cpp)
+
 if (UNIX)
-  gdal_autotest_target(proj_with_fork test-proj-with-fork proj_with_fork.cpp "")
+  list(APPEND QUICKTEST_LIST test-osr-set-proj-search-paths)
+  gdal_gtest_target(test_osr_set_proj_search_paths test-osr-set-proj-search-paths test_osr_set_proj_search_paths.cpp)
+  target_link_libraries(test_osr_set_proj_search_paths PRIVATE PROJ::proj)
+endif()
+
+if (UNIX)
+  gdal_gtest_target(proj_with_fork test-proj-with-fork proj_with_fork.cpp)
   list(APPEND QUICKTEST_LIST test-proj-with-fork)
 endif ()
 

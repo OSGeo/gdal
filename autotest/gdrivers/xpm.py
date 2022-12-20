@@ -36,6 +36,8 @@ from osgeo import gdal
 
 xpm_list = [("http://download.osgeo.org/gdal/data/xpm", "utm.xpm", 44206, -1)]
 
+pytestmark = pytest.mark.require_driver("XPM")
+
 
 @pytest.mark.parametrize(
     "downloadURL,fileName,checksum,download_size",

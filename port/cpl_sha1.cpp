@@ -33,9 +33,8 @@
 #include <string.h>
 #include "cpl_sha1.h"
 
-
-
-typedef struct {
+typedef struct
+{
     GByte data[64];
     GUInt32 datalen;
     GUIntBig bitlen;
@@ -49,15 +48,15 @@ typedef struct {
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static
-void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
+static void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
 {
     GUInt32 a, b, c, d, e, i, j, t, m[80];
 
     for (i = 0, j = 0; i < 16; ++i, j += 4)
-        m[i] = (data[j] << 24) + (data[j + 1] << 16) +
-               (data[j + 2] << 8) + (data[j + 3]);
-    for ( ; i < 80; ++i) {
+        m[i] = (data[j] << 24) + (data[j + 1] << 16) + (data[j + 2] << 8) +
+               (data[j + 3]);
+    for (; i < 80; ++i)
+    {
         m[i] = (m[i - 3] ^ m[i - 8] ^ m[i - 14] ^ m[i - 16]);
         m[i] = (m[i] << 1) | (m[i] >> 31);
     }
@@ -68,7 +67,8 @@ void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
     d = ctx->state[3];
     e = ctx->state[4];
 
-    for (i = 0; i < 20; ++i) {
+    for (i = 0; i < 20; ++i)
+    {
         t = ROTLEFT(a, 5) + ((b & c) ^ (~b & d)) + e + 0x5a827999U + m[i];
         e = d;
         d = c;
@@ -76,7 +76,8 @@ void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
         b = a;
         a = t;
     }
-    for ( ; i < 40; ++i) {
+    for (; i < 40; ++i)
+    {
         t = ROTLEFT(a, 5) + (b ^ c ^ d) + e + 0x6ed9eba1U + m[i];
         e = d;
         d = c;
@@ -84,16 +85,18 @@ void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
         b = a;
         a = t;
     }
-    for ( ; i < 60; ++i) {
-        t = ROTLEFT(a, 5) + ((b & c) ^ (b & d) ^ (c & d))  + e +
-            0x8f1bbcdcU + m[i];
+    for (; i < 60; ++i)
+    {
+        t = ROTLEFT(a, 5) + ((b & c) ^ (b & d) ^ (c & d)) + e + 0x8f1bbcdcU +
+            m[i];
         e = d;
         d = c;
         c = ROTLEFT(b, 30);
         b = a;
         a = t;
     }
-    for ( ; i < 80; ++i) {
+    for (; i < 80; ++i)
+    {
         t = ROTLEFT(a, 5) + (b ^ c ^ d) + e + 0xca62c1d6U + m[i];
         e = d;
         d = c;
@@ -113,8 +116,7 @@ void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
 /*                           CPL_SHA1Init()                             */
 /************************************************************************/
 
-static
-void CPL_SHA1Init(CPL_SHA1Context *ctx)
+static void CPL_SHA1Init(CPL_SHA1Context *ctx)
 {
     ctx->datalen = 0;
     ctx->bitlen = 0;
@@ -129,18 +131,19 @@ void CPL_SHA1Init(CPL_SHA1Context *ctx)
 /*                          CPL_SHA1Update()                            */
 /************************************************************************/
 
-static
-void CPL_SHA1Update(CPL_SHA1Context *ctx, const GByte data[], size_t len)
+static void CPL_SHA1Update(CPL_SHA1Context *ctx, const GByte data[], size_t len)
 {
     size_t i;
 
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i < len; ++i)
+    {
         ctx->data[ctx->datalen] = data[i];
         ctx->datalen++;
-        if (ctx->datalen == 64) {
-                sha1_transform(ctx, ctx->data);
-                ctx->bitlen += 512;
-                ctx->datalen = 0;
+        if (ctx->datalen == 64)
+        {
+            sha1_transform(ctx, ctx->data);
+            ctx->bitlen += 512;
+            ctx->datalen = 0;
         }
     }
 }
@@ -149,20 +152,21 @@ void CPL_SHA1Update(CPL_SHA1Context *ctx, const GByte data[], size_t len)
 /*                           CPL_SHA1Final()                            */
 /************************************************************************/
 
-static
-void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
+static void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
 {
     GUInt32 i;
 
     i = ctx->datalen;
 
     // Pad whatever data is left in the buffer.
-    if (ctx->datalen < 56) {
+    if (ctx->datalen < 56)
+    {
         ctx->data[i++] = 0x80;
         while (i < 56)
             ctx->data[i++] = 0x00;
     }
-    else {
+    else
+    {
         ctx->data[i++] = 0x80;
         while (i < 64)
             ctx->data[i++] = 0x00;
@@ -182,14 +186,21 @@ void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
     ctx->data[56] = static_cast<GByte>((ctx->bitlen >> 56) & 0xFFU);
     sha1_transform(ctx, ctx->data);
 
-    // Since this implementation uses little endian byte ordering and MD uses big endian,
-    // reverse all the bytes when copying the final state to the output hash.
-    for (i = 0; i < 4; ++i) {
-        hash[i]      = static_cast<GByte>((ctx->state[0] >> (24 - i * 8)) & 0x000000ffU);
-        hash[i + 4]  = static_cast<GByte>((ctx->state[1] >> (24 - i * 8)) & 0x000000ffU);
-        hash[i + 8]  = static_cast<GByte>((ctx->state[2] >> (24 - i * 8)) & 0x000000ffU);
-        hash[i + 12] = static_cast<GByte>((ctx->state[3] >> (24 - i * 8)) & 0x000000ffU);
-        hash[i + 16] = static_cast<GByte>((ctx->state[4] >> (24 - i * 8)) & 0x000000ffU);
+    // Since this implementation uses little endian byte ordering and MD uses
+    // big endian, reverse all the bytes when copying the final state to the
+    // output hash.
+    for (i = 0; i < 4; ++i)
+    {
+        hash[i] =
+            static_cast<GByte>((ctx->state[0] >> (24 - i * 8)) & 0x000000ffU);
+        hash[i + 4] =
+            static_cast<GByte>((ctx->state[1] >> (24 - i * 8)) & 0x000000ffU);
+        hash[i + 8] =
+            static_cast<GByte>((ctx->state[2] >> (24 - i * 8)) & 0x000000ffU);
+        hash[i + 12] =
+            static_cast<GByte>((ctx->state[3] >> (24 - i * 8)) & 0x000000ffU);
+        hash[i + 16] =
+            static_cast<GByte>((ctx->state[4] >> (24 - i * 8)) & 0x000000ffU);
     }
 }
 
@@ -197,12 +208,12 @@ void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
 /*                              CPL_SHA1()                              */
 /************************************************************************/
 
-static
-void CPL_SHA1( const void *data, size_t len, GByte hash[CPL_SHA1_HASH_SIZE] )
+static void CPL_SHA1(const void *data, size_t len,
+                     GByte hash[CPL_SHA1_HASH_SIZE])
 {
     CPL_SHA1Context sSHA1Ctxt;
     CPL_SHA1Init(&sSHA1Ctxt);
-    CPL_SHA1Update(&sSHA1Ctxt, static_cast<const GByte*>(data), len);
+    CPL_SHA1Update(&sSHA1Ctxt, static_cast<const GByte *>(data), len);
     CPL_SHA1Final(&sSHA1Ctxt, hash);
     memset(&sSHA1Ctxt, 0, sizeof(sSHA1Ctxt));
 }
@@ -213,13 +224,13 @@ void CPL_SHA1( const void *data, size_t len, GByte hash[CPL_SHA1_HASH_SIZE] )
 
 #define CPL_HMAC_SHA1_BLOCKSIZE 64U
 
-// See https://en.wikipedia.org/wiki/Hash-based_message_authentication_code#Implementation
-void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen,
-                             const void *pabyMessage, size_t nMessageLen,
-                             GByte abyDigest[CPL_SHA1_HASH_SIZE])
+// See
+// https://en.wikipedia.org/wiki/Hash-based_message_authentication_code#Implementation
+void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen, const void *pabyMessage,
+                   size_t nMessageLen, GByte abyDigest[CPL_SHA1_HASH_SIZE])
 {
     GByte abyPad[CPL_HMAC_SHA1_BLOCKSIZE] = {};
-    if( nKeyLen > CPL_HMAC_SHA1_BLOCKSIZE )
+    if (nKeyLen > CPL_HMAC_SHA1_BLOCKSIZE)
     {
         CPL_SHA1(pKey, nKeyLen, abyPad);
     }
@@ -229,18 +240,18 @@ void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen,
     }
 
     // Compute ipad.
-    for( size_t i = 0; i < CPL_HMAC_SHA1_BLOCKSIZE; i++ )
+    for (size_t i = 0; i < CPL_HMAC_SHA1_BLOCKSIZE; i++)
         abyPad[i] = 0x36 ^ abyPad[i];
 
     CPL_SHA1Context sSHA1Ctxt;
     CPL_SHA1Init(&sSHA1Ctxt);
     CPL_SHA1Update(&sSHA1Ctxt, abyPad, CPL_HMAC_SHA1_BLOCKSIZE);
-    CPL_SHA1Update(&sSHA1Ctxt, static_cast<const GByte*>(pabyMessage),
+    CPL_SHA1Update(&sSHA1Ctxt, static_cast<const GByte *>(pabyMessage),
                    nMessageLen);
     CPL_SHA1Final(&sSHA1Ctxt, abyDigest);
 
     // Compute opad.
-    for( size_t i = 0; i < CPL_HMAC_SHA1_BLOCKSIZE; i++ )
+    for (size_t i = 0; i < CPL_HMAC_SHA1_BLOCKSIZE; i++)
         abyPad[i] = (0x36 ^ 0x5C) ^ abyPad[i];
 
     CPL_SHA1Init(&sSHA1Ctxt);

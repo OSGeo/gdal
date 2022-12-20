@@ -203,8 +203,8 @@ def test_netcdf_multidim_var_alldatatypes():
     expected_vars = [
         ("char_var", gdal.GDT_Byte, (ord("x"), ord("y"))),
         ("ubyte_var", gdal.GDT_Byte, (255, 254)),
-        ("byte_var", gdal.GDT_Int16, (-128, -127)),
-        ("byte_unsigned_false_var", gdal.GDT_Int16, (-128, -127)),
+        ("byte_var", gdal.GDT_Int8, (-128, -127)),
+        ("byte_unsigned_false_var", gdal.GDT_Int8, (-128, -127)),
         ("byte_unsigned_true_var", gdal.GDT_Byte, (128, 129)),
         ("ushort_var", gdal.GDT_UInt16, (65534, 65533)),
         ("short_var", gdal.GDT_Int16, (-32768, -32767)),
@@ -230,6 +230,8 @@ def test_netcdf_multidim_var_alldatatypes():
         assert var.GetDataType().GetNumericDataType() == dt, var_name
         if dt == gdal.GDT_Byte:
             assert struct.unpack("B" * len(val), var.Read()) == val
+        if dt == gdal.GDT_Int8:
+            assert struct.unpack("b" * len(val), var.Read()) == val
         if dt == gdal.GDT_UInt16:
             assert struct.unpack("H" * len(val), var.Read()) == val
         if dt == gdal.GDT_Int16:
@@ -254,15 +256,6 @@ def test_netcdf_multidim_var_alldatatypes():
             assert struct.unpack("f" * len(val), var.Read()) == val
         if dt == gdal.GDT_CFloat64:
             assert struct.unpack("d" * len(val), var.Read()) == val
-
-    # Read byte_var (where nc native type != gdal data type) to other data types
-    var = rg.OpenMDArray("byte_var")
-    assert struct.unpack(
-        "B" * 2, var.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    ) == (0, 0)
-    assert struct.unpack(
-        "i" * 2, var.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Int32))
-    ) == (-128, -127)
 
     # Read int_var to other data types
     var = rg.OpenMDArray("int_var")
@@ -543,7 +536,7 @@ def test_netcdf_multidim_attr_alldatatypes():
     attr = map_attrs["attr_byte"]
     assert attr.GetDimensionCount() == 0
     assert len(attr.GetDimensionsSize()) == 0
-    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int16
+    assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int8
     assert attr.Read() == -128
 
     assert map_attrs["attr_ubyte"].Read() == 255
@@ -1010,16 +1003,16 @@ def test_netcdf_multidim_create_nc4():
         var = rg.CreateMDArray(
             "var_as_nc_byte",
             [],
-            gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+            gdal.ExtendedDataType.Create(gdal.GDT_Int16),
             ["NC_TYPE=NC_BYTE"],
         )
-        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Int16
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Int8
         assert var.GetNoDataValueAsRaw() is None
         assert var.SetNoDataValueDouble(-127) == gdal.CE_None
-        assert struct.unpack("h", var.GetNoDataValueAsRaw()) == (-127,)
+        assert struct.unpack("b", var.GetNoDataValueAsRaw()) == (-127,)
         assert var.GetNoDataValueAsDouble() == -127
-        assert var.Write(struct.pack("h", -128)) == gdal.CE_None
-        assert struct.unpack("h", var.Read()) == (-128,)
+        assert var.Write(struct.pack("b", -128)) == gdal.CE_None
+        assert struct.unpack("b", var.Read()) == (-128,)
 
         var = rg.CreateMDArray(
             "var_as_nc_int64",

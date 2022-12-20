@@ -81,6 +81,8 @@ def startup_and_cleanup():
 
 def get_sqlite_version():
     ds = ogr.Open(":memory:")
+    if ds is None:
+        return (0, 0, 0)
     sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
     f = sql_lyr.GetNextFeature()
     version = f.GetField(0)
@@ -1274,6 +1276,38 @@ def test_ogr_gpkg_15():
         assert sql_lyr.GetGeomType() == ogr.wkbPolygon
         assert sql_lyr.GetSpatialRef().ExportToWkt().find("32631") >= 0
         gpkg_ds.ReleaseResultSet(sql_lyr)
+
+
+###############################################################################
+# Test SetSRID() function
+
+
+def test_ogr_gpkg_SetSRID():
+
+    filename = "/vsimem/test_ogr_gpkg_SetSRID.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    lyr.CreateFeature(f)
+
+    for srid in (32631, 0, -1, 12345678):
+        sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(SetSRID(geom, %d)) FROM foo" % srid)
+        f = sql_lyr.GetNextFeature()
+        try:
+            assert f.GetField(0) == srid, srid
+        finally:
+            ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(SetSRID(NULL, 32631)) FROM foo")
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) is None
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink("/vsimem/test_ogr_gpkg_SetSRID.gpkg")
 
 
 ###############################################################################
@@ -4911,6 +4945,20 @@ def test_ogr_gpkg_nolock():
     gdal.Unlink(filename + "-wal")
     gdal.Unlink(filename + "-shm")
 
+    ds = gdal.OpenEx(
+        "/vsizip/data/gpkg/poly.gpkg.zip/poly.gpkg",
+        gdal.OF_VECTOR,
+        open_options=["NOLOCK=YES"],
+    )
+    assert ds
+
+    ds = gdal.OpenEx(
+        "/vsizip/" + os.getcwd() + "/data/gpkg/poly.gpkg.zip/poly.gpkg",
+        gdal.OF_VECTOR,
+        open_options=["NOLOCK=YES"],
+    )
+    assert ds
+
 
 ###############################################################################
 # Run test_ogrsf
@@ -5154,14 +5202,14 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
 
     filename = "/vsimem/test_ogr_gpkg_fixup_wrong_rtree_trigger.gpkg"
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
-    ds.CreateLayer("test")
+    ds.CreateLayer("test-with-dash")
     ds.CreateLayer("test2")
     ds = None
     with gdaltest.error_handler():
         ds = ogr.Open(filename, update=1)
         # inject wrong trigger on purpose with the wrong 'OF "geometry" ' part
-        ds.ExecuteSQL("DROP TRIGGER rtree_test_geometry_update3")
-        wrong_trigger = 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE OF "geometry" ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        ds.ExecuteSQL('DROP TRIGGER "rtree_test-with-dash_geometry_update3"')
+        wrong_trigger = 'CREATE TRIGGER "rtree_test-with-dash_geometry_update3" AFTER UPDATE OF "geometry" ON "test-with-dash" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
         ds.ExecuteSQL(wrong_trigger)
 
         ds.ExecuteSQL("DROP TRIGGER rtree_test2_geometry_update3")
@@ -5174,7 +5222,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     # Open in read-only mode
     ds = ogr.Open(filename)
     sql_lyr = ds.ExecuteSQL(
-        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test_geometry_update3'"
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test-with-dash_geometry_update3'"
     )
     f = sql_lyr.GetNextFeature()
     sql = f["sql"]
@@ -5185,7 +5233,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     # Open in update mode
     ds = ogr.Open(filename, update=1)
     sql_lyr = ds.ExecuteSQL(
-        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test_geometry_update3'"
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test-with-dash_geometry_update3'"
     )
     f = sql_lyr.GetNextFeature()
     sql = f["sql"]
@@ -5201,7 +5249,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     gdal.Unlink(filename)
     assert (
         sql
-        == 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        == 'CREATE TRIGGER "rtree_test-with-dash_geometry_update3" AFTER UPDATE ON "test-with-dash" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
     )
     assert (
         sql2
@@ -6064,6 +6112,54 @@ def test_ogr_gpkg_field_domains_errors():
 
 
 ###############################################################################
+# Test gpkg_data_column_constraints of GPKG 1.0
+
+
+def test_ogr_gpkg_field_domain_gpkg_1_0():
+
+    filename = "/vsimem/test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown, options=["VERSION=1.0"]
+    )
+    ds.CreateLayer("test")
+    assert ds.AddFieldDomain(
+        ogr.CreateRangeFieldDomain(
+            "range_domain_int",
+            "my desc",
+            ogr.OFTReal,
+            ogr.OFSTNone,
+            1.5,
+            True,
+            2.5,
+            False,
+        )
+    )
+    ds = None
+
+    assert validate(filename)
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    gdal.ErrorReset()
+    domain = ds.GetFieldDomain("range_domain_int")
+    assert gdal.GetLastErrorMsg() == ""
+    assert domain is not None
+    assert domain.GetName() == "range_domain_int"
+    assert domain.GetDescription() == "my desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTReal
+    assert domain.GetMinAsDouble() == 1.5
+    assert domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == 2.5
+    assert not domain.IsMaxInclusive()
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test attribute and spatial views
 
 
@@ -6503,21 +6599,596 @@ def test_ogr_gpkg_relations_sqlite_foreign_keys():
         ds = None
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
-        assert ds.GetRelationshipNames() == ["test_relation_b_test_relation_a"]
+        assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
         assert ds.GetRelationship("xxx") is None
-        rel = ds.GetRelationship("test_relation_b_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_b")
         assert rel is not None
-        assert rel.GetName() == "test_relation_b_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_b"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_b"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_b"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
-        assert rel.GetLeftTableFields() == ["trackartist"]
-        assert rel.GetRightTableFields() == ["artistid"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid"]
+        assert rel.GetRightTableFields() == ["trackartist"]
+        assert rel.GetRelatedTableType() == "features"
 
     finally:
         gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test support for altering relationships
+
+
+def test_ogr_gpkg_alter_relations():
+    def clone_relationship(relationship):
+        res = gdal.Relationship(
+            relationship.GetName(),
+            relationship.GetLeftTableName(),
+            relationship.GetRightTableName(),
+            relationship.GetCardinality(),
+        )
+        res.SetLeftTableFields(relationship.GetLeftTableFields())
+        res.SetRightTableFields(relationship.GetRightTableFields())
+        res.SetMappingTableName(relationship.GetMappingTableName())
+        res.SetLeftMappingTableFields(relationship.GetLeftMappingTableFields())
+        res.SetRightMappingTableFields(relationship.GetRightMappingTableFields())
+        res.SetType(relationship.GetType())
+        res.SetForwardPathLabel(relationship.GetForwardPathLabel())
+        res.SetBackwardPathLabel(relationship.GetBackwardPathLabel())
+        res.SetRelatedTableType(relationship.GetRelatedTableType())
+
+        return res
+
+    filename = "/vsimem/test_ogr_gpkg_relation_create.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    def get_query_row_count(query):
+        sql_lyr = ds.ExecuteSQL(query)
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table", "dest_table", gdal.GRC_MANY_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("media")
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    # no tables yet
+    assert not ds.AddRelationship(relationship)
+
+    lyr = ds.CreateLayer("origin_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("o_pkey2", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds.ExecuteSQL("CREATE UNIQUE INDEX origin_table_o_pkey_idx ON origin_table(o_pkey)")
+
+    assert not ds.AddRelationship(relationship)
+
+    lyr = ds.CreateLayer("dest_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("dest_pkey2", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds.ExecuteSQL(
+        "CREATE UNIQUE INDEX dest_table_dest_pkey_idx ON dest_table(dest_pkey)"
+    )
+
+    # left table fields must be set, only one field
+    relationship.SetLeftTableFields([])
+    assert not ds.AddRelationship(relationship)
+    relationship.SetLeftTableFields(["o_pkey", "another"])
+    assert not ds.AddRelationship(relationship)
+    # left table field must exist
+    relationship.SetLeftTableFields(["o_pkey_nope"])
+    assert not ds.AddRelationship(relationship)
+
+    relationship.SetLeftTableFields(["o_pkey"])
+
+    # right table fields must be set, only one field
+    relationship.SetRightTableFields([])
+    assert not ds.AddRelationship(relationship)
+    relationship.SetRightTableFields(["dest_pkey", "another"])
+    assert not ds.AddRelationship(relationship)
+    # right table field must exist
+    relationship.SetRightTableFields(["dest_pkey_nope"])
+    assert not ds.AddRelationship(relationship)
+
+    relationship.SetRightTableFields(["dest_pkey"])
+
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {"origin_table_dest_table_media"}
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_media")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "media"
+    assert retrieved_rel.GetMappingTableName() == "origin_table_dest_table"
+    assert retrieved_rel.GetLeftMappingTableFields() == ["base_id"]
+    assert retrieved_rel.GetRightMappingTableFields() == ["related_id"]
+
+    # try again, should fail because relationship already exists
+    assert not ds.AddRelationship(relationship)
+
+    # validate that extensions table exists and is correctly populated
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'gpkgext_relations' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 1
+    )
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'origin_table_dest_table' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 1
+    )
+
+    # validate gpkgext_relations has been populated correctly
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkgext_relations WHERE base_table_name = 'origin_table' AND "
+            "base_primary_column = 'o_pkey' AND "
+            "related_table_name = 'dest_table' AND "
+            "related_primary_column = 'dest_pkey' AND "
+            "relation_name = 'media' AND "
+            "mapping_table_name = 'origin_table_dest_table'"
+        )
+        == 1
+    )
+
+    lyr = ds.CreateLayer("origin_table2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("dest_table2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    # only many-to-many relationships are supported
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_ONE_TO_ONE
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_ONE_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_MANY_TO_ONE
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("features")
+    assert not ds.AddRelationship(relationship)
+
+    # only features/media/simple_attributes/attributes/tiles related table type are supported
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table2", "dest_table2", gdal.GRC_MANY_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("something else")
+    assert not ds.AddRelationship(relationship)
+
+    # should default to "features" related table type if nothing explicitly specified
+    relationship.SetRelatedTableType("")
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_media",
+        "origin_table2_dest_table2_features",
+    }
+    retrieved_rel = ds.GetRelationship("origin_table2_dest_table2_features")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table2"
+    assert retrieved_rel.GetRightTableName() == "dest_table2"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "features"
+
+    # validate that extensions table exists is correctly populated
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'origin_table2_dest_table2' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 1
+    )
+    # validate gpkgext_relations has been populated correctly
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkgext_relations WHERE base_table_name = 'origin_table2' AND "
+            "base_primary_column = 'o_pkey' AND "
+            "related_table_name = 'dest_table2' AND "
+            "related_primary_column = 'dest_pkey' AND "
+            "relation_name = 'features' AND "
+            "mapping_table_name = 'origin_table2_dest_table2'"
+        )
+        == 1
+    )
+
+    # try with an existing mapping table
+    lyr = ds.CreateLayer("origin_table3", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("dest_table3", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("origin_table3_to_dest_table_3_mapping", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("base_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("related_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    assert (
+        get_query_row_count(
+            "SELECT 1 FROM sqlite_master WHERE name = 'origin_table3_to_dest_table_3_mapping' AND type in ('table', 'view')"
+        )
+        == 1
+    )
+
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table3", "dest_table3", gdal.GRC_MANY_TO_MANY
+    )
+    # fid fields should be permitted for relationship use
+    relationship.SetLeftTableFields(["fid"])
+    relationship.SetRightTableFields(["fid"])
+    relationship.SetMappingTableName("nope")
+    assert not ds.AddRelationship(relationship)
+
+    relationship.SetMappingTableName("origin_table3_to_dest_table_3_mapping")
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_media",
+        "origin_table2_dest_table2_features",
+        "origin_table3_dest_table3_features",
+    }
+    retrieved_rel = ds.GetRelationship("origin_table3_dest_table3_features")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table3"
+    assert retrieved_rel.GetRightTableName() == "dest_table3"
+    assert retrieved_rel.GetLeftTableFields() == ["fid"]
+    assert retrieved_rel.GetRightTableFields() == ["fid"]
+    assert retrieved_rel.GetRelatedTableType() == "features"
+    assert (
+        retrieved_rel.GetMappingTableName() == "origin_table3_to_dest_table_3_mapping"
+    )
+
+    # validate that extensions table exists is correctly populated
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'origin_table3_to_dest_table_3_mapping' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 1
+    )
+
+    # validate gpkgext_relations has been populated correctly
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkgext_relations WHERE base_table_name = 'origin_table3' AND "
+            "base_primary_column = 'fid' AND "
+            "related_table_name = 'dest_table3' AND "
+            "related_primary_column = 'fid' AND "
+            "relation_name = 'features' AND "
+            "mapping_table_name = 'origin_table3_to_dest_table_3_mapping'"
+        )
+        == 1
+    )
+
+    # try again, with a mapping table which doesn't match requirements
+    lyr = ds.CreateLayer("origin_table4", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("dest_table4", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("origin_table4_to_dest_table_4_mapping", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("not_base_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("related_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    assert (
+        get_query_row_count(
+            "SELECT 1 FROM sqlite_master WHERE name = 'origin_table4_to_dest_table_4_mapping' AND type in ('table', 'view')"
+        )
+        == 1
+    )
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table4", "dest_table4", gdal.GRC_MANY_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetMappingTableName("origin_table4_to_dest_table_4_mapping")
+    assert not ds.AddRelationship(relationship)
+    lyr = ds.CreateLayer(
+        "origin_table4_to_dest_table_4_mappingv2", geom_type=ogr.wkbNone
+    )
+    fld_defn = ogr.FieldDefn("base_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("not_related_id", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    assert (
+        get_query_row_count(
+            "SELECT 1 FROM sqlite_master WHERE name = 'origin_table4_to_dest_table_4_mappingv2' AND type in ('table', 'view')"
+        )
+        == 1
+    )
+    relationship.SetMappingTableName("origin_table4_to_dest_table_4_mappingv2")
+    assert not ds.AddRelationship(relationship)
+
+    ds = None
+    assert validate(filename), "validation failed"
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    # delete relationship
+    assert not ds.DeleteRelationship("nope")
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_media",
+        "origin_table2_dest_table2_features",
+        "origin_table3_dest_table3_features",
+    }
+
+    assert ds.DeleteRelationship("origin_table2_dest_table2_features")
+
+    # validate that extensions table was correctly updated
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'origin_table2_dest_table2' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 0
+    )
+    # validate gpkgext_relations has been updated correctly
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkgext_relations WHERE base_table_name = 'origin_table2' AND "
+            "base_primary_column = 'o_pkey' AND "
+            "related_table_name = 'dest_table2' AND "
+            "related_primary_column = 'dest_pkey' AND "
+            "relation_name = 'features' AND "
+            "mapping_table_name = 'origin_table2_dest_table2'"
+        )
+        == 0
+    )
+    # validate that mapping table was deleted
+    assert (
+        get_query_row_count(
+            "SELECT 1 FROM sqlite_master WHERE name = 'origin_table2_dest_table2' AND type in ('table', 'view')"
+        )
+        == 0
+    )
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_media",
+        "origin_table3_dest_table3_features",
+    }
+
+    ds = None
+    assert validate(filename), "validation failed"
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    # update relationship
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_media")
+
+    # can't update a relationship which doesn't exit
+    relationship = gdal.Relationship(
+        "nope",
+        retrieved_rel.GetLeftTableName(),
+        retrieved_rel.GetRightTableName(),
+        gdal.GRC_MANY_TO_MANY,
+    )
+    relationship.SetLeftTableFields(retrieved_rel.GetLeftTableFields())
+    relationship.SetRightTableFields(retrieved_rel.GetRightTableFields())
+    relationship.SetMappingTableName(retrieved_rel.GetMappingTableName())
+    relationship.SetLeftMappingTableFields(retrieved_rel.GetLeftMappingTableFields())
+    relationship.SetRightMappingTableFields(retrieved_rel.GetRightMappingTableFields())
+
+    assert not ds.UpdateRelationship(clone_relationship(relationship))
+
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_media")
+    retrieved_rel.SetRelatedTableType("nope")
+    # relationship will be validated before updates
+    assert not ds.UpdateRelationship(clone_relationship(retrieved_rel))
+
+    # change related table type
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_media")
+    retrieved_rel.SetRelatedTableType("attributes")
+    assert ds.UpdateRelationship(clone_relationship(retrieved_rel))
+
+    ds = None
+    assert validate(filename), "validation failed"
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_attributes",
+        "origin_table3_dest_table3_features",
+    }
+
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_attributes")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "attributes"
+
+    # change base table field
+    retrieved_rel.SetLeftTableFields(["o_pkey2"])
+    assert ds.UpdateRelationship(clone_relationship(retrieved_rel))
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_attributes",
+        "origin_table3_dest_table3_features",
+    }
+
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_attributes")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey2"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "attributes"
+
+    retrieved_rel.SetRightTableFields(["dest_pkey2"])
+    assert ds.UpdateRelationship(clone_relationship(retrieved_rel))
+
+    assert set(ds.GetRelationshipNames()) == {
+        "origin_table_dest_table_attributes",
+        "origin_table3_dest_table3_features",
+    }
+
+    retrieved_rel = ds.GetRelationship("origin_table_dest_table_attributes")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey2"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey2"]
+    assert retrieved_rel.GetRelatedTableType() == "attributes"
+
+    # try updating to field which doesn't exist
+    retrieved_rel.SetRightTableFields(["dest_pkey2xxx"])
+    assert not ds.UpdateRelationship(clone_relationship(retrieved_rel))
+
+    # delete all relationships
+
+    assert ds.DeleteRelationship("origin_table_dest_table_attributes")
+
+    # validate that extensions table was correctly updated
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE table_name = 'origin_table_dest_table' AND extension_name = 'gpkg_related_tables'"
+        )
+        == 0
+    )
+    # validate gpkgext_relations has been updated correctly
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkgext_relations WHERE base_table_name = 'origin_table' AND "
+            "base_primary_column = 'o_pkey2' AND "
+            "related_table_name = 'dest_table' AND "
+            "related_primary_column = 'dest_pkey2' AND "
+            "relation_name = 'attributes' AND "
+            "mapping_table_name = 'origin_table_dest_table'"
+        )
+        == 0
+    )
+    # validate that mapping table was deleted
+    assert (
+        get_query_row_count(
+            "SELECT 1 FROM sqlite_master WHERE name = 'origin_table_dest_table' AND type in ('table', 'view')"
+        )
+        == 0
+    )
+
+    assert set(ds.GetRelationshipNames()) == {"origin_table3_dest_table3_features"}
+    # should still be two extension rows for gpkg_related_tables: one for the remaining relationship, one for the extension itself
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE extension_name = 'gpkg_related_tables'"
+        )
+        == 2
+    )
+
+    assert ds.DeleteRelationship("origin_table3_dest_table3_features")
+
+    # should be no remaining gpkg_related_tables extension records
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_extensions WHERE extension_name = 'gpkg_related_tables'"
+        )
+        == 0
+    )
+    # validate gpkgext_relations has been updated correctly
+    assert get_query_row_count("SELECT * FROM gpkgext_relations") == 0
+
+    ds = None
+    assert validate(filename), "validation failed"
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test creating relationships with complex names
+
+
+def test_ogr_gpkg_add_relationship_complex_names():
+
+    filename = "/vsimem/test_ogr_gpkg_relation_create_complex.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    def get_query_row_count(query):
+        sql_lyr = ds.ExecuteSQL(query)
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    relationship = gdal.Relationship(
+        "my_relationship", "Origin' [tàble!", "dést ]table$", gdal.GRC_MANY_TO_MANY
+    )
+    relationship.SetLeftTableFields(["o pkéy"])
+    relationship.SetRightTableFields(["Dest pkéy"])
+    relationship.SetRelatedTableType("media")
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
+    lyr = ds.CreateLayer("Origin' [tàble!", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o pkéy", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds.ExecuteSQL(
+        'CREATE UNIQUE INDEX origin_table_o_pkey_idx ON "Origin\' [tàble!"("o pkéy")'
+    )
+
+    lyr = ds.CreateLayer("dést ]table$", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("Dest pkéy", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds.ExecuteSQL(
+        'CREATE UNIQUE INDEX dest_table_dest_pkey_idx ON "dést ]table$"("Dest pkéy")'
+    )
+
+    relationship.SetLeftTableFields(["o pkéy"])
+    relationship.SetRightTableFields(["Dest pkéy"])
+
+    assert ds.AddRelationship(relationship)
+
+    assert set(ds.GetRelationshipNames()) == {"Origin' [tàble!_dést ]table$_media"}
+    retrieved_rel = ds.GetRelationship("Origin' [tàble!_dést ]table$_media")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "Origin' [tàble!"
+    assert retrieved_rel.GetRightTableName() == "dést ]table$"
+    assert retrieved_rel.GetLeftTableFields() == ["o pkéy"]
+    assert retrieved_rel.GetRightTableFields() == ["Dest pkéy"]
+    assert retrieved_rel.GetRelatedTableType() == "media"
+    assert retrieved_rel.GetMappingTableName() == "Origin' [tàble!_dést ]table$"
+    assert retrieved_rel.GetLeftMappingTableFields() == ["base_id"]
+    assert retrieved_rel.GetRightMappingTableFields() == ["related_id"]
+
+    ds = None
+    assert validate(filename), "validation failed"
 
 
 ###############################################################################
@@ -7182,10 +7853,15 @@ def test_ogr_gpkg_background_rtree_build(filename):
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo")
+    assert lyr.StartTransaction() == ogr.OGRERR_NONE
     for i in range(1000):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        if i == 500:
+            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+            assert lyr.StartTransaction() == ogr.OGRERR_NONE
+    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
     ds = None
     assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
 
@@ -7265,6 +7941,45 @@ def test_ogr_gpkg_background_rtree_build(filename):
 
 
 ###############################################################################
+
+
+def test_ogr_gpkg_detect_broken_rtree_gdal_3_6_0():
+
+    filename = "/vsimem/test_ogr_gpkg_detect_broken_rtree_gdal_3_6_0.gpkg"
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    for i in range(100):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(
+            ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i % 10, i // 10))
+        )
+        lyr.CreateFeature(f)
+    ds = None
+
+    # Voluntary corrupt the RTree by removing the entry for the last feature
+    ds = ogr.Open(filename, update=1)
+    sql_lyr = ds.ExecuteSQL("DELETE FROM rtree_foo_geom WHERE id = 100")
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    with gdaltest.config_option("OGR_GPKG_THRESHOLD_DETECT_BROKEN_RTREE", "100"):
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            lyr.SetSpatialFilterRect(8.5, 8.5, 9.5, 9.5)
+            assert (
+                "Spatial index (perhaps created with GDAL 3.6.0) of table foo is corrupted"
+                in gdal.GetLastErrorMsg()
+            )
+        assert lyr.GetFeatureCount() == 1
+        ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test ST_Area()
 
 
@@ -7318,3 +8033,207 @@ def test_ogr_gpkg_st_area(wkt_or_binary, area):
     ds = None
     gdal.Unlink(filename)
     assert f.GetField(0) == area
+
+
+###############################################################################
+# Test reading a layer with a generated column
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 31, 0),
+    reason="sqlite >= 3.31 needed",
+)
+def test_ogr_gpkg_read_generated_column():
+
+    filename = "/vsimem/test_ogr_gpkg_read_generated_column.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    ds.ExecuteSQL(
+        "CREATE TABLE test (fid INTEGER PRIMARY KEY NOT NULL,unused TEXT,strfield TEXT,strfield_generated TEXT GENERATED ALWAYS AS (strfield || '_generated'),intfield_generated_stored INTEGER GENERATED ALWAYS AS (5) STORED)"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents (table_name,data_type,identifier,description,last_change,srs_id) VALUES ('test','attributes','test','','',0)"
+    )
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 4
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "strfield_generated"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "intfield_generated_stored"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger64
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "foo"
+    assert f["strfield_generated"] == "foo_generated"
+    assert f["intfield_generated_stored"] == 5
+
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "foo"
+    assert f["strfield_generated"] == "foo_generated"
+
+    f.SetField("strfield", "bar")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "bar"
+    assert f["strfield_generated"] == "bar_generated"
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo2")
+    f.SetField("strfield_generated", "ignored")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetFeature(2)
+    assert f["strfield"] == "foo2"
+    assert f["strfield_generated"] == "foo2_generated"
+    f = None
+
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo3")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetFeature(3)
+    assert f["strfield"] == "foo3"
+    # None for sqlite < 3.35.5 that uses table recreation for DeleteField() implementation
+    # and thus for now the generated column expression is lost
+    assert (
+        f["strfield_generated"] == "foo3_generated" or f["strfield_generated"] is None
+    )
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test gdal_get_pixel_value() function
+
+
+def test_ogr_gpkg_sql_gdal_get_pixel_value():
+
+    filename = "/vsimem/test_ogr_gpkg_sql_gdal_get_pixel_value.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440780, 3751080)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 156
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 1, 4)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 156
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/float64.tif', 1, 'pixel', 0, 1)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 115.0
+
+    # Invalid column
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', -1, 0)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] is None
+
+    # Missing OGR_SQLITE_ALLOW_EXTERNAL_ACCESS
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440720, 3751320)"
+        )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 1st arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value(NULL, 1, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 2nd arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', NULL, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 3rd arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, NULL, 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 4th arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', NULL, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 5th arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0, NULL)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # Invalid band number
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 0, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # Invalid value for 3rd argument
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'invalid', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    gdal.Unlink(filename)

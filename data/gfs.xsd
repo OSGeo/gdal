@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:element name="GMLFeatureClassList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="SequentialLayers" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>Set this element to true if all features belonging to the same layer are written sequentially in the file. The reader will then avoid unnecessary resets when layers are read completely one after the other. To get the best performance, the layers must be read in the order they appear in the file. Cf https://gdal.org/drivers/vector/gml.html#performance-issues-with-large-multi-layer-gml-files</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element maxOccurs="unbounded" minOccurs="0" name="GMLFeatureClass">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Name" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Name of the feature type; essentially used as layer name. Can be different than the name of the XML element that represents such a feature in XML data. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation).
+                  Different GMLFeatureClass elements should have a different name.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element name="ElementPath" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Defines the path in a given XML document to the elements that represent the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant.
+                  As multiple ElementPath-elements are not allowed per GMLFeatureClass, if a feature type was encoded in different places in an XML document (e.g. on collection member level, as well as inline in some other feature), the gfs file would have to contain multiple GMLFeatureClass entries, with different ElementPaths.</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" ref="GeomPropertyDefn">
+                <xs:annotation>
+                  <xs:documentation>Defines a geometry column. This element may be repeated if there are several geometry columns. For backward compatibility with older GDAL versions, the GDAL .gfs writer will only write this element if there are several geometry columns, but it is allowed to use it if there is just a single geometry column. GeomPropertyDefn is mutually exclusive with GeometryName, GeometryElementPath and GeometryType</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="GeometryName" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Name of a geometric property of the feature. Can be different than the name of the XML element that represents that property. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation, or a combination of names in the element path). Mutually exclusive with GeomPropertyDefn</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="GeometryElementPath" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Defines the path to the XML element that represents the geometry property within the XML element of the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant. NOTE: The path should not include the actual GML geometry element itself. Used in combination with the GeometryName. Mutually exclusive with GeomPropertyDef.</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="GeometryType" type="SupportedGeometryTypes">
+                <xs:annotation>
+                  <xs:documentation>Used in combination with the GeometryName. Mutually exclusive with GeomPropertyDef.</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="SRSName" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Defines the SRS of all geometry columns of the layer. Typically a string of the form urn:ogc:def:crs:EPSG::XXXX</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="DatasetSpecificInfo">
+                <xs:annotation>
+                  <xs:documentation>Contains optional information about the feature count of the layer and its extent. This should not be used in .gfs templates, but for specific instantiation of a .gfs on a given .gml file</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element minOccurs="0" name="FeatureCount" type="xs:nonNegativeInteger">
+                      <xs:annotation>
+                        <xs:documentation>Number of features in the layer</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="ExtentXMin" type="xs:double">
+                      <xs:annotation>
+                        <xs:documentation>Minimum X value of the layer extent.</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element default="0.0" minOccurs="0" name="ExtentXMax" type="xs:double">
+                      <xs:annotation>
+                        <xs:documentation>Maximum X value of the layer extent.</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element default="0.0" minOccurs="0" name="ExtentYMin" type="xs:double">
+                      <xs:annotation>
+                        <xs:documentation>Minimum Y value of the layer extent.</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element default="0.0" minOccurs="0" name="ExtentYMax" type="xs:double">
+                      <xs:annotation>
+                        <xs:documentation>Maximum X value of the layer extent.</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <!-- To remove ultimately when support for that in the code is removed
+                    <xs:element minOccurs="0" name="ExtraInfo" type="xs:string">
+                      <xs:annotation>
+                        <xs:documentation>Unused</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    -->
+                  </xs:all>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" ref="PropertyDefn"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="uniqueGMLFeatureClassNames">
+      <xs:annotation>
+        <xs:documentation>The names of all GMLFeatureClasses within the GMLFeatureClassList must be unique.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="GMLFeatureClass"/>
+      <xs:field xpath="Name"/>
+    </xs:unique>
+  </xs:element>
+  <xs:simpleType name="SupportedGeometryTypes">
+    <xs:annotation>
+      <xs:documentation>Geometry type, expressed either as a numeric value matching the OGRwkbGeometryType enumeration or a string ([Multi]?Point|[Multi]?LineString|[Multi]?Polygon|GeometryCollection|CircularString|CurvePolygon|[Multi]Curve|[Multi]Surface|Triangle|PolyhedralSurface|TIN)Z?M? or None to indicate a layer without geometry field.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="-?[0-9]+"/>
+      <!-- value from OGRwkbGeometryType enumeration -->
+      <xs:pattern value="[pP][oO][iI][nN][tT]Z?M?"/>
+      <xs:pattern value="[lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][iI][nN][tT]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[gG][eE][oO][mM][eE][tT][rR][yY][cC][oO][lL][lL][eE][cC][tT][iI][oO][nN]Z?M?"/>
+      <xs:pattern value="[cC][iI][rR][cC][uU][lL][aA][rR][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[cC][oO][mM][pP][oO][uU][nN][dD][cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[cC][uU][rR][vV][eE][pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[tT][rR][iI][aA][nN][gG][lL][eE]Z?M?"/>
+      <xs:pattern value="[pP][oO][lL][yY][hH][eE][dD][rR][aA][lL][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[tT][iI][nN]Z?M?"/>
+      <xs:pattern value="[nN][oO][nN][eE]"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="GeomPropertyDefn">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="Name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Name of a geometric property of the feature. Can be different than the name of the XML element that represents that property. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation, or a combination of names in the element path).</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="ElementPath" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Defines the path to the XML element that represents the geometry property within the XML element of the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant. NOTE: The path should not include the actual GML geometry element itself.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="Type" type="SupportedGeometryTypes">
+          <xs:annotation>
+            <xs:documentation/>
+          </xs:annotation>
+        </xs:element>
+        <xs:element default="true" minOccurs="0" name="Nullable" type="xs:boolean">
+          <xs:annotation>
+            <xs:documentation>Can be set to false to indicate that null/missing geometries are forbidden.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PropertyDefn">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="Name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Name of a non-geometric property of the feature. Can be different than the name of the XML element that represents that property.
+
+NOTE: Properties with name suffix "_href" - typically used when the ElementPath ends in @xlink:href - can be used to build junction tables. For further details, see https://gdal.org/drivers/vector/gml.html#building-junction-tables.
+
+Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation, or a combination of names in the element path).</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="ElementPath" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Defines the path to the XML element that represents the property within the XML element of the GML feature. Can use '|' as element separator. The last path segment may have an XML attribute name as suffix, using '@' as separator (e.g., width@uom). Namespace prefixes of path elements are insignificant.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="Type">
+          <xs:annotation>
+            <xs:documentation>Field type. Complex may be used to indicate that the value of the element is not a simple type.</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <!-- Untyped is referenced in the code but not used in practice; Complex does not appear to have any effect (furthermore, its use is unclear) -->
+              <xs:enumeration value="String"/>
+              <xs:enumeration value="Integer"/>
+              <xs:enumeration value="Real"/>
+              <xs:enumeration value="StringList"/>
+              <xs:enumeration value="IntegerList"/>
+              <xs:enumeration value="RealList"/>
+              <xs:enumeration value="Complex"/>
+              <xs:enumeration value="FeatureProperty"/>
+              <xs:enumeration value="FeaturePropertyList"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element default="true" minOccurs="0" name="Nullable" type="xs:boolean">
+          <xs:annotation>
+            <xs:documentation>Can be set to false to indicate that null/missing values are forbidden.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element minOccurs="0" name="Subtype">
+          <xs:annotation>
+            <xs:documentation>Further specializes the property type. Allowed combinations are: (Type: Integer, Subtype: Short, Integer64), (Type: IntegerList, Subtype: Integer64), (Type: Real, Subtype: Float), (Type: String, Subtype: Boolean, Date, Time, Datetime), (Type: StringList, Subtype: Boolean)</xs:documentation>
+          </xs:annotation>
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="Boolean"/>
+              <xs:enumeration value="Date"/>
+              <xs:enumeration value="Time"/>
+              <xs:enumeration value="Datetime"/>
+              <xs:enumeration value="Short"/>
+              <xs:enumeration value="Integer64"/>
+              <xs:enumeration value="Float"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element minOccurs="0" name="Condition" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Can be used to create multiple properties from the same XML element, based upon a set of mutually exclusive conditions. For further details, and examples, see https://gdal.org/drivers/vector/gml.html#using-conditions-on-xml-attributes</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element default="false" minOccurs="0" name="Unique" type="xs:boolean">
+          <xs:annotation>
+            <xs:documentation>When set to true, indicates that values of that field are unique through all the features of the layer</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element default="0" minOccurs="0" name="Width" type="xs:nonNegativeInteger">
+          <xs:annotation>
+            <xs:documentation>Maximum width of the string representation of the values of the field. Supported use cases: (Type: String, Subtype is NOT Boolean, Date, Time, or Datetime), (Type: Integer), (Type: Real)</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element default="0" minOccurs="0" name="Precision" type="xs:nonNegativeInteger">
+          <xs:annotation>
+            <xs:documentation>Only applies to Real. Maximum decimal precision (i.e. number of digits after the decimal point) of the values of the field.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

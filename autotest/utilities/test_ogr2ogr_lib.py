@@ -164,17 +164,8 @@ def test_ogr2ogr_lib_6():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
-    ret = "success"
-    if feat.GetFieldAsDouble("EAS_ID") != 168:
-        gdaltest.post_reason("did not get expected value for EAS_ID")
-        print(feat.GetFieldAsDouble("EAS_ID"))
-        ret = "fail"
-    elif feat.GetFieldAsString("PRFEDEA") != "35043411":
-        gdaltest.post_reason("did not get expected value for PRFEDEA")
-        print(feat.GetFieldAsString("PRFEDEA"))
-        ret = "fail"
-
-    return ret
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
 
 
 ###############################################################################
@@ -494,6 +485,9 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     if not ogrtest.have_geos():
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
     ds = gdal.VectorTranslate(
@@ -652,6 +646,9 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 
 
 def test_ogr2ogr_lib_makevalid():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
@@ -994,3 +991,157 @@ def test_ogr2ogr_upsert():
     assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test -t_srs to a driver that automatically reprojects to WGS 84
+
+
+def test_ogr2ogr_lib_t_srs_ignored():
+
+    if gdal.GetDriverByName("GeoJSONSeq") is None:
+        pytest.skip("GeoJSONSeq driver is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    gdal.PushErrorHandler(my_handler)
+    assert (
+        gdal.VectorTranslate(
+            "/vsimem/out.txt",
+            srcDS,
+            format="GeoJSONSeq",
+            dstSRS="EPSG:32631",
+            reproject=True,
+        )
+        is not None
+    )
+    gdal.PopErrorHandler()
+    gdal.Unlink("/vsimem/out.txt")
+    assert got_msg == [
+        "Target SRS WGS 84 / UTM zone 31N not taken into account as target driver likely implements on-the-fly reprojection to WGS 84"
+    ]
+
+
+###############################################################################
+# Test spatSRS
+
+
+def test_ogr2ogr_lib_spat_srs_projected():
+
+    # Check that we densify spatial filter geometry when not expressed in
+    # the layer CRS
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT(20.56403717640477 60.367519337232835)")
+    )
+    # Reprojection of this point to EPSG:3067 is POINT (145388.398 6709681.065)
+    # and thus falls in the below spatial filter rectangle
+    # But if we don't densify the geometry enough, post processing would
+    # discard the point.
+    srcLayer.CreateFeature(f)
+
+    ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        spatFilter=[130036.75, 6697405.5, 145400.4, 6756013.0],
+        spatSRS="EPSG:3067",
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test spatSRS
+
+
+def test_ogr2ogr_lib_spat_srs_geographic():
+
+    # Check that we densify spatial filter geometry when not expressed in
+    # the layer CRS
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32661)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    # Reprojects as -90 89.099 in EPSG:4326
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1900000 2000000)"))
+    srcLayer.CreateFeature(f)
+
+    # Naive reprojection of the below bounding box to EPSG:32661 would
+    # be [2000000, 2000000, 2000000, 3112951.14]
+    ds = gdal.VectorTranslate(
+        "", srcDS, format="Memory", spatFilter=[-180, 80, 180, 90], spatSRS="EPSG:4326"
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test -clipsrc and intersection being of a lower dimensionality
+
+
+def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 1)"))
+    srcLayer.CreateFeature(f)
+
+    # Intersection of above geometry with -clipsrc bounding box is a point
+    ds = gdal.VectorTranslate("", srcDS, options="-f Memory -clipsrc -1 -1 0 0")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test -clipdst and intersection being of a lower dimensionality
+
+
+def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 1)"))
+    srcLayer.CreateFeature(f)
+
+    # Intersection of above geometry with -clipdst bounding box is a point
+    ds = gdal.VectorTranslate("", srcDS, options="-f Memory -clipdst -1 -1 0 0")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0

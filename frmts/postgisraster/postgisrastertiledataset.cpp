@@ -33,15 +33,12 @@
  ************************************************************************/
 #include "postgisraster.h"
 
-
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterTileDataset::PostGISRasterTileDataset( PostGISRasterDataset* poRDSIn,
-                                                    int nXSize,
-                                                    int nYSize ) :
-    poRDS(poRDSIn),
-    pszPKID(nullptr)
+PostGISRasterTileDataset::PostGISRasterTileDataset(
+    PostGISRasterDataset *poRDSIn, int nXSize, int nYSize)
+    : poRDS(poRDSIn), pszPKID(nullptr)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -59,7 +56,8 @@ PostGISRasterTileDataset::PostGISRasterTileDataset( PostGISRasterDataset* poRDSI
  ************************/
 PostGISRasterTileDataset::~PostGISRasterTileDataset()
 {
-    if (pszPKID) {
+    if (pszPKID)
+    {
         CPLFree(pszPKID);
         pszPKID = nullptr;
     }
@@ -68,7 +66,8 @@ PostGISRasterTileDataset::~PostGISRasterTileDataset()
 /********************************************************
  * \brief Get the affine transformation coefficients
  ********************************************************/
-CPLErr PostGISRasterTileDataset::GetGeoTransform(double * padfTransform) {
+CPLErr PostGISRasterTileDataset::GetGeoTransform(double *padfTransform)
+{
     // copy necessary values in supplied buffer
     padfTransform[0] = adfGeoTransform[0];
     padfTransform[1] = adfGeoTransform[1];
@@ -83,8 +82,8 @@ CPLErr PostGISRasterTileDataset::GetGeoTransform(double * padfTransform) {
 /********************************************************
  * \brief Return spatial extent of tile
  ********************************************************/
-void PostGISRasterTileDataset::GetExtent(double* pdfMinX, double* pdfMinY,
-                                         double* pdfMaxX, double* pdfMaxY) const
+void PostGISRasterTileDataset::GetExtent(double *pdfMinX, double *pdfMinY,
+                                         double *pdfMaxX, double *pdfMaxY) const
 {
     // FIXME; incorrect in case of non 0 rotation terms
 
@@ -92,15 +91,15 @@ void PostGISRasterTileDataset::GetExtent(double* pdfMinX, double* pdfMinY,
     double dfMaxY = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y];
 
     double dfMaxX = adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
-            nRasterXSize * adfGeoTransform[GEOTRSFRM_WE_RES] +
-            nRasterYSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
+                    nRasterXSize * adfGeoTransform[GEOTRSFRM_WE_RES] +
+                    nRasterYSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1];
 
     double dfMinY = adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
-            nRasterXSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
-            nRasterYSize * adfGeoTransform[GEOTRSFRM_NS_RES];
+                    nRasterXSize * adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] +
+                    nRasterYSize * adfGeoTransform[GEOTRSFRM_NS_RES];
 
     // In case yres > 0
-    if( dfMinY > dfMaxY )
+    if (dfMinY > dfMaxY)
     {
         double dfTemp = dfMinY;
         dfMinY = dfMaxY;

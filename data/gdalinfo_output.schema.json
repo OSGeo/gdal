@@ -1,0 +1,344 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for gdalinfo -json output",
+
+  "oneOf": [
+    {
+      "$ref": "#/definitions/dataset"
+    }
+  ],
+
+  "definitions": {
+
+    "arrayOfTwoIntegers": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+
+    "arrayOfTwoNumbers": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+
+    "band": {
+      "type": "object",
+      "properties": {
+        "band": {
+          "type": "integer"
+        },
+        "block": {
+          "$ref": "#/definitions/arrayOfTwoIntegers"
+        },
+        "checksum": {
+          "type": "integer"
+        },
+        "colorInterpretation": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "Byte",
+            "Int8",
+            "UInt16",
+            "Int16",
+            "UInt32",
+            "Int32",
+            "UInt64",
+            "Int32",
+            "Float32",
+            "Float64",
+            "CInt16",
+            "CInt32",
+            "CFloat32",
+            "CFloat64"
+          ]
+        },
+        "histogram": {
+          "type": "object",
+          "properties": {
+            "buckets": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "count": {
+              "type": "integer"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "computedMin": {
+          "type": "number"
+        },
+        "computedMax": {
+          "type": "number"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "mean": {
+          "type": "number"
+        },
+        "stdDev": {
+          "type": "number"
+        },
+        "overviews": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "size": {
+                "$ref": "#/definitions/arrayOfTwoIntegers"
+              }
+            }
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadata"
+        }
+      },
+      "required": [
+        "band",
+        "block",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+
+    "cornerCoordinates": {
+      "type": "object",
+      "properties": {
+        "upperLeft": {
+          "$ref": "#/definitions/arrayOfTwoNumbers"
+        },
+        "lowerLeft": {
+          "$ref": "#/definitions/arrayOfTwoNumbers"
+        },
+        "lowerRight": {
+          "$ref": "#/definitions/arrayOfTwoNumbers"
+        },
+        "upperRight": {
+          "$ref": "#/definitions/arrayOfTwoNumbers"
+        },
+        "center": {
+          "$ref": "#/definitions/arrayOfTwoNumbers"
+        }
+      },
+      "required": [
+        "upperLeft",
+        "lowerLeft",
+        "lowerRight",
+        "upperRight",
+        "center"
+      ],
+      "additionalProperties": false
+    },
+
+    "dataset": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "driverShortName": {
+          "type": "string"
+        },
+        "driverLongName": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "size": {
+          "$ref": "#/definitions/arrayOfTwoIntegers"
+        },
+        "coordinateSystem": {
+          "$ref": "#/definitions/coordinateSystem"
+        },
+        "geoTransform": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minItems": 6,
+            "maxItems": 6
+          }
+        },
+        "cornerCoordinates": {
+          "$ref": "#/definitions/cornerCoordinates"
+        },
+        "wgs84Extent": {
+          "$ref": "https://geojson.org/schema/Geometry.json"
+        },
+        "bands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/band"
+          }
+        },
+        "stac": {
+          "$ref": "#/definitions/stac"
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadata"
+        }
+      },
+      "required": [
+        "size",
+        "bands"
+      ],
+      "additionalProperties": false
+    },
+
+    "metadata": {
+      "type": "object",
+      "$comment": "Object whose keys are metadata domain names. The empty string is a valid metadata domain name, and is used for the default domain.",
+      "patternProperties": {
+        "^.*$": {
+          "$ref": "#/definitions/metadataDomain"
+        }
+      }
+    },
+
+    "metadataDomain": {
+      "$comment": " The values of a metadadomain are key: string pairs, or arbitrary JSON objects for metadata domain names starting with the \"json:\" prefix.",
+      "any": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "#/definitions/keyValueDict"
+        }
+      ]
+    },
+
+    "coordinateSystem": {
+      "type": "object",
+      "properties": {
+        "wkt": {
+          "type": "string"
+        },
+        "proj4": {
+          "type": "string"
+        },
+        "projjson": {
+          "$ref": "https://proj.org/schemas/v0.5/projjson.schema.json"
+        },
+        "dataAxisToSRSAxisMapping": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minItems": 2,
+            "maxItems": 3
+          }
+        },
+        "coordinateEpoch": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "wkt",
+        "dataAxisToSRSAxisMapping"
+      ],
+      "additionalProperties": false
+    },
+
+    "keyValueDict": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {}
+      }
+    },
+
+    "stac": {
+      "$comment": "Derived from https://raw.githubusercontent.com/stac-extensions/projection/main/json-schema/schema.json#/definitions/fields, https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands and https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands",
+      "type": "object",
+      "properties": {
+        "proj:epsg": {
+          "title": "EPSG code",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "proj:wkt2": {
+          "title": "Coordinate Reference System in WKT2 format",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proj:projjson": {
+          "title": "Coordinate Reference System in PROJJSON format",
+          "oneOf": [
+            {
+              "$ref": "https://proj.org/schemas/v0.5/projjson.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "proj:shape": {
+          "title": "Shape",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "proj:transform": {
+          "title": "Transform",
+          "type": "array",
+          "oneOf": [
+            {
+              "minItems": 6,
+              "maxItems": 6
+            },
+            {
+              "minItems": 9,
+              "maxItems": 9
+            }
+          ],
+          "items": {
+            "type": "number"
+          }
+        },
+        "eo:bands": {
+          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands"
+        },
+        "raster:bands": {
+          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

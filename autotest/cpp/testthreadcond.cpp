@@ -32,19 +32,27 @@
 #endif
 
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 
-CPLCond* hCond = nullptr;
-CPLCond* hCondJobFinished = nullptr;
-CPLMutex* hClientMutex = nullptr;
+#include "gtest_include.h"
+
+namespace
+{
+
+// ---------------------------------------------------------------------------
+
+CPLCond *hCond = nullptr;
+CPLCond *hCondJobFinished = nullptr;
+CPLMutex *hClientMutex = nullptr;
 
 struct _JobItem
 {
     int nJobNumber;
-    struct _JobItem* psNext;
+    struct _JobItem *psNext;
 };
 typedef struct _JobItem JobItem;
 
-JobItem* psJobList = nullptr;
+JobItem *psJobList = nullptr;
 int nJobListSize = 0;
 int nThreadTotal = 0;
 int bProducedFinished = 0;
@@ -54,17 +62,17 @@ static void ProducerThread(void * /* unused */)
 {
     int i;
     int jobNumber = 0;
-    JobItem* psItem;
+    JobItem *psItem;
 
-    while(jobNumber < 1000)
+    while (jobNumber < 1000)
     {
         CPLAcquireMutex(hClientMutex, 1000.0);
 
-        for(i=0;i<nThreadTotal;i++)
+        for (i = 0; i < nThreadTotal; i++)
         {
-            jobNumber ++;
-            nJobListSize ++;
-            psItem = (JobItem*)malloc(sizeof(JobItem));
+            jobNumber++;
+            nJobListSize++;
+            psItem = (JobItem *)malloc(sizeof(JobItem));
             psItem->nJobNumber = jobNumber;
             psItem->psNext = psJobList;
             psJobList = psItem;
@@ -85,24 +93,24 @@ static void ProducerThread(void * /* unused */)
     CPLReleaseMutex(hClientMutex);
 }
 
-static void ConsumerThread(void* pIndex)
+static void ConsumerThread(void *pIndex)
 {
     int nJobNumber;
     int nThreadIndex;
-    JobItem* psNext;
+    JobItem *psNext;
 
-    nThreadIndex = *(int*)pIndex;
+    nThreadIndex = *(int *)pIndex;
     free(pIndex);
 
     if (bVerbose)
         printf("Thread %d created\n", nThreadIndex);
 
-    nThreadTotal ++;
+    nThreadTotal++;
 
-    while(TRUE)
+    while (TRUE)
     {
         CPLAcquireMutex(hClientMutex, 1000.0);
-        while(psJobList == nullptr && !bProducedFinished)
+        while (psJobList == nullptr && !bProducedFinished)
             CPLCondWait(hCond, hClientMutex);
         if (bProducedFinished)
         {
@@ -120,22 +128,18 @@ static void ConsumerThread(void* pIndex)
             printf("Thread %d consumed job %d\n", nThreadIndex, nJobNumber);
 
         CPLAcquireMutex(hClientMutex, 1000.0);
-        nJobListSize --;
+        nJobListSize--;
         CPLCondSignal(hCondJobFinished);
         CPLReleaseMutex(hClientMutex);
     }
 }
 
-int main(int argc, char* argv[])
+TEST(testthreadcond, test)
 {
     int i;
-    CPLJoinableThread* apThreads[10];
+    CPLJoinableThread *apThreads[10];
 
-    for(i = 0; i < argc; i++)
-    {
-        if( EQUAL(argv[i], "-verbose") )
-            bVerbose = TRUE;
-    }
+    bVerbose = CPLTestBool(CPLGetConfigOption("VERBOSE", "NO"));
 
     hCond = CPLCreateCond();
     hCondJobFinished = CPLCreateCond();
@@ -145,14 +149,14 @@ int main(int argc, char* argv[])
 
     CPLCreateThread(ProducerThread, nullptr);
 
-    for(i = 0; i < 10;i++)
+    for (i = 0; i < 10; i++)
     {
-        int* pi = (int*)malloc(sizeof(int));
+        int *pi = (int *)malloc(sizeof(int));
         *pi = i;
         apThreads[i] = CPLCreateJoinableThread(ConsumerThread, pi);
     }
 
-    for(i = 0; i < 10;i++)
+    for (i = 0; i < 10; i++)
     {
         CPLJoinThread(apThreads[i]);
     }
@@ -160,5 +164,6 @@ int main(int argc, char* argv[])
     CPLDestroyCond(hCond);
     CPLDestroyCond(hCondJobFinished);
     CPLDestroyMutex(hClientMutex);
-    return 0;
 }
+
+}  // namespace

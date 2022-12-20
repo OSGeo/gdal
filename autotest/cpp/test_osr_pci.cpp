@@ -38,135 +38,113 @@
 #include <cmath>
 #include <string>
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
 
-    // Common fixture with test data
-    struct test_osr_pci_data
+// Common fixture with test data
+struct test_osr_pci : public ::testing::Test
+{
+    OGRErr err_ = OGRERR_NONE;
+    OGRSpatialReferenceH srs_ = nullptr;
+
+    void SetUp() override
     {
-        OGRErr err_;
-        OGRSpatialReferenceH srs_;
-
-        test_osr_pci_data()
-            : err_(OGRERR_NONE), srs_(nullptr)
-        {
-            srs_ = OSRNewSpatialReference(nullptr);
-        }
-
-        ~test_osr_pci_data()
-        {
-            OSRDestroySpatialReference(srs_);
-        }
-    };
-
-    // Register test group
-    typedef test_group<test_osr_pci_data> group;
-    typedef group::object object;
-    group test_osr_pci_group("OSR::PCI");
-
-    // Test the OGRSpatialReference::importFromPCI() and OSRImportFromPCI()
-    template<>
-    template<>
-    void object::test<1>()
-    {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
-        const int size = 17;
-        double params[size] = {
-            0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-        };
-
-        err_ = OSRImportFromPCI(srs_, "EC          E015", "METRE", params);
-        ensure_equals("Can't import Equidistant Conic projection",
-            err_, OGRERR_NONE);
-
-        const double maxError = 0.0000005;
-        double val = 0;
-
-        val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_1, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("Standard parallel 1 is invalid",
-               std::fabs(val - 47.0) <= maxError);
-
-        val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_2, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("Standard parallel 2 is invalid",
-               std::fabs(val - 62.0) <= maxError);
-
-        val = OSRGetProjParm(srs_, SRS_PP_LATITUDE_OF_CENTER, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("Latitude of center is invalid",
-               std::fabs(val - 54.5) <= maxError);
-
-        val = OSRGetProjParm(srs_, SRS_PP_LONGITUDE_OF_CENTER, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("Longitude of center is invalid",
-               std::fabs(val - 45.0) <= maxError);
-
-        val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("False easting is invalid", std::fabs(val - 0.0) <= maxError);
-
-        val = OSRGetProjParm(srs_, SRS_PP_FALSE_NORTHING, -1111, &err_);
-        ensure_equals("OSRGetProjParm() failed", err_, OGRERR_NONE);
-        ensure("False northing is invalid", std::fabs(val - 0.0) <= maxError);
+        srs_ = OSRNewSpatialReference(nullptr);
+        ASSERT_TRUE(nullptr != srs_);
     }
 
-    // Test the OGRSpatialReference::exportToPCI() and OSRExportToPCI()
-    template<>
-    template<>
-    void object::test<2>()
+    void TearDown() override
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
-        const char* wkt = "PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
-            "DATUM[\"North_American_Datum_1927\","
-            "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982139006,"
-            "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-            "AUTHORITY[\"EPSG\",\"4267\"]],PROJECTION[\"Lambert_Conformal_Conic_2SP\"],"
-            "PARAMETER[\"standard_parallel_1\",33.90363402777778],"
-            "PARAMETER[\"standard_parallel_2\",33.62529002777778],"
-            "PARAMETER[\"latitude_of_origin\",33.76446202777777],"
-            "PARAMETER[\"central_meridian\",-117.4745428888889],"
-            "PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],"
-            "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]]";
-
-        err_ = OSRImportFromWkt(srs_, (char**) &wkt);
-        ensure_equals("Can't import Lambert Conformal Conic projection",
-            err_, OGRERR_NONE);
-
-        char* proj = nullptr;
-        char* units = nullptr;
-        double* params = nullptr;
-
-        err_ = OSRExportToPCI(srs_, &proj, &units, &params);
-        ensure_equals("OSRExportToPCI() failed", err_, OGRERR_NONE);
-
-        ensure_equals("Invalid projection definition",
-            std::string(proj), std::string("LCC         D-01"));
-
-        ensure_equals("Invalid projection units",
-            std::string(units), std::string("METRE"));
-
-        const double maxError = 0.0000005;
-
-        ensure("Invalid 2nd projection parameter",
-            std::fabs(params[2] - (-117.4745429)) <= maxError);
-
-        ensure("Invalid 3rd projection parameter",
-            std::fabs(params[3] - 33.76446203) <= maxError);
-
-        ensure("Invalid 4th projection parameter",
-            std::fabs(params[4] - 33.90363403) <= maxError);
-
-        ensure("Invalid 5th projection parameter",
-            std::fabs(params[5] - 33.62529003) <= maxError);
-
-        CPLFree(proj);
-        CPLFree(units);
-        CPLFree(params);
+        OSRDestroySpatialReference(srs_);
+        srs_ = nullptr;
     }
+};
 
-} // namespace tut
+// Test the OGRSpatialReference::importFromPCI() and OSRImportFromPCI()
+TEST_F(test_osr_pci, importFromPCI)
+{
+    const int size = 17;
+    double params[size] = {0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0,  0.0,  0.0,  0.0,  0.0, 0.0};
+
+    err_ = OSRImportFromPCI(srs_, "EC          E015", "METRE", params);
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    const double maxError = 0.0000005;
+    double val = 0;
+
+    val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_1, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 47.0, maxError);
+
+    val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_2, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 62.0, maxError);
+
+    val = OSRGetProjParm(srs_, SRS_PP_LATITUDE_OF_CENTER, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 54.5, maxError);
+
+    val = OSRGetProjParm(srs_, SRS_PP_LONGITUDE_OF_CENTER, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 45.0, maxError);
+
+    val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 0.0, maxError);
+
+    val = OSRGetProjParm(srs_, SRS_PP_FALSE_NORTHING, -1111, &err_);
+    ASSERT_EQ(err_, OGRERR_NONE);
+    EXPECT_NEAR(val, 0.0, maxError);
+}
+
+// Test the OGRSpatialReference::exportToPCI() and OSRExportToPCI()
+TEST_F(test_osr_pci, exportToPCI)
+{
+    const char *wkt =
+        "PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
+        "DATUM[\"North_American_Datum_1927\","
+        "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982139006,"
+        "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
+        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
+        "AUTHORITY[\"EPSG\",\"4267\"]],PROJECTION[\"Lambert_Conformal_Conic_"
+        "2SP\"],"
+        "PARAMETER[\"standard_parallel_1\",33.90363402777778],"
+        "PARAMETER[\"standard_parallel_2\",33.62529002777778],"
+        "PARAMETER[\"latitude_of_origin\",33.76446202777777],"
+        "PARAMETER[\"central_meridian\",-117.4745428888889],"
+        "PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],"
+        "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]]";
+
+    err_ = OSRImportFromWkt(srs_, (char **)&wkt);
+    ASSERT_EQ(err_, OGRERR_NONE);
+
+    char *proj = nullptr;
+    char *units = nullptr;
+    double *params = nullptr;
+
+    err_ = OSRExportToPCI(srs_, &proj, &units, &params);
+    EXPECT_EQ(err_, OGRERR_NONE);
+
+    EXPECT_STREQ(proj, "LCC         D-01");
+
+    EXPECT_STREQ(units, "METRE");
+
+    const double maxError = 0.0000005;
+
+    EXPECT_NEAR(params[2], -117.47454290, maxError);
+
+    EXPECT_NEAR(params[3], 33.76446203, maxError);
+
+    EXPECT_NEAR(params[4], 33.90363403, maxError);
+
+    EXPECT_NEAR(params[5], 33.62529003, maxError);
+
+    CPLFree(proj);
+    CPLFree(units);
+    CPLFree(params);
+}
+
+}  // namespace

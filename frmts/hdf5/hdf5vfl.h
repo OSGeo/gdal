@@ -26,9 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
- // This file contains the Virtual File Layer implementation that calls through
- // to the VSI functions and should be included by HDF5 based drivers that wish
- // to use the VFL for /vsi file system support.
+// This file contains the Virtual File Layer implementation that calls through
+// to the VSI functions and should be included by HDF5 based drivers that wish
+// to use the VFL for /vsi file system support.
 
 #ifndef HDF5VFL_H_INCLUDED_
 #define HDF5VFL_H_INCLUDED_
@@ -46,18 +46,27 @@
 #define HDF5_1_13_OR_LATER
 #endif
 
+// HDF5 >= 1.13.2
+#ifdef H5FD_CLASS_VERSION
+#if H5FD_CLASS_VERSION != 1
+#error                                                                         \
+    "HDF5_vsil_g needs to be adapted to the new layout of H5FD_class_t. Look at ${hdf5_prefix}/include/H5FDdevelop.h"
+#endif
+#endif
+
 static std::mutex gMutex;
 static hid_t hFileDriver = -1;
 
 static H5FD_t *HDF5_vsil_open(const char *name, unsigned flags, hid_t fapl_id,
-            haddr_t maxaddr);
+                              haddr_t maxaddr);
 static herr_t HDF5_vsil_close(H5FD_t *_file);
 static herr_t HDF5_vsil_query(const H5FD_t *_f1, unsigned long *flags);
 static haddr_t HDF5_vsil_get_eoa(const H5FD_t *_file, H5FD_mem_t type);
 static herr_t HDF5_vsil_set_eoa(H5FD_t *_file, H5FD_mem_t type, haddr_t addr);
 static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file
 #ifdef HDF5_1_10_OR_LATER
-                                 , H5FD_mem_t type
+                                 ,
+                                 H5FD_mem_t type
 #endif
 );
 static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t type, hid_t fapl_id,
@@ -69,84 +78,94 @@ static herr_t HDF5_vsil_truncate(H5FD_t *_file, hid_t dxpl_id, hbool_t closing);
 static hid_t HDF5VFLGetFileDriver();
 static void HDF5VFLUnloadFileDriver();
 
-#define MAXADDR (((haddr_t)1<<(8*sizeof(haddr_t)-1))-1)
+#define MAXADDR (((haddr_t)1 << (8 * sizeof(haddr_t) - 1)) - 1)
 
 /* See https://support.hdfgroup.org/HDF5/doc/TechNotes/VFL.html */
 static const H5FD_class_t HDF5_vsil_g = {
+#ifdef H5FD_CLASS_VERSION
+    H5FD_CLASS_VERSION,
+#endif
 #ifdef HDF5_1_13_OR_LATER
-/* value: 513 has been reserved with hdfgroup and is registered at:
+    /* value: 513 has been reserved with hdfgroup and is registered at:
      * https://portal.hdfgroup.org/pages/viewpage.action?pageId=74188097 */
     (H5FD_class_value_t)(513),
 #endif
-    "vsil",                     /* name */
-    MAXADDR,                    /* maxaddr  */
-    H5F_CLOSE_WEAK,             /* fc_degree  */
+    "vsil",         /* name */
+    MAXADDR,        /* maxaddr  */
+    H5F_CLOSE_WEAK, /* fc_degree  */
 #ifdef HDF5_1_10_OR_LATER
-    nullptr,                    /* terminate */
+    nullptr, /* terminate */
 #endif
-    nullptr,                    /* sb_size  */
-    nullptr,                    /* sb_encode */
-    nullptr,                    /* sb_decode */
-    0,                          /* fapl_size */
-    nullptr,                    /* fapl_get  */
-    nullptr,                    /* fapl_copy */
-    nullptr,                    /* fapl_free */
-    0,                          /* dxpl_size */
-    nullptr,                    /* dxpl_copy */
-    nullptr,                    /* dxpl_free */
-    HDF5_vsil_open,             /* open */
-    HDF5_vsil_close,            /* close */
-    nullptr,                    /* cmp  */
-    HDF5_vsil_query,            /* query */
-    nullptr,                    /* get_type_map */
-    nullptr,                    /* alloc */
-    nullptr,                    /* free */
-    HDF5_vsil_get_eoa,          /* get_eoa */
-    HDF5_vsil_set_eoa,          /* set_eoa */
-    HDF5_vsil_get_eof,          /* get_eof */
-    nullptr,                    /* get_handle */
-    HDF5_vsil_read,             /* read */
-    HDF5_vsil_write,            /* write */
-    nullptr,                    /* flush */
-    HDF5_vsil_truncate,         /* truncate */
-    nullptr,                    /* lock */
-    nullptr,                    /* unlock */
+    nullptr,           /* sb_size  */
+    nullptr,           /* sb_encode */
+    nullptr,           /* sb_decode */
+    0,                 /* fapl_size */
+    nullptr,           /* fapl_get  */
+    nullptr,           /* fapl_copy */
+    nullptr,           /* fapl_free */
+    0,                 /* dxpl_size */
+    nullptr,           /* dxpl_copy */
+    nullptr,           /* dxpl_free */
+    HDF5_vsil_open,    /* open */
+    HDF5_vsil_close,   /* close */
+    nullptr,           /* cmp  */
+    HDF5_vsil_query,   /* query */
+    nullptr,           /* get_type_map */
+    nullptr,           /* alloc */
+    nullptr,           /* free */
+    HDF5_vsil_get_eoa, /* get_eoa */
+    HDF5_vsil_set_eoa, /* set_eoa */
+    HDF5_vsil_get_eof, /* get_eof */
+    nullptr,           /* get_handle */
+    HDF5_vsil_read,    /* read */
+    HDF5_vsil_write,   /* write */
+#if H5FD_CLASS_VERSION == 1
+    nullptr, /* read_vector */
+    nullptr, /* write_vector */
+    nullptr, /* read_selection */
+    nullptr, /* write_selection */
+#endif
+    nullptr,            /* flush */
+    HDF5_vsil_truncate, /* truncate */
+    nullptr,            /* lock */
+    nullptr,            /* unlock */
 #ifdef HDF5_1_13_OR_LATER
-    nullptr,                    /* del */
-    nullptr,                    /* ctl */
+    nullptr, /* del */
+    nullptr, /* ctl */
 #endif
-    H5FD_FLMAP_DICHOTOMY        /* fl_map */
+    H5FD_FLMAP_DICHOTOMY /* fl_map */
 };
 
-typedef struct HDF5_vsil_t {
-    H5FD_t          pub;            /* must be first */
-    VSILFILE       *fp = nullptr;
-    haddr_t         eoa = 0;
-    haddr_t         eof = 0;
+typedef struct HDF5_vsil_t
+{
+    H5FD_t pub; /* must be first */
+    VSILFILE *fp = nullptr;
+    haddr_t eoa = 0;
+    haddr_t eof = 0;
 } HDF5_vsil_t;
 
 static H5FD_t *HDF5_vsil_open(const char *name, unsigned flags,
                               hid_t /*fapl_id*/, haddr_t /*maxaddr*/)
 {
-    const char* openFlags = "rb";
-    if( (H5F_ACC_RDWR & flags) )
+    const char *openFlags = "rb";
+    if ((H5F_ACC_RDWR & flags))
         openFlags = "rb+";
-    if( (H5F_ACC_TRUNC & flags) || (H5F_ACC_CREAT & flags) )
+    if ((H5F_ACC_TRUNC & flags) || (H5F_ACC_CREAT & flags))
         openFlags = "wb+";
 
-    VSILFILE* fp = VSIFOpenL(name, openFlags);
-    if( !fp )
+    VSILFILE *fp = VSIFOpenL(name, openFlags);
+    if (!fp)
     {
         return nullptr;
     }
-    if( (H5F_ACC_TRUNC & flags) )
+    if ((H5F_ACC_TRUNC & flags))
     {
         VSIFTruncateL(fp, 0);
     }
 
-    HDF5_vsil_t* fh = new HDF5_vsil_t;
+    HDF5_vsil_t *fh = new HDF5_vsil_t;
     memset(&fh->pub, 0, sizeof(fh->pub));
-    if( !fh )
+    if (!fh)
     {
         VSIFCloseL(fp);
         return nullptr;
@@ -156,12 +175,12 @@ static H5FD_t *HDF5_vsil_open(const char *name, unsigned flags,
     VSIFSeekL(fh->fp, 0, SEEK_END);
     fh->eof = static_cast<haddr_t>(VSIFTellL(fh->fp));
 
-    return reinterpret_cast<H5FD_t*>(fh);
+    return reinterpret_cast<H5FD_t *>(fh);
 }
 
 static herr_t HDF5_vsil_close(H5FD_t *_file)
 {
-    HDF5_vsil_t* fh = reinterpret_cast<HDF5_vsil_t*>(_file);
+    HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
     int ret = VSIFCloseL(fh->fp);
     delete fh;
     return ret;
@@ -169,52 +188,50 @@ static herr_t HDF5_vsil_close(H5FD_t *_file)
 
 static herr_t HDF5_vsil_query(const H5FD_t *, unsigned long *flags /* out */)
 {
-    *flags = H5FD_FEAT_AGGREGATE_METADATA |
-             H5FD_FEAT_ACCUMULATE_METADATA |
-             H5FD_FEAT_DATA_SIEVE |
-             H5FD_FEAT_AGGREGATE_SMALLDATA;
+    *flags = H5FD_FEAT_AGGREGATE_METADATA | H5FD_FEAT_ACCUMULATE_METADATA |
+             H5FD_FEAT_DATA_SIEVE | H5FD_FEAT_AGGREGATE_SMALLDATA;
     return 0;
 }
 
 static haddr_t HDF5_vsil_get_eoa(const H5FD_t *_file, H5FD_mem_t /*type*/)
 {
-    const HDF5_vsil_t* fh = reinterpret_cast<const HDF5_vsil_t*>(_file);
+    const HDF5_vsil_t *fh = reinterpret_cast<const HDF5_vsil_t *>(_file);
     return fh->eoa;
 }
 
 static herr_t HDF5_vsil_set_eoa(H5FD_t *_file, H5FD_mem_t /*type*/,
                                 haddr_t addr)
 {
-    HDF5_vsil_t* fh = reinterpret_cast<HDF5_vsil_t*>(_file);
+    HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
     fh->eoa = addr;
     return 0;
 }
 
 static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file
 #ifdef HDF5_1_10_OR_LATER
-                                 , H5FD_mem_t /* type */
+                                 ,
+                                 H5FD_mem_t /* type */
 #endif
-                                )
+)
 {
-    const HDF5_vsil_t* fh = reinterpret_cast<const HDF5_vsil_t*>(_file);
+    const HDF5_vsil_t *fh = reinterpret_cast<const HDF5_vsil_t *>(_file);
     return fh->eof;
 }
 
 static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t /* type */,
-                             hid_t /* dxpl_id */,
-                             haddr_t addr, size_t size, void *buf /*out*/)
+                             hid_t /* dxpl_id */, haddr_t addr, size_t size,
+                             void *buf /*out*/)
 {
-    HDF5_vsil_t* fh = reinterpret_cast<HDF5_vsil_t*>(_file);
+    HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
     VSIFSeekL(fh->fp, static_cast<vsi_l_offset>(addr), SEEK_SET);
     return VSIFReadL(buf, size, 1, fh->fp) == 1 ? 0 : -1;
 }
 
 static herr_t HDF5_vsil_write(H5FD_t *_file, H5FD_mem_t /* type */,
-                              hid_t /* dxpl_id */,
-                              haddr_t addr, size_t size,
+                              hid_t /* dxpl_id */, haddr_t addr, size_t size,
                               const void *buf /*out*/)
 {
-    HDF5_vsil_t* fh = reinterpret_cast<HDF5_vsil_t*>(_file);
+    HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
     VSIFSeekL(fh->fp, static_cast<vsi_l_offset>(addr), SEEK_SET);
     int ret = VSIFWriteL(buf, size, 1, fh->fp) == 1 ? 0 : -1;
     fh->eof = std::max(fh->eof, static_cast<haddr_t>(VSIFTellL(fh->fp)));
@@ -224,10 +241,10 @@ static herr_t HDF5_vsil_write(H5FD_t *_file, H5FD_mem_t /* type */,
 static herr_t HDF5_vsil_truncate(H5FD_t *_file, hid_t /* dxpl_id*/,
                                  hbool_t /*closing*/)
 {
-    HDF5_vsil_t* fh = reinterpret_cast<HDF5_vsil_t*>(_file);
-    if(fh->eoa != fh->eof)
+    HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
+    if (fh->eoa != fh->eof)
     {
-        if( VSIFTruncateL(fh->fp, fh->eoa) < 0 )
+        if (VSIFTruncateL(fh->fp, fh->eoa) < 0)
         {
             return -1;
         }
@@ -243,14 +260,14 @@ static herr_t HDF5_vsil_truncate(H5FD_t *_file, hid_t /* dxpl_id*/,
 static hid_t HDF5VFLGetFileDriver()
 {
     std::lock_guard<std::mutex> oLock(gMutex);
-    if( hFileDriver < 0 )
+    if (hFileDriver < 0)
     {
         hFileDriver = H5FDregister(&HDF5_vsil_g);
 #if H5E_auto_t_vers == 2
         // also, don't print error messages from KEA driver.
-        // (which uses H5E_auto_t_vers=2 - the default, hdf uses 1 for some reason).
-        // These tend to be meaningless - ie no GCP's found etc.
-        // They didn't seem to be shown when we didn't use the VFL layer
+        // (which uses H5E_auto_t_vers=2 - the default, hdf uses 1 for some
+        // reason). These tend to be meaningless - ie no GCP's found etc. They
+        // didn't seem to be shown when we didn't use the VFL layer
         // - maybe VFL turns them on?
         H5Eset_auto(H5E_DEFAULT, nullptr, nullptr);
 #endif
@@ -266,7 +283,7 @@ static void HDF5VFLUnloadFileDriver()
 {
     {
         std::lock_guard<std::mutex> oLock(gMutex);
-        if( hFileDriver >= 0 )
+        if (hFileDriver >= 0)
         {
             H5FDunregister(hFileDriver);
             hFileDriver = -1;

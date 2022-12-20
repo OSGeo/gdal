@@ -292,6 +292,12 @@ def test_cog_creation_of_overviews():
 
 
 def test_cog_creation_of_overviews_with_compression():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     directory = "/vsimem/test_cog_creation_of_overviews_with_compression"
     filename = directory + "/cog.tif"
     src_ds = gdal.Translate("", "data/byte.tif", options="-of MEM -outsize 2048 300")
@@ -382,6 +388,11 @@ def test_cog_creation_of_overviews_with_mask():
 
 
 def test_cog_small_world_to_web_mercator():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     tab = [0]
 
@@ -925,6 +936,11 @@ def test_cog_sparse():
 
 def test_cog_sparse_mask():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     filename = "/vsimem/cog.tif"
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 4)
     for i in range(4):
@@ -1019,6 +1035,11 @@ def test_cog_sparse_mask():
 
 def test_cog_sparse_imagery_0_mask_255():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     filename = "/vsimem/cog.tif"
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 4)
     for i in range(4):
@@ -1073,6 +1094,11 @@ def test_cog_sparse_imagery_0_mask_255():
 
 
 def test_cog_sparse_imagery_0_or_255_mask_255():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     filename = "/vsimem/cog.tif"
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 4)
@@ -1142,6 +1168,11 @@ def test_cog_sparse_imagery_0_or_255_mask_255():
 
 
 def test_cog_sparse_imagery_mask_0():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("COG").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     filename = "/vsimem/cog.tif"
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 4)

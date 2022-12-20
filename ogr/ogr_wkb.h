@@ -31,9 +31,22 @@
 
 #include "cpl_port.h"
 
-bool OGRWKBGetGeomType(const GByte* pabyWkb, size_t nWKBSize,
-                       bool& bNeedSwap, uint32_t& nType);
-bool OGRWKBPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea);
-bool OGRWKBMultiPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea);
+bool OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize, bool &bNeedSwap,
+                       uint32_t &nType);
+bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                          double &dfArea);
+bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                               double &dfArea);
 
-#endif // OGR_WKB_H_INCLUDED
+/** Modifies a PostGIS-style Extended WKB geometry to a regular WKB one.
+ * pabyEWKB will be modified in place.
+ * The return value will be either at the beginning of pabyEWKB or 4 bytes
+ * later, and thus has the same lifetime of pabyEWKB. The function returns in
+ * nWKBSizeOut the length of the returned WKB pointer. pnSRIDOut may be NULL, or
+ * if not NULL, the function will return in it the SRID, if present, or INT_MIN
+ * if not present.
+ */
+const GByte CPL_DLL *WKBFromEWKB(GByte *pabyEWKB, size_t nEWKBSize,
+                                 size_t &nWKBSizeOut, int *pnSRIDOut);
+
+#endif  // OGR_WKB_H_INCLUDED

@@ -36,51 +36,43 @@
 
 #include "proj.h"
 
-static void func1(void*)
+#include "test_data.h"
+#include "gtest_include.h"
+
+namespace
+{
+
+// ---------------------------------------------------------------------------
+
+static void func1(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
     CPLPushErrorHandler(CPLQuietErrorHandler);
     auto ret = OSRImportFromEPSG(hSRS, 32631);
     CPLPopErrorHandler();
-    if( ret == OGRERR_NONE )
-    {
-        fprintf(stderr, "failure expected (1)\n");
-        exit(1);
-    }
+    EXPECT_NE(ret, OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
-static void func2(void*)
+static void func2(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    if( OSRImportFromEPSG(hSRS, 32631) != OGRERR_NONE )
-    {
-        fprintf(stderr, "failure not expected (2)\n");
-        exit(1);
-    }
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
-static void func3(void*)
+static void func3(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    if( OSRImportFromEPSG(hSRS, 32631) != OGRERR_NONE )
-    {
-        fprintf(stderr, "failure not expected (3)\n");
-        exit(1);
-    }
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
 
     // Test cleanup effect
     OSRCleanup();
 
-    for(int epsg = 32601; epsg <= 32661; epsg++ )
+    for (int epsg = 32601; epsg <= 32661; epsg++)
     {
-        if( OSRImportFromEPSG(hSRS, epsg) != OGRERR_NONE ||
-            OSRImportFromEPSG(hSRS, epsg+100) != OGRERR_NONE )
-        {
-            fprintf(stderr, "failure not expected (4)\n");
-            exit(1);
-        }
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE);
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE);
     }
     OSRDestroySpatialReference(hSRS);
 }
@@ -92,40 +84,25 @@ static void func4()
     // database structure change.
     //
     // See PR https://github.com/OSGeo/gdal/pull/3590
-    const char* apszAux0[] = {"data/test_aux.db", nullptr};
+    const char *apszAux0[] = {TUT_ROOT_DATA_DIR "/test_aux.db", nullptr};
     OSRSetPROJAuxDbPaths(apszAux0);
 
-    char** papszAux1 = OSRGetPROJAuxDbPaths();
-    if(papszAux1 == nullptr || papszAux1[0] == nullptr)
-    {
-        fprintf(stderr, "failure not expected (5)\n");
-        exit(1);
-    }
-    if(!EQUAL(apszAux0[0], papszAux1[0]))
-    {
-        fprintf(stderr, "failure not expected (6)\n");
-        exit(1);
-    }
+    CPLStringList aosAux1(OSRGetPROJAuxDbPaths());
+    ASSERT_EQ(aosAux1.size(), 1);
+    ASSERT_STREQ(apszAux0[0], aosAux1[0]);
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    if(OSRImportFromEPSG(hSRS, 4326) != OGRERR_NONE)
-    {
-        fprintf(stderr, "failure not expected (7)\n");
-        exit(1); 
-    }
-    if(OSRImportFromEPSG(hSRS, 111111) != OGRERR_NONE)
-    {
-        fprintf(stderr, "failure not expected (8)\n");
-        exit(1); 
-    }
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 4326), OGRERR_NONE);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 111111), OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
-int main()
+TEST(test_osr_set_proj_search_paths, test)
 {
     auto tokens = OSRGetPROJSearchPaths();
 
     // Overriding PROJ_LIB
-    setenv("PROJ_LIB", "/i_do/not_exist", true);
+    static char szPROJ_LIB[] = "PROJ_LIB=/i_do/not_exist";
+    putenv(szPROJ_LIB);
 
     // Test we can no longer find the database
     func1(nullptr);
@@ -135,14 +112,10 @@ int main()
     CPLJoinThread(t1);
 
     {
-        const char* const apszDummyPaths[] = { "/i/am/dummy", nullptr };
+        const char *const apszDummyPaths[] = {"/i/am/dummy", nullptr};
         OSRSetPROJSearchPaths(apszDummyPaths);
         auto tokens2 = OSRGetPROJSearchPaths();
-        if( strcmp(tokens2[0], "/i/am/dummy") != 0 )
-        {
-            fprintf(stderr, "failure not expected (5)\n");
-            exit(1);
-        }
+        EXPECT_STREQ(tokens2[0], "/i/am/dummy");
         CSLDestroy(tokens2);
     }
 
@@ -160,17 +133,17 @@ int main()
     OSRCleanup();
 
     // Test fix for #2744
-    CPLJoinableThread* ahThreads[4];
-    for( int i = 0; i< 4; i++ )
+    CPLJoinableThread *ahThreads[4];
+    for (int i = 0; i < 4; i++)
     {
         ahThreads[i] = CPLCreateJoinableThread(func3, nullptr);
     }
-    for( int i = 0; i< 4; i++ )
+    for (int i = 0; i < 4; i++)
     {
         CPLJoinThread(ahThreads[i]);
     }
-    
-    func4();
 
-    return 0;
+    func4();
 }
+
+}  // namespace

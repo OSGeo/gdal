@@ -13,14 +13,24 @@ Download
 Current Release
 ------------------------------------------------------------------------------
 
+* **2022-12-11** `gdal-3.6.1.tar.gz`_ `3.6.1 Release Notes`_ (`3.6.1 md5`_)
+
+.. _`3.6.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.6.1/NEWS.md
+.. _`gdal-3.6.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.6.1/gdal-3.6.1.tar.gz
+.. _`3.6.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.6.1/gdal-3.6.1.tar.gz.md5
+
+Past Releases
+------------------------------------------------------------------------------
+
+* **2022-11-06** `3.6.0 Release Notes`_ *Warning*: this version has been official retracted and superseded per 3.6.1
+
+.. _`3.6.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.6.0/NEWS.md
+
 * **2022-10-21** `gdal-3.5.3.tar.gz`_ `3.5.3 Release Notes`_ (`3.5.3 md5`_)
 
 .. _`3.5.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.5.3/NEWS.md
 .. _`gdal-3.5.3.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.5.3/gdal-3.5.3.tar.gz
 .. _`3.5.3 md5`: https://github.com/OSGeo/gdal/releases/download/v3.5.3/gdal-3.5.3.tar.gz.md5
-
-Past Releases
-------------------------------------------------------------------------------
 
 * **2022-09-12** `gdal-3.5.2.tar.gz`_ `3.5.2 Release Notes`_ (`3.5.2 md5`_)
 
@@ -192,7 +202,7 @@ Past Releases
 Development Source
 ------------------------------------------------------------------------------
 
-The main repository for GDAL is located on github at
+The main repository for GDAL is located on GitHub at
 https://github.com/OSGeo/GDAL.
 
 You can obtain a copy of the active source code by issuing the following
@@ -203,30 +213,17 @@ command
     git clone https://github.com/OSGeo/GDAL.git
 
 
-Build requirements
-..................
-
-To build GDAL 3 or later, you need *at a minimum* a C++11 compatible compiler, and
-`PROJ 6 or later <https://proj.org>`_.
-This will only give you a minimum build which will lack a lot of drivers.
-Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for additional optional
-dependencies.
-
-
-Build instructions
-..................
-
-See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for existing
-autoconf and nmake build systems.
-
-From GDAL 3.5, an *experimental* :ref:`CMake-based build <build_hints>` is available.
-
+Additional information is available about :ref:`build_requirements` and :ref:`building_from_source`.
 
 Binaries
 ------------------------------------------------------------------------------
 
 In this section we list a number of the binary distributions of GDAL
 all of which should have fully reproducible open source build recipes.
+
+Note that the maintainers of those distributions are generally not the maintainers
+of the GDAL sources, so please report any issue specific to those builds through
+their own support channels.
 
 Windows
 ................................................................................
@@ -268,6 +265,14 @@ available at https://anaconda.org/conda-forge/gdal.
 
     conda install -c conda-forge gdal
 
+
+To install the Arrow and Parquet drivers as plugins:
+
+::
+
+    conda install -c conda-forge libgdal-arrow-parquet
+
+
 Vcpkg
 ................................................................................
 
@@ -285,6 +290,31 @@ You can download and install gdal using the vcpkg dependency manager:
 
 If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg>`__ on the vcpkg repository.
 
+Spack
+................................................................................
+
+Spack is a package management tool designed to support multiple versions and
+configurations of software on a wide variety of platforms and environments.
+It was designed for large supercomputing centers. Spack builds packages from
+sources, and allows tweaking their configurations.
+
+You can find information about GDAL in Spack at
+https://spack.readthedocs.io/en/latest/package_list.html#gdal
+
+For the default GDAL build with a reduced number of drivers:
+
+::
+
+    git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+    cd spack/bin
+    ./spack install gdal
+
+For a build with netcdf driver enabled:
+
+::
+
+    ./spack install gdal +netcdf
+
 
 Linux Docker images
 ................................................................................
@@ -294,8 +324,3 @@ Images with nightly builds of GDAL master and tagged releases are available at
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_
-
-.. toctree::
-   :maxdepth: 0
-
-   build_hints

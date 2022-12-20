@@ -6112,6 +6112,73 @@ def test_ogr_pg_get_geometry_types():
 
 
 ###############################################################################
+
+
+def test_ogr_pg_insert_single_feature_of_fid_0():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    if not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    try:
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_insert_single_feature_of_fid_0", geom_type=ogr.wkbUnknown
+        )
+        lyr.CreateField(ogr.FieldDefn("foo"))
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "0"
+        f.SetFID(0)
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert gdaltest.pg_ds.SyncToDisk() == ogr.OGRERR_NONE
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "1"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 1
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_insert_single_feature_of_fid_0")
+
+
+###############################################################################
+
+
+def test_ogr_pg_temp():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    try:
+        layer_name = "test_ogr_pg_temp"
+        lyr = gdaltest.pg_ds.CreateLayer(
+            layer_name, geom_type=ogr.wkbPoint, options=["TEMPORARY=ON"]
+        )
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL(
+            "SELECT TRUE FROM pg_class WHERE relpersistence = 't' AND oid = '"
+            + layer_name
+            + "'::REGCLASS"
+        )
+        assert sql_lyr.GetNextFeature() is not None
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+        f["foo"] = "bar"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "wkb_geometry"
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:" + layer_name)
+
+
+###############################################################################
 #
 
 

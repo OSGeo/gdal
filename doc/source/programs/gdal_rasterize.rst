@@ -21,7 +21,7 @@ Synopsis
         [-dialect dialect] [-of format] [-a_srs srs_def] [-to NAME=VALUE]*
         [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
         [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
-        [-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
+        [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
                 CInt16/CInt32/CFloat32/CFloat64}]
         [-optim {[AUTO]/VECTOR/RASTER}] [-q]
         <src_datasource> <dst_filename>

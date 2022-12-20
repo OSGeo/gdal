@@ -8,12 +8,20 @@ apk add \
     proj-dev proj proj-util \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
+    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
     py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip \
     poppler-dev postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
-    netcdf-dev hdf5-dev freexl-dev \
-    lz4-dev blosc-dev libdeflate-dev \
+    netcdf-dev libaec-dev hdf5-dev freexl-dev \
+    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    kealib-dev libjxl-dev \
+    json-c-dev giflib-dev \
+    libspatialite-dev librasterlite2-dev \
+    mariadb-connector-c-dev \
+    pcre2-dev \
+    qhull-dev \
+    unixodbc-dev \
+    libpq-dev \
     libxml2-dev
 
 USER=root
@@ -77,5 +85,5 @@ projsync --system-directory --file ca_nrc_ntv1_can.tif
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
 
-(cd autotest && $PYTEST)
+(cd build_ci_alpine/autotest && $PYTEST)
 

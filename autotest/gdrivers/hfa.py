@@ -665,7 +665,7 @@ def test_hfa_vsimem():
 
     tst = gdaltest.GDALTest("HFA", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -691,18 +691,11 @@ def test_hfa_proName():
     ds = gdal.Open("tmp/proname.img")
 
     srs = ds.GetProjectionRef()
-    if srs.find('PROJCS["NAD83 / Ohio South (ftUS)",') != 0:
-        gdaltest.post_reason("did not get expected PROJCS name.")
-        print(srs)
-        result = "fail"
-    else:
-        result = "success"
+    assert srs.startswith('PROJCS["NAD83 / Ohio South (ftUS)",')
 
     ds = None
 
     drv.Delete("tmp/proname.img")
-
-    return result
 
 
 ###############################################################################
@@ -716,16 +709,10 @@ def test_hfa_read_empty_compressed():
     ds = None
 
     ds = gdal.Open("tmp/emptycompressed.img")
-    if ds.GetRasterBand(1).Checksum() != 0:
-        result = "fail"
-    else:
-        result = "success"
-
+    assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
 
     drv.Delete("tmp/emptycompressed.img")
-
-    return result
 
 
 ###############################################################################
@@ -881,6 +868,9 @@ def test_hfa_delete_colortable():
 
 def test_hfa_delete_colortable2():
 
+    if gdal.GetDriverByName("BMP") is None:
+        pytest.skip("BMP driver is missing")
+
     # copy a file to tmp dir to modify.
     src_ds = gdal.Open("../gcore/data/8bit_pal.bmp")
     ds = gdal.GetDriverByName("HFA").CreateCopy(
@@ -934,6 +924,9 @@ def test_hfa_excluded_values():
 
 
 def test_hfa_ov_nodata():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     drv = gdal.GetDriverByName("HFA")
     src_ds = gdal.Open("data/aaigrid/nodata_int.asc")

@@ -28,7 +28,7 @@
 
 #include "ods_formula.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    ods_formula_node* expr_out = ods_formula_compile( argv[1] );
+    ods_formula_node *expr_out = ods_formula_compile(argv[1]);
     if (expr_out)
     {
         printf("Raw expression dump :\n");

@@ -30,93 +30,98 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
 static void Usage()
 {
-    printf( "Usage: gdalflattenmask [--help-general] [-of output_format] \n"
-            "                       [-co \"NAME=VALUE\"]* [-set_alpha] [-a_nodata val] \n"
-            "                       srcdatasetname dstdatasetname\n"
-            "\n"
-            "This utility is intended to produce a new file that merges regular data\n"
-            "bands with the mask bands, for applications not being able to use the mask band concept.\n"
-            "* If -set_alpha is not specified, this utility will use the mask band(s)\n"
-            "  to create a new dataset with empty values where the mask has null values.\n"
-            "* If -set_alpha is specified, a new alpha band is added to the destination\n"
-            "  dataset with the content of the global dataset mask band.\n");
-    exit( 1 );
+    printf("Usage: gdalflattenmask [--help-general] [-of output_format] \n"
+           "                       [-co \"NAME=VALUE\"]* [-set_alpha] "
+           "[-a_nodata val] \n"
+           "                       srcdatasetname dstdatasetname\n"
+           "\n"
+           "This utility is intended to produce a new file that merges regular "
+           "data\n"
+           "bands with the mask bands, for applications not being able to use "
+           "the mask band concept.\n"
+           "* If -set_alpha is not specified, this utility will use the mask "
+           "band(s)\n"
+           "  to create a new dataset with empty values where the mask has "
+           "null values.\n"
+           "* If -set_alpha is specified, a new alpha band is added to the "
+           "destination\n"
+           "  dataset with the content of the global dataset mask band.\n");
+    exit(1);
 }
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    const char* pszFormat = "GTiff";
-    const char* pszSrcFilename = NULL;
-    const char* pszDstFilename = NULL;
+    const char *pszFormat = "GTiff";
+    const char *pszSrcFilename = NULL;
+    const char *pszDstFilename = NULL;
     int i;
     int nBands, nXSize, nYSize;
     GDALDriverH hDriver;
     GDALDatasetH hSrcDS;
     GDALDatasetH hDstDS;
-    char** papszCreateOptions = NULL;
+    char **papszCreateOptions = NULL;
     int bSetNoData = FALSE;
     double dfDstNoData = 0;
     int bSetAlpha = FALSE;
     double adfGeoTransform[6];
-    const char* pszProjectionRef;
-    GByte* pabyMaskBuffer;
-    char** papszMetadata;
+    const char *pszProjectionRef;
+    GByte *pabyMaskBuffer;
+    char **papszMetadata;
 
     GDALAllRegister();
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
-/* -------------------------------------------------------------------- */
-/*      Parse arguments.                                                */
-/* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
+    /* -------------------------------------------------------------------- */
+    /*      Parse arguments.                                                */
+    /* -------------------------------------------------------------------- */
+    for (i = 1; i < argc; i++)
     {
-        if( EQUAL(argv[i], "-of") && i + 1 < argc)
+        if (EQUAL(argv[i], "-of") && i + 1 < argc)
         {
             pszFormat = argv[++i];
         }
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        else if (EQUAL(argv[i], "-co") && i < argc - 1)
         {
-            papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
+            papszCreateOptions = CSLAddString(papszCreateOptions, argv[++i]);
         }
-        else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
+        else if (EQUAL(argv[i], "-a_nodata") && i < argc - 1)
         {
             bSetNoData = TRUE;
             dfDstNoData = CPLAtof(argv[++i]);
         }
-        else if( EQUAL(argv[i], "-set_alpha"))
+        else if (EQUAL(argv[i], "-set_alpha"))
         {
             bSetAlpha = TRUE;
         }
-        else if ( argv[i][0] == '-')
+        else if (argv[i][0] == '-')
             Usage();
-        else if( pszSrcFilename == NULL )
+        else if (pszSrcFilename == NULL)
             pszSrcFilename = argv[i];
-        else if(  pszDstFilename == NULL )
+        else if (pszDstFilename == NULL)
             pszDstFilename = argv[i];
         else
             Usage();
     }
 
-    if( pszSrcFilename == NULL || pszDstFilename == NULL)
+    if (pszSrcFilename == NULL || pszDstFilename == NULL)
         Usage();
 
-/* -------------------------------------------------------------------- */
-/*      Open source dataset                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open source dataset                                             */
+    /* -------------------------------------------------------------------- */
     hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
     if (hSrcDS == NULL)
     {
@@ -128,36 +133,40 @@ int main(int argc, char* argv[])
     nXSize = GDALGetRasterXSize(hSrcDS);
     nYSize = GDALGetRasterYSize(hSrcDS);
 
-    for(i = 0; i < nBands; i++)
+    for (i = 0; i < nBands; i++)
     {
-        GDALRasterBandH hSrcBand = GDALGetRasterBand(hSrcDS, i+1);
-        GDALDataType  eDataType = GDALGetRasterDataType(hSrcBand);
+        GDALRasterBandH hSrcBand = GDALGetRasterBand(hSrcDS, i + 1);
+        GDALDataType eDataType = GDALGetRasterDataType(hSrcBand);
 
         if (bSetAlpha)
         {
-            if (nBands > 1 && (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) == 0)
+            if (nBands > 1 &&
+                (GDALGetMaskFlags(hSrcBand) & GMF_PER_DATASET) == 0)
             {
-                fprintf(stderr, "When -set_alpha is specified, all source bands must "
-                                "share the same mask band (PER_DATASET mask)\n");
+                fprintf(stderr,
+                        "When -set_alpha is specified, all source bands must "
+                        "share the same mask band (PER_DATASET mask)\n");
                 exit(1);
             }
             if (GDALGetRasterColorInterpretation(hSrcBand) == GCI_AlphaBand)
             {
-                fprintf(stderr, "The source dataset has already an alpha band\n");
+                fprintf(stderr,
+                        "The source dataset has already an alpha band\n");
                 exit(1);
             }
         }
 
         if (eDataType != GDT_Byte)
         {
-            fprintf(stderr, "Only GDT_Byte type supported for source dataset\n");
+            fprintf(stderr,
+                    "Only GDT_Byte type supported for source dataset\n");
             exit(1);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create destination dataset                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create destination dataset                                      */
+    /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName(pszFormat);
     if (hDriver == NULL)
     {
@@ -165,12 +174,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    hDstDS = GDALCreate(hDriver,
-                        pszDstFilename,
-                        nXSize,
-                        nYSize,
-                        nBands + ((bSetAlpha) ? 1 : 0),
-                        GDT_Byte,
+    hDstDS = GDALCreate(hDriver, pszDstFilename, nXSize, nYSize,
+                        nBands + ((bSetAlpha) ? 1 : 0), GDT_Byte,
                         papszCreateOptions);
     if (hDstDS == NULL)
     {
@@ -178,32 +183,32 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write geotransform, projection, color interpretations, no data  */
-/*      values, color tables, metadata, etc. before the file is         */
-/*      crystallized.                                                   */
-/* -------------------------------------------------------------------- */
-    if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None )
+    /* -------------------------------------------------------------------- */
+    /*      Write geotransform, projection, color interpretations, no data  */
+    /*      values, color tables, metadata, etc. before the file is         */
+    /*      crystallized.                                                   */
+    /* -------------------------------------------------------------------- */
+    if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None)
     {
-        GDALSetGeoTransform( hDstDS, adfGeoTransform );
+        GDALSetGeoTransform(hDstDS, adfGeoTransform);
     }
 
-    pszProjectionRef = GDALGetProjectionRef( hSrcDS );
+    pszProjectionRef = GDALGetProjectionRef(hSrcDS);
     if (pszProjectionRef && pszProjectionRef[0])
     {
-        GDALSetProjection( hDstDS, pszProjectionRef );
+        GDALSetProjection(hDstDS, pszProjectionRef);
     }
 
     if (bSetAlpha)
     {
-        GDALRasterBandH hDstAlphaBand = GDALGetRasterBand(hDstDS, nBands+1);
-        GDALSetRasterColorInterpretation( hDstAlphaBand, GCI_AlphaBand);
+        GDALRasterBandH hDstAlphaBand = GDALGetRasterBand(hDstDS, nBands + 1);
+        GDALSetRasterColorInterpretation(hDstAlphaBand, GCI_AlphaBand);
     }
 
     papszMetadata = GDALGetMetadata(hSrcDS, NULL);
     GDALSetMetadata(hDstDS, papszMetadata, NULL);
 
-    for(i = 0; i < nBands; i++)
+    for (i = 0; i < nBands; i++)
     {
         GDALRasterBandH hSrcBand, hDstBand;
         GDALColorTableH hColorTable;
@@ -211,8 +216,8 @@ int main(int argc, char* argv[])
         int bHasNoData;
         double dfNoDataValue;
 
-        hSrcBand = GDALGetRasterBand(hSrcDS, i+1);
-        hDstBand = GDALGetRasterBand(hDstDS, i+1);
+        hSrcBand = GDALGetRasterBand(hSrcDS, i + 1);
+        hDstBand = GDALGetRasterBand(hDstDS, i + 1);
 
         dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bHasNoData);
         if (!bHasNoData)
@@ -220,7 +225,7 @@ int main(int argc, char* argv[])
         if (!bSetAlpha && (bHasNoData || bSetNoData))
             GDALSetRasterNoDataValue(hDstBand, dfNoDataValue);
 
-        hColorTable = GDALGetRasterColorTable( hSrcBand );
+        hColorTable = GDALGetRasterColorTable(hSrcBand);
         if (hColorTable)
         {
             GDALSetRasterColorTable(hDstBand, hColorTable);
@@ -229,55 +234,58 @@ int main(int argc, char* argv[])
         papszMetadata = GDALGetMetadata(hSrcBand, NULL);
         GDALSetMetadata(hDstBand, papszMetadata, NULL);
 
-        eColorInterpretation = GDALGetRasterColorInterpretation( hSrcBand );
-        GDALSetRasterColorInterpretation( hDstBand, eColorInterpretation );
+        eColorInterpretation = GDALGetRasterColorInterpretation(hSrcBand);
+        GDALSetRasterColorInterpretation(hDstBand, eColorInterpretation);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write the data values now                                       */
-/* -------------------------------------------------------------------- */
-    pabyMaskBuffer = (GByte*)CPLMalloc(nXSize);
+    /* -------------------------------------------------------------------- */
+    /*      Write the data values now                                       */
+    /* -------------------------------------------------------------------- */
+    pabyMaskBuffer = (GByte *)CPLMalloc(nXSize);
 
-    for(i = 0; i < nBands; i++)
+    for (i = 0; i < nBands; i++)
     {
         GDALRasterBandH hSrcBand, hDstBand, hMaskBand;
-        GDALDataType  eDataType;
-        GByte* pabyBuffer;
+        GDALDataType eDataType;
+        GByte *pabyBuffer;
         int iCol, iLine;
         int bHasNoData;
         double dfNoDataValue;
         int nMaskFlag;
 
-        hSrcBand = GDALGetRasterBand(hSrcDS, i+1);
-        hDstBand = GDALGetRasterBand(hDstDS, i+1);
+        hSrcBand = GDALGetRasterBand(hSrcDS, i + 1);
+        hDstBand = GDALGetRasterBand(hDstDS, i + 1);
         hMaskBand = GDALGetMaskBand(hSrcBand);
         nMaskFlag = GDALGetMaskFlags(hSrcBand);
 
         eDataType = GDALGetRasterDataType(hSrcBand);
-        pabyBuffer = (GByte*)CPLMalloc(nXSize * GDALGetDataTypeSize(eDataType));
+        pabyBuffer =
+            (GByte *)CPLMalloc(nXSize * GDALGetDataTypeSize(eDataType));
         dfNoDataValue = GDALGetRasterNoDataValue(hSrcBand, &bHasNoData);
         if (!bHasNoData)
             dfNoDataValue = dfDstNoData;
 
-        for(iLine = 0; iLine < nYSize; iLine++)
+        for (iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALRasterIO( hSrcBand, GF_Read, 0, iLine, nXSize, 1,
-                          pabyBuffer, nXSize, 1, eDataType, 0, 0);
+            GDALRasterIO(hSrcBand, GF_Read, 0, iLine, nXSize, 1, pabyBuffer,
+                         nXSize, 1, eDataType, 0, 0);
             if (!bSetAlpha)
             {
-                GDALRasterIO( hMaskBand, GF_Read, 0, iLine, nXSize, 1,
-                              pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
+                GDALRasterIO(hMaskBand, GF_Read, 0, iLine, nXSize, 1,
+                             pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
                 switch (eDataType)
                 {
                     case GDT_Byte:
                     {
-                        for(iCol = 0; iCol < nXSize; iCol++)
+                        for (iCol = 0; iCol < nXSize; iCol++)
                         {
                             /* If the mask is 1-bit and the value is 0,
                                or if the mask is 8-bit and the value < 128,
-                               then replace the value of the pixel by the transparent value */
+                               then replace the value of the pixel by the
+                               transparent value */
                             if (pabyMaskBuffer[iCol] == 0 ||
-                                ((nMaskFlag & GMF_ALPHA) != 0 && pabyMaskBuffer[iCol] < 128))
+                                ((nMaskFlag & GMF_ALPHA) != 0 &&
+                                 pabyMaskBuffer[iCol] < 128))
                                 pabyBuffer[iCol] = (GByte)dfNoDataValue;
                         }
                         break;
@@ -289,51 +297,51 @@ int main(int argc, char* argv[])
                 }
             }
 
-            GDALRasterIO( hDstBand, GF_Write, 0, iLine, nXSize, 1,
-                          pabyBuffer, nXSize, 1, eDataType, 0, 0);
+            GDALRasterIO(hDstBand, GF_Write, 0, iLine, nXSize, 1, pabyBuffer,
+                         nXSize, 1, eDataType, 0, 0);
         }
 
         CPLFree(pabyBuffer);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the alpha band if -set_alpha is specified                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the alpha band if -set_alpha is specified                */
+    /* -------------------------------------------------------------------- */
     if (bSetAlpha)
     {
         GDALRasterBandH hSrcBand = GDALGetRasterBand(hSrcDS, 1);
-        GDALRasterBandH hDstAlphaBand = GDALGetRasterBand(hDstDS, nBands+1);
+        GDALRasterBandH hDstAlphaBand = GDALGetRasterBand(hDstDS, nBands + 1);
         GDALRasterBandH hMaskBand = GDALGetMaskBand(hSrcBand);
         int nMaskFlag = GDALGetMaskFlags(hSrcBand);
 
         int iCol;
         int iLine;
-        for(iLine = 0; iLine < nYSize; iLine++)
+        for (iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALRasterIO( hMaskBand, GF_Read, 0, iLine, nXSize, 1,
-                          pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
-            for(iCol = 0; iCol < nXSize; iCol++)
+            GDALRasterIO(hMaskBand, GF_Read, 0, iLine, nXSize, 1,
+                         pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
+            for (iCol = 0; iCol < nXSize; iCol++)
             {
                 /* If the mask is 1-bit, expand 1 to 255 */
                 if (pabyMaskBuffer[iCol] == 1 && (nMaskFlag & GMF_ALPHA) == 0)
                     pabyMaskBuffer[iCol] = 255;
             }
-            GDALRasterIO( hDstAlphaBand, GF_Write, 0, iLine, nXSize, 1,
-                          pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
+            GDALRasterIO(hDstAlphaBand, GF_Write, 0, iLine, nXSize, 1,
+                         pabyMaskBuffer, nXSize, 1, GDT_Byte, 0, 0);
         }
     }
 
-/************************************************************************/
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
+    /************************************************************************/
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
     CPLFree(pabyMaskBuffer);
 
     GDALClose(hSrcDS);
     GDALClose(hDstDS);
-    GDALDumpOpenDatasets( stderr );
+    GDALDumpOpenDatasets(stderr);
     GDALDestroyDriverManager();
-    CSLDestroy( argv );
-    CSLDestroy( papszCreateOptions );
+    CSLDestroy(argv);
+    CSLDestroy(papszCreateOptions);
 
     return 0;
 }

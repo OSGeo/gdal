@@ -28,9 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import sys
 
 import pytest
 import test_py_scripts
+from test_py_scripts import samples_path
 
 from osgeo import gdal, ogr
 
@@ -442,3 +444,220 @@ def test_ogrmerge_12():
 
     gdal.Unlink("tmp/tmp.json")
     gdal.Unlink("tmp/out.vrt")
+
+
+###############################################################################
+# Validate a geopackage
+
+
+def has_validate():
+    path = samples_path
+    if path not in sys.path:
+        sys.path.append(path)
+    try:
+        import validate_gpkg
+
+        validate_gpkg.check
+    except ImportError:
+        print("Cannot import validate_gpkg")
+        return False
+    return True
+
+
+def _validate_check(filename):
+    if not has_validate():
+        return
+    import validate_gpkg
+
+    validate_gpkg.check(filename, extra_checks=True, warning_as_error=True)
+
+
+###############################################################################
+# Test GPKG optimization
+
+
+@pytest.mark.parametrize(
+    "src_has_spatial_index,dst_has_spatial_index,has_progress,a_srs,s_srs,t_srs",
+    [
+        (True, True, True, None, None, None),
+        (True, False, True, None, None, None),
+        (False, True, True, None, None, None),
+        (False, False, True, None, None, None),
+        (True, True, False, None, None, None),
+        (True, False, False, None, None, None),
+        (False, True, False, None, None, None),
+        (False, False, False, None, None, None),
+        (True, True, False, None, None, None),
+        (True, True, False, "EPSG:32631", None, None),
+        (True, True, False, None, "EPSG:32631", None),  # s_srs ignored
+        (True, True, False, None, None, "EPSG:32631"),
+        (True, True, False, None, "EPSG:32631", "EPSG:4326"),
+    ],
+)
+def test_ogrmerge_gpkg(
+    src_has_spatial_index, dst_has_spatial_index, has_progress, a_srs, s_srs, t_srs
+):
+    script_path = test_py_scripts.get_py_script("ogrmerge")
+    if script_path is None:
+        pytest.skip()
+
+    if gdal.GetDriverByName("GPKG") is None:
+        pytest.skip("GPKG driver missing")
+
+    lco = [] if src_has_spatial_index else ["SPATIAL_INDEX=NO"]
+    gdal.VectorTranslate(
+        "tmp/in.gpkg",
+        test_py_scripts.get_data_path("ogr") + "poly.shp",
+        layerCreationOptions=lco,
+    )
+
+    gdal.Unlink("tmp/out.gpkg")
+    ogrmerge_opts = "-f GPKG -o tmp/out.gpkg tmp/in.gpkg -nln poly"
+    if not dst_has_spatial_index:
+        ogrmerge_opts += " -lco SPATIAL_INDEX=NO"
+    if has_progress:
+        ogrmerge_opts += " -progress"
+    if a_srs:
+        ogrmerge_opts += " -a_srs " + a_srs
+    if s_srs:
+        ogrmerge_opts += " -s_srs " + s_srs
+    if t_srs:
+        ogrmerge_opts += " -t_srs " + t_srs
+    test_py_scripts.run_py_script(script_path, "ogrmerge", ogrmerge_opts)
+
+    _validate_check("tmp/out.gpkg")
+
+    src_ds = ogr.Open("tmp/in.gpkg")
+    src_lyr = src_ds.GetLayer(0)
+    expected_fc = src_lyr.GetFeatureCount()
+
+    ds = ogr.Open("tmp/out.gpkg")
+    lyr = ds.GetLayerByName("poly")
+    assert lyr.GetLayerDefn().GetFieldCount() == src_lyr.GetLayerDefn().GetFieldCount()
+    assert lyr.GetFeatureCount() == expected_fc
+    assert len([f for f in lyr]) == expected_fc
+    assert lyr.GetExtent() == src_lyr.GetExtent()
+    if a_srs:
+        assert (
+            lyr.GetSpatialRef().GetAuthorityName(None)
+            + ":"
+            + lyr.GetSpatialRef().GetAuthorityCode(None)
+            == a_srs
+        )
+    elif t_srs:
+        assert (
+            lyr.GetSpatialRef().GetAuthorityName(None)
+            + ":"
+            + lyr.GetSpatialRef().GetAuthorityCode(None)
+            == t_srs
+        )
+    else:
+        src_feat = src_lyr.GetNextFeature()
+        lyr.ResetReading()
+        feat = lyr.GetNextFeature()
+        assert feat.ExportToJson() == src_feat.ExportToJson()
+        assert lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
+
+    sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('poly', 'geom')")
+    f = sql_lyr.GetNextFeature()
+    v = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    assert v == dst_has_spatial_index
+
+    src_ds = None
+    ds = None
+
+    gdal.Unlink("tmp/out.gpkg")
+    gdal.Unlink("tmp/in.gpkg")
+
+
+###############################################################################
+# Test GPKG optimization for non-spatial layers
+
+
+@pytest.mark.parametrize("has_progress", [True, False])
+def test_ogrmerge_gpkg_non_spatial(has_progress):
+    script_path = test_py_scripts.get_py_script("ogrmerge")
+    if script_path is None:
+        pytest.skip()
+
+    if gdal.GetDriverByName("GPKG") is None:
+        pytest.skip("GPKG driver missing")
+
+    src_ds = gdal.VectorTranslate(
+        "tmp/in.gpkg", test_py_scripts.get_data_path("ogr") + "idlink.dbf"
+    )
+    src_ds.GetLayer(0).SetMetadataItem("foo", "bar")
+    src_ds = None
+
+    gdal.Unlink("tmp/out.gpkg")
+    ogrmerge_opts = "-f GPKG -o tmp/out.gpkg tmp/in.gpkg -nln idlink"
+    if has_progress:
+        ogrmerge_opts += " -progress"
+    test_py_scripts.run_py_script(script_path, "ogrmerge", ogrmerge_opts)
+
+    _validate_check("tmp/out.gpkg")
+
+    src_ds = ogr.Open("tmp/in.gpkg")
+    src_lyr = src_ds.GetLayer(0)
+    expected_fc = src_lyr.GetFeatureCount()
+
+    ds = ogr.Open("tmp/out.gpkg")
+    lyr = ds.GetLayerByName("idlink")
+    assert lyr.GetLayerDefn().GetFieldCount() == src_lyr.GetLayerDefn().GetFieldCount()
+    assert lyr.GetFeatureCount() == expected_fc
+    src_feat = src_lyr.GetNextFeature()
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    assert feat.ExportToJson() == src_feat.ExportToJson()
+    assert len([f for f in lyr]) == expected_fc
+    assert lyr.GetMetadata_Dict() == {"foo": "bar"}
+
+    src_ds = None
+    ds = None
+
+    gdal.Unlink("tmp/out.gpkg")
+    gdal.Unlink("tmp/in.gpkg")
+
+
+###############################################################################
+# Test GPKG optimization when a curve geometry is in a GEOMETRY typed column
+
+
+def test_ogrmerge_gpkg_curve_geom_in_generic_layer():
+    script_path = test_py_scripts.get_py_script("ogrmerge")
+    if script_path is None:
+        pytest.skip()
+
+    if gdal.GetDriverByName("GPKG") is None:
+        pytest.skip("GPKG driver missing")
+
+    gdal.Unlink("tmp/out.gpkg")
+    gdal.Unlink("tmp/in.gpkg")
+
+    src_ds = ogr.GetDriverByName("GPKG").CreateDataSource("tmp/in.gpkg")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 1,2 0)"))
+    assert src_lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    src_ds = None
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "ogrmerge",
+        "-f GPKG -o tmp/out.gpkg tmp/in.gpkg -lco SPATIAL_INDEX=NO",
+    )
+
+    # Check that the gpkg_geom_CIRCULARSTRING extension is declared
+    ds = ogr.Open("tmp/out.gpkg")
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT 1 FROM gpkg_extensions WHERE extension_name = 'gpkg_geom_CIRCULARSTRING'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    _validate_check("tmp/out.gpkg")
+
+    gdal.Unlink("tmp/out.gpkg")
+    gdal.Unlink("tmp/in.gpkg")

@@ -4075,3 +4075,61 @@ def test_ogr_geojson_feature_large():
         with gdaltest.error_handler():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test reading http:// resource
+
+
+def test_ogr_geojson_read_from_http():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    import webserver
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    response = """{"type": "FeatureCollection", "features":[
+    {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null}]}"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/foo",
+        200,
+        {},
+        response,
+        expected_headers={"Accept": "text/plain, application/json"},
+    )
+
+    try:
+        with webserver.install_http_handler(handler):
+            ds = ogr.Open("http://localhost:%d/foo" % webserver_port)
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+
+###############################################################################
+# Test ogr2ogr -nln with a input dataset being a GeoJSON file with a name
+
+
+def test_ogr_geojson_ogr2ogr_nln_with_input_dataset_having_name():
+
+    filename = "/vsimem/test_ogr_geojson_feature_large.geojson"
+    gdal.VectorTranslate(
+        filename,
+        '{"type":"FeatureCollection","name":"to_be_overriden","features":[]}',
+        layerName="new_name",
+    )
+    ds = ogr.Open(filename)
+    assert ds.GetLayer(0).GetName() == "new_name"
+    ds = None
+    gdal.Unlink(filename)

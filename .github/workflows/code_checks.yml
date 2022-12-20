@@ -60,6 +60,9 @@ jobs:
       - name: Detect suspicious char digit zero
         run: ./scripts/detect_suspicious_char_digit_zero.sh
 
+      - name: Detect missing includes
+        run: ./scripts/detect_missing_include.sh
+
       - name: Shellcheck
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
@@ -71,7 +74,7 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
   doxygen:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3

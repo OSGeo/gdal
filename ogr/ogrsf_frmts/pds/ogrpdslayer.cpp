@@ -34,35 +34,26 @@
 
 #include <algorithm>
 
-
-namespace OGRPDS {
+namespace OGRPDS
+{
 
 /************************************************************************/
 /*                           OGRPDSLayer()                              */
 /************************************************************************/
 
-OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
-                          const char* pszLayerName, VSILFILE* fp,
-                          CPLString osLabelFilename,
-                          CPLString osStructureFilename,
-                          int nRecordsIn,
-                          int nStartBytesIn, int nRecordSizeIn,
-                          GByte* pabyRecordIn, bool bIsASCII ) :
-    poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
-    osTableID(osTableIDIn),
-    fpPDS(fp),
-    nRecords(nRecordsIn),
-    nStartBytes(nStartBytesIn),
-    nRecordSize(nRecordSizeIn),
-    pabyRecord(pabyRecordIn),
-    nNextFID(0),
-    nLongitudeIndex(-1),
-    nLatitudeIndex(-1),
-    pasFieldDesc(nullptr)
+OGRPDSLayer::OGRPDSLayer(CPLString osTableIDIn, const char *pszLayerName,
+                         VSILFILE *fp, CPLString osLabelFilename,
+                         CPLString osStructureFilename, int nRecordsIn,
+                         int nStartBytesIn, int nRecordSizeIn,
+                         GByte *pabyRecordIn, bool bIsASCII)
+    : poFeatureDefn(new OGRFeatureDefn(pszLayerName)), osTableID(osTableIDIn),
+      fpPDS(fp), nRecords(nRecordsIn), nStartBytes(nStartBytesIn),
+      nRecordSize(nRecordSizeIn), pabyRecord(pabyRecordIn), nNextFID(0),
+      nLongitudeIndex(-1), nLatitudeIndex(-1), pasFieldDesc(nullptr)
 {
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( wkbNone );
+    poFeatureDefn->SetGeomType(wkbNone);
 
     if (!osStructureFilename.empty())
     {
@@ -73,21 +64,20 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
         ReadStructure(osLabelFilename);
     }
 
-    if (bIsASCII &&
-        poFeatureDefn->GetFieldCount() == 0)
+    if (bIsASCII && poFeatureDefn->GetFieldCount() == 0)
     {
-        VSIFSeekL( fpPDS, nStartBytes, SEEK_SET );
-        VSIFReadL( pabyRecord, nRecordSize, 1, fpPDS);
+        VSIFSeekL(fpPDS, nStartBytes, SEEK_SET);
+        VSIFReadL(pabyRecord, nRecordSize, 1, fpPDS);
 
-        char **papszTokens = CSLTokenizeString2(
-                (const char*)pabyRecord, " ", CSLT_HONOURSTRINGS );
+        char **papszTokens = CSLTokenizeString2((const char *)pabyRecord, " ",
+                                                CSLT_HONOURSTRINGS);
         const int nTokens = CSLCount(papszTokens);
-        for( int i = 0; i < nTokens; i++ )
+        for (int i = 0; i < nTokens; i++)
         {
-            const char* pszStr = papszTokens[i];
+            const char *pszStr = papszTokens[i];
             char ch = '\0';
             OGRFieldType eFieldType = OFTInteger;
-            while((ch = *pszStr) != 0)
+            while ((ch = *pszStr) != 0)
             {
                 if ((ch >= '0' && ch <= '9') || ch == '+' || ch == '-')
                 {
@@ -101,11 +91,11 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
                     eFieldType = OFTString;
                     break;
                 }
-                pszStr ++;
+                pszStr++;
             }
             char szFieldName[32];
             snprintf(szFieldName, sizeof(szFieldName), "field_%d",
-                    poFeatureDefn->GetFieldCount() + 1);
+                     poFeatureDefn->GetFieldCount() + 1);
             OGRFieldDefn oFieldDefn(szFieldName, eFieldType);
             poFeatureDefn->AddFieldDefn(&oFieldDefn);
         }
@@ -114,7 +104,7 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
 
     if (nLongitudeIndex >= 0 && nLatitudeIndex >= 0)
     {
-        poFeatureDefn->SetGeomType( wkbPoint );
+        poFeatureDefn->SetGeomType(wkbPoint);
     }
 
     OGRPDSLayer::ResetReading();
@@ -131,7 +121,7 @@ OGRPDSLayer::~OGRPDSLayer()
     poFeatureDefn->Release();
     VSIFree(pabyRecord);
 
-    VSIFCloseL( fpPDS );
+    VSIFCloseL(fpPDS);
 }
 
 /************************************************************************/
@@ -141,7 +131,7 @@ OGRPDSLayer::~OGRPDSLayer()
 void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
 
 {
-    VSILFILE* fpStructure = VSIFOpenL(osStructureFilename, "rb");
+    VSILFILE *fpStructure = VSIFOpenL(osStructureFilename, "rb");
     if (fpStructure == nullptr)
         return;
 
@@ -157,39 +147,36 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
     CPLString osColumnItems;
     CPLString osColumnItemBytes;
     int nRowBytes = nRecordSize;
-    while( true )
+    while (true)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        const char* pszLine = CPLReadLine2L(fpStructure, 256, nullptr);
+        const char *pszLine = CPLReadLine2L(fpStructure, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
         if (pszLine == nullptr)
             break;
 
         char **papszTokens =
-                CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
+            CSLTokenizeString2(pszLine, " =", CSLT_HONOURSTRINGS);
         const int nTokens = CSLCount(papszTokens);
 
         if (bInObjectColumn && nTokens >= 1 &&
             EQUAL(papszTokens[0], "END_OBJECT"))
         {
-            if (!osColumnName.empty() &&
-                !osColumnDataType.empty() &&
-                !osColumnStartByte.empty() &&
-                !osColumnBytes.empty())
+            if (!osColumnName.empty() && !osColumnDataType.empty() &&
+                !osColumnStartByte.empty() && !osColumnBytes.empty())
             {
-                pasFieldDesc =
-                    static_cast<FieldDesc*>(
-                        CPLRealloc( pasFieldDesc,
-                                    (nFields + 1) * sizeof(FieldDesc)) );
+                pasFieldDesc = static_cast<FieldDesc *>(CPLRealloc(
+                    pasFieldDesc, (nFields + 1) * sizeof(FieldDesc)));
                 pasFieldDesc[nFields].nStartByte = atoi(osColumnStartByte) - 1;
                 pasFieldDesc[nFields].nByteCount = atoi(osColumnBytes);
                 if (pasFieldDesc[nFields].nStartByte >= 0 &&
                     pasFieldDesc[nFields].nByteCount > 0 &&
-                    pasFieldDesc[nFields].nStartByte < INT_MAX -
-                                    pasFieldDesc[nFields].nByteCount &&
+                    pasFieldDesc[nFields].nStartByte <
+                        INT_MAX - pasFieldDesc[nFields].nByteCount &&
                     pasFieldDesc[nFields].nStartByte +
-                        pasFieldDesc[nFields].nByteCount <= nRecordSize)
+                            pasFieldDesc[nFields].nByteCount <=
+                        nRecordSize)
                 {
                     OGRFieldType eFieldType = OFTString;
                     OGRFieldSubType eSubType = OFSTNone;
@@ -251,7 +238,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         {
                             eSubType = OFSTFloat32;
                         }
-                        else if( pasFieldDesc[nFields].nItemBytes != 8)
+                        else if (pasFieldDesc[nFields].nItemBytes != 8)
                         {
                             // Not sure if this is correct, but default to
                             // Float32
@@ -266,16 +253,14 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
 
                     OGRFieldDefn oFieldDefn(osColumnName, eFieldType);
                     if ((pasFieldDesc[nFields].eFormat == ASCII_REAL &&
-                            !osColumnFormat.empty() &&
-                            osColumnFormat[0] == 'F') ||
+                         !osColumnFormat.empty() && osColumnFormat[0] == 'F') ||
                         (pasFieldDesc[nFields].eFormat == ASCII_INTEGER &&
-                            !osColumnFormat.empty() &&
-                            osColumnFormat[0] == 'I'))
+                         !osColumnFormat.empty() && osColumnFormat[0] == 'I'))
                     {
-                        const char* pszFormat = osColumnFormat.c_str();
+                        const char *pszFormat = osColumnFormat.c_str();
                         int nWidth = atoi(pszFormat + 1);
                         oFieldDefn.SetWidth(nWidth);
-                        const char* pszPoint = strchr(pszFormat, '.');
+                        const char *pszPoint = strchr(pszFormat, '.');
                         if (pszPoint)
                         {
                             int nPrecision = atoi(pszPoint + 1);
@@ -283,10 +268,10 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         }
                     }
                     else if (oFieldDefn.GetType() == OFTString &&
-                                !osColumnFormat.empty() &&
-                                osColumnFormat[0] == 'A')
+                             !osColumnFormat.empty() &&
+                             osColumnFormat[0] == 'A')
                     {
-                        const char* pszFormat = osColumnFormat.c_str();
+                        const char *pszFormat = osColumnFormat.c_str();
                         int nWidth = atoi(pszFormat + 1);
                         oFieldDefn.SetWidth(nWidth);
                     }
@@ -302,14 +287,14 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                             nLatitudeIndex = nFields;
                     }
 
-                    nFields ++;
+                    nFields++;
                 }
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                                "Field %d out of record extents", nFields);
+                             "Field %d out of record extents", nFields);
                     CSLDestroy(papszTokens);
-                    if( nFields == 0 )
+                    if (nFields == 0)
                     {
                         CPLFree(pasFieldDesc);
                         pasFieldDesc = nullptr;
@@ -320,7 +305,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Did not get expected records for field %d", nFields);
+                         "Did not get expected records for field %d", nFields);
                 CSLDestroy(papszTokens);
                 break;
             }
@@ -332,7 +317,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             {
                 CSLDestroy(papszTokens);
                 papszTokens = nullptr;
-                while( true )
+                while (true)
                 {
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     pszLine = CPLReadLine2L(fpStructure, 256, nullptr);
@@ -341,10 +326,9 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                     if (pszLine == nullptr)
                         break;
                     papszTokens =
-                        CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
+                        CSLTokenizeString2(pszLine, " =", CSLT_HONOURSTRINGS);
                     int nTokens2 = CSLCount(papszTokens);
-                    if (nTokens2 == 2 &&
-                        EQUAL(papszTokens[0], "OBJECT") &&
+                    if (nTokens2 == 2 && EQUAL(papszTokens[0], "OBJECT") &&
                         EQUAL(papszTokens[1], osTableID.c_str()))
                     {
                         break;
@@ -360,7 +344,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             else if (EQUAL(papszTokens[0], "ROW_BYTES"))
             {
                 nRowBytes = atoi(papszTokens[1]);
-                if( nRowBytes < 0 || nRowBytes > 10*1024*1024)
+                if (nRowBytes < 0 || nRowBytes > 10 * 1024 * 1024)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_BYTES");
@@ -372,16 +356,17 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             {
                 try
                 {
-                    nRowBytes = (CPLSM(nRowBytes) + CPLSM(atoi(papszTokens[1]))).v();
+                    nRowBytes =
+                        (CPLSM(nRowBytes) + CPLSM(atoi(papszTokens[1]))).v();
                 }
-                catch( const CPLSafeIntOverflow& )
+                catch (const CPLSafeIntOverflow &)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_SUFFIX_BYTES");
                     CSLDestroy(papszTokens);
                     break;
                 }
-                if( nRowBytes < 0 || nRowBytes > 10*1024*1024)
+                if (nRowBytes < 0 || nRowBytes > 10 * 1024 * 1024)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_SUFFIX_BYTES");
@@ -396,13 +381,13 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                 {
                     nRecordSize = nRowBytes;
                     VSIFree(pabyRecord);
-                    pabyRecord = (GByte*) CPLMalloc(nRecordSize + 1);
+                    pabyRecord = (GByte *)CPLMalloc(nRecordSize + 1);
                     pabyRecord[nRecordSize] = 0;
                 }
                 else
                     nRecordSize = nRowBytes;
 
-                nExpectedColumnNumber ++;
+                nExpectedColumnNumber++;
                 bInObjectColumn = true;
                 osColumnName = "";
                 osColumnDataType = "";
@@ -419,7 +404,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                 if (nColumnNumber != nExpectedColumnNumber)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                                "Did not get expected column number");
+                             "Did not get expected column number");
                     CSLDestroy(papszTokens);
                     break;
                 }
@@ -474,7 +459,7 @@ void OGRPDSLayer::ResetReading()
 
 {
     nNextFID = 0;
-    VSIFSeekL( fpPDS, nStartBytes, SEEK_SET );
+    VSIFSeekL(fpPDS, nStartBytes, SEEK_SET);
 }
 
 /************************************************************************/
@@ -485,28 +470,28 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
 {
     if (nNextFID == nRecords)
         return nullptr;
-    int nRead = (int)VSIFReadL( pabyRecord, 1, nRecordSize, fpPDS);
+    int nRead = (int)VSIFReadL(pabyRecord, 1, nRecordSize, fpPDS);
     if (nRead != nRecordSize)
         return nullptr;
 
-    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     int nFieldCount = poFeatureDefn->GetFieldCount();
     if (pasFieldDesc != nullptr)
     {
-        for( int i=0;i<nFieldCount;i++)
+        for (int i = 0; i < nFieldCount; i++)
         {
             if (pasFieldDesc[i].eFormat == ASCII_REAL ||
                 pasFieldDesc[i].eFormat == ASCII_INTEGER ||
                 pasFieldDesc[i].eFormat == CHARACTER)
             {
-                char* pchEnd = reinterpret_cast<char*>(
+                char *pchEnd = reinterpret_cast<char *>(
                     &pabyRecord[pasFieldDesc[i].nStartByte +
                                 pasFieldDesc[i].nByteCount]);
                 char chSaved = *pchEnd;
                 *pchEnd = 0;
-                const char* pszValue = (const char*)(pabyRecord +
-                                                    pasFieldDesc[i].nStartByte);
-                if( pasFieldDesc[i].eFormat == CHARACTER )
+                const char *pszValue =
+                    (const char *)(pabyRecord + pasFieldDesc[i].nStartByte);
+                if (pasFieldDesc[i].eFormat == CHARACTER)
                 {
                     poFeature->SetField(i, pszValue);
                 }
@@ -517,46 +502,56 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                 *pchEnd = chSaved;
             }
             else if (pasFieldDesc[i].eFormat == MSB_UNSIGNED_INTEGER &&
-                     pasFieldDesc[i].nStartByte +
-                     pasFieldDesc[i].nItemBytes * pasFieldDesc[i].nItems <= nRecordSize)
+                     pasFieldDesc[i].nStartByte + pasFieldDesc[i].nItemBytes *
+                                                      pasFieldDesc[i].nItems <=
+                         nRecordSize)
             {
                 if (pasFieldDesc[i].nItemBytes == 1)
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        int* panValues = static_cast<int *>(
-                            CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems) );
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        int *panValues = static_cast<int *>(
+                            CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems));
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
-                            panValues[j] = pabyRecord[pasFieldDesc[i].nStartByte + j];
+                            panValues[j] =
+                                pabyRecord[pasFieldDesc[i].nStartByte + j];
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, panValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            panValues);
                         CPLFree(panValues);
                     }
                     else
                     {
-                        poFeature->SetField(i, pabyRecord[pasFieldDesc[i].nStartByte]);
+                        poFeature->SetField(
+                            i, pabyRecord[pasFieldDesc[i].nStartByte]);
                     }
                 }
                 else if (pasFieldDesc[i].nItemBytes == 2)
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        int* panValues = (int*)CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems);
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        int *panValues = (int *)CPLMalloc(
+                            sizeof(int) * pasFieldDesc[i].nItems);
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
                             unsigned short sVal = 0;
-                            memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte + 2 * j, 2);
+                            memcpy(&sVal,
+                                   pabyRecord + pasFieldDesc[i].nStartByte +
+                                       2 * j,
+                                   2);
                             CPL_MSBPTR16(&sVal);
                             panValues[j] = sVal;
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, panValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            panValues);
                         CPLFree(panValues);
                     }
                     else
                     {
                         unsigned short sVal = 0;
-                        memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte, 2);
+                        memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte,
+                               2);
                         CPL_MSBPTR16(&sVal);
                         poFeature->SetField(i, (int)sVal);
                     }
@@ -565,66 +560,85 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        double* padfValues = (double*)CPLMalloc(sizeof(double) * pasFieldDesc[i].nItems);
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        double *padfValues = (double *)CPLMalloc(
+                            sizeof(double) * pasFieldDesc[i].nItems);
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
                             unsigned int nVal = 0;
-                            memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte + 4 * j, 4);
+                            memcpy(&nVal,
+                                   pabyRecord + pasFieldDesc[i].nStartByte +
+                                       4 * j,
+                                   4);
                             CPL_MSBPTR32(&nVal);
                             padfValues[j] = (double)nVal;
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, padfValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            padfValues);
                         CPLFree(padfValues);
                     }
                     else
                     {
                         unsigned int nVal = 0;
-                        memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte, 4);
+                        memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte,
+                               4);
                         CPL_MSBPTR32(&nVal);
                         poFeature->SetField(i, (double)nVal);
                     }
                 }
             }
             else if (pasFieldDesc[i].eFormat == MSB_INTEGER &&
-                     pasFieldDesc[i].nStartByte +
-                     pasFieldDesc[i].nItemBytes * pasFieldDesc[i].nItems <= nRecordSize)
+                     pasFieldDesc[i].nStartByte + pasFieldDesc[i].nItemBytes *
+                                                      pasFieldDesc[i].nItems <=
+                         nRecordSize)
             {
                 if (pasFieldDesc[i].nItemBytes == 1)
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        int* panValues = (int*)CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems);
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        int *panValues = (int *)CPLMalloc(
+                            sizeof(int) * pasFieldDesc[i].nItems);
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
-                            panValues[j] = ((char*)pabyRecord)[pasFieldDesc[i].nStartByte + j];
+                            panValues[j] = ((
+                                char *)pabyRecord)[pasFieldDesc[i].nStartByte +
+                                                   j];
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, panValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            panValues);
                         CPLFree(panValues);
                     }
                     else
                     {
-                        poFeature->SetField(i, ((char*)pabyRecord)[pasFieldDesc[i].nStartByte]);
+                        poFeature->SetField(
+                            i,
+                            ((char *)pabyRecord)[pasFieldDesc[i].nStartByte]);
                     }
                 }
                 else if (pasFieldDesc[i].nItemBytes == 2)
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        int* panValues = (int*)CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems);
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        int *panValues = (int *)CPLMalloc(
+                            sizeof(int) * pasFieldDesc[i].nItems);
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
                             short sVal = 0;
-                            memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte + 2 * j, 2);
+                            memcpy(&sVal,
+                                   pabyRecord + pasFieldDesc[i].nStartByte +
+                                       2 * j,
+                                   2);
                             CPL_MSBPTR16(&sVal);
                             panValues[j] = sVal;
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, panValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            panValues);
                         CPLFree(panValues);
                     }
                     else
                     {
                         short sVal = 0;
-                        memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte, 2);
+                        memcpy(&sVal, pabyRecord + pasFieldDesc[i].nStartByte,
+                               2);
                         CPL_MSBPTR16(&sVal);
                         poFeature->SetField(i, (int)sVal);
                     }
@@ -633,38 +647,48 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                 {
                     if (pasFieldDesc[i].nItems > 1)
                     {
-                        int* panValues = (int*)CPLMalloc(sizeof(int) * pasFieldDesc[i].nItems);
-                        for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                        int *panValues = (int *)CPLMalloc(
+                            sizeof(int) * pasFieldDesc[i].nItems);
+                        for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                         {
                             int nVal = 0;
-                            memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte + 4 * j, 4);
+                            memcpy(&nVal,
+                                   pabyRecord + pasFieldDesc[i].nStartByte +
+                                       4 * j,
+                                   4);
                             CPL_MSBPTR32(&nVal);
                             panValues[j] = nVal;
                         }
-                        poFeature->SetField(i, pasFieldDesc[i].nItems, panValues);
+                        poFeature->SetField(i, pasFieldDesc[i].nItems,
+                                            panValues);
                         CPLFree(panValues);
                     }
                     else
                     {
                         int nVal = 0;
-                        memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte, 4);
+                        memcpy(&nVal, pabyRecord + pasFieldDesc[i].nStartByte,
+                               4);
                         CPL_MSBPTR32(&nVal);
                         poFeature->SetField(i, nVal);
                     }
                 }
             }
             else if (pasFieldDesc[i].eFormat == IEEE_REAL &&
-                     pasFieldDesc[i].nStartByte +
-                     pasFieldDesc[i].nItemBytes * pasFieldDesc[i].nItems <= nRecordSize &&
+                     pasFieldDesc[i].nStartByte + pasFieldDesc[i].nItemBytes *
+                                                      pasFieldDesc[i].nItems <=
+                         nRecordSize &&
                      pasFieldDesc[i].nItemBytes == 4)
             {
                 if (pasFieldDesc[i].nItems > 1)
                 {
-                    double* padfValues = (double*)CPLMalloc(sizeof(double) * pasFieldDesc[i].nItems);
-                    for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                    double *padfValues = (double *)CPLMalloc(
+                        sizeof(double) * pasFieldDesc[i].nItems);
+                    for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                     {
                         float fVal = 0.0f;
-                        memcpy(&fVal, pabyRecord + pasFieldDesc[i].nStartByte + 4 * j, 4);
+                        memcpy(&fVal,
+                               pabyRecord + pasFieldDesc[i].nStartByte + 4 * j,
+                               4);
                         CPL_MSBPTR32(&fVal);
                         padfValues[j] = (double)fVal;
                     }
@@ -680,17 +704,21 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                 }
             }
             else if (pasFieldDesc[i].eFormat == IEEE_REAL &&
-                     pasFieldDesc[i].nStartByte +
-                     pasFieldDesc[i].nItemBytes * pasFieldDesc[i].nItems <= nRecordSize &&
+                     pasFieldDesc[i].nStartByte + pasFieldDesc[i].nItemBytes *
+                                                      pasFieldDesc[i].nItems <=
+                         nRecordSize &&
                      pasFieldDesc[i].nItemBytes == 8)
             {
                 if (pasFieldDesc[i].nItems > 1)
                 {
-                    double* padfValues = (double*)CPLMalloc(sizeof(double) * pasFieldDesc[i].nItems);
-                    for( int j = 0; j < pasFieldDesc[i].nItems; j++ )
+                    double *padfValues = (double *)CPLMalloc(
+                        sizeof(double) * pasFieldDesc[i].nItems);
+                    for (int j = 0; j < pasFieldDesc[i].nItems; j++)
                     {
                         double dfVal = 0.0;
-                        memcpy(&dfVal, pabyRecord + pasFieldDesc[i].nStartByte + 8 * j, 8);
+                        memcpy(&dfVal,
+                               pabyRecord + pasFieldDesc[i].nStartByte + 8 * j,
+                               8);
                         CPL_MSBPTR64(&dfVal);
                         padfValues[j] = dfVal;
                     }
@@ -709,10 +737,10 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
     }
     else
     {
-        char **papszTokens = CSLTokenizeString2(
-                (const char*)pabyRecord, " ", CSLT_HONOURSTRINGS );
+        char **papszTokens = CSLTokenizeString2((const char *)pabyRecord, " ",
+                                                CSLT_HONOURSTRINGS);
         const int nTokens = std::min(CSLCount(papszTokens), nFieldCount);
-        for( int i = 0; i < nTokens; i++ )
+        for (int i = 0; i < nTokens; i++)
         {
             poFeature->SetField(i, papszTokens[i]);
         }
@@ -720,9 +748,9 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
     }
 
     if (nLongitudeIndex >= 0 && nLatitudeIndex >= 0)
-        poFeature->SetGeometryDirectly(new OGRPoint(
-                                poFeature->GetFieldAsDouble(nLongitudeIndex),
-                                poFeature->GetFieldAsDouble(nLatitudeIndex)));
+        poFeature->SetGeometryDirectly(
+            new OGRPoint(poFeature->GetFieldAsDouble(nLongitudeIndex),
+                         poFeature->GetFieldAsDouble(nLatitudeIndex)));
 
     poFeature->SetFID(nNextFID++);
 
@@ -733,18 +761,18 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSLayer::TestCapability( const char * pszCap )
+int OGRPDSLayer::TestCapability(const char *pszCap)
 
 {
-    if (EQUAL(pszCap,OLCFastFeatureCount) &&
-        m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
+    if (EQUAL(pszCap, OLCFastFeatureCount) && m_poFilterGeom == nullptr &&
+        m_poAttrQuery == nullptr)
         return TRUE;
 
-    if (EQUAL(pszCap,OLCRandomRead))
+    if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
 
-    if (EQUAL(pszCap,OLCFastSetNextByIndex) &&
-        m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
+    if (EQUAL(pszCap, OLCFastSetNextByIndex) && m_poFilterGeom == nullptr &&
+        m_poAttrQuery == nullptr)
         return TRUE;
 
     return FALSE;
@@ -754,7 +782,7 @@ int OGRPDSLayer::TestCapability( const char * pszCap )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRPDSLayer::GetFeatureCount(int bForce )
+GIntBig OGRPDSLayer::GetFeatureCount(int bForce)
 {
     if (TestCapability(OLCFastFeatureCount))
         return nRecords;
@@ -766,13 +794,13 @@ GIntBig OGRPDSLayer::GetFeatureCount(int bForce )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPDSLayer::GetFeature( GIntBig nFID )
+OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
 {
     if (nFID < 0 || nFID >= nRecords)
         return nullptr;
 
     nNextFID = (int)nFID;
-    VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );
+    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
     return GetNextRawFeature();
 }
 
@@ -780,17 +808,17 @@ OGRFeature *OGRPDSLayer::GetFeature( GIntBig nFID )
 /*                         SetNextByIndex()                             */
 /************************************************************************/
 
-OGRErr OGRPDSLayer::SetNextByIndex( GIntBig nIndex )
+OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
 {
     if (!TestCapability(OLCFastSetNextByIndex))
-        return OGRLayer::SetNextByIndex( nIndex );
+        return OGRLayer::SetNextByIndex(nIndex);
 
     if (nIndex < 0 || nIndex >= nRecords)
         return OGRERR_FAILURE;
 
     nNextFID = (int)nIndex;
-    VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );
+    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
     return OGRERR_NONE;
 }
 
-} /* end of OGRPDS namespace */
+}  // namespace OGRPDS

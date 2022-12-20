@@ -410,21 +410,12 @@ def test_ogr2ogr_py_10():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
-    ret = "success"
-    if feat.GetFieldAsDouble("EAS_ID") != 168:
-        gdaltest.post_reason("did not get expected value for EAS_ID")
-        print(feat.GetFieldAsDouble("EAS_ID"))
-        ret = "fail"
-    elif feat.GetFieldAsString("PRFEDEA") != "35043411":
-        gdaltest.post_reason("did not get expected value for PRFEDEA")
-        print(feat.GetFieldAsString("PRFEDEA"))
-        ret = "fail"
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
     feat = None
     ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/poly.shp")
-
-    return ret
 
 
 ###############################################################################
@@ -521,7 +512,7 @@ def test_ogr2ogr_py_13():
 # Test -segmentize
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="-segmentize not implemented")
 def test_ogr2ogr_py_14():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
@@ -658,7 +649,7 @@ def test_ogr2ogr_py_17():
 # Test -wrapdateline
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="-wrapdateline not implemented")
 def test_ogr2ogr_py_18():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
@@ -771,6 +762,9 @@ def test_ogr2ogr_py_20():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     try:
         os.remove("tmp/Fields.dbf")
@@ -895,6 +889,12 @@ def test_ogr2ogr_py_22():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("MapInfo File") is None:
+        pytest.skip("MapInfo File driver is missing")
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
@@ -932,6 +932,12 @@ def test_ogr2ogr_py_23():
         pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("MapInfo File") is None:
+        pytest.skip("MapInfo File driver is missing")
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path()
@@ -1008,6 +1014,9 @@ def test_ogr2ogr_py_25():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     if not ogrtest.have_geos():
         pytest.skip()
@@ -1098,6 +1107,9 @@ def test_ogr2ogr_py_27():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     if not ogrtest.have_geos():
         pytest.skip()
@@ -1229,6 +1241,9 @@ def test_ogr2ogr_py_33():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_33_src.csv")
@@ -1676,6 +1691,9 @@ def test_ogr2ogr_py_44():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("GML") is None:
+        pytest.skip("GML driver is missing")
+
     try:
         os.stat("tmp/test_ogr2ogr_44_src.shp")
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
@@ -1743,6 +1761,9 @@ def test_ogr2ogr_py_45():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("GML") is None:
+        pytest.skip("GML driver is missing")
+
     try:
         os.stat("tmp/test_ogr2ogr_44_src.shp")
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
@@ -1809,6 +1830,9 @@ def test_ogr2ogr_py_46():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_45_src.shp")

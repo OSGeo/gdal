@@ -30,26 +30,37 @@
 #include "wmsdriver.h"
 #include "minidriver_tms.h"
 
+WMSMiniDriver_TMS::WMSMiniDriver_TMS()
+{
+}
 
-WMSMiniDriver_TMS::WMSMiniDriver_TMS() {}
+WMSMiniDriver_TMS::~WMSMiniDriver_TMS()
+{
+}
 
-WMSMiniDriver_TMS::~WMSMiniDriver_TMS() {}
-
-CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config,
+                                     CPL_UNUSED char **papszOpenOptions)
+{
     CPLErr ret = CE_None;
 
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
+        if (base_url[0] != '\0')
+        {
             m_base_url = base_url;
-            if (m_base_url.find("${") == std::string::npos) {
-                if (m_base_url.back() != '/') {
+            if (m_base_url.find("${") == std::string::npos)
+            {
+                if (m_base_url.back() != '/')
+                {
                     m_base_url += "/";
                 }
                 m_base_url += "${version}/${layer}/${z}/${x}/${y}.${format}";
             }
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TMS mini-driver: ServerURL missing.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALWMS, TMS mini-driver: ServerURL missing.");
             ret = CE_Failure;
         }
     }
@@ -62,29 +73,33 @@ CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     const char *format = CPLGetXMLValue(config, "Format", "jpg");
     URLSearchAndReplace(&m_base_url, "${format}", "%s", format);
 
-    m_nTileXMultiplier = atoi(
-        CPLGetXMLValue(config, "TileXMultiplier", "1"));
+    m_nTileXMultiplier = atoi(CPLGetXMLValue(config, "TileXMultiplier", "1"));
 
     return ret;
 }
 
-CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
-                                            const GDALWMSImageRequestInfo &iri,
-                                            const GDALWMSTiledImageRequestInfo &tiri)
+CPLErr
+WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
+                                     const GDALWMSImageRequestInfo &iri,
+                                     const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
     int tms_y;
 
-    if (data_window->m_y_origin != GDALWMSDataWindow::TOP) {
-        if( iri.m_y0 == iri.m_y1 )
+    if (data_window->m_y_origin != GDALWMSDataWindow::TOP)
+    {
+        if (iri.m_y0 == iri.m_y1)
             return CE_Failure;
-        const double dfTmp = floor(((data_window->m_y1 - data_window->m_y0)
-                                      / (iri.m_y1 - iri.m_y0)) + 0.5);
-        if( !(dfTmp >= 0 && dfTmp < INT_MAX) )
+        const double dfTmp = floor(
+            ((data_window->m_y1 - data_window->m_y0) / (iri.m_y1 - iri.m_y0)) +
+            0.5);
+        if (!(dfTmp >= 0 && dfTmp < INT_MAX))
             return CE_Failure;
         tms_y = static_cast<int>(dfTmp) - tiri.m_y - 1;
-    } else {
+    }
+    else
+    {
         tms_y = tiri.m_y;
     }
     // http://tms25.arc.nasa.gov/tile/tile.aspx?T=geocover2000&L=0&X=86&Y=39
@@ -94,10 +109,14 @@ CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
     URLSearchAndReplace(&url, "${y}", "%d", tms_y);
     URLSearchAndReplace(&url, "${z}", "%d", tiri.m_level);
 
-    /* Hack for some TMS like servers that require tile numbers split into 3 groups of */
-    /* 3 digits, like http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
-    URLSearchAndReplace(&url, "${xxx}", "%03d/%03d/%03d", tiri.m_x / 1000000, (tiri.m_x / 1000) % 1000, tiri.m_x % 1000);
-    URLSearchAndReplace(&url, "${yyy}", "%03d/%03d/%03d", tms_y / 1000000, (tms_y / 1000) % 1000, tms_y % 1000);
+    /* Hack for some TMS like servers that require tile numbers split into 3
+     * groups of */
+    /* 3 digits, like
+     * http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
+    URLSearchAndReplace(&url, "${xxx}", "%03d/%03d/%03d", tiri.m_x / 1000000,
+                        (tiri.m_x / 1000) % 1000, tiri.m_x % 1000);
+    URLSearchAndReplace(&url, "${yyy}", "%03d/%03d/%03d", tms_y / 1000000,
+                        (tms_y / 1000) % 1000, tms_y % 1000);
 
     return CE_None;
 }

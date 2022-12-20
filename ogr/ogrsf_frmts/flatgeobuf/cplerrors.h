@@ -31,18 +31,21 @@
 
 #include "ogr_p.h"
 
-namespace ogr_flatgeobuf {
+namespace ogr_flatgeobuf
+{
 
-static std::nullptr_t CPLErrorInvalidPointer(const char *message) {
+static std::nullptr_t CPLErrorInvalidPointer(const char *message)
+{
     CPLError(CE_Failure, CPLE_AppDefined, "Unexpected nullptr: %s", message);
     return nullptr;
 }
 
-static OGRErr CPLErrorInvalidSize(const char *message) {
+static OGRErr CPLErrorInvalidSize(const char *message)
+{
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid size detected: %s", message);
     return OGRERR_CORRUPT_DATA;
 }
 
-}
+}  // namespace ogr_flatgeobuf
 
 #endif /* ndef FLATGEOBUF_CPLERRORS_H_INCLUDED */

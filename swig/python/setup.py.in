@@ -60,7 +60,14 @@ libraries = ['@GDAL_LIB_OUTPUT_NAME@']
 # Function to find numpy's include directory
 def get_numpy_include():
     # Fix numpy installation using setuptools
-    __builtins__.__NUMPY_SETUP__ = False
+    # __builtins__ can be either a dict or a module
+    def _set_builtin(name, value):
+        if isinstance(__builtins__, dict):
+            __builtins__[name] = value
+        else:
+            setattr(__builtins__, name, value)
+
+    _set_builtin("__NUMPY_SETUP__", False)
 
     import numpy
     return numpy.get_include()

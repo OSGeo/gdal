@@ -42,6 +42,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("NITF")
+
 
 @pytest.fixture(scope="module")
 def not_jpeg_9b():
@@ -196,7 +198,7 @@ def nitf_check_created_file(
 
 def test_nitf_5():
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    nitf_check_created_file(32498, 42602, 38982)
 
 
 ###############################################################################
@@ -685,7 +687,7 @@ def test_nitf_27():
 
     nitf_create(["ICORDS=G", "IC=NC", "BLOCKXSIZE=10", "BLOCKYSIZE=10"])
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    nitf_check_created_file(32498, 42602, 38982)
 
 
 ###############################################################################
@@ -696,7 +698,7 @@ def test_nitf_28_jp2ecw():
 
     gdaltest.nitf_28_jp2ecw_is_ok = False
     if gdal.GetDriverByName("JP2ECW") is None:
-        pytest.skip()
+        pytest.skip("JP2ECW driver missing")
 
     import ecw
 
@@ -705,37 +707,25 @@ def test_nitf_28_jp2ecw():
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2ECW")
-
-    if (
+    try:
         nitf_create(["ICORDS=G", "IC=C8", "TARGET=75"], set_inverted_color_interp=False)
-        == "success"
-    ):
-        ret = nitf_check_created_file(
-            32398, 42502, 38882, set_inverted_color_interp=False
-        )
-        if ret == "success":
-            gdaltest.nitf_28_jp2ecw_is_ok = True
-    else:
-        ret = "fail"
 
-    tmpfilename = "/vsimem/nitf_28_jp2ecw.ntf"
-    src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
-    gdal.GetDriverByName("NITF").CreateCopy(tmpfilename, src_ds, options=["IC=C8"])
-    ds = gdal.Open(tmpfilename)
-    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
-    ds = None
-    gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (
-        256,
-        256,
-    ):  # 256 since this is hardcoded as such in the ECW driver
-        gdaltest.post_reason("wrong block size")
-        print(blockxsize, blockysize)
-        ret = "fail"
+        nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
+        gdaltest.nitf_28_jp2ecw_is_ok = True
 
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+        tmpfilename = "/vsimem/nitf_28_jp2ecw.ntf"
+        src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
+        gdal.GetDriverByName("NITF").CreateCopy(tmpfilename, src_ds, options=["IC=C8"])
+        ds = gdal.Open(tmpfilename)
+        blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+        ds = None
+        gdal.Unlink(tmpfilename)
+        assert (blockxsize, blockysize) == (
+            256,
+            256,
+        )  # 256 since this is hardcoded as such in the ECW driver
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 ###############################################################################
@@ -748,7 +738,7 @@ def test_nitf_28_jp2mrsid():
 
     jp2mrsid_drv = gdal.GetDriverByName("JP2MrSID")
     if jp2mrsid_drv is None:
-        pytest.skip()
+        pytest.skip("JP2MrSID driver missing")
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2MrSID")
@@ -770,7 +760,7 @@ def test_nitf_28_jp2kak():
 
     jp2kak_drv = gdal.GetDriverByName("JP2KAK")
     if jp2kak_drv is None:
-        pytest.skip()
+        pytest.skip("JP2KAK driver missing")
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2KAK")
@@ -792,16 +782,14 @@ def test_nitf_28_jp2openjpeg():
 
     drv = gdal.GetDriverByName("JP2OpenJPEG")
     if drv is None:
-        pytest.skip()
+        pytest.skip("JP2OpenJPEG driver missing")
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
-
-    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+    try:
+        nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 ###############################################################################
@@ -815,36 +803,26 @@ def test_nitf_28_jp2openjpeg_bis():
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
-
-    if (
+    try:
         nitf_create(
             ["ICORDS=G", "IC=C8", "QUALITY=25"],
             set_inverted_color_interp=False,
             createcopy=True,
         )
-        == "success"
-    ):
-        ret = nitf_check_created_file(
-            31604, 42782, 38791, set_inverted_color_interp=False
-        )
-    else:
-        ret = "fail"
+        ds = gdal.Open("tmp/test_create.ntf")
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
 
-    tmpfilename = "/vsimem/nitf_28_jp2openjpeg_bis.ntf"
-    src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
-    gdal.GetDriverByName("NITF").CreateCopy(tmpfilename, src_ds, options=["IC=C8"])
-    ds = gdal.Open(tmpfilename)
-    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
-    ds = None
-    gdal.Unlink(tmpfilename)
-    if (blockxsize, blockysize) != (1024, 1024):
-        gdaltest.post_reason("wrong block size")
-        print(blockxsize, blockysize)
-        ret = "fail"
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+        tmpfilename = "/vsimem/nitf_28_jp2openjpeg_bis.ntf"
+        src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
+        gdal.GetDriverByName("NITF").CreateCopy(tmpfilename, src_ds, options=["IC=C8"])
+        ds = gdal.Open(tmpfilename)
+        blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+        ds = None
+        gdal.Unlink(tmpfilename)
+        assert (blockxsize, blockysize) == (1024, 1024)
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 ###############################################################################
@@ -1644,34 +1622,28 @@ def nitf_43(driver_to_test, options):
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
+    try:
+        ds = gdal.Open("data/byte.tif")
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        out_ds = gdal.GetDriverByName("NITF").CreateCopy(
+            "tmp/nitf_43.ntf", ds, options=options, strict=0
+        )
+        gdal.PopErrorHandler()
+        out_ds = None
+        out_ds = gdal.Open("tmp/nitf_43.ntf")
+        assert out_ds.GetRasterBand(1).Checksum() == 4672
+        out_ds = None
 
-    ds = gdal.Open("data/byte.tif")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    out_ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "tmp/nitf_43.ntf", ds, options=options, strict=0
-    )
-    gdal.PopErrorHandler()
-    out_ds = None
-    out_ds = gdal.Open("tmp/nitf_43.ntf")
-    if out_ds.GetRasterBand(1).Checksum() == 4672:
-        ret = "success"
-    else:
-        ret = "fail"
-    out_ds = None
+        # Check that there is no GMLJP2
+        assert "<gml" not in (open("tmp/nitf_43.ntf", "rb").read().decode("LATIN1"))
+    finally:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf_43.ntf")
 
-    if open("tmp/nitf_43.ntf", "rb").read().decode("LATIN1").find("<gml") >= 0:
-        print("GMLJP2 detected !")
-        ret = "fail"
-
-    gdal.GetDriverByName("NITF").Delete("tmp/nitf_43.ntf")
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 def test_nitf_43_jasper():
-    return nitf_43("JPEG2000", ["IC=C8"])
+    nitf_43("JPEG2000", ["IC=C8"])
 
 
 def test_nitf_43_jp2ecw():
@@ -1679,11 +1651,11 @@ def test_nitf_43_jp2ecw():
 
     if not ecw.has_write_support():
         pytest.skip()
-    return nitf_43("JP2ECW", ["IC=C8", "TARGET=0"])
+    nitf_43("JP2ECW", ["IC=C8", "TARGET=0"])
 
 
 def test_nitf_43_jp2kak():
-    return nitf_43("JP2KAK", ["IC=C8", "QUALITY=100"])
+    nitf_43("JP2KAK", ["IC=C8", "QUALITY=100"])
 
 
 ###############################################################################
@@ -3641,7 +3613,7 @@ def test_nitf_80():
 
 
 def test_nitf_81():
-    tre_data = "TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB000123401234560123450TGT_LOC=             "
+    tre_data = "TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB001234501234560123450TGT_LOC=             "
     ds = gdal.GetDriverByName("NITF").Create(
         "/vsimem/nitf_81.ntf", 1, 1, options=[tre_data]
     )
@@ -3663,7 +3635,7 @@ def test_nitf_81():
     <field name="TGT_LTIOV" value="0123456789AB" />
     <field name="TGT_TYPE" value="0" />
     <field name="TGT_COLL" value="0" />
-    <field name="TGT_CAT" value="01234" />
+    <field name="TGT_CAT" value="12345" />
     <field name="TGT_UTC" value="0123456" />
     <field name="TGT_ELEV" value="012345" />
     <field name="TGT_ELEV_UNIT" value="0" />
@@ -3816,18 +3788,22 @@ def test_nitf_84():
 
 def test_nitf_85():
     ds = gdal.GetDriverByName("NITF").Create(
-        "/vsimem/nitf_85.ntf", 1, 1, options=["TRE=HEX/TSTTRE=414243"]
+        "/vsimem/nitf_85.ntf",
+        1,
+        1,
+        options=["TRE=BEFORE=FOO", "TRE=HEX/TSTTRE=414243", "TRE=AFTERx=BAR"],
     )
     ds = None
 
     ds = gdal.Open("/vsimem/nitf_85.ntf")
-    data = ds.GetMetadata("TRE")["TSTTRE"]
+    data = ds.GetMetadata("TRE")
     ds = None
 
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_85.ntf")
 
-    expected_data = "ABC"
-    assert data == expected_data
+    assert data["BEFORE"] == "FOO"
+    assert data["TSTTRE"] == "ABC"
+    assert data["AFTERx"] == "BAR"
 
 
 ###############################################################################
@@ -4028,7 +4004,7 @@ def test_nitf_87():
 def test_nitf_88():
     tre_data = (
         "TRE=CSWRPB=1F199.9999999900000010000002000000300000040000005000000600000070000008"
-        "1111-9.99999999999999E-99+9.99999999999999E+9900000"
+        "1111-9.99999999999999E-99+0.50000000000000E+0000000"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4075,7 +4051,7 @@ def test_nitf_88():
           <group index="0">
             <repeated number="1">
               <group index="0">
-                <field name="B" value="+9.99999999999999E+99" />
+                <field name="B" value="+0.50000000000000E+00" />
               </group>
             </repeated>
           </group>
@@ -4257,9 +4233,9 @@ def test_nitf_RSMAPB():
 
     tre_data = (
         "TRE=RSMAPB=iid                                                                             "
-        + "edition                                 tid                                     01IG+9.99999999999999E+99"
-        + "+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99"
-        + "Y01011230001+9.99999999999999E+99+9.99999999999999E+99"
+        + "edition                                 tid                                     01IG+0.50000000000000E+00"
+        + "+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00"
+        + "Y01011230001+0.50000000000000E+00+0.50000000000000E+00"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4281,12 +4257,12 @@ def test_nitf_RSMAPB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="I" />
     <field name="LOCTYP" value="G" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="Y" />
     <field name="NISAP" value="01" />
     <field name="NISAPR" value="01" />
@@ -4303,14 +4279,14 @@ def test_nitf_RSMAPB():
       <group index="0">
         <repeated number="1">
           <group index="0">
-            <field name="AEL" value="+9.99999999999999E+99" />
+            <field name="AEL" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
     </repeated>
     <repeated number="1">
       <group index="0">
-        <field name="PARVAL" value="+9.99999999999999E+99" />
+        <field name="PARVAL" value="+0.50000000000000E+00" />
       </group>
     </repeated>
   </tre>
@@ -4331,8 +4307,8 @@ def test_nitf_RSMDCB():
         + "edition                                 tid                                     01001iidi"
         + " " * 76
         + "01Y01GN"
-        + "+9.99999999999999E+99" * 6
-        + "N01ABCD+9.99999999999999E+99"
+        + "+0.50000000000000E+00" * 6
+        + "N01ABCD+0.50000000000000E+00"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4363,12 +4339,12 @@ def test_nitf_RSMDCB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="G" />
     <field name="LOCTYP" value="N" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="N" />
     <field name="NGSAP" value="01" />
     <repeated number="1">
@@ -4382,7 +4358,7 @@ def test_nitf_RSMDCB():
           <group index="0">
             <repeated number="1">
               <group index="0">
-                <field name="CRSCOV" value="+9.99999999999999E+99" />
+                <field name="CRSCOV" value="+0.50000000000000E+00" />
               </group>
             </repeated>
           </group>
@@ -4406,15 +4382,15 @@ def test_nitf_RSMECB():
         "TRE=RSMECB=iid                                                                             "
         + "edition                                 tid                                     "
         + "YY01012020110201GN"
-        + "+9.99999999999999E+99" * 6
+        + "+0.50000000000000E+00" * 6
         + "N01ABCD02"
-        + "+9.99999999999999E+99" * 3
+        + "+0.50000000000000E+00" * 3
         + "1N2"
-        + "+9.99999999999999E+99" * 8
+        + "+0.50000000000000E+00" * 8
         + "N2"
-        + "+9.99999999999999E+99" * 4
+        + "+0.50000000000000E+00" * 4
         + "2"
-        + "+9.99999999999999E+99" * 4
+        + "+0.50000000000000E+00" * 4
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4441,12 +4417,12 @@ def test_nitf_RSMECB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="G" />
     <field name="LOCTYP" value="N" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="N" />
     <field name="NGSAP" value="01" />
     <repeated number="1">
@@ -4459,13 +4435,13 @@ def test_nitf_RSMECB():
         <field name="NUMOPG" value="02" />
         <repeated number="3">
           <group index="0">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
           <group index="1">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
           <group index="2">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
         </repeated>
         <field name="TCDF" value="1" />
@@ -4473,12 +4449,12 @@ def test_nitf_RSMECB():
         <field name="NCSEG" value="2" />
         <repeated number="2">
           <group index="0">
-            <field name="CORSEG" value="+9.99999999999999E+99" />
-            <field name="TAUSEG" value="+9.99999999999999E+99" />
+            <field name="CORSEG" value="+0.50000000000000E+00" />
+            <field name="TAUSEG" value="+0.50000000000000E+00" />
           </group>
           <group index="1">
-            <field name="CORSEG" value="+9.99999999999999E+99" />
-            <field name="TAUSEG" value="+9.99999999999999E+99" />
+            <field name="CORSEG" value="+0.50000000000000E+00" />
+            <field name="TAUSEG" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
@@ -4487,35 +4463,35 @@ def test_nitf_RSMECB():
       <group index="0">
         <repeated number="1">
           <group index="0">
-            <field name="MAP" value="+9.99999999999999E+99" />
+            <field name="MAP" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
     </repeated>
-    <field name="URR" value="+9.99999999999999E+99" />
-    <field name="URC" value="+9.99999999999999E+99" />
-    <field name="UCC" value="+9.99999999999999E+99" />
+    <field name="URR" value="+0.50000000000000E+00" />
+    <field name="URC" value="+0.50000000000000E+00" />
+    <field name="UCC" value="+0.50000000000000E+00" />
     <field name="UACSMC" value="N" />
     <field name="UNCSR" value="2" />
     <repeated number="2">
       <group index="0">
-        <field name="UCORSR" value="+9.99999999999999E+99" />
-        <field name="UTAUSR" value="+9.99999999999999E+99" />
+        <field name="UCORSR" value="+0.50000000000000E+00" />
+        <field name="UTAUSR" value="+0.50000000000000E+00" />
       </group>
       <group index="1">
-        <field name="UCORSR" value="+9.99999999999999E+99" />
-        <field name="UTAUSR" value="+9.99999999999999E+99" />
+        <field name="UCORSR" value="+0.50000000000000E+00" />
+        <field name="UTAUSR" value="+0.50000000000000E+00" />
       </group>
     </repeated>
     <field name="UNCSC" value="2" />
     <repeated number="2">
       <group index="0">
-        <field name="UCORSC" value="+9.99999999999999E+99" />
-        <field name="UTAUSC" value="+9.99999999999999E+99" />
+        <field name="UCORSC" value="+0.50000000000000E+00" />
+        <field name="UTAUSC" value="+0.50000000000000E+00" />
       </group>
       <group index="1">
-        <field name="UCORSC" value="+9.99999999999999E+99" />
-        <field name="UTAUSC" value="+9.99999999999999E+99" />
+        <field name="UCORSC" value="+0.50000000000000E+00" />
+        <field name="UTAUSC" value="+0.50000000000000E+00" />
       </group>
     </repeated>
   </tre>
@@ -4938,8 +4914,12 @@ def test_nitf_SENSRB():
     <field name="IMAGE_FORMATION_DATA" value="Y" />
     <field name="METHOD" value="" />
     <field name="MODE" value="" />
-    <field name="ROW_COUNT" value="00000000" />
-    <field name="COLUMN_COUNT" value="00000000" />
+    <field name="ROW_COUNT" value="00000000">
+      <warning>Minimum value constraint of 1 not met</warning>
+    </field>
+    <field name="COLUMN_COUNT" value="00000000">
+      <warning>Minimum value constraint of 1 not met</warning>
+    </field>
     <field name="ROW_SET" value="00000000" />
     <field name="COLUMN_SET" value="00000000" />
     <field name="ROW_RATE" value="0000000000" />
@@ -5323,6 +5303,119 @@ def test_nitf_no_image_segment():
 
     with gdaltest.error_handler():
         gdal.GetDriverByName("NITF").Delete(out_filename)
+
+
+###############################################################################
+# Test TRE metadata validation
+
+
+def test_nitf_metadata_validation_tre():
+
+    filename = "/vsimem/test_nitf_metadata_validation_tre.ntf"
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Create(
+            filename,
+            1,
+            1,
+            options=[
+                "TRE=BLOCKA=010000001000360-10                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924"
+            ],
+        )
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+    assert gdal.GetLastErrorMsg() != ""
+    md = ds.GetMetadata("xml:TRE")[0]
+    assert (
+        md
+        == """<tres>
+  <tre name="BLOCKA" location="image">
+    <error>BLOCKA TRE wrong size (118). Expected 123.</error>
+    <field name="BLOCK_INSTANCE" value="01" />
+    <field name="N_GRAY" value="00000" />
+    <field name="L_LINES" value="01000" />
+    <field name="LAYOVER_ANGLE" value="360">
+      <error>Maximum value constraint of 359 not met</error>
+    </field>
+    <field name="SHADOW_ANGLE" value="-10">
+      <error>Minimum value constraint of 0 not met</error>
+    </field>
+    <field name="FRLC_LOC" value="+42.319331+020.078400" />
+    <field name="LRLC_LOC" value="+42.317083+020.126072" />
+    <field name="LRFC_LOC" value="+42.281634+020.122570" />
+    <field name="FRFC_LOC" value="+42.283881+020.074924" />
+  </tre>
+</tres>
+"""
+    )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(
+            filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
+        )
+    assert ds is None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test DES metadata validation
+
+
+def test_nitf_metadata_validation_des():
+
+    filename = "/vsimem/test_nitf_metadata_validation_des.ntf"
+    des_data = b"02U" + b" " * 166 + b"0004ABCD"
+    escaped_data = gdal.EscapeString(des_data, gdal.CPLES_BackslashQuotable)
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Create(
+            filename, 1, 1, options=[b"DES=CSATTA DES=" + escaped_data]
+        )
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+    assert gdal.GetLastErrorMsg() != ""
+    md = ds.GetMetadata("xml:DES")[0]
+    assert (
+        md
+        == """<des_list>
+  <des name="CSATTA DES">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD">
+      <user_defined_fields>
+        <error>CSATTA DES DES wrong size (4). Expected 52.</error>
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="" />
+  </des>
+</des_list>
+"""
+    )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(
+            filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
+        )
+    assert ds is None
+
+    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -5739,37 +5832,31 @@ def nitf_online_15(driver_to_test, expected_cs=1054):
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
-    ds = gdal.Open("tmp/cache/p0_01a.ntf")
-    if ds.GetRasterBand(1).Checksum() == expected_cs:
-        ret = "success"
-    else:
-        print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason("Did not get expected checksums")
-        ret = "fail"
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+    try:
+        ds = gdal.Open("tmp/cache/p0_01a.ntf")
+        assert ds.GetRasterBand(1).Checksum() == expected_cs
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 def test_nitf_online_15_jp2ecw():
-    return nitf_online_15("JP2ECW")
+    nitf_online_15("JP2ECW")
 
 
 def test_nitf_online_15_jp2mrsid():
-    return nitf_online_15("JP2MrSID")
+    nitf_online_15("JP2MrSID")
 
 
 def test_nitf_online_15_jp2kak():
-    return nitf_online_15("JP2KAK")
+    nitf_online_15("JP2KAK")
 
 
 def test_nitf_online_15_jasper():
-    return nitf_online_15("JPEG2000")
+    nitf_online_15("JPEG2000")
 
 
 def test_nitf_online_15_openjpeg():
-    return nitf_online_15("JP2OpenJPEG")
+    nitf_online_15("JP2OpenJPEG")
 
 
 ###############################################################################
@@ -5792,53 +5879,44 @@ def nitf_online_16(driver_to_test):
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
-    ds = gdal.Open("tmp/cache/file9_jp2_2places.ntf")
-    # JPEG2000 driver
-    if (
-        ds.RasterCount == 3
-        and ds.GetRasterBand(1).Checksum() == 48954
-        and ds.GetRasterBand(2).Checksum() == 4939
-        and ds.GetRasterBand(3).Checksum() == 17734
-    ):
-        ret = "success"
-
-    elif (
-        ds.RasterCount == 1
-        and ds.GetRasterBand(1).Checksum() == 47664
-        and ds.GetRasterBand(1).GetRasterColorTable() is not None
-    ):
-        ret = "success"
-    else:
-        print(ds.RasterCount)
-        for i in range(ds.RasterCount):
-            print(ds.GetRasterBand(i + 1).Checksum())
-        print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason("Did not get expected checksums")
-        ret = "fail"
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
+    try:
+        ds = gdal.Open("tmp/cache/file9_jp2_2places.ntf")
+        # JPEG2000 driver
+        if ds.RasterCount == 3:
+            assert ds.GetRasterBand(1).Checksum() == 48954
+            assert ds.GetRasterBand(2).Checksum() == 4939
+            assert ds.GetRasterBand(3).Checksum() == 17734
+        elif ds.RasterCount == 1:
+            assert ds.GetRasterBand(1).Checksum() == 47664
+            assert ds.GetRasterBand(1).GetRasterColorTable() is not None
+        else:
+            print(ds.RasterCount)
+            for i in range(ds.RasterCount):
+                print(ds.GetRasterBand(i + 1).Checksum())
+            print(ds.GetRasterBand(1).GetRasterColorTable())
+            pytest.fail("Did not get expected checksums")
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
 
 
 def test_nitf_online_16_jp2ecw():
-    return nitf_online_16("JP2ECW")
+    nitf_online_16("JP2ECW")
 
 
 def test_nitf_online_16_jp2mrsid():
-    return nitf_online_16("JP2MrSID")
+    nitf_online_16("JP2MrSID")
 
 
 def test_nitf_online_16_jp2kak():
-    return nitf_online_16("JP2KAK")
+    nitf_online_16("JP2KAK")
 
 
 def test_nitf_online_16_jasper():
-    return nitf_online_16("JPEG2000")
+    nitf_online_16("JPEG2000")
 
 
 def test_nitf_online_16_openjpeg():
-    return nitf_online_16("JP2OpenJPEG")
+    nitf_online_16("JP2OpenJPEG")
 
 
 ###############################################################################
@@ -5862,43 +5940,37 @@ def nitf_online_17(driver_to_test):
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
     ds = gdal.Open("tmp/cache/file9_j2c.ntf")
-    if (
-        ds.RasterCount == 1
-        and ds.GetRasterBand(1).Checksum() == 47664
-        and ds.GetRasterBand(1).GetRasterColorTable() is not None
-    ):
-        ret = "success"
+    if ds.RasterCount == 1:
+        assert ds.GetRasterBand(1).Checksum() == 47664
+        assert ds.GetRasterBand(1).GetRasterColorTable() is not None
     else:
         print(ds.RasterCount)
         for i in range(ds.RasterCount):
             print(ds.GetRasterBand(i + 1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason("Did not get expected checksums")
-        ret = "fail"
+        pytest.fail("Did not get expected checksums")
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
-    return ret
-
 
 def test_nitf_online_17_jp2ecw():
-    return nitf_online_17("JP2ECW")
+    nitf_online_17("JP2ECW")
 
 
 def test_nitf_online_17_jp2mrsid():
-    return nitf_online_17("JP2MrSID")
+    nitf_online_17("JP2MrSID")
 
 
 def test_nitf_online_17_jp2kak():
-    return nitf_online_17("JP2KAK")
+    nitf_online_17("JP2KAK")
 
 
 def test_nitf_online_17_jasper():
-    return nitf_online_17("JPEG2000")
+    nitf_online_17("JPEG2000")
 
 
 def test_nitf_online_17_openjpeg():
-    return nitf_online_17("JP2OpenJPEG")
+    nitf_online_17("JP2OpenJPEG")
 
 
 ###############################################################################

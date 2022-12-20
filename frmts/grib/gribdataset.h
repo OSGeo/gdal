@@ -42,7 +42,7 @@
 #include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 
 #include <algorithm>
@@ -74,40 +74,47 @@
 class GRIBArray;
 class GRIBRasterBand;
 
-namespace gdal {
-namespace grib {
+namespace gdal
+{
+namespace grib
+{
 class InventoryWrapper;
 }
-}
+}  // namespace gdal
 
-class GRIBDataset final: public GDALPamDataset
+class GRIBDataset final : public GDALPamDataset
 {
     friend class GRIBArray;
     friend class GRIBRasterBand;
 
   public:
-                GRIBDataset();
-                ~GRIBDataset();
+    GRIBDataset();
+    ~GRIBDataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-    static GDALDataset *CreateCopy( const char * pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char ** papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void * pProgressData );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 
-    CPLErr      GetGeoTransform( double *padfTransform ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    const OGRSpatialReference *GetSpatialRef() const override
+    {
         return m_poSRS.get();
     }
 
-    std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poRootGroup;
+    }
 
   private:
     void SetGribMetaData(grib_MetaData *meta);
-    static GDALDataset *OpenMultiDim( GDALOpenInfo * );
-    static std::unique_ptr<gdal::grib::InventoryWrapper> Inventory(VSILFILE *, GDALOpenInfo *);
+    static GDALDataset *OpenMultiDim(GDALOpenInfo *);
+    static std::unique_ptr<gdal::grib::InventoryWrapper>
+    Inventory(VSILFILE *, GDALOpenInfo *);
 
     VSILFILE *fp;
     // Calculate and store once as GetGeoTransform may be called multiple times.
@@ -117,8 +124,8 @@ class GRIBDataset final: public GDALPamDataset
     GIntBig nCachedBytesThreshold;
     int bCacheOnlyOneBand;
 
-    // Split&Swap: transparent rewrap around the prime meridian instead of the antimeridian
-    // rows after nSplitAndSwapColumn are placed at the beginning
+    // Split&Swap: transparent rewrap around the prime meridian instead of the
+    // antimeridian rows after nSplitAndSwapColumn are placed at the beginning
     // while rows before are placed at the end
     int nSplitAndSwapColumn;
 
@@ -135,31 +142,33 @@ class GRIBDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRIBRasterBand final: public GDALPamRasterBand
+class GRIBRasterBand final : public GDALPamRasterBand
 {
     friend class GRIBArray;
     friend class GRIBDataset;
 
-public:
-    GRIBRasterBand( GRIBDataset *, int, inventoryType * );
+  public:
+    GRIBRasterBand(GRIBDataset *, int, inventoryType *);
     virtual ~GRIBRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
     virtual const char *GetDescription() const override;
 
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
-    virtual const char *GetMetadataItem(const char *pszName, const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain = "") override;
 
-    void    FindPDSTemplate();
+    void FindPDSTemplate();
 
-    void    UncacheData();
+    void UncacheData();
 
-    static void ReadGribData( VSILFILE *, vsi_l_offset, int, double **,
-                              grib_MetaData ** );
-private:
-    CPLErr       LoadData();
-    void         FindNoDataGrib2(bool bSeekToStart = true);
-    void         FindMetaData();
+    static void ReadGribData(VSILFILE *, vsi_l_offset, int, double **,
+                             grib_MetaData **);
+
+  private:
+    CPLErr LoadData();
+    void FindNoDataGrib2(bool bSeekToStart = true);
+    void FindMetaData();
     // Heuristic search for the start of the message
     static vsi_l_offset FindTrueStart(VSILFILE *, vsi_l_offset);
 
@@ -172,47 +181,64 @@ private:
 
     int nGribDataXSize;
     int nGribDataYSize;
-    int     m_nGribVersion;
+    int m_nGribVersion;
 
-    bool    m_bHasLookedForNoData;
-    double  m_dfNoData;
-    bool    m_bHasNoData;
+    bool m_bHasLookedForNoData;
+    double m_dfNoData;
+    bool m_bHasNoData;
 
-    int     m_nDisciplineCode = -1;
+    int m_nDisciplineCode = -1;
     std::string m_osDisciplineName{};
-    int     m_nCenter = -1;
+    int m_nCenter = -1;
     std::string m_osCenterName{};
-    int     m_nSubCenter = -1;
+    int m_nSubCenter = -1;
     std::string m_osSubCenterName{};
     std::string m_osSignRefTimeName{};
     std::string m_osRefTime{};
     std::string m_osProductionStatus{};
     std::string m_osType{};
-    int     m_nPDTN = -1;
+    int m_nPDTN = -1;
     std::vector<GUInt32> m_anPDSTemplateAssembledValues{};
-    bool    bLoadedPDS = false;
-    bool    bLoadedMetadata = false;
+    bool bLoadedPDS = false;
+    bool bLoadedMetadata = false;
 };
 
-namespace gdal {
-namespace grib {
+namespace gdal
+{
+namespace grib
+{
 
 // Thin layer to manage allocation and deallocation.
 class InventoryWrapper
 {
   public:
-    InventoryWrapper() {}
-    virtual ~InventoryWrapper() {}
-
-    // Modifying the contents pointed to by the return is allowed.
-    inventoryType * get(int i) const {
-      if (i < 0 || i >= static_cast<int>(inv_len_)) return nullptr;
-      return inv_ + i;
+    InventoryWrapper()
+    {
+    }
+    virtual ~InventoryWrapper()
+    {
     }
 
-    uInt4 length() const { return inv_len_; }
-    size_t num_messages() const { return num_messages_; }
-    int result() const { return result_; }
+    // Modifying the contents pointed to by the return is allowed.
+    inventoryType *get(int i) const
+    {
+        if (i < 0 || i >= static_cast<int>(inv_len_))
+            return nullptr;
+        return inv_ + i;
+    }
+
+    uInt4 length() const
+    {
+        return inv_len_;
+    }
+    size_t num_messages() const
+    {
+        return num_messages_;
+    }
+    int result() const
+    {
+        return result_;
+    }
 
   protected:
     inventoryType *inv_ = nullptr;
@@ -221,10 +247,10 @@ class InventoryWrapper
     int result_ = 0;
 };
 
-} // namespace grib
-} // namespace gdal
+}  // namespace grib
+}  // namespace gdal
 
-const char* const apszJ2KDrivers[] =
-        { "JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW" };
+const char *const apszJ2KDrivers[] = {"JP2KAK", "JP2OPENJPEG", "JPEG2000",
+                                      "JP2ECW"};
 
-#endif // GRIBDATASET_H
+#endif  // GRIBDATASET_H

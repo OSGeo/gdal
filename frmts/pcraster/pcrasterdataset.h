@@ -34,10 +34,11 @@
 #include "csf.h"
 
 // namespace {
-  // PCRasterDataset declarations.
+// PCRasterDataset declarations.
 // }
-namespace gdal {
-  class PCRasterDatasetTest;
+namespace gdal
+{
+class PCRasterDatasetTest;
 }
 
 // namespace {
@@ -53,86 +54,78 @@ namespace gdal {
   Additional documentation about this driver can be found in
   frmts/frmts_various.html of the GDAL source code distribution.
 */
-class PCRasterDataset final: public GDALPamDataset
+class PCRasterDataset final : public GDALPamDataset
 {
 
-  friend class gdal::PCRasterDatasetTest;
+    friend class gdal::PCRasterDatasetTest;
 
-public:
+  public:
+    static GDALDataset *open(GDALOpenInfo *info);
 
-  static GDALDataset* open             (GDALOpenInfo* info);
+    static GDALDataset *create(const char *filename, int nr_cols, int nr_rows,
+                               int nrBands, GDALDataType gdalType,
+                               char **papszParamList);
 
-  static GDALDataset* create           (const char* filename,
-                                        int nr_cols,
-                                        int nr_rows,
-                                        int nrBands,
-                                        GDALDataType gdalType,
-                                        char** papszParamList);
+    static GDALDataset *createCopy(char const *filename, GDALDataset *source,
+                                   int strict, char **options,
+                                   GDALProgressFunc progress,
+                                   void *progressData);
 
-  static GDALDataset* createCopy       (char const* filename,
-                                        GDALDataset* source,
-                                        int strict,
-                                        char** options,
-                                        GDALProgressFunc progress,
-                                        void* progressData);
+  private:
+    //! CSF map structure.
+    MAP *d_map;
 
-private:
+    //! Left coordinate of raster.
+    double d_west;
 
-  //! CSF map structure.
-  MAP*             d_map;
+    //! Top coordinate of raster.
+    double d_north;
 
-  //! Left coordinate of raster.
-  double           d_west;
+    //! Cell size.
+    double d_cellSize;
 
-  //! Top coordinate of raster.
-  double           d_north;
+    //! Cell representation.
+    CSF_CR d_cellRepresentation;
 
-  //! Cell size.
-  double           d_cellSize;
+    //! Value scale.
+    CSF_VS d_valueScale;
 
-  //! Cell representation.
-  CSF_CR           d_cellRepresentation;
+    //! No data value.
+    double d_defaultNoDataValue;
 
-  //! Value scale.
-  CSF_VS           d_valueScale;
+    bool d_location_changed;
 
-  //! No data value.
-  double           d_defaultNoDataValue;
+    //! Assignment operator. NOT IMPLEMENTED.
+    PCRasterDataset &operator=(const PCRasterDataset &);
 
-  bool             d_location_changed;
+    //! Copy constructor. NOT IMPLEMENTED.
+    PCRasterDataset(const PCRasterDataset &);
 
-  //! Assignment operator. NOT IMPLEMENTED.
-  PCRasterDataset& operator=           (const PCRasterDataset&);
+  public:
+    //----------------------------------------------------------------------------
+    // CREATORS
+    //----------------------------------------------------------------------------
 
-  //! Copy constructor. NOT IMPLEMENTED.
-                   PCRasterDataset     (const PCRasterDataset&);
+    explicit PCRasterDataset(MAP *map, GDALAccess eAccess);
 
-public:
+    /* virtual */ ~PCRasterDataset();
 
-  //----------------------------------------------------------------------------
-  // CREATORS
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    // MANIPULATORS
+    //----------------------------------------------------------------------------
 
-  explicit          PCRasterDataset     (MAP* map, GDALAccess eAccess);
+    CPLErr SetGeoTransform(double *transform) override;
 
-  /* virtual */    ~PCRasterDataset    ();
+    //----------------------------------------------------------------------------
+    // ACCESSORS
+    //----------------------------------------------------------------------------
 
-  //----------------------------------------------------------------------------
-  // MANIPULATORS
-  //----------------------------------------------------------------------------
-
-  CPLErr           SetGeoTransform     (double* transform) override;
-
-  //----------------------------------------------------------------------------
-  // ACCESSORS
-  //----------------------------------------------------------------------------
-
-  MAP*             map                 () const;
-  CPLErr           GetGeoTransform     (double* transform) override;
-  CSF_CR           cellRepresentation  () const;
-  CSF_VS           valueScale          () const;
-  double           defaultNoDataValue  () const;
-  bool             location_changed    () const;
+    MAP *map() const;
+    CPLErr GetGeoTransform(double *transform) override;
+    CSF_CR cellRepresentation() const;
+    CSF_VS valueScale() const;
+    double defaultNoDataValue() const;
+    bool location_changed() const;
 };
 // } // namespace
 

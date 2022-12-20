@@ -1968,6 +1968,9 @@ def test_ogr_mitab_38():
 
 def test_ogr_mitab_39():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     ds = ogr.Open("data/mitab/all_geoms.mif")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/mitab/all_geoms.mif.golden.csv")
@@ -2014,6 +2017,9 @@ def test_ogr_mitab_40():
 
 def test_ogr_mitab_41():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     ds = ogr.Open("data/mitab/all_geoms.tab")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/mitab/all_geoms.mif.golden.csv")
@@ -2039,6 +2045,9 @@ def test_ogr_mitab_41():
 
 
 def test_ogr_mitab_42():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     ds = ogr.Open("/vsizip/data/mitab/all_geoms_block_32256.zip")
     lyr = ds.GetLayer(0)
@@ -2933,3 +2942,32 @@ def test_ogr_mitab_point_label():
     ds = None
 
     gdaltest.mapinfo_drv.DeleteDataSource("/vsimem/test_ogr_mitab_point_label.tab")
+
+
+###############################################################################
+
+
+def test_ogr_mitab_write_epsg_3125_philippine_reference_system_1992():
+
+    ref_srs = osr.SpatialReference()
+    ref_srs.ImportFromEPSG(3125)
+
+    filename = (
+        "/vsimem/test_ogr_mitab_write_epsg_3125_philippine_reference_system_1992.tab"
+    )
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test", srs=ref_srs, geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs.IsSame(ref_srs), got_srs.ExportToWkt()
+    ds = None
+
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)

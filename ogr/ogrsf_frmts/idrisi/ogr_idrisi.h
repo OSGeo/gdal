@@ -36,90 +36,103 @@
 /*                         OGRIdrisiLayer                               */
 /************************************************************************/
 
-class OGRIdrisiLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRIdrisiLayer>
+class OGRIdrisiLayer final : public OGRLayer,
+                             public OGRGetNextFeatureThroughRaw<OGRIdrisiLayer>
 {
-protected:
-    OGRFeatureDefn*    poFeatureDefn;
+  protected:
+    OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSRS;
     OGRwkbGeometryType eGeomType;
 
-    VSILFILE*          fp;
-    VSILFILE*          fpAVL;
-    bool               bEOF;
+    VSILFILE *fp;
+    VSILFILE *fpAVL;
+    bool bEOF;
 
-    int                nNextFID;
+    int nNextFID;
 
-    bool               bExtentValid;
-    double             dfMinX;
-    double             dfMinY;
-    double             dfMaxX;
-    double             dfMaxY;
+    bool bExtentValid;
+    double dfMinX;
+    double dfMinY;
+    double dfMaxX;
+    double dfMaxY;
 
-    unsigned int       nTotalFeatures;
+    unsigned int nTotalFeatures;
 
-    bool               Detect_AVL_ADC( const char* pszFilename );
-    void               ReadAVLLine( OGRFeature* poFeature );
+    bool Detect_AVL_ADC(const char *pszFilename);
+    void ReadAVLLine(OGRFeature *poFeature);
 
-    OGRFeature *       GetNextRawFeature();
+    OGRFeature *GetNextRawFeature();
 
   public:
-    OGRIdrisiLayer( const char* pszFilename,
-                    const char* pszLayerName, VSILFILE* fp,
-                    OGRwkbGeometryType eGeomType, const char* pszWTKString );
+    OGRIdrisiLayer(const char *pszFilename, const char *pszLayerName,
+                   VSILFILE *fp, OGRwkbGeometryType eGeomType,
+                   const char *pszWTKString);
     virtual ~OGRIdrisiLayer();
 
-    virtual void                ResetReading() override;
+    virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRIdrisiLayer)
 
-    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    virtual OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    virtual int                 TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    void SetExtent( double dfMinX, double dfMinY, double dfMaxX, double dfMaxY );
-    virtual OGRErr GetExtent( OGREnvelope *psExtent, int bForce = TRUE ) override;
-    virtual OGRErr GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce ) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
 
-    virtual GIntBig         GetFeatureCount( int bForce = TRUE ) override;
+    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
 };
 
 /************************************************************************/
 /*                        OGRIdrisiDataSource                           */
 /************************************************************************/
 
-class OGRIdrisiDataSource final: public OGRDataSource
+class OGRIdrisiDataSource final : public OGRDataSource
 {
-    char*               pszName;
+    char *pszName;
 
-    OGRLayer**          papoLayers;
-    int                 nLayers;
+    OGRLayer **papoLayers;
+    int nLayers;
 
   public:
     OGRIdrisiDataSource();
     virtual ~OGRIdrisiDataSource();
 
-    int                 Open( const char * pszFilename );
+    int Open(const char *pszFilename);
 
-    virtual const char*         GetName() override { return pszName; }
+    virtual const char *GetName() override
+    {
+        return pszName;
+    }
 
-    virtual int                 GetLayerCount() override { return nLayers; }
-    virtual OGRLayer*           GetLayer( int ) override;
+    virtual int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    virtual OGRLayer *GetLayer(int) override;
 
-    virtual int                 TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 /************************************************************************/
 /*                         OGRIdrisiDriver                              */
 /************************************************************************/
 
-class OGRIdrisiDriver final: public OGRSFDriver
+class OGRIdrisiDriver final : public OGRSFDriver
 {
   public:
     virtual ~OGRIdrisiDriver();
 
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual int                 TestCapability( const char * ) override;
+    virtual const char *GetName() override;
+    virtual OGRDataSource *Open(const char *, int) override;
+    virtual int TestCapability(const char *) override;
 };
 
-#endif // ndef OGR_IDRISI_H_INCLUDED
+#endif  // ndef OGR_IDRISI_H_INCLUDED

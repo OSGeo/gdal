@@ -37,17 +37,16 @@
 
 #include "cpl_port.h"
 
-#define CPL_SHA1_HASH_SIZE 20 // SHA1 outputs a 20 byte digest
+#define CPL_SHA1_HASH_SIZE 20  // SHA1 outputs a 20 byte digest
 
 CPL_C_START
 
 /* Not CPL_DLL exported */
-void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen,
-                   const void *pabyMessage, size_t nMessageLen,
-                   GByte abyDigest[CPL_SHA1_HASH_SIZE]);
+void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen, const void *pabyMessage,
+                   size_t nMessageLen, GByte abyDigest[CPL_SHA1_HASH_SIZE]);
 
 CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif  /* CPL_SHA1_INCLUDED_H */
+#endif /* CPL_SHA1_INCLUDED_H */

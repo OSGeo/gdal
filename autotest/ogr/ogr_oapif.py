@@ -34,35 +34,32 @@ import gdaltest
 import pytest
 import webserver
 
-from osgeo import ogr
+from osgeo import gdal, ogr, osr
+
+pytestmark = pytest.mark.require_driver("OAPIF")
 
 ###############################################################################
 # Init
 #
 
 
-def test_ogr_opaif_init():
-
-    gdaltest.opaif_drv = ogr.GetDriverByName("OAPIF")
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
+@pytest.fixture(scope="module", autouse=True)
+def init():
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:
         pytest.skip()
+    yield
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
 
 
 def test_ogr_opaif_errors():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 404)
@@ -142,11 +139,6 @@ def test_ogr_opaif_errors():
 
 
 def test_ogr_opaif_collections_paging():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -177,11 +169,6 @@ def test_ogr_opaif_collections_paging():
 
 
 def test_ogr_opaif_empty_layer_and_user_query_parameters():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -216,11 +203,6 @@ def test_ogr_opaif_empty_layer_and_user_query_parameters():
 
 
 def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -255,11 +237,6 @@ def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
 
 
 def test_ogr_opaif_fc_links_next_geojson():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -344,11 +321,6 @@ def test_ogr_opaif_fc_links_next_geojson():
 
 
 def test_ogr_opaif_id_is_integer():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -424,11 +396,6 @@ def test_ogr_opaif_id_is_integer():
 
 
 def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -513,11 +480,6 @@ def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
 
 
 def test_ogr_opaif_spatial_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     # Deprecated API
     handler = webserver.SequentialHandler()
@@ -702,11 +664,6 @@ def test_ogr_opaif_spatial_filter():
 
 
 def test_ogr_opaif_get_feature_count():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -801,11 +758,6 @@ def test_ogr_opaif_get_feature_count():
 
 
 def test_ogr_opaif_get_feature_count_from_numberMatched():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -839,11 +791,6 @@ def test_ogr_opaif_get_feature_count_from_numberMatched():
 
 
 def test_ogr_opaif_attribute_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1105,11 +1052,6 @@ def test_ogr_opaif_attribute_filter():
 
 
 def test_ogr_opaif_schema_from_xml_schema():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1189,11 +1131,6 @@ def test_ogr_opaif_schema_from_xml_schema():
 
 
 def test_ogr_opaif_schema_from_json_schema():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1261,11 +1198,6 @@ def test_ogr_opaif_schema_from_json_schema():
 
 
 def test_ogr_opaif_stac_catalog():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1337,10 +1269,441 @@ def test_ogr_opaif_stac_catalog():
 ###############################################################################
 
 
-def test_ogr_opaif_cleanup():
+def test_ogr_opaif_storage_crs_easting_northing():
 
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        """{ "collections" : [ {
+                    "name": "foo",
+                    "extent": {
+                        "spatial": [ -10, 40, 15, 50 ]
+                    },
+                    "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/32631"
+                 }] }""",
+    )
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
 
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "32631"
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/32631",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/32631>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [500000, 4500000]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (500000 4500000)"
+
+    lyr.SetSpatialFilterRect(400000, 4000000, 600000, 5000000)
+    lyr.ResetReading()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&bbox=400000,4000000,600000,5000000&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/32631&crs=http://www.opengis.net/def/crs/EPSG/0/32631",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/32631>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [500000, 4500000]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (500000 4500000)"
+
+
+###############################################################################
+
+
+def test_ogr_opaif_storage_crs_latitude_longitude():
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        """{ "collections" : [ {
+                    "name": "foo",
+                    "extent": {
+                        "spatial": [ -10, 40, 15, 50 ]
+                    },
+                    "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/4326",
+                    "storageCrsCoordinateEpoch": 2022.5
+                 }] }""",
+    )
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "4326"
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+        assert srs.GetCoordinateEpoch() == 2022.5
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    handler = webserver.SequentialHandler()
+    # Coordinates must be in lat, lon order in the GeoJSON answer
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/4326",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/4326>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [49, 2]}
+                    }
+                ] }""",
+    )
+    # Check that we swap them back to GIS friendly order
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+    lyr.SetSpatialFilterRect(1, 48, 3, 50)
+    lyr.ResetReading()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&bbox=48,1,50,3&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/4326&crs=http://www.opengis.net/def/crs/EPSG/0/4326",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/4326>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [49, 2]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+
+###############################################################################
+
+
+def test_ogr_opaif_storage_crs_latitude_longitude_non_compliant_server():
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        """{ "collections" : [ {
+                    "name": "foo",
+                    "extent": {
+                        "spatial": [ -10, 40, 15, 50 ]
+                    },
+                    "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/4326",
+                    "storageCrsCoordinateEpoch": 2022.5
+                 }] }""",
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["SERVER_FEATURE_AXIS_ORDER=GIS_FRIENDLY"],
+        )
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
+
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "4326"
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+        assert srs.GetCoordinateEpoch() == 2022.5
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    handler = webserver.SequentialHandler()
+    # Coordinates must be in lat, lon order in the GeoJSON answer
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/4326",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "$comment": "Server not compliant here, returning longitude=2, latitude=49 in GIS friendly order",
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    # Check GIS friendly order is preserved.
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+
+###############################################################################
+
+
+def test_ogr_opaif_crs_and_preferred_crs_open_options():
+    def get_collections_handler():
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/oapif/collections",
+            200,
+            {"Content-Type": "application/json"},
+            """{ "crs" : [ "http://www.opengis.net/def/crs/EPSG/0/32631" ],
+                  "collections" : [ {
+                        "name": "foo",
+                        "extent": {
+                            "spatial": [ -10, 40, 15, 50 ]
+                        },
+                        "crs": [ "#/crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" ]
+                     }] }""",
+        )
+        return handler
+
+    with webserver.install_http_handler(get_collections_handler()):
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx(
+                    "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+                    open_options=["CRS=EPSG:32632"],
+                )
+                is None
+            )
+
+    with webserver.install_http_handler(get_collections_handler()):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["CRS=EPSG:32631"],
+        )
+        assert ds
+        lyr = ds.GetLayer(0)
+
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
+
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list
+    assert len(supported_srs_list) == 2
+    assert supported_srs_list[0].GetAuthorityCode(None) == "32631"
+    # Below doesn't work with early PROJ 6 versions
+    # assert supported_srs_list[1].GetAuthorityCode(None) == "CRS84"
+
+    def get_items_handler():
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/oapif/collections/foo/items?limit=10",
+            200,
+            {"Content-Type": "application/geo+json"},
+            """{ "type": "FeatureCollection", "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "foo": "bar"
+                            },
+                            "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                        }
+                    ] }""",
+        )
+        return handler
+
+    with webserver.install_http_handler(get_items_handler()):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "32631"
+
+    json_info = gdal.VectorInfo(ds, format="json", featureCount=False)
+    assert "supportedSRSList" in json_info["layers"][0]["geometryFields"][0]
+    assert len(json_info["layers"][0]["geometryFields"][0]["supportedSRSList"]) == 2
+    assert json_info["layers"][0]["geometryFields"][0]["supportedSRSList"][0] == {
+        "id": {"authority": "EPSG", "code": "32631"}
+    }
+
+    text_info = gdal.VectorInfo(ds, featureCount=False)
+    assert "Supported SRS: EPSG:32631, " in text_info
+
+    # Test changing active SRS
+    assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
+    assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
+    srs_other = osr.SpatialReference()
+    srs_other.ImportFromEPSG(32632)
+    assert lyr.SetActiveSRS(0, srs_other) != ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().IsGeographic()
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-10.0, 40.0, 15.0, 50.0),
+        abs=1e-3,
+    )
+
+    assert lyr.SetActiveSRS(0, supported_srs_list[0]) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
+
+    with webserver.install_http_handler(get_collections_handler()):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["PREFERRED_CRS=EPSG:32631"],
+        )
+        assert ds
+        lyr = ds.GetLayer(0)
+    with webserver.install_http_handler(get_items_handler()):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "32631"
+
+    with webserver.install_http_handler(get_collections_handler()):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["PREFERRED_CRS=EPSG:32632"],
+        )
+        assert ds
+        lyr = ds.GetLayer(0)
+    with webserver.install_http_handler(get_items_handler()):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "4326"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/32631",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/32631>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [500000, 4500000]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        out_ds = gdal.VectorTranslate(
+            "", ds, format="Memory", dstSRS="EPSG:32631", reproject=True
+        )
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    f = out_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (500000 4500000)"

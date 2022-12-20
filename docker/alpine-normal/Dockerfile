@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.16
+ARG ALPINE_VERSION=3.17
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -24,15 +24,22 @@ RUN \
 # For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
-    linux-headers gnu-libiconv-dev \
+    cmake linux-headers gnu-libiconv-dev \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
+    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
     py3-numpy-dev python3-dev py3-setuptools py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
-    lz4-dev blosc-dev libdeflate-dev \
+    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    kealib-dev libjxl-dev \
+    json-c-dev giflib-dev \
+    mariadb-connector-c-dev \
+    pcre2-dev \
+    qhull-dev \
+    unixodbc-dev \
+    libpq-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -73,31 +80,10 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && apk del byacc flex portablexdr-dev \
     ); fi
 
-# Build likbkea
-ARG KEA_VERSION=1.4.15
-RUN if test "${KEA_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
-    && unzip -q kealib-${KEA_VERSION}.zip \
-    && rm -f kealib-${KEA_VERSION}.zip \
-    && cd kealib-kealib-${KEA_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5 \
-        -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF \
-    && make -j$(nproc) \
-    && make install \
-    && cd .. \
-    && rm -rf kealib-kealib-${KEA_VERSION} \
-    && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && apk del cmake \
-    ); fi
-
 # Build openjpeg
 # ARG OPENJPEG_VERSION=2.3.1
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
@@ -110,14 +96,13 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    && apk del cmake \
     ); fi
 
 # Build Arrow Apache
-ARG ARROW_VERSION=8.0.0
+ARG ARROW_VERSION=10.0.0
 RUN if test "${ARROW_VERSION}" != ""; then ( \
-    apk add --no-cache cmake snappy-dev \
-    && wget -q https://dlcdn.apache.org/arrow/arrow-${ARROW_VERSION}/apache-arrow-${ARROW_VERSION}.tar.gz \
+    wget -q https://dlcdn.apache.org/arrow/arrow-${ARROW_VERSION}/apache-arrow-${ARROW_VERSION}.tar.gz \
+    && apk add --no-cache re2-dev utf8proc-dev thrift-dev  \
     && tar xzf apache-arrow-${ARROW_VERSION}.tar.gz \
     && rm -f apache-arrow-${ARROW_VERSION}.tar.gz \
     && cd apache-arrow-${ARROW_VERSION}/cpp \
@@ -129,7 +114,8 @@ RUN if test "${ARROW_VERSION}" != ""; then ( \
         -DARROW_WITH_LZ4:BOOL=ON \
         -DARROW_WITH_SNAPPY:BOOL=ON \
         -DARROW_WITH_ZLIB:BOOL=ON \
-        -DARROW_WITH_ZSTD:BOOL=ON \
+        -DARROW_WITH_ZSTD:BOOL=ON \ \
+        -DARROW_WITH_BROTLI:BOOL=ON \
     && make -j$(nproc) \
     && make install \
     && cp -P /usr/lib/libarrow*.so* /build_thirdparty/usr/lib \
@@ -137,7 +123,6 @@ RUN if test "${ARROW_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd ../../.. \
     && rm -rf apache-arrow-${ARROW_VERSION} \
-    && apk del cmake \
     ); fi
 
 RUN apk add --no-cache rsync ccache
@@ -146,7 +131,6 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && apk add --no-cache cmake \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
@@ -181,8 +165,7 @@ RUN mkdir proj \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && apk del cmake
+    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.0.1
@@ -232,7 +215,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
-    && apk add --no-cache cmake \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
@@ -300,8 +282,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             /build/usr/share/gdal/*.svg \
             # unused
             /build/usr/share/gdal/*.png \
-       ;do rm $i; done)\
-    && apk del cmake
+       ;do rm $i; done)
 
 # Build final image
 FROM alpine:${ALPINE_VERSION} as runner
@@ -315,12 +296,19 @@ RUN apk add --no-cache \
         sqlite-libs \
         libcurl tiff \
         zlib zstd-libs xz-libs snappy \
-        libjpeg-turbo libpng libwebp expat \
+        libjpeg-turbo libpng libwebp expat libkml \
         icu-libs \
-        python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+        python3 py3-numpy ${POPPLER} pcre2 libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
-        lz4-libs blosc libdeflate snappy \
+        lz4-libs blosc libdeflate brotli-libs liburiparser \
+        kealib libjxl \
+        json-c giflib \
+        mariadb-connector-c \
+        qhull \
+        unixodbc \
+        libpq \
+        re2 utf8proc thrift-libs-cpp \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
@@ -328,8 +316,7 @@ RUN apk add --no-cache \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/

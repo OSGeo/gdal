@@ -29,23 +29,19 @@
 #include "ogr_svg.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                          OGRSVGDataSource()                          */
 /************************************************************************/
 
-OGRSVGDataSource::OGRSVGDataSource() :
-    pszName(nullptr),
-    papoLayers(nullptr),
-    nLayers(0)
+OGRSVGDataSource::OGRSVGDataSource()
+    : pszName(nullptr), papoLayers(nullptr), nLayers(0)
 #ifdef HAVE_EXPAT
-    ,
-    eValidity(SVG_VALIDITY_UNKNOWN),
-    bIsCloudmade(false),
-    oCurrentParser(nullptr),
-    nDataHandlerCounter(0)
+      ,
+      eValidity(SVG_VALIDITY_UNKNOWN), bIsCloudmade(false),
+      oCurrentParser(nullptr), nDataHandlerCounter(0)
 #endif
-{}
+{
+}
 
 /************************************************************************/
 /*                         ~OGRSVGDataSource()                          */
@@ -54,20 +50,20 @@ OGRSVGDataSource::OGRSVGDataSource() :
 OGRSVGDataSource::~OGRSVGDataSource()
 
 {
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
-    CPLFree( papoLayers );
-    CPLFree( pszName );
+    CPLFree(papoLayers);
+    CPLFree(pszName);
 }
 
 /************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSVGDataSource::GetLayer( int iLayer )
+OGRLayer *OGRSVGDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
     else
         return papoLayers[iLayer];
@@ -87,10 +83,10 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
         if (strcmp(pszNameIn, "svg") == 0)
         {
             eValidity = SVG_VALIDITY_VALID;
-            for( int i = 0; ppszAttr[i] != nullptr; i += 2 )
+            for (int i = 0; ppszAttr[i] != nullptr; i += 2)
             {
                 if (strcmp(ppszAttr[i], "xmlns:cm") == 0 &&
-                    strcmp(ppszAttr[i+1], "http://cloudmade.com/") == 0)
+                    strcmp(ppszAttr[i + 1], "http://cloudmade.com/") == 0)
                 {
                     bIsCloudmade = true;
                     break;
@@ -111,7 +107,7 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
 void OGRSVGDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
                                               CPL_UNUSED int nLen)
 {
-    nDataHandlerCounter ++;
+    nDataHandlerCounter++;
     if (nDataHandlerCounter >= BUFSIZ)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -121,15 +117,17 @@ void OGRSVGDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
 }
 
 static void XMLCALL startElementValidateCbk(void *pUserData,
-                                            const char *pszName, const char **ppszAttr)
+                                            const char *pszName,
+                                            const char **ppszAttr)
 {
-    OGRSVGDataSource* poDS = (OGRSVGDataSource*) pUserData;
+    OGRSVGDataSource *poDS = (OGRSVGDataSource *)pUserData;
     poDS->startElementValidateCbk(pszName, ppszAttr);
 }
 
-static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data, int nLen)
+static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data,
+                                           int nLen)
 {
-    OGRSVGDataSource* poDS = (OGRSVGDataSource*) pUserData;
+    OGRSVGDataSource *poDS = (OGRSVGDataSource *)pUserData;
     poDS->dataHandlerValidateCbk(data, nLen);
 }
 #endif
@@ -138,16 +136,16 @@ static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data, in
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSVGDataSource::Open( const char * pszFilename )
+int OGRSVGDataSource::Open(const char *pszFilename)
 
 {
 #ifdef HAVE_EXPAT
-    pszName = CPLStrdup( pszFilename );
+    pszName = CPLStrdup(pszFilename);
 
-/* -------------------------------------------------------------------- */
-/*      Try to open the file.                                           */
-/* -------------------------------------------------------------------- */
-    CPLString osFilename; // keep in that scope
+    /* -------------------------------------------------------------------- */
+    /*      Try to open the file.                                           */
+    /* -------------------------------------------------------------------- */
+    CPLString osFilename;  // keep in that scope
     if (EQUAL(CPLGetExtension(pszFilename), "svgz") &&
         strstr(pszFilename, "/vsigzip/") == nullptr)
     {
@@ -155,7 +153,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
         pszFilename = osFilename.c_str();
     }
 
-    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE *fp = VSIFOpenL(pszFilename, "r");
     if (fp == nullptr)
         return FALSE;
 
@@ -179,21 +177,22 @@ int OGRSVGDataSource::Open( const char * pszFilename )
     do
     {
         nDataHandlerCounter = 0;
-        nLen = (unsigned int) VSIFReadL( aBuf, 1, sizeof(aBuf), fp );
+        nLen = (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fp);
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            if (nLen <= BUFSIZ-1)
+            if (nLen <= BUFSIZ - 1)
                 aBuf[nLen] = 0;
             else
-                aBuf[BUFSIZ-1] = 0;
+                aBuf[BUFSIZ - 1] = 0;
             if (strstr(aBuf, "<?xml") && strstr(aBuf, "<svg"))
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "XML parsing of SVG file failed : %s at line %d, column %d",
-                        XML_ErrorString(XML_GetErrorCode(oParser)),
-                        (int)XML_GetCurrentLineNumber(oParser),
-                        (int)XML_GetCurrentColumnNumber(oParser));
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "XML parsing of SVG file failed : %s at line %d, column %d",
+                    XML_ErrorString(XML_GetErrorCode(oParser)),
+                    (int)XML_GetCurrentLineNumber(oParser),
+                    (int)XML_GetCurrentColumnNumber(oParser));
             }
             eValidity = SVG_VALIDITY_INVALID;
             break;
@@ -208,13 +207,14 @@ int OGRSVGDataSource::Open( const char * pszFilename )
         }
         else
         {
-            /* After reading 50 * BUFSIZE bytes, and not finding whether the file */
+            /* After reading 50 * BUFSIZE bytes, and not finding whether the
+             * file */
             /* is SVG or not, we give up and fail silently */
-            nCount ++;
+            nCount++;
             if (nCount == 50)
                 break;
         }
-    } while (!nDone && nLen > 0 );
+    } while (!nDone && nLen > 0);
 
     XML_ParserFree(oParser);
 
@@ -225,34 +225,38 @@ int OGRSVGDataSource::Open( const char * pszFilename )
         if (bIsCloudmade)
         {
             nLayers = 3;
-            papoLayers =(OGRSVGLayer **) CPLRealloc(papoLayers,
-                                            nLayers * sizeof(OGRSVGLayer*));
-            papoLayers[0] = new OGRSVGLayer( pszFilename, "points", SVG_POINTS, this );
-            papoLayers[1] = new OGRSVGLayer( pszFilename, "lines", SVG_LINES, this );
-            papoLayers[2] = new OGRSVGLayer( pszFilename, "polygons", SVG_POLYGONS, this );
+            papoLayers = (OGRSVGLayer **)CPLRealloc(
+                papoLayers, nLayers * sizeof(OGRSVGLayer *));
+            papoLayers[0] =
+                new OGRSVGLayer(pszFilename, "points", SVG_POINTS, this);
+            papoLayers[1] =
+                new OGRSVGLayer(pszFilename, "lines", SVG_LINES, this);
+            papoLayers[2] =
+                new OGRSVGLayer(pszFilename, "polygons", SVG_POLYGONS, this);
         }
         else
         {
-            CPLDebug("SVG",
-                     "%s seems to be a SVG file, but not a Cloudmade vector one.",
-                     pszFilename);
+            CPLDebug(
+                "SVG",
+                "%s seems to be a SVG file, but not a Cloudmade vector one.",
+                pszFilename);
         }
     }
 
     return nLayers > 0;
 #else
     char aBuf[256];
-    VSILFILE* fp = VSIFOpenL(pszFilename, "r");
+    VSILFILE *fp = VSIFOpenL(pszFilename, "r");
     if (fp)
     {
-        unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );
+        unsigned int nLen = (unsigned int)VSIFReadL(aBuf, 1, 255, fp);
         aBuf[nLen] = 0;
         if (strstr(aBuf, "<?xml") && strstr(aBuf, "<svg") &&
             strstr(aBuf, "http://cloudmade.com/"))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                    "OGR/SVG driver has not been built with read support. "
-                    "Expat library required");
+                     "OGR/SVG driver has not been built with read support. "
+                     "Expat library required");
         }
         VSIFCloseL(fp);
     }
@@ -264,7 +268,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int OGRSVGDataSource::TestCapability( CPL_UNUSED const char *pszCap )
+int OGRSVGDataSource::TestCapability(CPL_UNUSED const char *pszCap)
 {
     return FALSE;
 }

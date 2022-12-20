@@ -39,7 +39,6 @@
 
 //! @cond Doxygen_Suppress
 
-
 #ifdef DEBUG_VERBOSE_ABBC
 static int nAllBandsKeptAlivedBlocks = 0;
 #endif
@@ -48,14 +47,11 @@ static int nAllBandsKeptAlivedBlocks = 0;
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(
-    GDALRasterBand* poBandIn ) :
-    hSpinLock(CPLCreateLock(LOCK_SPIN)),
-    hCond(CPLCreateCond()),
-    hCondMutex(CPLCreateMutex()),
-    poBand(poBandIn)
+GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand *poBandIn)
+    : hSpinLock(CPLCreateLock(LOCK_SPIN)), hCond(CPLCreateCond()),
+      hCondMutex(CPLCreateMutex()), poBand(poBandIn)
 {
-    if( hCondMutex )
+    if (hCondMutex)
         CPLReleaseMutex(hCondMutex);
 }
 
@@ -67,11 +63,11 @@ GDALAbstractBandBlockCache::~GDALAbstractBandBlockCache()
 {
     CPLAssert(nKeepAliveCounter == 0);
     FreeDanglingBlocks();
-    if( hSpinLock )
+    if (hSpinLock)
         CPLDestroyLock(hSpinLock);
-    if( hCondMutex )
+    if (hCondMutex)
         CPLDestroyMutex(hCondMutex);
-    if( hCond )
+    if (hCond)
         CPLDestroyCond(hCond);
 }
 
@@ -99,23 +95,26 @@ void GDALAbstractBandBlockCache::UnreferenceBlockBase()
 /*      FlushCacheBlock() after they have been finished with a block.   */
 /************************************************************************/
 
-void GDALAbstractBandBlockCache::AddBlockToFreeList( GDALRasterBlock *poBlock )
+void GDALAbstractBandBlockCache::AddBlockToFreeList(GDALRasterBlock *poBlock)
 {
     CPLAssert(poBlock->poPrevious == nullptr);
     CPLAssert(poBlock->poNext == nullptr);
     {
 #ifdef DEBUG_VERBOSE_ABBC
         CPLAtomicInc(&nAllBandsKeptAlivedBlocks);
-        fprintf(stderr, "AddBlockToFreeList(): nAllBandsKeptAlivedBlocks=%d\n", nAllBandsKeptAlivedBlocks);/*ok*/
+        fprintf(/*ok*/ stderr,
+                "AddBlockToFreeList(): nAllBandsKeptAlivedBlocks=%d\n",
+                nAllBandsKeptAlivedBlocks);
 #endif
         CPLLockHolderOptionalLockD(hSpinLock);
         poBlock->poNext = psListBlocksToFree;
         psListBlocksToFree = poBlock;
     }
 
-    // If no more blocks in transient state, then warn WaitCompletionPendingTasks()
+    // If no more blocks in transient state, then warn
+    // WaitCompletionPendingTasks()
     CPLAcquireMutex(hCondMutex, 1000);
-    if( CPLAtomicDec(&nKeepAliveCounter) == 0 )
+    if (CPLAtomicDec(&nKeepAliveCounter) == 0)
     {
         CPLCondSignal(hCond);
     }
@@ -133,10 +132,10 @@ void GDALAbstractBandBlockCache::WaitCompletionPendingTasks()
 #endif
 
     CPLAcquireMutex(hCondMutex, 1000);
-    while( nKeepAliveCounter != 0 )
+    while (nKeepAliveCounter != 0)
     {
-        CPLDebug( "GDAL", "Waiting for other thread to finish working with our "
-                  "blocks" );
+        CPLDebug("GDAL", "Waiting for other thread to finish working with our "
+                         "blocks");
         CPLCondWait(hCond, hCondMutex);
     }
     CPLReleaseMutex(hCondMutex);
@@ -148,19 +147,21 @@ void GDALAbstractBandBlockCache::WaitCompletionPendingTasks()
 
 void GDALAbstractBandBlockCache::FreeDanglingBlocks()
 {
-    GDALRasterBlock* poList;
+    GDALRasterBlock *poList;
     {
         CPLLockHolderOptionalLockD(hSpinLock);
         poList = psListBlocksToFree;
         psListBlocksToFree = nullptr;
     }
-    while( poList )
+    while (poList)
     {
 #ifdef DEBUG_VERBOSE_ABBC
         CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
-        fprintf(stderr, "FreeDanglingBlocks(): nAllBandsKeptAlivedBlocks=%d\n", nAllBandsKeptAlivedBlocks);/*ok*/
+        fprintf(/*ok*/ stderr,
+                "FreeDanglingBlocks(): nAllBandsKeptAlivedBlocks=%d\n",
+                nAllBandsKeptAlivedBlocks);
 #endif
-        GDALRasterBlock* poNext = poList->poNext;
+        GDALRasterBlock *poNext = poList->poNext;
         poList->poNext = nullptr;
         delete poList;
         poList = poNext;
@@ -171,27 +172,29 @@ void GDALAbstractBandBlockCache::FreeDanglingBlocks()
 /*                            CreateBlock()                             */
 /************************************************************************/
 
-GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
+GDALRasterBlock *GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
                                                          int nYBlockOff)
 {
-    GDALRasterBlock* poBlock;
+    GDALRasterBlock *poBlock;
     {
         CPLLockHolderOptionalLockD(hSpinLock);
         poBlock = psListBlocksToFree;
-        if( poBlock )
+        if (poBlock)
         {
 #ifdef DEBUG_VERBOSE_ABBC
             CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
-            fprintf(stderr, "CreateBlock(): nAllBandsKeptAlivedBlocks=%d\n", nAllBandsKeptAlivedBlocks);/*ok*/
+            fprintf(/*ok*/ stderr,
+                    "CreateBlock(): nAllBandsKeptAlivedBlocks=%d\n",
+                    nAllBandsKeptAlivedBlocks);
 #endif
             psListBlocksToFree = poBlock->poNext;
         }
     }
-    if( poBlock )
+    if (poBlock)
         poBlock->RecycleFor(nXBlockOff, nYBlockOff);
     else
-        poBlock = new (std::nothrow) GDALRasterBlock(
-            poBand, nXBlockOff, nYBlockOff );
+        poBlock =
+            new (std::nothrow) GDALRasterBlock(poBand, nXBlockOff, nYBlockOff);
     return poBlock;
 }
 
@@ -203,7 +206,7 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
  * \brief Increment/decrement the number of dirty blocks
  */
 
-void GDALAbstractBandBlockCache::IncDirtyBlocks( int nInc )
+void GDALAbstractBandBlockCache::IncDirtyBlocks(int nInc)
 {
     CPLAtomicAdd(&m_nDirtyBlocks, nInc);
 }
@@ -215,11 +218,12 @@ void GDALAbstractBandBlockCache::IncDirtyBlocks( int nInc )
 void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
 {
     m_nInitialDirtyBlocksInFlushCache = 0;
-    if( m_nDirtyBlocks > 0 && CPLIsDefaultErrorHandlerAndCatchDebug() )
+    if (m_nDirtyBlocks > 0 && CPLIsDefaultErrorHandlerAndCatchDebug())
     {
         const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", nullptr);
-        if( pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "GDAL")) &&
-            CPLGetConfigOption("GDAL_REPORT_DIRTY_BLOCK_FLUSHING", nullptr) == nullptr )
+        if (pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "GDAL")) &&
+            CPLGetConfigOption("GDAL_REPORT_DIRTY_BLOCK_FLUSHING", nullptr) ==
+                nullptr)
         {
             m_nInitialDirtyBlocksInFlushCache = m_nDirtyBlocks;
             m_nLastTick = -1;
@@ -234,34 +238,35 @@ void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
 void GDALAbstractBandBlockCache::UpdateDirtyBlockFlushingLog()
 {
     // Poor man progress report for console applications
-    if( m_nInitialDirtyBlocksInFlushCache )
+    if (m_nInitialDirtyBlocksInFlushCache)
     {
         const auto nRemainingDirtyBlocks = m_nDirtyBlocks;
         const auto nFlushedBlocks =
             m_nInitialDirtyBlocksInFlushCache - nRemainingDirtyBlocks + 1;
-        const double dfComplete = double(nFlushedBlocks) / m_nInitialDirtyBlocksInFlushCache;
-        const int nThisTick = std::min(40, std::max(0,
-            static_cast<int>(dfComplete * 40.0) ));
-        if( nThisTick > m_nLastTick )
+        const double dfComplete =
+            double(nFlushedBlocks) / m_nInitialDirtyBlocksInFlushCache;
+        const int nThisTick =
+            std::min(40, std::max(0, static_cast<int>(dfComplete * 40.0)));
+        if (nThisTick > m_nLastTick)
         {
-            if( m_nLastTick < 0 )
+            if (m_nLastTick < 0)
             {
                 fprintf(stderr, "GDAL: Flushing dirty blocks: "); /*ok*/
-                fflush(stderr); /*ok*/
+                fflush(stderr);                                   /*ok*/
             }
-            while( nThisTick > m_nLastTick )
+            while (nThisTick > m_nLastTick)
             {
                 ++m_nLastTick;
-                if( m_nLastTick % 4 == 0 )
-                    fprintf( stderr, "%d", (m_nLastTick / 4) * 10 ); /*ok*/
+                if (m_nLastTick % 4 == 0)
+                    fprintf(stderr, "%d", (m_nLastTick / 4) * 10); /*ok*/
                 else
-                    fprintf( stderr, "." ); /*ok*/
+                    fprintf(stderr, "."); /*ok*/
             }
 
-            if( nThisTick == 40 )
-                fprintf( stderr, " - done.\n" ); /*ok*/
+            if (nThisTick == 40)
+                fprintf(stderr, " - done.\n"); /*ok*/
             else
-                fflush( stderr ); /*ok*/
+                fflush(stderr); /*ok*/
         }
     }
 }

@@ -43,32 +43,29 @@ int main()
         // cppcheck-suppress unusedVariable
         MVTTile oEmptyTile;
         // cppcheck-suppress unassignedVariable
-        CPLAssert( oEmptyTile.getSize() == 0 );
+        CPLAssert(oEmptyTile.getSize() == 0);
     }
 
     {
         MVTTile oTile;
-        MVTTileLayer* poLayer = new MVTTileLayer();
-        oTile.addLayer( std::shared_ptr<MVTTileLayer>(poLayer) );
-        CPLAssert( oTile.getSize() ==
-            1 /* layer key */ +
-            1 /* layer size*/ +
-            1 /* name key */ +
-            1 /* version size */ +
-            1 /* version key */ +
-            1 /* version */
+        MVTTileLayer *poLayer = new MVTTileLayer();
+        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
+        CPLAssert(oTile.getSize() == 1 /* layer key */ + 1 /* layer size*/ +
+                                         1 /* name key */ +
+                                         1 /* version size */ +
+                                         1 /* version key */ + 1 /* version */
         );
     }
 
     {
         MVTTile oTile;
-        MVTTileLayer* poLayer = new MVTTileLayer();
-        oTile.addLayer( std::shared_ptr<MVTTileLayer>(poLayer) );
-        MVTTileLayerFeature* poFeature = new MVTTileLayerFeature();
+        MVTTileLayer *poLayer = new MVTTileLayer();
+        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
+        MVTTileLayerFeature *poFeature = new MVTTileLayerFeature();
         poLayer->setVersion(2);
         poLayer->setName(std::string("my_layer"));
         poLayer->setExtent(4096);
-        poLayer->addFeature( std::shared_ptr<MVTTileLayerFeature>(poFeature) );
+        poLayer->addFeature(std::shared_ptr<MVTTileLayerFeature>(poFeature));
         poLayer->addKey(std::string("key0"));
         {
             MVTTileLayerValue oValue;
@@ -171,19 +168,19 @@ int main()
         poFeature->addGeometry(0);
 
         poLayer->addFeature(
-            std::shared_ptr<MVTTileLayerFeature>(new MVTTileLayerFeature()) );
+            std::shared_ptr<MVTTileLayerFeature>(new MVTTileLayerFeature()));
 
-        oTile.addLayer( std::shared_ptr<MVTTileLayer>(new MVTTileLayer()) );
+        oTile.addLayer(std::shared_ptr<MVTTileLayer>(new MVTTileLayer()));
 
         poLayer = new MVTTileLayer();
-        oTile.addLayer( std::shared_ptr<MVTTileLayer>(poLayer) );
+        oTile.addLayer(std::shared_ptr<MVTTileLayer>(poLayer));
         poLayer->addValue(MVTTileLayerValue());
 
         size_t nSize = oTile.getSize();
-        GByte* pabyBuffer = static_cast<GByte*>(CPLMalloc(nSize));
+        GByte *pabyBuffer = static_cast<GByte *>(CPLMalloc(nSize));
         oTile.write(pabyBuffer);
-        VSILFILE* fp = VSIFOpenL("out.gpb", "wb");
-        if( fp )
+        VSILFILE *fp = VSIFOpenL("out.gpb", "wb");
+        if (fp)
         {
             VSIFWriteL(pabyBuffer, 1, nSize, fp);
             VSIFCloseL(fp);
@@ -195,7 +192,7 @@ int main()
         CPLAssert(bRet);
         size_t nSize2 = oTileDeserialized.getSize();
         CPLAssert(nSize == nSize2);
-        GByte* pabyBuffer2 = static_cast<GByte*>(CPLMalloc(nSize2));
+        GByte *pabyBuffer2 = static_cast<GByte *>(CPLMalloc(nSize2));
         oTileDeserialized.write(pabyBuffer2);
         CPLAssert(memcmp(pabyBuffer, pabyBuffer2, nSize) == 0);
         CPLFree(pabyBuffer);

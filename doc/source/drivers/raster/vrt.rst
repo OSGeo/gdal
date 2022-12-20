@@ -853,7 +853,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **div**
      - 2
      - -
-     - divide one rasted band by another (``b1 / b2``)
+     - divide one raster band by another (``b1 / b2``)
    * - **exp**
      - 1
      - ``base`` (optional), ``fact`` (optional)
@@ -1075,8 +1075,8 @@ The signature of the Python pixel function must have the following arguments:
 - **yoff** line offset to the top left corner of the accessed region of the band. Generally not needed.
 - **xsize**: width of the region of the accessed region of the band. Can be used together with out_ar.shape[1] to determine the horizontal resampling ratio of the request.
 - **ysize**: height of the region of the accessed region of the band. Can be used together with out_ar.shape[0] to determine the vertical resampling ratio of the request.
-- **raster_xsize**: total with of the raster band. Generally not needed.
-- **raster_ysize**: total with of the raster band. Generally not needed.
+- **raster_xsize**: total width of the raster band. Generally not needed.
+- **raster_ysize**: total height of the raster band. Generally not needed.
 - **buf_radius**: radius of the buffer (in pixels) added to the left, right, top and bottom of in_ar / out_ar. This is the value of the optional BufferRadius element that can be set so that the original pixel request is extended by a given amount of pixels.
 - **gt**: geotransform. Array of 6 double values.
 - **kwargs**: dictionary with user arguments defined in PixelFunctionArguments
@@ -1607,18 +1607,55 @@ the dataset name since GDAL 3.1
 
     vrt://{path_to_gdal_dataset}?[bands=num1,...,numN]
 
+::
+
+    vrt://{path_to_gdal_dataset}?[a_srs=srs_def]
+
+::
+
+    vrt://{path_to_gdal_dataset}?[a_ullr=ulx,uly,lrx,lry]
+
+
 For example:
 
 ::
 
     vrt://my.tif?bands=3,2,1
 
-The only supported option currently is bands. Other may be added in the future.
+::
 
-The effect of this option is to change the band composition. The values specified
+    vrt://my.tif?a_srs=OGC:CRS84
+    
+::
+
+    vrt://my.tif?a_ullr=0,1,1,-1
+    
+
+The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``. Other options may be 
+added in the future.
+
+The effect of the ``bands`` option is to change the band composition. The values specified
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
+The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign (override) the coordinate 
+reference system of the source in the same way as (:ref:`gdal_translate`), it may be missing, 
+or incorrect. The value provided for ``a_srs`` may be a string or a file containing a srs 
+definition.
+
+The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) the georeferenced
+bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
+values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y). 
+
+The options may be chained together separated by '&'. (Beware the need for quoting to protect
+the ampersand).
+
+::
+
+    "vrt://my.tif?a_srs=OGC:CRS84&bands=2,1&a_ullr=-180,90,180,-90"
+    
+
 
 Multi-threading optimizations
 -----------------------------

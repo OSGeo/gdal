@@ -1,33 +1,33 @@
 /******************************************************************************
-*
-* Project:  OpenGIS Simple Features Reference Implementation
-* Purpose:  Different utility functions used in FileGDB OGR driver.
-* Author:   Ragi Yaser Burhum, ragi@burhum.com
-*           Paul Ramsey, pramsey at cleverelephant.ca
-*
-******************************************************************************
-* Copyright (c) 2010, Ragi Yaser Burhum
-* Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  Different utility functions used in FileGDB OGR driver.
+ * Author:   Ragi Yaser Burhum, ragi@burhum.com
+ *           Paul Ramsey, pramsey at cleverelephant.ca
+ *
+ ******************************************************************************
+ * Copyright (c) 2010, Ragi Yaser Burhum
+ * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-****************************************************************************/
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 
 #include "FGdbUtils.h"
 #include <algorithm>
@@ -35,16 +35,16 @@
 #include "ogr_api.h"
 #include "ogrpgeogeometry.h"
 
-
 using std::string;
 
 /*************************************************************************/
 /*                          StringToWString()                            */
 /*************************************************************************/
 
-std::wstring StringToWString(const std::string& utf8string)
+std::wstring StringToWString(const std::string &utf8string)
 {
-    wchar_t* pszUTF16 = CPLRecodeToWChar( utf8string.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
+    wchar_t *pszUTF16 =
+        CPLRecodeToWChar(utf8string.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
     std::wstring utf16string = pszUTF16;
     CPLFree(pszUTF16);
     return utf16string;
@@ -54,9 +54,10 @@ std::wstring StringToWString(const std::string& utf8string)
 /*                          WStringToString()                            */
 /*************************************************************************/
 
-std::string WStringToString(const std::wstring& utf16string)
+std::string WStringToString(const std::wstring &utf16string)
 {
-    char* pszUTF8 = CPLRecodeFromWChar( utf16string.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8 );
+    char *pszUTF8 =
+        CPLRecodeFromWChar(utf16string.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
     std::string utf8string = pszUTF8;
     CPLFree(pszUTF8);
     return utf8string;
@@ -66,25 +67,27 @@ std::string WStringToString(const std::wstring& utf16string)
 /*                                GDBErr()                               */
 /*************************************************************************/
 
-bool GDBErr(long int hr, const std::string& desc, CPLErr errType, const char* pszAddMsg)
+bool GDBErr(long int hr, const std::string &desc, CPLErr errType,
+            const char *pszAddMsg)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
-    if ( er == S_OK )
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr),
+                                                    fgdb_error_desc_w);
+    if (er == S_OK)
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
-        CPLError( errType, CPLE_AppDefined,
-                  "%s (%s)%s", desc.c_str(), fgdb_error_desc.c_str(), pszAddMsg);
+        CPLError(errType, CPLE_AppDefined, "%s (%s)%s", desc.c_str(),
+                 fgdb_error_desc.c_str(), pszAddMsg);
     }
     else
     {
-        CPLError( errType, CPLE_AppDefined,
-                  "Error (%ld): %s%s", hr, desc.c_str(), pszAddMsg);
+        CPLError(errType, CPLE_AppDefined, "Error (%ld): %s%s", hr,
+                 desc.c_str(), pszAddMsg);
     }
-    // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it, it causes crashes in case of
-    // repeated errors
-    //FileGDBAPI::ErrorInfo::ClearErrors();
+    // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it,
+    // it causes crashes in case of repeated errors
+    // FileGDBAPI::ErrorInfo::ClearErrors();
 
     return false;
 }
@@ -93,12 +96,13 @@ bool GDBErr(long int hr, const std::string& desc, CPLErr errType, const char* ps
 /*                            GDBDebug()                                 */
 /*************************************************************************/
 
-bool GDBDebug(long int hr, const std::string& desc)
+bool GDBDebug(long int hr, const std::string &desc)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
-    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr), fgdb_error_desc_w);
-    if ( er == S_OK )
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(static_cast<fgdbError>(hr),
+                                                    fgdb_error_desc_w);
+    if (er == S_OK)
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
         CPLDebug("FGDB", "%s (%s)", desc.c_str(), fgdb_error_desc.c_str());
@@ -107,9 +111,9 @@ bool GDBDebug(long int hr, const std::string& desc)
     {
         CPLDebug("FGDB", "%s", desc.c_str());
     }
-    // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it, it causes crashes in case of
-    // repeated errors
-    //FileGDBAPI::ErrorInfo::ClearErrors();
+    // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it,
+    // it causes crashes in case of repeated errors
+    // FileGDBAPI::ErrorInfo::ClearErrors();
 
     return false;
 }
@@ -118,7 +122,8 @@ bool GDBDebug(long int hr, const std::string& desc)
 /*                            GDBToOGRGeometry()                         */
 /*************************************************************************/
 
-bool GDBToOGRGeometry(const std::string& geoType, bool hasZ, bool hasM, OGRwkbGeometryType* pOut)
+bool GDBToOGRGeometry(const std::string &geoType, bool hasZ, bool hasM,
+                      OGRwkbGeometryType *pOut)
 {
     if (geoType == "esriGeometryPoint")
     {
@@ -137,19 +142,20 @@ bool GDBToOGRGeometry(const std::string& geoType, bool hasZ, bool hasM, OGRwkbGe
         *pOut = wkbMultiLineString;
     }
     else if (geoType == "esriGeometryPolygon" ||
-            geoType == "esriGeometryMultiPatch")
+             geoType == "esriGeometryMultiPatch")
     {
-        *pOut = wkbMultiPolygon; // no mapping to single polygon
+        *pOut = wkbMultiPolygon;  // no mapping to single polygon
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Cannot map esriGeometryType(%s) to OGRwkbGeometryType", geoType.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot map esriGeometryType(%s) to OGRwkbGeometryType",
+                 geoType.c_str());
         return false;
     }
-    if( hasZ )
+    if (hasZ)
         *pOut = wkbSetZ(*pOut);
-    if( hasM )
+    if (hasM)
         *pOut = wkbSetM(*pOut);
 
     return true;
@@ -159,7 +165,8 @@ bool GDBToOGRGeometry(const std::string& geoType, bool hasZ, bool hasM, OGRwkbGe
 /*                            OGRGeometryToGDB()                         */
 /*************************************************************************/
 
-bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *hasZ, bool *hasM)
+bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType,
+                      bool *hasZ, bool *hasM)
 {
     *hasZ = wkbHasZ(ogrType);
     *hasM = wkbHasM(ogrType);
@@ -200,8 +207,9 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 
         default:
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Cannot map OGRwkbGeometryType (%s) to ESRI type",
-                      OGRGeometryTypeToName(ogrType));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot map OGRwkbGeometryType (%s) to ESRI type",
+                     OGRGeometryTypeToName(ogrType));
             return false;
         }
     }
@@ -212,13 +220,14 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 /*                            OGRToGDBFieldType()                        */
 /*************************************************************************/
 
-bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::string* gdbType)
+bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType,
+                       std::string *gdbType)
 {
-    switch(ogrType)
+    switch (ogrType)
     {
         case OFTInteger:
         {
-            if( eSubType == OFSTInt16 )
+            if (eSubType == OFSTInt16)
                 *gdbType = "esriFieldTypeSmallInteger";
             else
                 *gdbType = "esriFieldTypeInteger";
@@ -227,7 +236,7 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::stri
         case OFTReal:
         case OFTInteger64:
         {
-             if( eSubType == OFSTFloat32 )
+            if (eSubType == OFSTFloat32)
                 *gdbType = "esriFieldTypeSingle";
             else
                 *gdbType = "esriFieldTypeDouble";
@@ -251,9 +260,9 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::stri
         }
         default:
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Cannot map OGR field type (%s)",
-                      OGR_GetFieldTypeName(ogrType) );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot map OGR field type (%s)",
+                     OGR_GetFieldTypeName(ogrType));
             return false;
         }
     }
@@ -265,59 +274,60 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::stri
 /*                       GDBFieldTypeToWidthPrecision()                  */
 /*************************************************************************/
 
-bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width, int *precision)
+bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width,
+                                  int *precision)
 {
     *precision = 0;
 
-    /* Width (Length in FileGDB terms) based on FileGDB_API/samples/XMLsamples/OneOfEachFieldType.xml */
+    /* Width (Length in FileGDB terms) based on
+     * FileGDB_API/samples/XMLsamples/OneOfEachFieldType.xml */
     /* Length is in bytes per doc of FileGDB_API/xmlResources/FileGDBAPI.xsd */
-    if(gdbType == "esriFieldTypeSmallInteger" )
+    if (gdbType == "esriFieldTypeSmallInteger")
     {
         *width = 2;
     }
-    else if(gdbType == "esriFieldTypeInteger" )
+    else if (gdbType == "esriFieldTypeInteger")
     {
         *width = 4;
     }
-    else if(gdbType == "esriFieldTypeSingle" )
+    else if (gdbType == "esriFieldTypeSingle")
     {
         *width = 4;
-        *precision = 5; // FIXME ?
+        *precision = 5;  // FIXME ?
     }
-    else if(gdbType == "esriFieldTypeDouble" )
+    else if (gdbType == "esriFieldTypeDouble")
     {
         *width = 8;
-        *precision = 15; // FIXME ?
+        *precision = 15;  // FIXME ?
     }
-    else if(gdbType == "esriFieldTypeString" ||
-            gdbType == "esriFieldTypeXML")
+    else if (gdbType == "esriFieldTypeString" || gdbType == "esriFieldTypeXML")
     {
         *width = atoi(CPLGetConfigOption("FGDB_STRING_WIDTH", "65536"));
     }
-    else if(gdbType == "esriFieldTypeDate" )
+    else if (gdbType == "esriFieldTypeDate")
     {
         *width = 8;
     }
-    else if(gdbType == "esriFieldTypeOID" )
+    else if (gdbType == "esriFieldTypeOID")
     {
         *width = 4;
     }
-    else if(gdbType == "esriFieldTypeGUID" )
+    else if (gdbType == "esriFieldTypeGUID")
     {
         *width = 16;
     }
-    else if(gdbType == "esriFieldTypeBlob" )
+    else if (gdbType == "esriFieldTypeBlob")
     {
         *width = 0;
     }
-    else if(gdbType == "esriFieldTypeGlobalID" )
+    else if (gdbType == "esriFieldTypeGlobalID")
     {
         *width = 38;
     }
     else
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Cannot map ESRI field type (%s)", gdbType.c_str());
+        CPLError(CE_Warning, CPLE_AppDefined, "Cannot map ESRI field type (%s)",
+                 gdbType.c_str());
         return false;
     }
 
@@ -328,60 +338,72 @@ bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width, int *p
 /*                       GDBFieldTypeToWidthPrecision()                  */
 /*************************************************************************/
 
-bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeometry,
-                              OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry)
+bool GDBGeometryToOGRGeometry(bool forceMulti,
+                              FileGDBAPI::ShapeBuffer *pGdbGeometry,
+                              OGRSpatialReference *pOGRSR,
+                              OGRGeometry **ppOutGeometry)
 {
 
-    OGRGeometry* pOGRGeometry = nullptr;
+    OGRGeometry *pOGRGeometry = nullptr;
 
-    OGRErr eErr = OGRCreateFromShapeBin( pGdbGeometry->shapeBuffer,
-                                &pOGRGeometry,
-                                static_cast<int>(pGdbGeometry->inUseLength));
+    OGRErr eErr =
+        OGRCreateFromShapeBin(pGdbGeometry->shapeBuffer, &pOGRGeometry,
+                              static_cast<int>(pGdbGeometry->inUseLength));
 
-    //OGRErr eErr = OGRGeometryFactory::createFromWkb(pGdbGeometry->shapeBuffer, pOGRSR, &pOGRGeometry, pGdbGeometry->inUseLength );
+    // OGRErr eErr =
+    // OGRGeometryFactory::createFromWkb(pGdbGeometry->shapeBuffer, pOGRSR,
+    // &pOGRGeometry, pGdbGeometry->inUseLength );
 
     if (eErr != OGRERR_NONE)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed attempting to import GDB WKB Geometry. OGRGeometryFactory err:%d", eErr);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed attempting to import GDB WKB Geometry. "
+                 "OGRGeometryFactory err:%d",
+                 eErr);
         return false;
     }
 
-    if( pOGRGeometry != nullptr )
+    if (pOGRGeometry != nullptr)
     {
         // force geometries to multi if requested
 
-        // If it is a polygon, force to MultiPolygon since we always produce multipolygons
-        OGRwkbGeometryType eFlattenType = wkbFlatten(pOGRGeometry->getGeometryType());
+        // If it is a polygon, force to MultiPolygon since we always produce
+        // multipolygons
+        OGRwkbGeometryType eFlattenType =
+            wkbFlatten(pOGRGeometry->getGeometryType());
         if (eFlattenType == wkbPolygon)
         {
-            pOGRGeometry = OGRGeometryFactory::forceToMultiPolygon(pOGRGeometry);
+            pOGRGeometry =
+                OGRGeometryFactory::forceToMultiPolygon(pOGRGeometry);
         }
         else if (eFlattenType == wkbCurvePolygon)
         {
-            OGRMultiSurface* poMS = new OGRMultiSurface();
-            poMS->addGeometryDirectly( pOGRGeometry );
+            OGRMultiSurface *poMS = new OGRMultiSurface();
+            poMS->addGeometryDirectly(pOGRGeometry);
             pOGRGeometry = poMS;
         }
         else if (forceMulti)
         {
             if (eFlattenType == wkbLineString)
             {
-                pOGRGeometry = OGRGeometryFactory::forceToMultiLineString(pOGRGeometry);
+                pOGRGeometry =
+                    OGRGeometryFactory::forceToMultiLineString(pOGRGeometry);
             }
             else if (eFlattenType == wkbCompoundCurve)
             {
-                OGRMultiCurve* poMC = new OGRMultiCurve();
-                poMC->addGeometryDirectly( pOGRGeometry );
+                OGRMultiCurve *poMC = new OGRMultiCurve();
+                poMC->addGeometryDirectly(pOGRGeometry);
                 pOGRGeometry = poMC;
             }
             else if (eFlattenType == wkbPoint)
             {
-                pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
+                pOGRGeometry =
+                    OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
             }
         }
 
         if (pOGRGeometry)
-            pOGRGeometry->assignSpatialReference( pOGRSR );
+            pOGRGeometry->assignSpatialReference(pOGRSR);
     }
 
     *ppOutGeometry = pOGRGeometry;
@@ -393,11 +415,11 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
 /*                         GDBToOGRSpatialReference()                    */
 /*************************************************************************/
 
-bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
+bool GDBToOGRSpatialReference(const string &wkt, OGRSpatialReference **ppSR)
 {
     if (wkt.empty())
     {
-        CPLError( CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is NULL");
+        CPLError(CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is NULL");
         return false;
     }
 
@@ -408,16 +430,16 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
 
     if (result == OGRERR_NONE)
     {
-        if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+        if (CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")))
         {
             int nEntries = 0;
-            int* panConfidence = nullptr;
-            OGRSpatialReferenceH* pahSRS =
+            int *panConfidence = nullptr;
+            OGRSpatialReferenceH *pahSRS =
                 (*ppSR)->FindMatches(nullptr, &nEntries, &panConfidence);
-            if( nEntries == 1 && panConfidence[0] == 100 )
+            if (nEntries == 1 && panConfidence[0] == 100)
             {
                 (*ppSR)->Release();
-                (*ppSR) = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                (*ppSR) = reinterpret_cast<OGRSpatialReference *>(pahSRS[0]);
                 (*ppSR)->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLFree(pahSRS);
             }
@@ -439,8 +461,8 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
         delete *ppSR;
         *ppSR = nullptr;
 
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed morphing from ESRI Geometry: %s", wkt.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed morphing from ESRI Geometry: %s", wkt.c_str());
 
         return false;
     }
@@ -451,17 +473,20 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
 /*************************************************************************/
 
 /* Utility method for attributing nodes */
-void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue)
+void FGDB_CPLAddXMLAttribute(CPLXMLNode *node, const char *attrname,
+                             const char *attrvalue)
 {
-    if ( !node ) return;
-    CPLCreateXMLNode( CPLCreateXMLNode( node, CXT_Attribute, attrname ), CXT_Text, attrvalue );
+    if (!node)
+        return;
+    CPLCreateXMLNode(CPLCreateXMLNode(node, CXT_Attribute, attrname), CXT_Text,
+                     attrvalue);
 }
 
 /*************************************************************************/
 /*                          FGDBLaunderName()                            */
 /*************************************************************************/
 
-std::wstring FGDBLaunderName(const std::wstring& name)
+std::wstring FGDBLaunderName(const std::wstring &name)
 {
     std::wstring newName = name;
 
@@ -470,20 +495,18 @@ std::wstring FGDBLaunderName(const std::wstring& name)
     // "Do not start field or table names with an underscore or a number."
     // But we can see in the wild table names starting with underscore...
     // (cf https://github.com/OSGeo/gdal/issues/4112)
-    if( !newName.empty() && newName[0]>='0' && newName[0]<='9' )
+    if (!newName.empty() && newName[0] >= '0' && newName[0] <= '9')
     {
         newName = StringToWString("_") + newName;
     }
 
-    // "Essentially, eliminate anything that is not alphanumeric or an underscore."
-    // Note: alphanumeric unicode is supported
-    for( size_t i=0; i < newName.size(); i++)
+    // "Essentially, eliminate anything that is not alphanumeric or an
+    // underscore." Note: alphanumeric unicode is supported
+    for (size_t i = 0; i < newName.size(); i++)
     {
-        if ( !( newName[i] == '_' ||
-              ( newName[i]>='0' && newName[i]<='9') ||
-              ( newName[i]>='a' && newName[i]<='z') ||
-              ( newName[i]>='A' && newName[i]<='Z') ||
-               newName[i] >= 128 ) )
+        if (!(newName[i] == '_' || (newName[i] >= '0' && newName[i] <= '9') ||
+              (newName[i] >= 'a' && newName[i] <= 'z') ||
+              (newName[i] >= 'A' && newName[i] <= 'Z') || newName[i] >= 128))
         {
             newName[i] = '_';
         }
@@ -496,12 +519,13 @@ std::wstring FGDBLaunderName(const std::wstring& name)
 /*                     FGDBEscapeUnsupportedPrefixes()                   */
 /*************************************************************************/
 
-std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring& className)
+std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring &className)
 {
     std::wstring newName = className;
     // From ESRI docs
     // Feature classes starting with these strings are unsupported.
-    static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", nullptr};
+    static const char *const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_",
+                                                       nullptr};
 
     for (int i = 0; UNSUPPORTED_PREFIXES[i] != nullptr; i++)
     {
@@ -509,7 +533,8 @@ std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring& className)
         if (newName.find(StringToWString(UNSUPPORTED_PREFIXES[i])) == 0)
         {
             // Normally table names shouldn't start with underscore, but
-            // there are such in the wild (cf https://github.com/OSGeo/gdal/issues/4112)
+            // there are such in the wild (cf
+            // https://github.com/OSGeo/gdal/issues/4112)
             newName = StringToWString("_") + newName;
             break;
         }
@@ -522,23 +547,25 @@ std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring& className)
 /*                        FGDBEscapeReservedKeywords()                   */
 /*************************************************************************/
 
-std::wstring FGDBEscapeReservedKeywords(const std::wstring& name)
+std::wstring FGDBEscapeReservedKeywords(const std::wstring &name)
 {
     std::string newName = WStringToString(name);
     std::string upperName = CPLString(newName).toupper();
 
     // From ESRI docs
-    static const char* const RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
-                                    "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
-                                    "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
-                                    "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",
-                                    "SET", "TABLE", "UPDATE", "VALUES", "WHERE", nullptr};
+    static const char *const RESERVED_WORDS[] = {
+        FGDB_OID_NAME, "ADD",   "ALTER",  "AND",    "AS",    "ASC",
+        "BETWEEN",     "BY",    "COLUMN", "CREATE", "DATE",  "DELETE",
+        "DESC",        "DROP",  "EXISTS", "FOR",    "FROM",  "IN",
+        "INSERT",      "INTO",  "IS",     "LIKE",   "NOT",   "NULL",
+        "OR",          "ORDER", "SELECT", "SET",    "TABLE", "UPDATE",
+        "VALUES",      "WHERE", nullptr};
 
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behavior ArcCatalog follows.
     for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
     {
-        const char* w = RESERVED_WORDS[i];
+        const char *w = RESERVED_WORDS[i];
         if (upperName == w)
         {
             newName += '_';

@@ -48,24 +48,21 @@ constexpr GIntBig TM_YEAR_BASE = 1900;
 constexpr GIntBig DAYSPERNYEAR = 365;
 constexpr GIntBig DAYSPERLYEAR = 366;
 
-static bool isleap( GIntBig y ) {
-    return
-        ((y % 4) == 0 &&
-         (y % 100) != 0) ||
-        (y % 400) == 0;
+static bool isleap(GIntBig y)
+{
+    return ((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0;
 }
 
-static GIntBig LEAPS_THROUGH_END_OF( GIntBig y )
+static GIntBig LEAPS_THROUGH_END_OF(GIntBig y)
 {
     return y / 4 - y / 100 + y / 400;
 }
 
 static const int mon_lengths[2][MONSPERYEAR] = {
-  {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-  {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
-} ;
+    {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
-static const int year_lengths[2] = { DAYSPERNYEAR, DAYSPERLYEAR };
+static const int year_lengths[2] = {DAYSPERNYEAR, DAYSPERLYEAR};
 
 /************************************************************************/
 /*                   CPLUnixTimeToYMDHMS()                              */
@@ -83,13 +80,13 @@ static const int year_lengths[2] = { DAYSPERNYEAR, DAYSPERLYEAR };
  * @return the structure pointed by pRet filled with a broken-down UTC time.
  */
 
-static
-struct tm * myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
+static struct tm *myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
 {
     GIntBig days = unixTime / SECSPERDAY;
     GIntBig rem = unixTime % SECSPERDAY;
 
-    while (rem < 0) {
+    while (rem < 0)
+    {
         rem += SECSPERDAY;
         --days;
     }
@@ -103,26 +100,25 @@ struct tm * myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     */
     pRet->tm_sec = static_cast<int>(rem % SECSPERMIN);
     pRet->tm_wday = static_cast<int>((EPOCH_WDAY + days) % DAYSPERWEEK);
-    if( pRet->tm_wday < 0 )
+    if (pRet->tm_wday < 0)
         pRet->tm_wday += DAYSPERWEEK;
     int yleap = 0;
     GIntBig y = EPOCH_YEAR;
-    while( days < 0 ||
-           days >= static_cast<GIntBig>(year_lengths[yleap = isleap(y)]) )
+    while (days < 0 ||
+           days >= static_cast<GIntBig>(year_lengths[yleap = isleap(y)]))
     {
         GIntBig newy = y + days / DAYSPERNYEAR;
-        if( days < 0 )
+        if (days < 0)
             --newy;
-        days -= (newy - y) * DAYSPERNYEAR +
-            LEAPS_THROUGH_END_OF(newy - 1) -
-            LEAPS_THROUGH_END_OF(y - 1);
+        days -= (newy - y) * DAYSPERNYEAR + LEAPS_THROUGH_END_OF(newy - 1) -
+                LEAPS_THROUGH_END_OF(y - 1);
         y = newy;
     }
     pRet->tm_year = static_cast<int>(y - TM_YEAR_BASE);
     pRet->tm_yday = static_cast<int>(days);
-    const int* ip = mon_lengths[yleap];
-    for( pRet->tm_mon = 0; days >= static_cast<GIntBig>(ip[pRet->tm_mon]);
-         ++(pRet->tm_mon) )
+    const int *ip = mon_lengths[yleap];
+    for (pRet->tm_mon = 0; days >= static_cast<GIntBig>(ip[pRet->tm_mon]);
+         ++(pRet->tm_mon))
         days = days - static_cast<GIntBig>(ip[pRet->tm_mon]);
 
     pRet->tm_mday = static_cast<int>(days + 1);
@@ -131,36 +127,36 @@ struct tm * myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     return pRet;
 }
 
-static void WriteEscaped(const char* pszStr, VSILFILE* fp)
+static void WriteEscaped(const char *pszStr, VSILFILE *fp)
 {
     GByte ch;
-    while( (ch = *(pszStr ++)) != 0 )
+    while ((ch = *(pszStr++)) != 0)
     {
-        if( ch == '<' )
+        if (ch == '<')
         {
             /* printf("&lt;"); */
             VSIFPrintfL(fp, "&#60;");
         }
-        else if( ch == '>' )
+        else if (ch == '>')
         {
             /* printf("&gt;"); */
             VSIFPrintfL(fp, "&#62;");
         }
-        else if( ch == '&' )
+        else if (ch == '&')
         {
             /* printf("&amp;"); */
             VSIFPrintfL(fp, "&#38;");
         }
-        else if( ch == '"' )
+        else if (ch == '"')
         {
             /* printf("&quot;"); */
             VSIFPrintfL(fp, "&#34;");
         }
-        else if( ch == '\'' )
+        else if (ch == '\'')
         {
             VSIFPrintfL(fp, "&#39;");
         }
-        else if( ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD )
+        else if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD)
         {
             /* These control characters are unrepresentable in XML format, */
             /* so we just drop them.  #4117 */
@@ -175,15 +171,14 @@ static void WriteEscaped(const char* pszStr, VSILFILE* fp)
 #define WRITE_STR(str) VSIFWriteL(str, 1, strlen(str), fp)
 #define WRITE_ESCAPED(str) WriteEscaped(str, fp)
 
-static
-void myNotifyNodesFunc( unsigned int nNodes, OSMNode* pasNodes,
-                        OSMContext* /* psOSMContext */, void* user_data )
+static void myNotifyNodesFunc(unsigned int nNodes, OSMNode *pasNodes,
+                              OSMContext * /* psOSMContext */, void *user_data)
 {
-    VSILFILE* fp = static_cast<VSILFILE *>(user_data);
+    VSILFILE *fp = static_cast<VSILFILE *>(user_data);
 
-    for( int k = 0; k < static_cast<int>(nNodes); k++ )
+    for (int k = 0; k < static_cast<int>(nNodes); k++)
     {
-        const OSMNode* psNode = &pasNodes[k];
+        const OSMNode *psNode = &pasNodes[k];
 
         WRITE_STR(" <node id=\"");
         VSIFPrintfL(fp, "%d", static_cast<int>(psNode->nID));
@@ -203,27 +198,27 @@ void myNotifyNodesFunc( unsigned int nNodes, OSMNode* pasNodes,
             VSIFPrintfL(fp, "%d", psNode->sInfo.nUID);
         }
 
-        if( !(psNode->sInfo.bTimeStampIsStr) )
+        if (!(psNode->sInfo.bTimeStampIsStr))
         {
             WRITE_STR("\" timestamp=\"");
             struct tm mytm;
             myCPLUnixTimeToYMDHMS(psNode->sInfo.ts.nTimeStamp, &mytm);
             VSIFPrintfL(fp, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                    1900 + mytm.tm_year, mytm.tm_mon + 1, mytm.tm_mday,
-                    mytm.tm_hour, mytm.tm_min, mytm.tm_sec);
+                        1900 + mytm.tm_year, mytm.tm_mon + 1, mytm.tm_mday,
+                        mytm.tm_hour, mytm.tm_min, mytm.tm_sec);
         }
-        else if( psNode->sInfo.ts.pszTimeStamp != NULL &&
-                 psNode->sInfo.ts.pszTimeStamp[0] != '\0' )
+        else if (psNode->sInfo.ts.pszTimeStamp != NULL &&
+                 psNode->sInfo.ts.pszTimeStamp[0] != '\0')
         {
             WRITE_STR("\" timestamp=\"");
             WRITE_STR(psNode->sInfo.ts.pszTimeStamp);
         }
 
-        if( psNode->nTags )
+        if (psNode->nTags)
         {
             WRITE_STR("\">\n");
             OSMTag *pasTags = psNode->pasTags;
-            for( unsigned int l = 0; l < psNode->nTags; l++ )
+            for (unsigned int l = 0; l < psNode->nTags; l++)
             {
                 WRITE_STR("  <tag k=\"");
                 WRITE_ESCAPED(pasTags[l].pszK);
@@ -240,11 +235,10 @@ void myNotifyNodesFunc( unsigned int nNodes, OSMNode* pasNodes,
     }
 }
 
-static
-void myNotifyWayFunc( OSMWay* psWay, OSMContext* /* psOSMContext */,
-                      void* user_data )
+static void myNotifyWayFunc(OSMWay *psWay, OSMContext * /* psOSMContext */,
+                            void *user_data)
 {
-    VSILFILE* fp = static_cast<VSILFILE *>(user_data);
+    VSILFILE *fp = static_cast<VSILFILE *>(user_data);
 
     WRITE_STR(" <way id=\"");
     VSIFPrintfL(fp, "%d", static_cast<int>(psWay->nID));
@@ -260,17 +254,17 @@ void myNotifyWayFunc( OSMWay* psWay, OSMContext* /* psOSMContext */,
         WRITE_ESCAPED(psWay->sInfo.pszUserSID);
     }
 
-    if( !(psWay->sInfo.bTimeStampIsStr) )
+    if (!(psWay->sInfo.bTimeStampIsStr))
     {
         WRITE_STR("\" timestamp=\"");
         struct tm mytm;
         myCPLUnixTimeToYMDHMS(psWay->sInfo.ts.nTimeStamp, &mytm);
-        VSIFPrintfL(fp, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                1900 + mytm.tm_year, mytm.tm_mon + 1, mytm.tm_mday,
-                mytm.tm_hour, mytm.tm_min, mytm.tm_sec);
+        VSIFPrintfL(fp, "%04d-%02d-%02dT%02d:%02d:%02dZ", 1900 + mytm.tm_year,
+                    mytm.tm_mon + 1, mytm.tm_mday, mytm.tm_hour, mytm.tm_min,
+                    mytm.tm_sec);
     }
-    else if( psWay->sInfo.ts.pszTimeStamp != NULL &&
-             psWay->sInfo.ts.pszTimeStamp[0] != '\0' )
+    else if (psWay->sInfo.ts.pszTimeStamp != NULL &&
+             psWay->sInfo.ts.pszTimeStamp[0] != '\0')
     {
         WRITE_STR("\" timestamp=\"");
         WRITE_STR(psWay->sInfo.ts.pszTimeStamp);
@@ -278,11 +272,11 @@ void myNotifyWayFunc( OSMWay* psWay, OSMContext* /* psOSMContext */,
 
     WRITE_STR("\">\n");
 
-    for( unsigned int l = 0; l < psWay->nRefs; l++ )
+    for (unsigned int l = 0; l < psWay->nRefs; l++)
         VSIFPrintfL(fp, "  <nd ref=\"%d\"/>\n",
                     static_cast<int>(psWay->panNodeRefs[l]));
 
-    for( unsigned int l = 0; l < psWay->nTags; l++ )
+    for (unsigned int l = 0; l < psWay->nTags; l++)
     {
         WRITE_STR("  <tag k=\"");
         WRITE_ESCAPED(psWay->pasTags[l].pszK);
@@ -293,12 +287,11 @@ void myNotifyWayFunc( OSMWay* psWay, OSMContext* /* psOSMContext */,
     VSIFPrintfL(fp, " </way>\n");
 }
 
-static
-void myNotifyRelationFunc( OSMRelation* psRelation,
-                           OSMContext* /* psOSMContext */, void* user_data )
+static void myNotifyRelationFunc(OSMRelation *psRelation,
+                                 OSMContext * /* psOSMContext */,
+                                 void *user_data)
 {
-    VSILFILE* fp = static_cast<VSILFILE *>(user_data);
-
+    VSILFILE *fp = static_cast<VSILFILE *>(user_data);
 
     WRITE_STR(" <relation id=\"");
     VSIFPrintfL(fp, "%d", static_cast<int>(psRelation->nID));
@@ -306,7 +299,7 @@ void myNotifyRelationFunc( OSMRelation* psRelation,
     VSIFPrintfL(fp, "%d", psRelation->sInfo.nVersion);
     WRITE_STR("\" changeset=\"");
     VSIFPrintfL(fp, "%d", static_cast<int>(psRelation->sInfo.nChangeset));
-    if( psRelation->sInfo.nUID >= 0 )
+    if (psRelation->sInfo.nUID >= 0)
     {
         WRITE_STR("\" uid=\"");
         VSIFPrintfL(fp, "%d", psRelation->sInfo.nUID);
@@ -314,17 +307,17 @@ void myNotifyRelationFunc( OSMRelation* psRelation,
         WRITE_ESCAPED(psRelation->sInfo.pszUserSID);
     }
 
-    if( !(psRelation->sInfo.bTimeStampIsStr) )
+    if (!(psRelation->sInfo.bTimeStampIsStr))
     {
         struct tm mytm;
         myCPLUnixTimeToYMDHMS(psRelation->sInfo.ts.nTimeStamp, &mytm);
         WRITE_STR("\" timestamp=\"");
-        VSIFPrintfL(fp, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                1900 + mytm.tm_year, mytm.tm_mon + 1, mytm.tm_mday,
-                mytm.tm_hour, mytm.tm_min, mytm.tm_sec);
+        VSIFPrintfL(fp, "%04d-%02d-%02dT%02d:%02d:%02dZ", 1900 + mytm.tm_year,
+                    mytm.tm_mon + 1, mytm.tm_mday, mytm.tm_hour, mytm.tm_min,
+                    mytm.tm_sec);
     }
-    else if( psRelation->sInfo.ts.pszTimeStamp != NULL &&
-             psRelation->sInfo.ts.pszTimeStamp[0] != '\0' )
+    else if (psRelation->sInfo.ts.pszTimeStamp != NULL &&
+             psRelation->sInfo.ts.pszTimeStamp[0] != '\0')
     {
         WRITE_STR("\" timestamp=\"");
         WRITE_STR(psRelation->sInfo.ts.pszTimeStamp);
@@ -332,16 +325,16 @@ void myNotifyRelationFunc( OSMRelation* psRelation,
 
     WRITE_STR("\">\n");
 
-    const OSMTag* pasTags = psRelation->pasTags;
-    const OSMMember* pasMembers = psRelation->pasMembers;
+    const OSMTag *pasTags = psRelation->pasTags;
+    const OSMMember *pasMembers = psRelation->pasMembers;
 
-    for( unsigned int l = 0; l < psRelation->nMembers; l++ )
+    for (unsigned int l = 0; l < psRelation->nMembers; l++)
     {
         WRITE_STR("  <member type=\"");
         VSIFPrintfL(fp, "%s",
-                    pasMembers[l].eType == MEMBER_NODE
-                    ? "node"
-                    : pasMembers[l].eType == MEMBER_WAY ? "way": "relation");
+                    pasMembers[l].eType == MEMBER_NODE  ? "node"
+                    : pasMembers[l].eType == MEMBER_WAY ? "way"
+                                                        : "relation");
         WRITE_STR("\" ref=\"");
         VSIFPrintfL(fp, "%d", static_cast<int>(pasMembers[l].nID));
         WRITE_STR("\" role=\"");
@@ -349,7 +342,7 @@ void myNotifyRelationFunc( OSMRelation* psRelation,
         WRITE_STR("\"/>\n");
     }
 
-    for( unsigned int l = 0; l < psRelation->nTags; l++ )
+    for (unsigned int l = 0; l < psRelation->nTags; l++)
     {
         WRITE_STR("  <tag k=\"");
         WRITE_ESCAPED(pasTags[l].pszK);
@@ -360,51 +353,49 @@ void myNotifyRelationFunc( OSMRelation* psRelation,
     VSIFPrintfL(fp, " </relation>\n");
 }
 
-static
-void myNotifyBoundsFunc( double dfXMin, double dfYMin,
-                         double dfXMax, double dfYMax,
-                         OSMContext* /* psOSMContext */, void* user_data )
+static void myNotifyBoundsFunc(double dfXMin, double dfYMin, double dfXMax,
+                               double dfYMax, OSMContext * /* psOSMContext */,
+                               void *user_data)
 {
-    VSILFILE* fp = static_cast<VSILFILE *>(user_data);
-    VSIFPrintfL(fp, " <bounds minlat=\"%.7f\" minlon=\"%.7f\""
+    VSILFILE *fp = static_cast<VSILFILE *>(user_data);
+    VSIFPrintfL(fp,
+                " <bounds minlat=\"%.7f\" minlon=\"%.7f\""
                 " maxlat=\"%.7f\" maxlon=\"%.7f\"/>\n",
                 dfYMin, dfXMin, dfYMax, dfXMax);
 }
 
-int main( int argc, char* argv[] )
+int main(int argc, char *argv[])
 {
-    if( argc != 3 )
+    if (argc != 3)
     {
-        fprintf(stderr, "Usage: osm2osm input.pbf output.osm\n");  /*ok*/
+        fprintf(stderr, "Usage: osm2osm input.pbf output.osm\n"); /*ok*/
         exit(1);
     }
 
     const char *pszSrcFilename = argv[1];
     const char *pszDstFilename = argv[2];
 
-    VSILFILE* fp = VSIFOpenL(pszDstFilename, "wt");
-    if( fp == NULL )
+    VSILFILE *fp = VSIFOpenL(pszDstFilename, "wt");
+    if (fp == NULL)
     {
-        fprintf(stderr, "Cannot create %s.\n", pszDstFilename);  /*ok*/
+        fprintf(stderr, "Cannot create %s.\n", pszDstFilename); /*ok*/
         exit(1);
     }
 
-    OSMContext* psContext = OSM_Open(pszSrcFilename,
-                                     myNotifyNodesFunc,
-                                     myNotifyWayFunc,
-                                     myNotifyRelationFunc,
-                                     myNotifyBoundsFunc,
-                                     fp);
-    if( psContext == NULL )
+    OSMContext *psContext =
+        OSM_Open(pszSrcFilename, myNotifyNodesFunc, myNotifyWayFunc,
+                 myNotifyRelationFunc, myNotifyBoundsFunc, fp);
+    if (psContext == NULL)
     {
-        fprintf(stderr, "Cannot process %s.\n", pszSrcFilename);  /*ok*/
+        fprintf(stderr, "Cannot process %s.\n", pszSrcFilename); /*ok*/
         exit(1);
     }
 
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<osm version=\"0.6\" generator=\"pbttoosm\">\n");
 
-    while( OSM_ProcessBlock(psContext) == OSM_OK );
+    while (OSM_ProcessBlock(psContext) == OSM_OK)
+        ;
 
     VSIFPrintfL(fp, "</osm>\n");
 

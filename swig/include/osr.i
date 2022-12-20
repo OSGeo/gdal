@@ -187,7 +187,7 @@ OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
   OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
   if( rcode == OGRERR_NONE )
       rcode = OSRExportToWkt ( srs, argout );
-  OSRDestroySpatialReference( srs );
+  OSRRelease( srs );
   return rcode;
 }
 %}
@@ -201,7 +201,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
   OGRErr rcode = OSRSetFromUserInput( srs, name );
   if( rcode == OGRERR_NONE )
       rcode = OSRExportToWkt ( srs, argout );
-  OSRDestroySpatialReference( srs );
+  OSRRelease( srs );
   return rcode;
 }
 %}
@@ -310,9 +310,7 @@ public:
   }
 
   ~OSRSpatialReferenceShadow() {
-    if (OSRDereference( self ) == 0 ) {
-      OSRDestroySpatialReference( self );
-    }
+    OSRRelease( self );
   }
 
 /* FIXME : all bindings should avoid using the #else case */
