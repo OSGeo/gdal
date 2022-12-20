@@ -217,10 +217,15 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
   protected:
+    bool m_bBlockSizeSpecified = false;
+    int m_nBlockXSize = 0;
+    int m_nBlockYSize = 0;
+
     virtual int CloseDependentDatasets() override;
 
   public:
-    VRTDataset(int nXSize, int nYSize);
+    VRTDataset(int nXSize, int nYSize, int nBlockXSize = 0,
+               int nBlockYSize = 0);
     virtual ~VRTDataset();
 
     void SetNeedsFlush()
@@ -296,6 +301,19 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     void UnsetPreservedRelativeFilenames();
 
+    bool IsBlockSizeSpecified() const
+    {
+        return m_bBlockSizeSpecified;
+    }
+    int GetBlockXSize() const
+    {
+        return m_nBlockXSize;
+    }
+    int GetBlockYSize() const
+    {
+        return m_nBlockYSize;
+    }
+
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenXML(const char *, const char * = nullptr,
@@ -319,8 +337,6 @@ class VRTWarpedRasterBand;
 
 class CPL_DLL VRTWarpedDataset final : public VRTDataset
 {
-    int m_nBlockXSize;
-    int m_nBlockYSize;
     GDALWarpOperation *m_poWarper;
 
     int m_nOverviewCount;
@@ -337,7 +353,8 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
     virtual int CloseDependentDatasets() override;
 
   public:
-    VRTWarpedDataset(int nXSize, int nYSize);
+    VRTWarpedDataset(int nXSize, int nYSize, int nBlockXSize = 0,
+                     int nBlockYSize = 0);
     virtual ~VRTWarpedDataset();
 
     virtual void FlushCache(bool bAtClosing) override;
@@ -382,8 +399,6 @@ class VRTPansharpenedDataset final : public VRTDataset
 {
     friend class VRTPansharpenedRasterBand;
 
-    int m_nBlockXSize;
-    int m_nBlockYSize;
     GDALPansharpenOperation *m_poPansharpener;
     VRTPansharpenedDataset *m_poMainDataset;
     std::vector<VRTPansharpenedDataset *> m_apoOverviewDatasets{};
@@ -410,7 +425,8 @@ class VRTPansharpenedDataset final : public VRTDataset
     virtual int CloseDependentDatasets() override;
 
   public:
-    VRTPansharpenedDataset(int nXSize, int nYSize);
+    VRTPansharpenedDataset(int nXSize, int nYSize, int nBlockXSize = 0,
+                           int nBlockYSize = 0);
     virtual ~VRTPansharpenedDataset();
 
     virtual void FlushCache(bool bAtClosing) override;

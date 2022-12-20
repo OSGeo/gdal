@@ -628,3 +628,18 @@ def test_vrtwarp_sourcedataset_source_absolute_dest_relative():
     finally:
         gdal.Unlink("tmp/byte.tif")
         gdal.Unlink("tmp/byte.vrt")
+
+
+###############################################################################
+# Test BLOCKXSIZE and BLOCKYSIZE creation options
+
+
+def test_vrtwarp_BLOCKXSIZE_BLOCKYSIZE():
+
+    ds = gdal.Warp(
+        "",
+        "data/byte.tif",
+        format="VRT",
+        creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"],
+    )
+    assert ds.GetRasterBand(1).GetBlockSize() == [32, 48]

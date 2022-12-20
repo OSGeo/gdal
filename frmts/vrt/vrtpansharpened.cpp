@@ -128,14 +128,17 @@ GDALDatasetH GDALCreatePansharpenedVRT(const char *pszXML,
 /*                       VRTPansharpenedDataset()                       */
 /************************************************************************/
 
-VRTPansharpenedDataset::VRTPansharpenedDataset(int nXSize, int nYSize)
-    : VRTDataset(nXSize, nYSize), m_nBlockXSize(std::min(nXSize, 512)),
-      m_nBlockYSize(std::min(nYSize, 512)), m_poPansharpener(nullptr),
-      m_poMainDataset(nullptr), m_bLoadingOtherBands(FALSE),
-      m_pabyLastBufferBandRasterIO(nullptr), m_nLastBandRasterIOXOff(0),
-      m_nLastBandRasterIOYOff(0), m_nLastBandRasterIOXSize(0),
-      m_nLastBandRasterIOYSize(0), m_eLastBandRasterIODataType(GDT_Unknown),
-      m_eGTAdjustment(GTAdjust_Union), m_bNoDataDisabled(FALSE)
+VRTPansharpenedDataset::VRTPansharpenedDataset(int nXSize, int nYSize,
+                                               int nBlockXSize, int nBlockYSize)
+    : VRTDataset(nXSize, nYSize,
+                 nBlockXSize > 0 ? nBlockXSize : std::min(nXSize, 512),
+                 nBlockYSize > 0 ? nBlockYSize : std::min(nYSize, 512)),
+      m_poPansharpener(nullptr), m_poMainDataset(nullptr),
+      m_bLoadingOtherBands(FALSE), m_pabyLastBufferBandRasterIO(nullptr),
+      m_nLastBandRasterIOXOff(0), m_nLastBandRasterIOYOff(0),
+      m_nLastBandRasterIOXSize(0), m_nLastBandRasterIOYSize(0),
+      m_eLastBandRasterIODataType(GDT_Unknown), m_eGTAdjustment(GTAdjust_Union),
+      m_bNoDataDisabled(FALSE)
 {
     eAccess = GA_Update;
     m_poMainDataset = this;

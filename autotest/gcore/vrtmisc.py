@@ -643,6 +643,69 @@ def test_vrtmisc_blocksize():
 
 
 ###############################################################################
+# Test setting block size through creation options
+
+
+def test_vrtmisc_blocksize_creation_options():
+    filename = "/vsimem/test_vrtmisc_blocksize_creation_options.vrt"
+    vrt_ds = gdal.GetDriverByName("VRT").Create(
+        filename, 50, 50, 1, options=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
+    )
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test setting block size through creation options
+
+
+def test_vrtmisc_blocksize_gdal_translate_direct():
+    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_direct.vrt"
+    vrt_ds = gdal.Translate(
+        filename, "data/byte.tif", creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
+    )
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test setting block size through creation options
+
+
+def test_vrtmisc_blocksize_gdal_translate_indirect():
+    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_indirect.vrt"
+    vrt_ds = gdal.Translate(
+        filename,
+        "data/byte.tif",
+        metadataOptions=["FOO=BAR"],
+        creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"],
+    )
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test support for coordinate epoch
 
 
