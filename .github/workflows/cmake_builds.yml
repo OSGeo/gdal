@@ -610,6 +610,8 @@ jobs:
       run: |
         brew update
         brew outdated
+        brew unlink python
+        brew link --overwrite python@3.10
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif
         brew install ccache swig
