@@ -1273,8 +1273,10 @@ GDALGeoPackageDataset::GetContents()
 /*                                Open()                                */
 /************************************************************************/
 
-int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo)
+int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
+                                const std::string &osFilenameInZip)
 {
+    m_osFilenameInZip = osFilenameInZip;
     CPLAssert(m_nLayers == 0);
     CPLAssert(hDB == nullptr);
 
@@ -1338,7 +1340,15 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     eAccess = poOpenInfo->eAccess;
-    m_pszFilename = CPLStrdup(osFilename);
+    if (!m_osFilenameInZip.empty())
+    {
+        m_pszFilename = CPLStrdup(CPLSPrintf(
+            "/vsizip/{%s}/%s", osFilename.c_str(), m_osFilenameInZip.c_str()));
+    }
+    else
+    {
+        m_pszFilename = CPLStrdup(osFilename);
+    }
 
     if (poOpenInfo->papszOpenOptions)
     {
@@ -4796,13 +4806,19 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
+    const size_t nFilenameLen = strlen(pszFilename);
+    const bool bGpkgZip =
+        (nFilenameLen > strlen(".gpkg.zip") &&
+         !STARTS_WITH(pszFilename, "/vsizip/") &&
+         EQUAL(pszFilename + nFilenameLen - strlen(".gpkg.zip"), ".gpkg.zip"));
+
     const bool bUseTempFile =
-        CPLTestBool(CPLGetConfigOption(
-            "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) &&
-        (VSIHasOptimizedReadMultiRange(pszFilename) != FALSE ||
-         EQUAL(
-             CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
-             "FORCED"));
+        bGpkgZip || (CPLTestBool(CPLGetConfigOption(
+                         "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) &&
+                     (VSIHasOptimizedReadMultiRange(pszFilename) != FALSE ||
+                      EQUAL(CPLGetConfigOption(
+                                "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
+                            "FORCED")));
 
     bool bFileExists = false;
     if (VSIStatL(pszFilename, &sStatBuf) == 0)
@@ -4822,7 +4838,17 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (bUseTempFile)
     {
-        m_osFinalFilename = pszFilename;
+        if (bGpkgZip)
+        {
+            std::string osFilenameInZip(CPLGetFilename(pszFilename));
+            osFilenameInZip.resize(osFilenameInZip.size() - strlen(".zip"));
+            m_osFinalFilename =
+                std::string("/vsizip/{") + pszFilename + "}/" + osFilenameInZip;
+        }
+        else
+        {
+            m_osFinalFilename = pszFilename;
+        }
         m_pszFilename =
             CPLStrdup(CPLGenerateTempFilename(CPLGetFilename(pszFilename)));
         CPLDebug("GPKG", "Creating temporary file %s", m_pszFilename);

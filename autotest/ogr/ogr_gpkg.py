@@ -8270,3 +8270,29 @@ def test_ogr_gpkg_sql_gdal_get_pixel_value():
         assert f[0] is None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SOZip writing and reading
+
+
+def test_ogr_gpkg_sozip():
+
+    filename = "/vsimem/test_ogr_gpkg_sozip.gpkg.zip"
+
+    with gdaltest.config_options(
+        {"CPL_SOZIP_MIN_FILE_SIZE": "256", "CPL_VSIL_DEFLATE_CHUNK_SIZE": "128"}
+    ):
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+        ds.CreateLayer("foo")
+        ds = None
+
+    md = gdal.GetFileMetadata(f"/vsizip/{filename}/test_ogr_gpkg_sozip.gpkg", "ZIP")
+    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+
+    ds = ogr.Open(filename)
+    assert ds
+    assert ds.GetLayer(0).GetName() == "foo"
+    ds = None
+
+    gdal.Unlink(filename)
