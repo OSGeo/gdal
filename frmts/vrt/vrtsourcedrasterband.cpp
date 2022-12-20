@@ -168,8 +168,9 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     /*      Do we have overviews that would be appropriate to satisfy       */
     /*      this request?                                                   */
     /* ==================================================================== */
-    auto l_poDS = cpl::down_cast<VRTDataset *>(poDS);
-    if (l_poDS->m_apoOverviews.empty() &&  // do not use virtual overviews
+    auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
+    if (l_poDS &&
+        l_poDS->m_apoOverviews.empty() &&  // do not use virtual overviews
         (nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0)
     {
         if (OverviewRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
@@ -827,7 +828,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
 
         if (poBand != nullptr && poBand != this)
         {
-            auto l_poDS = cpl::down_cast<VRTDataset *>(poDS);
+            auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
             if (l_poDS && !l_poDS->m_apoOverviews.empty() &&
                 dynamic_cast<VRTSourcedRasterBand *>(poBand) != nullptr)
             {
@@ -1101,7 +1102,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
         if (poBand != nullptr && poBand != this)
         {
-            auto l_poDS = cpl::down_cast<VRTDataset *>(poDS);
+            auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
             if (l_poDS && !l_poDS->m_apoOverviews.empty() &&
                 dynamic_cast<VRTSourcedRasterBand *>(poBand) != nullptr)
             {
@@ -1543,7 +1544,7 @@ CPLErr VRTSourcedRasterBand::GetHistogram(double dfMin, double dfMax,
 
         if (poBand != nullptr && poBand != this)
         {
-            auto l_poDS = cpl::down_cast<VRTDataset *>(poDS);
+            auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
             if (l_poDS && !l_poDS->m_apoOverviews.empty() &&
                 dynamic_cast<VRTSourcedRasterBand *>(poBand) != nullptr)
             {
@@ -2352,7 +2353,12 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem(const char *pszName,
         if (psTree == nullptr)
             return CE_Failure;
 
-        auto l_poDS = cpl::down_cast<VRTDataset *>(GetDataset());
+        auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
+        if (l_poDS == nullptr)
+        {
+            CPLDestroyXMLNode(psTree);
+            return CE_Failure;
+        }
         VRTSource *const poSource =
             poDriver->ParseSource(psTree, nullptr, l_poDS->m_oMapSharedSources);
         CPLDestroyXMLNode(psTree);
@@ -2383,7 +2389,12 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem(const char *pszName,
         if (psTree == nullptr)
             return CE_Failure;
 
-        auto l_poDS = cpl::down_cast<VRTDataset *>(GetDataset());
+        auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
+        if (l_poDS == nullptr)
+        {
+            CPLDestroyXMLNode(psTree);
+            return CE_Failure;
+        }
         VRTSource *const poSource =
             poDriver->ParseSource(psTree, nullptr, l_poDS->m_oMapSharedSources);
         CPLDestroyXMLNode(psTree);
@@ -2434,7 +2445,12 @@ CPLErr VRTSourcedRasterBand::SetMetadata(char **papszNewMD,
             if (psTree == nullptr)
                 return CE_Failure;
 
-            auto l_poDS = cpl::down_cast<VRTDataset *>(GetDataset());
+            auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
+            if (l_poDS == nullptr)
+            {
+                CPLDestroyXMLNode(psTree);
+                return CE_Failure;
+            }
             VRTSource *const poSource = poDriver->ParseSource(
                 psTree, nullptr, l_poDS->m_oMapSharedSources);
             CPLDestroyXMLNode(psTree);
