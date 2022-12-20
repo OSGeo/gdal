@@ -2932,58 +2932,8 @@ int CPLUnlinkTree(const char *pszPath)
 int CPLCopyFile(const char *pszNewPath, const char *pszOldPath)
 
 {
-    /* -------------------------------------------------------------------- */
-    /*      Open old and new file.                                          */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fpOld = VSIFOpenL(pszOldPath, "rb");
-    if (fpOld == nullptr)
-        return -1;
-
-    VSILFILE *fpNew = VSIFOpenL(pszNewPath, "wb");
-    if (fpNew == nullptr)
-    {
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
-        return -1;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Prepare buffer.                                                 */
-    /* -------------------------------------------------------------------- */
-    const size_t nBufferSize = 1024 * 1024;
-    GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBufferSize));
-    if (pabyBuffer == nullptr)
-    {
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpNew));
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
-        return -1;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Copy file over till we run out of stuff.                        */
-    /* -------------------------------------------------------------------- */
-    size_t nBytesRead = 0;
-    int nRet = 0;
-    do
-    {
-        nBytesRead = VSIFReadL(pabyBuffer, 1, nBufferSize, fpOld);
-        if (long(nBytesRead) < 0)
-            nRet = -1;
-
-        if (nRet == 0 &&
-            VSIFWriteL(pabyBuffer, 1, nBytesRead, fpNew) < nBytesRead)
-            nRet = -1;
-    } while (nRet == 0 && nBytesRead == nBufferSize);
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup                                                         */
-    /* -------------------------------------------------------------------- */
-    if (VSIFCloseL(fpNew) != 0)
-        nRet = -1;
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
-
-    CPLFree(pabyBuffer);
-
-    return nRet;
+    return VSICopyFile(pszOldPath, pszNewPath, nullptr, 0, nullptr, nullptr,
+                       nullptr);
 }
 
 /************************************************************************/
