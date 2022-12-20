@@ -1252,6 +1252,10 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     poSrcDS->GetGeoTransform(adfGeoTransform);
 
+    const double dfYLLCorner =
+        adfGeoTransform[5] < 0
+            ? adfGeoTransform[3] + nYSize * adfGeoTransform[5]
+            : adfGeoTransform[3];
     if (std::abs(adfGeoTransform[1] + adfGeoTransform[5]) < 0.0000001 ||
         std::abs(adfGeoTransform[1] - adfGeoTransform[5]) < 0.0000001 ||
         (pszForceCellsize && CPLTestBool(pszForceCellsize)))
@@ -1262,8 +1266,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                     "xllcorner    %.12f\n"
                     "yllcorner    %.12f\n"
                     "cellsize     %.12f\n",
-                    nXSize, nYSize, adfGeoTransform[0],
-                    adfGeoTransform[3] - nYSize * adfGeoTransform[1],
+                    nXSize, nYSize, adfGeoTransform[0], dfYLLCorner,
                     adfGeoTransform[1]);
     }
     else
@@ -1283,8 +1286,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                     "yllcorner    %.12f\n"
                     "dx           %.12f\n"
                     "dy           %.12f\n",
-                    nXSize, nYSize, adfGeoTransform[0],
-                    adfGeoTransform[3] + nYSize * adfGeoTransform[5],
+                    nXSize, nYSize, adfGeoTransform[0], dfYLLCorner,
                     adfGeoTransform[1], fabs(adfGeoTransform[5]));
     }
 
@@ -1371,7 +1373,9 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     for (int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++)
     {
         CPLString osBuf;
-        eErr = poBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
+        const int iSrcLine =
+            adfGeoTransform[5] < 0 ? iLine : nYSize - 1 - iLine;
+        eErr = poBand->RasterIO(GF_Read, 0, iSrcLine, nXSize, 1,
                                 bReadAsInt ? static_cast<void *>(panScanline)
                                            : static_cast<void *>(padfScanline),
                                 nXSize, 1, bReadAsInt ? GDT_Int32 : GDT_Float64,
