@@ -32,6 +32,7 @@
 ###############################################################################
 
 import os
+import struct
 
 import gdaltest
 import pytest
@@ -454,3 +455,27 @@ null 1.5 null 3.5
     ds = None
 
     gdal.Unlink("/vsimem/test_aaigrid_null.asc")
+
+
+###############################################################################
+# Test fix for #6946
+
+
+def test_aaigrid_write_south_up_raster():
+
+    ds = gdal.Open("data/byte.tif")
+    mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    mem_ds.SetGeoTransform([2, 1, 0, 49, 0, 1])
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, struct.pack("f" * 2, 1, 2))
+    ds = None
+    gdal.GetDriverByName("AAIGRID").CreateCopy(
+        "/vsimem/test_aaigrid_write_south_up_raster.asc", mem_ds
+    )
+
+    ds = gdal.Open("/vsimem/test_aaigrid_write_south_up_raster.asc")
+    assert ds.GetGeoTransform() == pytest.approx([2, 1, 0, 51, 0, -1])
+    assert struct.unpack("f" * 2, ds.GetRasterBand(1).ReadRaster()) == (2, 1)
+
+    gdal.GetDriverByName("AAIGRID").Delete(
+        "/vsimem/test_aaigrid_write_south_up_raster.asc"
+    )
