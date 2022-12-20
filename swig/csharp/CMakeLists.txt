@@ -92,7 +92,11 @@ endif ()
 
 # needed because of differences in the packages
 if (DOTNET_FOUND)
-  set(CSHARP_DRAWING "System.Drawing.Common")
+  if(_CSHARP_LIBRARY_SDK_NUMBER LESS "6")
+    set(CSHARP_DRAWING "System.Drawing.Common")
+  else ()
+    set(CSHARP_DRAWING "System.Drawing.Primitives;SkiaSharp")
+  endif ()
 else ()
   set(CSHARP_DRAWING "System.Drawing")
 endif ()
@@ -415,7 +419,7 @@ function (gdal_build_csharp_sample)
   endif (_GBCS_DEPENDS)
   if (_GBCS_SYSTEM_DEPENDS)
     foreach (_dep IN LISTS _GBCS_SYSTEM_DEPENDS)
-      if (NOT _dep MATCHES "^OSGeo*.")
+      if (_dep MATCHES "^System*.")
         list(APPEND CSC_OPTIONS /r:${_dep}.dll)
       endif ()
     endforeach ()
@@ -429,7 +433,11 @@ function (gdal_build_csharp_sample)
 
   # build the sample exe
   if (DOTNET_FOUND)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${_GBCS_PROJ}.csproj")
+    if ( "SkiaSharp" IN_LIST _GBCS_SYSTEM_DEPENDS)
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template_dcomp.csproj" "${_GBCS_PROJ}.csproj")
+    else() 
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/exe_template.csproj" "${_GBCS_PROJ}.csproj")
+    endif ()
     add_dotnet(
       ${_GBCS_PROJ_NATIVE}.csproj
       ${CSHARP_CONFIG}
