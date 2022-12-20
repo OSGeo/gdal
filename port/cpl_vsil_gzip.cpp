@@ -3672,6 +3672,12 @@ class VSISOZipHandle final : public VSIVirtualHandle
     uint32_t nOffsetSize_;
     bool bEOF_ = false;
     vsi_l_offset nCurPos_ = 0;
+    bool bOK_ = true;
+#ifdef HAVE_LIBDEFLATE
+    struct libdeflate_decompressor *pDecompressor_ = nullptr;
+#else
+    z_stream sStream_{};
+#endif
 
     VSISOZipHandle(const VSISOZipHandle &) = delete;
     VSISOZipHandle &operator=(const VSISOZipHandle &) = delete;
@@ -3698,6 +3704,11 @@ class VSISOZipHandle final : public VSIVirtualHandle
         return bEOF_;
     }
     virtual int Close() override;
+
+    bool IsOK() const
+    {
+        return bOK_;
+    }
 };
 
 /************************************************************************/
@@ -3716,6 +3727,16 @@ VSISOZipHandle::VSISOZipHandle(VSIVirtualHandle *poVirtualHandle,
       indexPos_(indexPos), nToSkip_(nToSkip), nChunkSize_(nChunkSize),
       nOffsetSize_(nOffsetSize)
 {
+#ifdef HAVE_LIBDEFLATE
+    pDecompressor_ = libdeflate_alloc_decompressor();
+    if (!pDecompressor_)
+        bOK_ = false;
+#else
+    memset(&sStream_, 0, sizeof(sStream_));
+    int err = inflateInit2(&sStream_, -MAX_WBITS);
+    if (err != Z_OK)
+        bOK_ = false;
+#endif
 }
 
 /************************************************************************/
@@ -3725,6 +3746,14 @@ VSISOZipHandle::VSISOZipHandle(VSIVirtualHandle *poVirtualHandle,
 VSISOZipHandle::~VSISOZipHandle()
 {
     VSISOZipHandle::Close();
+    if (bOK_)
+    {
+#ifdef HAVE_LIBDEFLATE
+        libdeflate_free_decompressor(pDecompressor_);
+#else
+        inflateEnd(&sStream_);
+#endif
+    }
 }
 
 /************************************************************************/
@@ -3883,21 +3912,18 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             abyCompressedData[nCompressedToRead - 5] = 0x01;
         }
 
-        struct libdeflate_decompressor *d = libdeflate_alloc_decompressor();
         size_t nOut = 0;
         if (libdeflate_deflate_decompress(
-                d, &abyCompressedData[0], nCompressedToRead,
+                pDecompressor_, &abyCompressedData[0], nCompressedToRead,
                 static_cast<Bytef *>(pBuffer) + nOffsetInOutputBuffer,
                 nToReadThisIter, &nOut) != LIBDEFLATE_SUCCESS)
         {
-            libdeflate_free_decompressor(d);
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "libdeflate_deflate_decompress() failed at pos " CPL_FRMT_GUIB,
                 static_cast<GUIntBig>(nCurPos_));
             return 0;
         }
-        libdeflate_free_decompressor(d);
         if (nOut != nToReadThisIter)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3909,42 +3935,36 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             return 0;
         }
 #else
-        z_stream sStream;
-        memset(&sStream, 0, sizeof(sStream));
-        sStream.zalloc = nullptr;
-        sStream.zfree = nullptr;
-        sStream.opaque = nullptr;
-
-        sStream.avail_in = nCompressedToRead;
-        sStream.next_in = &abyCompressedData[0];
-        sStream.avail_out = static_cast<int>(nToReadThisIter);
-        sStream.next_out =
+        sStream_.avail_in = nCompressedToRead;
+        sStream_.next_in = &abyCompressedData[0];
+        sStream_.avail_out = static_cast<int>(nToReadThisIter);
+        sStream_.next_out =
             static_cast<Bytef *>(pBuffer) + nOffsetInOutputBuffer;
 
-        int err = inflateInit2(&sStream, -MAX_WBITS);
-        if (err != Z_OK)
-            return 0;
-        err = inflate(&sStream, Z_SYNC_FLUSH);
-        inflateEnd(&sStream);
+        int err = inflate(&sStream_, Z_SYNC_FLUSH);
         if ((err != Z_OK && err != Z_STREAM_END))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "inflate() failed at pos " CPL_FRMT_GUIB,
                      static_cast<GUIntBig>(nCurPos_));
+            inflateReset(&sStream_);
             return 0;
         }
-        if (sStream.avail_in != 0)
-            CPLDebug("VSIZIP", "avail_in = %d", sStream.avail_in);
-        if (sStream.avail_out != 0)
+        if (sStream_.avail_in != 0)
+            CPLDebug("VSIZIP", "avail_in = %d", sStream_.avail_in);
+        if (sStream_.avail_out != 0)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
-                     " whereas %u where expected",
-                     static_cast<unsigned>(nToReadThisIter - sStream.avail_out),
-                     static_cast<GUIntBig>(nCurPos_),
-                     static_cast<unsigned>(nToReadThisIter));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
+                " whereas %u where expected",
+                static_cast<unsigned>(nToReadThisIter - sStream_.avail_out),
+                static_cast<GUIntBig>(nCurPos_),
+                static_cast<unsigned>(nToReadThisIter));
+            inflateReset(&sStream_);
             return 0;
         }
+        inflateReset(&sStream_);
 #endif
         nOffsetInOutputBuffer += nToReadThisIter;
         nCurPos_ += nToReadThisIter;
@@ -4191,13 +4211,17 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
     {
         if (info.bSOZipIndexValid)
         {
-            return VSICreateCachedFile(
-                new VSISOZipHandle(info.poVirtualHandle.release(),
-                                   info.nStartDataStream, info.nCompressedSize,
-                                   info.nUncompressedSize, info.nSOZIPStartData,
-                                   info.nSOZIPToSkip, info.nSOZIPChunkSize,
-                                   info.nSOZIPOffsetSize),
-                info.nSOZIPChunkSize, 0);
+            auto poSOZIPHandle = new VSISOZipHandle(
+                info.poVirtualHandle.release(), info.nStartDataStream,
+                info.nCompressedSize, info.nUncompressedSize,
+                info.nSOZIPStartData, info.nSOZIPToSkip, info.nSOZIPChunkSize,
+                info.nSOZIPOffsetSize);
+            if (!poSOZIPHandle->IsOK())
+            {
+                delete poSOZIPHandle;
+                return nullptr;
+            }
+            return VSICreateCachedFile(poSOZIPHandle, info.nSOZIPChunkSize, 0);
         }
 
         VSIGZipHandle *poGZIPHandle = new VSIGZipHandle(
