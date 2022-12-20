@@ -997,7 +997,7 @@ def test_rasterio_15():
 nrows        2
 xllcorner    0
 yllcorner    0
-cellsize     0
+cellsize     1
   0   100
 100   100""",
     )
