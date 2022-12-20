@@ -33,6 +33,8 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 
+#include <limits>
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -45,6 +47,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
            "             [-r|--recurse-paths]\n"
            "             [-j|--junk]\n"
            "             [-l|--list]\n"
+           "             [--validate]\n"
            "             [--enable-sozip=auto/yes/no]\n"
            "             [--sozip-chunk-size=value]\n"
            "             [--sozip-min-file-size=value]\n"
@@ -54,6 +57,285 @@ static void Usage(const char *pszErrorMsg = nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit(1);
+}
+
+/************************************************************************/
+/*                          Validate()                                  */
+/************************************************************************/
+
+static int Validate(const char *pszZipFilename, bool bVerbose)
+{
+    VSIDIR *psDir = VSIOpenDir(
+        (std::string("/vsizip/") + pszZipFilename).c_str(), -1, nullptr);
+    if (psDir == nullptr)
+    {
+        fprintf(stderr, "%s is not a valid .zip file\n", pszZipFilename);
+        return 1;
+    }
+
+    int nCountInvalidSOZIP = 0;
+    int nCountValidSOZIP = 0;
+    int ret = 0;
+    while (auto psEntry = VSIGetNextDirEntry(psDir))
+    {
+        if (!VSI_ISDIR(psEntry->nMode))
+        {
+            const std::string osFilenameInZip = std::string("/vsizip/{") +
+                                                pszZipFilename + "}/" +
+                                                psEntry->pszName;
+            if (bVerbose)
+                printf("Testing %s...\n", psEntry->pszName);
+
+            char **papszMD =
+                VSIGetFileMetadata(osFilenameInZip.c_str(), "ZIP", nullptr);
+            bool bSeekOptimizedFound =
+                CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_FOUND") != nullptr;
+            bool bSeekOptimizedValid =
+                CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_VALID") != nullptr;
+            const char *pszChunkSize =
+                CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
+            if (bSeekOptimizedValid)
+            {
+                if (bVerbose)
+                    printf("  %s has an associated .sozip.idx file\n",
+                           psEntry->pszName);
+
+                const char *pszStartIdxDataOffset =
+                    CSLFetchNameValue(papszMD, "SOZIP_START_DATA_OFFSET");
+                const vsi_l_offset nStartIdxOffset =
+                    std::strtoull(pszStartIdxDataOffset, nullptr, 10);
+                VSILFILE *fpRaw = VSIFOpenL(pszZipFilename, "rb");
+                CPLAssert(fpRaw != nullptr);
+
+                VSIFSeekL(fpRaw, nStartIdxOffset + 4, SEEK_SET);
+                uint32_t nToSkip = 0;
+                VSIFReadL(&nToSkip, 1, sizeof(nToSkip), fpRaw);
+                CPL_LSBPTR32(&nToSkip);
+
+                VSIFSeekL(fpRaw, nStartIdxOffset + 12, SEEK_SET);
+                uint32_t nOffsetSize = 0;
+                VSIFReadL(&nOffsetSize, 1, sizeof(nOffsetSize), fpRaw);
+                CPL_LSBPTR32(&nOffsetSize);
+
+                VSIFSeekL(fpRaw, nStartIdxOffset + 32 + nToSkip, SEEK_SET);
+                const int nChunkSize = atoi(pszChunkSize);
+                const uint64_t nCompressedSize = std::strtoull(
+                    CSLFetchNameValue(papszMD, "COMPRESSED_SIZE"), nullptr, 10);
+                const uint64_t nUncompressedSize = std::strtoull(
+                    CSLFetchNameValue(papszMD, "UNCOMPRESSED_SIZE"), nullptr,
+                    10);
+                if ((nUncompressedSize - 1) / nChunkSize >
+                    static_cast<uint64_t>(std::numeric_limits<int>::max()))
+                {
+                    fprintf(
+                        stderr,
+                        "* File %s has a SOZip index, but (nUncompressedSize - "
+                        "1) / nChunkSize > INT_MAX !\n",
+                        psEntry->pszName);
+                    nCountInvalidSOZIP++;
+                    ret = 1;
+                    CSLDestroy(papszMD);
+                    continue;
+                }
+                int nChunksItems =
+                    static_cast<int>((nUncompressedSize - 1) / nChunkSize);
+
+                if (bVerbose)
+                    printf("  %s: checking index offset values...\n",
+                           psEntry->pszName);
+
+                std::vector<uint64_t> anOffsets;
+                try
+                {
+                    anOffsets.reserve(nChunksItems);
+                }
+                catch (const std::exception &)
+                {
+                    nChunksItems = 0;
+                    fprintf(stderr,
+                            "Cannot allocate memory for chunk offsets.\n");
+                    ret = 1;
+                }
+
+                for (int i = 0; i < nChunksItems; ++i)
+                {
+                    uint64_t nOffset64 = 0;
+                    if (nOffsetSize == 4)
+                    {
+                        uint32_t nOffset32 = 0;
+                        VSIFReadL(&nOffset32, 1, sizeof(nOffset32), fpRaw);
+                        CPL_LSBPTR32(&nOffset32);
+                        nOffset64 = nOffset32;
+                    }
+                    else
+                    {
+                        CPLAssert(nOffsetSize == 8);
+                        VSIFReadL(&nOffset64, 1, sizeof(nOffset64), fpRaw);
+                        CPL_LSBPTR64(&nOffset64);
+                    }
+                    if (nOffset64 >= nCompressedSize)
+                    {
+                        bSeekOptimizedValid = false;
+                        fprintf(stderr,
+                                "Error: file %s, offset[%d] (= " CPL_FRMT_GUIB
+                                ") >= compressed_size is invalid.\n",
+                                psEntry->pszName, i,
+                                static_cast<GUIntBig>(nOffset64));
+                    }
+                    if (!anOffsets.empty())
+                    {
+                        const auto nPrevOffset = anOffsets.back();
+                        if (nOffset64 <= nPrevOffset)
+                        {
+                            bSeekOptimizedValid = false;
+                            fprintf(
+                                stderr,
+                                "Error: file %s, offset[%d] (= " CPL_FRMT_GUIB
+                                ") <= offset[%d] (= " CPL_FRMT_GUIB ")\n",
+                                psEntry->pszName, i + 1,
+                                static_cast<GUIntBig>(nOffset64), i,
+                                static_cast<GUIntBig>(nPrevOffset));
+                        }
+                    }
+                    else if (nOffset64 < 9)
+                    {
+                        bSeekOptimizedValid = false;
+                        fprintf(stderr,
+                                "Error: file %s, offset[0] (= " CPL_FRMT_GUIB
+                                ") is invalid.\n",
+                                psEntry->pszName,
+                                static_cast<GUIntBig>(nOffset64));
+                    }
+                    anOffsets.push_back(nOffset64);
+                }
+
+                if (bVerbose)
+                    printf("  %s: checking chunks can be independantly "
+                           "decompressed...\n",
+                           psEntry->pszName);
+
+                const char *pszStartDataOffset =
+                    CSLFetchNameValue(papszMD, "START_DATA_OFFSET");
+                const vsi_l_offset nStartOffset =
+                    std::strtoull(pszStartDataOffset, nullptr, 10);
+                VSILFILE *fp = VSIFOpenL(osFilenameInZip.c_str(), "rb");
+                if (fp == nullptr)
+                {
+                    bSeekOptimizedValid = false;
+                    fprintf(stderr, "Error: cannot open %s\n",
+                            osFilenameInZip.c_str());
+                }
+                std::vector<GByte> abyData;
+                try
+                {
+                    abyData.resize(nChunkSize);
+                }
+                catch (const std::exception &)
+                {
+                    fprintf(stderr, "Cannot allocate memory for chunk data.\n");
+                    ret = 1;
+                }
+                for (int i = 0; fp != nullptr && i < nChunksItems; ++i)
+                {
+                    VSIFSeekL(fpRaw, nStartOffset + anOffsets[i] - 9, SEEK_SET);
+                    GByte abyEnd[9] = {0};
+                    VSIFReadL(abyEnd, 1, 9, fpRaw);
+                    if (memcmp(abyEnd, "\x00\x00\xFF\xFF\x00\x00\x00\xFF\xFF",
+                               9) != 0)
+                    {
+                        bSeekOptimizedValid = false;
+                        fprintf(
+                            stderr,
+                            "Error: file %s, chunk[%d] is not terminated by "
+                            "\\x00\\x00\\xFF\\xFF\\x00\\x00\\x00\\xFF\\xFF.\n",
+                            psEntry->pszName, i);
+                    }
+                    if (!abyData.empty())
+                    {
+                        VSIFSeekL(fp, static_cast<vsi_l_offset>(i) * nChunkSize,
+                                  SEEK_SET);
+                        const size_t nRead =
+                            VSIFReadL(&abyData[0], 1, nChunkSize, fp);
+                        if (nRead != static_cast<size_t>(nChunkSize))
+                        {
+                            bSeekOptimizedValid = false;
+                            fprintf(stderr,
+                                    "Error: file %s, chunk[%d] cannot be fully "
+                                    "read.\n",
+                                    psEntry->pszName, i);
+                        }
+                    }
+                }
+
+                if (fp != nullptr)
+                {
+                    VSIFSeekL(fp,
+                              static_cast<vsi_l_offset>(nChunksItems) *
+                                  nChunkSize,
+                              SEEK_SET);
+                    const size_t nRead =
+                        VSIFReadL(&abyData[0], 1, nChunkSize, fp);
+                    if (nRead != static_cast<size_t>(
+                                     nUncompressedSize -
+                                     static_cast<vsi_l_offset>(nChunksItems) *
+                                         nChunkSize))
+                    {
+                        bSeekOptimizedValid = false;
+                        fprintf(
+                            stderr,
+                            "Error: file %s, chunk[%d] cannot be fully read.\n",
+                            psEntry->pszName, nChunksItems);
+                    }
+
+                    VSIFCloseL(fp);
+                }
+
+                VSIFCloseL(fpRaw);
+            }
+
+            if (bSeekOptimizedValid)
+            {
+                printf("* File %s has a valid SOZip index, using chunk_size = "
+                       "%s.\n",
+                       psEntry->pszName, pszChunkSize);
+                nCountValidSOZIP++;
+            }
+            else if (bSeekOptimizedFound)
+            {
+                fprintf(stderr,
+                        "* File %s has a SOZip index, but is is invalid!\n",
+                        psEntry->pszName);
+                nCountInvalidSOZIP++;
+                ret = 1;
+            }
+            CSLDestroy(papszMD);
+        }
+    }
+
+    VSICloseDir(psDir);
+
+    if (ret == 0)
+    {
+        if (nCountValidSOZIP > 0)
+        {
+            printf("-----\n");
+            printf("%s is a valid .zip file, and contains %d SOZip-enabled "
+                   "file(s).\n",
+                   pszZipFilename, nCountValidSOZIP);
+        }
+        else
+            printf("%s is a valid .zip file, but does not contain any "
+                   "SOZip-enabled files.\n",
+                   pszZipFilename);
+    }
+    else
+    {
+        if (nCountInvalidSOZIP > 0)
+            printf("-----\n");
+        fprintf(stderr, "%s is not a valid SOZip file!\n", pszZipFilename);
+    }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -68,6 +350,7 @@ MAIN_START(nArgc, papszArgv)
     bool bQuiet = false;
     bool bList = false;
     bool bJunkPaths = false;
+    bool bValidate = false;
     const char *pszZipFilename = nullptr;
     CPLStringList aosFiles;
     CPLStringList aosOptions;
@@ -120,6 +403,10 @@ MAIN_START(nArgc, papszArgv)
                  strcmp(papszArgv[iArg], "--list") == 0)
         {
             bList = true;
+        }
+        else if (strcmp(papszArgv[iArg], "--validate") == 0)
+        {
+            bValidate = true;
         }
         else if (strcmp(papszArgv[iArg], "--enable-sozip") == 0 &&
                  iArg + 1 < nArgc)
@@ -176,27 +463,27 @@ MAIN_START(nArgc, papszArgv)
         return 1;
     }
 
-    if (!bList)
+    if ((bValidate ? 1 : 0) + (bList ? 1 : 0) + (!aosFiles.empty() ? 1 : 0) > 1)
     {
-        if (aosFiles.empty())
-        {
-            Usage("Missing source filename(s)");
-            return 1;
-        }
+        Usage("Validate, list and create/append modes are mutually exclusive");
+        return 1;
     }
-    else
+
+    if (!bList && !bValidate && aosFiles.empty())
     {
-        if (!aosFiles.empty())
-        {
-            Usage("Unexpect source filename(s) in --list mode");
-            return 1;
-        }
+        Usage("Missing source filename(s)");
+        return 1;
     }
 
     if (!EQUAL(CPLGetExtension(pszZipFilename), "zip"))
     {
         Usage("Extension of zip filename should be .zip");
         return 1;
+    }
+
+    if (bValidate)
+    {
+        return Validate(pszZipFilename, bVerbose);
     }
 
     if (bList)

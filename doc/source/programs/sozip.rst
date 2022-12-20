@@ -22,6 +22,7 @@ Synopsis
           [-r|--recurse-paths]
           [-j|--junk-paths]
           [-l|--list]
+          [--validate]
           [--enable-sozip=auto/yes/no]
           [--sozip-chunk-size=value]
           [--sozip-min-file-size=value]
@@ -32,7 +33,8 @@ Description
 -----------
 
 The :program:`sozip` utility can be used to create a seek-optimized ZIP file,
-append files to an existing ZIP file or list the contents of a ZIP file.
+append files to an existing ZIP/SOZip file, list the contents of a ZIP/SOZip
+file or validate a SOZip file.
 
 .. program:: sozip
 
@@ -61,6 +63,13 @@ append files to an existing ZIP file or list the contents of a ZIP file.
     List the files contained in the zip file in an output similar to Info-ZIP
     :program:`unzip` utility, but with the addition of a column indicating
     whether each file is seek-optimized.
+
+.. option:: --validate
+
+    Validates a SOZip file. Baseline ZIP validation is done in a light way,
+    limited to being able to browse through ZIP records with the InfoZIP-based
+    ZIP reader used by GDAL. But validation of the SOZip-specific aspects is
+    done in a more thoroughful way.
 
 .. option:: -j
 .. option:: --junk-paths
@@ -134,3 +143,10 @@ List the contents of a ZIP file and display which files are seek-optimized:
 ::
 
     sozip -l my.gpkg.zip
+
+
+Validates a SOZip file:
+
+::
+
+    sozip --validate my.gpkg.zip

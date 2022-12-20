@@ -110,3 +110,31 @@ def test_sozip_append():
     assert "SEEK_OPTIMIZED_VALID" not in md
 
     gdal.Unlink("tmp/sozip.zip")
+
+
+###############################################################################
+
+
+def test_sozip_validate():
+    if get_sozip_path() is None:
+        pytest.skip()
+
+    gdal.Unlink("tmp/sozip.zip")
+
+    (out, err) = gdaltest.runexternal_out_and_err(
+        get_sozip_path()
+        + " -j --enable-sozip=yes --sozip-chunk-size 128 tmp/sozip.zip ../gcore/data/byte.tif"
+    )
+    assert err is None or err == "", "got error/warning"
+
+    (out, err) = gdaltest.runexternal_out_and_err(
+        get_sozip_path() + " --validate tmp/sozip.zip"
+    )
+    assert err is None or err == "", "got error/warning"
+    assert "File byte.tif has a valid SOZip index, using chunk_size = 128" in out
+    assert (
+        "tmp/sozip.zip is a valid .zip file, and contains 1 SOZip-enabled file(s)"
+        in out
+    )
+
+    gdal.Unlink("tmp/sozip.zip")
