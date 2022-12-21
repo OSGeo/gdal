@@ -131,4 +131,4 @@ A C++ test will be added to the test suite.
 Voting history
 --------------
 
-
++1 from PSC members MateuszL, JukkaR, TamasS and EvenR
