@@ -636,8 +636,17 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     double dfSize = 0;
     if (eExists != EXIST_YES)
     {
+#if CURL_AT_LEAST_VERSION(7, 55, 0)
+        curl_off_t nSizeTmp = 0;
+        const CURLcode code = curl_easy_getinfo(
+            hLocalHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &nSizeTmp);
+        CPL_IGNORE_RET_VAL(dfSize);
+        dfSize = static_cast<double>(nSizeTmp);
+#else
+        dfSize = 0;
         const CURLcode code = curl_easy_getinfo(
             hLocalHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize);
+#endif
         if (code == 0)
         {
             eExists = EXIST_YES;
