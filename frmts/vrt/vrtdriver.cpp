@@ -182,7 +182,7 @@ VRTDriver::ParseSource(CPLXMLNode *psSrc, const char *pszVRTPath,
 /************************************************************************/
 
 static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int /* bStrict */, char ** /* papszOptions */,
+                                  int /* bStrict */, char **papszOptions,
                                   GDALProgressFunc /* pfnProgress */,
                                   void * /* pProgressData */)
 {
@@ -276,9 +276,9 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Create the virtual dataset.                                     */
     /* -------------------------------------------------------------------- */
-    VRTDataset *poVRTDS = static_cast<VRTDataset *>(
-        VRTDataset::Create(pszFilename, poSrcDS->GetRasterXSize(),
-                           poSrcDS->GetRasterYSize(), 0, GDT_Byte, nullptr));
+    VRTDataset *poVRTDS = static_cast<VRTDataset *>(VRTDataset::Create(
+        pszFilename, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 0,
+        GDT_Byte, papszOptions));
     if (poVRTDS == nullptr)
         return nullptr;
 
@@ -358,12 +358,16 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* --------------------------------------------------------------------
          */
         CPLStringList aosAddBandOptions;
-        int nSrcBlockXSize, nSrcBlockYSize;
-        poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        int nBlockXSize = poVRTDS->GetBlockXSize();
+        int nBlockYSize = poVRTDS->GetBlockYSize();
+        if (!poVRTDS->IsBlockSizeSpecified())
+        {
+            poSrcBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        }
         aosAddBandOptions.SetNameValue("BLOCKXSIZE",
-                                       CPLSPrintf("%d", nSrcBlockXSize));
+                                       CPLSPrintf("%d", nBlockXSize));
         aosAddBandOptions.SetNameValue("BLOCKYSIZE",
-                                       CPLSPrintf("%d", nSrcBlockYSize));
+                                       CPLSPrintf("%d", nBlockYSize));
         poVRTDS->AddBand(poSrcBand->GetRasterDataType(), aosAddBandOptions);
 
         VRTSourcedRasterBand *poVRTBand = static_cast<VRTSourcedRasterBand *>(
@@ -462,6 +466,17 @@ void GDALRegister_VRT()
         "Byte Int8 Int16 UInt16 Int32 UInt32 Int64 UInt64 "
         "Float32 Float64 "
         "CInt16 CInt32 CFloat32 CFloat64");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>\n"
+        "   <Option name='SUBCLASS' type='string-select' "
+        "default='VRTDataset'>\n"
+        "       <Value>VRTDataset</Value>\n"
+        "       <Value>VRTWarpedDataset</Value>\n"
+        "   </Option>\n"
+        "   <Option name='BLOCKXSIZE' type='int' description='Block width'/>\n"
+        "   <Option name='BLOCKYSIZE' type='int' description='Block height'/>\n"
+        "</CreationOptionList>\n");
 
     poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnCreateCopy = VRTCreateCopy;

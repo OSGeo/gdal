@@ -2067,6 +2067,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             aosAddBandOptions.SetNameValue("BLOCKYSIZE",
                                            CPLSPrintf("%d", nSrcBlockYSize));
         }
+        const char *pszBlockXSize =
+            psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE");
+        if (pszBlockXSize)
+            aosAddBandOptions.SetNameValue("BLOCKXSIZE", pszBlockXSize);
+        const char *pszBlockYSize =
+            psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE");
+        if (pszBlockYSize)
+            aosAddBandOptions.SetNameValue("BLOCKYSIZE", pszBlockYSize);
         poVDS->AddBand(eBandType, aosAddBandOptions.List());
         VRTSourcedRasterBand *poVRTBand =
             static_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand(i + 1));

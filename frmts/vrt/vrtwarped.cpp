@@ -431,10 +431,13 @@ GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
 /*                          VRTWarpedDataset()                          */
 /************************************************************************/
 
-VRTWarpedDataset::VRTWarpedDataset(int nXSize, int nYSize)
-    : VRTDataset(nXSize, nYSize), m_nBlockXSize(std::min(nXSize, 512)),
-      m_nBlockYSize(std::min(nYSize, 128)), m_poWarper(nullptr),
-      m_nOverviewCount(0), m_papoOverviews(nullptr), m_nSrcOvrLevel(-2)
+VRTWarpedDataset::VRTWarpedDataset(int nXSize, int nYSize, int nBlockXSize,
+                                   int nBlockYSize)
+    : VRTDataset(nXSize, nYSize,
+                 nBlockXSize > 0 ? nBlockXSize : std::min(nXSize, 512),
+                 nBlockYSize > 0 ? nBlockYSize : std::min(nYSize, 128)),
+      m_poWarper(nullptr), m_nOverviewCount(0), m_papoOverviews(nullptr),
+      m_nSrcOvrLevel(-2)
 {
     eAccess = GA_Update;
     DisableReadWriteMutex();

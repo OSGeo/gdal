@@ -50,6 +50,15 @@ This tutorial will cover the .vrt file format (suitable for users editing
 .vrt files), and how .vrt files may be created and manipulated programmatically
 for developers.
 
+Creation options
+----------------
+
+The following creations options are supported:
+
+-  **BLOCKXSIZE=n**: (GDAL >= 3.7) Sets block width.
+
+-  **BLOCKYSIZE=n**: (GDAL >= 3.7) Sets block height.
+
 .vrt Format
 -----------
 
@@ -1625,13 +1634,13 @@ For example:
 ::
 
     vrt://my.tif?a_srs=OGC:CRS84
-    
+
 ::
 
     vrt://my.tif?a_ullr=0,1,1,-1
-    
 
-The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``. Other options may be 
+
+The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``. Other options may be
 added in the future.
 
 The effect of the ``bands`` option is to change the band composition. The values specified
@@ -1639,14 +1648,14 @@ are the source band numbers (between 1 and N), possibly out-of-order or with rep
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
 
-The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign (override) the coordinate 
-reference system of the source in the same way as (:ref:`gdal_translate`), it may be missing, 
-or incorrect. The value provided for ``a_srs`` may be a string or a file containing a srs 
+The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign (override) the coordinate
+reference system of the source in the same way as (:ref:`gdal_translate`), it may be missing,
+or incorrect. The value provided for ``a_srs`` may be a string or a file containing a srs
 definition.
 
 The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) the georeferenced
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
-values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y). 
+values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
@@ -1654,7 +1663,7 @@ the ampersand).
 ::
 
     "vrt://my.tif?a_srs=OGC:CRS84&bands=2,1&a_ullr=-180,90,180,-90"
-    
+
 
 
 Multi-threading optimizations

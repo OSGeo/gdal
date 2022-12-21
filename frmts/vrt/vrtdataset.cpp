@@ -47,7 +47,7 @@
 /*                            VRTDataset()                             */
 /************************************************************************/
 
-VRTDataset::VRTDataset(int nXSize, int nYSize)
+VRTDataset::VRTDataset(int nXSize, int nYSize, int nBlockXSize, int nBlockYSize)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -58,6 +58,9 @@ VRTDataset::VRTDataset(int nXSize, int nYSize)
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
+    m_bBlockSizeSpecified = nBlockXSize > 0 && nBlockYSize > 0;
+    m_nBlockXSize = nBlockXSize > 0 ? nBlockXSize : std::min(128, nXSize);
+    m_nBlockYSize = nBlockYSize > 0 ? nBlockYSize : std::min(128, nYSize);
 
     GDALRegister_VRT();
 
@@ -1288,6 +1291,11 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
                 atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "0"));
             int nBlockYSizeIn =
                 atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "0"));
+            if (nBlockXSizeIn == 0 && nBlockYSizeIn == 0)
+            {
+                nBlockXSizeIn = m_nBlockXSize;
+                nBlockYSizeIn = m_nBlockYSize;
+            }
             /* ---- Standard sourced band ---- */
             poBand = new VRTSourcedRasterBand(
                 this, GetRasterCount() + 1, eType, GetRasterXSize(),
@@ -1374,11 +1382,15 @@ GDALDataset *VRTDataset::Create(const char *pszName, int nXSize, int nYSize,
 
     VRTDataset *poDS = nullptr;
 
+    const int nBlockXSize =
+        atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "0"));
+    const int nBlockYSize =
+        atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "0"));
     if (pszSubclass == nullptr || EQUAL(pszSubclass, "VRTDataset"))
-        poDS = new VRTDataset(nXSize, nYSize);
+        poDS = new VRTDataset(nXSize, nYSize, nBlockXSize, nBlockYSize);
     else if (EQUAL(pszSubclass, "VRTWarpedDataset"))
     {
-        poDS = new VRTWarpedDataset(nXSize, nYSize);
+        poDS = new VRTWarpedDataset(nXSize, nYSize, nBlockXSize, nBlockYSize);
     }
     else
     {
