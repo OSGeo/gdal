@@ -30,6 +30,7 @@
 #include "gdalexif.h"
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
+#include "gdalorienteddataset.h"
 
 #include <algorithm>
 #include <cassert>
@@ -1352,7 +1353,30 @@ GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 {
-    return OpenStaticPAM(poOpenInfo);
+    GDALDataset *poDS = OpenStaticPAM(poOpenInfo);
+
+#ifdef HAVE_JXL_BOX_API
+    if (poDS &&
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "APPLY_ORIENTATION", false))
+    {
+        const char *pszOrientation =
+            poDS->GetMetadataItem("EXIF_Orientation", "EXIF");
+        if (pszOrientation && !EQUAL(pszOrientation, "1"))
+        {
+            int nOrientation = atoi(pszOrientation);
+            if (nOrientation >= 2 && nOrientation <= 8)
+            {
+                std::unique_ptr<GDALDataset> poOriDS(poDS);
+                auto poOrientedDS = cpl::make_unique<GDALOrientedDataset>(
+                    std::move(poOriDS),
+                    static_cast<GDALOrientedDataset::Origin>(nOrientation));
+                poDS = poOrientedDS.release();
+            }
+        }
+    }
+#endif
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -2182,6 +2206,16 @@ void GDALRegister_JPEGXL()
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte UInt16 Float32");
+
+#ifdef HAVE_JXL_BOX_API
+    const char *pszOpenOptions =
+        "<OpenOptionList>\n"
+        "   <Option name='APPLY_ORIENTATION' type='boolean' "
+        "description='whether to take into account EXIF Orientation to "
+        "rotate/flip the image' default='NO'/>\n"
+        "</OpenOptionList>\n";
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, pszOpenOptions);
+#endif
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,

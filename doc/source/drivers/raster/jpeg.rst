@@ -95,6 +95,18 @@ Such errors will be reported as GDAL
 Warnings, but can optionally be considered as true Errors by setting the
 GDAL_ERROR_ON_LIBJPEG_WARNING configuration option to TRUE.
 
+Open Options
+------------
+
+The following open options are available:
+
+-  **USE_INTERNAL_OVERVIEWS=YES/NO**: Whether to use partial DCT decompression
+   to generate overviews. Default to YES.
+
+-  **APPLY_ORIENTATION=YES/NO**: (GDAL >= 3.7) Whether to use EXIF_Orientation
+   metadata item to rotate/flip the image to apply scene orientation.
+   Defaults to NO (that is the image will be returned in sensor orientation).
+
 Creation Options
 ----------------
 

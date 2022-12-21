@@ -1388,6 +1388,28 @@ def test_jpeg_write_4band_not_cmyk():
 
 
 ###############################################################################
+# Test APPLY_ORIENTATION=YES open option
+
+
+@pytest.mark.parametrize("orientation", [i + 1 for i in range(8)])
+def test_jpeg_apply_orientation(orientation):
+
+    ds = gdal.OpenEx(
+        "data/jpeg/exif_orientation/F%d.jpg" % orientation,
+        open_options=["APPLY_ORIENTATION=YES"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 5
+    vals = struct.unpack("B" * 3 * 5, ds.ReadRaster())
+    vals = [1 if v else 0 for v in vals]
+    assert vals == [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0]
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
+    if orientation != 1:
+        assert ds.GetMetadataItem("EXIF_Orientation") is None
+        assert ds.GetMetadataItem("original_EXIF_Orientation") == str(orientation)
+
+
+###############################################################################
 # Cleanup
 
 
