@@ -626,6 +626,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     // Variables used for background RTree building
     std::string m_osAsyncDBName{};
+    std::string m_osAsyncDBAttachName{};
     sqlite3 *m_hAsyncDBHandle = nullptr;
     cpl::ThreadSafeQueue<std::vector<GPKGRTreeEntry>> m_oQueueRTreeEntries{};
     bool m_bAllowedRTreeThread = false;
@@ -641,6 +642,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void StartAsyncRTree();
     void CancelAsyncRTree();
+    void RemoveAsyncRTreeTempDB();
     void AsyncRTreeThreadFunction();
 
     virtual OGRErr ResetStatement() override;
