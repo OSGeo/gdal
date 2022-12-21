@@ -481,6 +481,7 @@ static int NewProcessFunction(void *p, curl_off_t dltotal, curl_off_t dlnow,
     return 0;
 }
 
+#if !CURL_AT_LEAST_VERSION(7, 32, 0)
 static int ProcessFunction(void *p, double dltotal, double dlnow,
                            double ultotal, double ulnow)
 {
@@ -488,6 +489,7 @@ static int ProcessFunction(void *p, double dltotal, double dlnow,
         p, static_cast<curl_off_t>(dltotal), static_cast<curl_off_t>(dlnow),
         static_cast<curl_off_t>(ultotal), static_cast<curl_off_t>(ulnow));
 }
+#endif
 
 #endif /* def HAVE_CURL */
 
@@ -1294,15 +1296,15 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
     CurlProcessData stProcessData = {pfnProgress, pProgressArg};
     if (nullptr != pfnProgress)
     {
-        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION,
-                                   ProcessFunction);
-        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA,
-                                   &stProcessData);
-
 #if CURL_AT_LEAST_VERSION(7, 32, 0)
         unchecked_curl_easy_setopt(http_handle, CURLOPT_XFERINFOFUNCTION,
                                    NewProcessFunction);
         unchecked_curl_easy_setopt(http_handle, CURLOPT_XFERINFODATA,
+                                   &stProcessData);
+#else
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION,
+                                   ProcessFunction);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA,
                                    &stProcessData);
 #endif  // CURL_AT_LEAST_VERSION(7,32,0)
         unchecked_curl_easy_setopt(http_handle, CURLOPT_NOPROGRESS, 0L);
