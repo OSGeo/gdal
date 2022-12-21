@@ -47,6 +47,7 @@
 #include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
+#include "vrtdataset.h"  // for VRTSerializeNoData
 
 #if (defined(__x86_64) || defined(_M_X64))
 #include <emmintrin.h>
@@ -1758,12 +1759,11 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfSrcNoDataReal != nullptr)
         {
-            if (CPLIsNan(psWO->padfSrcNoDataReal[i]))
-                CPLCreateXMLElementAndValue(psBand, "SrcNoDataReal", "nan");
-            else
-                CPLCreateXMLElementAndValue(
-                    psBand, "SrcNoDataReal",
-                    CPLString().Printf("%.16g", psWO->padfSrcNoDataReal[i]));
+            CPLCreateXMLElementAndValue(
+                psBand, "SrcNoDataReal",
+                VRTSerializeNoData(psWO->padfSrcNoDataReal[i],
+                                   psWO->eWorkingDataType, 16)
+                    .c_str());
         }
 
         if (psWO->padfSrcNoDataImag != nullptr)
@@ -1784,12 +1784,11 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfDstNoDataReal != nullptr)
         {
-            if (CPLIsNan(psWO->padfDstNoDataReal[i]))
-                CPLCreateXMLElementAndValue(psBand, "DstNoDataReal", "nan");
-            else
-                CPLCreateXMLElementAndValue(
-                    psBand, "DstNoDataReal",
-                    CPLString().Printf("%.16g", psWO->padfDstNoDataReal[i]));
+            CPLCreateXMLElementAndValue(
+                psBand, "DstNoDataReal",
+                VRTSerializeNoData(psWO->padfDstNoDataReal[i],
+                                   psWO->eWorkingDataType, 16)
+                    .c_str());
         }
 
         if (psWO->padfDstNoDataImag != nullptr)
@@ -2024,6 +2023,28 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
         if (pszValue != nullptr)
             psWO->panDstBands[iBand] = atoi(pszValue);
 
+        const auto NormalizeValue = [](const char *pszValueIn,
+                                       GDALDataType eDataType) -> double
+        {
+            if (eDataType == GDT_Float32 &&
+                CPLString().Printf(
+                    "%.16g", -std::numeric_limits<float>::max()) == pszValueIn)
+            {
+                return -std::numeric_limits<float>::max();
+            }
+            else if (eDataType == GDT_Float32 &&
+                     CPLString().Printf("%.16g",
+                                        std::numeric_limits<float>::max()) ==
+                         pszValueIn)
+            {
+                return std::numeric_limits<float>::max();
+            }
+            else
+            {
+                return CPLAtof(pszValueIn);
+            }
+        };
+
         /* --------------------------------------------------------------------
          */
         /*      Source nodata. */
@@ -2033,7 +2054,8 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
         if (pszValue != nullptr)
         {
             GDALWarpInitSrcNoDataReal(psWO, -1.1e20);
-            psWO->padfSrcNoDataReal[iBand] = CPLAtof(pszValue);
+            psWO->padfSrcNoDataReal[iBand] =
+                NormalizeValue(pszValue, psWO->eWorkingDataType);
         }
 
         pszValue = CPLGetXMLValue(psBand, "SrcNoDataImag", nullptr);
@@ -2052,7 +2074,8 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
         if (pszValue != nullptr)
         {
             GDALWarpInitDstNoDataReal(psWO, -1.1e20);
-            psWO->padfDstNoDataReal[iBand] = CPLAtof(pszValue);
+            psWO->padfDstNoDataReal[iBand] =
+                NormalizeValue(pszValue, psWO->eWorkingDataType);
         }
 
         pszValue = CPLGetXMLValue(psBand, "DstNoDataImag", nullptr);
