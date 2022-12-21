@@ -2349,7 +2349,8 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
     if (bFlag)
     {
         m_bAllowedRTreeThread =
-            sqlite3_threadsafe() != 0 && CPLGetNumCPUs() >= 2 &&
+            m_poDS->GetLayerCount() == 1 && sqlite3_threadsafe() != 0 &&
+            CPLGetNumCPUs() >= 2 &&
             CPLTestBool(
                 CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
 
@@ -2402,6 +2403,10 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
         m_osAsyncDBName += CPLMD5String(m_pszTableName);
     }
     m_osAsyncDBName += ".db";
+
+    m_osAsyncDBAttachName = "temp_rtree_";
+    m_osAsyncDBAttachName += CPLMD5String(m_pszTableName);
+
     VSIUnlink(m_osAsyncDBName.c_str());
     CPLDebug("GPKG", "Creating background RTree DB %s",
              m_osAsyncDBName.c_str());
@@ -2416,8 +2421,9 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
                        "CREATE VIRTUAL TABLE my_rtree USING rtree(id, minx, "
                        "maxx, miny, maxy)") == OGRERR_NONE)
         {
-            char *pszSQL = sqlite3_mprintf("ATTACH DATABASE '%q' AS temp_rtree",
-                                           m_osAsyncDBName.c_str());
+            char *pszSQL = sqlite3_mprintf("ATTACH DATABASE '%q' AS '%q'",
+                                           m_osAsyncDBName.c_str(),
+                                           m_osAsyncDBAttachName.c_str());
             OGRErr eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
 
@@ -2456,6 +2462,21 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 }
 
 /************************************************************************/
+/*                        RemoveAsyncRTreeTempDB()                      */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::RemoveAsyncRTreeTempDB()
+{
+    SQLCommand(
+        m_poDS->GetDB(),
+        CPLSPrintf("DETACH DATABASE \"%s\"",
+                   SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
+    m_osAsyncDBAttachName.clear();
+    VSIUnlink(m_osAsyncDBName.c_str());
+    m_osAsyncDBName.clear();
+}
+
+/************************************************************************/
 /*                          CancelAsyncRTree()                          */
 /************************************************************************/
 
@@ -2470,9 +2491,21 @@ void OGRGeoPackageTableLayer::CancelAsyncRTree()
         sqlite3_close(m_hAsyncDBHandle);
         m_hAsyncDBHandle = nullptr;
     }
-    VSIUnlink(m_osAsyncDBName.c_str());
     m_bErrorDuringRTreeThread = true;
-    SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
+    RemoveAsyncRTreeTempDB();
+}
+
+/************************************************************************/
+/*                     FinishOrDisableThreadedRTree()                   */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::FinishOrDisableThreadedRTree()
+{
+    if (m_bThreadRTreeStarted)
+    {
+        CreateSpatialIndexIfNecessary();
+    }
+    m_bAllowedRTreeThread = false;
 }
 
 /************************************************************************/
@@ -3673,20 +3706,21 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
     {
         pszSQL = sqlite3_mprintf(
             "DELETE FROM \"%w_node\";\n"
-            "INSERT INTO \"%w_node\" SELECT * FROM temp_rtree.my_rtree_node;\n"
+            "INSERT INTO \"%w_node\" SELECT * FROM \"%w\".my_rtree_node;\n"
             "INSERT INTO \"%w_rowid\" SELECT * FROM "
-            "temp_rtree.my_rtree_rowid;\n"
+            "\"%w\".my_rtree_rowid;\n"
             "INSERT INTO \"%w_parent\" SELECT * FROM "
-            "temp_rtree.my_rtree_parent;\n",
-            m_osRTreeName.c_str(), m_osRTreeName.c_str(), m_osRTreeName.c_str(),
-            m_osRTreeName.c_str());
+            "\"%w\".my_rtree_parent;\n",
+            m_osRTreeName.c_str(), m_osRTreeName.c_str(),
+            m_osAsyncDBAttachName.c_str(), m_osRTreeName.c_str(),
+            m_osAsyncDBAttachName.c_str(), m_osRTreeName.c_str(),
+            m_osAsyncDBAttachName.c_str());
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
         if (err != OGRERR_NONE)
         {
             m_poDS->SoftRollbackTransaction();
-            SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
-            VSIUnlink(m_osAsyncDBName.c_str());
+            RemoveAsyncRTreeTempDB();
             return false;
         }
     }
@@ -3847,8 +3881,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
         m_poDS->SoftRollbackTransaction();
         if (bPopulateFromThreadRTree)
         {
-            SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
-            VSIUnlink(m_osAsyncDBName.c_str());
+            RemoveAsyncRTreeTempDB();
         }
         return false;
     }
@@ -3857,8 +3890,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
 
     if (bPopulateFromThreadRTree)
     {
-        SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
-        VSIUnlink(m_osAsyncDBName.c_str());
+        RemoveAsyncRTreeTempDB();
     }
 
     m_bHasSpatialIndex = true;

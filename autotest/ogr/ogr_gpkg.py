@@ -7850,6 +7850,8 @@ def test_ogr_gpkg_get_geometry_types():
 def test_ogr_gpkg_background_rtree_build(filename):
 
     # Batch insertion only
+
+    gdal.ErrorReset()
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo")
@@ -7862,12 +7864,31 @@ def test_ogr_gpkg_background_rtree_build(filename):
             assert lyr.CommitTransaction() == ogr.OGRERR_NONE
             assert lyr.StartTransaction() == ogr.OGRERR_NONE
     assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() == ""
+
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("bar")
+    assert lyr.StartTransaction() == ogr.OGRERR_NONE
+    for i in range(900):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (-i, -i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        if i == 500:
+            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+            assert lyr.StartTransaction() == ogr.OGRERR_NONE
+    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() == ""
+
     ds = None
     assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
+    assert gdal.VSIStatL(filename + ".tmp_rtree_bar.db") is None
 
     ds = ogr.Open(filename)
     sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
     assert sql_lyr.GetFeatureCount() == 1000
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_bar_geom")
+    assert sql_lyr.GetFeatureCount() == 900
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
