@@ -789,6 +789,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     }
 
     void CreateSpatialIndexIfNecessary();
+    void FinishOrDisableThreadedRTree();
     bool CreateSpatialIndex(const char *pszTableName = nullptr);
     bool DropSpatialIndex(bool bCalledFromSQLFunction = false);
     CPLString ReturnSQLCreateSpatialIndexTriggers(const char *pszTableName,

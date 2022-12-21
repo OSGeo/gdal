@@ -2349,7 +2349,8 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
     if (bFlag)
     {
         m_bAllowedRTreeThread =
-            sqlite3_threadsafe() != 0 && CPLGetNumCPUs() >= 2 &&
+            m_poDS->GetLayerCount() == 1 && sqlite3_threadsafe() != 0 &&
+            CPLGetNumCPUs() >= 2 &&
             CPLTestBool(
                 CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
 
@@ -2492,6 +2493,19 @@ void OGRGeoPackageTableLayer::CancelAsyncRTree()
     }
     m_bErrorDuringRTreeThread = true;
     RemoveAsyncRTreeTempDB();
+}
+
+/************************************************************************/
+/*                     FinishOrDisableThreadedRTree()                   */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::FinishOrDisableThreadedRTree()
+{
+    if (m_bThreadRTreeStarted)
+    {
+        CreateSpatialIndexIfNecessary();
+    }
+    m_bAllowedRTreeThread = false;
 }
 
 /************************************************************************/

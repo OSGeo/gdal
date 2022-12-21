@@ -6367,6 +6367,14 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         }
     }
 
+    if (m_nLayers == 1)
+    {
+        // Async RTree building doesn't play well with multiple layer:
+        // SQLite3 locks being hold for a long time, random failed commits,
+        // etc.
+        m_papoLayers[0]->FinishOrDisableThreadedRTree();
+    }
+
     /* Create a blank layer. */
     auto poLayer = std::unique_ptr<OGRGeoPackageTableLayer>(
         new OGRGeoPackageTableLayer(this, pszLayerName));
