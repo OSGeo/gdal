@@ -1274,8 +1274,16 @@ retry:
             }
         }
 
+#if CURL_AT_LEAST_VERSION(7, 55, 0)
+        curl_off_t nSizeTmp = 0;
+        const CURLcode code = curl_easy_getinfo(
+            hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &nSizeTmp);
+        CPL_IGNORE_RET_VAL(dfSize);
+        dfSize = static_cast<double>(nSizeTmp);
+#else
         const CURLcode code = curl_easy_getinfo(
             hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize);
+#endif
         if (code == 0)
         {
             oFileProp.eExists = EXIST_YES;
