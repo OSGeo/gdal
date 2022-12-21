@@ -171,6 +171,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     bool m_bDateTimeWithTZ = true;
 
+    bool m_bRemoveOGREmptyTable = false;
+
     CPLString m_osTilingScheme = "CUSTOM";
 
     bool ComputeTileAndPixelShifts();
