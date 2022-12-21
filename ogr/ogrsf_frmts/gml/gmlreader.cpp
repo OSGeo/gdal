@@ -1155,44 +1155,16 @@ bool GMLReader::LoadClasses(const char *pszFile)
     /* -------------------------------------------------------------------- */
     /*      Load the raw XML file.                                          */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL(pszFile, "rb");
-
-    if (fp == nullptr)
+    GByte *pabyRet = nullptr;
+    if (!VSIIngestFile(nullptr, pszFile, &pabyRet, nullptr, 100 * 1024 * 1024))
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s.",
-                 pszFile);
         return false;
     }
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    int nLength = static_cast<int>(VSIFTellL(fp));
-    VSIFSeekL(fp, 0, SEEK_SET);
-
-    char *pszWholeText = static_cast<char *>(VSIMalloc(nLength + 1));
-    if (pszWholeText == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to allocate %d byte buffer for %s,\n"
-                 "is this really a GMLFeatureClassList file?",
-                 nLength, pszFile);
-        VSIFCloseL(fp);
-        return false;
-    }
-
-    if (VSIFReadL(pszWholeText, nLength, 1, fp) != 1)
-    {
-        VSIFree(pszWholeText);
-        VSIFCloseL(fp);
-        CPLError(CE_Failure, CPLE_AppDefined, "Read failed on %s.", pszFile);
-        return false;
-    }
-    pszWholeText[nLength] = '\0';
-
-    VSIFCloseL(fp);
+    const char *pszWholeText = reinterpret_cast<const char *>(pabyRet);
 
     if (strstr(pszWholeText, "<GMLFeatureClassList") == nullptr)
     {
-        VSIFree(pszWholeText);
+        VSIFree(pabyRet);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s does not contain a GMLFeatureClassList tree.",
                  pszFile);
@@ -1203,7 +1175,7 @@ bool GMLReader::LoadClasses(const char *pszFile)
     /*      Convert to XML parse tree.                                      */
     /* -------------------------------------------------------------------- */
     CPLXMLTreeCloser psRoot(CPLParseXMLString(pszWholeText));
-    VSIFree(pszWholeText);
+    VSIFree(pabyRet);
 
     // We assume parser will report errors via CPL.
     if (psRoot.get() == nullptr)
