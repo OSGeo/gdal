@@ -137,6 +137,39 @@ OGRErr CPL_DLL OGR_G_ExportToWkb(OGRGeometryH, OGRwkbByteOrder,
                                  unsigned char *);
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb(OGRGeometryH, OGRwkbByteOrder,
                                     unsigned char *);
+
+/** Opaque type for geometry precision options */
+typedef struct OGRPrecisionOptions OGRPrecisionOptions;
+
+OGRPrecisionOptions CPL_DLL *OGRPrecisionOptionsCreate(void);
+void CPL_DLL OGRPrecisionOptionsDestroy(OGRPrecisionOptions *);
+void CPL_DLL OGRPrecisionOptionsSetPrecision(OGRPrecisionOptions *,
+                                             double dfXYPrecision,
+                                             double dfZPrecision,
+                                             double dfMPrecision);
+void CPL_DLL OGRPrecisionOptionsSetMetricPrecision(OGRPrecisionOptions *,
+                                                   OGRSpatialReferenceH hSRS,
+                                                   double dfXYMetricPrecision,
+                                                   double dfZMetricPrecision,
+                                                   double dfMPrecision);
+/** Opaque type for WKB export options */
+typedef struct OGRwkbExportOptions OGRwkbExportOptions;
+
+OGRwkbExportOptions CPL_DLL *OGRwkbExportOptionsCreate(void);
+void CPL_DLL OGRwkbExportOptionsDestroy(OGRwkbExportOptions *);
+OGRwkbByteOrder CPL_DLL
+OGRwkbExportOptionsGetByteOrder(const OGRwkbExportOptions *);
+void CPL_DLL OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *,
+                                             OGRwkbByteOrder);
+OGRwkbVariant CPL_DLL
+OGRwkbExportOptionsGetVariant(const OGRwkbExportOptions *);
+void CPL_DLL OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *,
+                                           OGRwkbVariant);
+void CPL_DLL OGRwkbExportOptionsSetPrecision(OGRwkbExportOptions *,
+                                             const OGRPrecisionOptions *);
+OGRErr CPL_DLL OGR_G_ExportToWkbEx(OGRGeometryH, unsigned char *,
+                                   const OGRwkbExportOptions *);
+
 int CPL_DLL OGR_G_WkbSize(OGRGeometryH hGeom);
 size_t CPL_DLL OGR_G_WkbSizeEx(OGRGeometryH hGeom);
 OGRErr CPL_DLL OGR_G_ImportFromWkt(OGRGeometryH, char **);

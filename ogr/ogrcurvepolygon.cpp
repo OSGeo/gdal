@@ -491,15 +491,20 @@ OGRErr OGRCurvePolygon::importFromWkb(const unsigned char *pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::exportToWkb(OGRwkbByteOrder eByteOrder,
-                                    unsigned char *pabyData,
-                                    OGRwkbVariant eWkbVariant) const
+static const OGRwkbExportOptions defaultOptions;
 
+OGRErr OGRCurvePolygon::exportToWkb(unsigned char *pabyData,
+                                    const OGRwkbExportOptions *psOptions) const
 {
-    if (eWkbVariant == wkbVariantOldOgc)
-        // Does not make sense for new geometries, so patch it.
-        eWkbVariant = wkbVariantIso;
-    return oCC.exportToWkb(this, eByteOrder, pabyData, eWkbVariant);
+    if (psOptions == nullptr)
+        psOptions = &defaultOptions;
+
+    OGRwkbExportOptions sOptions(*psOptions);
+
+    // Does not make sense for new geometries, so patch it.
+    if (sOptions.eWkbVariant == wkbVariantOldOgc)
+        sOptions.eWkbVariant = wkbVariantIso;
+    return oCC.exportToWkb(this, pabyData, &sOptions);
 }
 
 /************************************************************************/

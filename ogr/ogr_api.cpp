@@ -1893,3 +1893,281 @@ int OGRGetNonLinearGeometriesEnabledFlag(void)
 {
     return bNonLinearGeometriesEnabled;
 }
+
+/************************************************************************/
+/*                        OGRPrecisionOptionsCreate()                   */
+/************************************************************************/
+
+/**
+ * \brief Create geometry precision options.
+ *
+ * The default is 0 discarded lsb bits.
+ *
+ * @return object to be freed with OGRPrecisionOptionsDestroy().
+ * @since GDAL 3.7
+ */
+OGRPrecisionOptions *OGRPrecisionOptionsCreate()
+{
+    return new OGRPrecisionOptions;
+}
+
+/************************************************************************/
+/*                        OGRPrecisionOptionsDestroy()                  */
+/************************************************************************/
+
+/**
+ * \brief Destroy object returned by OGRPrecisionOptionsCreate()
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.7
+ */
+
+void OGRPrecisionOptionsDestroy(OGRPrecisionOptions *psOptions)
+{
+    delete psOptions;
+}
+
+/************************************************************************/
+/*                  OGRPrecisionOptionsSetPrecision()                   */
+/************************************************************************/
+
+/**
+ * \brief Set the wished precision used to quantify coordinates.
+ *
+ * Quantification is the operation that consists in zeroing the maximum number
+ * of least significant bits of the binary representation of coordinates,
+ * while achieving the wished precision.
+ * This is only useful if the file is compressed.
+ *
+ * For the X, Y and Z ordinates, the precision should be expressed in the units
+ * of the CRS of the geometry. So typically degrees for geographic CRS, or
+ * meters/feet/US-feet for projected CRS.
+ * Users might use OGRPrecisionOptionsSetMetricPrecision() for an even more
+ * convenient interface.
+ *
+ * For a projected CRS with meters as linear unit, 1e-3 corresponds to a
+ * millimetric precision.
+ * For a geographic CRS in 8.9e-9 corresponds to a millimetric precision
+ * (for a Earth CRS)
+ *
+ * Precision should be stricty positive (setting to 0 means not to quantify
+ * the corresponding ordinates)
+ *
+ * @param psOptions Precision options
+ * @param dfXYPrecision Precision for X and Y ordinates.
+ * @param dfZPrecision Precision for Z ordinates.
+ * @param dfMPrecision Precision for M ordinates.
+ * @since GDAL 3.7
+ */
+
+void OGRPrecisionOptionsSetPrecision(OGRPrecisionOptions *psOptions,
+                                     double dfXYPrecision, double dfZPrecision,
+                                     double dfMPrecision)
+{
+    if (dfXYPrecision != 0)
+    {
+        psOptions->nXYBitPrecision =
+            static_cast<int>(ceil(log2(1. / dfXYPrecision)));
+    }
+    if (dfZPrecision != 0)
+    {
+        psOptions->nZBitPrecision =
+            static_cast<int>(ceil(log2(1. / dfZPrecision)));
+    }
+    if (dfMPrecision != 0)
+    {
+        psOptions->nMBitPrecision =
+            static_cast<int>(ceil(log2(1. / dfMPrecision)));
+    }
+}
+
+/************************************************************************/
+/*               OGRPrecisionOptionsSetMetricPrecision()                */
+/************************************************************************/
+
+/**
+ * \brief Set the wished precision used to quantify coordinates.
+ *
+ * Quantification is the operation that consists in zeroing the maximum number
+ * of least significant bits of the binary representation of coordinates,
+ * while achieving the wished precision.
+ * This is only useful if the file is compressed.
+ *
+ * For the X, Y and Z ordinates, the precision should be expressed in metre,
+ * e.g 1e-3 for millimetric precision.
+ *
+ * @param psOptions Precision options
+ * @param hSRS Spatial reference system, used for metric to SRS unit conversion.
+ * @param dfXYMetricPrecision Precision for X and Y ordinates, in metre.
+ * @param dfZMetricPrecision Precision for Z ordinates, in metre.
+ * @param dfMPrecision Precision for M ordinates.
+ * @since GDAL 3.7
+ */
+
+void OGRPrecisionOptionsSetMetricPrecision(OGRPrecisionOptions *psOptions,
+                                           OGRSpatialReferenceH hSRS,
+                                           double dfXYMetricPrecision,
+                                           double dfZMetricPrecision,
+                                           double dfMPrecision)
+{
+    const OGRSpatialReference *poSRS = OGRSpatialReference::FromHandle(hSRS);
+    if (dfXYMetricPrecision != 0)
+    {
+        double dfConvFactor = 1;
+        if (poSRS)
+        {
+            if (poSRS->IsGeographic())
+            {
+                dfConvFactor = poSRS->GetSemiMajor(nullptr) * M_PI / 180;
+            }
+            else
+            {
+                dfConvFactor = poSRS->GetLinearUnits(nullptr);
+            }
+        }
+        psOptions->nXYBitPrecision =
+            static_cast<int>(ceil(log2(dfConvFactor / dfXYMetricPrecision)));
+    }
+    if (dfZMetricPrecision != 0)
+    {
+        double dfConvFactor = 1;
+        if (poSRS && poSRS->GetAxesCount() == 3)
+        {
+            poSRS->GetAxis(nullptr, 2, nullptr, &dfConvFactor);
+        }
+        psOptions->nZBitPrecision =
+            static_cast<int>(ceil(log2(dfConvFactor / dfZMetricPrecision)));
+    }
+    if (dfMPrecision != 0)
+    {
+        psOptions->nMBitPrecision =
+            static_cast<int>(ceil(log2(1. / dfMPrecision)));
+    }
+}
+
+/************************************************************************/
+/*                        OGRwkbExportOptionsCreate()                   */
+/************************************************************************/
+
+/**
+ * \brief Create geometry WKB export options.
+ *
+ * The default is Intel order, old-OGC wkb variant and 0 discarded lsb bits.
+ *
+ * @return object to be freed with OGRwkbExportOptionsDestroy().
+ * @since GDAL 3.7
+ */
+OGRwkbExportOptions *OGRwkbExportOptionsCreate()
+{
+    return new OGRwkbExportOptions;
+}
+
+/************************************************************************/
+/*                        OGRwkbExportOptionsDestroy()                  */
+/************************************************************************/
+
+/**
+ * \brief Destroy object returned by OGRwkbExportOptionsCreate()
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.7
+ */
+
+void OGRwkbExportOptionsDestroy(OGRwkbExportOptions *psOptions)
+{
+    delete psOptions;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsGetByteOrder()                  */
+/************************************************************************/
+
+/**
+ * \brief Get the WKB byte order.
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.7
+ */
+
+OGRwkbByteOrder
+OGRwkbExportOptionsGetByteOrder(const OGRwkbExportOptions *psOptions)
+{
+    return psOptions->eByteOrder;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetByteOrder()                  */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB byte order.
+ *
+ * @param psOptions WKB export options
+ * @param eByteOrder Byte order: wkbXDR (big-endian) or wkbNDR (little-endian,
+ * Intel)
+ * @since GDAL 3.7
+ */
+
+void OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *psOptions,
+                                     OGRwkbByteOrder eByteOrder)
+{
+    psOptions->eByteOrder = eByteOrder;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsGetVariant()                    */
+/************************************************************************/
+
+/**
+ * \brief Get the WKB variant
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.7
+ */
+
+OGRwkbVariant
+OGRwkbExportOptionsGetVariant(const OGRwkbExportOptions *psOptions)
+{
+    return psOptions->eWkbVariant;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetVariant()                    */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB variant
+ *
+ * @param psOptions WKB export options
+ * @param eWkbVariant variant: wkbVariantOldOgc, wkbVariantIso,
+ * wkbVariantPostGIS1
+ * @since GDAL 3.7
+ */
+
+void OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *psOptions,
+                                   OGRwkbVariant eWkbVariant)
+{
+    psOptions->eWkbVariant = eWkbVariant;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetPrecision()                  */
+/************************************************************************/
+
+/**
+ * \brief Set precision options
+ *
+ * @param psOptions WKB export options
+ * @param psPrecisionOptions Precision options (might be null to reset them)
+ * @since GDAL 3.7
+ */
+
+void OGRwkbExportOptionsSetPrecision(
+    OGRwkbExportOptions *psOptions,
+    const OGRPrecisionOptions *psPrecisionOptions)
+{
+    if (psPrecisionOptions)
+        psOptions->sPrecision = *psPrecisionOptions;
+    else
+        psOptions->sPrecision = OGRPrecisionOptions();
+}

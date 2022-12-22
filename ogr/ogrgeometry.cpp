@@ -1520,12 +1520,12 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
         static_cast<const GByte *>(pabyData), nSize);
 }
 
+/************************************************************************/
+/*                       OGRGeometry::exportToWkb()                     */
+/************************************************************************/
+
 /* clang-format off */
 /**
- * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                        unsigned char * pabyData,
-                                        OGRwkbVariant eWkbVariant=wkbVariantOldOgc ) const
- *
  * \brief Convert a geometry into well known binary format.
  *
  * This method relates to the SFCOM IWks::ExportToWKB() method.
@@ -1548,6 +1548,15 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
  * @return Currently OGRERR_NONE is always returned.
  */
 /* clang-format on */
+OGRErr OGRGeometry::exportToWkb(OGRwkbByteOrder eByteOrder,
+                                unsigned char *pabyData,
+                                OGRwkbVariant eWkbVariant) const
+{
+    OGRwkbExportOptions sOptions;
+    sOptions.eByteOrder = eByteOrder;
+    sOptions.eWkbVariant = eWkbVariant;
+    return exportToWkb(pabyData, &sOptions);
+}
 
 /************************************************************************/
 /*                         OGR_G_ExportToWkb()                          */
@@ -1622,6 +1631,60 @@ OGRErr OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 
     return OGRGeometry::FromHandle(hGeom)->exportToWkb(eOrder, pabyDstBuffer,
                                                        wkbVariantIso);
+}
+
+/************************************************************************/
+/*                        OGR_G_ExportToWkbEx()                         */
+/************************************************************************/
+
+/* clang-format off */
+/**
+ * \fn OGRErr OGRGeometry::exportToWkb(unsigned char *pabyDstBuffer, const OGRwkbExportOptions *psOptions=nullptr) const
+ *
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the C function OGR_G_ExportToWkbEx().
+ *
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.7
+ */
+/* clang-format on */
+
+/**
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the CPP method
+ * OGRGeometry::exportToWkb(unsigned char *, const OGRwkbExportOptions*)
+ *
+ * @param hGeom handle on the geometry to convert to a well know binary
+ * data from.
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.7
+ */
+
+OGRErr OGR_G_ExportToWkbEx(OGRGeometryH hGeom, unsigned char *pabyDstBuffer,
+                           const OGRwkbExportOptions *psOptions)
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_ExportToWkbEx", OGRERR_FAILURE);
+
+    return OGRGeometry::FromHandle(hGeom)->exportToWkb(pabyDstBuffer,
+                                                       psOptions);
 }
 
 /**
@@ -7383,6 +7446,76 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
     return FALSE;
 }
 //! @endcond
+
+/************************************************************************/
+/*                    quantizeCoordinates()                             */
+/************************************************************************/
+
+/** Quantize coordinates of a geometry.
+ *
+ * Determines the number of bits (N) required to represent a coordinate value
+ * with a specified number of digits after the decimal point, and then sets all
+ * but the N most significant bits to zero. The resulting coordinate value will
+ * still round to the original value, but will have improved compressiblity.
+ *
+ * @param options Contains the precision requirements. Typically computed with
+ * OGRPrecisionOptionsSetPrecision() or OGRPrecisionOptionsSetMetric().
+ * @since GDAL 3.7
+ */
+void OGRGeometry::quantizeCoordinates(const OGRPrecisionOptions &options)
+{
+    struct Quantizer : public OGRDefaultGeometryVisitor
+    {
+        const OGRPrecisionOptions &m_options;
+        explicit Quantizer(const OGRPrecisionOptions &optionsIn)
+            : m_options(optionsIn)
+        {
+        }
+
+        using OGRDefaultGeometryVisitor::visit;
+        void visit(OGRPoint *poPoint) override
+        {
+            if (m_options.nXYBitPrecision != INT_MIN)
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getX();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRQuantizeValue(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setX(d);
+                d = poPoint->getY();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRQuantizeValue(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setY(d);
+            }
+            if (m_options.nZBitPrecision != INT_MIN && poPoint->Is3D())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getZ();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRQuantizeValue(i, m_options.nZBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setZ(d);
+            }
+            if (m_options.nMBitPrecision != INT_MIN && poPoint->IsMeasured())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getM();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRQuantizeValue(i, m_options.nMBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setM(d);
+            }
+        }
+    };
+
+    Quantizer quantizer(options);
+    accept(&quantizer);
+}
 
 /************************************************************************/
 /*                             visit()                                  */
