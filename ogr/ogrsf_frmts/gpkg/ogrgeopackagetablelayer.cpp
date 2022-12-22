@@ -235,7 +235,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
         if (poGeom)
         {
             size_t szWkb = 0;
-            GByte *pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
+            GByte *pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs,
+                                                 &m_sPrecisionOptions, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
                                     static_cast<int>(szWkb), CPLFree);
             MY_CPLAssert(err == SQLITE_OK);
@@ -7564,4 +7565,87 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     iNextShapeId += sFillArrowArray.nCountRows;
 
     return 0;
+}
+
+/************************************************************************/
+/*                      SetCoordinatePrecision()                        */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::SetCoordinatePrecision(const char *pszXY,
+                                                     const char *pszZ,
+                                                     double dfM)
+{
+    if (m_poFeatureDefn->GetGeomFieldCount() > 0)
+    {
+        const auto poSRS =
+            m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
+
+        const auto GetValueAndIsMetric = [](const char *pszVal)
+        {
+            char *pszUnits = nullptr;
+            double dfVal = strtod(pszVal, &pszUnits);
+            bool bIsMetric = false;
+            if (dfVal != 0)
+            {
+                if (pszUnits &&
+                    (strcmp(pszUnits, "m") == 0 || strcmp(pszUnits, " m") == 0))
+                {
+                    bIsMetric = true;
+                }
+                else if (pszUnits && (strcmp(pszUnits, "cm") == 0 ||
+                                      strcmp(pszUnits, " cm") == 0))
+                {
+                    bIsMetric = true;
+                    dfVal *= 1e-2;
+                }
+                else if (pszUnits && (strcmp(pszUnits, "mm") == 0 ||
+                                      strcmp(pszUnits, " mm") == 0))
+                {
+                    bIsMetric = true;
+                    dfVal *= 1e-3;
+                }
+                else if (pszUnits && *pszUnits != '\0')
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unrecognized unit: %s", pszUnits);
+                }
+            }
+            return std::pair<double, bool>(dfVal, bIsMetric);
+        };
+
+        const auto xyPrec = GetValueAndIsMetric(pszXY);
+        if (xyPrec.first != 0)
+        {
+            if (xyPrec.second)
+                OGRPrecisionOptionsSetMetricPrecision(
+                    &m_sPrecisionOptions,
+                    OGRSpatialReference::ToHandle(
+                        const_cast<OGRSpatialReference *>(poSRS)),
+                    xyPrec.first, 0, 0);
+            else
+                OGRPrecisionOptionsSetPrecision(&m_sPrecisionOptions,
+                                                xyPrec.first, 0, 0);
+        }
+
+        const auto zPrec = GetValueAndIsMetric(pszZ);
+        if (zPrec.first != 0)
+        {
+            OGRPrecisionOptions tmp;
+            if (zPrec.second)
+                OGRPrecisionOptionsSetMetricPrecision(
+                    &tmp,
+                    OGRSpatialReference::ToHandle(
+                        const_cast<OGRSpatialReference *>(poSRS)),
+                    0, zPrec.first, 0);
+            else
+                OGRPrecisionOptionsSetPrecision(&tmp, 0, zPrec.first, 0);
+            m_sPrecisionOptions.nZBitPrecision = tmp.nZBitPrecision;
+        }
+        if (dfM != 0)
+        {
+            OGRPrecisionOptions tmp;
+            OGRPrecisionOptionsSetPrecision(&tmp, 0, 0, dfM);
+            m_sPrecisionOptions.nMBitPrecision = tmp.nMBitPrecision;
+        }
+    }
 }

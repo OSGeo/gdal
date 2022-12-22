@@ -604,6 +604,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool m_bHasReadMetadataFromStorage = false;
     bool m_bHasTriedDetectingFID64 = false;
     GPKGASpatialVariant m_eASpatialVariant = GPKG_ATTRIBUTES;
+    OGRPrecisionOptions m_sPrecisionOptions{};
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned{};
 
     int m_nIsCompatOfOptimizedGetNextArrowArray = -1;
@@ -786,6 +787,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     {
         m_eASpatialVariant = eASpatialVariant;
     }
+    void SetCoordinatePrecision(const char *pszXY, const char *pszZ,
+                                double dfM);
 
     void CreateSpatialIndexIfNecessary();
     void FinishOrDisableThreadedRTree();

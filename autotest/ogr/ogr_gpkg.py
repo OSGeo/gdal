@@ -8258,3 +8258,51 @@ def test_ogr_gpkg_sql_gdal_get_pixel_value():
         assert f[0] is None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test coordinate quantification
+
+
+@pytest.mark.parametrize(
+    "xy_prec,z_prec,m_prec,xy_prec_abs,z_prec_abs,m_prec_abs",
+    [
+        ("1 mm", "0.01", "1e-5", 8.9e-9, 1e-2, 1e-5),
+        ("8.9e-9", "10mm", "1e-5", 8.9e-9, 1e-2, 1e-5),
+        ("0.001m", "1cm", "1e-5", 8.9e-9, 1e-2, 1e-5),
+        ("0.001 m", "1 cm", "1e-5", 8.9e-9, 1e-2, 1e-5),
+    ],
+)
+def test_ogr_gpkg_coordinate_quantification(
+    xy_prec, z_prec, m_prec, xy_prec_abs, z_prec_abs, m_prec_abs
+):
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(":memory:")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer(
+        "foo",
+        srs=srs,
+        options=[
+            "XY_QUANTIZED_PRECISION=" + xy_prec,
+            "Z_QUANTIZED_PRECISION=" + z_prec,
+            "M_QUANTIZED_PRECISION=" + m_prec,
+        ],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g_ref = ogr.CreateGeometryFromWkt(
+        "POINT ZM(179.123456789 89.123456789 123.4567 1234.567891)"
+    )
+    f.SetGeometry(g_ref)
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != g_ref.GetX(0)
+    assert g.GetY(0) != g_ref.GetY(0)
+    assert g.GetZ(0) != g_ref.GetZ(0)
+    assert g.GetM(0) != g_ref.GetM(0)
+    assert g.GetX(0) == pytest.approx(g_ref.GetX(0), abs=xy_prec_abs)
+    assert g.GetY(0) == pytest.approx(g_ref.GetY(0), abs=xy_prec_abs)
+    assert g.GetZ(0) == pytest.approx(g_ref.GetZ(0), abs=z_prec_abs)
+    assert g.GetM(0) == pytest.approx(g_ref.GetM(0), abs=m_prec_abs)

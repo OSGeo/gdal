@@ -6428,6 +6428,11 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         }
         poLayer->SetASpatialVariant(eASpatialVariant);
     }
+    poLayer->SetCoordinatePrecision(
+        CSLFetchNameValueDef(papszOptions, "XY_QUANTIZED_PRECISION", "0"),
+        CSLFetchNameValueDef(papszOptions, "Z_QUANTIZED_PRECISION", "0"),
+        CPLAtof(
+            CSLFetchNameValueDef(papszOptions, "M_QUANTIZED_PRECISION", "0")));
 
     // If there was an ogr_empty_table table, we can remove it
     // But do it at dataset closing, otherwise locking performance issues
@@ -7737,7 +7742,7 @@ static void OGRGeoPackageSetSRID(sqlite3_context *pContext, int /* argc */,
         }
         size_t nBLOBDestLen = 0;
         GByte *pabyDestBLOB =
-            GPkgGeometryFromOGR(poGeom, nDestSRID, &nBLOBDestLen);
+            GPkgGeometryFromOGR(poGeom, nDestSRID, nullptr, &nBLOBDestLen);
         sqlite3_result_blob(pContext, pabyDestBLOB,
                             static_cast<int>(nBLOBDestLen), VSIFree);
         return;
@@ -7797,8 +7802,8 @@ static void OGRGeoPackageSTMakeValid(sqlite3_context *pContext, int argc,
     }
 
     size_t nBLOBDestLen = 0;
-    GByte *pabyDestBLOB =
-        GPkgGeometryFromOGR(poValid.get(), sHeader.iSrsId, &nBLOBDestLen);
+    GByte *pabyDestBLOB = GPkgGeometryFromOGR(poValid.get(), sHeader.iSrsId,
+                                              nullptr, &nBLOBDestLen);
     sqlite3_result_blob(pContext, pabyDestBLOB, static_cast<int>(nBLOBDestLen),
                         VSIFree);
 }
@@ -7996,7 +8001,8 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
     }
 
     size_t nBLOBDestLen = 0;
-    GByte *pabyDestBLOB = GPkgGeometryFromOGR(poGeom, nDestSRID, &nBLOBDestLen);
+    GByte *pabyDestBLOB =
+        GPkgGeometryFromOGR(poGeom, nDestSRID, nullptr, &nBLOBDestLen);
     sqlite3_result_blob(pContext, pabyDestBLOB, static_cast<int>(nBLOBDestLen),
                         VSIFree);
 

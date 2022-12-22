@@ -273,6 +273,35 @@ The following layer creation options are available:
    text fields, and also to "fix" the passed string if needed to make it
    a valid UTF-8 string. If "NO" then the value is not truncated nor
    modified. The default is "NO".
+-  **XY_QUANTIZED_PRECISION**\ =float or string. (GDAL >= 3.7)
+   Desired precision for X/Y coordinate quantization.
+   This parameter will influence the number of nullified
+   least significant bits in the mantissa of the binary representation of
+   coordinates as IEEE-754 double-precision floating-point numbers.
+   This is only useful if the file is compressed.
+   By default, the value is understood as expressed in the units of the CRS
+   of the layer (for example, for a geographic Earth CRS, "8.9e-9" corresponds
+   to a millimetric precision), unless the 'm', 'cm' or 'mm' suffixes are added
+   to express respectively the value in metre, centimetre or millimetre (will work
+   for a geographic or projected CRS). For example, "1 mm" for a millimetric
+   precision.
+-  **Z_QUANTIZED_PRECISION**\ =float or string. (GDAL >= 3.7)
+   Desired precision for Z coordinate quantization.
+   This parameter will influence the number of nullified
+   least significant bits in the mantissa of the binary representation of
+   coordinates as IEEE-754 double-precision floating-point numbers.
+   This is only useful if the file is compressed.
+   By default, the value is understood as expressed in the units of the CRS
+   of the layer, unless the 'm', 'cm' or 'mm' suffixes are added
+   to express respectively the value in metre, centimetre or millimetre (will work
+   for a geographic or projected CRS). For example, "1 mm" for a millimetric
+   precision.
+-  **M_QUANTIZED_PRECISION**\ =float. (GDAL >= 3.7)
+   Desired precision for M coordinate quantization.
+   This parameter will influence the number of nullified
+   least significant bits in the mantissa of the binary representation of
+   coordinates as IEEE-754 double-precision floating-point numbers.
+   This is only useful if the file is compressed.
 -  **IDENTIFIER**\ =string: Identifier of the layer, as put
    in the contents table.
 -  **DESCRIPTION**\ =string: Description of the layer, as
