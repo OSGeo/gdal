@@ -4089,6 +4089,21 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                      poSrcLayer->GetFIDColumn());
             bPreserveFID = true;
         }
+        // Detect scenario of converting GML2 with fid attribute to GPKG
+        else if (EQUAL(m_poDstDS->GetDriver()->GetDescription(), "GPKG") &&
+                 CSLFetchNameValue(m_papszLCO, "FID") == nullptr)
+        {
+            int nFieldIdx = poSrcLayer->GetLayerDefn()->GetFieldIndex("fid");
+            if (nFieldIdx >= 0 && poSrcLayer->GetLayerDefn()
+                                          ->GetFieldDefn(nFieldIdx)
+                                          ->GetType() == OFTString)
+            {
+                CPLDebug("GDALVectorTranslate",
+                         "Source layer has a non-string 'fid' column. Using "
+                         "FID=gpkg_fid for GeoPackage");
+                papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", "gpkg_fid");
+            }
+        }
 
         // If bAddOverwriteLCO is ON (set up when overwriting a CARTO layer),
         // set OVERWRITE to YES so the new layer overwrites the old one

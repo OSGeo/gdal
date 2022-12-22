@@ -1145,3 +1145,21 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
     ds = gdal.VectorTranslate("", srcDS, options="-f Memory -clipdst -1 -1 0 0")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test converting a layer with a fid string to GPKG
+
+
+def test_ogr2ogr_lib_fid_string_to_gpkg():
+
+    if ogr.GetDriverByName("GPKG") is None:
+        pytest.skip("GPKG driver not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcLayer = srcDS.CreateLayer("test")
+    srcLayer.CreateField(ogr.FieldDefn("fid"))
+
+    ds = gdal.VectorTranslate(":memory:", srcDS, options="-f GPKG")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFIDColumn() == "gpkg_fid"
