@@ -2259,7 +2259,10 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
                 reinterpret_cast<std::vector<QueryLogEntry> *>(
                     pQueryLoggerArg)};
             QueryLogEntry entryLocal;
-            entryLocal.sql = pszSQL;
+            if (pszSQL)
+            {
+                entryLocal.sql = pszSQL;
+            }
             entryLocal.numRecords = lNumRecords;
             entryLocal.executionTimeMilliseconds = lExecutionTimeMilliseconds;
             if (pszError)
