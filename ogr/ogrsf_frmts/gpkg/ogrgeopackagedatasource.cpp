@@ -3141,6 +3141,12 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
 void GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 {
+    if (m_bRemoveOGREmptyTable)
+    {
+        m_bRemoveOGREmptyTable = false;
+        RemoveOGREmptyTable();
+    }
+
     IFlushCacheWithErrCode(bAtClosing);
 }
 
@@ -6198,6 +6204,14 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         }
     }
 
+    if (m_nLayers == 1)
+    {
+        // Async RTree building doesn't play well with multiple layer:
+        // SQLite3 locks being hold for a long time, random failed commits,
+        // etc.
+        m_papoLayers[0]->FinishOrDisableThreadedRTree();
+    }
+
     /* Create a blank layer. */
     auto poLayer = std::unique_ptr<OGRGeoPackageTableLayer>(
         new OGRGeoPackageTableLayer(this, pszLayerName));
@@ -6253,7 +6267,9 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     }
 
     // If there was an ogr_empty_table table, we can remove it
-    RemoveOGREmptyTable();
+    // But do it at dataset closing, otherwise locking performance issues
+    // can arise (probably when transactions are used).
+    m_bRemoveOGREmptyTable = true;
 
     m_papoLayers = static_cast<OGRGeoPackageTableLayer **>(CPLRealloc(
         m_papoLayers, sizeof(OGRGeoPackageTableLayer *) * (m_nLayers + 1)));
