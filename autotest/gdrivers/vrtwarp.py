@@ -30,6 +30,7 @@
 
 import os
 import shutil
+import struct
 import sys
 
 import gdaltest
@@ -643,3 +644,37 @@ def test_vrtwarp_BLOCKXSIZE_BLOCKYSIZE():
         creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"],
     )
     assert ds.GetRasterBand(1).GetBlockSize() == [32, 48]
+
+
+###############################################################################
+# Test nodata == +/-FLOAT_MAX
+
+
+@pytest.mark.parametrize("nodata", [-3.4028234663852886e38, 3.4028234663852886e38])
+def test_vrtwarp_float32_max_nodata(nodata):
+
+    in_filename = "/vsimem/test_vrtwarp_float32_minus_max_in.tif"
+    out_filename = "/vsimem/test_vrtwarp_float32_minus_max.vrt"
+    try:
+        src_ds = gdal.GetDriverByName("GTiff").Create(
+            in_filename, 3, 1, 1, gdal.GDT_Float32
+        )
+        src_ds.GetRasterBand(1).SetNoDataValue(nodata)
+        src_ds.GetRasterBand(1).WriteRaster(
+            0, 0, 3, 1, struct.pack("f" * 3, -10, nodata, 20)
+        )
+        src_ds = None
+        gdal.Warp(
+            out_filename, in_filename, transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"]
+        )
+        ds = gdal.Open(out_filename)
+        assert ds.GetRasterBand(1).ComputeStatistics(approx_ok=False) == [
+            -10.0,
+            20.0,
+            5.0,
+            15.0,
+        ]
+        ds = None
+    finally:
+        gdal.Unlink(in_filename)
+        gdal.Unlink(out_filename)
