@@ -119,11 +119,18 @@ GDALDriverManager *GetGDALDriverManager()
 /*                         GDALDriverManager()                          */
 /************************************************************************/
 
+#define XSTRINGIFY(x) #x
+#define STRINGIFY(x) XSTRINGIFY(x)
+
 GDALDriverManager::GDALDriverManager()
 {
     CPLAssert(poDM == nullptr);
 
     CPLLoadConfigOptionsFromPredefinedFiles();
+
+    CPLHTTPSetDefaultUserAgent(
+        "GDAL/" STRINGIFY(GDAL_VERSION_MAJOR) "." STRINGIFY(
+            GDAL_VERSION_MINOR) "." STRINGIFY(GDAL_VERSION_REV));
 
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
