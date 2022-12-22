@@ -138,3 +138,34 @@ def test_sozip_validate():
     )
 
     gdal.Unlink("tmp/sozip.zip")
+
+
+###############################################################################
+
+
+def test_sozip_optimize_from():
+    if get_sozip_path() is None:
+        pytest.skip()
+
+    gdal.Unlink("tmp/sozip.zip")
+
+    (out, err) = gdaltest.runexternal_out_and_err(
+        get_sozip_path()
+        + " --optimize-from=../ogr/data/filegdb/test_spatial_index.gdb.zip tmp/sozip.zip"
+    )
+    assert err is None or err == "", "got error/warning"
+
+    (out, err) = gdaltest.runexternal_out_and_err(
+        get_sozip_path() + " --validate tmp/sozip.zip"
+    )
+    assert err is None or err == "", "got error/warning"
+    assert (
+        "File test_spatial_index.gdb/a00000009.spx has a valid SOZip index, using chunk_size = 32768"
+        in out
+    )
+    assert (
+        "tmp/sozip.zip is a valid .zip file, and contains 2 SOZip-enabled file(s)"
+        in out
+    )
+
+    gdal.Unlink("tmp/sozip.zip")

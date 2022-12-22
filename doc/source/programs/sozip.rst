@@ -22,6 +22,7 @@ Synopsis
           [-r|--recurse-paths]
           [-j|--junk-paths]
           [-l|--list]
+          [--optimize-from=<input.zip>]
           [--validate]
           [--enable-sozip=auto/yes/no]
           [--sozip-chunk-size=value]
@@ -32,9 +33,12 @@ Synopsis
 Description
 -----------
 
-The :program:`sozip` utility can be used to create a seek-optimized ZIP file,
-append files to an existing ZIP/SOZip file, list the contents of a ZIP/SOZip
-file or validate a SOZip file.
+The :program:`sozip` utility can be used to:
+- create a seek-optimized ZIP file
+- append files to an existing ZIP/SOZip file
+- list the contents of a ZIP/SOZip file
+- validate a SOZip file
+- convert an existing Zip file in a SOZip optimized one
 
 .. program:: sozip
 
@@ -77,6 +81,12 @@ file or validate a SOZip file.
     Store just the name of a saved file (junk the path), and do not store
     directory names. By default, sozip will store the full path (relative to the
     current directory).
+
+.. option:: --optimize-from=<input.zip>
+
+    Re-process {input.zip} to generate a SOZip-optimized .zip. Options
+    :option:`--enable-sozip`, :option:`--sozip-chunk-size` and
+    :option:`--sozip-min-file-size` may be used in that mode.
 
 .. option:: --enable-sozip=auto/yes/no
 
@@ -136,6 +146,13 @@ directory:
 ::
 
     sozip -r my.gpkg.zip source_dir/
+
+
+Create a, potentially seek-optimized, ZIP file from an existing ZIP file.
+
+::
+
+    sozip --convert-from=in.zip out.zip
 
 
 List the contents of a ZIP file and display which files are seek-optimized:

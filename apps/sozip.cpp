@@ -48,6 +48,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
            "             [-j|--junk]\n"
            "             [-l|--list]\n"
            "             [--validate]\n"
+           "             [--optimize-from=input.zip]\n"
            "             [--enable-sozip=auto/yes/no]\n"
            "             [--sozip-chunk-size=value]\n"
            "             [--sozip-min-file-size=value]\n"
@@ -352,6 +353,7 @@ MAIN_START(nArgc, papszArgv)
     bool bJunkPaths = false;
     bool bValidate = false;
     const char *pszZipFilename = nullptr;
+    const char *pszOptimizeFrom = nullptr;
     CPLStringList aosFiles;
     CPLStringList aosOptions;
 
@@ -408,6 +410,16 @@ MAIN_START(nArgc, papszArgv)
         {
             bValidate = true;
         }
+        else if (strcmp(papszArgv[iArg], "--optimize-from") == 0 &&
+                 iArg + 1 < nArgc)
+        {
+            ++iArg;
+            pszOptimizeFrom = papszArgv[iArg];
+        }
+        else if (STARTS_WITH(papszArgv[iArg], "--optimize-from="))
+        {
+            pszOptimizeFrom = papszArgv[iArg] + strlen("--optimize-from=");
+        }
         else if (strcmp(papszArgv[iArg], "--enable-sozip") == 0 &&
                  iArg + 1 < nArgc)
         {
@@ -463,13 +475,16 @@ MAIN_START(nArgc, papszArgv)
         return 1;
     }
 
-    if ((bValidate ? 1 : 0) + (bList ? 1 : 0) + (!aosFiles.empty() ? 1 : 0) > 1)
+    if ((bValidate ? 1 : 0) + (bList ? 1 : 0) + (!aosFiles.empty() ? 1 : 0) +
+            (pszOptimizeFrom != nullptr ? 1 : 0) >
+        1)
     {
-        Usage("Validate, list and create/append modes are mutually exclusive");
+        Usage("--validate, --list, --optimize-from and create/append modes are "
+              "mutually exclusive");
         return 1;
     }
 
-    if (!bList && !bValidate && aosFiles.empty())
+    if (!bList && !bValidate && pszOptimizeFrom == nullptr && aosFiles.empty())
     {
         Usage("Missing source filename(s)");
         return 1;
@@ -539,13 +554,46 @@ MAIN_START(nArgc, papszArgv)
     else
     {
         if (VSIStatExL(pszZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0)
+        {
+            if (pszOptimizeFrom)
+            {
+                fprintf(
+                    stderr,
+                    "%s already exists. Use --overwrite or delete it before.\n",
+                    pszZipFilename);
+                return 1;
+            }
             aosOptionsCreateZip.SetNameValue("APPEND", "TRUE");
+        }
     }
 
     uint64_t nTotalSize = 0;
     std::vector<uint64_t> anFileSizes;
 
-    if (bRecurse)
+    std::string osRemovePrefix;
+    if (pszOptimizeFrom)
+    {
+        VSIDIR *psDir = VSIOpenDir(
+            (std::string("/vsizip/") + pszOptimizeFrom).c_str(), -1, nullptr);
+        if (psDir == nullptr)
+        {
+            fprintf(stderr, "%s is not a valid .zip file\n", pszOptimizeFrom);
+            return 1;
+        }
+
+        osRemovePrefix = std::string("/vsizip/{") + pszOptimizeFrom + "}/";
+        while (auto psEntry = VSIGetNextDirEntry(psDir))
+        {
+            if (!VSI_ISDIR(psEntry->nMode))
+            {
+                const std::string osFilenameInZip =
+                    osRemovePrefix + psEntry->pszName;
+                aosFiles.AddString(osFilenameInZip.c_str());
+            }
+        }
+        VSICloseDir(psDir);
+    }
+    else if (bRecurse)
     {
         CPLStringList aosNewFiles;
         for (int i = 0; i < aosFiles.size(); ++i)
@@ -633,6 +681,11 @@ MAIN_START(nArgc, papszArgv)
         if (bJunkPaths)
         {
             osArchiveFilename = CPLGetFilename(aosFiles[i]);
+        }
+        else if (!osRemovePrefix.empty() &&
+                 STARTS_WITH(osArchiveFilename.c_str(), osRemovePrefix.c_str()))
+        {
+            osArchiveFilename = osArchiveFilename.substr(osRemovePrefix.size());
         }
         else if (osArchiveFilename[0] == '/')
         {
