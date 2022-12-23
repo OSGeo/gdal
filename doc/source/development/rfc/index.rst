@@ -95,3 +95,4 @@ RFC list
     rfc86_column_oriented_api
     rfc87_signed_int8
     rfc88_googletest
+    rfc89_sql_logging_callback
