@@ -244,15 +244,18 @@ static GDALDataset *OGRGeoPackageDriverCreate(const char *pszFilename,
                                               int nBands, GDALDataType eDT,
                                               char **papszOptions)
 {
-    const char *pszExt = CPLGetExtension(pszFilename);
-    const bool bIsRecognizedExtension =
-        EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
-    if (!bIsRecognizedExtension)
+    if (strcmp(pszFilename, ":memory:") != 0)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "The filename extension should be 'gpkg' instead of '%s' "
-                 "to conform to the GPKG specification.",
-                 pszExt);
+        const char *pszExt = CPLGetExtension(pszFilename);
+        const bool bIsRecognizedExtension =
+            EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
+        if (!bIsRecognizedExtension)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "The filename extension should be 'gpkg' instead of '%s' "
+                     "to conform to the GPKG specification.",
+                     pszExt);
+        }
     }
 
     GDALGeoPackageDataset *poDS = new GDALGeoPackageDataset();
