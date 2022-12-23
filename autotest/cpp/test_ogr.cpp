@@ -2243,6 +2243,9 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
         int64_t executionTimeMilliseconds;
     };
 
+    // Note: this must be constructed before poDS or the order
+    //       of destruction will make the callback call the already
+    //       destructed vector
     std::vector<QueryLogEntry> queryLog;
 
     auto poDS = std::unique_ptr<GDALDataset>(
