@@ -1203,11 +1203,29 @@ bool CPL_DLL GDALDatasetUpdateRelationship(GDALDatasetH hDS,
                                            GDALRelationshipH hRelationship,
                                            char **ppszFailureReason);
 
+/** Type of functions to pass to GDALDatasetSetQueryLoggerFunc
+ * @since GDAL 3.7 */
 typedef void (*GDALQueryLoggerFunc)(const char *pszSQL, const char *pszError,
                                     int64_t lNumRecords,
                                     int64_t lExecutionTimeMilliseconds,
                                     void *pQueryLoggerArg);
 
+/**
+ * Sets the SQL query logger callback.
+ *
+ * When supported by the driver, the callback will be called with
+ * the executed SQL text, the error message, the execution time in milliseconds,
+ * the number of records fetched/affected and the client status data.
+ *
+ * A value of -1 in the execution time or in the number of records indicates
+ * that the values are unknown.
+ *
+ * @param hDS                   Dataset handle.
+ * @param pfnQueryLoggerFunc    Callback function
+ * @param poQueryLoggerArg      Opaque client status data
+ * @return                      true in case of success.
+ * @since                       GDAL 3.7
+ */
 bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
     GDALDatasetH hDS, GDALQueryLoggerFunc pfnQueryLoggerFunc,
     void *poQueryLoggerArg);
