@@ -49,6 +49,15 @@ metadata in the COLOR_PROFILE domain:
 
 -  SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file.)
 
+Open Options
+------------
+
+The following open options are available:
+
+-  **APPLY_ORIENTATION=YES/NO**: (GDAL >= 3.7) Whether to use EXIF_Orientation
+   metadata item to rotate/flip the image to apply scene orientation.
+   Defaults to NO (that is the image will be returned in sensor orientation).
+
 Creation Options
 ----------------
 

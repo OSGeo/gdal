@@ -30,6 +30,7 @@
 ###############################################################################
 
 import base64
+import struct
 
 import gdaltest
 import pytest
@@ -637,3 +638,31 @@ def test_jpegxl_band_combinations():
             vrtds = None
             ds = None
             gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test APPLY_ORIENTATION=YES open option
+
+
+@pytest.mark.parametrize("orientation", [i + 1 for i in range(8)])
+def test_jpegxl_apply_orientation(orientation):
+
+    if "APPLY_ORIENTATION" not in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
+        "DMD_OPENOPTIONLIST"
+    ):
+        pytest.skip()
+
+    ds = gdal.OpenEx(
+        "data/jpegxl/exif_orientation/F%d.jxl" % orientation,
+        open_options=["APPLY_ORIENTATION=YES"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 5
+    vals = struct.unpack("B" * 3 * 5, ds.ReadRaster())
+    vals = [1 if v else 0 for v in vals]
+    assert vals == [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0]
+    if orientation != 1:
+        assert ds.GetMetadataItem("EXIF_Orientation", "EXIF") is None
+        assert ds.GetMetadataItem("original_EXIF_Orientation", "EXIF") == str(
+            orientation
+        )

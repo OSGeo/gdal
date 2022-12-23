@@ -49,6 +49,8 @@
 #include <algorithm>
 #include <string>
 
+#include "gdalorienteddataset.h"
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
@@ -2668,15 +2670,34 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     sArgs.bUseInternalOverviews = CPLFetchBool(poOpenInfo->papszOpenOptions,
                                                "USE_INTERNAL_OVERVIEWS", true);
 
-    auto poDS = std::unique_ptr<JPGDatasetCommon>(JPGDataset::Open(&sArgs));
+    auto poJPG_DS = JPGDataset::Open(&sArgs);
+    auto poDS = std::unique_ptr<GDALDataset>(poJPG_DS);
     if (poDS == nullptr)
     {
         return nullptr;
     }
     if (bFLIRRawThermalImage)
     {
-        return poDS->OpenFLIRRawThermalImage();
+        poDS.reset(poJPG_DS->OpenFLIRRawThermalImage());
     }
+
+    if (poDS &&
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "APPLY_ORIENTATION", false))
+    {
+        const char *pszOrientation = poDS->GetMetadataItem("EXIF_Orientation");
+        if (pszOrientation && !EQUAL(pszOrientation, "1"))
+        {
+            int nOrientation = atoi(pszOrientation);
+            if (nOrientation >= 2 && nOrientation <= 8)
+            {
+                auto poOrientedDS = cpl::make_unique<GDALOrientedDataset>(
+                    std::move(poDS),
+                    static_cast<GDALOrientedDataset::Origin>(nOrientation));
+                poDS = std::move(poOrientedDS);
+            }
+        }
+    }
+
     return poDS.release();
 }
 
@@ -4297,12 +4318,16 @@ void GDALRegister_JPEG()
 #endif
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-                              "<OpenOptionList>\n"
-                              "   <Option name='USE_INTERNAL_OVERVIEWS' "
-                              "type='boolean' description='whether to use "
-                              "implicit internal overviews' default='YES'/>\n"
-                              "</OpenOptionList>\n");
+    const char *pszOpenOptions =
+        "<OpenOptionList>\n"
+        "   <Option name='USE_INTERNAL_OVERVIEWS' type='boolean' "
+        "description='whether to use implicit internal overviews' "
+        "default='YES'/>\n"
+        "   <Option name='APPLY_ORIENTATION' type='boolean' "
+        "description='whether to take into account EXIF Orientation to "
+        "rotate/flip the image' default='NO'/>\n"
+        "</OpenOptionList>\n";
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, pszOpenOptions);
 
     poDriver->pfnIdentify = JPGDatasetCommon::Identify;
     poDriver->pfnOpen = JPGDatasetCommon::Open;
