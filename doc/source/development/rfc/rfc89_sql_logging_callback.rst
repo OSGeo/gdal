@@ -8,7 +8,7 @@ RFC 89: SQL logging callback
 Author:        Alessandro Pasotti
 Contact:       elpaso @ itopen.it
 Started:       2022-Nov-30
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
