@@ -7046,9 +7046,9 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    int rc = sqlite3_prepare_v2(hDB, osSQLCommandTruncated.c_str(),
-                                static_cast<int>(osSQLCommandTruncated.size()),
-                                &hSQLStmt, nullptr);
+    int rc = prepareSql(hDB, osSQLCommandTruncated.c_str(),
+                        static_cast<int>(osSQLCommandTruncated.size()),
+                        &hSQLStmt, nullptr);
 
     if (rc != SQLITE_OK)
     {

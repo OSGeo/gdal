@@ -34,6 +34,10 @@
 #include "ogr_recordbatch.h"
 
 #include <string>
+#include <algorithm>
+#include <fstream>
+
+#include <sqlite3.h>
 
 #include "gtest_include.h"
 
@@ -2211,6 +2215,121 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
         ++i;
     }
     EXPECT_EQ(i, oFDefn.GetGeomFieldCount());
+}
+
+// Test GDALDataset QueryLoggerFunc callback
+TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
+{
+#if SQLITE_VERSION_NUMBER < 3014000
+    GTEST_SKIP() << "SQLite version must be >= 3014000";
+#else
+    if (GDALGetDriverByName("GPKG") == nullptr)
+    {
+        GTEST_SKIP() << "GPKG driver missing";
+    }
+
+    auto tmpGPKG{testing::TempDir() + "/poly-1-feature.gpkg"};
+    {
+        std::ifstream src("data/poly-1-feature.gpkg", std::ios::binary);
+        std::ofstream dst(tmpGPKG, std::ios::binary);
+        dst << src.rdbuf();
+    }
+
+    struct QueryLogEntry
+    {
+        std::string sql;
+        std::string error;
+        int64_t numRecords;
+        int64_t executionTimeMilliseconds;
+    };
+
+    // Note: this must be constructed before poDS or the order
+    //       of destruction will make the callback call the already
+    //       destructed vector
+    std::vector<QueryLogEntry> queryLog;
+
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open(tmpGPKG.c_str(), GDAL_OF_VECTOR | GDAL_OF_UPDATE));
+    ASSERT_TRUE(poDS);
+    auto hDS = GDALDataset::ToHandle(poDS.get());
+    ASSERT_TRUE(hDS);
+
+    const bool retVal = GDALDatasetSetQueryLoggerFunc(
+        hDS,
+        [](const char *pszSQL, const char *pszError, int64_t lNumRecords,
+           int64_t lExecutionTimeMilliseconds, void *pQueryLoggerArg)
+        {
+            std::vector<QueryLogEntry> *queryLogLocal{
+                reinterpret_cast<std::vector<QueryLogEntry> *>(
+                    pQueryLoggerArg)};
+            QueryLogEntry entryLocal;
+            if (pszSQL)
+            {
+                entryLocal.sql = pszSQL;
+            }
+            entryLocal.numRecords = lNumRecords;
+            entryLocal.executionTimeMilliseconds = lExecutionTimeMilliseconds;
+            if (pszError)
+            {
+                entryLocal.error = pszError;
+            }
+            queryLogLocal->push_back(entryLocal);
+        },
+        &queryLog);
+
+    ASSERT_TRUE(retVal);
+    auto hLayer{GDALDatasetGetLayer(hDS, 0)};
+    ASSERT_TRUE(hLayer);
+    ASSERT_STREQ(OGR_L_GetName(hLayer), "poly");
+    auto poFeature = std::unique_ptr<OGRFeature>(
+        OGRFeature::FromHandle(OGR_L_GetNextFeature(hLayer)));
+    auto hFeature = OGRFeature::ToHandle(poFeature.get());
+    ASSERT_TRUE(hFeature);
+    ASSERT_GT(queryLog.size(), 1);
+
+    QueryLogEntry entry{queryLog.back()};
+    ASSERT_EQ(entry.sql.find("SELECT", 0), 0);
+    ASSERT_TRUE(entry.executionTimeMilliseconds >= 0);
+    ASSERT_EQ(entry.numRecords, -1);
+    ASSERT_TRUE(entry.error.empty());
+
+    // Test erroneous query
+    OGRLayerH queryResultLayerH{GDALDatasetExecuteSQL(
+        hDS, "SELECT * FROM not_existing_table", nullptr, nullptr)};
+    GDALDatasetReleaseResultSet(hDS, queryResultLayerH);
+    ASSERT_FALSE(queryResultLayerH);
+
+    entry = queryLog.back();
+    ASSERT_EQ(entry.sql.find("SELECT * FROM not_existing_table", 0), 0);
+    ASSERT_EQ(entry.executionTimeMilliseconds, -1);
+    ASSERT_EQ(entry.numRecords, -1);
+    ASSERT_FALSE(entry.error.empty());
+
+    // Test prepared arg substitution
+    hFeature = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
+    poFeature.reset(OGRFeature::FromHandle(hFeature));
+    const char *wkt = "POLYGON ((479819 4765180,479690 4765259,479647 4765369, "
+                      "479819 4765180))";
+    OGRGeometryH testGeom = nullptr;
+    OGRErr err = OGR_G_CreateFromWkt((char **)&wkt, nullptr, &testGeom);
+    ASSERT_EQ(OGRERR_NONE, err);
+    err = OGR_F_SetGeometryDirectly(hFeature, testGeom);
+    ASSERT_EQ(OGRERR_NONE, err);
+    err = OGR_L_CreateFeature(hLayer, hFeature);
+    ASSERT_EQ(OGRERR_NONE, err);
+
+    auto insertEntry = std::find_if(
+        queryLog.cbegin(), queryLog.cend(),
+        [](const QueryLogEntry &e)
+        { return e.sql.find(R"sql(INSERT INTO "poly")sql", 0) == 0; });
+
+    ASSERT_TRUE(insertEntry != queryLog.end());
+    ASSERT_EQ(
+        insertEntry->sql.find(
+            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (x'47500003346c0000000000007c461d41)sql",
+            0),
+        0);
+#endif
 }
 
 }  // namespace
