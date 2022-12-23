@@ -4708,19 +4708,24 @@ bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
                 {
                     char *pzsSql{sqlite3_expanded_sql(
                         reinterpret_cast<sqlite3_stmt *>(preparedStatement))};
-                    const std::string sql{pzsSql};
-                    sqlite3_free(pzsSql);
-                    const uint64_t executionTimeMilliSeconds{
-                        static_cast<uint64_t>(
-                            *reinterpret_cast<uint64_t *>(executionTime) /
-                            1e+6)};
-                    OGRSQLiteBaseDataSource *source{
-                        reinterpret_cast<OGRSQLiteBaseDataSource *>(context)};
-                    if (source->pfnQueryLoggerFunc)
+                    if (pzsSql)
                     {
-                        source->pfnQueryLoggerFunc(sql.c_str(), nullptr, -1,
-                                                   executionTimeMilliSeconds,
-                                                   source->poQueryLoggerArg);
+                        const std::string sql{pzsSql};
+                        sqlite3_free(pzsSql);
+                        const uint64_t executionTimeMilliSeconds{
+                            static_cast<uint64_t>(
+                                *reinterpret_cast<uint64_t *>(executionTime) /
+                                1e+6)};
+                        OGRSQLiteBaseDataSource *source{
+                            reinterpret_cast<OGRSQLiteBaseDataSource *>(
+                                context)};
+                        if (source->pfnQueryLoggerFunc)
+                        {
+                            source->pfnQueryLoggerFunc(
+                                sql.c_str(), nullptr, -1,
+                                executionTimeMilliSeconds,
+                                source->poQueryLoggerArg);
+                        }
                     }
                 }
                 return 0;
