@@ -4706,8 +4706,10 @@ bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
             {
                 if (context)
                 {
-                    const std::string sql{sqlite3_expanded_sql(
+                    char *pzsSql{sqlite3_expanded_sql(
                         reinterpret_cast<sqlite3_stmt *>(preparedStatement))};
+                    const std::string sql{pzsSql};
+                    sqlite3_free(pzsSql);
                     const uint64_t executionTimeMilliSeconds{
                         static_cast<uint64_t>(
                             *reinterpret_cast<uint64_t *>(executionTime) /

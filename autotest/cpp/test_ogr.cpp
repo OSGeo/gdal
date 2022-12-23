@@ -2235,12 +2235,6 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
         dst << src.rdbuf();
     }
 
-    auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(tmpGPKG.c_str(), GDAL_OF_VECTOR | GDAL_OF_UPDATE));
-    ASSERT_TRUE(poDS);
-    auto hDS = GDALDataset::ToHandle(poDS.get());
-    ASSERT_TRUE(hDS);
-
     struct QueryLogEntry
     {
         std::string sql;
@@ -2250,6 +2244,13 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     };
 
     std::vector<QueryLogEntry> queryLog;
+
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open(tmpGPKG.c_str(), GDAL_OF_VECTOR | GDAL_OF_UPDATE));
+    ASSERT_TRUE(poDS);
+    auto hDS = GDALDataset::ToHandle(poDS.get());
+    ASSERT_TRUE(hDS);
+
     const bool retVal = GDALDatasetSetQueryLoggerFunc(
         hDS,
         [](const char *pszSQL, const char *pszError, int64_t lNumRecords,
