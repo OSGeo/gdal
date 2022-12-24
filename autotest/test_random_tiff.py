@@ -94,7 +94,7 @@ def generate_tif(comb_val):
     count_non_none = 0
     has_strip = False
     for tag in tags:
-        tag = tag[1]
+        code = tag[1]
         possible_vals = tag[2]
         len_possible_vals = tag[3]
         idx_val = comb_val % len_possible_vals
@@ -102,10 +102,10 @@ def generate_tif(comb_val):
         val = possible_vals[idx_val]
 
         if (
-            tag == TIFFTAG_TILEWIDTH
-            or tag == TIFFTAG_TILELENGTH
-            or tag == TIFFTAG_TILEOFFSETS
-            or tag == TIFFTAG_TILEBYTECOUNTS
+            code == TIFFTAG_TILEWIDTH
+            or code == TIFFTAG_TILELENGTH
+            or code == TIFFTAG_TILEOFFSETS
+            or code == TIFFTAG_TILEBYTECOUNTS
         ):
             if has_strip:
                 idx_val = 0
@@ -114,21 +114,21 @@ def generate_tif(comb_val):
 
         if val is not None:
             if (
-                tag == TIFFTAG_STRIPOFFSETS
-                or tag == TIFFTAG_ROWSPERSTRIP
-                or tag == TIFFTAG_STRIPBYTECOUNTS
+                code == TIFFTAG_STRIPOFFSETS
+                or code == TIFFTAG_ROWSPERSTRIP
+                or code == TIFFTAG_STRIPBYTECOUNTS
             ):
                 has_strip = True
             count_non_none = count_non_none + 1
 
     content = "\x49\x49\x2A\x00\x08\x00\x00\x00" + ("%c" % count_non_none) + "\x00"
     for level, tag in enumerate(tags):
-        tag = tag[1]
+        code = tag[1]
         possible_vals = tag[2]
         idx = idx_tab[level]
         val = possible_vals[idx]
         if val is not None:
-            content = content + ("%c" % (tag & 255)) + ("%c" % (tag >> 8))
+            content = content + ("%c" % (code & 255)) + ("%c" % (code >> 8))
             content = content + "\x04\x00\x01\x00\x00\x00"
             content = (
                 content
