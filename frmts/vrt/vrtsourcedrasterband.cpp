@@ -249,7 +249,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
                         bFallbackToBase = true;
                 }
             }
-            if (bFallbackToBase)
+            if (bFallbackToBase && l_poDS)
             {
                 const bool bBackupEnabledOverviews =
                     l_poDS->AreOverviewsEnabled();
