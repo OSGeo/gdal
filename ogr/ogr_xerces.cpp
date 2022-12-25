@@ -181,9 +181,7 @@ void *OGRXercesInstrumentedMemoryManager::allocate(XMLSize_t size)
     // https://issues.apache.org/jira/browse/XERCESC-1051
     if (pLimitation && pLimitation->maxMemAlloc > 0)
     {
-        pLimitation->totalAllocSize += size;
-
-        if (pLimitation->totalAllocSize > pLimitation->maxMemAlloc)
+        if (pLimitation->totalAllocSize + size > pLimitation->maxMemAlloc)
         {
             pLimitation->maxMemAlloc = 0;
             VSIFree(memptr);
@@ -238,6 +236,11 @@ void *OGRXercesInstrumentedMemoryManager::allocate(XMLSize_t size)
             }
             pLimitation->lastTV = tv;
         }
+    }
+
+    if (pLimitation && pLimitation->maxMemAlloc > 0)
+    {
+        pLimitation->totalAllocSize += size;
     }
 
     return static_cast<char *>(memptr) + 8;
