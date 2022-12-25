@@ -493,8 +493,6 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         nThreads = 1;
 
     CPLDebug("WARP", "Using %d threads", nThreads);
-    psThreadData->nTotalThreadCountForThisRun = nThreads;
-    psThreadData->nCurThreadCountForThisRun = 0;
 
     auto &jobs = *psThreadData->threadJobs;
     CPLAssert(static_cast<int>(jobs.size()) >= nThreads);
@@ -514,6 +512,9 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
 
     {
         std::unique_lock<std::mutex> lock(psThreadData->mutex);
+
+        psThreadData->nTotalThreadCountForThisRun = nThreads;
+        psThreadData->nCurThreadCountForThisRun = 0;
 
         // Start jobs.
         for (int i = 0; i < nThreads; ++i)
