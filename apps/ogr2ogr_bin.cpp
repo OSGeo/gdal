@@ -96,6 +96,8 @@ static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
         "               [-clipdstwhere expression]\n"
         "               [-wrapdateline][-datelineoffset val]\n"
         "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
+        "               [-xy_quantized_prec prec] [-z_quantized_prec prec] "
+        "[-m_quantized_prec prec]\n"
         "               [-makevalid]\n"
         "               [-addfields] [-unsetFid] [-emptyStrAsNull]\n"
         "               [-relaxedFieldNameMatch] [-forceNullable] "

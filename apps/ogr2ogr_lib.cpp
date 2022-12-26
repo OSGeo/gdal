@@ -388,6 +388,21 @@ struct GDALVectorTranslateOptions
 
     /*! Maximum number of features, or -1 if no limit. */
     GIntBig nLimit;
+
+    /*! Precision for X/Y coordinate quantification. */
+    double dfQuantizeXYPrec;
+
+    /*! Whether dfQuantizeXYPrec is expressed in metre */
+    bool bQuantizeXYPrecIsMetric;
+
+    /*! Precision for Z coordinate quantification. */
+    double dfQuantizeZPrec;
+
+    /*! Whether dfQuantizeZPrec is expressed in metre */
+    bool bQuantizeZPrecIsMetric;
+
+    /*! Precision for M coordinate quantification. */
+    double dfQuantizeMPrec;
 };
 
 struct TargetLayerInfo
@@ -398,6 +413,7 @@ struct TargetLayerInfo
     OGRLayer *m_poDstLayer = nullptr;
     std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
     std::vector<CPLStringList> m_aosTransformOptions{};
+    std::vector<OGRPrecisionOptions> m_asPrecisionOptions{};
     std::vector<int> m_anMap{};
     struct ResolvedInfo
     {
@@ -4767,6 +4783,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     psInfo->m_apoCT.resize(poDstLayer->GetLayerDefn()->GetGeomFieldCount());
     psInfo->m_aosTransformOptions.resize(
         poDstLayer->GetLayerDefn()->GetGeomFieldCount());
+    psInfo->m_asPrecisionOptions.resize(
+        poDstLayer->GetLayerDefn()->GetGeomFieldCount());
     psInfo->m_anMap = std::move(anMap);
     psInfo->m_iSrcZField = iSrcZField;
     psInfo->m_iSrcFIDField = iSrcFIDField;
@@ -4837,6 +4855,43 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     psInfo->m_pszSpatSRSDef = psOptions->pszSpatSRSDef;
     psInfo->m_hSpatialFilter = psOptions->hSpatialFilter;
     psInfo->m_pszGeomField = psOptions->pszGeomField;
+
+    for (auto &options : psInfo->m_asPrecisionOptions)
+    {
+        if (psOptions->dfQuantizeXYPrec != 0)
+        {
+            if (psOptions->bQuantizeXYPrecIsMetric)
+                OGRPrecisionOptionsSetMetricPrecision(
+                    &options,
+                    OGRSpatialReference::ToHandle(
+                        const_cast<OGRSpatialReference *>(poOutputSRS)),
+                    psOptions->dfQuantizeXYPrec, 0, 0);
+            else
+                OGRPrecisionOptionsSetPrecision(
+                    &options, psOptions->dfQuantizeXYPrec, 0, 0);
+        }
+        if (psOptions->dfQuantizeZPrec != 0)
+        {
+            OGRPrecisionOptions tmp;
+            if (psOptions->bQuantizeZPrecIsMetric)
+                OGRPrecisionOptionsSetMetricPrecision(
+                    &tmp,
+                    OGRSpatialReference::ToHandle(
+                        const_cast<OGRSpatialReference *>(poOutputSRS)),
+                    0, psOptions->dfQuantizeZPrec, 0);
+            else
+                OGRPrecisionOptionsSetPrecision(&tmp, 0,
+                                                psOptions->dfQuantizeZPrec, 0);
+            options.nZBitPrecision = tmp.nZBitPrecision;
+        }
+        if (psOptions->dfQuantizeMPrec != 0)
+        {
+            OGRPrecisionOptions tmp;
+            OGRPrecisionOptionsSetPrecision(&tmp, 0, 0,
+                                            psOptions->dfQuantizeMPrec);
+            options.nMBitPrecision = tmp.nMBitPrecision;
+        }
+    }
 
     return psInfo;
 }
@@ -5644,6 +5699,18 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     }
                 }
 
+                if (poDstGeometry != nullptr &&
+                    (psInfo->m_asPrecisionOptions[iGeom].nXYBitPrecision !=
+                         INT_MIN ||
+                     psInfo->m_asPrecisionOptions[iGeom].nZBitPrecision !=
+                         INT_MIN ||
+                     psInfo->m_asPrecisionOptions[iGeom].nMBitPrecision !=
+                         INT_MIN))
+                {
+                    poDstGeometry->quantizeCoordinates(
+                        psInfo->m_asPrecisionOptions[iGeom]);
+                }
+
                 poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
             }
 
@@ -5898,6 +5965,39 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
     psOptions->hSpatialFilter = nullptr;
     psOptions->bNativeData = true;
     psOptions->nLimit = -1;
+
+    const auto GetValueAndIsMetric = [](const char *pszVal)
+    {
+        char *pszUnits = nullptr;
+        double dfVal = strtod(pszVal, &pszUnits);
+        bool bIsMetric = false;
+        if (dfVal != 0)
+        {
+            if (pszUnits &&
+                (strcmp(pszUnits, "m") == 0 || strcmp(pszUnits, " m") == 0))
+            {
+                bIsMetric = true;
+            }
+            else if (pszUnits && (strcmp(pszUnits, "cm") == 0 ||
+                                  strcmp(pszUnits, " cm") == 0))
+            {
+                bIsMetric = true;
+                dfVal *= 1e-2;
+            }
+            else if (pszUnits && (strcmp(pszUnits, "mm") == 0 ||
+                                  strcmp(pszUnits, " mm") == 0))
+            {
+                bIsMetric = true;
+                dfVal *= 1e-3;
+            }
+            else if (pszUnits && *pszUnits != '\0')
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized unit: %s",
+                         pszUnits);
+            }
+        }
+        return std::pair<double, bool>(dfVal, bIsMetric);
+    };
 
     int nArgc = CSLCount(papszArgv);
     for (int i = 0; papszArgv != nullptr && i < nArgc; i++)
@@ -6310,6 +6410,25 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         else if (i < nArgc - 1 && EQUAL(papszArgv[i], "-datelineoffset"))
         {
             psOptions->dfDateLineOffset = CPLAtof(papszArgv[++i]);
+        }
+        else if (i < nArgc - 1 && EQUAL(papszArgv[i], "-xy_quantized_prec"))
+        {
+            ++i;
+            const auto v = GetValueAndIsMetric(papszArgv[i]);
+            psOptions->dfQuantizeXYPrec = v.first;
+            psOptions->bQuantizeXYPrecIsMetric = v.second;
+        }
+        else if (i < nArgc - 1 && EQUAL(papszArgv[i], "-z_quantized_prec"))
+        {
+            ++i;
+            const auto v = GetValueAndIsMetric(papszArgv[i]);
+            psOptions->dfQuantizeZPrec = v.first;
+            psOptions->bQuantizeZPrecIsMetric = v.second;
+        }
+        else if (i < nArgc - 1 && EQUAL(papszArgv[i], "-m_quantized_prec"))
+        {
+            ++i;
+            psOptions->dfQuantizeMPrec = CPLAtof(papszArgv[i]);
         }
         else if (EQUAL(papszArgv[i], "-clipsrc"))
         {

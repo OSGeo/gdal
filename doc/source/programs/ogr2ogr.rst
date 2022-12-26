@@ -38,6 +38,7 @@ Synopsis
             [-clipdstwhere expression]
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
+            [-xy_quantized_prec prec] [-z_quantized_prec prec] [-m_quantized_prec prec]
             [-makevalid]
             [-addfields] [-unsetFid] [-emptyStrAsNull]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
@@ -367,6 +368,47 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -segmentize <max_dist>
 
     Maximum distance between 2 nodes. Used to create intermediate points.
+
+.. option:: -xy_quantized_prec <prec>
+
+    .. versionadded: 3.7
+
+    Desired precision for X/Y coordinate quantization (with a m suffix to
+    specify it in metre). This parameter will influence the number of nullified
+    least significant bits in the mantissa of the binary representation of
+    coordinates as IEEE-754 double-precision floating-point numbers.
+    This is only useful if the file is compressed.
+    By default, the value is understood as expressed in the units of the CRS
+    of the layer (for example, for a geographic Earth CRS, "8.9e-9" corresponds
+    to a millimetric precision), unless the 'm', 'cm' or 'mm' suffixes are added
+    to express respectively the value in metre, centimetre or millimetre (will work
+    for a geographic or projected CRS). For example, "1 mm" for a millimetric
+    precision.
+
+.. option:: -z_quantized_prec <prec>
+
+    .. versionadded: 3.7
+
+    Desired precision for Z coordinate quantization (with a m suffix to
+    specify it in metre). This parameter will influence the number of nullified
+    least significant bits in the mantissa of the binary representation of
+    coordinates as IEEE-754 double-precision floating-point numbers.
+    This is only useful if the file is compressed.
+    By default, the value is understood as expressed in the units of the CRS
+    of the layer, unless the 'm', 'cm' or 'mm' suffixes are added
+    to express respectively the value in metre, centimetre or millimetre (will work
+    for a geographic or projected CRS). For example, "1 mm" for a millimetric
+    precision.
+
+.. option:: -m_quantized_prec <prec>
+
+    .. versionadded: 3.7
+
+    Desired precision for M coordinate quantization.
+    This parameter will influence the number of nullified
+    least significant bits in the mantissa of the binary representation of
+    coordinates as IEEE-754 double-precision floating-point numbers.
+    This is only useful if the file is compressed.
 
 .. option:: -makevalid
 

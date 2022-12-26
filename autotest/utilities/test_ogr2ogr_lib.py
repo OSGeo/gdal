@@ -1447,3 +1447,38 @@ def test_ogr2ogr_lib_transaction_size(transaction_size):
     finally:
         ds = None
         gdal.Unlink("/vsimem/out.gpkg")
+
+
+###############################################################################
+# Test coordinate quantization
+
+
+def test_ogr2ogr_lib_quantize_coordinates():
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    g_ref = ogr.CreateGeometryFromWkt(
+        "POINT ZM(179.123456789 89.123456789 123.4567 1234.567891)"
+    )
+    f.SetGeometry(g_ref)
+    srcLayer.CreateFeature(f)
+
+    ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        options="-f Memory -xy_quantized_prec 0.001m -z_quantized_prec 0.01 -m_quantized_prec 1e-5",
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != g_ref.GetX(0)
+    assert g.GetY(0) != g_ref.GetY(0)
+    assert g.GetZ(0) != g_ref.GetZ(0)
+    assert g.GetM(0) != g_ref.GetM(0)
+    assert g.GetX(0) == pytest.approx(g_ref.GetX(0), abs=8.9e-9)
+    assert g.GetY(0) == pytest.approx(g_ref.GetY(0), abs=8.9e-9)
+    assert g.GetZ(0) == pytest.approx(g_ref.GetZ(0), abs=1e-2)
+    assert g.GetM(0) == pytest.approx(g_ref.GetM(0), abs=1e-5)
