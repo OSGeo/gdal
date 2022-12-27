@@ -713,6 +713,9 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                               OGRGeometry *poSpatialFilter,
                               CPL_UNUSED const char *pszDialect)
 {
+    while (*pszStatement != '\0' && isspace(*pszStatement))
+        pszStatement++;
+
     char *pszTmpDBName = (char *)CPLMalloc(256);
     char szPtr[32];
     snprintf(szPtr, sizeof(szPtr), "%p", pszTmpDBName);
