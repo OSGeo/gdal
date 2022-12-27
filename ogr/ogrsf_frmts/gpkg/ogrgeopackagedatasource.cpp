@@ -6638,7 +6638,7 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
 
     FlushMetadata();
 
-    while (*pszSQLCommand == ' ')
+    while (*pszSQLCommand != '\0' && isspace(*pszSQLCommand))
         pszSQLCommand++;
 
     CPLString osSQLCommand(pszSQLCommand);
