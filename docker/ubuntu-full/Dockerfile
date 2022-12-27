@@ -241,6 +241,12 @@ ARG WITH_DEBUG_SYMBOLS=no
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY ./bh-proj.sh /buildscripts/bh-proj.sh
+# We build PROJ a first time, just to build the projsync utility if grids need
+# to be refreshed. We will rebuild just afterwards, but depending on the
+# PROJ_VERSION argument
+# We want 2 separate steps for incremental builds where grids are refreshed
+# only when the content of cdn.proj.org has changed, independently if PROJ master
+# itself has changed.
 RUN . /buildscripts/bh-set-envvars.sh \
     && DESTDIR=/build_tmp_proj /buildscripts/bh-proj.sh \
      && LD_LIBRARY_PATH=/build_tmp_proj/usr/local/lib /build_tmp_proj/usr/local/bin/projsync --target-dir /tmp/proj_grids --all \
