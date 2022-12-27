@@ -461,7 +461,6 @@ def test_rasterize_7():
     sr_wkt = 'LOCAL_CS["arbitrary"]'
 
     # Create a memory raster to rasterize into.
-    print(gdal)
     target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 1, gdal.GDT_Byte)
     target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
     target_ds.SetProjection(sr_wkt)
@@ -802,3 +801,52 @@ def test_rasterize_merge_alg_add_polygon(wkt):
         10,
     )
     assert got == expected, "%s" % str(got)
+
+
+###############################################################################
+def test_rasterize_bugfix_gh6981():
+
+    bad_geometry = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
+                [
+                    [680334.22538978618104, 5128367.892639194615185],
+                    [680812.384837608668022, 5128326.164302133023739],
+                    [681291.53140685800463, 5128418.05398784019053],
+                    [681317.43234931351617, 5125828.967085248790681],
+                    [680424.775291706551798, 5125830.598540099337697],
+                    [680334.22538978618104, 5128367.892639194615185],
+                ]
+            ]
+        ],
+    }
+
+    driver = gdal.GetDriverByName("MEM")
+    raster_ds = driver.Create("", 98, 259, 1, gdal.GDT_Float32)
+    raster_ds.SetGeoTransform(
+        (
+            680334.2253897862,
+            10.032724076809542,
+            0.0,
+            5128418.05398784,
+            0.0,
+            -9.996474527379922,
+        )
+    )
+
+    import json
+
+    vect_ds = gdal.OpenEx(json.dumps(bad_geometry), gdal.OF_VECTOR)
+
+    # Just check we don't crash
+    assert (
+        gdal.RasterizeLayer(
+            raster_ds,
+            bands=[1],
+            layer=vect_ds.GetLayerByIndex(0),
+            burn_values=[1.0],
+            options=["ALL_TOUCHED=TRUE"],
+        )
+        == gdal.CE_None
+    )

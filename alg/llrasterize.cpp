@@ -598,6 +598,8 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                 if (dfYEnd >= nRasterYSize)
                 {
                     dfXEnd += (dfYEnd - nRasterYSize) / dfSlope;
+                    if (dfXEnd > nRasterXSize)
+                        dfXEnd = nRasterXSize;
                     // dfYEnd is no longer used afterwards, but for
                     // consistency it should be:
                     // dfYEnd = nRasterXSize;
