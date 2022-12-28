@@ -480,8 +480,7 @@ def test_ogr2ogr_lib_21():
 ###############################################################################
 
 
-@pytest.mark.parametrize("args_using_options", [True, False])
-def test_ogr2ogr_clipsrc_wkt_no_dst_geom(args_using_options):
+def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 
     if not ogrtest.have_geos():
         pytest.skip()
@@ -491,14 +490,9 @@ def test_ogr2ogr_clipsrc_wkt_no_dst_geom(args_using_options):
 
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
-    if args_using_options:
-        ds = gdal.VectorTranslate(
-            tmpfilename, "../ogr/data/poly.shp", options='-f CSV -clipsrc "%s"' % wkt
-        )
-    else:
-        ds = gdal.VectorTranslate(
-            tmpfilename, "../ogr/data/poly.shp", format="CSV", clipSrc=wkt
-        )
+    ds = gdal.VectorTranslate(
+        tmpfilename, "../ogr/data/poly.shp", format="CSV", clipSrc=wkt
+    )
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     assert fc == 1
