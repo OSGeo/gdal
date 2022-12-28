@@ -47,6 +47,8 @@ on dependencies of optional drivers.
     The path to the updated version of SWIG can be provided to provided to ``cmake`` using ``-DSWIG_EXECUTABLE=$SWIG_PREFIX/bin/swig``.
 
 
+If you want to do Python binding development, you also need to specify the SWIG_REGENERATE_PYTHON:BOOL=ON CMake variable to force regeneration of the Python bindings from the SWIG input .i files.
+
 Vagrant
 -------
 
