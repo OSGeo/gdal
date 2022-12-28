@@ -1141,11 +1141,6 @@ def test_ogr2ogr_lib_clipsrc_datasource():
     clip_layer.CreateFeature(f)
     clip_ds = None
 
-    # Test clip without filtering the clip layer
-    # -> gives an error: Input geom 1 is invalid: Self-intersection at 1 2
-    dst_ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
-    assert dst_ds is None
-
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
     dst_ds = gdal.VectorTranslate(
@@ -1250,11 +1245,6 @@ def test_ogr2ogr_lib_clipdst_datasource():
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
     clip_layer.CreateFeature(f)
     clip_ds = None
-
-    # Test clip without filtering the clip layer
-    # -> gives an error: Input geom 1 is invalid: Self-intersection at 1 2
-    dst_ds = gdal.VectorTranslate("", srcDS, format="Memory", clipDst=clip_path)
-    assert dst_ds is None
 
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
