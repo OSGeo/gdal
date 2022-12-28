@@ -67,6 +67,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
 {
     printf(
         "Usage: gdalwarp [--help-general] [--formats]\n"
+        "    [-srcband n]* [-dstband n]*\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]* [-vshift "
         "| -novshift]\n"
         "    [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]\n"

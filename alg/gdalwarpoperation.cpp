@@ -896,7 +896,7 @@ void GDALWarpOperation::CollectChunkList(int nDstXOff, int nDstYOff,
                 ->AdviseRead(nSrcXOff, nSrcYOff, nSrcX2Off - nSrcXOff,
                              nSrcY2Off - nSrcYOff, nDstXSize, nDstYSize,
                              psOptions->eWorkingDataType, psOptions->nBandCount,
-                             nullptr, nullptr);
+                             psOptions->panSrcBands, nullptr);
         }
     }
 }

@@ -3125,6 +3125,189 @@ def test_gdalwarp_lib_sum_preserving_accross_antimeridian():
 
 
 ###############################################################################
+
+
+def test_gdalwarp_lib_srcBands():
+
+    # Test with single band input dataset
+    ds = gdal.Warp("", "../gcore/data/byte.tif", format="MEM", srcBands=[1])
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = gdal.Warp(
+        "", "../gcore/data/byte.tif", format="MEM", srcBands=[1], dstBands=[1]
+    )
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = gdal.Warp("", "../gcore/data/byte.tif", format="MEM", srcBands=[1, 1])
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(2).Checksum() == 4672
+
+    # Error: len(dstBands) != len(srcBands)
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            assert (
+                gdal.Warp(
+                    "",
+                    "../gcore/data/byte.tif",
+                    format="MEM",
+                    srcBands=[1, 1],
+                    dstBands=[1],
+                )
+                is None
+            )
+
+    # Invalid srcBands[0] value
+    with gdaltest.error_handler():
+        assert (
+            gdal.Warp("", "../gcore/data/byte.tif", format="MEM", srcBands=[2]) is None
+        )
+
+    # Invalid dstBands[0] value
+    with gdaltest.error_handler():
+        assert (
+            gdal.Warp(
+                "", "../gcore/data/byte.tif", format="MEM", srcBands=[1], dstBands=[2]
+            )
+            is None
+        )
+
+    # Test with RGB input dataset
+    src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[1])
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[2])
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(2).Checksum()
+
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", setColorInterpretation=True, srcBands=[2, 1]
+    )
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert (
+        ds.GetRasterBand(1).GetColorInterpretation()
+        == src_ds.GetRasterBand(2).GetColorInterpretation()
+    )
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[3, 2, 1])
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(3).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[1, 2, 3], dstBands=[3, 2, 1])
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(3).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[1, 2, 3])
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(3).Checksum()
+
+    ds = gdal.Warp("", src_ds, format="MEM", srcBands=[1, 2, 3, 1])
+    assert ds.RasterCount == 4
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(3).Checksum()
+    assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    # Warp into existing dataset
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(0)
+    ds.GetRasterBand(4).Fill(0)
+    assert gdal.Warp(ds, src_ds, srcBands=[2], dstBands=[3])
+    assert ds.GetRasterBand(1).Checksum() == 0
+    assert ds.GetRasterBand(2).Checksum() == 0
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(4).Checksum() == 0
+
+    # Test with RGBA input dataset
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    ref_ds = gdal.Warp(
+        "", src_ds, format="MEM", transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"]
+    )
+
+    # No srcAlpha nor dstAlpha ==> set implicitly
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+        srcBands=[2],
+    )
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == ref_ds.GetRasterBand(4).Checksum()
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+
+    # srcAlpha=True
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+        srcBands=[2],
+        srcAlpha=True,
+    )
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == ref_ds.GetRasterBand(4).Checksum()
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+
+    # dstAlpha=True
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+        srcBands=[2],
+        dstAlpha=True,
+    )
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == ref_ds.GetRasterBand(4).Checksum()
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+
+    # Disable alpha
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+        srcAlpha=False,
+        srcBands=[2],
+    )
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(2).Checksum()
+
+    # srcAlpha=False, dstAlpha=True
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM"],
+        srcBands=[2],
+        srcAlpha=False,
+        dstAlpha=True,
+    )
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(2).Checksum() != 0
+    assert ds.GetRasterBand(2).Checksum() != ref_ds.GetRasterBand(4).Checksum()
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
+
+
+###############################################################################
 # Cleanup
 
 

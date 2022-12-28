@@ -16,6 +16,7 @@ Synopsis
 .. code-block::
 
     gdalwarp [--help-general] [--formats]
+        [-srcband n]* [-dstband n]*
         [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-vshift | -novshift]
         [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
         [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
@@ -42,6 +43,31 @@ and can also apply GCPs stored with the image if the image is "raw"
 with control information.
 
 .. program:: gdalwarp
+
+.. option:: -srcband <n>
+
+    .. versionadded:: 3.7
+
+    Specify a input band number to warp (between 1 and the number of bands
+    of the source dataset). This option may be repeated multiple times, to warp
+    several bands of the input dataset. The alpha band should not be specified
+    in the list, as it will be automatically retrieved (unless :option:`-nosrcalpha`
+    is specified).
+    If :option:`-srcband` is not specified, all input bands are used.
+
+.. option:: -dstband <n>
+
+    .. versionadded:: 3.7
+
+    Specify the output band number in which to warp.
+    If :option:`-srcband` is specified, there must be as many occurences of
+    :option:`-dstband` as there are of :option:`-srcband`.
+    The output alpha band should not be specified, as it will be automatically
+    created if the input dataset has an alpha band, or if :option:`-dstalpha`
+    is specified.
+    If :option:`-dstband` is not specified, then
+    ``-dstband 1 -dstband 2 ... -dstband N`` is assumed where N is the number
+    of input bands specified explicitly or implicitly.
 
 .. option:: -s_srs <srs def>
 

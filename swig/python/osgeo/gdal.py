@@ -686,13 +686,15 @@ def Translate(destName, srcDS, **kwargs):
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
 def WarpOptions(options=None, format=None,
+         srcBands=None,
+         dstBands=None,
          outputBounds=None,
          outputBoundsSRS=None,
          xRes=None, yRes=None, targetAlignedPixels = False,
          width = 0, height = 0,
          srcSRS=None, dstSRS=None,
          coordinateOperation=None,
-         srcAlpha = False, dstAlpha = False,
+         srcAlpha = None, dstAlpha = False,
          warpOptions=None, errorThreshold=None,
          warpMemoryLimit=None, creationOptions=None, outputType = gdalconst.GDT_Unknown,
          workingType = gdalconst.GDT_Unknown, resampleAlg=None,
@@ -712,6 +714,10 @@ def WarpOptions(options=None, format=None,
         can be be an array of strings, a string or let empty and filled from other keywords.
     format:
         output format ("GTiff", etc...)
+    srcBands:
+        list of source band numbers (between 1 and the number of input bands)
+    dstBands:
+        list of output band numbers
     outputBounds:
         output bounds as (minX, minY, maxX, maxY) in target SRS
     outputBoundsSRS:
@@ -733,7 +739,8 @@ def WarpOptions(options=None, format=None,
     coordinateOperation:
         coordinate operation as a PROJ string or WKT string
     srcAlpha:
-        whether to force the last band of the input dataset to be considered as an alpha band
+        whether to force the last band of the input dataset to be considered as an alpha band.
+        If set to False, source alpha warping will be disabled.
     dstAlpha:
         whether to force the creation of an output alpha band
     outputType:
@@ -803,6 +810,12 @@ def WarpOptions(options=None, format=None,
         new_options = ParseCommandLine(options)
     else:
         new_options = options
+        if srcBands:
+            for b in srcBands:
+                new_options += ['-srcband', str(b)]
+        if dstBands:
+            for b in dstBands:
+                new_options += ['-dstband', str(b)]
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -827,6 +840,8 @@ def WarpOptions(options=None, format=None,
             new_options += ['-tap']
         if srcAlpha:
             new_options += ['-srcalpha']
+        elif srcAlpha is not None:
+            new_options += ['-nosrcalpha']
         if dstAlpha:
             new_options += ['-dstalpha']
         if warpOptions is not None:
