@@ -1340,7 +1340,7 @@ def test_ogr2ogr_lib_explodecollections():
     f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
     src_lyr.CreateFeature(f)
 
-    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", explodecollections=True)
+    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", explodeCollections=True)
 
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 2, "wrong feature count"

@@ -983,7 +983,7 @@ def VectorTranslateOptions(options=None, format=None,
          segmentizeMaxDist=None,
          makeValid=False,
          mapFieldType=None,
-         explodecollections=False,
+         explodeCollections=False,
          zField=None,
          resolveDomains=False,
          skipFailures=False,
@@ -1089,7 +1089,7 @@ def VectorTranslateOptions(options=None, format=None,
         the CAST operator of OGR SQL, that may avoid typing a long SQL query.
         Note that this does not influence the field types used by the source driver,
         and is only an afterwards conversion.
-    explodecollections:
+    explodeCollections:
         produce one feature for each geometry in any kind of geometry collection in the
         source file, applied after any -sql option.
     zField:
@@ -1231,7 +1231,7 @@ def VectorTranslateOptions(options=None, format=None,
                 new_options += [mapFieldType]
             else:
                 new_options += [",".join(mapFieldType)]
-        if explodecollections:
+        if explodeCollections:
             new_options += ['-explodecollections']
         if spatFilter is not None:
             new_options += [
