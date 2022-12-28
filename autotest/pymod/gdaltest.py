@@ -1920,20 +1920,7 @@ def tempfile(filename, content):
 # Temporarily enable exceptions
 
 
-@contextlib.contextmanager
-def enable_exceptions():
-    if gdal.GetUseExceptions():
-        try:
-            yield
-        finally:
-            pass
-        return
-
-    gdal.UseExceptions()
-    try:
-        yield
-    finally:
-        gdal.DontUseExceptions()
+enable_exceptions = gdal.enable_exceptions
 
 
 ###############################################################################

@@ -2228,3 +2228,15 @@ def test_osr_basic_eqearth_central_meridian():
         "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
     )
     assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN, 0) == 150
+
+
+###############################################################################
+# Test osr.enable_exceptions()
+
+
+def test_osr_exceptions():
+
+    with pytest.raises(Exception):
+        with osr.enable_exceptions():
+            srs = osr.SpatialReference()
+            srs.ImportFromEPSG(0)

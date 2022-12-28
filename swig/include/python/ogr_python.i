@@ -805,3 +805,35 @@ del _Module
 
 %}
 #endif
+
+%pythoncode %{
+
+import contextlib
+@contextlib.contextmanager
+def enable_exceptions():
+    """Temporarily enable exceptions.
+
+       Note: this will only affect the osgeo.ogr module. For gdal or osr
+       modules, use respectively osgeo.gdal.enable_exceptions() and
+       osgeo.osr.enable_exceptions().
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with ogr.enable_exceptions():
+               ogr.VectorTranslate("out.gpkg", "in.shp")
+    """
+    if GetUseExceptions():
+        yield
+    else:
+        UseExceptions()
+        try:
+            yield
+        finally:
+            DontUseExceptions()
+
+%}

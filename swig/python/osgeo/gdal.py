@@ -2047,6 +2047,34 @@ def config_option(key, value, thread_local=True):
     return config_options({key: value}, thread_local=thread_local)
 
 
+@contextlib.contextmanager
+def enable_exceptions():
+    """Temporarily enable exceptions.
+
+       Note: this will only affect the osgeo.gdal module. For ogr or osr
+       modules, use respectively osgeo.ogr.enable_exceptions() and
+       osgeo.osr.enable_exceptions().
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with gdal.enable_exceptions():
+               gdal.Translate("out.tif", "in.tif", format="COG")
+    """
+    if GetUseExceptions():
+        yield
+    else:
+        UseExceptions()
+        try:
+            yield
+        finally:
+            DontUseExceptions()
+
+
 
 def Debug(*args) -> "void":
     r"""Debug(char const * msg_class, char const * message)"""

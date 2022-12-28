@@ -160,12 +160,19 @@ def basic_test_7_internal():
 
 
 def test_basic_test_7():
-    old_use_exceptions_status = gdal.GetUseExceptions()
-    gdal.UseExceptions()
-    ret = basic_test_7_internal()
-    if old_use_exceptions_status == 0:
-        gdal.DontUseExceptions()
-    return ret
+    old_val = gdal.GetUseExceptions()
+    try:
+        with gdal.enable_exceptions():
+            basic_test_7_internal()
+    finally:
+        assert old_val == gdal.GetUseExceptions()
+
+    try:
+        with gdal.enable_exceptions():
+            with gdal.enable_exceptions():
+                basic_test_7_internal()
+    finally:
+        assert old_val == gdal.GetUseExceptions()
 
 
 ###############################################################################

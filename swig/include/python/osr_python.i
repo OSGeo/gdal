@@ -37,3 +37,36 @@
 
   %}
 }
+
+%pythoncode %{
+
+import contextlib
+@contextlib.contextmanager
+def enable_exceptions():
+    """Temporarily enable exceptions.
+
+       Note: this will only affect the osgeo.osr module. For gdal or ogr
+       modules, use respectively osgeo.gdal.enable_exceptions() and
+       osgeo.ogr.enable_exceptions().
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with osr.enable_exceptions():
+               srs = osr.SpatialReference()
+               srs.ImportFromEPSG(code)
+    """
+    if GetUseExceptions():
+        yield
+    else:
+        UseExceptions()
+        try:
+            yield
+        finally:
+            DontUseExceptions()
+
+%}
