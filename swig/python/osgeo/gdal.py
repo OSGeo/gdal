@@ -962,8 +962,6 @@ def VectorTranslateOptions(options=None, format=None,
          forceNullable=False,
          emptyStrAsNull=False,
          spatFilter=None, spatSRS=None,
-         srcDatasetOpenOptions=None,
-         dstDatasetOpenOptions=None,
          datasetCreationOptions=None,
          layerCreationOptions=None,
          layers=None,
@@ -1030,10 +1028,6 @@ def VectorTranslateOptions(options=None, format=None,
     spatSRS:
         SRS in which the spatFilter is expressed. If not specified, it is assumed to be
         the one of the layer(s).
-    srcDatasetOpenOptions:
-        list of dataset open options for the source dataset
-    dstDatasetOpenOptions:
-        list of dataset open options for the destination dataset
     datasetCreationOptions:
         list of dataset creation options
     layerCreationOptions:
@@ -1154,12 +1148,6 @@ def VectorTranslateOptions(options=None, format=None,
                 val += item
             new_options += ['-select', val]
         
-        if srcDatasetOpenOptions is not None:
-            for opt in srcDatasetOpenOptions:
-                new_options += ['-oo', opt]
-        if dstDatasetOpenOptions is not None:
-            for opt in dstDatasetOpenOptions:
-                new_options += ['-doo', opt]
         if datasetCreationOptions is not None:
             for opt in datasetCreationOptions:
                 new_options += ['-dsco', opt]
