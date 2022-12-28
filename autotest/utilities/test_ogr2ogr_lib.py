@@ -1418,6 +1418,7 @@ def test_ogr2ogr_lib_options_and_args():
 # Test using simplify
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
 def test_ogr2ogr_lib_simplify():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
