@@ -1366,10 +1366,7 @@ def test_ogr2ogr_lib_mapfieldtype():
 
     src_path = "../ogr/data/poly.shp"
     dst_ds = gdal.VectorTranslate(
-        "",
-        src_path,
-        format="Memory",
-        mapFieldType=["Integer64=String"]
+        "", src_path, format="Memory", mapFieldType=["Integer64=String"]
     )
     assert dst_ds is not None
 
