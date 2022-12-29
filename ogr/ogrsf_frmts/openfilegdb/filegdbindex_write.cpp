@@ -1293,8 +1293,8 @@ bool FileGDBTable::CreateSpatialIndex()
     int nDepth = atoi(CPLGetConfigOption("OPENFILEGDB_FORCE_SPX_DEPTH", "0"));
 
     const auto writeValueFunc =
-        [](std::vector<GByte> &abyPage,
-           const typename ValueOIDPair::first_type &nval, int /* maxStrSize */)
+        +[](std::vector<GByte> &abyPage,
+            const typename ValueOIDPair::first_type &nval, int /* maxStrSize */)
     { WriteUInt64(abyPage, static_cast<uint64_t>(nval)); };
 
     bool bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
@@ -1357,9 +1357,9 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
             }
 
             const auto writeValueFunc =
-                [](std::vector<GByte> &abyPage,
-                   const typename ValueOIDPair::first_type &val,
-                   int /* maxStrSize */)
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int /* maxStrSize */)
             { WriteUInt16(abyPage, static_cast<uint16_t>(val)); };
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
@@ -1382,9 +1382,9 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
             }
 
             const auto writeValueFunc =
-                [](std::vector<GByte> &abyPage,
-                   const typename ValueOIDPair::first_type &val,
-                   int /* maxStrSize */)
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int /* maxStrSize */)
             { WriteUInt32(abyPage, static_cast<uint32_t>(val)); };
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
@@ -1407,9 +1407,9 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
             }
 
             const auto writeValueFunc =
-                [](std::vector<GByte> &abyPage,
-                   const typename ValueOIDPair::first_type &val,
-                   int /* maxStrSize */) { WriteFloat32(abyPage, val); };
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int /* maxStrSize */) { WriteFloat32(abyPage, val); };
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
         }
@@ -1434,9 +1434,9 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
             m_apoFields[iField]->m_eType = eFieldType;
 
             const auto writeValueFunc =
-                [](std::vector<GByte> &abyPage,
-                   const typename ValueOIDPair::first_type &val,
-                   int /* maxStrSize */) { WriteFloat64(abyPage, val); };
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int /* maxStrSize */) { WriteFloat64(abyPage, val); };
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
         }
@@ -1491,9 +1491,9 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
                 maxStrSize++;
 
             const auto writeValueFunc =
-                [](std::vector<GByte> &abyPage,
-                   const typename ValueOIDPair::first_type &val,
-                   int l_maxStrSize)
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int l_maxStrSize)
             {
                 for (size_t i = 0; i < val.size(); ++i)
                     WriteUInt16(abyPage, val[i]);
