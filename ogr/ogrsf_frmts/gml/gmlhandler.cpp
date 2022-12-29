@@ -770,13 +770,20 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
      */
     /* So we have to add it manually */
     if (strcmp(pszName, "posList") == 0 &&
-        CPLGetXMLValue(psCurNode, "srsDimension", nullptr) == nullptr &&
-        m_nSRSDimensionIfMissing != 0)
+        CPLGetXMLValue(psCurNode, "srsDimension", nullptr) == nullptr)
     {
         CPLXMLNode *psChild =
             CPLCreateXMLNode(nullptr, CXT_Attribute, "srsDimension");
-        CPLCreateXMLNode(psChild, CXT_Text,
-                         (m_nSRSDimensionIfMissing == 3) ? "3" : "2");
+
+        const char *dimension = "3";  // #6989: 3-dimension as default
+
+        // when env GML_SRS_DIMENSION_IF_MISSING is set
+        if (m_nSRSDimensionIfMissing == 2)
+        {
+            dimension = "2";
+        }
+
+        CPLCreateXMLNode(psChild, CXT_Text, dimension);
 
         if (psLastChildCurNode == nullptr)
             psCurNode->psChild = psChild;
