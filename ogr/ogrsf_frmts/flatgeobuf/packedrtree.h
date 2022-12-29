@@ -102,15 +102,16 @@ template <class ITEM_TYPE> void hilbertSort(std::deque<ITEM_TYPE> &items)
     const double minY = extent.minY;
     const double width = extent.width();
     const double height = extent.height();
-    std::sort(items.begin(), items.end(),
-              [minX, minY, width, height](ITEM_TYPE &a, ITEM_TYPE &b)
-              {
-                  uint32_t ha = hilbert(a.nodeItem, HILBERT_MAX, minX, minY,
-                                        width, height);
-                  uint32_t hb = hilbert(b.nodeItem, HILBERT_MAX, minX, minY,
-                                        width, height);
-                  return ha > hb;
-              });
+    std::sort(
+        items.begin(), items.end(),
+        [minX, minY, width, height](const ITEM_TYPE &a, const ITEM_TYPE &b)
+        {
+            uint32_t ha =
+                hilbert(a.nodeItem, HILBERT_MAX, minX, minY, width, height);
+            uint32_t hb =
+                hilbert(b.nodeItem, HILBERT_MAX, minX, minY, width, height);
+            return ha > hb;
+        });
 }
 
 void hilbertSort(std::vector<NodeItem> &items);
