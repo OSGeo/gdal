@@ -778,9 +778,9 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
         const char *dimension = "3";  // #6989: 3-dimension as default
 
         // when env GML_SRS_DIMENSION_IF_MISSING is set
-        if (m_nSRSDimensionIfMissing == 2)
+        if (m_nSRSDimensionIfMissing != 0)
         {
-            dimension = "2";
+            dimension = m_nSRSDimensionIfMissing == 2 ? "2" : "3";
         }
 
         CPLCreateXMLNode(psChild, CXT_Text, dimension);
