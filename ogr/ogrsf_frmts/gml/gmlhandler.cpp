@@ -775,12 +775,15 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
         CPLXMLNode *psChild =
             CPLCreateXMLNode(nullptr, CXT_Attribute, "srsDimension");
 
-        const char *dimension = "3";  // #6989: 3-dimension as default
+        const char *dimension =
+            eAppSchemaType == APPSCHEMA_CITYGML
+                ? "3"
+                : "2";  // #6989: 3-dimension as default in CityGML
 
-        // when env GML_SRS_DIMENSION_IF_MISSING is set
         if (m_nSRSDimensionIfMissing != 0)
         {
-            dimension = m_nSRSDimensionIfMissing == 2 ? "2" : "3";
+            // when env GML_SRS_DIMENSION_IF_MISSING is set
+            dimension = m_nSRSDimensionIfMissing == 3 ? "3" : "2";
         }
 
         CPLCreateXMLNode(psChild, CXT_Text, dimension);
