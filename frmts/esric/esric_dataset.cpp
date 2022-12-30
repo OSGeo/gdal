@@ -525,7 +525,6 @@ void CPL_DLL GDALRegister_ESRIC()
 
     poDriver->SetDescription("ESRIC");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Esri Compact Cache");
 
