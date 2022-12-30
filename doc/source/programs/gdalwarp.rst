@@ -506,6 +506,12 @@ where cutline.csv content is like:
     gdalwarp -overwrite in_dem.tif out_dem.tif -s_srs EPSG:4326+5773 -t_srs EPSG:4979
 
 
+C API
+-----
+
+This utility is also callable from C with :cpp:func:`GDALWarp`.
+
+
 See also
 --------
 

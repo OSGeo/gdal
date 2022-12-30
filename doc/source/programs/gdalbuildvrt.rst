@@ -236,3 +236,8 @@ Examples
 ::
 
     gdalbuildvrt -hidenodata -vrtnodata "0 0 255" doq_index.vrt doq/*.tif
+
+C API
+-----
+
+This utility is also callable from C with :cpp:func:`GDALBuildVRT`.
