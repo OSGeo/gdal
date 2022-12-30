@@ -238,6 +238,12 @@ struct GDALWarpAppOptions
 
     /*! Whether to disable vertical shift adjustment */
     bool bNoVShift = false;
+
+    /*! Source bands */
+    std::vector<int> anSrcBands{};
+
+    /*! Destination bands */
+    std::vector<int> anDstBands{};
 };
 
 static CPLErr LoadCutline(const std::string &osCutlineDSName,
@@ -1849,7 +1855,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
 
         for (int i = 0; !bHaveNodata && i < psWO->nBandCount; i++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hWrkSrcDS, i + 1);
+            GDALRasterBandH hBand =
+                GDALGetRasterBand(hWrkSrcDS, psWO->panSrcBands[i]);
             dfReal = GDALGetRasterNoDataValue(hBand, &bHaveNodata);
         }
 
@@ -1871,7 +1878,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
 
             for (int i = 0; i < psWO->nBandCount; i++)
             {
-                GDALRasterBandH hBand = GDALGetRasterBand(hWrkSrcDS, i + 1);
+                GDALRasterBandH hBand =
+                    GDALGetRasterBand(hWrkSrcDS, psWO->panSrcBands[i]);
 
                 dfReal = GDALGetRasterNoDataValue(hBand, &bHaveNodata);
 
@@ -1950,7 +1958,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                 }
             }
 
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, i + 1);
+            GDALRasterBandH hBand =
+                GDALGetRasterBand(hDstDS, psWO->panDstBands[i]);
             int bClamped = FALSE;
             int bRounded = FALSE;
             psWO->padfDstNoDataReal[i] = GDALAdjustValueToDataType(
@@ -1963,7 +1972,7 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                     CE_Warning, CPLE_AppDefined,
                     "for band %d, destination nodata value has been clamped "
                     "to %.0f, the original value being out of range.",
-                    i + 1, psWO->padfDstNoDataReal[i]);
+                    psWO->panDstBands[i], psWO->padfDstNoDataReal[i]);
             }
             else if (bRounded)
             {
@@ -1971,7 +1980,7 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                     CE_Warning, CPLE_AppDefined,
                     "for band %d, destination nodata value has been rounded "
                     "to %.0f, %s being an integer datatype.",
-                    i + 1, psWO->padfDstNoDataReal[i],
+                    psWO->panDstBands[i], psWO->padfDstNoDataReal[i],
                     GDALGetDataTypeName(GDALGetRasterDataType(hBand)));
             }
 
@@ -1992,7 +2001,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
         int bHaveNodataAll = TRUE;
         for (int i = 0; i < psWO->nBandCount; i++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, i + 1);
+            GDALRasterBandH hBand =
+                GDALGetRasterBand(hDstDS, psWO->panDstBands[i]);
             int bHaveNodata = FALSE;
             GDALGetRasterNoDataValue(hBand, &bHaveNodata);
             bHaveNodataAll &= bHaveNodata;
@@ -2003,7 +2013,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
                 CPLMalloc(psWO->nBandCount * sizeof(double)));
             for (int i = 0; i < psWO->nBandCount; i++)
             {
-                GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, i + 1);
+                GDALRasterBandH hBand =
+                    GDALGetRasterBand(hDstDS, psWO->panDstBands[i]);
                 int bHaveNodata = FALSE;
                 psWO->padfDstNoDataReal[i] =
                     GDALGetRasterNoDataValue(hBand, &bHaveNodata);
@@ -2021,7 +2032,8 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
     {
         for (int i = 0; i < psWO->nBandCount; i++)
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, i + 1);
+            GDALRasterBandH hBand =
+                GDALGetRasterBand(hDstDS, psWO->panDstBands[i]);
             int bHaveNodata = FALSE;
             CPLPushErrorHandler(CPLQuietErrorHandler);
             bool bRedefinedOK =
@@ -2770,10 +2782,17 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /*      Setup band mapping. */
         /* --------------------------------------------------------------------
          */
-        if (bEnableSrcAlpha)
-            psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS) - 1;
+        if (psOptions->anSrcBands.empty())
+        {
+            if (bEnableSrcAlpha)
+                psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS) - 1;
+            else
+                psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS);
+        }
         else
-            psWO->nBandCount = GDALGetRasterCount(hWrkSrcDS);
+        {
+            psWO->nBandCount = static_cast<int>(psOptions->anSrcBands.size());
+        }
 
         const int nNeededDstBands =
             psWO->nBandCount + (bEnableDstAlpha ? 1 : 0);
@@ -2795,11 +2814,47 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             static_cast<int *>(CPLMalloc(psWO->nBandCount * sizeof(int)));
         psWO->panDstBands =
             static_cast<int *>(CPLMalloc(psWO->nBandCount * sizeof(int)));
-
-        for (int i = 0; i < psWO->nBandCount; i++)
+        if (psOptions->anSrcBands.empty())
         {
-            psWO->panSrcBands[i] = i + 1;
-            psWO->panDstBands[i] = i + 1;
+            for (int i = 0; i < psWO->nBandCount; i++)
+            {
+                psWO->panSrcBands[i] = i + 1;
+                psWO->panDstBands[i] = i + 1;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < psWO->nBandCount; i++)
+            {
+                if (psOptions->anSrcBands[i] <= 0 ||
+                    psOptions->anSrcBands[i] > GDALGetRasterCount(hSrcDS))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "-srcband[%d] = %d is invalid", i,
+                             psOptions->anSrcBands[i]);
+                    GDALDestroyTransformer(hTransformArg);
+                    GDALDestroyWarpOptions(psWO);
+                    OGR_G_DestroyGeometry(hCutline);
+                    GDALReleaseDataset(hWrkSrcDS);
+                    GDALReleaseDataset(hDstDS);
+                    return nullptr;
+                }
+                if (psOptions->anDstBands[i] <= 0 ||
+                    psOptions->anDstBands[i] > GDALGetRasterCount(hDstDS))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "-dstband[%d] = %d is invalid", i,
+                             psOptions->anDstBands[i]);
+                    GDALDestroyTransformer(hTransformArg);
+                    GDALDestroyWarpOptions(psWO);
+                    OGR_G_DestroyGeometry(hCutline);
+                    GDALReleaseDataset(hWrkSrcDS);
+                    GDALReleaseDataset(hDstDS);
+                    return nullptr;
+                }
+                psWO->panSrcBands[i] = psOptions->anSrcBands[i];
+                psWO->panDstBands[i] = psOptions->anDstBands[i];
+            }
         }
 
         /* --------------------------------------------------------------------
@@ -2811,7 +2866,13 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             psWO->nSrcAlphaBand = GDALGetRasterCount(hWrkSrcDS);
 
         if (bEnableDstAlpha)
-            psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
+        {
+            if (psOptions->anSrcBands.empty())
+                psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
+            else
+                psWO->nDstAlphaBand =
+                    static_cast<int>(psOptions->anDstBands.size()) + 1;
+        }
 
         /* --------------------------------------------------------------------
          */
@@ -3448,7 +3509,6 @@ static GDALDatasetH GDALWarpCreateOutput(
          */
         if (iSrc == 0)
         {
-            nDstBandCount = GDALGetRasterCount(hSrcDS);
             hCT = GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1));
             if (hCT != nullptr)
             {
@@ -3458,11 +3518,52 @@ static GDALDatasetH GDALWarpCreateOutput(
                            GDALGetDescription(hSrcDS));
             }
 
-            for (int iBand = 0; iBand < nDstBandCount; iBand++)
+            if (psOptions->anDstBands.empty())
             {
-                GDALColorInterp eInterp = GDALGetRasterColorInterpretation(
-                    GDALGetRasterBand(hSrcDS, iBand + 1));
-                apeColorInterpretations.push_back(eInterp);
+                nDstBandCount = GDALGetRasterCount(hSrcDS);
+                for (int iBand = 0; iBand < nDstBandCount; iBand++)
+                {
+                    if (psOptions->anDstBands.empty())
+                    {
+                        GDALColorInterp eInterp =
+                            GDALGetRasterColorInterpretation(
+                                GDALGetRasterBand(hSrcDS, iBand + 1));
+                        apeColorInterpretations.push_back(eInterp);
+                    }
+                }
+
+                // Do we want to generate an alpha band in the output file?
+                if (psOptions->bEnableSrcAlpha)
+                    nDstBandCount--;
+
+                if (psOptions->bEnableDstAlpha)
+                    nDstBandCount++;
+            }
+            else
+            {
+                for (int nSrcBand : psOptions->anSrcBands)
+                {
+                    auto hBand = GDALGetRasterBand(hSrcDS, nSrcBand);
+                    GDALColorInterp eInterp =
+                        hBand ? GDALGetRasterColorInterpretation(hBand)
+                              : GCI_Undefined;
+                    apeColorInterpretations.push_back(eInterp);
+                }
+                nDstBandCount = static_cast<int>(psOptions->anDstBands.size());
+                if (psOptions->bEnableDstAlpha)
+                {
+                    nDstBandCount++;
+                    apeColorInterpretations.push_back(GCI_AlphaBand);
+                }
+                else if (GDALGetRasterCount(hSrcDS) &&
+                         GDALGetRasterColorInterpretation(GDALGetRasterBand(
+                             hSrcDS, GDALGetRasterCount(hSrcDS))) ==
+                             GCI_AlphaBand &&
+                         !psOptions->bDisableSrcAlpha)
+                {
+                    nDstBandCount++;
+                    apeColorInterpretations.push_back(GCI_AlphaBand);
+                }
             }
         }
 
@@ -4001,15 +4102,6 @@ static GDALDatasetH GDALWarpCreateOutput(
         adfDstGeoTransform[5] = -psOptions->dfYRes;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Do we want to generate an alpha band in the output file?        */
-    /* -------------------------------------------------------------------- */
-    if (psOptions->bEnableSrcAlpha)
-        nDstBandCount--;
-
-    if (psOptions->bEnableDstAlpha)
-        nDstBandCount++;
-
     if (EQUAL(pszFormat, "GTiff"))
     {
 
@@ -4159,18 +4251,24 @@ static GDALDatasetH GDALWarpCreateOutput(
 
         for (int i = 0; i < nBandsToCopy; i++)
         {
-            auto poSrcBand = poSrcDS->GetRasterBand(i + 1);
-            auto poDstBand = poDstDS->GetRasterBand(i + 1);
+            auto poSrcBand = poSrcDS->GetRasterBand(
+                psOptions->anSrcBands.empty() ? i + 1
+                                              : psOptions->anSrcBands[i]);
+            auto poDstBand = poDstDS->GetRasterBand(
+                psOptions->anDstBands.empty() ? i + 1
+                                              : psOptions->anDstBands[i]);
+            if (poSrcBand && poDstBand)
+            {
+                int bHasScale = FALSE;
+                const double dfScale = poSrcBand->GetScale(&bHasScale);
+                if (bHasScale)
+                    poDstBand->SetScale(dfScale);
 
-            int bHasScale = FALSE;
-            const double dfScale = poSrcBand->GetScale(&bHasScale);
-            if (bHasScale)
-                poDstBand->SetScale(dfScale);
-
-            int bHasOffset = FALSE;
-            const double dfOffset = poSrcBand->GetOffset(&bHasOffset);
-            if (bHasOffset)
-                poDstBand->SetOffset(dfOffset);
+                int bHasOffset = FALSE;
+                const double dfOffset = poSrcBand->GetOffset(&bHasOffset);
+                if (bHasOffset)
+                    poDstBand->SetOffset(dfOffset);
+            }
         }
     }
 
@@ -5150,6 +5248,18 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
         }
 
+        else if ((EQUAL(papszArgv[i], "-srcband") ||
+                  EQUAL(papszArgv[i], "-b")) &&
+                 i + 1 < argc)
+        {
+            psOptions->anSrcBands.push_back(atoi(papszArgv[++i]));
+        }
+
+        else if (EQUAL(papszArgv[i], "-dstband") && i + 1 < argc)
+        {
+            psOptions->anDstBands.push_back(atoi(papszArgv[++i]));
+        }
+
         else if (papszArgv[i][0] == '-')
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
@@ -5172,6 +5282,21 @@ GDALWarpAppOptionsNew(char **papszArgv,
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "-srcalpha and -nosrcalpha cannot be used together");
         return nullptr;
+    }
+
+    if (!psOptions->anDstBands.empty() &&
+        psOptions->anSrcBands.size() != psOptions->anDstBands.size())
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "-srcband should be specified as many times as -dstband is");
+        return nullptr;
+    }
+    else if (!psOptions->anSrcBands.empty() && psOptions->anDstBands.empty())
+    {
+        for (int i = 0; i < static_cast<int>(psOptions->anSrcBands.size()); ++i)
+        {
+            psOptions->anDstBands.push_back(i + 1);
+        }
     }
 
     if (psOptionsForBinary)
