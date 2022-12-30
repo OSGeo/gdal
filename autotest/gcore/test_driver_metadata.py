@@ -378,6 +378,18 @@ schema_multidim_dimension_creationoptionslist_xml = etree.XML(
 
 
 @pytest.mark.parametrize("driver_name", all_driver_names)
+def test_metadata_dcap_yes(driver_name):
+    """Test that the only value of DCAP_ elements is YES"""
+
+    driver = gdal.GetDriverByName(driver_name)
+    md = driver.GetMetadata()
+    for key in md:
+        if key.startswith("DCAP_"):
+            value = md[key]
+            assert value == "YES", (key, value)
+
+
+@pytest.mark.parametrize("driver_name", all_driver_names)
 def test_metadata_openoptionlist(driver_name):
     """Test if DMD_OPENOPTIONLIST metadataitem is present and can be parsed"""
 
