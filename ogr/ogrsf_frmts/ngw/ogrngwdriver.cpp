@@ -581,8 +581,6 @@ void RegisterOGRNGW()
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time");
-    poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "NO");
-    poDriver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_RENAME_LAYERS, "YES");
