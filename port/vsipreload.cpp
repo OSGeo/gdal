@@ -426,6 +426,7 @@ static bool GET_DEBUG_VSIPRELOAD_COND(VSILFILE *fpVSIL)
 {
     // cppcheck-suppress knownConditionTrueFalse
     return DEBUG_VSIPRELOAD &&
+           // cppcheck-suppress knownConditionTrueFalse
            (!DEBUG_VSIPRELOAD_ONLY_VSIL || fpVSIL != nullptr);
 }
 

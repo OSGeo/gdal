@@ -317,7 +317,7 @@ char **GDALOrientedDataset::GetMetadata(const char *pszDomain)
         }
         return m_aosSrcMD.List();
     }
-    if (pszDomain != nullptr && EQUAL(pszDomain, "EXIF"))
+    if (EQUAL(pszDomain, "EXIF"))
     {
         if (m_aosSrcMD_EXIF.empty())
         {

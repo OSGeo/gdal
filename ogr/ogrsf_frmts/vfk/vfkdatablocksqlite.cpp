@@ -457,8 +457,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
 
         /* store also geometry in DB */
         if (poReader->IsSpatial() &&
-            SaveGeometryToDB(poOgrGeometry, rowId) != OGRERR_FAILURE &&
-            poOgrGeometry)
+            SaveGeometryToDB(poOgrGeometry, rowId) != OGRERR_FAILURE)
             nGeometries++;
     }
 
