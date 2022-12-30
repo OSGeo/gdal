@@ -734,25 +734,29 @@ def test_ogr_gml_15():
 
 
 ###############################################################################
-# Read CityGML generic attributes
+# Read CityGML generic attributes and reading 3D geometries by default
 
 
-def test_ogr_gml_16():
+def test_ogr_gml_city_gml():
 
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
     ds = ogr.Open("data/gml/citygml.gml")
     lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
     feat = lyr.GetNextFeature()
 
-    if (
-        feat.GetField("Name_") != "aname"
-        or feat.GetField("a_int_attr") != 2
-        or feat.GetField("a_double_attr") != 3.45
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected values")
+    assert feat.GetField("Name_") == "aname"
+    assert feat.GetField("a_int_attr") == 2
+    assert feat.GetField("a_double_attr") == 3.45
+    assert (
+        feat.GetGeometryRef().ExportToIsoWkt()
+        == "MULTIPOLYGON Z (((0 0 0,0.0 0.5 0,0 1 0,1 1 0,1 0 0,0 0 0)))"
+    )
+    ds = None
+
+    gdal.Unlink("data/gml/citygml.gfs")
 
 
 ###############################################################################
