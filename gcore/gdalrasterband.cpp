@@ -5301,8 +5301,9 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
     }
 };
 
-#endif  // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) ||
-        // defined(_MSC_VER))
+#endif
+// (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) ||
+// defined(_MSC_VER))
 
 #endif  // CPL_HAS_GINT64
 

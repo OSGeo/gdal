@@ -105,9 +105,8 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<int>
         m_anMapFieldIndexToArrayIndex{};  // only valid when m_bIgnoredFields is
                                           // set
-    std::vector<int>
-        m_anMapGeomFieldIndexToArrayIndex{};  // only valid when
-                                              // m_bIgnoredFields is set
+    std::vector<int> m_anMapGeomFieldIndexToArrayIndex{};  // only valid when
+        // m_bIgnoredFields is set
     int m_nRequestedFIDColumn = -1;  // only valid when m_bIgnoredFields is set
 
     bool m_bEOF = false;

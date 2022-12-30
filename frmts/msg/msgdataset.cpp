@@ -124,7 +124,7 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (sErr.compare("-") !=
             0)  // this driver does not recognize this format .. be silent and
-                // return false so that another driver can try
+            // return false so that another driver can try
             CPLError(CE_Failure, CPLE_AppDefined, "%s", (sErr + "\n").c_str());
         return nullptr;
     }

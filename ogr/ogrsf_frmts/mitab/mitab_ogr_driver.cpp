@@ -222,7 +222,7 @@ void RegisterOGRTAB()
         "  <Option name='DESCRIPTION' type='string' "
         "description='Friendly name of table. Only for tab "
         "format.'/>"  // See
-                      // https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US
+        // https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(

@@ -572,9 +572,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool m_bFeatureCountTriggersDeletedInTransaction = false;
 #endif
     CPLString m_soColumns{};
-    std::vector<bool>
-        m_abGeneratedColumns{};  // .size() ==
-                                 // m_poFeatureDefn->GetFieldDefnCount()
+    std::vector<bool> m_abGeneratedColumns{};  // .size() ==
+        // m_poFeatureDefn->GetFieldDefnCount()
     CPLString m_soFilter{};
     CPLString osQuery{};
     CPLString m_osRTreeName{};

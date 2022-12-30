@@ -3592,13 +3592,15 @@ typedef struct
     int EOLcnt;                               /* # EOL codes recognized */     \
     const unsigned char *bitmap = sp->bitmap; /* input data bit reverser */    \
     const TIFFFaxTabEnt *TabEnt
+
 #define DECLARE_STATE_2D(tif, sp, mod)                                         \
     DECLARE_STATE(tif, sp, mod);                                               \
-    int b1; /* next change on prev line */                                     \
-    GUInt32 *pb /* next run in reference line */ /*                            \
-                                                  * Load any state that may be \
-                                                  * changed during decoding.   \
-                                                  */
+    int b1;     /* next change on prev line */                                 \
+    GUInt32 *pb /* next run in reference line */
+
+/**
+ * Load any state that may be hanged during decoding.
+ */
 #define CACHE_STATE(sp)                                                        \
     do                                                                         \
     {                                                                          \

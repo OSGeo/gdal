@@ -616,9 +616,8 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->m_Shape = WHOLE_DISK;
         }
         else if (idr.plannedCoverage_visir.northernLinePlanned ==
-                     idr.referencegrid_visir
-                         .numberOfLines &&  // start at max N
-                                            // full expected width
+                     idr.referencegrid_visir.numberOfLines &&  // start at max N
+                 // full expected width
                  idr.plannedCoverage_visir.westernColumnPlanned ==
                      idr.plannedCoverage_visir.easternColumnPlanned +
                          nRawVisIRColumns - 1 &&

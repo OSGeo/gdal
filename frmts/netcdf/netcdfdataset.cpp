@@ -8681,9 +8681,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (NCDF_FORMAT_NONE == poDS->eFormat ||
                 NCDF_FORMAT_UNKNOWN == poDS->eFormat)
             {
-                CPLReleaseMutex(
-                    hNCMutex);  // Release mutex otherwise we'll
-                                // deadlock with GDALDataset own mutex.
+                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                    // deadlock with GDALDataset own mutex.
                 delete poDS;
                 CPLAcquireMutex(hNCMutex, 1000.0);
                 return nullptr;

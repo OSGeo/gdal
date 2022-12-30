@@ -1073,8 +1073,8 @@ static int qh_compare_anglemerge();
 #pragma warning(push)
 #pragma warning(disable : 4324)
 #pragma warning(disable : 4032)
-#pragma warning(disable : 4306) /* e.g 'type cast' : conversion from 'long' to \
-                                   'facetT *' of greater size */
+// 4306: e.g 'type cast' : conversion from 'long' to 'facetT *' of greater size
+#pragma warning(disable : 4306)
 #pragma warning(disable : 4701)
 #pragma warning(disable : 4703)
 #endif

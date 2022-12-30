@@ -280,7 +280,7 @@ class IliClass
                 }
                 else if (EQUAL(typeName, "IlisMeta07.ModelData.NumType"))
                 {  //// Unit INTERLIS.ANYUNIT, INTERLIS.TIME, INTERLIS.h,
-                   /// INTERLIS.min, INTERLIS.s, INTERLIS.M, INTERLIS.d
+                    /// INTERLIS.min, INTERLIS.s, INTERLIS.M, INTERLIS.d
                     AddField(psName, OFTReal);
                 }
                 else if (EQUAL(typeName, "IlisMeta07.ModelData.BlackboxType"))

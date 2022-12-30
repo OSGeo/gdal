@@ -888,9 +888,9 @@ class CPL_DLL OGRFeature
 
       public:
         //! @cond Doxygen_Suppress
-        ConstFieldIterator(ConstFieldIterator &&
-                               oOther) noexcept;  // declared but not defined.
-                                                  // Needed for gcc 5.4 at least
+        ConstFieldIterator(
+            ConstFieldIterator &&oOther) noexcept;  // declared but not defined.
+        // Needed for gcc 5.4 at least
         ~ConstFieldIterator();
         const FieldValue &operator*() const;
         ConstFieldIterator &operator++();
