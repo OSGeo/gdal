@@ -10,7 +10,9 @@
     <trans:Road gml:id="id1">
       <gml:name>aname</gml:name>
       <gml:boundedBy>
-        <gml:Envelope srsDimension="3" srsName="urn:ogc:def:crs,crs:EPSG:6.12:3068,crs:EPSG:6.12:5783">
+        <!-- Do not specify srsDimension="3" so we check we can default to it for CityGML (#6989) -->
+        <!--<gml:Envelope srsDimension="3" srsName="urn:ogc:def:crs,crs:EPSG:6.12:3068,crs:EPSG:6.12:5783">-->
+        <gml:Envelope>
           <gml:lowerCorner>0 0 0</gml:lowerCorner>
           <gml:upperCorner>1 1 0</gml:upperCorner>
         </gml:Envelope>
@@ -31,7 +33,7 @@
             <gml:Polygon gml:id="id3">
               <gml:exterior>
                 <gml:LinearRing gml:id="id4">
-                    <gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 1 0 0 0 0 0</gml:posList>
+                    <gml:posList>0 0 0 0 0.5 0 0 1 0 1 1 0 1 0 0 0 0 0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
