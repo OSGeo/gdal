@@ -1273,6 +1273,9 @@ class OGRGMLASDataSource final : public GDALDataset
 
     std::vector<PairURIFilename> m_aoXSDsManuallyPassed;
 
+    /** Default value for srsDimension attribute. */
+    int m_nDefaultSrsDimension = 0;
+
     GMLASConfiguration m_oConf;
 
     /** Schema cache */
@@ -1632,6 +1635,12 @@ class GMLASReader final : public DefaultHandler
     /** Current XML nesting level */
     int m_nLevel;
 
+    /** Whether we are in a gml:boundedBy element at level 1 */
+    bool m_bInGMLBoundedByLevel1 = false;
+
+    /** Default value for srsDimension attribute. */
+    int m_nDefaultSrsDimension = 0;
+
     /** Map layer to global FID */
     std::map<OGRLayer *, int> m_oMapGlobalCounter;
 
@@ -1892,6 +1901,15 @@ class GMLASReader final : public DefaultHandler
     void SetMapElementIdToPKID(const std::map<CPLString, CPLString> &oMap)
     {
         m_oMapElementIdToPKID = oMap;
+    }
+
+    int GetDefaultSrsDimension() const
+    {
+        return m_nDefaultSrsDimension;
+    }
+    void SetDefaultSrsDimension(int nDim)
+    {
+        m_nDefaultSrsDimension = nDim;
     }
 
     void SetHash(const CPLString &osHash)

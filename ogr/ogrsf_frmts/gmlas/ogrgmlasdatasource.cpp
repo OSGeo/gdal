@@ -1243,6 +1243,7 @@ void OGRGMLASDataSource::InitReaderWithFirstPassElements(GMLASReader *poReader)
         poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
         poReader->SetMapElementIdToLayer(m_oMapElementIdToLayer);
         poReader->SetMapElementIdToPKID(m_oMapElementIdToPKID);
+        poReader->SetDefaultSrsDimension(m_nDefaultSrsDimension);
     }
 }
 
@@ -1407,6 +1408,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
 
         m_oMapElementIdToLayer = poReaderFirstPass->GetMapElementIdToLayer();
         m_oMapElementIdToPKID = poReaderFirstPass->GetMapElementIdToPKID();
+        m_nDefaultSrsDimension = poReaderFirstPass->GetDefaultSrsDimension();
 
         delete poReaderFirstPass;
 

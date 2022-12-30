@@ -1250,6 +1250,28 @@ void GMLASReader::startElement(const XMLCh *const uri,
         return;
     }
 
+    if (m_bInitialPass)
+    {
+        // Collect the gml:boundedBy/gml:Envelope@srsDimension attribute
+        if (m_bInGMLBoundedByLevel1 && m_nLevel == 2 &&
+            m_osXPath == "gml:Envelope")
+        {
+            for (unsigned int i = 0; i < attrs.getLength(); i++)
+            {
+                const CPLString &osAttrLocalname(
+                    transcode(attrs.getLocalName(i), m_osAttrLocalName));
+                if (osAttrLocalname == "srsDimension")
+                {
+                    const CPLString &osAttrValue(
+                        transcode(attrs.getValue(i), m_osAttrValue));
+                    m_nDefaultSrsDimension = atoi(osAttrValue.c_str());
+                }
+            }
+        }
+        m_bInGMLBoundedByLevel1 =
+            (m_nLevel == 1 && m_osXPath == "gml:boundedBy");
+    }
+
     CPLAssert(m_aoFeaturesReady.empty());
 
     // Look which layer might match the current XPath
@@ -2957,6 +2979,33 @@ static const char *GMLASGetSRSName(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
+/*                    AddMissingSRSDimension()                          */
+/************************************************************************/
+
+static void AddMissingSRSDimension(CPLXMLNode *psRoot, int nDefaultSrsDimension)
+{
+    for (CPLXMLNode *psIter = psRoot->psChild; psIter; psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Element)
+        {
+            if (CPLGetXMLValue(psIter, "srsDimension", nullptr) == nullptr)
+            {
+                if (strcmp(psIter->pszValue, "gml:posList") == 0)
+                {
+                    CPLAddXMLAttributeAndValue(
+                        psIter, "srsDimension",
+                        CPLSPrintf("%d", nDefaultSrsDimension));
+                }
+                else
+                {
+                    AddMissingSRSDimension(psIter, nDefaultSrsDimension);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                            ProcessGeometry()                         */
 /************************************************************************/
 
@@ -2993,6 +3042,12 @@ void GMLASReader::ProcessGeometry(CPLXMLNode *psRoot)
             }
         }
         return;
+    }
+
+    if (m_nDefaultSrsDimension != 0 &&
+        CPLGetXMLValue(psRoot, "srsDimension", nullptr) == nullptr)
+    {
+        AddMissingSRSDimension(psRoot, m_nDefaultSrsDimension);
     }
 
 #ifdef DEBUG_VERBOSE

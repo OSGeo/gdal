@@ -3416,3 +3416,18 @@ def test_ogr_gmlas_schema_not_in_ogc_schema_location():
         is not None
     )
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test reading a file with srsDimension="3" only on top gml:Envelope (#6986)
+
+
+def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
+
+    ds = gdal.OpenEx("GMLAS:data/gmlas/global_srsDimension_3.gml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert (
+        f.GetGeometryRef().ExportToIsoWkt()
+        == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
+    )
