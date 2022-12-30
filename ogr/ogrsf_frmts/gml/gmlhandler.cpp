@@ -1370,6 +1370,9 @@ OGRErr GMLHandler::startElementTop(const char *pszName, int /*nLenName*/,
     if (strcmp(pszName, "CityModel") == 0)
     {
         eAppSchemaType = APPSCHEMA_CITYGML;
+        // Default to 3D geometries for CityGML (#6989)
+        if (m_nSRSDimensionIfMissing == 0)
+            m_nSRSDimensionIfMissing = 3;
     }
     else if (strcmp(pszName, "AIXMBasicMessage") == 0)
     {
