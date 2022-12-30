@@ -4496,3 +4496,21 @@ def test_ogr_gml_read_feature_with_gml_description():
     assert f["identifier"] == "gml_identifier"
     assert f["name"] == "gml_name"
     assert f["bar"] == 1
+
+
+###############################################################################
+# Test reading a file with srsDimension="3" only on top gml:Envelope (#6986)
+
+
+def test_ogr_gml_read_srsDimension_3_on_top_gml_Envelope():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = gdal.OpenEx("data/gml/global_srsDimension_3.gml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert (
+        f.GetGeometryRef().ExportToIsoWkt()
+        == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
+    )
