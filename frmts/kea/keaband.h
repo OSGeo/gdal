@@ -52,9 +52,8 @@ class KEARasterBand CPL_NON_FINAL : public GDALPamRasterBand
     GDALRasterAttributeTable *m_pAttributeTable =
         nullptr;  // pointer to the attribute table
                   // created on first call to GetDefaultRAT()
-    GDALColorTable *m_pColorTable =
-        nullptr;  // pointer to the color table
-                  // created on first call to GetColorTable()
+    GDALColorTable *m_pColorTable = nullptr;  // pointer to the color table
+        // created on first call to GetColorTable()
 
     int m_nAttributeChunkSize = 0;  // for reporting via the metadata
   public:

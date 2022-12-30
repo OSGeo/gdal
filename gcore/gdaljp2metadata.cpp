@@ -1036,16 +1036,16 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
                 m_oSRS = oSRS;
         }
-        else if (
-            (STARTS_WITH_CI(pszSRSName, "urn:") &&
-             strstr(pszSRSName, ":def:") != nullptr &&
-             oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
-            /* GMLJP2 v2.0 uses CRS URL instead of URN */
-            /* See e.g.
+        else if ((STARTS_WITH_CI(pszSRSName, "urn:") &&
+                  strstr(pszSRSName, ":def:") != nullptr &&
+                  oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
+                 /* GMLJP2 v2.0 uses CRS URL instead of URN */
+                 /* See e.g.
                http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml
              */
-            (STARTS_WITH_CI(pszSRSName, "http://www.opengis.net/def/crs/") &&
-             oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE))
+                 (STARTS_WITH_CI(pszSRSName,
+                                 "http://www.opengis.net/def/crs/") &&
+                  oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE))
         {
             m_oSRS = oSRS;
 

@@ -139,7 +139,7 @@ void *SectorCache::data(size_t address)
     }
     else
     {  // Choose a random one to replace, but not the last used, to avoid
-       // thrashing
+        // thrashing
         do
         {
             // coverity[dont_call]
@@ -251,7 +251,7 @@ CPLErr WMSMiniDriver_MRF::EndInit()
     }
     else
     {  // Not provided, change extension to .idx if we can, otherwise use the
-       // same file
+        // same file
         m_idxname = m_base_url;
     }
 

@@ -198,11 +198,10 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(                                                               \
-    disable : 4250)  // warning C4250: 'MEMMDArray': inherits
-                     // 'MEMAbstractMDArray::MEMAbstractMDArray::IRead'
-                     // via dominance
-#endif               //_MSC_VER
+// warning C4250: 'MEMMDArray': inherits
+// 'MEMAbstractMDArray::MEMAbstractMDArray::IRead' via dominance
+#pragma warning(disable : 4250)
+#endif  //_MSC_VER
 
 class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray, public GDALMDArray
 {

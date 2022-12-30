@@ -59,11 +59,12 @@ class OGRWarpedLayer : public OGRLayerDecorator
     OGRFeature *WarpedFeatureToSrcFeature(OGRFeature *poFeature);
 
   public:
-    OGRWarpedLayer(OGRLayer* poDecoratedLayer,
-                                      int iGeomField,
-                                      int bTakeOwnership,
-                                      OGRCoordinateTransformation* poCT,  /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
-                                      OGRCoordinateTransformation* poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
+    OGRWarpedLayer(
+        OGRLayer *poDecoratedLayer, int iGeomField, int bTakeOwnership,
+        OGRCoordinateTransformation
+            *poCT, /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
+        OGRCoordinateTransformation *
+            poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
     virtual ~OGRWarpedLayer();
 
     void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);

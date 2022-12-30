@@ -4549,7 +4549,7 @@ void GDALSlicedMDArray::PrepareParentArrays(
                 m_parentStep[iParent] =
                     count[i] == 1 ? 1 :
                                   // other checks should have ensured this does
-                                  // not overflow
+                        // not overflow
                         arrayStep[i] * m_parentRanges[iParent].m_nIncr;
             }
             if (bufferStride)
