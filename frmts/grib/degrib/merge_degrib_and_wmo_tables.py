@@ -14,7 +14,7 @@ import requests
 
 # URL of the WMO GRIB2 tables repository
 wmo_github_repo = "wmo-im/GRIB2"
-wmo_github_tag = "v28.1"
+wmo_github_tag = "v30"
 wmo_base_url = f"https://raw.githubusercontent.com/{wmo_github_repo}/{wmo_github_tag}"
 
 script_dir_name = os.path.dirname(os.path.realpath(__file__))
@@ -73,9 +73,10 @@ def process_table_4_5():
         "Value",
         "MeaningParameterDescription_en",
         "Note_en",
+        "noteIDs",
         "UnitComments_en",
         "Status",
-    ]
+    ], wmo_csv_reader.fieldnames
     wmo_records = [None for i in range(256)]
     for row in wmo_csv_reader:
         code = row["CodeFlag"]
@@ -158,9 +159,10 @@ def get_auxiliary_table(num):
         "Value",
         "MeaningParameterDescription_en",
         "Note_en",
+        "noteIDs",
         "UnitComments_en",
         "Status",
-    ]
+    ], wmo_csv_reader.fieldnames
     ret = ""
     for row in wmo_csv_reader:
         if ret:
@@ -190,9 +192,10 @@ def process_table_4_2():
         "Value",
         "MeaningParameterDescription_en",
         "Note_en",
+        "noteIDs",
         "UnitComments_en",
         "Status",
-    ]
+    ], wmo_csv_reader.fieldnames
 
     # dict_tables has as key a subtable (by product discipline and category)
     # and as value a table of 256 entries with the subcategory as index
@@ -216,10 +219,6 @@ def process_table_4_2():
         table = dict_tables[table_name]
 
         code = row["CodeFlag"]
-
-        # See https://github.com/wmo-im/GRIB2/issues/129
-        if product_type == 0 and category == 1 and code == "149-191":
-            code = "150-191"  # patching as there is a record 149
 
         if "-" in code:
             min_val, max_val = code.split("-")

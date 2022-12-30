@@ -672,6 +672,7 @@ set(GDAL_DATA_FILES
     data/grib2_table_4_2_0_19.csv
     data/grib2_table_4_2_0_1.csv
     data/grib2_table_4_2_0_20.csv
+    data/grib2_table_4_2_0_21.csv
     data/grib2_table_4_2_0_2.csv
     data/grib2_table_4_2_0_3.csv
     data/grib2_table_4_2_0_4.csv
@@ -694,6 +695,7 @@ set(GDAL_DATA_FILES
     data/grib2_table_4_2_2_3.csv
     data/grib2_table_4_2_2_4.csv
     data/grib2_table_4_2_2_5.csv
+    data/grib2_table_4_2_2_6.csv
     data/grib2_table_4_2_3_0.csv
     data/grib2_table_4_2_3_1.csv
     data/grib2_table_4_2_3_2.csv
