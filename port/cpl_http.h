@@ -115,6 +115,8 @@ void CPL_DLL CPLHTTPDestroyResult(CPLHTTPResult *psResult);
 void CPL_DLL CPLHTTPDestroyMultiResult(CPLHTTPResult **papsResults, int nCount);
 int CPL_DLL CPLHTTPParseMultipartMime(CPLHTTPResult *psResult);
 
+void CPL_DLL CPLHTTPSetDefaultUserAgent(const char *pszUserAgent);
+
 /* -------------------------------------------------------------------- */
 /* To install an alternate network layer to the default Curl one        */
 /* -------------------------------------------------------------------- */

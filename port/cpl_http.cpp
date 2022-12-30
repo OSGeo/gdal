@@ -494,6 +494,28 @@ static int ProcessFunction(void *p, double dltotal, double dlnow,
 #endif /* def HAVE_CURL */
 
 /************************************************************************/
+/*                     CPLHTTPSetDefaultUserAgent()                     */
+/************************************************************************/
+
+static std::string gosDefaultUserAgent;
+
+/**
+ * \brief Set the default user agent.
+ *
+ * GDAL core will by default call this method with "GDAL/x.y.z" where x.y.z
+ * is the GDAL version number (during driver initialization). Applications may
+ * override it.
+ *
+ * @param pszUserAgent String (or nullptr to cancel the default user agent)
+ *
+ * @since GDAL 3.7
+ */
+void CPLHTTPSetDefaultUserAgent(const char *pszUserAgent)
+{
+    gosDefaultUserAgent = pszUserAgent ? pszUserAgent : "";
+}
+
+/************************************************************************/
 /*                       CPLHTTPGetOptionsFromEnv()                     */
 /************************************************************************/
 
@@ -921,16 +943,19 @@ int CPLHTTPPopFetchCallback(void)
 
 // NOTE: when adding an option below, add it in asAssocEnvVarOptionName[]
 
+// clang-format off
 /**
  * \brief Fetch a document from an url and return in a string.
  *
  * @param pszURL valid URL recognized by underlying download library (libcurl)
  * @param papszOptions option list as a NULL-terminated array of strings. May be
- * NULL. The following options are handled : <ul> <li>CONNECTTIMEOUT=val, where
+ * NULL. The following options are handled : <ul>
+ * <li>CONNECTTIMEOUT=val, where
  * val is in seconds (possibly with decimals). This is the maximum delay for the
  * connection to be established before being aborted (GDAL >= 2.2).</li>
  * <li>TIMEOUT=val, where val is in seconds. This is the maximum delay for the
- * whole request to complete before being aborted.</li> <li>LOW_SPEED_TIME=val,
+ * whole request to complete before being aborted.</li>
+ * <li>LOW_SPEED_TIME=val,
  * where val is in seconds. This is the maximum time where the transfer speed
  * should be below the LOW_SPEED_LIMIT (if not specified 1b/s), before the
  * transfer to be considered too slow and aborted. (GDAL >= 2.1)</li>
@@ -941,31 +966,44 @@ int CPLHTTPPopFetchCallback(void)
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     (GDAL >= 2.2)</li>
  * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY] to specify an authentication scheme
- * to use.</li> <li>USERPWD=userid:password to specify a user and password for
- * authentication</li> <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
+ * to use.</li>
+ * <li>USERPWD=userid:password to specify a user and password for
+ * authentication</li>
+ * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
  * GSS-API delegation. Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the
- * server with a POST request.</li> <li>PROXY=val, to make requests go through a
+ * server with a POST request.</li>
+ * <li>PROXY=val, to make requests go through a
  * proxy server, where val is of the form proxy.server.com:port_number. This
- * option affects both HTTP and HTTPS URLs.</li> <li>HTTPS_PROXY=val (GDAL
+ * option affects both HTTP and HTTPS URLs.</li>
+ * <li>HTTPS_PROXY=val (GDAL
  * >= 2.4), the same meaning as PROXY, but this option is taken into account
- * only for HTTPS URLs.</li> <li>PROXYUSERPWD=val, where val is of the form
- * username:password</li> <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to
- * specify an proxy authentication scheme to use.</li> <li>NETRC=[YES/NO] to
+ * only for HTTPS URLs.</li>
+ * <li>PROXYUSERPWD=val, where val is of the form
+ * username:password</li>
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to
+ * specify an proxy authentication scheme to use.</li>
+ * <li>NETRC=[YES/NO] to
  * enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL
- * >= 1.9.0)</li> <li>FORM_FILE_NAME=val, where val is upload file name. If this
+ * >= 1.9.0)</li>
+ * <li>FORM_FILE_NAME=val, where val is upload file name. If this
  * option and FORM_FILE_PATH present, request type will set to POST.</li>
  * <li>FORM_FILE_PATH=val, where val is upload file path.</li>
  * <li>FORM_KEY_0=val...FORM_KEY_N, where val is name of form item.</li>
  * <li>FORM_VALUE_0=val...FORM_VALUE_N, where val is value of the form
- * item.</li> <li>FORM_ITEM_COUNT=val, where val is count of form items.</li>
+ * item.</li>
+ * <li>FORM_ITEM_COUNT=val, where val is count of form items.</li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2;
- * ...</li> <li>COOKIEFILE=val, where val is file name to read cookies from
- * (GDAL >= 2.4)</li> <li>COOKIEJAR=val, where val is file name to store cookies
- * to (GDAL >= 2.4)</li> <li>MAX_RETRY=val, where val is the maximum number of
+ * ...</li>
+ * <li>COOKIEFILE=val, where val is file name to read cookies from
+ * (GDAL >= 2.4)</li>
+ * <li>COOKIEJAR=val, where val is file name to store cookies
+ * to (GDAL >= 2.4)</li>
+ * <li>MAX_RETRY=val, where val is the maximum number of
  * retry attempts if a 429, 502, 503 or 504 HTTP error occurs. Default is 0.
- * (GDAL >= 2.0)</li> <li>RETRY_DELAY=val, where val is the number of seconds
+ * (GDAL >= 2.0)</li>
+ * <li>RETRY_DELAY=val, where val is the number of seconds
  * between retry attempts. Default is 30. (GDAL >= 2.0)</li>
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
@@ -985,14 +1023,21 @@ int CPLHTTPPopFetchCallback(void)
  * whether the status of the server cert using the "Certificate Status Request"
  * TLS extension (aka. OCSP stapling) should be checked. If this option is
  * enabled but the server does not support the TLS extension, the verification
- * will fail. Default to NO.</li> <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3,
+ * will fail. Default to NO.</li>
+ * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3,
  * Windows only): whether CA certificates from the Windows certificate store.
- * Defaults to NO.</li> <li>TCP_KEEPALIVE=YES/NO (GDAL >= 3.6): whether to
+ * Defaults to NO.</li>
+ * <li>TCP_KEEPALIVE=YES/NO (GDAL >= 3.6): whether to
  * enable TCP keep-alive. Defaults to NO</li> <li>TCP_KEEPIDLE=integer, in
  * seconds (GDAL >= 3.6): keep-alive idle time. Defaults to 60. Only taken into
- * account if TCP_KEEPALIVE=YES.</li> <li>TCP_KEEPINTVL=integer, in seconds
+ * account if TCP_KEEPALIVE=YES.</li>
+ * <li>TCP_KEEPINTVL=integer, in seconds
  * (GDAL >= 3.6): interval time between keep-alive probes. Defaults to 60. Only
  * taken into account if TCP_KEEPALIVE=YES.</li>
+ * <li>USERAGENT=string: value of User-Agent header. Starting with GDAL 3.7,
+ * GDAL core sets it by default (during driver initialization) to GDAL/x.y.z
+ * where x.y.z is the GDAL version number. Applications may override it with the
+ * CPLHTTPSetDefaultUserAgent() function.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
@@ -1000,14 +1045,16 @@ int CPLHTTPPopFetchCallback(void)
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD,
  * PROXYAUTH, NETRC, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
  * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, TCP_KEEPALIVE,
- * TCP_KEEPIDLE, TCP_KEEPINTVL values are searched in the configuration options
+ * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT values are searched in the
+ * configuration options
  * respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
  * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION,
- * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL.
+ * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL,
+ * GDAL_HTTP_USERAGENT
  *
  * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also
  * be used to specify a comma separated list of key: value pairs. This is an
@@ -1024,6 +1071,7 @@ int CPLHTTPPopFetchCallback(void)
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
+// clang-format on
 CPLHTTPResult *CPLHTTPFetch(const char *pszURL, CSLConstList papszOptions)
 {
     return CPLHTTPFetchEx(pszURL, papszOptions, nullptr, nullptr, nullptr,
@@ -2336,10 +2384,13 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     /* Set User-Agent */
     const char *pszUserAgent = CSLFetchNameValue(papszOptions, "USERAGENT");
     if (pszUserAgent == nullptr)
-        pszUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", nullptr);
-    if (pszUserAgent != nullptr)
+        pszUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT",
+                                          gosDefaultUserAgent.c_str());
+    if (pszUserAgent != nullptr && !EQUAL(pszUserAgent, ""))
+    {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_USERAGENT,
                                    pszUserAgent);
+    }
 
     /* NOSIGNAL should be set to true for timeout to work in multithread
      * environments on Unix, requires libcurl 7.10 or more recent.
