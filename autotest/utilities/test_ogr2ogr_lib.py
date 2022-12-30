@@ -480,7 +480,7 @@ def test_ogr2ogr_lib_21():
 ###############################################################################
 
 
-def test_ogr2ogr_clipsrc_no_dst_geom():
+def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 
     if not ogrtest.have_geos():
         pytest.skip()
@@ -491,7 +491,7 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
     ds = gdal.VectorTranslate(
-        tmpfilename, "../ogr/data/poly.shp", options='-f CSV -clipsrc "%s"' % wkt
+        tmpfilename, "../ogr/data/poly.shp", format="CSV", clipSrc=wkt
     )
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
@@ -1030,7 +1030,8 @@ def test_ogr2ogr_lib_t_srs_ignored():
     gdal.PopErrorHandler()
     gdal.Unlink("/vsimem/out.txt")
     assert got_msg == [
-        "Target SRS WGS 84 / UTM zone 31N not taken into account as target driver likely implements on-the-fly reprojection to WGS 84"
+        "Target SRS WGS 84 / UTM zone 31N not taken into account as target driver "
+        "likely implements on-the-fly reprojection to WGS 84"
     ]
 
 
@@ -1102,6 +1103,87 @@ def test_ogr2ogr_lib_spat_srs_geographic():
 
 
 ###############################################################################
+# Test -clipsrc with a clip datasource
+
+
+@pytest.mark.skipif(
+    ogr.GetDriverByName("GPKG") is None, reason="GPKG driver not available"
+)
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+def test_ogr2ogr_lib_clipsrc_datasource():
+
+    # Prepare the data layer to clip
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
+    srcLayer.CreateFeature(f)
+
+    # Prepare the data layers to clip with
+    clip_path = "/vsimem/clip_test.gpkg"
+    clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
+    clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
+    clip_layer.CreateField(ogr.FieldDefn("filter_field", ogr.OFTString))
+    # Overlaps with half the src line
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "half_overlap_line_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((1 1, 1 2, 2 2, 2 1, 1 1))"))
+    clip_layer.CreateFeature(f)
+    # Doesn't overlap at all
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "no_overlap_no_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((5 5, 5 6, 6 6, 6 5, 5 5))"))
+    clip_layer.CreateFeature(f)
+    # Feature not to clip with
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "exact_overlap_full_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
+    clip_layer.CreateFeature(f)
+    clip_ds = None
+
+    # Test clip with 'half_overlap_line_result' using sql statement
+    sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_ds = gdal.VectorTranslate(
+        "", srcDS, format="Memory", clipSrc=clip_path, clipSrcSQL=sql
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
+    dst_ds = None
+
+    # Test clip with the "exact_overlap_full_result" using clipSrcLayer + clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        clipSrc=clip_path,
+        clipSrcLayer="cliptest",
+        clipSrcWhere="filter_field = 'exact_overlap_full_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
+    dst_ds = None
+
+    # Test clip with the "no_overlap_no_result" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        clipSrc=clip_path,
+        clipSrcWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+
+    # Cleanup
+    gdal.Unlink(clip_path)
+
+
+###############################################################################
 # Test -clipsrc and intersection being of a lower dimensionality
 
 
@@ -1118,10 +1200,92 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 1)"))
     srcLayer.CreateFeature(f)
 
-    # Intersection of above geometry with -clipsrc bounding box is a point
-    ds = gdal.VectorTranslate("", srcDS, options="-f Memory -clipsrc -1 -1 0 0")
+    # Intersection of above geometry with clipSrc bounding box is a point
+    ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=[-1, -1, 0, 0])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+    ds = None
+
+
+###############################################################################
+# Test -clipdst with a clip datasource
+
+
+@pytest.mark.skipif(
+    ogr.GetDriverByName("GPKG") is None, reason="GPKG driver not available"
+)
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+def test_ogr2ogr_lib_clipdst_datasource():
+
+    # Prepare the data layer to clip
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
+    srcLayer.CreateFeature(f)
+
+    # Prepare the data layers to clip with
+    clip_path = "/vsimem/clip_test.gpkg"
+    clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
+    clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
+    clip_layer.CreateField(ogr.FieldDefn("filter_field", ogr.OFTString))
+    # Overlaps with half the src line
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "half_overlap_line_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((1 1, 1 2, 2 2, 2 1, 1 1))"))
+    clip_layer.CreateFeature(f)
+    # Doesn't overlap at all
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "no_overlap_no_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((5 5, 5 6, 6 6, 6 5, 5 5))"))
+    clip_layer.CreateFeature(f)
+    # Feature not to clip with
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetField("filter_field", "exact_overlap_full_result")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 2, 2 2, 2 0, 0 0))"))
+    clip_layer.CreateFeature(f)
+    clip_ds = None
+
+    # Test clip with 'half_overlap_line_result' using sql statement
+    sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_ds = gdal.VectorTranslate(
+        "", srcDS, format="Memory", clipDst=clip_path, clipDstSQL=sql
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
+    dst_ds = None
+
+    # Test clip with the "exact_overlap_full_result" using clipDstLayer + clipDstWhere
+    dst_ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        clipDst=clip_path,
+        clipDstLayer="cliptest",
+        clipDstWhere="filter_field = 'exact_overlap_full_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
+    dst_ds = None
+
+    # Test clip with the "no_overlap_no_result" using only clipSrcWhere
+    dst_ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        clipDst=clip_path,
+        clipDstWhere="filter_field = 'no_overlap_no_result'",
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
+    dst_ds = None
+
+    # Cleanup
+    gdal.Unlink(clip_path)
 
 
 ###############################################################################
@@ -1141,10 +1305,29 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 1)"))
     srcLayer.CreateFeature(f)
 
-    # Intersection of above geometry with -clipdst bounding box is a point
-    ds = gdal.VectorTranslate("", srcDS, options="-f Memory -clipdst -1 -1 0 0")
+    # Intersection of above geometry with clipDst bounding box is a point -> no result
+    ds = gdal.VectorTranslate("", srcDS, format="Memory", clipDst=[-1, -1, 0, 0])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test using explodecollections
+
+
+def test_ogr2ogr_lib_explodecollections():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("layer")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    wkt = "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
+    f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+    src_lyr.CreateFeature(f)
+
+    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", explodeCollections=True)
+
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 2, "wrong feature count"
 
 
 ###############################################################################
@@ -1163,3 +1346,104 @@ def test_ogr2ogr_lib_fid_string_to_gpkg():
     ds = gdal.VectorTranslate(":memory:", srcDS, options="-f GPKG")
     lyr = ds.GetLayer(0)
     assert lyr.GetFIDColumn() == "gpkg_fid"
+
+
+###############################################################################
+# Test using mapfieldtype parameter
+
+
+def test_ogr2ogr_lib_mapfieldtype():
+
+    src_path = "../ogr/data/poly.shp"
+    dst_ds = gdal.VectorTranslate(
+        "", src_path, format="Memory", mapFieldType=["Integer64=String"]
+    )
+    assert dst_ds is not None
+
+    src_ds = gdal.OpenEx(src_path)
+    src_lyr = src_ds.GetLayer(0)
+    src_lyr_defn = src_lyr.GetLayerDefn()
+    dst_lyr = dst_ds.GetLayer(0)
+    dst_lyr_defn = dst_lyr.GetLayerDefn()
+    for i in range(src_lyr_defn.GetFieldCount()):
+        src_typename = src_lyr_defn.GetFieldDefn(i).GetTypeName()
+        dst_typename = dst_lyr_defn.GetFieldDefn(i).GetTypeName()
+        if src_typename == "Integer64":
+            assert dst_typename == "String"
+        else:
+            assert dst_typename == src_typename
+
+
+###############################################################################
+# Test using combination of arguments and a "raw" options list
+
+
+def test_ogr2ogr_lib_options_and_args():
+
+    raw_options_list = ["-limit", "1"]
+    ds = gdal.VectorTranslate(
+        "",
+        "../ogr/data/poly.shp",
+        format="Memory",
+        selectFields=["eas_id", "prfedea"],
+        options=raw_options_list,
+    )
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1, "wrong feature count"
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    feat = lyr.GetNextFeature()
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
+
+
+###############################################################################
+# Test using simplify
+
+
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+def test_ogr2ogr_lib_simplify():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("layer")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0, 10 0)"))
+    src_lyr.CreateFeature(f)
+
+    dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", simplifyTolerance=5)
+
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1, "wrong feature count"
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,10 0)"
+
+
+###############################################################################
+# Test using transactionSize
+
+
+@pytest.mark.skipif(
+    ogr.GetDriverByName("GPKG") is None, reason="GPKG driver not available"
+)
+@pytest.mark.parametrize("transaction_size", [0, 10, "unlimited"])
+def test_ogr2ogr_lib_transaction_size(transaction_size):
+
+    ds = gdal.VectorTranslate(
+        "/vsimem/out.gpkg",
+        "../ogr/data/poly.shp",
+        format="GPKG",
+        transactionSize=transaction_size,
+    )
+
+    try:
+        # A transaction size of 0 is invalid
+        if transaction_size == 0:
+            assert ds is None
+            return
+
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 10, "wrong feature count"
+    finally:
+        ds = None
+        gdal.Unlink("/vsimem/out.gpkg")

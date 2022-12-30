@@ -2114,19 +2114,34 @@ def VectorTranslateOptions(options=None, format=None,
          layerName=None,
          geometryType=None,
          dim=None,
-         segmentizeMaxDist= None,
+         transactionSize=None,
+         clipSrc=None,
+         clipSrcSQL=None,
+         clipSrcLayer=None,
+         clipSrcWhere=None,
+         clipDst=None,
+         clipDstSQL=None,
+         clipDstLayer=None,
+         clipDstWhere=None,
+         simplifyTolerance=None,
+         segmentizeMaxDist=None,
          makeValid=False,
+         mapFieldType=None,
+         explodeCollections=False,
          zField=None,
          resolveDomains=False,
          skipFailures=False,
          limit=None,
          callback=None, callback_data=None):
-    """Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
+    """
+    Create a VectorTranslateOptions() object that can be passed to
+    gdal.VectorTranslate()
 
     Parameters
     ----------
     options:
-        can be be an array of strings, a string or let empty and filled from other keywords.
+        can be be an array of strings, a string or let empty and filled from other
+        keywords.
     format:
         format ("ESRI Shapefile", etc...)
     accessMode:
@@ -2148,7 +2163,8 @@ def VectorTranslateOptions(options=None, format=None,
     selectFields:
         list of fields to select
     addFields:
-        whether to add new fields found in source layers (to be used with accessMode == 'append' or 'upsert')
+        whether to add new fields found in source layers (to be used with
+        accessMode == 'append' or 'upsert')
     forceNullable:
         whether to drop NOT NULL constraints on newly created fields
     emptyStrAsNull:
@@ -2156,7 +2172,12 @@ def VectorTranslateOptions(options=None, format=None,
     spatFilter:
         spatial filter as (minX, minY, maxX, maxY) bounding box
     spatSRS:
-        SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
+        SRS in which the spatFilter is expressed. If not specified, it is assumed to be
+        the one of the layer(s)
+    srcDatasetOpenOptions:
+        list of dataset open options for the source dataset
+    dstDatasetOpenOptions:
+        list of dataset open options for the destination dataset
     datasetCreationOptions:
         list of dataset creation options
     layerCreationOptions:
@@ -2169,14 +2190,57 @@ def VectorTranslateOptions(options=None, format=None,
         output layer geometry type ('POINT', ....)
     dim:
         output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
+    transactionSize:
+        number of features to save per transaction (default 100 000). Increase the value
+        for better performance when writing into DBMS drivers that have transaction
+        support. Set to "unlimited" to load the data into a single transaction.
+    clipSrc:
+        clip geometries to the specified bounding box (expressed in source SRS),
+        WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial
+        extent of the -spat option if you use the "spat_extent" keyword. When
+        specifying a datasource, you will generally want to use it in combination with
+        the clipSrcLayer, clipSrcWhere or clipSrcSQL options.
+    clipSrcSQL:
+        select desired geometries using an SQL query instead.
+    clipSrcLayer:
+        select the named layer from the source clip datasource.
+    clipSrcWhere:
+        restrict desired geometries based on attribute query.
+    clipDst:
+        clip geometries after reprojection to the specified bounding box (expressed in
+        dest SRS), WKT geometry (POLYGON or MULTIPOLYGON) or from a datasource. When
+        specifying a datasource, you will generally want to use it in combination of
+        the clipDstLayer, clipDstWhere or clipDstSQL options.
+    clipDstSQL:
+        select desired geometries using an SQL query instead.
+    clipDstLayer:
+        select the named layer from the destination clip datasource.
+    clipDstWhere:
+        restrict desired geometries based on attribute query.        
+    simplifyTolerance:
+        distance tolerance for simplification. The algorithm used preserves topology per
+        feature, in particular for polygon geometries, but not for a whole layer.
     segmentizeMaxDist:
         maximum distance between consecutive nodes of a line geometry
     makeValid:
         run MakeValid() on geometries
+    mapFieldType:
+        converts any field of the specified type to another type. Valid types are:
+        Integer, Integer64, Real, String, Date, Time, DateTime, Binary, IntegerList,
+        Integer64List, RealList, StringList. Types can also include subtype between
+        parenthesis, such as Integer(Boolean), Real(Float32),... Special value All can
+        be used to convert all fields to another type. This is an alternate way to using
+        the CAST operator of OGR SQL, that may avoid typing a long SQL query.
+        Note that this does not influence the field types used by the source driver,
+        and is only an afterwards conversion.
+    explodeCollections:
+        produce one feature for each geometry in any kind of geometry collection in the
+        source file, applied after any -sql option.
     zField:
         name of field to use to set the Z component of geometries
     resolveDomains:
-        whether to create an additional field for each field associated with a coded field domain.
+        whether to create an additional field for each field associated with a coded
+        field domain.
     skipFailures:
         whether to skip failures
     limit:
@@ -2233,24 +2297,88 @@ def VectorTranslateOptions(options=None, format=None,
                     val += ','
                 val += item
             new_options += ['-select', val]
+        
         if datasetCreationOptions is not None:
             for opt in datasetCreationOptions:
                 new_options += ['-dsco', opt]
         if layerCreationOptions is not None:
             for opt in layerCreationOptions:
                 new_options += ['-lco', opt]
+
         if layers is not None:
             if isinstance(layers, str):
                 new_options += [layers]
             else:
                 for lyr in layers:
                     new_options += [lyr]
+        
+        if transactionSize is not None:
+            new_options += ['-gt', str(transactionSize)]
+
+        if clipSrc is not None:
+            new_options += ['-clipsrc']
+            if isinstance(clipSrc, str):
+                new_options += [clipSrc]
+            else:
+                try:
+                    new_options += [
+                        str(clipSrc[0]),
+                        str(clipSrc[1]),
+                        str(clipSrc[2]),
+                        str(clipSrc[3])
+                    ]
+                except Exception as ex:
+                    raise ValueError(f"invalid value for clipSrc: {clipSrc}") from ex
+        if clipSrcSQL is not None:
+            new_options += ['-clipsrcsql', str(clipSrcSQL)]
+        if clipSrcLayer is not None:
+            new_options += ['-clipsrclayer', str(clipSrcLayer)]
+        if clipSrcWhere is not None:
+            new_options += ['-clipsrcwhere', str(clipSrcWhere)]
+
+        if clipDst is not None:
+            new_options += ['-clipdst']
+            if isinstance(clipDst, str):
+                new_options += [clipDst]
+            else:
+                try:
+                    new_options += [
+                        str(clipDst[0]),
+                        str(clipDst[1]),
+                        str(clipDst[2]),
+                        str(clipDst[3])
+                    ]
+                except Exception as ex:
+                    raise ValueError(f"invalid value for clipDst: {clipDst}") from ex
+        if clipDstSQL is not None:
+            new_options += ['-clipdstsql', str(clipDstSQL)]
+        if clipDstLayer is not None:
+            new_options += ['-clipdstlayer', str(clipDstLayer)]
+        if clipDstWhere is not None:
+            new_options += ['-clipdstwhere', str(clipDstWhere)]
+
+        if simplifyTolerance is not None:
+            new_options += ['-simplify', str(simplifyTolerance)]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist)]
         if makeValid:
             new_options += ['-makevalid']
+        if mapFieldType is not None:
+            new_options += ['-mapFieldType']
+            if isinstance(mapFieldType, str):
+                new_options += [mapFieldType]
+            else:
+                new_options += [",".join(mapFieldType)]
+        if explodeCollections:
+            new_options += ['-explodecollections']
         if spatFilter is not None:
-            new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
+            new_options += [
+                '-spat',
+                str(spatFilter[0]),
+                str(spatFilter[1]),
+                str(spatFilter[2]),
+                str(spatFilter[3])
+            ]
         if spatSRS is not None:
             new_options += ['-spat_srs', str(spatSRS)]
         if layerName is not None:
@@ -2275,6 +2403,7 @@ def VectorTranslateOptions(options=None, format=None,
         new_options += ['-progress']
 
     return (GDALVectorTranslateOptions(new_options), callback, callback_data)
+
 
 def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     """Convert one vector dataset
