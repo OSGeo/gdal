@@ -66,14 +66,13 @@ enum BMPType
 
 enum BMPComprMethod
 {
-    BMPC_RGB = 0L,   // Uncompressed
-    BMPC_RLE8 = 1L,  // RLE for 8 bpp images
-    BMPC_RLE4 = 2L,  // RLE for 4 bpp images
-    BMPC_BITFIELDS =
-        3L,          // Bitmap is not compressed and the colour table
-                     // consists of three DWORD color masks that specify
-                     // the red, green, and blue components of each pixel.
-                     // This is valid when used with 16- and 32-bpp bitmaps.
+    BMPC_RGB = 0L,        // Uncompressed
+    BMPC_RLE8 = 1L,       // RLE for 8 bpp images
+    BMPC_RLE4 = 2L,       // RLE for 4 bpp images
+    BMPC_BITFIELDS = 3L,  // Bitmap is not compressed and the colour table
+                          // consists of three DWORD color masks that specify
+                          // the red, green, and blue components of each pixel.
+    // This is valid when used with 16- and 32-bpp bitmaps.
     BMPC_JPEG = 4L,  // Indicates that the image is a JPEG image.
     BMPC_PNG = 5L    // Indicates that the image is a PNG image.
 };

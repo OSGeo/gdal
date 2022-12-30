@@ -78,8 +78,7 @@ extern "C"
         double dfRotY;
         double dfRotZ;
         double dfScaleFactor;
-        double
-            dfDiffA;             /*
+        double dfDiffA;          /*
                                   * semi-major difference to-datum minus from-datum :
                                   * http://home.hiwaay.net/~taylorc/bookshelf/math-science/geodesy/datum/transform/molodensky/
                                   */

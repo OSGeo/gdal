@@ -1761,7 +1761,7 @@ bool GMLASWriter::WriteFieldRegular(
     const int nFieldIdx =
         bIsGeometryField ?
                          // Some drivers may not store the geometry field name,
-                         // so for a feature with a single geometry, use it
+            // so for a feature with a single geometry, use it
             (poFeature->GetGeomFieldCount() == 1
                  ? 0
                  : poFeature->GetGeomFieldIndex(oField.GetName()))

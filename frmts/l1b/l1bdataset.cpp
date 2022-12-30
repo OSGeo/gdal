@@ -68,7 +68,7 @@ typedef enum
     NOAA17,         // NOAA-17(M)
     NOAA18,         // NOAA-18(N)
     NOAA19,         // NOAA-19(N')
-             // MetOp are given a number before launch and a letter after launch
+    // MetOp are given a number before launch and a letter after launch
     METOP2,  // METOP-A(2)
     METOP1,  // METOP-B(1)
     METOP3,  // METOP-C(3)
@@ -139,9 +139,8 @@ static const char *const apszBandDesc[] = {
 /*      L1B file format related constants                               */
 /************************************************************************/
 
-#define L1B_DATASET_NAME_SIZE                                                  \
-    42                              // Length of the string containing
-                                    // dataset name
+// Length of the string containing dataset name
+#define L1B_DATASET_NAME_SIZE 42
 #define L1B_NOAA9_HEADER_SIZE 122   // Terabit memory (TBM) header length
 #define L1B_NOAA9_HDR_NAME_OFF 30   // Dataset name offset
 #define L1B_NOAA9_HDR_SRC_OFF 70    // Receiving station name offset
@@ -149,25 +148,22 @@ static const char *const apszBandDesc[] = {
 #define L1B_NOAA9_HDR_CHAN_SIZE 20  // Length of selected channels map
 #define L1B_NOAA9_HDR_WORD_OFF 117  // Sensor data word size offset
 
-#define L1B_NOAA15_HEADER_SIZE                                                 \
-    512                              // Archive Retrieval System (ARS)
-                                     // header
+// Archive Retrieval System (ARS) header
+#define L1B_NOAA15_HEADER_SIZE 512
 #define L1B_NOAA15_HDR_CHAN_OFF 97   // Selected channels map offset
 #define L1B_NOAA15_HDR_CHAN_SIZE 20  // Length of selected channels map
 #define L1B_NOAA15_HDR_WORD_OFF 117  // Sensor data word size offset
 
-#define L1B_NOAA9_HDR_REC_SIZE                                                 \
-    146                                 // Length of header record
-                                        // filled with the data
+// Length of header record filled with the data
+#define L1B_NOAA9_HDR_REC_SIZE 146
 #define L1B_NOAA9_HDR_REC_ID_OFF 0      // Spacecraft ID offset
 #define L1B_NOAA9_HDR_REC_PROD_OFF 1    // Data type offset
 #define L1B_NOAA9_HDR_REC_DSTAT_OFF 34  // DACS status offset
 
 /* See
  * http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm */
-#define L1B_NOAA15_HDR_REC_SIZE                                                \
-    992                                // Length of header record
-                                       // filled with the data
+// Length of header record filled with the data
+#define L1B_NOAA15_HDR_REC_SIZE 992
 #define L1B_NOAA15_HDR_REC_SITE_OFF 0  // Dataset creation site ID offset
 #define L1B_NOAA15_HDR_REC_FORMAT_VERSION_OFF                                  \
     4  // NOAA Level 1b Format Version Number

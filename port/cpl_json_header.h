@@ -36,10 +36,8 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4005) /* json_inttypes.h(18,1): warning C4005:       \
-'PRId64': macro redefinition. C:\Program Files (x86)\Windows                   \
-Kits\10\Include\10.0.19041.0\ucrt\inttypes.h(117): message : see previous      \
-definition of 'PRId64' */
+// json_inttypes.h(18,1): warning C4005: 'PRId64': macro redefinition.
+#pragma warning(disable : 4005)
 #endif
 
 #include <json.h>

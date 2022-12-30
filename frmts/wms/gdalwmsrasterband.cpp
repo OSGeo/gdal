@@ -883,7 +883,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x, int y,
                         else  // if( bandmap != nullptr && bandmap[ib - 1] == 0
                               // )
                         {  // parent expects 4 bands but file has fewer count so
-                           // generate a all "opaque" 4th band
+                            // generate a all "opaque" 4th band
                             GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                             for (int l_y = 0; l_y < sy; ++l_y)
                             {

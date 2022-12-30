@@ -428,7 +428,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
 
                 if (adjusted)
                 {  // Fill with no data for partial buffer, instead of padding
-                   // afterwards
+                    // afterwards
                     size_t bsb = bsrc->blockSizeBytes();
                     auto b = buffer.data();
                     bsrc->FillBlock(b);
