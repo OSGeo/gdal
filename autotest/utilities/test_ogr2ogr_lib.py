@@ -1389,10 +1389,6 @@ def test_ogr2ogr_lib_options_and_args():
         options=raw_options_list,
     )
 
-    # Note: the raw_options_list parameter is changed: all options specified as standard
-    # arguments are also added to the list.
-    assert len(raw_options_list) == 6
-
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1, "wrong feature count"
     assert lyr.GetLayerDefn().GetFieldCount() == 2
