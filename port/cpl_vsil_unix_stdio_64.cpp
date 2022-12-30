@@ -943,7 +943,7 @@ bool VSIUnixStdioFilesystemHandler::IsLocal(const char *
             case 0x517bU:      // SMB
             case 0xff534d42U:  // CIFS
             case 0xfe534d42U:  // SMB2
-                               // (https://github.com/libuv/libuv/blob/97dcdb1926f6aca43171e1614338bcef067abd59/src/unix/fs.c#L960)
+                // (https://github.com/libuv/libuv/blob/97dcdb1926f6aca43171e1614338bcef067abd59/src/unix/fs.c#L960)
                 return false;
         }
     }

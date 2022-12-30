@@ -396,7 +396,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
     {
         OGRGeometry *poGeometry = poFeature->GetGeomFieldRef(i);
         char *pszGeom = nullptr;
-        if ( nullptr != poGeometry /* && (bHasWkb || bHasPostGISGeometry || bHasPostGISGeography) */)
+        if (nullptr !=
+            poGeometry /* && (bHasWkb || bHasPostGISGeometry || bHasPostGISGeography) */)
         {
             OGRPGDumpGeomFieldDefn *poGFldDefn =
                 (OGRPGDumpGeomFieldDefn *)poFeature->GetGeomFieldDefnRef(i);
