@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     gdalwarp [--help-general] [--formats]
-        [-srcband n]* [-dstband n]*
+        [-b|-srcband n]* [-dstband n]*
         [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-vshift | -novshift]
         [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
         [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
@@ -44,30 +44,61 @@ with control information.
 
 .. program:: gdalwarp
 
+.. option:: -b <n>
+
 .. option:: -srcband <n>
 
     .. versionadded:: 3.7
 
-    Specify a input band number to warp (between 1 and the number of bands
-    of the source dataset). This option may be repeated multiple times, to warp
-    several bands of the input dataset. The alpha band should not be specified
-    in the list, as it will be automatically retrieved (unless :option:`-nosrcalpha`
-    is specified).
-    If :option:`-srcband` is not specified, all input bands are used.
+    Specify an input band number to warp (between 1 and the number of bands
+    of the source dataset).
+
+    This option is used to warp a subset of the input bands. All input bands
+    are used when it is not specified.
+
+    This option may be repeated multiple times to select several input bands.
+    The order in which bands are specified will be the order in which they
+    appear in the output dataset (unless :option:`-dstband` is specified).
+
+    The alpha band should not be specified in the list, as it will be
+    automatically retrieved (unless :option:`-nosrcalpha` is specified).
+
+    The following invokation will warp an input datasets with bands ordered as
+    Blue, Green, Red, NearInfraRed in an output dataset with bands ordered as
+    Red, Green, Blue.
+
+    ::
+
+        gdalwarp in_bgrn.tif out_rgb.tif -b 3 -b 2 -b 1 -overwrite
+
 
 .. option:: -dstband <n>
 
     .. versionadded:: 3.7
 
-    Specify the output band number in which to warp.
+    Specify the output band number in which to warp. In practice, this option
+    is only useful when updating an existing dataset, e.g to warp one band at
+    at time.
+
+    ::
+
+        gdal_create -if in_red.tif -bands 3 out_rgb.tif
+        gdalwarp in_red.tif out_rgb.tif -srcband 1 -dstband 1
+        gdalwarp in_green.tif out_rgb.tif -srcband 1 -dstband 2
+        gdalwarp in_blue.tif out_rgb.tif -srcband 1 -dstband 3
+
+
     If :option:`-srcband` is specified, there must be as many occurences of
     :option:`-dstband` as there are of :option:`-srcband`.
+
     The output alpha band should not be specified, as it will be automatically
     created if the input dataset has an alpha band, or if :option:`-dstalpha`
     is specified.
+
     If :option:`-dstband` is not specified, then
     ``-dstband 1 -dstband 2 ... -dstband N`` is assumed where N is the number
-    of input bands specified explicitly or implicitly.
+    of input bands (specified explicitly either with :option:`-srcband` or
+    implicitly)
 
 .. option:: -s_srs <srs def>
 

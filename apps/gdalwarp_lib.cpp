@@ -5248,7 +5248,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
         }
 
-        else if (EQUAL(papszArgv[i], "-srcband") && i + 1 < argc)
+        else if ((EQUAL(papszArgv[i], "-srcband") ||
+                  EQUAL(papszArgv[i], "-b")) &&
+                 i + 1 < argc)
         {
             psOptions->anSrcBands.push_back(atoi(papszArgv[++i]));
         }
