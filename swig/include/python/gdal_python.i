@@ -2189,10 +2189,6 @@ def VectorTranslateOptions(options=None, format=None,
     spatSRS:
         SRS in which the spatFilter is expressed. If not specified, it is assumed to be
         the one of the layer(s)
-    srcDatasetOpenOptions:
-        list of dataset open options for the source dataset
-    dstDatasetOpenOptions:
-        list of dataset open options for the destination dataset
     datasetCreationOptions:
         list of dataset creation options
     layerCreationOptions:
@@ -2231,7 +2227,7 @@ def VectorTranslateOptions(options=None, format=None,
     clipDstLayer:
         select the named layer from the destination clip datasource.
     clipDstWhere:
-        restrict desired geometries based on attribute query.        
+        restrict desired geometries based on attribute query.
     simplifyTolerance:
         distance tolerance for simplification. The algorithm used preserves topology per
         feature, in particular for polygon geometries, but not for a whole layer.
@@ -2312,7 +2308,7 @@ def VectorTranslateOptions(options=None, format=None,
                     val += ','
                 val += item
             new_options += ['-select', val]
-        
+
         if datasetCreationOptions is not None:
             for opt in datasetCreationOptions:
                 new_options += ['-dsco', opt]
@@ -2326,7 +2322,7 @@ def VectorTranslateOptions(options=None, format=None,
             else:
                 for lyr in layers:
                     new_options += [lyr]
-        
+
         if transactionSize is not None:
             new_options += ['-gt', str(transactionSize)]
 
