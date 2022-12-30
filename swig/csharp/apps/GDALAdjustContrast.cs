@@ -104,31 +104,6 @@ class GDALAdjustContrast {
             LoadBitmapDirect(ds, bmp, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize, 0);
             Bitmap newBitmap = (Bitmap)bmp.Clone();
 
-            //create the ColorMatrix
-            float[][] colormatrix = new float[][]
-              {
-                 new float[] {contrastRatio, 0, 0, 0, 0},
-                 new float[] {0, contrastRatio, 0, 0, 0},
-                 new float[] {0, 0, contrastRatio, 0, 0},
-                 new float[] {0, 0, 0, 1, 0},
-                 new float[] {0, 0, 0, 0, 1}
-              };
-            ColorMatrix colorMatrix = new ColorMatrix(colormatrix);
-
-            //create the image attributes
-            ImageAttributes attributes = new ImageAttributes();
-
-            //set the color matrix attribute
-            attributes.SetColorMatrix(colorMatrix);
-
-            //get a graphics object from the new image
-            Graphics g = Graphics.FromImage(newBitmap);
-            //draw the original image on the new image
-            g.DrawImage(bmp,
-               new Rectangle(0, 0, bmp.Width, bmp.Height),
-               0, 0, bmp.Width, bmp.Height,
-               GraphicsUnit.Pixel, attributes);
-
             SaveBitmapDirect(ds, newBitmap, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize);
 
             ds.FlushCache();
