@@ -180,6 +180,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     bool bHasReadXMPMetadata;
     bool bHasReadICCMetadata;
     bool bHasReadFLIRMetadata = false;
+    bool bHasReadImageStructureMetadata = false;
     char **papszMetadata;
     int nExifOffset;
     int nInterOffset;
@@ -204,6 +205,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     virtual int GetDataPrecision() = 0;
     virtual int GetOutColorSpace() = 0;
+    virtual int GetJPEGColorSpace() = 0;
 
     bool EXIFInit(VSILFILE *);
     void ReadICCProfile();
@@ -213,6 +215,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     void LoadForMetadataDomain(const char *pszDomain);
 
+    void ReadImageStructureMetadata();
     void ReadEXIFMetadata();
     void ReadXMPMetadata();
     void ReadFLIRMetadata();
@@ -299,6 +302,10 @@ class JPGDataset final : public JPGDatasetCommon
     virtual int GetOutColorSpace() override
     {
         return sDInfo.out_color_space;
+    }
+    virtual int GetJPEGColorSpace() override
+    {
+        return sDInfo.jpeg_color_space;
     }
 
     int nQLevel;

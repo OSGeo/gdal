@@ -53,6 +53,9 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_md5.h"
+#include "quant_table_md5sum.h"
+#include "quant_table_md5sum_jpeg9e.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
@@ -144,6 +147,80 @@ static void SetMaxMemoryToUse(struct jpeg_decompress_struct *psDInfo)
 }
 
 #if !defined(JPGDataset)
+
+/************************************************************************/
+/*                     ReadImageStructureMetadata()                     */
+/************************************************************************/
+
+void JPGDatasetCommon::ReadImageStructureMetadata()
+{
+    if (bHasReadImageStructureMetadata)
+        return;
+
+    bHasReadImageStructureMetadata = true;
+    if (GetDataPrecision() != 8)
+        return;  // quality guessing not implemented for 12-bit JPEG for now
+
+    // Save current position to avoid disturbing JPEG stream decoding.
+    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+
+    GByte abyChunkHeader[4];
+    int nChunkLoc = 2;
+    constexpr GByte MARKER_QUANT_TABLE = 0xDB;
+    struct CPLMD5Context context;
+    CPLMD5Init(&context);
+
+    while (true)
+    {
+        if (VSIFSeekL(m_fpImage, nChunkLoc, SEEK_SET) != 0)
+            break;
+
+        if (VSIFReadL(abyChunkHeader, sizeof(abyChunkHeader), 1, m_fpImage) !=
+            1)
+            break;
+
+        const int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        if (abyChunkHeader[0] == 0xFF &&
+            abyChunkHeader[1] == MARKER_QUANT_TABLE && nChunkLength > 2)
+        {
+            std::vector<GByte> abyTable(nChunkLength);
+            abyTable[0] = abyChunkHeader[2];
+            abyTable[1] = abyChunkHeader[3];
+            if (VSIFReadL(&abyTable[2], nChunkLength - 2, 1, m_fpImage) == 1)
+            {
+                CPLMD5Update(&context, &abyTable[0], nChunkLength);
+            }
+        }
+        else
+        {
+            if (abyChunkHeader[0] != 0xFF || (abyChunkHeader[1] & 0xf0) != 0xe0)
+                break;  // Not an APP chunk.
+        }
+
+        nChunkLoc += 2 + nChunkLength;
+    }
+
+    VSIFSeekL(m_fpImage, nCurOffset, SEEK_SET);
+
+    GByte digest[16];
+    CPLMD5Final(digest, &context);
+
+    const bool bIsYCbCr = nBands == 3 && GetJPEGColorSpace() == JCS_YCbCr;
+    for (int i = 0; i < 100; i++)
+    {
+        if ((bIsYCbCr &&
+             (memcmp(md5JPEGQuantTable_3_YCBCR_8bit[i], digest, 16) == 0 ||
+              memcmp(md5JPEGQuantTable_3_YCBCR_8bit_jpeg9e[i], digest, 16) ==
+                  0)) ||
+            (!bIsYCbCr &&
+             memcmp(md5JPEGQuantTable_generic_8bit[i], digest, 16) == 0))
+        {
+            GDALDataset::SetMetadataItem(
+                "JPEG_QUALITY", CPLSPrintf("%d", i + 1), "IMAGE_STRUCTURE");
+            break;
+        }
+    }
+}
 
 /************************************************************************/
 /*                       ReadEXIFMetadata()                             */
@@ -862,6 +939,9 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
+    if (eAccess == GA_ReadOnly && !bHasReadImageStructureMetadata &&
+        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+        ReadImageStructureMetadata();
     if (eAccess == GA_ReadOnly && pszDomain != nullptr &&
         EQUAL(pszDomain, "xml:XMP"))
     {
@@ -901,7 +981,15 @@ char **JPGDatasetCommon::GetMetadata(const char *pszDomain)
 const char *JPGDatasetCommon::GetMetadataItem(const char *pszName,
                                               const char *pszDomain)
 {
-    LoadForMetadataDomain(pszDomain);
+    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    {
+        if (EQUAL(pszName, "JPEG_QUALITY"))
+            LoadForMetadataDomain(pszDomain);
+    }
+    else
+    {
+        LoadForMetadataDomain(pszDomain);
+    }
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
