@@ -475,11 +475,6 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 return false;
             }
 
-            GDALDataset::SetMetadataItem(
-                "COMPRESSION_REVERSIBILITY",
-                info.uses_original_profile ? "LOSSLESS (possibly)" : "LOSSY",
-                "IMAGE_STRUCTURE");
-
             nRasterXSize = static_cast<int>(info.xsize);
             nRasterYSize = static_cast<int>(info.ysize);
 
@@ -770,6 +765,23 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
+    GDALDataset::SetMetadataItem("COMPRESSION_REVERSIBILITY",
+                                 info.uses_original_profile
+#ifdef HAVE_JXL_BOX_API
+                                         && !m_bHasJPEGReconstructionData
+                                     ?
+#endif
+                                     "LOSSLESS (possibly)"
+                                     : "LOSSY",
+                                 "IMAGE_STRUCTURE");
+#ifdef HAVE_JXL_BOX_API
+    if (m_bHasJPEGReconstructionData)
+    {
+        GDALDataset::SetMetadataItem("ORIGINAL_COMPRESSION", "JPEG",
+                                     "IMAGE_STRUCTURE");
+    }
+#endif
+
 #ifdef HAVE_JXL_THREADS
     const char *pszNumThreads =
         CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
@@ -996,11 +1008,6 @@ const char *JPEGXLDataset::GetMetadataItem(const char *pszName,
         !m_aosEXIFMetadata.empty())
     {
         return m_aosEXIFMetadata.FetchNameValue(pszName);
-    }
-    else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))
-    {
-        if (EQUAL(pszName, "HAS_JPEG_RECONSTRUCTION_DATA"))
-            return m_bHasJPEGReconstructionData ? "YES" : "NO";
     }
 #endif
 
