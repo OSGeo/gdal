@@ -4,7 +4,7 @@ add_gdal_driver(
   BUILTIN)
 gdal_standard_includes(gdal_JPEG)
 
-target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem)
+target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
 if (GDAL_USE_JPEG12_INTERNAL)
   target_sources(gdal_JPEG PRIVATE jpgdataset_12.cpp vsidataio_12.cpp)
   target_include_directories(gdal_JPEG PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

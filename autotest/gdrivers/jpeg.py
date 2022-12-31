@@ -49,6 +49,7 @@ pytestmark = pytest.mark.require_driver("JPEG")
 def test_jpeg_1():
 
     ds = gdal.Open("data/jpeg/albania.jpg")
+    assert ds.GetMetadataItem("JPEG_QUALITY", "IMAGE_STRUCTURE") == "80"
     cs = ds.GetRasterBand(2).Checksum()
     if cs == 34296:
         gdaltest.jpeg_version = "9b"
