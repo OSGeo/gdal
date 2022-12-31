@@ -286,7 +286,7 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
                           poDS->nRasterYSize)
         eDT = GDT_Float64;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-    if (poDS->nRasterXSize > INT_MAX / nDTSize)
+    if (nDTSize <= 0 || poDS->nRasterXSize > INT_MAX / nDTSize)
     {
         delete poDS;
         return nullptr;

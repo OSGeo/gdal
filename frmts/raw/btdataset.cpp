@@ -169,10 +169,10 @@ CPLErr BTRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /*      Vertical flip, since GDAL expects values from top to bottom,    */
     /*      but in .bt they are bottom to top.                              */
     /* -------------------------------------------------------------------- */
+    GByte abyWrk[8] = {0};
+    CPLAssert(nDataSize <= 8);
     for (int i = 0; i < nRasterYSize / 2; i++)
     {
-        GByte abyWrk[8] = {0};
-
         memcpy(abyWrk, reinterpret_cast<GByte *>(pImage) + i * nDataSize,
                nDataSize);
         memcpy(reinterpret_cast<GByte *>(pImage) + i * nDataSize,

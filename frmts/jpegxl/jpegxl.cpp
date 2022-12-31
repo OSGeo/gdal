@@ -1998,9 +1998,10 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     {
         const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
 
-        if (static_cast<size_t>(poSrcDS->GetRasterXSize()) >
-            std::numeric_limits<size_t>::max() / poSrcDS->GetRasterYSize() /
-                nBaseChannels / nDataSize)
+        if (nDataSize <= 0 || static_cast<size_t>(poSrcDS->GetRasterXSize()) >
+                                  std::numeric_limits<size_t>::max() /
+                                      poSrcDS->GetRasterYSize() /
+                                      nBaseChannels / nDataSize)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Image too big for architecture");

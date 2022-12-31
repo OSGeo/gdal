@@ -556,11 +556,13 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Figure out the data type.                                       */
     /* -------------------------------------------------------------------- */
     const char *pszDataType = CSLFetchNameValue(papszHdr, "DATATYPE");
-    GDALDataType eDataType = GDT_Unknown;
+    GDALDataType eDataType = GDT_Byte;
     int nBits = -1;  // Only needed for partial byte types
 
     if (pszDataType == nullptr)
-        eDataType = GDT_Byte;
+    {
+        // nothing to do
+    }
     else if (EQUAL(pszDataType, "U16"))
         eDataType = GDT_UInt16;
     else if (EQUAL(pszDataType, "S16"))
@@ -570,12 +572,13 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (EQUAL(pszDataType, "F64"))
         eDataType = GDT_Float64;
     else if (EQUAL(pszDataType, "U8"))
-        eDataType = GDT_Byte;
+    {
+        // nothing to do
+    }
     else if (EQUAL(pszDataType, "U1") || EQUAL(pszDataType, "U2") ||
              EQUAL(pszDataType, "U4"))
     {
         nBits = atoi(pszDataType + 1);
-        eDataType = GDT_Byte;
         if (nBands != 1)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
@@ -586,7 +589,6 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        eDataType = GDT_Byte;
         CPLError(CE_Warning, CPLE_AppDefined,
                  "DATATYPE=%s not recognised, assuming Byte.", pszDataType);
     }
@@ -622,7 +624,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(pszInterleaving, "BSQ") || EQUAL(pszInterleaving, "NA"))
     {
         nPixelOffset = nItemSize;
-        if (poDS->nRasterXSize > INT_MAX / nItemSize)
+        if (nItemSize <= 0 || poDS->nRasterXSize > INT_MAX / nItemSize)
             bIntOverflow = true;
         else
         {

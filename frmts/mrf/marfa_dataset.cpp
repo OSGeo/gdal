@@ -993,20 +993,20 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
     }
 
     // Calculate the page size in bytes
-    if (image.pagesize.z <= 0 ||
+    const int nDTSize = GDALGetDataTypeSizeBytes(image.dt);
+    if (nDTSize <= 0 || image.pagesize.z <= 0 ||
         image.pagesize.x > INT_MAX / image.pagesize.y ||
         image.pagesize.x * image.pagesize.y > INT_MAX / image.pagesize.z ||
         image.pagesize.x * image.pagesize.y * image.pagesize.z >
             INT_MAX / image.pagesize.c ||
         image.pagesize.x * image.pagesize.y * image.pagesize.z *
                 image.pagesize.c >
-            INT_MAX / GDALGetDataTypeSizeBytes(image.dt))
+            INT_MAX / nDTSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF page size too big");
         return CE_Failure;
     }
-    image.pageSizeBytes = GDALGetDataTypeSizeBytes(image.dt) *
-                          image.pagesize.x * image.pagesize.y *
+    image.pageSizeBytes = nDTSize * image.pagesize.x * image.pagesize.y *
                           image.pagesize.z * image.pagesize.c;
 
     // Calculate the page count, including the total for the level
