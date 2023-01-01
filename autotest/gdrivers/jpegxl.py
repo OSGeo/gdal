@@ -329,7 +329,11 @@ def test_jpegxl_lossless_copy_of_jpeg():
         assert set(ds.GetMetadataDomainList()) == set(
             ["DERIVED_SUBDATASETS", "EXIF", "IMAGE_STRUCTURE"]
         )
-        assert ds.GetMetadataItem("HAS_JPEG_RECONSTRUCTION_DATA", "_DEBUG_") == "YES"
+        assert (
+            ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+            == "LOSSY"
+        )
+        assert ds.GetMetadataItem("ORIGINAL_COMPRESSION", "IMAGE_STRUCTURE") == "JPEG"
 
     ds = None
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
