@@ -115,19 +115,12 @@ CPLStringList &CPLStringList::operator=(const CPLStringList &oOther)
 {
     if (this != &oOther)
     {
-        Assign(oOther.papszList, FALSE);
-
-        // We don't want to just retain a reference to the others list
-        // as we don't want to make assumptions about its lifetime that
-        if (!MakeOurOwnCopy())
+        char **l_papszList = CSLDuplicate(oOther.papszList);
+        if (l_papszList)
         {
-            papszList = nullptr;
-            bOwnList = FALSE;
-            nAllocation = 0;
-            nCount = 0;
-        }
-        else
-        {
+            Assign(l_papszList, TRUE);
+            nAllocation = oOther.nCount > 0 ? oOther.nCount + 1 : 0;
+            nCount = oOther.nCount;
             bIsSorted = oOther.bIsSorted;
         }
     }

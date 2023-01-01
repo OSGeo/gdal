@@ -621,6 +621,7 @@ TEST_F(test_cpl, CPLStringList_NameValue)
 
     // Test copy constructor.
     CPLStringList oCopy2(oCopy);
+    EXPECT_EQ(oCopy2.Count(), oCopy.Count());
     oCopy.Clear();
     EXPECT_STREQ(oCopy2[0], "test");
 
