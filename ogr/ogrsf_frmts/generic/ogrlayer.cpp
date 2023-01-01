@@ -5451,7 +5451,6 @@ static bool FillBoolArray(struct ArrowArray *psChild,
         }
         else if (bIsNullable)
         {
-            panValues[iFeat] = 0;
             ++psChild->null_count;
             if (pabyNull == nullptr)
             {
