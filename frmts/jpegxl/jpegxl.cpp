@@ -770,9 +770,8 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                                  info.uses_original_profile
 #ifdef HAVE_JXL_BOX_API
                                          && !m_bHasJPEGReconstructionData
-                                     ?
 #endif
-                                     "LOSSLESS (possibly)"
+                                     ? "LOSSLESS (possibly)"
                                      : "LOSSY",
                                  "IMAGE_STRUCTURE");
 #ifdef HAVE_JXL_BOX_API
