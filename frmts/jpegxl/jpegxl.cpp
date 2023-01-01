@@ -73,8 +73,10 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
 #ifdef HAVE_JXL_BOX_API
     std::string m_osXMP{};
     char *m_apszXMP[2] = {nullptr, nullptr};
+    std::vector<GByte> m_abyEXIFBox{};
     CPLStringList m_aosEXIFMetadata{};
     bool m_bHasJPEGReconstructionData = false;
+    std::string m_osJPEGData{};
 #endif
 
     bool Open(GDALOpenInfo *poOpenInfo);
@@ -341,6 +343,8 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 (abyBoxBuffer[4] == 0x4d  // TIFF_BIGENDIAN
                  || abyBoxBuffer[4] == 0x49 /* TIFF_LITTLEENDIAN */))
             {
+                m_abyEXIFBox.insert(m_abyEXIFBox.end(), abyBoxBuffer.data() + 4,
+                                    abyBoxBuffer.data() + nSize);
 #ifdef CPL_LSB
                 const bool bSwab = abyBoxBuffer[4] == 0x4d;
 #else
@@ -1008,6 +1012,272 @@ const char *JPEGXLDataset::GetMetadataItem(const char *pszName,
         !m_aosEXIFMetadata.empty())
     {
         return m_aosEXIFMetadata.FetchNameValue(pszName);
+    }
+#endif
+
+#ifdef HAVE_JXL_BOX_API
+    if (m_bHasJPEGReconstructionData && pszDomain != nullptr &&
+        EQUAL(pszDomain, "JPEG") &&
+        (EQUAL(pszName, "CODESTREAM") ||
+         EQUAL(pszName, "CODESTREAM_WITHOUT_EXIF")))
+    {
+        auto decoder = JxlDecoderMake(nullptr);
+        if (!decoder)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "JxlDecoderMake() failed");
+            return nullptr;
+        }
+        auto status = JxlDecoderSubscribeEvents(
+            decoder.get(), JXL_DEC_BASIC_INFO | JXL_DEC_JPEG_RECONSTRUCTION |
+                               JXL_DEC_FULL_IMAGE);
+        if (status != JXL_DEC_SUCCESS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "JxlDecoderSubscribeEvents() failed");
+            return nullptr;
+        }
+
+        VSIFSeekL(m_fp, 0, SEEK_SET);
+        try
+        {
+            std::vector<GByte> jpeg_bytes;
+            std::vector<GByte> jpeg_data_chunk(16 * 1024);
+
+            bool bJPEGReconstruction = false;
+            while (true)
+            {
+                status = JxlDecoderProcessInput(decoder.get());
+                if (status == JXL_DEC_SUCCESS)
+                {
+                    break;
+                }
+                else if (status == JXL_DEC_NEED_MORE_INPUT)
+                {
+                    JxlDecoderReleaseInput(decoder.get());
+
+                    const size_t nRead = VSIFReadL(m_abyInputData.data(), 1,
+                                                   m_abyInputData.size(), m_fp);
+                    if (nRead == 0)
+                    {
+                        break;
+                    }
+                    if (JxlDecoderSetInput(decoder.get(), m_abyInputData.data(),
+                                           nRead) != JXL_DEC_SUCCESS)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "JxlDecoderSetInput() failed");
+                        return nullptr;
+                    }
+                }
+                else if (status == JXL_DEC_JPEG_RECONSTRUCTION)
+                {
+                    bJPEGReconstruction = true;
+                    // Decoding to JPEG.
+                    if (JXL_DEC_SUCCESS !=
+                        JxlDecoderSetJPEGBuffer(decoder.get(),
+                                                jpeg_data_chunk.data(),
+                                                jpeg_data_chunk.size()))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Decoder failed to set JPEG Buffer\n");
+                        return nullptr;
+                    }
+                }
+                else if (status == JXL_DEC_JPEG_NEED_MORE_OUTPUT)
+                {
+                    // Decoded a chunk to JPEG.
+                    size_t used_jpeg_output =
+                        jpeg_data_chunk.size() -
+                        JxlDecoderReleaseJPEGBuffer(decoder.get());
+                    jpeg_bytes.insert(jpeg_bytes.end(), jpeg_data_chunk.data(),
+                                      jpeg_data_chunk.data() +
+                                          used_jpeg_output);
+                    if (used_jpeg_output == 0)
+                    {
+                        // Chunk is too small.
+                        jpeg_data_chunk.resize(jpeg_data_chunk.size() * 2);
+                    }
+                    if (JXL_DEC_SUCCESS !=
+                        JxlDecoderSetJPEGBuffer(decoder.get(),
+                                                jpeg_data_chunk.data(),
+                                                jpeg_data_chunk.size()))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Decoder failed to set JPEG Buffer\n");
+                        return nullptr;
+                    }
+                }
+                else if (status == JXL_DEC_BASIC_INFO ||
+                         status == JXL_DEC_FULL_IMAGE)
+                {
+                    // do nothing
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unexpected event: %d", status);
+                    break;
+                }
+            }
+            if (bJPEGReconstruction)
+            {
+                size_t used_jpeg_output =
+                    jpeg_data_chunk.size() -
+                    JxlDecoderReleaseJPEGBuffer(decoder.get());
+                jpeg_bytes.insert(jpeg_bytes.end(), jpeg_data_chunk.data(),
+                                  jpeg_data_chunk.data() + used_jpeg_output);
+            }
+
+            JxlDecoderReleaseInput(decoder.get());
+
+            if (!jpeg_bytes.empty() &&
+                jpeg_bytes.size() < static_cast<size_t>(INT_MAX))
+            {
+                constexpr GByte JFIF_SIGNATURE[] = {'J', 'F', 'I', 'F', '\0'};
+
+                // Insert Exif box in JPEG codestream (if not already present)
+                constexpr GByte EXIF_SIGNATURE[] = {'E', 'x',  'i',
+                                                    'f', '\0', '\0'};
+                const size_t nEXIFMarkerSize =
+                    2 + sizeof(EXIF_SIGNATURE) + m_abyEXIFBox.size();
+                if (!EQUAL(pszName, "CODESTREAM_WITHOUT_EXIF") &&
+                    nEXIFMarkerSize <= 65535U)
+                {
+                    size_t nChunkLoc = 2;
+                    size_t nInsertPos = 0;
+                    bool bEXIFFound = false;
+                    while (nChunkLoc + 4 <= jpeg_bytes.size())
+                    {
+                        if (jpeg_bytes[nChunkLoc + 0] != 0xFF ||
+                            jpeg_bytes[nChunkLoc + 1] == 0xDA)
+                            break;
+                        const int nChunkLength =
+                            jpeg_bytes[nChunkLoc + 2] * 256 +
+                            jpeg_bytes[nChunkLoc + 3];
+                        if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
+                            jpeg_bytes[nChunkLoc + 1] == 0xE0 &&
+                            nChunkLoc + 4 + sizeof(JFIF_SIGNATURE) <=
+                                jpeg_bytes.size() &&
+                            memcmp(jpeg_bytes.data() + nChunkLoc + 4,
+                                   JFIF_SIGNATURE, sizeof(JFIF_SIGNATURE)) == 0)
+                        {
+                            nInsertPos = nChunkLoc + 2 + nChunkLength;
+                        }
+                        else if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
+                                 jpeg_bytes[nChunkLoc + 1] == 0xE1 &&
+                                 nChunkLoc + 4 + sizeof(EXIF_SIGNATURE) <=
+                                     jpeg_bytes.size() &&
+                                 memcmp(jpeg_bytes.data() + nChunkLoc + 4,
+                                        EXIF_SIGNATURE,
+                                        sizeof(EXIF_SIGNATURE)) == 0)
+                        {
+                            bEXIFFound = true;
+                            break;
+                        }
+                        nChunkLoc += 2 + nChunkLength;
+                    }
+                    if (!bEXIFFound && nInsertPos > 0)
+                    {
+                        std::vector<GByte> abyNew;
+                        abyNew.reserve(jpeg_bytes.size() + 2 + nEXIFMarkerSize);
+                        abyNew.insert(abyNew.end(), jpeg_bytes.data(),
+                                      jpeg_bytes.data() + nInsertPos);
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xFF));
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xE1));
+                        abyNew.insert(abyNew.end(),
+                                      static_cast<GByte>(nEXIFMarkerSize >> 8));
+                        abyNew.insert(
+                            abyNew.end(),
+                            static_cast<GByte>(nEXIFMarkerSize & 0xFF));
+                        abyNew.insert(abyNew.end(), EXIF_SIGNATURE,
+                                      EXIF_SIGNATURE + sizeof(EXIF_SIGNATURE));
+                        abyNew.insert(abyNew.end(), m_abyEXIFBox.data(),
+                                      m_abyEXIFBox.data() +
+                                          m_abyEXIFBox.size());
+                        abyNew.insert(abyNew.end(),
+                                      jpeg_bytes.data() + nInsertPos,
+                                      jpeg_bytes.data() + jpeg_bytes.size());
+                        jpeg_bytes = std::move(abyNew);
+                    }
+                }
+
+                constexpr const char APP1_XMP_SIGNATURE[] =
+                    "http://ns.adobe.com/xap/1.0/";
+                const size_t nXMPMarkerSize =
+                    2 + sizeof(APP1_XMP_SIGNATURE) + m_osXMP.size();
+                if (!m_osXMP.empty() && nXMPMarkerSize <= 65535U)
+                {
+                    size_t nChunkLoc = 2;
+                    size_t nInsertPos = 0;
+                    bool bXMPFound = false;
+                    while (nChunkLoc + 4 <= jpeg_bytes.size())
+                    {
+                        if (jpeg_bytes[nChunkLoc + 0] != 0xFF ||
+                            jpeg_bytes[nChunkLoc + 1] == 0xDA)
+                            break;
+                        const int nChunkLength =
+                            jpeg_bytes[nChunkLoc + 2] * 256 +
+                            jpeg_bytes[nChunkLoc + 3];
+                        if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
+                            jpeg_bytes[nChunkLoc + 1] == 0xE0 &&
+                            nChunkLoc + 4 + sizeof(JFIF_SIGNATURE) <=
+                                jpeg_bytes.size() &&
+                            memcmp(jpeg_bytes.data() + nChunkLoc + 4,
+                                   JFIF_SIGNATURE, sizeof(JFIF_SIGNATURE)) == 0)
+                        {
+                            nInsertPos = nChunkLoc + 2 + nChunkLength;
+                        }
+                        else if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
+                                 jpeg_bytes[nChunkLoc + 1] == 0xE1 &&
+                                 nChunkLoc + 4 + sizeof(APP1_XMP_SIGNATURE) <=
+                                     jpeg_bytes.size() &&
+                                 memcmp(jpeg_bytes.data() + nChunkLoc + 4,
+                                        APP1_XMP_SIGNATURE,
+                                        sizeof(APP1_XMP_SIGNATURE)) == 0)
+                        {
+                            bXMPFound = true;
+                            break;
+                        }
+                        nChunkLoc += 2 + nChunkLength;
+                    }
+                    if (!bXMPFound && nInsertPos > 0)
+                    {
+                        std::vector<GByte> abyNew;
+                        abyNew.reserve(jpeg_bytes.size() + 2 + nXMPMarkerSize);
+                        abyNew.insert(abyNew.end(), jpeg_bytes.data(),
+                                      jpeg_bytes.data() + nInsertPos);
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xFF));
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xE1));
+                        abyNew.insert(abyNew.end(),
+                                      static_cast<GByte>(nXMPMarkerSize >> 8));
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(
+                                                        nXMPMarkerSize & 0xFF));
+                        abyNew.insert(abyNew.end(), APP1_XMP_SIGNATURE,
+                                      APP1_XMP_SIGNATURE +
+                                          sizeof(APP1_XMP_SIGNATURE));
+                        abyNew.insert(abyNew.end(), m_osXMP.data(),
+                                      m_osXMP.data() + m_osXMP.size());
+                        abyNew.insert(abyNew.end(),
+                                      jpeg_bytes.data() + nInsertPos,
+                                      jpeg_bytes.data() + jpeg_bytes.size());
+                        jpeg_bytes = std::move(abyNew);
+                    }
+                }
+
+                char *pszVal = CPLBase64Encode(
+                    static_cast<int>(jpeg_bytes.size()), jpeg_bytes.data());
+                if (pszVal)
+                {
+                    m_osJPEGData.assign(pszVal);
+                    CPLFree(pszVal);
+                    return m_osJPEGData.c_str();
+                }
+            }
+        }
+        catch (const std::exception &)
+        {
+        }
+        return nullptr;
     }
 #endif
 
