@@ -37,7 +37,9 @@
 #include <algorithm>
 #include <fstream>
 
+#ifdef HAVE_SQLITE3
 #include <sqlite3.h>
+#endif
 
 #include "gtest_include.h"
 
