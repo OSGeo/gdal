@@ -651,9 +651,8 @@ def test_jpegxl_band_combinations():
 @pytest.mark.parametrize("orientation", [i + 1 for i in range(8)])
 def test_jpegxl_apply_orientation(orientation):
 
-    if "APPLY_ORIENTATION" not in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
-        "DMD_OPENOPTIONLIST"
-    ):
+    open_options = gdal.GetDriverByName("JPEGXL").GetMetadataItem("DMD_OPENOPTIONLIST")
+    if open_options is None or "APPLY_ORIENTATION" not in open_options:
         pytest.skip()
 
     ds = gdal.OpenEx(
