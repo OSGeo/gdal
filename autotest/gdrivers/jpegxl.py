@@ -315,6 +315,10 @@ def test_jpegxl_icc_profile():
 
 def test_jpegxl_lossless_copy_of_jpeg():
 
+    jpeg_drv = gdal.GetDriverByName("JPEG")
+    if jpeg_drv is None:
+        pytest.skip("JPEG driver missing")
+
     has_box_api = "COMPRESS_BOX" in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
         "DMD_CREATIONOPTIONLIST"
     )
@@ -348,6 +352,88 @@ def test_jpegxl_lossless_copy_of_jpeg():
             assert (
                 gdal.GetDriverByName("JPEGXL").CreateCopy(outfilename, src_ds) is None
             )
+
+
+def test_jpegxl_lossless_copy_of_jpeg_with_mask_band():
+
+    jpeg_drv = gdal.GetDriverByName("JPEG")
+    if jpeg_drv is None:
+        pytest.skip("JPEG driver missing")
+
+    drv = gdal.GetDriverByName("JPEGXL")
+    if drv.GetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS") is None:
+        pytest.skip()
+
+    has_box_api = "COMPRESS_BOX" in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
+    src_ds = gdal.Open("data/jpeg/masked.jpg")
+    outfilename = "/vsimem/out.jxl"
+    drv.CreateCopy(outfilename, src_ds)
+    if has_box_api:
+        assert gdal.VSIStatL(outfilename + ".aux.xml") is None
+
+    ds = gdal.Open(outfilename)
+    assert ds is not None
+    assert ds.RasterCount == 4
+    assert (
+        ds.GetRasterBand(4).Checksum()
+        == src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    )
+
+    if has_box_api:
+        assert (
+            ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+            == "LOSSY"
+        )
+        assert ds.GetMetadataItem("ORIGINAL_COMPRESSION", "IMAGE_STRUCTURE") == "JPEG"
+
+    outfilename_jpg = "/vsimem/out.jpg"
+
+    jpeg_drv.CreateCopy(outfilename_jpg, ds)
+    ds = None
+    ds = gdal.Open(outfilename_jpg)
+    assert ds is not None
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(3).Checksum()
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().Checksum()
+        == src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    )
+    ds = None
+
+    drv.Delete(outfilename)
+    jpeg_drv.Delete(outfilename_jpg)
+
+
+def test_jpegxl_lossless_copy_of_jpeg_xmp():
+
+    jpeg_drv = gdal.GetDriverByName("JPEG")
+    if jpeg_drv is None:
+        pytest.skip("JPEG driver missing")
+    drv = gdal.GetDriverByName("JPEGXL")
+    has_box_api = "COMPRESS_BOX" in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
+    if not has_box_api:
+        pytest.skip()
+
+    src_ds = gdal.Open("data/jpeg/byte_with_xmp.jpg")
+    outfilename = "/vsimem/out.jxl"
+    drv.CreateCopy(outfilename, src_ds)
+    assert gdal.VSIStatL(outfilename + ".aux.xml") is None
+
+    ds = gdal.Open(outfilename)
+    assert ds is not None
+
+    outfilename_jpg = "/vsimem/out.jpg"
+    jpeg_drv.CreateCopy(outfilename_jpg, ds)
+    assert gdal.VSIStatL(outfilename_jpg + ".aux.xml") is None
+    ds = None
+    ds = gdal.Open(outfilename_jpg)
+    assert ds is not None
+    assert ds.GetMetadata("xml:XMP") == src_ds.GetMetadata("xml:XMP")
+    ds = None
+
+    drv.Delete(outfilename)
+    jpeg_drv.Delete(outfilename_jpg)
 
 
 def test_jpegxl_read_extra_channels():
