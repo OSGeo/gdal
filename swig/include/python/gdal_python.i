@@ -3272,4 +3272,92 @@ def ApplyVerticalShiftGrid(*args, **kwargs):
     warn('ApplyVerticalShiftGrid() will be removed in GDAL 4.0', DeprecationWarning)
     return _ApplyVerticalShiftGrid(*args, **kwargs)
 
+
+import contextlib
+@contextlib.contextmanager
+def config_options(options, thread_local=True):
+    """Temporarily define a set of configuration options.
+
+       Parameters
+       ----------
+       options: dict
+            Dictionary of configuration options passed as key, value
+       thread_local: bool
+            Whether the configuration options should be only set on the current
+            thread. The default is True.
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
+               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+    """
+    oldvals = {key: GetConfigOption(key) for key in options}
+    set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
+    for key in options:
+        set_config_option(key, options[key])
+    try:
+        yield
+    finally:
+        for key in options:
+            set_config_option(key, oldvals[key])
+
+
+def config_option(key, value, thread_local=True):
+    """Temporarily define a configuration option.
+
+       Parameters
+       ----------
+       key: str
+            Name of the configuration option
+       value: str
+            Value of the configuration option
+       thread_local: bool
+            Whether the configuration option should be only set on the current
+            thread. The default is True.
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+    """
+    return config_options({key: value}, thread_local=thread_local)
+
+
+@contextlib.contextmanager
+def enable_exceptions():
+    """Temporarily enable exceptions.
+
+       Note: this will only affect the osgeo.gdal module. For ogr or osr
+       modules, use respectively osgeo.ogr.enable_exceptions() and
+       osgeo.osr.enable_exceptions().
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with gdal.enable_exceptions():
+               gdal.Translate("out.tif", "in.tif", format="COG")
+    """
+    if GetUseExceptions():
+        yield
+    else:
+        UseExceptions()
+        try:
+            yield
+        finally:
+            DontUseExceptions()
+
 %}

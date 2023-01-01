@@ -59,7 +59,7 @@ def gs_test_config():
         "GS_USER_PROJECT": "",
     }
 
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options, thread_local=False):
         yield
 
 
@@ -75,7 +75,8 @@ def webserver_port():
         if webserver_port == 0:
             pytest.skip()
         with gdaltest.config_options(
-            {"CPL_GS_ENDPOINT": "http://127.0.0.1:%d/" % webserver_port}
+            {"CPL_GS_ENDPOINT": "http://127.0.0.1:%d/" % webserver_port},
+            thread_local=False,
         ):
             yield webserver_port
     finally:
@@ -89,7 +90,9 @@ def webserver_port():
 
 def test_vsigs_init(gs_test_config):
 
-    with gdaltest.config_options({"CPL_GCE_SKIP": "YES", "CPL_GS_ENDPOINT": ""}):
+    with gdaltest.config_options(
+        {"CPL_GCE_SKIP": "YES", "CPL_GS_ENDPOINT": ""}, thread_local=False
+    ):
         assert gdal.GetSignedURL("/vsigs/foo/bar") is None
 
 
@@ -104,10 +107,14 @@ def test_vsigs_1(gs_test_config):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_options({"CPL_GCE_SKIP": "YES", "CPL_GS_ENDPOINT": ""}):
+    with gdaltest.config_options(
+        {"CPL_GCE_SKIP": "YES", "CPL_GS_ENDPOINT": ""}, thread_local=False
+    ):
         # Invalid header filename
         gdal.ErrorReset()
-        with gdaltest.config_option("GDAL_HTTP_HEADER_FILE", "/i_dont/exist.py"):
+        with gdaltest.config_option(
+            "GDAL_HTTP_HEADER_FILE", "/i_dont/exist.py", thread_local=False
+        ):
             with gdaltest.error_handler():
                 f = open_for_read("/vsigs/foo/bar")
         if f is not None:
@@ -117,7 +124,9 @@ def test_vsigs_1(gs_test_config):
         assert "Cannot read" in last_err
 
         # Invalid content for header file
-        with gdaltest.config_option("GDAL_HTTP_HEADER_FILE", "vsigs.py"):
+        with gdaltest.config_option(
+            "GDAL_HTTP_HEADER_FILE", "vsigs.py", thread_local=False
+        ):
             f = open_for_read("/vsigs/foo/bar")
         if f is not None:
             gdal.VSIFCloseL(f)
@@ -134,7 +143,9 @@ def test_vsigs_1(gs_test_config):
             f = open_for_read("/vsigs_streaming/foo/bar")
         assert f is None and gdal.VSIGetLastErrorMsg().find("GS_SECRET_ACCESS_KEY") >= 0
 
-        with gdaltest.config_option("GS_SECRET_ACCESS_KEY", "GS_SECRET_ACCESS_KEY"):
+        with gdaltest.config_option(
+            "GS_SECRET_ACCESS_KEY", "GS_SECRET_ACCESS_KEY", thread_local=False
+        ):
 
             # Missing GS_ACCESS_KEY_ID
             gdal.ErrorReset()
@@ -142,7 +153,9 @@ def test_vsigs_1(gs_test_config):
                 f = open_for_read("/vsigs/foo/bar")
             assert f is None and gdal.VSIGetLastErrorMsg().find("GS_ACCESS_KEY_ID") >= 0
 
-            with gdaltest.config_option("GS_ACCESS_KEY_ID", "GS_ACCESS_KEY_ID"):
+            with gdaltest.config_option(
+                "GS_ACCESS_KEY_ID", "GS_ACCESS_KEY_ID", thread_local=False
+            ):
 
                 # ERROR 1: The User Id you provided does not exist in our records.
                 gdal.ErrorReset()
@@ -170,12 +183,12 @@ def test_vsigs_no_sign_request(gs_test_config):
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    with gdaltest.config_options({"CPL_GS_ENDPOINT": ""}):
+    with gdaltest.config_options({"CPL_GS_ENDPOINT": ""}, thread_local=False):
 
         object_key = "gcp-public-data-landsat/LC08/01/044/034/LC08_L1GT_044034_20130330_20170310_01_T2/LC08_L1GT_044034_20130330_20170310_01_T2_B1.TIF"
         expected_url = "https://storage.googleapis.com/" + object_key
 
-        with gdaltest.config_option("GS_NO_SIGN_REQUEST", "YES"):
+        with gdaltest.config_option("GS_NO_SIGN_REQUEST", "YES", thread_local=False):
             actual_url = gdal.GetActualURL("/vsigs/" + object_key)
             assert actual_url == expected_url
 
@@ -219,7 +232,8 @@ def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
                 "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
                 "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
                 "GDAL_HTTP_HEADER_FILE": "/vsimem/my_headers.txt",
-            }
+            },
+            thread_local=False,
         ):
             f = open_for_read("/vsigs/gs_fake_bucket_http_header_file/resource")
             assert f is not None
@@ -234,7 +248,7 @@ def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
         "CPL_GS_TIMESTAMP": "my_timestamp",
     }
     with gdaltest.config_options(
-        options
+        options, thread_local=False
     ) if use_config_options else gdaltest.credentials("/vsigs/", options):
 
         signed_url = gdal.GetSignedURL(
@@ -327,7 +341,9 @@ def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
             },
         )
         with webserver.install_http_handler(handler):
-            with gdaltest.config_option("GS_USER_PROJECT", "my_project_id"):
+            with gdaltest.config_option(
+                "GS_USER_PROJECT", "my_project_id", thread_local=False
+            ):
                 f = open_for_read(
                     "/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays"
                 )
@@ -360,7 +376,8 @@ def test_vsigs_GDAL_HTTP_HEADERS(gs_test_config, webserver_port):
         with gdaltest.config_options(
             {
                 "GDAL_HTTP_HEADERS": "Authorization: Bearer MY_BEARER",
-            }
+            },
+            thread_local=False,
         ):
             f = open_for_read("/vsigs/gs_fake_bucket_http_header_file/resource")
             assert f is not None
@@ -379,7 +396,8 @@ def test_vsigs_readdir(gs_test_config, webserver_port):
         {
             "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
             "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -475,7 +493,8 @@ def test_vsigs_write(gs_test_config, webserver_port):
         {
             "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
             "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
 
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -548,7 +567,8 @@ def test_vsigs_fake_rename(gs_test_config, webserver_port):
         {
             "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
             "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -601,7 +621,8 @@ def test_vsigs_acl(gs_test_config, webserver_port):
         {
             "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
             "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -658,7 +679,8 @@ def test_vsigs_headers(gs_test_config, webserver_port):
         {
             "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
             "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -699,7 +721,8 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app(
             "GOA2_AUTH_URL_TOKEN": "http://localhost:%d/accounts.google.com/o/oauth2/token"
             % webserver_port,
             "GS_OAUTH2_REFRESH_TOKEN": "REFRESH_TOKEN",
-        }
+        },
+        thread_local=False,
     ):
 
         with gdaltest.error_handler():
@@ -773,7 +796,9 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app(
             expected_headers={"x-goog-user-project": "my_project_id"},
         )
         with webserver.install_http_handler(handler):
-            with gdaltest.config_option("GS_USER_PROJECT", "my_project_id"):
+            with gdaltest.config_option(
+                "GS_USER_PROJECT", "my_project_id", thread_local=False
+            ):
                 f = open_for_read(
                     "/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays"
                 )
@@ -799,7 +824,8 @@ def test_vsigs_read_credentials_refresh_token_custom_app(
             "GS_OAUTH2_REFRESH_TOKEN": "REFRESH_TOKEN",
             "GS_OAUTH2_CLIENT_ID": "CLIENT_ID",
             "GS_OAUTH2_CLIENT_SECRET": "CLIENT_SECRET",
-        }
+        },
+        thread_local=False,
     ):
 
         gdal.VSICurlClearCache()
@@ -893,7 +919,8 @@ gwE6fxOLyJDxuWRf
             "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
             "GS_OAUTH2_CLIENT_EMAIL": "CLIENT_EMAIL",
-        }
+        },
+        thread_local=False,
     ):
 
         for i in range(2):
@@ -901,7 +928,8 @@ gwE6fxOLyJDxuWRf
             with gdaltest.config_options(
                 {"GS_OAUTH2_PRIVATE_KEY": key}
                 if i == 0
-                else {"GS_OAUTH2_PRIVATE_KEY_FILE": "/vsimem/pkey"}
+                else {"GS_OAUTH2_PRIVATE_KEY_FILE": "/vsimem/pkey"},
+                thread_local=False,
             ):
 
                 gdal.VSICurlClearCache()
@@ -995,7 +1023,8 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
             "GOOGLE_APPLICATION_CREDENTIALS": "/vsimem/service_account.json",
             "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
-        }
+        },
+        thread_local=False,
     ):
 
         gdal.VSICurlClearCache()
@@ -1097,7 +1126,8 @@ def test_vsigs_read_credentials_oauth2_authorized_user_json_file(
             "GOOGLE_APPLICATION_CREDENTIALS": "/vsimem/authorized_user.json",
             "GOA2_AUTH_URL_TOKEN": "http://localhost:%d/accounts.google.com/o/oauth2/token"
             % webserver_port,
-        }
+        },
+        thread_local=False,
     ):
 
         gdal.VSICurlClearCache()
@@ -1184,7 +1214,11 @@ gs_secret_access_key = bar
     )
 
     with gdaltest.config_options(
-        {"CPL_GS_TIMESTAMP": "my_timestamp", "CPL_GS_CREDENTIALS_FILE": "/vsimem/.boto"}
+        {
+            "CPL_GS_TIMESTAMP": "my_timestamp",
+            "CPL_GS_CREDENTIALS_FILE": "/vsimem/.boto",
+        },
+        thread_local=False,
     ):
 
         def method(request):
@@ -1245,7 +1279,8 @@ client_secret = CLIENT_SECRET
             "CPL_GS_CREDENTIALS_FILE": "/vsimem/.boto",
             "GOA2_AUTH_URL_TOKEN": "http://localhost:%d/accounts.google.com/o/oauth2/token"
             % webserver_port,
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -1351,7 +1386,9 @@ Content-Length: 0
 """,
             expected_body=b"--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <3>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/baw HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n",
         )
-        with gdaltest.config_option("CPL_VSIGS_UNLINK_BATCH_SIZE", "2"):
+        with gdaltest.config_option(
+            "CPL_VSIGS_UNLINK_BATCH_SIZE", "2", thread_local=False
+        ):
             with webserver.install_http_handler(handler):
                 ret = gdal.UnlinkBatch(
                     [
@@ -1379,7 +1416,8 @@ def test_vsigs_read_credentials_gce(gs_test_config, webserver_port):
             % webserver_port,
             # Disable hypervisor related check to test if we are really on EC2
             "CPL_GCE_CHECK_LOCAL_FILES": "NO",
-        }
+        },
+        thread_local=False,
     ):
 
         def method(request):
@@ -1423,7 +1461,7 @@ def test_vsigs_read_credentials_gce(gs_test_config, webserver_port):
         assert data == "foo"
 
         # Set a fake URL to check that credentials re-use works
-        with gdaltest.config_option("CPL_GCE_CREDENTIALS_URL", ""):
+        with gdaltest.config_option("CPL_GCE_CREDENTIALS_URL", "", thread_local=False):
 
             handler = webserver.SequentialHandler()
             handler.add("GET", "/gs_fake_bucket/bar", 200, {}, "bar")
@@ -1454,7 +1492,8 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
             % webserver_port,
             # Disable hypervisor related check to test if we are really on EC2
             "CPL_GCE_CHECK_LOCAL_FILES": "NO",
-        }
+        },
+        thread_local=False,
     ):
 
         def method(request):

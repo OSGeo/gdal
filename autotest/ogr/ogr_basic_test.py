@@ -888,6 +888,17 @@ def test_ogr_basic_get_geometry_types():
 
 
 ###############################################################################
+# Test ogr.enable_exceptions()
+
+
+def test_ogr_exceptions():
+
+    with pytest.raises(Exception):
+        with ogr.enable_exceptions():
+            ogr.CreateGeometryFromWkt("invalid")
+
+
+###############################################################################
 # cleanup
 
 

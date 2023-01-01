@@ -1871,30 +1871,14 @@ def SetCacheMax(val):
 # Temporarily define a configuration option
 
 
-@contextlib.contextmanager
-def config_option(key, val):
-    oldval = gdal.GetConfigOption(key)
-    gdal.SetConfigOption(key, val)
-    try:
-        yield
-    finally:
-        gdal.SetConfigOption(key, oldval)
+config_option = gdal.config_option
 
 
 ###############################################################################
 # Temporarily define a set of configuration options
 
 
-@contextlib.contextmanager
-def config_options(options):
-    oldvals = {key: gdal.GetConfigOption(key) for key in options}
-    for key in options:
-        gdal.SetConfigOption(key, options[key])
-    try:
-        yield
-    finally:
-        for key in options:
-            gdal.SetConfigOption(key, oldvals[key])
+config_options = gdal.config_options
 
 
 ###############################################################################
@@ -1936,20 +1920,7 @@ def tempfile(filename, content):
 # Temporarily enable exceptions
 
 
-@contextlib.contextmanager
-def enable_exceptions():
-    if gdal.GetUseExceptions():
-        try:
-            yield
-        finally:
-            pass
-        return
-
-    gdal.UseExceptions()
-    try:
-        yield
-    finally:
-        gdal.DontUseExceptions()
+enable_exceptions = gdal.enable_exceptions
 
 
 ###############################################################################

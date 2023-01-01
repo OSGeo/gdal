@@ -72,9 +72,9 @@ general_s3_options = {
 def aws_test_config_as_config_options_or_credentials(request):
     options = general_s3_options
 
-    with gdaltest.config_options(options) if request.param else gdaltest.credentials(
-        "/vsis3/", options
-    ):
+    with gdaltest.config_options(
+        options, thread_local=False
+    ) if request.param else gdaltest.credentials("/vsis3/", options):
         yield request.param
 
 
@@ -82,7 +82,7 @@ def aws_test_config_as_config_options_or_credentials(request):
 def aws_test_config():
     options = general_s3_options
 
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options, thread_local=False):
         yield
 
 
@@ -98,8 +98,7 @@ def webserver_port():
         if webserver_port == 0:
             pytest.skip()
         with gdaltest.config_option(
-            "AWS_S3_ENDPOINT",
-            f"127.0.0.1:{webserver_port}",
+            "AWS_S3_ENDPOINT", f"127.0.0.1:{webserver_port}", thread_local=False
         ):
             yield webserver_port
     finally:
@@ -116,7 +115,7 @@ def test_vsis3_init(aws_test_config):
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
     }
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options, thread_local=False):
         assert gdal.GetSignedURL("/vsis3/foo/bar") is None
 
 
@@ -142,7 +141,7 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
     url = "https://" + bucket + ".s3.amazonaws.com/" + obj
 
     with gdaltest.config_options(
-        options
+        options, thread_local=False
     ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
         "/vsis3/" + bucket, options
     ):
@@ -186,7 +185,7 @@ def test_vsis3_sync_multithreaded_download(
     }
     # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
     with gdaltest.config_options(
-        options
+        options, thread_local=False
     ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
         "/vsis3/cdn.proj.org", options
     ):
@@ -230,7 +229,7 @@ def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
         "AWS_VIRTUAL_HOSTING": "FALSE",
     }
     # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
-    with gdaltest.config_options(options):
+    with gdaltest.config_options(options, thread_local=False):
         assert gdal.Sync(
             "/vsis3/cdn.proj.org/test_dummy",
             "/vsimem/test_vsis3_no_sign_request_sync",
@@ -261,7 +260,7 @@ def test_vsis3_1(aws_test_config):
         pytest.skip()
 
     # Missing AWS_SECRET_ACCESS_KEY
-    with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}):
+    with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}, thread_local=False):
         gdal.ErrorReset()
 
         with gdaltest.error_handler():
@@ -276,7 +275,8 @@ def test_vsis3_1(aws_test_config):
         assert gdal.VSIGetLastErrorMsg().find("AWS_SECRET_ACCESS_KEY") >= 0
 
     with gdaltest.config_options(
-        {"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID": ""}
+        {"AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID": ""},
+        thread_local=False,
     ):
         # Missing AWS_ACCESS_KEY_ID
         gdal.ErrorReset()
@@ -289,7 +289,8 @@ def test_vsis3_1(aws_test_config):
         {
             "AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
             "AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
-        }
+        },
+        thread_local=False,
     ):
         # ERROR 1: The AWS Access Key Id you provided does not exist in our
         # records.
@@ -458,7 +459,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 
     # Test with temporary credentials
     with gdaltest.config_option(
-        "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN"
+        "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN", thread_local=False
     ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
         "/vsis3/s3_fake_bucket_with_session_token",
         {"AWS_SESSION_TOKEN": "AWS_SESSION_TOKEN"},
@@ -818,7 +819,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
 
     with gdaltest.config_option(
-        "AWS_REQUEST_PAYER", "requester"
+        "AWS_REQUEST_PAYER", "requester", thread_local=False
     ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
         "/vsis3/s3_fake_bucket_with_requester_pays", {"AWS_REQUEST_PAYER": "requester"}
     ):
@@ -942,7 +943,9 @@ def test_vsis3_open_after_config_option_change(aws_test_config, webserver_port):
     f = open_for_read("/vsis3/test_vsis3_change_config_options/test.bin")
     assert f is None
 
-    with gdaltest.config_option("AWS_ACCESS_KEY_ID", "another_key_id"):
+    with gdaltest.config_option(
+        "AWS_ACCESS_KEY_ID", "another_key_id", thread_local=False
+    ):
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
@@ -1218,7 +1221,9 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             </ListBucketResult>
         """,
     )
-    with gdaltest.config_option("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "NO"):
+    with gdaltest.config_option(
+        "CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "NO", thread_local=False
+    ):
         with webserver.install_http_handler(handler):
             dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir")
     assert dir_contents == [
@@ -1262,7 +1267,9 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             </ListBucketResult>
         """,
     )
-    with gdaltest.config_option("CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES", ""):
+    with gdaltest.config_option(
+        "CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES", "", thread_local=False
+    ):
         with webserver.install_http_handler(handler):
             dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir")
     assert dir_contents == [
@@ -1280,7 +1287,9 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         "/vsis3/unrelated:/vsis3/s3_non_cached",
         "/vsis3/unrelated:/vsis3/s3_non_cached:/vsis3/unrelated",
     ]:
-        with gdaltest.config_option("CPL_VSIL_CURL_NON_CACHED", config_option_value):
+        with gdaltest.config_option(
+            "CPL_VSIL_CURL_NON_CACHED", config_option_value, thread_local=False
+        ):
 
             handler = webserver.SequentialHandler()
             handler.add("GET", "/s3_non_cached/test.txt", 200, {}, "foo")
@@ -1322,7 +1331,9 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     # Retry without option
     for config_option_value in [None, "/vsis3/s3_non_cached/bar.txt"]:
-        with gdaltest.config_option("CPL_VSIL_CURL_NON_CACHED", config_option_value):
+        with gdaltest.config_option(
+            "CPL_VSIL_CURL_NON_CACHED", config_option_value, thread_local=False
+        ):
 
             handler = webserver.SequentialHandler()
             if config_option_value is None:
@@ -1979,7 +1990,9 @@ def test_vsis3_4(aws_test_config, webserver_port):
     # Nominal case
 
     gdal.NetworkStatsReset()
-    with gdaltest.config_option("CPL_VSIL_NETWORK_STATS_ENABLED", "YES"):
+    with gdaltest.config_option(
+        "CPL_VSIL_NETWORK_STATS_ENABLED", "YES", thread_local=False
+    ):
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/another_file.bin", "wb")
             assert f is not None
@@ -2112,7 +2125,8 @@ def test_vsis3_4(aws_test_config, webserver_port):
 
 def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
     with gdaltest.config_options(
-        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"}
+        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
+        thread_local=False,
     ):
 
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -2301,7 +2315,7 @@ def test_vsis3_unlink_batch(aws_test_config, webserver_port):
         </DeleteResult>""",
     )
 
-    with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2"):
+    with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2", thread_local=False):
         with webserver.install_http_handler(handler):
             ret = gdal.UnlinkBatch(
                 [
@@ -2443,7 +2457,7 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
 
     handler.add("POST", "/test_rmdir_recursive/?delete", custom_method=method)
 
-    with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2"):
+    with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.RmdirRecursive("/vsis3/test_rmdir_recursive/somedir") == 0
 
@@ -2525,7 +2539,7 @@ def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port
 
 
 def test_vsis3_6(aws_test_config, webserver_port):
-    with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+    with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1", thread_local=False):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket4/large_file.tif", "wb")
     assert f is not None
@@ -2689,7 +2703,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
     ]
     with webserver.install_http_handler(handler):
         for filename in filenames:
-            with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+            with gdaltest.config_option(
+                "VSIS3_CHUNK_SIZE", "1", thread_local=False
+            ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None
             with gdaltest.error_handler():
@@ -2754,7 +2770,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
     ]
     with webserver.install_http_handler(handler):
         for filename in filenames:
-            with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+            with gdaltest.config_option(
+                "VSIS3_CHUNK_SIZE", "1", thread_local=False
+            ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None, filename
             with gdaltest.error_handler():
@@ -2792,7 +2810,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
 
     filename = "/vsis3/s3_fake_bucket4/large_file_abortmultipart_403_error.bin"
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+        with gdaltest.config_option(
+            "VSIS3_CHUNK_SIZE", "1", thread_local=False
+        ):  # 1 MB
             f = gdal.VSIFOpenL(filename, "wb")
         assert f is not None, filename
         with gdaltest.error_handler():
@@ -2846,7 +2866,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
 
     filename = "/vsis3/s3_fake_bucket4/large_file_completemultipart_403_error.bin"
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+        with gdaltest.config_option(
+            "VSIS3_CHUNK_SIZE", "1", thread_local=False
+        ):  # 1 MB
             f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None, filename
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
@@ -2864,10 +2886,13 @@ def test_vsis3_6(aws_test_config, webserver_port):
 def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
     with gdaltest.config_options(
-        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"}
+        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
+        thread_local=False,
     ):
 
-        with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1"):  # 1 MB
+        with gdaltest.config_option(
+            "VSIS3_CHUNK_SIZE", "1", thread_local=False
+        ):  # 1 MB
             with webserver.install_http_handler(webserver.SequentialHandler()):
                 f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket4/large_file.tif", "wb")
         assert f is not None
@@ -2977,7 +3002,9 @@ def test_vsis3_abort_pending_uploads(aws_test_config, webserver_port):
     handler.add("DELETE", "/my_bucket/my_key?uploadId=my_upload_id", 204)
     handler.add("DELETE", "/my_bucket/my_key2?uploadId=my_upload_id2", 204)
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option("CPL_VSIS3_LIST_UPLOADS_MAX", "1"):
+        with gdaltest.config_option(
+            "CPL_VSIS3_LIST_UPLOADS_MAX", "1", thread_local=False
+        ):
             assert gdal.AbortPendingUploads("/vsis3/my_bucket")
 
 
@@ -3854,7 +3881,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
 
     handler.add("POST", "/test_bucket/test/foo?uploadId=my_id", custom_method=method)
 
-    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES"):
+    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
                 "/vsimem/test",
@@ -3908,7 +3935,8 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
     handler.add("DELETE", "/test_bucket/test/foo?uploadId=my_id", 204)
 
     with gdaltest.config_options(
-        {"VSIS3_SIMULATE_THREADING": "YES", "VSIS3_SYNC_MULTITHREADING": "NO"}
+        {"VSIS3_SIMULATE_THREADING": "YES", "VSIS3_SYNC_MULTITHREADING": "NO"},
+        thread_local=False,
     ):
         with webserver.install_http_handler(handler):
             with gdaltest.error_handler():
@@ -4053,7 +4081,9 @@ def test_vsis3_random_write(aws_test_config, webserver_port):
     with gdaltest.error_handler():
         assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b") is None
 
-    with gdaltest.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES"):
+    with gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
     assert f
     assert gdal.VSIFWriteL("foo", 3, 1, f) == 1
@@ -4076,7 +4106,9 @@ def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES"):
+    with gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
     assert f
 
@@ -4095,7 +4127,9 @@ def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES"):
+    with gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
         with gdaltest.config_option("VSIS3_CHUNK_SIZE_BYTES", "1"):
             f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
     assert f
@@ -4124,7 +4158,9 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
 
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdaltest.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES"):
+    with gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
         with webserver.install_http_handler(handler):
             ds = gdal.GetDriverByName("GTiff").CreateCopy(
                 "/vsis3/random_write/test.tif", src_ds
@@ -4173,7 +4209,7 @@ aws_secret_access_key = bar
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4220,7 +4256,7 @@ aws_secret_access_key = bar
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4283,7 +4319,7 @@ aws_secret_access_key = bar
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4349,9 +4385,11 @@ aws_secret_access_key = bar
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             with gdaltest.config_option(
-                "USERPROFILE" if sys.platform == "win32" else "HOME", str(tmpdir)
+                "USERPROFILE" if sys.platform == "win32" else "HOME",
+                str(tmpdir),
+                thread_local=False,
             ):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
@@ -4417,7 +4455,7 @@ aws_secret_access_key = bar
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             with gdaltest.error_handler():
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
@@ -4488,9 +4526,11 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             with gdaltest.config_option(
-                "CPL_AWS_STS_ROOT_URL", "http://localhost:%d" % webserver_port
+                "CPL_AWS_STS_ROOT_URL",
+                "http://localhost:%d" % webserver_port,
+                thread_local=False,
             ):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
@@ -4553,9 +4593,11 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             with gdaltest.config_option(
-                "CPL_AWS_EC2_API_ROOT_URL", "http://localhost:%d" % webserver_port
+                "CPL_AWS_EC2_API_ROOT_URL",
+                "http://localhost:%d" % webserver_port,
+                thread_local=False,
             ):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
@@ -4567,9 +4609,11 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("GET", "/s3_fake_bucket/bar", 200, {}, "bar")
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             # Set a fake URL to check that credentials re-use works
-            with gdaltest.config_option("CPL_AWS_EC2_API_ROOT_URL", ""):
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", "", thread_local=False
+            ):
                 f = open_for_read("/vsis3/s3_fake_bucket/bar")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4579,7 +4623,8 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
 
     # We can reuse credentials here as their expiration is far away in the future
     with gdaltest.config_options(
-        {**options, "CPL_AWS_EC2_API_ROOT_URL": "http://localhost:%d" % webserver_port}
+        {**options, "CPL_AWS_EC2_API_ROOT_URL": "http://localhost:%d" % webserver_port},
+        thread_local=False,
     ):
         signed_url = gdal.GetSignedURL("/vsis3/s3_fake_bucket/resource")
     expected_url_8080 = (
@@ -4630,7 +4675,8 @@ def test_vsis3_read_credentials_ec2_imdsv2(aws_test_config, webserver_port):
     )
 
     with gdaltest.config_options(
-        {**options, "CPL_AWS_EC2_API_ROOT_URL": "http://localhost:%d" % webserver_port}
+        {**options, "CPL_AWS_EC2_API_ROOT_URL": "http://localhost:%d" % webserver_port},
+        thread_local=False,
     ):
         with webserver.install_http_handler(handler):
             signed_url = gdal.GetSignedURL(
@@ -4715,7 +4761,7 @@ def test_vsis3_read_credentials_ec2_imdsv1(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4799,8 +4845,10 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
         custom_method=get_s3_fake_bucket_resource_method,
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
-            with gdaltest.config_option("CPL_AWS_EC2_API_ROOT_URL", valid_url):
+        with gdaltest.config_options(options, thread_local=False):
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", valid_url, thread_local=False
+            ):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
                 assert f is not None
                 data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4814,9 +4862,11 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
         "GET", "/invalid/latest/meta-data/iam/security-credentials/myprofile", 404
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             # Set a fake URL to demonstrate we try to re-fetch credentials
-            with gdaltest.config_option("CPL_AWS_EC2_API_ROOT_URL", invalid_url):
+            with gdaltest.config_option(
+                "CPL_AWS_EC2_API_ROOT_URL", invalid_url, thread_local=False
+            ):
                 with gdaltest.error_handler():
                     f = open_for_read("/vsis3/s3_fake_bucket/bar")
         assert f is None
@@ -4906,7 +4956,7 @@ role_session_name = my_role_session_name
         },
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource")
             assert f is not None
             data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4942,7 +4992,7 @@ role_session_name = my_role_session_name
         },
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource2")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -4963,7 +5013,7 @@ role_session_name = my_role_session_name
         },
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options):
+        with gdaltest.config_options(options, thread_local=False):
             f = open_for_read("/vsis3/s3_fake_bucket/resource3")
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -5115,7 +5165,7 @@ source_profile = foo
 
     try:
         with webserver.install_http_handler(handler):
-            with gdaltest.config_options(options):
+            with gdaltest.config_options(options, thread_local=False):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
             assert f is not None
             data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -5123,7 +5173,7 @@ source_profile = foo
         assert data == "foo"
 
         with webserver.install_http_handler(handler2):
-            with gdaltest.config_options(options):
+            with gdaltest.config_options(options, thread_local=False):
                 f = open_for_read("/vsis3/s3_fake_bucket/resource2")
                 assert f is not None
                 data = gdal.VSIFReadL(1, 4, f).decode("ascii")
@@ -5158,7 +5208,9 @@ def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
         200,
     )
     gdal.ErrorReset()
-    with gdaltest.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "YES"):
+    with gdaltest.config_option(
+        "GDAL_DISABLE_READDIR_ON_OPEN", "YES", thread_local=False
+    ):
         with webserver.install_http_handler(handler):
             with gdaltest.error_handler():
                 gdal.Open("/vsis3/test_bucket/non_existing.tif")

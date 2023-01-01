@@ -52,7 +52,7 @@ def open_for_read(uri):
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    az_vars = {}
+    options = {}
     for var, reset_val in (
         ("AZURE_STORAGE_CONNECTION_STRING", None),
         ("AZURE_STORAGE_ACCOUNT", None),
@@ -62,40 +62,38 @@ def startup_and_cleanup():
         ("AZURE_CONFIG_DIR", ""),
         ("AZURE_STORAGE_ACCESS_TOKEN", ""),
     ):
-        az_vars[var] = gdal.GetConfigOption(var)
-        gdal.SetConfigOption(var, reset_val)
+        options[var] = reset_val
 
-    assert gdal.GetSignedURL("/vsiaz/foo/bar") is None
+    with gdal.config_options(options, thread_local=False):
+        assert gdal.GetSignedURL("/vsiaz/foo/bar") is None
 
-    gdaltest.webserver_process = None
-    gdaltest.webserver_port = 0
+        gdaltest.webserver_process = None
+        gdaltest.webserver_port = 0
 
-    if not gdaltest.built_against_curl():
-        pytest.skip()
+        if not gdaltest.built_against_curl():
+            pytest.skip()
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+        (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+            handler=webserver.DispatcherHttpHandler
+        )
+        if gdaltest.webserver_port == 0:
+            pytest.skip()
 
-    gdal.SetConfigOption(
-        "AZURE_STORAGE_CONNECTION_STRING",
-        "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/azure/blob/myaccount"
-        % gdaltest.webserver_port,
-    )
-    gdal.SetConfigOption("CPL_AZURE_TIMESTAMP", "my_timestamp")
+        with gdal.config_options(
+            {
+                "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/azure/blob/myaccount"
+                % gdaltest.webserver_port,
+                "CPL_AZURE_TIMESTAMP": "my_timestamp",
+            },
+            thread_local=False,
+        ):
+            yield
 
-    yield
+        # Clearcache needed to close all connections, since the Python server
+        # can only handle one connection at a time
+        gdal.VSICurlClearCache()
 
-    # Clearcache needed to close all connections, since the Python server
-    # can only handle one connection at a time
-    gdal.VSICurlClearCache()
-
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    for var in az_vars:
-        gdal.SetConfigOption(var, az_vars[var])
+        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
@@ -219,7 +217,7 @@ def test_vsiaz_fake_basic():
 
     # Test that we don't emit a Authorization header in AZURE_NO_SIGN_REQUEST
     # mode, even if we have credentials
-    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES"):
+    with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
         handler = webserver.SequentialHandler()
         handler.add(
             "HEAD",
@@ -410,7 +408,8 @@ def test_vsiaz_sas_fake():
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "AZURE_STORAGE_CONNECTION_STRING": "",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -585,11 +584,10 @@ def test_vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
     # Test creation of AppendBlob
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", "10")
-    f = gdal.VSIFOpenExL(
-        "/vsiaz/test_copy/file.tif", "wb", 0, ["x-ms-client-request-id=REQUEST_ID"]
-    )
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", None)
+    with gdal.config_option("VSIAZ_CHUNK_SIZE_BYTES", "10", thread_local=False):
+        f = gdal.VSIFOpenExL(
+            "/vsiaz/test_copy/file.tif", "wb", 0, ["x-ms-client-request-id=REQUEST_ID"]
+        )
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -696,9 +694,8 @@ def test_vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
     # Test failed creation of AppendBlob
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", "10")
-    f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", None)
+    with gdal.config_option("VSIAZ_CHUNK_SIZE_BYTES", "10", thread_local=False):
+        f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -720,9 +717,8 @@ def test_vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
     # Test failed writing of a block of an AppendBlob
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", "10")
-    f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
-    gdal.SetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", None)
+    with gdal.config_option("VSIAZ_CHUNK_SIZE_BYTES", "10", thread_local=False):
+        f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -753,7 +749,8 @@ def test_vsiaz_write_blockblob_retry():
     assert f is not None
 
     with gdaltest.config_options(
-        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"}
+        {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -798,7 +795,8 @@ def test_vsiaz_write_appendblob_retry():
             "GDAL_HTTP_MAX_RETRY": "2",
             "GDAL_HTTP_RETRY_DELAY": "0.01",
             "VSIAZ_CHUNK_SIZE_BYTES": "10",
-        }
+        },
+        thread_local=False,
     ):
 
         f = gdal.VSIFOpenL("/vsiaz/test_copy/file.bin", "wb")
@@ -1117,6 +1115,7 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
         "AZURE_STORAGE_CONNECTION_STRING",
         "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount"
         % gdaltest.webserver_port,
+        thread_local=False,
     ):
 
         signed_url = gdal.GetSignedURL("/vsiaz/az_fake_bucket/resource")
@@ -1139,6 +1138,7 @@ def test_vsiaz_fake_test_SharedAccessSignatureInConnectionString():
         "AZURE_STORAGE_CONNECTION_STRING",
         "BlobEndpoint=http://127.0.0.1:%d/myaccount;SharedAccessSignature=sp=rl&st=2022-12-06T20:41:17Z&se=2022-12-07T04:41:17Z&spr=https&sv=2021-06-08&sr=c&sig=xxxxxxxx"
         % gdaltest.webserver_port,
+        thread_local=False,
     ):
 
         signed_url = gdal.GetSignedURL("/vsiaz/az_fake_bucket/resource")
@@ -1602,7 +1602,7 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
         tab[0] = pct
         return True
 
-    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES"):
+    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
                 "/vsimem/test",
@@ -1702,7 +1702,7 @@ def test_vsiaz_fake_sync_multithreaded_upload_single_file():
         custom_method=method,
     )
 
-    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES"):
+    with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
                 "/vsimem/test/foo",
@@ -1733,7 +1733,8 @@ def test_vsiaz_read_credentials_simulated_azure_vm():
             "CPL_AZURE_USE_HTTPS": "NO",
             "CPL_AZURE_VM_API_ROOT_URL": "http://localhost:%d"
             % gdaltest.webserver_port,
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -1777,7 +1778,8 @@ def test_vsiaz_read_credentials_simulated_azure_vm():
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "CPL_AZURE_VM_API_ROOT_URL": "invalid",
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -1821,7 +1823,8 @@ def test_vsiaz_read_credentials_simulated_azure_vm_expiration():
             "CPL_AZURE_USE_HTTPS": "NO",
             "CPL_AZURE_VM_API_ROOT_URL": "http://localhost:%d"
             % gdaltest.webserver_port,
-        }
+        },
+        thread_local=False,
     ):
 
         handler = webserver.SequentialHandler()
@@ -1990,7 +1993,8 @@ connection_string = DefaultEndpointsProtocol=http;AccountName=myaccount2;Account
         {
             "AZURE_STORAGE_CONNECTION_STRING": None,
             "AZURE_CONFIG_DIR": "/vsimem/azure_config_dir",
-        }
+        },
+        thread_local=False,
     ):
         handler = webserver.SequentialHandler()
         handler.add(
@@ -2040,7 +2044,8 @@ key = MY_ACCOUNT_KEY
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "AZURE_CONFIG_DIR": "/vsimem/azure_config_dir",
-        }
+        },
+        thread_local=False,
     ):
         handler = webserver.SequentialHandler()
         handler.add(
@@ -2090,7 +2095,8 @@ sas_token = sig=sas
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "AZURE_CONFIG_DIR": "/vsimem/azure_config_dir",
-        }
+        },
+        thread_local=False,
     ):
         handler = webserver.SequentialHandler()
         handler.add(
@@ -2135,7 +2141,8 @@ account=foo
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "AZURE_CONFIG_DIR": "/vsimem/azure_config_dir",
-        }
+        },
+        thread_local=False,
     ):
         handler = webserver.SequentialHandler()
         with webserver.install_http_handler(handler):
@@ -2162,7 +2169,8 @@ def test_vsiaz_access_token():
             % gdaltest.webserver_port,
             "CPL_AZURE_USE_HTTPS": "NO",
             "AZURE_STORAGE_ACCESS_TOKEN": "my_token",
-        }
+        },
+        thread_local=False,
     ):
         handler = webserver.SequentialHandler()
         handler.add(
