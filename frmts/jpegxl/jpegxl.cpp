@@ -1686,6 +1686,23 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                                   fpJPEG.get()) == abyJPEG.size() &&
                         abyJPEG[0] == 0xff && abyJPEG[1] == 0xd8)
                     {
+                        if (abyJPEG.size() > 4)
+                        {
+                            // Detect zlib compress mask band at end of file
+                            // and remove it if found
+                            uint32_t nImageSize = 0;
+                            memcpy(&nImageSize, abyJPEG.data() + nFileSize - 4,
+                                   4);
+                            CPL_LSBPTR32(&nImageSize);
+                            if (nImageSize > 2 && nImageSize >= nFileSize / 2 &&
+                                nImageSize <= nFileSize - 4 &&
+                                abyJPEG[nImageSize - 2] == 0xFF &&
+                                abyJPEG[nImageSize - 1] == 0xD9)
+                            {
+                                abyJPEG.resize(nImageSize);
+                            }
+                        }
+
                         std::vector<GByte> abyJPEGMod;
                         abyJPEGMod.reserve(abyJPEG.size());
 
@@ -1988,8 +2005,45 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
+    int nPamMask = GCIF_PAM_DEFAULT;
+
     if (!abyJPEG.empty())
     {
+#ifdef HAVE_JxlEncoderInitExtraChannelInfo
+        const bool bHasMaskBand =
+            basic_info.num_extra_channels == 0 &&
+            poSrcDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET;
+        if (bHasMaskBand)
+        {
+            nPamMask &= ~GCIF_MASK;
+
+            basic_info.alpha_bits = basic_info.bits_per_sample;
+            basic_info.num_extra_channels = 1;
+            if (JXL_ENC_SUCCESS !=
+                JxlEncoderSetBasicInfo(encoder.get(), &basic_info))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetBasicInfo() failed");
+                return nullptr;
+            }
+
+            JxlExtraChannelInfo extra_channel_info;
+            JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_ALPHA,
+                                           &extra_channel_info);
+            extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
+            extra_channel_info.exponent_bits_per_sample =
+                basic_info.exponent_bits_per_sample;
+
+            if (JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelInfo(
+                                       encoder.get(), 0, &extra_channel_info))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetExtraChannelInfo() failed");
+                return nullptr;
+            }
+        }
+#endif
+
         CPLDebug("JPEGXL", "Adding JPEG frame");
         JxlEncoderStoreJPEGMetadata(encoder.get(), true);
         if (JxlEncoderAddJPEGFrame(opts, abyJPEG.data(), abyJPEG.size()) !=
@@ -1999,6 +2053,69 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                      "JxlEncoderAddJPEGFrame() failed");
             return nullptr;
         }
+
+#ifdef HAVE_JxlEncoderInitExtraChannelInfo
+        if (bHasMaskBand)
+        {
+            JxlColorEncoding color_encoding;
+            JxlColorEncodingSetToSRGB(&color_encoding,
+                                      basic_info.num_color_channels ==
+                                          1 /*is_gray*/);
+            if (JXL_ENC_SUCCESS !=
+                JxlEncoderSetColorEncoding(encoder.get(), &color_encoding))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetColorEncoding() failed");
+                return nullptr;
+            }
+
+            const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
+            if (nDataSize <= 0 ||
+                static_cast<size_t>(poSrcDS->GetRasterXSize()) >
+                    std::numeric_limits<size_t>::max() /
+                        poSrcDS->GetRasterYSize() / nDataSize)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Image too big for architecture");
+                return nullptr;
+            }
+            const size_t nInputDataSize =
+                static_cast<size_t>(poSrcDS->GetRasterXSize()) *
+                poSrcDS->GetRasterYSize() * nDataSize;
+
+            std::vector<GByte> abyInputData;
+            try
+            {
+                abyInputData.resize(nInputDataSize);
+            }
+            catch (const std::exception &e)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate image buffer: %s", e.what());
+                return nullptr;
+            }
+
+            format.num_channels = 1;
+            if (poSrcDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
+                    GF_Read, 0, 0, poSrcDS->GetRasterXSize(),
+                    poSrcDS->GetRasterYSize(), abyInputData.data(),
+                    poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), eDT,
+                    0, 0, nullptr) != CE_None)
+            {
+                return nullptr;
+            }
+            if (JxlEncoderSetExtraChannelBuffer(
+                    opts, &format, abyInputData.data(),
+                    static_cast<size_t>(poSrcDS->GetRasterXSize()) *
+                        poSrcDS->GetRasterYSize() * nDataSize,
+                    0) != JXL_ENC_SUCCESS)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderSetExtraChannelBuffer() failed");
+                return nullptr;
+            }
+        }
+#endif
     }
     else
     {
@@ -2186,7 +2303,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
         }
 #endif
-        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
+        poDS->CloneInfo(poSrcDS, nPamMask);
     }
 
     return poDS;
