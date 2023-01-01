@@ -673,6 +673,7 @@ class GPKGChecker(object):
         cols = c.fetchall()
         found_geom = False
         count_pkid = 0
+        pkid_column_name = None
         for (_, name, typ, notnull, default, pk) in cols:
             if name.lower() == geom_column_name.lower():
                 found_geom = True
@@ -695,6 +696,8 @@ class GPKGChecker(object):
                 )
 
             elif pk == 1:
+                if pkid_column_name is None:
+                    pkid_column_name = name
                 count_pkid += 1
                 self._assert(
                     typ == "INTEGER",
@@ -773,8 +776,12 @@ class GPKGChecker(object):
 
         wkb_geometries = GPKGChecker.BASE_GEOM_TYPES + GPKGChecker.EXT_GEOM_TYPES
         c.execute(
-            "SELECT _rowid_, %s FROM %s "
-            % (_esc_id(geom_column_name), _esc_id(table_name))
+            "SELECT %s, %s FROM %s "
+            % (
+                _esc_id(pkid_column_name) if pkid_column_name else -1,
+                _esc_id(geom_column_name),
+                _esc_id(table_name),
+            )
         )
         found_geom_types = set()
         warning_messages = set()
