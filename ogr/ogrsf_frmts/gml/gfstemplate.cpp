@@ -192,6 +192,10 @@ bool GMLReader::ReArrangeTemplateClasses(GFSTemplateList *pCC)
 
 bool GMLReader::PrescanForTemplate()
 {
+    // Below logic is not ready for FeatureProperty/FeaturePropertyList
+    if (ShouldLookForClassAtAnyLevel())
+        return true;
+
     GMLFeature *poFeature = nullptr;
     GFSTemplateList *pCC = new GFSTemplateList();
 

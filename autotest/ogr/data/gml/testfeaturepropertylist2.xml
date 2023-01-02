@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TEST INSTRUCTIONS: Open a command line, where the command 'ogrinfo' is available (e.g. OSGeo4W Shell). Then navigate to the directory in which the test instance is located. Then execute the following command:
+
+ogrinfo -ro -al -rl -oo WRITE_GFS=NO -oo GFS_TEMPLATE=../results/gfs1/IDENTITY/Test_Schema.gfs test_basic1.xml
+
+-->
+<t:CollectionNotEncodedInGfs xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:t="http://example.org/shapechange/schema/test" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://example.org/shapechange/schema/test ../results/xsd/IDENTITY/test.xsd">
+  <t:ft1>
+    <t:FeatureType1 gml:id="FT1_1">
+      <t:attGeom>
+        <gml:Polygon>
+          <gml:exterior>
+            <gml:LinearRing>
+              <gml:posList>0 0 1 0 1 1 0 1 0 0</gml:posList>
+            </gml:LinearRing>
+          </gml:exterior>
+        </gml:Polygon>
+      </t:attGeom>         
+      <t:attDt>
+        <t:DataType>
+          <t:dtAtt1>1_a</t:dtAtt1>
+          <t:dtAtt1>1_b</t:dtAtt1>
+          <t:dtAtt2>1.1</t:dtAtt2>
+        </t:DataType>
+      </t:attDt>
+      <t:attU>
+        <t:Union>
+          <t:option2>
+            <t:DataType>
+              <t:dtAtt1>u_opt2_dt_1_a</t:dtAtt1>
+              <t:dtAtt1>u_opt2_dt_1_b</t:dtAtt1>
+              <t:dtAtt2>1.1</t:dtAtt2>
+            </t:DataType>
+          </t:option2>
+          <t:option2>
+            <t:DataType>
+              <t:dtAtt1>u_opt2_dt_2_a</t:dtAtt1>
+              <t:dtAtt1>u_opt2_dt_2_b</t:dtAtt1>
+              <t:dtAtt2>2.2</t:dtAtt2>
+            </t:DataType>
+          </t:option2>
+        </t:Union>
+      </t:attU>
+      <t:attCl>code_1</t:attCl> 
+      <t:roleOt1>
+        <t:ObjectType1 gml:id="OT1_1">
+          <t:attE>enum1</t:attE>
+          <t:attDtSupertype>
+            <t:DataTypeSupertype>
+              <t:attSuper1>
+                <gml:LineString>
+                  <gml:posList>0 0 1 1</gml:posList>
+                </gml:LineString>
+              </t:attSuper1>
+              <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+              <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+              <t:attSuper3 uom="m">3.3</t:attSuper3>
+            </t:DataTypeSupertype>
+          </t:attDtSupertype>
+        </t:ObjectType1>
+      </t:roleOt1>
+      <t:roleOt1>
+        <t:ObjectType1 gml:id="OT1_2">
+          <t:attE>enum2</t:attE>
+          <t:attDtSupertype>
+            <t:DataTypeSub1>
+              <t:attSuper1>
+                <gml:Point>
+                  <gml:pos>1 1</gml:pos>
+                </gml:Point>
+              </t:attSuper1>
+              <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+              <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+              <t:attSuper3 uom="mm">4.4</t:attSuper3>
+              <t:attSub1 uom="cm">5.5</t:attSub1>
+            </t:DataTypeSub1>
+          </t:attDtSupertype>
+        </t:ObjectType1>
+      </t:roleOt1>
+      <t:roleOt1>
+        <t:ObjectType1 gml:id="OT1_3">
+          <t:attE>enum2</t:attE>
+          <t:attDtSupertype>
+            <t:DataTypeSub2>
+              <t:attSuper1>
+                <gml:Point>
+                  <gml:pos>1 1</gml:pos>
+                </gml:Point>
+              </t:attSuper1>
+              <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+              <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+              <t:attSuper3 uom="mm">4.4</t:attSuper3>
+              <t:attSubAbstract>5</t:attSubAbstract>
+              <t:attSub2>
+                <t:Union>
+                  <t:option1>6</t:option1>
+                </t:Union>
+              </t:attSub2>
+            </t:DataTypeSub2>
+          </t:attDtSupertype>
+        </t:ObjectType1>
+      </t:roleOt1>      
+      <t:roleFt2 xlink:href="#FT2_1"/>
+      <t:roleFt2 xlink:href="#FT2_2"/>
+    </t:FeatureType1>
+  </t:ft1>
+  <t:ft2>
+   <t:FeatureType2 gml:id="FT2_1">
+     <t:att1>12345678901234567890xyz</t:att1>
+     <t:att2>false</t:att2>
+     <t:att3>
+       <gml:Point>
+         <gml:pos>10 10</gml:pos>
+       </gml:Point>
+     </t:att3>
+     <t:att4>1</t:att4>
+     <t:att4>2</t:att4>
+     <t:att5>
+       <gml:LineString>
+         <gml:posList>9 9 10 10</gml:posList>
+       </gml:LineString>
+     </t:att5>
+     <t:roleFt1 xlink:href="#FT1_1"/>
+   </t:FeatureType2>
+  </t:ft2>
+  <t:ft2>
+    <t:FeatureType2 gml:id="FT2_2">
+      <t:att1>abc</t:att1>
+      <t:att2>true</t:att2>
+      <t:att3>
+        <gml:Point>
+          <gml:pos>11 11</gml:pos>
+        </gml:Point>
+      </t:att3>
+      <t:att4>6</t:att4>
+      <t:att4>7</t:att4>
+      <t:att5>
+        <gml:LineString>
+          <gml:posList>11 11 12 12</gml:posList>
+        </gml:LineString>
+      </t:att5>
+      <t:roleFt1 xlink:href="#FT1_1"/>
+    </t:FeatureType2>
+  </t:ft2>
+  <t:ot1>
+    <t:ObjectType1 gml:id="OT1_4">
+      <t:attE>enum1</t:attE>
+      <t:attDtSupertype>
+        <t:DataTypeSupertype>
+          <t:attSuper1>
+            <gml:LineString>
+              <gml:posList>4 4 5 5</gml:posList>
+            </gml:LineString>
+          </t:attSuper1>
+          <t:attSuper2>dtsuper_attsuper2_x</t:attSuper2>
+          <t:attSuper2>dtsuper_attsuper2_y</t:attSuper2>
+          <t:attSuper3 uom="m">7.7</t:attSuper3>
+        </t:DataTypeSupertype>
+      </t:attDtSupertype>
+    </t:ObjectType1>
+  </t:ot1>
+<!--  <t:ot1>
+    <t:ObjectType1 gml:id="OT1_1">
+      <t:attE>enum1</t:attE>
+      <t:attDtSupertype>
+        <t:DataTypeSupertype>
+          <t:attSuper1>
+            <gml:LineString>
+              <gml:posList>0 0 1 1</gml:posList>
+            </gml:LineString>
+          </t:attSuper1>
+          <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+          <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+          <t:attSuper3 uom="m">3.3</t:attSuper3>
+        </t:DataTypeSupertype>
+      </t:attDtSupertype>
+    </t:ObjectType1>
+  </t:ot1>
+  <t:ot1>
+    <t:ObjectType1 gml:id="OT1_2">
+      <t:attE>enum2</t:attE>
+      <t:attDtSupertype>
+        <t:DataTypeSub1>
+          <t:attSuper1>
+            <gml:Point>
+              <gml:pos>1 1</gml:pos>
+            </gml:Point>
+          </t:attSuper1>
+          <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+          <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+          <t:attSuper3 uom="mm">4.4</t:attSuper3>
+          <t:attSub1 uom="cm">5.5</t:attSub1>
+        </t:DataTypeSub1>
+      </t:attDtSupertype>
+    </t:ObjectType1>
+  </t:ot1>
+  <t:ot1>
+    <t:ObjectType1 gml:id="OT1_3">
+      <t:attE>enum2</t:attE>
+      <t:attDtSupertype>
+        <t:DataTypeSub2>
+          <t:attSuper1>
+            <gml:Point>
+              <gml:pos>1 1</gml:pos>
+            </gml:Point>
+          </t:attSuper1>
+          <t:attSuper2>dtsuper_attsuper2_1</t:attSuper2>
+          <t:attSuper2>dtsuper_attsuper2_2</t:attSuper2>
+          <t:attSuper3 uom="mm">4.4</t:attSuper3>
+          <t:attSubAbstract>5</t:attSubAbstract>
+          <t:attSub2>
+            <t:Union>
+              <t:option1>6</t:option1>
+            </t:Union>
+          </t:attSub2>
+        </t:DataTypeSub2>
+      </t:attDtSupertype>
+    </t:ObjectType1>
+  </t:ot1>-->
+</t:CollectionNotEncodedInGfs>
