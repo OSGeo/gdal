@@ -2089,6 +2089,78 @@ def test_ogr_gml_50():
 
 
 ###############################################################################
+# Test FeaturePropertyList in gfs
+
+
+@pytest.mark.parametrize(
+    "open_options", [[], ["GFS_TEMPLATE=data/gml/testfeaturepropertylist.gfs"]]
+)
+def test_ogr_gml_read_FeaturePropertyList_in_gfs(open_options):
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = gdal.OpenEx("data/gml/testfeaturepropertylist.gml", open_options=open_options)
+    assert ds.GetLayerCount() == 2
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FA"
+    assert f["name"] == "Feature A"
+    assert f["roleInline_href"] == ["#FB1_1", "#FB1_2"]
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetFeatureCount() == 3
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FB1_1"
+    assert f["name"] == "Feature B 1_1"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FB1_2"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FB2"
+
+
+###############################################################################
+# Test FeatureProperty and FeaturePropertyList in gfs
+
+
+@pytest.mark.parametrize(
+    "open_options", [[], ["GFS_TEMPLATE=data/gml/testfeaturepropertylist2.gfs"]]
+)
+def test_ogr_gml_read_FeatureProperty_in_gfs(open_options):
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = gdal.OpenEx("data/gml/testfeaturepropertylist2.xml", open_options=open_options)
+    assert ds.GetLayerCount() == 3
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FT1_1"
+    assert f["roleFt2_href"] == ["#FT2_1", "#FT2_2"]
+    assert f["roleOt1_href"] == ["#OT1_1", "#OT1_2", "#OT1_3"]
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetFeatureCount() == 2
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FT2_1"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "FT2_2"
+
+    lyr = ds.GetLayer(2)
+    assert lyr.GetFeatureCount() == 4
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "OT1_1"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "OT1_2"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "OT1_3"
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "OT1_4"
+
+
+###############################################################################
 # Test -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES
 
 

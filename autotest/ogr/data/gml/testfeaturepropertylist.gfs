@@ -1,0 +1,33 @@
+<GMLFeatureClassList>
+  <!-- Test with: ogrinfo test_href.gml -ro -al -->
+  <GMLFeatureClass>
+    <Name>Feature_Type_A</Name>
+    <ElementPath>FeatureA</ElementPath>  
+    <GeometryType>None</GeometryType>  
+    <PropertyDefn>
+      <Name>name</Name> 
+      <ElementPath>name</ElementPath>
+      <Type>String</Type>  
+    </PropertyDefn>  
+    <PropertyDefn>
+      <Name>roleInline_href</Name> 
+      <ElementPath>roleInline</ElementPath>
+      <Type>FeaturePropertyList</Type>  
+    </PropertyDefn>
+    <PropertyDefn>  
+      <Name>roleByReference_href</Name>     
+      <ElementPath>roleByReference@href</ElementPath> 
+      <Type>FeaturePropertyList</Type>  
+    </PropertyDefn>    
+  </GMLFeatureClass>  
+  <GMLFeatureClass>
+    <Name>Feature_Type_B</Name>
+    <ElementPath>FeatureB</ElementPath>
+    <GeometryType>None</GeometryType>
+    <PropertyDefn>
+      <Name>name</Name>
+      <ElementPath>name</ElementPath>
+      <Type>String</Type>
+    </PropertyDefn>
+  </GMLFeatureClass>
+</GMLFeatureClassList>
