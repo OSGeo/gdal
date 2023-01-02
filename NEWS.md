@@ -1,3 +1,107 @@
+# GDAL/OGR 3.6.2 Release Notes
+
+GDAL 3.6.2 is a bugfix release.
+
+## General
+
+[RFC69](https://gdal.org/development/rfc/rfc69_cplusplus_formatting.html):
+Whole code base C/C++ reformatting
+
+## Build
+
+* Avoid warning with curl >= 7.55 about CURLINFO_CONTENT_LENGTH_DOWNLOAD being
+  deprecated
+* Avoid warning with curl >= 7.87 about CURLOPT_PROGRESSFUNCTION being
+  deprecated
+* fix nitfdump build against external libtiff (#6968)
+* fix compilation with gcc 4.8.5 of Centos 7.9 (#6991)
+
+## Data files
+
+* tms_MapML_CBMTILE.json: fix wrong matrixWidth value (#6922)
+
+## GDAL 3.6.2
+
+### Port
+
+* CPLGetUsablePhysicalRAM(): take into account RSS limit (ulimit -m) (#6669)
+* CPLGetNumCPUs(): take into sched_getaffinity() (#6669)
+
+### Algorithms
+
+* Warp: fix crash in multi-threaded mode when doing several warping runs with
+  the same WarpOperation
+* RasterizeLayer: prevent out-of-bounds index/crash on some input data (#6981)
+
+### Core
+
+* gdal_pam.h: workaround for code including it after windows.h
+
+### Raster drivers
+
+AAIGRID driver:
+ * fix CreateCopy() of source raster with south-up orientation (#6946)
+
+BAG driver:
+ * conform to the final BAG georeferenced metadata layer specification (#6933)
+
+ESRIC driver:
+ * Fix DCAP_VECTOR metadata
+
+JPEGXL driver:
+ * advertise COMPRESSION_REVERSIBILITY=LOSSY when there is a JPEG
+   reconstruction box
+
+netCDF driver:
+ * deal with files with decreasing latitudes/north-up orientation and presence
+   of actual_range attribute (#6909)
+
+VRT driver:
+ * VRTSourcedRasterBand: replace potentially unsafe cpl::down_cast<> by
+   dynamic_cast<>
+
+## OGR 3.6.2
+
+### Core
+
+* OGRGenSQLResultsLayer::GetFeatureCount(): fix it to return -1 when base layer
+  also returns -1 (#6925)
+* OGRXercesInstrumentedMemoryManager::deallocate(): avoid (likely harmless)
+  unsigned integer overflow in error code path.
+* GPKG/SQLite dialect: fix issues when SQL statement provided to ExecuteSQL()
+  starts with space/tabulation/newline (#6976)
+* ArrowArray generic: FillBoolArray(): avoid out-of-bounds write access
+
+### Utilities
+
+* ogr2ogr: make -nln flag with GeoJSON output even if a name exists in input
+  GeoJSON (#6920)
+* ogr2ogr: silent reprojection errors related to IsPolarToWGS84() in
+  OGRGeometryFactory::transformWithOptions()
+
+### Drivers
+
+GML driver:
+ * fix recognizing WFS GetFeature response with a very long initial XML element
+   (#6940)
+ * default srsDimension to 3 for CityGML files (#6989)
+ * fix incorrect behavior when using GFS_TEMPLATE open option with a .gfs that
+   refers to FeatureProperty/FeaturePropertyList fields (#6932)
+
+GeoPackage driver:
+ * fix threaded RTree building when creating several layers (3.6.0 regression),
+   by disabling async RTree building
+ * avoid SQLite3 locking in CreateLayer() due to RemoveOGREmptyTable()
+
+NGW driver:
+ * remove DCAP_ items set to NO (#6994)
+
+Parquet driver:
+ * update to read and write GeoParquet 1.0.0-beta.1 specification (#6646)
+
+Selafin driver:
+ * Fix DCAP_VECTOR metadata
+
 # GDAL/OGR 3.6.1 Release Notes
 
 GDAL 3.6.1 is a bugfix release. It officially retracts GDAL 3.6.0 which
