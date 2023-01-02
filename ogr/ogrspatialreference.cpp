@@ -10020,6 +10020,11 @@ static void CleanupSRSWGS84Mutex();
  *
  * This function will attempt to cleanup any cache spatial reference
  * related information, such as cached tables of coordinate systems.
+ *
+ * This function should not be called concurrently with any other GDAL/OGR
+ * function. It is meant at being called once before process termination
+ * (typically from the main thread). CPLCleanupTLS() might be used to clean
+ * thread-specific resources before thread termination.
  */
 void OSRCleanup(void)
 
