@@ -57,6 +57,13 @@ static void osr_proj_logger(void * /* user_data */, int level,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "PROJ: %s", message);
     }
+#if PROJ_VERSION_MAJOR > 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 2)
+    else if (level == PJ_LOG_WARNING)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "PROJ: %s", message);
+    }
+#endif
     else if (level == PJ_LOG_DEBUG)
     {
         CPLDebug("PROJ", "%s", message);
