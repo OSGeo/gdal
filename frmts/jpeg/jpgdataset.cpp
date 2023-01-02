@@ -3889,7 +3889,8 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     // Try to convert losslessly from JPEGXL
     auto poUnderlyingSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poUnderlyingSrcDS->GetDriver() != nullptr &&
+    if (poUnderlyingSrcDS != nullptr &&
+        poUnderlyingSrcDS->GetDriver() != nullptr &&
         EQUAL(poUnderlyingSrcDS->GetDriver()->GetDescription(), "JPEGXL") &&
         CSLFetchNameValue(papszOptions, "QUALITY") == nullptr)
     {
