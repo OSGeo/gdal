@@ -1941,16 +1941,18 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
 
             JxlEncoderUseBoxes(encoder.get());
 
-            const GByte *pabyBoxData = poJUMBFBox->GetWritableBoxData();
+            GByte *pabyBoxData = poJUMBFBox->GetWritableBoxData();
             if (JxlEncoderAddBox(
                     encoder.get(), "jumb", pabyBoxData,
                     static_cast<size_t>(poJUMBFBox->GetBoxLength()),
                     bCompressBox) != JXL_ENC_SUCCESS)
             {
+                VSIFree(pabyBoxData);
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "JxlEncoderAddBox() failed");
                 return nullptr;
             }
+            VSIFree(pabyBoxData);
         }
     }
 #endif
