@@ -4012,6 +4012,8 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     const int nBands = poSrcDS->GetRasterCount();
 
+    const char *pszLossLessCopy =
+        CSLFetchNameValueDef(papszOptions, "LOSSLESS_COPY", "AUTO");
 #if 0
     CPLStringList aosFormats = poSrcDS->GetCompressionFormats(0, 0,
                                                               poSrcDS->GetRasterXSize(),
@@ -4020,6 +4022,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                                                               nullptr);
     if( aosFormats.FindString("JPEG") >= 0 )
 #endif
+    if (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy))
     {
         void *pJPEGContent = nullptr;
         size_t nJPEGContent = 0;
@@ -4128,6 +4131,13 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                 poJPG_DS->SetBand(i + 1, JPGCreateBand(poJPG_DS, i + 1));
             return poJPG_DS;
         }
+    }
+
+    if (!EQUAL(pszLossLessCopy, "AUTO") && CPLTestBool(pszLossLessCopy))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LOSSLESS_COPY=YES requested but not possible");
+        return nullptr;
     }
 
     // Some some rudimentary checks.
@@ -4606,6 +4616,13 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
             "to generate a progressive JPEG' default='NO'/>\n"
             "   <Option name='QUALITY' type='int' description='good=100, "
             "bad=0, default=75'/>\n"
+            "   <Option name='LOSSLESS_COPY' type='string-select' "
+            "description='Whether conversion should be lossless' "
+            "default='AUTO'>"
+            "     <Value>AUTO</Value>"
+            "     <Value>YES</Value>"
+            "     <Value>NO</Value>"
+            "   </Option>"
             "   <Option name='WORLDFILE' type='boolean' description='whether "
             "to generate a worldfile' default='NO'/>\n"
             "   <Option name='INTERNAL_MASK' type='boolean' "
