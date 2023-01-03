@@ -244,6 +244,101 @@ class VSIGZipHandle final : public VSIVirtualHandle
     }
 };
 
+#ifdef ENABLE_DEFLATE64
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           VSIDeflate64Handle                         */
+/* ==================================================================== */
+/************************************************************************/
+
+struct VSIDeflate64Snapshot
+{
+    vsi_l_offset posInBaseHandle = 0;
+    z_stream stream{};
+    uLong crc = 0;
+    vsi_l_offset in = 0;
+    vsi_l_offset out = 0;
+    std::vector<GByte> extraOutput{};
+    bool m_bStreamEndReached = false;
+};
+
+class VSIDeflate64Handle final : public VSIVirtualHandle
+{
+    VSIVirtualHandle *m_poBaseHandle = nullptr;
+#ifdef DEBUG
+    vsi_l_offset m_offset = 0;
+#endif
+    vsi_l_offset m_compressed_size = 0;
+    vsi_l_offset m_uncompressed_size = 0;
+    vsi_l_offset offsetEndCompressedData = 0;
+    uLong m_expected_crc = 0;
+    char *m_pszBaseFileName = nullptr; /* optional */
+
+    /* Fields from gz_stream structure */
+    z_stream stream;
+    int z_err = Z_OK; /* error code for last stream operation */
+    int z_eof = 0;    /* set if end of input file (but not necessarily of the
+                         uncompressed stream ! "in" must be null too ) */
+    Byte *inbuf = nullptr;  /* input buffer */
+    Byte *outbuf = nullptr; /* output buffer */
+    std::vector<GByte> extraOutput{};
+    bool m_bStreamEndReached = false;
+    uLong crc = 0; /* crc32 of uncompressed data */
+    vsi_l_offset startOff =
+        0; /* startOff of compressed data in file (header skipped) */
+    vsi_l_offset in = 0;  /* bytes into deflate or inflate */
+    vsi_l_offset out = 0; /* bytes out of deflate or inflate */
+
+    std::vector<VSIDeflate64Snapshot> snapshots{};
+    vsi_l_offset snapshot_byte_interval =
+        0; /* number of compressed bytes at which we create a "snapshot" */
+
+    bool gzseek(vsi_l_offset nOffset, int nWhence);
+    int gzrewind();
+
+    CPL_DISALLOW_COPY_ASSIGN(VSIDeflate64Handle)
+
+  public:
+    VSIDeflate64Handle(VSIVirtualHandle *poBaseHandle,
+                       const char *pszBaseFileName, vsi_l_offset offset = 0,
+                       vsi_l_offset compressed_size = 0,
+                       vsi_l_offset uncompressed_size = 0,
+                       uLong expected_crc = 0);
+    ~VSIDeflate64Handle() override;
+
+    bool IsInitOK() const
+    {
+        return inbuf != nullptr;
+    }
+
+    int Seek(vsi_l_offset nOffset, int nWhence) override;
+    vsi_l_offset Tell() override;
+    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
+
+    VSIDeflate64Handle *Duplicate();
+    bool CloseBaseHandle();
+
+    const char *GetBaseFileName()
+    {
+        return m_pszBaseFileName;
+    }
+
+    void SetUncompressedSize(vsi_l_offset nUncompressedSize)
+    {
+        m_uncompressed_size = nUncompressedSize;
+    }
+    vsi_l_offset GetUncompressedSize()
+    {
+        return m_uncompressed_size;
+    }
+};
+#endif
+
 class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIGZipFilesystemHandler)
@@ -1190,6 +1285,656 @@ int VSIGZipHandle::Close()
 {
     return 0;
 }
+
+#ifdef ENABLE_DEFLATE64
+
+/************************************************************************/
+/*                            Duplicate()                               */
+/************************************************************************/
+
+VSIDeflate64Handle *VSIDeflate64Handle::Duplicate()
+{
+    CPLAssert(m_offset == 0);
+    CPLAssert(m_compressed_size != 0);
+    CPLAssert(m_pszBaseFileName != nullptr);
+
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler(m_pszBaseFileName);
+
+    VSIVirtualHandle *poNewBaseHandle =
+        poFSHandler->Open(m_pszBaseFileName, "rb");
+
+    if (poNewBaseHandle == nullptr)
+        return nullptr;
+
+    VSIDeflate64Handle *poHandle =
+        new VSIDeflate64Handle(poNewBaseHandle, m_pszBaseFileName, 0,
+                               m_compressed_size, m_uncompressed_size);
+    if (!(poHandle->IsInitOK()))
+    {
+        delete poHandle;
+        return nullptr;
+    }
+
+    // Most important: duplicate the snapshots!
+
+    for (unsigned int i = 0; i < m_compressed_size / snapshot_byte_interval + 1;
+         i++)
+    {
+        if (snapshots[i].posInBaseHandle == 0)
+            break;
+
+        poHandle->snapshots[i].posInBaseHandle = snapshots[i].posInBaseHandle;
+        if (inflateBack9Copy(&poHandle->snapshots[i].stream,
+                             &snapshots[i].stream) != Z_OK)
+            CPLError(CE_Failure, CPLE_AppDefined, "inflateBack9Copy() failed");
+        poHandle->snapshots[i].crc = snapshots[i].crc;
+        poHandle->snapshots[i].in = snapshots[i].in;
+        poHandle->snapshots[i].out = snapshots[i].out;
+        poHandle->snapshots[i].extraOutput = snapshots[i].extraOutput;
+        poHandle->snapshots[i].m_bStreamEndReached =
+            snapshots[i].m_bStreamEndReached;
+    }
+
+    return poHandle;
+}
+
+/************************************************************************/
+/*                     CloseBaseHandle()                                */
+/************************************************************************/
+
+bool VSIDeflate64Handle::CloseBaseHandle()
+{
+    bool bRet = true;
+    if (m_poBaseHandle)
+    {
+        bRet = m_poBaseHandle->Close() == 0;
+        delete m_poBaseHandle;
+    }
+    m_poBaseHandle = nullptr;
+    return bRet;
+}
+
+/************************************************************************/
+/*                       VSIDeflate64Handle()                                */
+/************************************************************************/
+
+VSIDeflate64Handle::VSIDeflate64Handle(VSIVirtualHandle *poBaseHandle,
+                                       const char *pszBaseFileName,
+                                       vsi_l_offset offset,
+                                       vsi_l_offset compressed_size,
+                                       vsi_l_offset uncompressed_size,
+                                       uLong expected_crc)
+    : m_poBaseHandle(poBaseHandle),
+#ifdef DEBUG
+      m_offset(offset),
+#endif
+      m_uncompressed_size(uncompressed_size), m_expected_crc(expected_crc),
+      m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : nullptr),
+      stream(), crc(0)
+{
+    if (compressed_size)
+    {
+        m_compressed_size = compressed_size;
+    }
+    else
+    {
+        if (poBaseHandle->Seek(0, SEEK_END) != 0)
+            CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
+        m_compressed_size = poBaseHandle->Tell() - offset;
+        compressed_size = m_compressed_size;
+    }
+    offsetEndCompressedData = offset + compressed_size;
+
+    if (poBaseHandle->Seek(offset, SEEK_SET) != 0)
+        CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
+
+    stream.zalloc = nullptr;
+    stream.zfree = nullptr;
+    stream.opaque = nullptr;
+    stream.next_in = inbuf = nullptr;
+    stream.next_out = outbuf = nullptr;
+    stream.avail_in = stream.avail_out = 0;
+
+    inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
+    stream.next_in = inbuf;
+
+    int err = inflateBack9Init(&(stream), nullptr);
+    // Note that in this case inflate *requires* an extra "dummy" byte
+    // after the compressed stream in order to complete decompression and
+    // return Z_STREAM_END. Here the gzip CRC32 ensures that 4 bytes are
+    // present after the compressed stream.
+    if (err != Z_OK || inbuf == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "inflateBack9Init init failed");
+        TRYFREE(inbuf);
+        inbuf = nullptr;
+        return;
+    }
+    startOff = poBaseHandle->Tell() - stream.avail_in;
+
+    snapshot_byte_interval =
+        std::max(static_cast<vsi_l_offset>(Z_BUFSIZE), compressed_size / 100);
+    snapshots.resize(
+        static_cast<size_t>(compressed_size / snapshot_byte_interval + 1));
+}
+
+/************************************************************************/
+/*                      ~VSIDeflate64Handle()                       */
+/************************************************************************/
+
+VSIDeflate64Handle::~VSIDeflate64Handle()
+{
+    if (stream.state != nullptr)
+    {
+        inflateBack9End(&(stream));
+    }
+
+    TRYFREE(inbuf);
+    TRYFREE(outbuf);
+
+    for (auto &snapshot : snapshots)
+    {
+        if (snapshot.posInBaseHandle)
+        {
+            inflateBack9End(&(snapshot.stream));
+        }
+    }
+    CPLFree(m_pszBaseFileName);
+
+    CloseBaseHandle();
+}
+
+/************************************************************************/
+/*                            gzrewind()                                */
+/************************************************************************/
+
+int VSIDeflate64Handle::gzrewind()
+{
+    m_bStreamEndReached = false;
+    extraOutput.clear();
+    z_err = Z_OK;
+    z_eof = 0;
+    stream.avail_in = 0;
+    stream.next_in = inbuf;
+    crc = 0;
+    CPL_IGNORE_RET_VAL(inflateBack9End(&stream));
+    CPL_IGNORE_RET_VAL(inflateBack9Init(&stream, nullptr));
+    in = 0;
+    out = 0;
+    return VSIFSeekL(reinterpret_cast<VSILFILE *>(m_poBaseHandle), startOff,
+                     SEEK_SET);
+}
+
+/************************************************************************/
+/*                              Seek()                                  */
+/************************************************************************/
+
+int VSIDeflate64Handle::Seek(vsi_l_offset nOffset, int nWhence)
+{
+    return gzseek(nOffset, nWhence) ? 0 : -1;
+}
+
+/************************************************************************/
+/*                            gzseek()                                  */
+/************************************************************************/
+
+bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
+{
+    const vsi_l_offset original_offset = offset;
+    const int original_nWhence = whence;
+
+    z_eof = 0;
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "Seek(" CPL_FRMT_GUIB ",%d)", offset, whence);
+#endif
+
+    // whence == SEEK_END is unsuppored in original gzseek.
+    if (whence == SEEK_END)
+    {
+        // If we known the uncompressed size, we can fake a jump to
+        // the end of the stream.
+        if (offset == 0 && m_uncompressed_size != 0)
+        {
+            out = m_uncompressed_size;
+            return true;
+        }
+
+        // We don't know the uncompressed size. This is unfortunate.
+        // Do the slow version.
+        static int firstWarning = 1;
+        if (m_compressed_size > 10 * 1024 * 1024 && firstWarning)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "VSIFSeekL(xxx, SEEK_END) may be really slow "
+                     "on GZip streams.");
+            firstWarning = 0;
+        }
+
+        whence = SEEK_CUR;
+        offset = 1024 * 1024 * 1024;
+        offset *= 1024 * 1024;
+    }
+
+    // Rest of function is for reading only.
+
+    // Compute absolute position.
+    if (whence == SEEK_CUR)
+    {
+        offset += out;
+    }
+
+    // For a negative seek, rewind and use positive seek.
+    if (offset >= out)
+    {
+        offset -= out;
+    }
+    else if (gzrewind() < 0)
+    {
+        CPL_VSIL_GZ_RETURN(FALSE);
+        return false;
+    }
+
+    if (z_err != Z_OK && z_err != Z_STREAM_END)
+    {
+        CPL_VSIL_GZ_RETURN(FALSE);
+        return false;
+    }
+
+    for (unsigned int i = 0; i < m_compressed_size / snapshot_byte_interval + 1;
+         i++)
+    {
+        if (snapshots[i].posInBaseHandle == 0)
+            break;
+        if (snapshots[i].out <= out + offset &&
+            (i == m_compressed_size / snapshot_byte_interval ||
+             snapshots[i + 1].out == 0 || snapshots[i + 1].out > out + offset))
+        {
+            if (out >= snapshots[i].out)
+                break;
+
+#ifdef ENABLE_DEBUG
+            CPLDebug("SNAPSHOT",
+                     "using snapshot %d : "
+                     "posInBaseHandle(snapshot)=" CPL_FRMT_GUIB
+                     " in(snapshot)=" CPL_FRMT_GUIB
+                     " out(snapshot)=" CPL_FRMT_GUIB " out=" CPL_FRMT_GUIB
+                     " offset=" CPL_FRMT_GUIB,
+                     i, snapshots[i].posInBaseHandle, snapshots[i].in,
+                     snapshots[i].out, out, offset);
+#endif
+            offset = out + offset - snapshots[i].out;
+            if (VSIFSeekL(reinterpret_cast<VSILFILE *>(m_poBaseHandle),
+                          snapshots[i].posInBaseHandle, SEEK_SET) != 0)
+                CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
+
+            inflateBack9End(&stream);
+            if (inflateBack9Copy(&stream, &snapshots[i].stream) != Z_OK)
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "inflateBack9Copy() failed");
+            crc = snapshots[i].crc;
+            in = snapshots[i].in;
+            out = snapshots[i].out;
+            extraOutput = snapshots[i].extraOutput;
+            m_bStreamEndReached = snapshots[i].m_bStreamEndReached;
+            break;
+        }
+    }
+
+    // Offset is now the number of bytes to skip.
+
+    if (offset != 0 && outbuf == nullptr)
+    {
+        outbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
+        if (outbuf == nullptr)
+        {
+            CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
+        }
+    }
+
+    if (original_nWhence == SEEK_END && z_err == Z_STREAM_END)
+    {
+        return true;
+    }
+
+    while (offset > 0)
+    {
+        int size = Z_BUFSIZE;
+        if (offset < static_cast<vsi_l_offset>(Z_BUFSIZE))
+            size = static_cast<int>(offset);
+
+        int read_size =
+            static_cast<int>(Read(outbuf, 1, static_cast<uInt>(size)));
+        if (original_nWhence == SEEK_END)
+        {
+            if (size != read_size)
+            {
+                z_err = Z_STREAM_END;
+                break;
+            }
+        }
+        else if (read_size == 0)
+        {
+            // CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
+        }
+        offset -= read_size;
+    }
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "gzseek at offset " CPL_FRMT_GUIB, out);
+#endif
+
+    if (original_offset == 0 && original_nWhence == SEEK_END)
+    {
+        m_uncompressed_size = out;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                              Tell()                                  */
+/************************************************************************/
+
+vsi_l_offset VSIDeflate64Handle::Tell()
+{
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "Tell() = " CPL_FRMT_GUIB, out);
+#endif
+    return out;
+}
+
+/************************************************************************/
+/*                              Read()                                  */
+/************************************************************************/
+
+size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
+                                size_t const nMemb)
+{
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "Read(%p, %d, %d)", buf, static_cast<int>(nSize),
+             static_cast<int>(nMemb));
+#endif
+
+    if ((z_eof && in == 0) || z_err == Z_STREAM_END)
+    {
+        z_eof = 1;
+        in = 0;
+#ifdef ENABLE_DEBUG
+        CPLDebug("GZIP", "Read: Eof");
+#endif
+        return 0; /* EOF */
+    }
+
+    const unsigned len =
+        static_cast<unsigned int>(nSize) * static_cast<unsigned int>(nMemb);
+    Bytef *pStart =
+        static_cast<Bytef *>(buf);  // Start off point for crc computation.
+    // == stream.next_out but not forced far (for MSDOS).
+    stream.next_out = static_cast<Bytef *>(buf);
+    stream.avail_out = len;
+
+    while (stream.avail_out != 0)
+    {
+        if (!extraOutput.empty())
+        {
+            if (extraOutput.size() >= stream.avail_out)
+            {
+                memcpy(stream.next_out, extraOutput.data(), stream.avail_out);
+                extraOutput.erase(extraOutput.begin(),
+                                  extraOutput.begin() + stream.avail_out);
+                out += stream.avail_out;
+                stream.next_out += stream.avail_out;
+                stream.avail_out = 0;
+            }
+            else
+            {
+                memcpy(stream.next_out, extraOutput.data(), extraOutput.size());
+                stream.next_out += extraOutput.size();
+                out += static_cast<uInt>(extraOutput.size());
+                stream.avail_out -= static_cast<uInt>(extraOutput.size());
+                CPLAssert(stream.avail_out > 0);
+                extraOutput.clear();
+            }
+            z_err = Z_OK;
+        }
+
+        if (stream.avail_in == 0 && !z_eof)
+        {
+            vsi_l_offset posInBaseHandle = m_poBaseHandle->Tell();
+            if (posInBaseHandle - startOff > m_compressed_size)
+            {
+                // If we reach here, file size has changed (because at
+                // construction time startOff + m_compressed_size marked the
+                // end of file).
+                // We should probably have a better fix than that, by detecting
+                // at open time that the saved snapshot is not valid and
+                // discarding it.
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File size of underlying /vsigzip/ file has changed");
+                z_eof = 1;
+                in = 0;
+                CPL_VSIL_GZ_RETURN(0);
+                return 0;
+            }
+            auto snapshot = &snapshots[static_cast<size_t>(
+                (posInBaseHandle - startOff) / snapshot_byte_interval)];
+            if (snapshot->posInBaseHandle == 0)
+            {
+                snapshot->crc = crc32(
+                    crc, pStart, static_cast<uInt>(stream.next_out - pStart));
+#ifdef ENABLE_DEBUG
+                CPLDebug("SNAPSHOT",
+                         "creating snapshot %d : "
+                         "posInBaseHandle=" CPL_FRMT_GUIB " in=" CPL_FRMT_GUIB
+                         " out=" CPL_FRMT_GUIB " crc=%X",
+                         static_cast<int>((posInBaseHandle - startOff) /
+                                          snapshot_byte_interval),
+                         posInBaseHandle, in, out,
+                         static_cast<unsigned int>(snapshot->crc));
+#endif
+                snapshot->posInBaseHandle = posInBaseHandle;
+                if (inflateBack9Copy(&snapshot->stream, &stream) != Z_OK)
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "inflateBack9Copy() failed");
+                snapshot->in = in;
+                snapshot->out = out;
+                snapshot->extraOutput = extraOutput;
+                snapshot->m_bStreamEndReached = m_bStreamEndReached;
+            }
+
+            errno = 0;
+            stream.avail_in = static_cast<uInt>(
+                VSIFReadL(inbuf, 1, Z_BUFSIZE,
+                          reinterpret_cast<VSILFILE *>(m_poBaseHandle)));
+#ifdef ENABLE_DEBUG
+            CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
+                     m_poBaseHandle->Tell(), offsetEndCompressedData);
+#endif
+            if (m_poBaseHandle->Tell() > offsetEndCompressedData)
+            {
+#ifdef ENABLE_DEBUG
+                CPLDebug("GZIP", "avail_in before = %d", stream.avail_in);
+#endif
+                stream.avail_in = stream.avail_in -
+                                  static_cast<uInt>(m_poBaseHandle->Tell() -
+                                                    offsetEndCompressedData);
+                if (VSIFSeekL(reinterpret_cast<VSILFILE *>(m_poBaseHandle),
+                              offsetEndCompressedData, SEEK_SET) != 0)
+                    CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
+#ifdef ENABLE_DEBUG
+                CPLDebug("GZIP", "avail_in after = %d", stream.avail_in);
+#endif
+            }
+            if (stream.avail_in == 0)
+            {
+                z_eof = 1;
+                if (m_poBaseHandle->Tell() != offsetEndCompressedData)
+                {
+                    z_err = Z_ERRNO;
+                    break;
+                }
+            }
+            stream.next_in = inbuf;
+        }
+
+        struct InOutCallback
+        {
+            vsi_l_offset *pOut = nullptr;
+            std::vector<GByte> *pExtraOutput = nullptr;
+            z_stream *pStream = nullptr;
+
+            static unsigned inCbk(void FAR *, z_const unsigned char FAR *FAR *)
+            {
+                return 0;
+            }
+
+            static int outCbk(void FAR *user_data, unsigned char FAR *data,
+                              unsigned len)
+            {
+                auto self = static_cast<InOutCallback *>(user_data);
+                if (self->pStream->avail_out >= len)
+                {
+                    memcpy(self->pStream->next_out, data, len);
+                    *(self->pOut) += len;
+                    self->pStream->next_out += len;
+                    self->pStream->avail_out -= len;
+                }
+                else
+                {
+                    if (self->pStream->avail_out != 0)
+                    {
+                        memcpy(self->pStream->next_out, data,
+                               self->pStream->avail_out);
+                        *(self->pOut) += self->pStream->avail_out;
+                        data += self->pStream->avail_out;
+                        len -= self->pStream->avail_out;
+                        self->pStream->next_out += self->pStream->avail_out;
+                        self->pStream->avail_out = 0;
+                    }
+                    if (len > 0)
+                    {
+                        self->pExtraOutput->insert(self->pExtraOutput->end(),
+                                                   data, data + len);
+                    }
+                }
+                return 0;
+            }
+        };
+        InOutCallback cbkData;
+        cbkData.pOut = &out;
+        cbkData.pExtraOutput = &extraOutput;
+        cbkData.pStream = &stream;
+
+        if (stream.avail_out)
+        {
+            if (m_bStreamEndReached)
+                z_err = Z_STREAM_END;
+            else
+            {
+                in += stream.avail_in;
+                z_err = inflateBack9(&(stream), InOutCallback::inCbk, &cbkData,
+                                     InOutCallback::outCbk, &cbkData);
+                in -= stream.avail_in;
+            }
+        }
+        if (z_err == Z_BUF_ERROR && stream.next_in == Z_NULL)
+            z_err = Z_OK;
+        else if (!extraOutput.empty() && z_err == Z_STREAM_END)
+        {
+            m_bStreamEndReached = true;
+            z_err = Z_OK;
+        }
+
+        if (z_err == Z_STREAM_END /*&& m_compressed_size != 2*/)
+        {
+            // Check CRC and original size.
+            crc =
+                crc32(crc, pStart, static_cast<uInt>(stream.next_out - pStart));
+            pStart = stream.next_out;
+            if (m_expected_crc)
+            {
+#ifdef ENABLE_DEBUG
+                CPLDebug("GZIP", "Computed CRC = %X. Expected CRC = %X",
+                         static_cast<unsigned int>(crc),
+                         static_cast<unsigned int>(m_expected_crc));
+#endif
+            }
+            if (m_expected_crc != 0 && m_expected_crc != crc)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "CRC error. Got %X instead of %X",
+                         static_cast<unsigned int>(crc),
+                         static_cast<unsigned int>(m_expected_crc));
+                z_err = Z_DATA_ERROR;
+            }
+        }
+        if (z_err != Z_OK || z_eof)
+            break;
+    }
+    crc = crc32(crc, pStart, static_cast<uInt>(stream.next_out - pStart));
+
+    size_t ret = (len - stream.avail_out) / nSize;
+    if (z_err != Z_OK && z_err != Z_STREAM_END)
+    {
+        z_eof = 1;
+        in = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "In file %s, at line %d, decompression failed with "
+                 "z_err = %d, return = %d",
+                 __FILE__, __LINE__, z_err, static_cast<int>(ret));
+    }
+
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "Read return %d (z_err=%d, z_eof=%d)",
+             static_cast<int>(ret), z_err, z_eof);
+#endif
+    return ret;
+}
+
+/************************************************************************/
+/*                              Write()                                 */
+/************************************************************************/
+
+size_t VSIDeflate64Handle::Write(const void * /* pBuffer */, size_t /* nSize */,
+                                 size_t /* nMemb */)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "VSIFWriteL is not supported on GZip streams");
+    return 0;
+}
+
+/************************************************************************/
+/*                               Eof()                                  */
+/************************************************************************/
+
+int VSIDeflate64Handle::Eof()
+{
+#ifdef ENABLE_DEBUG
+    CPLDebug("GZIP", "Eof()");
+#endif
+    return z_eof && in == 0;
+}
+
+/************************************************************************/
+/*                              Flush()                                 */
+/************************************************************************/
+
+int VSIDeflate64Handle::Flush()
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+int VSIDeflate64Handle::Close()
+{
+    return 0;
+}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2895,20 +3640,41 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
 
     delete poReader;
 
-    VSIGZipHandle *poGZIPHandle = new VSIGZipHandle(
-        poVirtualHandle, nullptr, pos, file_info.compressed_size,
-        file_info.uncompressed_size, file_info.crc,
-        file_info.compression_method == 0);
-    if (!(poGZIPHandle->IsInitOK()))
+#ifdef ENABLE_DEFLATE64
+    if (file_info.compression_method == 9)
     {
-        delete poGZIPHandle;
-        return nullptr;
-    }
+        auto poGZIPHandle = new VSIDeflate64Handle(
+            poVirtualHandle, nullptr, pos, file_info.compressed_size,
+            file_info.uncompressed_size, file_info.crc);
+        if (!(poGZIPHandle->IsInitOK()))
+        {
+            delete poGZIPHandle;
+            return nullptr;
+        }
 
-    // Wrap the VSIGZipHandle inside a buffered reader that will
-    // improve dramatically performance when doing small backward
-    // seeks.
-    return VSICreateBufferedReaderHandle(poGZIPHandle);
+        // Wrap the VSIGZipHandle inside a buffered reader that will
+        // improve dramatically performance when doing small backward
+        // seeks.
+        return VSICreateBufferedReaderHandle(poGZIPHandle);
+    }
+    else
+#endif
+    {
+        VSIGZipHandle *poGZIPHandle = new VSIGZipHandle(
+            poVirtualHandle, nullptr, pos, file_info.compressed_size,
+            file_info.uncompressed_size, file_info.crc,
+            file_info.compression_method == 0);
+        if (!(poGZIPHandle->IsInitOK()))
+        {
+            delete poGZIPHandle;
+            return nullptr;
+        }
+
+        // Wrap the VSIGZipHandle inside a buffered reader that will
+        // improve dramatically performance when doing small backward
+        // seeks.
+        return VSICreateBufferedReaderHandle(poGZIPHandle);
+    }
 }
 
 /************************************************************************/

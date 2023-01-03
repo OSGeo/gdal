@@ -480,6 +480,12 @@ if (GDAL_USE_JSONC_INTERNAL)
   add_subdirectory(ogr/ogrsf_frmts/geojson/libjson)
 endif ()
 
+option(ENABLE_DEFLATE64 "Enable Deflate64 decompression" ON)
+mark_as_advanced(ENABLE_DEFLATE64)
+if(ENABLE_DEFLATE64)
+    add_subdirectory(frmts/zlib/contrib/infback9)
+endif()
+
 # Internal zlib and jsonc must be declared before
 add_subdirectory(port)
 
