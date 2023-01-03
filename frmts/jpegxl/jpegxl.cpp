@@ -2046,6 +2046,8 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
+    const char *pszLossLessCopy =
+        CSLFetchNameValueDef(papszOptions, "LOSSLESS_COPY", "AUTO");
     std::vector<GByte> abyJPEG;
     const char *pszSourceColorSpace =
         poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
@@ -2054,12 +2056,12 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     // If the source dataset is a JPEG file or compatible of it, try to
     // losslessly add it
     // lossless transcoding from CMYK not supported
-    if (bLossless &&
-        !(pszSourceColorSpace && EQUAL(pszSourceColorSpace,
+    if (!(pszSourceColorSpace && EQUAL(pszSourceColorSpace,
                                        "CMYK")) &&
         eDT == GDT_Byte &&  // libjxl doesn't support 12-bit JPEG
         // lossless transcoding from 4-band contig JPEG RGBA not supported
         poSrcDS->GetRasterCount() <= 3 &&
+        (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
         poSrcDS->ReadCompressedData(
             "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
             poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
@@ -2127,6 +2129,13 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         catch (const std::exception &)
         {
         }
+    }
+    if (abyJPEG.empty() && !bLossless &&
+        (!EQUAL(pszLossLessCopy, "AUTO") && CPLTestBool(pszLossLessCopy)))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LOSSLESS_COPY=YES requested but not possible");
+        return nullptr;
     }
 
     const char *pszICCProfile =
@@ -2710,6 +2719,12 @@ void GDALRegister_JPEGXL()
         "<CreationOptionList>\n"
         "   <Option name='LOSSLESS' type='boolean' description='Whether JPEGXL "
         "compression should be lossless' default='YES'/>"
+        "   <Option name='LOSSLESS_COPY' type='string-select' "
+        "description='Whether conversion should be lossless' default='AUTO'>"
+        "     <Value>AUTO</Value>"
+        "     <Value>YES</Value>"
+        "     <Value>NO</Value>"
+        "   </Option>"
         "   <Option name='EFFORT' type='int' description='Level of effort "
         "1(fast)-9(slow)' default='5'/>"
         "   <Option name='DISTANCE' type='float' description='Distance level "

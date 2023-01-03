@@ -75,6 +75,15 @@ The following creation options are available:
 -  **LOSSLESS=YES/NO**: Whether JPEGXL compression should be lossless.
    Defaults to YES (unless DISTANCE or QUALITY are specified)
 
+-  **LOSSLESS_COPY=AUTO/YES/NO**: (GDAL >= 3.7)
+   Whether conversion should be lossless. Defaults to AUTO.
+   In AUTO or YES mode, if LOSSLESS=YES and the source dataset uses JPEG
+   compression, lossless recoding of it to JPEGXL is done, and a JPEG
+   reconstruction box is added so that reverse conversion to JPEG is possible.
+   If set to NO, or in AUTO mode if the source dataset does not use JPEG
+   compression, the regular conversion code path is taken, resulting in a
+   lossless or lossy copy depending on the LOSSLESS setting.
+
 -  **EFFORT=[1-9]**: Level of effort.
    The higher, the smaller file and slower compression time. Default is 5.
 
