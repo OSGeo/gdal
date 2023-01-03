@@ -268,6 +268,15 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     virtual void FlushCache(bool bAtClosing) override;
 
+    CPLStringList GetCompressionFormats(int nXOff, int nYOff, int nXSize,
+                                        int nYSize, int nBandCount,
+                                        const int *panBandList) override;
+    CPLErr ReadCompressedData(const char *pszFormat, int nXOff, int nYOff,
+                              int nXSize, int nYSize, int nBandCount,
+                              const int *panBandList, void **ppBuffer,
+                              size_t *pnBufferSize,
+                              CSLConstList papszOptions) override;
+
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
 };

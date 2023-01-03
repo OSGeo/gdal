@@ -2046,112 +2046,86 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    // If the source dataset is a JPEG file, try to losslessly add it
-    auto poSrcDriver = poSrcDS->GetDriver();
     std::vector<GByte> abyJPEG;
     const char *pszSourceColorSpace =
         poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
-    if (poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "JPEG") &&
-        !(pszSourceColorSpace &&
-          EQUAL(pszSourceColorSpace,
-                "CMYK")) &&  // lossless transcoding from CMYK not supported
-        bLossless)
+    void *pJPEGContent = nullptr;
+    size_t nJPEGContent = 0;
+    // If the source dataset is a JPEG file or compatible of it, try to
+    // losslessly add it
+    // lossless transcoding from CMYK not supported
+    if (bLossless &&
+        !(pszSourceColorSpace && EQUAL(pszSourceColorSpace,
+                                       "CMYK")) &&
+        eDT == GDT_Byte &&  // libjxl doesn't support 12-bit JPEG
+        // lossless transcoding from 4-band contig JPEG RGBA not supported
+        poSrcDS->GetRasterCount() <= 3 &&
+        poSrcDS->ReadCompressedData(
+            "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
+            nullptr) == CE_None)
     {
-        auto fpJPEG = std::unique_ptr<VSILFILE, VSILFileReleaser>(
-            VSIFOpenL(poSrcDS->GetDescription(), "rb"));
-        if (fpJPEG)
+        try
         {
-            VSIFSeekL(fpJPEG.get(), 0, SEEK_END);
-            const auto nFileSize = VSIFTellL(fpJPEG.get());
-            if (nFileSize > 2 &&
-                nFileSize < std::numeric_limits<size_t>::max() / 2)
+            abyJPEG.reserve(nJPEGContent);
+            abyJPEG.insert(abyJPEG.end(), static_cast<GByte *>(pJPEGContent),
+                           static_cast<GByte *>(pJPEGContent) + nJPEGContent);
+            VSIFree(pJPEGContent);
+
+            std::vector<GByte> abyJPEGMod;
+            abyJPEGMod.reserve(abyJPEG.size());
+
+            // Append Start Of Image marker (0xff 0xd8)
+            abyJPEGMod.insert(abyJPEGMod.end(), abyJPEG.begin(),
+                              abyJPEG.begin() + 2);
+
+            // Rework JPEG data to remove APP (except APP0) and COM
+            // markers as it confuses libjxl, when trying to
+            // reconstruct a JPEG file
+            size_t i = 2;
+            while (i + 1 < abyJPEG.size())
             {
-                try
+                if (abyJPEG[i] != 0xFF)
                 {
-                    abyJPEG.resize(static_cast<size_t>(nFileSize));
-                    VSIFSeekL(fpJPEG.get(), 0, SEEK_SET);
-                    if (VSIFReadL(&abyJPEG[0], 1, abyJPEG.size(),
-                                  fpJPEG.get()) == abyJPEG.size() &&
-                        abyJPEG[0] == 0xff && abyJPEG[1] == 0xd8)
-                    {
-                        if (abyJPEG.size() > 4)
-                        {
-                            // Detect zlib compress mask band at end of file
-                            // and remove it if found
-                            uint32_t nImageSize = 0;
-                            memcpy(&nImageSize, abyJPEG.data() + nFileSize - 4,
-                                   4);
-                            CPL_LSBPTR32(&nImageSize);
-                            if (nImageSize > 2 && nImageSize >= nFileSize / 2 &&
-                                nImageSize <= nFileSize - 4 &&
-                                abyJPEG[nImageSize - 2] == 0xFF &&
-                                abyJPEG[nImageSize - 1] == 0xD9)
-                            {
-                                abyJPEG.resize(nImageSize);
-                            }
-                        }
-
-                        std::vector<GByte> abyJPEGMod;
-                        abyJPEGMod.reserve(abyJPEG.size());
-
-                        // Append Start Of Image marker (0xff 0xd8)
-                        abyJPEGMod.insert(abyJPEGMod.end(), abyJPEG.begin(),
-                                          abyJPEG.begin() + 2);
-
-                        // Rework JPEG data to remove APP (except APP0) and COM
-                        // markers as it confuses libjxl, when trying to
-                        // reconstruct a JPEG file
-                        size_t i = 2;
-                        while (i + 1 < abyJPEG.size())
-                        {
-                            if (abyJPEG[i] != 0xFF)
-                            {
-                                // Not a valid tag (shouldn't happen)
-                                abyJPEGMod.clear();
-                                break;
-                            }
-
-                            // Stop when encountering a marker that is not a APP
-                            // or COM marker
-                            const bool bIsCOM = abyJPEG[i + 1] == 0xFE;
-                            if ((abyJPEG[i + 1] & 0xF0) != 0xE0 && !bIsCOM)
-                            {
-                                // Append all markers until end
-                                abyJPEGMod.insert(abyJPEGMod.end(),
-                                                  abyJPEG.begin() + i,
-                                                  abyJPEG.end());
-                                break;
-                            }
-                            const bool bIsAPP0 = abyJPEG[i + 1] == 0xE0;
-
-                            // Skip marker ID
-                            i += 2;
-                            // Check we can read chunk length
-                            if (i + 1 >= abyJPEG.size())
-                            {
-                                // Truncated JPEG file
-                                abyJPEGMod.clear();
-                                break;
-                            }
-                            const int nChunkLength =
-                                abyJPEG[i] * 256 + abyJPEG[i + 1];
-                            if ((bIsCOM || bIsAPP0) &&
-                                i + nChunkLength <= abyJPEG.size())
-                            {
-                                // Append COM or APP0 marker
-                                abyJPEGMod.insert(
-                                    abyJPEGMod.end(), abyJPEG.begin() + i - 2,
-                                    abyJPEG.begin() + i + nChunkLength);
-                            }
-                            i += nChunkLength;
-                        }
-                        abyJPEG = std::move(abyJPEGMod);
-                    }
+                    // Not a valid tag (shouldn't happen)
+                    abyJPEGMod.clear();
+                    break;
                 }
-                catch (const std::exception &)
+
+                // Stop when encountering a marker that is not a APP
+                // or COM marker
+                const bool bIsCOM = abyJPEG[i + 1] == 0xFE;
+                if ((abyJPEG[i + 1] & 0xF0) != 0xE0 && !bIsCOM)
                 {
+                    // Append all markers until end
+                    abyJPEGMod.insert(abyJPEGMod.end(), abyJPEG.begin() + i,
+                                      abyJPEG.end());
+                    break;
                 }
+                const bool bIsAPP0 = abyJPEG[i + 1] == 0xE0;
+
+                // Skip marker ID
+                i += 2;
+                // Check we can read chunk length
+                if (i + 1 >= abyJPEG.size())
+                {
+                    // Truncated JPEG file
+                    abyJPEGMod.clear();
+                    break;
+                }
+                const int nChunkLength = abyJPEG[i] * 256 + abyJPEG[i + 1];
+                if ((bIsCOM || bIsAPP0) && i + nChunkLength <= abyJPEG.size())
+                {
+                    // Append COM or APP0 marker
+                    abyJPEGMod.insert(abyJPEGMod.end(), abyJPEG.begin() + i - 2,
+                                      abyJPEG.begin() + i + nChunkLength);
+                }
+                i += nChunkLength;
             }
+            abyJPEG = std::move(abyJPEGMod);
+        }
+        catch (const std::exception &)
+        {
         }
     }
 

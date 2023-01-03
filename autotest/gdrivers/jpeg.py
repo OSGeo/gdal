@@ -503,9 +503,14 @@ def test_jpeg_14():
 
 def test_jpeg_15():
 
-    tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 17016)
-
-    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    gdal.Translate("/vsimem/tmp.tif", "data/jpeg/albania.jpg")
+    try:
+        tst = gdaltest.GDALTest(
+            "JPEG", "/vsimem/tmp.tif", 2, 17016, filename_absolute=1
+        )
+        tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    finally:
+        gdal.Unlink("/vsimem/tmp.tif")
 
 
 ###############################################################################

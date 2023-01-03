@@ -3410,6 +3410,111 @@ void JPGDatasetCommon::DecompressMask()
     }
 }
 
+/************************************************************************/
+/*                       GetCompressionFormats()                        */
+/************************************************************************/
+
+CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
+                                                      int nXSize, int nYSize,
+                                                      int nBandCount,
+                                                      const int *panBandList)
+{
+    CPLStringList aosRet;
+    if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
+        nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
+    {
+        aosRet.AddString("JPEG");
+    }
+    return aosRet;
+}
+
+/************************************************************************/
+/*                       ReadCompressedData()                           */
+/************************************************************************/
+
+CPLErr JPGDatasetCommon::ReadCompressedData(
+    const char *pszFormat, int nXOff, int nYOff, int nXSize, int nYSize,
+    int nBandCount, const int *panBandList, void **ppBuffer,
+    size_t *pnBufferSize, CSLConstList /*papszOptions*/)
+{
+    if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
+        nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
+    {
+        if (EQUAL(pszFormat, "JPEG"))
+        {
+            const auto nSavedPos = VSIFTellL(m_fpImage);
+            VSIFSeekL(m_fpImage, 0, SEEK_END);
+            auto nFileSize = VSIFTellL(m_fpImage);
+            if (nFileSize > std::numeric_limits<size_t>::max())
+                return CE_Failure;
+            if (nFileSize > 4)
+            {
+                VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
+                // Detect zlib compress mask band at end of file
+                // and remove it if found
+                uint32_t nImageSize = 0;
+                VSIFReadL(&nImageSize, 4, 1, m_fpImage);
+                CPL_LSBPTR32(&nImageSize);
+                if (nImageSize > 2 && nImageSize >= nFileSize / 2 &&
+                    nImageSize < nFileSize - 4)
+                {
+                    VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+                    GByte abyTwoBytes[2];
+                    if (VSIFReadL(abyTwoBytes, 2, 1, m_fpImage) == 1 &&
+                        abyTwoBytes[0] == 0xFF && abyTwoBytes[1] == 0xD9)
+                    {
+                        nFileSize = nImageSize;
+                    }
+                }
+            }
+            const auto nSize = static_cast<size_t>(nFileSize);
+            if (ppBuffer)
+            {
+                if (pnBufferSize == nullptr)
+                {
+                    VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
+                    return CE_Failure;
+                }
+                bool bFreeOnError = false;
+                if (*ppBuffer)
+                {
+                    if (*pnBufferSize < nSize)
+                    {
+                        VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
+                        return CE_Failure;
+                    }
+                }
+                else
+                {
+                    *ppBuffer = VSI_MALLOC_VERBOSE(nSize);
+                    if (*ppBuffer == nullptr)
+                    {
+                        VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
+                        return CE_Failure;
+                    }
+                    bFreeOnError = true;
+                }
+                VSIFSeekL(m_fpImage, 0, SEEK_SET);
+                if (VSIFReadL(*ppBuffer, nSize, 1, m_fpImage) != 1)
+                {
+                    if (bFreeOnError)
+                    {
+                        VSIFree(*ppBuffer);
+                        *ppBuffer = nullptr;
+                    }
+                    VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
+                    return CE_Failure;
+                }
+            }
+            VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
+            if (pnBufferSize)
+                *pnBufferSize = nSize;
+            return CE_None;
+        }
+    }
+    return CE_Failure;
+}
+
 #endif  // !defined(JPGDataset)
 
 /************************************************************************/
