@@ -3892,23 +3892,6 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
 #endif  // !defined(JPGDataset)
 
 /************************************************************************/
-/*                      GetUnderlyingDataset()                          */
-/************************************************************************/
-
-static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
-{
-    // Test if we can directly copy original content if available.
-    if (poSrcDS->GetDriver() != nullptr &&
-        poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
-    {
-        VRTDataset *poVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
-        poSrcDS = poVRTDS->GetSingleSimpleSource();
-    }
-
-    return poSrcDS;
-}
-
-/************************************************************************/
 /*                              CreateCopy()                            */
 /************************************************************************/
 
@@ -3924,122 +3907,121 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     const int nBands = poSrcDS->GetRasterCount();
 
-    // Try to convert losslessly from JPEGXL
-    auto poUnderlyingSrcDS = GetUnderlyingDataset(poSrcDS);
-    if (poUnderlyingSrcDS != nullptr &&
-        poUnderlyingSrcDS->GetDriver() != nullptr &&
-        EQUAL(poUnderlyingSrcDS->GetDriver()->GetDescription(), "JPEGXL") &&
-        CSLFetchNameValue(papszOptions, "QUALITY") == nullptr)
+#if 0
+    CPLStringList aosFormats = poSrcDS->GetCompressionFormats(0, 0,
+                                                              poSrcDS->GetRasterXSize(),
+                                                              poSrcDS->GetRasterYSize(),
+                                                              nBands,
+                                                              nullptr);
+    if( aosFormats.FindString("JPEG") >= 0 )
+#endif
     {
-        const char *pszOriginalCompression = poUnderlyingSrcDS->GetMetadataItem(
-            "ORIGINAL_COMPRESSION", "IMAGE_STRUCTURE");
-        if (pszOriginalCompression && EQUAL(pszOriginalCompression, "JPEG") &&
-            CPLTestBool(CPLGetConfigOption("GDAL_JPEG_FROM_JPEGXL", "YES")))
+        void *pJPEGContent = nullptr;
+        size_t nJPEGContent = 0;
+        CPLStringList aosOptions;
+        const bool bWriteExifMetadata =
+            CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
+        if (bWriteExifMetadata)
+            aosOptions.AddNameValue("EXIF", "YES");
+        aosOptions.AddNameValue("XMP", "YES");
+        if (poSrcDS->ReadCompressedData("JPEG", 0, 0, poSrcDS->GetRasterXSize(),
+                                        poSrcDS->GetRasterYSize(), nBands,
+                                        nullptr, &pJPEGContent, &nJPEGContent,
+                                        aosOptions.List()) == CE_None)
         {
-            const bool bWriteExifMetadata =
-                CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
-            const char *pszCodestream = poUnderlyingSrcDS->GetMetadataItem(
-                bWriteExifMetadata ? "CODESTREAM" : "CODESTREAM_WITHOUT_EXIF",
-                "JPEG");
-            if (pszCodestream)
+            CPLDebug("JPEG", "Lossless copy from source dataset");
+
+            VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+            if (fpImage == nullptr)
             {
-                CPLDebug("JPEG", "Lossless copy from JPEGXL");
-
-                std::vector<GByte> abyData;
-                abyData.insert(abyData.end(),
-                               reinterpret_cast<const GByte *>(pszCodestream),
-                               reinterpret_cast<const GByte *>(pszCodestream) +
-                                   strlen(pszCodestream) + 1);
-                int nSize = CPLBase64DecodeInPlace(&abyData[0]);
-                VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
-                if (fpImage == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "Unable to create jpeg file %s.", pszFilename);
-                    return nullptr;
-                }
-                if (VSIFWriteL(abyData.data(), 1, nSize, fpImage) !=
-                    static_cast<size_t>(nSize))
-                {
-                    CPLError(CE_Failure, CPLE_FileIO,
-                             "Failure writing data: %s", VSIStrerror(errno));
-                    VSIFCloseL(fpImage);
-                    return nullptr;
-                }
-                if (VSIFCloseL(fpImage) != 0)
-                {
-                    CPLError(CE_Failure, CPLE_FileIO,
-                             "Failure writing data: %s", VSIStrerror(errno));
-                    return nullptr;
-                }
-
-                pfnProgress(1.0, nullptr, pProgressData);
-
-                // Append masks to the jpeg file if necessary.
-                const auto poLastSrcBand = poSrcDS->GetRasterBand(nBands);
-                const bool bAppendMask =
-                    poLastSrcBand != nullptr &&
-                    poLastSrcBand->GetColorInterpretation() == GCI_AlphaBand &&
-                    CPLFetchBool(papszOptions, "INTERNAL_MASK", true);
-
-                if (bAppendMask)
-                {
-                    CPLDebug("JPEG", "Appending Mask Bitmap");
-
-                    CPLErr eErr = JPGAppendMask(pszFilename, poLastSrcBand,
-                                                nullptr, nullptr);
-
-                    if (eErr != CE_None)
-                    {
-                        VSIUnlink(pszFilename);
-                        return nullptr;
-                    }
-                }
-
-                // Do we need a world file?
-                if (CPLFetchBool(papszOptions, "WORLDFILE", false))
-                {
-                    double adfGeoTransform[6] = {};
-
-                    poSrcDS->GetGeoTransform(adfGeoTransform);
-                    GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
-                }
-
-                // Re-open dataset, and copy any auxiliary pam information.
-
-                // If writing to stdout, we can't reopen it, so return
-                // a fake dataset to make the caller happy.
-                if (CPLTestBool(
-                        CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")))
-                {
-                    CPLPushErrorHandler(CPLQuietErrorHandler);
-
-                    JPGDatasetOpenArgs sArgs;
-                    sArgs.pszFilename = pszFilename;
-                    sArgs.fpLin = nullptr;
-                    sArgs.papszSiblingFiles = nullptr;
-                    sArgs.nScaleFactor = 1;
-                    sArgs.bDoPAMInitialize = true;
-                    sArgs.bUseInternalOverviews = true;
-
-                    auto poDS = Open(&sArgs);
-                    CPLPopErrorHandler();
-                    if (poDS)
-                    {
-                        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
-                        return poDS;
-                    }
-
-                    CPLErrorReset();
-                }
-
-                JPGDataset *poJPG_DS = new JPGDataset();
-                poJPG_DS->nRasterXSize = poSrcDS->GetRasterXSize();
-                poJPG_DS->nRasterYSize = poSrcDS->GetRasterYSize();
-                for (int i = 0; i < nBands; i++)
-                    poJPG_DS->SetBand(i + 1, JPGCreateBand(poJPG_DS, i + 1));
-                return poJPG_DS;
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Unable to create jpeg file %s.", pszFilename);
+                VSIFree(pJPEGContent);
+                return nullptr;
             }
+            if (VSIFWriteL(pJPEGContent, 1, nJPEGContent, fpImage) !=
+                nJPEGContent)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Failure writing data: %s",
+                         VSIStrerror(errno));
+                VSIFCloseL(fpImage);
+                VSIFree(pJPEGContent);
+                return nullptr;
+            }
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Failure writing data: %s",
+                         VSIStrerror(errno));
+                VSIFree(pJPEGContent);
+                return nullptr;
+            }
+            VSIFree(pJPEGContent);
+
+            pfnProgress(1.0, nullptr, pProgressData);
+
+            // Append masks to the jpeg file if necessary.
+            const auto poLastSrcBand = poSrcDS->GetRasterBand(nBands);
+            const bool bAppendMask =
+                poLastSrcBand != nullptr &&
+                poLastSrcBand->GetColorInterpretation() == GCI_AlphaBand &&
+                CPLFetchBool(papszOptions, "INTERNAL_MASK", true);
+
+            if (bAppendMask)
+            {
+                CPLDebug("JPEG", "Appending Mask Bitmap");
+
+                CPLErr eErr =
+                    JPGAppendMask(pszFilename, poLastSrcBand, nullptr, nullptr);
+
+                if (eErr != CE_None)
+                {
+                    VSIUnlink(pszFilename);
+                    return nullptr;
+                }
+            }
+
+            // Do we need a world file?
+            if (CPLFetchBool(papszOptions, "WORLDFILE", false))
+            {
+                double adfGeoTransform[6] = {};
+
+                poSrcDS->GetGeoTransform(adfGeoTransform);
+                GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+            }
+
+            // Re-open dataset, and copy any auxiliary pam information.
+
+            // If writing to stdout, we can't reopen it, so return
+            // a fake dataset to make the caller happy.
+            if (CPLTestBool(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")))
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+
+                JPGDatasetOpenArgs sArgs;
+                sArgs.pszFilename = pszFilename;
+                sArgs.fpLin = nullptr;
+                sArgs.papszSiblingFiles = nullptr;
+                sArgs.nScaleFactor = 1;
+                sArgs.bDoPAMInitialize = true;
+                sArgs.bUseInternalOverviews = true;
+
+                auto poDS = Open(&sArgs);
+                CPLPopErrorHandler();
+                if (poDS)
+                {
+                    poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
+                    return poDS;
+                }
+
+                CPLErrorReset();
+            }
+
+            JPGDataset *poJPG_DS = new JPGDataset();
+            poJPG_DS->nRasterXSize = poSrcDS->GetRasterXSize();
+            poJPG_DS->nRasterYSize = poSrcDS->GetRasterYSize();
+            for (int i = 0; i < nBands; i++)
+                poJPG_DS->SetBand(i + 1, JPGCreateBand(poJPG_DS, i + 1));
+            return poJPG_DS;
         }
     }
 
