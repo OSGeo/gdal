@@ -1261,7 +1261,7 @@ static CPLErr PowPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
-// Given nt intervals spaced by dt and beginning at t0, return the the index of
+// Given nt intervals spaced by dt and beginning at t0, return the index of
 // the lower bound of the interval that should be used to
 // interpolate/extrapolate a value for t.
 static std::size_t intervalLeft(double t0, double dt, std::size_t nt, double t)

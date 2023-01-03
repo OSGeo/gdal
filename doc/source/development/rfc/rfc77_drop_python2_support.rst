@@ -223,7 +223,7 @@ This topic has been discussed in the past in :
 Related PRs:
 -------------
 
-Adding a deprecation warning if running a Python version that is known to be unsupported in the the next GDAL version:
+Adding a deprecation warning if running a Python version that is known to be unsupported in the next GDAL version:
 
 - https://github.com/OSGeo/gdal/pull/3165
 

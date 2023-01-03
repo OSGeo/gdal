@@ -2241,7 +2241,7 @@ const std::string &GDALMDArray::GetUnit() const
 /*                          SetSpatialRef()                             */
 /************************************************************************/
 
-/** Assign a spatial reference system object to the the array.
+/** Assign a spatial reference system object to the array.
  *
  * This is the same as the C function GDALMDArraySetSpatialRef().
  */
@@ -10696,7 +10696,7 @@ const char *GDALMDArrayGetUnit(GDALMDArrayH hArray)
 /*                      GDALMDArrayGetSpatialRef()                      */
 /************************************************************************/
 
-/** Assign a spatial reference system object to the the array.
+/** Assign a spatial reference system object to the array.
  *
  * This is the same as the C++ method GDALMDArray::SetSpatialRef().
  * @return TRUE in case of success.

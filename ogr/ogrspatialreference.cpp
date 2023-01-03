@@ -11683,7 +11683,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT(const char *prjName,
  * <li>OAMS_CUSTOM means that the data axis are customly defined with
  *     SetDataAxisToSRSAxisMapping()
  * </ul>
- * @return the the data axis to CRS axis mapping strategy.
+ * @return the data axis to CRS axis mapping strategy.
  * @since GDAL 3.0
  */
 OSRAxisMappingStrategy OGRSpatialReference::GetAxisMappingStrategy() const

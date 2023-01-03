@@ -67,7 +67,7 @@ def test_gis_order():
 
     osr_util.set_default_axis_order(osr.OAMS_TRADITIONAL_GIS_ORDER)  # sets gis order
 
-    srs = osr_util.get_srs(4326)  # check the the default was changed
+    srs = osr_util.get_srs(4326)  # check the default was changed
     if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs.GetAxisMappingStrategy() == osr.OAMS_TRADITIONAL_GIS_ORDER
 
@@ -97,7 +97,7 @@ def test_gis_order():
     # restore the default and repeat some tests
     osr_util.set_default_axis_order()
 
-    srs = osr_util.get_srs(4326)  # check the the default was restored
+    srs = osr_util.get_srs(4326)  # check the default was restored
     if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
 

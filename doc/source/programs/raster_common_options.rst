@@ -46,7 +46,7 @@ Creating new files
 Access an existing file to read it is generally quite simple.
 Just indicate the name of the file or dataset on the command line.
 However, creating a file is more complicated. It may be necessary to
-indicate the the format to create, various creation options affecting
+indicate the format to create, various creation options affecting
 how it will be created and perhaps a coordinate system to be assigned.
 Many of these options are handled similarly by different GDAL utilities,
 and are introduced here.

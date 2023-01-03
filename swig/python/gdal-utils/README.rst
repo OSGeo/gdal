@@ -41,7 +41,7 @@ Packaging
 ---------
 
 Starting March 2022 installing gdal-utils with pip will use Setuptools'
-_console_scripts_, which turn the the scripts into native platform
+_console_scripts_, which turn the scripts into native platform
 executables that call the script using the appropriate platform interpreter.
 This means you no longer need to something similar as a post-install step.
 If this causes problems with your distribution please file an issue on
