@@ -4026,110 +4026,312 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     {
         void *pJPEGContent = nullptr;
         size_t nJPEGContent = 0;
-        CPLStringList aosOptions;
-        const bool bWriteExifMetadata =
-            CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
-        if (bWriteExifMetadata)
-            aosOptions.AddNameValue("EXIF", "YES");
-        aosOptions.AddNameValue("XMP", "YES");
         if (poSrcDS->ReadCompressedData("JPEG", 0, 0, poSrcDS->GetRasterXSize(),
                                         poSrcDS->GetRasterYSize(), nBands,
                                         nullptr, &pJPEGContent, &nJPEGContent,
-                                        aosOptions.List()) == CE_None)
+                                        nullptr) == CE_None &&
+            poSrcDS->GetRasterCount() == 4 &&
+            poSrcDS->GetRasterBand(4)->GetColorInterpretation() ==
+                GCI_AlphaBand)
+        {
+            // 4-band RGBA will unfortunately be interpreted as CMYK in
+            // standalone JPEG
+            CPLString osTmpFilename;
+            osTmpFilename.Printf("/vsimem/_jpeg/%p", pJPEGContent);
+            VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename,
+                                            static_cast<GByte *>(pJPEGContent),
+                                            nJPEGContent, false));
+            GDALOpenInfo oOpenInfo(osTmpFilename.c_str(), GA_ReadOnly);
+            CPLConfigOptionSetter oSetter("GDAL_JPEG_TO_RGB", "NO", false);
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            auto poTmpDS = std::unique_ptr<GDALDataset>(
+                JPGDatasetCommon::Open(&oOpenInfo));
+            if (poTmpDS && poTmpDS->GetRasterCount() == 4)
+            {
+                VSIFree(pJPEGContent);
+                pJPEGContent = nullptr;
+            }
+        }
+
+        if (pJPEGContent)
         {
             CPLDebug("JPEG", "Lossless copy from source dataset");
+            std::vector<GByte> abyJPEG;
+            try
+            {
+                abyJPEG.assign(static_cast<const GByte *>(pJPEGContent),
+                               static_cast<const GByte *>(pJPEGContent) +
+                                   nJPEGContent);
 
-            VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
-            if (fpImage == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Unable to create jpeg file %s.", pszFilename);
-                VSIFree(pJPEGContent);
-                return nullptr;
+                const bool bWriteExifMetadata =
+                    CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
+                if (bWriteExifMetadata)
+                {
+                    char **papszEXIF_MD = poSrcDS->GetMetadata("EXIF");
+                    if (papszEXIF_MD == nullptr)
+                    {
+                        papszEXIF_MD = poSrcDS->GetMetadata();
+                    }
+                    GUInt32 nEXIFContentSize = 0;
+                    GByte *pabyEXIF = EXIFCreate(papszEXIF_MD, nullptr, 0, 0, 0,
+                                                 &nEXIFContentSize);
+                    if (nEXIFContentSize > 0 && nEXIFContentSize + 2 <= 65535U)
+                    {
+                        size_t nChunkLoc = 2;
+                        size_t nInsertPos = 0;
+                        constexpr GByte JFIF_SIGNATURE[] = {'J', 'F', 'I', 'F',
+                                                            '\0'};
+                        constexpr GByte EXIF_SIGNATURE[] = {'E', 'x',  'i',
+                                                            'f', '\0', '\0'};
+                        while (nChunkLoc + 4 <= abyJPEG.size())
+                        {
+                            if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                                abyJPEG[nChunkLoc + 1] == 0xDA)
+                            {
+                                if (nInsertPos == 0)
+                                    nInsertPos = nChunkLoc;
+                                break;
+                            }
+                            if (abyJPEG[nChunkLoc + 0] != 0xFF)
+                                break;
+                            const int nChunkLength =
+                                abyJPEG[nChunkLoc + 2] * 256 +
+                                abyJPEG[nChunkLoc + 3];
+                            if (nChunkLength < 2)
+                                break;
+                            if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                                abyJPEG[nChunkLoc + 1] == 0xE0 &&
+                                nChunkLoc + 4 + sizeof(JFIF_SIGNATURE) <=
+                                    abyJPEG.size() &&
+                                memcmp(abyJPEG.data() + nChunkLoc + 4,
+                                       JFIF_SIGNATURE,
+                                       sizeof(JFIF_SIGNATURE)) == 0)
+                            {
+                                if (nInsertPos == 0)
+                                    nInsertPos = nChunkLoc + 2 + nChunkLength;
+                            }
+                            else if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                                     abyJPEG[nChunkLoc + 1] == 0xE1 &&
+                                     nChunkLoc + 4 + sizeof(EXIF_SIGNATURE) <=
+                                         abyJPEG.size() &&
+                                     memcmp(abyJPEG.data() + nChunkLoc + 4,
+                                            EXIF_SIGNATURE,
+                                            sizeof(EXIF_SIGNATURE)) == 0)
+                            {
+                                CPLDebug("JPEG",
+                                         "Remove existing EXIF from source "
+                                         "compressed data");
+                                abyJPEG.erase(abyJPEG.begin() + nChunkLoc,
+                                              abyJPEG.begin() + nChunkLoc + 2 +
+                                                  nChunkLength);
+                                continue;
+                            }
+                            nChunkLoc += 2 + nChunkLength;
+                        }
+                        if (nInsertPos > 0)
+                        {
+                            std::vector<GByte> abyNew;
+                            const size_t nMarkerSize = 2 + nEXIFContentSize;
+                            abyNew.reserve(abyJPEG.size() + 2 + nMarkerSize);
+                            abyNew.insert(abyNew.end(), abyJPEG.data(),
+                                          abyJPEG.data() + nInsertPos);
+                            abyNew.insert(abyNew.end(),
+                                          static_cast<GByte>(0xFF));
+                            abyNew.insert(abyNew.end(),
+                                          static_cast<GByte>(0xE1));
+                            abyNew.insert(abyNew.end(),
+                                          static_cast<GByte>(nMarkerSize >> 8));
+                            abyNew.insert(
+                                abyNew.end(),
+                                static_cast<GByte>(nMarkerSize & 0xFF));
+                            abyNew.insert(abyNew.end(), pabyEXIF,
+                                          pabyEXIF + nEXIFContentSize);
+                            abyNew.insert(abyNew.end(),
+                                          abyJPEG.data() + nInsertPos,
+                                          abyJPEG.data() + abyJPEG.size());
+                            abyJPEG = std::move(abyNew);
+                        }
+                    }
+                    VSIFree(pabyEXIF);
+                }
+
+                const bool bWriteXMP =
+                    CPLFetchBool(papszOptions, "WRITE_XMP", true);
+                char **papszXMP =
+                    bWriteXMP ? poSrcDS->GetMetadata("xml:XMP") : nullptr;
+                if (papszXMP && papszXMP[0])
+                {
+                    size_t nChunkLoc = 2;
+                    size_t nInsertPos = 0;
+                    constexpr GByte JFIF_SIGNATURE[] = {'J', 'F', 'I', 'F',
+                                                        '\0'};
+                    constexpr const char APP1_XMP_SIGNATURE[] =
+                        "http://ns.adobe.com/xap/1.0/";
+                    while (nChunkLoc + 4 <= abyJPEG.size())
+                    {
+                        if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                            abyJPEG[nChunkLoc + 1] == 0xDA)
+                        {
+                            if (nInsertPos == 0)
+                                nInsertPos = nChunkLoc;
+                            break;
+                        }
+                        if (abyJPEG[nChunkLoc + 0] != 0xFF)
+                            break;
+                        const int nChunkLength = abyJPEG[nChunkLoc + 2] * 256 +
+                                                 abyJPEG[nChunkLoc + 3];
+                        if (nChunkLength < 2)
+                            break;
+                        if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                            abyJPEG[nChunkLoc + 1] == 0xE0 &&
+                            nChunkLoc + 4 + sizeof(JFIF_SIGNATURE) <=
+                                abyJPEG.size() &&
+                            memcmp(abyJPEG.data() + nChunkLoc + 4,
+                                   JFIF_SIGNATURE, sizeof(JFIF_SIGNATURE)) == 0)
+                        {
+                            if (nInsertPos == 0)
+                                nInsertPos = nChunkLoc + 2 + nChunkLength;
+                        }
+                        else if (abyJPEG[nChunkLoc + 0] == 0xFF &&
+                                 abyJPEG[nChunkLoc + 1] == 0xE1 &&
+                                 nChunkLoc + 4 + sizeof(APP1_XMP_SIGNATURE) <=
+                                     abyJPEG.size() &&
+                                 memcmp(abyJPEG.data() + nChunkLoc + 4,
+                                        APP1_XMP_SIGNATURE,
+                                        sizeof(APP1_XMP_SIGNATURE)) == 0)
+                        {
+                            CPLDebug("JPEG", "Remove existing XMP from source "
+                                             "compressed data");
+                            abyJPEG.erase(abyJPEG.begin() + nChunkLoc,
+                                          abyJPEG.begin() + nChunkLoc + 2 +
+                                              nChunkLength);
+                            continue;
+                        }
+                        nChunkLoc += 2 + nChunkLength;
+                    }
+                    const size_t nMarkerSize =
+                        2 + sizeof(APP1_XMP_SIGNATURE) + strlen(papszXMP[0]);
+                    if (nInsertPos > 0 && nMarkerSize <= 65535U)
+                    {
+                        std::vector<GByte> abyNew;
+                        abyNew.reserve(abyJPEG.size() + 2 + nMarkerSize);
+                        abyNew.insert(abyNew.end(), abyJPEG.data(),
+                                      abyJPEG.data() + nInsertPos);
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xFF));
+                        abyNew.insert(abyNew.end(), static_cast<GByte>(0xE1));
+                        abyNew.insert(abyNew.end(),
+                                      static_cast<GByte>(nMarkerSize >> 8));
+                        abyNew.insert(abyNew.end(),
+                                      static_cast<GByte>(nMarkerSize & 0xFF));
+                        abyNew.insert(abyNew.end(), APP1_XMP_SIGNATURE,
+                                      APP1_XMP_SIGNATURE +
+                                          sizeof(APP1_XMP_SIGNATURE));
+                        abyNew.insert(abyNew.end(), papszXMP[0],
+                                      papszXMP[0] + strlen(papszXMP[0]));
+                        abyNew.insert(abyNew.end(), abyJPEG.data() + nInsertPos,
+                                      abyJPEG.data() + abyJPEG.size());
+                        abyJPEG = std::move(abyNew);
+                    }
+                }
             }
-            if (VSIFWriteL(pJPEGContent, 1, nJPEGContent, fpImage) !=
-                nJPEGContent)
+            catch (const std::exception &)
             {
-                CPLError(CE_Failure, CPLE_FileIO, "Failure writing data: %s",
-                         VSIStrerror(errno));
-                VSIFCloseL(fpImage);
-                VSIFree(pJPEGContent);
-                return nullptr;
-            }
-            if (VSIFCloseL(fpImage) != 0)
-            {
-                CPLError(CE_Failure, CPLE_FileIO, "Failure writing data: %s",
-                         VSIStrerror(errno));
-                VSIFree(pJPEGContent);
-                return nullptr;
+                abyJPEG.clear();
             }
             VSIFree(pJPEGContent);
 
-            pfnProgress(1.0, nullptr, pProgressData);
-
-            // Append masks to the jpeg file if necessary.
-            const auto poLastSrcBand = poSrcDS->GetRasterBand(nBands);
-            const bool bAppendMask =
-                poLastSrcBand != nullptr &&
-                poLastSrcBand->GetColorInterpretation() == GCI_AlphaBand &&
-                CPLFetchBool(papszOptions, "INTERNAL_MASK", true);
-
-            if (bAppendMask)
+            if (!abyJPEG.empty())
             {
-                CPLDebug("JPEG", "Appending Mask Bitmap");
-
-                CPLErr eErr =
-                    JPGAppendMask(pszFilename, poLastSrcBand, nullptr, nullptr);
-
-                if (eErr != CE_None)
+                VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+                if (fpImage == nullptr)
                 {
-                    VSIUnlink(pszFilename);
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "Unable to create jpeg file %s.", pszFilename);
+
                     return nullptr;
                 }
-            }
-
-            // Do we need a world file?
-            if (CPLFetchBool(papszOptions, "WORLDFILE", false))
-            {
-                double adfGeoTransform[6] = {};
-
-                poSrcDS->GetGeoTransform(adfGeoTransform);
-                GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
-            }
-
-            // Re-open dataset, and copy any auxiliary pam information.
-
-            // If writing to stdout, we can't reopen it, so return
-            // a fake dataset to make the caller happy.
-            if (CPLTestBool(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")))
-            {
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-
-                JPGDatasetOpenArgs sArgs;
-                sArgs.pszFilename = pszFilename;
-                sArgs.fpLin = nullptr;
-                sArgs.papszSiblingFiles = nullptr;
-                sArgs.nScaleFactor = 1;
-                sArgs.bDoPAMInitialize = true;
-                sArgs.bUseInternalOverviews = true;
-
-                auto poDS = Open(&sArgs);
-                CPLPopErrorHandler();
-                if (poDS)
+                if (VSIFWriteL(abyJPEG.data(), 1, abyJPEG.size(), fpImage) !=
+                    abyJPEG.size())
                 {
-                    poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
-                    return poDS;
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Failure writing data: %s", VSIStrerror(errno));
+                    VSIFCloseL(fpImage);
+                    return nullptr;
+                }
+                if (VSIFCloseL(fpImage) != 0)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Failure writing data: %s", VSIStrerror(errno));
+                    return nullptr;
                 }
 
-                CPLErrorReset();
-            }
+                pfnProgress(1.0, nullptr, pProgressData);
 
-            JPGDataset *poJPG_DS = new JPGDataset();
-            poJPG_DS->nRasterXSize = poSrcDS->GetRasterXSize();
-            poJPG_DS->nRasterYSize = poSrcDS->GetRasterYSize();
-            for (int i = 0; i < nBands; i++)
-                poJPG_DS->SetBand(i + 1, JPGCreateBand(poJPG_DS, i + 1));
-            return poJPG_DS;
+                // Append masks to the jpeg file if necessary.
+                const auto poLastSrcBand = poSrcDS->GetRasterBand(nBands);
+                const bool bAppendMask =
+                    poLastSrcBand != nullptr &&
+                    poLastSrcBand->GetColorInterpretation() == GCI_AlphaBand &&
+                    CPLFetchBool(papszOptions, "INTERNAL_MASK", true);
+
+                if (bAppendMask)
+                {
+                    CPLDebug("JPEG", "Appending Mask Bitmap");
+
+                    CPLErr eErr = JPGAppendMask(pszFilename, poLastSrcBand,
+                                                nullptr, nullptr);
+
+                    if (eErr != CE_None)
+                    {
+                        VSIUnlink(pszFilename);
+                        return nullptr;
+                    }
+                }
+
+                // Do we need a world file?
+                if (CPLFetchBool(papszOptions, "WORLDFILE", false))
+                {
+                    double adfGeoTransform[6] = {};
+
+                    poSrcDS->GetGeoTransform(adfGeoTransform);
+                    GDALWriteWorldFile(pszFilename, "wld", adfGeoTransform);
+                }
+
+                // Re-open dataset, and copy any auxiliary pam information.
+
+                // If writing to stdout, we can't reopen it, so return
+                // a fake dataset to make the caller happy.
+                if (CPLTestBool(
+                        CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")))
+                {
+                    CPLPushErrorHandler(CPLQuietErrorHandler);
+
+                    JPGDatasetOpenArgs sArgs;
+                    sArgs.pszFilename = pszFilename;
+                    sArgs.fpLin = nullptr;
+                    sArgs.papszSiblingFiles = nullptr;
+                    sArgs.nScaleFactor = 1;
+                    sArgs.bDoPAMInitialize = true;
+                    sArgs.bUseInternalOverviews = true;
+
+                    auto poDS = Open(&sArgs);
+                    CPLPopErrorHandler();
+                    if (poDS)
+                    {
+                        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
+                        return poDS;
+                    }
+
+                    CPLErrorReset();
+                }
+
+                JPGDataset *poJPG_DS = new JPGDataset();
+                poJPG_DS->nRasterXSize = poSrcDS->GetRasterXSize();
+                poJPG_DS->nRasterYSize = poSrcDS->GetRasterYSize();
+                for (int i = 0; i < nBands; i++)
+                    poJPG_DS->SetBand(i + 1, JPGCreateBand(poJPG_DS, i + 1));
+                return poJPG_DS;
+            }
         }
     }
 
