@@ -465,6 +465,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int AcquireMutex();
     void ReleaseMutex();
+
+    bool IsAllBands(int nBandCount, const int *panBandList) const;
     //! @endcond
 
   public:
@@ -603,6 +605,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                         OPTIONAL_OUTSIDE_GDAL(nullptr)
 #endif
                         ) CPL_WARN_UNUSED_RESULT;
+
+    virtual CPLStringList GetCompressionFormats(int nXOff, int nYOff,
+                                                int nXSize, int nYSize,
+                                                int nBandCount,
+                                                const int *panBandList);
+    virtual CPLErr ReadCompressedData(const char *pszFormat, int nXOff,
+                                      int nYOff, int nXSize, int nYSize,
+                                      int nBands, const int *panBandList,
+                                      void **ppBuffer, size_t *pnBufferSize,
+                                      CSLConstList papszOptions);
 
     int Reference();
     int Dereference();
