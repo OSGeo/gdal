@@ -3467,7 +3467,7 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
                     }
                 }
             }
-            const auto nSize = static_cast<size_t>(nFileSize);
+            auto nSize = static_cast<size_t>(nFileSize);
             if (ppBuffer)
             {
                 if (pnBufferSize == nullptr)
@@ -3504,6 +3504,59 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
                     }
                     VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
                     return CE_Failure;
+                }
+
+                constexpr GByte EXIF_SIGNATURE[] = {'E', 'x',  'i',
+                                                    'f', '\0', '\0'};
+                constexpr const char APP1_XMP_SIGNATURE[] =
+                    "http://ns.adobe.com/xap/1.0/";
+                size_t nChunkLoc = 2;
+                GByte *pabyJPEG = static_cast<GByte *>(*ppBuffer);
+                while (nChunkLoc + 4 <= nSize)
+                {
+                    if (pabyJPEG[nChunkLoc + 0] == 0xFF &&
+                        pabyJPEG[nChunkLoc + 1] == 0xDA)
+                    {
+                        break;
+                    }
+                    if (pabyJPEG[nChunkLoc + 0] != 0xFF)
+                        break;
+                    const int nChunkLength =
+                        pabyJPEG[nChunkLoc + 2] * 256 + pabyJPEG[nChunkLoc + 3];
+                    if (nChunkLength < 2 || static_cast<size_t>(nChunkLength) >
+                                                nSize - (nChunkLoc + 2))
+                        break;
+                    if (pabyJPEG[nChunkLoc + 0] == 0xFF &&
+                        pabyJPEG[nChunkLoc + 1] == 0xE1 &&
+                        nChunkLoc + 4 + sizeof(EXIF_SIGNATURE) <= nSize &&
+                        memcmp(pabyJPEG + nChunkLoc + 4, EXIF_SIGNATURE,
+                               sizeof(EXIF_SIGNATURE)) == 0)
+                    {
+                        CPLDebug("JPEG", "Remove existing EXIF from "
+                                         "source compressed data");
+                        memmove(pabyJPEG + nChunkLoc,
+                                pabyJPEG + nChunkLoc + 2 + nChunkLength,
+                                nSize - (nChunkLoc + 2 + nChunkLength));
+                        nSize -= 2 + nChunkLength;
+                        continue;
+                    }
+                    else if (pabyJPEG[nChunkLoc + 0] == 0xFF &&
+                             pabyJPEG[nChunkLoc + 1] == 0xE1 &&
+                             nChunkLoc + 4 + sizeof(APP1_XMP_SIGNATURE) <=
+                                 nSize &&
+                             memcmp(pabyJPEG + nChunkLoc + 4,
+                                    APP1_XMP_SIGNATURE,
+                                    sizeof(APP1_XMP_SIGNATURE)) == 0)
+                    {
+                        CPLDebug("JPEG", "Remove existing XMP from "
+                                         "source compressed data");
+                        memmove(pabyJPEG + nChunkLoc,
+                                pabyJPEG + nChunkLoc + 2 + nChunkLength,
+                                nSize - (nChunkLoc + 2 + nChunkLength));
+                        nSize -= 2 + nChunkLength;
+                        continue;
+                    }
+                    nChunkLoc += 2 + nChunkLength;
                 }
             }
             VSIFSeekL(m_fpImage, nSavedPos, SEEK_SET);
