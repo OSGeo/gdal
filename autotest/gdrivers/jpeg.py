@@ -583,25 +583,32 @@ def test_jpeg_17():
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
     with gdaltest.error_handler("CPLQuietErrorHandler"):
-        # Get this warning:
+        # Get this error:
         #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
-        ds.GetRasterBand(1).Checksum()
+        assert ds.GetRasterBand(1).Checksum() < 0
 
     assert not (
-        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+        gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
     )
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
     with gdaltest.error_handler("CPLQuietErrorHandler"):
-        gdal.SetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", "TRUE")
-        # Get this ERROR 1:
-        #   libjpeg: Corrupt JPEG data: found marker 0x00 instead of RST63
-        ds.GetRasterBand(1).Checksum()
-        gdal.SetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", None)
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "TRUE"):
+            assert ds.GetRasterBand(1).Checksum() < 0
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "FALSE"):
+            assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
     )
 
 
