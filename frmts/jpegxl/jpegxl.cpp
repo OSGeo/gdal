@@ -1039,7 +1039,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                          int nYOff, int nXSize, int nYSize,
                                          int nBandCount, const int *panBandList,
                                          void **ppBuffer, size_t *pnBufferSize,
-                                         CSLConstList /*papszOptions*/)
+                                         CPL_UNUSED CSLConstList papszOptions)
 {
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
@@ -1243,6 +1243,23 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                         if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
                             jpeg_bytes[nChunkLoc + 1] == 0xDA)
                         {
+                            break;
+                        }
+                        if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
+                            jpeg_bytes[nChunkLoc + 1] == 0xC2)
+                        {
+                            // Start of progressive JPEG
+                            CPLDebug("JPEGXL", "Progressive JPEG detected");
+                            // Ideally we'd want to advertize JPEG_PROGRESSIVE
+                            // as format in GetCompressionFormats() but we can't
+                            // easily obtain that information without
+                            // transcoding first
+                            if (!CPLTestBool(CSLFetchNameValueDef(
+                                    papszOptions, "ALLOW_PROGRESSIVE_JPEG",
+                                    "YES")))
+                            {
+                                return CE_Failure;
+                            }
                             break;
                         }
                         if (jpeg_bytes[nChunkLoc + 0] != 0xFF)
@@ -2318,10 +2335,14 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         // lossless transcoding from 4-band contig JPEG RGBA not supported
         poSrcDS->GetRasterCount() <= 3 &&
         (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
-        poSrcDS->ReadCompressedData(
-            "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
-            nullptr) == CE_None)
+        (poSrcDS->ReadCompressedData(
+             "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+             poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
+             nullptr) == CE_None ||
+         poSrcDS->ReadCompressedData(
+             "JPEG_PROGRESSIVE", 0, 0, poSrcDS->GetRasterXSize(),
+             poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
+             &pJPEGContent, &nJPEGContent, nullptr) == CE_None))
     {
         try
         {

@@ -2053,6 +2053,15 @@ bool JPGDataset::ErrorOutOnNonFatalError()
 }
 
 /************************************************************************/
+/*                         HasMultipleScans()                           */
+/************************************************************************/
+
+bool JPGDataset::HasMultipleScans()
+{
+    return jpeg_has_multiple_scans(&sDInfo) != 0;
+}
+
+/************************************************************************/
 /*                          StartDecompress()                           */
 /************************************************************************/
 
@@ -3423,7 +3432,10 @@ CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
     if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        aosRet.AddString("JPEG");
+        if (HasMultipleScans())
+            aosRet.AddString("JPEG_PROGRESSIVE");
+        else
+            aosRet.AddString("JPEG");
     }
     return aosRet;
 }
@@ -3440,7 +3452,8 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
     if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        if (EQUAL(pszFormat, "JPEG"))
+        if ((!HasMultipleScans() && EQUAL(pszFormat, "JPEG")) ||
+            (HasMultipleScans() && EQUAL(pszFormat, "JPEG_PROGRESSIVE")))
         {
             const auto nSavedPos = VSIFTellL(m_fpImage);
             VSIFSeekL(m_fpImage, 0, SEEK_END);
@@ -4079,10 +4092,14 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     {
         void *pJPEGContent = nullptr;
         size_t nJPEGContent = 0;
-        if (poSrcDS->ReadCompressedData("JPEG", 0, 0, poSrcDS->GetRasterXSize(),
-                                        poSrcDS->GetRasterYSize(), nBands,
-                                        nullptr, &pJPEGContent, &nJPEGContent,
-                                        nullptr) == CE_None &&
+        if ((poSrcDS->ReadCompressedData(
+                 "JPEG", 0, 0, poSrcDS->GetRasterXSize(),
+                 poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
+                 &nJPEGContent, nullptr) == CE_None ||
+             poSrcDS->ReadCompressedData(
+                 "JPEG_PROGRESSIVE", 0, 0, poSrcDS->GetRasterXSize(),
+                 poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
+                 &nJPEGContent, nullptr) == CE_None) &&
             poSrcDS->GetRasterCount() == 4 &&
             poSrcDS->GetRasterBand(4)->GetColorInterpretation() ==
                 GCI_AlphaBand)
