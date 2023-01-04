@@ -43,7 +43,7 @@ Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
 format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
-it. If the *Conventions* attribute has a value of CF-1.6, the the file will be treated as following the CF-1.6 convention.
+it. If the *Conventions* attribute has a value of CF-1.6, the file will be treated as following the CF-1.6 convention.
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -340,7 +340,7 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
    be used.
 -  **GROUPLESS_WRITE_BACK**\ =YES/NO. In order to reduce time used to write data to the target
    netCDF file, data is often grouped together in arrays and written all at once.
-   Each of these arrays is associated with a variable in the target dataset. 
+   Each of these arrays is associated with a variable in the target dataset.
    Arrays are destroyed as soon as the associated data is written to the netCDF file
    which in turn occurs as soon as a complete data array for a variable is assembled in memory.
    For machines with small memory sizes, this optimization may cause issues

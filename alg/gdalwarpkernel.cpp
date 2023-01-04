@@ -929,7 +929,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
  * The GDALWarpKern algorithm will only ever use this transformer in
  * "destination to source" mode (bDstToSrc=TRUE), and will always pass
  * partial or complete scanlines of points in the destination image as
- * input.  This means, among other things, that it is safe to the the
+ * input.  This means, among other things, that it is safe to the
  * approximating transform GDALApproxTransform() as the transformation
  * function.
  *

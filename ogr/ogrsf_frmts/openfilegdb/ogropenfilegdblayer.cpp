@@ -353,7 +353,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
                     // In the situation of
                     // https://github.com/OSGeo/gdal/issues/5747, the SRS inside
                     // the .gdbtable is consistent with the XML definition of
-                    // the feature dataset, so it seems that the the XML
+                    // the feature dataset, so it seems that the XML
                     // definition of the feature table lacked an update.
                     CPLDebug(
                         "OpenFileGDB",

@@ -949,7 +949,7 @@ GDALGetAsyncStatusTypeByName(const char *pszName)
  * Get name of AsyncStatus data type.
  *
  * Returns a symbolic name for the AsyncStatus data type.  This is essentially
- * the the enumerated item name with the GARIO_ prefix removed.  So
+ * the enumerated item name with the GARIO_ prefix removed.  So
  * GARIO_COMPLETE returns "COMPLETE".  The returned strings are static strings
  * and should not be modified or freed by the application.  These strings are
  * useful for reporting datatypes in debug statements, errors and other user

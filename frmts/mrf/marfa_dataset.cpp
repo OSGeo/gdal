@@ -1698,7 +1698,7 @@ GIntBig MRFDataset::AddOverviews(int scaleIn)
         // And adjust the offset again, within next level
         img.idxoffset += sizeof(ILIdx) * img.pagecount.l / img.size.z * zslice;
 
-        // Create and register the the overviews for each band
+        // Create and register the overviews for each band
         for (int i = 1; i <= nBands; i++)
         {
             MRFRasterBand *b =

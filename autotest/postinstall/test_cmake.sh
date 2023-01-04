@@ -11,7 +11,7 @@ echo "Running post-install tests with CMake"
 
 prefix=$1
 if [ -z "$prefix" ]; then
-    echo "First positional argument to the the installed prefix is required"
+    echo "First positional argument to the installed prefix is required"
     exit 1
 fi
 

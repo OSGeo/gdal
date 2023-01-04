@@ -1008,7 +1008,7 @@ int CPLHTTPPopFetchCallback(void)
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
  *     bundle file. By default, it will be looked for in a system location. If
- *     the CAINFO option is not defined, GDAL will also look in the the
+ *     the CAINFO option is not defined, GDAL will also look in the
  *     CURL_CA_BUNDLE and SSL_CERT_FILE environment variables respectively
  *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
  *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the

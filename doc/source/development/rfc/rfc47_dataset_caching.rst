@@ -94,7 +94,7 @@ GDALRasterBlockManager
    class CPL_DLL GDALRasterBlockManager
    {
        friend class GDALRasterBlock;
-       
+
        int             bCacheMaxInitialized;
        GIntBig         nCacheMax;
        volatile GIntBig nCacheUsed;
@@ -131,15 +131,15 @@ This is set at initialization of the dataset via:
 
 ::
 
-   bDatasetCache =  CSLTestBoolean( 
+   bDatasetCache =  CSLTestBoolean(
    CPLGetConfigOption( "GDAL_DATASET_CACHING", "NO") );
 
-   if ( bDatasetCache ) 
-   {    
+   if ( bDatasetCache )
+   {
        poRasterBlockManager = new GDALRasterBlockManager();
    }
    else
-   {   
+   {
        poRasterBlockManager = GetGDALRasterBlockManager();
    }
 
@@ -184,7 +184,7 @@ Dataset RW Mutex
 ''''''''''''''''
 
 The objective of the Dataset RW Mutex is to protect the data stored
-within the the GDALRasterBlocks associated with a dataset, and lock
+within the GDALRasterBlocks associated with a dataset, and lock
 during large Read or Write operations. This prevents two different
 threads from using memcpy on the same GDALRasterBlock at the same time.
 This mutex normally lies within the GDALDataset, but in the case of a
@@ -267,7 +267,7 @@ Block RW Mutex
 ''''''''''''''
 
 The objective of the Block RW Mutex is to protect the data stored within
-the the GDALRasterBlocks associated with a dataset, and lock during
+the GDALRasterBlocks associated with a dataset, and lock during
 large Read or Write operations. This prevents two different threads from
 using memcpy on the same GDALRasterBlock at the same time. It is created
 on a per block basis.

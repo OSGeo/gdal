@@ -106,7 +106,7 @@ double OGR_GreatCircle_InitialHeading(double LatA_deg, double LonA_deg,
         const double denom = sin_LatA * cos_diffG - cos_LatA * tan(LatB_rad);
         if (denom == 0.0)
         {
-            // Can be the the case if Lat_A = -Lat_B and abs(LonA - LonB) = 180
+            // Can be the case if Lat_A = -Lat_B and abs(LonA - LonB) = 180
             return 0.0;
         }
 
