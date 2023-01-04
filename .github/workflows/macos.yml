@@ -20,7 +20,8 @@ permissions:
 jobs:
 
   macos_build:
-    runs-on: macos-latest
+    # FIXME: Python tests fail with "ModuleNotFoundError: No module named '_gdal'" with macos-12
+    runs-on: macos-11
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
 
