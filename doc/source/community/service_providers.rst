@@ -83,6 +83,13 @@ and related Open Source technologies.
 
       `Faunalia`_ (Italy) is a company that operates since more than 15 years in the field of Geographic Information Systems (GIS) based on free and open source software (chiefly QGIS, PostGIS, and more). Our main customers are public administrations, private companies, associations. Faunalia has its main branch in Italy, and operates worldwide. Faunalia provides training services on GDAL.
 
+.. container:: service-provider
+
+  |logo_kartoza|
+
+  .. container:: service-provider-description
+
+      `Kartoza`_ (South Africa) is a South Africa-based Free and Open Source GIS (FOSSGIS) service provider. We use GIS software to solve complex location-related problems for individuals, businesses and governments around the world. Kartoza provides training services on GDAL.
 
 .. container:: service-provider
 
@@ -162,6 +169,12 @@ The steps to add a company to the service providers list are outlined in the :re
    :class: img-logos
    :width: 100 px
    :target: `Faunalia`_
+
+.. _`Kartoza`: https://kartoza.erpnext.com/
+.. |logo_kartoza| image:: ../../images/logo-kartoza.png
+   :class: img-logos
+   :width: 100 px
+   :target: `Kartoza`_
 
 .. _`mundialis`: https://www.mundialis.de/
 .. |logo_mundialis| image:: ../../images/logo-mundialis.png
