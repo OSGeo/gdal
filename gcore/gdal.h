@@ -1087,6 +1087,15 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead(
     int nBXSize, int nBYSize, GDALDataType eBDataType, int nBandCount,
     int *panBandCount, CSLConstList papszOptions);
 
+char CPL_DLL **
+GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
+                                 int nXSize, int nYSize, int nBandCount,
+                                 const int *panBandList) CPL_WARN_UNUSED_RESULT;
+CPLErr CPL_DLL GDALDatasetReadCompressedData(
+    GDALDatasetH hDS, const char *pszFormat, int nXOff, int nYOff, int nXSize,
+    int nYSize, int nBandCount, const int *panBandList, void **ppBuffer,
+    size_t *pnBufferSize, CSLConstList papszOptions);
+
 const char CPL_DLL *CPL_STDCALL GDALGetProjectionRef(GDALDatasetH);
 OGRSpatialReferenceH CPL_DLL GDALGetSpatialRef(GDALDatasetH);
 CPLErr CPL_DLL CPL_STDCALL GDALSetProjection(GDALDatasetH, const char *);
