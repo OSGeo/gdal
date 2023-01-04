@@ -10621,5 +10621,79 @@ def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
     gdal.Unlink(tmpfilename)
 
 
+###############################################################################
+# Test lossless extraction of a JPEG compressed tile to JPEG
+
+
+@pytest.mark.parametrize("extra_options", ["-co PHOTOMETRIC=YCBCR", ""])
+def test_tiff_write_lossless_extraction_of_JPEG_tile(extra_options):
+
+    md = gdal.GetDriverByName("GTiff").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
+        pytest.skip()
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip()
+
+    tmpfilename_gtiff = "/vsimem/test_tiff_write_lossless_extraction_of_JPEG_tile.tif"
+    gdal.Translate(
+        tmpfilename_gtiff,
+        "../gdrivers/data/small_world.tif",
+        options="-co TILED=YES -co BLOCKXSIZE=128 -co BLOCKYSIZE=128 -co COMPRESS=JPEG "
+        + extra_options,
+    )
+
+    tmpfilename_jpg = "/vsimem/test_tiff_write_lossless_extraction_of_JPEG_tile.jpg"
+    gdal.Translate(
+        tmpfilename_jpg,
+        tmpfilename_gtiff,
+        options="-srcwin 0 0 128 128 -co LOSSLESS_COPY=YES",
+    )
+    gtiff_ds = gdal.Open(tmpfilename_gtiff)
+    jpeg_ds = gdal.Open(tmpfilename_jpg)
+    assert jpeg_ds.ReadRaster() == gtiff_ds.ReadRaster(0, 0, 128, 128)
+
+    gdal.Unlink(tmpfilename_gtiff)
+    gdal.Unlink(tmpfilename_jpg)
+    gdal.Unlink(tmpfilename_jpg + ".aux.xml")
+
+
+###############################################################################
+# Test lossless extraction of a JPEGXL compressed tile to JPEGXL
+
+
+def test_tiff_write_lossless_extraction_of_JPEGXL_tile():
+
+    md = gdal.GetDriverByName("GTiff").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
+        pytest.skip()
+    if gdal.GetDriverByName("JPEGXL") is None:
+        pytest.skip()
+
+    tmpfilename_gtiff = "/vsimem/test_tiff_write_lossless_extraction_of_JPEGXL_tile.tif"
+    gdal.Translate(
+        tmpfilename_gtiff,
+        "../gdrivers/data/small_world.tif",
+        options="-co TILED=YES -co BLOCKXSIZE=128 -co BLOCKYSIZE=128 -co COMPRESS=JXL",
+    )
+
+    tmpfilename_jxl = "/vsimem/test_tiff_write_lossless_extraction_of_JPEGXL_tile.jxl"
+    gdal.Translate(
+        tmpfilename_jxl,
+        tmpfilename_gtiff,
+        options="-srcwin 128 0 128 128 -co LOSSLESS_COPY=YES -co LOSSLESS=NO",
+    )
+    assert gdal.VSIStatL(tmpfilename_jxl + ".aux.xml") is None
+    gtiff_ds = gdal.Open(tmpfilename_gtiff)
+    jpeg_ds = gdal.Open(tmpfilename_jxl)
+    assert (
+        jpeg_ds.GetGeoTransform()[0]
+        == gtiff_ds.GetGeoTransform()[0] + 128 * gtiff_ds.GetGeoTransform()[1]
+    )
+    assert jpeg_ds.ReadRaster() == gtiff_ds.ReadRaster(128, 0, 128, 128)
+
+    gdal.Unlink(tmpfilename_gtiff)
+    gdal.Unlink(tmpfilename_jxl)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
