@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_unit_test.h"
+
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -2800,6 +2802,147 @@ TEST_F(test_gdal, GDALDatasetReportError)
         CE_Warning, CPLE_AppDefined, "bar");
     CPLPopErrorHandler();
     EXPECT_STREQ(CPLGetLastErrorMsg(), "foo: bar");
+}
+
+// Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
+TEST_F(test_gdal, gtiff_ReadCompressedData)
+{
+    if (GDALGetDriverByName("JPEG") == nullptr)
+    {
+        GTEST_SKIP() << "JPEG support missing";
+    }
+
+    GDALDatasetUniquePtr poSrcDS(GDALDataset::FromHandle(
+        GDALDataset::Open((tut::common::data_basedir +
+                           "/../../gcore/data/byte_jpg_unusual_jpegtable.tif")
+                              .c_str())));
+    ASSERT_TRUE(poSrcDS);
+
+    const CPLStringList aosRet(GDALDatasetGetCompressionFormats(
+        GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 20, 20, 1, nullptr));
+    EXPECT_EQ(aosRet.size(), 1);
+    if (aosRet.size() == 1)
+    {
+        EXPECT_STREQ(aosRet[0], "JPEG");
+    }
+
+    {
+        int nBand = 1;
+        EXPECT_EQ(CPLStringList(GDALDatasetGetCompressionFormats(
+                                    GDALDataset::ToHandle(poSrcDS.get()), 0, 0,
+                                    20, 20, 1, &nBand))
+                      .size(),
+                  1);
+    }
+
+    // nBandCout > nBands
+    EXPECT_EQ(CPLStringList(GDALDatasetGetCompressionFormats(
+                                GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 20,
+                                20, 2, nullptr))
+                  .size(),
+              0);
+
+    // Cannot subset just one pixel
+    EXPECT_EQ(CPLStringList(GDALDatasetGetCompressionFormats(
+                                GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 1,
+                                1, 1, nullptr))
+                  .size(),
+              0);
+
+    // Wrong band number
+    {
+        int nBand = 2;
+        EXPECT_EQ(CPLStringList(GDALDatasetGetCompressionFormats(
+                                    GDALDataset::ToHandle(poSrcDS.get()), 0, 0,
+                                    20, 20, 1, &nBand))
+                      .size(),
+                  0);
+    }
+
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20, 20, 1,
+                  nullptr, nullptr, nullptr, nullptr),
+              CE_None);
+
+    size_t nNeededSize;
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20, 20, 1,
+                  nullptr, nullptr, &nNeededSize, nullptr),
+              CE_None);
+    EXPECT_EQ(nNeededSize, 476);
+
+    {
+        const GByte abyCanary[] = {0xDE, 0xAD, 0xBE, 0xEF};
+        std::vector<GByte> abyBuffer(nNeededSize + sizeof(abyCanary));
+        memcpy(&abyBuffer[nNeededSize], abyCanary, sizeof(abyCanary));
+        void *pabyBuffer = abyBuffer.data();
+        void **ppabyBuffer = &pabyBuffer;
+        size_t nProvidedSize = nNeededSize;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                  CE_None);
+        ASSERT_EQ(nProvidedSize, nNeededSize);
+        ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_TRUE(
+            memcmp(&abyBuffer[nNeededSize], abyCanary, sizeof(abyCanary)) == 0);
+        EXPECT_EQ(abyBuffer[0], 0xFF);
+        EXPECT_EQ(abyBuffer[1], 0xD8);
+        EXPECT_EQ(abyBuffer[nNeededSize - 2], 0xFF);
+        EXPECT_EQ(abyBuffer[nNeededSize - 1], 0xD9);
+
+        // Buffer larger than needed: OK
+        nProvidedSize = nNeededSize + 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                  CE_None);
+
+        // Too small buffer
+        nProvidedSize = nNeededSize - 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                  CE_Failure);
+
+        // Missing pointer to size
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
+                  CE_Failure);
+    }
+
+    // Let GDAL allocate buffer
+    {
+        void *pBuffer = nullptr;
+        size_t nGotSize = 0;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
+                      20, 1, nullptr, &pBuffer, &nGotSize, nullptr),
+                  CE_None);
+        EXPECT_EQ(nGotSize, nNeededSize);
+        EXPECT_NE(pBuffer, nullptr);
+        if (pBuffer != nullptr && nGotSize == nNeededSize)
+        {
+            const GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
+            EXPECT_EQ(pabyBuffer[0], 0xFF);
+            EXPECT_EQ(pabyBuffer[1], 0xD8);
+            EXPECT_EQ(pabyBuffer[nNeededSize - 2], 0xFF);
+            EXPECT_EQ(pabyBuffer[nNeededSize - 1], 0xD9);
+        }
+        VSIFree(pBuffer);
+    }
+
+    // Cannot subset just one pixel
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 1, 1, 1,
+                  nullptr, nullptr, nullptr, nullptr),
+              CE_Failure);
+
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "wrong_format", 0, 0,
+                  20, 20, 1, nullptr, nullptr, nullptr, nullptr),
+              CE_Failure);
 }
 
 }  // namespace
