@@ -2823,7 +2823,7 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
     EXPECT_EQ(aosRet.size(), 1);
     if (aosRet.size() == 1)
     {
-        EXPECT_STREQ(aosRet[0], "JPEG");
+        EXPECT_STREQ(aosRet[0], "image/jpeg");
     }
 
     {
@@ -2860,14 +2860,14 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
     }
 
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20, 20, 1,
-                  nullptr, nullptr, nullptr, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 20,
+                  20, 1, nullptr, nullptr, nullptr, nullptr),
               CE_None);
 
     size_t nNeededSize;
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20, 20, 1,
-                  nullptr, nullptr, &nNeededSize, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 20,
+                  20, 1, nullptr, nullptr, &nNeededSize, nullptr),
               CE_None);
     EXPECT_EQ(nNeededSize, 476);
 
@@ -2879,8 +2879,8 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
         void **ppabyBuffer = &pabyBuffer;
         size_t nProvidedSize = nNeededSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
                   CE_None);
         ASSERT_EQ(nProvidedSize, nNeededSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
@@ -2894,21 +2894,21 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
         // Buffer larger than needed: OK
         nProvidedSize = nNeededSize + 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
                   CE_None);
 
         // Too small buffer
         nProvidedSize = nNeededSize - 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
                   CE_Failure);
 
         // Missing pointer to size
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
                   CE_Failure);
     }
 
@@ -2917,8 +2917,8 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
         void *pBuffer = nullptr;
         size_t nGotSize = 0;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 20,
-                      20, 1, nullptr, &pBuffer, &nGotSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, &pBuffer, &nGotSize, nullptr),
                   CE_None);
         EXPECT_EQ(nGotSize, nNeededSize);
         EXPECT_NE(pBuffer, nullptr);
@@ -2935,8 +2935,8 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
 
     // Cannot subset just one pixel
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 1, 1, 1,
-                  nullptr, nullptr, nullptr, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 1,
+                  1, 1, nullptr, nullptr, nullptr, nullptr),
               CE_Failure);
 
     EXPECT_EQ(GDALDatasetReadCompressedData(
@@ -2963,13 +2963,16 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
     EXPECT_EQ(aosRet.size(), 1);
     if (aosRet.size() == 1)
     {
-        EXPECT_STREQ(aosRet[0], "JPEG");
+        EXPECT_STREQ(aosRet[0],
+                     "image/"
+                     "jpeg;frame_type=SOF0_baseline;bit_depth=8;num_components="
+                     "3;subsampling=4:2:0;colorspace=YCbCr");
     }
 
     size_t nUpperBoundSize;
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361, 260,
-                  3, nullptr, nullptr, &nUpperBoundSize, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 361,
+                  260, 3, nullptr, nullptr, &nUpperBoundSize, nullptr),
               CE_None);
     EXPECT_EQ(nUpperBoundSize, 12574);
 
@@ -2979,8 +2982,8 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
-                      260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      361, 260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
         ASSERT_LT(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
@@ -2992,21 +2995,21 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
         // Buffer larger than needed: OK
         nSize = nUpperBoundSize + 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
-                      260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      361, 260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
 
         // Too small buffer
         nSize = nUpperBoundSize - 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
-                      260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      361, 260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_Failure);
 
         // Missing pointer to size
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
-                      260, 3, nullptr, ppabyBuffer, nullptr, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      361, 260, 3, nullptr, ppabyBuffer, nullptr, nullptr),
                   CE_Failure);
     }
 
@@ -3015,8 +3018,8 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
         void *pBuffer = nullptr;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 361,
-                      260, 3, nullptr, &pBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      361, 260, 3, nullptr, &pBuffer, &nSize, nullptr),
                   CE_None);
         EXPECT_GT(nSize, 4);
         EXPECT_LT(nSize, nUpperBoundSize);
@@ -3051,13 +3054,13 @@ TEST_F(test_gdal, jpegxl_ReadCompressedData)
     EXPECT_EQ(aosRet.size(), 1);
     if (aosRet.size() == 1)
     {
-        EXPECT_STREQ(aosRet[0], "JPEGXL");
+        EXPECT_STREQ(aosRet[0], "image/jxl");
     }
 
     size_t nUpperBoundSize;
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20, 20,
-                  1, nullptr, nullptr, &nUpperBoundSize, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0, 20,
+                  20, 1, nullptr, nullptr, &nUpperBoundSize, nullptr),
               CE_None);
     EXPECT_EQ(nUpperBoundSize, 719);
 
@@ -3067,8 +3070,8 @@ TEST_F(test_gdal, jpegxl_ReadCompressedData)
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
         ASSERT_LT(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
@@ -3082,21 +3085,21 @@ TEST_F(test_gdal, jpegxl_ReadCompressedData)
         // Buffer larger than needed: OK
         nSize = nUpperBoundSize + 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
 
         // Too small buffer
         nSize = nUpperBoundSize - 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_Failure);
 
         // Missing pointer to size
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
-                      20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
+                      20, 20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
                   CE_Failure);
     }
 
@@ -3105,8 +3108,8 @@ TEST_F(test_gdal, jpegxl_ReadCompressedData)
         void *pBuffer = nullptr;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
-                      20, 1, nullptr, &pBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
+                      20, 20, 1, nullptr, &pBuffer, &nSize, nullptr),
                   CE_None);
         EXPECT_GT(nSize, 6);
         EXPECT_LT(nSize, nUpperBoundSize);
@@ -3145,14 +3148,14 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
     EXPECT_EQ(aosRet.size(), 2);
     if (aosRet.size() == 2)
     {
-        EXPECT_STREQ(aosRet[0], "JPEGXL");
-        EXPECT_STREQ(aosRet[1], "JPEG");
+        EXPECT_STREQ(aosRet[0], "image/jxl");
+        EXPECT_STREQ(aosRet[1], "image/jpeg");
     }
 
     size_t nUpperBoundSize;
     EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5, 1,
-                  nullptr, nullptr, &nUpperBoundSize, nullptr),
+                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 3,
+                  5, 1, nullptr, nullptr, &nUpperBoundSize, nullptr),
               CE_None);
     EXPECT_EQ(nUpperBoundSize, 235);
 
@@ -3162,8 +3165,8 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
-                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      3, 5, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
         ASSERT_LE(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
@@ -3175,21 +3178,21 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
         // Buffer larger than needed: OK
         nSize = nUpperBoundSize + 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
-                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      3, 5, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_None);
 
         // Too small buffer
         nSize = nUpperBoundSize - 1;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
-                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      3, 5, 1, nullptr, ppabyBuffer, &nSize, nullptr),
                   CE_Failure);
 
         // Missing pointer to size
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
-                      1, nullptr, ppabyBuffer, nullptr, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      3, 5, 1, nullptr, ppabyBuffer, nullptr, nullptr),
                   CE_Failure);
     }
 
@@ -3198,8 +3201,8 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
         void *pBuffer = nullptr;
         size_t nSize = nUpperBoundSize;
         EXPECT_EQ(GDALDatasetReadCompressedData(
-                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
-                      1, nullptr, &pBuffer, &nSize, nullptr),
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      3, 5, 1, nullptr, &pBuffer, &nSize, nullptr),
                   CE_None);
         EXPECT_GT(nSize, 4);
         EXPECT_LE(nSize, nUpperBoundSize);

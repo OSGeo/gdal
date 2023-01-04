@@ -2053,15 +2053,6 @@ bool JPGDataset::ErrorOutOnNonFatalError()
 }
 
 /************************************************************************/
-/*                         HasMultipleScans()                           */
-/************************************************************************/
-
-bool JPGDataset::HasMultipleScans()
-{
-    return jpeg_has_multiple_scans(&sDInfo) != 0;
-}
-
-/************************************************************************/
 /*                          StartDecompress()                           */
 /************************************************************************/
 
@@ -3432,10 +3423,7 @@ CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
     if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        if (HasMultipleScans())
-            aosRet.AddString("JPEG_PROGRESSIVE");
-        else
-            aosRet.AddString("JPEG");
+        aosRet.AddString(GDALGetCompressionFormatForJPEG(m_fpImage).c_str());
     }
     return aosRet;
 }
@@ -3447,13 +3435,16 @@ CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
 CPLErr JPGDatasetCommon::ReadCompressedData(
     const char *pszFormat, int nXOff, int nYOff, int nXSize, int nYSize,
     int nBandCount, const int *panBandList, void **ppBuffer,
-    size_t *pnBufferSize, CSLConstList /*papszOptions*/)
+    size_t *pnBufferSize, CSLConstList /* papszOptions */)
 {
     if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        if ((!HasMultipleScans() && EQUAL(pszFormat, "JPEG")) ||
-            (HasMultipleScans() && EQUAL(pszFormat, "JPEG_PROGRESSIVE")))
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+        if (aosTokens.size() != 1)
+            return CE_Failure;
+
+        if (EQUAL(aosTokens[0], "image/jpeg"))
         {
             const auto nSavedPos = VSIFTellL(m_fpImage);
             VSIFSeekL(m_fpImage, 0, SEEK_END);
@@ -4080,50 +4071,16 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     const char *pszLossLessCopy =
         CSLFetchNameValueDef(papszOptions, "LOSSLESS_COPY", "AUTO");
-#if 0
-    CPLStringList aosFormats = poSrcDS->GetCompressionFormats(0, 0,
-                                                              poSrcDS->GetRasterXSize(),
-                                                              poSrcDS->GetRasterYSize(),
-                                                              nBands,
-                                                              nullptr);
-    if( aosFormats.FindString("JPEG") >= 0 )
-#endif
     if (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy))
     {
         void *pJPEGContent = nullptr;
         size_t nJPEGContent = 0;
-        if ((poSrcDS->ReadCompressedData(
-                 "JPEG", 0, 0, poSrcDS->GetRasterXSize(),
-                 poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
-                 &nJPEGContent, nullptr) == CE_None ||
-             poSrcDS->ReadCompressedData(
-                 "JPEG_PROGRESSIVE", 0, 0, poSrcDS->GetRasterXSize(),
-                 poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
-                 &nJPEGContent, nullptr) == CE_None) &&
-            poSrcDS->GetRasterCount() == 4 &&
-            poSrcDS->GetRasterBand(4)->GetColorInterpretation() ==
-                GCI_AlphaBand)
-        {
-            // 4-band RGBA will unfortunately be interpreted as CMYK in
-            // standalone JPEG
-            CPLString osTmpFilename;
-            osTmpFilename.Printf("/vsimem/_jpeg/%p", pJPEGContent);
-            VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename,
-                                            static_cast<GByte *>(pJPEGContent),
-                                            nJPEGContent, false));
-            GDALOpenInfo oOpenInfo(osTmpFilename.c_str(), GA_ReadOnly);
-            CPLConfigOptionSetter oSetter("GDAL_JPEG_TO_RGB", "NO", false);
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            auto poTmpDS = std::unique_ptr<GDALDataset>(
-                JPGDatasetCommon::Open(&oOpenInfo));
-            if (poTmpDS && poTmpDS->GetRasterCount() == 4)
-            {
-                VSIFree(pJPEGContent);
-                pJPEGContent = nullptr;
-            }
-        }
-
-        if (pJPEGContent)
+        if (poSrcDS->ReadCompressedData(
+                "image/jpeg", 0, 0, poSrcDS->GetRasterXSize(),
+                poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
+                &nJPEGContent, nullptr) == CE_None &&
+            GDALGetCompressionFormatForJPEG(pJPEGContent, nJPEGContent)
+                    .find(";colorspace=RGBA") == std::string::npos)
         {
             CPLDebug("JPEG", "Lossless copy from source dataset");
             std::vector<GByte> abyJPEG;

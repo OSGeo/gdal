@@ -206,7 +206,6 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual int GetDataPrecision() = 0;
     virtual int GetOutColorSpace() = 0;
     virtual int GetJPEGColorSpace() = 0;
-    virtual bool HasMultipleScans() = 0;
 
     bool EXIFInit(VSILFILE *);
     void ReadICCProfile();
@@ -317,7 +316,6 @@ class JPGDataset final : public JPGDatasetCommon
     {
         return sDInfo.jpeg_color_space;
     }
-    virtual bool HasMultipleScans() override;
 
     int nQLevel;
 #if !defined(JPGDataset)

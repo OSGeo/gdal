@@ -9130,10 +9130,24 @@ bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const
  * drivers may also be able to merge several tiles together (not currently
  * implemented though).
  *
- * The returned values may be used as the pszFormat argument of
- * ReadCompressedData(). Several values might be returned. For example,
- * the JPEGXL driver will return "JPEGXL", but also potentially "JPEG" if
- * the JPEGXL codestream includes a JPEG reconstruction box.
+ * Each format string is a pseudo MIME type, whose first part can be passed
+ * as the pszFormat argument of ReadCompressedData(), with additional
+ * parameters specified as key=value with a semi-colon separator.
+ *
+ * The amount and types of optional parameters passed after the MIME type is
+ * format dependent, and driver dependent (some drivers might not be able to
+ * return those extra information without doing a rather costly processing).
+ *
+ * For example, a driver might return "image/jpeg;frame_type=SOF0_baseline;"
+ * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
+ * consequently "image/jpeg" can be passed as the pszFormat argument of
+ * ReadCompressedData(). For JPEG, implementations can use the
+ * GDALGetCompressionFormatForJPEG() helper method to generate a string like
+ * above from a JPEG codestream.
+ *
+ * Several values might be returned. For example,
+ * the JPEGXL driver will return "image/jxl", but also potentially "image/jpeg"
+ * if the JPEGXL codestream includes a JPEG reconstruction box.
  *
  * In the general case this method will return an empty list.
  *
@@ -9180,10 +9194,24 @@ GDALDataset::GetCompressionFormats(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
  * drivers may also be able to merge several tiles together (not currently
  * implemented though).
  *
- * The returned values may be used as the pszFormat argument of
- * ReadCompressedData(). Several values might be returned. For example,
- * the JPEGXL driver will return "JPEGXL", but also potentially "JPEG" if
- * the JPEGXL codestream includes a JPEG reconstruction box.
+ * Each format string is a pseudo MIME type, whose first part can be passed
+ * as the pszFormat argument of ReadCompressedData(), with additional
+ * parameters specified as key=value with a semi-colon separator.
+ *
+ * The amount and types of optional parameters passed after the MIME type is
+ * format dependent, and driver dependent (some drivers might not be able to
+ * return those extra information without doing a rather costly processing).
+ *
+ * For example, a driver might return "image/jpeg;frame_type=SOF0_baseline;"
+ * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
+ * consequently "image/jpeg" can be passed as the pszFormat argument of
+ * ReadCompressedData(). For JPEG, implementations can use the
+ * GDALGetCompressionFormatForJPEG() helper method to generate a string like
+ * above from a JPEG codestream.
+ *
+ * Several values might be returned. For example,
+ * the JPEGXL driver will return "image/jxl", but also potentially "image/jpeg"
+ * if the JPEGXL codestream includes a JPEG reconstruction box.
  *
  * In the general case this method will return an empty list.
  *
@@ -9245,8 +9273,13 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  *
  * This is the same as C function GDALDatasetReadCompressedData().
  *
- * @param pszFormat Requested compression format (e.g. "JPEG", "WEBP", "JPEGXL").
- * One of the values returned by GetCompressionFormats()
+ * @param pszFormat Requested compression format (e.g. "image/jpeg",
+ * "image/webp", "image/jxl"). This is the MIME type of one of the values
+ * returned by GetCompressionFormats(). The format string is designed to
+ * potentially include at a later point key=value optional parameters separated
+ * by a semi-colon character. At time of writing, none are implemented.
+ * ReadCompressedData() implementations should verify optional parameters and
+ * return CE_Failure if they cannot support one of them.
  *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -9323,8 +9356,13 @@ CPLErr GDALDataset::ReadCompressedData(
  *
  * @param hDS Dataset handle.
  *
- * @param pszFormat Requested compression format (e.g. "JPEG", "WEBP", "JPEGXL").
- * One of the values returned by GetCompressionFormats()
+ * @param pszFormat Requested compression format (e.g. "image/jpeg",
+ * "image/webp", "image/jxl"). This is the MIME type of one of the values
+ * returned by GetCompressionFormats(). The format string is designed to
+ * potentially include at a later point key=value optional parameters separated
+ * by a semi-colon character. At time of writing, none are implemented.
+ * ReadCompressedData() implementations should verify optional parameters and
+ * return CE_Failure if they cannot support one of them.
  *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.

@@ -1022,10 +1022,10 @@ CPLStringList JPEGXLDataset::GetCompressionFormats(int nXOff, int nYOff,
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        aosRet.AddString("JPEGXL");
+        aosRet.AddString("image/jxl");
 #ifdef HAVE_JXL_BOX_API
         if (m_bHasJPEGReconstructionData)
-            aosRet.AddString("JPEG");
+            aosRet.AddString("image/jpeg");
 #endif
     }
     return aosRet;
@@ -1044,7 +1044,11 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        if (EQUAL(pszFormat, "JPEGXL"))
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+        if (aosTokens.size() != 1)
+            return CE_Failure;
+
+        if (EQUAL(aosTokens[0], "image/jxl"))
         {
             VSIFSeekL(m_fp, 0, SEEK_END);
             const auto nFileSize = VSIFTellL(m_fp);
@@ -1114,7 +1118,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         }
 
 #ifdef HAVE_JXL_BOX_API
-        if (m_bHasJPEGReconstructionData && EQUAL(pszFormat, "JPEG"))
+        if (m_bHasJPEGReconstructionData && EQUAL(aosTokens[0], "image/jpeg"))
         {
             auto decoder = JxlDecoderMake(nullptr);
             if (!decoder)
@@ -1823,7 +1827,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         void *pJPEGXLContent = nullptr;
         size_t nJPEGXLContent = 0;
         if (poSrcDS->ReadCompressedData(
-                "JPEGXL", 0, 0, poSrcDS->GetRasterXSize(),
+                "image/jxl", 0, 0, poSrcDS->GetRasterXSize(),
                 poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
                 &pJPEGXLContent, &nJPEGXLContent, nullptr) == CE_None)
         {
@@ -2322,27 +2326,72 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     }
 
     std::vector<GByte> abyJPEG;
-    const char *pszSourceColorSpace =
-        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
     void *pJPEGContent = nullptr;
     size_t nJPEGContent = 0;
     // If the source dataset is a JPEG file or compatible of it, try to
     // losslessly add it
-    // lossless transcoding from CMYK not supported
-    if (!(pszSourceColorSpace && EQUAL(pszSourceColorSpace,
-                                       "CMYK")) &&
-        eDT == GDT_Byte &&  // libjxl doesn't support 12-bit JPEG
-        // lossless transcoding from 4-band contig JPEG RGBA not supported
-        poSrcDS->GetRasterCount() <= 3 &&
-        (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
-        (poSrcDS->ReadCompressedData(
-             "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-             poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
-             nullptr) == CE_None ||
-         poSrcDS->ReadCompressedData(
-             "JPEG_PROGRESSIVE", 0, 0, poSrcDS->GetRasterXSize(),
-             poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
-             &pJPEGContent, &nJPEGContent, nullptr) == CE_None))
+    if ((EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
+        poSrcDS->ReadCompressedData(
+            "image/jpeg", 0, 0, poSrcDS->GetRasterXSize(),
+            poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
+            &pJPEGContent, &nJPEGContent, nullptr) == CE_None)
+    {
+        const CPLStringList aosFormats(poSrcDS->GetCompressionFormats(
+            0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(), nullptr));
+        std::string osColorspace;
+        for (int i = 0; i < aosFormats.size(); ++i)
+        {
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(aosFormats[i], ";", 0));
+            if (EQUAL(aosTokens[0], "image/jpeg"))
+            {
+                osColorspace = aosTokens.FetchNameValueDef("colorspace", "");
+                break;
+            }
+        }
+
+        const std::string osJPEGFormat =
+            GDALGetCompressionFormatForJPEG(pJPEGContent, nJPEGContent);
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(osJPEGFormat.c_str(), ";", 0));
+        const char *pszBitDepth = aosTokens.FetchNameValueDef("bit_depth", "");
+        if (pJPEGContent && !EQUAL(pszBitDepth, "8"))
+        {
+            CPLDebug(
+                "JPEGXL",
+                "Unsupported bit_depth=%s for lossless transcoding from JPEG",
+                pszBitDepth);
+            VSIFree(pJPEGContent);
+            pJPEGContent = nullptr;
+        }
+        if (osColorspace.empty())
+            osColorspace = aosTokens.FetchNameValueDef("colorspace", "");
+        if (pJPEGContent && !EQUAL(osColorspace.c_str(), "unknown") &&
+            !EQUAL(osColorspace.c_str(), "RGB") &&
+            !EQUAL(osColorspace.c_str(), "YCbCr"))
+        {
+            CPLDebug(
+                "JPEGXL",
+                "Unsupported colorspace=%s for lossless transcoding from JPEG",
+                osColorspace.c_str());
+            VSIFree(pJPEGContent);
+            pJPEGContent = nullptr;
+        }
+        const char *pszSOF = aosTokens.FetchNameValueDef("frame_type", "");
+        if (pJPEGContent && !EQUAL(pszSOF, "SOF0_baseline") &&
+            !EQUAL(pszSOF, "SOF1_extended_sequential") &&
+            !EQUAL(pszSOF, "SOF2_progressive_huffman"))
+        {
+            CPLDebug(
+                "JPEGXL",
+                "Unsupported frame_type=%s for lossless transcoding from JPEG",
+                pszSOF);
+            VSIFree(pJPEGContent);
+            pJPEGContent = nullptr;
+        }
+    }
+    if (pJPEGContent)
     {
         try
         {

@@ -2399,20 +2399,27 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
             nSize <
                 static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
         {
-            // We don't want to handle CMYK JPEG for now
-            if (m_nCompression == COMPRESSION_JPEG &&
-                (m_nPlanarConfig == PLANARCONFIG_SEPARATE ||
-                 m_nPhotometric != PHOTOMETRIC_SEPARATED))
+            if (m_nCompression == COMPRESSION_JPEG)
             {
-                aosList.AddString("JPEG");
+                if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands == 4 &&
+                    m_nPhotometric == PHOTOMETRIC_RGB &&
+                    GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
+                {
+                    // as a hint for the JPEG and JPEGXL drivers to not use it!
+                    aosList.AddString("image/jpeg;colorspace=RGBA");
+                }
+                else
+                {
+                    aosList.AddString("image/jpeg");
+                }
             }
             else if (m_nCompression == COMPRESSION_WEBP)
             {
-                aosList.AddString("WEBP");
+                aosList.AddString("image/webp");
             }
             else if (m_nCompression == COMPRESSION_JXL)
             {
-                aosList.AddString("JPEGXL");
+                aosList.AddString("image/jxl");
             }
         }
         return aosList;
@@ -2437,12 +2444,19 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
          (IsAllBands(nBandCount, panBandList) &&
           m_nPlanarConfig == PLANARCONFIG_CONTIG)))
     {
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+        if (aosTokens.size() != 1)
+            return CE_Failure;
+
         // We don't want to handle CMYK JPEG for now
-        if ((m_nCompression == COMPRESSION_JPEG && EQUAL(pszFormat, "JPEG") &&
+        if ((m_nCompression == COMPRESSION_JPEG &&
+             EQUAL(aosTokens[0], "image/jpeg") &&
              (m_nPlanarConfig == PLANARCONFIG_SEPARATE ||
               m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
-            (m_nCompression == COMPRESSION_WEBP && EQUAL(pszFormat, "WEBP")) ||
-            (m_nCompression == COMPRESSION_JXL && EQUAL(pszFormat, "JPEGXL")))
+            (m_nCompression == COMPRESSION_WEBP &&
+             EQUAL(aosTokens[0], "image/webp")) ||
+            (m_nCompression == COMPRESSION_JXL &&
+             EQUAL(aosTokens[0], "image/jxl")))
         {
             int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
             int nBlockId = (nXOff / m_nBlockXSize) +
