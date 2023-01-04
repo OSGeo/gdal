@@ -3467,18 +3467,55 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
             // Create the message.
             (*cinfo->err->format_message)(cinfo, buffer);
 
-            if (CPLTestBool(
-                    CPLGetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", "NO")))
+            const char *pszVal =
+                CPLGetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", nullptr);
+            if (strstr(buffer, "Premature end of JPEG file"))
             {
-                psUserData->bNonFatalErrorEncountered = true;
-                CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
+                // Consider this an error by default
+                if (pszVal == nullptr || CPLTestBool(pszVal))
+                {
+                    psUserData->bNonFatalErrorEncountered = true;
+                    if (pszVal == nullptr)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "libjpeg: %s (this error can be turned as a "
+                                 "warning "
+                                 "by setting GDAL_ERROR_ON_LIBJPEG_WARNING to "
+                                 "FALSE)",
+                                 buffer);
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s",
+                                 buffer);
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "libjpeg: %s",
+                             buffer);
+                }
+            }
+            else if (pszVal == nullptr || CPLTestBool(pszVal))
+            {
+                if (pszVal == nullptr)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "libjpeg: %s (this warning can be turned as an error "
+                        "by setting GDAL_ERROR_ON_LIBJPEG_WARNING to TRUE)",
+                        buffer);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "libjpeg: %s",
+                             buffer);
+                }
             }
             else
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "libjpeg: %s (this warning can be turned as an error "
-                         "by setting GDAL_ERROR_ON_LIBJPEG_WARNING to TRUE)",
-                         buffer);
+                psUserData->bNonFatalErrorEncountered = true;
+                CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
             }
         }
 
