@@ -724,3 +724,36 @@ def test_vsizip_byte_zip64_local_header_zeroed():
         "/vsizip/data/byte_zip64_local_header_zeroed.zip/byte.tif"
     ).size
     assert size == 736
+
+
+###############################################################################
+def test_vsizip_deflate64():
+
+    filename = "/vsizip/data/deflate64.zip/100k_lines.txt"
+    size = gdal.VSIStatL(filename).size
+    assert size == 2188890
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    try:
+        data = gdal.VSIFReadL(1, size, f)
+        assert len(data) == size
+        assert len(gdal.VSIFReadL(1, 1, f)) == 0
+        assert gdal.VSIFSeekL(f, 0, 0) == 0
+        data2 = gdal.VSIFReadL(1, size, f)
+        len_data2 = len(data2)
+        assert len_data2 == size
+        assert data2 == data
+        for (pos, nread) in [
+            (10000, 1000),
+            (1, 1),
+            (size - 1, 1),
+            (size // 2, size // 2 + 10),
+        ]:
+            assert gdal.VSIFSeekL(f, pos, 0) == 0
+            data2 = gdal.VSIFReadL(1, nread, f)
+            len_data2 = len(data2)
+            assert len_data2 == min(nread, size - pos), (pos, nread)
+            assert data2 == data[pos : pos + len_data2], (pos, nread)
+    finally:
+        gdal.VSIFCloseL(f)

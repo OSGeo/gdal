@@ -1,0 +1,10 @@
+Modified copy of zlib from https://github.com/brianhelba/zipfile-deflate64
+(at https://github.com/cielavenir/zlib_infback9_resumable/tree/beaec8dc39f5caa86e808611b10f2ea0ab8720c2)
+
+zipfile-deflate64 modified copy has logic to save & restore
+state at beginning and end of inflateBack9(), to allow incremental decoding.
+
+GDAL's changes are regarding the "left" and "put" variables
+
+GDAL also adds a inflateBack9Copy() to allow snapshoting of decompression
+state.

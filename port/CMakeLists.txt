@@ -182,6 +182,10 @@ target_sources(cpl PRIVATE cpl_vsil_gzip.cpp cpl_minizip_ioapi.cpp cpl_minizip_u
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(cpl libz)
 endif ()
+if (ENABLE_DEFLATE64)
+  gdal_add_vendored_lib(cpl infback9)
+  target_compile_definitions(cpl PRIVATE -DENABLE_DEFLATE64)
+endif ()
 
 # Now external libraries
 if (NOT GDAL_USE_JSONC_INTERNAL)

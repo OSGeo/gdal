@@ -9,7 +9,6 @@ fi
 
 # determine changed files
 FILES=$(git diff --diff-filter=AM --name-only HEAD~1| tr '\n' ' ' | sort -u)
-
 if [ -z "$FILES" ]; then
   echo "nothing was modified"
   exit 0
@@ -26,6 +25,11 @@ for f in $FILES; do
 
 	# echo "Checking $f"
 	case "$f" in
+
+	*frmts/zlib/contrib/infback9/*)
+	  continue
+	  ;;
+
 	*.cpp|*.c|*.h|*.cxx|*.hxx|*.c++|*.h++|*.cc|*.hh|*.C|*.H)
 		;;
 
