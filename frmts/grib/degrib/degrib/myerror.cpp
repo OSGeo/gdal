@@ -40,7 +40,6 @@
 #endif
 
 
-
 /*****************************************************************************
  * AllocSprintf() -- Arthur Taylor / MDL (Review 12/2002)
  *
@@ -178,7 +177,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                switch (flag) {
                   case 'l':
                   case 'L':
-                     sprintf (bufpart, format, va_arg (ap, sInt4));
+                     snprintf (bufpart, sizeof(bufpart), format, va_arg (ap, sInt4));
                      break;
                      /*
                       * gcc warning for 'h': "..." promotes short int to
@@ -188,11 +187,11 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                       */
 /*
               case 'h':
-                sprintf (bufpart, format, va_arg(ap, short int));
+                snprintf (bufpart, sizeof(bufpart), format, va_arg(ap, short int));
                 break;
 */
                   default:
-                     sprintf (bufpart, format, va_arg (ap, int));
+                     snprintf (bufpart, sizeof(bufpart), format, va_arg (ap, int));
                }
                slen = strlen (bufpart);
                lenBuff += slen;
@@ -201,7 +200,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                ipos = lenBuff - 1;
                break;
             case 'f':
-               sprintf (bufpart, format, va_arg (ap, double));
+               snprintf (bufpart, sizeof(bufpart), format, va_arg (ap, double));
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
@@ -209,7 +208,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                ipos = lenBuff - 1;
                break;
             case 'e':
-               sprintf (bufpart, format, va_arg (ap, double));
+               snprintf (bufpart, sizeof(bufpart), format, va_arg (ap, double));
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
@@ -217,7 +216,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                ipos = lenBuff - 1;
                break;
             case 'g':
-               sprintf (bufpart, format, va_arg (ap, double));
+               snprintf (bufpart, sizeof(bufpart), format, va_arg (ap, double));
                slen = strlen (bufpart);
                lenBuff += slen;
                buffer = (char *) realloc ((void *) buffer, lenBuff);
