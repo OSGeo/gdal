@@ -2628,9 +2628,27 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         if (JxlEncoderAddJPEGFrame(opts, abyJPEG.data(), abyJPEG.size()) !=
             JXL_ENC_SUCCESS)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "JxlEncoderAddJPEGFrame() failed");
-            return nullptr;
+            if (EQUAL(pszLossLessCopy, "AUTO"))
+            {
+                // could happen with a file with arithmetic encoding for example
+                CPLDebug("JPEGXL",
+                         "JxlEncoderAddJPEGFrame() framed. "
+                         "Perhaps unsupported JPEG formulation for libjxl. "
+                         "Retrying with normal code path");
+                CPLStringList aosOptions(papszOptions);
+                aosOptions.SetNameValue("LOSSLESS_COPY", "NO");
+                CPLConfigOptionSetter oSetter("GDAL_ERROR_ON_LIBJPEG_WARNING",
+                                              "YES", true);
+                return CreateCopy(pszFilename, poSrcDS, FALSE,
+                                  aosOptions.List(), pfnProgress,
+                                  pProgressData);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "JxlEncoderAddJPEGFrame() failed");
+                return nullptr;
+            }
         }
 
 #ifdef HAVE_JxlEncoderInitExtraChannelInfo
