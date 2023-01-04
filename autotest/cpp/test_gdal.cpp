@@ -2865,11 +2865,21 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
               CE_None);
 
     size_t nNeededSize;
-    EXPECT_EQ(GDALDatasetReadCompressedData(
-                  GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0, 20,
-                  20, 1, nullptr, nullptr, &nNeededSize, nullptr),
-              CE_None);
-    EXPECT_EQ(nNeededSize, 476);
+    {
+        char *pszDetailedFormat = nullptr;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      20, 20, 1, nullptr, nullptr, &nNeededSize,
+                      &pszDetailedFormat),
+                  CE_None);
+        EXPECT_EQ(nNeededSize, 476);
+        EXPECT_TRUE(pszDetailedFormat != nullptr);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat, "image/jpeg");
+            VSIFree(pszDetailedFormat);
+        }
+    }
 
     {
         const GByte abyCanary[] = {0xDE, 0xAD, 0xBE, 0xEF};
@@ -2878,12 +2888,23 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
         void *pabyBuffer = abyBuffer.data();
         void **ppabyBuffer = &pabyBuffer;
         size_t nProvidedSize = nNeededSize;
+        char *pszDetailedFormat = nullptr;
         EXPECT_EQ(GDALDatasetReadCompressedData(
                       GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
-                      20, 20, 1, nullptr, ppabyBuffer, &nProvidedSize, nullptr),
+                      20, 20, 1, nullptr, ppabyBuffer, &nProvidedSize,
+                      &pszDetailedFormat),
                   CE_None);
         ASSERT_EQ(nProvidedSize, nNeededSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_TRUE(pszDetailedFormat != nullptr);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat,
+                         "image/"
+                         "jpeg;frame_type=SOF0_baseline;bit_depth=8;num_"
+                         "components=1;colorspace=unknown");
+            VSIFree(pszDetailedFormat);
+        }
         EXPECT_TRUE(
             memcmp(&abyBuffer[nNeededSize], abyCanary, sizeof(abyCanary)) == 0);
         EXPECT_EQ(abyBuffer[0], 0xFF);
@@ -2946,6 +2967,50 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
 }
 
 // Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
+TEST_F(test_gdal, gtiff_ReadCompressedData_jpeg_rgba)
+{
+    if (GDALGetDriverByName("JPEG") == nullptr)
+    {
+        GTEST_SKIP() << "JPEG support missing";
+    }
+
+    GDALDatasetUniquePtr poSrcDS(GDALDataset::FromHandle(
+        GDALDataset::Open((tut::common::data_basedir +
+                           "/../../gcore/data/stefan_full_rgba_jpeg_contig.tif")
+                              .c_str())));
+    ASSERT_TRUE(poSrcDS);
+
+    const CPLStringList aosRet(GDALDatasetGetCompressionFormats(
+        GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 162, 16, 4, nullptr));
+    EXPECT_EQ(aosRet.size(), 1);
+    if (aosRet.size() == 1)
+    {
+        EXPECT_STREQ(aosRet[0], "image/jpeg;colorspace=RGBA");
+    }
+
+    // Let GDAL allocate buffer
+    {
+        void *pBuffer = nullptr;
+        size_t nGotSize = 0;
+        char *pszDetailedFormat = nullptr;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
+                      162, 16, 4, nullptr, &pBuffer, &nGotSize,
+                      &pszDetailedFormat),
+                  CE_None);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat,
+                         "image/"
+                         "jpeg;frame_type=SOF0_baseline;bit_depth=8;num_"
+                         "components=4;colorspace=RGBA");
+            VSIFree(pszDetailedFormat);
+        }
+        VSIFree(pBuffer);
+    }
+}
+
+// Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
 TEST_F(test_gdal, jpeg_ReadCompressedData)
 {
     if (GDALGetDriverByName("JPEG") == nullptr)
@@ -2981,12 +3046,23 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
         void *pabyBuffer = abyBuffer.data();
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
+        char *pszDetailedFormat = nullptr;
         EXPECT_EQ(GDALDatasetReadCompressedData(
                       GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
-                      361, 260, 3, nullptr, ppabyBuffer, &nSize, nullptr),
+                      361, 260, 3, nullptr, ppabyBuffer, &nSize,
+                      &pszDetailedFormat),
                   CE_None);
         ASSERT_LT(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_TRUE(pszDetailedFormat != nullptr);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat,
+                         "image/"
+                         "jpeg;frame_type=SOF0_baseline;bit_depth=8;num_"
+                         "components=3;subsampling=4:2:0;colorspace=YCbCr");
+            VSIFree(pszDetailedFormat);
+        }
         EXPECT_EQ(abyBuffer[0], 0xFF);
         EXPECT_EQ(abyBuffer[1], 0xD8);
         EXPECT_EQ(abyBuffer[nSize - 2], 0xFF);
@@ -3069,12 +3145,20 @@ TEST_F(test_gdal, jpegxl_ReadCompressedData)
         void *pabyBuffer = abyBuffer.data();
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
+        char *pszDetailedFormat = nullptr;
         EXPECT_EQ(GDALDatasetReadCompressedData(
                       GDALDataset::ToHandle(poSrcDS.get()), "image/jxl", 0, 0,
-                      20, 20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      20, 20, 1, nullptr, ppabyBuffer, &nSize,
+                      &pszDetailedFormat),
                   CE_None);
         ASSERT_LT(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_TRUE(pszDetailedFormat != nullptr);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat, "image/jxl");
+            VSIFree(pszDetailedFormat);
+        }
         EXPECT_EQ(abyBuffer[0], 0x00);
         EXPECT_EQ(abyBuffer[1], 0x00);
         EXPECT_EQ(abyBuffer[2], 0x00);
@@ -3164,12 +3248,23 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
         void *pabyBuffer = abyBuffer.data();
         void **ppabyBuffer = &pabyBuffer;
         size_t nSize = nUpperBoundSize;
+        char *pszDetailedFormat = nullptr;
         EXPECT_EQ(GDALDatasetReadCompressedData(
                       GDALDataset::ToHandle(poSrcDS.get()), "image/jpeg", 0, 0,
-                      3, 5, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                      3, 5, 1, nullptr, ppabyBuffer, &nSize,
+                      &pszDetailedFormat),
                   CE_None);
         ASSERT_LE(nSize, nUpperBoundSize);
         ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_TRUE(pszDetailedFormat != nullptr);
+        if (pszDetailedFormat)
+        {
+            ASSERT_STREQ(pszDetailedFormat,
+                         "image/"
+                         "jpeg;frame_type=SOF0_baseline;bit_depth=8;num_"
+                         "components=1;colorspace=unknown");
+            VSIFree(pszDetailedFormat);
+        }
         EXPECT_EQ(abyBuffer[0], 0xFF);
         EXPECT_EQ(abyBuffer[1], 0xD8);
         EXPECT_EQ(abyBuffer[nSize - 2], 0xFF);

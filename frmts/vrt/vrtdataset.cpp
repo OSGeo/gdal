@@ -2296,7 +2296,7 @@ CPLErr VRTDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                       int nYOff, int nXSize, int nYSize,
                                       int nBandCount, const int *panBandList,
                                       void **ppBuffer, size_t *pnBufferSize,
-                                      CSLConstList papszOptions)
+                                      char **ppszDetailedFormat)
 {
     GDALDataset *poSrcDataset;
     int nSrcXOff;
@@ -2306,7 +2306,7 @@ CPLErr VRTDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         return CE_Failure;
     return poSrcDataset->ReadCompressedData(
         pszFormat, nSrcXOff, nSrcYOff, nXSize, nYSize, nBandCount, panBandList,
-        ppBuffer, pnBufferSize, papszOptions);
+        ppBuffer, pnBufferSize, ppszDetailedFormat);
 }
 
 /*! @endcond */

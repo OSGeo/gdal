@@ -711,7 +711,7 @@ class GTiffDataset final : public GDALPamDataset
                                       int nYOff, int nXSize, int nYSize,
                                       int nBandCount, const int *panBandList,
                                       void **ppBuffer, size_t *pnBufferSize,
-                                      CSLConstList papszOptions) override;
+                                      char **ppszDetailedFormat) override;
 
     virtual char **GetFileList() override;
 
@@ -2435,7 +2435,7 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                         int nYOff, int nXSize, int nYSize,
                                         int nBandCount, const int *panBandList,
                                         void **ppBuffer, size_t *pnBufferSize,
-                                        CPL_UNUSED CSLConstList papszOptions)
+                                        char **ppszDetailedFormat)
 {
     if (m_nCompression != COMPRESSION_NONE &&
         IsWholeBlock(nXOff, nYOff, nXSize, nYSize) &&
@@ -2458,6 +2458,8 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
             (m_nCompression == COMPRESSION_JXL &&
              EQUAL(aosTokens[0], "image/jxl")))
         {
+            std::string osDetailedFormat = aosTokens[0];
+
             int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
             int nBlockId = (nXOff / m_nBlockXSize) +
                            (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
@@ -2540,7 +2542,34 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                 static_cast<size_t>(nSize) - 2);
                         memcpy(pabyBuffer + 2, pJPEGTable, nJPEGTableSize);
                     }
+
+                    if (m_nCompression == COMPRESSION_JPEG)
+                    {
+                        osDetailedFormat = GDALGetCompressionFormatForJPEG(
+                            *ppBuffer, nSizeSize);
+                        const CPLStringList aosTokens2(CSLTokenizeString2(
+                            osDetailedFormat.c_str(), ";", 0));
+                        if (m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+                            nBands == 4 && m_nPhotometric == PHOTOMETRIC_RGB &&
+                            GetRasterBand(4)->GetColorInterpretation() ==
+                                GCI_AlphaBand)
+                        {
+                            osDetailedFormat = aosTokens2[0];
+                            for (int i = 1; i < aosTokens2.size(); ++i)
+                            {
+                                if (!STARTS_WITH_CI(aosTokens2[i],
+                                                    "colorspace="))
+                                {
+                                    osDetailedFormat += ';';
+                                    osDetailedFormat += aosTokens2[i];
+                                }
+                            }
+                            osDetailedFormat += ";colorspace=RGBA";
+                        }
+                    }
                 }
+                if (ppszDetailedFormat)
+                    *ppszDetailedFormat = VSIStrdup(osDetailedFormat.c_str());
                 if (pnBufferSize)
                     *pnBufferSize = nSizeSize;
                 return CE_None;

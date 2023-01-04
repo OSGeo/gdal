@@ -3435,7 +3435,7 @@ CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
 CPLErr JPGDatasetCommon::ReadCompressedData(
     const char *pszFormat, int nXOff, int nYOff, int nXSize, int nYSize,
     int nBandCount, const int *panBandList, void **ppBuffer,
-    size_t *pnBufferSize, CSLConstList /* papszOptions */)
+    size_t *pnBufferSize, char **ppszDetailedFormat)
 {
     if (m_fpImage && nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
@@ -3446,6 +3446,10 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
 
         if (EQUAL(aosTokens[0], "image/jpeg"))
         {
+            if (ppszDetailedFormat)
+                *ppszDetailedFormat = VSIStrdup(
+                    GDALGetCompressionFormatForJPEG(m_fpImage).c_str());
+
             const auto nSavedPos = VSIFTellL(m_fpImage);
             VSIFSeekL(m_fpImage, 0, SEEK_END);
             auto nFileSize = VSIFTellL(m_fpImage);

@@ -292,7 +292,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                                       int nYOff, int nXSize, int nYSize,
                                       int nBandCount, const int *panBandList,
                                       void **ppBuffer, size_t *pnBufferSize,
-                                      CSLConstList papszOptions) override;
+                                      char **ppszDetailedFormat) override;
 
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize, GDALDataType eDT,

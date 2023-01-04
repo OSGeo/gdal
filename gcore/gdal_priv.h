@@ -614,7 +614,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                       int nYOff, int nXSize, int nYSize,
                                       int nBands, const int *panBandList,
                                       void **ppBuffer, size_t *pnBufferSize,
-                                      CSLConstList papszOptions);
+                                      char **ppszDetailedFormat);
 
     int Reference();
     int Dereference();

@@ -1094,7 +1094,7 @@ GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
 CPLErr CPL_DLL GDALDatasetReadCompressedData(
     GDALDatasetH hDS, const char *pszFormat, int nXOff, int nYOff, int nXSize,
     int nYSize, int nBandCount, const int *panBandList, void **ppBuffer,
-    size_t *pnBufferSize, CSLConstList papszOptions);
+    size_t *pnBufferSize, char **ppszDetailedFormat);
 
 const char CPL_DLL *CPL_STDCALL GDALGetProjectionRef(GDALDatasetH);
 OGRSpatialReferenceH CPL_DLL GDALGetSpatialRef(GDALDatasetH);

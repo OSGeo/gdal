@@ -9316,7 +9316,15 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  * method is successful, *pnBufferSize will be updated with the actual size
  * used.
  *
- * @param papszOptions Implementation specific options, or nullptr.
+ * @param ppszDetailedFormat Pointer to an output string, or nullptr.
+ * If ppszDetailedFormat is not nullptr, then, on success, the method will
+ * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
+ * *ppszDetailedFormat might contain strings like
+ * "image/jpeg;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
+ * The string will contain at least as much information as what
+ * GetCompressionFormats() returns, and potentially more when
+ * ppBuffer != nullptr.
  *
  * @return CE_None in case of success, CE_Failure otherwise.
  *
@@ -9327,7 +9335,7 @@ CPLErr GDALDataset::ReadCompressedData(
     CPL_UNUSED int nYOff, CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
     CPL_UNUSED int nBandCount, CPL_UNUSED const int *panBandList,
     CPL_UNUSED void **ppBuffer, CPL_UNUSED size_t *pnBufferSize,
-    CPL_UNUSED CSLConstList papszOptions)
+    CPL_UNUSED char **ppszDetailedFormat)
 {
     return CE_Failure;
 }
@@ -9399,7 +9407,15 @@ CPLErr GDALDataset::ReadCompressedData(
  * method is successful, *pnBufferSize will be updated with the actual size
  * used.
  *
- * @param papszOptions Implementation specific options, or nullptr.
+ * @param ppszDetailedFormat Pointer to an output string, or nullptr.
+ * If ppszDetailedFormat is not nullptr, then, on success, the method will
+ * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
+ * *ppszDetailedFormat might contain strings like
+ * "image/jpeg;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
+ * The string will contain at least as much information as what
+ * GetCompressionFormats() returns, and potentially more when
+ * ppBuffer != nullptr.
  *
  * @return CE_None in case of success, CE_Failure otherwise.
  *
@@ -9410,10 +9426,10 @@ CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
                                      int nYSize, int nBandCount,
                                      const int *panBandList, void **ppBuffer,
                                      size_t *pnBufferSize,
-                                     CSLConstList papszOptions)
+                                     char **ppszDetailedFormat)
 {
     VALIDATE_POINTER1(hDS, __func__, CE_Failure);
     return GDALDataset::FromHandle(hDS)->ReadCompressedData(
         pszFormat, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandList,
-        ppBuffer, pnBufferSize, papszOptions);
+        ppBuffer, pnBufferSize, ppszDetailedFormat);
 }

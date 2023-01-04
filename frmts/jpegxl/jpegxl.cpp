@@ -103,7 +103,7 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
                               int nXSize, int nYSize, int nBandCount,
                               const int *panBandList, void **ppBuffer,
                               size_t *pnBufferSize,
-                              CSLConstList papszOptions) override;
+                              char **ppszDetailedFormat) override;
 
     const std::vector<GByte> &GetDecodedImage();
 
@@ -1039,7 +1039,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                          int nYOff, int nXSize, int nYSize,
                                          int nBandCount, const int *panBandList,
                                          void **ppBuffer, size_t *pnBufferSize,
-                                         CPL_UNUSED CSLConstList papszOptions)
+                                         char **ppszDetailedFormat)
 {
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
@@ -1050,6 +1050,8 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
         if (EQUAL(aosTokens[0], "image/jxl"))
         {
+            if (ppszDetailedFormat)
+                *ppszDetailedFormat = VSIStrdup("image/jxl");
             VSIFSeekL(m_fp, 0, SEEK_END);
             const auto nFileSize = VSIFTellL(m_fp);
             if (nFileSize > std::numeric_limits<size_t>::max())
@@ -1249,23 +1251,6 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                         {
                             break;
                         }
-                        if (jpeg_bytes[nChunkLoc + 0] == 0xFF &&
-                            jpeg_bytes[nChunkLoc + 1] == 0xC2)
-                        {
-                            // Start of progressive JPEG
-                            CPLDebug("JPEGXL", "Progressive JPEG detected");
-                            // Ideally we'd want to advertize JPEG_PROGRESSIVE
-                            // as format in GetCompressionFormats() but we can't
-                            // easily obtain that information without
-                            // transcoding first
-                            if (!CPLTestBool(CSLFetchNameValueDef(
-                                    papszOptions, "ALLOW_PROGRESSIVE_JPEG",
-                                    "YES")))
-                            {
-                                return CE_Failure;
-                            }
-                            break;
-                        }
                         if (jpeg_bytes[nChunkLoc + 0] != 0xFF)
                             break;
                         const int nChunkLength =
@@ -1307,6 +1292,14 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                         nChunkLoc += 2 + nChunkLength;
                     }
 
+                    if (ppszDetailedFormat)
+                    {
+                        *ppszDetailedFormat =
+                            VSIStrdup(GDALGetCompressionFormatForJPEG(
+                                          jpeg_bytes.data(), jpeg_bytes.size())
+                                          .c_str());
+                    }
+
                     const auto nSize = jpeg_bytes.size();
                     if (ppBuffer)
                     {
@@ -1327,6 +1320,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                     }
                     if (pnBufferSize)
                         *pnBufferSize = nSize;
+
                     return CE_None;
                 }
             }
@@ -2328,33 +2322,19 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     std::vector<GByte> abyJPEG;
     void *pJPEGContent = nullptr;
     size_t nJPEGContent = 0;
+    char *pszDetailedFormat = nullptr;
     // If the source dataset is a JPEG file or compatible of it, try to
     // losslessly add it
     if ((EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
         poSrcDS->ReadCompressedData(
             "image/jpeg", 0, 0, poSrcDS->GetRasterXSize(),
             poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
-            &pJPEGContent, &nJPEGContent, nullptr) == CE_None)
+            &pJPEGContent, &nJPEGContent, &pszDetailedFormat) == CE_None)
     {
-        const CPLStringList aosFormats(poSrcDS->GetCompressionFormats(
-            0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
-            poSrcDS->GetRasterCount(), nullptr));
-        std::string osColorspace;
-        for (int i = 0; i < aosFormats.size(); ++i)
-        {
-            const CPLStringList aosTokens(
-                CSLTokenizeString2(aosFormats[i], ";", 0));
-            if (EQUAL(aosTokens[0], "image/jpeg"))
-            {
-                osColorspace = aosTokens.FetchNameValueDef("colorspace", "");
-                break;
-            }
-        }
-
-        const std::string osJPEGFormat =
-            GDALGetCompressionFormatForJPEG(pJPEGContent, nJPEGContent);
+        CPLAssert(pszDetailedFormat != nullptr);
         const CPLStringList aosTokens(
-            CSLTokenizeString2(osJPEGFormat.c_str(), ";", 0));
+            CSLTokenizeString2(pszDetailedFormat, ";", 0));
+        VSIFree(pszDetailedFormat);
         const char *pszBitDepth = aosTokens.FetchNameValueDef("bit_depth", "");
         if (pJPEGContent && !EQUAL(pszBitDepth, "8"))
         {
@@ -2365,16 +2345,15 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             VSIFree(pJPEGContent);
             pJPEGContent = nullptr;
         }
-        if (osColorspace.empty())
-            osColorspace = aosTokens.FetchNameValueDef("colorspace", "");
-        if (pJPEGContent && !EQUAL(osColorspace.c_str(), "unknown") &&
-            !EQUAL(osColorspace.c_str(), "RGB") &&
-            !EQUAL(osColorspace.c_str(), "YCbCr"))
+        const char *pszColorspace =
+            aosTokens.FetchNameValueDef("colorspace", "");
+        if (pJPEGContent && !EQUAL(pszColorspace, "unknown") &&
+            !EQUAL(pszColorspace, "RGB") && !EQUAL(pszColorspace, "YCbCr"))
         {
             CPLDebug(
                 "JPEGXL",
                 "Unsupported colorspace=%s for lossless transcoding from JPEG",
-                osColorspace.c_str());
+                pszColorspace);
             VSIFree(pJPEGContent);
             pJPEGContent = nullptr;
         }
