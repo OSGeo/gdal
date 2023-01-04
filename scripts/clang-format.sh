@@ -26,6 +26,11 @@ for f in $FILES; do
 
 	# echo "Checking $f"
 	case "$f" in
+
+	*frmts/grib/degrib/*)
+	  continue
+	  ;;
+
 	*.cpp|*.c|*.h|*.cxx|*.hxx|*.c++|*.h++|*.cc|*.hh|*.C|*.H)
 		;;
 
