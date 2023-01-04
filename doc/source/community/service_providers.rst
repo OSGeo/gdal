@@ -170,6 +170,12 @@ The steps to add a company to the service providers list are outlined in the :re
    :width: 100 px
    :target: `Faunalia`_
 
+.. _`Kartoza`: https://kartoza.erpnext.com/
+.. |logo_kartoza| image:: ../../images/logo-kartoza.png
+   :class: img-logos
+   :width: 100 px
+   :target: `Kartoza`_
+
 .. _`mundialis`: https://www.mundialis.de/
 .. |logo_mundialis| image:: ../../images/logo-mundialis.png
    :class: img-logos
