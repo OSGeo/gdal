@@ -3033,4 +3033,187 @@ TEST_F(test_gdal, jpeg_ReadCompressedData)
     }
 }
 
+// Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
+TEST_F(test_gdal, jpegxl_ReadCompressedData)
+{
+    if (GDALGetDriverByName("JPEGXL") == nullptr)
+    {
+        GTEST_SKIP() << "JPEGXL support missing";
+    }
+
+    GDALDatasetUniquePtr poSrcDS(GDALDataset::FromHandle(GDALDataset::Open(
+        (tut::common::data_basedir + "/../../gdrivers/data/jpegxl/byte.jxl")
+            .c_str())));
+    ASSERT_TRUE(poSrcDS);
+
+    const CPLStringList aosRet(GDALDatasetGetCompressionFormats(
+        GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 20, 20, 1, nullptr));
+    EXPECT_EQ(aosRet.size(), 1);
+    if (aosRet.size() == 1)
+    {
+        EXPECT_STREQ(aosRet[0], "JPEGXL");
+    }
+
+    size_t nUpperBoundSize;
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20, 20,
+                  1, nullptr, nullptr, &nUpperBoundSize, nullptr),
+              CE_None);
+    EXPECT_EQ(nUpperBoundSize, 719);
+
+    {
+        std::vector<GByte> abyBuffer(nUpperBoundSize);
+        void *pabyBuffer = abyBuffer.data();
+        void **ppabyBuffer = &pabyBuffer;
+        size_t nSize = nUpperBoundSize;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_None);
+        ASSERT_LT(nSize, nUpperBoundSize);
+        ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_EQ(abyBuffer[0], 0x00);
+        EXPECT_EQ(abyBuffer[1], 0x00);
+        EXPECT_EQ(abyBuffer[2], 0x00);
+        EXPECT_EQ(abyBuffer[3], 0x0C);
+        EXPECT_EQ(abyBuffer[nSize - 2], 0x4C);
+        EXPECT_EQ(abyBuffer[nSize - 1], 0x01);
+
+        // Buffer larger than needed: OK
+        nSize = nUpperBoundSize + 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_None);
+
+        // Too small buffer
+        nSize = nUpperBoundSize - 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_Failure);
+
+        // Missing pointer to size
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
+                      20, 1, nullptr, ppabyBuffer, nullptr, nullptr),
+                  CE_Failure);
+    }
+
+    // Let GDAL allocate buffer
+    {
+        void *pBuffer = nullptr;
+        size_t nSize = nUpperBoundSize;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEGXL", 0, 0, 20,
+                      20, 1, nullptr, &pBuffer, &nSize, nullptr),
+                  CE_None);
+        EXPECT_GT(nSize, 6);
+        EXPECT_LT(nSize, nUpperBoundSize);
+        EXPECT_NE(pBuffer, nullptr);
+        if (pBuffer != nullptr && nSize >= 6 && nSize <= nUpperBoundSize)
+        {
+            const GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
+            EXPECT_EQ(pabyBuffer[0], 0x00);
+            EXPECT_EQ(pabyBuffer[1], 0x00);
+            EXPECT_EQ(pabyBuffer[2], 0x00);
+            EXPECT_EQ(pabyBuffer[3], 0x0C);
+            EXPECT_EQ(pabyBuffer[nSize - 2], 0x4C);
+            EXPECT_EQ(pabyBuffer[nSize - 1], 0x01);
+        }
+        VSIFree(pBuffer);
+    }
+}
+
+// Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
+TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
+{
+    auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("JPEGXL"));
+    if (poDrv == nullptr)
+    {
+        GTEST_SKIP() << "JPEGXL support missing";
+    }
+
+    GDALDatasetUniquePtr poSrcDS(GDALDataset::FromHandle(GDALDataset::Open(
+        (tut::common::data_basedir +
+         "/../../gdrivers/data/jpegxl/exif_orientation/F1.jxl")
+            .c_str())));
+    ASSERT_TRUE(poSrcDS);
+
+    const CPLStringList aosRet(GDALDatasetGetCompressionFormats(
+        GDALDataset::ToHandle(poSrcDS.get()), 0, 0, 3, 5, 1, nullptr));
+    EXPECT_EQ(aosRet.size(), 2);
+    if (aosRet.size() == 2)
+    {
+        EXPECT_STREQ(aosRet[0], "JPEGXL");
+        EXPECT_STREQ(aosRet[1], "JPEG");
+    }
+
+    size_t nUpperBoundSize;
+    EXPECT_EQ(GDALDatasetReadCompressedData(
+                  GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5, 1,
+                  nullptr, nullptr, &nUpperBoundSize, nullptr),
+              CE_None);
+    EXPECT_EQ(nUpperBoundSize, 235);
+
+    {
+        std::vector<GByte> abyBuffer(nUpperBoundSize);
+        void *pabyBuffer = abyBuffer.data();
+        void **ppabyBuffer = &pabyBuffer;
+        size_t nSize = nUpperBoundSize;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
+                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_None);
+        ASSERT_LE(nSize, nUpperBoundSize);
+        ASSERT_TRUE(*ppabyBuffer == pabyBuffer);
+        EXPECT_EQ(abyBuffer[0], 0xFF);
+        EXPECT_EQ(abyBuffer[1], 0xD8);
+        EXPECT_EQ(abyBuffer[nSize - 2], 0xFF);
+        EXPECT_EQ(abyBuffer[nSize - 1], 0xD9);
+
+        // Buffer larger than needed: OK
+        nSize = nUpperBoundSize + 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
+                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_None);
+
+        // Too small buffer
+        nSize = nUpperBoundSize - 1;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
+                      1, nullptr, ppabyBuffer, &nSize, nullptr),
+                  CE_Failure);
+
+        // Missing pointer to size
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
+                      1, nullptr, ppabyBuffer, nullptr, nullptr),
+                  CE_Failure);
+    }
+
+    // Let GDAL allocate buffer
+    {
+        void *pBuffer = nullptr;
+        size_t nSize = nUpperBoundSize;
+        EXPECT_EQ(GDALDatasetReadCompressedData(
+                      GDALDataset::ToHandle(poSrcDS.get()), "JPEG", 0, 0, 3, 5,
+                      1, nullptr, &pBuffer, &nSize, nullptr),
+                  CE_None);
+        EXPECT_GT(nSize, 4);
+        EXPECT_LE(nSize, nUpperBoundSize);
+        EXPECT_NE(pBuffer, nullptr);
+        if (pBuffer != nullptr && nSize >= 4 && nSize <= nUpperBoundSize)
+        {
+            const GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
+            EXPECT_EQ(pabyBuffer[0], 0xFF);
+            EXPECT_EQ(pabyBuffer[1], 0xD8);
+            EXPECT_EQ(pabyBuffer[nSize - 2], 0xFF);
+            EXPECT_EQ(pabyBuffer[nSize - 1], 0xD9);
+        }
+        VSIFree(pBuffer);
+    }
+}
+
 }  // namespace
