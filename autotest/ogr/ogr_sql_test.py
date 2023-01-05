@@ -242,6 +242,9 @@ def test_ogr_sql_9():
 
 def test_ogr_sql_ilike():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
         "select * from prime_meridian where PRIME_MERIDIAN_NAME ilike 'GREEN%'"
@@ -274,6 +277,9 @@ def test_ogr_sql_ilike():
 
 
 def test_ogr_sql_like():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
@@ -677,6 +683,9 @@ def test_ogr_sql_26():
 
 
 def test_ogr_sql_27():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/testdatetime.csv")
 
@@ -1600,6 +1609,51 @@ def test_ogr_sql_field_names_same_case():
     assert f["id"] == "foo"
     assert f["ID"] == "bar"
     assert f["ID2"] == "baz"
+
+
+###############################################################################
+# Test no crash when comparing string with integer array
+
+
+def test_ogr_sql_string_int_array_comparison():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("id"))
+    lyr.CreateField(ogr.FieldDefn("int_array", ogr.OFTIntegerList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+
+    f["id"] = "foo"
+    f.SetFieldIntegerList(1, [1, 2])
+
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetNextFeature()
+    assert f is not None
+
+    assert lyr.SetAttributeFilter("id = 'foo'") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is not None
+
+    for op in ("=", "<>", "<", "<=", ">", ">="):
+        assert lyr.SetAttributeFilter("int_array {} 1".format(op)) == ogr.OGRERR_NONE
+        f = lyr.GetNextFeature()
+        assert f is None
+
+    assert lyr.SetAttributeFilter("int_array BETWEEN 0 AND 3") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    assert lyr.SetAttributeFilter("int_array IS NULL") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    assert lyr.SetAttributeFilter("int_array IN (1, 2)") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    del lyr
+    del ds
 
 
 ###############################################################################
