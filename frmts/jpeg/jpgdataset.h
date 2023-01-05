@@ -57,7 +57,12 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+
 CPL_C_START
+
+// So that D_LOSSLESS_SUPPORTED is visible if defined in jmorecfg of libjpeg-turbo >= 2.2
+#define JPEG_INTERNAL_OPTIONS
+
 #ifdef LIBJPEG_12_PATH
 #include LIBJPEG_12_PATH
 #else
@@ -88,6 +93,7 @@ typedef struct
     int nScaleFactor;
     bool bDoPAMInitialize;
     bool bUseInternalOverviews;
+    bool bIsLossless;
 } JPGDatasetOpenArgs;
 
 class JPGDatasetCommon;

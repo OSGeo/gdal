@@ -1840,6 +1840,7 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     sArgs.nScaleFactor = 1;
     sArgs.bDoPAMInitialize = false;
     sArgs.bUseInternalOverviews = false;
+    sArgs.bIsLossless = false;
     return JPGDataset::Open(&sArgs);
 }
 
@@ -2624,48 +2625,46 @@ CPLErr JPGDatasetCommon::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      nLineSpace, nBandSpace, psExtraArg);
 }
 
-#if JPEG_LIB_VERSION_MAJOR < 9
 /************************************************************************/
 /*                    JPEGDatasetIsJPEGLS()                             */
 /************************************************************************/
 
-static int JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
+static bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
 
 {
     GByte *pabyHeader = poOpenInfo->pabyHeader;
     int nHeaderBytes = poOpenInfo->nHeaderBytes;
 
     if (nHeaderBytes < 10)
-        return FALSE;
+        return false;
 
     if (pabyHeader[0] != 0xff || pabyHeader[1] != 0xd8)
-        return FALSE;
+        return false;
 
     for (int nOffset = 2; nOffset + 4 < nHeaderBytes;)
     {
         if (pabyHeader[nOffset] != 0xFF)
-            return FALSE;
+            return false;
 
         int nMarker = pabyHeader[nOffset + 1];
         if (nMarker == 0xF7)  // JPEG Extension 7, JPEG-LS.
-            return TRUE;
+            return true;
         if (nMarker == 0xF8)  // JPEG Extension 8, JPEG-LS Extension.
-            return TRUE;
+            return true;
         if (nMarker == 0xC3)  // Start of Frame 3.
-            return TRUE;
+            return true;
         if (nMarker == 0xC7)  // Start of Frame 7.
-            return TRUE;
+            return true;
         if (nMarker == 0xCB)  // Start of Frame 11.
-            return TRUE;
+            return true;
         if (nMarker == 0xCF)  // Start of Frame 15.
-            return TRUE;
+            return true;
 
         nOffset += 2 + pabyHeader[nOffset + 2] * 256 + pabyHeader[nOffset + 3];
     }
 
-    return FALSE;
+    return false;
 }
-#endif
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -2690,7 +2689,8 @@ int JPGDatasetCommon::Identify(GDALOpenInfo *poOpenInfo)
     if (pabyHeader[0] != 0xff || pabyHeader[1] != 0xd8 || pabyHeader[2] != 0xff)
         return FALSE;
 
-#if JPEG_LIB_VERSION_MAJOR < 9
+        // libjpeg-turbo >= 2.2 supports lossless mode
+#if !defined(D_LOSSLESS_SUPPORTED)
     if (JPEGDatasetIsJPEGLS(poOpenInfo))
     {
         return FALSE;
@@ -2758,6 +2758,11 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     sArgs.bDoPAMInitialize = true;
     sArgs.bUseInternalOverviews = CPLFetchBool(poOpenInfo->papszOpenOptions,
                                                "USE_INTERNAL_OVERVIEWS", true);
+#ifdef D_LOSSLESS_SUPPORTED
+    sArgs.bIsLossless = JPEGDatasetIsJPEGLS(poOpenInfo);
+#else
+    sArgs.bIsLossless = false;
+#endif
 
     auto poJPG_DS = JPGDataset::Open(&sArgs);
     auto poDS = std::unique_ptr<GDALDataset>(poJPG_DS);
@@ -3145,6 +3150,12 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     {
         poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+    }
+
+    if (psArgs->bIsLossless)
+    {
+        poDS->SetMetadataItem("COMPRESSION_REVERSIBILITY", "LOSSLESS",
+                              "IMAGE_STRUCTURE");
     }
 
     // Initialize any PAM information.
@@ -4933,6 +4944,11 @@ void GDALRegister_JPEG()
     poDriver->pfnIdentify = JPGDatasetCommon::Identify;
     poDriver->pfnOpen = JPGDatasetCommon::Open;
     poDriver->pfnCreateCopy = JPGDataset::CreateCopy;
+
+#ifdef D_LOSSLESS_SUPPORTED
+    // For autotest purposes
+    poDriver->SetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "YES", "JPEG");
+#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

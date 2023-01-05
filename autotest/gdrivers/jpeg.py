@@ -1501,6 +1501,41 @@ def test_jpeg_read_arcgis_metadata_geodataxform_gcp():
 
 
 ###############################################################################
+# Test reading lossless JPEG with libjpeg-turbo 2.2
+
+
+def test_jpeg_read_lossless():
+
+    if (
+        gdal.GetDriverByName("JPEG").GetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "JPEG")
+        is None
+    ):
+        pytest.skip("lossless jpeg not supported")
+    ds = gdal.Open("data/jpeg/byte_lossless.jpg")
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
+
+
+###############################################################################
+# Test reading 16-bit lossless JPEG with libjpeg-turbo 2.2 (unsupported by GDAL)
+
+
+def test_jpeg_read_lossless_16bit():
+
+    if (
+        gdal.GetDriverByName("JPEG").GetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "JPEG")
+        is None
+    ):
+        pytest.skip("lossless jpeg not supported")
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/jpeg/uint16_lossless.jpg")
+        assert ds is None
+
+
+###############################################################################
 # Cleanup
 
 
