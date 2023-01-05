@@ -54,8 +54,8 @@ def test_sozip_list():
         get_sozip_path() + " --list ../gcore/data/zero_5GB_sozip_of_sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
-    assert " 5230829 " in out
-    assert " 2022-12-19 17:41:08 " in out
+    assert " 5232873 " in out
+    assert " 2023-01-05 15:41:14 " in out
     assert " yes " in out
     assert "32768 bytes" in out
     assert " zero_5GB.bin.zip" in out

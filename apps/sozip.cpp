@@ -113,11 +113,6 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 VSIFReadL(&nToSkip, 1, sizeof(nToSkip), fpRaw);
                 CPL_LSBPTR32(&nToSkip);
 
-                VSIFSeekL(fpRaw, nStartIdxOffset + 12, SEEK_SET);
-                uint32_t nOffsetSize = 0;
-                VSIFReadL(&nOffsetSize, 1, sizeof(nOffsetSize), fpRaw);
-                CPL_LSBPTR32(&nOffsetSize);
-
                 VSIFSeekL(fpRaw, nStartIdxOffset + 32 + nToSkip, SEEK_SET);
                 const int nChunkSize = atoi(pszChunkSize);
                 const uint64_t nCompressedSize = std::strtoull(
@@ -161,19 +156,8 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 for (int i = 0; i < nChunksItems; ++i)
                 {
                     uint64_t nOffset64 = 0;
-                    if (nOffsetSize == 4)
-                    {
-                        uint32_t nOffset32 = 0;
-                        VSIFReadL(&nOffset32, 1, sizeof(nOffset32), fpRaw);
-                        CPL_LSBPTR32(&nOffset32);
-                        nOffset64 = nOffset32;
-                    }
-                    else
-                    {
-                        CPLAssert(nOffsetSize == 8);
-                        VSIFReadL(&nOffset64, 1, sizeof(nOffset64), fpRaw);
-                        CPL_LSBPTR64(&nOffset64);
-                    }
+                    VSIFReadL(&nOffset64, 1, sizeof(nOffset64), fpRaw);
+                    CPL_LSBPTR64(&nOffset64);
                     if (nOffset64 >= nCompressedSize)
                     {
                         bSeekOptimizedValid = false;

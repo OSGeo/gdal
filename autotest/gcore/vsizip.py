@@ -826,7 +826,7 @@ def test_vsizip_byte_copyfile_srcfilename_is_none():
         assert md["SEEK_OPTIMIZED_FOUND"] == "YES"
         assert md["SEEK_OPTIMIZED_VALID"] == "YES"
         assert md["SOZIP_VERSION"] == "1"
-        assert md["SOZIP_OFFSET_SIZE"] == "4"
+        assert md["SOZIP_OFFSET_SIZE"] == "8"
         assert md["SOZIP_CHUNK_SIZE"] == "32768"
         assert int(md["SOZIP_START_DATA_OFFSET"]) > int(md["START_DATA_OFFSET"])
 
@@ -917,15 +917,12 @@ def test_vsizip_byte_copyfile_file_already_open():
 ###############################################################################
 
 
-@pytest.mark.parametrize(
-    "options", [[], ["SOZIP_OFFSET_SIZE=4"], ["SOZIP_OFFSET_SIZE=8"]]
-)
-def test_vsizip_byte_sozip(options):
+def test_vsizip_byte_sozip():
 
     zipfilename = "/vsimem/test_vsizip_byte_sozip.zip"
     dstfilename = f"/vsizip/{zipfilename}/test.tif"
     try:
-        options += ["SEEK_OPTIMIZED=YES", "SOZIP_CHUNK_SIZE=128"]
+        options = ["SEEK_OPTIMIZED=YES", "SOZIP_CHUNK_SIZE=128"]
         assert gdal.CopyFile("data/byte.tif", dstfilename, options=options) == 0
         assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
 
@@ -933,9 +930,7 @@ def test_vsizip_byte_sozip(options):
         assert md is not None
         assert md["SEEK_OPTIMIZED_VALID"] == "YES"
         assert md["SOZIP_CHUNK_SIZE"] == "128"
-        assert md["SOZIP_OFFSET_SIZE"] == (
-            "8" if "SOZIP_OFFSET_SIZE=8" in options else "4"
-        ), options
+        assert md["SOZIP_OFFSET_SIZE"] == "8"
 
         ds = gdal.Open(dstfilename)
         assert ds.GetRasterBand(1).Checksum() == 4672

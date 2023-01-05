@@ -3669,7 +3669,6 @@ class VSISOZipHandle final : public VSIVirtualHandle
     vsi_l_offset indexPos_;
     uint32_t nToSkip_;
     uint32_t nChunkSize_;
-    uint32_t nOffsetSize_;
     bool bEOF_ = false;
     vsi_l_offset nCurPos_ = 0;
     bool bOK_ = true;
@@ -3686,7 +3685,7 @@ class VSISOZipHandle final : public VSIVirtualHandle
     VSISOZipHandle(VSIVirtualHandle *poVirtualHandle,
                    vsi_l_offset nPosCompressedStream, uint64_t compressed_size,
                    uint64_t uncompressed_size, vsi_l_offset indexPos,
-                   uint32_t nToSkip, uint32_t nChunkSize, uint32_t nOffsetSize);
+                   uint32_t nToSkip, uint32_t nChunkSize);
     ~VSISOZipHandle() override;
 
     virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
@@ -3720,12 +3719,11 @@ VSISOZipHandle::VSISOZipHandle(VSIVirtualHandle *poVirtualHandle,
                                uint64_t compressed_size,
                                uint64_t uncompressed_size,
                                vsi_l_offset indexPos, uint32_t nToSkip,
-                               uint32_t nChunkSize, uint32_t nOffsetSize)
+                               uint32_t nChunkSize)
     : poBaseHandle_(poVirtualHandle),
       nPosCompressedStream_(nPosCompressedStream),
       compressed_size_(compressed_size), uncompressed_size_(uncompressed_size),
-      indexPos_(indexPos), nToSkip_(nToSkip), nChunkSize_(nChunkSize),
-      nOffsetSize_(nOffsetSize)
+      indexPos_(indexPos), nToSkip_(nToSkip), nChunkSize_(nChunkSize)
 {
 #ifdef HAVE_LIBDEFLATE
     pDecompressor_ = libdeflate_alloc_decompressor();
@@ -3826,26 +3824,17 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             return 0;
         if (nChunkIdx == 1 + (uncompressed_size_ - 1) / nChunkSize_)
             return compressed_size_;
+        constexpr size_t nOffsetSize = 8;
         if (poBaseHandle_->Seek(indexPos_ + 32 + nToSkip_ +
-                                    (nChunkIdx - 1) * nOffsetSize_,
+                                    (nChunkIdx - 1) * nOffsetSize,
                                 SEEK_SET) != 0)
             return static_cast<uint64_t>(-1);
-        if (nOffsetSize_ == 4)
-        {
-            uint32_t nOffset;
-            if (poBaseHandle_->Read(&nOffset, sizeof(nOffset), 1) != 1)
-                return static_cast<uint64_t>(-1);
-            CPL_LSBPTR32(&nOffset);
-            return nOffset;
-        }
-        else
-        {
-            uint64_t nOffset;
-            if (poBaseHandle_->Read(&nOffset, sizeof(nOffset), 1) != 1)
-                return static_cast<uint64_t>(-1);
-            CPL_LSBPTR64(&nOffset);
-            return nOffset;
-        }
+
+        uint64_t nOffset;
+        if (poBaseHandle_->Read(&nOffset, sizeof(nOffset), 1) != 1)
+            return static_cast<uint64_t>(-1);
+        CPL_LSBPTR64(&nOffset);
+        return nOffset;
     };
 
     size_t nOffsetInOutputBuffer = 0;
@@ -4118,7 +4107,7 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
                 CPLDebug("SOZIP", "invalid chunkSize = %u", nChunkSize);
                 bValid = false;
             }
-            if (!(nOffsetSize == 4 || nOffsetSize == 8))
+            if (nOffsetSize != 8)
             {
                 CPLDebug("SOZIP", "invalid offsetSize = %u", nOffsetSize);
                 bValid = false;
@@ -4214,8 +4203,7 @@ VSIVirtualHandle *VSIZipFilesystemHandler::Open(const char *pszFilename,
             auto poSOZIPHandle = new VSISOZipHandle(
                 info.poVirtualHandle.release(), info.nStartDataStream,
                 info.nCompressedSize, info.nUncompressedSize,
-                info.nSOZIPStartData, info.nSOZIPToSkip, info.nSOZIPChunkSize,
-                info.nSOZIPOffsetSize);
+                info.nSOZIPStartData, info.nSOZIPToSkip, info.nSOZIPChunkSize);
             if (!poSOZIPHandle->IsOK())
             {
                 delete poSOZIPHandle;

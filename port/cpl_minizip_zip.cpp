@@ -2307,9 +2307,8 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
 
     std::vector<uint8_t> sozip_index;
     uint64_t nExpectedIndexSize = 0;
-    size_t nOffsetSize = 0;
-    const char *pszOffsetSize = nullptr;
     constexpr unsigned nDefaultSOZipChunkSize = 32 * 1024;
+    constexpr size_t nOffsetSize = 8;
     if (((EQUAL(pszSOZIP, "AUTO") && nUncompressedSize > nSOZipMinFileSize) ||
          (!EQUAL(pszSOZIP, "AUTO") && CPLTestBool(pszSOZIP))) &&
         ((bChunkSizeSpecified &&
@@ -2323,25 +2322,6 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
 
         aosNewsOptions.SetNameValue(
             "UNCOMPRESSED_SIZE", CPLSPrintf(CPL_FRMT_GUIB, nUncompressedSize));
-
-        // Mostly/only for testing purposes.
-        pszOffsetSize = CSLFetchNameValue(papszOptions, "SOZIP_OFFSET_SIZE");
-        if (pszOffsetSize)
-        {
-            if (EQUAL(pszOffsetSize, "4"))
-                nOffsetSize = 4;
-            else if (EQUAL(pszOffsetSize, "8"))
-                nOffsetSize = 8;
-        }
-        if (nOffsetSize == 0)
-        {
-            // Try to guess the size of an offset based on the uncompressed file
-            // size, by being a bit pessimistic. We will recompact from 8 to 4
-            // bytes afterwards if possible.
-            nOffsetSize = nUncompressedSize < 4U * 1000 * 1000 * 1000
-                              ? sizeof(uint32_t)
-                              : sizeof(uint64_t);
-        }
 
         zi->nOffsetSize = nOffsetSize;
         nExpectedIndexSize =
@@ -2464,30 +2444,6 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
     }
     else if (bSeekOptimized)
     {
-        if (pszOffsetSize == nullptr && nOffsetSize == 8)
-        {
-            // We may have been pessimistic in reserving 8 bytes per offset,
-            // so check if we cannot fit on 4 bytes based on the last offset
-            // value.
-            uint64_t nLastOffset;
-            memcpy(&nLastOffset, sozip_index.data() + sozip_index.size() - 8,
-                   sizeof(nLastOffset));
-            CPL_LSBPTR64(&nLastOffset);
-            if (nLastOffset <= std::numeric_limits<uint32_t>::max())
-            {
-                const int nOffsetCount =
-                    static_cast<int>((nUncompressedSize - 1) / nChunkSize);
-                for (int i = 1; i < nOffsetCount; ++i)
-                {
-                    memcpy(sozip_index.data() + 32 + i * sizeof(uint32_t),
-                           sozip_index.data() + 32 + i * sizeof(uint64_t),
-                           sizeof(uint32_t));
-                }
-                uint32_t nVal32 = CPL_LSBWORD32(4);
-                memcpy(sozip_index.data() + 12, &nVal32, sizeof(nVal32));
-                sozip_index.resize(32 + nOffsetCount * sizeof(uint32_t));
-            }
-        }
         std::string osIdxName;
         const char *pszLastSlash = strchr(pszArchiveFilename, '/');
         if (pszLastSlash)
