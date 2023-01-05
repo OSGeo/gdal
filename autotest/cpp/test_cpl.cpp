@@ -258,8 +258,27 @@ TEST_F(test_cpl, CSLTokenizeString2)
         ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
         ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
         ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
-    }
 
+        // Test range-based for loop
+        int i = 0;
+        for (const char *pszVal : aosStringList)
+        {
+            EXPECT_STREQ(pszVal, aosStringList[i]);
+            ++i;
+        }
+        EXPECT_EQ(i, 3);
+    }
+    {
+        CPLStringList aosStringList;
+        // Test range-based for loop on empty list
+        int i = 0;
+        for (const char *pszVal : aosStringList)
+        {
+            EXPECT_EQ(pszVal, nullptr);  // should not reach that point...
+            ++i;
+        }
+        EXPECT_EQ(i, 0);
+    }
     {
         CPLStringList aosStringList(
             CSLTokenizeString2("one two, three;four,five; six", " ;,", 0));

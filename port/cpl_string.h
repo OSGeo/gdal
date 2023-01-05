@@ -538,6 +538,18 @@ extern "C++"
             return FetchNameValue(pszKey);
         }
 
+        /** begin() implementation */
+        const char *const *begin() const
+        {
+            return papszList ? &papszList[0] : nullptr;
+        }
+
+        /** end() implementation */
+        const char *const *end() const
+        {
+            return papszList ? &papszList[size()] : nullptr;
+        }
+
         /** Return list. Ownership remains to the object */
         char **List()
         {
