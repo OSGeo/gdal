@@ -30,6 +30,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/grib/degrib/*)
+	  continue
+	  ;;
+
 	*.cpp|*.c|*.h|*.cxx|*.hxx|*.c++|*.h++|*.cc|*.hh|*.C|*.H)
 		;;
 
