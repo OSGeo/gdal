@@ -49,6 +49,14 @@ Various creation options exists, among them :
    default, lossy compression is used. If set to True, lossless
    compression will be used.
 
+-  **LOSSLESS_COPY=AUTO/YES/NO**: (GDAL >= 3.7)
+   Whether conversion should be lossless. Defaults to AUTO.
+   In AUTO or YES mode, if LOSSLESS=YES and the source dataset uses WEBP
+   compression, lossless copying of it is done.
+   If set to NO, or in AUTO mode if the source dataset does not use WEBP
+   compression, the regular conversion code path is taken, resulting in a
+   lossless or lossy copy depending on the LOSSLESS setting.
+
 See Also
 --------
 
