@@ -109,6 +109,7 @@ API
       .. toctree::
        :maxdepth: 1
 
+       Rust <https://github.com/georust/gdal>
        Go <https://github.com/lukeroth/gdal>
        Julia <https://github.com/JuliaGeo/GDAL.jl>
        Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>
