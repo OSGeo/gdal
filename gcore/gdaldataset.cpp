@@ -9171,6 +9171,23 @@ bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const
  *
  * @return a list of compatible formats (which may be empty)
  *
+ * For example, to check if native compression format(s) are available on the
+ * whole image:
+ * \code{.cpp}
+ *   const CPLStringList aosFormats =
+ *      poDataset->GetCompressionFormats(0, 0,
+ *                                       poDataset->GetRasterXSize(),
+ *                                       poDataset->GetRasterYSize(),
+ *                                       poDataset->GetRasterCount(),
+ *                                       nullptr);
+ *   for( const char* pszFormat: aosFormats )
+ *   {
+ *      // Remove optional parameters and just print out the MIME type.
+ *      const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+ *      printf("Found format %s\n, aosTokens[0]);
+ *   }
+ * \endcode
+ *
  * @since GDAL 3.7
  */
 CPLStringList
@@ -9327,6 +9344,80 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  * ppBuffer != nullptr.
  *
  * @return CE_None in case of success, CE_Failure otherwise.
+ *
+ * For example, to request JPEG content on the whole image and let GDAL deal
+ * with the buffer allocation.
+ * \code{.cpp}
+ *   void* pBuffer = nullptr;
+ *   size_t nBufferSize = 0;
+ *   CPLErr eErr =
+ *      poDataset->ReadCompressedData("image/jpeg",
+ *                                    0, 0,
+ *                                    poDataset->GetRasterXSize(),
+ *                                    poDataset->GetRasterYSize(),
+ *                                    poDataset->GetRasterCount(),
+ *                                    nullptr, // panBandList
+ *                                    &pBuffer,
+ *                                    &nBufferSize,
+ *                                    nullptr // ppszDetailedFormat
+ *                                   );
+ *   if (eErr == CE_None)
+ *   {
+ *       CPLAssert(pBuffer != nullptr);
+ *       CPLAssert(nBufferSize > 0);
+ *       VSILFILE* fp = VSIFOpenL("my.jpeg", "wb");
+ *       if (fp)
+ *       {
+ *           VSIFWriteL(pBuffer, nBufferSize, 1, fp);
+ *           VSIFCloseL(fp);
+ *       }
+ *       VSIFree(pBuffer);
+ *   }
+ * \endcode
+ *
+ * Or to manage the buffer allocation on your side:
+ * \code{.cpp}
+ *   size_t nUpperBoundBufferSize = 0;
+ *   CPLErr eErr =
+ *      poDataset->ReadCompressedData("image/jpeg",
+ *                                    0, 0,
+ *                                    poDataset->GetRasterXSize(),
+ *                                    poDataset->GetRasterYSize(),
+ *                                    poDataset->GetRasterCount(),
+ *                                    nullptr, // panBandList
+ *                                    nullptr, // ppBuffer,
+ *                                    &nUpperBoundBufferSize,
+ *                                    nullptr // ppszDetailedFormat
+ *                                   );
+ *   if (eErr == CE_None)
+ *   {
+ *       std::vector<uint8_t> myBuffer;
+ *       myBuffer.resize(nUpperBoundBufferSize);
+ *       void* pBuffer = myBuffer.data();
+ *       size_t nActualSize = nUpperBoundBufferSize;
+ *       char* pszDetailedFormat = nullptr;
+ *       // We also request detailed format, but we could have passed it to
+ *       // nullptr as well.
+ *       eErr =
+ *         poDataset->ReadCompressedData("image/jpeg",
+ *                                       0, 0,
+ *                                       poDataset->GetRasterXSize(),
+ *                                       poDataset->GetRasterYSize(),
+ *                                       poDataset->GetRasterCount(),
+ *                                       nullptr, // panBandList
+ *                                       &pBuffer,
+ *                                       &nActualSize,
+ *                                       &pszDetailedFormat);
+ *       if (eErr == CE_None)
+ *       {
+ *          CPLAssert(pBuffer == myBuffer.data()); // pointed value not modified
+ *          CPLAssert(nActualSize <= nUpperBoundBufferSize);
+ *          myBuffer.resize(nActualSize);
+ *          // do something useful
+ *          VSIFree(pszDetailedFormat);
+ *       }
+ *   }
+ * \endcode
  *
  * @since GDAL 3.7
  */
