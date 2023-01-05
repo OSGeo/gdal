@@ -434,11 +434,17 @@ a candidate implementation with the following capabilities:
   or "image/jxl", in its CreateCopy() implementation, and expose the LOSSLESS_COPY
   creation option
 
+- implement ReadCompressedData() in the WEBP driver.
+
+- use ReadCompressedData() in the WEBP driver (with pszFormat equal to "image/webp")
+  in its CreateCopy() implementation, and expose the LOSSLESS_COPY creation
+  option
+
 Given the above, the following scenarios are for example covered:
 
-- gdal_translate -srcwin of a tile of a JPEG (resp. JPEGXL)-compressed tiled
-  GeoTIFF to JPEG (resp. JPEGXL).
-  (involves the GTiff and VRT drivers as producers, the JPEG/JPEGXL drivers as
+- gdal_translate -srcwin of a tile of a JPEG (resp. JPEGXL, WEBP)-compressed tiled
+  GeoTIFF to JPEG (resp. JPEGXL, WEBP).
+  (involves the GTiff and VRT drivers as producers, the JPEG/JPEGXL/WEBP drivers as
   consumers)
 
 - gdal_translate of a JPEGXL file with JPEG reconstruction box to JPEG
