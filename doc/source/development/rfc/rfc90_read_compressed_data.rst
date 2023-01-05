@@ -411,7 +411,7 @@ Issues / pull requests
 ----------------------
 
 https://github.com/OSGeo/gdal/compare/master...rouault:gdal:ReadCompressedData?expand=1 contains
-a candidate implementation with the following capabities:
+a candidate implementation with the following capabilities:
 
 - core empty implementation of GetCompressionFormats() and ReadCompressedData()
 
