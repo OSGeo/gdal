@@ -184,7 +184,7 @@ ReadCompressedData()
      * window of interest and requested bands.
      *
      * For example, a tiled dataset may be able to return data in compressed format
-     * is the window of interest matches exactly a tile. For some formats, drivers
+     * if the window of interest matches exactly a tile. For some formats, drivers
      * may also be example to merge several tiles together (not currently
      * implemented though).
      *
