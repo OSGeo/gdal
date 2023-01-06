@@ -3891,16 +3891,16 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         size_t nToReadThisIter =
             std::min(nToRead, static_cast<size_t>(nChunkSize_));
 
-#ifdef HAVE_LIBDEFLATE
         if (nCompressedToRead >= 5 &&
             abyCompressedData[nCompressedToRead - 5] == 0x00 &&
             memcmp(&abyCompressedData[nCompressedToRead - 4],
                    "\x00\x00\xFF\xFF", 4) == 0)
         {
-            // Tag this flush block as the last one to make libdeflate happy
+            // Tag this flush block as the last one.
             abyCompressedData[nCompressedToRead - 5] = 0x01;
         }
 
+#ifdef HAVE_LIBDEFLATE
         size_t nOut = 0;
         if (libdeflate_deflate_decompress(
                 pDecompressor_, &abyCompressedData[0], nCompressedToRead,
@@ -3930,7 +3930,7 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         sStream_.next_out =
             static_cast<Bytef *>(pBuffer) + nOffsetInOutputBuffer;
 
-        int err = inflate(&sStream_, Z_SYNC_FLUSH);
+        int err = inflate(&sStream_, Z_FINISH);
         if ((err != Z_OK && err != Z_STREAM_END))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
