@@ -236,6 +236,7 @@ class BMPDataset final : public GDALPamDataset
     GDALColorTable *poColorTable;
     double adfGeoTransform[6];
     int bGeoTransformValid;
+    bool m_bNewFile = false;
 
     char *pszFilename;
     VSILFILE *fp;
@@ -966,6 +967,17 @@ BMPDataset::~BMPDataset()
 {
     FlushCache(true);
 
+    if (m_bNewFile && fp)
+    {
+        // Extend the file with zeroes if needed
+        VSIFSeekL(fp, 0, SEEK_END);
+
+        if (VSIFTellL(fp) < sFileHeader.iSize)
+        {
+            VSIFTruncateL(fp, sFileHeader.iSize);
+        }
+    }
+
     CPLFree(pabyColorTable);
     if (poColorTable)
         delete poColorTable;
@@ -1436,6 +1448,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
     BMPDataset *poDS = new BMPDataset();
+    poDS->m_bNewFile = true;
 
     poDS->fp = VSIFOpenL(pszFilename, "wb+");
     if (poDS->fp == nullptr)
