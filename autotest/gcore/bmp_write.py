@@ -27,9 +27,10 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test creating an in memory copy.
@@ -69,3 +70,18 @@ init_list = [
 def test_bmp_create(filename, checksum, testfunction):
     ut = gdaltest.GDALTest("BMP", filename, 1, checksum)
     getattr(ut, testfunction)()
+
+
+###############################################################################
+# Test Create() and closing afterwards (https://github.com/OSGeo/gdal/issues/7025)
+
+
+@pytest.mark.require_driver("BMP")
+def test_bmp_create_empty():
+    filename = "/vsimem/test.bmp"
+    assert gdal.GetDriverByName("BMP").Create(filename, 10, 10)
+    ds = gdal.Open(filename)
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 0
+    ds = None
+    gdal.Unlink(filename)
