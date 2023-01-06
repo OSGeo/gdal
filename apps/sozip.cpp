@@ -52,6 +52,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
            "             [--enable-sozip=auto/yes/no]\n"
            "             [--sozip-chunk-size=value]\n"
            "             [--sozip-min-file-size=value]\n"
+           "             [--content-type=value]\n"
            "             zip_filename [filename]*\n");
 
     if (pszErrorMsg != nullptr)
@@ -439,6 +440,17 @@ MAIN_START(nArgc, papszArgv)
                                     papszArgv[iArg] +
                                         strlen("--sozip-min-file-size="));
         }
+        else if (strcmp(papszArgv[iArg], "--content-type") == 0 &&
+                 iArg + 1 < nArgc)
+        {
+            ++iArg;
+            aosOptions.SetNameValue("CONTENT_TYPE", papszArgv[iArg]);
+        }
+        else if (STARTS_WITH(papszArgv[iArg], "--content-type="))
+        {
+            aosOptions.SetNameValue(
+                "CONTENT_TYPE", papszArgv[iArg] + strlen("--content-type="));
+        }
         else if (papszArgv[iArg][0] == '-')
         {
             Usage(CPLSPrintf("Unhandled option %s", papszArgv[iArg]));
@@ -492,9 +504,9 @@ MAIN_START(nArgc, papszArgv)
         if (psDir == nullptr)
             return 1;
         printf("  Length          DateTime        Seek-optimized / chunk size  "
-               "Name\n");
+               "Name               Properties\n");
         /* clang-format off */
-        printf("-----------  -------------------  ---------------------------  -----------------\n");
+        printf("-----------  -------------------  ---------------------------  -----------------  --------------\n");
         /* clang-format on */
         while (auto psEntry = VSIGetNextDirEntry(psDir))
         {
@@ -502,18 +514,30 @@ MAIN_START(nArgc, papszArgv)
             {
                 struct tm brokenDown;
                 CPLUnixTimeToYMDHMS(psEntry->nMTime, &brokenDown);
-                char **papszMD = VSIGetFileMetadata((std::string("/vsizip/{") +
-                                                     pszZipFilename + "}/" +
-                                                     psEntry->pszName)
-                                                        .c_str(),
-                                                    "ZIP", nullptr);
+                const std::string osFilename = std::string("/vsizip/{") +
+                                               pszZipFilename + "}/" +
+                                               psEntry->pszName;
+                std::string osProperties;
+                char **papszMDGeneric =
+                    VSIGetFileMetadata(osFilename.c_str(), nullptr, nullptr);
+                for (char **papszIter = papszMDGeneric;
+                     papszIter && papszIter[0]; ++papszIter)
+                {
+                    if (!osProperties.empty())
+                        osProperties += ',';
+                    osProperties += *papszIter;
+                }
+                CSLDestroy(papszMDGeneric);
+                char **papszMD =
+                    VSIGetFileMetadata(osFilename.c_str(), "ZIP", nullptr);
                 bool bSeekOptimized =
                     CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_VALID") !=
                     nullptr;
                 const char *pszChunkSize =
                     CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
                 printf("%11" CPL_FRMT_GB_WITHOUT_PREFIX
-                       "u  %04d-%02d-%02d %02d:%02d:%02d  %s  %s\n",
+                       "u  %04d-%02d-%02d %02d:%02d:%02d  %s  %s               "
+                       "%s\n",
                        static_cast<GUIntBig>(psEntry->nSize),
                        brokenDown.tm_year + 1900, brokenDown.tm_mon + 1,
                        brokenDown.tm_mday, brokenDown.tm_hour,
@@ -521,7 +545,7 @@ MAIN_START(nArgc, papszArgv)
                        bSeekOptimized
                            ? CPLSPrintf("   yes (%9s bytes)   ", pszChunkSize)
                            : "                           ",
-                       psEntry->pszName);
+                       psEntry->pszName, osProperties.c_str());
                 CSLDestroy(papszMD);
             }
         }

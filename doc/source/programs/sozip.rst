@@ -27,6 +27,7 @@ Synopsis
           [--enable-sozip=auto/yes/no]
           [--sozip-chunk-size=value]
           [--sozip-min-file-size=value]
+          [--content-type=value]
           zip_filename [filename]*
 
 
@@ -107,6 +108,11 @@ The :program:`sozip` utility can be used to:
     --enable-sozip=auto mode. Defaults to 1 MB byte. The value
     is specified in bytes, or K, M or G suffix can be respecively used to
     specify a value in kilo-bytes, mega-bytes or giga-bytes.
+
+.. option:: --content-type=<value>
+
+    Store the Content-Type for the file being added as a key-value pair in the
+    extra field extension 'KV' (0x564b) dedicated to storing key-value pair metadata
 
 .. option:: <zip_filename>
 

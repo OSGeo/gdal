@@ -70,9 +70,12 @@ def test_sozip_create():
 
     (out, err) = gdaltest.runexternal_out_and_err(
         get_sozip_path()
-        + " -j --overwrite --enable-sozip=yes --sozip-chunk-size 128 tmp/sozip.zip ../gcore/data/byte.tif"
+        + " -j --overwrite --enable-sozip=yes --sozip-chunk-size 128 --content-type=image/tiff tmp/sozip.zip ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
+
+    md = gdal.GetFileMetadata("/vsizip/tmp/sozip.zip/byte.tif", None)
+    assert md["Content-Type"] == "image/tiff"
 
     md = gdal.GetFileMetadata("/vsizip/tmp/sozip.zip/byte.tif", "ZIP")
     assert md["SEEK_OPTIMIZED_VALID"] == "YES"

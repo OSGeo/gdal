@@ -2081,8 +2081,7 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
     char *pszCPFilename = nullptr;
-    unsigned int nExtraLength = 0;
-    GByte *pabyExtra = nullptr;
+    std::vector<GByte> abyExtra;
     // If the filename is not ASCII only, we need an extended field
     if (!CPLIsASCII(pszFilename, strlen(pszFilename)))
     {
@@ -2097,26 +2096,91 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
         pszCPFilename = CPLRecode(pszFilename, CPL_ENC_UTF8, pszDestEncoding);
 
         /* Create a Info-ZIP Unicode Path Extra Field (0x7075) */
-        const GUInt16 nDataLength =
-            1 + 4 + static_cast<GUInt16>(strlen(pszFilename));
-        nExtraLength = 2 + 2 + nDataLength;
-        pabyExtra = static_cast<GByte *>(CPLMalloc(nExtraLength));
-        const GUInt16 nHeaderIdLE = CPL_LSBWORD16(0x7075);
-        memcpy(pabyExtra, &nHeaderIdLE, 2);
-        const GUInt16 nDataLengthLE = CPL_LSBWORD16(nDataLength);
-        memcpy(pabyExtra + 2, &nDataLengthLE, 2);
-        const GByte nVersion = 1;
-        memcpy(pabyExtra + 2 + 2, &nVersion, 1);
-        const GUInt32 nNameCRC32 = static_cast<GUInt32>(
-            crc32(0, reinterpret_cast<const Bytef *>(pszCPFilename),
-                  static_cast<uInt>(strlen(pszCPFilename))));
-        const GUInt32 nNameCRC32LE = CPL_LSBWORD32(nNameCRC32);
-        memcpy(pabyExtra + 2 + 2 + 1, &nNameCRC32LE, 4);
-        memcpy(pabyExtra + 2 + 2 + 1 + 4, pszFilename, strlen(pszFilename));
+        const size_t nDataLength =
+            sizeof(GByte) + sizeof(uint32_t) + strlen(pszFilename);
+        if (abyExtra.size() + 2 * sizeof(uint16_t) + nDataLength >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Too much content to fit in ZIP ExtraField");
+        }
+        else
+        {
+            const uint16_t nHeaderIdLE = CPL_LSBWORD16(0x7075);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nHeaderIdLE),
+                            reinterpret_cast<const GByte *>(&nHeaderIdLE) + 2);
+            const uint16_t nDataLengthLE =
+                CPL_LSBWORD16(static_cast<uint16_t>(nDataLength));
+            abyExtra.insert(
+                abyExtra.end(), reinterpret_cast<const GByte *>(&nDataLengthLE),
+                reinterpret_cast<const GByte *>(&nDataLengthLE) + 2);
+            const GByte nVersion = 1;
+            abyExtra.push_back(nVersion);
+            const uint32_t nNameCRC32 = static_cast<uint32_t>(
+                crc32(0, reinterpret_cast<const Bytef *>(pszCPFilename),
+                      static_cast<uInt>(strlen(pszCPFilename))));
+            const uint32_t nNameCRC32LE = CPL_LSBWORD32(nNameCRC32);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nNameCRC32LE),
+                            reinterpret_cast<const GByte *>(&nNameCRC32LE) + 4);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(pszFilename),
+                            reinterpret_cast<const GByte *>(pszFilename) +
+                                strlen(pszFilename));
+        }
     }
     else
     {
         pszCPFilename = CPLStrdup(pszFilename);
+    }
+
+    const char *pszContentType =
+        CSLFetchNameValue(papszOptions, "CONTENT_TYPE");
+    if (pszContentType)
+    {
+        const size_t nDataLength = strlen("KeyValuePairs") + sizeof(GByte) +
+                                   sizeof(uint16_t) + strlen("Content-Type") +
+                                   sizeof(uint16_t) + strlen(pszContentType);
+        if (abyExtra.size() + 2 * sizeof(uint16_t) + nDataLength >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Too much content to fit in ZIP ExtraField");
+        }
+        else
+        {
+            abyExtra.push_back(GByte('K'));
+            abyExtra.push_back(GByte('V'));
+            const uint16_t nDataLengthLE =
+                CPL_LSBWORD16(static_cast<uint16_t>(nDataLength));
+            abyExtra.insert(
+                abyExtra.end(), reinterpret_cast<const GByte *>(&nDataLengthLE),
+                reinterpret_cast<const GByte *>(&nDataLengthLE) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>("KeyValuePairs"),
+                            reinterpret_cast<const GByte *>("KeyValuePairs") +
+                                strlen("KeyValuePairs"));
+            abyExtra.push_back(1);  // number of key/value pairs
+            const uint16_t nKeyLen =
+                CPL_LSBWORD16(static_cast<uint16_t>(strlen("Content-Type")));
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nKeyLen),
+                            reinterpret_cast<const GByte *>(&nKeyLen) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>("Content-Type"),
+                            reinterpret_cast<const GByte *>("Content-Type") +
+                                strlen("Content-Type"));
+            const uint16_t nValLen =
+                CPL_LSBWORD16(static_cast<uint16_t>(strlen(pszContentType)));
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nValLen),
+                            reinterpret_cast<const GByte *>(&nValLen) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(pszContentType),
+                            reinterpret_cast<const GByte *>(
+                                pszContentType + strlen(pszContentType)));
+        }
     }
 
     const bool bIncludeInCentralDirectory = CPLTestBool(CSLFetchNameValueDef(
@@ -2143,14 +2207,16 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
     fileinfo.tmz_date.tm_sec = brokenDown.tm_sec;
 
     const int nErr = cpl_zipOpenNewFileInZip3(
-        psZip->hZip, pszCPFilename, &fileinfo, pabyExtra, nExtraLength,
-        pabyExtra, nExtraLength, "", bCompressed ? Z_DEFLATED : 0,
+        psZip->hZip, pszCPFilename, &fileinfo,
+        abyExtra.empty() ? nullptr : abyExtra.data(),
+        static_cast<uInt>(abyExtra.size()),
+        abyExtra.empty() ? nullptr : abyExtra.data(),
+        static_cast<uInt>(abyExtra.size()), "", bCompressed ? Z_DEFLATED : 0,
         bCompressed ? Z_DEFAULT_COMPRESSION : 0,
         /* raw = */ 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
         /* password = */ nullptr,
         /* crcForCtypting = */ 0, bZip64, bIncludeInCentralDirectory);
 
-    CPLFree(pabyExtra);
     CPLFree(pszCPFilename);
 
     if (nErr != ZIP_OK)
@@ -2233,6 +2299,9 @@ CPLErr CPLCloseFileInZip(void *hZip)
  * <li>TIMESTAMP=AUTO/NOW/timestamp_as_epoch_since_jan_1_1970: in AUTO mode,
  * the timestamp of pszInputFilename will be used (if available), otherwise
  * it will fallback to NOW.</li>
+ * <li>CONTENT_TYPE=string: Content-Type value for the file. This is stored as
+ * a key-value pair in the extra field extension 'KV' (0x564b) dedicated to
+ * storing key-value pair metadata.</li>
  * </ul>
  *
  * @param hZip ZIP file handle

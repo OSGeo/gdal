@@ -3485,6 +3485,7 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     {
         std::unique_ptr<VSIVirtualHandle, VirtualHandleCloser>
             poVirtualHandle{};
+        std::map<std::string, std::string> oMapProperties{};
         int nCompressionMethod = 0;
         uint64_t nUncompressedSize = 0;
         uint64_t nCompressedSize = 0;
@@ -4035,6 +4036,71 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
         return false;
     }
 
+    if (file_info.size_file_extra)
+    {
+        std::vector<GByte> abyExtra(file_info.size_file_extra);
+        poVirtualHandle->Seek(file_info.file_extra_abs_offset, SEEK_SET);
+        if (poVirtualHandle->Read(&abyExtra[0], abyExtra.size(), 1) == 1)
+        {
+            size_t nPos = 0;
+            while (nPos + 2 * sizeof(uint16_t) <= abyExtra.size())
+            {
+                uint16_t nId;
+                memcpy(&nId, &abyExtra[nPos], sizeof(uint16_t));
+                nPos += sizeof(uint16_t);
+                CPL_LSBPTR16(&nId);
+                uint16_t nSize;
+                memcpy(&nSize, &abyExtra[nPos], sizeof(uint16_t));
+                nPos += sizeof(uint16_t);
+                CPL_LSBPTR16(&nSize);
+                if (nId == 0x564b && nPos + nSize <= abyExtra.size())  // "KV"
+                {
+                    if (nSize >= strlen("KeyValuePairs") + 1 &&
+                        memcmp(&abyExtra[nPos], "KeyValuePairs",
+                               strlen("KeyValuePairs")) == 0)
+                    {
+                        int nPos2 = static_cast<int>(strlen("KeyValuePairs"));
+                        int nKVPairs = abyExtra[nPos + nPos2];
+                        nPos2++;
+                        for (int iKV = 0; iKV < nKVPairs; ++iKV)
+                        {
+                            if (nPos2 + sizeof(uint16_t) > nSize)
+                                break;
+                            uint16_t nKeyLen;
+                            memcpy(&nKeyLen, &abyExtra[nPos + nPos2],
+                                   sizeof(uint16_t));
+                            nPos2 += sizeof(uint16_t);
+                            CPL_LSBPTR16(&nKeyLen);
+                            if (nPos2 + nKeyLen > nSize)
+                                break;
+                            std::string osKey;
+                            osKey.resize(nKeyLen);
+                            memcpy(&osKey[0], &abyExtra[nPos + nPos2], nKeyLen);
+                            nPos2 += nKeyLen;
+
+                            if (nPos2 + sizeof(uint16_t) > nSize)
+                                break;
+                            uint16_t nValLen;
+                            memcpy(&nValLen, &abyExtra[nPos + nPos2],
+                                   sizeof(uint16_t));
+                            nPos2 += sizeof(uint16_t);
+                            CPL_LSBPTR16(&nValLen);
+                            if (nPos2 + nValLen > nSize)
+                                break;
+                            std::string osVal;
+                            osVal.resize(nValLen);
+                            memcpy(&osVal[0], &abyExtra[nPos + nPos2], nValLen);
+                            nPos2 += nValLen;
+
+                            info.oMapProperties[osKey] = osVal;
+                        }
+                    }
+                }
+                nPos += nSize;
+            }
+        }
+    }
+
     info.nCRC = file_info.crc;
     info.nCompressionMethod = static_cast<int>(file_info.compression_method);
     info.nUncompressedSize = static_cast<uint64_t>(file_info.uncompressed_size);
@@ -4237,12 +4303,21 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
                                                 const char *pszDomain,
                                                 CSLConstList /*papszOptions*/)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "ZIP"))
-    {
-        VSIFileInZipInfo info;
-        if (!GetFileInfo(pszFilename, info))
-            return nullptr;
+    VSIFileInZipInfo info;
+    if (!GetFileInfo(pszFilename, info))
+        return nullptr;
 
+    if (pszDomain == nullptr)
+    {
+        CPLStringList aosMetadata;
+        for (const auto &kv : info.oMapProperties)
+        {
+            aosMetadata.AddNameValue(kv.first.c_str(), kv.second.c_str());
+        }
+        return aosMetadata.StealList();
+    }
+    else if (EQUAL(pszDomain, "ZIP"))
+    {
         CPLStringList aosMetadata;
         aosMetadata.SetNameValue(
             "START_DATA_OFFSET",

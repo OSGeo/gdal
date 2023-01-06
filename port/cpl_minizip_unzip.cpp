@@ -914,6 +914,7 @@ static int unzlocal_GetCurrentFileInfoInternal(
         }
 
         uLong acc = 0;
+        file_info.file_extra_abs_offset = ZTELL(s->z_filefunc, s->filestream);
         while (acc < file_info.size_file_extra)
         {
             uLong headerId;
