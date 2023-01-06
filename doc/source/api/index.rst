@@ -109,7 +109,6 @@ API
       .. toctree::
        :maxdepth: 1
 
-       Rust <https://github.com/georust/gdal>
        Go <https://github.com/lukeroth/gdal>
        Julia <https://github.com/JuliaGeo/GDAL.jl>
        Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>
@@ -118,6 +117,7 @@ API
        Perl <https://metacpan.org/release/Geo-GDAL-FFI>
        PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>
        R <http://cran.r-project.org/web/packages/rgdal/index.html>
+       Rust <https://github.com/georust/gdal>
 
     .. warning::
         For Perl, since GDAL 3.5 the link `Perl <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>`__ is deprecated, use above link instead.
