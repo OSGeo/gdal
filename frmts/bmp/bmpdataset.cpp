@@ -237,6 +237,7 @@ class BMPDataset final : public GDALPamDataset
     double adfGeoTransform[6];
     int bGeoTransformValid;
     bool m_bNewFile = false;
+    vsi_l_offset m_nLargeFileSize = 0;
 
     char *pszFilename;
     VSILFILE *fp;
@@ -972,9 +973,9 @@ BMPDataset::~BMPDataset()
         // Extend the file with zeroes if needed
         VSIFSeekL(fp, 0, SEEK_END);
 
-        if (VSIFTellL(fp) < sFileHeader.iSize)
+        if (VSIFTellL(fp) < m_nLargeFileSize)
         {
-            VSIFTruncateL(fp, sFileHeader.iSize);
+            VSIFTruncateL(fp, m_nLargeFileSize);
         }
     }
 
@@ -1495,7 +1496,6 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     }
     nScanSize = (nScanSize & ~31U) / 8;
 
-    poDS->sInfoHeader.iSizeImage = nScanSize * poDS->sInfoHeader.iHeight;
     poDS->sInfoHeader.iXPelsPerMeter = 0;
     poDS->sInfoHeader.iYPelsPerMeter = 0;
     poDS->nColorElems = 4;
@@ -1526,15 +1526,53 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Fill the BMPFileHeader                                          */
     /* -------------------------------------------------------------------- */
-    poDS->sFileHeader.bType[0] = 'B';
-    poDS->sFileHeader.bType[1] = 'M';
-    poDS->sFileHeader.iSize = BFH_SIZE + poDS->sInfoHeader.iSize +
-                              poDS->sInfoHeader.iClrUsed * poDS->nColorElems +
-                              poDS->sInfoHeader.iSizeImage;
-    poDS->sFileHeader.iReserved1 = 0;
-    poDS->sFileHeader.iReserved2 = 0;
+
     poDS->sFileHeader.iOffBits = BFH_SIZE + poDS->sInfoHeader.iSize +
                                  poDS->sInfoHeader.iClrUsed * poDS->nColorElems;
+
+    // From https://medium.com/@chiaracoetzee/maximum-resolution-of-bmp-image-file-8c729b3f833a
+    if (nXSize > 30000 || nYSize > 30000)
+    {
+        CPLDebug("BMP", "Dimensions of BMP file exceed maximum supported by "
+                        "Adobe Photoshop CC 2014.2.2");
+    }
+    if (nXSize > 2147483647 / (nYSize + 1))
+    {
+        CPLDebug("BMP", "Dimensions of BMP file exceed maximum supported by "
+                        "Windows Photo Viewer");
+    }
+
+    const vsi_l_offset nLargeImageSize =
+        static_cast<vsi_l_offset>(nScanSize) * poDS->sInfoHeader.iHeight;
+    poDS->m_nLargeFileSize = poDS->sFileHeader.iOffBits + nLargeImageSize;
+    if (nLargeImageSize > std::numeric_limits<uint32_t>::max())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Image too big for its size to fit in a 32 bit integer! "
+                 "Writing 0xFFFFFFFF in it, but that could cause compatibility "
+                 "problems with other readers.");
+        poDS->sFileHeader.iSize = std::numeric_limits<uint32_t>::max();
+        poDS->sInfoHeader.iSizeImage = std::numeric_limits<uint32_t>::max();
+    }
+    else if (poDS->m_nLargeFileSize > std::numeric_limits<uint32_t>::max())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "File too big for its size to fit in a 32 bit integer! "
+                 "Writing 0xFFFFFFFF in it, but that could cause compatibility "
+                 "problems with other readers.");
+        poDS->sFileHeader.iSize = std::numeric_limits<uint32_t>::max();
+        poDS->sInfoHeader.iSizeImage = static_cast<uint32_t>(nLargeImageSize);
+    }
+    else
+    {
+        poDS->sFileHeader.iSize = static_cast<uint32_t>(poDS->m_nLargeFileSize);
+        poDS->sInfoHeader.iSizeImage = static_cast<uint32_t>(nLargeImageSize);
+    }
+
+    poDS->sFileHeader.bType[0] = 'B';
+    poDS->sFileHeader.bType[1] = 'M';
+    poDS->sFileHeader.iReserved1 = 0;
+    poDS->sFileHeader.iReserved2 = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Write all structures to the file                                */
