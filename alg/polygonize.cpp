@@ -35,6 +35,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <utility>
@@ -582,6 +583,11 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     /* -------------------------------------------------------------------- */
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
+    if (nXSize > std::numeric_limits<int>::max() - 2)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too wide raster");
+        return CE_Failure;
+    }
 
     DataType *panLastLineVal = static_cast<DataType *>(
         VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize + 2));
