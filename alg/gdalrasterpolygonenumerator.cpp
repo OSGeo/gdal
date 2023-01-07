@@ -31,6 +31,7 @@
 #include "gdal_alg_priv.h"
 
 #include <cstddef>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -129,21 +130,53 @@ int GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::NewPolygon(
     DataType nValue)
 
 {
-    const int nPolyId = nNextPolygonId;
-
+    if (nNextPolygonId == std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALRasterPolygonEnumeratorT::NewPolygon(): maximum number "
+                 "of polygons reached");
+        return -1;
+    }
     if (nNextPolygonId >= nPolyAlloc)
     {
-        nPolyAlloc = nPolyAlloc * 2 + 20;
-        panPolyIdMap = static_cast<GInt32 *>(
-            CPLRealloc(panPolyIdMap, nPolyAlloc * sizeof(GInt32)));
-        panPolyValue = static_cast<DataType *>(
-            CPLRealloc(panPolyValue, nPolyAlloc * sizeof(DataType)));
+        int nPolyAllocNew;
+        if (nPolyAlloc < (std::numeric_limits<int>::max() - 20) / 2)
+            nPolyAllocNew = nPolyAlloc * 2 + 20;
+        else
+            nPolyAllocNew = std::numeric_limits<int>::max();
+#if SIZEOF_VOIDP == 4
+        if (nPolyAllocNew >
+                static_cast<int>(std::numeric_limits<size_t>::max() /
+                                 sizeof(GInt32)) ||
+            nPolyAllocNew >
+                static_cast<int>(std::numeric_limits<size_t>::max() /
+                                 sizeof(DataType)))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "GDALRasterPolygonEnumeratorT::NewPolygon(): too many "
+                     "polygons");
+            return -1;
+        }
+#endif
+        auto panPolyIdMapNew = static_cast<GInt32 *>(
+            VSI_REALLOC_VERBOSE(panPolyIdMap, nPolyAllocNew * sizeof(GInt32)));
+        auto panPolyValueNew = static_cast<DataType *>(VSI_REALLOC_VERBOSE(
+            panPolyValue, nPolyAllocNew * sizeof(DataType)));
+        if (panPolyIdMapNew == nullptr || panPolyValueNew == nullptr)
+        {
+            VSIFree(panPolyIdMapNew);
+            VSIFree(panPolyValueNew);
+            return -1;
+        }
+        panPolyIdMap = panPolyIdMapNew;
+        panPolyValue = panPolyValueNew;
+        nPolyAlloc = nPolyAllocNew;
     }
 
-    nNextPolygonId++;
-
+    const int nPolyId = nNextPolygonId;
     panPolyIdMap[nPolyId] = nPolyId;
     panPolyValue[nPolyId] = nValue;
+    nNextPolygonId++;
 
     return nPolyId;
 }
@@ -197,7 +230,7 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::CompleteMerges()
 /************************************************************************/
 
 template <class DataType, class EqualityTest>
-void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
+bool GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
     DataType *panLastLineVal, DataType *panThisLineVal, GInt32 *panLastLineId,
     GInt32 *panThisLineId, int nXSize)
 
@@ -219,6 +252,8 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
                      !(eq.operator()(panThisLineVal[i], panThisLineVal[i - 1])))
             {
                 panThisLineId[i] = NewPolygon(panThisLineVal[i]);
+                if (panThisLineId[i] < 0)
+                    return false;
             }
             else
             {
@@ -226,7 +261,7 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
             }
         }
 
-        return;
+        return true;
     }
 
     /* -------------------------------------------------------------------- */
@@ -292,8 +327,11 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
         else
         {
             panThisLineId[i] = NewPolygon(panThisLineVal[i]);
+            if (panThisLineId[i] < 0)
+                return false;
         }
     }
+    return true;
 }
 
 template class GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest>;
