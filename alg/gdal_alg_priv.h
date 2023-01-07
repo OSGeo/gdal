@@ -143,7 +143,7 @@ template <class DataType, class EqualityTest> class GDALRasterPolygonEnumeratorT
     explicit GDALRasterPolygonEnumeratorT(int nConnectedness = 4);
     ~GDALRasterPolygonEnumeratorT();
 
-    void ProcessLine(DataType *panLastLineVal, DataType *panThisLineVal,
+    bool ProcessLine(DataType *panLastLineVal, DataType *panThisLineVal,
                      GInt32 *panLastLineId, GInt32 *panThisLineId, int nXSize);
 
     void CompleteMerges();
