@@ -796,7 +796,10 @@ bool NASReader::SaveClasses(const char *pszFile)
     if (fp == nullptr)
         bSuccess = false;
     else if (VSIFWriteL(pszWholeText, strlen(pszWholeText), 1, fp) != 1)
+    {
+        VSIFCloseL(fp);
         bSuccess = false;
+    }
     else
     {
         if (VSIFWriteL(pszWholeText, strlen(pszWholeText), 1, fp) != 1)
