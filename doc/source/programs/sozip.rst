@@ -35,11 +35,13 @@ Description
 -----------
 
 The :program:`sozip` utility can be used to:
-- create a seek-optimized ZIP file
+
+- create a :ref:`sozip_intro` file
 - append files to an existing ZIP/SOZip file
 - list the contents of a ZIP/SOZip file
 - validate a SOZip file
 - convert an existing Zip file in a SOZip optimized one
+
 
 .. program:: sozip
 

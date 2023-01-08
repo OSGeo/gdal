@@ -46,6 +46,9 @@ Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 /vsizip/ (.zip archives)
 ------------------------
 
+Read capabilities
++++++++++++++++++
+
 /vsizip/ is a file handler that allows reading ZIP archives on-the-fly without decompressing them beforehand.
 
 To point to a file inside a zip file, the filename must be of the form :file:`/vsizip/path/to/the/file.zip/path/inside/the/zip/file`, where :file:`path/to/the/file.zip` is relative or absolute and :file:`path/inside/the/zip/file` is the relative path to the file inside the archive.
@@ -65,6 +68,9 @@ Examples:
 .kmz, .ods and .xlsx extensions are also detected as valid extensions for zip-compatible archives.
 
 Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .zip extension, e.g.: ``/vsizip/{/path/to/the/archive}/path/inside/the/zip/file``. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+
+Write capabilities
+++++++++++++++++++
 
 Write capabilities are also available. They allow creating a new zip file and adding new files to an already existing (or just created) zip file.
 
@@ -87,8 +93,38 @@ Addition of a new file to an existing zip:
     VSIFCloseL(newfile);
 
 Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the :decl_configoption:`CPL_VSIL_DEFLATE_CHUNK_SIZE` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
+Starting with GDAL 3.7, this technique is reused to generate .zip files following :ref:`sozip_intro`.
 
 Read and write operations cannot be interleaved. The new zip must be closed before being re-opened in read mode.
+
+.. _sozip_intro:
+
+SOZip (Seek-Optimized ZIP)
+++++++++++++++++++++++++++
+
+GDAL (>= 3.7) has full read and write support for .zip files following the
+`SOZip (Seek-Optimized ZIP) <https://sozip.org>`__ profile.
+
+* The ``/vsizip/`` virtual file system uses the SOZip index to perform fast
+  random access within a compressed SOZip-enabled file.
+
+* The :ref:`vector.shapefile` and :ref:`vector.gpkg` drivers can directly generate
+  SOZip-enabled .shz/.shp.zip or .gpkg.zip files.
+
+* The :cpp:func:`CPLAddFileInZip` C function, which can compress a file and add
+  it to an new or existing ZIP file, enables the SOZip optimization when relevant
+  (ie when a file to be compressed is larger than 1 MB).
+  SOZip optimization can be forced by setting the :decl_configoption:`CPL_SOZIP_ENABLED`
+  configuration option to YES. Or totally disabled by setting it ot NO.
+
+* The :cpp:func:`VSIGetFileMetadata` method can be called on a filename of
+  the form :file:`/vsizip/path/to/the/file.zip/path/inside/the/zip/file` and
+  with domain = "ZIP" to get information if a SOZip index is available for that file.
+
+* The :ref:`sozip` new command line utility can be used to create a
+  seek-optimized ZIP file, to append files to an existing ZIP file, list the
+  contents of a ZIP file and display the SOZip optimization status or validate a SOZip file.
+
 
 .. _vsigzip:
 
