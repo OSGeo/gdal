@@ -463,6 +463,7 @@ void VSIInstallOSSFileHandler(void);
 void VSIInstallOSSStreamingFileHandler(void);
 void VSIInstallSwiftFileHandler(void);
 void VSIInstallSwiftStreamingFileHandler(void);
+void VSIInstall7zFileHandler(void);   /* No reason to export that */
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void);  /* No reason to export that */
 void VSIInstallStdinHandler(void);    /* No reason to export that */

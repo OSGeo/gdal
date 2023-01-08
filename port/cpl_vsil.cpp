@@ -2928,6 +2928,9 @@ VSIFileManager *VSIFileManager::Get()
     VSIInstallGZipFileHandler();
     VSIInstallZipFileHandler();
 #endif
+#ifdef HAVE_LIBARCHIVE
+    VSIInstall7zFileHandler();
+#endif
 #ifdef HAVE_CURL
     VSIInstallCurlFileHandler();
     VSIInstallCurlStreamingFileHandler();
