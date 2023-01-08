@@ -441,7 +441,7 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     }
     virtual std::vector<CPLString> GetExtensions() override
     {
-        return {".7z", ".lpk", ".lpkx"};
+        return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx"};
     }
     virtual VSIArchiveReader *
     CreateReader(const char *pszArchiveFileName) override;
