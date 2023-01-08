@@ -8288,7 +8288,7 @@ def test_ogr_gpkg_sozip():
         ds = None
 
     md = gdal.GetFileMetadata(f"/vsizip/{filename}/test_ogr_gpkg_sozip.gpkg", "ZIP")
-    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_VALID"] == "YES"
 
     ds = ogr.Open(filename)
     assert ds

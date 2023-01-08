@@ -4344,7 +4344,7 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
 
         if (info.bSOZipIndexFound)
         {
-            aosMetadata.SetNameValue("SEEK_OPTIMIZED_FOUND", "YES");
+            aosMetadata.SetNameValue("SOZIP_FOUND", "YES");
 
             aosMetadata.SetNameValue("SOZIP_VERSION",
                                      CPLSPrintf("%u", info.nSOZIPVersion));
@@ -4362,7 +4362,7 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
 
             if (info.bSOZipIndexValid)
             {
-                aosMetadata.SetNameValue("SEEK_OPTIMIZED_VALID", "YES");
+                aosMetadata.SetNameValue("SOZIP_VALID", "YES");
             }
         }
 

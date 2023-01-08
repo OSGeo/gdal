@@ -2286,13 +2286,14 @@ CPLErr CPLCloseFileInZip(void *hZip)
  *
  * Supported options are:
  * <ul>
- * <li>SEEK_OPTIMIZED=AUTO/YES/NO: whether to generate a SOZip index for the
- * file.</li>
+ * <li>SOZIP_ENABLED=AUTO/YES/NO: whether to generate a SOZip index for the
+ * file. The default can be changed with the CPL_SOZIP_ENABLED configuration
+ * option.</li>
  * <li>SOZIP_CHUNK_SIZE: chunk size to use for SOZip generation. Defaults to
  * 32768.
  * </li>
  * <li>SOZIP_MIN_FILE_SIZE: minimum file size to consider to enable SOZip index
- * generation in SEEK_OPTIMIZED=AUTO mode. Defaults to 1 MB.
+ * generation in SOZIP_ENABLED=AUTO mode. Defaults to 1 MB.
  * </li>
  * <li>NUM_THREADS: number of threads used for SOZip generation. Defaults to
  * ALL_CPUS.</li>
@@ -2346,7 +2347,8 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
     CPLStringList aosNewsOptions(papszOptions);
     bool bSeekOptimized = false;
     const char *pszSOZIP =
-        CSLFetchNameValueDef(papszOptions, "SEEK_OPTIMIZED", "AUTO");
+        CSLFetchNameValueDef(papszOptions, "SOZIP_ENABLED",
+                             CPLGetConfigOption("CPL_SOZIP_ENABLED", "AUTO"));
 
     const char *pszChunkSize = CSLFetchNameValueDef(
         papszOptions, "SOZIP_CHUNK_SIZE",

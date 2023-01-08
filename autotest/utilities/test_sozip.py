@@ -78,7 +78,7 @@ def test_sozip_create():
     assert md["Content-Type"] == "image/tiff"
 
     md = gdal.GetFileMetadata("/vsizip/tmp/sozip.zip/byte.tif", "ZIP")
-    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_VALID"] == "YES"
     assert md["SOZIP_CHUNK_SIZE"] == "128"
 
     gdal.Unlink("tmp/sozip.zip")
@@ -105,12 +105,12 @@ def test_sozip_append():
     assert err is None or err == "", "got error/warning"
 
     md = gdal.GetFileMetadata("/vsizip/tmp/sozip.zip/byte.tif", "ZIP")
-    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_VALID"] == "YES"
     assert md["SOZIP_CHUNK_SIZE"] == "128"
 
     md = gdal.GetFileMetadata("/vsizip/tmp/sozip.zip/uint16.tif", "ZIP")
     assert md != {}
-    assert "SEEK_OPTIMIZED_VALID" not in md
+    assert "SOZIP_VALID" not in md
 
     gdal.Unlink("tmp/sozip.zip")
 

@@ -91,9 +91,9 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
             char **papszMD =
                 VSIGetFileMetadata(osFilenameInZip.c_str(), "ZIP", nullptr);
             bool bSeekOptimizedFound =
-                CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_FOUND") != nullptr;
+                CSLFetchNameValue(papszMD, "SOZIP_FOUND") != nullptr;
             bool bSeekOptimizedValid =
-                CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_VALID") != nullptr;
+                CSLFetchNameValue(papszMD, "SOZIP_VALID") != nullptr;
             const char *pszChunkSize =
                 CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
             if (bSeekOptimizedValid)
@@ -409,12 +409,12 @@ MAIN_START(nArgc, papszArgv)
                  iArg + 1 < nArgc)
         {
             ++iArg;
-            aosOptions.SetNameValue("SEEK_OPTIMIZED", papszArgv[iArg]);
+            aosOptions.SetNameValue("SOZIP_ENABLED", papszArgv[iArg]);
         }
         else if (STARTS_WITH(papszArgv[iArg], "--enable-sozip="))
         {
             aosOptions.SetNameValue(
-                "SEEK_OPTIMIZED", papszArgv[iArg] + strlen("--enable-sozip="));
+                "SOZIP_ENABLED", papszArgv[iArg] + strlen("--enable-sozip="));
         }
         else if (strcmp(papszArgv[iArg], "--sozip-chunk-size") == 0 &&
                  iArg + 1 < nArgc)
@@ -531,8 +531,7 @@ MAIN_START(nArgc, papszArgv)
                 char **papszMD =
                     VSIGetFileMetadata(osFilename.c_str(), "ZIP", nullptr);
                 bool bSeekOptimized =
-                    CSLFetchNameValue(papszMD, "SEEK_OPTIMIZED_VALID") !=
-                    nullptr;
+                    CSLFetchNameValue(papszMD, "SOZIP_VALID") != nullptr;
                 const char *pszChunkSize =
                     CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
                 printf("%11" CPL_FRMT_GB_WITHOUT_PREFIX

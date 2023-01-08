@@ -812,19 +812,19 @@ def test_vsizip_byte_copyfile_srcfilename_is_none():
             "COMPRESSION_METHOD",
             "COMPRESSED_SIZE",
             "UNCOMPRESSED_SIZE",
-            "SEEK_OPTIMIZED_FOUND",
+            "SOZIP_FOUND",
             "SOZIP_VERSION",
             "SOZIP_OFFSET_SIZE",
             "SOZIP_CHUNK_SIZE",
             "SOZIP_START_DATA_OFFSET",
-            "SEEK_OPTIMIZED_VALID",
+            "SOZIP_VALID",
         }
         assert md["START_DATA_OFFSET"] == "38"
         assert md["COMPRESSION_METHOD"] == "8 (DEFLATE)"
         assert md["UNCOMPRESSED_SIZE"] == str(gdal.VSIStatL(dstfilename).size)
         assert int(md["COMPRESSED_SIZE"]) < int(md["UNCOMPRESSED_SIZE"])
-        assert md["SEEK_OPTIMIZED_FOUND"] == "YES"
-        assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+        assert md["SOZIP_FOUND"] == "YES"
+        assert md["SOZIP_VALID"] == "YES"
         assert md["SOZIP_VERSION"] == "1"
         assert md["SOZIP_OFFSET_SIZE"] == "8"
         assert md["SOZIP_CHUNK_SIZE"] == "32768"
@@ -922,13 +922,13 @@ def test_vsizip_byte_sozip():
     zipfilename = "/vsimem/test_vsizip_byte_sozip.zip"
     dstfilename = f"/vsizip/{zipfilename}/test.tif"
     try:
-        options = ["SEEK_OPTIMIZED=YES", "SOZIP_CHUNK_SIZE=128"]
+        options = ["SOZIP_ENABLED=YES", "SOZIP_CHUNK_SIZE=128"]
         assert gdal.CopyFile("data/byte.tif", dstfilename, options=options) == 0
         assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
 
         md = gdal.GetFileMetadata(dstfilename, "ZIP")
         assert md is not None
-        assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+        assert md["SOZIP_VALID"] == "YES"
         assert md["SOZIP_CHUNK_SIZE"] == "128"
         assert md["SOZIP_OFFSET_SIZE"] == "8"
 
@@ -947,14 +947,14 @@ def test_vsizip_sozip_of_file_bigger_than_4GB():
     md = gdal.GetFileMetadata(
         "/vsizip/{data/zero_5GB_sozip_of_sozip.zip}/zero_5GB.bin.zip", "ZIP"
     )
-    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_VALID"] == "YES"
     assert md["SOZIP_CHUNK_SIZE"] == "32768"
 
     md = gdal.GetFileMetadata(
         "/vsizip/{/vsizip/{data/zero_5GB_sozip_of_sozip.zip}/zero_5GB.bin.zip}/zero_5GB.bin",
         "ZIP",
     )
-    assert md["SEEK_OPTIMIZED_VALID"] == "YES"
+    assert md["SOZIP_VALID"] == "YES"
     assert md["SOZIP_CHUNK_SIZE"] == "10485760"
 
     f = gdal.VSIFOpenL(

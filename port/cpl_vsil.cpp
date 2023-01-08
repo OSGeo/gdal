@@ -861,7 +861,7 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
  * https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata.
  * Note: this will be a subset of what pszDomain=HEADERS returns</li>
  * <li>ZIP: specific to /vsizip/: to obtain ZIP specific metadata, in particular
- * if a file is seek-optimized (SEEK_OPTIMIZED=YES)</li>
+ * if a file is SOZIP-enabled (SOZIP_VALID=YES)</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
  *
