@@ -25,11 +25,11 @@ extern "C" {
 #define inflateBack9Init_ gdal_inflateBack9Init_
 #define inflateBack9Copy gdal_inflateBack9Copy
 
-ZEXTERN int ZEXPORT inflateBack9 (z_stream FAR *strm,
+int inflateBack9 (z_stream FAR *strm,
                                     in_func in, void FAR *in_desc,
                                     out_func out, void FAR *out_desc);
-ZEXTERN int ZEXPORT inflateBack9End (z_stream FAR *strm);
-ZEXTERN int ZEXPORT inflateBack9Init_ (z_stream FAR *strm,
+int inflateBack9End (z_stream FAR *strm);
+int inflateBack9Init_ (z_stream FAR *strm,
                                          unsigned char FAR *window,
                                          const char *version,
                                          int stream_size);
@@ -37,7 +37,7 @@ ZEXTERN int ZEXPORT inflateBack9Init_ (z_stream FAR *strm,
         inflateBack9Init_((strm), (window), \
         ZLIB_VERSION, sizeof(z_stream))
 
-ZEXTERN int ZEXPORT inflateBack9Copy (z_streamp dest, z_streamp source);
+int inflateBack9Copy (z_streamp dest, z_streamp source);
 
 #ifdef __cplusplus
 }
