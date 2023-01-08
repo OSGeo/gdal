@@ -357,7 +357,7 @@ void RegisterOGROpenFileGDB()
         "  <Option name='MSCALE' type='float' description='M scale of the "
         "coordinate precision grid'/>"
         "  <Option name='COLUMN_TYPES' type='string' description='A list of "
-        "strings of format field_name=fgdb_filed_type (separated by comma) to "
+        "strings of format field_name=fgdb_field_type (separated by comma) to "
         "force the FileGDB column type of fields to be created'/>"
         "  <Option name='DOCUMENTATION' type='string' description='XML "
         "documentation'/>"
