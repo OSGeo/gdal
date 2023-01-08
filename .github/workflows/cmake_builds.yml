@@ -59,7 +59,7 @@ jobs:
            libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
            libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libkml-dev \
            libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
-           libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev \
+           libclc-dev ocl-icd-opencl-dev libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev libarchive-dev \
            libqhull-dev libcfitsio-dev libogdi-dev libopenjp2-7-dev libheif-dev \
            python3-dev libpython3-dev libpython3.8-dev python3.8-dev python3-numpy python3-lxml pyflakes python3-setuptools python3-pip python3-venv \
            python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
@@ -327,7 +327,7 @@ jobs:
           # Disable mingw-w64-x86_64-crypto++ as it crashes at runtime on eedai_3 test. Likely a build issue with crypto++ itself
           install: |
             base-devel git mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache
-            mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-pcre mingw-w64-x86_64-xerces-c mingw-w64-x86_64-zstd mingw-w64-x86_64-libarchive
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
             mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler mingw-w64-x86_64-postgresql
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
@@ -434,7 +434,7 @@ jobs:
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
-            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc \
+            openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
             "arrow-cpp>=7.0.0" "pyarrow>=7.0.0"
         cd $CONDA_PREFIX/Library/share/proj
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
@@ -613,7 +613,7 @@ jobs:
         brew unlink python
         brew install --overwrite python@3.10 python@3.11
         brew install postgresql || brew link postgresql
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif
+        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
