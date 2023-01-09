@@ -139,7 +139,7 @@ Layer Creation Options
    -  ZORIGIN and MORIGIN: -100000
    -  ZSCALE and MSCALE: 10000
 
--  **COLUMN_TYPES**\=string. A list of strings of format field_name=fgdb_filed_type
+-  **COLUMN_TYPES**\=string. A list of strings of format field_name=fgdb_field_type
    (separated by comma) to force the FileGDB column type of fields to be created.
 
 -  **DOCUMENTATION**\=string. XML documentation for the layer.
