@@ -935,7 +935,7 @@ void RegisterOGRFileGDB()
         "description='Whether to write geometries of layers of type "
         "MultiPolygon as MultiPatch' default='NO'/>"
         "  <Option name='COLUMN_TYPES' type='string' description='A list of "
-        "strings of format field_name=fgdb_filed_type (separated by comma) to "
+        "strings of format field_name=fgdb_field_type (separated by comma) to "
         "force the FileGDB column type of fields to be created'/>"
         "  <Option name='CONFIGURATION_KEYWORD' type='string-select' "
         "description='Customize how data is stored. By default text in UTF-8 "
