@@ -9,6 +9,9 @@
 #include "inflate9.h"
 #include <assert.h>
 
+#undef ZEXPORT
+#define ZEXPORT
+
 #define WSIZE 65536UL
 
 /*

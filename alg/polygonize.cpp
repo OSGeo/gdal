@@ -35,6 +35,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <utility>
@@ -582,6 +583,11 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     /* -------------------------------------------------------------------- */
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
+    if (nXSize > std::numeric_limits<int>::max() - 2)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too wide raster");
+        return CE_Failure;
+    }
 
     DataType *panLastLineVal = static_cast<DataType *>(
         VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize + 2));
@@ -661,13 +667,21 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         if (eErr == CE_None && hMaskBand != nullptr)
             eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
                                    panThisLineVal);
+        if (eErr != CE_None)
+            break;
 
         if (iY == 0)
-            oFirstEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
-                                   panThisLineId, nXSize);
+            eErr = oFirstEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
+                                          panThisLineId, nXSize)
+                       ? CE_None
+                       : CE_Failure;
         else
-            oFirstEnum.ProcessLine(panLastLineVal, panThisLineVal,
-                                   panLastLineId, panThisLineId, nXSize);
+            eErr = oFirstEnum.ProcessLine(panLastLineVal, panThisLineVal,
+                                          panLastLineId, panThisLineId, nXSize)
+                       ? CE_None
+                       : CE_Failure;
+        if (eErr != CE_None)
+            break;
 
         // Swap lines.
         std::swap(panLastLineVal, panThisLineVal);
@@ -678,8 +692,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         /*      Report progress, and support interrupts. */
         /* --------------------------------------------------------------------
          */
-        if (eErr == CE_None &&
-            !pfnProgress(0.10 * ((iY + 1) / static_cast<double>(nYSize)), "",
+        if (!pfnProgress(0.10 * ((iY + 1) / static_cast<double>(nYSize)), "",
                          pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -692,7 +705,8 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     /*      points to the final id it should use, not an intermediate       */
     /*      value.                                                          */
     /* -------------------------------------------------------------------- */
-    oFirstEnum.CompleteMerges();
+    if (eErr == CE_None)
+        oFirstEnum.CompleteMerges();
 
     /* -------------------------------------------------------------------- */
     /*      Initialize ids to -1 to serve as a nodata value for the         */
@@ -712,7 +726,9 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oSecondEnum(
         nConnectedness);
     RPolygon **papoPoly = static_cast<RPolygon **>(
-        CPLCalloc(sizeof(RPolygon *), oFirstEnum.nNextPolygonId));
+        VSI_CALLOC_VERBOSE(sizeof(RPolygon *), oFirstEnum.nNextPolygonId));
+    if (oFirstEnum.nNextPolygonId && papoPoly == nullptr)
+        eErr = CE_Failure;
 
     /* ==================================================================== */
     /*      Second pass during which we will actually collect polygon       */
@@ -751,15 +767,22 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         }
         else if (iY == 0)
         {
-            oSecondEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
-                                    panThisLineId + 1, nXSize);
+            eErr = oSecondEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
+                                           panThisLineId + 1, nXSize)
+                       ? CE_None
+                       : CE_Failure;
         }
         else
         {
-            oSecondEnum.ProcessLine(panLastLineVal, panThisLineVal,
-                                    panLastLineId + 1, panThisLineId + 1,
-                                    nXSize);
+            eErr = oSecondEnum.ProcessLine(panLastLineVal, panThisLineVal,
+                                           panLastLineId + 1, panThisLineId + 1,
+                                           nXSize)
+                       ? CE_None
+                       : CE_Failure;
         }
+
+        if (eErr != CE_None)
+            continue;
 
         /* --------------------------------------------------------------------
          */
