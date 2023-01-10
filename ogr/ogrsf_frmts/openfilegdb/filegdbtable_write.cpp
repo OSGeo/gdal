@@ -722,6 +722,19 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                 if (auto poCC = dynamic_cast<const OGRCompoundCurve *>(poCurve))
                 {
                     const size_t nSizeBefore = m_adfX.size();
+
+                    std::size_t nTotalSize = 0;
+                    for (const auto *poSubCurve : *poCC)
+                    {
+                        nTotalSize += poSubCurve->getNumPoints();
+                    }
+                    m_adfX.reserve(m_adfX.size() + nTotalSize);
+                    m_adfY.reserve(m_adfY.size() + nTotalSize);
+                    if (bIs3D)
+                        m_adfZ.reserve(m_adfZ.size() + nTotalSize);
+                    if (bIsMeasured)
+                        m_adfM.reserve(m_adfM.size() + nTotalSize);
+
                     bool bFirstSubCurve = true;
                     for (const auto *poSubCurve : *poCC)
                     {
@@ -786,6 +799,12 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                 {
                     const int nNumPoints = poLS->getNumPoints();
                     m_anNumberPointsPerPart.push_back(nNumPoints);
+                    m_adfX.reserve(m_adfX.size() + nNumPoints);
+                    m_adfY.reserve(m_adfY.size() + nNumPoints);
+                    if (bIs3D)
+                        m_adfZ.reserve(m_adfZ.size() + nNumPoints);
+                    if (bIsMeasured)
+                        m_adfM.reserve(m_adfM.size() + nNumPoints);
                     for (int i = 0; i < nNumPoints; ++i)
                     {
                         m_adfX.push_back(poLS->getX(i));
@@ -801,6 +820,13 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                 {
                     const int nNumPoints = poCS->getNumPoints();
                     const size_t nSizeBefore = m_adfX.size();
+                    const size_t nSizeAfter = nSizeBefore + nNumPoints;
+                    m_adfX.reserve(nSizeAfter);
+                    m_adfY.reserve(nSizeAfter);
+                    if (bIs3D)
+                        m_adfZ.reserve(nSizeAfter);
+                    if (bIsMeasured)
+                        m_adfM.reserve(nSizeAfter);
                     for (int i = 0; i < nNumPoints; i++)
                     {
                         m_adfX.push_back(poCS->getX(i));
@@ -901,6 +927,19 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                         dynamic_cast<const OGRPolygon *>(poSurface))
                 {
                     bool bFirstRing = true;
+
+                    std::size_t nTotalSize = 0;
+                    for (const auto *poLS : *poPolygon)
+                    {
+                        nTotalSize += poLS->getNumPoints();
+                    }
+                    m_adfX.reserve(m_adfX.size() + nTotalSize);
+                    m_adfY.reserve(m_adfY.size() + nTotalSize);
+                    if (bIs3D)
+                        m_adfZ.reserve(m_adfZ.size() + nTotalSize);
+                    if (bIsMeasured)
+                        m_adfM.reserve(m_adfM.size() + nTotalSize);
+
                     for (const auto *poLS : *poPolygon)
                     {
                         const int nNumPoints = poLS->getNumPoints();
