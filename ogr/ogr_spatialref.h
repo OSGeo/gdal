@@ -209,6 +209,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr exportToUSGS(long *, long *, double **, long *) const;
     OGRErr exportToXML(char **, const char * = nullptr) const;
     OGRErr exportToPanorama(long *, long *, long *, long *, double *) const;
+    OGRErr exportVertCSToPanorama(int *) const;
     OGRErr exportToERM(char *pszProj, char *pszDatum, char *pszUnits);
     OGRErr exportToMICoordSys(char **) const;
 
@@ -239,7 +240,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr importFromUSGS(long iProjSys, long iZone, double *padfPrjParams,
                           long iDatum,
                           int nUSGSAngleFormat = USGS_ANGLE_PACKEDDMS);
-    OGRErr importFromPanorama(long, long, long, double *);
+    OGRErr importFromPanorama(long, long, long, double *, bool bNorth = true);
     OGRErr importVertCSFromPanorama(int);
     OGRErr importFromOzi(const char *const *papszLines);
     OGRErr importFromWMSAUTO(const char *pszAutoDef);

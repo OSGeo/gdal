@@ -444,4 +444,62 @@ TEST_F(test_osr, constructors_assignment_operators)
     ASSERT_TRUE(oSRS5.GetAuthorityCode(nullptr) != nullptr);
 }
 
+static int GetEPSGCode(OGRSpatialReference &oSRS)
+{
+    int nEPSG = 0;
+    auto pszEPSG = oSRS.GetAuthorityCode("PROJCS");
+    if (pszEPSG == nullptr)
+    {
+        pszEPSG = oSRS.GetAuthorityCode("GEOGCS");
+    }
+    if (pszEPSG == nullptr)
+    {
+        pszEPSG = oSRS.GetAuthorityCode("VERT_CS");
+    }
+    if (pszEPSG != nullptr)
+    {
+        nEPSG = atoi(pszEPSG);
+    }
+    return nEPSG;
+}
+
+// Test exportVertCSToPanorama
+TEST_F(test_osr, exportVertCSToPanorama)
+{
+    OGRSpatialReference oSRS;
+    oSRS.importFromEPSG(28407);
+
+    OGRSpatialReference oVertSRS;
+    oVertSRS.importFromEPSG(5705);
+    EXPECT_TRUE(oVertSRS.IsVertical() == TRUE);
+    EXPECT_STRNE(oVertSRS.GetAttrValue("VERT_CS"), "");
+    EXPECT_STRNE(oVertSRS.GetAttrValue("VERT_DATUM"), "");
+    EXPECT_EQ(GetEPSGCode(oVertSRS), 5705);
+
+    oSRS.SetVertCS(oVertSRS.GetAttrValue("VERT_CS"),
+                   oVertSRS.GetAttrValue("VERT_DATUM"));
+
+    int nVertID = 0;
+    oSRS.exportVertCSToPanorama(&nVertID);
+    EXPECT_EQ(nVertID, 25);
+}
+
+// Test importFromPanorama
+TEST_F(test_osr, importFromPanorama)
+{
+    OGRSpatialReference oSRS;
+    oSRS.importFromPanorama(35, 0, 45, nullptr);
+    EXPECT_EQ(GetEPSGCode(oSRS), 3857);
+
+    oSRS.importFromPanorama(35, 0, 9, nullptr);
+    EXPECT_EQ(GetEPSGCode(oSRS), 3395);
+
+    double adfPrjParams[8] = {0.0,    0.0,      0.0, 0.680678,
+                              0.9996, 500000.0, 0.0, 0.0};
+    oSRS.importFromPanorama(17, 2, 9, adfPrjParams);
+    EXPECT_EQ(GetEPSGCode(oSRS), 32637);
+
+    oSRS.importFromPanorama(17, 2, 9, adfPrjParams, FALSE);
+    EXPECT_EQ(GetEPSGCode(oSRS), 32737);
+}
 }  // namespace
