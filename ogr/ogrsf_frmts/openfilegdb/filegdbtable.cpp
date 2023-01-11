@@ -3735,11 +3735,27 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 poPoly->addRingDirectly(papoRings[0]);
             }
             else
+            // Note: ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING is *not* defined
 #ifdef ASSUME_INNER_RINGS_IMMEDIATELY_AFTER_OUTER_RING
                 if (bUseOrganize || !(papoRings[0]->isClockwise()))
 #endif
             {
-                /* Slow method : not used by default */
+                /* Slow method: we do a rather expensive topological analysis of
+                 * the rings to figure out which ones are inner rings from outer
+                 * rings, and to which outer ring an inner ring belongs too.
+                 * In most cases, inner rings are CCW oriented and follow
+                 * immediately the outer ring in which they are included,
+                 * (that situation is the commented code in the below else
+                 * branch).
+                 * In nearly all cases, inner rings are CCW and outer rings
+                 * are CW oriented, so we could call organizePolygons() with
+                 * the relatively lightweight METHOD=ONLY_CCW strategy (which
+                 * is what the shapefile drivers does at time of writing).
+                 * Unfortunately in https://github.com/OSGeo/gdal/issues/1369,
+                 * we found likely broken datasets where a polygon with inner
+                 * rings has its exterior ring with wrong orientation, hence
+                 * we use the slowest but bullet-proof method.
+                 */
                 OGRPolygon **papoPolygons = new OGRPolygon *[nParts];
                 for (i = 0; i < nParts; i++)
                 {
