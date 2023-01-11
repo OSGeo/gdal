@@ -560,6 +560,18 @@ def test_gdal_translate_lib_colorinterp():
         with gdaltest.error_handler():
             gdal.Translate("", src_ds, options="-f MEM -colorinterp_0 alpha")
 
+    # Test colorinterp on a source mask band
+    tmp_ds = gdal.Translate("", src_ds, options="-f MEM -b 1 -b 2 -b 3 -mask mask")
+    ds = gdal.Translate(
+        "",
+        tmp_ds,
+        options="-f MEM -b 1 -b 2 -b 3 -b mask -colorinterp red,green,blue,alpha",
+    )
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
+
 
 ###############################################################################
 # Test nogcp options

@@ -2095,12 +2095,26 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         poVDS->AddBand(eBandType, aosAddBandOptions.List());
         VRTSourcedRasterBand *poVRTBand =
             static_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand(i + 1));
+
         if (nSrcBand < 0)
         {
             poVRTBand->AddMaskBandSource(
                 poSrcBand, psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
                 psOptions->adfSrcWin[2], psOptions->adfSrcWin[3], adfDstWin[0],
                 adfDstWin[1], adfDstWin[2], adfDstWin[3]);
+
+            // Color interpretation override
+            if (!psOptions->anColorInterp.empty())
+            {
+                if (i < static_cast<int>(psOptions->anColorInterp.size()) &&
+                    psOptions->anColorInterp[i] >= 0)
+                {
+                    poVRTBand->SetColorInterpretation(
+                        static_cast<GDALColorInterp>(
+                            psOptions->anColorInterp[i]));
+                }
+            }
+
             continue;
         }
 
