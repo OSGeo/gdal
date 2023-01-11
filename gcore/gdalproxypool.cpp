@@ -1264,7 +1264,24 @@ void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(
 
 CPLErr GDALProxyPoolRasterBand::FlushCache(bool bAtClosing)
 {
-    GDALRasterBand *poUnderlyingRasterBand = RefUnderlyingRasterBand(false);
+    GDALRasterBand *poUnderlyingRasterBand;
+    if (auto l_poProxyMaskBand = dynamic_cast<GDALProxyPoolMaskBand *>(this))
+    {
+        poUnderlyingRasterBand =
+            static_cast<GDALProxyPoolRasterBand *>(l_poProxyMaskBand)
+                ->RefUnderlyingRasterBand();
+    }
+    else if (auto poProxyOvrBand =
+                 dynamic_cast<GDALProxyPoolOverviewRasterBand *>(this))
+    {
+        poUnderlyingRasterBand =
+            static_cast<GDALProxyPoolRasterBand *>(poProxyOvrBand)
+                ->RefUnderlyingRasterBand();
+    }
+    else
+    {
+        poUnderlyingRasterBand = RefUnderlyingRasterBand(false);
+    }
     if (poUnderlyingRasterBand)
     {
         CPLErr eErr = poUnderlyingRasterBand->FlushCache(bAtClosing);
