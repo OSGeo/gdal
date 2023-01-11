@@ -325,7 +325,8 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
     double m_dfNoData;
 
   protected:
-    virtual GDALRasterBand *RefUnderlyingRasterBand() const override
+    virtual GDALRasterBand *
+    RefUnderlyingRasterBand(bool /* bForceOpen */) const override
     {
         return m_poBaseBand;
     }
