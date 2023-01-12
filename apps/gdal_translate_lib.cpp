@@ -2104,14 +2104,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 adfDstWin[1], adfDstWin[2], adfDstWin[3]);
 
             // Color interpretation override
-            if (!psOptions->anColorInterp.empty())
+            if (psOptions->panColorInterp)
             {
-                if (i < static_cast<int>(psOptions->anColorInterp.size()) &&
-                    psOptions->anColorInterp[i] >= 0)
+                if (i < psOptions->nColorInterpSize &&
+                    psOptions->panColorInterp[i] >= 0)
                 {
                     poVRTBand->SetColorInterpretation(
                         static_cast<GDALColorInterp>(
-                            psOptions->anColorInterp[i]));
+                            psOptions->panColorInterp[i]));
                 }
             }
 
