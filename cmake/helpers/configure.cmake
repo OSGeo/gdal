@@ -117,7 +117,7 @@ else ()
     "
         #define _GNU_SOURCE
         #include <sys/mman.h>
-        int main() { return (mremap(0,0,0,0,0)); }
+        int main() { return (mremap(0,0,0,0,0) != 0); }
         "
     HAVE_5ARGS_MREMAP)
 
