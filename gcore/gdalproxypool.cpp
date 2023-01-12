@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdal_proxy.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -70,6 +71,7 @@ struct _GDALProxyPoolCacheEntry
     char *pszFileNameAndOpenOptions;
     char *pszOwner;
     GDALDataset *poDS;
+    GIntBig nRAMUsage;
 
     /* Ref count of the cached dataset */
     int refCount;
@@ -93,6 +95,8 @@ class GDALDatasetPool
 
     int maxSize = 0;
     int currentSize = 0;
+    int64_t nMaxRAMUsage = 0;
+    int64_t nRAMUsage = 0;
     GDALProxyPoolCacheEntry *firstEntry = nullptr;
     GDALProxyPoolCacheEntry *lastEntry = nullptr;
 
@@ -111,7 +115,7 @@ class GDALDatasetPool
 
     /* Caution : to be sure that we don't run out of entries, size must be at */
     /* least greater or equal than the maximum number of threads */
-    explicit GDALDatasetPool(int maxSize);
+    explicit GDALDatasetPool(int maxSize, int64_t nMaxRAMUsage);
     ~GDALDatasetPool();
     GDALProxyPoolCacheEntry *_RefDataset(const char *pszFileName,
                                          GDALAccess eAccess,
@@ -152,7 +156,8 @@ class GDALDatasetPool
 /*                         GDALDatasetPool()                            */
 /************************************************************************/
 
-GDALDatasetPool::GDALDatasetPool(int maxSizeIn) : maxSize(maxSizeIn)
+GDALDatasetPool::GDALDatasetPool(int maxSizeIn, int64_t nMaxRAMUsageIn)
+    : maxSize(maxSizeIn), nMaxRAMUsage(nMaxRAMUsageIn)
 {
 }
 
@@ -195,7 +200,9 @@ void GDALDatasetPool::ShowContent()
     {
         printf("[%d] pszFileName=%s, owner=%s, refCount=%d, " /*ok*/
                "responsiblePID=%d\n",
-               i, cur->pszFileNameAndOpenOptions,
+               i,
+               cur->pszFileNameAndOpenOptions ? cur->pszFileNameAndOpenOptions
+                                              : "(null)",
                cur->pszOwner ? cur->pszOwner : "(null)", cur->refCount,
                (int)cur->responsiblePID);
         i++;
@@ -252,9 +259,79 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     if (bInDestruction)
         return nullptr;
 
+    const GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
+
+    const auto EvictEntryWithZeroRefCount =
+        [this, responsiblePID](bool evictEntryWithOpenedDataset)
+    {
+        GDALProxyPoolCacheEntry *cur = firstEntry;
+        GDALProxyPoolCacheEntry *candidate = nullptr;
+        while (cur)
+        {
+            GDALProxyPoolCacheEntry *next = cur->next;
+
+            if (cur->refCount == 0 &&
+                (!evictEntryWithOpenedDataset || cur->nRAMUsage > 0))
+            {
+                candidate = cur;
+            }
+
+            cur = next;
+        }
+        if (candidate == nullptr)
+            return false;
+
+        nRAMUsage -= candidate->nRAMUsage;
+        candidate->nRAMUsage = 0;
+
+        CPLFree(candidate->pszFileNameAndOpenOptions);
+        candidate->pszFileNameAndOpenOptions = nullptr;
+
+        if (candidate->poDS)
+        {
+            /* Close by pretending we are the thread that GDALOpen'ed this */
+            /* dataset */
+            GDALSetResponsiblePIDForCurrentThread(candidate->responsiblePID);
+
+            refCountOfDisableRefCount++;
+            GDALClose(candidate->poDS);
+            refCountOfDisableRefCount--;
+
+            candidate->poDS = nullptr;
+            GDALSetResponsiblePIDForCurrentThread(responsiblePID);
+        }
+        CPLFree(candidate->pszOwner);
+        candidate->pszOwner = nullptr;
+
+        if (!evictEntryWithOpenedDataset && candidate != firstEntry)
+        {
+            /* Recycle this entry for the to-be-opened dataset and */
+            /* moves it to the top of the list */
+            if (candidate->prev)
+                candidate->prev->next = candidate->next;
+
+            if (candidate->next)
+                candidate->next->prev = candidate->prev;
+            else
+            {
+                CPLAssert(candidate == lastEntry);
+                lastEntry->prev->next = nullptr;
+                lastEntry = lastEntry->prev;
+            }
+            candidate->prev = nullptr;
+            candidate->next = firstEntry;
+            firstEntry->prev = candidate;
+            firstEntry = candidate;
+
+#ifdef DEBUG_PROXY_POOL
+            CheckLinks();
+#endif
+        }
+
+        return true;
+    };
+
     GDALProxyPoolCacheEntry *cur = firstEntry;
-    GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
-    GDALProxyPoolCacheEntry *lastEntryWithZeroRefCount = nullptr;
 
     const std::string osFilenameAndOO =
         GetFilenameAndOpenOptions(pszFileName, papszOpenOptions);
@@ -263,7 +340,8 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     {
         GDALProxyPoolCacheEntry *next = cur->next;
 
-        if (osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
+        if (cur->pszFileNameAndOpenOptions &&
+            osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
             ((bShared && cur->responsiblePID == responsiblePID &&
               ((cur->pszOwner == nullptr && pszOwner == nullptr) ||
                (cur->pszOwner != nullptr && pszOwner != nullptr &&
@@ -292,9 +370,6 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
             return cur;
         }
 
-        if (cur->refCount == 0)
-            lastEntryWithZeroRefCount = cur;
-
         cur = next;
     }
 
@@ -303,7 +378,7 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
 
     if (currentSize == maxSize)
     {
-        if (lastEntryWithZeroRefCount == nullptr)
+        if (!EvictEntryWithZeroRefCount(false))
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -315,55 +390,14 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
             return nullptr;
         }
 
-        lastEntryWithZeroRefCount->pszFileNameAndOpenOptions[0] = '\0';
-        if (lastEntryWithZeroRefCount->poDS)
-        {
-            /* Close by pretending we are the thread that GDALOpen'ed this */
-            /* dataset */
-            GDALSetResponsiblePIDForCurrentThread(
-                lastEntryWithZeroRefCount->responsiblePID);
-
-            refCountOfDisableRefCount++;
-            GDALClose(lastEntryWithZeroRefCount->poDS);
-            refCountOfDisableRefCount--;
-
-            lastEntryWithZeroRefCount->poDS = nullptr;
-            GDALSetResponsiblePIDForCurrentThread(responsiblePID);
-        }
-        CPLFree(lastEntryWithZeroRefCount->pszFileNameAndOpenOptions);
-        CPLFree(lastEntryWithZeroRefCount->pszOwner);
-
-        /* Recycle this entry for the to-be-opened dataset and */
-        /* moves it to the top of the list */
-        if (lastEntryWithZeroRefCount->prev)
-            lastEntryWithZeroRefCount->prev->next =
-                lastEntryWithZeroRefCount->next;
-        else
-        {
-            CPLAssert(false);
-        }
-        if (lastEntryWithZeroRefCount->next)
-            lastEntryWithZeroRefCount->next->prev =
-                lastEntryWithZeroRefCount->prev;
-        else
-        {
-            CPLAssert(lastEntryWithZeroRefCount == lastEntry);
-            lastEntry->prev->next = nullptr;
-            lastEntry = lastEntry->prev;
-        }
-        lastEntryWithZeroRefCount->prev = nullptr;
-        lastEntryWithZeroRefCount->next = firstEntry;
-        firstEntry->prev = lastEntryWithZeroRefCount;
-        cur = firstEntry = lastEntryWithZeroRefCount;
-#ifdef DEBUG_PROXY_POOL
-        CheckLinks();
-#endif
+        CPLAssert(firstEntry);
+        cur = firstEntry;
     }
     else
     {
         /* Prepend */
         cur = static_cast<GDALProxyPoolCacheEntry *>(
-            CPLMalloc(sizeof(GDALProxyPoolCacheEntry)));
+            CPLCalloc(1, sizeof(GDALProxyPoolCacheEntry)));
         if (lastEntry == nullptr)
             lastEntry = cur;
         cur->prev = nullptr;
@@ -381,6 +415,7 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     cur->pszOwner = (pszOwner) ? CPLStrdup(pszOwner) : nullptr;
     cur->responsiblePID = responsiblePID;
     cur->refCount = 1;
+    cur->nRAMUsage = 0;
 
     refCountOfDisableRefCount++;
     int nFlag = ((eAccess == GA_Update) ? GDAL_OF_UPDATE : GDAL_OF_READONLY) |
@@ -389,6 +424,22 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     cur->poDS = GDALDataset::Open(pszFileName, nFlag, nullptr, papszOpenOptions,
                                   nullptr);
     refCountOfDisableRefCount--;
+
+    if (cur->poDS)
+    {
+        cur->nRAMUsage =
+            std::max<GIntBig>(0, cur->poDS->GetEstimatedRAMUsage());
+        nRAMUsage += cur->nRAMUsage;
+    }
+
+    if (nMaxRAMUsage > 0 && cur->nRAMUsage > 0)
+    {
+        while (nRAMUsage > nMaxRAMUsage && nRAMUsage != cur->nRAMUsage &&
+               EvictEntryWithZeroRefCount(true))
+        {
+            // ok
+        }
+    }
 
     return cur;
 }
@@ -416,8 +467,7 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
     {
         GDALProxyPoolCacheEntry *next = cur->next;
 
-        CPLAssert(cur->pszFileNameAndOpenOptions);
-        if (cur->refCount == 0 &&
+        if (cur->refCount == 0 && cur->pszFileNameAndOpenOptions &&
             osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
             ((pszOwner == nullptr && cur->pszOwner == nullptr) ||
              (pszOwner != nullptr && cur->pszOwner != nullptr &&
@@ -430,8 +480,12 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
 
             GDALDataset *poDS = cur->poDS;
 
+            nRAMUsage -= cur->nRAMUsage;
+            cur->nRAMUsage = 0;
+
             cur->poDS = nullptr;
-            cur->pszFileNameAndOpenOptions[0] = '\0';
+            CPLFree(cur->pszFileNameAndOpenOptions);
+            cur->pszFileNameAndOpenOptions = nullptr;
             CPLFree(cur->pszOwner);
             cur->pszOwner = nullptr;
 
@@ -460,7 +514,22 @@ void GDALDatasetPool::Ref()
             atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
         if (l_maxSize < 2 || l_maxSize > 1000)
             l_maxSize = 100;
-        singleton = new GDALDatasetPool(l_maxSize);
+
+        // Try to not consume more than 25% of the usable RAM
+        GIntBig l_nMaxRAMUsage =
+            (CPLGetUsablePhysicalRAM() - GDALGetCacheMax64()) / 4;
+        const char *pszMaxRAMUsage =
+            CPLGetConfigOption("GDAL_MAX_DATASET_POOL_RAM_USAGE", nullptr);
+        if (pszMaxRAMUsage)
+        {
+            l_nMaxRAMUsage = std::strtoll(pszMaxRAMUsage, nullptr, 10);
+            if (strstr(pszMaxRAMUsage, "MB"))
+                l_nMaxRAMUsage *= 1024 * 1024;
+            else if (strstr(pszMaxRAMUsage, "GB"))
+                l_nMaxRAMUsage *= 1024 * 1024 * 1024;
+        }
+
+        singleton = new GDALDatasetPool(l_maxSize, l_nMaxRAMUsage);
     }
     if (singleton->refCountOfDisableRefCount == 0)
         singleton->refCount++;

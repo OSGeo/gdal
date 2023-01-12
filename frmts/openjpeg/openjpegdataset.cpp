@@ -240,6 +240,8 @@ class JP2OpenJPEGDataset final : public GDALJP2AbstractDataset
 #endif
     int m_nX0 = 0;
     int m_nY0 = 0;
+    uint32_t m_nTileWidth = 0;
+    uint32_t m_nTileHeight = 0;
 
     int nThreads = -1;
     int m_nBlocksToLoad = 0;
@@ -290,6 +292,8 @@ class JP2OpenJPEGDataset final : public GDALJP2AbstractDataset
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
+
+    virtual GIntBig GetEstimatedRAMUsage() override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,
@@ -688,6 +692,29 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand *poBand, int nXOff,
     }
 
     return bRet;
+}
+
+/************************************************************************/
+/*                      GetEstimatedRAMUsage()                          */
+/************************************************************************/
+
+GIntBig JP2OpenJPEGDataset::GetEstimatedRAMUsage()
+{
+    // libopenjp2 holds the code block values in a uint32_t array.
+    GIntBig nVal = static_cast<GIntBig>(m_nTileWidth) * m_nTileHeight * nBands *
+                   sizeof(uint32_t);
+    if (bSingleTiled)
+    {
+        // libopenjp2 ingests the codestream for a whole tile. So for a
+        // single-tiled image, this is roughly the size of the file.
+        const auto nCurPos = VSIFTellL(fp);
+        VSIFSeekL(fp, 0, SEEK_END);
+        nVal += VSIFTellL(fp);
+        VSIFSeekL(fp, nCurPos, SEEK_SET);
+    }
+    CPLDebug("OPENJPEG", "Estimated RAM usage for %s: %.2f GB",
+             GetDescription(), static_cast<double>(nVal * 1e-9));
+    return nVal;
 }
 
 /************************************************************************/
@@ -1960,6 +1987,8 @@ GDALDataset *JP2OpenJPEGDataset::Open(GDALOpenInfo *poOpenInfo)
                           poDS->nRasterYSize == (int)nTileH);
     poDS->m_nX0 = psImage->x0;
     poDS->m_nY0 = psImage->y0;
+    poDS->m_nTileWidth = nTileW;
+    poDS->m_nTileHeight = nTileH;
 
     int nBlockXSize = (int)nTileW;
     int nBlockYSize = (int)nTileH;

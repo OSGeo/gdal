@@ -3842,3 +3842,25 @@ def test_jp2openjpeg_reversible_quality_not_100():
     ds = None
 
     gdaltest.jp2openjpeg_drv.Delete(filename)
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/pull/7055
+
+
+def test_jp2openjpeg_mosaic():
+
+    src_ds_names = []
+    for j in range(10):
+        for i in range(10):
+            src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+            src_ds.SetGeoTransform([i * 10, 1, 0, j * 10, 0, -1])
+            src_ds.GetRasterBand(1).Fill(255)
+            jp2_filename = "/vsimem/test_%d_%d.jp2" % (j, i)
+            gdaltest.jp2openjpeg_drv.CreateCopy(jp2_filename, src_ds)
+            src_ds_names.append(jp2_filename)
+    with gdal.config_option("GDAL_MAX_DATASET_POOL_RAM_USAGE", "500"):
+        vrt_ds = gdal.BuildVRT("", src_ds_names)
+        assert vrt_ds.GetRasterBand(1).Checksum() == 57182
+    for name in src_ds_names:
+        gdal.Unlink(name)

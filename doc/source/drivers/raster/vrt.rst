@@ -1724,6 +1724,12 @@ Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...
 gdal_translate and gdalwarp, by default, increase the pool size to 450.
 
+Starting with GDAL 3.7, the :decl_configoption:`GDAL_MAX_DATASET_POOL_RAM_USAGE`
+configuration option to a number of bytes, to limit the RAM usage of opened
+datasets in the pool. The value can also be suffixed with ``MB`` or ``GB`` to
+respectively express it in megabytes or gigabytes. The default value is 25%
+of the usable physical RAM minus the GDAL_CACHEMAX value.
+
 Driver capabilities
 -------------------
 
