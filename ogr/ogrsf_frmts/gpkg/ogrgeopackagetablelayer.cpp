@@ -4973,7 +4973,8 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(
     for (size_t i = 0; i < apoFields.size(); i++)
     {
         OGRFieldDefn *poFieldDefn = apoFields[i];
-        if ((eGType != wkbNone) && (stricmp(poFieldDefn->GetNameRef(), GetGeometryColumn())))
+        if ((eGType != wkbNone)
+            && (stricmp(poFieldDefn->GetNameRef(), GetGeometryColumn())))
         {
             continue;
         }
