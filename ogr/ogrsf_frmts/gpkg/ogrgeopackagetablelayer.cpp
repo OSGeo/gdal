@@ -4936,8 +4936,12 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(
     for (size_t i = 0; i < apoFields.size(); i++)
     {
         OGRFieldDefn *poFieldDefn = apoFields[i];
+        // Eg. when a geometry type is specified + an sql statement returns no
+        // or NULL geometry values, the geom column is incorrectly treated as
+        // an attribute column as well with the same name. Not ideal, but skip
+        // this column here to avoid duplicate column name error. Issue: #6976.
         if ((eGType != wkbNone) &&
-            (strcmp(poFieldDefn->GetNameRef(), GetGeometryColumn())))
+            (EQUAL(poFieldDefn->GetNameRef(), GetGeometryColumn())))
         {
             continue;
         }
