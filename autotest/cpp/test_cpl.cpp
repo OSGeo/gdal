@@ -4453,4 +4453,29 @@ TEST_F(test_cpl, CPLGetExecPath)
         CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())));
 }
 
+TEST_F(test_cpl, VSIDuplicateFileSystemHandler)
+{
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_FALSE(VSIDuplicateFileSystemHandler(
+            "/vsi_i_dont_exist/", "/vsi_i_will_not_be_created/"));
+    }
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_FALSE(
+            VSIDuplicateFileSystemHandler("/", "/vsi_i_will_not_be_created/"));
+    }
+    EXPECT_EQ(VSIFileManager::GetHandler("/vsi_test_clone_vsimem/"),
+              VSIFileManager::GetHandler("/"));
+    EXPECT_TRUE(
+        VSIDuplicateFileSystemHandler("/vsimem/", "/vsi_test_clone_vsimem/"));
+    EXPECT_NE(VSIFileManager::GetHandler("/vsi_test_clone_vsimem/"),
+              VSIFileManager::GetHandler("/"));
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        EXPECT_FALSE(VSIDuplicateFileSystemHandler("/vsimem/",
+                                                   "/vsi_test_clone_vsimem/"));
+    }
+}
+
 }  // namespace

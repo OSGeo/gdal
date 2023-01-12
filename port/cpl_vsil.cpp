@@ -2862,6 +2862,56 @@ const char *VSIGetPathSpecificOption(const char *pszPath, const char *pszKey,
 }
 
 /************************************************************************/
+/*                      VSIDuplicateFileSystemHandler()                 */
+/************************************************************************/
+
+/**
+ * \brief Duplicate an existing file system handler.
+ *
+ * A number of virtual file system for remote object stores use protocols
+ * identical or close to popular ones (typically AWS S3), but with slightly
+ * different settings (at the very least the endpoint).
+ *
+ * This functions allows to duplicate the source virtual file system handler
+ * as a new one with a different prefix (when the source virtual file system
+ * handler supports the duplication operation).
+ *
+ * VSISetPathSpecificOption() will typically be called afterwards to change
+ * configurable settings on the cloned file system handler (e.g. AWS_S3_ENDPOINT
+ * for a clone of /vsis3/).
+ *
+ * @since GDAL 3.7
+ */
+bool VSIDuplicateFileSystemHandler(const char *pszSourceFSName,
+                                   const char *pszNewFSName)
+{
+    VSIFilesystemHandler *poTargetFSHandler =
+        VSIFileManager::GetHandler(pszNewFSName);
+    if (poTargetFSHandler != VSIFileManager::GetHandler("/"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s is already a known virtual file system", pszNewFSName);
+        return false;
+    }
+
+    VSIFilesystemHandler *poSourceFSHandler =
+        VSIFileManager::GetHandler(pszSourceFSName);
+    if (!poSourceFSHandler)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s is not a known virtual file system", pszSourceFSName);
+        return false;
+    }
+
+    poTargetFSHandler = poSourceFSHandler->Duplicate(pszNewFSName);
+    if (!poTargetFSHandler)
+        return false;
+
+    VSIFileManager::InstallHandler(pszNewFSName, poTargetFSHandler);
+    return true;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                           VSIFileManager()                           */
 /* ==================================================================== */

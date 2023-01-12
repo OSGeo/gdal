@@ -633,6 +633,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3FSHandler)
 
+    const std::string m_osPrefix;
     std::set<CPLString> DeleteObjects(const char *pszBucket,
                                       const char *pszXML);
 
@@ -650,7 +651,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     CPLString GetFSPrefix() const override
     {
-        return "/vsis3/";
+        return m_osPrefix;
     }
 
     void ClearCache() override;
@@ -661,7 +662,9 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     }
 
   public:
-    VSIS3FSHandler() = default;
+    explicit VSIS3FSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
+    {
+    }
     ~VSIS3FSHandler() override;
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
@@ -700,6 +703,11 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
+
+    VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
+    {
+        return new VSIS3FSHandler(pszPrefix);
+    }
 };
 
 /************************************************************************/
@@ -4828,7 +4836,8 @@ bool VSIS3Handle::CanRestartOnError(const char *pszErrorMsg,
  */
 void VSIInstallS3FileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsis3/", new cpl::VSIS3FSHandler);
+    VSIFileManager::InstallHandler("/vsis3/",
+                                   new cpl::VSIS3FSHandler("/vsis3/"));
 }
 
 #endif /* HAVE_CURL */

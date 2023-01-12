@@ -480,6 +480,7 @@ const VSIDIREntry *VSIDIRAz::NextDirEntry()
 class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIAzureFSHandler)
+    const std::string m_osPrefix;
 
     int CreateContainer(const std::string &osDirname);
     int DeleteContainer(const std::string &osDirname);
@@ -509,12 +510,14 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     }
 
   public:
-    VSIAzureFSHandler() = default;
+    explicit VSIAzureFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
+    {
+    }
     ~VSIAzureFSHandler() override = default;
 
     CPLString GetFSPrefix() const override
     {
-        return "/vsiaz/";
+        return m_osPrefix;
     }
     const char *GetDebugKey() const override
     {
@@ -616,6 +619,11 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
+
+    VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
+    {
+        return new VSIAzureFSHandler(pszPrefix);
+    }
 };
 
 /************************************************************************/
@@ -2329,7 +2337,8 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
 
 void VSIInstallAzureFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiaz/", new cpl::VSIAzureFSHandler);
+    VSIFileManager::InstallHandler("/vsiaz/",
+                                   new cpl::VSIAzureFSHandler("/vsiaz/"));
 }
 
 #endif /* HAVE_CURL */
