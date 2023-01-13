@@ -693,6 +693,12 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
             const char *pszUnit =
                 GDALGetRasterUnitType(GDALGetRasterBand(hWrkSrcDS, 1));
 
+            double dfToMeterSrcAxis = 1.0;
+            if (bSrcHasVertAxis)
+            {
+                oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrcAxis);
+            }
+
             if (pszUnit && (EQUAL(pszUnit, "m") || EQUAL(pszUnit, "meter") ||
                             EQUAL(pszUnit, "metre")))
             {
@@ -710,10 +716,7 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
             {
                 if (bSrcHasVertAxis)
                 {
-                    oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrc);
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Unknown units=%s. Using source vertical units.",
-                             pszUnit);
+                    dfToMeterSrc = dfToMeterSrcAxis;
                 }
                 else
                 {
@@ -740,6 +743,16 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
                 psWO->papszWarpOptions = CSLSetNameValue(
                     psWO->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT",
                     CPLSPrintf("%.18g", dfMultFactorVerticalShift));
+
+                const double dfMultFactorVerticalShiftPipeline =
+                    dfToMeterSrcAxis / dfToMeterDst;
+                CPLDebug("WARP",
+                         "Applying MULT_FACTOR_VERTICAL_SHIFT_PIPELINE=%.18g",
+                         dfMultFactorVerticalShiftPipeline);
+                psWO->papszWarpOptions = CSLSetNameValue(
+                    psWO->papszWarpOptions,
+                    "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                    CPLSPrintf("%.18g", dfMultFactorVerticalShiftPipeline));
             }
         }
     }
