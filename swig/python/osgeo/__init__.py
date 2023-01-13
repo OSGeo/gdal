@@ -14,12 +14,12 @@ if version_info >= (3, 8, 0) and platform == 'win32':
     elif 'PATH' in os.environ:
         import glob
         for p in os.environ['PATH'].split(';'):
-            if glob.glob(os.path.join(p, 'gdal*.dll')) or glob.glob(os.path.join(p, 'libgdal*.dll')):
-                try:
+            try:
+                if glob.glob(os.path.join(p, 'gdal*.dll')) or glob.glob(os.path.join(p, 'libgdal*.dll')):
                     os.add_dll_directory(p)
                     break
-                except (FileNotFoundError, OSError):
-                    continue
+            except (FileNotFoundError, OSError):
+                continue
 
 
 def swig_import_helper():
@@ -29,17 +29,6 @@ def swig_import_helper():
     try:
         return importlib.import_module(mname)
     except ImportError:
-        if version_info >= (3, 8, 0) and platform == 'win32':
-            import os
-            if not 'USE_PATH_FOR_GDAL_PYTHON' in os.environ:
-                msg = 'On Windows, with Python >= 3.8, DLLs are no longer imported from the PATH.\n'
-                msg += 'If gdalXXX.dll is in the PATH, then set the USE_PATH_FOR_GDAL_PYTHON=YES environment variable\n'
-                msg += 'to feed the PATH into os.add_dll_directory().'
-
-                import sys
-                import traceback
-                traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
-                raise ImportError(traceback_string + '\n' + msg)
         return importlib.import_module('_gdal')
 
 
