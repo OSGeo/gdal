@@ -6191,6 +6191,20 @@ def test_netcdf_read_actual_range_with_order_different_than_latitude():
     )
 
 
+###############################################################################
+# Test opening a dataset that has a variable with ':' in its name
+
+
+def test_netcdf_read_var_with_column():
+
+    ds = gdal.Open("data/netcdf/var_with_column.nc")
+    assert ds
+    subds = ds.GetSubDatasets()
+    assert subds[0][0] == 'NETCDF:"data/netcdf/var_with_column.nc":"VAR:NAME"'
+    ds = gdal.Open(subds[0][0])
+    assert ds
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
