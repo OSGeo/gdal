@@ -55,6 +55,7 @@ Vector drivers
    gpsbabel
    gpx
    grass
+   gtfs
    hana
    idb
    idrisi

@@ -96,6 +96,8 @@ ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNA
 ogr_dependent_driver(parquet "Parquet" "GDAL_USE_PARQUET")
 ogr_dependent_driver(arrow "Arrow" "GDAL_USE_ARROW")
 
+ogr_dependent_driver(gtfs "GTFS" "OGR_ENABLE_DRIVER_CSV")
+
 # ######################################################################################################################
 # proprietary libraries
 ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
