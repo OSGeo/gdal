@@ -2771,3 +2771,16 @@ def test_ogr_csv_pipe_separated():
     ds = None
 
     gdal.Unlink("/vsimem/test_ogr_csv_pipe_separated.psv")
+
+
+###############################################################################
+
+
+def test_ogr_csv_get_feature_count_and_attribute_filter():
+
+    ds = ogr.Open("data/csv/testcsvt.csv")
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("INTCOL = -1")
+    assert lyr.GetFeatureCount() == 0
+    lyr.SetAttributeFilter(None)
+    assert lyr.GetFeatureCount() == 2

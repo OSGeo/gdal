@@ -2458,12 +2458,7 @@ GIntBig OGRCSVLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
     {
-        GIntBig nRet = OGRLayer::GetFeatureCount(bForce);
-        if (nRet >= 0)
-        {
-            nTotalFeatures = nNextFID - 1;
-        }
-        return nRet;
+        return OGRLayer::GetFeatureCount(bForce);
     }
 
     if (nTotalFeatures >= 0)
