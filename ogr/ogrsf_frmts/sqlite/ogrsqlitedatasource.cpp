@@ -1301,7 +1301,9 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 
     const bool bUseOGRVFS =
         CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO")) ||
-        STARTS_WITH(m_pszFilename, "/vsi");
+        STARTS_WITH(m_pszFilename, "/vsi") ||
+        // https://sqlite.org/forum/forumpost/0b1b8b5116: MAX_PATHNAME=512
+        strlen(m_pszFilename) >= 512 - strlen(".journal");
 
 #ifdef SQLITE_OPEN_URI
     const bool bNoLock =
