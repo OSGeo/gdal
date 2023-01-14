@@ -705,7 +705,8 @@ const char *MBTilesBand::GetMetadataItem(const char *pszName,
     /* ==================================================================== */
     /*      LocationInfo handling.                                          */
     /* ==================================================================== */
-    if (pszDomain != nullptr && EQUAL(pszDomain, "LocationInfo") &&
+    if (poGDS->hDS != nullptr && pszDomain != nullptr &&
+        EQUAL(pszDomain, "LocationInfo") &&
         (STARTS_WITH_CI(pszName, "Pixel_") ||
          STARTS_WITH_CI(pszName, "GeoPixel_")))
     {
@@ -1364,7 +1365,7 @@ char **MBTilesDataset::GetMetadataDomainList()
 
 char **MBTilesDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && !EQUAL(pszDomain, ""))
+    if (hDS == nullptr || (pszDomain != nullptr && !EQUAL(pszDomain, "")))
         return GDALPamDataset::GetMetadata(pszDomain);
 
     if (bFetchedMetadata)
