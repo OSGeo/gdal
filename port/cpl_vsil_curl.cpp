@@ -2221,9 +2221,11 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         }
         nSize += panSizes[iNext];
 
-        i = iNext + 1;
         if (nSize == 0)
+        {
+            i = iNext + 1;
             continue;
+        }
 
         CURL *hCurlHandle = curl_easy_init();
         aHandles.push_back(hCurlHandle);
@@ -2288,6 +2290,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         aHeaders.push_back(headers);
         curl_multi_add_handle(hMultiHandle, hCurlHandle);
 
+        i = iNext + 1;
         iRequest++;
     }
 
