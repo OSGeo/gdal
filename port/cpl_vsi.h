@@ -613,6 +613,24 @@ typedef int (*VSIFilesystemPluginTruncateCallback)(void *pFile,
 typedef int (*VSIFilesystemPluginCloseCallback)(void *pFile);
 
 /**
+ * This optional method is called when code plans to access soon one or several
+ * ranges in a file. Some file systems may be able to use this hint to
+ * for example asynchronously start such requests.
+ *
+ * Offsets may be given in a non-increasing order, and may potentially
+ * overlap.
+ *
+ * @param pFile File handle.
+ * @param nRanges Size of the panOffsets and panSizes arrays.
+ * @param panOffsets Array containing the start offset of each range.
+ * @param panSizes Array containing the size (in bytes) of each range.
+ * @since GDAL 3.7
+ */
+typedef void (*VSIFilesystemPluginAdviseReadCallback)(
+    void *pFile, int nRanges, const vsi_l_offset *panOffsets,
+    const size_t *panSizes);
+
+/**
  * struct containing callbacks to used by the handler.
  * (rw), (r), (w) or () at the end indicate whether the given callback is
  * mandatory for reading and or writing handlers. A (?) indicates that the
@@ -654,6 +672,9 @@ typedef struct
     size_t nCacheSize;  /**< max mem to use per file when buffering */
     VSIFilesystemPluginSiblingFilesCallback
         sibling_files; /**< list related files*/
+
+    /** The following optional member has been added in GDAL 3.7: */
+    VSIFilesystemPluginAdviseReadCallback advise_read; /**< AdviseRead() */
     /*
         Callbacks are defined as a struct allocated by a call to
        VSIAllocFilesystemPluginCallbacksStruct in order to try to maintain ABI
