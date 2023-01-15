@@ -444,6 +444,11 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
 
 VSICurlHandle::~VSICurlHandle()
 {
+    if (m_oThreadAdviseRead.joinable())
+    {
+        m_oThreadAdviseRead.join();
+    }
+
     if (!m_bCached)
     {
         poFS->InvalidateCachedData(m_pszURL);
@@ -2788,6 +2793,39 @@ end:
 size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                             vsi_l_offset nOffset) const
 {
+    // Try to use AdviseRead ranges fetched asynchronously
+    if (!m_aoAdviseReadRanges.empty())
+    {
+        for (auto &poRange : m_aoAdviseReadRanges)
+        {
+            if (nOffset >= poRange->nStartOffset &&
+                nOffset + nSize <= poRange->nStartOffset + poRange->nSize)
+            {
+                {
+                    std::unique_lock<std::mutex> oLock(poRange->oMutex);
+                    while (!poRange->bDone)
+                    {
+                        poRange->oCV.wait(oLock);
+                    }
+                }
+                if (poRange->abyData.empty())
+                    return 0;
+
+                auto nEndOffset =
+                    poRange->nStartOffset + poRange->abyData.size();
+                if (nOffset >= nEndOffset)
+                    return 0;
+                const size_t nToCopy = static_cast<size_t>(
+                    std::min<vsi_l_offset>(nSize, nEndOffset - nOffset));
+                memcpy(pBuffer,
+                       poRange->abyData.data() +
+                           static_cast<size_t>(nOffset - poRange->nStartOffset),
+                       nToCopy);
+                return nToCopy;
+            }
+        }
+    }
+
     // poFS has a global mutex
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
     if (oFileProp.eExists == EXIST_NO)
@@ -2917,6 +2955,328 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 #endif
 
     return nRet;
+}
+
+/************************************************************************/
+/*                         AdviseRead()                                 */
+/************************************************************************/
+
+void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+                               const size_t *panSizes)
+{
+    if (!CPLTestBool(
+            CPLGetConfigOption("GDAL_HTTP_ENABLE_ADVISE_READ", "TRUE")))
+        return;
+
+    if (m_oThreadAdviseRead.joinable())
+    {
+        m_oThreadAdviseRead.join();
+    }
+
+    // Give up if we need to allocate too much memory
+    vsi_l_offset nMaxSize = 0;
+    for (int i = 0; i < nRanges; ++i)
+    {
+        if (panSizes[i] > 100 * 1024 * 1024 - nMaxSize)
+        {
+            CPLDebug(poFS->GetDebugKey(),
+                     "Trying to request too many bytes in AdviseRead()");
+            return;
+        }
+        nMaxSize += panSizes[i];
+    }
+
+    ManagePlanetaryComputerSigning();
+
+    bool bHasExpired = false;
+    CPLString osURL(GetRedirectURLIfValid(bHasExpired));
+    if (bHasExpired)
+    {
+        return;
+    }
+
+    const bool bMergeConsecutiveRanges = CPLTestBool(
+        CPLGetConfigOption("GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", "TRUE"));
+
+    try
+    {
+        m_aoAdviseReadRanges.resize(nRanges);
+        int iRequest = 0;
+        for (int i = 0; i < nRanges;)
+        {
+            int iNext = i;
+            // Identify consecutive ranges
+            constexpr size_t SIZE_COG_MARKERS = 2 * sizeof(uint32_t);
+            auto nEndOffset = panOffsets[iNext] + panSizes[iNext];
+            while (bMergeConsecutiveRanges && iNext + 1 < nRanges &&
+                   panOffsets[iNext + 1] > panOffsets[iNext] &&
+                   panOffsets[iNext] + panSizes[iNext] + SIZE_COG_MARKERS >=
+                       panOffsets[iNext + 1] &&
+                   panOffsets[iNext + 1] + panSizes[iNext + 1] > nEndOffset)
+            {
+                iNext++;
+                nEndOffset = panOffsets[iNext] + panSizes[iNext];
+            }
+            CPLAssert(panOffsets[i] <= nEndOffset);
+            const size_t nSize =
+                static_cast<size_t>(nEndOffset - panOffsets[i]);
+
+            if (nSize == 0)
+            {
+                i = iNext + 1;
+                continue;
+            }
+
+            if (m_aoAdviseReadRanges[iRequest] == nullptr)
+                m_aoAdviseReadRanges[iRequest] =
+                    cpl::make_unique<AdviseReadRange>();
+            m_aoAdviseReadRanges[iRequest]->bDone = false;
+            m_aoAdviseReadRanges[iRequest]->nStartOffset = panOffsets[i];
+            m_aoAdviseReadRanges[iRequest]->nSize = nSize;
+            m_aoAdviseReadRanges[iRequest]->abyData.resize(nSize);
+
+            i = iNext + 1;
+            iRequest++;
+        }
+        m_aoAdviseReadRanges.resize(iRequest);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory in VSICurlHandle::AdviseRead()");
+        m_aoAdviseReadRanges.clear();
+    }
+
+    if (m_aoAdviseReadRanges.empty())
+        return;
+
+#ifdef DEBUG
+    CPLDebug(poFS->GetDebugKey(), "AdviseRead(): fetching %u ranges",
+             static_cast<unsigned>(m_aoAdviseReadRanges.size()));
+#endif
+
+    const auto task = [this, osURL]()
+    {
+        CURLM *hMultiHandle = curl_multi_init();
+
+        NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+        NetworkStatisticsFile oContextFile(m_osFilename);
+        NetworkStatisticsAction oContextAction("AdviseRead");
+
+#ifdef CURLPIPE_MULTIPLEX
+        // Enable HTTP/2 multiplexing (ignored if an older version of HTTP is
+        // used)
+        // Not that this does not enable HTTP/1.1 pipeling, which is not
+        // recommended for example by Google Cloud Storage.
+        // For HTTP/1.1, parallel connections work better since you can get
+        // results out of order.
+        if (CPLTestBool(CPLGetConfigOption("GDAL_HTTP_MULTIPLEX", "YES")))
+        {
+            curl_multi_setopt(hMultiHandle, CURLMOPT_PIPELINING,
+                              CURLPIPE_MULTIPLEX);
+        }
+#endif
+
+        std::vector<CURL *> aHandles;
+        std::vector<WriteFuncStruct> asWriteFuncData(
+            m_aoAdviseReadRanges.size());
+        std::vector<WriteFuncStruct> asWriteFuncHeaderData(
+            m_aoAdviseReadRanges.size());
+        std::vector<char *> apszRanges;
+        std::vector<struct curl_slist *> aHeaders;
+
+        struct CurlErrBuffer
+        {
+            std::array<char, CURL_ERROR_SIZE + 1> szCurlErrBuf;
+        };
+        std::vector<CurlErrBuffer> asCurlErrors(m_aoAdviseReadRanges.size());
+
+        std::map<CURL *, size_t> oMapHandleToIdx;
+        for (size_t i = 0; i < m_aoAdviseReadRanges.size(); ++i)
+        {
+            CURL *hCurlHandle = curl_easy_init();
+            oMapHandleToIdx[hCurlHandle] = i;
+            aHandles.push_back(hCurlHandle);
+
+            // As the multi-range request is likely not the first one, we don't
+            // need to wait as we already know if pipelining is possible
+            // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
+
+            struct curl_slist *headers =
+                VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+
+            VSICURLInitWriteFuncStruct(&asWriteFuncData[i],
+                                       reinterpret_cast<VSILFILE *>(this),
+                                       pfnReadCbk, pReadCbkUserData);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
+                                       &asWriteFuncData[i]);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                                       VSICurlHandleWriteFunc);
+
+            VSICURLInitWriteFuncStruct(&asWriteFuncHeaderData[i], nullptr,
+                                       nullptr, nullptr);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
+                                       &asWriteFuncHeaderData[i]);
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                                       VSICurlHandleWriteFunc);
+            asWriteFuncHeaderData[i].bIsHTTP = STARTS_WITH(m_pszURL, "http");
+            asWriteFuncHeaderData[i].nStartOffset =
+                m_aoAdviseReadRanges[i]->nStartOffset;
+
+            asWriteFuncHeaderData[i].nEndOffset =
+                m_aoAdviseReadRanges[i]->nStartOffset +
+                m_aoAdviseReadRanges[i]->nSize - 1;
+
+            char rangeStr[512] = {};
+            snprintf(rangeStr, sizeof(rangeStr),
+                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                     asWriteFuncHeaderData[i].nStartOffset,
+                     asWriteFuncHeaderData[i].nEndOffset);
+
+            if (ENABLE_DEBUG)
+                CPLDebug(poFS->GetDebugKey(), "Downloading %s (%s)...",
+                         rangeStr, osURL.c_str());
+
+            if (asWriteFuncHeaderData[i].bIsHTTP)
+            {
+                CPLString osHeaderRange;
+                osHeaderRange.Printf("Range: bytes=%s", rangeStr);
+                // So it gets included in Azure signature
+                char *pszRange = CPLStrdup(osHeaderRange);
+                apszRanges.push_back(pszRange);
+                headers = curl_slist_append(headers, pszRange);
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+            }
+            else
+            {
+                apszRanges.push_back(nullptr);
+                unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE,
+                                           rangeStr);
+            }
+
+            asCurlErrors[i].szCurlErrBuf[0] = '\0';
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
+                                       &asCurlErrors[i].szCurlErrBuf[0]);
+
+            headers =
+                VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
+                                       headers);
+            aHeaders.push_back(headers);
+            curl_multi_add_handle(hMultiHandle, hCurlHandle);
+        }
+
+        size_t nTotalDownloaded = 0;
+        const auto DealWithRequest =
+            [this, &osURL, &nTotalDownloaded, &oMapHandleToIdx, &asCurlErrors,
+             &asWriteFuncHeaderData, &asWriteFuncData](CURL *hCurlHandle)
+        {
+            auto oIter = oMapHandleToIdx.find(hCurlHandle);
+            CPLAssert(oIter != oMapHandleToIdx.end());
+            const auto iReq = oIter->second;
+
+            long response_code = 0;
+            curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+
+            if (ENABLE_DEBUG && asCurlErrors[iReq].szCurlErrBuf[0] != '\0')
+            {
+                char rangeStr[512] = {};
+                snprintf(rangeStr, sizeof(rangeStr),
+                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                         asWriteFuncHeaderData[iReq].nStartOffset,
+                         asWriteFuncHeaderData[iReq].nEndOffset);
+
+                const char *pszErrorMsg = &asCurlErrors[iReq].szCurlErrBuf[0];
+                CPLDebug(poFS->GetDebugKey(),
+                         "ReadMultiRange(%s), %s: response_code=%d, msg=%s",
+                         osURL.c_str(), rangeStr,
+                         static_cast<int>(response_code), pszErrorMsg);
+            }
+
+            if ((response_code != 206 && response_code != 225) ||
+                asWriteFuncHeaderData[iReq].nEndOffset + 1 !=
+                    asWriteFuncHeaderData[iReq].nStartOffset +
+                        asWriteFuncData[iReq].nSize)
+            {
+                char rangeStr[512] = {};
+                snprintf(rangeStr, sizeof(rangeStr),
+                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                         asWriteFuncHeaderData[iReq].nStartOffset,
+                         asWriteFuncHeaderData[iReq].nEndOffset);
+
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Request for %s failed with response_code=%ld",
+                         rangeStr, response_code);
+            }
+            else
+            {
+                const size_t nSize = asWriteFuncData[iReq].nSize;
+                memcpy(&m_aoAdviseReadRanges[iReq]->abyData[0],
+                       asWriteFuncData[iReq].pBuffer, nSize);
+                m_aoAdviseReadRanges[iReq]->abyData.resize(nSize);
+
+                nTotalDownloaded += nSize;
+            }
+
+            {
+                std::lock_guard<std::mutex> oLock(
+                    m_aoAdviseReadRanges[iReq]->oMutex);
+                m_aoAdviseReadRanges[iReq]->bDone = true;
+                m_aoAdviseReadRanges[iReq]->oCV.notify_all();
+            }
+        };
+
+        int repeats = 0;
+
+        void *old_handler = CPLHTTPIgnoreSigPipe();
+        while (true)
+        {
+            int still_running;
+            while (curl_multi_perform(hMultiHandle, &still_running) ==
+                   CURLM_CALL_MULTI_PERFORM)
+            {
+                // loop
+            }
+            if (!still_running)
+            {
+                break;
+            }
+
+            CURLMsg *msg;
+            do
+            {
+                int msgq = 0;
+                msg = curl_multi_info_read(hMultiHandle, &msgq);
+                if (msg && (msg->msg == CURLMSG_DONE))
+                {
+                    DealWithRequest(msg->easy_handle);
+                }
+            } while (msg);
+
+            CPLMultiPerformWait(hMultiHandle, repeats);
+        }
+        CPLHTTPRestoreSigPipeHandler(old_handler);
+
+        for (size_t i = 0; i < m_aoAdviseReadRanges.size(); ++i)
+        {
+            if (!m_aoAdviseReadRanges[i]->bDone)
+            {
+                DealWithRequest(aHandles[i]);
+            }
+            curl_multi_remove_handle(hMultiHandle, aHandles[i]);
+            VSICURLResetHeaderAndWriterFunctions(aHandles[i]);
+            curl_easy_cleanup(aHandles[i]);
+            CPLFree(apszRanges[i]);
+            CPLFree(asWriteFuncData[i].pBuffer);
+            CPLFree(asWriteFuncHeaderData[i].pBuffer);
+            curl_slist_free_all(aHeaders[i]);
+        }
+
+        NetworkStatisticsLogger::LogGET(nTotalDownloaded);
+
+        curl_multi_cleanup(hMultiHandle);
+    };
+    m_oThreadAdviseRead = std::thread(task);
 }
 
 /************************************************************************/

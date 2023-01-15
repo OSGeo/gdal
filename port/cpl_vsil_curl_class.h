@@ -42,10 +42,12 @@
 #include "cpl_curl_priv.h"
 
 #include <algorithm>
+#include <condition_variable>
 #include <set>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <thread>
 
 //! @cond Doxygen_Suppress
 
@@ -402,6 +404,19 @@ class VSICurlHandle : public VSIVirtualHandle
     void UpdateRedirectInfo(CURL *hCurlHandle,
                             const WriteFuncStruct &sWriteFuncHeaderData);
 
+    // Used by AdviseRead()
+    struct AdviseReadRange
+    {
+        bool bDone = false;
+        std::mutex oMutex{};
+        std::condition_variable oCV{};
+        vsi_l_offset nStartOffset = 0;
+        size_t nSize = 0;
+        std::vector<GByte> abyData{};
+    };
+    std::vector<std::unique_ptr<AdviseReadRange>> m_aoAdviseReadRanges{};
+    std::thread m_oThreadAdviseRead{};
+
   protected:
     virtual struct curl_slist *
     GetCurlHeaders(const CPLString & /*osVerb*/,
@@ -457,6 +472,9 @@ class VSICurlHandle : public VSIVirtualHandle
     }
     size_t PRead(void *pBuffer, size_t nSize,
                  vsi_l_offset nOffset) const override;
+
+    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+                    const size_t *panSizes) override;
 
     bool IsKnownFileSize() const
     {

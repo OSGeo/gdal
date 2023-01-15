@@ -4849,8 +4849,9 @@ def test_tiff_read_multi_threaded(
 
 
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
+@pytest.mark.parametrize("advise_read", [True, False])
 @pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
-def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
+def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster, advise_read):
 
     if not check_libtiff_internal_or_at_least(4, 0, 11):
         pytest.skip()
@@ -4900,8 +4901,12 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
                     request.wfile.write(f.read(end - start + 1))
 
         _, blockYSize = ref_ds.GetRasterBand(1).GetBlockSize()
-        for i in range(2 + ref_ds.RasterYSize // blockYSize):
-            handler.add("GET", "/utm.tif", custom_method=method)
+        if advise_read:
+            for i in range(3):
+                handler.add("GET", "/utm.tif", custom_method=method)
+        else:
+            for i in range(2 + ref_ds.RasterYSize // blockYSize):
+                handler.add("GET", "/utm.tif", custom_method=method)
 
         with webserver.install_http_handler(handler):
             with gdaltest.config_options(
@@ -4909,6 +4914,7 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
                     "GDAL_NUM_THREADS": "2",
                     "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
                     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+                    "GDAL_HTTP_ENABLE_ADVISE_READ": ("YES" if advise_read else "NO"),
                 }
             ):
                 ds = gdal.Open("/vsicurl/http://127.0.0.1:%d/utm.tif" % webserver_port)
