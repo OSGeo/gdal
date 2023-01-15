@@ -90,6 +90,12 @@ class VSICachedFile final : public VSIVirtualHandle
                        const vsi_l_offset *panOffsets,
                        const size_t *panSizes) override;
 
+    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+                    const size_t *panSizes) override
+    {
+        m_poBase->AdviseRead(nRanges, panOffsets, panSizes);
+    }
+
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
     int Flush() override;
