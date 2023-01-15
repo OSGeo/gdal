@@ -3299,12 +3299,11 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
                  &sContext.pExtraSamples);
 
-    // We need to do that as threads will access the block cache
-    TemporarilyDropReadWriteLock();
-
     // Create one job per tile/strip
     vsi_l_offset nFileSize = 0;
     std::vector<GTiffDecompressJob> asJobs(nBlocks);
+    std::vector<vsi_l_offset> anOffsets(nBlocks);
+    std::vector<size_t> anSizes(nBlocks);
     int iJob = 0;
     for (int y = 0; y < nYBlocks; ++y)
     {
@@ -3364,18 +3363,36 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     }
                 }
 
-                poQueue->SubmitJob(ThreadDecompressionFunc, &asJobs[iJob]);
+                anOffsets[iJob] = asJobs[iJob].nOffset;
+                anSizes[iJob] = static_cast<size_t>(std::min<vsi_l_offset>(
+                    std::numeric_limits<size_t>::max(), asJobs[iJob].nSize));
 
                 ++iJob;
             }
         }
     }
 
-    // Wait for all jobs to have been completed
-    poQueue->WaitCompletion();
+    if (sContext.bSuccess)
+    {
+        // Potentially start asynchronous fetching of ranges depending on file
+        // implementation
+        sContext.poHandle->AdviseRead(nBlocks, anOffsets.data(),
+                                      anSizes.data());
 
-    // Undo effect of above TemporarilyDropReadWriteLock()
-    ReacquireReadWriteLock();
+        // We need to do that as threads will access the block cache
+        TemporarilyDropReadWriteLock();
+
+        for (auto &sJob : asJobs)
+        {
+            poQueue->SubmitJob(ThreadDecompressionFunc, &sJob);
+        }
+
+        // Wait for all jobs to have been completed
+        poQueue->WaitCompletion();
+
+        // Undo effect of above TemporarilyDropReadWriteLock()
+        ReacquireReadWriteLock();
+    }
 
     return sContext.bSuccess ? CE_None : CE_Failure;
 }
