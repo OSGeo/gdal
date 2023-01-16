@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<GeodataXform xsi:type='typens:PolynomialXform'
+              xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+              xmlns:typens='http://www.esri.com/schemas/ArcGIS/9.3'>
+    <PolynomialOrder>1</PolynomialOrder>
+    <SpatialReference xsi:type='typens:ProjectedCoordinateSystem'>
+        <WKT>PROJCS[&quot;NAD_1927_UTM_Zone_12N&quot;,GEOGCS[&quot;GCS_North_American_1927&quot;,DATUM[&quot;D_North_American_1927&quot;,SPHEROID[&quot;Clarke_1866&quot;,6378206.4,294.9786982]],PRIMEM[&quot;Greenwich&quot;,0.0],UNIT[&quot;Degree&quot;,0.0174532925199433]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;False_Easting&quot;,500000.0],PARAMETER[&quot;False_Northing&quot;,0.0],PARAMETER[&quot;Central_Meridian&quot;,-111.0],PARAMETER[&quot;Scale_Factor&quot;,0.9996],PARAMETER[&quot;Latitude_Of_Origin&quot;,0.0],UNIT[&quot;Meter&quot;,1.0],AUTHORITY[&quot;EPSG&quot;,26712]]</WKT>
+        <HighPrecision>true</HighPrecision>
+        <WKID>26712</WKID>
+    </SpatialReference>
+   <SourceGCPs xsi:type="typens:ArrayOfDouble">
+        <Double>565.0000</Double>
+        <Double>11041.0000</Double>
+        <Double>3155.0000</Double>
+        <Double>11019.0000</Double>
+        <Double>5739.0000</Double>
+        <Double>11000.0000</Double>
+        <Double>8333.0000</Double>
+        <Double>10979.0000</Double>
+    </SourceGCPs>
+    <TargetGCPs xsi:type="typens:ArrayOfDouble">
+        <Double>5.000000000000E+05</Double>
+        <Double>4.705078790166E+06</Double>
+        <Double>5.136947389499E+05</Double>
+        <Double>4.705092246720E+06</Double>
+        <Double>5.273894882319E+05</Double>
+        <Double>4.705132616643E+06</Double>
+        <Double>5.410842581756E+05</Double>
+        <Double>4.705199900713E+06</Double>
+    </TargetGCPs>
+</GeodataXform>

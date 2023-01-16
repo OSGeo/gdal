@@ -1385,6 +1385,36 @@ def test_jpeg_write_4band_not_cmyk():
     gdal.GetDriverByName("JPEG").Delete("/vsimem/out.jpg")
 
 
+def test_jpeg_read_arcgis_geodataxform_gcp():
+
+    ds = gdal.Open("data/jpeg/arcgis_geodataxform_gcp.jpg")
+    assert ds.GetGCPProjection().find("26712") >= 0
+    assert ds.GetGCPCount() == 4
+    gcp = ds.GetGCPs()[0]
+    assert (
+        gcp.GCPPixel == pytest.approx(565, abs=1e-5)
+        and gcp.GCPLine == pytest.approx(11041, abs=1e-5)
+        and gcp.GCPX == pytest.approx(500000, abs=1e-5)
+        and gcp.GCPY == pytest.approx(4705078.79016612, abs=1e-5)
+        and gcp.GCPZ == pytest.approx(0, abs=1e-5)
+    )
+
+
+def test_jpeg_read_arcgis_metadata_geodataxform_gcp():
+
+    ds = gdal.Open("data/jpeg/arcgis_metadata_geodataxform_gcp.jpg")
+    assert ds.GetGCPProjection().find("26712") >= 0
+    assert ds.GetGCPCount() == 4
+    gcp = ds.GetGCPs()[0]
+    assert (
+        gcp.GCPPixel == pytest.approx(565, abs=1e-5)
+        and gcp.GCPLine == pytest.approx(11041, abs=1e-5)
+        and gcp.GCPX == pytest.approx(500000, abs=1e-5)
+        and gcp.GCPY == pytest.approx(4705078.79016612, abs=1e-5)
+        and gcp.GCPZ == pytest.approx(0, abs=1e-5)
+    )
+
+
 ###############################################################################
 # Cleanup
 
