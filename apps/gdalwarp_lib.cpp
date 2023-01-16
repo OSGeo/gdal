@@ -109,6 +109,9 @@ struct GDALWarpAppOptions
     double dfXRes = 0;
     double dfYRes = 0;
 
+    /*! whether target pixels should have dfXRes == dfYRes */
+    bool bSquarePixels = false;
+
     /*! align the coordinates of the extent of the output file to the values of
        the GDALWarpAppOptions::dfXRes and GDALWarpAppOptions::dfYRes, such that
        the aligned extent includes the minimum extent. */
@@ -3586,9 +3589,9 @@ static GDALDatasetH GDALWarpCreateOutput(
         /*      dataset, if not set already. */
         /* --------------------------------------------------------------------
          */
+        const auto osThisSourceSRS = GetSrcDSProjection(hSrcDS, papszTO);
         if (iSrc == 0 && osThisTargetSRS.empty())
         {
-            const auto osThisSourceSRS = GetSrcDSProjection(hSrcDS, papszTO);
             if (!osThisSourceSRS.empty())
             {
                 osThisTargetSRS = osThisSourceSRS;
@@ -3759,11 +3762,10 @@ static GDALDatasetH GDALWarpCreateOutput(
         /*      Get approximate output definition. */
         /* --------------------------------------------------------------------
          */
-
+        double adfThisGeoTransform[6];
+        double adfExtent[4];
         if (bNeedsSuggestedWarpOutput)
         {
-            double adfThisGeoTransform[6];
-            double adfExtent[4];
             int nThisPixels, nThisLines;
 
             // For sum, round-up dimension, to be sure that the output extent
@@ -3866,7 +3868,41 @@ static GDALDatasetH GDALWarpCreateOutput(
                     }
                 }
             }
+        }
 
+        // If no reprojection or geometry change is involved, and that the
+        // source image is north-up, preserve source resolution instead of
+        // forcing square pixels.
+        const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+        double adfThisGeoTransformTmp[6];
+        if (!psOptions->bSquarePixels && bNeedsSuggestedWarpOutput &&
+            osThisSourceSRS == osThisTargetSRS && psOptions->dfXRes == 0 &&
+            psOptions->dfYRes == 0 && psOptions->nForcePixels == 0 &&
+            psOptions->nForceLines == 0 &&
+            (pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM")) &&
+            CSLFetchNameValue(papszTO, "COORDINATE_OPERATION") == nullptr &&
+            CSLFetchNameValue(papszTO, "SRC_METHOD") == nullptr &&
+            CSLFetchNameValue(papszTO, "DST_METHOD") == nullptr &&
+            GDALGetGeoTransform(hSrcDS, adfThisGeoTransformTmp) == CE_None &&
+            adfThisGeoTransformTmp[2] == 0 && adfThisGeoTransformTmp[4] == 0 &&
+            adfThisGeoTransformTmp[5] < 0 &&
+            GDALGetMetadata(hSrcDS, "GEOLOC_ARRAY") == nullptr &&
+            GDALGetMetadata(hSrcDS, "RPC") == nullptr)
+        {
+            memcpy(adfThisGeoTransform, adfThisGeoTransformTmp,
+                   6 * sizeof(double));
+            adfExtent[0] = adfThisGeoTransform[0];
+            adfExtent[1] = adfThisGeoTransform[3] +
+                           GDALGetRasterYSize(hSrcDS) * adfThisGeoTransform[5];
+            adfExtent[2] = adfThisGeoTransform[0] +
+                           GDALGetRasterXSize(hSrcDS) * adfThisGeoTransform[1];
+            adfExtent[3] = adfThisGeoTransform[3];
+            dfResFromSourceAndTargetExtent =
+                std::numeric_limits<double>::infinity();
+        }
+
+        if (bNeedsSuggestedWarpOutput)
+        {
             /* --------------------------------------------------------------------
              */
             /*      Expand the working bounds to include this region, ensure the
@@ -5040,6 +5076,13 @@ GDALWarpAppOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[i], "-dstnodata") && i + 1 < argc)
         {
             psOptions->osDstNodata = papszArgv[++i];
+        }
+        else if (EQUAL(papszArgv[i], "-tr") && i + 1 < argc &&
+                 EQUAL(papszArgv[i + 1], "square"))
+        {
+            ++i;
+            psOptions->bSquarePixels = true;
+            psOptions->bCreateOutput = true;
         }
         else if (EQUAL(papszArgv[i], "-tr") && i + 2 < argc)
         {
