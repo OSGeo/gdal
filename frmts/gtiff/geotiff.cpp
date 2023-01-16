@@ -3305,6 +3305,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     std::vector<vsi_l_offset> anOffsets(nBlocks);
     std::vector<size_t> anSizes(nBlocks);
     int iJob = 0;
+    int nAdviseReadRanges = 0;
     for (int y = 0; y < nYBlocks; ++y)
     {
         for (int x = 0; x < nXBlocks; ++x)
@@ -3363,9 +3364,53 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     }
                 }
 
-                anOffsets[iJob] = asJobs[iJob].nOffset;
-                anSizes[iJob] = static_cast<size_t>(std::min<vsi_l_offset>(
-                    std::numeric_limits<size_t>::max(), asJobs[iJob].nSize));
+                // Only request in AdviseRead() ranges for blocks we don't
+                // have in cache.
+                bool bAddToAdviseRead = true;
+                if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
+                {
+                    auto poBlock =
+                        GetRasterBand(panBandMap[i])
+                            ->TryGetLockedBlockRef(asJobs[iJob].nXBlock,
+                                                   asJobs[iJob].nYBlock);
+                    if (poBlock)
+                    {
+                        poBlock->DropLock();
+                        bAddToAdviseRead = false;
+                    }
+                }
+                else
+                {
+                    bool bAllCached = true;
+                    for (int iBand = 0; iBand < nBandCount; ++iBand)
+                    {
+                        auto poBlock =
+                            GetRasterBand(panBandMap[iBand])
+                                ->TryGetLockedBlockRef(asJobs[iJob].nXBlock,
+                                                       asJobs[iJob].nYBlock);
+                        if (poBlock)
+                        {
+                            poBlock->DropLock();
+                        }
+                        else
+                        {
+                            bAllCached = false;
+                            break;
+                        }
+                    }
+                    if (bAllCached)
+                        bAddToAdviseRead = false;
+                }
+
+                if (bAddToAdviseRead)
+                {
+                    anOffsets[nAdviseReadRanges] = asJobs[iJob].nOffset;
+                    anSizes[nAdviseReadRanges] =
+                        static_cast<size_t>(std::min<vsi_l_offset>(
+                            std::numeric_limits<size_t>::max(),
+                            asJobs[iJob].nSize));
+                    ++nAdviseReadRanges;
+                }
 
                 ++iJob;
             }
@@ -3376,8 +3421,11 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     {
         // Potentially start asynchronous fetching of ranges depending on file
         // implementation
-        sContext.poHandle->AdviseRead(nBlocks, anOffsets.data(),
-                                      anSizes.data());
+        if (nAdviseReadRanges > 0)
+        {
+            sContext.poHandle->AdviseRead(nAdviseReadRanges, anOffsets.data(),
+                                          anSizes.data());
+        }
 
         // We need to do that as threads will access the block cache
         TemporarilyDropReadWriteLock();
