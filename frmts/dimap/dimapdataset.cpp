@@ -93,6 +93,10 @@ class DIMAPDataset final : public GDALPamDataset
     char **GetMetadata(const char *pszDomain) override;
     char **GetFileList() override;
 
+    CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALRasterIOExtraArg *psExtraArg) override;
+
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
 
@@ -335,6 +339,34 @@ CPLErr DIMAPRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     return poVRTBand->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                                 nBufXSize, nBufYSize, eBufType, nPixelSpace,
                                 nLineSpace, psExtraArg);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr DIMAPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                               int nXSize, int nYSize, void *pData,
+                               int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, int nBandCount,
+                               int *panBandMap, GSpacing nPixelSpace,
+                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               GDALRasterIOExtraArg *psExtraArg)
+
+{
+    if (cpl::down_cast<DIMAPRasterBand *>(papoBands[0])
+            ->GDALPamRasterBand::GetOverviewCount() > 0)
+    {
+        return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nBandCount, panBandMap, nPixelSpace,
+                                         nLineSpace, nBandSpace, psExtraArg);
+    }
+
+    return poVRTDS->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                              nBufXSize, nBufYSize, eBufType, nBandCount,
+                              panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                              psExtraArg);
 }
 
 /************************************************************************/
