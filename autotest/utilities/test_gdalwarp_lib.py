@@ -1774,6 +1774,18 @@ def test_gdalwarp_lib_135():
         src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
         src_ds.GetRasterBand(1).Fill(100)
 
+        # Target CRS in us-ft
+        ds = gdal.Warp(
+            "",
+            src_ds,
+            format="VRT",
+            outputType=gdal.GDT_Float32,
+            srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+            dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid2.gtx +vunits=us-ft +no_defs",
+        )
+        data = struct.unpack("f" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+        assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
+
         # Both transforms to regular VRT
         gdal.GetDriverByName("GTiff").CreateCopy("tmp/dem.tif", src_ds)
         gdal.Warp(

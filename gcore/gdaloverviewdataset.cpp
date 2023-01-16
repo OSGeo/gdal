@@ -110,7 +110,7 @@ class GDALOverviewBand final : public GDALProxyRasterBand
     friend class GDALOverviewDataset;
 
     GDALRasterBand *poUnderlyingBand = nullptr;
-    GDALRasterBand *RefUnderlyingRasterBand() const override;
+    GDALRasterBand *RefUnderlyingRasterBand(bool bForceOpen) const override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, GSpacing, GSpacing,
@@ -600,12 +600,10 @@ CPLErr GDALOverviewBand::FlushCache(bool bAtClosing)
 /*                        RefUnderlyingRasterBand()                     */
 /************************************************************************/
 
-GDALRasterBand *GDALOverviewBand::RefUnderlyingRasterBand() const
+GDALRasterBand *
+GDALOverviewBand::RefUnderlyingRasterBand(bool /*bForceOpen */) const
 {
-    if (poUnderlyingBand)
-        return poUnderlyingBand;
-
-    return nullptr;
+    return poUnderlyingBand;
 }
 
 /************************************************************************/

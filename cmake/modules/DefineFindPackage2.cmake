@@ -68,6 +68,8 @@ function(define_find_package2 pkgname include_file library_name)
     else()
         set_property(GLOBAL APPEND PROPERTY define_find_package_find_path_suffix "_unset_")
     endif()
+    set(FIND_PACKAGE2_${pkgname}_ENABLED TRUE CACHE BOOL "Use find_package2 for dependency ${pkgname}")
+    mark_as_advanced(FIND_PACKAGE2_${pkgname}_ENABLED)
 endfunction()
 
 function(find_package2 pkgname)

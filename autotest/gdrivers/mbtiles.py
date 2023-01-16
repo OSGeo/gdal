@@ -662,6 +662,8 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     src_ds = gdal.Open("data/mbtiles/byte.mbtiles")
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    assert ds.GetMetadata() == {}
+    assert ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo") is None
     ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.SetProjection(src_ds.GetProjectionRef())
 

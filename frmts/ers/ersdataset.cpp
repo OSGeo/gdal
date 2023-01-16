@@ -827,7 +827,7 @@ class ERSProxyRasterBand final : public GDALProxyRasterBand
     int GetOverviewCount() override;
 
   protected:
-    GDALRasterBand *RefUnderlyingRasterBand() const override
+    GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
     {
         return m_poUnderlyingBand;
     }

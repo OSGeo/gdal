@@ -2220,8 +2220,12 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
             iNext++;
         }
         nSize += panSizes[iNext];
+
         if (nSize == 0)
+        {
+            i = iNext + 1;
             continue;
+        }
 
         CURL *hCurlHandle = curl_easy_init();
         aHandles.push_back(hCurlHandle);

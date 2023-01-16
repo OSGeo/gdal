@@ -57,7 +57,13 @@
 #endif
 
 #if defined(__linux) && defined(CPL_MULTIPROC_PTHREAD)
+#ifndef HAVE_5ARGS_MREMAP
+// FIXME? gcore/virtualmem.py tests fail/crash when HAVE_5ARGS_MREMAP
+// is not defined.
+#warning "HAVE_5ARGS_MREMAP not found. Disabling HAVE_VIRTUAL_MEM_VMA"
+#else
 #define HAVE_VIRTUAL_MEM_VMA
+#endif
 #endif
 
 #if defined(HAVE_MMAP) || defined(HAVE_VIRTUAL_MEM_VMA)
@@ -106,9 +112,6 @@ struct CPLVirtualMem
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-
-// FIXME? gcore/virtualmem.py tests fail/crash when HAVE_5ARGS_MREMAP
-// is not defined.
 
 #ifndef HAVE_5ARGS_MREMAP
 #include "cpl_atomic_ops.h"
