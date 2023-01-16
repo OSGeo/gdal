@@ -190,6 +190,15 @@ Default value is 128, or starting with GDAL 3.1, if creating overviews on a tile
 Note: without this setting, the file can have the full resolution image with a blocksize different from overviews blocksize.(e.g. full resolution image at blocksize 256, overviews at blocksize 128)
 
 
+Nodata / source validity mask handling during resampling
+--------------------------------------------------------
+
+Invalid values in source pixels, either identified through a nodata value
+metadata set on the source band, a mask band, an alpha band will not be used
+during resampling.
+
+.. include:: nodata_handling_gdaladdo_gdal_translate.rst
+
 Multithreading
 --------------
 
