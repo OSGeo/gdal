@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "gdal.h"
 
+#include <cstdint>
 #include <iostream>
 
 #include "gtest_include.h"
