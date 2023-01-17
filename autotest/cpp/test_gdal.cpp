@@ -1858,19 +1858,25 @@ TEST_F(test_gdal, TileMatrixSet)
     {
         auto poTMS = gdal::TileMatrixSet::parse("LINZAntarticaMapTileGrid");
         EXPECT_TRUE(poTMS != nullptr);
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
-        EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
-        EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        if (poTMS)
+        {
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
+            EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        }
     }
 
     {
         auto poTMS = gdal::TileMatrixSet::parse("NZTM2000");
         EXPECT_TRUE(poTMS != nullptr);
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
-        EXPECT_TRUE(!poTMS->hasOnlyPowerOfTwoVaryingScales());
-        EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        if (poTMS)
+        {
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(!poTMS->hasOnlyPowerOfTwoVaryingScales());
+            EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        }
     }
 
     // Inline JSON with minimal structure
@@ -1880,10 +1886,13 @@ TEST_F(test_gdal, TileMatrixSet)
             "\"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": "
             "[{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
         EXPECT_TRUE(poTMS != nullptr);
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
-        EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
-        EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        if (poTMS)
+        {
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
+            EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+        }
     }
 
     // Invalid scaleDenominator
@@ -1953,36 +1962,41 @@ TEST_F(test_gdal, TileMatrixSet)
         VSIUnlink("/vsimem/tmp.json");
 
         EXPECT_TRUE(poTMS != nullptr);
-        EXPECT_EQ(poTMS->title(), "CRS84 for the World");
-        EXPECT_EQ(poTMS->identifier(), "WorldCRS84Quad");
-        EXPECT_EQ(poTMS->abstract(), "my abstract");
-        EXPECT_EQ(poTMS->crs(), "http://www.opengis.net/def/crs/OGC/1.3/CRS84");
-        EXPECT_EQ(poTMS->wellKnownScaleSet(),
-                  "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad");
-        EXPECT_EQ(poTMS->bbox().mCrs,
-                  "http://www.opengis.net/def/crs/OGC/1.X/CRS84");
-        EXPECT_EQ(poTMS->bbox().mLowerCornerX, -180.0);
-        EXPECT_EQ(poTMS->bbox().mLowerCornerY, -90.0);
-        EXPECT_EQ(poTMS->bbox().mUpperCornerX, 180.0);
-        EXPECT_EQ(poTMS->bbox().mUpperCornerY, 90.0);
-        ASSERT_EQ(poTMS->tileMatrixList().size(), 2U);
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
-        EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
-        EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
-        EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
-        const auto &tm = poTMS->tileMatrixList()[0];
-        EXPECT_EQ(tm.mId, "0");
-        EXPECT_EQ(tm.mScaleDenominator, 279541132.014358);
-        EXPECT_TRUE(fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 /
-                                        (6378137. * M_PI / 180)) < 1e-10);
-        EXPECT_TRUE(fabs(tm.mResX - 180. / 256) < 1e-10);
-        EXPECT_EQ(tm.mResY, tm.mResX);
-        EXPECT_EQ(tm.mTopLeftX, -180.0);
-        EXPECT_EQ(tm.mTopLeftY, 90.0);
-        EXPECT_EQ(tm.mTileWidth, 256);
-        EXPECT_EQ(tm.mTileHeight, 256);
-        EXPECT_EQ(tm.mMatrixWidth, 2);
-        EXPECT_EQ(tm.mMatrixHeight, 1);
+        if (poTMS)
+        {
+            EXPECT_EQ(poTMS->title(), "CRS84 for the World");
+            EXPECT_EQ(poTMS->identifier(), "WorldCRS84Quad");
+            EXPECT_EQ(poTMS->abstract(), "my abstract");
+            EXPECT_EQ(poTMS->crs(),
+                      "http://www.opengis.net/def/crs/OGC/1.3/CRS84");
+            EXPECT_EQ(
+                poTMS->wellKnownScaleSet(),
+                "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad");
+            EXPECT_EQ(poTMS->bbox().mCrs,
+                      "http://www.opengis.net/def/crs/OGC/1.X/CRS84");
+            EXPECT_EQ(poTMS->bbox().mLowerCornerX, -180.0);
+            EXPECT_EQ(poTMS->bbox().mLowerCornerY, -90.0);
+            EXPECT_EQ(poTMS->bbox().mUpperCornerX, 180.0);
+            EXPECT_EQ(poTMS->bbox().mUpperCornerY, 90.0);
+            ASSERT_EQ(poTMS->tileMatrixList().size(), 2U);
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
+            EXPECT_TRUE(!poTMS->hasVariableMatrixWidth());
+            const auto &tm = poTMS->tileMatrixList()[0];
+            EXPECT_EQ(tm.mId, "0");
+            EXPECT_EQ(tm.mScaleDenominator, 279541132.014358);
+            EXPECT_TRUE(fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 /
+                                            (6378137. * M_PI / 180)) < 1e-10);
+            EXPECT_TRUE(fabs(tm.mResX - 180. / 256) < 1e-10);
+            EXPECT_EQ(tm.mResY, tm.mResX);
+            EXPECT_EQ(tm.mTopLeftX, -180.0);
+            EXPECT_EQ(tm.mTopLeftY, 90.0);
+            EXPECT_EQ(tm.mTileWidth, 256);
+            EXPECT_EQ(tm.mTileHeight, 256);
+            EXPECT_EQ(tm.mMatrixWidth, 2);
+            EXPECT_EQ(tm.mMatrixHeight, 1);
+        }
     }
 
     {
@@ -2040,17 +2054,20 @@ TEST_F(test_gdal, TileMatrixSet)
             "    ]"
             "}");
         EXPECT_TRUE(poTMS != nullptr);
-        ASSERT_EQ(poTMS->tileMatrixList().size(), 2U);
-        EXPECT_TRUE(!poTMS->haveAllLevelsSameTopLeft());
-        EXPECT_TRUE(!poTMS->haveAllLevelsSameTileSize());
-        EXPECT_TRUE(!poTMS->hasOnlyPowerOfTwoVaryingScales());
-        EXPECT_TRUE(poTMS->hasVariableMatrixWidth());
-        const auto &tm = poTMS->tileMatrixList()[1];
-        EXPECT_EQ(tm.mVariableMatrixWidthList.size(), 1U);
-        const auto &vmw = tm.mVariableMatrixWidthList[0];
-        EXPECT_EQ(vmw.mCoalesce, 2);
-        EXPECT_EQ(vmw.mMinTileRow, 0);
-        EXPECT_EQ(vmw.mMaxTileRow, 1);
+        if (poTMS)
+        {
+            ASSERT_EQ(poTMS->tileMatrixList().size(), 2U);
+            EXPECT_TRUE(!poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(!poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(!poTMS->hasOnlyPowerOfTwoVaryingScales());
+            EXPECT_TRUE(poTMS->hasVariableMatrixWidth());
+            const auto &tm = poTMS->tileMatrixList()[1];
+            EXPECT_EQ(tm.mVariableMatrixWidthList.size(), 1U);
+            const auto &vmw = tm.mVariableMatrixWidthList[0];
+            EXPECT_EQ(vmw.mCoalesce, 2);
+            EXPECT_EQ(vmw.mMinTileRow, 0);
+            EXPECT_EQ(vmw.mMaxTileRow, 1);
+        }
     }
 
     {
@@ -2101,13 +2118,16 @@ TEST_F(test_gdal, TileMatrixSet)
             "    ]"
             "}");
         EXPECT_TRUE(poTMS != nullptr);
-        ASSERT_EQ(poTMS->tileMatrixList().size(), 1U);
-        const auto &tm = poTMS->tileMatrixList()[0];
-        EXPECT_EQ(tm.mVariableMatrixWidthList.size(), 2U);
-        const auto &vmw = tm.mVariableMatrixWidthList[0];
-        EXPECT_EQ(vmw.mCoalesce, 12);
-        EXPECT_EQ(vmw.mMinTileRow, 0);
-        EXPECT_EQ(vmw.mMaxTileRow, 0);
+        if (poTMS)
+        {
+            ASSERT_EQ(poTMS->tileMatrixList().size(), 1U);
+            const auto &tm = poTMS->tileMatrixList()[0];
+            EXPECT_EQ(tm.mVariableMatrixWidthList.size(), 2U);
+            const auto &vmw = tm.mVariableMatrixWidthList[0];
+            EXPECT_EQ(vmw.mCoalesce, 12);
+            EXPECT_EQ(vmw.mMinTileRow, 0);
+            EXPECT_EQ(vmw.mMaxTileRow, 0);
+        }
     }
 }
 
