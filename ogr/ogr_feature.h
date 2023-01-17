@@ -457,7 +457,7 @@ class CPL_DLL OGRFeatureDefn
         \verbatim
         for( const auto* poFieldDefn: poFeatureDefn->GetFields() )
         {
-            // do someting
+            // do something
         }
         \endverbatim
 
@@ -570,7 +570,7 @@ class CPL_DLL OGRFeatureDefn
         \verbatim
         for( const auto* poGeomFieldDefn: poFeatureDefn->GetGeomFields() )
         {
-            // do someting
+            // do something
         }
         \endverbatim
 

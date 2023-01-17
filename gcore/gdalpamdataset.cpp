@@ -492,7 +492,7 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
         // previously we only tried to load GeodataXform if we didn't already
         // encounter a valid SRS at this stage. But in some cases a PAMDataset
         // may have both a SRS child element AND a GeodataXform with a SpatialReference
-        // child element. In this case we should prioritise the GeodataXform
+        // child element. In this case we should prioritize the GeodataXform
         // over the root PAMDataset SRS node.
 
         // ArcGIS 9.3: GeodataXform as a root element

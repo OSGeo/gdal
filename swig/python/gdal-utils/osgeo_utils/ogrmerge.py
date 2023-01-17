@@ -792,7 +792,7 @@ def _gpkg_ogrmerge(
                     )
                     dst_ds.ExecuteSQL(sql)
 
-            # Re-install trigers
+            # Re-install triggers
             for sql in triggers:
                 dst_ds.ExecuteSQL(sql)
 

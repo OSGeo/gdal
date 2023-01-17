@@ -63,7 +63,7 @@ with control information.
     The alpha band should not be specified in the list, as it will be
     automatically retrieved (unless :option:`-nosrcalpha` is specified).
 
-    The following invokation will warp an input datasets with bands ordered as
+    The following invocation will warp an input datasets with bands ordered as
     Blue, Green, Red, NearInfraRed in an output dataset with bands ordered as
     Red, Green, Blue.
 
@@ -88,7 +88,7 @@ with control information.
         gdalwarp in_blue.tif out_rgb.tif -srcband 1 -dstband 3
 
 
-    If :option:`-srcband` is specified, there must be as many occurences of
+    If :option:`-srcband` is specified, there must be as many occurrences of
     :option:`-dstband` as there are of :option:`-srcband`.
 
     The output alpha band should not be specified, as it will be automatically

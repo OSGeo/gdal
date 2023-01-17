@@ -193,7 +193,7 @@ Implementation
 1. add clang-format to pre-commit configuration file
 2. Set up GitHub workflow [clang-format-check]
 
-A draft of the implementation is avaliable at `this branch <https://github.com/elpaso/gdal/tree/rfc69_cplusplus_formatting_revival>`__.
+A draft of the implementation is available at `this branch <https://github.com/elpaso/gdal/tree/rfc69_cplusplus_formatting_revival>`__.
 
 The relevant files are:
 
