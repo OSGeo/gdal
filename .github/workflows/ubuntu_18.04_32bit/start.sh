@@ -62,7 +62,6 @@ fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil
 
 (git clone --depth 1 https://github.com/OSGeo/PROJ && cd PROJ && mkdir build && cd build && CC='ccache gcc' CXX='ccache g++' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON || cat config.log && make -j3)
 sudo sh -c "cd $PWD/PROJ/build && make -j3 install"
-sudo sh -c "cd /usr/local/share/proj && curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz && tar xvzf proj-datumgrid-1.8.tar.gz"
 sudo sh -c "apt-get remove -y libproj-dev"
 
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

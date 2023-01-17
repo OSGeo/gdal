@@ -351,11 +351,6 @@ jobs:
       - name: populate JAVA_HOME
         run: |
           echo "JAVA_HOME=$JAVA_HOME_11_X64" >> ${GITHUB_ENV}
-      - name: Install PROJ data
-        run: |
-          cd /mingw64/share/proj
-          wget http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz
-          tar xvzf proj-datumgrid-1.8.tar.gz
       - name: Install python dependencies for autotest
         run: |
           python -m pip install pytest-env
@@ -436,10 +431,6 @@ jobs:
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc \
             "arrow-cpp>=7.0.0" "pyarrow>=7.0.0"
-        cd $CONDA_PREFIX/Library/share/proj
-        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
-        tar xvzf proj-datumgrid-1.8.tar.gz
-        cd $OLDPWD
     - name: Setup cache
       uses: actions/cache@v3
       id: cache
@@ -543,10 +534,6 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install --yes --quiet --name gdalenv -c conda-forge proj clcache pytest pytest-env lxml
-        cd $CONDA_PREFIX/Library/share/proj
-        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
-        tar xvzf proj-datumgrid-1.8.tar.gz
-        cd $OLDPWD
     - name: Configure
       shell: bash -l {0}
       run: |
@@ -617,10 +604,6 @@ jobs:
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
-        cd /usr/local/opt/proj/share/proj
-        curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
-        tar xvzf proj-datumgrid-1.8.tar.gz
-        cd $OLDPWD
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
