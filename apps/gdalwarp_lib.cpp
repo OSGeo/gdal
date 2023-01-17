@@ -2591,6 +2591,9 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         if (psOptions->nOvLevel <= OVR_LEVEL_AUTO && nOvCount > 0)
         {
             double dfTargetRatio = 0;
+            double dfTargetRatioX = 0;
+            double dfTargetRatioY = 0;
+
             if (bFigureoutCorrespondingWindow)
             {
                 // If the user has explicitly set the target bounds and
@@ -2621,19 +2624,30 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     double dfMinSrcX = std::numeric_limits<double>::infinity();
                     double dfMaxSrcX = -std::numeric_limits<double>::infinity();
+                    double dfMinSrcY = std::numeric_limits<double>::infinity();
+                    double dfMaxSrcY = -std::numeric_limits<double>::infinity();
                     for (int i = 0; i < nPoints; i++)
                     {
                         if (abSuccess[i])
                         {
                             dfMinSrcX = std::min(dfMinSrcX, adfX[i]);
                             dfMaxSrcX = std::max(dfMaxSrcX, adfX[i]);
+                            dfMinSrcY = std::min(dfMinSrcY, adfY[i]);
+                            dfMaxSrcY = std::max(dfMaxSrcY, adfY[i]);
                         }
                     }
                     if (dfMaxSrcX > dfMinSrcX)
                     {
-                        dfTargetRatio = (dfMaxSrcX - dfMinSrcX) /
-                                        GDALGetRasterXSize(hDstDS);
+                        dfTargetRatioX = (dfMaxSrcX - dfMinSrcX) /
+                                         GDALGetRasterXSize(hDstDS);
                     }
+                    if (dfMaxSrcY > dfMinSrcY)
+                    {
+                        dfTargetRatioY = (dfMaxSrcY - dfMinSrcY) /
+                                         GDALGetRasterYSize(hDstDS);
+                    }
+                    // take the minimum of these ratios #7019
+                    dfTargetRatio = std::min(dfTargetRatioX, dfTargetRatioY);
                 }
             }
             else
