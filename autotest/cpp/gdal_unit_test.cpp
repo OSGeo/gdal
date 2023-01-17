@@ -164,6 +164,35 @@ CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
 
 int main(int argc, char *argv[])
 {
+#if defined(PROJ_GRIDS_PATH) && defined(PROJ_DB_TMPDIR)
+    // Look for proj.db in PROJ search paths, copy it in PROJ_DB_TMPDIR, and restrict
+    // PROJ search paths to PROJ_DB_TMPDIR and PROJ_GRIDS_PATH
+    VSIMkdir(PROJ_DB_TMPDIR, 0755);
+    static char szProjNetworkOff[] = "PROJ_NETWORK=OFF";
+    putenv(szProjNetworkOff);
+    const CPLStringList aosPathsOri(OSRGetPROJSearchPaths());
+    bool bFoundProjDB = false;
+    for (int i = 0; i < aosPathsOri.size(); ++i)
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(CPLFormFilename(aosPathsOri[i], "proj.db", nullptr),
+                     &sStat) == 0)
+        {
+            CPLCopyFile(CPLFormFilename(PROJ_DB_TMPDIR, "proj.db", nullptr),
+                        CPLFormFilename(aosPathsOri[i], "proj.db", nullptr));
+            bFoundProjDB = true;
+            break;
+        }
+    }
+    if (bFoundProjDB)
+    {
+        CPLStringList aosPaths;
+        aosPaths.AddString(PROJ_DB_TMPDIR);
+        aosPaths.AddString(PROJ_GRIDS_PATH);
+        OSRSetPROJSearchPaths(aosPaths.List());
+    }
+#endif
+
     // Register GDAL/OGR drivers
     ::GDALAllRegister();
     ::OGRRegisterAll();
