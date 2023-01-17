@@ -488,8 +488,13 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
     /* -------------------------------------------------------------------- */
     /*      Try loading ESRI xml encoded GeodataXform.                      */
     /* -------------------------------------------------------------------- */
-    if (psPam->poSRS == nullptr)
     {
+        // previously we only tried to load GeodataXform if we didn't already
+        // encounter a valid SRS at this stage. But in some cases a PAMDataset
+        // may have both a SRS child element AND a GeodataXform with a SpatialReference
+        // child element. In this case we should prioritise the GeodataXform
+        // over the root PAMDataset SRS node.
+
         // ArcGIS 9.3: GeodataXform as a root element
         CPLXMLNode *psGeodataXform = CPLGetXMLNode(psTree, "=GeodataXform");
         CPLXMLNode *psValueAsXML = nullptr;
@@ -520,6 +525,7 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
                 CPLGetXMLValue(psGeodataXform, "SpatialReference.WKT", nullptr);
             if (pszESRI_WKT)
             {
+                delete psPam->poSRS;
                 psPam->poSRS = new OGRSpatialReference(nullptr);
                 psPam->poSRS->SetAxisMappingStrategy(
                     OAMS_TRADITIONAL_GIS_ORDER);
