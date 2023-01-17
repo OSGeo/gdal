@@ -105,7 +105,7 @@ GetCompressionFormats()
      *
      * For example, a tiled dataset may be able to return data in a compressed
      * format if the window of interest matches exactly a tile. For some formats,
-     * drivers may also be example to merge several tiles together (not currently
+     * drivers may also be able to merge several tiles together (not currently
      * implemented though).
      *
      * Each format string is a pseudo MIME type, whose first part can be passed
@@ -185,12 +185,12 @@ ReadCompressedData()
      *
      * For example, a tiled dataset may be able to return data in compressed format
      * if the window of interest matches exactly a tile. For some formats, drivers
-     * may also be example to merge several tiles together (not currently
+     * may also be able to merge several tiles together (not currently
      * implemented though).
      *
      * The implementation should make sure that the content returned forms a valid
      * standalone file. For example, for the GeoTIFF implementation of this method,
-     * when extracting a JPEG tile, the method will automatically adds the content
+     * when extracting a JPEG tile, the method will automatically add the content
      * of the JPEG Huffman and/or quantization tables that might be stored in the
      * TIFF JpegTables tag, and not in tile data itself.
      *
@@ -360,7 +360,7 @@ for example).
 Miscellaneous
 +++++++++++++
 
-An helper ``bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const``
+A helper ``bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const``
 method is also added to check if (nBandCount, panBandList) requests all the
 bands of the dataset.
 
