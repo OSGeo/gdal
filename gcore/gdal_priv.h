@@ -527,6 +527,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void FlushCache(bool bAtClosing = false);
 
+    virtual GIntBig GetEstimatedRAMUsage();
+
     virtual const OGRSpatialReference *GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference *poSRS);
 

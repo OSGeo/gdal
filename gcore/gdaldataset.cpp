@@ -483,6 +483,36 @@ void CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 }
 
 /************************************************************************/
+/*                      GetEstimatedRAMUsage()                          */
+/************************************************************************/
+
+/**
+ * \brief Return the intrinsic RAM usage of this dataset.
+ *
+ * The returned value should take into account caches in the underlying driver
+ * and decoding library, but not the usage related to the GDAL block cache.
+ *
+ * At time of writing, this method is only implemented in the JP2OpenJPEG
+ * driver. For single-tiled JPEG2000 images, the decoding of the image,
+ * even partially, involves allocating at least
+ * width * height * number_of_bands * sizeof(uint32_t) bytes inside the libopenjp2
+ * library.
+ *
+ * This method is used by the GDALDatasetPool class, itself used by the GDAL VRT
+ * driver, to determine how long a dataset in the pool must be kept open, given
+ * the RAM usage of the dataset with respect to the usable total RAM.
+ *
+ * @since GDAL 3.7
+ * @return RAM usage in bytes, or -1 if unknown (the default implementation
+ * returns -1)
+ */
+
+GIntBig GDALDataset::GetEstimatedRAMUsage()
+{
+    return -1;
+}
+
+/************************************************************************/
 /*                        BlockBasedFlushCache()                        */
 /*                                                                      */
 /*      This helper method can be called by the                         */
