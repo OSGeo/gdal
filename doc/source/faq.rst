@@ -85,6 +85,11 @@ How do I add support for a new format?
 
 To some extent this is now covered by the :ref:`raster_driver_tut` and :ref:`vector_driver_tut`
 
+Is GDAL thread-safe ?
++++++++++++++++++++++
+
+See :ref:`multithreading`
+
 How do I cite GDAL ?
 ++++++++++++++++++++
 
