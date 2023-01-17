@@ -2406,20 +2406,20 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
                     GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
                 {
                     // as a hint for the JPEG and JPEGXL drivers to not use it!
-                    aosList.AddString("image/jpeg;colorspace=RGBA");
+                    aosList.AddString("JPEG;colorspace=RGBA");
                 }
                 else
                 {
-                    aosList.AddString("image/jpeg");
+                    aosList.AddString("JPEG");
                 }
             }
             else if (m_nCompression == COMPRESSION_WEBP)
             {
-                aosList.AddString("image/webp");
+                aosList.AddString("WEBP");
             }
             else if (m_nCompression == COMPRESSION_JXL)
             {
-                aosList.AddString("image/jxl");
+                aosList.AddString("JXL");
             }
         }
         return aosList;
@@ -2450,13 +2450,12 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
         // We don't want to handle CMYK JPEG for now
         if ((m_nCompression == COMPRESSION_JPEG &&
-             EQUAL(aosTokens[0], "image/jpeg") &&
+             EQUAL(aosTokens[0], "JPEG") &&
              (m_nPlanarConfig == PLANARCONFIG_SEPARATE ||
               m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
             (m_nCompression == COMPRESSION_WEBP &&
-             EQUAL(aosTokens[0], "image/webp")) ||
-            (m_nCompression == COMPRESSION_JXL &&
-             EQUAL(aosTokens[0], "image/jxl")))
+             EQUAL(aosTokens[0], "WEBP")) ||
+            (m_nCompression == COMPRESSION_JXL && EQUAL(aosTokens[0], "JXL")))
         {
             std::string osDetailedFormat = aosTokens[0];
 

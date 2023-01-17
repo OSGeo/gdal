@@ -9138,15 +9138,15 @@ bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const
  * format dependent, and driver dependent (some drivers might not be able to
  * return those extra information without doing a rather costly processing).
  *
- * For example, a driver might return "image/jpeg;frame_type=SOF0_baseline;"
+ * For example, a driver might return "JPEG;frame_type=SOF0_baseline;"
  * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
- * consequently "image/jpeg" can be passed as the pszFormat argument of
+ * consequently "JPEG" can be passed as the pszFormat argument of
  * ReadCompressedData(). For JPEG, implementations can use the
  * GDALGetCompressionFormatForJPEG() helper method to generate a string like
  * above from a JPEG codestream.
  *
  * Several values might be returned. For example,
- * the JPEGXL driver will return "image/jxl", but also potentially "image/jpeg"
+ * the JPEGXL driver will return "JXL", but also potentially "JPEG"
  * if the JPEGXL codestream includes a JPEG reconstruction box.
  *
  * In the general case this method will return an empty list.
@@ -9219,15 +9219,15 @@ GDALDataset::GetCompressionFormats(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
  * format dependent, and driver dependent (some drivers might not be able to
  * return those extra information without doing a rather costly processing).
  *
- * For example, a driver might return "image/jpeg;frame_type=SOF0_baseline;"
+ * For example, a driver might return "JPEG;frame_type=SOF0_baseline;"
  * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
- * consequently "image/jpeg" can be passed as the pszFormat argument of
+ * consequently "JPEG" can be passed as the pszFormat argument of
  * ReadCompressedData(). For JPEG, implementations can use the
  * GDALGetCompressionFormatForJPEG() helper method to generate a string like
  * above from a JPEG codestream.
  *
  * Several values might be returned. For example,
- * the JPEGXL driver will return "image/jxl", but also potentially "image/jpeg"
+ * the JPEGXL driver will return "JXL", but also potentially "JPEG"
  * if the JPEGXL codestream includes a JPEG reconstruction box.
  *
  * In the general case this method will return an empty list.
@@ -9290,8 +9290,8 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  *
  * This is the same as C function GDALDatasetReadCompressedData().
  *
- * @param pszFormat Requested compression format (e.g. "image/jpeg",
- * "image/webp", "image/jxl"). This is the MIME type of one of the values
+ * @param pszFormat Requested compression format (e.g. "JPEG",
+ * "WEBP", "JXL"). This is the MIME type of one of the values
  * returned by GetCompressionFormats(). The format string is designed to
  * potentially include at a later point key=value optional parameters separated
  * by a semi-colon character. At time of writing, none are implemented.
@@ -9337,7 +9337,7 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  * If ppszDetailedFormat is not nullptr, then, on success, the method will
  * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
  * *ppszDetailedFormat might contain strings like
- * "image/jpeg;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "JPEG;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
  * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
  * The string will contain at least as much information as what
  * GetCompressionFormats() returns, and potentially more when
@@ -9351,7 +9351,7 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  *   void* pBuffer = nullptr;
  *   size_t nBufferSize = 0;
  *   CPLErr eErr =
- *      poDataset->ReadCompressedData("image/jpeg",
+ *      poDataset->ReadCompressedData("JPEG",
  *                                    0, 0,
  *                                    poDataset->GetRasterXSize(),
  *                                    poDataset->GetRasterYSize(),
@@ -9379,7 +9379,7 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  * \code{.cpp}
  *   size_t nUpperBoundBufferSize = 0;
  *   CPLErr eErr =
- *      poDataset->ReadCompressedData("image/jpeg",
+ *      poDataset->ReadCompressedData("JPEG",
  *                                    0, 0,
  *                                    poDataset->GetRasterXSize(),
  *                                    poDataset->GetRasterYSize(),
@@ -9399,7 +9399,7 @@ char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
  *       // We also request detailed format, but we could have passed it to
  *       // nullptr as well.
  *       eErr =
- *         poDataset->ReadCompressedData("image/jpeg",
+ *         poDataset->ReadCompressedData("JPEG",
  *                                       0, 0,
  *                                       poDataset->GetRasterXSize(),
  *                                       poDataset->GetRasterYSize(),
@@ -9455,8 +9455,8 @@ CPLErr GDALDataset::ReadCompressedData(
  *
  * @param hDS Dataset handle.
  *
- * @param pszFormat Requested compression format (e.g. "image/jpeg",
- * "image/webp", "image/jxl"). This is the MIME type of one of the values
+ * @param pszFormat Requested compression format (e.g. "JPEG",
+ * "WEBP", "JXL"). This is the MIME type of one of the values
  * returned by GetCompressionFormats(). The format string is designed to
  * potentially include at a later point key=value optional parameters separated
  * by a semi-colon character. At time of writing, none are implemented.
@@ -9502,7 +9502,7 @@ CPLErr GDALDataset::ReadCompressedData(
  * If ppszDetailedFormat is not nullptr, then, on success, the method will
  * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
  * *ppszDetailedFormat might contain strings like
- * "image/jpeg;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "JPEG;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
  * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
  * The string will contain at least as much information as what
  * GetCompressionFormats() returns, and potentially more when

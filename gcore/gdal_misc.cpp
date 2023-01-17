@@ -4572,7 +4572,7 @@ std::string GDALGetCompressionFormatForJPEG(VSILFILE *fp)
         VSIFReadL(abyMarkerHeader, 2, 1, fp) == 1 &&
         abyMarkerHeader[0] == 0xFF && abyMarkerHeader[1] == 0xD8)
     {
-        osRet = "image/jpeg";
+        osRet = "JPEG";
         bool bHasAPP14Adobe = false;
         GByte abyAPP14AdobeMarkerData[14 - 2] = {0};
         int nNumComponents = 0;

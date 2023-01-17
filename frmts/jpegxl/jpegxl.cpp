@@ -1022,10 +1022,10 @@ CPLStringList JPEGXLDataset::GetCompressionFormats(int nXOff, int nYOff,
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        aosRet.AddString("image/jxl");
+        aosRet.AddString("JXL");
 #ifdef HAVE_JXL_BOX_API
         if (m_bHasJPEGReconstructionData)
-            aosRet.AddString("image/jpeg");
+            aosRet.AddString("JPEG");
 #endif
     }
     return aosRet;
@@ -1048,10 +1048,10 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         if (aosTokens.size() != 1)
             return CE_Failure;
 
-        if (EQUAL(aosTokens[0], "image/jxl"))
+        if (EQUAL(aosTokens[0], "JXL"))
         {
             if (ppszDetailedFormat)
-                *ppszDetailedFormat = VSIStrdup("image/jxl");
+                *ppszDetailedFormat = VSIStrdup("JXL");
             VSIFSeekL(m_fp, 0, SEEK_END);
             const auto nFileSize = VSIFTellL(m_fp);
             if (nFileSize > std::numeric_limits<size_t>::max())
@@ -1120,7 +1120,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         }
 
 #ifdef HAVE_JXL_BOX_API
-        if (m_bHasJPEGReconstructionData && EQUAL(aosTokens[0], "image/jpeg"))
+        if (m_bHasJPEGReconstructionData && EQUAL(aosTokens[0], "JPEG"))
         {
             auto decoder = JxlDecoderMake(nullptr);
             if (!decoder)
@@ -1821,7 +1821,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         void *pJPEGXLContent = nullptr;
         size_t nJPEGXLContent = 0;
         if (poSrcDS->ReadCompressedData(
-                "image/jxl", 0, 0, poSrcDS->GetRasterXSize(),
+                "JXL", 0, 0, poSrcDS->GetRasterXSize(),
                 poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
                 &pJPEGXLContent, &nJPEGXLContent, nullptr) == CE_None)
         {
@@ -2327,9 +2327,9 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     // losslessly add it
     if ((EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
         poSrcDS->ReadCompressedData(
-            "image/jpeg", 0, 0, poSrcDS->GetRasterXSize(),
-            poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
-            &pJPEGContent, &nJPEGContent, &pszDetailedFormat) == CE_None)
+            "JPEG", 0, 0, poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(), nullptr, &pJPEGContent, &nJPEGContent,
+            &pszDetailedFormat) == CE_None)
     {
         CPLAssert(pszDetailedFormat != nullptr);
         const CPLStringList aosTokens(

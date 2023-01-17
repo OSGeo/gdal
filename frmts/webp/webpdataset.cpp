@@ -400,7 +400,7 @@ CPLStringList WEBPDataset::GetCompressionFormats(int nXOff, int nYOff,
     if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
         nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
     {
-        aosRet.AddString("image/webp");
+        aosRet.AddString("WEBP");
     }
     return aosRet;
 }
@@ -422,10 +422,10 @@ CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         if (aosTokens.size() != 1)
             return CE_Failure;
 
-        if (EQUAL(aosTokens[0], "image/webp"))
+        if (EQUAL(aosTokens[0], "WEBP"))
         {
             if (ppszDetailedFormat)
-                *ppszDetailedFormat = VSIStrdup("image/webp");
+                *ppszDetailedFormat = VSIStrdup("WEBP");
             VSIFSeekL(fpImage, 0, SEEK_END);
             const auto nFileSize = VSIFTellL(fpImage);
             if (nFileSize > std::numeric_limits<uint32_t>::max())
@@ -677,7 +677,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
         void *pWEBPContent = nullptr;
         size_t nWEBPContent = 0;
         if (poSrcDS->ReadCompressedData(
-                "image/webp", 0, 0, poSrcDS->GetRasterXSize(),
+                "WEBP", 0, 0, poSrcDS->GetRasterXSize(),
                 poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
                 &pWEBPContent, &nWEBPContent, nullptr) == CE_None)
         {

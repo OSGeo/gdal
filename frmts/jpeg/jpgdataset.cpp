@@ -3455,7 +3455,7 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
         if (aosTokens.size() != 1)
             return CE_Failure;
 
-        if (EQUAL(aosTokens[0], "image/jpeg"))
+        if (EQUAL(aosTokens[0], "JPEG"))
         {
             if (ppszDetailedFormat)
                 *ppszDetailedFormat = VSIStrdup(
@@ -4090,10 +4090,10 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     {
         void *pJPEGContent = nullptr;
         size_t nJPEGContent = 0;
-        if (poSrcDS->ReadCompressedData(
-                "image/jpeg", 0, 0, poSrcDS->GetRasterXSize(),
-                poSrcDS->GetRasterYSize(), nBands, nullptr, &pJPEGContent,
-                &nJPEGContent, nullptr) == CE_None &&
+        if (poSrcDS->ReadCompressedData("JPEG", 0, 0, poSrcDS->GetRasterXSize(),
+                                        poSrcDS->GetRasterYSize(), nBands,
+                                        nullptr, &pJPEGContent, &nJPEGContent,
+                                        nullptr) == CE_None &&
             GDALGetCompressionFormatForJPEG(pJPEGContent, nJPEGContent)
                     .find(";colorspace=RGBA") == std::string::npos)
         {
