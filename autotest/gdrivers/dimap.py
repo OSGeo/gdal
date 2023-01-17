@@ -236,3 +236,10 @@ def test_dimap_2_vhr2020_ms_fs():
         "Red Edge",
         "Deep Blue",
     ]
+    rgb_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_RGB_R1C1.TIF")
+    ned_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_NED_R1C1.TIF")
+    assert ds.ReadRaster() == rgb_ds.ReadRaster() + ned_ds.ReadRaster()
+    assert ds.ReadRaster(0, 0, 1663, 1366, 100, 100) == rgb_ds.ReadRaster(
+        0, 0, 1663, 1366, 100, 100
+    ) + ned_ds.ReadRaster(0, 0, 1663, 1366, 100, 100)
+    assert ds.GetRasterBand(1).ReadRaster() == rgb_ds.GetRasterBand(1).ReadRaster()
