@@ -125,7 +125,7 @@ if(HDF4_FOUND)
 
       add_library(HDF4::HDF4 INTERFACE IMPORTED)
       set_target_properties(HDF4::HDF4 PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIRS}
+                            INTERFACE_INCLUDE_DIRECTORIES "${HDF4_INCLUDE_DIRS}"
                             INTERFACE_LINK_LIBRARIES "${HDF4_TARGETS}")
   endif()
 endif()
