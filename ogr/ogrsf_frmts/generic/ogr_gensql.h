@@ -62,7 +62,8 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     OGRLayer *poSrcLayer;
     void *pSelectInfo;
 
-    char *pszWHERE;
+    std::string m_osInitialWHERE{};
+    bool m_bForwardWhereToSourceLayer = true;
 
     OGRLayer **papoTableLayers;
 

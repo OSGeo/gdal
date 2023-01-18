@@ -56,8 +56,8 @@ class OGRGenSQLGeomFieldDefn final : public OGRGeomFieldDefn
 /*               OGRGenSQLResultsLayerHasSpecialField()                 */
 /************************************************************************/
 
-static int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node *expr,
-                                                int nMinIndexForSpecialField)
+static bool OGRGenSQLResultsLayerHasSpecialField(swq_expr_node *expr,
+                                                 int nMinIndexForSpecialField)
 {
     if (expr->eNodeType == SNT_COLUMN)
     {
@@ -74,10 +74,10 @@ static int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node *expr,
         {
             if (OGRGenSQLResultsLayerHasSpecialField(expr->papoSubExpr[i],
                                                      nMinIndexForSpecialField))
-                return TRUE;
+                return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -90,7 +90,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
                                              const char *pszWHEREIn,
                                              const char *pszDialect)
     : poSrcDS(poSrcDSIn), poSrcLayer(nullptr), pSelectInfo(pSelectInfoIn),
-      pszWHERE(nullptr), papoTableLayers(nullptr), poDefn(nullptr),
+      papoTableLayers(nullptr), poDefn(nullptr),
       panGeomFieldToSrcGeomField(nullptr), nIndexSize(0), panFIDIndex(nullptr),
       bOrderByValid(FALSE), nNextIndexFID(0), poSummaryFeature(nullptr),
       iFIDFieldIndex(), nExtraDSCount(0), papoExtraDS(nullptr),
@@ -146,24 +146,20 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
     /*      we should avoid to forward the where clause to the source layer */
     /*      when there is a risk it cannot understand it (#4022)            */
     /* -------------------------------------------------------------------- */
-    int bForwardWhereToSourceLayer = TRUE;
+    m_bForwardWhereToSourceLayer = true;
     if (pszWHEREIn)
     {
         if (psSelectInfo->where_expr && pszDialect != nullptr &&
             EQUAL(pszDialect, "OGRSQL"))
         {
-            int nMinIndexForSpecialField =
+            const int nMinIndexForSpecialField =
                 poSrcLayer->GetLayerDefn()->GetFieldCount();
-            bForwardWhereToSourceLayer = !OGRGenSQLResultsLayerHasSpecialField(
-                psSelectInfo->where_expr, nMinIndexForSpecialField);
+            m_bForwardWhereToSourceLayer =
+                !OGRGenSQLResultsLayerHasSpecialField(psSelectInfo->where_expr,
+                                                      nMinIndexForSpecialField);
         }
-        if (bForwardWhereToSourceLayer)
-            pszWHERE = CPLStrdup(pszWHEREIn);
-        else
-            pszWHERE = nullptr;
+        m_osInitialWHERE = pszWHEREIn;
     }
-    else
-        pszWHERE = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Prepare a feature definition based on the query.                */
@@ -485,8 +481,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
 
     FindAndSetIgnoredFields();
 
-    if (!bForwardWhereToSourceLayer)
-        OGRGenSQLResultsLayer::SetAttributeFilter(pszWHEREIn);
+    if (!m_bForwardWhereToSourceLayer)
+        OGRLayer::SetAttributeFilter(m_osInitialWHERE.c_str());
 }
 
 /************************************************************************/
@@ -528,7 +524,6 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
         GDALClose(GDALDataset::ToHandle(papoExtraDS[iEDS]));
 
     CPLFree(papoExtraDS);
-    CPLFree(pszWHERE);
 }
 
 /************************************************************************/
@@ -605,7 +600,14 @@ int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
 
 void OGRGenSQLResultsLayer::ApplyFiltersToSource()
 {
-    poSrcLayer->SetAttributeFilter(pszWHERE);
+    if (m_bForwardWhereToSourceLayer && !m_osInitialWHERE.empty())
+    {
+        poSrcLayer->SetAttributeFilter(m_osInitialWHERE.c_str());
+    }
+    else
+    {
+        poSrcLayer->SetAttributeFilter(nullptr);
+    }
     if (m_iGeomFieldFilter >= 0 &&
         m_iGeomFieldFilter < GetLayerDefn()->GetGeomFieldCount())
     {
@@ -2436,8 +2438,26 @@ void OGRGenSQLResultsLayer::InvalidateOrderByIndex()
 
 OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
 {
+    const std::string osAdditionalWHERE =
+        pszAttributeFilter ? pszAttributeFilter : "";
+    std::string osWHERE;
+    if (!m_bForwardWhereToSourceLayer && !m_osInitialWHERE.empty())
+    {
+        if (!osAdditionalWHERE.empty())
+            osWHERE += '(';
+        osWHERE += m_osInitialWHERE;
+        if (!osAdditionalWHERE.empty())
+            osWHERE += ") AND (";
+    }
+    osWHERE += osAdditionalWHERE;
+    if (!m_bForwardWhereToSourceLayer && !m_osInitialWHERE.empty() &&
+        !osAdditionalWHERE.empty())
+    {
+        osWHERE += ')';
+    }
     InvalidateOrderByIndex();
-    return OGRLayer::SetAttributeFilter(pszAttributeFilter);
+    return OGRLayer::SetAttributeFilter(osWHERE.empty() ? nullptr
+                                                        : osWHERE.c_str());
 }
 
 /************************************************************************/
