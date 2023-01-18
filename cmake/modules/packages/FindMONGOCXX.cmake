@@ -37,20 +37,20 @@ find_package_handle_standard_args(MONGOCXX
                                   VERSION_VAR MONGOCXX_VERSION_STRING)
 
 if(MONGOCXX_FOUND)
-    set(MONGOCXX_LIBRARIES ${MONGOCXX_LIBRARY} ${BSONCXX_LIBRARY})
-    set(MONGOCXX_INCLUDE_DIRS ${MONGOCXX_INCLUDE_DIR} ${BSONCXX_INCLUDE_DIR})
+    set(MONGOCXX_LIBRARIES "${MONGOCXX_LIBRARY}" "${BSONCXX_LIBRARY}")
+    set(MONGOCXX_INCLUDE_DIRS "${MONGOCXX_INCLUDE_DIR}" "${BSONCXX_INCLUDE_DIR}")
     if(NOT TARGET MONGOCXX::MONGOCXX)
         add_library(MONGOCXX::MONGOCXX UNKNOWN IMPORTED)
         set_target_properties(MONGOCXX::MONGOCXX PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${MONGOCXX_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES "${MONGOCXX_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${MONGOCXX_LIBRARY})
+                              IMPORTED_LOCATION "${MONGOCXX_LIBRARY}")
     endif()
     if(NOT TARGET MONGOCXX::BSONCXX)
         add_library(MONGOCXX::BSONCXX UNKNOWN IMPORTED)
         set_target_properties(MONGOCXX::BSONCXX PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${BSONCXX_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES "${BSONCXX_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${BSONCXX_LIBRARY})
+                              IMPORTED_LOCATION "${BSONCXX_LIBRARY}")
     endif()
 endif()
