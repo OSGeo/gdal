@@ -759,6 +759,8 @@ if (Arrow_FOUND)
     if (Parquet_FOUND AND NOT ArrowDataset_FOUND)
         message(WARNING "Parquet library found, but not ArrowDataset: partitioned datasets will not be supported")
     endif()
+    option(ARROW_USE_STATIC_LIBRARIES "Use statically built Arrow libraries" OFF)
+    mark_as_advanced(ARROW_USE_STATIC_LIBRARIES)
 endif()
 
 # bindings

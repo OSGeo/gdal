@@ -243,9 +243,9 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
     Control whether to use Arrow. Defaults to ON when Arrow is found.
 
-.. option:: ARROW_STATIC=ON/OFF
+.. option:: ARROW_USE_STATIC_LIBRARIES=ON/OFF
 
-    Control whether to use the statically built Arrow targets. Defaults to OFF when Arrow is found.
+    Control whether to use statically built Arrow libraries. Defaults to OFF when Arrow is found.
 
 basisu
 ******
@@ -1426,9 +1426,9 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
     Control whether to use Parquet. Defaults to ON when Parquet is found.
 
-.. option:: PARQUET_STATIC=ON/OFF
+.. option:: ARROW_USE_STATIC_LIBRARIES=ON/OFF
 
-    Control whether to use the statically built Parquet targets. Defaults to OFF when Parquet is found.
+    Control whether to use statically built Arrow libraries. Defaults to OFF when Parquet is found.
 
 
 PCRE2
