@@ -15,13 +15,13 @@ find_package_handle_standard_args(PCRE2
                                   REQUIRED_VARS PCRE2-8_LIBRARY PCRE2_INCLUDE_DIR)
 mark_as_advanced(PCRE2_INCLUDE_DIR PCRE2-8_LIBRARY)
 if(PCRE2_FOUND)
-    list(APPEND PCRE2_LIBRARIES ${PCRE2-8_LIBRARY})
-    set(PCRE2_INCLUDE_DIRS ${PCRE2_INCLUDE_DIR})
+    list(APPEND PCRE2_LIBRARIES "${PCRE2-8_LIBRARY}")
+    set(PCRE2_INCLUDE_DIRS "${PCRE2_INCLUDE_DIR}")
     if(NOT TARGET PCRE2::PCRE2-8)
         add_library(PCRE2::PCRE2-8 UNKNOWN IMPORTED)
         set_target_properties(PCRE2::PCRE2-8 PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${PCRE2_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${PCRE2-8_LIBRARY})
+                              IMPORTED_LOCATION "${PCRE2-8_LIBRARY}")
     endif()
 endif()

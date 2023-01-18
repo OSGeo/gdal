@@ -16,13 +16,13 @@ find_package_handle_standard_args(PCRE
                                   REQUIRED_VARS PCRE_LIBRARY PCRE_INCLUDE_DIR)
 mark_as_advanced(PCRE_INCLUDE_DIR PCRE_LIBRARY)
 if(PCRE_FOUND)
-    set(PCRE_LIBRARIES ${PCRE_LIBRARY})
-    set(PCRE_INCLUDE_DIRS ${PCRE_INCLUDE_DIR})
+    set(PCRE_LIBRARIES "${PCRE_LIBRARY}")
+    set(PCRE_INCLUDE_DIRS "${PCRE_INCLUDE_DIR}")
     if(NOT TARGET PCRE::PCRE)
         add_library(PCRE::PCRE UNKNOWN IMPORTED)
         set_target_properties(PCRE::PCRE PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${PCRE_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES "${PCRE_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${PCRE_LIBRARY})
+                              IMPORTED_LOCATION "${PCRE_LIBRARY}")
     endif()
 endif()

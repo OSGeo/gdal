@@ -26,13 +26,13 @@ find_package_handle_standard_args(WebP
 )
 
 if(WEBP_FOUND)
-    set(WEBP_LIBRARIES ${WEBP_LIBRARY})
-    set(WEBP_INCLUDE_DIRS ${WEBP_INCLUDE_DIR})
+    set(WEBP_LIBRARIES "${WEBP_LIBRARY}")
+    set(WEBP_INCLUDE_DIRS "${WEBP_INCLUDE_DIR}")
     if(NOT TARGET WEBP::WebP)
         add_library(WEBP::WebP UNKNOWN IMPORTED)
         set_target_properties(WEBP::WebP PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${WEBP_INCLUDE_DIRS}
+                              INTERFACE_INCLUDE_DIRECTORIES "${WEBP_INCLUDE_DIRS}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${WEBP_LIBRARIES})
+                              IMPORTED_LOCATION "${WEBP_LIBRARIES}")
     endif()
 endif()

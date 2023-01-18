@@ -135,14 +135,14 @@ find_package_handle_standard_args(Poppler
 mark_as_advanced(Poppler_INCLUDE_DIR Poppler_LIBRARY)
 
 if(Poppler_FOUND)
-  set(Poppler_INCLUDE_DIRS ${Poppler_INCLUDE_DIR})
+  set(Poppler_INCLUDE_DIRS "${Poppler_INCLUDE_DIR}")
   if(Poppler_INCLUDE_DIR MATCHES ".*/poppler" OR Poppler_INCLUDE_DIR MATCHES ".*\\poppler")
       # poppler/splash/SplashBitmap.h unfortunately has a #include "poppler/GfxState.h"
       # which obliges us to add the parent directory of Poppler_INCLUDE_DIR
       get_filename_component(_poppler_upper_include_dir "${Poppler_INCLUDE_DIR}" DIRECTORY)
       list(APPEND Poppler_INCLUDE_DIRS "${_poppler_upper_include_dir}")
   endif()
-  set(Poppler_LIBRARIES ${Poppler_LIBRARY})
+  set(Poppler_LIBRARIES "${Poppler_LIBRARY}")
   if(NOT TARGET Poppler::Poppler)
     add_library(Poppler::Poppler UNKNOWN IMPORTED)
     set(POPPLER_EXTRA_TARGETS)
@@ -162,9 +162,9 @@ if(Poppler_FOUND)
     foreach(tgt IN LISTS Poppler_known_components)
       add_library(Poppler::${tgt} UNKNOWN IMPORTED)
       set_target_properties(Poppler::${tgt} PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES ${Poppler_${tgt}_INCLUDE_DIR}
+                            INTERFACE_INCLUDE_DIRECTORIES "${Poppler_${tgt}_INCLUDE_DIR}"
                             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                            IMPORTED_LOCATION ${POPPLER_${tgt}_LIBRARY})
+                            IMPORTED_LOCATION "${POPPLER_${tgt}_LIBRARY}")
     endforeach()
   endif()
 endif()

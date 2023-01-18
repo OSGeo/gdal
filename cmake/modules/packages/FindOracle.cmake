@@ -196,30 +196,30 @@ find_package_handle_standard_args(Oracle
 mark_as_advanced(Oracle_INCLUDE_DIR Oracle_LIBRARY)
 
 IF(Oracle_FOUND)
-    set(Oracle_INCLUDE_DIRS ${Oracle_INCLUDE_DIR})
-    set(Oracle_LIBRARIES ${Oracle_LIBRARY})
+    set(Oracle_INCLUDE_DIRS "${Oracle_INCLUDE_DIR}")
+    set(Oracle_LIBRARIES "${Oracle_LIBRARY}")
     if(Oracle_XML_INCLUDE_DIR AND Oracle_XML_LIBRARY)
-        list(APPEND Oracle_INCLUDE_DIRS ${Oracle_XML_INCLUDE_DIR})
+        list(APPEND Oracle_INCLUDE_DIRS "${Oracle_XML_INCLUDE_DIR}")
     endif()
     if(NOT TARGET Oracle::OCI)
         add_library(Oracle::OCI UNKNOWN IMPORTED)
         set_target_properties(Oracle::OCI PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES ${Oracle_INCLUDE_DIR}
+                              INTERFACE_INCLUDE_DIRECTORIES "${Oracle_INCLUDE_DIR}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${Oracle_LIBRARY}
+                              IMPORTED_LOCATION "${Oracle_LIBRARY}"
                               )
         foreach(tgt IN LISTS Oracle_known_components)
             if(Oracle_${tgt}_FOUND)
                 add_library(Oracle::${tgt} UNKNOWN IMPORTED)
                 set_target_properties(Oracle::${tgt} PROPERTIES
                                       IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                      IMPORTED_LOCATION ${Oracle_${tgt}_LIBRARY})
+                                      IMPORTED_LOCATION "${Oracle_${tgt}_LIBRARY}")
             endif()
         endforeach()
         if(Oracle_XML_INCLUDE_DIR)
             if(TARGET Oracle::XML)
                 set_property(Oracle::XML APPEND PROPERTY
-                             INTERFACE_INCLUDE_DIRECTORIES ${Oracle_XML_INCLUDE_DIR})
+                             INTERFACE_INCLUDE_DIRECTORIES "${Oracle_XML_INCLUDE_DIR}")
             endif()
         endif()
     endif()

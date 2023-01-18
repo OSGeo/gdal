@@ -89,8 +89,8 @@ if(GIF_FOUND)
   if(NOT TARGET GIF::GIF)
     add_library(GIF::GIF UNKNOWN IMPORTED)
     set_target_properties(GIF::GIF PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES ${GIF_INCLUDE_DIR}
+                          INTERFACE_INCLUDE_DIRECTORIES "${GIF_INCLUDE_DIR}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES C
-                          IMPORTED_LOCATION ${GIF_LIBRARY})
+                          IMPORTED_LOCATION "${GIF_LIBRARY}")
   endif()
 endif()
