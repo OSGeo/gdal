@@ -1657,6 +1657,51 @@ def test_ogr_sql_string_int_array_comparison():
 
 
 ###############################################################################
+# Test SetAttributeFilter() on a GenSQL layer that doesn't forward its
+# initial where clause to the source, particularly with explicit dialect="OGRSQL"
+
+
+@pytest.mark.parametrize("dialect", [None, "OGRSQL"])
+def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test")
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON EMPTY"))
+    mem_lyr.CreateFeature(f)
+
+    sql_lyr = mem_ds.ExecuteSQL(
+        "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
+    )
+    sql_lyr.SetAttributeFilter("")
+    try:
+        assert sql_lyr.GetFeatureCount() == 1
+    finally:
+        mem_ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = mem_ds.ExecuteSQL(
+        "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
+    )
+    sql_lyr.SetAttributeFilter("1")
+    try:
+        assert sql_lyr.GetFeatureCount() == 1
+    finally:
+        mem_ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = mem_ds.ExecuteSQL(
+        "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
+    )
+    sql_lyr.SetAttributeFilter("0")
+    try:
+        assert sql_lyr.GetFeatureCount() == 0
+    finally:
+        mem_ds.ReleaseResultSet(sql_lyr)
+
+
+###############################################################################
 
 
 def test_ogr_sql_cleanup():
