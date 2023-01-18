@@ -197,9 +197,10 @@ CPLString BuildConnectionString(char **openOptions)
         addParameter(paramName, paramValue);
     };
 
-    if (CSLFindString(openOptions, OpenOptionsConstants::DSN) != -1)
+    const char *paramDSN = getOptValue(OpenOptionsConstants::DSN);
+    if (paramDSN != nullptr)
     {
-        addOptParameter(OpenOptionsConstants::DSN, "DSN", true);
+        addParameter(OpenOptionsConstants::DSN, paramDSN);
     }
     else
     {
