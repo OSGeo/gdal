@@ -466,7 +466,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         if (bPrintSep)
             printf("PROJ.4 : ");
         oSRS.exportToProj4(&pszOutput);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("PROJJSON", pszOutputType))
@@ -476,7 +476,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             bPretty ? "MULTILINE=YES" : "MULTILINE=NO", nullptr};
         oSRS.exportToPROJJSON(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt1", pszOutputType))
@@ -486,7 +486,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=WKT1_GDAL", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt_simple", pszOutputType))
@@ -496,7 +496,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=WKT1_SIMPLE", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt_noct", pszOutputType))
@@ -506,7 +506,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=SFSQL", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt_esri", pszOutputType))
@@ -516,7 +516,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=WKT1_ESRI", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt2_2015", pszOutputType))
@@ -526,7 +526,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=WKT2_2015", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("wkt", pszOutputType) || EQUAL("wkt2", pszOutputType) ||
@@ -538,7 +538,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         const char *const apszOptions[] = {
             "FORMAT=WKT2_2018", bPretty ? "MULTILINE=YES" : nullptr, nullptr};
         oSRS.exportToWkt(&pszOutput, apszOptions);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("mapinfo", pszOutputType))
@@ -546,7 +546,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         if (bPrintSep)
             printf("MAPINFO : ");
         oSRS.exportToMICoordSys(&pszOutput);
-        printf("\'%s\'\n", pszOutput);
+        printf("\'%s\'\n", pszOutput ? pszOutput : "(error)");
     }
 
     else if (EQUAL("xml", pszOutputType))
@@ -554,7 +554,7 @@ CPLErr PrintSRS(const OGRSpatialReference &oSRS, const char *pszOutputType,
         if (bPrintSep)
             printf("XML :\n");
         oSRS.exportToXML(&pszOutput, nullptr);
-        printf("%s\n", pszOutput);
+        printf("%s\n", pszOutput ? pszOutput : "(error)");
     }
 
     else
