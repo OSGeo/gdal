@@ -3974,23 +3974,72 @@ void OGRFeature::SetField(int iField, const char *pszValue)
     }
     else if (eType == OFTInteger)
     {
-        // As allowed by C standard, some systems like MSVC do not reset errno.
-        errno = 0;
+        if (poFDefn->GetSubType() == OFSTBoolean)
+        {
+            constexpr char DIGIT_ZERO = '0';
+            if ((pszValue[0] == '1' && pszValue[1] == '\0') ||
+                EQUAL(pszValue, "true") || EQUAL(pszValue, "on") ||
+                EQUAL(pszValue, "yes"))
+            {
+                pauFields[iField].Integer = 1;
+                pauFields[iField].Set.nMarker2 = 0;
+                pauFields[iField].Set.nMarker3 = 0;
+            }
+            else if ((pszValue[0] == DIGIT_ZERO && pszValue[1] == '\0') ||
+                     EQUAL(pszValue, "false") || EQUAL(pszValue, "off") ||
+                     EQUAL(pszValue, "no"))
+            {
+                pauFields[iField].Integer = 0;
+                pauFields[iField].Set.nMarker2 = 0;
+                pauFields[iField].Set.nMarker3 = 0;
+            }
+            else
+            {
+                if (CPLGetValueType(pszValue) == CPL_VALUE_STRING)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Invalid value '%s' for boolean field %s.%s. "
+                             "Assuming it to be false.",
+                             pszValue, poDefn->GetName(),
+                             poFDefn->GetNameRef());
+                    pauFields[iField].Integer = 0;
+                    pauFields[iField].Set.nMarker2 = 0;
+                    pauFields[iField].Set.nMarker3 = 0;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Invalid value '%s' for boolean field %s.%s. "
+                             "Assuming it to be true.",
+                             pszValue, poDefn->GetName(),
+                             poFDefn->GetNameRef());
+                    pauFields[iField].Integer = 1;
+                    pauFields[iField].Set.nMarker2 = 0;
+                    pauFields[iField].Set.nMarker3 = 0;
+                }
+            }
+        }
+        else
+        {
+            // As allowed by C standard, some systems like MSVC do not reset errno.
+            errno = 0;
 
-        long long nVal64 = std::strtoll(pszValue, &pszLast, 10);
-        int nVal32 = nVal64 > INT_MAX   ? INT_MAX
-                     : nVal64 < INT_MIN ? INT_MIN
-                                        : static_cast<int>(nVal64);
-        pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nVal32);
-        if (bWarn && pauFields[iField].Integer == nVal32 &&
-            (errno == ERANGE || nVal32 != nVal64 || !pszLast || *pszLast))
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Value '%s' of field %s.%s parsed incompletely to integer %d.",
-                pszValue, poDefn->GetName(), poFDefn->GetNameRef(),
-                pauFields[iField].Integer);
-        pauFields[iField].Set.nMarker2 = 0;
-        pauFields[iField].Set.nMarker3 = 0;
+            long long nVal64 = std::strtoll(pszValue, &pszLast, 10);
+            int nVal32 = nVal64 > INT_MAX   ? INT_MAX
+                         : nVal64 < INT_MIN ? INT_MIN
+                                            : static_cast<int>(nVal64);
+            pauFields[iField].Integer =
+                OGRFeatureGetIntegerValue(poFDefn, nVal32);
+            if (bWarn && pauFields[iField].Integer == nVal32 &&
+                (errno == ERANGE || nVal32 != nVal64 || !pszLast || *pszLast))
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Value '%s' of field %s.%s parsed incompletely to "
+                         "integer %d.",
+                         pszValue, poDefn->GetName(), poFDefn->GetNameRef(),
+                         pauFields[iField].Integer);
+            pauFields[iField].Set.nMarker2 = 0;
+            pauFields[iField].Set.nMarker3 = 0;
+        }
     }
     else if (eType == OFTInteger64)
     {
