@@ -1865,6 +1865,11 @@ OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS, char **ppszReturn,
  * the input string, and the input string pointer
  * is then updated to point to the remaining (unused) input.
  *
+ * Starting with PROJ 9.2, if invoked on a COORDINATEMETADATA[] construct,
+ * the CRS contained in it will be used to fill the OGRSpatialReference object,
+ * and the coordinate epoch potentially present used as the coordinate epoch
+ * property of the OGRSpatialReference object.
+ *
  * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System
  * Issues</a> page for implementation details of WKT in OGR.
  *
@@ -1933,9 +1938,26 @@ OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput,
                 aosOptions.SetNameValue("STRICT", "NO");
             PROJ_STRING_LIST warnings = nullptr;
             PROJ_STRING_LIST errors = nullptr;
-            d->setPjCRS(proj_create_from_wkt(d->getPROJContext(), *ppszInput,
-                                             aosOptions.List(), &warnings,
-                                             &errors));
+            auto ctxt = d->getPROJContext();
+            auto pj = proj_create_from_wkt(ctxt, *ppszInput, aosOptions.List(),
+                                           &warnings, &errors);
+
+#if PROJ_AT_LEAST_VERSION(9, 2, 0)
+            if (pj && proj_get_type(pj) == PJ_TYPE_COORDINATE_METADATA)
+            {
+                const double dfEpoch =
+                    proj_coordinate_metadata_get_epoch(ctxt, pj);
+                if (!std::isnan(dfEpoch))
+                {
+                    SetCoordinateEpoch(dfEpoch);
+                }
+                auto crs = proj_get_source_crs(ctxt, pj);
+                proj_destroy(pj);
+                pj = crs;
+            }
+#endif
+            d->setPjCRS(pj);
+
             for (auto iter = warnings; iter && *iter; ++iter)
             {
                 d->m_wktImportWarnings.push_back(*iter);
@@ -3702,7 +3724,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         // WKT2"
         "GEODCRS", "GEOGCRS", "GEODETICCRS", "GEOGRAPHICCRS", "PROJCRS",
         "PROJECTEDCRS", "VERTCRS", "VERTICALCRS", "COMPOUNDCRS", "ENGCRS",
-        "ENGINEERINGCRS", "BOUNDCRS", "DERIVEDPROJCRS"};
+        "ENGINEERINGCRS", "BOUNDCRS", "DERIVEDPROJCRS", "COORDINATEMETADATA"};
     for (const char *keyword : wktKeywords)
     {
         if (STARTS_WITH_CI(pszDefinition, keyword))

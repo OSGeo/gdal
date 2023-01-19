@@ -2240,3 +2240,82 @@ def test_osr_exceptions():
         with osr.enable_exceptions():
             srs = osr.SpatialReference()
             srs.ImportFromEPSG(0)
+
+
+###############################################################################
+# Test SetFromUserInput() with COORDINATEMETADATA[]
+
+
+def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 902:
+        pytest.skip("requires PROJ 9.2 or later")
+
+    srs = osr.SpatialReference()
+    assert (
+        srs.SetFromUserInput(
+            """COORDINATEMETADATA[
+    GEOGCRS["WGS 84 (G1762)",
+        DYNAMIC[
+            FRAMEEPOCH[2005]],
+        DATUM["World Geodetic System 1984 (G1762)",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        CS[ellipsoidal,2],
+            AXIS["geodetic latitude (Lat)",north,
+                ORDER[1],
+                ANGLEUNIT["degree",0.0174532925199433]],
+            AXIS["geodetic longitude (Lon)",east,
+                ORDER[2],
+                ANGLEUNIT["degree",0.0174532925199433]],
+        USAGE[
+            SCOPE["Geodesy. Navigation and positioning using GPS satellite system."],
+            AREA["World."],
+            BBOX[-90,-180,90,180]],
+        ID["EPSG",9057]],
+    EPOCH[2025]]"""
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert srs.GetName() == "WGS 84 (G1762)"
+    assert srs.GetCoordinateEpoch() == 2025.0
+
+
+###############################################################################
+# Test SetFromUserInput() with COORDINATEMETADATA[]
+
+
+def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 902:
+        pytest.skip("requires PROJ 9.2 or later")
+
+    srs = osr.SpatialReference()
+    assert (
+        srs.SetFromUserInput(
+            """COORDINATEMETADATA[
+    GEOGCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        CS[ellipsoidal,2],
+            AXIS["geodetic latitude (Lat)",north,
+                ORDER[1],
+                ANGLEUNIT["degree",0.0174532925199433]],
+            AXIS["geodetic longitude (Lon)",east,
+                ORDER[2],
+                ANGLEUNIT["degree",0.0174532925199433]],
+        USAGE[
+            SCOPE["Geodesy. Navigation and positioning using GPS satellite system."],
+            AREA["World."],
+            BBOX[-90,-180,90,180]],
+        ID["EPSG",9057]]]"""
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert srs.GetName() == "WGS 84"
+    assert srs.GetCoordinateEpoch() == 0.0
