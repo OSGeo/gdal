@@ -74,10 +74,6 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
-projsync --system-directory --file us_noaa_conus.tif
-projsync --system-directory --file us_nga_egm96
-projsync --system-directory --file ca_nrc_ntv1_can.tif
-
 # SKIP_TESTVIRTUALMEM because it crashes on testvirtualmem on CI
 # with "ERROR 1: CPLVirtualMemManagerThread: trying to write into read-only mapping"
 (cd build_fedora_rawhide && SKIP_TESTVIRTUALMEM=YES make quicktest)

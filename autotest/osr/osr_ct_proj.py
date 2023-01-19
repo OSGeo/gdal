@@ -160,12 +160,12 @@ transform_list = [
         "EPSG:4979",
         (31.5656461890308, -121.213327277021, 0.0),
         0.1,
-        "+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft",
+        "+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15_extract.gtx +units=us-ft",
         (328083.333225467, 11482916.6665952, 41.4697855726348),
         0.01,
         "EGM 96 Conversion",
         None,
-        "egm96_15.gtx",
+        "egm96_15_extract.gtx",
         "6.2.1",
     ),
     # Test optimization in case of identical projections (projected)
@@ -283,7 +283,7 @@ transform_list = [
 map_old_grid_name_to_tif_ones = {
     "ntf_r93.gsb": "fr_ign_ntf_r93.tif",
     "BETA2007.gsb": "de_adv_BETA2007.tif",
-    "egm96_15.gtx": "us_nga_egm96_15.tif",
+    "egm96_15_extract.gtx": "egm96_15_extract.gtx",
 }
 
 ###############################################################################

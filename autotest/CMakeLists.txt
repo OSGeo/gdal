@@ -74,14 +74,14 @@ if (Python_Interpreter_FOUND)
 
   endfunction ()
 
-  # Needed for a autotest/osr test
   if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-      symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/cpp/data ${CMAKE_CURRENT_BINARY_DIR}/cpp/data)
-      if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-        message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/pymod")
-      else ()
-        symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/pymod ${CMAKE_CURRENT_BINARY_DIR}/pymod)
-      endif ()
+      foreach (subdir IN ITEMS pymod proj_grids cpp/data)
+          if (SKIP_COPYING_AUTOTEST_SUBDIRS)
+            message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
+          else ()
+            symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${subdir} ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
+          endif ()
+      endforeach ()
   endif()
 
   foreach (

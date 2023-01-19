@@ -1771,6 +1771,7 @@ def test_SetPROJSearchPath():
         with gdaltest.error_handler():
             arg[0] = sr.ImportFromEPSG(32631)
 
+    backup_search_paths = osr.GetPROJSearchPaths()
     try:
         arg = [-1]
 
@@ -1786,8 +1787,7 @@ def test_SetPROJSearchPath():
         thread.join()
         assert arg[0] > 0
     finally:
-        # Cancel search path (we can't call SetPROJSearchPath(None))
-        osr.SetPROJSearchPaths([])
+        osr.SetPROJSearchPaths(backup_search_paths)
 
     sr = osr.SpatialReference()
     assert sr.ImportFromEPSG(32631) == 0

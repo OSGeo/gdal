@@ -6,6 +6,7 @@ log_file = @AUTOTEST_LOG_FILE@
 log_file_level = INFO
 env =
    @TEST_ENV@
+   PROJ_NETWORK=OFF
 # Deprecated raster drivers
    GDAL_ENABLE_DEPRECATED_DRIVER_DODS=YES
    GDAL_ENABLE_DEPRECATED_DRIVER_JDEM=YES

@@ -183,14 +183,14 @@ TEST_F(test_osr_ct, GetInverse)
     ASSERT_TRUE(poInverse->GetTargetCS() != nullptr);
     ASSERT_TRUE(poInverse->GetTargetCS()->IsSame(&oSRSSource));
 
-    double x = 44;
-    double y = -60;
+    double x = 40;
+    double y = -100;
     ASSERT_TRUE(poCT->Transform(1, &x, &y));
     // Check that the transformed point is different but not too far
-    EXPECT_TRUE(fabs(x - 44) > 1e-10);
-    EXPECT_TRUE(fabs(y - -60) > 1e-10);
-    EXPECT_NEAR(x, 44, 1e-3);
-    EXPECT_NEAR(y, -60, 1e-3);
+    EXPECT_TRUE(fabs(x - 40) > 1e-10);
+    EXPECT_TRUE(fabs(y - -100) > 1e-10);
+    EXPECT_NEAR(x, 40, 1e-3);
+    EXPECT_NEAR(y, -100, 1e-3);
     const double xTransformed = x;
     const double yTransformed = y;
 
@@ -199,8 +199,8 @@ TEST_F(test_osr_ct, GetInverse)
     // Check that the transformed point with the inverse transformation
     // matches the source
     ASSERT_TRUE(poInverse->Transform(1, &x, &y));
-    EXPECT_NEAR(x, 44, 1e-8);
-    EXPECT_NEAR(y, -60, 1e-8);
+    EXPECT_NEAR(x, 40, 1e-8);
+    EXPECT_NEAR(y, -100, 1e-8);
 
     auto poInvOfInv =
         std::unique_ptr<OGRCoordinateTransformation>(poInverse->GetInverse());
