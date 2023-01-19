@@ -60,12 +60,12 @@ find_package_handle_standard_args(PROJ
 mark_as_advanced(PROJ_INCLUDE_DIR PROJ_LIBRARY)
 
 if(PROJ_FOUND)
-  set(PROJ_LIBRARIES ${PROJ_LIBRARY})
-  set(PROJ_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
+  set(PROJ_LIBRARIES "${PROJ_LIBRARY}")
+  set(PROJ_INCLUDE_DIRS "${PROJ_INCLUDE_DIR}")
   if(NOT TARGET PROJ::proj)
     add_library(PROJ::proj UNKNOWN IMPORTED)
     set_target_properties(PROJ::proj PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES ${PROJ_INCLUDE_DIR}
+                          INTERFACE_INCLUDE_DIRECTORIES "${PROJ_INCLUDE_DIR}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C")
     if(EXISTS "${PROJ_LIBRARY}")
       set_target_properties(PROJ::proj PROPERTIES
