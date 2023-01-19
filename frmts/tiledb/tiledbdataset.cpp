@@ -378,14 +378,25 @@ CPLErr TileDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else
         q = m_query.get();
 
-    if (poGDS->m_array->schema().domain().ndim() == 3)
+    try
     {
-        q->set_subarray(oaSubarray);
+        if (poGDS->m_array->schema().domain().ndim() == 3)
+        {
+            q->set_subarray(oaSubarray);
+        }
+        else
+        {
+            q->set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
+                                                  oaSubarray.cend()));
+        }
     }
-    else
+    catch (const std::exception &e)
     {
-        q->set_subarray(
-            std::vector<uint64_t>(oaSubarray.cbegin() + 2, oaSubarray.cend()));
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "TileDBRasterBand::IReadBlock(): set_subarray() failed with %s",
+            e.what());
+        return CE_Failure;
     }
 
     SetBuffer(q, eDataType, osAttrName, pImage, nBlockXSize * nBlockYSize);
@@ -440,14 +451,25 @@ CPLErr TileDBRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
 
-        if (poGDS->eIndexMode == ATTRIBUTES)
+        try
         {
-            m_query->set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
-                                                        oaSubarray.cend()));
+            if (poGDS->eIndexMode == ATTRIBUTES)
+            {
+                m_query->set_subarray(std::vector<uint64_t>(
+                    oaSubarray.cbegin() + 2, oaSubarray.cend()));
+            }
+            else
+            {
+                m_query->set_subarray(oaSubarray);
+            }
         }
-        else
+        catch (const std::exception &e)
         {
-            m_query->set_subarray(oaSubarray);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "TileDBRasterBand::IWriteBlock(): set_subarray() failed "
+                     "with %s",
+                     e.what());
+            return CE_Failure;
         }
     }
     else
