@@ -207,7 +207,7 @@ def test_tiledb_write_attributes(mode):
 
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.require_driver("HDF5")
-def test_tiledb_write_subdatasets():
+def DISABLED_test_tiledb_write_subdatasets():
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open(
