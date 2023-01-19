@@ -4891,6 +4891,18 @@ static bool IsValidSRS(const char *pszUserInput)
 /*                             GDALWarpAppOptionsNew()                  */
 /************************************************************************/
 
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
+    do                                                                         \
+    {                                                                          \
+        if (i + nExtraArg >= argc)                                             \
+        {                                                                      \
+            CPLError(CE_Failure, CPLE_IllegalArg,                              \
+                     "%s option requires %d argument%s", papszArgv[i],         \
+                     nExtraArg, nExtraArg == 1 ? "" : "s");                    \
+            return nullptr;                                                    \
+        }                                                                      \
+    } while (false)
+
 /**
  * Allocates a GDALWarpAppOptions struct.
  *
@@ -4940,8 +4952,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
                          pszMAX_GCP_ORDER);
         } /* do not add 'else' in front of the next line */
 
-        if (EQUAL(papszArgv[i], "-co") && i + 1 < argc)
+        if (EQUAL(papszArgv[i], "-co"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszVal = papszArgv[++i];
             psOptions->aosCreateOptions.AddString(pszVal);
             psOptions->bCreateOutput = true;
@@ -4950,8 +4963,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 psOptionsForBinary->papszCreateOptions = CSLAddString(
                     psOptionsForBinary->papszCreateOptions, pszVal);
         }
-        else if (EQUAL(papszArgv[i], "-wo") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-wo"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->aosWarpOptions.AddString(papszArgv[++i]);
         }
         else if (EQUAL(papszArgv[i], "-multi"))
@@ -4975,14 +4989,15 @@ GDALWarpAppOptionsNew(char **papszArgv,
         {
             psOptions->bDisableSrcAlpha = true;
         }
-        else if ((EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")) &&
-                 i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osFormat = papszArgv[++i];
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-t_srs") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-t_srs"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSRS = papszArgv[++i];
             if (!IsValidSRS(pszSRS))
             {
@@ -4996,8 +5011,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->aosTransformerOptions.SetNameValue(
                 "DST_COORDINATE_EPOCH", pszCoordinateEpoch);
         }
-        else if (EQUAL(papszArgv[i], "-s_srs") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-s_srs"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSRS = papszArgv[++i];
             if (!IsValidSRS(pszSRS))
             {
@@ -5005,20 +5021,23 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
             psOptions->aosTransformerOptions.SetNameValue("SRC_SRS", pszSRS);
         }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-s_coord_epoch"))
+        else if (EQUAL(papszArgv[i], "-s_coord_epoch"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszCoordinateEpoch = papszArgv[++i];
             psOptions->aosTransformerOptions.SetNameValue(
                 "SRC_COORDINATE_EPOCH", pszCoordinateEpoch);
         }
-        else if (EQUAL(papszArgv[i], "-ct") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-ct"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszCT = papszArgv[++i];
             psOptions->aosTransformerOptions.SetNameValue(
                 "COORDINATE_OPERATION", pszCT);
         }
-        else if (EQUAL(papszArgv[i], "-order") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-order"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszMethod =
                 psOptions->aosTransformerOptions.FetchNameValue("METHOD");
             if (pszMethod)
@@ -5029,8 +5048,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->aosTransformerOptions.SetNameValue("MAX_GCP_ORDER",
                                                           papszArgv[++i]);
         }
-        else if (EQUAL(papszArgv[i], "-refine_gcps") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-refine_gcps"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->aosTransformerOptions.SetNameValue("REFINE_TOLERANCE",
                                                           papszArgv[++i]);
             if (CPLAtof(papszArgv[i]) < 0)
@@ -5064,18 +5084,21 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->aosTransformerOptions.SetNameValue("METHOD",
                                                           "GEOLOC_ARRAY");
         }
-        else if (EQUAL(papszArgv[i], "-to") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-to"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->aosTransformerOptions.AddString(papszArgv[++i]);
         }
-        else if (EQUAL(papszArgv[i], "-et") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-et"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->dfErrorThreshold = CPLAtofM(papszArgv[++i]);
             psOptions->aosWarpOptions.AddString(CPLSPrintf(
                 "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
         }
-        else if (EQUAL(papszArgv[i], "-wm") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-wm"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (CPLAtofM(papszArgv[i + 1]) < 10000)
                 psOptions->dfWarpMemoryLimit =
                     CPLAtofM(papszArgv[i + 1]) * 1024 * 1024;
@@ -5083,12 +5106,14 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 psOptions->dfWarpMemoryLimit = CPLAtofM(papszArgv[i + 1]);
             i++;
         }
-        else if (EQUAL(papszArgv[i], "-srcnodata") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-srcnodata"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osSrcNodata = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-dstnodata") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-dstnodata"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osDstNodata = papszArgv[++i];
         }
         else if (EQUAL(papszArgv[i], "-tr") && i + 1 < argc &&
@@ -5098,8 +5123,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->bSquarePixels = true;
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-tr") && i + 2 < argc)
+        else if (EQUAL(papszArgv[i], "-tr"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
             psOptions->dfYRes = fabs(CPLAtofM(papszArgv[++i]));
             if (psOptions->dfXRes == 0 || psOptions->dfYRes == 0)
@@ -5114,8 +5140,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
         {
             psOptions->bTargetAlignedPixels = true;
         }
-        else if (EQUAL(papszArgv[i], "-ot") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-ot"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int iType;
 
             for (iType = 1; iType < GDT_TypeCount; iType++)
@@ -5138,8 +5165,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             i++;
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-wt") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-wt"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int iType;
 
             for (iType = 1; iType < GDT_TypeCount; iType++)
@@ -5161,22 +5189,25 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
             i++;
         }
-        else if (EQUAL(papszArgv[i], "-ts") && i + 2 < argc)
+        else if (EQUAL(papszArgv[i], "-ts"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             psOptions->nForcePixels = atoi(papszArgv[++i]);
             psOptions->nForceLines = atoi(papszArgv[++i]);
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-te") && i + 4 < argc)
+        else if (EQUAL(papszArgv[i], "-te"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             psOptions->dfMinX = CPLAtofM(papszArgv[++i]);
             psOptions->dfMinY = CPLAtofM(papszArgv[++i]);
             psOptions->dfMaxX = CPLAtofM(papszArgv[++i]);
             psOptions->dfMaxY = CPLAtofM(papszArgv[++i]);
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-te_srs") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-te_srs"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSRS = papszArgv[++i];
             if (!IsValidSRS(pszSRS))
             {
@@ -5209,8 +5240,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[i], "-rm"))
             psOptions->eResampleAlg = GRA_Mode;
 
-        else if (EQUAL(papszArgv[i], "-r") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-r"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszResampling = papszArgv[++i];
             if (!GetResampleAlg(pszResampling, psOptions->eResampleAlg))
             {
@@ -5218,24 +5250,29 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
         }
 
-        else if (EQUAL(papszArgv[i], "-cutline") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-cutline"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osCutlineDSName = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-cwhere") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-cwhere"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osCWHERE = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-cl") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-cl"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osCLayer = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-csql") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-csql"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osCSQL = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-cblend") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-cblend"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->aosWarpOptions.SetNameValue("CUTLINE_BLEND_DIST",
                                                    papszArgv[++i]);
         }
@@ -5254,26 +5291,30 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->bCopyMetadata = false;
             psOptions->bCopyBandInfo = false;
         }
-        else if (EQUAL(papszArgv[i], "-cvmd") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-cvmd"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osMDConflictValue = papszArgv[++i];
         }
         else if (EQUAL(papszArgv[i], "-setci"))
             psOptions->bSetColorInterpretation = true;
-        else if (EQUAL(papszArgv[i], "-oo") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-oo"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (psOptionsForBinary)
                 psOptionsForBinary->papszOpenOptions = CSLAddString(
                     psOptionsForBinary->papszOpenOptions, papszArgv[++i]);
         }
-        else if (EQUAL(papszArgv[i], "-doo") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-doo"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (psOptionsForBinary)
                 psOptionsForBinary->papszDestOpenOptions = CSLAddString(
                     psOptionsForBinary->papszDestOpenOptions, papszArgv[++i]);
         }
-        else if (EQUAL(papszArgv[i], "-ovr") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-ovr"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszOvLevel = papszArgv[++i];
             if (EQUAL(pszOvLevel, "AUTO"))
                 psOptions->nOvLevel = OVR_LEVEL_AUTO;
@@ -5303,8 +5344,9 @@ GDALWarpAppOptionsNew(char **papszArgv,
             psOptions->bNoVShift = true;
         }
 
-        else if (EQUAL(papszArgv[i], "-if") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-if"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             i++;
             if (psOptionsForBinary)
             {
@@ -5318,15 +5360,15 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
         }
 
-        else if ((EQUAL(papszArgv[i], "-srcband") ||
-                  EQUAL(papszArgv[i], "-b")) &&
-                 i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-srcband") || EQUAL(papszArgv[i], "-b"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->anSrcBands.push_back(atoi(papszArgv[++i]));
         }
 
-        else if (EQUAL(papszArgv[i], "-dstband") && i + 1 < argc)
+        else if (EQUAL(papszArgv[i], "-dstband"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->anDstBands.push_back(atoi(papszArgv[++i]));
         }
 
