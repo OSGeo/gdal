@@ -455,4 +455,4 @@ Given the above, the following scenarios are for example covered:
 Voting history
 --------------
 
-TODO
++1 from PSC members JukkaR, FrankW, SeanG, MateuzL and EvenR
