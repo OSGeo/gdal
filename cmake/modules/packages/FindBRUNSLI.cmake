@@ -7,13 +7,13 @@ FindBRUNSLI
 
 Find the BRUNSLI libraries
 
-Brunsli encode and decode libraries are built with CMake. 
+Brunsli encode and decode libraries are built with CMake.
 Unfortunately Brunsli does not export cmake config files yet, thus this find module
 
 IMPORTED targets
 ^^^^^^^^^^^^^^^^
 
-This module defines the following 
+This module defines the following
 :prop_tgt:`IMPORTED` target: ``BRUNSLI::ENCODE``
 :prop_tgt:`IMPORTED` target: ``BRUNSLI::DECODE``
 
@@ -36,13 +36,13 @@ find_path(BRUNSLI_INCLUDE_DIR brunsli/encode.h
     PATH_SUFFIXES ${BRUNSLI_NAME}/include include
 )
 
-find_library(BRUNSLI_ENC_LIB 
+find_library(BRUNSLI_ENC_LIB
     NAMES brunslienc-c
     HINTS ${BRUNSLI_ROOT}
     PATH_SUFFIXES ${BRUNSLI_NAME}/lib lib
 )
 
-find_library(BRUNSLI_DEC_LIB 
+find_library(BRUNSLI_DEC_LIB
     NAMES brunslidec-c
     HINTS ${BRUNSLI_ROOT}
     PATH_SUFFIXES ${BRUNSLI_NAME}/lib lib
@@ -58,17 +58,17 @@ if(BRUNSLI_FOUND)
     if(NOT TARGET BRUNSLI::ENCODE)
         add_library(BRUNSLI::ENCODE UNKNOWN IMPORTED)
         set_target_properties(BRUNSLI::ENCODE PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES ${BRUNSLI_INCLUDE_DIR}
+            INTERFACE_INCLUDE_DIRECTORIES "${BRUNSLI_INCLUDE_DIR}"
             IMPORTED_LINK_INTERFACE_LANGUAGES C
-            IMPORTED_LOCATION ${BRUNSLI_ENC_LIB}
+            IMPORTED_LOCATION "${BRUNSLI_ENC_LIB}"
         )
     endif()
     if(NOT TARGET BRUNSLI::DECODE)
         add_library(BRUNSLI::DECODE UNKNOWN IMPORTED)
         set_target_properties(BRUNSLI::DECODE PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES ${BRUNSLI_INCLUDE_DIR}
+            INTERFACE_INCLUDE_DIRECTORIES "${BRUNSLI_INCLUDE_DIR}"
             IMPORTED_LINK_INTERFACE_LANGUAGES C
-            IMPORTED_LOCATION ${BRUNSLI_DEC_LIB}
+            IMPORTED_LOCATION "${BRUNSLI_DEC_LIB}"
         )
     endif()
 endif()

@@ -53,7 +53,7 @@ function (gdal_check_target_is_valid target res_var)
     # geotiff-config.cmake of GeoTIFF 1.7.0 doesn't define a INTERFACE_INCLUDE_DIRECTORIES
     # property, but a GeoTIFF_INCLUDE_DIRS variable.
     set_target_properties(${target} PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES ${GeoTIFF_INCLUDE_DIRS})
+                          INTERFACE_INCLUDE_DIRECTORIES "${GeoTIFF_INCLUDE_DIRS}")
   else()
      message(WARNING "Target ${target} has no INTERFACE_INCLUDE_DIRECTORIES property. Ignoring that target.")
      set(${res_var} FALSE PARENT_SCOPE)

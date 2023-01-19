@@ -70,14 +70,14 @@ find_package_handle_standard_args(Podofo
                                   VERSION_VAR PODOFO_VERSION_STRING)
 
 if(PODOFO_FOUND)
-  set(PODOFO_INCLUDE_DIRS ${PODOFO_INCLUDE_DIR})
-  set(PODOFO_LIBRARIES ${PDOFO_LIBRARY})
+  set(PODOFO_INCLUDE_DIRS "${PODOFO_INCLUDE_DIR}")
+  set(PODOFO_LIBRARIES "${PDOFO_LIBRARY}")
   if(NOT TARGET PODOFO::Podofo)
     add_library(PODOFO::Podofo UNKNOWN IMPORTED)
     set_target_properties(PODOFO::Podofo PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES ${PODOFO_INCLUDE_DIR}
+                          INTERFACE_INCLUDE_DIRECTORIES "${PODOFO_INCLUDE_DIR}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                          IMPORTED_LOCATION ${PODOFO_LIBRARY})
+                          IMPORTED_LOCATION "${PODOFO_LIBRARY}")
   endif()
 endif()
 
