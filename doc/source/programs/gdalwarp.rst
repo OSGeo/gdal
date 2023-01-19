@@ -318,7 +318,8 @@ with control information.
     Set nodata masking values for input bands (different values can be supplied
     for each band). If more than one value is supplied all values should be quoted
     to keep them together as a single operating system argument.
-    Masked values will not be used in interpolation.
+    Masked values will not be used in interpolation (details given in :ref:`gdalwarp_nodata`)
+
     Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
 
     When this option is set to a non-``None`` value, it causes the ``UNIFIED_SRC_NODATA``
@@ -461,6 +462,35 @@ original raster unless -te or -crop_to_cutline are specified.
 Starting with GDAL 3.1, it is possible to use as output format a driver that
 only supports the CreateCopy operation. This may internally imply creation of
 a temporary file.
+
+.. _gdalwarp_nodata:
+
+Nodata / source validity mask handling
+--------------------------------------
+
+Invalid values in source pixels, either identified through a nodata value
+metadata set on the source band, a mask band, an alpha band or the use of
+:option:`-srcnodata` will not be used in interpolation.
+The details of how it is taken into account depends on the resampling kernel:
+
+- for nearest resampling, for each target pixel, the coordinate of its center
+  is projected back to source coordinates and the source pixel containing that
+  coordinate is identified. If this source pixel is invalid, the target pixel
+  is considered as nodata.
+
+- for bilinear, cubic, cubicspline and lanczos, for each target pixel, the
+  coordinate of its center is projected back to source coordinates and a
+  correspond source pixel is identified. If this source pixel is invalid, the
+  target pixel is considered as nodata.
+  Given that those resampling kernels have a non-null kernel radius, this source
+  pixel is just one among other several source pixels, and it might be possible
+  that there are invalid values in those other contributing source pixels.
+  The weights used to take into account those invalid values will be set to zero
+  to ignore them.
+
+- for the other resampling methods, source pixels contributing to the target pixel
+  are ignored if invalid. Only the valid ones are taken into account. If there are
+  none, the target pixel is considered as nodata.
 
 Examples
 --------

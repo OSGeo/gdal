@@ -329,6 +329,16 @@ resampling, and rescaling pixels in the process.
 
     The destination file name.
 
+
+Nodata / source validity mask handling during resampling
+--------------------------------------------------------
+
+Masked values, either identified through a nodata value metadata set on the
+source band, a mask band, an alpha band will not be used during resampling
+(when using :option:`-outsize` or :option:`-tr`).
+
+.. include:: nodata_handling_gdaladdo_gdal_translate.rst
+
 C API
 -----
 
