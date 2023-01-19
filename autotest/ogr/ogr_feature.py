@@ -983,3 +983,60 @@ def test_ogr_feature_int32_overflow():
         f.SetField("field", "-123456789012345")
         assert gdal.GetLastErrorMsg() != ""
         assert f.GetField("field") == -2147483648
+
+
+###############################################################################
+# Test setting a boolean field through SetFieldAsString()
+
+
+@pytest.mark.parametrize(
+    "input_val,output_val",
+    [
+        ("off", False),
+        ("false", False),
+        ("no", False),
+        ("0", False),
+        ("on", True),
+        ("true", True),
+        ("yes", True),
+        ("1", True),
+    ],
+)
+def test_ogr_feature_set_boolean_through_string(input_val, output_val):
+
+    feat_def = ogr.FeatureDefn("test")
+    field_def = ogr.FieldDefn("field", ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTBoolean)
+    feat_def.AddFieldDefn(field_def)
+    f = ogr.Feature(feat_def)
+
+    gdal.ErrorReset()
+    f.SetField("field", input_val)
+    assert gdal.GetLastErrorMsg() == ""
+    assert f.GetField("field") == output_val
+
+
+###############################################################################
+# Test setting a boolean field through SetFieldAsString()
+
+
+@pytest.mark.parametrize(
+    "input_val,output_val",
+    [
+        ("invalid", False),
+        ("2", True),
+    ],
+)
+def test_ogr_feature_set_boolean_through_string_warning(input_val, output_val):
+
+    feat_def = ogr.FeatureDefn("test")
+    field_def = ogr.FieldDefn("field", ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTBoolean)
+    feat_def.AddFieldDefn(field_def)
+    f = ogr.Feature(feat_def)
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f.SetField("field", input_val)
+    assert gdal.GetLastErrorMsg() != ""
+    assert f.GetField("field") == output_val
