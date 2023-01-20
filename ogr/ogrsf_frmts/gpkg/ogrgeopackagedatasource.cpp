@@ -3285,7 +3285,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void GDALGeoPackageDataset::FlushCache(bool bAtClosing)
+CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 {
     if (m_bRemoveOGREmptyTable)
     {
@@ -3293,7 +3293,7 @@ void GDALGeoPackageDataset::FlushCache(bool bAtClosing)
         RemoveOGREmptyTable();
     }
 
-    IFlushCacheWithErrCode(bAtClosing);
+    return IFlushCacheWithErrCode(bAtClosing);
 }
 
 CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)

@@ -261,7 +261,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
         return osJSonFlavor_;
     }
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     static const size_t SPACE_FOR_BBOX = 130;
 

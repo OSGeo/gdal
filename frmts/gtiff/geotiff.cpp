@@ -587,7 +587,7 @@ class GTiffDataset final : public GDALPamDataset
 
     void FillEmptyTiles();
 
-    void FlushDirectory();
+    CPLErr FlushDirectory();
     CPLErr CleanOverviews();
 
     void LoadMetadata();
@@ -649,7 +649,7 @@ class GTiffDataset final : public GDALPamDataset
 
     void IdentifyAuthorizedGeoreferencingSources();
 
-    void FlushCacheInternal(bool bAtClosing, bool bFlushDirectory);
+    CPLErr FlushCacheInternal(bool bAtClosing, bool bFlushDirectory);
     bool HasOptimizedReadMultiRange();
 
     bool AssociateExternalMask();
@@ -734,7 +734,7 @@ class GTiffDataset final : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual char **GetMetadataDomainList() override;
     virtual CPLErr SetMetadata(char **, const char * = "") override;
@@ -12210,21 +12210,24 @@ bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
 /*      cache if need be.                                               */
 /************************************************************************/
 
-void GTiffDataset::FlushCache(bool bAtClosing)
+CPLErr GTiffDataset::FlushCache(bool bAtClosing)
 
 {
-    FlushCacheInternal(bAtClosing, true);
+    return FlushCacheInternal(bAtClosing, true);
 }
 
-void GTiffDataset::FlushCacheInternal(bool bAtClosing, bool bFlushDirectory)
+CPLErr GTiffDataset::FlushCacheInternal(bool bAtClosing, bool bFlushDirectory)
 {
     if (m_bIsFinalized)
-        return;
+        return CE_None;
 
-    GDALPamDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (m_bLoadedBlockDirty && m_nLoadedBlock != -1)
-        FlushBlockBuf();
+    {
+        if (FlushBlockBuf() != CE_None)
+            eErr = CE_Failure;
+    }
 
     CPLFree(m_pabyBlockBuf);
     m_pabyBlockBuf = nullptr;
@@ -12249,17 +12252,21 @@ void GTiffDataset::FlushCacheInternal(bool bAtClosing, bool bFlushDirectory)
 
     if (bFlushDirectory && GetAccess() == GA_Update)
     {
-        FlushDirectory();
+        if (FlushDirectory() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/
 /*                           FlushDirectory()                           */
 /************************************************************************/
 
-void GTiffDataset::FlushDirectory()
+CPLErr GTiffDataset::FlushDirectory()
 
 {
+    CPLErr eErr = CE_None;
+
     const auto ReloadAllOtherDirectories = [this]()
     {
         const auto poBaseDS = m_poBaseDS ? m_poBaseDS : this;
@@ -12363,7 +12370,8 @@ void GTiffDataset::FlushDirectory()
                 if ((m_nDirOffset % 2) == 1)
                     ++m_nDirOffset;
 
-                TIFFRewriteDirectory(m_hTIFF);
+                if (TIFFRewriteDirectory(m_hTIFF) == 0)
+                    eErr = CE_Failure;
 
                 TIFFSetSubDirectory(m_hTIFF, m_nDirOffset);
 
@@ -12399,7 +12407,8 @@ void GTiffDataset::FlushDirectory()
         if ((nNewDirOffset % 2) == 1)
             ++nNewDirOffset;
 
-        TIFFFlush(m_hTIFF);
+        if (TIFFFlush(m_hTIFF) == 0)
+            eErr = CE_Failure;
 
         if (m_nDirOffset != TIFFCurrentDirOffset(m_hTIFF))
         {
@@ -12411,6 +12420,7 @@ void GTiffDataset::FlushDirectory()
     }
 
     SetDirectory();
+    return eErr;
 }
 
 /************************************************************************/

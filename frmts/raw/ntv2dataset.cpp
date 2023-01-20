@@ -123,7 +123,7 @@ class NTv2Dataset final : public RawDataset
         return &m_oSRS;
     }
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -202,7 +202,7 @@ static void SwapPtr64IfNecessary(bool bMustSwap, void *ptr)
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void NTv2Dataset::FlushCache(bool bAtClosing)
+CPLErr NTv2Dataset::FlushCache(bool bAtClosing)
 
 {
     /* -------------------------------------------------------------------- */
@@ -211,8 +211,7 @@ void NTv2Dataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     if (eAccess != GA_Update || !(GetPamFlags() & GPF_DIRTY))
     {
-        RawDataset::FlushCache(bAtClosing);
-        return;
+        return RawDataset::FlushCache(bAtClosing);
     }
 
     /* -------------------------------------------------------------------- */
@@ -222,13 +221,13 @@ void NTv2Dataset::FlushCache(bool bAtClosing)
     char achFileHeader[nRecords * knMAX_RECORD_SIZE] = {'\0'};
     char achGridHeader[nRecords * knMAX_RECORD_SIZE] = {'\0'};
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(achFileHeader, nRecords, nRecordSize, fpImage));
+    bool bOK = VSIFSeekL(fpImage, 0, SEEK_SET) == 0;
+    bOK &=
+        VSIFReadL(achFileHeader, nRecords, nRecordSize, fpImage) == nRecordSize;
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, nGridOffset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(
-        VSIFReadL(achGridHeader, nRecords, nRecordSize, fpImage));
+    bOK &= VSIFSeekL(fpImage, nGridOffset, SEEK_SET) == 0;
+    bOK &=
+        VSIFReadL(achGridHeader, nRecords, nRecordSize, fpImage) == nRecordSize;
 
     /* -------------------------------------------------------------------- */
     /*      Update the grid, and file headers with any available            */
@@ -329,13 +328,13 @@ void NTv2Dataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     /*      Load grid and file headers.                                     */
     /* -------------------------------------------------------------------- */
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
-    CPL_IGNORE_RET_VAL(
-        VSIFWriteL(achFileHeader, nRecords, nRecordSize, fpImage));
+    bOK &= VSIFSeekL(fpImage, 0, SEEK_SET) == 0;
+    bOK &= VSIFWriteL(achFileHeader, nRecords, nRecordSize, fpImage) ==
+           nRecordSize;
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, nGridOffset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(
-        VSIFWriteL(achGridHeader, nRecords, nRecordSize, fpImage));
+    bOK &= VSIFSeekL(fpImage, nGridOffset, SEEK_SET) == 0;
+    bOK &= VSIFWriteL(achGridHeader, nRecords, nRecordSize, fpImage) ==
+           nRecordSize;
 
     /* -------------------------------------------------------------------- */
     /*      Clear flags if we got everything, then let pam and below do     */
@@ -344,7 +343,9 @@ void NTv2Dataset::FlushCache(bool bAtClosing)
     if (!bSomeLeftOver)
         SetPamFlags(GetPamFlags() & (~GPF_DIRTY));
 
-    RawDataset::FlushCache(bAtClosing);
+    if (RawDataset::FlushCache(bAtClosing) != CE_None)
+        bOK = false;
+    return bOK ? CE_None : CE_Failure;
 }
 
 /************************************************************************/

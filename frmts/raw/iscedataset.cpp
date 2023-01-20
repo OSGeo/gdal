@@ -73,7 +73,7 @@ class ISCEDataset final : public RawDataset
     ISCEDataset();
     ~ISCEDataset() override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     char **GetFileList() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -173,14 +173,14 @@ ISCEDataset::~ISCEDataset(void)
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void ISCEDataset::FlushCache(bool bAtClosing)
+CPLErr ISCEDataset::FlushCache(bool bAtClosing)
 {
-    RawDataset::FlushCache(bAtClosing);
+    CPLErr eErr = RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = (GetRasterCount() > 0) ? GetRasterBand(1) : nullptr;
 
     if (eAccess == GA_ReadOnly || band == nullptr)
-        return;
+        return eErr;
 
     /* -------------------------------------------------------------------- */
     /*      Recreate a XML doc with the dataset information.                */
@@ -362,12 +362,15 @@ void ISCEDataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     /*      Write the XML file.                                             */
     /* -------------------------------------------------------------------- */
-    CPLSerializeXMLTreeToFile(psDocNode, pszXMLFilename);
+    if (!CPLSerializeXMLTreeToFile(psDocNode, pszXMLFilename))
+        eErr = CE_Failure;
 
     /* -------------------------------------------------------------------- */
     /*      Free the XML Doc.                                               */
     /* -------------------------------------------------------------------- */
     CPLDestroyXMLNode(psDocNode);
+
+    return eErr;
 }
 
 /************************************************************************/

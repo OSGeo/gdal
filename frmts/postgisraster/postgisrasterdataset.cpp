@@ -289,10 +289,11 @@ int PostGISRasterDataset::CloseDependentDatasets()
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void PostGISRasterDataset::FlushCache(bool bAtClosing)
+CPLErr PostGISRasterDataset::FlushCache(bool bAtClosing)
 {
-    VRTDataset::FlushCache(bAtClosing);
+    CPLErr eErr = VRTDataset::FlushCache(bAtClosing);
     oOutDBDatasetCache.clear();
+    return eErr;
 }
 
 /************************************************************************/

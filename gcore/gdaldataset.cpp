@@ -430,11 +430,13 @@ void GDALDataset::AddToDatasetOpenList()
  * This method is the same as the C function GDALFlushCache().
  *
  * @param bAtClosing Whether this is called from a GDALDataset destructor
+ * @return CE_None in case of success (note: return value added in GDAL 3.7)
  */
 
-void GDALDataset::FlushCache(bool bAtClosing)
+CPLErr GDALDataset::FlushCache(bool bAtClosing)
 
 {
+    CPLErr eErr = CE_None;
     // This sometimes happens if a dataset is destroyed before completely
     // built.
 
@@ -443,7 +445,10 @@ void GDALDataset::FlushCache(bool bAtClosing)
         for (int i = 0; i < nBands; ++i)
         {
             if (papoBands[i] != nullptr)
-                papoBands[i]->FlushCache(bAtClosing);
+            {
+                if (papoBands[i]->FlushCache(bAtClosing) != CE_None)
+                    eErr = CE_Failure;
+            }
         }
     }
 
@@ -458,10 +463,13 @@ void GDALDataset::FlushCache(bool bAtClosing)
 
             if (poLayer)
             {
-                poLayer->SyncToDisk();
+                if (poLayer->SyncToDisk() != OGRERR_NONE)
+                    eErr = CE_Failure;
             }
         }
     }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -472,14 +480,15 @@ void GDALDataset::FlushCache(bool bAtClosing)
  * \brief Flush all write cached data to disk.
  *
  * @see GDALDataset::FlushCache().
+ * @return CE_None in case of success (note: return value added in GDAL 3.7)
  */
 
-void CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
+CPLErr CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 
 {
-    VALIDATE_POINTER0(hDS, "GDALFlushCache");
+    VALIDATE_POINTER1(hDS, "GDALFlushCache", CE_Failure);
 
-    GDALDataset::FromHandle(hDS)->FlushCache(false);
+    return GDALDataset::FromHandle(hDS)->FlushCache(false);
 }
 
 /************************************************************************/
@@ -524,14 +533,13 @@ GIntBig GDALDataset::GetEstimatedRAMUsage()
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
+CPLErr GDALDataset::BlockBasedFlushCache(bool bAtClosing)
 
 {
     GDALRasterBand *poBand1 = GetRasterBand(1);
     if (poBand1 == nullptr || (bSuppressOnClose && bAtClosing))
     {
-        GDALDataset::FlushCache(bAtClosing);
-        return;
+        return GDALDataset::FlushCache(bAtClosing);
     }
 
     int nBlockXSize = 0;
@@ -549,8 +557,7 @@ void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
         poBand->GetBlockSize(&nThisBlockXSize, &nThisBlockYSize);
         if (nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize)
         {
-            GDALDataset::FlushCache(bAtClosing);
-            return;
+            return GDALDataset::FlushCache(bAtClosing);
         }
     }
 
@@ -568,10 +575,11 @@ void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
                 const CPLErr eErr = poBand->FlushBlock(iX, iY);
 
                 if (eErr != CE_None)
-                    return;
+                    return CE_Failure;
             }
         }
     }
+    return CE_None;
 }
 
 /************************************************************************/

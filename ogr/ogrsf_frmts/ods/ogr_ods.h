@@ -252,7 +252,7 @@ class OGRODSDataSource final : public GDALDataset
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int iLayer) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);

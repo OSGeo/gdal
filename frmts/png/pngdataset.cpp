@@ -1269,10 +1269,10 @@ CPLErr PNGDataset::GetGeoTransform(double *padfTransform)
 /*      cache if need be.                                               */
 /************************************************************************/
 
-void PNGDataset::FlushCache(bool bAtClosing)
+CPLErr PNGDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (pabyBuffer != nullptr)
     {
@@ -1281,6 +1281,7 @@ void PNGDataset::FlushCache(bool bAtClosing)
         nBufferStartLine = 0;
         nBufferLines = 0;
     }
+    return eErr;
 }
 
 #ifdef DISABLE_CRC_CHECK

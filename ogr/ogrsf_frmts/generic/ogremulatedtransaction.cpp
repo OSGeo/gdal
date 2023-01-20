@@ -134,7 +134,7 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;
@@ -386,10 +386,10 @@ void OGRDataSourceWithTransaction::ReleaseResultSet(OGRLayer *poResultsSet)
     m_poBaseDataSource->ReleaseResultSet(poResultsSet);
 }
 
-void OGRDataSourceWithTransaction::FlushCache(bool bAtClosing)
+CPLErr OGRDataSourceWithTransaction::FlushCache(bool bAtClosing)
 {
     if (!m_poBaseDataSource)
-        return;
+        return CE_None;
     return m_poBaseDataSource->FlushCache(bAtClosing);
 }
 

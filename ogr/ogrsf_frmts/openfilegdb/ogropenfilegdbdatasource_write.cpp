@@ -1541,13 +1541,18 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void OGROpenFileGDBDataSource::FlushCache(bool /*bAtClosing*/)
+CPLErr OGROpenFileGDBDataSource::FlushCache(bool /*bAtClosing*/)
 {
     if (eAccess != GA_Update)
-        return;
+        return CE_None;
 
+    CPLErr eErr = CE_None;
     for (auto &poLayer : m_apoLayers)
-        poLayer->SyncToDisk();
+    {
+        if (poLayer->SyncToDisk() != OGRERR_NONE)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

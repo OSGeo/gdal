@@ -728,7 +728,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;

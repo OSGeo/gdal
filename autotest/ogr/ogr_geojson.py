@@ -156,7 +156,7 @@ def copy_shape_to_geojson(gjname, compress=None):
     else:
         dst_name = os.path.join("tmp", gjname + ".geojson")
 
-    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(dst_name)
+    ds = gdal.GetDriverByName("GeoJSON").Create(dst_name, 0, 0, 0, gdal.GDT_Unknown)
     if ds is None:
         return False, dst_name
 
@@ -194,6 +194,7 @@ def copy_shape_to_geojson(gjname, compress=None):
     shp_lyr = None
     lyr = None
 
+    assert ds.FlushCache() == gdal.CE_None
     ds = None
 
     return True, dst_name

@@ -61,10 +61,10 @@ OGRDGNV8DataSource::~OGRDGNV8DataSource()
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
+CPLErr OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
 {
     if (m_poDb.isNull() || !m_bModified)
-        return;
+        return CE_None;
     m_bModified = false;
 
     for (int i = 0; i < m_nLayers; i++)
@@ -72,6 +72,7 @@ void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
         m_papoLayers[i]->m_pModel->fitToView();
     }
 
+    CPLErr eErr = CE_None;
     OdString oFilename(FromUTF8(GetDescription()));
     try
     {
@@ -79,18 +80,22 @@ void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
     }
     catch (const OdError &e)
     {
+        eErr = CE_Failure;
         CPLError(CE_Failure, CPLE_AppDefined, "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
     }
     catch (const std::exception &exc)
     {
+        eErr = CE_Failure;
         CPLError(CE_Failure, CPLE_AppDefined, "std::exception occurred: %s",
                  exc.what());
     }
     catch (...)
     {
+        eErr = CE_Failure;
         CPLError(CE_Failure, CPLE_AppDefined, "Unknown exception occurred");
     }
+    return eErr;
 }
 
 /************************************************************************/

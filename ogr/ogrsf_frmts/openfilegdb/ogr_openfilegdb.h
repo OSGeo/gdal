@@ -462,7 +462,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     int Open(const GDALOpenInfo *poOpenInfo);
     bool Create(const char *pszName);
 
-    virtual void FlushCache(bool bAtClosing = false) override;
+    virtual CPLErr FlushCache(bool bAtClosing = false) override;
 
     virtual const char *GetName() override
     {

@@ -170,12 +170,16 @@ GDALPamDataset::~GDALPamDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void GDALPamDataset::FlushCache(bool bAtClosing)
+CPLErr GDALPamDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
     if (nPamFlags & GPF_DIRTY)
-        TrySaveXML();
+    {
+        if (TrySaveXML() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

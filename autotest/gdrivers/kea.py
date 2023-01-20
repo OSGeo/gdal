@@ -185,9 +185,6 @@ def test_kea_4():
     with gdaltest.error_handler():
         ret = ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "\0")
     assert ret != 0
-    with gdaltest.error_handler():
-        ret = ds.FlushCache()
-    assert ret != 0
     assert ds.GetRasterBand(1).Checksum() == 3
 
     ds = None

@@ -265,7 +265,6 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
                                char **papszParamList);
-    virtual void FlushCache(void);
 #endif
 };
 
@@ -3201,16 +3200,6 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer &stripData,
     stripData.importDataBSQ(pData);
     CPLFree(pData);
     return LT_STS_Success;
-}
-
-/************************************************************************/
-/*                             FlushCache()                             */
-/************************************************************************/
-
-void MrSIDDataset::FlushCache(bool bAtClosing)
-
-{
-    GDALDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

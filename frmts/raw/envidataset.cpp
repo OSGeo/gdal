@@ -195,24 +195,24 @@ ENVIDataset::~ENVIDataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ENVIDataset::FlushCache(bool bAtClosing)
+CPLErr ENVIDataset::FlushCache(bool bAtClosing)
 
 {
-    RawDataset::FlushCache(bAtClosing);
+    CPLErr eErr = RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
     if (band == nullptr || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
-        return;
+        return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make
     // sure any existing content is cleared, otherwise the file may contain
     // trailing content from the previous write.
     if (VSIFTruncateL(fp, 0) != 0)
-        return;
+        return CE_Failure;
 
     if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
-        return;
+        return CE_Failure;
 
     // Rewrite out the header.
     bool bOK = VSIFPrintfL(fp, "ENVI\n") >= 0;
@@ -492,9 +492,10 @@ void ENVIDataset::FlushCache(bool bAtClosing)
     }
 
     if (!bOK)
-        return;
+        return CE_Failure;
 
     bHeaderDirty = false;
+    return eErr;
 }
 
 /************************************************************************/

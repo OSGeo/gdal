@@ -440,8 +440,8 @@ public:
 
 #endif
 
-  void FlushCache() {
-    GDALFlushCache( self );
+  CPLErr FlushCache() {
+    return GDALFlushCache( self );
   }
 
 #ifndef SWIGJAVA

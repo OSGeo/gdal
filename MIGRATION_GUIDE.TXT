@@ -18,6 +18,9 @@ MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
   people building their plugins with DEBUG and running them against a non-DEBUG
   GDAL build, or the reverse.
 
+- GDALFlushCache() and GDALDataset::FlushCache() are modified to return a CPLErr
+  error code instead of void. Affects out-of-tree drivers.
+
 MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
 -----------------------------------------
 

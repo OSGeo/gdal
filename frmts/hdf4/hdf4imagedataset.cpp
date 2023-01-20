@@ -160,7 +160,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
     virtual CPLErr SetGeoTransform(double *) override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -929,15 +929,15 @@ const GDAL_GCP *HDF4ImageDataset::GetGCPs()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void HDF4ImageDataset::FlushCache(bool bAtClosing)
+CPLErr HDF4ImageDataset::FlushCache(bool bAtClosing)
 
 {
     CPLMutexHolderD(&hHDF4Mutex);
 
-    GDALDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
 
     if (eAccess == GA_ReadOnly)
-        return;
+        return eErr;
 
     // Write out transformation matrix.
     const char *pszValue =
@@ -947,6 +947,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
     if ((SDsetattr(hSD, "TransformationMatrix", DFNT_CHAR8,
                    static_cast<int>(strlen(pszValue)) + 1, pszValue)) < 0)
     {
+        eErr = CE_Failure;
         CPLDebug("HDF4Image",
                  "Cannot write transformation matrix to output file");
     }
@@ -961,6 +962,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
             if ((SDsetattr(hSD, "Projection", DFNT_CHAR8,
                            static_cast<int>(strlen(pszWKT)) + 1, pszWKT)) < 0)
             {
+                eErr = CE_Failure;
                 CPLDebug("HDF4Image",
                          "Cannot write projection information to output file");
             }
@@ -982,6 +984,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
                            static_cast<int>(strlen(pszValue)) + 1, pszValue)) <
                     0)
             {
+                eErr = CE_Failure;
                 CPLDebug("HDF4Image",
                          "Cannot write metadata information to output file");
             }
@@ -1004,6 +1007,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
                            static_cast<int>(strlen(pszValue)) + 1, pszValue)) <
                 0)
             {
+                eErr = CE_Failure;
                 CPLDebug("HDF4Image",
                          "Cannot write NoData value for band %d "
                          "to output file",
@@ -1027,6 +1031,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
             if (SDsetattr(hSD, pszName, DFNT_CHAR8,
                           static_cast<int>(strlen(pszValue)) + 1, pszValue) < 0)
             {
+                eErr = CE_Failure;
                 CPLDebug("HDF4Image",
                          "Cannot write band's %d description to output file",
                          iBand);
@@ -1035,6 +1040,7 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
 
         CPLFree(pszName);
     }
+    return eErr;
 }
 
 /************************************************************************/

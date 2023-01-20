@@ -883,17 +883,20 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ILWISDataset::FlushCache(bool bAtClosing)
+CPLErr ILWISDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
 
     if (bGeoDirty == TRUE)
     {
-        WriteGeoReference();
-        WriteProjection();
+        if (WriteGeoReference() != CE_None)
+            eErr = CE_Failure;
+        if (WriteProjection() != CE_None)
+            eErr = CE_Failure;
         bGeoDirty = FALSE;
     }
+    return eErr;
 }
 
 /************************************************************************/

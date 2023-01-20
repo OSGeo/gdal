@@ -459,12 +459,18 @@ class DatasetWithErrorInFlushCache : public GDALDataset
     {
         FlushCache(true);
     }
-    virtual void FlushCache(bool bAtClosing) override
+    virtual CPLErr FlushCache(bool bAtClosing) override
     {
+        CPLErr eErr = CE_None;
         if (!bHasFlushCache)
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "some error");
-        GDALDataset::FlushCache(bAtClosing);
+            eErr = CE_Failure;
+        }
+        if (GDALDataset::FlushCache(bAtClosing) != CE_None)
+            eErr = CE_Failure;
         bHasFlushCache = true;
+        return eErr;
     }
     CPLErr SetSpatialRef(const OGRSpatialReference *) override
     {

@@ -285,7 +285,7 @@ static void OGRLIBKMLPostProcessOutput(std::string &oKml)
 
 ******************************************************************************/
 
-void OGRLIBKMLDataSource::WriteKml()
+bool OGRLIBKMLDataSource::WriteKml()
 {
     std::string oKmlFilename = m_pszName;
 
@@ -330,6 +330,7 @@ void OGRLIBKMLDataSource::WriteKml()
     oKmlOut = kmldom::SerializePretty(m_poKmlDSKml);
     OGRLIBKMLPostProcessOutput(oKmlOut);
 
+    bool bRet = true;
     if (!oKmlOut.empty())
     {
         VSILFILE *fp = VSIFOpenExL(oKmlFilename.c_str(), "wb", true);
@@ -337,12 +338,15 @@ void OGRLIBKMLDataSource::WriteKml()
         {
             CPLError(CE_Failure, CPLE_FileIO, "Error writing %s: %s",
                      oKmlFilename.c_str(), VSIGetLastErrorMsg());
-            return;
+            return false;
         }
 
-        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
-        VSIFCloseL(fp);
+        if (VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp) != oKmlOut.size())
+            bRet = false;
+        if (VSIFCloseL(fp) != 0)
+            bRet = false;
     }
+    return bRet;
 }
 
 /******************************************************************************/
@@ -387,7 +391,7 @@ static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
 
 ******************************************************************************/
 
-void OGRLIBKMLDataSource::WriteKmz()
+bool OGRLIBKMLDataSource::WriteKmz()
 {
     void *hZIP = CPLCreateZip(m_pszName, nullptr);
 
@@ -395,8 +399,10 @@ void OGRLIBKMLDataSource::WriteKmz()
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess, "Error creating %s: %s",
                  m_pszName, VSIGetLastErrorMsg());
-        return;
+        return false;
     }
+
+    bool bRet = true;
 
     /***** write out the doc.kml ****/
     const char *pszUseDocKml = CPLGetConfigOption("LIBKML_USE_DOC.KML", "yes");
@@ -428,8 +434,11 @@ void OGRLIBKMLDataSource::WriteKmz()
         if (CPLCreateFileInZip(hZIP, "doc.kml", nullptr) != CE_None ||
             CPLWriteFileInZip(hZIP, oKmlOut.data(),
                               static_cast<int>(oKmlOut.size())) != CE_None)
+        {
+            bRet = false;
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
                      "doc.kml", m_pszName);
+        }
         CPLCloseFileInZip(hZIP);
     }
 
@@ -499,12 +508,16 @@ void OGRLIBKMLDataSource::WriteKmz()
             CPLCreateFileInZip(hZIP, "style/style.kml", nullptr) != CE_None ||
             CPLWriteFileInZip(hZIP, oKmlOut.data(),
                               static_cast<int>(oKmlOut.size())) != CE_None)
+        {
+            bRet = false;
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
                      "style/style.kml", m_pszName);
+        }
         CPLCloseFileInZip(hZIP);
     }
 
     CPLCloseZip(hZIP);
+    return bRet;
 }
 
 /******************************************************************************
@@ -516,11 +529,12 @@ void OGRLIBKMLDataSource::WriteKmz()
 
 ******************************************************************************/
 
-void OGRLIBKMLDataSource::WriteDir()
+bool OGRLIBKMLDataSource::WriteDir()
 {
     /***** write out the doc.kml ****/
     const char *pszUseDocKml = CPLGetConfigOption("LIBKML_USE_DOC.KML", "yes");
 
+    bool bRet = true;
     if (CPLTestBool(pszUseDocKml) && (m_poKmlDocKml || m_poKmlUpdate))
     {
         // If we don't have the doc.kml root
@@ -549,11 +563,13 @@ void OGRLIBKMLDataSource::WriteDir()
         {
             CPLError(CE_Failure, CPLE_FileIO, "Error writing %s to %s: %s",
                      "doc.kml", m_pszName, VSIGetLastErrorMsg());
-            return;
+            return false;
         }
 
-        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
-        VSIFCloseL(fp);
+        if (VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp) != oKmlOut.size())
+            bRet = false;
+        if (VSIFCloseL(fp) != 0)
+            bRet = false;
     }
 
     /***** loop though the layers and write them *****/
@@ -597,11 +613,13 @@ void OGRLIBKMLDataSource::WriteDir()
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
                      papoLayers[iLayer]->GetFileName(), m_pszName);
-            return;
+            return false;
         }
 
-        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
-        VSIFCloseL(fp);
+        if (VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp) != oKmlOut.size())
+            bRet = false;
+        if (VSIFCloseL(fp) != 0)
+            bRet = false;
     }
 
     /***** write the style table *****/
@@ -621,12 +639,15 @@ void OGRLIBKMLDataSource::WriteDir()
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
                      "style.kml", m_pszName);
-            return;
+            return false;
         }
 
-        VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp);
-        VSIFCloseL(fp);
+        if (VSIFWriteL(oKmlOut.data(), 1, oKmlOut.size(), fp) != oKmlOut.size())
+            bRet = false;
+        if (VSIFCloseL(fp) != 0)
+            bRet = false;
     }
+    return bRet;
 }
 
 /******************************************************************************
@@ -638,25 +659,30 @@ void OGRLIBKMLDataSource::WriteDir()
 
 ******************************************************************************/
 
-void OGRLIBKMLDataSource::FlushCache(bool /* bAtClosing */)
+CPLErr OGRLIBKMLDataSource::FlushCache(bool /* bAtClosing */)
 {
     if (!bUpdated)
-        return;
+        return CE_None;
 
+    CPLErr eErr = CE_None;
     if (bUpdate && IsKml())
     {
-        WriteKml();
+        if (!WriteKml())
+            eErr = CE_Failure;
     }
     else if (bUpdate && IsKmz())
     {
-        WriteKmz();
+        if (!WriteKmz())
+            eErr = CE_Failure;
     }
     else if (bUpdate && IsDir())
     {
-        WriteDir();
+        if (!WriteDir())
+            eErr = CE_Failure;
     }
 
     bUpdated = false;
+    return eErr;
 }
 
 /******************************************************************************

@@ -407,7 +407,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     BlockBasedRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                        GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
                        GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
-    void BlockBasedFlushCache(bool bAtClosing);
+    CPLErr BlockBasedFlushCache(bool bAtClosing);
 
     CPLErr
     BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -527,7 +527,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands GetBands();
 
-    virtual void FlushCache(bool bAtClosing = false);
+    virtual CPLErr FlushCache(bool bAtClosing = false);
 
     virtual GIntBig GetEstimatedRAMUsage();
 

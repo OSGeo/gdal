@@ -96,6 +96,7 @@ def test_ntv2_5():
     ds = gdal.GetDriverByName("NTv2").CreateCopy(
         "/vsimem/ntv2_5.gsb", src_ds, options=["APPEND_SUBDATASET=YES"]
     )
+    assert ds.FlushCache() == gdal.CE_None
     assert ds.GetRasterBand(2).Checksum() == 10
     ds = None
     ds = gdal.Open("NTv2:1:/vsimem/ntv2_5.gsb")

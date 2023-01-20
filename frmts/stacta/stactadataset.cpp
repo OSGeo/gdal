@@ -1071,10 +1071,10 @@ STACTADataset::~STACTADataset()
 /*                          FlushCache()                                */
 /************************************************************************/
 
-void STACTADataset::FlushCache(bool bAtClosing)
+CPLErr STACTADataset::FlushCache(bool bAtClosing)
 {
     m_oCacheTileDS.clear();
-    GDALDataset::FlushCache(bAtClosing);
+    return GDALDataset::FlushCache(bAtClosing);
 }
 
 /************************************************************************/

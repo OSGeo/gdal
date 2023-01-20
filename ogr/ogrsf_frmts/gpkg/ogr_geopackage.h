@@ -285,7 +285,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
     virtual CPLErr SetGeoTransform(double *padfGeoTransform) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;

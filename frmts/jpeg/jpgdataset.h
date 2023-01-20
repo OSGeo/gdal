@@ -272,7 +272,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
 
     virtual char **GetFileList(void) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     CPLStringList GetCompressionFormats(int nXOff, int nYOff, int nXSize,
                                         int nYSize, int nBandCount,

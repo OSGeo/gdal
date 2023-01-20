@@ -692,6 +692,7 @@ class GDALTest(object):
                 or not check_minmax
             ), "Did not get expected min/max values on reopened file."
 
+        assert new_ds.FlushCache() == gdal.CE_None
         new_ds = None
 
         if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":

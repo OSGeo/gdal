@@ -838,10 +838,12 @@ CPLErr OGRNGWDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 /*
  * FlushCache()
  */
-void OGRNGWDataset::FlushCache(bool bAtClosing)
+CPLErr OGRNGWDataset::FlushCache(bool bAtClosing)
 {
-    GDALDataset::FlushCache(bAtClosing);
-    FlushMetadata(GetMetadata("NGW"));
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
+    if (!FlushMetadata(GetMetadata("NGW")))
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /*

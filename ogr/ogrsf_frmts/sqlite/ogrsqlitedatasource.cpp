@@ -3065,19 +3065,23 @@ OGRSQLiteDataSource::GetLayerWithGetSpatialWhereByName(const char *pszName)
 /*                              FlushCache()                            */
 /************************************************************************/
 
-void OGRSQLiteDataSource::FlushCache(bool bAtClosing)
+CPLErr OGRSQLiteDataSource::FlushCache(bool bAtClosing)
 {
+    CPLErr eErr = CE_None;
     for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
     {
         if (m_papoLayers[iLayer]->IsTableLayer())
         {
             OGRSQLiteTableLayer *poLayer =
                 (OGRSQLiteTableLayer *)m_papoLayers[iLayer];
-            poLayer->RunDeferredCreationIfNecessary();
+            if (poLayer->RunDeferredCreationIfNecessary() != OGRERR_NONE)
+                eErr = CE_Failure;
             poLayer->CreateSpatialIndexIfNecessary();
         }
     }
-    GDALDataset::FlushCache(bAtClosing);
+    if (GDALDataset::FlushCache(bAtClosing) != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /************************************************************************/

@@ -99,7 +99,9 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
 
     dirname = "/vsimem/out.gdb"
     try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        ds = gdal.GetDriverByName("OpenFileGDB").Create(
+            dirname, 0, 0, 0, gdal.GDT_Unknown
+        )
         assert ds.TestCapability(ogr.ODsCCreateLayer) == 1
         lyr = ds.CreateLayer(
             "test",
@@ -206,6 +208,7 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
                 == "Attempting to write null/empty field in non-nullable field"
             )
 
+        assert ds.FlushCache() == gdal.CE_None
         ds = None
 
         ds = ogr.Open(dirname)

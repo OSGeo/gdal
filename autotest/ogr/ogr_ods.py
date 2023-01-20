@@ -306,7 +306,7 @@ def test_ogr_ods_7():
         os.unlink(filepath)
     shutil.copy("data/ods/test.ods", filepath)
 
-    ds = ogr.Open(filepath, update=1)
+    ds = gdal.OpenEx(filepath, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -315,6 +315,7 @@ def test_ogr_ods_7():
     feat.SetField(0, "modified_value")
     lyr.SetFeature(feat)
     feat = None
+    assert ds.FlushCache() == gdal.CE_None
     ds = None
 
     ds = ogr.Open("tmp/ogr_ods_7.ods")

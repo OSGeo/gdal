@@ -1759,15 +1759,6 @@ CPLErr GeoRasterDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 //  ---------------------------------------------------------------------------
-//                                                  FlushCache(bool bAtClosing)
-//  ---------------------------------------------------------------------------
-
-void GeoRasterDataset::FlushCache(bool bAtClosing)
-{
-    GDALDataset::FlushCache(bAtClosing);
-}
-
-//  ---------------------------------------------------------------------------
 //                                                            GetGeoTransform()
 //  ---------------------------------------------------------------------------
 

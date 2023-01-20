@@ -86,7 +86,7 @@ class ERSDataset final : public RawDataset
     ERSDataset();
     ~ERSDataset() override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *padfTransform) override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -186,27 +186,34 @@ int ERSDataset::CloseDependentDatasets()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ERSDataset::FlushCache(bool bAtClosing)
+CPLErr ERSDataset::FlushCache(bool bAtClosing)
 
 {
+    CPLErr eErr = CE_None;
     if (bHDRDirty)
     {
         VSILFILE *fpERS = VSIFOpenL(GetDescription(), "w");
         if (fpERS == nullptr)
         {
+            eErr = CE_Failure;
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to rewrite %s header.", GetDescription());
         }
         else
         {
-            VSIFPrintfL(fpERS, "DatasetHeader Begin\n");
+            if (VSIFPrintfL(fpERS, "DatasetHeader Begin\n") <= 0)
+                eErr = CE_Failure;
             poHeader->WriteSelf(fpERS, 1);
-            VSIFPrintfL(fpERS, "DatasetHeader End\n");
-            VSIFCloseL(fpERS);
+            if (VSIFPrintfL(fpERS, "DatasetHeader End\n") <= 0)
+                eErr = CE_Failure;
+            if (VSIFCloseL(fpERS) != 0)
+                eErr = CE_Failure;
         }
     }
 
-    RawDataset::FlushCache(bAtClosing);
+    if (RawDataset::FlushCache(bAtClosing) != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /************************************************************************/

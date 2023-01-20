@@ -238,7 +238,7 @@ int NITFDataset::CloseDependentDatasets()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void NITFDataset::FlushCache(bool bAtClosing)
+CPLErr NITFDataset::FlushCache(bool bAtClosing)
 
 {
     // If the JPEG/JP2K dataset has dirty pam info, then we should consider
@@ -255,10 +255,13 @@ void NITFDataset::FlushCache(bool bAtClosing)
          GPF_DIRTY))
         MarkPamDirty();
 
+    CPLErr eErr = CE_None;
     if (poJ2KDataset != nullptr && bJP2Writing)
-        poJ2KDataset->FlushCache(bAtClosing);
+        eErr = poJ2KDataset->FlushCache(bAtClosing);
 
-    GDALPamDataset::FlushCache(bAtClosing);
+    if (GDALPamDataset::FlushCache(bAtClosing) != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 #ifdef ESRI_BUILD

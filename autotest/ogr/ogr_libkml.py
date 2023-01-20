@@ -334,7 +334,7 @@ def test_ogr_libkml_polygon_read():
 
 def ogr_libkml_write(filename):
 
-    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(filename)
+    ds = gdal.GetDriverByName("LIBKML").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
 
     if filename != "/vsimem/libkml_use_doc_off.kmz":
         srs = osr.SpatialReference()
@@ -409,6 +409,7 @@ def ogr_libkml_write(filename):
     )
     assert lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
 
+    assert ds.FlushCache() == gdal.CE_None
     ds = None
 
 

@@ -1014,11 +1014,12 @@ void OGRGeoJSONDataSource::AddLayer(OGRGeoJSONLayer *poLayer)
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
+CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
 {
     if (papoLayersWriter_ != nullptr)
-        return;
+        return CE_None;
 
+    CPLErr eErr = CE_None;
     for (int i = 0; i < nLayers_; i++)
     {
         if (papoLayers_[i]->HasBeenUpdated())
@@ -1112,9 +1113,10 @@ void OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
                         }
                         else
                         {
-                            const bool bCopyOK = CPL_TO_BOOL(
+                            bool bCopyOK = CPL_TO_BOOL(
                                 VSIOverwriteFile(fpTarget, osNewFilename));
-                            VSIFCloseL(fpTarget);
+                            if (VSIFCloseL(fpTarget) != 0)
+                                bCopyOK = false;
                             if (bCopyOK)
                             {
                                 VSIUnlink(osNewFilename);
@@ -1149,10 +1151,13 @@ void OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
                     }
                 }
             }
+            if (!bOK)
+                eErr = CE_Failure;
 
             // Restore filters.
             papoLayers_[i]->m_poAttrQuery = poAttrQueryBak;
             papoLayers_[i]->m_poFilterGeom = poFilterGeomBak;
         }
     }
+    return eErr;
 }
