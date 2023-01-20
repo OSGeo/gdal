@@ -111,6 +111,8 @@ class NTv2Dataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NTv2Dataset)
 
+    CPLErr Close() override;
+
   public:
     NTv2Dataset();
     ~NTv2Dataset() override;
@@ -157,21 +159,40 @@ NTv2Dataset::NTv2Dataset()
 }
 
 /************************************************************************/
-/*                            ~NTv2Dataset()                          */
+/*                            ~NTv2Dataset()                            */
 /************************************************************************/
 
 NTv2Dataset::~NTv2Dataset()
 
 {
-    NTv2Dataset::FlushCache(true);
+    NTv2Dataset::Close();
+}
 
-    if (fpImage != nullptr)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr NTv2Dataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
+        if (NTv2Dataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
         }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/

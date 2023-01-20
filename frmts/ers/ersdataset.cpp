@@ -82,6 +82,8 @@ class ERSDataset final : public RawDataset
   protected:
     int CloseDependentDatasets() override;
 
+    CPLErr Close() override;
+
   public:
     ERSDataset();
     ~ERSDataset() override;
@@ -137,23 +139,41 @@ ERSDataset::ERSDataset()
 ERSDataset::~ERSDataset()
 
 {
-    ERSDataset::FlushCache(true);
+    ERSDataset::Close();
+}
 
-    if (fpImage != nullptr)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ERSDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        VSIFCloseL(fpImage);
+        if (ERSDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            VSIFCloseL(fpImage);
+        }
+
+        ERSDataset::CloseDependentDatasets();
+
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+        }
+
+        if (poHeader != nullptr)
+            delete poHeader;
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-
-    ERSDataset::CloseDependentDatasets();
-
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
-
-    if (poHeader != nullptr)
-        delete poHeader;
+    return eErr;
 }
 
 /************************************************************************/
@@ -162,7 +182,7 @@ ERSDataset::~ERSDataset()
 
 int ERSDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = RawDataset::CloseDependentDatasets();
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if (poDepFile != nullptr)
     {

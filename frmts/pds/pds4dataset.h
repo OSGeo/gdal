@@ -386,6 +386,8 @@ class PDS4Dataset final : public RawDataset
                                        GDALDataType eType,
                                        const char *const *papszOptions);
 
+    CPLErr Close() override;
+
   public:
     PDS4Dataset();
     virtual ~PDS4Dataset();

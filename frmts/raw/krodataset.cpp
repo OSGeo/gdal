@@ -41,14 +41,14 @@
 
 class KRODataset final : public RawDataset
 {
-    VSILFILE *fpImage;  // image data file.
+    VSILFILE *fpImage = nullptr;  // image data file.
 
     CPL_DISALLOW_COPY_ASSIGN(KRODataset)
 
+    CPLErr Close() override;
+
   public:
-    KRODataset() : fpImage(nullptr)
-    {
-    }
+    KRODataset() = default;
     ~KRODataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -71,15 +71,34 @@ class KRODataset final : public RawDataset
 KRODataset::~KRODataset()
 
 {
-    FlushCache(true);
+    KRODataset::Close();
+}
 
-    if (fpImage != nullptr)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr KRODataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
+        if (KRODataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
         }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/

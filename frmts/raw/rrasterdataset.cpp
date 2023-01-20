@@ -71,6 +71,8 @@ class RRASTERDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(RRASTERDataset)
 
+    CPLErr Close() override;
+
   public:
     RRASTERDataset();
     ~RRASTERDataset() override;
@@ -450,14 +452,33 @@ RRASTERDataset::RRASTERDataset()
 RRASTERDataset::~RRASTERDataset()
 
 {
-    if (m_fpImage != nullptr)
+    RRASTERDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr RRASTERDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        InitImageIfNeeded();
-        FlushCache(true);
-        VSIFCloseL(m_fpImage);
+        if (m_fpImage != nullptr)
+        {
+            InitImageIfNeeded();
+            if (RRASTERDataset::FlushCache(true) != CE_None)
+                eErr = CE_Failure;
+            if (VSIFCloseL(m_fpImage) != CE_None)
+                eErr = CE_Failure;
+        }
+        if (m_bHeaderDirty)
+            RewriteHeader();
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    if (m_bHeaderDirty)
-        RewriteHeader();
+    return eErr;
 }
 
 /************************************************************************/

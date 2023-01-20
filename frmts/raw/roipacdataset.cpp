@@ -54,6 +54,8 @@ class ROIPACDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
+    CPLErr Close() override;
+
   public:
     ROIPACDataset();
     ~ROIPACDataset() override;
@@ -152,16 +154,37 @@ ROIPACDataset::ROIPACDataset()
 
 ROIPACDataset::~ROIPACDataset()
 {
-    ROIPACDataset::FlushCache(true);
-    if (fpRsc != nullptr && VSIFCloseL(fpRsc) != 0)
+    ROIPACDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ROIPACDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        if (ROIPACDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpRsc != nullptr && VSIFCloseL(fpRsc) != 0)
+        {
+            eErr = CE_Failure;
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+        if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+        {
+            eErr = CE_Failure;
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+        CPLFree(pszRscFilename);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-    }
-    CPLFree(pszRscFilename);
+    return eErr;
 }
 
 /************************************************************************/

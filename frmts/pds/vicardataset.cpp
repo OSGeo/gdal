@@ -1155,12 +1155,32 @@ VICARDataset::VICARDataset()
 VICARDataset::~VICARDataset()
 
 {
-    if (!m_bIsLabelWritten)
-        WriteLabel();
-    VICARDataset::FlushCache(true);
-    PatchLabel();
-    if (fpImage != nullptr)
-        VSIFCloseL(fpImage);
+    VICARDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr VICARDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (!m_bIsLabelWritten)
+            WriteLabel();
+
+        if (VICARDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        PatchLabel();
+        if (fpImage != nullptr)
+            VSIFCloseL(fpImage);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

@@ -97,6 +97,8 @@ class PDSDataset final : public RawDataset
   protected:
     virtual int CloseDependentDatasets() override;
 
+    CPLErr Close() override;
+
   public:
     PDSDataset();
     virtual ~PDSDataset();
@@ -150,11 +152,31 @@ PDSDataset::PDSDataset()
 PDSDataset::~PDSDataset()
 
 {
-    PDSDataset::FlushCache(true);
-    if (fpImage != nullptr)
-        VSIFCloseL(fpImage);
+    PDSDataset::Close();
+}
 
-    PDSDataset::CloseDependentDatasets();
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr PDSDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (PDSDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+                eErr = CE_Failure;
+        }
+
+        PDSDataset::CloseDependentDatasets();
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

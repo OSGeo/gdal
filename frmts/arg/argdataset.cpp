@@ -48,6 +48,8 @@ class ARGDataset final : public RawDataset
     double adfGeoTransform[6];
     char *pszFilename;
 
+    CPLErr Close() override;
+
   public:
     ARGDataset();
     ~ARGDataset() override;
@@ -82,11 +84,36 @@ ARGDataset::ARGDataset() : fpImage(nullptr), pszFilename(nullptr)
 ARGDataset::~ARGDataset()
 
 {
-    CPLFree(pszFilename);
+    ARGDataset::Close();
+}
 
-    FlushCache(true);
-    if (fpImage != nullptr)
-        VSIFCloseL(fpImage);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ARGDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (ARGDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        CPLFree(pszFilename);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

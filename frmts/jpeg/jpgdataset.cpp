@@ -2834,6 +2834,10 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
                 nRasterXSize = nXSizeIn;
                 nRasterYSize = nYSizeIn;
             }
+            CPLErr Close() override
+            {
+                return GDALPamDataset::Close();
+            }
             ~JPEGRawDataset() = default;
 
             void SetBand(int nBand, GDALRasterBand *poBand)

@@ -85,6 +85,8 @@ class GenBinDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(GenBinDataset)
 
+    CPLErr Close() override;
+
   public:
     GenBinDataset();
     ~GenBinDataset() override;
@@ -244,18 +246,42 @@ GenBinDataset::GenBinDataset()
 }
 
 /************************************************************************/
-/*                            ~GenBinDataset()                            */
+/*                            ~GenBinDataset()                          */
 /************************************************************************/
 
 GenBinDataset::~GenBinDataset()
 
 {
-    FlushCache(true);
+    GenBinDataset::Close();
+}
 
-    if (fpImage != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    CSLDestroy(papszHDR);
+CPLErr GenBinDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (GenBinDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        CSLDestroy(papszHDR);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

@@ -56,6 +56,8 @@ class SNODASDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(SNODASDataset)
 
+    CPLErr Close() override;
+
   public:
     SNODASDataset();
     ~SNODASDataset() override;
@@ -183,7 +185,25 @@ SNODASDataset::SNODASDataset()
 SNODASDataset::~SNODASDataset()
 
 {
-    FlushCache(true);
+    SNODASDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr SNODASDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (SNODASDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

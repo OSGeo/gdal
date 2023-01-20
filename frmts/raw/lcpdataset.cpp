@@ -59,6 +59,8 @@ class LCPDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(LCPDataset)
 
+    CPLErr Close() override;
+
   public:
     LCPDataset();
     ~LCPDataset() override;
@@ -97,14 +99,34 @@ LCPDataset::LCPDataset() : fpImage(nullptr)
 LCPDataset::~LCPDataset()
 
 {
-    FlushCache(true);
-    if (fpImage != nullptr)
+    LCPDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr LCPDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
+        if (LCPDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
         }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/

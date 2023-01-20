@@ -50,6 +50,8 @@ class NDFDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NDFDataset)
 
+    CPLErr Close() override;
+
   public:
     NDFDataset();
     ~NDFDataset() override;
@@ -81,15 +83,34 @@ NDFDataset::NDFDataset() : papszExtraFiles(nullptr), papszHeader(nullptr)
 }
 
 /************************************************************************/
-/*                            ~NDFDataset()                            */
+/*                            ~NDFDataset()                             */
 /************************************************************************/
 
 NDFDataset::~NDFDataset()
 
 {
-    FlushCache(true);
-    CSLDestroy(papszHeader);
-    CSLDestroy(papszExtraFiles);
+    NDFDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr NDFDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (NDFDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        CSLDestroy(papszHeader);
+        CSLDestroy(papszExtraFiles);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

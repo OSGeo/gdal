@@ -166,6 +166,8 @@ class EnvisatDataset final : public RawDataset
     void CollectDSDMetadata();
     void CollectADSMetadata();
 
+    CPLErr Close() override;
+
   public:
     EnvisatDataset();
     virtual ~EnvisatDataset();
@@ -204,21 +206,39 @@ EnvisatDataset::EnvisatDataset()
 EnvisatDataset::~EnvisatDataset()
 
 {
-    FlushCache(true);
+    EnvisatDataset::Close();
+}
 
-    if (hEnvisatFile != nullptr)
-        EnvisatFile_Close(hEnvisatFile);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    if (fpImage != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
-
-    if (nGCPCount > 0)
+CPLErr EnvisatDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
+        if (EnvisatDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-    CSLDestroy(papszTempMD);
+        if (hEnvisatFile != nullptr)
+            EnvisatFile_Close(hEnvisatFile);
+
+        if (fpImage != nullptr)
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+        }
+
+        CSLDestroy(papszTempMD);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

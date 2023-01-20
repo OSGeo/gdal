@@ -254,6 +254,8 @@ class HKVDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(HKVDataset)
 
+    CPLErr Close() override;
+
   public:
     HKVDataset();
     ~HKVDataset() override;
@@ -364,36 +366,57 @@ HKVDataset::HKVDataset()
 HKVDataset::~HKVDataset()
 
 {
-    FlushCache(true);
-    if (bGeorefChanged)
-    {
-        const char *pszFilename = CPLFormFilename(pszPath, "georef", nullptr);
-        CSLSave(papszGeoref, pszFilename);
-    }
+    HKVDataset::Close();
+}
 
-    if (bNoDataChanged)
-    {
-        SaveHKVAttribFile(pszPath, nRasterXSize, nRasterYSize, nBands,
-                          eRasterType, bNoDataSet, dfNoDataValue);
-    }
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    if (fpBlob != nullptr)
+CPLErr HKVDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpBlob) != 0)
+        if (HKVDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (bGeorefChanged)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            const char *pszFilename =
+                CPLFormFilename(pszPath, "georef", nullptr);
+            CSLSave(papszGeoref, pszFilename);
         }
-    }
 
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
+        if (bNoDataChanged)
+        {
+            SaveHKVAttribFile(pszPath, nRasterXSize, nRasterYSize, nBands,
+                              eRasterType, bNoDataSet, dfNoDataValue);
+        }
 
-    CPLFree(pszPath);
-    CSLDestroy(papszGeoref);
-    CSLDestroy(papszAttrib);
+        if (fpBlob != nullptr)
+        {
+            if (VSIFCloseL(fpBlob) != 0)
+            {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
+        }
+
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+        }
+
+        CPLFree(pszPath);
+        CSLDestroy(papszGeoref);
+        CSLDestroy(papszAttrib);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

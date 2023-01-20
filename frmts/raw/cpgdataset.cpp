@@ -83,6 +83,8 @@ class CPGDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(CPGDataset)
 
+    CPLErr Close() override;
+
   public:
     CPGDataset();
     ~CPGDataset() override;
@@ -133,21 +135,39 @@ CPGDataset::CPGDataset()
 CPGDataset::~CPGDataset()
 
 {
-    FlushCache(true);
+    CPGDataset::Close();
+}
 
-    for (int iBand = 0; iBand < 4; iBand++)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr CPGDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (afpImage[iBand] != nullptr)
-            VSIFCloseL(afpImage[iBand]);
-    }
+        if (CPGDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
+        for (int iBand = 0; iBand < 4; iBand++)
+        {
+            if (afpImage[iBand] != nullptr)
+                VSIFCloseL(afpImage[iBand]);
+        }
 
-    CPLFree(padfStokesMatrix);
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+        }
+
+        CPLFree(padfStokesMatrix);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

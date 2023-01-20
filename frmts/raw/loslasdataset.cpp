@@ -84,6 +84,8 @@ class LOSLASDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(LOSLASDataset)
 
+    CPLErr Close() override;
+
   public:
     LOSLASDataset();
     ~LOSLASDataset() override;
@@ -123,10 +125,34 @@ LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
 LOSLASDataset::~LOSLASDataset()
 
 {
-    FlushCache(true);
+    LOSLASDataset::Close();
+}
 
-    if (fpImage != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr LOSLASDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (LOSLASDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
