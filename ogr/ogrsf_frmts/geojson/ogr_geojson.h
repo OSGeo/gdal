@@ -263,6 +263,8 @@ class OGRGeoJSONDataSource final : public OGRDataSource
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
+    CPLErr Close() override;
+
     static const size_t SPACE_FOR_BBOX = 130;
 
   private:
@@ -294,7 +296,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     //
     // Private utility functions
     //
-    void Clear();
+    bool Clear();
     int ReadFromFile(GDALOpenInfo *poOpenInfo, const char *pszUnprefixed);
     int ReadFromService(GDALOpenInfo *poOpenInfo, const char *pszSource);
     void LoadLayers(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,

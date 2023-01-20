@@ -76,8 +76,28 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
 
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 {
-    OGRGeoJSONDataSource::FlushCache(true);
-    OGRGeoJSONDataSource::Clear();
+    OGRGeoJSONDataSource::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGRGeoJSONDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRGeoJSONDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (!OGRGeoJSONDataSource::Clear())
+            eErr = CE_Failure;
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -553,7 +573,7 @@ void OGRGeoJSONDataSource::SetAttributesTranslation(AttributesTranslation type)
 /*                  PRIVATE FUNCTIONS IMPLEMENTATION                    */
 /************************************************************************/
 
-void OGRGeoJSONDataSource::Clear()
+bool OGRGeoJSONDataSource::Clear()
 {
     for (int i = 0; i < nLayers_; i++)
     {
@@ -576,11 +596,14 @@ void OGRGeoJSONDataSource::Clear()
     pszGeoData_ = nullptr;
     nGeoDataLen_ = 0;
 
+    bool bRet = true;
     if (fpOut_)
     {
-        VSIFCloseL(fpOut_);
+        if (VSIFCloseL(fpOut_) != 0)
+            bRet = false;
         fpOut_ = nullptr;
     }
+    return bRet;
 }
 
 /************************************************************************/
