@@ -6787,7 +6787,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     iCol++;
 
     if (!psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         const int iArrowField = psHelper->mapOGRGeomFieldToArrowField[0];
         auto psArray = psHelper->m_out_array->children[iArrowField];
@@ -7127,7 +7127,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     }
 
     if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ",m.\"";
         osSQL += SQLEscapeName(GetGeometryColumn());
@@ -7510,7 +7510,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += '"';
 
     if (!sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ',';
         osSQL += '"';
