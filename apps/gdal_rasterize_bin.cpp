@@ -207,10 +207,11 @@ MAIN_START(argc, argv)
                                         hInDS, psOptions, &bUsageError);
     if (bUsageError == TRUE)
         Usage();
-    const int nRetCode = hRetDS ? 0 : 1;
+    int nRetCode = hRetDS ? 0 : 1;
 
     GDALClose(hInDS);
-    GDALClose(hRetDS);
+    if (GDALClose(hRetDS) != CE_None)
+        nRetCode = 1;
     GDALRasterizeOptionsFree(psOptions);
     GDALRasterizeOptionsForBinaryFree(psOptionsForBinary);
 

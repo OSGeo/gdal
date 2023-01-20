@@ -161,11 +161,15 @@ MAIN_START(argc, argv)
                                         hInDS, psOptions, &bUsageError);
     if (bUsageError)
         Usage();
-    const int nRetCode = hRetDS ? 0 : 1;
+    int nRetCode = hRetDS ? 0 : 1;
 
-    GDALClose(hInDS);
+    if (GDALClose(hInDS) != CE_None)
+        nRetCode = 1;
     if (bCloseRetDS)
-        GDALClose(hRetDS);
+    {
+        if (GDALClose(hRetDS) != CE_None)
+            nRetCode = 1;
+    }
     GDALNearblackOptionsFree(psOptions);
     GDALNearblackOptionsForBinaryFree(psOptionsForBinary);
 

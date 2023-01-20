@@ -330,7 +330,11 @@ MAIN_START(nArgc, papszArgv)
     /* -------------------------------------------------------------------- */
     /*      Cleanup                                                         */
     /* -------------------------------------------------------------------- */
-    GDALClose(hDataset);
+    if (GDALClose(hDataset) != CE_None)
+    {
+        if (nResultStatus == 0)
+            nResultStatus = 1;
+    }
 
     CSLDestroy(papszArgv);
     CPLFree(panBandList);

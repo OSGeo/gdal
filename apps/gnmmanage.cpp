@@ -984,7 +984,10 @@ exit:
     CSLDestroy(papszLayers);
 
     if (poDS != nullptr)
-        GDALClose(poDS);
+    {
+        if (GDALClose(poDS) != CE_None)
+            nRet = 1;
+    }
 
     GDALDestroyDriverManager();
 

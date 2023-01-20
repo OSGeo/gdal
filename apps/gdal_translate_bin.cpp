@@ -393,7 +393,15 @@ MAIN_START(argc, argv)
     int nRetCode = hOutDS ? 0 : 1;
 
     /* Close hOutDS before hDataset for the -f VRT case */
-    GDALClose(hOutDS);
+    if (GDALClose(hOutDS) != CE_None)
+    {
+        nRetCode = 1;
+        if (CPLGetLastErrorType() == CE_None)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unknown error occurred in GDALClose()");
+        }
+    }
     GDALClose(hDataset);
     GDALTranslateOptionsFree(psOptions);
     GDALTranslateOptionsForBinaryFree(psOptionsForBinary);

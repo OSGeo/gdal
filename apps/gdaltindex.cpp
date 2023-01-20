@@ -455,10 +455,12 @@ MAIN_START(argc, argv)
         }
     }
 
+    int nRetCode = 0;
+
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
     /* -------------------------------------------------------------------- */
-    for (; iArg < argc; iArg++)
+    for (; nRetCode == 0 && iArg < argc; iArg++)
     {
         char *fileNameToWrite = nullptr;
         VSIStatBuf sStatBuf;
@@ -706,7 +708,7 @@ MAIN_START(argc, argv)
         if (OGR_L_CreateFeature(hLayer, hFeature) != OGRERR_NONE)
         {
             printf("Failed to create feature in shapefile.\n");
-            break;
+            nRetCode = 1;
         }
 
         OGR_F_Destroy(hFeature);
@@ -731,12 +733,13 @@ MAIN_START(argc, argv)
     if (hTargetSRS)
         OSRDestroySpatialReference(hTargetSRS);
 
-    GDALClose(hTileIndexDS);
+    if (GDALClose(hTileIndexDS) != CE_None)
+        nRetCode = 1;
 
     GDALDestroyDriverManager();
     OGRCleanupAll();
     CSLDestroy(argv);
 
-    exit(0);
+    exit(nRetCode);
 }
 MAIN_END

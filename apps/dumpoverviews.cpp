@@ -32,7 +32,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
-static void DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hBand,
+static bool DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hBand,
                      const char *pszName);
 
 /************************************************************************/
@@ -102,6 +102,7 @@ int main(int argc, char **argv)
     /* ==================================================================== */
     const int nBandCount = GDALGetRasterCount(hSrcDS);
 
+    bool bRet = true;
     for (int iBand = 0; iBand < nBandCount; iBand++)
     {
         GDALRasterBandH hBaseBand = GDALGetRasterBand(hSrcDS, iBand + 1);
@@ -151,7 +152,8 @@ int main(int argc, char **argv)
             CPLString osFilename;
             osFilename.Printf("%s_%d_%d.tif", CPLGetBasename(pszSrcFilename),
                               iBand + 1, iOverview);
-            DumpBand(hSrcDS, hSrcOver, osFilename);
+            if (!DumpBand(hSrcDS, hSrcOver, osFilename))
+                bRet = false;
 
             if (bMasks)
             {
@@ -159,7 +161,9 @@ int main(int argc, char **argv)
                 osMaskFilename.Printf("%s_%d_%d_mask.tif",
                                       CPLGetBasename(pszSrcFilename), iBand + 1,
                                       iOverview);
-                DumpBand(hSrcDS, GDALGetMaskBand(hSrcOver), osMaskFilename);
+                if (!DumpBand(hSrcDS, GDALGetMaskBand(hSrcOver),
+                              osMaskFilename))
+                    bRet = false;
             }
         }
 
@@ -173,7 +177,8 @@ int main(int argc, char **argv)
             CPLString osFilename;
             osFilename.Printf("%s_%d_mask.tif", CPLGetBasename(pszSrcFilename),
                               iBand + 1);
-            DumpBand(hSrcDS, GDALGetMaskBand(hBaseBand), osFilename);
+            if (!DumpBand(hSrcDS, GDALGetMaskBand(hBaseBand), osFilename))
+                bRet = false;
         }
     }
 
@@ -182,14 +187,14 @@ int main(int argc, char **argv)
     CSLDestroy(argv);
     GDALDestroyDriverManager();
 
-    return 0;
+    return bRet ? 0 : 1;
 }
 
 /************************************************************************/
 /*                              DumpBand()                              */
 /************************************************************************/
 
-static void DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
+static bool DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
                      const char *pszName)
 
 {
@@ -240,24 +245,33 @@ static void DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
     /* -------------------------------------------------------------------- */
     void *pData = CPLMalloc(64 * nXSize);
 
+    bool bRet = true;
     for (int iLine = 0; iLine < nYSize; iLine++)
     {
         {
             const CPLErr err = GDALRasterIO(hSrcOver, GF_Read, 0, iLine, nXSize,
                                             1, pData, nXSize, 1, eDT, 0, 0);
             if (err != CE_None)
+            {
+                bRet = false;
                 CPLError(CE_Failure, CPLE_FileIO,
                          "GDALRasterIO read failed at %d.", iLine);
+            }
         }
 
         const CPLErr err =
             GDALRasterIO(GDALGetRasterBand(hDstDS, 1), GF_Write, 0, iLine,
                          nXSize, 1, pData, nXSize, 1, eDT, 0, 0);
         if (err != CE_None)
+        {
+            bRet = false;
             CPLError(CE_Failure, CPLE_FileIO,
                      "GDALRasterIO write failed at %d.", iLine);
+        }
     }
     CPLFree(pData);
 
-    GDALClose(hDstDS);
+    if (GDALClose(hDstDS) != CE_None)
+        bRet = false;
+    return bRet;
 }

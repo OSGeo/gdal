@@ -312,7 +312,8 @@ MAIN_START(argc, argv)
         outputMode, nullptr);
     bool bSuccess = hDstDS != nullptr;
     GDALClose(hSrcDS);
-    GDALClose(hDstDS);
+    if (GDALClose(hDstDS) != CE_None)
+        bSuccess = false;
 
     CSLDestroy(argv);
     CSLDestroy(papszCreateOptions);

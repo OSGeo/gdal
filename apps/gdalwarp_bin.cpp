@@ -387,7 +387,9 @@ MAIN_START(argc, argv)
     GDALWarpAppOptionsForBinaryFree(psOptionsForBinary);
 
     // Close first hOutDS since it might reference sources (case of VRT)
-    GDALClose(hOutDS ? hOutDS : hDstDS);
+    if (GDALClose(hOutDS ? hOutDS : hDstDS) != CE_None)
+        nRetCode = 1;
+
     for (int i = 0; i < nSrcCount; i++)
     {
         GDALClose(pahSrcDS[i]);

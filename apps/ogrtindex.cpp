@@ -848,7 +848,9 @@ MAIN_START(nArgc, papszArgv)
     /* -------------------------------------------------------------------- */
     /*      Close tile index and clear buffers.                             */
     /* -------------------------------------------------------------------- */
-    GDALClose(poDstDS);
+    int nRetCode = 0;
+    if (GDALClose(poDstDS) != CE_None)
+        nRetCode = 1;
     OGRFeatureDefn::DestroyFeatureDefn(poFeatureDefn);
 
     if (alreadyExistingSpatialRef != nullptr)
@@ -868,6 +870,6 @@ MAIN_START(nArgc, papszArgv)
 
     OGRCleanupAll();
 
-    return 0;
+    return nRetCode;
 }
 MAIN_END

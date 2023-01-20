@@ -226,7 +226,8 @@ MAIN_START(argc, argv)
     CPLErrorReset();
     // The flush to disk is only done at that stage, so check if any error has
     // happened
-    GDALClose(hOutDS);
+    if (GDALClose(hOutDS) != CE_None)
+        nRetCode = 1;
     if (CPLGetLastErrorType() != CE_None)
         nRetCode = 1;
 
