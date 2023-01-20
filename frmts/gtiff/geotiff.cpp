@@ -3299,13 +3299,13 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
                  &sContext.pExtraSamples);
 
-    // We need to do that as threads will access the block cache
-    TemporarilyDropReadWriteLock();
-
     // Create one job per tile/strip
     vsi_l_offset nFileSize = 0;
     std::vector<GTiffDecompressJob> asJobs(nBlocks);
+    std::vector<vsi_l_offset> anOffsets(nBlocks);
+    std::vector<size_t> anSizes(nBlocks);
     int iJob = 0;
+    int nAdviseReadRanges = 0;
     for (int y = 0; y < nYBlocks; ++y)
     {
         for (int x = 0; x < nXBlocks; ++x)
@@ -3364,18 +3364,83 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     }
                 }
 
-                poQueue->SubmitJob(ThreadDecompressionFunc, &asJobs[iJob]);
+                // Only request in AdviseRead() ranges for blocks we don't
+                // have in cache.
+                bool bAddToAdviseRead = true;
+                if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
+                {
+                    auto poBlock =
+                        GetRasterBand(panBandMap[i])
+                            ->TryGetLockedBlockRef(asJobs[iJob].nXBlock,
+                                                   asJobs[iJob].nYBlock);
+                    if (poBlock)
+                    {
+                        poBlock->DropLock();
+                        bAddToAdviseRead = false;
+                    }
+                }
+                else
+                {
+                    bool bAllCached = true;
+                    for (int iBand = 0; iBand < nBandCount; ++iBand)
+                    {
+                        auto poBlock =
+                            GetRasterBand(panBandMap[iBand])
+                                ->TryGetLockedBlockRef(asJobs[iJob].nXBlock,
+                                                       asJobs[iJob].nYBlock);
+                        if (poBlock)
+                        {
+                            poBlock->DropLock();
+                        }
+                        else
+                        {
+                            bAllCached = false;
+                            break;
+                        }
+                    }
+                    if (bAllCached)
+                        bAddToAdviseRead = false;
+                }
+
+                if (bAddToAdviseRead)
+                {
+                    anOffsets[nAdviseReadRanges] = asJobs[iJob].nOffset;
+                    anSizes[nAdviseReadRanges] =
+                        static_cast<size_t>(std::min<vsi_l_offset>(
+                            std::numeric_limits<size_t>::max(),
+                            asJobs[iJob].nSize));
+                    ++nAdviseReadRanges;
+                }
 
                 ++iJob;
             }
         }
     }
 
-    // Wait for all jobs to have been completed
-    poQueue->WaitCompletion();
+    if (sContext.bSuccess)
+    {
+        // Potentially start asynchronous fetching of ranges depending on file
+        // implementation
+        if (nAdviseReadRanges > 0)
+        {
+            sContext.poHandle->AdviseRead(nAdviseReadRanges, anOffsets.data(),
+                                          anSizes.data());
+        }
 
-    // Undo effect of above TemporarilyDropReadWriteLock()
-    ReacquireReadWriteLock();
+        // We need to do that as threads will access the block cache
+        TemporarilyDropReadWriteLock();
+
+        for (auto &sJob : asJobs)
+        {
+            poQueue->SubmitJob(ThreadDecompressionFunc, &sJob);
+        }
+
+        // Wait for all jobs to have been completed
+        poQueue->WaitCompletion();
+
+        // Undo effect of above TemporarilyDropReadWriteLock()
+        ReacquireReadWriteLock();
+    }
 
     return sContext.bSuccess ? CE_None : CE_Failure;
 }

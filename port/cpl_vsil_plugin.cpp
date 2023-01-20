@@ -84,6 +84,12 @@ int VSIPluginHandle::ReadMultiRange(int nRanges, void **ppData,
     return poFS->ReadMultiRange(cbData, nRanges, ppData, panOffsets, panSizes);
 }
 
+void VSIPluginHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+                                 const size_t *panSizes)
+{
+    poFS->AdviseRead(cbData, nRanges, panOffsets, panSizes);
+}
+
 VSIRangeStatus VSIPluginHandle::GetRangeStatus(vsi_l_offset nOffset,
                                                vsi_l_offset nLength)
 {
@@ -322,6 +328,24 @@ int VSIPluginFilesystemHandler::ReadMultiRange(void *pFile, int nRanges,
     delete[] mData;
 
     return ret;
+}
+
+void VSIPluginFilesystemHandler::AdviseRead(void *pFile, int nRanges,
+                                            const vsi_l_offset *panOffsets,
+                                            const size_t *panSizes)
+{
+    if (m_cb->advise_read != nullptr)
+    {
+        m_cb->advise_read(pFile, nRanges, panOffsets, panSizes);
+    }
+    else
+    {
+        if (!m_bWarnedAdviseReadImplemented)
+        {
+            m_bWarnedAdviseReadImplemented = true;
+            CPLDebug("VSIPlugin", "AdviseRead() not implemented");
+        }
+    }
 }
 
 int VSIPluginFilesystemHandler::Eof(void *pFile)
