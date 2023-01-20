@@ -21,6 +21,10 @@ MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
 - GDALFlushCache() and GDALDataset::FlushCache() are modified to return a CPLErr
   error code instead of void. Affects out-of-tree drivers.
 
+- A Close() virtual method is added to GDALDataset per RFC 91. Out-of-tree
+  drivers with write support are encouraged to implement it for error
+  propagation.
+
 MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
 -----------------------------------------
 

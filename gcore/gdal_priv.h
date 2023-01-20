@@ -351,7 +351,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                const char *const *papszAllowedDrivers,
                const char *const *papszOpenOptions,
                const char *const *papszSiblingFiles);
-    friend void CPL_STDCALL GDALClose(GDALDatasetH hDS);
+    friend CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS);
 
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
@@ -375,7 +375,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int nBands = 0;
     GDALRasterBand **papoBands = nullptr;
 
-    int nOpenFlags = 0;
+    static constexpr int OPEN_FLAGS_CLOSED = -1;
+    int nOpenFlags =
+        0;  // set to OPEN_FLAGS_CLOSED after Close() has been called
 
     int nRefCount = 1;
     bool bForceCachedIO = false;
@@ -471,6 +473,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
   public:
     ~GDALDataset() override;
+
+    virtual CPLErr Close();
 
     int GetRasterXSize();
     int GetRasterYSize();
