@@ -6884,6 +6884,18 @@ def test_ogr_gpkg_arrow_stream_numpy():
             assert len(batch["fid"]) == 1, i
             assert batch["fid"][0] == 1, i
 
+    lyr.SetIgnoredFields(
+        [
+            lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
+            for i in range(lyr.GetLayerDefn().GetFieldCount())
+        ]
+    )
+    with lyr.GetArrowStreamAsNumPy(options=["INCLUDE_FID=NO"]) as stream:
+        batch = stream.GetNextRecordBatch()
+        assert len(batch["geom"]) == 3, i
+        assert len(batch["geom"][0]) > 0, i
+    lyr.SetIgnoredFields([])
+
     # Test attribute filter
     lyr.SetAttributeFilter("int16 = 123")
     stream = lyr.GetArrowStreamAsNumPy()

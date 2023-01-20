@@ -600,7 +600,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         /*      Process Geometry if we have a column. */
         /* --------------------------------------------------------------------
          */
-        if (iGeomCol >= 0 && sHelper.mapOGRGeomFieldToArrowField[0] > 0)
+        if (iGeomCol >= 0 && sHelper.mapOGRGeomFieldToArrowField[0] >= 0)
         {
             const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
             auto psArray = out_array->children[iArrowField];
