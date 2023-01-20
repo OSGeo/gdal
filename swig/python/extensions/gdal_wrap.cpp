@@ -4651,7 +4651,11 @@ SWIGINTERN void GDALAsyncReaderShadow_UnlockBuffer(GDALAsyncReaderShadow *self){
     }
 SWIGINTERN void delete_GDALDatasetShadow(GDALDatasetShadow *self){
     if ( GDALDereferenceDataset( self ) <= 0 ) {
-      GDALClose(self);
+      if( GDALClose(self) != CE_None )
+      {
+          if( CPLGetLastErrorType() == CE_None )
+              CPLError(CE_Failure, CPLE_AppDefined, "Error occurred in GDALClose()");
+      }
     }
   }
 SWIGINTERN GDALDriverShadow *GDALDatasetShadow_GetDriver(GDALDatasetShadow *self){

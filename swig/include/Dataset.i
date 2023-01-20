@@ -280,7 +280,11 @@ public:
 
   ~GDALDatasetShadow() {
     if ( GDALDereferenceDataset( self ) <= 0 ) {
-      GDALClose(self);
+      if( GDALClose(self) != CE_None )
+      {
+          if( CPLGetLastErrorType() == CE_None )
+              CPLError(CE_Failure, CPLE_AppDefined, "Error occurred in GDALClose()");
+      }
     }
   }
 
