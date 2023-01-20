@@ -585,7 +585,7 @@ class GTiffDataset final : public GDALPamDataset
                        int nLineStride, int nComponents);
     inline bool IsFirstPixelEqualToNoData(const void *pBuffer);
 
-    void FillEmptyTiles();
+    CPLErr FillEmptyTiles();
 
     CPLErr FlushDirectory();
     CPLErr CleanOverviews();
@@ -601,7 +601,7 @@ class GTiffDataset final : public GDALPamDataset
                                            GDALDataset *poOvrDS,
                                            int nOverviews);
     CPLErr CreateInternalMaskOverviews(int nOvrBlockXSize, int nOvrBlockYSize);
-    int Finalize();
+    CPLErr Finalize(bool &bDroppedRefOut);
 
     void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
     void GetDiscardLsbOption(char **papszOptions);
@@ -677,6 +677,8 @@ class GTiffDataset final : public GDALPamDataset
   public:
     GTiffDataset();
     virtual ~GTiffDataset();
+
+    CPLErr Close() override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -9671,25 +9673,45 @@ GTiffDataset::GTiffDataset()
 GTiffDataset::~GTiffDataset()
 
 {
-    Finalize();
-    if (m_pszTmpFilename)
+    GTiffDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr GTiffDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        VSIUnlink(m_pszTmpFilename);
-        CPLFree(m_pszTmpFilename);
+        bool bDroppedRefOut = false;
+        if (Finalize(bDroppedRefOut) != CE_None)
+            eErr = CE_Failure;
+
+        if (m_pszTmpFilename)
+        {
+            VSIUnlink(m_pszTmpFilename);
+            CPLFree(m_pszTmpFilename);
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/
 /*                             Finalize()                               */
 /************************************************************************/
 
-int GTiffDataset::Finalize()
+CPLErr GTiffDataset::Finalize(bool &bDroppedRefOut)
 {
+    bDroppedRefOut = false;
     if (m_bIsFinalized)
-        return FALSE;
+        return CE_None;
 
-    bool bHasDroppedRef = false;
-
+    CPLErr eErr = CE_None;
     Crystalize();
 
     if (m_bColorProfileMetadataChanged)
@@ -9725,10 +9747,17 @@ int GTiffDataset::Finalize()
          */
         /* --------------------------------------------------------------------
          */
-        FlushCacheInternal(true, /* at closing */
-                           false /* do not call FlushDirectory */);
+        if (FlushCacheInternal(true, /* at closing */
+                               false /* do not call FlushDirectory */) !=
+            CE_None)
+        {
+            eErr = CE_Failure;
+        }
 
-        FillEmptyTiles();
+        if (FillEmptyTiles() != CE_None)
+        {
+            eErr = CE_Failure;
+        }
         m_bFillEmptyTilesAtClosing = false;
     }
 
@@ -9736,7 +9765,10 @@ int GTiffDataset::Finalize()
     /*      Force a complete flush, including either rewriting(moving)      */
     /*      of writing in place the current directory.                      */
     /* -------------------------------------------------------------------- */
-    FlushCacheInternal(true /* at closing */, true);
+    if (FlushCacheInternal(true /* at closing */, true) != CE_None)
+    {
+        eErr = CE_Failure;
+    }
 
     // Destroy compression queue
     if (m_poCompressQueue)
@@ -9781,13 +9813,13 @@ int GTiffDataset::Finalize()
         for (int i = 0; i < nOldOverviewCount; ++i)
         {
             delete m_papoOverviewDS[i];
-            bHasDroppedRef = true;
+            bDroppedRefOut = true;
         }
 
         for (int i = 0; i < m_nJPEGOverviewCountOri; ++i)
         {
             delete m_papoJPEGOverviewDS[i];
-            bHasDroppedRef = true;
+            bDroppedRefOut = true;
         }
         m_nJPEGOverviewCount = 0;
         m_nJPEGOverviewCountOri = 0;
@@ -9811,7 +9843,7 @@ int GTiffDataset::Finalize()
         auto poMaskDS = m_poMaskDS;
         m_poMaskDS = nullptr;
         delete poMaskDS;
-        bHasDroppedRef = true;
+        bDroppedRefOut = true;
     }
 
     if (m_poColorTable != nullptr)
@@ -9854,6 +9886,7 @@ int GTiffDataset::Finalize()
             }
             if (VSIFCloseL(m_fpL) != 0)
             {
+                eErr = CE_Failure;
                 ReportError(CE_Failure, CPLE_FileIO, "I/O error");
             }
             m_fpL = nullptr;
@@ -9864,6 +9897,7 @@ int GTiffDataset::Finalize()
     {
         if (VSIFCloseL(m_fpToWrite) != 0)
         {
+            eErr = CE_Failure;
             ReportError(CE_Failure, CPLE_FileIO, "I/O error");
         }
         m_fpToWrite = nullptr;
@@ -9904,7 +9938,7 @@ int GTiffDataset::Finalize()
 
     m_bIsFinalized = true;
 
-    return bHasDroppedRef;
+    return eErr;
 }
 
 /************************************************************************/
@@ -9918,7 +9952,10 @@ int GTiffDataset::CloseDependentDatasets()
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
-    bHasDroppedRef |= Finalize();
+    bool bHasDroppedRefInFinalize = false;
+    Finalize(bHasDroppedRefInFinalize);
+    if (bHasDroppedRefInFinalize)
+        bHasDroppedRef = true;
 
     return bHasDroppedRef;
 }
@@ -10001,7 +10038,7 @@ int GTiffDataset::GetJPEGOverviewCount()
 /*                           FillEmptyTiles()                           */
 /************************************************************************/
 
-void GTiffDataset::FillEmptyTiles()
+CPLErr GTiffDataset::FillEmptyTiles()
 
 {
     /* -------------------------------------------------------------------- */
@@ -10026,7 +10063,7 @@ void GTiffDataset::FillEmptyTiles()
         // Got here with libtiff 3.9.3 and tiff_write_8 test.
         ReportError(CE_Failure, CPLE_AppDefined,
                     "FillEmptyTiles() failed because panByteCounts == NULL");
-        return;
+        return CE_Failure;
     }
 
     /* -------------------------------------------------------------------- */
@@ -10039,7 +10076,7 @@ void GTiffDataset::FillEmptyTiles()
     GByte *pabyData = static_cast<GByte *>(VSI_CALLOC_VERBOSE(nBlockBytes, 1));
     if (pabyData == nullptr)
     {
-        return;
+        return CE_Failure;
     }
 
     // Force tiles completely filled with the nodata value to be written.
@@ -10087,7 +10124,7 @@ void GTiffDataset::FillEmptyTiles()
             pabyData = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
                 m_nBlockXSize, m_nBlockYSize, nDataTypeSize));
             if (pabyData == nullptr)
-                return;
+                return CE_Failure;
             if (m_bNoDataSetAsInt64)
             {
                 GDALCopyWords64(&m_nNoDataValueInt64, GDT_Int64, 0, pabyData,
@@ -10109,6 +10146,7 @@ void GTiffDataset::FillEmptyTiles()
                                 static_cast<GPtrDiff_t>(m_nBlockXSize) *
                                     m_nBlockYSize);
             }
+            CPLErr eErr = CE_None;
             const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockYSize);
             for (int iBlock = 0; iBlock < nBlockCount; ++iBlock)
             {
@@ -10116,12 +10154,14 @@ void GTiffDataset::FillEmptyTiles()
                 {
                     if (m_nPlanarConfig == PLANARCONFIG_SEPARATE || nBands == 1)
                     {
-                        CPL_IGNORE_RET_VAL(
-                            GetRasterBand(1 + iBlock / m_nBlocksPerBand)
+                        if (GetRasterBand(1 + iBlock / m_nBlocksPerBand)
                                 ->WriteBlock(
                                     (iBlock % m_nBlocksPerBand) % nBlocksPerRow,
                                     (iBlock % m_nBlocksPerBand) / nBlocksPerRow,
-                                    pabyData));
+                                    pabyData) != CE_None)
+                        {
+                            eErr = CE_Failure;
+                        }
                     }
                     else
                     {
@@ -10141,16 +10181,19 @@ void GTiffDataset::FillEmptyTiles()
                                 : nRasterYSize - nYOff;
                         for (int iBand = 1; iBand <= nBands; ++iBand)
                         {
-                            CPL_IGNORE_RET_VAL(GetRasterBand(iBand)->RasterIO(
-                                GF_Write, nXOff, nYOff, nXSize, nYSize,
-                                pabyData, nXSize, nYSize, eDataType, 0, 0,
-                                nullptr));
+                            if (GetRasterBand(iBand)->RasterIO(
+                                    GF_Write, nXOff, nYOff, nXSize, nYSize,
+                                    pabyData, nXSize, nYSize, eDataType, 0, 0,
+                                    nullptr) != CE_None)
+                            {
+                                eErr = CE_Failure;
+                            }
                         }
                     }
                 }
             }
             CPLFree(pabyData);
-            return;
+            return eErr;
         }
     }
 
@@ -10161,6 +10204,7 @@ void GTiffDataset::FillEmptyTiles()
     /* -------------------------------------------------------------------- */
     else if (m_nCompression == COMPRESSION_NONE && (m_nBitsPerSample % 8) == 0)
     {
+        CPLErr eErr = CE_None;
         // Only use libtiff to write the first sparse block to ensure that it
         // will serialize offset and count arrays back to disk.
         int nCountBlocksToZero = 0;
@@ -10176,7 +10220,10 @@ void GTiffDataset::FillEmptyTiles()
                                                              FALSE) == CE_None;
                     m_bWriteEmptyTiles = bWriteEmptyTilesBak;
                     if (!bOK)
+                    {
+                        eErr = CE_Failure;
                         break;
+                    }
                 }
                 nCountBlocksToZero++;
             }
@@ -10200,7 +10247,7 @@ void GTiffDataset::FillEmptyTiles()
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "FillEmptyTiles() failed because panByteOffsets == NULL");
-                return;
+                return CE_Failure;
             }
 
             VSILFILE *fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF));
@@ -10223,12 +10270,13 @@ void GTiffDataset::FillEmptyTiles()
 
             if (VSIFTruncateL(fpTIF, nOffset + iBlockToZero * nBlockBytes) != 0)
             {
+                eErr = CE_Failure;
                 ReportError(CE_Failure, CPLE_FileIO,
                             "Cannot initialize empty blocks");
             }
         }
 
-        return;
+        return eErr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -10237,6 +10285,7 @@ void GTiffDataset::FillEmptyTiles()
 
     GByte *pabyRaw = nullptr;
     vsi_l_offset nRawSize = 0;
+    CPLErr eErr = CE_None;
     for (int iBlock = 0; iBlock < nBlockCount; ++iBlock)
     {
         if (panByteCounts[iBlock] == 0)
@@ -10244,7 +10293,10 @@ void GTiffDataset::FillEmptyTiles()
             if (pabyRaw == nullptr)
             {
                 if (WriteEncodedTileOrStrip(iBlock, pabyData, FALSE) != CE_None)
+                {
+                    eErr = CE_Failure;
                     break;
+                }
 
                 vsi_l_offset nOffset = 0;
                 if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize))
@@ -10278,6 +10330,7 @@ void GTiffDataset::FillEmptyTiles()
 
     CPLFree(pabyData);
     VSIFree(pabyRaw);
+    return eErr;
 }
 
 /************************************************************************/
