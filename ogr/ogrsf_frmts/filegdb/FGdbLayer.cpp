@@ -3490,7 +3490,7 @@ void FGdbLayer::ResyncIDs()
 {
     if (m_oMapOGRFIDToFGDBFID.empty())
         return;
-    if (m_pDS->Close())
+    if (m_pDS->CloseInternal())
         m_pDS->ReOpen();
 }
 
@@ -4318,7 +4318,7 @@ int FGdbLayer::CreateRealCopy()
     delete poF;
     GDALClose(poOpenFileGDBDS);
 
-    if (!m_pDS->Close(TRUE))
+    if (!m_pDS->CloseInternal(TRUE))
         return FALSE;
 
     // Create real copies (in .tmp files now) instead of symlinks
