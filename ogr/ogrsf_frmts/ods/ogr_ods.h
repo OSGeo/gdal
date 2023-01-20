@@ -236,6 +236,7 @@ class OGRODSDataSource final : public GDALDataset
   public:
     OGRODSDataSource();
     virtual ~OGRODSDataSource();
+    CPLErr Close() override;
 
     int Open(const char *pszFilename, VSILFILE *fpContentIn,
              VSILFILE *fpSettingsIn, int bUpdatableIn);

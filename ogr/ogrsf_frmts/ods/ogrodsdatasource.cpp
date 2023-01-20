@@ -235,18 +235,36 @@ OGRODSDataSource::OGRODSDataSource()
 OGRODSDataSource::~OGRODSDataSource()
 
 {
-    OGRODSDataSource::FlushCache(true);
+    OGRODSDataSource::Close();
+}
 
-    CPLFree(pszName);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    if (fpContent)
-        VSIFCloseL(fpContent);
-    if (fpSettings)
-        VSIFCloseL(fpSettings);
+CPLErr OGRODSDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRODSDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
+        CPLFree(pszName);
+
+        if (fpContent)
+            VSIFCloseL(fpContent);
+        if (fpSettings)
+            VSIFCloseL(fpSettings);
+
+        for (int i = 0; i < nLayers; i++)
+            delete papoLayers[i];
+        CPLFree(papoLayers);
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
