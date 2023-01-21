@@ -84,7 +84,23 @@ A typical implementation might look as the following:
 
     MyDataset::~MyDataset()
     {
-       MyDataset::Close();
+       try
+       {
+           MyDataset::Close();
+       }
+       catch (const std::exception &exc)
+       {
+           // If Close() can throw exception
+           CPLError(CE_Failure, CPLE_AppDefined,
+                    "Exception thrown in MyDataset::Close(): %s",
+                    exc.what());
+       }
+       catch (...)
+       {
+           // If Close() can throw exception
+           CPLError(CE_Failure, CPLE_AppDefined,
+                    "Exception thrown in MyDataset::Close()");
+       }
     }
 
     CPLErr MyDataset::Close()
