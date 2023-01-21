@@ -735,9 +735,6 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
  */
 const char * BlockTileLayer::GetDataType(void) const
 {
-    if (*mszDataType)
-        return mszDataType;
-
     MutexHolder oLock(mpoTileListMutex);
 
     if (*mszDataType)
@@ -764,9 +761,6 @@ const char * BlockTileLayer::GetDataType(void) const
  */
 const char * BlockTileLayer::GetCompressType(void) const
 {
-    if (*mszCompress)
-        return mszCompress;
-
     MutexHolder oLock(mpoTileListMutex);
 
     if (*mszCompress)
