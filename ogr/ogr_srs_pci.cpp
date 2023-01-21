@@ -1074,11 +1074,10 @@ OGRErr OGRSpatialReference::exportToPCI(char **ppszProj, char **ppszUnits,
     /*      If we haven't found something yet, try translating the          */
     /*      ellipsoid.                                                      */
     /* -------------------------------------------------------------------- */
+    const double dfSemiMajor = GetSemiMajor();
+    const double dfInvFlattening = GetInvFlattening();
     if (szEarthModel[0] == '\0')
     {
-        const double dfSemiMajor = GetSemiMajor();
-        const double dfInvFlattening = GetInvFlattening();
-
         const PCIDatums *pasDatum = asEllips;
 
         while (pasDatum->pszPCIDatum)
@@ -1097,47 +1096,47 @@ OGRErr OGRSpatialReference::exportToPCI(char **ppszProj, char **ppszUnits,
 
             pasDatum++;
         }
+    }
 
-        // Try to find in pci_ellips.txt.
-        if (szEarthModel[0] == '\0')
+    // Try to find in pci_ellips.txt.
+    if (szEarthModel[0] == '\0')
+    {
+        const char *pszCSV = CSVFilename("pci_ellips.txt");
+        const double dfSemiMinor =
+            OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
+
+        VSILFILE *fp = pszCSV ? VSIFOpenL(pszCSV, "r") : nullptr;
+
+        if (fp != nullptr)
         {
-            const char *pszCSV = CSVFilename("pci_ellips.txt");
-            const double dfSemiMinor =
-                OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
+            char **papszLineItems = nullptr;
 
-            VSILFILE *fp = pszCSV ? VSIFOpenL(pszCSV, "r") : nullptr;
-
-            if (fp != nullptr)
+            while ((papszLineItems = CSVReadParseLineL(fp)) != nullptr)
             {
-                char **papszLineItems = nullptr;
-
-                while ((papszLineItems = CSVReadParseLineL(fp)) != nullptr)
+                if (CSLCount(papszLineItems) >= 4 &&
+                    CPLIsEqual(dfSemiMajor, CPLAtof(papszLineItems[2])) &&
+                    CPLIsEqual(dfSemiMinor, CPLAtof(papszLineItems[3])))
                 {
-                    if (CSLCount(papszLineItems) >= 4 &&
-                        CPLIsEqual(dfSemiMajor, CPLAtof(papszLineItems[2])) &&
-                        CPLIsEqual(dfSemiMinor, CPLAtof(papszLineItems[3])))
-                    {
-                        snprintf(szEarthModel, sizeof(szEarthModel), "%s",
-                                 papszLineItems[0]);
-                        break;
-                    }
-
-                    CSLDestroy(papszLineItems);
+                    snprintf(szEarthModel, sizeof(szEarthModel), "%s",
+                             papszLineItems[0]);
+                    break;
                 }
 
                 CSLDestroy(papszLineItems);
-                VSIFCloseL(fp);
             }
-        }
 
-        // Custom ellipsoid parameters.
-        if (szEarthModel[0] == '\0')
-        {
-            CPLPrintStringFill(szEarthModel, "E999", 4);
-            (*ppadfPrjParams)[0] = dfSemiMajor;
-            (*ppadfPrjParams)[1] =
-                OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
+            CSLDestroy(papszLineItems);
+            VSIFCloseL(fp);
         }
+    }
+
+    // Custom ellipsoid parameters.
+    if (szEarthModel[0] == '\0')
+    {
+        CPLPrintStringFill(szEarthModel, "E999", 4);
+        (*ppadfPrjParams)[0] = dfSemiMajor;
+        (*ppadfPrjParams)[1] =
+            OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
     }
 
     /* -------------------------------------------------------------------- */
