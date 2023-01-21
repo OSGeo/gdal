@@ -273,6 +273,7 @@ class OGRXLSXDataSource final : public GDALDataset
   public:
     OGRXLSXDataSource();
     virtual ~OGRXLSXDataSource();
+    CPLErr Close() override;
 
     int Open(const char *pszFilename, const char *pszPrefixedFilename,
              VSILFILE *fpWorkbook, VSILFILE *fpWorkbookRels,

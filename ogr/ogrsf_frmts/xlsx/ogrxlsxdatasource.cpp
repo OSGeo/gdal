@@ -210,13 +210,31 @@ OGRXLSXDataSource::OGRXLSXDataSource()
 OGRXLSXDataSource::~OGRXLSXDataSource()
 
 {
-    OGRXLSXDataSource::FlushCache(true);
+    OGRXLSXDataSource::Close();
+}
 
-    CPLFree(pszName);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
+CPLErr OGRXLSXDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRXLSXDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        CPLFree(pszName);
+
+        for (int i = 0; i < nLayers; i++)
+            delete papoLayers[i];
+        CPLFree(papoLayers);
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
