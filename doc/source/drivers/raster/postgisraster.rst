@@ -33,7 +33,7 @@ specifying the database name, with additional parameters as necessary
 
 ::
 
-   PG:"[host=''] [port:''] dbname='' [user=''] [password=''] [schema=''] [table=''] [column=''] [where=''] [mode=''] [outdb_resolution='']"
+   PG:"[host=''] [port=''] [dbname='' [user=''] [password=''] [schema=''] [table=''] [column=''] [where=''] [mode=''] [outdb_resolution='']"
 
 Note that the string, up to the part starting with "table='" is a
 libpq-style connection string. That means that you can leave out
