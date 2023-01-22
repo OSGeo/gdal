@@ -485,7 +485,6 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             goto bad;
         tif->tif_diroff = 0;
         tif->tif_lastdiroff = 0;
-        tif->tif_dirnumber = 0;
         return (tif);
     }
     /*

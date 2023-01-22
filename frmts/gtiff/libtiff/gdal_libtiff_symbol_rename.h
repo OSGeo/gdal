@@ -342,6 +342,7 @@
 #define TIFFClampDoubleToUInt32 gdal_TIFFClampDoubleToUInt32
 #define TIFFClampDoubleToUInt8 gdal_TIFFClampDoubleToUInt8
 #define TIFFCleanup gdal_TIFFCleanup
+#define _TIFFCleanupIFDOffsetAndNumberMaps gdal__TIFFCleanupIFDOffsetAndNumberMaps
 #define TIFFClientdata gdal_TIFFClientdata
 #define TIFFClientOpen gdal_TIFFClientOpen
 #define TIFFClientOpenExt gdal_TIFFClientOpenExt
@@ -452,6 +453,7 @@
 #define TIFFHashSetRemove gdal_TIFFHashSetRemove
 #define TIFFHashSetRemoveInternal gdal_TIFFHashSetRemoveInternal
 #define TIFFHashSetReturnListElt gdal_TIFFHashSetReturnListElt
+#define TIFFHashSetSize gdal_TIFFHashSetSize
 #define TIFFIsBigEndian gdal_TIFFIsBigEndian
 #define TIFFIsBigTIFF gdal_TIFFIsBigTIFF
 #define TIFFIsByteSwapped gdal_TIFFIsByteSwapped

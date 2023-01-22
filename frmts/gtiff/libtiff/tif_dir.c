@@ -2104,7 +2104,7 @@ int TIFFSetSubDirectory(TIFF *tif, uint64_t diroff)
     {
         /* Reset IFD list to start new one for SubIFD chain and also start
          * SubIFD chain with tif_curdir=0. */
-        tif->tif_dirnumber = 0;
+        _TIFFCleanupIFDOffsetAndNumberMaps(tif); /* invalidate IFD loop lists */
         tif->tif_curdir = 0; /* first directory of new chain */
         /* add this offset to new IFD list */
         _TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
@@ -2231,5 +2231,7 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
     tif->tif_curoff = 0;
     tif->tif_row = (uint32_t)-1;
     tif->tif_curstrip = (uint32_t)-1;
+    tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER;
+    _TIFFCleanupIFDOffsetAndNumberMaps(tif);
     return (1);
 }

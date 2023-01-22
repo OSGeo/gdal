@@ -5448,7 +5448,8 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
     }
 
     /* Arbitrary (hopefully big enough) limit */
-    if (tif->tif_dirnumber >= TIFF_MAX_DIR_COUNT)
+    if (TIFFHashSetSize(tif->tif_map_dir_offset_to_number) >=
+        TIFF_MAX_DIR_COUNT)
     {
         TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
                       "Cannot handle more than %u TIFF directories",
@@ -5481,8 +5482,6 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
         return 0;
     }
 
-    tif->tif_dirnumber++;
-
     return 1;
 } /* --- _TIFFCheckDirNumberAndOffset() ---*/
 
@@ -5497,13 +5496,6 @@ int _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, tdir_t *dirn)
 {
     if (diroff == 0) /* no more directories */
         return 0;
-    if (tif->tif_dirnumber >= TIFF_MAX_DIR_COUNT)
-    {
-        TIFFErrorExtR(tif, "_TIFFGetDirNumberFromOffset",
-                      "Cannot handle more than %u TIFF directories",
-                      TIFF_MAX_DIR_COUNT);
-        return 0;
-    }
 
     /* Check if offset is already in the list and return matching directory
      * number. Otherwise update IFD list using TIFFNumberOfDirectories() and

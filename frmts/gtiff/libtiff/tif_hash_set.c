@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "tif_config.h"
+
 #include "tif_hash_set.h"
 
 #include <assert.h>
@@ -162,7 +163,6 @@ TIFFHashSet *TIFFHashSetNew(TIFFHashSetHashFunc fnHashFunc,
     return set;
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                          TIFFHashSetSize()                            */
 /************************************************************************/
@@ -182,7 +182,6 @@ int TIFFHashSetSize(const TIFFHashSet *set)
     assert(set != NULL);
     return set->nSize;
 }
-#endif
 
 /************************************************************************/
 /*                       TIFFHashSetGetNewListElt()                      */
