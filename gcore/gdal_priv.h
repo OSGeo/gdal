@@ -1190,6 +1190,10 @@ class GDALAbstractBandBlockCache
     {
         m_bWriteDirtyBlocks = false;
     }
+    bool HasDirtyBlocks() const
+    {
+        return m_nDirtyBlocks > 0;
+    }
 
     virtual bool Init() = 0;
     virtual bool IsInitOK() = 0;
@@ -1331,6 +1335,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int InitBlockInfo();
 
     void AddBlockToFreeList(GDALRasterBlock *);
+
+    bool HasDirtyBlocks() const
+    {
+        return poBandBlockCache && poBandBlockCache->HasDirtyBlocks();
+    }
     //! @endcond
 
   public:
