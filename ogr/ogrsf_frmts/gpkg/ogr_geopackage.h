@@ -262,7 +262,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     // Used by GDALGeoPackageDataset::GetRasterLayerDataset()
     std::map<std::string, std::unique_ptr<GDALDataset>> m_oCachedRasterDS{};
 
-    void CloseDB();
+    bool CloseDB();
+    CPLErr Close() override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 
