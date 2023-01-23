@@ -1107,6 +1107,36 @@ CPLErr CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand)
 }
 
 /************************************************************************/
+/*                        FlushDirtyBlocks()                            */
+/************************************************************************/
+
+/**
+ * \brief Flush dirty blocks from raster data cache.
+ *
+ * Dirty blocks are blocks that have been written through WriteBlock()
+ * or RasterIO(GF_Write, ), and not yet flushed to storage.
+ * @return CE_None on success.
+ * @since 3.7
+ */
+CPLErr GDALRasterBand::FlushDirtyBlocks()
+{
+    CPLErr eGlobalErr = eFlushBlockErr;
+
+    if (eFlushBlockErr != CE_None)
+    {
+        ReportError(
+            eFlushBlockErr, CPLE_AppDefined,
+            "An error occurred while writing a dirty block from FlushCache");
+        eFlushBlockErr = CE_None;
+    }
+
+    if (poBandBlockCache == nullptr || !poBandBlockCache->IsInitOK())
+        return eGlobalErr;
+
+    return poBandBlockCache->FlushDirtyBlocks();
+}
+
+/************************************************************************/
 /*                        UnreferenceBlock()                            */
 /*                                                                      */
 /*      Unreference the block from our array of blocks                  */

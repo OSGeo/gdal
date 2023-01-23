@@ -959,3 +959,46 @@ def test_envi_read_direct_access(byte_order):
     ds = None
 
     gdal.GetDriverByName("ENVI").Delete(filename)
+
+
+###############################################################################
+# Test direct access to BIP scanlines in GA_Update mode
+
+
+@pytest.mark.parametrize("GDAL_BAND_BLOCK_CACHE", ["HASHSET", "ARRAY"])
+def test_envi_read_direct_access_update_scenario(GDAL_BAND_BLOCK_CACHE):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    filename = "/vsimem/test.bin"
+    with gdaltest.config_option("GDAL_BAND_BLOCK_CACHE", GDAL_BAND_BLOCK_CACHE):
+        ds = gdal.GetDriverByName("ENVI").Create(
+            filename,
+            src_ds.RasterXSize,
+            src_ds.RasterYSize,
+            src_ds.RasterCount,
+            options=["INTERLEAVE=BIP"],
+        )
+        ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, src_ds.ReadRaster())
+
+        # Using optimization
+        assert ds.ReadRaster(
+            0,
+            0,
+            ds.RasterXSize,
+            ds.RasterYSize,
+            buf_type=gdal.GDT_Byte,
+            buf_pixel_space=ds.RasterCount,
+            buf_band_space=1,
+        ) == src_ds.ReadRaster(
+            0,
+            0,
+            ds.RasterXSize,
+            ds.RasterYSize,
+            buf_type=gdal.GDT_Byte,
+            buf_pixel_space=ds.RasterCount,
+            buf_band_space=1,
+        )
+
+    ds = None
+
+    gdal.GetDriverByName("ENVI").Delete(filename)

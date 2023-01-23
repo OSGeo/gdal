@@ -527,6 +527,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual void FlushCache(bool bAtClosing = false);
 
+    CPLErr FlushDirtyBlocks();
+
     virtual GIntBig GetEstimatedRAMUsage();
 
     virtual const OGRSpatialReference *GetSpatialRef() const;
@@ -1194,6 +1196,7 @@ class GDALAbstractBandBlockCache
     virtual bool Init() = 0;
     virtual bool IsInitOK() = 0;
     virtual CPLErr FlushCache() = 0;
+    virtual CPLErr FlushDirtyBlocks() = 0;
     virtual CPLErr AdoptBlock(GDALRasterBlock *poBlock) = 0;
     virtual GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
                                                   int nYBlockYOff) = 0;
@@ -1379,6 +1382,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     // New OpengIS CV_SampleDimension stuff.
 
     virtual CPLErr FlushCache(bool bAtClosing = false);
+    CPLErr FlushDirtyBlocks();
     virtual char **GetCategoryNames();
     virtual double GetNoDataValue(int *pbSuccess = nullptr);
     virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr);

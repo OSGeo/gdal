@@ -483,6 +483,35 @@ void CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 }
 
 /************************************************************************/
+/*                        FlushDirtyBlocks()                            */
+/************************************************************************/
+
+/**
+ * \brief Flush dirty blocks from raster data cache.
+ *
+ * Dirty blocks are blocks that have been written through WriteBlock()
+ * or RasterIO(GF_Write, ), and not yet flushed to storage.
+ * @return CE_None on success.
+ * @since 3.7
+ */
+CPLErr GDALDataset::FlushDirtyBlocks()
+{
+    CPLErr eErr = CE_None;
+    if (papoBands != nullptr)
+    {
+        for (int i = 0; i < nBands; ++i)
+        {
+            if (papoBands[i] != nullptr)
+            {
+                if (papoBands[i]->FlushDirtyBlocks() != CE_None)
+                    eErr = CE_Failure;
+            }
+        }
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                      GetEstimatedRAMUsage()                          */
 /************************************************************************/
 

@@ -74,6 +74,7 @@ class GDALArrayBandBlockCache final : public GDALAbstractBandBlockCache
     bool Init() override;
     bool IsInitOK() override;
     CPLErr FlushCache() override;
+    CPLErr FlushDirtyBlocks() override;
     CPLErr AdoptBlock(GDALRasterBlock *) override;
     GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
                                           int nYBlockYOff) override;
@@ -323,6 +324,97 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
                 // it is now empty.
                 u.papapoBlocks[nSubBlock] = nullptr;
                 CPLFree(papoSubBlockGrid);
+            }
+        }
+    }
+
+    EndDirtyBlockFlushingLog();
+
+    WaitCompletionPendingTasks();
+
+    return (eGlobalErr);
+}
+
+/************************************************************************/
+/*                        FlushDirtyBlocks()                            */
+/************************************************************************/
+
+CPLErr GDALArrayBandBlockCache::FlushDirtyBlocks()
+{
+    FreeDanglingBlocks();
+
+    CPLErr eGlobalErr = poBand->eFlushBlockErr;
+
+    StartDirtyBlockFlushingLog();
+
+    /* -------------------------------------------------------------------- */
+    /*      Flush all blocks in memory ... this case is without subblocking.*/
+    /* -------------------------------------------------------------------- */
+    if (!bSubBlockingActive && u.papoBlocks != nullptr)
+    {
+        const int nBlocksPerColumn = poBand->nBlocksPerColumn;
+        const int nBlocksPerRow = poBand->nBlocksPerRow;
+        for (int iY = 0; iY < nBlocksPerColumn; iY++)
+        {
+            for (int iX = 0; iX < nBlocksPerRow; iX++)
+            {
+                if (u.papoBlocks[iX + iY * nBlocksPerRow])
+                {
+                    auto poBlock = TryGetLockedBlockRef(iX, iY);
+                    const bool bIsDirty = (poBlock && poBlock->GetDirty());
+                    poBlock->DropLock();
+                    if (bIsDirty)
+                    {
+                        CPLErr eErr = FlushBlock(iX, iY, eGlobalErr == CE_None);
+
+                        if (eErr != CE_None)
+                            eGlobalErr = eErr;
+                    }
+                }
+            }
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      With subblocking.  We can short circuit missing subblocks.      */
+    /* -------------------------------------------------------------------- */
+    else if (u.papapoBlocks != nullptr)
+    {
+        for (int iSBY = 0; iSBY < nSubBlocksPerColumn; iSBY++)
+        {
+            for (int iSBX = 0; iSBX < nSubBlocksPerRow; iSBX++)
+            {
+                const int nSubBlock = iSBX + iSBY * nSubBlocksPerRow;
+
+                GDALRasterBlock **papoSubBlockGrid = u.papapoBlocks[nSubBlock];
+
+                if (papoSubBlockGrid == nullptr)
+                    continue;
+
+                for (int iY = 0; iY < SUBBLOCK_SIZE; iY++)
+                {
+                    for (int iX = 0; iX < SUBBLOCK_SIZE; iX++)
+                    {
+                        if (papoSubBlockGrid[iX + iY * SUBBLOCK_SIZE])
+                        {
+                            auto poBlock =
+                                TryGetLockedBlockRef(iX + iSBX * SUBBLOCK_SIZE,
+                                                     iY + iSBY * SUBBLOCK_SIZE);
+                            const bool bIsDirty =
+                                (poBlock && poBlock->GetDirty());
+                            poBlock->DropLock();
+                            if (bIsDirty)
+                            {
+                                CPLErr eErr =
+                                    FlushBlock(iX + iSBX * SUBBLOCK_SIZE,
+                                               iY + iSBY * SUBBLOCK_SIZE,
+                                               eGlobalErr == CE_None);
+                                if (eErr != CE_None)
+                                    eGlobalErr = eErr;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -1628,6 +1628,20 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
             const bool bNeedsByteOrderChange =
                 poFirstBand->NeedsByteOrderChange();
+            if (eAccess == GA_Update)
+            {
+                FlushDirtyBlocks();
+                for (int iBandIndex = 0; iBandIndex < nBands; iBandIndex++)
+                {
+                    RawRasterBand *poBand = dynamic_cast<RawRasterBand *>(
+                        GetRasterBand(panBandMap[iBandIndex]));
+                    if (poBand)
+                    {
+                        poBand->FlushCurrentLine(false);
+                        poBand->nLoadedScanline = -1;
+                    }
+                }
+            }
             for (int iY = 0; iY < nYSize; ++iY)
             {
                 GByte *pabyOut = static_cast<GByte *>(pData) + iY * nLineSpace;

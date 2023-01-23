@@ -75,6 +75,7 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
     bool Init() override;
     bool IsInitOK() override;
     CPLErr FlushCache() override;
+    CPLErr FlushDirtyBlocks() override;
     CPLErr AdoptBlock(GDALRasterBlock *) override;
     GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
                                           int nYBlockYOff) override;
@@ -170,8 +171,7 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
         {
             CPLErr eErr = CE_None;
 
-            if (m_bWriteDirtyBlocks && eGlobalErr == CE_None &&
-                poBlock->GetDirty())
+            if (poBlock->GetDirty())
             {
                 UpdateDirtyBlockFlushingLog();
                 eErr = poBlock->Write();
@@ -186,6 +186,54 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
     EndDirtyBlockFlushingLog();
 
     WaitCompletionPendingTasks();
+
+    return (eGlobalErr);
+}
+
+/************************************************************************/
+/*                        FlushDirtyBlocks()                            */
+/************************************************************************/
+
+CPLErr GDALHashSetBandBlockCache::FlushDirtyBlocks()
+{
+    FreeDanglingBlocks();
+
+    CPLErr eGlobalErr = poBand->eFlushBlockErr;
+
+    std::set<GDALRasterBlock *, BlockComparator> oNewSet;
+    std::set<GDALRasterBlock *, BlockComparator> oSetToFlush;
+    {
+        CPLLockHolderOptionalLockD(hLock);
+        for (auto &poBlock : m_oSet)
+        {
+            if (poBlock->GetDirty() && poBlock->DropLockForRemovalFromStorage())
+            {
+                oSetToFlush.insert(poBlock);
+            }
+            else
+            {
+                oNewSet.insert(poBlock);
+            }
+        }
+        m_oSet = std::move(oNewSet);
+    }
+
+    if (!oSetToFlush.empty())
+    {
+        StartDirtyBlockFlushingLog();
+        for (auto &poBlock : oSetToFlush)
+        {
+            UpdateDirtyBlockFlushingLog();
+            CPLErr eErr = poBlock->Write();
+            delete poBlock;
+
+            if (eErr != CE_None)
+                eGlobalErr = eErr;
+        }
+        EndDirtyBlockFlushingLog();
+
+        WaitCompletionPendingTasks();
+    }
 
     return (eGlobalErr);
 }
