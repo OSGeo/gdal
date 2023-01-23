@@ -11,6 +11,7 @@ User oriented documentation
    multidim_raster_data_model
    vector_data_model
    gnm_data_model
+   multithreading
    ogr_sql_sqlite_dialect
    GDAL Virtual File Systems <virtual_file_systems>
    ogr_feature_style
