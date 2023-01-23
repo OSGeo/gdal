@@ -3030,6 +3030,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             if (m_aoAdviseReadRanges[iRequest] == nullptr)
                 m_aoAdviseReadRanges[iRequest] =
                     cpl::make_unique<AdviseReadRange>();
+            // coverity[missing_lock]
             m_aoAdviseReadRanges[iRequest]->bDone = false;
             m_aoAdviseReadRanges[iRequest]->nStartOffset = panOffsets[i];
             m_aoAdviseReadRanges[iRequest]->nSize = nSize;

@@ -514,6 +514,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         std::unique_lock<std::mutex> lock(psThreadData->mutex);
 
         psThreadData->nTotalThreadCountForThisRun = nThreads;
+        // coverity[missing_lock]
         psThreadData->nCurThreadCountForThisRun = 0;
 
         // Start jobs.
