@@ -4775,6 +4775,53 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
             bGotCfGT = false;
         }
     }
+    else if (!bGotCfGT && !bReadSRSOnly && (nVarDimXID != -1) &&
+             (nVarDimYID != -1) && xdim > 0 && ydim > 0 &&
+             ((!bSwitchedXY &&
+               NCDFIsVarLongitude(nGroupId, nVarDimXID, nullptr) &&
+               NCDFIsVarLatitude(nGroupId, nVarDimYID, nullptr)) ||
+              (bSwitchedXY &&
+               NCDFIsVarLongitude(nGroupId, nVarDimYID, nullptr) &&
+               NCDFIsVarLatitude(nGroupId, nVarDimXID, nullptr))))
+    {
+        // Case of autotest/gdrivers/data/netcdf/GLMELT_4X5.OCN.nc
+        // which is indexed by lat, lon variables, but lat has irregular
+        // spacing.
+        const char *pszGeolocXFullName = poDS->papszDimName[poDS->nXDimID];
+        const char *pszGeolocYFullName = poDS->papszDimName[poDS->nYDimID];
+        if (bSwitchedXY)
+        {
+            std::swap(pszGeolocXFullName, pszGeolocYFullName);
+            GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
+        }
+
+        CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
+                 pszGeolocXFullName, pszGeolocYFullName);
+
+        GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+                                        "GEOLOCATION");
+
+        CPLString osTMP;
+        osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
+                     pszGeolocXFullName);
+
+        GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+        osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
+                     pszGeolocYFullName);
+
+        GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+
+        GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+
+        GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+
+        GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION",
+                                        "PIXEL_CENTER", "GEOLOCATION");
+    }
 
     // Set GeoTransform if we got a complete one - after projection has been set
     if (bGotCfGT || bGotGdalGT)
