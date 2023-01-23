@@ -6205,6 +6205,30 @@ def test_netcdf_read_var_with_column():
     assert ds
 
 
+###############################################################################
+# Test opening a dataset with lon, lat indexing but with irregular spacing
+
+
+def test_netcdf_read_lon_lat_indexed_irregularly_spaced():
+
+    ds = gdal.Open("data/netcdf/GLMELT_4X5.OCN.nc")
+    assert ds
+    assert ds.GetGeoTransform(can_return_null=1) is None
+    geolocation = ds.GetMetadata("GEOLOCATION")
+    assert geolocation == {
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'NETCDF:"data/netcdf/GLMELT_4X5.OCN.nc":lon',
+        "Y_BAND": "1",
+        "Y_DATASET": 'NETCDF:"data/netcdf/GLMELT_4X5.OCN.nc":lat',
+    }
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
