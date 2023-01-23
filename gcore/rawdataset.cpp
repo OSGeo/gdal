@@ -1593,6 +1593,7 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 const auto eDT = poBand->GetRasterDataType();
                 const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
                 if (poBand->bNeedFileFlush || poBand->bLoadedScanlineDirty ||
+                    poBand->HasDirtyBlocks() ||
                     panBandMap[iBandIndex] != iBandIndex + 1 ||
                     nPixelSpace != poBand->nPixelOffset)
                 {
