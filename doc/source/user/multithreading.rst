@@ -8,7 +8,7 @@ GDAL API: re-entrant, but not thread-safe
 -----------------------------------------
 
 The exact meaning of the terms ``thread-safe`` or ``re-entrant`` is not fully
-standardized. We will use here the `QT definitions <https://doc.qt.io/qt-5/threads-reentrancy.html>``.
+standardized. We will use here the `QT definitions <https://doc.qt.io/qt-5/threads-reentrancy.html>`__.
 In particular, a C function or C++ method is said to be re-entrant if it can
 be called simultaneously from multiple threads, *but* only if each invocation
 uses its own data.
