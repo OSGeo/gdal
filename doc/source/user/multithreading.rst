@@ -24,7 +24,7 @@ program initialization and termination.
 
 Unless otherwise stated, no GDAL public C functions and C++ methods should be
 assumed to be thread-safe. That is you should not call simultaneously GDAL
-functions from multiple threads on the same data structure, or even structures
+functions from multiple threads on the same data instance, or even instances
 that are closely related through ownership relationships. For example, for a
 multi-band raster dataset, it is not safe to call concurrently GDAL functions
 on different :cpp:class:`GDALRasterBand` instances owned by the same
