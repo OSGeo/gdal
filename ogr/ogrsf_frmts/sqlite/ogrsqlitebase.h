@@ -147,7 +147,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     bool SetCacheSize();
     void LoadExtensions();
 
-    void CloseDB();
+    bool CloseDB();
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope{};
 

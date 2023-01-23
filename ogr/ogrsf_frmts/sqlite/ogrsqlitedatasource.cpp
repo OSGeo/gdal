@@ -612,11 +612,12 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 /*                               CloseDB()                              */
 /************************************************************************/
 
-void OGRSQLiteBaseDataSource::CloseDB()
+bool OGRSQLiteBaseDataSource::CloseDB()
 {
+    bool bOK = true;
     if (hDB != nullptr)
     {
-        sqlite3_close(hDB);
+        bOK = (sqlite3_close(hDB) == SQLITE_OK);
         hDB = nullptr;
 
         // If we opened the DB in read-only mode, there might be spurious
@@ -681,6 +682,8 @@ void OGRSQLiteBaseDataSource::CloseDB()
         CPLFree(pMyVFS);
         pMyVFS = nullptr;
     }
+
+    return bOK;
 }
 
 /* Returns the first row of first column of SQL as integer */
@@ -881,63 +884,84 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
+    OGRSQLiteDataSource::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGRSQLiteDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (!OGRSQLiteDataSource::FlushCache(true))
+            eErr = CE_Failure;
+
 #ifdef HAVE_RASTERLITE2
-    if (m_pRL2Coverage != nullptr)
-    {
-        rl2_destroy_coverage(m_pRL2Coverage);
-    }
-#endif
-    for (size_t i = 0; i < m_apoOverviewDS.size(); ++i)
-    {
-        delete m_apoOverviewDS[i];
-    }
-
-    if (m_nLayers > 0 || !m_apoInvisibleLayers.empty())
-    {
-        // Close any remaining iterator
-        for (int i = 0; i < m_nLayers; i++)
-            m_papoLayers[i]->ResetReading();
-        for (size_t i = 0; i < m_apoInvisibleLayers.size(); i++)
-            m_apoInvisibleLayers[i]->ResetReading();
-
-        // Create spatial indices in a transaction for faster execution
-        if (hDB)
-            SoftStartTransaction();
-        for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
+        if (m_pRL2Coverage != nullptr)
         {
-            if (m_papoLayers[iLayer]->IsTableLayer())
-            {
-                OGRSQLiteTableLayer *poLayer =
-                    (OGRSQLiteTableLayer *)m_papoLayers[iLayer];
-                poLayer->RunDeferredCreationIfNecessary();
-                poLayer->CreateSpatialIndexIfNecessary();
-            }
+            rl2_destroy_coverage(m_pRL2Coverage);
         }
-        if (hDB)
-            SoftCommitTransaction();
-    }
-
-    SaveStatistics();
-
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-    for (size_t i = 0; i < m_apoInvisibleLayers.size(); i++)
-        delete m_apoInvisibleLayers[i];
-
-    CPLFree(m_papoLayers);
-
-    for (int i = 0; i < m_nKnownSRID; i++)
-    {
-        if (m_papoSRS[i] != nullptr)
-            m_papoSRS[i]->Release();
-    }
-    CPLFree(m_panSRID);
-    CPLFree(m_papoSRS);
-
-    CloseDB();
-#ifdef HAVE_RASTERLITE2
-    FinishRasterLite2();
 #endif
+        for (size_t i = 0; i < m_apoOverviewDS.size(); ++i)
+        {
+            delete m_apoOverviewDS[i];
+        }
+
+        if (m_nLayers > 0 || !m_apoInvisibleLayers.empty())
+        {
+            // Close any remaining iterator
+            for (int i = 0; i < m_nLayers; i++)
+                m_papoLayers[i]->ResetReading();
+            for (size_t i = 0; i < m_apoInvisibleLayers.size(); i++)
+                m_apoInvisibleLayers[i]->ResetReading();
+
+            // Create spatial indices in a transaction for faster execution
+            if (hDB)
+                SoftStartTransaction();
+            for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
+            {
+                if (m_papoLayers[iLayer]->IsTableLayer())
+                {
+                    OGRSQLiteTableLayer *poLayer =
+                        (OGRSQLiteTableLayer *)m_papoLayers[iLayer];
+                    poLayer->RunDeferredCreationIfNecessary();
+                    poLayer->CreateSpatialIndexIfNecessary();
+                }
+            }
+            if (hDB)
+                SoftCommitTransaction();
+        }
+
+        SaveStatistics();
+
+        for (int i = 0; i < m_nLayers; i++)
+            delete m_papoLayers[i];
+        for (size_t i = 0; i < m_apoInvisibleLayers.size(); i++)
+            delete m_apoInvisibleLayers[i];
+
+        CPLFree(m_papoLayers);
+
+        for (int i = 0; i < m_nKnownSRID; i++)
+        {
+            if (m_papoSRS[i] != nullptr)
+                m_papoSRS[i]->Release();
+        }
+        CPLFree(m_panSRID);
+        CPLFree(m_papoSRS);
+
+        if (!CloseDB())
+            eErr = CE_Failure;
+#ifdef HAVE_RASTERLITE2
+        FinishRasterLite2();
+#endif
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 #ifdef HAVE_RASTERLITE2

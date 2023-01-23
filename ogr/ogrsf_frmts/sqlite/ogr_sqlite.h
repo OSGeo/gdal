@@ -691,6 +691,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     void CreateRL2OverviewDatasetIfNeeded(double dfXRes, double dfYRes);
 #endif
 
+    CPLErr Close() override;
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
