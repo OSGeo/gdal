@@ -53,11 +53,8 @@ jobs:
         miniforge-version: latest
         use-mamba: true
         channels: conda-forge
-        #auto-update-conda: true
-        use-only-tar-bz2: true
+        auto-update-conda: true
 
-    - uses: ilammy/msvc-dev-cmd@v1
-      if: matrix.platform == 'windows-latest'
 
     - name: Remove conflicting libraries
       shell: cmd
