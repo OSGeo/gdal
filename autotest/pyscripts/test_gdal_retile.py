@@ -339,6 +339,43 @@ def test_gdal_retile_5():
 
 
 ###############################################################################
+# Test gdal_retile.py
+
+
+def test_gdal_retile_png():
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
+
+    script_path = test_py_scripts.get_py_script("gdal_retile")
+    if script_path is None:
+        pytest.skip()
+
+    out_dirname = os.path.join("tmp", "outretile_png")
+    os.mkdir(out_dirname)
+
+    try:
+        test_py_scripts.run_py_script(
+            script_path,
+            "gdal_retile",
+            "-v -levels 2 -r bilinear -of PNG -targetDir "
+            + '"'
+            + out_dirname
+            + '"'
+            + " "
+            + test_py_scripts.get_data_path("gcore")
+            + "byte.tif",
+        )
+
+        ds = gdal.Open(out_dirname + "/byte_1_1.png")
+        assert ds.GetRasterBand(1).Checksum() == 4672
+        ds = None
+        assert os.path.exists(out_dirname + "/byte_1_1.png.aux.xml")
+    finally:
+        shutil.rmtree(out_dirname)
+
+
+###############################################################################
 # Cleanup
 
 
