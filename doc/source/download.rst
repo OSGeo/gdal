@@ -279,6 +279,30 @@ To install the Arrow and Parquet drivers as plugins:
     conda install -c conda-forge libgdal-arrow-parquet
 
 
+GDAL master Conda builds
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+GDAL master builds are available in the `gdal-master <https://anaconda.org/gdal-master/gdal>`__
+channel. They are based on dependencies from the ``conda-forge`` channel.
+
+First create a dedicated ``gdal_master_env`` environment, activate it and install
+the ``mamba`` package manager.
+
+::
+
+    conda update -n base -c conda-forge conda
+    conda create --name gdal_master_env
+    conda activate gdal_master_env
+    conda install -c conda-forge mamba
+
+Then install GDAL from the ``gdal-master`` channel:
+
+::
+
+    mamba install -c gdal-master gdal
+    mamba install -c gdal-master libgdal-arrow-parquet # if you need the Arrow and Parquet drivers
+
+
 Vcpkg
 ................................................................................
 
