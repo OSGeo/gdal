@@ -144,7 +144,6 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
     hid_t hHDF5;
     hid_t hGroupID;  // H handler interface.
     char **papszSubDatasets;
-    int bIsHDFEOS;
     int nDatasetType;
     int nSubDataCount;
 

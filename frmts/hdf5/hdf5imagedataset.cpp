@@ -482,13 +482,11 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->hGroupID = H5Gopen(poDS->hHDF5, "/");
     if (poDS->hGroupID < 0)
     {
-        poDS->bIsHDFEOS = false;
         delete poDS;
         return nullptr;
     }
 
     // This is an HDF5 file.
-    poDS->bIsHDFEOS = TRUE;
     poDS->ReadGlobalAttributes(FALSE);
 
     // Create HDF5 Data Hierarchy in a link list.

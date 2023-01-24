@@ -119,9 +119,9 @@ void GDALRegister_HDF5()
 /*                           HDF5Dataset()                              */
 /************************************************************************/
 HDF5Dataset::HDF5Dataset()
-    : hHDF5(-1), hGroupID(-1), papszSubDatasets(nullptr), bIsHDFEOS(FALSE),
-      nDatasetType(-1), nSubDataCount(0), poH5RootGroup(nullptr),
-      papszMetadata(nullptr), poH5CurrentObject(nullptr)
+    : hHDF5(-1), hGroupID(-1), papszSubDatasets(nullptr), nDatasetType(-1),
+      nSubDataCount(0), poH5RootGroup(nullptr), papszMetadata(nullptr),
+      poH5CurrentObject(nullptr)
 {
 }
 
@@ -538,12 +538,10 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->hGroupID = H5Gopen(poDS->hHDF5, "/");
     if (poDS->hGroupID < 0)
     {
-        poDS->bIsHDFEOS = false;
         delete poDS;
         return nullptr;
     }
 
-    poDS->bIsHDFEOS = true;
     poDS->ReadGlobalAttributes(true);
 
     poDS->SetMetadata(poDS->papszMetadata);
