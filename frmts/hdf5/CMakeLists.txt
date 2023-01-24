@@ -8,7 +8,9 @@ set(SOURCE
     gh5_convenience.cpp
     iso19115_srs.cpp
     bagdataset.cpp
-    hdf5multidim.cpp)
+    hdf5multidim.cpp
+    hdf5eosparser.cpp
+)
 
 add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)
 
