@@ -880,7 +880,7 @@ class netCDFDataset final : public GDALPamDataset
     int DefVarDeflate(int nVarId, bool bChunkingArg = true);
     CPLErr AddProjectionVars(bool bDefsOnly, GDALProgressFunc pfnProgress,
                              void *pProgressData);
-    void AddGridMappingRef();
+    bool AddGridMappingRef();
 
     bool GetDefineMode() const
     {
@@ -949,10 +949,12 @@ class netCDFDataset final : public GDALPamDataset
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions) override;
 
+    CPLErr Close() override;
+
   public:
     netCDFDataset();
     virtual ~netCDFDataset();
-    void SGCommitPendingTransaction();
+    bool SGCommitPendingTransaction();
     void SGLogPendingTransaction();
     static std::string generateLogName();
 
