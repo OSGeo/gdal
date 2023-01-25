@@ -252,6 +252,8 @@ CPLErr OGRODSDataSource::Close()
 
         CPLFree(pszName);
 
+        // Those are read-only files, so we can ignore VSIFCloseL() return
+        // value.
         if (fpContent)
             VSIFCloseL(fpContent);
         if (fpSettings)
@@ -1908,7 +1910,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     /* Maintain new ZIP files opened */
     void *hZIP = CPLCreateZip(pszName, nullptr);
-    if (hZIP == nullptr)
+    if (!hZIP)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s", pszName,
                  VSIGetLastErrorMsg());
@@ -1946,7 +1948,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName);
     VSILFILE *fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
         return CE_Failure;
@@ -1972,7 +1974,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/meta.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
         return CE_Failure;
@@ -1987,7 +1989,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/settings.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
         return CE_Failure;
@@ -2043,7 +2045,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/styles.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
         return CE_Failure;
@@ -2064,7 +2066,7 @@ CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/content.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
         return CE_Failure;
