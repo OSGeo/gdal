@@ -713,8 +713,10 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
                     memcpy(abyData.data() + 4, &nSize32, 4);
                 }
             }
-            catch (const std::exception &)
+            catch (const std::exception &e)
             {
+                CPLError(CE_Failure, CPLE_AppDefined, "Exception occurred: %s",
+                         e.what());
                 abyData.clear();
             }
             VSIFree(pWEBPContent);
