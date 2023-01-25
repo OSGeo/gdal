@@ -3780,7 +3780,7 @@ GDALDatasetH CPL_STDCALL GDALOpenShared(const char *pszFilename,
 CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
 
 {
-    if (hDS == nullptr)
+    if (!hDS)
         return CE_None;
 
 #ifdef OGRAPISPY_ENABLED
