@@ -55,6 +55,7 @@
 #include <set>
 #include <string>
 #include <queue>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -601,7 +602,7 @@ class GTiffDataset final : public GDALPamDataset
                                            GDALDataset *poOvrDS,
                                            int nOverviews);
     CPLErr CreateInternalMaskOverviews(int nOvrBlockXSize, int nOvrBlockYSize);
-    CPLErr Finalize(bool &bDroppedRefOut);
+    std::tuple<CPLErr, bool> Finalize();
 
     void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
     void GetDiscardLsbOption(char **papszOptions);
@@ -9685,9 +9686,8 @@ CPLErr GTiffDataset::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        bool bDroppedRefOut = false;
-        if (Finalize(bDroppedRefOut) != CE_None)
-            eErr = CE_Failure;
+        bool bDroppedRef;
+        std::tie(eErr, bDroppedRef) = Finalize();
 
         if (m_pszTmpFilename)
         {
@@ -9705,11 +9705,13 @@ CPLErr GTiffDataset::Close()
 /*                             Finalize()                               */
 /************************************************************************/
 
-CPLErr GTiffDataset::Finalize(bool &bDroppedRefOut)
+// Return a tuple (CPLErr, bool) to indicate respectively if an I/O error has
+// occurred and if a reference to an auxiliary dataset has been dropped.
+std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 {
-    bDroppedRefOut = false;
+    bool bDroppedRef = false;
     if (m_bIsFinalized)
-        return CE_None;
+        return std::tuple<CPLErr, bool>(CE_None, bDroppedRef);
 
     CPLErr eErr = CE_None;
     Crystalize();
@@ -9813,13 +9815,13 @@ CPLErr GTiffDataset::Finalize(bool &bDroppedRefOut)
         for (int i = 0; i < nOldOverviewCount; ++i)
         {
             delete m_papoOverviewDS[i];
-            bDroppedRefOut = true;
+            bDroppedRef = true;
         }
 
         for (int i = 0; i < m_nJPEGOverviewCountOri; ++i)
         {
             delete m_papoJPEGOverviewDS[i];
-            bDroppedRefOut = true;
+            bDroppedRef = true;
         }
         m_nJPEGOverviewCount = 0;
         m_nJPEGOverviewCountOri = 0;
@@ -9843,7 +9845,7 @@ CPLErr GTiffDataset::Finalize(bool &bDroppedRefOut)
         auto poMaskDS = m_poMaskDS;
         m_poMaskDS = nullptr;
         delete poMaskDS;
-        bDroppedRefOut = true;
+        bDroppedRef = true;
     }
 
     if (m_poColorTable != nullptr)
@@ -9938,7 +9940,7 @@ CPLErr GTiffDataset::Finalize(bool &bDroppedRefOut)
 
     m_bIsFinalized = true;
 
-    return eErr;
+    return std::tuple<CPLErr, bool>(eErr, bDroppedRef);
 }
 
 /************************************************************************/
@@ -9952,8 +9954,11 @@ int GTiffDataset::CloseDependentDatasets()
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
+    CPLErr eErr;
     bool bHasDroppedRefInFinalize = false;
-    Finalize(bHasDroppedRefInFinalize);
+    // We ignore eErr as it is not relevant for CloseDependentDatasets(),
+    // which is called in a "garbage collection" context.
+    std::tie(eErr, bHasDroppedRefInFinalize) = Finalize();
     if (bHasDroppedRefInFinalize)
         bHasDroppedRef = true;
 
