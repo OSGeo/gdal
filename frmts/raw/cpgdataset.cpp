@@ -55,7 +55,8 @@ class CPGDataset final : public RawDataset
     friend class SIRC_QSLCRasterBand;
     friend class CPG_STOKESRasterBand;
 
-    VSILFILE *afpImage[4];
+    static constexpr int NUMBER_OF_BANDS = 4;
+    std::vector<VSILFILE *> afpImage{NUMBER_OF_BANDS};
     std::vector<CPLString> aosImageFilenames{};
 
     int nGCPCount;
@@ -123,9 +124,6 @@ CPGDataset::CPGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    for (int iBand = 0; iBand < 4; iBand++)
-        afpImage[iBand] = nullptr;
 }
 
 /************************************************************************/
@@ -150,10 +148,10 @@ CPLErr CPGDataset::Close()
         if (CPGDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
-        for (int iBand = 0; iBand < 4; iBand++)
+        for (auto poFile : afpImage)
         {
-            if (afpImage[iBand] != nullptr)
-                VSIFCloseL(afpImage[iBand]);
+            if (poFile != nullptr)
+                VSIFCloseL(poFile);
         }
 
         if (nGCPCount > 0)
@@ -633,7 +631,8 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Open the four bands.                                            */
     /* -------------------------------------------------------------------- */
-    static const char *const apszPolarizations[4] = {"hh", "hv", "vv", "vh"};
+    static const char *const apszPolarizations[NUMBER_OF_BANDS] = {"hh", "hv",
+                                                                   "vv", "vh"};
 
     const int nNameLen = static_cast<int>(strlen(pszWorkname));
 
@@ -652,7 +651,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
             return nullptr;
         }
         poDS->aosImageFilenames.push_back(pszWorkname);
-        for (int iBand = 0; iBand < 4; iBand++)
+        for (int iBand = 0; iBand < NUMBER_OF_BANDS; iBand++)
         {
             SIRC_QSLCRasterBand *poBand =
                 new SIRC_QSLCRasterBand(poDS, iBand + 1, GDT_CFloat32);
@@ -663,7 +662,8 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
     }
     else
     {
-        for (int iBand = 0; iBand < 4; iBand++)
+        CPLAssert(poDS->afpImage.size() == NUMBER_OF_BANDS);
+        for (int iBand = 0; iBand < NUMBER_OF_BANDS; iBand++)
         {
             AdjustFilename(&pszWorkname, apszPolarizations[iBand], "img");
 
@@ -689,10 +689,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
     }
 
     /* Set an appropriate matrix representation metadata item for the set */
-    if (poDS->GetRasterCount() == 4)
-    {
-        poDS->SetMetadataItem("MATRIX_REPRESENTATION", "SCATTERING");
-    }
+    poDS->SetMetadataItem("MATRIX_REPRESENTATION", "SCATTERING");
 
     /* -------------------------------------------------------------------------
      */
