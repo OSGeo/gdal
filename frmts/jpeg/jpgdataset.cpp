@@ -3527,7 +3527,7 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
 
                 constexpr GByte EXIF_SIGNATURE[] = {'E', 'x',  'i',
                                                     'f', '\0', '\0'};
-                constexpr const char APP1_XMP_SIGNATURE[] =
+                constexpr char APP1_XMP_SIGNATURE[] =
                     "http://ns.adobe.com/xap/1.0/";
                 size_t nChunkLoc = 2;
                 GByte *pabyJPEG = static_cast<GByte *>(*ppBuffer);

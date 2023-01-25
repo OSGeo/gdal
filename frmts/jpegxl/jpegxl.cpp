@@ -1241,7 +1241,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                 {
                     constexpr GByte EXIF_SIGNATURE[] = {'E', 'x',  'i',
                                                         'f', '\0', '\0'};
-                    constexpr const char APP1_XMP_SIGNATURE[] =
+                    constexpr char APP1_XMP_SIGNATURE[] =
                         "http://ns.adobe.com/xap/1.0/";
                     size_t nChunkLoc = 2;
                     while (nChunkLoc + 4 <= jpeg_bytes.size())

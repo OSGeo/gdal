@@ -433,7 +433,7 @@ CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
             auto nSize = static_cast<uint32_t>(nFileSize);
             if (ppBuffer)
             {
-                if (pnBufferSize == nullptr)
+                if (!pnBufferSize)
                     return CE_Failure;
                 bool bFreeOnError = false;
                 if (*ppBuffer)

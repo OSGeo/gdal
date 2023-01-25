@@ -2381,13 +2381,13 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
 {
     if (m_nCompression != COMPRESSION_NONE &&
         IsWholeBlock(nXOff, nYOff, nXSize, nYSize) &&
-        ((nBandCount == 1 && (panBandList != nullptr || nBands == 1) &&
+        ((nBandCount == 1 && (panBandList || nBands == 1) &&
           m_nPlanarConfig == PLANARCONFIG_SEPARATE) ||
          (IsAllBands(nBandCount, panBandList) &&
           m_nPlanarConfig == PLANARCONFIG_CONTIG)))
     {
         CPLStringList aosList;
-        int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+        const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
         int nBlockId =
             (nXOff / m_nBlockXSize) + (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
         if (m_nPlanarConfig == PLANARCONFIG_SEPARATE && panBandList != nullptr)
@@ -2459,7 +2459,8 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         {
             std::string osDetailedFormat = aosTokens[0];
 
-            int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+            const int l_nBlocksPerRow =
+                DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
             int nBlockId = (nXOff / m_nBlockXSize) +
                            (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
             if (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
@@ -2498,7 +2499,7 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                 size_t nSizeSize = static_cast<size_t>(nSize + nJPEGTableSize);
                 if (ppBuffer)
                 {
-                    if (pnBufferSize == nullptr)
+                    if (!pnBufferSize)
                         return CE_Failure;
                     bool bFreeOnError = false;
                     if (*ppBuffer)
