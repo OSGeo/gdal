@@ -464,7 +464,7 @@ CPLErr RRASTERDataset::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (m_fpImage != nullptr)
+        if (m_fpImage)
         {
             InitImageIfNeeded();
             if (RRASTERDataset::FlushCache(true) != CE_None)

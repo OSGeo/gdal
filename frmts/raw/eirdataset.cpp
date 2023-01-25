@@ -119,7 +119,7 @@ CPLErr EIRDataset::Close()
             }
         }
 
-        if (fpImage != nullptr)
+        if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
                 eErr = CE_Failure;

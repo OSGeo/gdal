@@ -140,7 +140,7 @@ CPLErr LOSLASDataset::Close()
         if (LOSLASDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
-        if (fpImage != nullptr)
+        if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
             {

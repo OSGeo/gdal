@@ -226,7 +226,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
-    if (band == nullptr || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
+    if (!band || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
         return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make

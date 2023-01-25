@@ -394,7 +394,7 @@ CPLErr HKVDataset::Close()
                               eRasterType, bNoDataSet, dfNoDataValue);
         }
 
-        if (fpBlob != nullptr)
+        if (fpBlob)
         {
             if (VSIFCloseL(fpBlob) != 0)
             {

@@ -410,7 +410,7 @@ CPLErr EHdrDataset::Close()
             }
         }
 
-        if (fpImage != nullptr)
+        if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
             {

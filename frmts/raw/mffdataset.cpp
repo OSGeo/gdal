@@ -285,11 +285,11 @@ CPLErr MFFDataset::Close()
             eErr = CE_Failure;
 
         CSLDestroy(papszHdrLines);
-        if (pafpBandFiles != nullptr)
+        if (pafpBandFiles)
         {
             for (int i = 0; i < GetRasterCount(); i++)
             {
-                if (pafpBandFiles[i] != nullptr)
+                if (pafpBandFiles[i])
                 {
                     if (VSIFCloseL(pafpBandFiles[i]) != 0)
                     {

@@ -193,7 +193,7 @@ CPLErr GTXDataset::Close()
         if (GTXDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
-        if (fpImage != nullptr)
+        if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
             {
