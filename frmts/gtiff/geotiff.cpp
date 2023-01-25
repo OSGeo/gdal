@@ -2399,27 +2399,35 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
             nSize <
                 static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
         {
-            if (m_nCompression == COMPRESSION_JPEG)
+            switch (m_nCompression)
             {
-                if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands == 4 &&
-                    m_nPhotometric == PHOTOMETRIC_RGB &&
-                    GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
+                case COMPRESSION_JPEG:
                 {
-                    // as a hint for the JPEG and JPEGXL drivers to not use it!
-                    aosList.AddString("JPEG;colorspace=RGBA");
+                    if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands == 4 &&
+                        m_nPhotometric == PHOTOMETRIC_RGB &&
+                        GetRasterBand(4)->GetColorInterpretation() ==
+                            GCI_AlphaBand)
+                    {
+                        // as a hint for the JPEG and JPEGXL drivers to not use it!
+                        aosList.AddString("JPEG;colorspace=RGBA");
+                    }
+                    else
+                    {
+                        aosList.AddString("JPEG");
+                    }
+                    break;
                 }
-                else
-                {
-                    aosList.AddString("JPEG");
-                }
-            }
-            else if (m_nCompression == COMPRESSION_WEBP)
-            {
-                aosList.AddString("WEBP");
-            }
-            else if (m_nCompression == COMPRESSION_JXL)
-            {
-                aosList.AddString("JXL");
+
+                case COMPRESSION_WEBP:
+                    aosList.AddString("WEBP");
+                    break;
+
+                case COMPRESSION_JXL:
+                    aosList.AddString("JXL");
+                    break;
+
+                default:
+                    break;
             }
         }
         return aosList;
