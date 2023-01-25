@@ -166,7 +166,7 @@ CPLErr PDSDataset::Close()
     {
         if (PDSDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
-        if (fpImage != nullptr)
+        if (fpImage)
         {
             if (VSIFCloseL(fpImage) != 0)
                 eErr = CE_Failure;

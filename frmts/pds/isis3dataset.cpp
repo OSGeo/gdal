@@ -1333,12 +1333,12 @@ CPLErr ISIS3Dataset::Close()
         }
         if (ISIS3Dataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
-        if (m_fpLabel != nullptr)
+        if (m_fpLabel)
         {
             if (VSIFCloseL(m_fpLabel) != 0)
                 eErr = CE_Failure;
         }
-        if (m_fpImage != nullptr && m_fpImage != m_fpLabel)
+        if (m_fpImage && m_fpImage != m_fpLabel)
         {
             if (VSIFCloseL(m_fpImage) != 0)
                 eErr = CE_Failure;

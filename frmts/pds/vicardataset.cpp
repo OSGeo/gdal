@@ -1174,7 +1174,7 @@ CPLErr VICARDataset::Close()
             eErr = CE_Failure;
 
         PatchLabel();
-        if (fpImage != nullptr)
+        if (fpImage)
             VSIFCloseL(fpImage);
 
         if (GDALPamDataset::Close() != CE_None)
