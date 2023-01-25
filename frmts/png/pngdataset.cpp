@@ -1272,7 +1272,7 @@ CPLErr PNGDataset::GetGeoTransform(double *padfTransform)
 CPLErr PNGDataset::FlushCache(bool bAtClosing)
 
 {
-    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
+    const CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (pabyBuffer != nullptr)
     {
