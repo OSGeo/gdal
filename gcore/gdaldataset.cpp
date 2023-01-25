@@ -522,11 +522,11 @@ CPLErr GDALDataset::FlushCache(bool bAtClosing)
     // This sometimes happens if a dataset is destroyed before completely
     // built.
 
-    if (papoBands != nullptr)
+    if (papoBands)
     {
         for (int i = 0; i < nBands; ++i)
         {
-            if (papoBands[i] != nullptr)
+            if (papoBands[i])
             {
                 if (papoBands[i]->FlushCache(bAtClosing) != CE_None)
                     eErr = CE_Failure;
