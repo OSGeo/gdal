@@ -1633,17 +1633,18 @@ class GPKGChecker(object):
             "gpkg_2d_gridded_coverage#3",
             "gpkg_spatial_ref_sys shall have a row for srs_id=4979",
         )
-        self._assert(
-            ret[0][1].lower() == "epsg",
-            "gpkg_2d_gridded_coverage#3",
-            "wrong value for organization for srs_id = 4979: %s" % ret[0][1],
-        )
-        self._assert(
-            ret[0][2] == 4979,
-            "gpkg_2d_gridded_coverage#3",
-            ("wrong value for organization_coordsys_id for " + "srs_id = 4979: %s")
-            % ret[0][2],
-        )
+        if len(ret) == 1:
+            self._assert(
+                ret[0][1].lower() == "epsg",
+                "gpkg_2d_gridded_coverage#3",
+                "wrong value for organization for srs_id = 4979: %s" % ret[0][1],
+            )
+            self._assert(
+                ret[0][2] == 4979,
+                "gpkg_2d_gridded_coverage#3",
+                ("wrong value for organization_coordsys_id for " + "srs_id = 4979: %s")
+                % ret[0][2],
+            )
 
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
         self._assert(
@@ -2942,7 +2943,7 @@ def main(argv=sys.argv):
         else:
             for (req, msg) in ret:
                 if req:
-                    print("Req %d: %s" % (req, msg))
+                    print("Req %s: %s" % (str(req), msg))
                 else:
                     print(msg)
             return 1
