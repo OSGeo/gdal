@@ -684,7 +684,7 @@ CPLErr TileDBDataset::AddDimensions(tiledb::Domain &domain,
 CPLErr TileDBDataset::FlushCache(bool bAtClosing)
 
 {
-    CPLErr eErr = BlockBasedFlushCache(bAtClosing);
+    const CPLErr eErr = BlockBasedFlushCache(bAtClosing);
 
     if (nPamFlags & GPF_DIRTY)
         TrySaveXML();
