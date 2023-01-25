@@ -1001,7 +1001,7 @@ CPLErr GDALGeoPackageDataset::Close()
         for (int i = 0; i < m_nOverviewCount; i++)
             delete m_papoOverviewDS[i];
 
-        if (m_poParentDS != nullptr)
+        if (m_poParentDS)
         {
             hDB = nullptr;
         }
