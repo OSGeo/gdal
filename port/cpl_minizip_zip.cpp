@@ -47,6 +47,9 @@
 #include "cpl_port.h"
 #include "cpl_minizip_zip.h"
 
+#include <algorithm>
+#include <limits>
+
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -54,11 +57,13 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <time.h>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_minizip_unzip.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi_virtual.h"
 
 #ifdef NO_ERRNO_H
@@ -199,6 +204,10 @@ typedef struct
     int use_cpl_io;
     vsi_l_offset vsi_raw_length_before;
     VSIVirtualHandle *vsi_deflate_handle;
+    size_t nChunkSize;
+    int nThreads;
+    size_t nOffsetSize;
+    std::vector<uint8_t> *sozip_index;
 } zip64_internal;
 
 #ifndef NOCRYPT
@@ -925,6 +934,10 @@ extern zipFile ZEXPORT cpl_zipOpen2(const char *pathname, int append,
     ziinit.use_cpl_io = (pzlib_filefunc_def == nullptr) ? 1 : 0;
     ziinit.vsi_raw_length_before = 0;
     ziinit.vsi_deflate_handle = nullptr;
+    ziinit.nChunkSize = 0;
+    ziinit.nThreads = 0;
+    ziinit.nOffsetSize = 0;
+    ziinit.sozip_index = nullptr;
     init_linkedlist(&(ziinit.central_dir));
 
     zip64_internal *zi =
@@ -1089,7 +1102,8 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3(
 #else
     uLong crcForCrypting
 #endif
-)
+    ,
+    bool bZip64, bool bIncludeInCentralDirectory)
 {
     zip64_internal *zi;
     uInt size_filename;
@@ -1157,81 +1171,92 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3(
     zi->ci.raw = raw;
     zi->ci.pos_local_header = ZTELL64(zi->z_filefunc, zi->filestream);
 
-    zi->ci.size_centralheader = SIZECENTRALHEADER + size_filename +
-                                size_extrafield_global + size_comment;
-    zi->ci.size_centralExtraFree = 32;  // Extra space we have reserved in case
-                                        // we need to add ZIP64 extra info data
+    if (bIncludeInCentralDirectory)
+    {
+        zi->ci.size_centralheader = SIZECENTRALHEADER + size_filename +
+                                    size_extrafield_global + size_comment;
+        zi->ci.size_centralExtraFree =
+            32;  // Extra space we have reserved in case we need to add ZIP64
+                 // extra info data
 
-    zi->ci.central_header = static_cast<char *>(ALLOC(static_cast<uInt>(
-        zi->ci.size_centralheader + zi->ci.size_centralExtraFree)));
+        zi->ci.central_header = static_cast<char *>(ALLOC(static_cast<uInt>(
+            zi->ci.size_centralheader + zi->ci.size_centralExtraFree)));
 
-    zi->ci.size_centralExtra = size_extrafield_global;
-    zip64local_putValue_inmemory(zi->ci.central_header, CENTRALHEADERMAGIC, 4);
-    /* version info */
-    zip64local_putValue_inmemory(zi->ci.central_header + 4, VERSIONMADEBY, 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 6, 20, 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 8,
-                                 static_cast<uLong>(zi->ci.flag), 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 10,
-                                 static_cast<uLong>(zi->ci.method), 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 12,
-                                 static_cast<uLong>(zi->ci.dosDate), 4);
-    zip64local_putValue_inmemory(zi->ci.central_header + 16, 0, 4); /*crc*/
-    zip64local_putValue_inmemory(zi->ci.central_header + 20, 0,
-                                 4); /*compr size*/
-    zip64local_putValue_inmemory(zi->ci.central_header + 24, 0,
-                                 4); /*uncompr size*/
-    zip64local_putValue_inmemory(zi->ci.central_header + 28,
-                                 static_cast<uLong>(size_filename), 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 30,
-                                 static_cast<uLong>(size_extrafield_global), 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 32,
-                                 static_cast<uLong>(size_comment), 2);
-    zip64local_putValue_inmemory(zi->ci.central_header + 34, 0,
-                                 2); /*disk nm start*/
+        zi->ci.size_centralExtra = size_extrafield_global;
+        zip64local_putValue_inmemory(zi->ci.central_header, CENTRALHEADERMAGIC,
+                                     4);
+        /* version info */
+        zip64local_putValue_inmemory(zi->ci.central_header + 4, VERSIONMADEBY,
+                                     2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 6, 20, 2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 8,
+                                     static_cast<uLong>(zi->ci.flag), 2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 10,
+                                     static_cast<uLong>(zi->ci.method), 2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 12,
+                                     static_cast<uLong>(zi->ci.dosDate), 4);
+        zip64local_putValue_inmemory(zi->ci.central_header + 16, 0, 4); /*crc*/
+        zip64local_putValue_inmemory(zi->ci.central_header + 20, 0,
+                                     4); /*compr size*/
+        zip64local_putValue_inmemory(zi->ci.central_header + 24, 0,
+                                     4); /*uncompr size*/
+        zip64local_putValue_inmemory(zi->ci.central_header + 28,
+                                     static_cast<uLong>(size_filename), 2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 30,
+                                     static_cast<uLong>(size_extrafield_global),
+                                     2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 32,
+                                     static_cast<uLong>(size_comment), 2);
+        zip64local_putValue_inmemory(zi->ci.central_header + 34, 0,
+                                     2); /*disk nm start*/
 
-    if (zipfi == nullptr)
-        zip64local_putValue_inmemory(zi->ci.central_header + 36, 0, 2);
+        if (zipfi == nullptr)
+            zip64local_putValue_inmemory(zi->ci.central_header + 36, 0, 2);
+        else
+            zip64local_putValue_inmemory(zi->ci.central_header + 36,
+                                         static_cast<uLong>(zipfi->internal_fa),
+                                         2);
+
+        if (zipfi == nullptr)
+            zip64local_putValue_inmemory(zi->ci.central_header + 38, 0, 4);
+        else
+            zip64local_putValue_inmemory(zi->ci.central_header + 38,
+                                         static_cast<uLong>(zipfi->external_fa),
+                                         4);
+
+        if (zi->ci.pos_local_header >= 0xffffffff)
+            zip64local_putValue_inmemory(zi->ci.central_header + 42,
+                                         static_cast<uLong>(0xffffffff), 4);
+        else
+            zip64local_putValue_inmemory(
+                zi->ci.central_header + 42,
+                static_cast<uLong>(zi->ci.pos_local_header) -
+                    zi->add_position_when_writing_offset,
+                4);
+
+        for (i = 0; i < size_filename; i++)
+            *(zi->ci.central_header + SIZECENTRALHEADER + i) = *(filename + i);
+
+        for (i = 0; i < size_extrafield_global; i++)
+            *(zi->ci.central_header + SIZECENTRALHEADER + size_filename + i) =
+                *((reinterpret_cast<const char *>(extrafield_global)) + i);
+
+        for (i = 0; i < size_comment; i++)
+            *(zi->ci.central_header + SIZECENTRALHEADER + size_filename +
+              size_extrafield_global + i) = *(comment + i);
+        if (zi->ci.central_header == nullptr)
+            return ZIP_INTERNALERROR;
+    }
     else
-        zip64local_putValue_inmemory(zi->ci.central_header + 36,
-                                     static_cast<uLong>(zipfi->internal_fa), 2);
-
-    if (zipfi == nullptr)
-        zip64local_putValue_inmemory(zi->ci.central_header + 38, 0, 4);
-    else
-        zip64local_putValue_inmemory(zi->ci.central_header + 38,
-                                     static_cast<uLong>(zipfi->external_fa), 4);
-
-    if (zi->ci.pos_local_header >= 0xffffffff)
-        zip64local_putValue_inmemory(zi->ci.central_header + 42,
-                                     static_cast<uLong>(0xffffffff), 4);
-    else
-        zip64local_putValue_inmemory(
-            zi->ci.central_header + 42,
-            static_cast<uLong>(zi->ci.pos_local_header) -
-                zi->add_position_when_writing_offset,
-            4);
-
-    for (i = 0; i < size_filename; i++)
-        *(zi->ci.central_header + SIZECENTRALHEADER + i) = *(filename + i);
-
-    for (i = 0; i < size_extrafield_global; i++)
-        *(zi->ci.central_header + SIZECENTRALHEADER + size_filename + i) =
-            *((reinterpret_cast<const char *>(extrafield_global)) + i);
-
-    for (i = 0; i < size_comment; i++)
-        *(zi->ci.central_header + SIZECENTRALHEADER + size_filename +
-          size_extrafield_global + i) = *(comment + i);
-    if (zi->ci.central_header == nullptr)
-        return ZIP_INTERNALERROR;
+    {
+        zi->ci.central_header = nullptr;
+    }
 
     zi->ci.totalCompressedData = 0;
     zi->ci.totalUncompressedData = 0;
     zi->ci.pos_zip64extrainfo = 0;
 
     // For now default is to generate zip64 extra fields
-    const bool bZip64 =
-        CPLTestBool(CPLGetConfigOption("CPL_CREATE_ZIP64", "ON"));
     err = Write_LocalFileHeader(zi, filename, size_extrafield_local,
                                 extrafield_local, bZip64 ? 1 : 0);
 
@@ -1256,7 +1281,8 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3(
             auto fpRaw = reinterpret_cast<VSIVirtualHandle *>(zi->filestream);
             zi->vsi_raw_length_before = fpRaw->Tell();
             zi->vsi_deflate_handle = VSICreateGZipWritable(
-                fpRaw, CPL_DEFLATE_TYPE_RAW_DEFLATE, false);
+                fpRaw, CPL_DEFLATE_TYPE_RAW_DEFLATE, false, zi->nThreads,
+                zi->nChunkSize, zi->nOffsetSize, zi->sozip_index);
             err = Z_OK;
         }
         else
@@ -1310,7 +1336,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip2(
     return cpl_zipOpenNewFileInZip3(
         file, filename, zipfi, extrafield_local, size_extrafield_local,
         extrafield_global, size_extrafield_global, comment, method, level, raw,
-        -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, nullptr, 0);
+        -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, nullptr, 0, true, true);
 }
 
 extern int ZEXPORT cpl_zipOpenNewFileInZip(
@@ -1445,6 +1471,14 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw(zipFile file,
             zi->vsi_deflate_handle = nullptr;
             zi->ci.totalCompressedData =
                 fpRaw->Tell() - zi->vsi_raw_length_before;
+
+            if (zi->sozip_index)
+            {
+                uint64_t nVal =
+                    static_cast<uint64_t>(zi->ci.totalCompressedData);
+                CPL_LSBPTR64(&nVal);
+                memcpy(zi->sozip_index->data() + 24, &nVal, sizeof(uint64_t));
+            }
         }
         else
         {
@@ -1538,119 +1572,130 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw(zipFile file,
 
         // Correct central header offset to local header
         zi->ci.pos_local_header += nZIP64ExtraBytes;
-        if (zi->ci.pos_local_header >= 0xffffffff)
-            zip64local_putValue_inmemory(zi->ci.central_header + 42,
-                                         static_cast<uLong>(0xffffffff), 4);
-        else
-            zip64local_putValue_inmemory(
-                zi->ci.central_header + 42,
-                static_cast<uLong>(zi->ci.pos_local_header) -
-                    zi->add_position_when_writing_offset,
-                4);
+        if (zi->ci.central_header)
+        {
+            if (zi->ci.pos_local_header >= 0xffffffff)
+                zip64local_putValue_inmemory(zi->ci.central_header + 42,
+                                             static_cast<uLong>(0xffffffff), 4);
+            else
+                zip64local_putValue_inmemory(
+                    zi->ci.central_header + 42,
+                    static_cast<uLong>(zi->ci.pos_local_header) -
+                        zi->add_position_when_writing_offset,
+                    4);
+        }
     }
 #endif
 
-    // update Current Item crc and sizes,
-    if (zi->ci.pos_zip64extrainfo || compressed_size >= 0xffffffff ||
-        uncompressed_size >= 0xffffffff ||
-        zi->ci.pos_local_header >= 0xffffffff)
+    const bool bInCentralHeader = zi->ci.central_header != nullptr;
+    if (zi->ci.central_header)
     {
-        /*version Made by*/
-        zip64local_putValue_inmemory(zi->ci.central_header + 4, 45, 2);
-        /*version needed*/
-        zip64local_putValue_inmemory(zi->ci.central_header + 6, 45, 2);
-    }
-
-    zip64local_putValue_inmemory(zi->ci.central_header + 16, crc32, 4); /*crc*/
-
-    const uLong invalidValue = 0xffffffff;
-    if (compressed_size >= 0xffffffff)
-        zip64local_putValue_inmemory(zi->ci.central_header + 20, invalidValue,
-                                     4); /*compr size*/
-    else
-        zip64local_putValue_inmemory(zi->ci.central_header + 20,
-                                     compressed_size, 4); /*compr size*/
-
-    /// set internal file attributes field
-    if (zi->ci.stream.data_type == Z_ASCII)
-        zip64local_putValue_inmemory(zi->ci.central_header + 36, Z_ASCII, 2);
-
-    if (uncompressed_size >= 0xffffffff)
-        zip64local_putValue_inmemory(zi->ci.central_header + 24, invalidValue,
-                                     4); /*uncompr size*/
-    else
-        zip64local_putValue_inmemory(zi->ci.central_header + 24,
-                                     uncompressed_size, 4); /*uncompr size*/
-
-    short datasize = 0;
-    // Add ZIP64 extra info field for uncompressed size
-    if (uncompressed_size >= 0xffffffff)
-        datasize += 8;
-
-    // Add ZIP64 extra info field for compressed size
-    if (compressed_size >= 0xffffffff)
-        datasize += 8;
-
-    // Add ZIP64 extra info field for relative offset to local file header of
-    // current file
-    if (zi->ci.pos_local_header >= 0xffffffff)
-        datasize += 8;
-
-    if (datasize > 0)
-    {
-        char *p = nullptr;
-
-        if (static_cast<uLong>(datasize + 4) > zi->ci.size_centralExtraFree)
+        // update Current Item crc and sizes,
+        if (zi->ci.pos_zip64extrainfo || compressed_size >= 0xffffffff ||
+            uncompressed_size >= 0xffffffff ||
+            zi->ci.pos_local_header >= 0xffffffff)
         {
-            // we can not write more data to the buffer that we have room for.
-            return ZIP_BADZIPFILE;
+            /*version Made by*/
+            zip64local_putValue_inmemory(zi->ci.central_header + 4, 45, 2);
+            /*version needed*/
+            zip64local_putValue_inmemory(zi->ci.central_header + 6, 45, 2);
         }
 
-        p = zi->ci.central_header + zi->ci.size_centralheader;
+        zip64local_putValue_inmemory(zi->ci.central_header + 16, crc32,
+                                     4); /*crc*/
 
-        // Add Extra Information Header for 'ZIP64 information'
-        zip64local_putValue_inmemory(p, 0x0001, 2);  // HeaderID
-        p += 2;
-        zip64local_putValue_inmemory(p, datasize, 2);  // DataSize
-        p += 2;
+        const uLong invalidValue = 0xffffffff;
+        if (compressed_size >= 0xffffffff)
+            zip64local_putValue_inmemory(zi->ci.central_header + 20,
+                                         invalidValue, 4); /*compr size*/
+        else
+            zip64local_putValue_inmemory(zi->ci.central_header + 20,
+                                         compressed_size, 4); /*compr size*/
+
+        /// set internal file attributes field
+        if (zi->ci.stream.data_type == Z_ASCII)
+            zip64local_putValue_inmemory(zi->ci.central_header + 36, Z_ASCII,
+                                         2);
 
         if (uncompressed_size >= 0xffffffff)
-        {
-            zip64local_putValue_inmemory(p, uncompressed_size, 8);
-            p += 8;
-        }
+            zip64local_putValue_inmemory(zi->ci.central_header + 24,
+                                         invalidValue, 4); /*uncompr size*/
+        else
+            zip64local_putValue_inmemory(zi->ci.central_header + 24,
+                                         uncompressed_size, 4); /*uncompr size*/
 
+        short datasize = 0;
+        // Add ZIP64 extra info field for uncompressed size
+        if (uncompressed_size >= 0xffffffff)
+            datasize += 8;
+
+        // Add ZIP64 extra info field for compressed size
         if (compressed_size >= 0xffffffff)
-        {
-            zip64local_putValue_inmemory(p, compressed_size, 8);
-            p += 8;
-        }
+            datasize += 8;
 
+        // Add ZIP64 extra info field for relative offset to local file header
+        // of current file
         if (zi->ci.pos_local_header >= 0xffffffff)
+            datasize += 8;
+
+        if (datasize > 0)
         {
-            zip64local_putValue_inmemory(p, zi->ci.pos_local_header, 8);
-            // p += 8;
+            char *p = nullptr;
+
+            if (static_cast<uLong>(datasize + 4) > zi->ci.size_centralExtraFree)
+            {
+                // we can not write more data to the buffer that we have room
+                // for.
+                return ZIP_BADZIPFILE;
+            }
+
+            p = zi->ci.central_header + zi->ci.size_centralheader;
+
+            // Add Extra Information Header for 'ZIP64 information'
+            zip64local_putValue_inmemory(p, 0x0001, 2);  // HeaderID
+            p += 2;
+            zip64local_putValue_inmemory(p, datasize, 2);  // DataSize
+            p += 2;
+
+            if (uncompressed_size >= 0xffffffff)
+            {
+                zip64local_putValue_inmemory(p, uncompressed_size, 8);
+                p += 8;
+            }
+
+            if (compressed_size >= 0xffffffff)
+            {
+                zip64local_putValue_inmemory(p, compressed_size, 8);
+                p += 8;
+            }
+
+            if (zi->ci.pos_local_header >= 0xffffffff)
+            {
+                zip64local_putValue_inmemory(p, zi->ci.pos_local_header, 8);
+                // p += 8;
+            }
+
+            // Update how much extra free space we got in the memory buffer
+            // and increase the centralheader size so the new ZIP64 fields are
+            // included ( 4 below is the size of HeaderID and DataSize field )
+            zi->ci.size_centralExtraFree -= datasize + 4;
+            zi->ci.size_centralheader += datasize + 4;
+
+            // Update the extra info size field
+            zi->ci.size_centralExtra += datasize + 4;
+            zip64local_putValue_inmemory(
+                zi->ci.central_header + 30,
+                static_cast<uLong>(zi->ci.size_centralExtra), 2);
         }
 
-        // Update how much extra free space we got in the memory buffer
-        // and increase the centralheader size so the new ZIP64 fields are
-        // included ( 4 below is the size of HeaderID and DataSize field )
-        zi->ci.size_centralExtraFree -= datasize + 4;
-        zi->ci.size_centralheader += datasize + 4;
-
-        // Update the extra info size field
-        zi->ci.size_centralExtra += datasize + 4;
-        zip64local_putValue_inmemory(
-            zi->ci.central_header + 30,
-            static_cast<uLong>(zi->ci.size_centralExtra), 2);
+        if (err == ZIP_OK)
+            err = add_data_in_datablock(
+                &zi->central_dir, zi->ci.central_header,
+                static_cast<uLong>(zi->ci.size_centralheader));
+        free(zi->ci.central_header);
+        zi->ci.central_header = nullptr;
     }
 
-    if (err == ZIP_OK)
-        err = add_data_in_datablock(
-            &zi->central_dir, zi->ci.central_header,
-            static_cast<uLong>(zi->ci.size_centralheader));
-    free(zi->ci.central_header);
-    zi->ci.central_header = nullptr;
     free(zi->ci.local_header);
     zi->ci.local_header = nullptr;
 
@@ -1705,7 +1750,8 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw(zipFile file,
             err = ZIP_ERRNO;
     }
 
-    zi->number_entry++;
+    if (bInCentralHeader)
+        zi->number_entry++;
     zi->in_opened_file_inzip = 0;
 
     return err;
@@ -2034,21 +2080,10 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
     const bool bCompressed =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
 
-    // If the filename is ASCII only, then no need for an extended field
-    bool bIsAscii = true;
-    for (int i = 0; pszFilename[i] != '\0'; i++)
-    {
-        if ((reinterpret_cast<const GByte *>(pszFilename))[i] > 127)
-        {
-            bIsAscii = false;
-            break;
-        }
-    }
-
     char *pszCPFilename = nullptr;
-    unsigned int nExtraLength = 0;
-    GByte *pabyExtra = nullptr;
-    if (!bIsAscii)
+    std::vector<GByte> abyExtra;
+    // If the filename is not ASCII only, we need an extended field
+    if (!CPLIsASCII(pszFilename, strlen(pszFilename)))
     {
         const char *pszDestEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
 #if defined(_WIN32) && !defined(HAVE_ICONV)
@@ -2061,40 +2096,136 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
         pszCPFilename = CPLRecode(pszFilename, CPL_ENC_UTF8, pszDestEncoding);
 
         /* Create a Info-ZIP Unicode Path Extra Field (0x7075) */
-        const GUInt16 nDataLength =
-            1 + 4 + static_cast<GUInt16>(strlen(pszFilename));
-        nExtraLength = 2 + 2 + nDataLength;
-        pabyExtra = static_cast<GByte *>(CPLMalloc(nExtraLength));
-        const GUInt16 nHeaderIdLE = CPL_LSBWORD16(0x7075);
-        memcpy(pabyExtra, &nHeaderIdLE, 2);
-        const GUInt16 nDataLengthLE = CPL_LSBWORD16(nDataLength);
-        memcpy(pabyExtra + 2, &nDataLengthLE, 2);
-        const GByte nVersion = 1;
-        memcpy(pabyExtra + 2 + 2, &nVersion, 1);
-        const GUInt32 nNameCRC32 = static_cast<GUInt32>(
-            crc32(0, reinterpret_cast<const Bytef *>(pszCPFilename),
-                  static_cast<uInt>(strlen(pszCPFilename))));
-        const GUInt32 nNameCRC32LE = CPL_LSBWORD32(nNameCRC32);
-        memcpy(pabyExtra + 2 + 2 + 1, &nNameCRC32LE, 4);
-        memcpy(pabyExtra + 2 + 2 + 1 + 4, pszFilename, strlen(pszFilename));
+        const size_t nDataLength =
+            sizeof(GByte) + sizeof(uint32_t) + strlen(pszFilename);
+        if (abyExtra.size() + 2 * sizeof(uint16_t) + nDataLength >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Too much content to fit in ZIP ExtraField");
+        }
+        else
+        {
+            const uint16_t nHeaderIdLE = CPL_LSBWORD16(0x7075);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nHeaderIdLE),
+                            reinterpret_cast<const GByte *>(&nHeaderIdLE) + 2);
+            const uint16_t nDataLengthLE =
+                CPL_LSBWORD16(static_cast<uint16_t>(nDataLength));
+            abyExtra.insert(
+                abyExtra.end(), reinterpret_cast<const GByte *>(&nDataLengthLE),
+                reinterpret_cast<const GByte *>(&nDataLengthLE) + 2);
+            const GByte nVersion = 1;
+            abyExtra.push_back(nVersion);
+            const uint32_t nNameCRC32 = static_cast<uint32_t>(
+                crc32(0, reinterpret_cast<const Bytef *>(pszCPFilename),
+                      static_cast<uInt>(strlen(pszCPFilename))));
+            const uint32_t nNameCRC32LE = CPL_LSBWORD32(nNameCRC32);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nNameCRC32LE),
+                            reinterpret_cast<const GByte *>(&nNameCRC32LE) + 4);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(pszFilename),
+                            reinterpret_cast<const GByte *>(pszFilename) +
+                                strlen(pszFilename));
+        }
     }
     else
     {
         pszCPFilename = CPLStrdup(pszFilename);
     }
 
-    const int nErr = cpl_zipOpenNewFileInZip(
-        psZip->hZip, pszCPFilename, nullptr, pabyExtra, nExtraLength, pabyExtra,
-        nExtraLength, "", bCompressed ? Z_DEFLATED : 0,
-        bCompressed ? Z_DEFAULT_COMPRESSION : 0);
+    const char *pszContentType =
+        CSLFetchNameValue(papszOptions, "CONTENT_TYPE");
+    if (pszContentType)
+    {
+        const size_t nDataLength = strlen("KeyValuePairs") + sizeof(GByte) +
+                                   sizeof(uint16_t) + strlen("Content-Type") +
+                                   sizeof(uint16_t) + strlen(pszContentType);
+        if (abyExtra.size() + 2 * sizeof(uint16_t) + nDataLength >
+            std::numeric_limits<uint16_t>::max())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Too much content to fit in ZIP ExtraField");
+        }
+        else
+        {
+            abyExtra.push_back(GByte('K'));
+            abyExtra.push_back(GByte('V'));
+            const uint16_t nDataLengthLE =
+                CPL_LSBWORD16(static_cast<uint16_t>(nDataLength));
+            abyExtra.insert(
+                abyExtra.end(), reinterpret_cast<const GByte *>(&nDataLengthLE),
+                reinterpret_cast<const GByte *>(&nDataLengthLE) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>("KeyValuePairs"),
+                            reinterpret_cast<const GByte *>("KeyValuePairs") +
+                                strlen("KeyValuePairs"));
+            abyExtra.push_back(1);  // number of key/value pairs
+            const uint16_t nKeyLen =
+                CPL_LSBWORD16(static_cast<uint16_t>(strlen("Content-Type")));
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nKeyLen),
+                            reinterpret_cast<const GByte *>(&nKeyLen) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>("Content-Type"),
+                            reinterpret_cast<const GByte *>("Content-Type") +
+                                strlen("Content-Type"));
+            const uint16_t nValLen =
+                CPL_LSBWORD16(static_cast<uint16_t>(strlen(pszContentType)));
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(&nValLen),
+                            reinterpret_cast<const GByte *>(&nValLen) + 2);
+            abyExtra.insert(abyExtra.end(),
+                            reinterpret_cast<const GByte *>(pszContentType),
+                            reinterpret_cast<const GByte *>(
+                                pszContentType + strlen(pszContentType)));
+        }
+    }
 
-    CPLFree(pabyExtra);
+    const bool bIncludeInCentralDirectory = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "INCLUDE_IN_CENTRAL_DIRECTORY", "YES"));
+    const bool bZip64 = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "ZIP64", CPLGetConfigOption("CPL_CREATE_ZIP64", "ON")));
+
+    // Set datetime to write
+    zip_fileinfo fileinfo;
+    memset(&fileinfo, 0, sizeof(fileinfo));
+    const char *pszTimeStamp =
+        CSLFetchNameValueDef(papszOptions, "TIMESTAMP", "NOW");
+    GIntBig unixTime =
+        EQUAL(pszTimeStamp, "NOW")
+            ? time(nullptr)
+            : static_cast<GIntBig>(std::strtoll(pszTimeStamp, nullptr, 10));
+    struct tm brokenDown;
+    CPLUnixTimeToYMDHMS(unixTime, &brokenDown);
+    fileinfo.tmz_date.tm_year = brokenDown.tm_year;
+    fileinfo.tmz_date.tm_mon = brokenDown.tm_mon;
+    fileinfo.tmz_date.tm_mday = brokenDown.tm_mday;
+    fileinfo.tmz_date.tm_hour = brokenDown.tm_hour;
+    fileinfo.tmz_date.tm_min = brokenDown.tm_min;
+    fileinfo.tmz_date.tm_sec = brokenDown.tm_sec;
+
+    const int nErr = cpl_zipOpenNewFileInZip3(
+        psZip->hZip, pszCPFilename, &fileinfo,
+        abyExtra.empty() ? nullptr : abyExtra.data(),
+        static_cast<uInt>(abyExtra.size()),
+        abyExtra.empty() ? nullptr : abyExtra.data(),
+        static_cast<uInt>(abyExtra.size()), "", bCompressed ? Z_DEFLATED : 0,
+        bCompressed ? Z_DEFAULT_COMPRESSION : 0,
+        /* raw = */ 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
+        /* password = */ nullptr,
+        /* crcForCtypting = */ 0, bZip64, bIncludeInCentralDirectory);
+
     CPLFree(pszCPFilename);
 
     if (nErr != ZIP_OK)
         return CE_Failure;
 
-    psZip->papszFilenames = CSLAddString(psZip->papszFilenames, pszFilename);
+    if (bIncludeInCentralDirectory)
+        psZip->papszFilenames =
+            CSLAddString(psZip->papszFilenames, pszFilename);
+
     return CE_None;
 }
 
@@ -2137,6 +2268,297 @@ CPLErr CPLCloseFileInZip(void *hZip)
 
     if (nErr != ZIP_OK)
         return CE_Failure;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         CPLAddFileInZip()                            */
+/************************************************************************/
+
+/** Add a file inside a ZIP file opened/created with CPLCreateZip().
+ *
+ * This combines calls sto CPLCreateFileInZip(), CPLWriteFileInZip(),
+ * and CPLCloseFileInZip() in a more convenient and powerful way.
+ *
+ * In particular, this enables to add a compressed file using the seek
+ * optimization extension.
+ *
+ * Supported options are:
+ * <ul>
+ * <li>SOZIP_ENABLED=AUTO/YES/NO: whether to generate a SOZip index for the
+ * file. The default can be changed with the CPL_SOZIP_ENABLED configuration
+ * option.</li>
+ * <li>SOZIP_CHUNK_SIZE: chunk size to use for SOZip generation. Defaults to
+ * 32768.
+ * </li>
+ * <li>SOZIP_MIN_FILE_SIZE: minimum file size to consider to enable SOZip index
+ * generation in SOZIP_ENABLED=AUTO mode. Defaults to 1 MB.
+ * </li>
+ * <li>NUM_THREADS: number of threads used for SOZip generation. Defaults to
+ * ALL_CPUS.</li>
+ * <li>TIMESTAMP=AUTO/NOW/timestamp_as_epoch_since_jan_1_1970: in AUTO mode,
+ * the timestamp of pszInputFilename will be used (if available), otherwise
+ * it will fallback to NOW.</li>
+ * <li>CONTENT_TYPE=string: Content-Type value for the file. This is stored as
+ * a key-value pair in the extra field extension 'KV' (0x564b) dedicated to
+ * storing key-value pair metadata.</li>
+ * </ul>
+ *
+ * @param hZip ZIP file handle
+ * @param pszArchiveFilename Filename (in UTF-8) stored in the archive.
+ * @param pszInputFilename Filename of the file to add. If NULL, fpInput must
+ * not be NULL
+ * @param fpInput File handle opened on the file to add. May be NULL if
+ * pszInputFilename is provided.
+ * @param papszOptions Options.
+ * @param pProgressFunc Progress callback, or NULL.
+ * @param pProgressData User data of progress callback, or NULL.
+ * @return CE_None in case of success.
+ *
+ * @since GDAL 3.7
+ */
+CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
+                       const char *pszInputFilename, VSILFILE *fpInput,
+                       CSLConstList papszOptions,
+                       GDALProgressFunc pProgressFunc, void *pProgressData)
+{
+    if (!hZip || !pszArchiveFilename || (!pszInputFilename && !fpInput))
+        return CE_Failure;
+
+    CPLZip *psZip = static_cast<CPLZip *>(hZip);
+    zip64_internal *zi = reinterpret_cast<zip64_internal *>(psZip->hZip);
+
+    std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
+    if (!fpInput)
+    {
+        fpInput = VSIFOpenL(pszInputFilename, "rb");
+        if (!fpInput)
+            return CE_Failure;
+        poFileHandleAutoClose.reset(
+            reinterpret_cast<VSIVirtualHandle *>(fpInput));
+    }
+
+    VSIFSeekL(fpInput, 0, SEEK_END);
+    const auto nUncompressedSize = VSIFTellL(fpInput);
+    VSIFSeekL(fpInput, 0, SEEK_SET);
+
+    CPLStringList aosNewsOptions(papszOptions);
+    bool bSeekOptimized = false;
+    const char *pszSOZIP =
+        CSLFetchNameValueDef(papszOptions, "SOZIP_ENABLED",
+                             CPLGetConfigOption("CPL_SOZIP_ENABLED", "AUTO"));
+
+    const char *pszChunkSize = CSLFetchNameValueDef(
+        papszOptions, "SOZIP_CHUNK_SIZE",
+        CPLGetConfigOption("CPL_VSIL_DEFLATE_CHUNK_SIZE", nullptr));
+    const bool bChunkSizeSpecified = pszChunkSize != nullptr;
+    if (!pszChunkSize)
+        pszChunkSize = "1024K";
+    unsigned nChunkSize = static_cast<unsigned>(atoi(pszChunkSize));
+    if (strchr(pszChunkSize, 'K'))
+        nChunkSize *= 1024;
+    else if (strchr(pszChunkSize, 'M'))
+        nChunkSize *= 1024 * 1024;
+    nChunkSize =
+        std::max(static_cast<unsigned>(1),
+                 std::min(static_cast<unsigned>(UINT_MAX), nChunkSize));
+
+    const char *pszMinFileSize = CSLFetchNameValueDef(
+        papszOptions, "SOZIP_MIN_FILE_SIZE",
+        CPLGetConfigOption("CPL_SOZIP_MIN_FILE_SIZE", "1M"));
+    uint64_t nSOZipMinFileSize = std::strtoull(pszMinFileSize, nullptr, 10);
+    if (strchr(pszMinFileSize, 'K'))
+        nSOZipMinFileSize *= 1024;
+    else if (strchr(pszMinFileSize, 'M'))
+        nSOZipMinFileSize *= 1024 * 1024;
+    else if (strchr(pszMinFileSize, 'G'))
+        nSOZipMinFileSize *= 1024 * 1024 * 1024;
+
+    std::vector<uint8_t> sozip_index;
+    uint64_t nExpectedIndexSize = 0;
+    constexpr unsigned nDefaultSOZipChunkSize = 32 * 1024;
+    constexpr size_t nOffsetSize = 8;
+    if (((EQUAL(pszSOZIP, "AUTO") && nUncompressedSize > nSOZipMinFileSize) ||
+         (!EQUAL(pszSOZIP, "AUTO") && CPLTestBool(pszSOZIP))) &&
+        ((bChunkSizeSpecified &&
+          nUncompressedSize > static_cast<unsigned>(nChunkSize)) ||
+         (!bChunkSizeSpecified && nUncompressedSize > nDefaultSOZipChunkSize)))
+    {
+        if (!bChunkSizeSpecified)
+            nChunkSize = nDefaultSOZipChunkSize;
+
+        bSeekOptimized = true;
+
+        aosNewsOptions.SetNameValue(
+            "UNCOMPRESSED_SIZE", CPLSPrintf(CPL_FRMT_GUIB, nUncompressedSize));
+
+        zi->nOffsetSize = nOffsetSize;
+        nExpectedIndexSize =
+            32 + ((nUncompressedSize - 1) / nChunkSize) * nOffsetSize;
+        if (nExpectedIndexSize >
+            static_cast<uint64_t>(std::numeric_limits<int>::max()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big file w.r.t CHUNK_SIZE");
+            return CE_Failure;
+        }
+        try
+        {
+            sozip_index.reserve(static_cast<size_t>(nExpectedIndexSize));
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate memory for SOZip index");
+            return CE_Failure;
+        }
+        sozip_index.resize(32);
+        uint32_t nVal32;
+        // Version
+        nVal32 = CPL_LSBWORD32(1);
+        memcpy(sozip_index.data(), &nVal32, sizeof(nVal32));
+        // Extra reserved space after 32 bytes of header
+        nVal32 = CPL_LSBWORD32(0);
+        memcpy(sozip_index.data() + 4, &nVal32, sizeof(nVal32));
+        // Chunksize
+        nVal32 = CPL_LSBWORD32(nChunkSize);
+        memcpy(sozip_index.data() + 8, &nVal32, sizeof(nVal32));
+        // SOZIPIndexEltSize
+        nVal32 = CPL_LSBWORD32(static_cast<uint32_t>(nOffsetSize));
+        memcpy(sozip_index.data() + 12, &nVal32, sizeof(nVal32));
+        // Uncompressed size
+        uint64_t nVal64 = nUncompressedSize;
+        CPL_LSBPTR64(&nVal64);
+        memcpy(sozip_index.data() + 16, &nVal64, sizeof(nVal64));
+        zi->sozip_index = &sozip_index;
+
+        zi->nChunkSize = nChunkSize;
+
+        const char *pszThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
+        if (pszThreads == nullptr || EQUAL(pszThreads, "ALL_CPUS"))
+            zi->nThreads = CPLGetNumCPUs();
+        else
+            zi->nThreads = atoi(pszThreads);
+        zi->nThreads = std::max(1, std::min(128, zi->nThreads));
+    }
+
+    aosNewsOptions.SetNameValue("ZIP64",
+                                nUncompressedSize > 0xFFFFFFFFU ? "YES" : "NO");
+
+    if (pszInputFilename != nullptr &&
+        aosNewsOptions.FetchNameValue("TIMESTAMP") == nullptr)
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(pszInputFilename, &sStat) == 0 && sStat.st_mtime != 0)
+        {
+            aosNewsOptions.SetNameValue(
+                "TIMESTAMP",
+                CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(sStat.st_mtime)));
+        }
+    }
+
+    if (CPLCreateFileInZip(hZip, pszArchiveFilename, aosNewsOptions.List()) !=
+        CE_None)
+    {
+        zi->sozip_index = nullptr;
+        zi->nChunkSize = 0;
+        zi->nThreads = 0;
+        return CE_Failure;
+    }
+    zi->nChunkSize = 0;
+    zi->nThreads = 0;
+
+    constexpr int CHUNK_READ_MAX_SIZE = 1024 * 1024;
+    std::vector<GByte> abyChunk(CHUNK_READ_MAX_SIZE);
+    vsi_l_offset nOffset = 0;
+    while (true)
+    {
+        const int nRead = static_cast<int>(
+            VSIFReadL(abyChunk.data(), 1, abyChunk.size(), fpInput));
+        if (nRead > 0 &&
+            CPLWriteFileInZip(hZip, abyChunk.data(), nRead) != CE_None)
+        {
+            CPLCloseFileInZip(hZip);
+            zi->sozip_index = nullptr;
+            return CE_Failure;
+        }
+        nOffset += nRead;
+        if (pProgressFunc &&
+            !pProgressFunc(nUncompressedSize == 0
+                               ? 1.0
+                               : double(nOffset) / nUncompressedSize,
+                           nullptr, pProgressData))
+        {
+            CPLCloseFileInZip(hZip);
+            zi->sozip_index = nullptr;
+            return CE_Failure;
+        }
+        if (nRead < CHUNK_READ_MAX_SIZE)
+            break;
+    }
+
+    if (CPLCloseFileInZip(hZip) != CE_None)
+    {
+        zi->sozip_index = nullptr;
+        return CE_Failure;
+    }
+
+    if (bSeekOptimized && sozip_index.size() != nExpectedIndexSize)
+    {
+        // shouldn't happen
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "sozip_index.size() (=%u) != nExpectedIndexSize (=%u)",
+                 static_cast<unsigned>(sozip_index.size()),
+                 static_cast<unsigned>(nExpectedIndexSize));
+    }
+    else if (bSeekOptimized)
+    {
+        std::string osIdxName;
+        const char *pszLastSlash = strchr(pszArchiveFilename, '/');
+        if (pszLastSlash)
+        {
+            osIdxName.assign(pszArchiveFilename,
+                             pszLastSlash - pszArchiveFilename + 1);
+            osIdxName += '.';
+            osIdxName += pszLastSlash + 1;
+        }
+        else
+        {
+            osIdxName = '.';
+            osIdxName += pszArchiveFilename;
+        }
+        osIdxName += ".sozip.idx";
+
+        CPLStringList aosIndexOptions;
+        aosIndexOptions.SetNameValue("COMPRESSED", "NO");
+        aosIndexOptions.SetNameValue("ZIP64", "NO");
+        aosIndexOptions.SetNameValue("INCLUDE_IN_CENTRAL_DIRECTORY", "NO");
+        aosIndexOptions.SetNameValue(
+            "TIMESTAMP", aosNewsOptions.FetchNameValue("TIMESTAMP"));
+        if (CPLCreateFileInZip(hZip, osIdxName.c_str(),
+                               aosIndexOptions.List()) != CE_None)
+        {
+            zi->sozip_index = nullptr;
+            return CE_Failure;
+        }
+
+        if (CPLWriteFileInZip(hZip, sozip_index.data(),
+                              static_cast<int>(sozip_index.size())) != CE_None)
+        {
+            zi->sozip_index = nullptr;
+            CPLCloseFileInZip(hZip);
+            return CE_Failure;
+        }
+
+        zi->sozip_index = nullptr;
+        if (CPLCloseFileInZip(hZip) != CE_None)
+        {
+            return CE_Failure;
+        }
+    }
+
+    zi->sozip_index = nullptr;
 
     return CE_None;
 }

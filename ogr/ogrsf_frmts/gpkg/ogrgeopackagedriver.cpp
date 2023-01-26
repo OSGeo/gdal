@@ -38,6 +38,7 @@
 /************************************************************************/
 
 static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
+                                       std::string &osFilenameInGpkgZip,
                                        bool bEmitWarning)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:"))
@@ -51,6 +52,32 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         return TRUE;
     }
 #endif
+
+    // Try to recognize "foo.gpkg.zip"
+    const size_t nFilenameLen = strlen(poOpenInfo->pszFilename);
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) == 0 &&
+        nFilenameLen > strlen(".gpkg.zip") &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
+        EQUAL(poOpenInfo->pszFilename + nFilenameLen - strlen(".gpkg.zip"),
+              ".gpkg.zip"))
+    {
+        int nCountGpkg = 0;
+        const CPLStringList aosFiles(VSIReadDirEx(
+            (std::string("/vsizip/") + poOpenInfo->pszFilename).c_str(), 1000));
+        for (int i = 0; i < aosFiles.size(); ++i)
+        {
+            const size_t nLen = strlen(aosFiles[i]);
+            if (nLen > strlen(".gpkg") &&
+                EQUAL(aosFiles[i] + nLen - strlen(".gpkg"), ".gpkg"))
+            {
+                osFilenameInGpkgZip = aosFiles[i];
+                nCountGpkg++;
+                if (nCountGpkg == 2)
+                    return FALSE;
+            }
+        }
+        return nCountGpkg == 1;
+    }
 
     if (poOpenInfo->nHeaderBytes < 100 || poOpenInfo->pabyHeader == nullptr ||
         !STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
@@ -212,7 +239,8 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
 
 static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    return OGRGeoPackageDriverIdentify(poOpenInfo, false);
+    std::string osIgnored;
+    return OGRGeoPackageDriverIdentify(poOpenInfo, osIgnored, false);
 }
 
 /************************************************************************/
@@ -221,12 +249,13 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 static GDALDataset *OGRGeoPackageDriverOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (!OGRGeoPackageDriverIdentify(poOpenInfo, true))
+    std::string osFilenameInGpkgZip;
+    if (!OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true))
         return nullptr;
 
     GDALGeoPackageDataset *poDS = new GDALGeoPackageDataset();
 
-    if (!poDS->Open(poOpenInfo))
+    if (!poDS->Open(poOpenInfo, osFilenameInGpkgZip))
     {
         delete poDS;
         poDS = nullptr;
@@ -246,15 +275,27 @@ static GDALDataset *OGRGeoPackageDriverCreate(const char *pszFilename,
 {
     if (strcmp(pszFilename, ":memory:") != 0)
     {
-        const char *pszExt = CPLGetExtension(pszFilename);
-        const bool bIsRecognizedExtension =
-            EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
-        if (!bIsRecognizedExtension)
+        const size_t nFilenameLen = strlen(pszFilename);
+        if (nFilenameLen > strlen(".gpkg.zip") &&
+            !STARTS_WITH(pszFilename, "/vsizip/") &&
+            EQUAL(pszFilename + nFilenameLen - strlen(".gpkg.zip"),
+                  ".gpkg.zip"))
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "The filename extension should be 'gpkg' instead of '%s' "
-                     "to conform to the GPKG specification.",
-                     pszExt);
+            // do nothing
+        }
+        else
+        {
+            const char *pszExt = CPLGetExtension(pszFilename);
+            const bool bIsRecognizedExtension =
+                EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
+            if (!bIsRecognizedExtension)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "The filename extension should be 'gpkg' instead of '%s' "
+                    "to conform to the GPKG specification.",
+                    pszExt);
+            }
         }
     }
 
@@ -465,7 +506,7 @@ void RegisterOGRGeoPackage()
                               "NATIVE OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GeoPackage");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gpkg");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gpkg gpkg.zip");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/gpkg.html");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte Int16 UInt16 Float32");

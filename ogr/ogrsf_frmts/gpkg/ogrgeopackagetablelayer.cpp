@@ -7389,7 +7389,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             task->m_iStartShapeId =
                 iNextShapeId + static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
             task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
-            if (!task->m_poDS->Open(&oOpenInfo))
+            if (!task->m_poDS->Open(&oOpenInfo, m_poDS->m_osFilenameInZip))
             {
                 break;
             }

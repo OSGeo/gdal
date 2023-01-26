@@ -139,3 +139,16 @@ Geographic network programs
 
     - :ref:`gnmmanage`: Manages networks
     - :ref:`gnmanalyse`: Analyses networks
+
+Other utilities
+---------------
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   sozip
+
+.. only:: html
+
+    - :ref:`sozip`: Generate a seek-optimized ZIP (SOZip) file

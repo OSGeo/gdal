@@ -2446,6 +2446,10 @@ def AbortPendingUploads(*args) -> "bool":
     r"""AbortPendingUploads(char const * utf8_path) -> bool"""
     return _gdal.AbortPendingUploads(*args)
 
+def CopyFile(*args, **kwargs) -> "int":
+    r"""CopyFile(char const * pszSource, char const * pszTarget, VSILFILE fpSource=None, GIntBig nSourceSize=-1, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
+    return _gdal.CopyFile(*args, **kwargs)
+
 def GetActualURL(*args) -> "char const *":
     r"""GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)

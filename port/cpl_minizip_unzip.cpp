@@ -914,6 +914,7 @@ static int unzlocal_GetCurrentFileInfoInternal(
         }
 
         uLong acc = 0;
+        file_info.file_extra_abs_offset = ZTELL(s->z_filefunc, s->filestream);
         while (acc < file_info.size_file_extra)
         {
             uLong headerId;
@@ -1580,6 +1581,119 @@ extern uLong64 ZEXPORT cpl_unzGetCurrentFileZStreamPos(unzFile file)
         return 0;  // UNZ_PARAMERROR;
     return pfile_in_zip_read_info->pos_in_zipfile +
            pfile_in_zip_read_info->byte_before_the_zipfile;
+}
+
+extern int cpl_unzGetLocalHeaderPos(unzFile file, uLong64 *pos_local_header)
+{
+    unz_s *s;
+
+    if (file == nullptr)
+        return UNZ_PARAMERROR;
+    s = reinterpret_cast<unz_s *>(file);
+    *pos_local_header = s->cur_file_info_internal.offset_curfile;
+    return UNZ_OK;
+}
+
+extern int cpl_unzCurrentFileInfoFromLocalHeader(
+    unzFile file, uLong64 pos_local_header, unz_file_info *pfile_info,
+    char *szFileName, size_t fileNameBufferSize, uLong64 *posData)
+{
+    int err = UNZ_OK;
+    uLong uMagic, uData, uFlags;
+    uLong size_filename;
+    uLong size_extra_field;
+    unz_s *s;
+
+    memset(pfile_info, 0, sizeof(*pfile_info));
+
+    if (!file)
+        return UNZ_PARAMERROR;
+    s = reinterpret_cast<unz_s *>(file);
+
+    if (ZSEEK(s->z_filefunc, s->filestream, pos_local_header,
+              ZLIB_FILEFUNC_SEEK_SET) != 0)
+        return UNZ_ERRNO;
+
+    if (err == UNZ_OK)
+    {
+        if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uMagic) != UNZ_OK)
+            err = UNZ_ERRNO;
+        else if (uMagic != 0x04034b50)
+            err = UNZ_BADZIPFILE;
+    }
+
+    if (unzlocal_getShort(&s->z_filefunc, s->filestream, &uData) != UNZ_OK)
+        err = UNZ_ERRNO;
+
+    if (unzlocal_getShort(&s->z_filefunc, s->filestream, &uFlags) != UNZ_OK)
+        err = UNZ_ERRNO;
+
+    if (unzlocal_getShort(&s->z_filefunc, s->filestream, &uData) != UNZ_OK)
+        err = UNZ_ERRNO;
+    else
+        pfile_info->compression_method = uData;
+
+    if ((err == UNZ_OK) && (pfile_info->compression_method != 0) &&
+        (pfile_info->compression_method != Z_DEFLATED))
+    {
+#ifdef ENABLE_DEFLATE64
+        if (pfile_info->compression_method == 9)
+        {
+            // ok
+        }
+        else
+#endif
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "A file in the ZIP archive uses a unsupported "
+                     "compression method (%lu)",
+                     pfile_info->compression_method);
+            err = UNZ_BADZIPFILE;
+        }
+    }
+
+    if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uData) !=
+        UNZ_OK) /* date/time */
+        err = UNZ_ERRNO;
+
+    if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uData) !=
+        UNZ_OK) /* crc */
+        err = UNZ_ERRNO;
+
+    if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uData) !=
+        UNZ_OK) /* size compr */
+        err = UNZ_ERRNO;
+    else
+        pfile_info->compressed_size = uData;
+
+    if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uData) !=
+        UNZ_OK) /* size uncompr */
+        err = UNZ_ERRNO;
+    else
+        pfile_info->uncompressed_size = uData;
+
+    if (unzlocal_getShort(&s->z_filefunc, s->filestream, &size_filename) !=
+        UNZ_OK)
+        err = UNZ_ERRNO;
+
+    if (unzlocal_getShort(&s->z_filefunc, s->filestream, &size_extra_field) !=
+        UNZ_OK)
+        err = UNZ_ERRNO;
+
+    if (posData)
+    {
+        *posData = pos_local_header + SIZEZIPLOCALHEADER + size_filename +
+                   size_extra_field;
+    }
+
+    if (size_filename <= fileNameBufferSize && szFileName)
+    {
+        if (ZREAD(s->z_filefunc, s->filestream, szFileName, size_filename) !=
+            size_filename)
+            err = UNZ_ERRNO;
+    }
+
+    return err;
 }
 
 /** Addition for GDAL : END */

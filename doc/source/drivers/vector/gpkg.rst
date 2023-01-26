@@ -458,6 +458,21 @@ Level of support of GeoPackage Extensions
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
 
+Compressed files
+----------------
+
+Starting with GDAL 3.7, the driver can also support reading and creating
+.gpkg.zip files containing one .gpkg file.
+
+On large files, good read performance can only be achieved if the file inside
+the .zip is not compressed or compressed using the `SOZip <https://sozip.org>`__
+optimization.
+
+Update of an existing file is not supported.
+
+Creation involves the creation of a temporary file. Sufficiently large files
+will be automatically compressed using the SOZip optimization.
+
 .. _target_drivers_vector_gpkg_performance_hints:
 
 Performance hints

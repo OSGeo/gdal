@@ -3599,11 +3599,11 @@ static CPLString ComputeMD5OfLocalFile(VSILFILE *fp)
 /*                           CopyFile()                                 */
 /************************************************************************/
 
-bool IVSIS3LikeFSHandler::CopyFile(VSILFILE *fpIn, vsi_l_offset nSourceSize,
-                                   const char *pszSource, const char *pszTarget,
-                                   CSLConstList papszOptions,
-                                   GDALProgressFunc pProgressFunc,
-                                   void *pProgressData)
+int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
+                                  VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                  CSLConstList papszOptions,
+                                  GDALProgressFunc pProgressFunc,
+                                  void *pProgressData)
 {
     CPLString osMsg;
     osMsg.Printf("Copying of %s", pszSource);
@@ -3619,10 +3619,11 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE *fpIn, vsi_l_offset nSourceSize,
         {
             bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;
         }
-        return bRet;
+        return bRet ? 0 : -1;
     }
 
-    if (fpIn == nullptr)
+    std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
+    if (!fpSource)
     {
         if (STARTS_WITH(pszSource, osPrefix))
         {
@@ -3635,63 +3636,27 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE *fpIn, vsi_l_offset nSourceSize,
                     poSourceFSHandler->GetStreamingFilename(pszSource);
                 if (!osStreamingPath.empty())
                 {
-                    fpIn = VSIFOpenExL(osStreamingPath, "rb", TRUE);
+                    fpSource = VSIFOpenExL(osStreamingPath, "rb", TRUE);
                 }
             }
         }
-        if (fpIn == nullptr)
+        if (!fpSource)
         {
-            fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
+            fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
         }
-    }
-    if (fpIn == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
-        return false;
+        if (!fpSource)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
+            return false;
+        }
+
+        poFileHandleAutoClose.reset(
+            reinterpret_cast<VSIVirtualHandle *>(fpSource));
     }
 
-    VSILFILE *fpOut = VSIFOpenEx2L(pszTarget, "wb", TRUE, papszOptions);
-    if (fpOut == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszTarget);
-        VSIFCloseL(fpIn);
-        return false;
-    }
-
-    bool ret = true;
-    constexpr size_t nBufferSize = 10 * 4096;
-    std::vector<GByte> abyBuffer(nBufferSize, 0);
-    GUIntBig nOffset = 0;
-    while (true)
-    {
-        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpIn);
-        size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
-        if (nWritten != nRead)
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Copying of %s to %s failed",
-                     pszSource, pszTarget);
-            ret = false;
-            break;
-        }
-        nOffset += nRead;
-        if (pProgressFunc && !pProgressFunc(double(nOffset) / nSourceSize,
-                                            osMsg.c_str(), pProgressData))
-        {
-            ret = false;
-            break;
-        }
-        if (nRead < nBufferSize)
-        {
-            break;
-        }
-    }
-
-    VSIFCloseL(fpIn);
-    if (VSIFCloseL(fpOut) != 0)
-    {
-        ret = false;
-    }
-    return ret;
+    return VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                          nSourceSize, papszOptions,
+                                          pProgressFunc, pProgressData);
 }
 
 /************************************************************************/
@@ -4296,9 +4261,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     double(nAccSize) / nTotalSize,
                     double(nAccSize + chunk.nSize) / nTotalSize, pProgressFunc,
                     pProgressData);
-                ret = CopyFile(nullptr, chunk.nSize, osSubSource, osSubTarget,
+                ret = CopyFile(osSubSource, osSubTarget, nullptr, chunk.nSize,
                                aosObjectCreationOptions.List(),
-                               GDALScaledProgress, pScaledProgress);
+                               GDALScaledProgress, pScaledProgress) == 0;
                 GDALDestroyScaledProgress(pScaledProgress);
                 if (!ret)
                 {
@@ -4458,9 +4423,15 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                       static_cast<int>(anIndexToCopy.size()));
         if (nThreads <= nMinThreads)
         {
-            return CopyFile(fpIn, sSource.st_size, osSourceWithoutSlash,
-                            osTarget, aosObjectCreationOptions.List(),
-                            pProgressFunc, pProgressData);
+            bool bRet =
+                CopyFile(osSourceWithoutSlash, osTarget, fpIn, sSource.st_size,
+                         aosObjectCreationOptions.List(), pProgressFunc,
+                         pProgressData) == 0;
+            if (fpIn)
+            {
+                VSIFCloseL(fpIn);
+            }
+            return bRet;
         }
         if (fpIn)
         {
@@ -4635,10 +4606,10 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             else
             {
                 CPLAssert(chunk.nStartOffset == 0);
-                if (!queue->poFS->CopyFile(
-                        nullptr, chunk.nTotalSize, osSubSource, osSubTarget,
+                if (queue->poFS->CopyFile(
+                        osSubSource, osSubTarget, nullptr, chunk.nTotalSize,
                         queue->aosObjectCreationOptions.List(),
-                        ProgressData::progressFunc, &progressData))
+                        ProgressData::progressFunc, &progressData) != 0)
                 {
                     queue->ret = false;
                     queue->stop = true;

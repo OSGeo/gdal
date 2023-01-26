@@ -78,6 +78,12 @@ std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
     {
         osExt = "shp.zip";
     }
+    else if (EQUAL(osExt, "zip") &&
+             (CPLString(pszDestFilename).endsWith(".gpkg.zip") ||
+              CPLString(pszDestFilename).endsWith(".GPKG.ZIP")))
+    {
+        osExt = "gpkg.zip";
+    }
     const int nDriverCount = GDALGetDriverCount();
     for (int i = 0; i < nDriverCount; i++)
     {

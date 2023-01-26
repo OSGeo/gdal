@@ -75,6 +75,9 @@ if (BUILD_APPS)
   add_executable(nearblack nearblack_bin.cpp)
   add_executable(gdalmdiminfo gdalmdiminfo_bin.cpp)
   add_executable(gdalmdimtranslate gdalmdimtranslate_bin.cpp)
+
+  add_executable(sozip sozip.cpp)
+
   set(APPS_TARGETS
       gdalinfo
       gdalbuildvrt
@@ -99,7 +102,8 @@ if (BUILD_APPS)
       ogrinfo
       ogr2ogr
       gdalmdiminfo
-      gdalmdimtranslate)
+      gdalmdimtranslate
+      sozip)
   if (ENABLE_GNM)
     add_executable(gnmanalyse gnmanalyse.cpp)
     add_executable(gnmmanage gnmmanage.cpp)
