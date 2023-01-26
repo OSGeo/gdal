@@ -110,6 +110,6 @@ def run_py_script_as_external_script(
         script_file_path = script_file_path.replace("\\", "/")
 
     return gdaltest.runexternal(
-        python_exe + " " + script_file_path + " " + concatenated_argv,
+        python_exe + ' "' + script_file_path + '" ' + concatenated_argv,
         display_live_on_parent_stdout=display_live_on_parent_stdout,
     )

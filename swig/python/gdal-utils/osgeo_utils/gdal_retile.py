@@ -31,7 +31,6 @@
 from __future__ import print_function
 
 import os
-import shutil
 import sys
 
 from osgeo import gdal, ogr, osr
@@ -465,11 +464,33 @@ def copyTileIndexToCSV(g, OGRDS, fileName):
     csvfile.close()
 
 
+def _createTempFileName(filename):
+
+    if os.sep != "/":
+        filename = filename.replace(os.sep, "/")
+    pos = filename.rfind("/")
+    if pos < 0:
+        return "tmp_" + filename
+    return filename[0 : pos + 1] + "tmp_" + filename[pos + 1 :]
+
+
+def _renameDataset(g, oldName, newName):
+
+    if os.path.exists(newName):
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        g.Driver.Delete(newName)
+        gdal.PopErrorHandler()
+        # if the above didn't work, use plain OS remove()
+        if os.path.exists(newName):
+            os.remove(newName)
+    g.Driver.Rename(newName, oldName)
+
+
 def createPyramidTile(
     g, levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only
 ):
 
-    temp_tilename = tileName + ".tmp"
+    temp_tilename = _createTempFileName(tileName)
 
     sx = levelMosaicInfo.scaleX * 2
     sy = levelMosaicInfo.scaleY * 2
@@ -546,9 +567,7 @@ def createPyramidTile(
 
     t_fh = None
 
-    if os.path.exists(tileName):
-        os.remove(tileName)
-    shutil.move(temp_tilename, tileName)
+    _renameDataset(g, temp_tilename, tileName)
 
     if g.Verbose:
         print(
@@ -572,7 +591,7 @@ def createTile(
     Create tile
 
     """
-    temp_tilename = tilename + ".tmp"
+    temp_tilename = _createTempFileName(tilename)
 
     if g.BandType is None:
         bt = minfo.band_type
@@ -649,9 +668,7 @@ def createTile(
 
     t_fh = None
 
-    if os.path.exists(tilename):
-        os.remove(tilename)
-    shutil.move(temp_tilename, tilename)
+    _renameDataset(g, temp_tilename, tilename)
 
     if g.Verbose:
         print(
