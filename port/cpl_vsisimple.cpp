@@ -1373,6 +1373,39 @@ GIntBig CPLGetPhysicalRAM(void)
     GIntBig nVal = static_cast<GIntBig>(nPhysPages) * nPageSize;
 
 #ifdef __linux
+    {
+        // Take into account MemTotal in /proc/meminfo
+        // which seems to be necessary for some container solutions
+        // Cf https://lists.osgeo.org/pipermail/gdal-dev/2023-January/056784.html
+        FILE *f = fopen("/proc/meminfo", "rb");
+        char szLine[256];
+        while (fgets(szLine, sizeof(szLine), f))
+        {
+            // Find line like "MemTotal:       32525176 kB"
+            if (strncmp(szLine, "MemTotal:", strlen("MemTotal:")) == 0)
+            {
+                char *pszVal = szLine + strlen("MemTotal:");
+                pszVal += strspn(pszVal, " ");
+                char *pszEnd = strstr(pszVal, " kB");
+                if (pszEnd)
+                {
+                    *pszEnd = 0;
+                    if (CPLGetValueType(pszVal) == CPL_VALUE_INTEGER)
+                    {
+                        const GUIntBig nLimit =
+                            CPLScanUIntBig(pszVal,
+                                           static_cast<int>(strlen(pszVal))) *
+                            1024;
+                        nVal = static_cast<GIntBig>(
+                            std::min(static_cast<GUIntBig>(nVal), nLimit));
+                    }
+                }
+                break;
+            }
+        }
+        fclose(f);
+    }
+
     char szGroupName[256];
     bool bFromMemory = false;
     szGroupName[0] = 0;
