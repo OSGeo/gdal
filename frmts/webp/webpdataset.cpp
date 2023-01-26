@@ -32,6 +32,8 @@
 
 #include "webp_headers.h"
 
+#include <limits>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                               WEBPDataset                            */
@@ -64,6 +66,16 @@ class WEBPDataset final : public GDALPamDataset
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
+    CPLStringList GetCompressionFormats(int nXOff, int nYOff, int nXSize,
+                                        int nYSize, int nBandCount,
+                                        const int *panBandList) override;
+    CPLErr ReadCompressedData(const char *pszFormat, int nXOff, int nYOff,
+                              int nXSize, int nYSize, int nBandCount,
+                              const int *panBandList, void **ppBuffer,
+                              size_t *pnBufferSize,
+                              char **ppszDetailedFormat) override;
+
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -376,6 +388,128 @@ CPLErr WEBPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
+/*                       GetCompressionFormats()                        */
+/************************************************************************/
+
+CPLStringList WEBPDataset::GetCompressionFormats(int nXOff, int nYOff,
+                                                 int nXSize, int nYSize,
+                                                 int nBandCount,
+                                                 const int *panBandList)
+{
+    CPLStringList aosRet;
+    if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
+        nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
+    {
+        aosRet.AddString("WEBP");
+    }
+    return aosRet;
+}
+
+/************************************************************************/
+/*                       ReadCompressedData()                           */
+/************************************************************************/
+
+CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
+                                       int nYOff, int nXSize, int nYSize,
+                                       int nBandCount, const int *panBandList,
+                                       void **ppBuffer, size_t *pnBufferSize,
+                                       char **ppszDetailedFormat)
+{
+    if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
+        nYSize == nRasterYSize && IsAllBands(nBandCount, panBandList))
+    {
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+        if (aosTokens.size() != 1)
+            return CE_Failure;
+
+        if (EQUAL(aosTokens[0], "WEBP"))
+        {
+            if (ppszDetailedFormat)
+                *ppszDetailedFormat = VSIStrdup("WEBP");
+            VSIFSeekL(fpImage, 0, SEEK_END);
+            const auto nFileSize = VSIFTellL(fpImage);
+            if (nFileSize > std::numeric_limits<uint32_t>::max())
+                return CE_Failure;
+            auto nSize = static_cast<uint32_t>(nFileSize);
+            if (ppBuffer)
+            {
+                if (!pnBufferSize)
+                    return CE_Failure;
+                bool bFreeOnError = false;
+                if (*ppBuffer)
+                {
+                    if (*pnBufferSize < nSize)
+                        return CE_Failure;
+                }
+                else
+                {
+                    *ppBuffer = VSI_MALLOC_VERBOSE(nSize);
+                    if (*ppBuffer == nullptr)
+                        return CE_Failure;
+                    bFreeOnError = true;
+                }
+                VSIFSeekL(fpImage, 0, SEEK_SET);
+                if (VSIFReadL(*ppBuffer, nSize, 1, fpImage) != 1)
+                {
+                    if (bFreeOnError)
+                    {
+                        VSIFree(*ppBuffer);
+                        *ppBuffer = nullptr;
+                    }
+                    return CE_Failure;
+                }
+
+                // Remove META box
+                if (nSize > 12 && memcmp(*ppBuffer, "RIFF", 4) == 0)
+                {
+                    size_t nPos = 12;
+                    GByte *pabyData = static_cast<GByte *>(*ppBuffer);
+                    while (nPos <= nSize - 8)
+                    {
+                        char szBoxName[5] = {0, 0, 0, 0, 0};
+                        memcpy(szBoxName, pabyData + nPos, 4);
+                        uint32_t nChunkSize;
+                        memcpy(&nChunkSize, pabyData + nPos + 4, 4);
+                        CPL_LSBPTR32(&nChunkSize);
+                        if (nChunkSize % 2)  // Payload padding if needed
+                            nChunkSize++;
+                        if (nChunkSize > nSize - (nPos + 8))
+                            break;
+                        if (memcmp(szBoxName, "META", 4) == 0)
+                        {
+                            CPLDebug("WEBP",
+                                     "Remove existing %s box from "
+                                     "source compressed data",
+                                     szBoxName);
+                            if (nPos + 8 + nChunkSize < nSize)
+                            {
+                                memmove(pabyData + nPos,
+                                        pabyData + nPos + 8 + nChunkSize,
+                                        nSize - (nPos + 8 + nChunkSize));
+                            }
+                            nSize -= 8 + nChunkSize;
+                        }
+                        else
+                        {
+                            nPos += 8 + nChunkSize;
+                        }
+                    }
+
+                    // Patch size of RIFF
+                    uint32_t nSize32 = nSize - 8;
+                    CPL_LSBPTR32(&nSize32);
+                    memcpy(pabyData + 4, &nSize32, 4);
+                }
+            }
+            if (pnBufferSize)
+                *pnBufferSize = nSize;
+            return CE_None;
+        }
+    }
+    return CE_Failure;
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -397,10 +531,10 @@ int WEBPDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                          OpenPAM()                                   */
 /************************************************************************/
 
-GDALDataset *WEBPDataset::Open(GDALOpenInfo *poOpenInfo)
+GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -478,6 +612,16 @@ GDALDataset *WEBPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                             Open()                                   */
+/************************************************************************/
+
+GDALDataset *WEBPDataset::Open(GDALOpenInfo *poOpenInfo)
+
+{
+    return OpenPAM(poOpenInfo);
+}
+
+/************************************************************************/
 /*                              WebPUserData                            */
 /************************************************************************/
 
@@ -526,6 +670,105 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
                                      void *pProgressData)
 
 {
+    const char *pszLossLessCopy =
+        CSLFetchNameValueDef(papszOptions, "LOSSLESS_COPY", "AUTO");
+    if (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy))
+    {
+        void *pWEBPContent = nullptr;
+        size_t nWEBPContent = 0;
+        if (poSrcDS->ReadCompressedData(
+                "WEBP", 0, 0, poSrcDS->GetRasterXSize(),
+                poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
+                &pWEBPContent, &nWEBPContent, nullptr) == CE_None)
+        {
+            CPLDebug("WEBP", "Lossless copy from source dataset");
+            std::vector<GByte> abyData;
+            try
+            {
+                abyData.assign(static_cast<const GByte *>(pWEBPContent),
+                               static_cast<const GByte *>(pWEBPContent) +
+                                   nWEBPContent);
+
+                char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+                if (papszXMP && papszXMP[0])
+                {
+                    GByte abyChunkHeader[8];
+                    memcpy(abyChunkHeader, "META", 4);
+                    const size_t nXMPSize = strlen(papszXMP[0]);
+                    uint32_t nChunkSize = static_cast<uint32_t>(nXMPSize);
+                    CPL_LSBPTR32(&nChunkSize);
+                    memcpy(abyChunkHeader + 4, &nChunkSize, 4);
+                    abyData.insert(abyData.end(), abyChunkHeader,
+                                   abyChunkHeader + sizeof(abyChunkHeader));
+                    abyData.insert(
+                        abyData.end(), reinterpret_cast<GByte *>(papszXMP[0]),
+                        reinterpret_cast<GByte *>(papszXMP[0]) + nXMPSize);
+                    if ((abyData.size() % 2) != 0)  // Payload padding if needed
+                        abyData.push_back(0);
+
+                    // Patch size of RIFF
+                    uint32_t nSize32 =
+                        static_cast<uint32_t>(abyData.size()) - 8;
+                    CPL_LSBPTR32(&nSize32);
+                    memcpy(abyData.data() + 4, &nSize32, 4);
+                }
+            }
+            catch (const std::exception &e)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Exception occurred: %s",
+                         e.what());
+                abyData.clear();
+            }
+            VSIFree(pWEBPContent);
+
+            if (!abyData.empty())
+            {
+                VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
+                if (fpImage == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "Unable to create jpeg file %s.", pszFilename);
+
+                    return nullptr;
+                }
+                if (VSIFWriteL(abyData.data(), 1, abyData.size(), fpImage) !=
+                    abyData.size())
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Failure writing data: %s", VSIStrerror(errno));
+                    VSIFCloseL(fpImage);
+                    return nullptr;
+                }
+                if (VSIFCloseL(fpImage) != 0)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Failure writing data: %s", VSIStrerror(errno));
+                    return nullptr;
+                }
+
+                pfnProgress(1.0, nullptr, pProgressData);
+
+                // Re-open file and clone missing info to PAM
+                GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+                auto poDS = OpenPAM(&oOpenInfo);
+                if (poDS)
+                {
+                    poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
+                }
+
+                return poDS;
+            }
+        }
+    }
+
+    const bool bLossless = CPLFetchBool(papszOptions, "LOSSLESS", false);
+    if (!bLossless &&
+        (!EQUAL(pszLossLessCopy, "AUTO") && CPLTestBool(pszLossLessCopy)))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LOSSLESS_COPY=YES requested but not possible");
+        return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      WEBP library initialization                                     */
@@ -676,7 +919,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     FETCH_AND_SET_OPTION_INT("PARTITION_LIMIT", partition_limit, 0, 100);
 #endif
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
-    sConfig.lossless = CPLFetchBool(papszOptions, "LOSSLESS", false);
+    sConfig.lossless = bLossless;
     if (sConfig.lossless)
         sPicture.use_argb = 1;
 #endif
@@ -843,7 +1086,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    auto poDS = cpl::down_cast<GDALPamDataset *>(WEBPDataset::Open(&oOpenInfo));
+    auto poDS = WEBPDataset::OpenPAM(&oOpenInfo);
     CPLPopErrorHandler();
     if (poDS)
     {
@@ -883,6 +1126,12 @@ void GDALRegister_WEBP()
         "   <Option name='LOSSLESS' type='boolean' description='Whether "
         "lossless compression should be used' default='FALSE'/>\n"
 #endif
+        "   <Option name='LOSSLESS_COPY' type='string-select' "
+        "description='Whether conversion should be lossless' default='AUTO'>"
+        "     <Value>AUTO</Value>"
+        "     <Value>YES</Value>"
+        "     <Value>NO</Value>"
+        "   </Option>"
         "   <Option name='PRESET' type='string-select' description='kind of "
         "image' default='DEFAULT'>\n"
         "       <Value>DEFAULT</Value>\n"

@@ -2210,4 +2210,103 @@ CPLErr VRTDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     return eErr;
 }
 
+/************************************************************************/
+/*                         GetShiftedDataset()                          */
+/*                                                                      */
+/* Returns true if the VRT is made of a single source that is a simple  */
+/* in its full resolution.                                              */
+/************************************************************************/
+
+bool VRTDataset::GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
+                                   GDALDataset *&poSrcDataset, int &nSrcXOff,
+                                   int &nSrcYOff)
+{
+    if (!CheckCompatibleForDatasetIO())
+        return false;
+
+    VRTSourcedRasterBand *poVRTBand =
+        static_cast<VRTSourcedRasterBand *>(papoBands[0]);
+    if (poVRTBand->nSources != 1)
+        return false;
+
+    VRTSimpleSource *poSource =
+        static_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
+
+    GDALRasterBand *poBand = poSource->GetRasterBand();
+    if (!poBand || poSource->GetMaskBandMainBand())
+        return false;
+
+    poSrcDataset = poBand->GetDataset();
+    if (!poSrcDataset)
+        return false;
+
+    double dfReqXOff = 0.0;
+    double dfReqYOff = 0.0;
+    double dfReqXSize = 0.0;
+    double dfReqYSize = 0.0;
+    int nReqXOff = 0;
+    int nReqYOff = 0;
+    int nReqXSize = 0;
+    int nReqYSize = 0;
+    int nOutXOff = 0;
+    int nOutYOff = 0;
+    int nOutXSize = 0;
+    int nOutYSize = 0;
+    bool bError = false;
+    if (!poSource->GetSrcDstWindow(nXOff, nYOff, nXSize, nYSize, nXSize, nYSize,
+                                   &dfReqXOff, &dfReqYOff, &dfReqXSize,
+                                   &dfReqYSize, &nReqXOff, &nReqYOff,
+                                   &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                                   &nOutXSize, &nOutYSize, bError))
+        return false;
+
+    if (nReqXSize != nXSize || nReqYSize != nYSize || nReqXSize != nOutXSize ||
+        nReqYSize != nOutYSize)
+        return false;
+
+    nSrcXOff = nReqXOff;
+    nSrcYOff = nReqYOff;
+    return true;
+}
+
+/************************************************************************/
+/*                       GetCompressionFormats()                        */
+/************************************************************************/
+
+CPLStringList VRTDataset::GetCompressionFormats(int nXOff, int nYOff,
+                                                int nXSize, int nYSize,
+                                                int nBandCount,
+                                                const int *panBandList)
+{
+    GDALDataset *poSrcDataset;
+    int nSrcXOff;
+    int nSrcYOff;
+    if (!GetShiftedDataset(nXOff, nYOff, nXSize, nYSize, poSrcDataset, nSrcXOff,
+                           nSrcYOff))
+        return CPLStringList();
+    return poSrcDataset->GetCompressionFormats(nSrcXOff, nSrcYOff, nXSize,
+                                               nYSize, nBandCount, panBandList);
+}
+
+/************************************************************************/
+/*                       ReadCompressedData()                           */
+/************************************************************************/
+
+CPLErr VRTDataset::ReadCompressedData(const char *pszFormat, int nXOff,
+                                      int nYOff, int nXSize, int nYSize,
+                                      int nBandCount, const int *panBandList,
+                                      void **ppBuffer, size_t *pnBufferSize,
+                                      char **ppszDetailedFormat)
+{
+    GDALDataset *poSrcDataset;
+    int nSrcXOff;
+    int nSrcYOff;
+    if (!GetShiftedDataset(nXOff, nYOff, nXSize, nYSize, poSrcDataset, nSrcXOff,
+                           nSrcYOff))
+        return CE_Failure;
+    return poSrcDataset->ReadCompressedData(
+        pszFormat, nSrcXOff, nSrcYOff, nXSize, nYSize, nBandCount, panBandList,
+        ppBuffer, pnBufferSize, ppszDetailedFormat);
+}
+
 /*! @endcond */

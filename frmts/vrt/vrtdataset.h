@@ -214,6 +214,10 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     static GDALDataset *OpenVRTProtocol(const char *pszSpec);
     bool AddVirtualOverview(int nOvFactor, const char *pszResampling);
 
+    bool GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
+                           GDALDataset *&poSrcDataset, int &nSrcXOff,
+                           int &nSrcYOff);
+
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
   protected:
@@ -280,6 +284,15 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
+
+    virtual CPLStringList
+    GetCompressionFormats(int nXOff, int nYOff, int nXSize, int nYSize,
+                          int nBandCount, const int *panBandList) override;
+    virtual CPLErr ReadCompressedData(const char *pszFormat, int nXOff,
+                                      int nYOff, int nXSize, int nYSize,
+                                      int nBandCount, const int *panBandList,
+                                      void **ppBuffer, size_t *pnBufferSize,
+                                      char **ppszDetailedFormat) override;
 
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize, GDALDataType eDT,

@@ -332,6 +332,12 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     if (!bCompatibleInterleave)
         return FALSE;
 
+    // We don't want to apply lossy JPEG on a source using lossless JPEG !
+    const char *pszReversibility = poSrcDS->GetMetadataItem(
+        "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+    if (pszReversibility && EQUAL(pszReversibility, "LOSSLESS"))
+        return FALSE;
+
     if ((nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
         (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
         poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
@@ -430,8 +436,24 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF *hTIFF, GDALDataset *poSrcDS)
     struct jpeg_error_mgr sJErr;
     struct jpeg_decompress_struct sDInfo;
     jmp_buf setjmp_buffer;
+
+    volatile bool bCallDestroyDecompress = false;
+    volatile bool bCallDestroyCompress = false;
+
+    struct jpeg_compress_struct sCInfo;
+
     if (setjmp(setjmp_buffer))
     {
+        if (bCallDestroyCompress)
+        {
+            jpeg_abort_compress(&sCInfo);
+            jpeg_destroy_compress(&sCInfo);
+        }
+        if (bCallDestroyDecompress)
+        {
+            jpeg_abort_decompress(&sDInfo);
+            jpeg_destroy_decompress(&sDInfo);
+        }
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpJPEG));
         return CE_Failure;
     }
@@ -440,22 +462,24 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF *hTIFF, GDALDataset *poSrcDS)
     sJErr.error_exit = GTIFF_ErrorExitJPEG;
     sDInfo.client_data = &setjmp_buffer;
 
+    bCallDestroyDecompress = true;
     jpeg_create_decompress(&sDInfo);
 
     jpeg_vsiio_src(&sDInfo, fpJPEG);
     jpeg_read_header(&sDInfo, TRUE);
-
-    struct jpeg_compress_struct sCInfo;
 
     sCInfo.err = jpeg_std_error(&sJErr);
     sJErr.error_exit = GTIFF_ErrorExitJPEG;
     sCInfo.client_data = &setjmp_buffer;
 
     jpeg_create_compress(&sCInfo);
+    bCallDestroyCompress = true;
     jpeg_copy_critical_parameters(&sDInfo, &sCInfo);
     GTIFF_Set_TIFFTAG_JPEGTABLES(hTIFF, sDInfo, sCInfo);
+    bCallDestroyCompress = false;
     jpeg_abort_compress(&sCInfo);
     jpeg_destroy_compress(&sCInfo);
+    CPL_IGNORE_RET_VAL(bCallDestroyCompress);
 
     /* -------------------------------------------------------------------- */
     /*      Write TIFFTAG_REFERENCEBLACKWHITE if needed.                    */
@@ -520,8 +544,10 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF *hTIFF, GDALDataset *poSrcDS)
     /*      Cleanup.                                                        */
     /* -------------------------------------------------------------------- */
 
+    bCallDestroyDecompress = false;
     jpeg_abort_decompress(&sDInfo);
     jpeg_destroy_decompress(&sDInfo);
+    CPL_IGNORE_RET_VAL(bCallDestroyDecompress);
 
     if (VSIFCloseL(fpJPEG) != 0)
         return CE_Failure;

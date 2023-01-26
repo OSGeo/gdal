@@ -669,6 +669,8 @@ class GTiffDataset final : public GDALPamDataset
                                uint16_t &nExtraSamples,
                                CSLConstList papszOptions) const;
 
+    bool IsWholeBlock(int nXOff, int nYOff, int nXSize, int nYSize) const;
+
   protected:
     virtual int CloseDependentDatasets() override;
 
@@ -701,6 +703,16 @@ class GTiffDataset final : public GDALPamDataset
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
+
+    virtual CPLStringList
+    GetCompressionFormats(int nXOff, int nYOff, int nXSize, int nYSize,
+                          int nBandCount, const int *panBandList) override;
+    virtual CPLErr ReadCompressedData(const char *pszFormat, int nXOff,
+                                      int nYOff, int nXSize, int nYSize,
+                                      int nBandCount, const int *panBandList,
+                                      void **ppBuffer, size_t *pnBufferSize,
+                                      char **ppszDetailedFormat) override;
+
     virtual char **GetFileList() override;
 
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
@@ -2334,6 +2346,245 @@ bool GTiffDataset::HasOptimizedReadMultiRange()
         || CPLTestBool(CPLGetConfigOption(
                "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
     return m_nHasOptimizedReadMultiRange != 0;
+}
+
+/************************************************************************/
+/*                        IsWholeBlock()                                */
+/************************************************************************/
+
+bool GTiffDataset::IsWholeBlock(int nXOff, int nYOff, int nXSize,
+                                int nYSize) const
+{
+    if ((nXOff % m_nBlockXSize) != 0 || (nYOff % m_nBlockYSize) != 0)
+    {
+        return false;
+    }
+    if (TIFFIsTiled(m_hTIFF))
+    {
+        return nXSize == m_nBlockXSize && nYSize == m_nBlockYSize;
+    }
+    else
+    {
+        return nXSize == m_nBlockXSize &&
+               (nYSize == m_nBlockYSize || nYOff + nYSize == nRasterYSize);
+    }
+}
+
+/************************************************************************/
+/*                       GetCompressionFormats()                        */
+/************************************************************************/
+
+CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
+                                                  int nXSize, int nYSize,
+                                                  int nBandCount,
+                                                  const int *panBandList)
+{
+    if (m_nCompression != COMPRESSION_NONE &&
+        IsWholeBlock(nXOff, nYOff, nXSize, nYSize) &&
+        ((nBandCount == 1 && (panBandList || nBands == 1) &&
+          m_nPlanarConfig == PLANARCONFIG_SEPARATE) ||
+         (IsAllBands(nBandCount, panBandList) &&
+          m_nPlanarConfig == PLANARCONFIG_CONTIG)))
+    {
+        CPLStringList aosList;
+        const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+        int nBlockId =
+            (nXOff / m_nBlockXSize) + (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
+        if (m_nPlanarConfig == PLANARCONFIG_SEPARATE && panBandList != nullptr)
+            nBlockId += panBandList[0] * m_nBlocksPerBand;
+
+        vsi_l_offset nOffset = 0;
+        vsi_l_offset nSize = 0;
+        if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+            nSize <
+                static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
+        {
+            switch (m_nCompression)
+            {
+                case COMPRESSION_JPEG:
+                {
+                    if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands == 4 &&
+                        m_nPhotometric == PHOTOMETRIC_RGB &&
+                        GetRasterBand(4)->GetColorInterpretation() ==
+                            GCI_AlphaBand)
+                    {
+                        // as a hint for the JPEG and JPEGXL drivers to not use it!
+                        aosList.AddString("JPEG;colorspace=RGBA");
+                    }
+                    else
+                    {
+                        aosList.AddString("JPEG");
+                    }
+                    break;
+                }
+
+                case COMPRESSION_WEBP:
+                    aosList.AddString("WEBP");
+                    break;
+
+                case COMPRESSION_JXL:
+                    aosList.AddString("JXL");
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        return aosList;
+    }
+    return CPLStringList();
+}
+
+/************************************************************************/
+/*                       ReadCompressedData()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        int nBandCount, const int *panBandList,
+                                        void **ppBuffer, size_t *pnBufferSize,
+                                        char **ppszDetailedFormat)
+{
+    if (m_nCompression != COMPRESSION_NONE &&
+        IsWholeBlock(nXOff, nYOff, nXSize, nYSize) &&
+        ((nBandCount == 1 && (panBandList != nullptr || nBands == 1) &&
+          m_nPlanarConfig == PLANARCONFIG_SEPARATE) ||
+         (IsAllBands(nBandCount, panBandList) &&
+          m_nPlanarConfig == PLANARCONFIG_CONTIG)))
+    {
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+        if (aosTokens.size() != 1)
+            return CE_Failure;
+
+        // We don't want to handle CMYK JPEG for now
+        if ((m_nCompression == COMPRESSION_JPEG &&
+             EQUAL(aosTokens[0], "JPEG") &&
+             (m_nPlanarConfig == PLANARCONFIG_SEPARATE ||
+              m_nPhotometric != PHOTOMETRIC_SEPARATED)) ||
+            (m_nCompression == COMPRESSION_WEBP &&
+             EQUAL(aosTokens[0], "WEBP")) ||
+            (m_nCompression == COMPRESSION_JXL && EQUAL(aosTokens[0], "JXL")))
+        {
+            std::string osDetailedFormat = aosTokens[0];
+
+            const int l_nBlocksPerRow =
+                DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+            int nBlockId = (nXOff / m_nBlockXSize) +
+                           (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
+            if (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
+                panBandList != nullptr)
+                nBlockId += panBandList[0] * m_nBlocksPerBand;
+
+            vsi_l_offset nOffset = 0;
+            vsi_l_offset nSize = 0;
+            if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+                nSize < static_cast<vsi_l_offset>(
+                            std::numeric_limits<tmsize_t>::max()))
+            {
+                uint32_t nJPEGTableSize = 0;
+                void *pJPEGTable = nullptr;
+                if (m_nCompression == COMPRESSION_JPEG)
+                {
+                    if (TIFFGetField(m_hTIFF, TIFFTAG_JPEGTABLES,
+                                     &nJPEGTableSize, &pJPEGTable) &&
+                        pJPEGTable != nullptr && nJPEGTableSize > 4 &&
+                        static_cast<GByte *>(pJPEGTable)[0] == 0xFF &&
+                        static_cast<GByte *>(pJPEGTable)[1] == 0xD8 &&
+                        static_cast<GByte *>(pJPEGTable)[nJPEGTableSize - 2] ==
+                            0xFF &&
+                        static_cast<GByte *>(pJPEGTable)[nJPEGTableSize - 1] ==
+                            0xD9)
+                    {
+                        pJPEGTable = static_cast<GByte *>(pJPEGTable) + 2;
+                        nJPEGTableSize -= 4;
+                    }
+                    else
+                    {
+                        nJPEGTableSize = 0;
+                    }
+                }
+
+                size_t nSizeSize = static_cast<size_t>(nSize + nJPEGTableSize);
+                if (ppBuffer)
+                {
+                    if (!pnBufferSize)
+                        return CE_Failure;
+                    bool bFreeOnError = false;
+                    if (*ppBuffer)
+                    {
+                        if (*pnBufferSize < nSizeSize)
+                            return CE_Failure;
+                    }
+                    else
+                    {
+                        *ppBuffer = VSI_MALLOC_VERBOSE(nSizeSize);
+                        if (*ppBuffer == nullptr)
+                            return CE_Failure;
+                        bFreeOnError = true;
+                    }
+                    const auto nTileSize = static_cast<tmsize_t>(nSize);
+                    bool bOK;
+                    if (TIFFIsTiled(m_hTIFF))
+                    {
+                        bOK = TIFFReadRawTile(m_hTIFF, nBlockId, *ppBuffer,
+                                              nTileSize) == nTileSize;
+                    }
+                    else
+                    {
+                        bOK = TIFFReadRawStrip(m_hTIFF, nBlockId, *ppBuffer,
+                                               nTileSize) == nTileSize;
+                    }
+                    if (!bOK)
+                    {
+                        if (bFreeOnError)
+                        {
+                            VSIFree(*ppBuffer);
+                            *ppBuffer = nullptr;
+                        }
+                        return CE_Failure;
+                    }
+                    if (nJPEGTableSize > 0)
+                    {
+                        GByte *pabyBuffer = static_cast<GByte *>(*ppBuffer);
+                        memmove(pabyBuffer + 2 + nJPEGTableSize, pabyBuffer + 2,
+                                static_cast<size_t>(nSize) - 2);
+                        memcpy(pabyBuffer + 2, pJPEGTable, nJPEGTableSize);
+                    }
+
+                    if (m_nCompression == COMPRESSION_JPEG)
+                    {
+                        osDetailedFormat = GDALGetCompressionFormatForJPEG(
+                            *ppBuffer, nSizeSize);
+                        const CPLStringList aosTokens2(CSLTokenizeString2(
+                            osDetailedFormat.c_str(), ";", 0));
+                        if (m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+                            nBands == 4 && m_nPhotometric == PHOTOMETRIC_RGB &&
+                            GetRasterBand(4)->GetColorInterpretation() ==
+                                GCI_AlphaBand)
+                        {
+                            osDetailedFormat = aosTokens2[0];
+                            for (int i = 1; i < aosTokens2.size(); ++i)
+                            {
+                                if (!STARTS_WITH_CI(aosTokens2[i],
+                                                    "colorspace="))
+                                {
+                                    osDetailedFormat += ';';
+                                    osDetailedFormat += aosTokens2[i];
+                                }
+                            }
+                            osDetailedFormat += ";colorspace=RGBA";
+                        }
+                    }
+                }
+                if (ppszDetailedFormat)
+                    *ppszDetailedFormat = VSIStrdup(osDetailedFormat.c_str());
+                if (pnBufferSize)
+                    *pnBufferSize = nSizeSize;
+                return CE_None;
+            }
+        }
+    }
+    return CE_Failure;
 }
 
 /************************************************************************/

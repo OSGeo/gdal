@@ -147,6 +147,20 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
                         (pszResampling, nOverviews, panOverviewList, nListBands,
                          panBandList, pfnProgress, pProgressData, papszOptions))
 
+D_PROXY_METHOD_WITH_RET(CPLStringList, CPLStringList(), GetCompressionFormats,
+                        (int nXOff, int nYOff, int nXSize, int nYSize,
+                         int nBandCount, const int *panBandList),
+                        (nXOff, nYOff, nXSize, nYSize, nBandCount, panBandList))
+
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ReadCompressedData,
+                        (const char *pszFormat, int nXOff, int nYOff,
+                         int nXSize, int nYSize, int nBandCount,
+                         const int *panBandList, void **ppBuffer,
+                         size_t *pnBufferSize, char **ppszDetailedFormat),
+                        (pszFormat, nXOff, nYOff, nXSize, nYSize, nBandCount,
+                         panBandList, ppBuffer, pnBufferSize,
+                         ppszDetailedFormat))
+
 void GDALProxyDataset::FlushCache(bool bAtClosing)
 {
     GDALDataset *poUnderlyingDataset = RefUnderlyingDataset();

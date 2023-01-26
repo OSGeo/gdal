@@ -132,6 +132,13 @@ to the JPEG file.
    range 10-100. Low values result in higher compression ratios, but
    poorer image quality. Values above 95 are not meaningfully better
    quality but can but substantially larger.
+-  **LOSSLESS_COPY=AUTO/YES/NO**: (GDAL >= 3.7)
+   Whether conversion should be lossless. Defaults to AUTO.
+   In AUTO or YES mode, if LOSSLESS=YES and the source dataset uses JPEG
+   compression, or JPEGXL compression with a JPEG reconstruction box, lossless
+   recoding from it is done.
+   If set to NO, or in AUTO mode and the source is not compatible of lossless
+   transcoding, the regular conversion code path is taken.
 -  **PROGRESSIVE=ON**: Enabled generation of progressive JPEGs. In some
    cases these will display a reduced resolution image in viewers such
    as Netscape, and Internet Explorer, before the full file has been

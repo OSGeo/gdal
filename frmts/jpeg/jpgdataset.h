@@ -57,7 +57,12 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+
 CPL_C_START
+
+// So that D_LOSSLESS_SUPPORTED is visible if defined in jmorecfg of libjpeg-turbo >= 2.2
+#define JPEG_INTERNAL_OPTIONS
+
 #ifdef LIBJPEG_12_PATH
 #include LIBJPEG_12_PATH
 #else
@@ -88,6 +93,7 @@ typedef struct
     int nScaleFactor;
     bool bDoPAMInitialize;
     bool bUseInternalOverviews;
+    bool bIsLossless;
 } JPGDatasetOpenArgs;
 
 class JPGDatasetCommon;
@@ -267,6 +273,15 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual char **GetFileList(void) override;
 
     virtual void FlushCache(bool bAtClosing) override;
+
+    CPLStringList GetCompressionFormats(int nXOff, int nYOff, int nXSize,
+                                        int nYSize, int nBandCount,
+                                        const int *panBandList) override;
+    CPLErr ReadCompressedData(const char *pszFormat, int nXOff, int nYOff,
+                              int nXSize, int nYSize, int nBandCount,
+                              const int *panBandList, void **ppBuffer,
+                              size_t *pnBufferSize,
+                              char **ppszDetailedFormat) override;
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);

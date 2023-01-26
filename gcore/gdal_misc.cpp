@@ -4557,3 +4557,205 @@ double GDALGetNoDataValueCastToDouble(uint64_t nVal)
     }
     return dfVal;
 }
+
+/************************************************************************/
+/*                GDALGetCompressionFormatForJPEG()                     */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+std::string GDALGetCompressionFormatForJPEG(VSILFILE *fp)
+{
+    std::string osRet;
+    const auto nSavedPos = VSIFTellL(fp);
+    GByte abyMarkerHeader[4];
+    if (VSIFSeekL(fp, 0, SEEK_SET) == 0 &&
+        VSIFReadL(abyMarkerHeader, 2, 1, fp) == 1 &&
+        abyMarkerHeader[0] == 0xFF && abyMarkerHeader[1] == 0xD8)
+    {
+        osRet = "JPEG";
+        bool bHasAPP14Adobe = false;
+        GByte abyAPP14AdobeMarkerData[14 - 2] = {0};
+        int nNumComponents = 0;
+        while (true)
+        {
+            const auto nCurPos = VSIFTellL(fp);
+            if (VSIFReadL(abyMarkerHeader, 4, 1, fp) != 1)
+                break;
+            if (abyMarkerHeader[0] != 0xFF)
+                break;
+            const GByte markerType = abyMarkerHeader[1];
+            const size_t nMarkerSize =
+                abyMarkerHeader[2] * 256 + abyMarkerHeader[3];
+            if (nMarkerSize < 2)
+                break;
+            if (markerType >= 0xC0 && markerType <= 0xCF &&
+                markerType != 0xC4 && markerType != 0xC8 && markerType != 0xCC)
+            {
+                switch (markerType)
+                {
+                    case 0xC0:
+                        osRet += ";frame_type=SOF0_baseline";
+                        break;
+                    case 0xC1:
+                        osRet += ";frame_type=SOF1_extended_sequential";
+                        break;
+                    case 0xC2:
+                        osRet += ";frame_type=SOF2_progressive_huffman";
+                        break;
+                    case 0xC3:
+                        osRet += ";frame_type=SOF3_lossless_huffman;libjpeg_"
+                                 "supported=no";
+                        break;
+                    case 0xC5:
+                        osRet += ";frame_type="
+                                 "SOF5_differential_sequential_huffman;"
+                                 "libjpeg_supported=no";
+                        break;
+                    case 0xC6:
+                        osRet += ";frame_type=SOF6_differential_progressive_"
+                                 "huffman;libjpeg_supported=no";
+                        break;
+                    case 0xC7:
+                        osRet += ";frame_type="
+                                 "SOF7_differential_lossless_huffman;"
+                                 "libjpeg_supported=no";
+                        break;
+                    case 0xC9:
+                        osRet += ";frame_type="
+                                 "SOF9_extended_sequential_arithmetic";
+                        break;
+                    case 0xCA:
+                        osRet += ";frame_type=SOF10_progressive_arithmetic";
+                        break;
+                    case 0xCB:
+                        osRet += ";frame_type="
+                                 "SOF11_lossless_arithmetic;libjpeg_"
+                                 "supported=no";
+                        break;
+                    case 0xCD:
+                        osRet += ";frame_type=SOF13_differential_sequential_"
+                                 "arithmetic;libjpeg_supported=no";
+                        break;
+                    case 0xCE:
+                        osRet += ";frame_type=SOF14_differential_progressive_"
+                                 "arithmetic;libjpeg_supported=no";
+                        break;
+                    case 0xCF:
+                        osRet += ";frame_type=SOF15_differential_lossless_"
+                                 "arithmetic;libjpeg_supported=no";
+                        break;
+                    default:
+                        break;
+                }
+                GByte abySegmentBegin[6];
+                if (VSIFReadL(abySegmentBegin, sizeof(abySegmentBegin), 1,
+                              fp) != 1)
+                    break;
+                osRet += ";bit_depth=";
+                osRet += CPLSPrintf("%d", abySegmentBegin[0]);
+                nNumComponents = abySegmentBegin[5];
+                osRet += ";num_components=";
+                osRet += CPLSPrintf("%d", nNumComponents);
+                if (nNumComponents == 3)
+                {
+                    GByte abySegmentNext[3 * 3];
+                    if (VSIFReadL(abySegmentNext, sizeof(abySegmentNext), 1,
+                                  fp) != 1)
+                        break;
+                    if (abySegmentNext[0] == 1 && abySegmentNext[1] == 0x11 &&
+                        abySegmentNext[3] == 2 && abySegmentNext[4] == 0x11 &&
+                        abySegmentNext[6] == 3 && abySegmentNext[7] == 0x11)
+                    {
+                        // no subsampling
+                        osRet += ";subsampling=4:4:4";
+                    }
+                    else if (abySegmentNext[0] == 1 &&
+                             abySegmentNext[1] == 0x22 &&
+                             abySegmentNext[3] == 2 &&
+                             abySegmentNext[4] == 0x11 &&
+                             abySegmentNext[6] == 3 &&
+                             abySegmentNext[7] == 0x11)
+                    {
+                        // classic subsampling
+                        osRet += ";subsampling=4:2:0";
+                    }
+                    else if (abySegmentNext[0] == 1 &&
+                             abySegmentNext[1] == 0x21 &&
+                             abySegmentNext[3] == 2 &&
+                             abySegmentNext[4] == 0x11 &&
+                             abySegmentNext[6] == 3 &&
+                             abySegmentNext[7] == 0x11)
+                    {
+                        osRet += ";subsampling=4:2:2";
+                    }
+                }
+            }
+            else if (markerType == 0xEE && nMarkerSize == 14)
+            {
+                if (VSIFReadL(abyAPP14AdobeMarkerData,
+                              sizeof(abyAPP14AdobeMarkerData), 1, fp) == 1 &&
+                    memcmp(abyAPP14AdobeMarkerData, "Adobe", strlen("Adobe")) ==
+                        0)
+                {
+                    bHasAPP14Adobe = true;
+                }
+            }
+            else if (markerType == 0xDA)
+            {
+                // Start of scan
+                break;
+            }
+            VSIFSeekL(fp, nCurPos + nMarkerSize + 2, SEEK_SET);
+        }
+        std::string osColorspace;
+        if (bHasAPP14Adobe)
+        {
+            if (abyAPP14AdobeMarkerData[11] == 0)
+            {
+                if (nNumComponents == 3)
+                    osColorspace = "RGB";
+                else if (nNumComponents == 4)
+                    osColorspace = "CMYK";
+            }
+            else if (abyAPP14AdobeMarkerData[11] == 1)
+            {
+                osColorspace = "YCbCr";
+            }
+            else if (abyAPP14AdobeMarkerData[11] == 2)
+            {
+                osColorspace = "YCCK";
+            }
+        }
+        else
+        {
+            if (nNumComponents == 3)
+                osColorspace = "YCbCr";
+            else if (nNumComponents == 4)
+                osColorspace = "CMYK";
+        }
+        osRet += ";colorspace=";
+        if (!osColorspace.empty())
+            osRet += osColorspace;
+        else
+            osRet += "unknown";
+    }
+    if (VSIFSeekL(fp, nSavedPos, SEEK_SET) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "VSIFSeekL(fp, nSavedPos, SEEK_SET) failed");
+    }
+    return osRet;
+}
+
+std::string GDALGetCompressionFormatForJPEG(const void *pBuffer,
+                                            size_t nBufferSize)
+{
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        nullptr, static_cast<GByte *>(const_cast<void *>(pBuffer)), nBufferSize,
+        false);
+    std::string osRet = GDALGetCompressionFormatForJPEG(fp);
+    VSIFCloseL(fp);
+    return osRet;
+}
+
+//! @endcond

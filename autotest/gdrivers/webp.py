@@ -188,3 +188,46 @@ def test_webp_6():
     assert cs1 == 12603, "did not get expected checksum on band 1"
 
     assert cs4 == 10807, "did not get expected checksum on band 4"
+
+
+###############################################################################
+# CreateCopy() in lossless copy mode
+
+
+def test_webp_lossless_copy():
+
+    if gdaltest.webp_drv is None:
+        pytest.skip()
+
+    outfilename = "/vsimem/out.webp"
+    src_ds = gdal.Open("data/webp/rgbsmall.webp")
+    assert gdaltest.webp_drv.CreateCopy(outfilename, src_ds) is not None
+    f = gdal.VSIFOpenL(outfilename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert data == open(src_ds.GetDescription(), "rb").read()
+    gdaltest.webp_drv.Delete(outfilename)
+
+
+###############################################################################
+# CreateCopy() in lossless copy mode with XMP metadata and explicit LOSSLESS_COPY
+
+
+def test_webp_lossless_copy_with_xmp():
+
+    if gdaltest.webp_drv is None:
+        pytest.skip()
+
+    outfilename = "/vsimem/out.webp"
+    src_ds = gdal.Open("data/webp/rgbsmall_with_xmp.webp")
+    assert (
+        gdaltest.webp_drv.CreateCopy(outfilename, src_ds, options=["LOSSLESS_COPY=YES"])
+        is not None
+    )
+    f = gdal.VSIFOpenL(outfilename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert data == open(src_ds.GetDescription(), "rb").read()
+    gdaltest.webp_drv.Delete(outfilename)

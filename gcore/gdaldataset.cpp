@@ -9097,4 +9097,430 @@ bool GDALDataset::AreOverviewsEnabled() const
     return m_poPrivate ? m_poPrivate->m_bOverviewsEnabled : true;
 }
 
+/************************************************************************/
+/*                             IsAllBands()                             */
+/************************************************************************/
+
+bool GDALDataset::IsAllBands(int nBandCount, const int *panBandList) const
+{
+    if (nBands != nBandCount)
+        return false;
+    if (panBandList)
+    {
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            if (panBandList[i] != i + 1)
+                return false;
+        }
+    }
+    return true;
+}
+
 //! @endcond
+
+/************************************************************************/
+/*                       GetCompressionFormats()                        */
+/************************************************************************/
+
+/** Return the compression formats that can be natively obtained for the
+ * window of interest and requested bands.
+ *
+ * For example, a tiled dataset may be able to return data in a compressed
+ * format if the window of interest matches exactly a tile. For some formats,
+ * drivers may also be able to merge several tiles together (not currently
+ * implemented though).
+ *
+ * Each format string is a pseudo MIME type, whose first part can be passed
+ * as the pszFormat argument of ReadCompressedData(), with additional
+ * parameters specified as key=value with a semi-colon separator.
+ *
+ * The amount and types of optional parameters passed after the MIME type is
+ * format dependent, and driver dependent (some drivers might not be able to
+ * return those extra information without doing a rather costly processing).
+ *
+ * For example, a driver might return "JPEG;frame_type=SOF0_baseline;"
+ * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
+ * consequently "JPEG" can be passed as the pszFormat argument of
+ * ReadCompressedData(). For JPEG, implementations can use the
+ * GDALGetCompressionFormatForJPEG() helper method to generate a string like
+ * above from a JPEG codestream.
+ *
+ * Several values might be returned. For example,
+ * the JPEGXL driver will return "JXL", but also potentially "JPEG"
+ * if the JPEGXL codestream includes a JPEG reconstruction box.
+ *
+ * In the general case this method will return an empty list.
+ *
+ * This is the same as C function GDALDatasetGetCompressionFormats().
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBandCount the number of bands being requested.
+ *
+ * @param panBandList the list of nBandCount band numbers.
+ * Note band numbers are 1 based. This may be NULL to select the first
+ * nBandCount bands.
+ *
+ * @return a list of compatible formats (which may be empty)
+ *
+ * For example, to check if native compression format(s) are available on the
+ * whole image:
+ * \code{.cpp}
+ *   const CPLStringList aosFormats =
+ *      poDataset->GetCompressionFormats(0, 0,
+ *                                       poDataset->GetRasterXSize(),
+ *                                       poDataset->GetRasterYSize(),
+ *                                       poDataset->GetRasterCount(),
+ *                                       nullptr);
+ *   for( const char* pszFormat: aosFormats )
+ *   {
+ *      // Remove optional parameters and just print out the MIME type.
+ *      const CPLStringList aosTokens(CSLTokenizeString2(pszFormat, ";", 0));
+ *      printf("Found format %s\n, aosTokens[0]);
+ *   }
+ * \endcode
+ *
+ * @since GDAL 3.7
+ */
+CPLStringList
+GDALDataset::GetCompressionFormats(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
+                                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                                   CPL_UNUSED int nBandCount,
+                                   CPL_UNUSED const int *panBandList)
+{
+    return CPLStringList();
+}
+
+/************************************************************************/
+/*                 GDALDatasetGetCompressionFormats()                   */
+/************************************************************************/
+
+/** Return the compression formats that can be natively obtained for the
+ * window of interest and requested bands.
+ *
+ * For example, a tiled dataset may be able to return data in a compressed
+ * format if the window of interest matches exactly a tile. For some formats,
+ * drivers may also be able to merge several tiles together (not currently
+ * implemented though).
+ *
+ * Each format string is a pseudo MIME type, whose first part can be passed
+ * as the pszFormat argument of ReadCompressedData(), with additional
+ * parameters specified as key=value with a semi-colon separator.
+ *
+ * The amount and types of optional parameters passed after the MIME type is
+ * format dependent, and driver dependent (some drivers might not be able to
+ * return those extra information without doing a rather costly processing).
+ *
+ * For example, a driver might return "JPEG;frame_type=SOF0_baseline;"
+ * "bit_depth=8;num_components=3;subsampling=4:2:0;colorspace=YCbCr", and
+ * consequently "JPEG" can be passed as the pszFormat argument of
+ * ReadCompressedData(). For JPEG, implementations can use the
+ * GDALGetCompressionFormatForJPEG() helper method to generate a string like
+ * above from a JPEG codestream.
+ *
+ * Several values might be returned. For example,
+ * the JPEGXL driver will return "JXL", but also potentially "JPEG"
+ * if the JPEGXL codestream includes a JPEG reconstruction box.
+ *
+ * In the general case this method will return an empty list.
+ *
+ * This is the same as C++ method GDALDataset::GetCompressionFormats().
+ *
+ * @param hDS Dataset handle.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBandCount the number of bands being requested.
+ *
+ * @param panBandList the list of nBandCount band numbers.
+ * Note band numbers are 1 based. This may be NULL to select the first
+ * nBandCount bands.
+ *
+ * @return a list of compatible formats (which may be empty) that should be
+ * freed with CSLDestroy(), or nullptr.
+ *
+ * @since GDAL 3.7
+ */
+char **GDALDatasetGetCompressionFormats(GDALDatasetH hDS, int nXOff, int nYOff,
+                                        int nXSize, int nYSize, int nBandCount,
+                                        const int *panBandList)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    return GDALDataset::FromHandle(hDS)
+        ->GetCompressionFormats(nXOff, nYOff, nXSize, nYSize, nBandCount,
+                                panBandList)
+        .StealList();
+}
+
+/************************************************************************/
+/*                         ReadCompressedData()                         */
+/************************************************************************/
+
+/** Return the compressed content that can be natively obtained for the
+ * window of interest and requested bands.
+ *
+ * For example, a tiled dataset may be able to return data in compressed format
+ * if the window of interest matches exactly a tile. For some formats, drivers
+ * may also be example to merge several tiles together (not currently
+ * implemented though).
+ *
+ * The implementation should make sure that the content returned forms a valid
+ * standalone file. For example, for the GeoTIFF implementation of this method,
+ * when extracting a JPEG tile, the method will automatically add the content
+ * of the JPEG Huffman and/or quantization tables that might be stored in the
+ * TIFF JpegTables tag, and not in tile data itself.
+ *
+ * In the general case this method will return CE_Failure.
+ *
+ * This is the same as C function GDALDatasetReadCompressedData().
+ *
+ * @param pszFormat Requested compression format (e.g. "JPEG",
+ * "WEBP", "JXL"). This is the MIME type of one of the values
+ * returned by GetCompressionFormats(). The format string is designed to
+ * potentially include at a later point key=value optional parameters separated
+ * by a semi-colon character. At time of writing, none are implemented.
+ * ReadCompressedData() implementations should verify optional parameters and
+ * return CE_Failure if they cannot support one of them.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBandCount the number of bands being requested.
+ *
+ * @param panBandList the list of nBandCount band numbers.
+ * Note band numbers are 1 based. This may be NULL to select the first
+ * nBandCount bands.
+ *
+ * @param ppBuffer Pointer to a buffer to store the compressed data or nullptr.
+ * If ppBuffer is not nullptr, then pnBufferSize should also not be nullptr.
+ * If ppBuffer is not nullptr, and *ppBuffer is not nullptr, then the provided
+ * buffer will be filled with the compressed data, provided that pnBufferSize
+ * and *pnBufferSize are not nullptr, and *pnBufferSize, indicating the size
+ * of *ppBuffer, is sufficiently large to hold the data.
+ * If ppBuffer is not nullptr, but *ppBuffer is nullptr, then the method will
+ * allocate *ppBuffer using VSIMalloc(), and thus the caller is responsible to
+ * free it with VSIFree().
+ * If ppBuffer is nullptr, then the compressed data itself will not be returned,
+ * but *pnBufferSize will be updated with an upper bound of the size that would
+ * be necessary to hold it (if pnBufferSize != nullptr).
+ *
+ * @param pnBufferSize Output buffer size, or nullptr.
+ * If ppBuffer != nullptr && *ppBuffer != nullptr, then pnBufferSize should
+ * be != nullptr and *pnBufferSize contain the size of *ppBuffer. If the
+ * method is successful, *pnBufferSize will be updated with the actual size
+ * used.
+ *
+ * @param ppszDetailedFormat Pointer to an output string, or nullptr.
+ * If ppszDetailedFormat is not nullptr, then, on success, the method will
+ * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
+ * *ppszDetailedFormat might contain strings like
+ * "JPEG;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
+ * The string will contain at least as much information as what
+ * GetCompressionFormats() returns, and potentially more when
+ * ppBuffer != nullptr.
+ *
+ * @return CE_None in case of success, CE_Failure otherwise.
+ *
+ * For example, to request JPEG content on the whole image and let GDAL deal
+ * with the buffer allocation.
+ * \code{.cpp}
+ *   void* pBuffer = nullptr;
+ *   size_t nBufferSize = 0;
+ *   CPLErr eErr =
+ *      poDataset->ReadCompressedData("JPEG",
+ *                                    0, 0,
+ *                                    poDataset->GetRasterXSize(),
+ *                                    poDataset->GetRasterYSize(),
+ *                                    poDataset->GetRasterCount(),
+ *                                    nullptr, // panBandList
+ *                                    &pBuffer,
+ *                                    &nBufferSize,
+ *                                    nullptr // ppszDetailedFormat
+ *                                   );
+ *   if (eErr == CE_None)
+ *   {
+ *       CPLAssert(pBuffer != nullptr);
+ *       CPLAssert(nBufferSize > 0);
+ *       VSILFILE* fp = VSIFOpenL("my.jpeg", "wb");
+ *       if (fp)
+ *       {
+ *           VSIFWriteL(pBuffer, nBufferSize, 1, fp);
+ *           VSIFCloseL(fp);
+ *       }
+ *       VSIFree(pBuffer);
+ *   }
+ * \endcode
+ *
+ * Or to manage the buffer allocation on your side:
+ * \code{.cpp}
+ *   size_t nUpperBoundBufferSize = 0;
+ *   CPLErr eErr =
+ *      poDataset->ReadCompressedData("JPEG",
+ *                                    0, 0,
+ *                                    poDataset->GetRasterXSize(),
+ *                                    poDataset->GetRasterYSize(),
+ *                                    poDataset->GetRasterCount(),
+ *                                    nullptr, // panBandList
+ *                                    nullptr, // ppBuffer,
+ *                                    &nUpperBoundBufferSize,
+ *                                    nullptr // ppszDetailedFormat
+ *                                   );
+ *   if (eErr == CE_None)
+ *   {
+ *       std::vector<uint8_t> myBuffer;
+ *       myBuffer.resize(nUpperBoundBufferSize);
+ *       void* pBuffer = myBuffer.data();
+ *       size_t nActualSize = nUpperBoundBufferSize;
+ *       char* pszDetailedFormat = nullptr;
+ *       // We also request detailed format, but we could have passed it to
+ *       // nullptr as well.
+ *       eErr =
+ *         poDataset->ReadCompressedData("JPEG",
+ *                                       0, 0,
+ *                                       poDataset->GetRasterXSize(),
+ *                                       poDataset->GetRasterYSize(),
+ *                                       poDataset->GetRasterCount(),
+ *                                       nullptr, // panBandList
+ *                                       &pBuffer,
+ *                                       &nActualSize,
+ *                                       &pszDetailedFormat);
+ *       if (eErr == CE_None)
+ *       {
+ *          CPLAssert(pBuffer == myBuffer.data()); // pointed value not modified
+ *          CPLAssert(nActualSize <= nUpperBoundBufferSize);
+ *          myBuffer.resize(nActualSize);
+ *          // do something useful
+ *          VSIFree(pszDetailedFormat);
+ *       }
+ *   }
+ * \endcode
+ *
+ * @since GDAL 3.7
+ */
+CPLErr GDALDataset::ReadCompressedData(
+    CPL_UNUSED const char *pszFormat, CPL_UNUSED int nXOff,
+    CPL_UNUSED int nYOff, CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+    CPL_UNUSED int nBandCount, CPL_UNUSED const int *panBandList,
+    CPL_UNUSED void **ppBuffer, CPL_UNUSED size_t *pnBufferSize,
+    CPL_UNUSED char **ppszDetailedFormat)
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                  GDALDatasetReadCompressedData()                     */
+/************************************************************************/
+
+/** Return the compressed content that can be natively obtained for the
+ * window of interest and requested bands.
+ *
+ * For example, a tiled dataset may be able to return data in compressed format
+ * if the window of interest matches exactly a tile. For some formats, drivers
+ * may also be example to merge several tiles together (not currently
+ * implemented though).
+ *
+ * The implementation should make sure that the content returned forms a valid
+ * standalone file. For example, for the GeoTIFF implementation of this method,
+ * when extracting a JPEG tile, the method will automatically adds the content
+ * of the JPEG Huffman and/or quantization tables that might be stored in the
+ * TIFF JpegTables tag, and not in tile data itself.
+ *
+ * In the general case this method will return CE_Failure.
+ *
+ * This is the same as C++ method GDALDataset:ReadCompressedData().
+ *
+ * @param hDS Dataset handle.
+ *
+ * @param pszFormat Requested compression format (e.g. "JPEG",
+ * "WEBP", "JXL"). This is the MIME type of one of the values
+ * returned by GetCompressionFormats(). The format string is designed to
+ * potentially include at a later point key=value optional parameters separated
+ * by a semi-colon character. At time of writing, none are implemented.
+ * ReadCompressedData() implementations should verify optional parameters and
+ * return CE_Failure if they cannot support one of them.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region
+ * of the band to be accessed.  This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param nBandCount the number of bands being requested.
+ *
+ * @param panBandList the list of nBandCount band numbers.
+ * Note band numbers are 1 based. This may be NULL to select the first
+ * nBandCount bands.
+ *
+ * @param ppBuffer Pointer to a buffer to store the compressed data or nullptr.
+ * If ppBuffer is not nullptr, then pnBufferSize should also not be nullptr.
+ * If ppBuffer is not nullptr, and *ppBuffer is not nullptr, then the provided
+ * buffer will be filled with the compressed data, provided that pnBufferSize
+ * and *pnBufferSize are not nullptr, and *pnBufferSize, indicating the size
+ * of *ppBuffer, is sufficiently large to hold the data.
+ * If ppBuffer is not nullptr, but *ppBuffer is nullptr, then the method will
+ * allocate *ppBuffer using VSIMalloc(), and thus the caller is responsible to
+ * free it with VSIFree().
+ * If ppBuffer is nullptr, then the compressed data itself will not be returned,
+ * but *pnBufferSize will be updated with an upper bound of the size that would
+ * be necessary to hold it (if pnBufferSize != nullptr).
+ *
+ * @param pnBufferSize Output buffer size, or nullptr.
+ * If ppBuffer != nullptr && *ppBuffer != nullptr, then pnBufferSize should
+ * be != nullptr and *pnBufferSize contain the size of *ppBuffer. If the
+ * method is successful, *pnBufferSize will be updated with the actual size
+ * used.
+ *
+ * @param ppszDetailedFormat Pointer to an output string, or nullptr.
+ * If ppszDetailedFormat is not nullptr, then, on success, the method will
+ * allocate a new string in *ppszDetailedFormat (to be freed with VSIFree())
+ * *ppszDetailedFormat might contain strings like
+ * "JPEG;frame_type=SOF0_baseline;bit_depth=8;num_components=3;"
+ * "subsampling=4:2:0;colorspace=YCbCr" or simply the MIME type.
+ * The string will contain at least as much information as what
+ * GetCompressionFormats() returns, and potentially more when
+ * ppBuffer != nullptr.
+ *
+ * @return CE_None in case of success, CE_Failure otherwise.
+ *
+ * @since GDAL 3.7
+ */
+CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
+                                     int nXOff, int nYOff, int nXSize,
+                                     int nYSize, int nBandCount,
+                                     const int *panBandList, void **ppBuffer,
+                                     size_t *pnBufferSize,
+                                     char **ppszDetailedFormat)
+{
+    VALIDATE_POINTER1(hDS, __func__, CE_Failure);
+    return GDALDataset::FromHandle(hDS)->ReadCompressedData(
+        pszFormat, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandList,
+        ppBuffer, pnBufferSize, ppszDetailedFormat);
+}

@@ -46,7 +46,9 @@ def test_jpegxl_read():
 
 
 def test_jpegxl_byte():
-    tst = gdaltest.GDALTest("JPEGXL", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "JPEGXL", "byte.tif", 1, 4672, options=["LOSSLESS_COPY=YES"]
+    )
     return tst.testCreateCopy(vsimem=1)
 
 
@@ -101,6 +103,20 @@ def test_jpegxl_rgba_lossless_param(lossless):
 
     ds = None
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
+
+
+def test_jpegxl_rgba_lossless_no_but_lossless_copy_yes():
+
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    outfilename = "/vsimem/out.jxl"
+    with gdaltest.error_handler():
+        assert (
+            gdal.GetDriverByName("JPEGXL").CreateCopy(
+                outfilename, src_ds, options=["LOSSLESS=NO", "LOSSLESS_COPY=YES"]
+            )
+            is None
+        )
+    assert gdal.VSIStatL(outfilename) is None
 
 
 def test_jpegxl_rgba_distance():
@@ -354,6 +370,32 @@ def test_jpegxl_lossless_copy_of_jpeg():
             )
 
 
+def test_jpegxl_lossless_copy_of_jpeg_disabled():
+
+    jpeg_drv = gdal.GetDriverByName("JPEG")
+    if jpeg_drv is None:
+        pytest.skip("JPEG driver missing")
+
+    has_box_api = "COMPRESS_BOX" in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    )
+    if not has_box_api:
+        pytest.skip()
+
+    src_ds = gdal.Open("data/jpeg/albania.jpg")
+    outfilename = "/vsimem/out.jxl"
+    gdal.GetDriverByName("JPEGXL").CreateCopy(
+        outfilename, src_ds, options=["LOSSLESS_COPY=NO"]
+    )
+    ds = gdal.Open(outfilename)
+    assert ds is not None
+
+    assert ds.GetMetadataItem("ORIGINAL_COMPRESSION", "IMAGE_STRUCTURE") != "JPEG"
+
+    ds = None
+    gdal.GetDriverByName("JPEGXL").Delete(outfilename)
+
+
 def test_jpegxl_lossless_copy_of_jpeg_with_mask_band():
 
     jpeg_drv = gdal.GetDriverByName("JPEG")
@@ -367,7 +409,7 @@ def test_jpegxl_lossless_copy_of_jpeg_with_mask_band():
     has_box_api = "COMPRESS_BOX" in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
     src_ds = gdal.Open("data/jpeg/masked.jpg")
     outfilename = "/vsimem/out.jxl"
-    drv.CreateCopy(outfilename, src_ds)
+    drv.CreateCopy(outfilename, src_ds, options=["LOSSLESS_COPY=YES"])
     if has_box_api:
         assert gdal.VSIStatL(outfilename + ".aux.xml") is None
 

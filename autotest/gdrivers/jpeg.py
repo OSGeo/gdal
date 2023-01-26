@@ -503,9 +503,14 @@ def test_jpeg_14():
 
 def test_jpeg_15():
 
-    tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 17016)
-
-    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    gdal.Translate("/vsimem/tmp.tif", "data/jpeg/albania.jpg")
+    try:
+        tst = gdaltest.GDALTest(
+            "JPEG", "/vsimem/tmp.tif", 2, 17016, filename_absolute=1
+        )
+        tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    finally:
+        gdal.Unlink("/vsimem/tmp.tif")
 
 
 ###############################################################################
@@ -1493,6 +1498,41 @@ def test_jpeg_read_arcgis_metadata_geodataxform_gcp():
         and gcp.GCPY == pytest.approx(4705078.79016612, abs=1e-5)
         and gcp.GCPZ == pytest.approx(0, abs=1e-5)
     )
+
+
+###############################################################################
+# Test reading lossless JPEG with libjpeg-turbo 2.2
+
+
+def test_jpeg_read_lossless():
+
+    if (
+        gdal.GetDriverByName("JPEG").GetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "JPEG")
+        is None
+    ):
+        pytest.skip("lossless jpeg not supported")
+    ds = gdal.Open("data/jpeg/byte_lossless.jpg")
+    assert ds
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
+
+
+###############################################################################
+# Test reading 16-bit lossless JPEG with libjpeg-turbo 2.2 (unsupported by GDAL)
+
+
+def test_jpeg_read_lossless_16bit():
+
+    if (
+        gdal.GetDriverByName("JPEG").GetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "JPEG")
+        is None
+    ):
+        pytest.skip("lossless jpeg not supported")
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/jpeg/uint16_lossless.jpg")
+        assert ds is None
 
 
 ###############################################################################
