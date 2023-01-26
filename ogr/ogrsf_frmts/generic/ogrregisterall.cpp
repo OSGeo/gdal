@@ -254,6 +254,9 @@ void OGRRegisterAllInternal()
 #ifdef ARROW_ENABLED
     RegisterOGRArrow();
 #endif
+#ifdef GTFS_ENABLED
+    RegisterOGRGTFS();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 
