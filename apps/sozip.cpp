@@ -109,12 +109,25 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 VSILFILE *fpRaw = VSIFOpenL(pszZipFilename, "rb");
                 CPLAssert(fpRaw);
 
-                VSIFSeekL(fpRaw, nStartIdxOffset + 4, SEEK_SET);
+                if (VSIFSeekL(fpRaw, nStartIdxOffset + 4, SEEK_SET) != 0)
+                {
+                    fprintf(stderr, "VSIFSeekL() failed.\n");
+                    ret = 1;
+                }
                 uint32_t nToSkip = 0;
-                VSIFReadL(&nToSkip, 1, sizeof(nToSkip), fpRaw);
+                if (VSIFReadL(&nToSkip, sizeof(nToSkip), 1, fpRaw) != 1)
+                {
+                    fprintf(stderr, "VSIFReadL() failed.\n");
+                    ret = 1;
+                }
                 CPL_LSBPTR32(&nToSkip);
 
-                VSIFSeekL(fpRaw, nStartIdxOffset + 32 + nToSkip, SEEK_SET);
+                if (VSIFSeekL(fpRaw, nStartIdxOffset + 32 + nToSkip,
+                              SEEK_SET) != 0)
+                {
+                    fprintf(stderr, "VSIFSeekL() failed.\n");
+                    ret = 1;
+                }
                 const int nChunkSize = atoi(pszChunkSize);
                 const uint64_t nCompressedSize = std::strtoull(
                     CSLFetchNameValue(papszMD, "COMPRESSED_SIZE"), nullptr, 10);
@@ -157,7 +170,11 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 for (int i = 0; i < nChunksItems; ++i)
                 {
                     uint64_t nOffset64 = 0;
-                    VSIFReadL(&nOffset64, 1, sizeof(nOffset64), fpRaw);
+                    if (VSIFReadL(&nOffset64, sizeof(nOffset64), 1, fpRaw) != 1)
+                    {
+                        fprintf(stderr, "VSIFReadL() failed.\n");
+                        ret = 1;
+                    }
                     CPL_LSBPTR64(&nOffset64);
                     if (nOffset64 >= nCompressedSize)
                     {
@@ -223,9 +240,18 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 }
                 for (int i = 0; fp != nullptr && i < nChunksItems; ++i)
                 {
-                    VSIFSeekL(fpRaw, nStartOffset + anOffsets[i] - 9, SEEK_SET);
+                    if (VSIFSeekL(fpRaw, nStartOffset + anOffsets[i] - 9,
+                                  SEEK_SET) != 0)
+                    {
+                        fprintf(stderr, "VSIFSeekL() failed.\n");
+                        ret = 1;
+                    }
                     GByte abyEnd[9] = {0};
-                    VSIFReadL(abyEnd, 1, 9, fpRaw);
+                    if (VSIFReadL(abyEnd, 9, 1, fpRaw) != 1)
+                    {
+                        fprintf(stderr, "VSIFReadL() failed.\n");
+                        ret = 1;
+                    }
                     if (memcmp(abyEnd, "\x00\x00\xFF\xFF\x00\x00\x00\xFF\xFF",
                                9) != 0)
                     {
@@ -238,8 +264,13 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                     }
                     if (!abyData.empty())
                     {
-                        VSIFSeekL(fp, static_cast<vsi_l_offset>(i) * nChunkSize,
-                                  SEEK_SET);
+                        if (VSIFSeekL(fp,
+                                      static_cast<vsi_l_offset>(i) * nChunkSize,
+                                      SEEK_SET) != 0)
+                        {
+                            fprintf(stderr, "VSIFSeekL() failed.\n");
+                            ret = 1;
+                        }
                         const size_t nRead =
                             VSIFReadL(&abyData[0], 1, nChunkSize, fp);
                         if (nRead != static_cast<size_t>(nChunkSize))
@@ -255,10 +286,14 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
 
                 if (fp)
                 {
-                    VSIFSeekL(fp,
-                              static_cast<vsi_l_offset>(nChunksItems) *
-                                  nChunkSize,
-                              SEEK_SET);
+                    if (VSIFSeekL(fp,
+                                  static_cast<vsi_l_offset>(nChunksItems) *
+                                      nChunkSize,
+                                  SEEK_SET) != 0)
+                    {
+                        fprintf(stderr, "VSIFSeekL() failed.\n");
+                        ret = 1;
+                    }
                     const size_t nRead =
                         VSIFReadL(&abyData[0], 1, nChunkSize, fp);
                     if (nRead != static_cast<size_t>(
