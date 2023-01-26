@@ -34,6 +34,6 @@ import pytest
 
 
 @pytest.mark.require_driver("TileDB")
-def DISABLED_test_tiledb_open():
+def test_tiledb_open():
     ut = gdaltest.GDALTest("TileDB", "tiledb_array", 1, 4857)
     ut.testOpen()
