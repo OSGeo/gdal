@@ -2678,7 +2678,7 @@ VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
     {
         if (nThreads == 0)
         {
-            if (pszThreads == nullptr || EQUAL(pszThreads, "ALL_CPUS"))
+            if (!pszThreads || EQUAL(pszThreads, "ALL_CPUS"))
                 nThreads = CPLGetNumCPUs();
             else
                 nThreads = atoi(pszThreads);
@@ -4307,7 +4307,7 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
     if (!GetFileInfo(pszFilename, info))
         return nullptr;
 
-    if (pszDomain == nullptr)
+    if (!pszDomain)
     {
         CPLStringList aosMetadata;
         for (const auto &kv : info.oMapProperties)

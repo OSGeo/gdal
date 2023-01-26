@@ -1606,7 +1606,7 @@ extern int cpl_unzCurrentFileInfoFromLocalHeader(
 
     memset(pfile_info, 0, sizeof(*pfile_info));
 
-    if (file == nullptr)
+    if (!file)
         return UNZ_PARAMERROR;
     s = reinterpret_cast<unz_s *>(file);
 

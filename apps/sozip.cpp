@@ -55,7 +55,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
            "             [--content-type=value]\n"
            "             zip_filename [filename]*\n");
 
-    if (pszErrorMsg != nullptr)
+    if (pszErrorMsg)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit(1);
@@ -69,7 +69,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
 {
     VSIDIR *psDir = VSIOpenDir(
         (std::string("/vsizip/") + pszZipFilename).c_str(), -1, nullptr);
-    if (psDir == nullptr)
+    if (!psDir)
     {
         fprintf(stderr, "%s is not a valid .zip file\n", pszZipFilename);
         return 1;
@@ -107,7 +107,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 const vsi_l_offset nStartIdxOffset =
                     std::strtoull(pszStartIdxDataOffset, nullptr, 10);
                 VSILFILE *fpRaw = VSIFOpenL(pszZipFilename, "rb");
-                CPLAssert(fpRaw != nullptr);
+                CPLAssert(fpRaw);
 
                 VSIFSeekL(fpRaw, nStartIdxOffset + 4, SEEK_SET);
                 uint32_t nToSkip = 0;
@@ -205,7 +205,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 const vsi_l_offset nStartOffset =
                     std::strtoull(pszStartDataOffset, nullptr, 10);
                 VSILFILE *fp = VSIFOpenL(osFilenameInZip.c_str(), "rb");
-                if (fp == nullptr)
+                if (!fp)
                 {
                     bSeekOptimizedValid = false;
                     fprintf(stderr, "Error: cannot open %s\n",
@@ -253,7 +253,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                     }
                 }
 
-                if (fp != nullptr)
+                if (fp)
                 {
                     VSIFSeekL(fp,
                               static_cast<vsi_l_offset>(nChunksItems) *
@@ -465,7 +465,7 @@ MAIN_START(nArgc, papszArgv)
         }
     }
 
-    if (pszZipFilename == nullptr)
+    if (!pszZipFilename)
     {
         Usage("Missing zip filename");
         return 1;
@@ -655,7 +655,7 @@ MAIN_START(nArgc, papszArgv)
 
     void *hZIP = CPLCreateZip(pszZipFilename, aosOptionsCreateZip.List());
 
-    if (hZIP == nullptr)
+    if (!hZIP)
         return 1;
 
     uint64_t nCurSize = 0;

@@ -2323,18 +2323,17 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
                        CSLConstList papszOptions,
                        GDALProgressFunc pProgressFunc, void *pProgressData)
 {
-    if (hZip == nullptr || pszArchiveFilename == nullptr ||
-        (pszInputFilename == nullptr && fpInput == nullptr))
+    if (!hZip || !pszArchiveFilename || (!pszInputFilename && !fpInput))
         return CE_Failure;
 
     CPLZip *psZip = static_cast<CPLZip *>(hZip);
     zip64_internal *zi = reinterpret_cast<zip64_internal *>(psZip->hZip);
 
     std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
-    if (fpInput == nullptr)
+    if (!fpInput)
     {
         fpInput = VSIFOpenL(pszInputFilename, "rb");
-        if (fpInput == nullptr)
+        if (!fpInput)
             return CE_Failure;
         poFileHandleAutoClose.reset(
             reinterpret_cast<VSIVirtualHandle *>(fpInput));
@@ -2354,7 +2353,7 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
         papszOptions, "SOZIP_CHUNK_SIZE",
         CPLGetConfigOption("CPL_VSIL_DEFLATE_CHUNK_SIZE", nullptr));
     const bool bChunkSizeSpecified = pszChunkSize != nullptr;
-    if (pszChunkSize == nullptr)
+    if (!pszChunkSize)
         pszChunkSize = "1024K";
     unsigned nChunkSize = static_cast<unsigned>(atoi(pszChunkSize));
     if (strchr(pszChunkSize, 'K'))

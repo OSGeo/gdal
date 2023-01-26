@@ -528,13 +528,13 @@ int VSICopyFile(const char *pszSource, const char *pszTarget,
                 void *pProgressData)
 
 {
-    if (pszSource == nullptr && fpSource == nullptr)
+    if (!pszSource && !fpSource)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "pszSource == nullptr && fpSource == nullptr");
         return -1;
     }
-    if (pszTarget == nullptr || pszTarget[0] == '\0')
+    if (!pszTarget || pszTarget[0] == '\0')
     {
         return -1;
     }
@@ -1254,10 +1254,10 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
 
     std::unique_ptr<VSIVirtualHandle, VirtualHandleCloser>
         poFileHandleAutoClose;
-    if (fpSource == nullptr)
+    if (!fpSource)
     {
         fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
-        if (fpSource == nullptr)
+        if (!fpSource)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
             return -1;
@@ -1276,7 +1276,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     }
 
     VSILFILE *fpOut = VSIFOpenEx2L(pszTarget, "wb", TRUE, papszOptions);
-    if (fpOut == nullptr)
+    if (!fpOut)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszTarget);
         return -1;

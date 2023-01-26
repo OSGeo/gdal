@@ -3623,7 +3623,7 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
     }
 
     std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
-    if (fpSource == nullptr)
+    if (!fpSource)
     {
         if (STARTS_WITH(pszSource, osPrefix))
         {
@@ -3640,11 +3640,11 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
                 }
             }
         }
-        if (fpSource == nullptr)
+        if (!fpSource)
         {
             fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
         }
-        if (fpSource == nullptr)
+        if (!fpSource)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
             return false;
