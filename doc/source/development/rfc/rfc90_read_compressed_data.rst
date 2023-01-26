@@ -8,7 +8,7 @@ RFC 90: Direct access to compressed raster data
 Author:        Even Rouault
 Contact:       even.rouault at spatialys.com
 Started:       2023-Jan-03
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
