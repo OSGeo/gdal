@@ -1791,3 +1791,43 @@ char **OGROpenFileGDBDataSource::GetFileList()
     CSLDestroy(papszFiles);
     return osStringList.StealList();
 }
+
+/************************************************************************/
+/*                           BuildSRS()                                 */
+/************************************************************************/
+
+OGRSpatialReference *OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
+{
+    std::shared_ptr<OGRSpatialReference> poSharedObj;
+    m_oCacheWKTToSRS.tryGet(pszWKT, poSharedObj);
+    if (poSharedObj)
+        return poSharedObj->Clone();
+
+    OGRSpatialReference *poSRS = new OGRSpatialReference();
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
+    {
+        delete poSRS;
+        poSRS = nullptr;
+    }
+    if (poSRS != nullptr)
+    {
+        if (CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")))
+        {
+            auto poSRSMatch = poSRS->FindBestMatch(100);
+            if (poSRSMatch)
+            {
+                poSRS->Release();
+                poSRS = poSRSMatch;
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+            m_oCacheWKTToSRS.insert(
+                pszWKT, std::shared_ptr<OGRSpatialReference>(poSRS->Clone()));
+        }
+        else
+        {
+            poSRS->AutoIdentifyEPSG();
+        }
+    }
+    return poSRS;
+}
