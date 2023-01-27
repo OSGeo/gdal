@@ -348,6 +348,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 continue;
             }
         }
+        else if (papsGeometry[0] &&
+                 strcmp(papsGeometry[0]->pszValue, "null") == 0)
+        {
+            // do nothing
+        }
         else if (papsGeometry[0] != nullptr)
         {
             const char *pszSRSName = poDS->GetGlobalSRSName();

@@ -17,4 +17,14 @@
       <osgb:deletionDate>9999-12-31</osgb:deletionDate>
     </osgb:DepartedFeature>
   </osgb:departedMember>
+  <osgb:departedMember>
+    <osgb:DepartedFeature fid="fid2">
+      <osgb:boundedBy>
+        <gml:null>unknown</gml:null>
+      </osgb:boundedBy>
+      <osgb:theme>Roads Tracks And Paths</osgb:theme>
+      <osgb:reasonForDeparture>Deleted</osgb:reasonForDeparture>
+      <osgb:deletionDate>9999-12-31</osgb:deletionDate>
+    </osgb:DepartedFeature>
+  </osgb:departedMember>
 </osgb:FeatureCollection>

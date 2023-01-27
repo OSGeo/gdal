@@ -4608,6 +4608,9 @@ def test_ogr_gml_read_boundedby_only():
         f = lyr.GetNextFeature()
         assert f["fid"] == "fid1"
         assert f.GetGeometryRef().ExportToIsoWkt() == "POLYGON ((0 1,2 1,2 3,0 3,0 1))"
+        f = lyr.GetNextFeature()
+        assert f["fid"] == "fid2"
+        assert f.GetGeometryRef() is None
         ds = None
 
     gdal.Unlink("data/gml/only_boundedby.gfs")
