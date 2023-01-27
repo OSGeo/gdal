@@ -2443,24 +2443,26 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
             }
         }
 
+        CSLDestroy(papszCopyOptions);
+
         // TODO Supporting mask bands is a possible future task
         if (poDstDS != nullptr)
         {
             int nCloneFlags = GCIF_PAM_DEFAULT & ~GCIF_MASK;
             poDstDS->CloneInfo(poSrcDS, nCloneFlags);
+
+            if (poDstDS->eIndexMode == ATTRIBUTES)
+            {
+                poDstDS->FlushCache(false);
+            }
+
+            poDstDS->m_array->close();
+            poDstDS->eAccess = GA_ReadOnly;
+            poDstDS->m_array->open(TILEDB_READ);
+
+            return poDstDS.release();
         }
-
-        CSLDestroy(papszCopyOptions);
-        if (poDstDS->eIndexMode == ATTRIBUTES)
-        {
-            poDstDS->FlushCache(false);
-        }
-
-        poDstDS->m_array->close();
-        poDstDS->eAccess = GA_ReadOnly;
-        poDstDS->m_array->open(TILEDB_READ);
-
-        return poDstDS.release();
+        return nullptr;
     }
     catch (const tiledb::TileDBError &e)
     {
