@@ -1064,45 +1064,29 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-        if (m_poGDS->m_poJPEGDS == nullptr)
+        const char *const apszDrivers[] = {"JPEG", nullptr};
+
+        CPLConfigOptionSetter oJPEGtoRGBSetter(
+            "GDAL_JPEG_TO_RGB",
+            m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+                    m_poGDS->nBands == 4
+                ? "NO"
+                : "YES",
+            false);
+
+        m_poGDS->m_poJPEGDS.reset(
+            GDALDataset::Open(osFileToOpen, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                              apszDrivers, nullptr, nullptr));
+
+        if (m_poGDS->m_poJPEGDS != nullptr)
         {
-            const char *const apszDrivers[] = {"JPEG", nullptr};
+            // Force all implicit overviews to be available, even for
+            // small tiles.
+            CPLConfigOptionSetter oInternalOverviewsSetter(
+                "JPEG_FORCE_INTERNAL_OVERVIEWS", "YES", false);
+            GDALGetOverviewCount(
+                GDALGetRasterBand(m_poGDS->m_poJPEGDS.get(), 1));
 
-            CPLConfigOptionSetter oJPEGtoRGBSetter(
-                "GDAL_JPEG_TO_RGB",
-                m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
-                        m_poGDS->nBands == 4
-                    ? "NO"
-                    : "YES",
-                false);
-
-            m_poGDS->m_poJPEGDS.reset(GDALDataset::Open(
-                osFileToOpen, GDAL_OF_RASTER | GDAL_OF_INTERNAL, apszDrivers,
-                nullptr, nullptr));
-
-            if (m_poGDS->m_poJPEGDS != nullptr)
-            {
-                // Force all implicit overviews to be available, even for
-                // small tiles.
-                CPLConfigOptionSetter oInternalOverviewsSetter(
-                    "JPEG_FORCE_INTERNAL_OVERVIEWS", "YES", false);
-                GDALGetOverviewCount(
-                    GDALGetRasterBand(m_poGDS->m_poJPEGDS.get(), 1));
-
-                m_poGDS->m_nBlockId = nBlockId;
-            }
-        }
-        else
-        {
-            // Trick: we invalidate the JPEG dataset to force a reload
-            // of the new content.
-            CPLErrorReset();
-            m_poGDS->m_poJPEGDS->FlushCache(false);
-            if (CPLGetLastErrorNo() != 0)
-            {
-                m_poGDS->m_poJPEGDS.reset();
-                return CE_Failure;
-            }
             m_poGDS->m_nBlockId = nBlockId;
         }
     }
