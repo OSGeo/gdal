@@ -2588,12 +2588,14 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBufXSize < nXSize && nBufYSize < nYSize)
     {
         int bTried = FALSE;
-        ++m_nJPEGOverviewVisibilityCounter;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            ++m_nJPEGOverviewVisibilityCounter;
         const CPLErr eErr = TryOverviewRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
             nBandSpace, psExtraArg, &bTried);
-        --m_nJPEGOverviewVisibilityCounter;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            --m_nJPEGOverviewVisibilityCounter;
         if (bTried)
             return eErr;
     }
@@ -2663,12 +2665,14 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 #endif
 
-    ++m_nJPEGOverviewVisibilityCounter;
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        ++m_nJPEGOverviewVisibilityCounter;
     const CPLErr eErr = GDALPamDataset::IRasterIO(
         eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
         eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
         psExtraArg);
-    m_nJPEGOverviewVisibilityCounter--;
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        m_nJPEGOverviewVisibilityCounter--;
 
     if (pBufferedData)
     {
@@ -5898,11 +5902,13 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBufXSize < nXSize && nBufYSize < nYSize)
     {
         int bTried = FALSE;
-        ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
         const CPLErr eErr = TryOverviewRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nPixelSpace, nLineSpace, psExtraArg, &bTried);
-        --m_poGDS->m_nJPEGOverviewVisibilityCounter;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            --m_poGDS->m_nJPEGOverviewVisibilityCounter;
         if (bTried)
             return eErr;
     }
@@ -6019,11 +6025,13 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
     const CPLErr eErr = GDALPamRasterBand::IRasterIO(
         eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
         eBufType, nPixelSpace, nLineSpace, psExtraArg);
-    --m_poGDS->m_nJPEGOverviewVisibilityCounter;
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        --m_poGDS->m_nJPEGOverviewVisibilityCounter;
 
     m_poGDS->m_bLoadingOtherBands = false;
 
