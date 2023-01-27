@@ -40,6 +40,7 @@ RUN apk add --no-cache \
     qhull-dev \
     unixodbc-dev \
     libpq-dev \
+    apache-arrow-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -96,33 +97,6 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    ); fi
-
-# Build Arrow Apache
-ARG ARROW_VERSION=10.0.0
-RUN if test "${ARROW_VERSION}" != ""; then ( \
-    wget -q https://dlcdn.apache.org/arrow/arrow-${ARROW_VERSION}/apache-arrow-${ARROW_VERSION}.tar.gz \
-    && apk add --no-cache re2-dev utf8proc-dev thrift-dev  \
-    && tar xzf apache-arrow-${ARROW_VERSION}.tar.gz \
-    && rm -f apache-arrow-${ARROW_VERSION}.tar.gz \
-    && cd apache-arrow-${ARROW_VERSION}/cpp \
-    && mkdir build \
-    && cd build \
-    && cmake .. -DARROW_BUILD_STATIC=ON -DARROW_BUILD_STATIC=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr -DARROW_DATASET=YES -DARROW_PARQUET=YES \
-        -DARROW_WITH_BZ2:BOOL=ON \
-        -DARROW_WITH_LZ4:BOOL=ON \
-        -DARROW_WITH_SNAPPY:BOOL=ON \
-        -DARROW_WITH_ZLIB:BOOL=ON \
-        -DARROW_WITH_ZSTD:BOOL=ON \ \
-        -DARROW_WITH_BROTLI:BOOL=ON \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libarrow*.so* /build_thirdparty/usr/lib \
-    && cp -P /usr/lib/libparquet*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd ../../.. \
-    && rm -rf apache-arrow-${ARROW_VERSION} \
     ); fi
 
 RUN apk add --no-cache rsync ccache
@@ -308,7 +282,7 @@ RUN apk add --no-cache \
         qhull \
         unixodbc \
         libpq \
-        re2 utf8proc thrift-libs-cpp \
+        apache-arrow \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
