@@ -826,7 +826,9 @@ bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
     m_bSupportsRead =
-        VSIFileManager::GetHandler(pszName)->SupportsRead(pszName);
+        VSIFileManager::GetHandler(pszName)->SupportsRead(pszName) &&
+        VSIFileManager::GetHandler(pszName)->SupportsRandomWrite(pszName,
+                                                                 false);
     m_bAtEOF = !m_bSupportsRead;
     m_fp = VSIFOpenExL(pszName, m_bSupportsRead ? "wb+" : "wb", true);
     if (nullptr == m_fp)
