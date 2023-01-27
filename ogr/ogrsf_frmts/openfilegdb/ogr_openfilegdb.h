@@ -455,6 +455,8 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
 
     bool BackupSystemTablesForTransaction();
 
+    CPLErr Close() override;
+
   public:
     OGROpenFileGDBDataSource();
     virtual ~OGROpenFileGDBDataSource();

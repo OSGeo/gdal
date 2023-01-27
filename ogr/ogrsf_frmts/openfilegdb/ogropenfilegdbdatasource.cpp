@@ -108,15 +108,33 @@ OGROpenFileGDBDataSource::OGROpenFileGDBDataSource()
 OGROpenFileGDBDataSource::~OGROpenFileGDBDataSource()
 
 {
-    if (m_bInTransaction)
-        OGROpenFileGDBDataSource::RollbackTransaction();
+    OGROpenFileGDBDataSource::Close();
+}
 
-    for (auto &poLayer : m_apoLayers)
-        poLayer->SyncToDisk();
-    m_apoLayers.clear();
-    m_apoHiddenLayers.clear();
-    CPLFree(m_pszName);
-    CSLDestroy(m_papszFiles);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGROpenFileGDBDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (m_bInTransaction)
+            OGROpenFileGDBDataSource::RollbackTransaction();
+
+        if (OGROpenFileGDBDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        m_apoLayers.clear();
+        m_apoHiddenLayers.clear();
+        CPLFree(m_pszName);
+        CSLDestroy(m_papszFiles);
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
