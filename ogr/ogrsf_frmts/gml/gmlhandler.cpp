@@ -585,6 +585,9 @@ OGRErr GMLHandler::startElement(const char *pszName, int nLenName, void *attr)
         case STATE_BOUNDED_BY:
             eRet = startElementBoundedBy(pszName, nLenName, attr);
             break;
+        case STATE_BOUNDED_BY_IN_FEATURE:
+            eRet = startElementGeometry(pszName, nLenName, attr);
+            break;
         case STATE_CITYGML_ATTRIBUTE:
             eRet = startElementCityGMLGenericAttr(pszName, nLenName, attr);
             break;
@@ -648,6 +651,9 @@ OGRErr GMLHandler::endElement()
         case STATE_BOUNDED_BY:
             return endElementBoundedBy();
             break;
+        case STATE_BOUNDED_BY_IN_FEATURE:
+            return endElementBoundedByInFeature();
+            break;
         case STATE_CITYGML_ATTRIBUTE:
             return endElementCityGMLGenericAttr();
             break;
@@ -688,6 +694,9 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
             break;
         case STATE_BOUNDED_BY:
             return OGRERR_NONE;
+            break;
+        case STATE_BOUNDED_BY_IN_FEATURE:
+            return dataHandlerGeometry(data, nLen);
             break;
         case STATE_CITYGML_ATTRIBUTE:
             return dataHandlerAttribute(data, nLen);
@@ -740,15 +749,6 @@ OGRErr GMLHandler::startElementBoundedBy(const char *pszName, int /*nLenName*/,
 OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
                                         void *attr)
 {
-    if (nLenName == 9 && strcmp(pszName, "boundedBy") == 0)
-    {
-        m_inBoundedByDepth = m_nDepth;
-
-        PUSH_STATE(STATE_BOUNDED_BY);
-
-        return OGRERR_NONE;
-    }
-
     /* Create new XML Element */
     CPLXMLNode *psCurNode = (CPLXMLNode *)CPLCalloc(sizeof(CPLXMLNode), 1);
     psCurNode->eType = CXT_Element;
@@ -1260,7 +1260,14 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
     {
         m_inBoundedByDepth = m_nDepth;
 
-        PUSH_STATE(STATE_BOUNDED_BY);
+        CPLAssert(apsXMLNode.empty());
+
+        NodeLastChild sNodeLastChild;
+        sNodeLastChild.psNode = nullptr;
+        sNodeLastChild.psLastChild = nullptr;
+        apsXMLNode.push_back(sNodeLastChild);
+
+        PUSH_STATE(STATE_BOUNDED_BY_IN_FEATURE);
 
         return OGRERR_NONE;
     }
@@ -1526,6 +1533,27 @@ OGRErr GMLHandler::endElementBoundedBy()
 }
 
 /************************************************************************/
+/*                     endElementBoundedByInFeature()                   */
+/************************************************************************/
+OGRErr GMLHandler::endElementBoundedByInFeature()
+
+{
+    if (m_nDepth > m_inBoundedByDepth)
+    {
+        if (m_nDepth == m_inBoundedByDepth + 1)
+        {
+            m_nGeometryDepth = m_nDepth;
+        }
+        return endElementGeometry();
+    }
+    else
+    {
+        POP_STATE();
+        return OGRERR_NONE;
+    }
+}
+
+/************************************************************************/
 /*                       ParseAIXMElevationPoint()                      */
 /************************************************************************/
 
@@ -1662,23 +1690,30 @@ OGRErr GMLHandler::endElementGeometry()
         }
 
         GMLFeature *poGMLFeature = m_poReader->GetState()->m_poFeature;
-        if (m_poReader->FetchAllGeometries())
-            poGMLFeature->AddGeometry(psInterestNode);
+        if (stateStack[nStackDepth] == STATE_BOUNDED_BY_IN_FEATURE)
+        {
+            poGMLFeature->SetBoundedByGeometry(psInterestNode);
+        }
         else
         {
-            GMLFeatureClass *poClass = poGMLFeature->GetClass();
-            if (poClass->GetGeometryPropertyCount() > 1)
-            {
-                poGMLFeature->SetGeometryDirectly(m_nGeometryPropertyIndex,
-                                                  psInterestNode);
-            }
+            if (m_poReader->FetchAllGeometries())
+                poGMLFeature->AddGeometry(psInterestNode);
             else
             {
-                poGMLFeature->SetGeometryDirectly(psInterestNode);
+                GMLFeatureClass *poClass = poGMLFeature->GetClass();
+                if (poClass->GetGeometryPropertyCount() > 1)
+                {
+                    poGMLFeature->SetGeometryDirectly(m_nGeometryPropertyIndex,
+                                                      psInterestNode);
+                }
+                else
+                {
+                    poGMLFeature->SetGeometryDirectly(psInterestNode);
+                }
             }
-        }
 
-        POP_STATE();
+            POP_STATE();
+        }
     }
 
     apsXMLNode.pop_back();

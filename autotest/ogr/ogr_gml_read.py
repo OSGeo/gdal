@@ -4586,3 +4586,34 @@ def test_ogr_gml_read_srsDimension_3_on_top_gml_Envelope():
         f.GetGeometryRef().ExportToIsoWkt()
         == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
     )
+
+
+###############################################################################
+# Test reading a file with only a boundedBy property in features without
+# a regular geometry field
+
+
+def test_ogr_gml_read_boundedby_only():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    def check():
+        ds = gdal.OpenEx("data/gml/only_boundedby.gml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetGeometryColumn() == "boundedBy"
+        assert lyr.GetExtent() == (0, 2, 1, 3)
+        f = lyr.GetNextFeature()
+        assert f["fid"] == "fid1"
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POLYGON ((0 1,2 1,2 3,0 3,0 1))"
+        ds = None
+
+    gdal.Unlink("data/gml/only_boundedby.gfs")
+    check()
+
+    # This time with .gfs
+    assert os.path.exists("data/gml/only_boundedby.gfs")
+    check()
+    gdal.Unlink("data/gml/only_boundedby.gfs")

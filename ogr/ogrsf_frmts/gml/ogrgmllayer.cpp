@@ -279,6 +279,15 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         OGRGeometry **papoGeometries = nullptr;
         const CPLXMLNode *const *papsGeometry = poGMLFeature->GetGeometryList();
 
+        const CPLXMLNode *apsGeometries[2] = {nullptr, nullptr};
+        const CPLXMLNode *psBoundedByGeometry =
+            poGMLFeature->GetBoundedByGeometry();
+        if (psBoundedByGeometry && !(papsGeometry && papsGeometry[0]))
+        {
+            apsGeometries[0] = psBoundedByGeometry;
+            papsGeometry = apsGeometries;
+        }
+
         OGRGeometry *poGeom = nullptr;
 
         if (poFeatureDefn->GetGeomFieldCount() > 1)

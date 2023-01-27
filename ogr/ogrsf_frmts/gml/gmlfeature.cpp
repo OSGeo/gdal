@@ -86,6 +86,9 @@ GMLFeature::~GMLFeature()
         CPLFree(m_papsGeometry);
     }
 
+    if (m_psBoundedByGeometry)
+        CPLDestroyXMLNode(m_psBoundedByGeometry);
+
     CPLFree(m_pasProperties);
     CSLDestroy(m_papszOBProperties);
 }
@@ -283,6 +286,18 @@ void GMLFeature::AddGeometry(CPLXMLNode *psGeom)
         m_papsGeometry[m_nGeometryCount + 1] = nullptr;
     }
     m_nGeometryCount++;
+}
+
+/************************************************************************/
+/*                         SetBoundedByGeometry()                       */
+/************************************************************************/
+
+void GMLFeature::SetBoundedByGeometry(CPLXMLNode *psGeom)
+
+{
+    if (m_psBoundedByGeometry)
+        CPLDestroyXMLNode(m_psBoundedByGeometry);
+    m_psBoundedByGeometry = psGeom;
 }
 
 /************************************************************************/
