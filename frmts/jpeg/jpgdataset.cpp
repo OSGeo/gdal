@@ -1925,6 +1925,7 @@ void JPGDatasetCommon::InitInternalOverviews()
                 sArgs.nScaleFactor = 1 << (i + 1);
                 sArgs.bDoPAMInitialize = false;
                 sArgs.bUseInternalOverviews = false;
+                sArgs.bIsLossless = false;
                 JPGDatasetCommon *poImplicitOverview = JPGDataset::Open(&sArgs);
                 if (poImplicitOverview == nullptr)
                     break;
