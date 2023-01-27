@@ -87,15 +87,16 @@ NASAKeywordHandler::~NASAKeywordHandler()
 /*                               Ingest()                               */
 /************************************************************************/
 
-int NASAKeywordHandler::Ingest(VSILFILE *fp, int nOffset)
+bool NASAKeywordHandler::Ingest(VSILFILE *fp, int nOffset)
 
 {
     /* -------------------------------------------------------------------- */
     /*      Read in buffer till we find END all on its own line.            */
     /* -------------------------------------------------------------------- */
     if (VSIFSeekL(fp, nOffset, SEEK_SET) != 0)
-        return FALSE;
+        return false;
 
+    std::string osHeaderText;
     for (; true;)
     {
         char szChunk[513];
@@ -121,7 +122,17 @@ int NASAKeywordHandler::Ingest(VSILFILE *fp, int nOffset)
             break;
     }
 
-    pszHeaderNext = osHeaderText.c_str();
+    return Parse(osHeaderText.c_str());
+}
+
+/************************************************************************/
+/*                               Parse()                                */
+/************************************************************************/
+
+bool NASAKeywordHandler::Parse(const char *pszStr)
+
+{
+    pszHeaderNext = pszStr;
 
     /* -------------------------------------------------------------------- */
     /*      Process name/value pairs, keeping track of a "path stack".      */
@@ -134,22 +145,22 @@ int NASAKeywordHandler::Ingest(VSILFILE *fp, int nOffset)
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
-                                  CPLJSONObject &oCur, int nRecLevel)
+bool NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
+                                   CPLJSONObject &oCur, int nRecLevel)
 
 {
     if (osPathPrefix.size() > 256)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big prefix for GROUP");
-        return FALSE;
+        return false;
     }
     if (nRecLevel == 100)
-        return FALSE;
+        return false;
     for (; true;)
     {
         CPLString osName, osValue;
         if (!ReadPair(osName, osValue, oCur))
-            return FALSE;
+            return false;
 
         if (EQUAL(osName, "OBJECT") || EQUAL(osName, "GROUP"))
         {
@@ -159,7 +170,7 @@ int NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
             if (!ReadGroup((osPathPrefix + osValue + ".").c_str(), oNewGroup,
                            nRecLevel + 1))
             {
-                return FALSE;
+                return false;
             }
             CPLJSONObject oName = oNewGroup["Name"];
             if ((osValue == "Table" || osValue == "Field") &&
@@ -186,7 +197,7 @@ int NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
         else if (EQUAL(osName, "END") || EQUAL(osName, "END_GROUP") ||
                  EQUAL(osName, "END_OBJECT"))
         {
-            return TRUE;
+            return true;
         }
         else
         {
@@ -216,28 +227,28 @@ static CPLString StripQuotesIfNeeded(const CPLString &osWord,
 /*      Returns TRUE on success.                                        */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
-                                 CPLJSONObject &oCur)
+bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
+                                  CPLJSONObject &oCur)
 
 {
     osName = "";
     osValue = "";
 
     if (!ReadWord(osName))
-        return FALSE;
+        return false;
 
     SkipWhite();
 
     if (EQUAL(osName, "END"))
-        return TRUE;
+        return true;
 
     if (*pszHeaderNext != '=')
     {
         // ISIS3 does not have anything after the end group/object keyword.
         if (EQUAL(osName, "End_Group") || EQUAL(osName, "End_Object"))
-            return TRUE;
+            return true;
 
-        return FALSE;
+        return false;
     }
 
     pszHeaderNext++;
@@ -302,7 +313,7 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '(')
                 {
                     CPLDebug("PDS", "Unpaired ( ) for %s", osName.c_str());
-                    return FALSE;
+                    return false;
                 }
                 oStackArrayBeginChar.pop_back();
                 pszHeaderNext++;
@@ -316,7 +327,7 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '{')
                 {
                     CPLDebug("PDS", "Unpaired { } for %s", osName.c_str());
-                    return FALSE;
+                    return false;
                 }
                 oStackArrayBeginChar.pop_back();
                 pszHeaderNext++;
@@ -344,7 +355,7 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
     else  // Handle more normal "single word" values.
     {
         if (!ReadWord(osValue, m_bStripSurroundingQuotes, false, &bIsString))
-            return FALSE;
+            return false;
     }
 
     SkipWhite();
@@ -375,7 +386,7 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
                 }
             }
         }
-        return TRUE;
+        return true;
     }
 
     CPLString osValueNoUnit(osValue);
@@ -425,7 +436,7 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
     }
     newObject.Add("unit", osUnit);
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -433,9 +444,9 @@ int NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
 /*  Returns TRUE on success                                             */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadWord(CPLString &osWord,
-                                 bool bStripSurroundingQuotes, bool bParseList,
-                                 bool *pbIsString)
+bool NASAKeywordHandler::ReadWord(CPLString &osWord,
+                                  bool bStripSurroundingQuotes, bool bParseList,
+                                  bool *pbIsString)
 
 {
     if (pbIsString)
@@ -446,7 +457,7 @@ int NASAKeywordHandler::ReadWord(CPLString &osWord,
 
     if (!(*pszHeaderNext != '\0' && *pszHeaderNext != '=' &&
           !isspace(static_cast<unsigned char>(*pszHeaderNext))))
-        return FALSE;
+        return false;
 
     /* Extract a text string delimited by '\"' */
     /* Convert newlines (CR or LF) within quotes. While text strings
@@ -461,7 +472,7 @@ int NASAKeywordHandler::ReadWord(CPLString &osWord,
         while (*pszHeaderNext != '"')
         {
             if (*pszHeaderNext == '\0')
-                return FALSE;
+                return false;
             if (*pszHeaderNext == '\n')
             {
                 osWord += "\\n";
@@ -480,7 +491,7 @@ int NASAKeywordHandler::ReadWord(CPLString &osWord,
             osWord += *(pszHeaderNext);
         pszHeaderNext++;
 
-        return TRUE;
+        return true;
     }
 
     /* Extract a symbol string */
@@ -499,14 +510,14 @@ int NASAKeywordHandler::ReadWord(CPLString &osWord,
         while (*pszHeaderNext != '\'')
         {
             if (*pszHeaderNext == '\0')
-                return FALSE;
+                return false;
 
             osWord += *(pszHeaderNext++);
         }
         if (!bStripSurroundingQuotes)
             osWord += *(pszHeaderNext);
         pszHeaderNext++;
-        return TRUE;
+        return true;
     }
 
     /*
@@ -537,7 +548,7 @@ int NASAKeywordHandler::ReadWord(CPLString &osWord,
     if (pbIsString)
         *pbIsString = CPLGetValueType(osWord) == CPL_VALUE_STRING;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

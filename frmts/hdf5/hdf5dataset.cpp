@@ -542,6 +542,14 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+    if (HDF5EOSParser::HasHDFEOS(poDS->hGroupID))
+    {
+        if (poDS->m_oHDFEOSParser.Parse(poDS->hGroupID))
+        {
+            CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");
+        }
+    }
+
     poDS->ReadGlobalAttributes(true);
 
     poDS->SetMetadata(poDS->papszMetadata);
@@ -1290,47 +1298,80 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
     if (poRootGroup->nType == H5G_DATASET && bSUBDATASET &&
         poDS->GetDataType(poRootGroup->native) == GDT_Unknown)
     {
-        CPLDebug("HDF5", "Skipping unsupported %s of type %s",
-                 poRootGroup->pszUnderscorePath,
-                 poDS->GetDataTypeName(poRootGroup->native));
+        if (!EQUAL(poRootGroup->pszUnderscorePath,
+                   "//HDFEOS_INFORMATION/StructMetadata.0"))
+        {
+            CPLDebug("HDF5", "Skipping unsupported %s of type %s",
+                     poRootGroup->pszUnderscorePath,
+                     poDS->GetDataTypeName(poRootGroup->native));
+        }
     }
     else if (poRootGroup->nType == H5G_DATASET && bSUBDATASET)
     {
         CreateMetadata(poRootGroup, H5G_DATASET);
 
-        char szTemp[8192];  // TODO(schwehr): Get this off of the stack.
+        CPLString osStr;
         switch (poRootGroup->nRank)
         {
             case 2:
-                snprintf(szTemp, sizeof(szTemp), "%dx%d",
-                         static_cast<int>(poRootGroup->paDims[0]),
-                         static_cast<int>(poRootGroup->paDims[1]));
+                osStr.Printf("%dx%d", static_cast<int>(poRootGroup->paDims[0]),
+                             static_cast<int>(poRootGroup->paDims[1]));
                 break;
             case 3:
-                snprintf(szTemp, sizeof(szTemp), "%dx%dx%d",
-                         static_cast<int>(poRootGroup->paDims[0]),
-                         static_cast<int>(poRootGroup->paDims[1]),
-                         static_cast<int>(poRootGroup->paDims[2]));
+                osStr.Printf("%dx%dx%d",
+                             static_cast<int>(poRootGroup->paDims[0]),
+                             static_cast<int>(poRootGroup->paDims[1]),
+                             static_cast<int>(poRootGroup->paDims[2]));
                 break;
             default:
                 return CE_None;
         }
 
-        const std::string osDim = szTemp;
+        HDF5EOSParser::GridMetadata oMetadata;
+        if (m_oHDFEOSParser.GetMetadata(poRootGroup->pszUnderscorePath,
+                                        oMetadata) &&
+            static_cast<int>(oMetadata.aoDimensions.size()) ==
+                poRootGroup->nRank)
+        {
+            int nXDimSize = 0;
+            int nYDimSize = 0;
+            int nOtherDimSize = 0;
+            for (auto &oDim : oMetadata.aoDimensions)
+            {
+                if (oDim.osName == "XDim")
+                    nXDimSize = oDim.nSize;
+                else if (oDim.osName == "YDim")
+                    nYDimSize = oDim.nSize;
+                else
+                    nOtherDimSize = oDim.nSize;
+            }
+            switch (poRootGroup->nRank)
+            {
+                case 2:
+                    osStr.Printf("%dx%d", nXDimSize, nYDimSize);
+                    break;
+                case 3:
+                    osStr.Printf("%dx%dx%d", nXDimSize, nYDimSize,
+                                 nOtherDimSize);
+                    break;
+                default:
+                    break;
+            }
+        }
 
-        snprintf(szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME",
-                 ++(poDS->nSubDataCount));
+        const std::string osDim = osStr;
+
+        osStr.Printf("SUBDATASET_%d_NAME", ++(poDS->nSubDataCount));
 
         poDS->papszSubDatasets =
-            CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+            CSLSetNameValue(poDS->papszSubDatasets, osStr.c_str(),
                             CPLSPrintf("HDF5:\"%s\":%s", poDS->GetDescription(),
                                        poRootGroup->pszUnderscorePath));
 
-        snprintf(szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC",
-                 poDS->nSubDataCount);
+        osStr.Printf("SUBDATASET_%d_DESC", poDS->nSubDataCount);
 
         poDS->papszSubDatasets = CSLSetNameValue(
-            poDS->papszSubDatasets, szTemp,
+            poDS->papszSubDatasets, osStr.c_str(),
             CPLSPrintf("[%s] %s (%s)", osDim.c_str(),
                        poRootGroup->pszUnderscorePath,
                        poDS->GetDataTypeName(poRootGroup->native)));

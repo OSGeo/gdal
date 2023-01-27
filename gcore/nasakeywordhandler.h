@@ -51,7 +51,6 @@ class CPL_DLL NASAKeywordHandler
 {
     CPLStringList aosKeywordList{};
 
-    CPLString osHeaderText{};
     const char *pszHeaderNext = nullptr;
 
     CPLJSONObject oJSon{};
@@ -59,11 +58,11 @@ class CPL_DLL NASAKeywordHandler
     bool m_bStripSurroundingQuotes = false;
 
     void SkipWhite();
-    int ReadWord(CPLString &osWord, bool bStripSurroundingQuotes = false,
-                 bool bParseList = false, bool *pbIsString = nullptr);
-    int ReadPair(CPLString &osName, CPLString &osValue, CPLJSONObject &oCur);
-    int ReadGroup(const std::string &osPathPrefix, CPLJSONObject &oCur,
-                  int nRecLevel);
+    bool ReadWord(CPLString &osWord, bool bStripSurroundingQuotes = false,
+                  bool bParseList = false, bool *pbIsString = nullptr);
+    bool ReadPair(CPLString &osName, CPLString &osValue, CPLJSONObject &oCur);
+    bool ReadGroup(const std::string &osPathPrefix, CPLJSONObject &oCur,
+                   int nRecLevel);
 
     NASAKeywordHandler(const NASAKeywordHandler &) = delete;
     NASAKeywordHandler &operator=(const NASAKeywordHandler &) = delete;
@@ -77,7 +76,8 @@ class CPL_DLL NASAKeywordHandler
         m_bStripSurroundingQuotes = bStripSurroundingQuotes;
     }
 
-    int Ingest(VSILFILE *fp, int nOffset);
+    bool Ingest(VSILFILE *fp, int nOffset);
+    bool Parse(const char *pszStr);
 
     const char *GetKeyword(const char *pszPath, const char *pszDefault);
     char **GetKeywordList();

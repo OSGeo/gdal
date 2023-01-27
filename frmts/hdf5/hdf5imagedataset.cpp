@@ -78,6 +78,9 @@ class HDF5ImageDataset final : public HDF5Dataset
     HDF5CSKProductEnum iCSKProductType;
     double adfGeoTransform[6];
     bool bHasGeoTransform;
+    int m_nXIndex = -1;
+    int m_nYIndex = -1;
+    int m_nOtherDimIndex = -1;
 
     CPLErr CreateODIMH5Projection();
 
@@ -111,11 +114,11 @@ class HDF5ImageDataset final : public HDF5Dataset
     }
     int GetYIndex() const
     {
-        return IsComplexCSKL1A() ? 0 : ndims - 2;
+        return m_nYIndex;
     }
     int GetXIndex() const
     {
-        return IsComplexCSKL1A() ? 1 : ndims - 1;
+        return m_nXIndex;
     }
 
     /**
@@ -332,19 +335,12 @@ CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     hsize_t col_dims[3] = {0, 0, 0};
     hsize_t rank = std::min(poGDS->ndims, 2);
 
-    if (poGDS->IsComplexCSKL1A())
+    if (poGDS->ndims == 3)
     {
         rank = 3;
-        offset[2] = nBand - 1;
-        count[2] = 1;
-        col_dims[2] = 1;
-    }
-    else if (poGDS->ndims == 3)
-    {
-        rank = 3;
-        offset[0] = nBand - 1;
-        count[0] = 1;
-        col_dims[0] = 1;
+        offset[poGDS->m_nOtherDimIndex] = nBand - 1;
+        count[poGDS->m_nOtherDimIndex] = 1;
+        col_dims[poGDS->m_nOtherDimIndex] = 1;
     }
 
     const int nYIndex = poGDS->GetYIndex();
@@ -525,25 +521,90 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     // Check if the hdf5 is a well known product type
     poDS->IdentifyProductType();
 
+    poDS->m_nYIndex = poDS->IsComplexCSKL1A() ? 0 : poDS->ndims - 2;
+    poDS->m_nXIndex = poDS->IsComplexCSKL1A() ? 1 : poDS->ndims - 1;
+
+    if (poDS->IsComplexCSKL1A())
+    {
+        poDS->m_nOtherDimIndex = 2;
+    }
+    else if (poDS->ndims == 3)
+    {
+        poDS->m_nOtherDimIndex = 0;
+    }
+
+    if (HDF5EOSParser::HasHDFEOS(poDS->hGroupID))
+    {
+        HDF5EOSParser oHDFEOSParser;
+        if (oHDFEOSParser.Parse(poDS->hGroupID))
+        {
+            CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");
+            HDF5EOSParser::GridMetadata oMetadata;
+            if (oHDFEOSParser.GetMetadata(osSubdatasetName.c_str(),
+                                          oMetadata) &&
+                static_cast<int>(oMetadata.aoDimensions.size()) == poDS->ndims)
+            {
+                for (auto &oDim : oMetadata.aoDimensions)
+                {
+                    if (oDim.osName == "XDim")
+                        poDS->m_nXIndex = oDim.nDimIndex;
+                    else if (oDim.osName == "YDim")
+                        poDS->m_nYIndex = oDim.nDimIndex;
+                    else
+                        poDS->m_nOtherDimIndex = oDim.nDimIndex;
+                }
+
+                // Special case for https://github.com/OSGeo/gdal/issues/7117
+                if (oMetadata.osProjection == "HE5_GCTP_SNSOID" &&
+                    oMetadata.osGridOrigin == "HE5_HDFE_GD_UL" &&
+                    oMetadata.adfUpperLeftPointMetres.size() == 2 &&
+                    oMetadata.adfLowerRightPointMetres.size() == 2 &&
+                    oMetadata.adfProjParams.size() == 13 &&
+                    std::all_of(oMetadata.adfProjParams.begin() + 1,
+                                oMetadata.adfProjParams.end(),
+                                [](double v) { return v == 0.0; }))
+                {
+                    poDS->nRasterYSize =
+                        static_cast<int>(poDS->dims[poDS->GetYIndex()]);
+                    poDS->nRasterXSize =
+                        static_cast<int>(poDS->dims[poDS->GetXIndex()]);
+                    poDS->bHasGeoTransform = true;
+                    poDS->adfGeoTransform[0] =
+                        oMetadata.adfUpperLeftPointMetres[0];
+                    poDS->adfGeoTransform[1] =
+                        (oMetadata.adfLowerRightPointMetres[0] -
+                         oMetadata.adfUpperLeftPointMetres[0]) /
+                        poDS->nRasterXSize;
+                    poDS->adfGeoTransform[2] = 0;
+                    poDS->adfGeoTransform[3] =
+                        oMetadata.adfUpperLeftPointMetres[1];
+                    poDS->adfGeoTransform[4] = 0;
+                    poDS->adfGeoTransform[5] =
+                        (oMetadata.adfLowerRightPointMetres[1] -
+                         oMetadata.adfUpperLeftPointMetres[1]) /
+                        poDS->nRasterYSize;
+                    poDS->m_oSRS.SetGeogCS("unknown", "unknown", "unknown",
+                                           oMetadata.adfProjParams[0], 0);
+                    poDS->m_oSRS.SetSinusoidal(0.0, 0.0, 0.0);
+                }
+            }
+        }
+    }
+
     poDS->nRasterYSize =
         poDS->GetYIndex() < 0
             ? 1
             : static_cast<int>(poDS->dims[poDS->GetYIndex()]);  // nRows
     poDS->nRasterXSize =
         static_cast<int>(poDS->dims[poDS->GetXIndex()]);  // nCols
-    if (poDS->IsComplexCSKL1A())
+    if (poDS->m_nOtherDimIndex >= 0)
     {
-        poDS->nBands = static_cast<int>(poDS->dims[2]);
-    }
-    else if (poDS->ndims == 3)
-    {
-        poDS->nBands = static_cast<int>(poDS->dims[0]);
+        poDS->nBands = static_cast<int>(poDS->dims[poDS->m_nOtherDimIndex]);
     }
     else
     {
         poDS->nBands = 1;
     }
-
     for (int i = 1; i <= poDS->nBands; i++)
     {
         HDF5ImageRasterBand *const poBand =
