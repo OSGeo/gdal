@@ -19,6 +19,8 @@ if [[ $BASH_VERSION && $(realpath $called) == $(realpath "$0") ]]; then
     exit 1
 fi
 
+# The following line uses a zsh expansion that is not supported by shellcheck
+# shellcheck disable=SC2296
 SETDEVENV_SH=${BASH_SOURCE[0]:-${(%):-%x}}
 
 # SC2164 is "Use cd ... || exit in case cd fails"
