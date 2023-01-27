@@ -2069,6 +2069,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                             oPoints.getZ(0));
         poBoxRing->setPoint(4, oPoints.getX(0), oPoints.getY(0),
                             oPoints.getZ(0));
+        poBoxRing->set3D(oPoints.Is3D());
 
         poBoxPoly->addRingDirectly(poBoxRing);
 

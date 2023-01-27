@@ -380,7 +380,7 @@ def test_gml_Box():
     geom = ogr.CreateGeometryFromGML(gml)
 
     assert (
-        geom.ExportToWkt() == "POLYGON ((1 2 0,3 2 0,3 4 0,1 4 0,1 2 0))"
+        geom.ExportToWkt() == "POLYGON ((1 2,3 2,3 4,1 4,1 2))"
     ), "<gml:Box> not correctly parsed"
 
 
