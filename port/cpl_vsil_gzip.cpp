@@ -3477,7 +3477,10 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
         void operator()(VSIVirtualHandle *poHandle)
         {
             if (poHandle)
+            {
                 poHandle->Close();
+                delete poHandle;
+            }
         }
     };
 

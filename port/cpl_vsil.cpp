@@ -1248,7 +1248,10 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
         void operator()(VSIVirtualHandle *poHandle)
         {
             if (poHandle)
+            {
                 poHandle->Close();
+                delete poHandle;
+            }
         }
     };
 
