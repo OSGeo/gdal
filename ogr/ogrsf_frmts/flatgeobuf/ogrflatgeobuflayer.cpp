@@ -466,7 +466,7 @@ static bool SupportsSeekWhileWriting(const std::string &osFilename)
            STARTS_WITH(osFilename.c_str(), "/vsimem/");
 }
 
-void OGRFlatGeobufLayer::Create()
+bool OGRFlatGeobufLayer::CreateFinalFile()
 {
     // no spatial index requested, we are (almost) done
     if (!m_bCreateSpatialIndexAtClose)
@@ -474,7 +474,7 @@ void OGRFlatGeobufLayer::Create()
         if (m_poFpWrite == nullptr || m_featuresCount == 0 ||
             !SupportsSeekWhileWriting(m_osFilename))
         {
-            return;
+            return true;
         }
 
         // Rewrite header
@@ -491,7 +491,7 @@ void OGRFlatGeobufLayer::Create()
         CPLAssert(m_writeOffset == m_offsetAfterHeader);
         CPL_IGNORE_RET_VAL(m_writeOffset);  // otherwise checkers might tell the
                                             // member is not used
-        return;
+        return true;
     }
 
     m_poFp = VSIFOpenL(m_osFilename.c_str(), "wb");
@@ -499,7 +499,7 @@ void OGRFlatGeobufLayer::Create()
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
                  m_osFilename.c_str(), VSIStrerror(errno));
-        return;
+        return false;
     }
 
     // check if something has been written, if not write empty layer and bail
@@ -507,7 +507,7 @@ void OGRFlatGeobufLayer::Create()
     {
         CPLDebugOnly("FlatGeobuf", "Writing empty layer");
         writeHeader(m_poFp, 0, nullptr);
-        return;
+        return true;
     }
 
     CPLDebugOnly("FlatGeobuf", "Writing second pass sorted by spatial index");
@@ -522,7 +522,7 @@ void OGRFlatGeobufLayer::Create()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too many features for this architecture");
-        return;
+        return false;
     }
 
     NodeItem extent = calcExtent(m_featureItems);
@@ -562,7 +562,7 @@ void OGRFlatGeobufLayer::Create()
     catch (const std::exception &e)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create: %s", e.what());
-        return;
+        return false;
     }
     CPLDebugOnly("FlatGeobuf", "Wrote tree (%lu bytes)",
                  static_cast<long unsigned int>(c));
@@ -586,7 +586,7 @@ void OGRFlatGeobufLayer::Create()
             static_cast<uint32_t>(std::min(
                 static_cast<uint64_t>(100 * 1024 * 1024), nTempFileSize)));
         if (ensureFeatureBuf(nMaxBufferSize) != OGRERR_NONE)
-            return;
+            return false;
         uint32_t offsetInBuffer = 0;
         struct BatchItem
         {
@@ -645,7 +645,7 @@ void OGRFlatGeobufLayer::Create()
             {
                 if (!flushBatch())
                 {
-                    return;
+                    return false;
                 }
             }
 
@@ -659,14 +659,14 @@ void OGRFlatGeobufLayer::Create()
 
         if (!flushBatch())
         {
-            return;
+            return false;
         }
     }
     else
     {
         const auto err = ensureFeatureBuf(m_maxFeatureSize);
         if (err != OGRERR_NONE)
-            return;
+            return false;
 
         for (const auto &featureItem : m_featureItems)
         {
@@ -678,18 +678,18 @@ void OGRFlatGeobufLayer::Create()
             if (VSIFSeekL(m_poFpWrite, featureItem.offset, SEEK_SET) == -1)
             {
                 CPLErrorIO("seeking to temp feature location");
-                return;
+                return false;
             }
             if (VSIFReadL(m_featureBuf, 1, featureSize, m_poFpWrite) !=
                 featureSize)
             {
                 CPLErrorIO("reading temp feature");
-                return;
+                return false;
             }
             if (VSIFWriteL(m_featureBuf, 1, featureSize, m_poFp) != featureSize)
             {
                 CPLErrorIO("writing feature");
-                return;
+                return false;
             }
             c += featureSize;
         }
@@ -701,21 +701,13 @@ void OGRFlatGeobufLayer::Create()
 
     CPLDebugOnly("FlatGeobuf", "Now at offset %lu",
                  static_cast<long unsigned int>(m_writeOffset));
+
+    return true;
 }
 
 OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 {
-    if (m_create)
-        Create();
-
-    if (m_poFp)
-        VSIFCloseL(m_poFp);
-
-    if (m_poFpWrite)
-        VSIFCloseL(m_poFpWrite);
-
-    if (!m_osTempFile.empty())
-        VSIUnlink(m_osTempFile.c_str());
+    OGRFlatGeobufLayer::Close();
 
     if (m_poFeatureDefn)
         m_poFeatureDefn->Release();
@@ -728,6 +720,40 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 
     if (m_headerBuf)
         VSIFree(m_headerBuf);
+}
+
+CPLErr OGRFlatGeobufLayer::Close()
+{
+    CPLErr eErr = CE_None;
+
+    if (m_create)
+    {
+        if (!CreateFinalFile())
+            eErr = CE_Failure;
+        m_create = false;
+    }
+
+    if (m_poFp)
+    {
+        if (VSIFCloseL(m_poFp) != 0)
+            eErr = CE_Failure;
+        m_poFp = nullptr;
+    }
+
+    if (m_poFpWrite)
+    {
+        if (VSIFCloseL(m_poFpWrite) != 0)
+            eErr = CE_Failure;
+        m_poFpWrite = nullptr;
+    }
+
+    if (!m_osTempFile.empty())
+    {
+        VSIUnlink(m_osTempFile.c_str());
+        m_osTempFile.clear();
+    }
+
+    return eErr;
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index,

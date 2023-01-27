@@ -65,6 +65,7 @@ class OGRFlatGeobufBaseLayerInterface CPL_NON_FINAL
 
     virtual const std::string &GetFilename() const = 0;
     virtual OGRLayer *GetLayer() = 0;
+    virtual CPLErr Close() = 0;
 };
 
 class OGRFlatGeobufLayer final : public OGRLayer,
@@ -132,7 +133,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     OGRErr readFeatureOffset(uint64_t index, uint64_t &featureOffset);
 
     // serialize
-    void Create();
+    bool CreateFinalFile();
     void writeHeader(VSILFILE *poFp, uint64_t featuresCount,
                      std::vector<double> *extentVector);
 
@@ -149,6 +150,8 @@ class OGRFlatGeobufLayer final : public OGRLayer,
   protected:
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
                                   struct ArrowArray *out_array) override;
+
+    CPLErr Close() override;
 
   public:
     virtual ~OGRFlatGeobufLayer();
@@ -228,6 +231,11 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
         return this;
     }
     int TestCapability(const char *pszCap) override;
+
+    CPLErr Close() override
+    {
+        return CE_None;
+    }
 };
 
 class OGRFlatGeobufDataset final : public GDALDataset
@@ -239,6 +247,8 @@ class OGRFlatGeobufDataset final : public GDALDataset
     bool m_bIsDir = false;
 
     bool OpenFile(const char *pszFilename, VSILFILE *fp, bool bVerifyBuffers);
+
+    CPLErr Close() override;
 
   public:
     OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate,
