@@ -137,36 +137,8 @@ void OGROpenFileGDBLayer::Close()
 /*                           BuildSRS()                                 */
 /************************************************************************/
 
-static OGRSpatialReference *BuildSRS(const char *pszWKT)
-{
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
-    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
-    {
-        delete poSRS;
-        poSRS = nullptr;
-    }
-    if (poSRS != nullptr)
-    {
-        if (CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")))
-        {
-            auto poSRSMatch = poSRS->FindBestMatch(100);
-            if (poSRSMatch)
-            {
-                poSRS->Release();
-                poSRS = poSRSMatch;
-                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            }
-        }
-        else
-        {
-            poSRS->AutoIdentifyEPSG();
-        }
-    }
-    return poSRS;
-}
-
-OGRSpatialReference *OGROpenFileGDBLayer::BuildSRS(const CPLXMLNode *psInfo)
+OGRSpatialReference *
+OGROpenFileGDBLayer::BuildSRS(const CPLXMLNode *psInfo) const
 {
     const char *pszWKT =
         CPLGetXMLValue(psInfo, "SpatialReference.WKT", nullptr);
@@ -218,7 +190,7 @@ OGRSpatialReference *OGROpenFileGDBLayer::BuildSRS(const CPLXMLNode *psInfo)
     }
     if (poSRS == nullptr && pszWKT != nullptr && pszWKT[0] != '{')
     {
-        poSRS = ::BuildSRS(pszWKT);
+        poSRS = m_poDS->BuildSRS(pszWKT);
     }
     return poSRS;
 }
@@ -474,7 +446,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             poGDBGeomField->GetWKT()[0] != '{')
         {
             auto poSRSFromGDBTable =
-                ::BuildSRS(poGDBGeomField->GetWKT().c_str());
+                m_poDS->BuildSRS(poGDBGeomField->GetWKT().c_str());
             if (poSRSFromGDBTable)
             {
                 if (!poSRS->IsSame(poSRSFromGDBTable))
@@ -580,7 +552,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if (!poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{')
         {
-            poSRS = ::BuildSRS(poGDBGeomField->GetWKT().c_str());
+            poSRS = m_poDS->BuildSRS(poGDBGeomField->GetWKT().c_str());
         }
         if (poSRS != nullptr)
         {
