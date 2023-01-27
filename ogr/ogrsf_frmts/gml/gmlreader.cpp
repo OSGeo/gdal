@@ -1346,7 +1346,8 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
         const CPLXMLNode *psBoundedByGeometry =
             poFeature->GetBoundedByGeometry();
         int nFeatureGeomCount = poFeature->GetGeometryCount();
-        if (psBoundedByGeometry && nFeatureGeomCount == 0)
+        if (psBoundedByGeometry && nFeatureGeomCount == 0 &&
+            strcmp(psBoundedByGeometry->pszValue, "null") != 0)
         {
             apsGeometries[0] = psBoundedByGeometry;
             papsGeometry = apsGeometries;
