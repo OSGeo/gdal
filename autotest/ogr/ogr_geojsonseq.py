@@ -365,3 +365,29 @@ def test_ogr_geojsonseq_vsistdout():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test output on /vsigzip/
+
+
+def test_ogr_geojsonseq_vsigzip():
+
+    filename = "/vsimem/test_ogr_geojsonseq_vsigzip.geojsonl.gz"
+    gdal.ErrorReset()
+    ds = ogr.GetDriverByName("GeoJSONSeq").CreateDataSource("/vsigzip/" + filename)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("test", srs=sr)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = ogr.Open("/vsigzip/" + filename)
+    assert ds.GetLayer(0).GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)
