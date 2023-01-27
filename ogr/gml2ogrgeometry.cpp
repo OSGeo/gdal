@@ -3841,6 +3841,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         return poMP;
     }
 
+    if (strcmp(pszBaseGeometry, "null") == 0)
+    {
+        return nullptr;
+    }
+
     CPLError(CE_Failure, CPLE_AppDefined,
              "Unrecognized geometry type <%.500s>.", pszBaseGeometry);
 

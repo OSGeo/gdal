@@ -385,6 +385,20 @@ def test_gml_Box():
 
 
 ###############################################################################
+# Test gml:null
+
+
+def test_gml_null():
+
+    gml = """<gml:null>unknown</gml:null>"""
+
+    gdal.ErrorReset()
+    geom = ogr.CreateGeometryFromGML(gml)
+    assert geom is None
+    assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
 # Test GML Envelope
 
 
