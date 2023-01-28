@@ -463,26 +463,32 @@ class SetupTargetLayer
 class LayerTranslator
 {
   public:
-    GDALDataset *m_poSrcDS;
-    GDALDataset *m_poODS;
-    bool m_bTransform;
-    bool m_bWrapDateline;
-    CPLString m_osDateLineOffset;
-    OGRSpatialReference *m_poOutputSRS;
-    bool m_bNullifyOutputSRS;
-    OGRSpatialReference *m_poUserSourceSRS;
-    OGRCoordinateTransformation *m_poGCPCoordTrans;
-    int m_eGType;
-    GeomTypeConversion m_eGeomTypeConversion;
-    bool m_bMakeValid;
-    int m_nCoordDim;
-    GeomOperation m_eGeomOp;
-    double m_dfGeomOpParam;
-    OGRGeometry *m_poClipSrc;
-    OGRGeometry *m_poClipDst;
-    bool m_bExplodeCollections;
-    bool m_bNativeData;
-    GIntBig m_nLimit;
+    GDALDataset *m_poSrcDS = nullptr;
+    GDALDataset *m_poODS = nullptr;
+    bool m_bTransform = false;
+    bool m_bWrapDateline = false;
+    CPLString m_osDateLineOffset{};
+    OGRSpatialReference *m_poOutputSRS = nullptr;
+    bool m_bNullifyOutputSRS = false;
+    OGRSpatialReference *m_poUserSourceSRS = nullptr;
+    OGRCoordinateTransformation *m_poGCPCoordTrans = nullptr;
+    int m_eGType = -1;
+    GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
+    bool m_bMakeValid = false;
+    int m_nCoordDim = 0;
+    GeomOperation m_eGeomOp = GEOMOP_NONE;
+    double m_dfGeomOpParam = 0;
+    OGRGeometry *m_poClipSrcOri = nullptr;
+    bool m_bWarnedClipSrcSRS = false;
+    std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS;
+    const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
+    OGRGeometry *m_poClipDstOri = nullptr;
+    bool m_bWarnedClipDstSRS = false;
+    std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS;
+    const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
+    bool m_bExplodeCollections = false;
+    bool m_bNativeData = false;
+    GIntBig m_nLimit = -1;
     OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache;
 
     int Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
@@ -538,7 +544,16 @@ static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
                 wkbFlatten(poSrcGeom->getGeometryType());
 
             if (poMP == nullptr)
+            {
                 poMP = cpl::make_unique<OGRMultiPolygon>();
+                const auto poSRSSrc = poSrcGeom->getSpatialReference();
+                if (poSRSSrc)
+                {
+                    auto poSRSClone = poSRSSrc->Clone();
+                    poMP->assignSpatialReference(poSRSClone);
+                    poSRSClone->Release();
+                }
+            }
 
             if (eType == wkbPolygon)
                 poMP->addGeometry(poSrcGeom);
@@ -2243,6 +2258,44 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         return nullptr;
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Parse spatial filter SRS if needed.                             */
+    /* -------------------------------------------------------------------- */
+    struct l_OGRSpatialReferenceReleaser
+    {
+        void operator()(OGRSpatialReference *poSRS) const
+        {
+            if (poSRS)
+                poSRS->Release();
+        }
+    };
+    std::unique_ptr<OGRSpatialReference, l_OGRSpatialReferenceReleaser>
+        poSpatSRS;
+    if (psOptions->hSpatialFilter != nullptr &&
+        psOptions->pszSpatSRSDef != nullptr)
+    {
+        if (psOptions->pszSQLStatement)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-spat_srs not compatible with -sql.");
+            GDALVectorTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+        OGREnvelope sEnvelope;
+        OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
+        poSpatSRS.reset(new OGRSpatialReference());
+        poSpatSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSpatSRS->SetFromUserInput(psOptions->pszSpatSRSDef) !=
+            OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to process SRS definition: %s",
+                     psOptions->pszSpatSRSDef);
+            GDALVectorTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+    }
+
     if (psOptions->bClipSrc && psOptions->pszClipSrcDS != nullptr)
     {
         psOptions->hClipSrc = OGRGeometry::ToHandle(LoadGeometry(
@@ -2259,7 +2312,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     else if (psOptions->bClipSrc && psOptions->hClipSrc == nullptr)
     {
         if (psOptions->hSpatialFilter)
+        {
             psOptions->hClipSrc = OGR_G_Clone(psOptions->hSpatialFilter);
+            if (poSpatSRS)
+            {
+                OGRGeometry::FromHandle(psOptions->hClipSrc)
+                    ->assignSpatialReference(poSpatSRS.get());
+            }
+        }
         if (psOptions->hClipSrc == nullptr)
         {
             CPLError(
@@ -2682,39 +2742,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Parse spatial filter SRS if needed.                             */
-    /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSpatSRS;
-    OGRSpatialReference *poSpatSRS = nullptr;
-    if (psOptions->hSpatialFilter != nullptr &&
-        psOptions->pszSpatSRSDef != nullptr)
-    {
-        if (psOptions->pszSQLStatement)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-spat_srs not compatible with -sql.");
-            GDALVectorTranslateOptionsFree(psOptions);
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
-            return nullptr;
-        }
-        OGREnvelope sEnvelope;
-        OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
-        oSpatSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (oSpatSRS.SetFromUserInput(psOptions->pszSpatSRSDef) != OGRERR_NONE)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to process SRS definition: %s",
-                     psOptions->pszSpatSRSDef);
-            GDALVectorTranslateOptionsFree(psOptions);
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
-            return nullptr;
-        }
-        poSpatSRS = &oSpatSRS;
-    }
-
-    /* -------------------------------------------------------------------- */
     /*      Create a transformation object from the source to               */
     /*      destination coordinate system.                                  */
     /* -------------------------------------------------------------------- */
@@ -2783,8 +2810,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
-    oTranslator.m_poClipSrc = OGRGeometry::FromHandle(psOptions->hClipSrc);
-    oTranslator.m_poClipDst = OGRGeometry::FromHandle(psOptions->hClipDst);
+    // Do not emit warning if the user specified directly the clip source geom
+    if (psOptions->pszClipSrcDS == nullptr)
+        oTranslator.m_bWarnedClipSrcSRS = true;
+    oTranslator.m_poClipSrcOri = OGRGeometry::FromHandle(psOptions->hClipSrc);
+    // Do not emit warning if the user specified directly the clip dest geom
+    if (psOptions->pszClipDstDS == nullptr)
+        oTranslator.m_bWarnedClipDstSRS = true;
+    oTranslator.m_poClipDstOri = OGRGeometry::FromHandle(psOptions->hClipDst);
     oTranslator.m_bExplodeCollections = psOptions->bExplodeCollections;
     oTranslator.m_bNativeData = psOptions->bNativeData;
     oTranslator.m_nLimit = psOptions->nLimit;
@@ -3090,7 +3123,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
                 ApplySpatialFilter(
                     poLayer, OGRGeometry::FromHandle(psOptions->hSpatialFilter),
-                    poSpatSRS, psOptions->pszGeomField, poSourceSRS);
+                    poSpatSRS.get(), psOptions->pszGeomField, poSourceSRS);
 
                 oMapLayerToIdx[poLayer] = iLayer;
             }
@@ -3329,7 +3362,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
             ApplySpatialFilter(
                 poLayer, OGRGeometry::FromHandle(psOptions->hSpatialFilter),
-                poSpatSRS, psOptions->pszGeomField, poSourceSRS);
+                poSpatSRS.get(), psOptions->pszGeomField, poSourceSRS);
 
             if (psOptions->bDisplayProgress)
             {
@@ -5199,7 +5232,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 OGRGeometry *poStolenGeometry = nullptr;
                 if (!bExplodeCollections && nSrcGeomFieldCount == 1 &&
                     (nDstGeomFieldCount == 1 ||
-                     (nDstGeomFieldCount == 0 && m_poClipSrc)))
+                     (nDstGeomFieldCount == 0 && m_poClipSrcOri)))
                 {
                     poStolenGeometry = poFeature->StealGeometry();
                 }
@@ -5209,10 +5242,46 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         poFeature->StealGeometry(iRequestedSrcGeomField);
                 }
 
-                if (nDstGeomFieldCount == 0 && poStolenGeometry && m_poClipSrc)
+                if (nDstGeomFieldCount == 0 && poStolenGeometry &&
+                    m_poClipSrcOri)
                 {
-                    OGRGeometry *poClipped =
-                        poStolenGeometry->Intersection(m_poClipSrc);
+                    auto poGeomSRS = poStolenGeometry->getSpatialReference();
+                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+                    {
+                        auto poClipSrcSRS =
+                            m_poClipSrcOri->getSpatialReference();
+                        if (poClipSrcSRS && poGeomSRS &&
+                            !poClipSrcSRS->IsSame(poGeomSRS))
+                        {
+                            // Transform clip geom to geometry SRS
+                            m_poClipSrcReprojectedToSrcSRS.reset(
+                                m_poClipSrcOri->clone());
+                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
+                                    poGeomSRS) != OGRERR_NONE)
+                            {
+                                delete poStolenGeometry;
+                                goto end_loop;
+                            }
+                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
+                        }
+                        else if (!poClipSrcSRS && poGeomSRS)
+                        {
+                            if (!m_bWarnedClipSrcSRS)
+                            {
+                                m_bWarnedClipSrcSRS = true;
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Clip source geometry has no attached SRS, "
+                                    "but the feature's geometry has one. "
+                                    "Assuming clip source geometry SRS is the "
+                                    "same as the feature's geometry");
+                            }
+                        }
+                    }
+                    OGRGeometry *poClipped = poStolenGeometry->Intersection(
+                        m_poClipSrcReprojectedToSrcSRS
+                            ? m_poClipSrcReprojectedToSrcSRS.get()
+                            : m_poClipSrcOri);
                     delete poStolenGeometry;
                     poStolenGeometry = nullptr;
                     if (poClipped == nullptr || poClipped->IsEmpty())
@@ -5377,10 +5446,45 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     }
                 }
 
-                if (m_poClipSrc)
+                if (m_poClipSrcOri)
                 {
-                    OGRGeometry *poClipped =
-                        poDstGeometry->Intersection(m_poClipSrc);
+                    auto poGeomSRS = poDstGeometry->getSpatialReference();
+                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+                    {
+                        auto poClipSrcSRS =
+                            m_poClipSrcOri->getSpatialReference();
+                        if (poClipSrcSRS && poGeomSRS &&
+                            !poClipSrcSRS->IsSame(poGeomSRS))
+                        {
+                            // Transform clip geom to geometry SRS
+                            m_poClipSrcReprojectedToSrcSRS.reset(
+                                m_poClipSrcOri->clone());
+                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
+                                    poGeomSRS) != OGRERR_NONE)
+                            {
+                                delete poDstGeometry;
+                                goto end_loop;
+                            }
+                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
+                        }
+                        else if (!poClipSrcSRS && poGeomSRS)
+                        {
+                            if (!m_bWarnedClipSrcSRS)
+                            {
+                                m_bWarnedClipSrcSRS = true;
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Clip source geometry has no attached SRS, "
+                                    "but the feature's geometry has one. "
+                                    "Assuming clip source geometry SRS is the "
+                                    "same as the feature's geometry");
+                            }
+                        }
+                    }
+                    OGRGeometry *poClipped = poDstGeometry->Intersection(
+                        m_poClipSrcReprojectedToSrcSRS
+                            ? m_poClipSrcReprojectedToSrcSRS.get()
+                            : m_poClipSrcOri);
                     if (poClipped == nullptr || poClipped->IsEmpty())
                     {
                         delete poDstGeometry;
@@ -5460,10 +5564,45 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 
                 if (poDstGeometry != nullptr)
                 {
-                    if (m_poClipDst)
+                    if (m_poClipDstOri)
                     {
-                        OGRGeometry *poClipped =
-                            poDstGeometry->Intersection(m_poClipDst);
+                        auto poGeomSRS = poDstGeometry->getSpatialReference();
+                        if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
+                        {
+                            auto poClipDstSRS =
+                                m_poClipDstOri->getSpatialReference();
+                            if (poClipDstSRS && poGeomSRS &&
+                                !poClipDstSRS->IsSame(poGeomSRS))
+                            {
+                                // Transform clip geom to geometry SRS
+                                m_poClipDstReprojectedToDstSRS.reset(
+                                    m_poClipDstOri->clone());
+                                if (m_poClipDstReprojectedToDstSRS->transformTo(
+                                        poGeomSRS) != OGRERR_NONE)
+                                {
+                                    delete poDstGeometry;
+                                    goto end_loop;
+                                }
+                                m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
+                            }
+                            else if (!poClipDstSRS && poGeomSRS)
+                            {
+                                if (!m_bWarnedClipDstSRS)
+                                {
+                                    m_bWarnedClipDstSRS = true;
+                                    CPLError(CE_Warning, CPLE_AppDefined,
+                                             "Clip destination geometry has no "
+                                             "attached SRS, but the feature's "
+                                             "geometry has one. Assuming clip "
+                                             "destination geometry SRS is the "
+                                             "same as the feature's geometry");
+                                }
+                            }
+                        }
+                        OGRGeometry *poClipped = poDstGeometry->Intersection(
+                            m_poClipDstReprojectedToDstSRS
+                                ? m_poClipDstReprojectedToDstSRS.get()
+                                : m_poClipDstOri);
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
                             delete poDstGeometry;
