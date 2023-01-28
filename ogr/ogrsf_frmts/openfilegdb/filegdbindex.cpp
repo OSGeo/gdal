@@ -217,6 +217,7 @@ class FileGDBIndexIteratorBase : virtual public FileGDBIterator
     FileGDBTable *poParent;
     bool bAscending;
     VSILFILE *fpCurIdx = nullptr;
+    GUInt32 m_nPageCount = 0;
     GUInt32 nMaxPerPages = 0;
     GUInt32 m_nValueSize = 0;
     GUInt32 nOffsetFirstValInPage = 0;
@@ -765,6 +766,8 @@ bool FileGDBIndexIteratorBase::ReadTrailer(const std::string &osFilename)
     VSIFSeekL(fpCurIdx, nFileSize - 22, SEEK_SET);
     GByte abyTrailer[22];
     returnErrorIf(VSIFReadL(abyTrailer, 22, 1, fpCurIdx) != 1);
+
+    m_nPageCount = static_cast<GUInt32>((nFileSize - 22) / FGDB_PAGE_SIZE);
 
     m_nValueSize = abyTrailer[0];
 
@@ -2196,6 +2199,42 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
         CPLDebug("OpenFileGDB",
                  "Cannot use %s as the grid resolution is invalid", pszSpxName);
         return false;
+    }
+
+    // Detect broken .spx file such as SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
+    // from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
+    // which advertizes nIndexDepth == 1 whereas it seems to be it should be 2.
+    if (nIndexDepth == 1)
+    {
+        iLastPageIdx[0] = 0;
+        LoadNextFeaturePage();
+        iFirstPageIdx[0] = iLastPageIdx[0] = -1;
+        if (nFeaturesInPage >= 2 &&
+            nFeaturesInPage < poParent->GetTotalRecordCount() / 10 &&
+            m_nPageCount > static_cast<GUInt32>(nFeaturesInPage) &&
+            m_nPageCount - static_cast<GUInt32>(nFeaturesInPage) <= 2)
+        {
+            // Check if it looks like a non-feature page, that is that the
+            // IDs pointed by it are index page IDs and not feature IDs.
+            bool bReferenceOtherPages = true;
+            for (int i = 0; i < nFeaturesInPage; ++i)
+            {
+                const GUInt32 nID = GetUInt32(abyPageFeature + 8, i);
+                if (!(nID >= 2 && nID <= m_nPageCount))
+                {
+                    bReferenceOtherPages = false;
+                    break;
+                }
+            }
+            if (bReferenceOtherPages)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot use %s as the index depth(=1) is suspicous "
+                         "(it should rather be 2)",
+                         pszSpxName);
+                return false;
+            }
+        }
     }
 
     return ResetInternal();

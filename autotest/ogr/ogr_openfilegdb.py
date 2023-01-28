@@ -1538,6 +1538,51 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 
 
 ###############################################################################
+# Test reading a broken .spx that has an index depth of 1 instead of 2
+# Simulates scenario of SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
+# from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
+# which advertizes nIndexDepth == 1 whereas it seems to be it should be 2.
+
+
+def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
+
+    dirname = "/vsimem/test_ogr_openfilegdb_read_broken_spx_wrong_index_depth.gdb"
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    for j in range(50):
+        for i in range(50):
+            p = ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, j))
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometry(p)
+            lyr.CreateFeature(f)
+    ds = None
+
+    # Manually patch index depth from 2 to 1
+    f = gdal.VSIFOpenL(dirname + "/a00000009.spx", "rb+")
+    assert f
+    gdal.VSIFSeekL(f, 0, os.SEEK_END)
+    pos = gdal.VSIFTellL(f) - 22 + 6
+    gdal.VSIFSeekL(f, pos, os.SEEK_SET)
+    assert gdal.VSIFReadL(1, 1, f) == b"\x02"
+    gdal.VSIFSeekL(f, pos, os.SEEK_SET)
+    gdal.VSIFWriteL(b"\x01", 1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(0.5, 0.5, 48.5, 48.5)
+    with gdaltest.error_handler():
+        assert lyr.GetFeatureCount() == 48 * 48
+    assert (
+        "Cannot use /vsimem/test_ogr_openfilegdb_read_broken_spx_wrong_index_depth.gdb/a00000009.spx"
+        in gdal.GetLastErrorMsg()
+    )
+    ds = None
+
+    gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
 
