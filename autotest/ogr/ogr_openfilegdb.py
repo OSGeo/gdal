@@ -1541,7 +1541,7 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 # Test reading a broken .spx that has an index depth of 1 instead of 2
 # Simulates scenario of SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
 # from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
-# which advertizes nIndexDepth == 1 whereas it seems to be it should be 2.
+# which advertises nIndexDepth == 1 whereas it seems to be it should be 2.
 
 
 def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():

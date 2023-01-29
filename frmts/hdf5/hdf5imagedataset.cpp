@@ -557,8 +557,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                 // Special case for https://github.com/OSGeo/gdal/issues/7117
                 if (oMetadata.osProjection == "HE5_GCTP_SNSOID" &&
                     oMetadata.osGridOrigin == "HE5_HDFE_GD_UL" &&
-                    oMetadata.adfUpperLeftPointMetres.size() == 2 &&
-                    oMetadata.adfLowerRightPointMetres.size() == 2 &&
+                    oMetadata.adfUpperLeftPointMeters.size() == 2 &&
+                    oMetadata.adfLowerRightPointMeters.size() == 2 &&
                     oMetadata.adfProjParams.size() == 13 &&
                     std::all_of(oMetadata.adfProjParams.begin() + 1,
                                 oMetadata.adfProjParams.end(),
@@ -570,18 +570,18 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                         static_cast<int>(poDS->dims[poDS->GetXIndex()]);
                     poDS->bHasGeoTransform = true;
                     poDS->adfGeoTransform[0] =
-                        oMetadata.adfUpperLeftPointMetres[0];
+                        oMetadata.adfUpperLeftPointMeters[0];
                     poDS->adfGeoTransform[1] =
-                        (oMetadata.adfLowerRightPointMetres[0] -
-                         oMetadata.adfUpperLeftPointMetres[0]) /
+                        (oMetadata.adfLowerRightPointMeters[0] -
+                         oMetadata.adfUpperLeftPointMeters[0]) /
                         poDS->nRasterXSize;
                     poDS->adfGeoTransform[2] = 0;
                     poDS->adfGeoTransform[3] =
-                        oMetadata.adfUpperLeftPointMetres[1];
+                        oMetadata.adfUpperLeftPointMeters[1];
                     poDS->adfGeoTransform[4] = 0;
                     poDS->adfGeoTransform[5] =
-                        (oMetadata.adfLowerRightPointMetres[1] -
-                         oMetadata.adfUpperLeftPointMetres[1]) /
+                        (oMetadata.adfLowerRightPointMeters[1] -
+                         oMetadata.adfUpperLeftPointMeters[1]) /
                         poDS->nRasterYSize;
                     poDS->m_oSRS.SetGeogCS("unknown", "unknown", "unknown",
                                            oMetadata.adfProjParams[0], 0);

@@ -1156,7 +1156,7 @@ def test_vsifile_vsimem_truncate_zeroize():
 
 def test_vsifile_copyfile():
 
-    # Most simple invokation
+    # Most simple invocation
     dstfilename = "/vsimem/test_vsifile_copyfile.tif"
     assert gdal.CopyFile("data/byte.tif", dstfilename) == 0
     assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size

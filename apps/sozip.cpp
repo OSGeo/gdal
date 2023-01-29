@@ -213,7 +213,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 }
 
                 if (bVerbose)
-                    printf("  %s: checking chunks can be independantly "
+                    printf("  %s: checking chunks can be independently "
                            "decompressed...\n",
                            psEntry->pszName);
 

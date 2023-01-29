@@ -101,14 +101,14 @@ The :program:`sozip` utility can be used to:
 .. option:: --sozip-chunk-size
 
     Chunk size for a seek-optimized file. Defaults to 32768 bytes. The value
-    is specified in bytes, or K and M suffix can be respecively used to
+    is specified in bytes, or K and M suffix can be respectively used to
     specify a value in kilo-bytes or mega-bytes.
 
 .. option:: --sozip-min-file-size
 
     Minimum file size to decide if a file should be seek-optimized, in
     --enable-sozip=auto mode. Defaults to 1 MB byte. The value
-    is specified in bytes, or K, M or G suffix can be respecively used to
+    is specified in bytes, or K, M or G suffix can be respectively used to
     specify a value in kilo-bytes, mega-bytes or giga-bytes.
 
 .. option:: --content-type=<value>

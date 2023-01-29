@@ -213,13 +213,13 @@ bool HDF5EOSParser::Parse(hid_t hRoot)
                         const auto oUpperLeftPointMtrs =
                             oGrid.GetArray("UpperLeftPointMtrs");
                         for (int j = 0; j < oUpperLeftPointMtrs.Size(); ++j)
-                            oMetadata.adfUpperLeftPointMetres.push_back(
+                            oMetadata.adfUpperLeftPointMeters.push_back(
                                 oUpperLeftPointMtrs[j].ToDouble());
 
                         const auto oLowerRightMtrs =
                             oGrid.GetArray("LowerRightMtrs");
                         for (int j = 0; j < oLowerRightMtrs.Size(); ++j)
-                            oMetadata.adfLowerRightPointMetres.push_back(
+                            oMetadata.adfLowerRightPointMeters.push_back(
                                 oLowerRightMtrs[j].ToDouble());
 
                         m_oMapSubdatasetNameToMetadata["//HDFEOS/GRIDS/" +

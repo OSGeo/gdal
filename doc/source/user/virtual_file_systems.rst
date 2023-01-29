@@ -115,7 +115,7 @@ GDAL (>= 3.7) has full read and write support for .zip files following the
   it to an new or existing ZIP file, enables the SOZip optimization when relevant
   (ie when a file to be compressed is larger than 1 MB).
   SOZip optimization can be forced by setting the :decl_configoption:`CPL_SOZIP_ENABLED`
-  configuration option to YES. Or totally disabled by setting it ot NO.
+  configuration option to YES. Or totally disabled by setting it to NO.
 
 * The :cpp:func:`VSIGetFileMetadata` method can be called on a filename of
   the form :file:`/vsizip/path/to/the/file.zip/path/inside/the/zip/file` and

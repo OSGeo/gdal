@@ -60,9 +60,9 @@ class HDF5EOSParser
         std::vector<double>
             adfProjParams{};  // e.g (6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)
         std::vector<double>
-            adfUpperLeftPointMetres{};  // e.g (-1111950.519667,5559752.598333)
+            adfUpperLeftPointMeters{};  // e.g (-1111950.519667,5559752.598333)
         std::vector<double>
-            adfLowerRightPointMetres{};  // e.g (0.000000,4447802.078667)
+            adfLowerRightPointMeters{};  // e.g (0.000000,4447802.078667)
     };
 
     static bool HasHDFEOS(hid_t hRoot);
