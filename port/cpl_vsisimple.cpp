@@ -1421,7 +1421,8 @@ GIntBig CPLGetPhysicalRAM(void)
             if (pszMemory)
             {
                 bFromMemory = true;
-                strcpy(szGroupName, pszMemory + strlen(":memory:"));
+                snprintf(szGroupName, sizeof(szGroupName), "%s",
+                         pszMemory + strlen(":memory:"));
                 char *pszEOL = strchr(szGroupName, '\n');
                 if (pszEOL)
                     *pszEOL = '\0';
@@ -1429,7 +1430,8 @@ GIntBig CPLGetPhysicalRAM(void)
             }
             if (strncmp(szLine, "0::", strlen("0::")) == 0)
             {
-                strcpy(szGroupName, szLine + strlen("0::"));
+                snprintf(szGroupName, sizeof(szGroupName), "%s",
+                         szLine + strlen("0::"));
                 char *pszEOL = strchr(szGroupName, '\n');
                 if (pszEOL)
                     *pszEOL = '\0';

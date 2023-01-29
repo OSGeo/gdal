@@ -3465,7 +3465,7 @@ CPLErr JPGDatasetCommon::ReadCompressedData(
             const auto nSavedPos = VSIFTellL(m_fpImage);
             VSIFSeekL(m_fpImage, 0, SEEK_END);
             auto nFileSize = VSIFTellL(m_fpImage);
-            if (nFileSize > std::numeric_limits<size_t>::max())
+            if (nFileSize > std::numeric_limits<size_t>::max() / 2)
                 return CE_Failure;
             if (nFileSize > 4)
             {

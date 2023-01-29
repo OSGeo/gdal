@@ -1378,7 +1378,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         for (int i = 0; i < nSources; ++i)
         {
             auto poSimpleSource =
-                cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
+                static_cast<VRTSimpleSource *>(papoSources[i]);
             auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
             sContext.nTotalPixelsOfSources +=
                 static_cast<uint64_t>(poSimpleSourceBand->GetXSize()) *
@@ -1394,7 +1394,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             for (int i = 0; i < nSources; ++i)
             {
                 auto poSimpleSource =
-                    cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
+                    static_cast<VRTSimpleSource *>(papoSources[i]);
                 auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
                 asJobs[i].psContext = &sContext;
                 asJobs[i].poRasterBand = poSimpleSourceBand;
@@ -1421,7 +1421,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             for (int i = 0; i < nSources; ++i)
             {
                 auto poSimpleSource =
-                    cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
+                    static_cast<VRTSimpleSource *>(papoSources[i]);
                 auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
                 Job sJob;
                 sJob.psContext = &sContext;
