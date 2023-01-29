@@ -466,26 +466,32 @@ class SetupTargetLayer
 class LayerTranslator
 {
   public:
-    GDALDataset *m_poSrcDS;
-    GDALDataset *m_poODS;
-    bool m_bTransform;
-    bool m_bWrapDateline;
-    CPLString m_osDateLineOffset;
-    OGRSpatialReference *m_poOutputSRS;
-    bool m_bNullifyOutputSRS;
-    OGRSpatialReference *m_poUserSourceSRS;
-    OGRCoordinateTransformation *m_poGCPCoordTrans;
-    int m_eGType;
-    GeomTypeConversion m_eGeomTypeConversion;
-    bool m_bMakeValid;
-    int m_nCoordDim;
-    GeomOperation m_eGeomOp;
-    double m_dfGeomOpParam;
-    OGRGeometry *m_poClipSrc;
-    OGRGeometry *m_poClipDst;
-    bool m_bExplodeCollections;
-    bool m_bNativeData;
-    GIntBig m_nLimit;
+    GDALDataset *m_poSrcDS = nullptr;
+    GDALDataset *m_poODS = nullptr;
+    bool m_bTransform = false;
+    bool m_bWrapDateline = false;
+    CPLString m_osDateLineOffset{};
+    OGRSpatialReference *m_poOutputSRS = nullptr;
+    bool m_bNullifyOutputSRS = false;
+    OGRSpatialReference *m_poUserSourceSRS = nullptr;
+    OGRCoordinateTransformation *m_poGCPCoordTrans = nullptr;
+    int m_eGType = -1;
+    GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
+    bool m_bMakeValid = false;
+    int m_nCoordDim = 0;
+    GeomOperation m_eGeomOp = GEOMOP_NONE;
+    double m_dfGeomOpParam = 0;
+    OGRGeometry *m_poClipSrcOri = nullptr;
+    bool m_bWarnedClipSrcSRS = false;
+    std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS;
+    const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
+    OGRGeometry *m_poClipDstOri = nullptr;
+    bool m_bWarnedClipDstSRS = false;
+    std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS;
+    const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
+    bool m_bExplodeCollections = false;
+    bool m_bNativeData = false;
+    GIntBig m_nLimit = -1;
     OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache;
 
     int Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
@@ -508,8 +514,8 @@ static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
                                  const char *pszLyr, const char *pszWhere)
 {
-    GDALDataset *poDS =
-        reinterpret_cast<GDALDataset *>(OGROpen(pszDS, FALSE, nullptr));
+    auto poDS =
+        std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDS, GDAL_OF_VECTOR));
     if (poDS == nullptr)
         return nullptr;
 
@@ -525,14 +531,13 @@ static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to identify source layer from datasource.");
-        GDALClose(poDS);
         return nullptr;
     }
 
     if (pszWhere)
         poLyr->SetAttributeFilter(pszWhere);
 
-    OGRMultiPolygon *poMP = nullptr;
+    std::unique_ptr<OGRMultiPolygon> poMP;
     for (auto &poFeat : poLyr)
     {
         OGRGeometry *poSrcGeom = poFeat->GetGeometryRef();
@@ -542,7 +547,16 @@ static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
                 wkbFlatten(poSrcGeom->getGeometryType());
 
             if (poMP == nullptr)
-                poMP = new OGRMultiPolygon();
+            {
+                poMP = cpl::make_unique<OGRMultiPolygon>();
+                const auto poSRSSrc = poSrcGeom->getSpatialReference();
+                if (poSRSSrc)
+                {
+                    auto poSRSClone = poSRSSrc->Clone();
+                    poMP->assignSpatialReference(poSRSClone);
+                    poSRSClone->Release();
+                }
+            }
 
             if (eType == wkbPolygon)
                 poMP->addGeometry(poSrcGeom);
@@ -560,10 +574,8 @@ static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Geometry not of polygon type.");
-                OGRGeometryFactory::destroyGeometry(poMP);
                 if (pszSQL != nullptr)
                     poDS->ReleaseResultSet(poLyr);
-                GDALClose(poDS);
                 return nullptr;
             }
         }
@@ -571,9 +583,8 @@ static OGRGeometry *LoadGeometry(const char *pszDS, const char *pszSQL,
 
     if (pszSQL != nullptr)
         poDS->ReleaseResultSet(poLyr);
-    GDALClose(poDS);
 
-    return poMP;
+    return poMP.release();
 }
 
 /************************************************************************/
@@ -2023,8 +2034,8 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
                             psOptions->pszGeomField);
                     if (iGeomField >= 0)
                         poSrcLayer->SetSpatialFilter(
-                            iGeomField, reinterpret_cast<OGRGeometry *>(
-                                            psOptions->hSpatialFilter));
+                            iGeomField,
+                            OGRGeometry::FromHandle(psOptions->hSpatialFilter));
                     else
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot find geometry field %s in layer %s. "
@@ -2035,8 +2046,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
                 else
                 {
                     poSrcLayer->SetSpatialFilter(
-                        reinterpret_cast<OGRGeometry *>(
-                            psOptions->hSpatialFilter));
+                        OGRGeometry::FromHandle(psOptions->hSpatialFilter));
                 }
             }
         }
@@ -2251,9 +2261,38 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         return nullptr;
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Parse spatial filter SRS if needed.                             */
+    /* -------------------------------------------------------------------- */
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSpatSRS;
+    if (psOptions->hSpatialFilter != nullptr &&
+        psOptions->pszSpatSRSDef != nullptr)
+    {
+        if (psOptions->pszSQLStatement)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-spat_srs not compatible with -sql.");
+            GDALVectorTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+        OGREnvelope sEnvelope;
+        OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
+        poSpatSRS.reset(new OGRSpatialReference());
+        poSpatSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSpatSRS->SetFromUserInput(psOptions->pszSpatSRSDef) !=
+            OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to process SRS definition: %s",
+                     psOptions->pszSpatSRSDef);
+            GDALVectorTranslateOptionsFree(psOptions);
+            return nullptr;
+        }
+    }
+
     if (psOptions->bClipSrc && psOptions->pszClipSrcDS != nullptr)
     {
-        psOptions->hClipSrc = reinterpret_cast<OGRGeometryH>(LoadGeometry(
+        psOptions->hClipSrc = OGRGeometry::ToHandle(LoadGeometry(
             psOptions->pszClipSrcDS, psOptions->pszClipSrcSQL,
             psOptions->pszClipSrcLayer, psOptions->pszClipSrcWhere));
         if (psOptions->hClipSrc == nullptr)
@@ -2267,7 +2306,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     else if (psOptions->bClipSrc && psOptions->hClipSrc == nullptr)
     {
         if (psOptions->hSpatialFilter)
+        {
             psOptions->hClipSrc = OGR_G_Clone(psOptions->hSpatialFilter);
+            if (poSpatSRS)
+            {
+                OGRGeometry::FromHandle(psOptions->hClipSrc)
+                    ->assignSpatialReference(poSpatSRS.get());
+            }
+        }
         if (psOptions->hClipSrc == nullptr)
         {
             CPLError(
@@ -2283,7 +2329,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     if (psOptions->pszClipDstDS != nullptr)
     {
-        psOptions->hClipDst = reinterpret_cast<OGRGeometryH>(LoadGeometry(
+        psOptions->hClipDst = OGRGeometry::ToHandle(LoadGeometry(
             psOptions->pszClipDstDS, psOptions->pszClipDstSQL,
             psOptions->pszClipDstLayer, psOptions->pszClipDstWhere));
         if (psOptions->hClipDst == nullptr)
@@ -2295,14 +2341,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
-    GDALDataset *poDS = static_cast<GDALDataset *>(hSrcDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hSrcDS);
     GDALDataset *poODS = nullptr;
     GDALDriver *poDriver = nullptr;
     CPLString osDestFilename;
 
     if (hDstDS)
     {
-        poODS = static_cast<GDALDataset *>(hDstDS);
+        poODS = GDALDataset::FromHandle(hDstDS);
         osDestFilename = poODS->GetDescription();
     }
     else
@@ -2365,17 +2411,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     if (bUpdate && poODS == nullptr)
     {
-        poODS = static_cast<GDALDataset *>(
-            GDALOpenEx(osDestFilename, GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
-                       psOptions->papszDestOpenOptions, nullptr));
+        poODS = GDALDataset::Open(osDestFilename,
+                                  GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
+                                  psOptions->papszDestOpenOptions, nullptr);
 
         if (poODS == nullptr)
         {
             if (bOverwrite || bAppend)
             {
-                poODS = static_cast<GDALDataset *>(
-                    GDALOpenEx(osDestFilename, GDAL_OF_VECTOR, nullptr,
-                               psOptions->papszDestOpenOptions, nullptr));
+                poODS =
+                    GDALDataset::Open(osDestFilename, GDAL_OF_VECTOR, nullptr,
+                                      psOptions->papszDestOpenOptions, nullptr);
                 if (poODS == nullptr)
                 {
                     /* OK the datasource doesn't exist at all */
@@ -2690,39 +2736,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Parse spatial filter SRS if needed.                             */
-    /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSpatSRS;
-    OGRSpatialReference *poSpatSRS = nullptr;
-    if (psOptions->hSpatialFilter != nullptr &&
-        psOptions->pszSpatSRSDef != nullptr)
-    {
-        if (psOptions->pszSQLStatement)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-spat_srs not compatible with -sql.");
-            GDALVectorTranslateOptionsFree(psOptions);
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
-            return nullptr;
-        }
-        OGREnvelope sEnvelope;
-        OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
-        oSpatSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (oSpatSRS.SetFromUserInput(psOptions->pszSpatSRSDef) != OGRERR_NONE)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to process SRS definition: %s",
-                     psOptions->pszSpatSRSDef);
-            GDALVectorTranslateOptionsFree(psOptions);
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
-            return nullptr;
-        }
-        poSpatSRS = &oSpatSRS;
-    }
-
-    /* -------------------------------------------------------------------- */
     /*      Create a transformation object from the source to               */
     /*      destination coordinate system.                                  */
     /* -------------------------------------------------------------------- */
@@ -2791,10 +2804,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
-    oTranslator.m_poClipSrc =
-        reinterpret_cast<OGRGeometry *>(psOptions->hClipSrc);
-    oTranslator.m_poClipDst =
-        reinterpret_cast<OGRGeometry *>(psOptions->hClipDst);
+    // Do not emit warning if the user specified directly the clip source geom
+    if (psOptions->pszClipSrcDS == nullptr)
+        oTranslator.m_bWarnedClipSrcSRS = true;
+    oTranslator.m_poClipSrcOri = OGRGeometry::FromHandle(psOptions->hClipSrc);
+    // Do not emit warning if the user specified directly the clip dest geom
+    if (psOptions->pszClipDstDS == nullptr)
+        oTranslator.m_bWarnedClipDstSRS = true;
+    oTranslator.m_poClipDstOri = OGRGeometry::FromHandle(psOptions->hClipDst);
     oTranslator.m_bExplodeCollections = psOptions->bExplodeCollections;
     oTranslator.m_bNativeData = psOptions->bNativeData;
     oTranslator.m_nLimit = psOptions->nLimit;
@@ -2832,7 +2849,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         OGRLayer *poResultSet = poDS->ExecuteSQL(
             psOptions->pszSQLStatement,
             (psOptions->pszGeomField == nullptr)
-                ? reinterpret_cast<OGRGeometry *>(psOptions->hSpatialFilter)
+                ? OGRGeometry::FromHandle(psOptions->hSpatialFilter)
                 : nullptr,
             psOptions->pszDialect);
 
@@ -2845,8 +2862,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     psOptions->pszGeomField);
                 if (iGeomField >= 0)
                     poResultSet->SetSpatialFilter(
-                        iGeomField, reinterpret_cast<OGRGeometry *>(
-                                        psOptions->hSpatialFilter));
+                        iGeomField,
+                        OGRGeometry::FromHandle(psOptions->hSpatialFilter));
                 else
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Cannot find geometry field %s.",
@@ -3099,9 +3116,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 }
 
                 ApplySpatialFilter(
-                    poLayer,
-                    reinterpret_cast<OGRGeometry *>(psOptions->hSpatialFilter),
-                    poSpatSRS, psOptions->pszGeomField, poSourceSRS);
+                    poLayer, OGRGeometry::FromHandle(psOptions->hSpatialFilter),
+                    poSpatSRS.get(), psOptions->pszGeomField, poSourceSRS);
 
                 oMapLayerToIdx[poLayer] = iLayer;
             }
@@ -3339,9 +3355,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             }
 
             ApplySpatialFilter(
-                poLayer,
-                reinterpret_cast<OGRGeometry *>(psOptions->hSpatialFilter),
-                poSpatSRS, psOptions->pszGeomField, poSourceSRS);
+                poLayer, OGRGeometry::FromHandle(psOptions->hSpatialFilter),
+                poSpatSRS.get(), psOptions->pszGeomField, poSourceSRS);
 
             if (psOptions->bDisplayProgress)
             {
@@ -3487,7 +3502,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     GDALVectorTranslateOptionsFree(psOptions);
     if (nRetCode == 0)
-        return static_cast<GDALDatasetH>(poODS);
+        return GDALDataset::ToHandle(poODS);
 
     if (hDstDS == nullptr)
         GDALClose(poODS);
@@ -5308,7 +5323,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 OGRGeometry *poStolenGeometry = nullptr;
                 if (!bExplodeCollections && nSrcGeomFieldCount == 1 &&
                     (nDstGeomFieldCount == 1 ||
-                     (nDstGeomFieldCount == 0 && m_poClipSrc)))
+                     (nDstGeomFieldCount == 0 && m_poClipSrcOri)))
                 {
                     poStolenGeometry = poFeature->StealGeometry();
                 }
@@ -5318,10 +5333,46 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         poFeature->StealGeometry(iRequestedSrcGeomField);
                 }
 
-                if (nDstGeomFieldCount == 0 && poStolenGeometry && m_poClipSrc)
+                if (nDstGeomFieldCount == 0 && poStolenGeometry &&
+                    m_poClipSrcOri)
                 {
-                    OGRGeometry *poClipped =
-                        poStolenGeometry->Intersection(m_poClipSrc);
+                    auto poGeomSRS = poStolenGeometry->getSpatialReference();
+                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+                    {
+                        auto poClipSrcSRS =
+                            m_poClipSrcOri->getSpatialReference();
+                        if (poClipSrcSRS && poGeomSRS &&
+                            !poClipSrcSRS->IsSame(poGeomSRS))
+                        {
+                            // Transform clip geom to geometry SRS
+                            m_poClipSrcReprojectedToSrcSRS.reset(
+                                m_poClipSrcOri->clone());
+                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
+                                    poGeomSRS) != OGRERR_NONE)
+                            {
+                                delete poStolenGeometry;
+                                goto end_loop;
+                            }
+                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
+                        }
+                        else if (!poClipSrcSRS && poGeomSRS)
+                        {
+                            if (!m_bWarnedClipSrcSRS)
+                            {
+                                m_bWarnedClipSrcSRS = true;
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Clip source geometry has no attached SRS, "
+                                    "but the feature's geometry has one. "
+                                    "Assuming clip source geometry SRS is the "
+                                    "same as the feature's geometry");
+                            }
+                        }
+                    }
+                    OGRGeometry *poClipped = poStolenGeometry->Intersection(
+                        m_poClipSrcReprojectedToSrcSRS
+                            ? m_poClipSrcReprojectedToSrcSRS.get()
+                            : m_poClipSrcOri);
                     delete poStolenGeometry;
                     poStolenGeometry = nullptr;
                     if (poClipped == nullptr || poClipped->IsEmpty())
@@ -5486,10 +5537,45 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     }
                 }
 
-                if (m_poClipSrc)
+                if (m_poClipSrcOri)
                 {
-                    OGRGeometry *poClipped =
-                        poDstGeometry->Intersection(m_poClipSrc);
+                    auto poGeomSRS = poDstGeometry->getSpatialReference();
+                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+                    {
+                        auto poClipSrcSRS =
+                            m_poClipSrcOri->getSpatialReference();
+                        if (poClipSrcSRS && poGeomSRS &&
+                            !poClipSrcSRS->IsSame(poGeomSRS))
+                        {
+                            // Transform clip geom to geometry SRS
+                            m_poClipSrcReprojectedToSrcSRS.reset(
+                                m_poClipSrcOri->clone());
+                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
+                                    poGeomSRS) != OGRERR_NONE)
+                            {
+                                delete poDstGeometry;
+                                goto end_loop;
+                            }
+                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
+                        }
+                        else if (!poClipSrcSRS && poGeomSRS)
+                        {
+                            if (!m_bWarnedClipSrcSRS)
+                            {
+                                m_bWarnedClipSrcSRS = true;
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Clip source geometry has no attached SRS, "
+                                    "but the feature's geometry has one. "
+                                    "Assuming clip source geometry SRS is the "
+                                    "same as the feature's geometry");
+                            }
+                        }
+                    }
+                    OGRGeometry *poClipped = poDstGeometry->Intersection(
+                        m_poClipSrcReprojectedToSrcSRS
+                            ? m_poClipSrcReprojectedToSrcSRS.get()
+                            : m_poClipSrcOri);
                     if (poClipped == nullptr || poClipped->IsEmpty())
                     {
                         delete poDstGeometry;
@@ -5569,10 +5655,45 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 
                 if (poDstGeometry != nullptr)
                 {
-                    if (m_poClipDst)
+                    if (m_poClipDstOri)
                     {
-                        OGRGeometry *poClipped =
-                            poDstGeometry->Intersection(m_poClipDst);
+                        auto poGeomSRS = poDstGeometry->getSpatialReference();
+                        if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
+                        {
+                            auto poClipDstSRS =
+                                m_poClipDstOri->getSpatialReference();
+                            if (poClipDstSRS && poGeomSRS &&
+                                !poClipDstSRS->IsSame(poGeomSRS))
+                            {
+                                // Transform clip geom to geometry SRS
+                                m_poClipDstReprojectedToDstSRS.reset(
+                                    m_poClipDstOri->clone());
+                                if (m_poClipDstReprojectedToDstSRS->transformTo(
+                                        poGeomSRS) != OGRERR_NONE)
+                                {
+                                    delete poDstGeometry;
+                                    goto end_loop;
+                                }
+                                m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
+                            }
+                            else if (!poClipDstSRS && poGeomSRS)
+                            {
+                                if (!m_bWarnedClipDstSRS)
+                                {
+                                    m_bWarnedClipDstSRS = true;
+                                    CPLError(CE_Warning, CPLE_AppDefined,
+                                             "Clip destination geometry has no "
+                                             "attached SRS, but the feature's "
+                                             "geometry has one. Assuming clip "
+                                             "destination geometry SRS is the "
+                                             "same as the feature's geometry");
+                                }
+                            }
+                        }
+                        OGRGeometry *poClipped = poDstGeometry->Intersection(
+                            m_poClipDstReprojectedToDstSRS
+                                ? m_poClipDstReprojectedToDstSRS.get()
+                                : m_poClipDstOri);
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
                             delete poDstGeometry;
@@ -6170,8 +6291,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
             OGRPolygon *poSpatialFilter = new OGRPolygon();
             poSpatialFilter->addRing(&oRing);
             OGR_G_DestroyGeometry(psOptions->hSpatialFilter);
-            psOptions->hSpatialFilter =
-                reinterpret_cast<OGRGeometryH>(poSpatialFilter);
+            psOptions->hSpatialFilter = OGRGeometry::ToHandle(poSpatialFilter);
             i += 4;
         }
         else if (i + 1 < nArgc && EQUAL(papszArgv[i], "-spat_srs"))
@@ -6345,7 +6465,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                                CPLAtof(papszArgv[i + 2]));
 
                 OGRPolygon *poPoly = new OGRPolygon();
-                psOptions->hClipSrc = reinterpret_cast<OGRGeometryH>(poPoly);
+                psOptions->hClipSrc = OGRGeometry::ToHandle(poPoly);
                 poPoly->addRing(&oRing);
                 i += 4;
             }
@@ -6353,9 +6473,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                       STARTS_WITH_CI(papszArgv[i + 1], "MULTIPOLYGON")) &&
                      VSIStatL(papszArgv[i + 1], &sStat) != 0)
             {
-                OGRGeometryFactory::createFromWkt(
-                    papszArgv[i + 1], nullptr,
-                    reinterpret_cast<OGRGeometry **>(&psOptions->hClipSrc));
+                OGRGeometry *poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt(papszArgv[i + 1], nullptr,
+                                                  &poGeom);
+                psOptions->hClipSrc = OGRGeometry::ToHandle(poGeom);
                 if (psOptions->hClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -6427,7 +6548,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                                CPLAtof(papszArgv[i + 2]));
 
                 OGRPolygon *poPoly = new OGRPolygon();
-                psOptions->hClipDst = reinterpret_cast<OGRGeometryH>(poPoly);
+                psOptions->hClipDst = OGRGeometry::ToHandle(poPoly);
                 poPoly->addRing(&oRing);
                 i += 4;
             }
@@ -6435,9 +6556,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                       STARTS_WITH_CI(papszArgv[i + 1], "MULTIPOLYGON")) &&
                      VSIStatL(papszArgv[i + 1], &sStat) != 0)
             {
-                OGRGeometryFactory::createFromWkt(
-                    papszArgv[i + 1], nullptr,
-                    reinterpret_cast<OGRGeometry **>(&psOptions->hClipDst));
+                OGRGeometry *poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt(papszArgv[i + 1], nullptr,
+                                                  &poGeom);
+                psOptions->hClipDst = OGRGeometry::ToHandle(poGeom);
                 if (psOptions->hClipDst == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,

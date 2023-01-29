@@ -1312,6 +1312,61 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
 
 ###############################################################################
+# Test /-clipsrc-clipdst with reprojection
+
+
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+@pytest.mark.parametrize("clipSrc", [True, False])
+def test_ogr2ogr_lib_clip_datasource_reprojection(clipSrc):
+
+    # Prepare the data layer to clip
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs_4326 = osr.SpatialReference()
+    srs_4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs_4326.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString, srs=srs_4326)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
+    srcLayer.CreateFeature(f)
+
+    # Prepare the data layers to clip with
+    clip_path = "/vsimem/clip_test.shp"
+    clip_ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        clip_path, 0, 0, 0, gdal.GDT_Unknown
+    )
+    srs_32631 = osr.SpatialReference()
+    srs_32631.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs_32631.ImportFromEPSG(32631)
+    clip_layer = clip_ds.CreateLayer(
+        "clip_test", geom_type=ogr.wkbPolygon, srs=srs_32631
+    )
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((426857 5427937,426857 5427938,426858 5427938,426858 5427937,426857 5427937))"
+        )
+    )
+    clip_layer.CreateFeature(f)
+    clip_ds = None
+
+    dst_ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        clipSrc=clip_path if clipSrc else None,
+        clipDst=clip_path if not clipSrc else None,
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+    dst_feature = dst_lyr.GetFeature(0)
+    assert dst_feature.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+    dst_ds = None
+
+    # Cleanup
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(clip_path)
+
+
+###############################################################################
 # Test using explodecollections
 
 
