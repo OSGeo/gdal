@@ -204,7 +204,7 @@ const char *GDALRelationshipGetMappingTableName(GDALRelationshipH hRelationship)
  * \brief Sets the name of the mapping table for many-to-many relationships.
  *
  * This function is the same as the CPP method
- * OGRFieldDefn::SetMappingTableName().
+ * GDALRelationship::SetMappingTableName().
  *
  * @param hRelationship handle to the relationship to apply the new mapping name
  * to.
@@ -554,7 +554,7 @@ const char *GDALRelationshipGetForwardPathLabel(GDALRelationshipH hRelationship)
  * \brief Sets the label of the forward path for the relationship.
  *
  * This function is the same as the CPP method
- * OGRFieldDefn::SetForwardPathLabel().
+ * GDALRelationship::SetForwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
  * which can be used to generate descriptions of the relationship between
@@ -622,7 +622,7 @@ GDALRelationshipGetBackwardPathLabel(GDALRelationshipH hRelationship)
  * \brief Sets the label of the backward path for the relationship.
  *
  * This function is the same as the CPP method
- * OGRFieldDefn::SetBackwardPathLabel().
+ * GDALRelationship::SetBackwardPathLabel().
  *
  * The forward and backward path labels are free-form, user-friendly strings
  * which can be used to generate descriptions of the relationship between
@@ -683,7 +683,7 @@ const char *GDALRelationshipGetRelatedTableType(GDALRelationshipH hRelationship)
  * \brief Sets the type string of the related table.
  *
  * This function is the same as the CPP method
- * OGRFieldDefn::SetRelatedTableType().
+ * GDALRelationship::SetRelatedTableType().
  *
  * This a free-form string representing the type of related features, where the
  * exact interpretation is format dependent. For instance, table types from
