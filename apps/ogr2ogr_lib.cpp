@@ -52,6 +52,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_alg.h"
@@ -88,6 +89,8 @@ typedef enum
 #define COORD_DIM_UNCHANGED -1
 #define COORD_DIM_LAYER_DIM -2
 #define COORD_DIM_XYM -3
+
+#define TZ_OFFSET_INVALID INT_MIN
 
 /************************************************************************/
 /*                              CopyableGCPs                            */
@@ -424,6 +427,9 @@ struct GDALVectorTranslateOptions
 
     /*! Maximum number of features, or -1 if no limit. */
     GIntBig nLimit = -1;
+
+    /*! Wished offset w.r.t UTC of dateTime */
+    int nTZOffsetInSec = TZ_OFFSET_INVALID;
 };
 
 struct TargetLayerInfo
@@ -452,6 +458,7 @@ struct TargetLayerInfo
     const char *m_pszSpatSRSDef = nullptr;
     OGRGeometryH m_hSpatialFilter = nullptr;
     const char *m_pszGeomField = nullptr;
+    std::vector<int> m_anDateTimeFieldIdx{};
 };
 
 struct AssociatedLayers
@@ -4788,6 +4795,17 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     psInfo->m_pszGeomField =
         psOptions->bGeomFieldSet ? psOptions->osGeomField.c_str() : nullptr;
 
+    if (psOptions->nTZOffsetInSec != TZ_OFFSET_INVALID && poDstFDefn)
+    {
+        for (int i = 0; i < poDstFDefn->GetFieldCount(); ++i)
+        {
+            if (poDstFDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
+            {
+                psInfo->m_anDateTimeFieldIdx.push_back(i);
+            }
+        }
+    }
+
     return psInfo;
 }
 
@@ -5388,6 +5406,51 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     auto str = poDstFeature->GetFieldAsString(i);
                     if (strcmp(str, "") == 0)
                         poDstFeature->SetFieldNull(i);
+                }
+            }
+
+            if (!psInfo->m_anDateTimeFieldIdx.empty())
+            {
+                for (int i : psInfo->m_anDateTimeFieldIdx)
+                {
+                    if (!poDstFeature->IsFieldSetAndNotNull(i))
+                        continue;
+                    auto psField = poDstFeature->GetRawFieldRef(i);
+                    if (psField->Date.TZFlag == 0 || psField->Date.TZFlag == 1)
+                        continue;
+
+                    const int nTZOffsetInSec =
+                        (psField->Date.TZFlag - 100) * 15 * 60;
+                    if (nTZOffsetInSec == psOptions->nTZOffsetInSec)
+                        continue;
+
+                    struct tm brokendowntime;
+                    memset(&brokendowntime, 0, sizeof(brokendowntime));
+                    brokendowntime.tm_year = psField->Date.Year - 1900;
+                    brokendowntime.tm_mon = psField->Date.Month - 1;
+                    brokendowntime.tm_mday = psField->Date.Day;
+                    GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    int nSec = psField->Date.Hour * 3600 +
+                               psField->Date.Minute * 60 +
+                               static_cast<int>(psField->Date.Second);
+                    nSec += psOptions->nTZOffsetInSec - nTZOffsetInSec;
+                    nUnixTime += nSec;
+                    CPLUnixTimeToYMDHMS(nUnixTime, &brokendowntime);
+
+                    psField->Date.Year =
+                        static_cast<GInt16>(brokendowntime.tm_year + 1900);
+                    psField->Date.Month =
+                        static_cast<GByte>(brokendowntime.tm_mon + 1);
+                    psField->Date.Day =
+                        static_cast<GByte>(brokendowntime.tm_mday);
+                    psField->Date.Hour =
+                        static_cast<GByte>(brokendowntime.tm_hour);
+                    psField->Date.Minute =
+                        static_cast<GByte>(brokendowntime.tm_min);
+                    psField->Date.Second = static_cast<float>(
+                        brokendowntime.tm_sec + fmod(psField->Date.Second, 1));
+                    psField->Date.TZFlag = static_cast<GByte>(
+                        100 + psOptions->nTZOffsetInSec / (15 * 60));
                 }
             }
 
@@ -6594,6 +6657,50 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->nLimit = CPLAtoGIntBig(papszArgv[++i]);
+        }
+        else if (EQUAL(papszArgv[i], "-dateTimeTo"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszFormat = papszArgv[++i];
+            if (EQUAL(pszFormat, "UTC"))
+            {
+                psOptions->nTZOffsetInSec = 0;
+            }
+            else if (STARTS_WITH_CI(pszFormat, "UTC") &&
+                     (strlen(pszFormat) == strlen("UTC+HH") ||
+                      strlen(pszFormat) == strlen("UTC+HH:MM")) &&
+                     (pszFormat[3] == '+' || pszFormat[3] == '-'))
+            {
+                const int nHour = atoi(pszFormat + strlen("UTC+"));
+                if (nHour < 0 || nHour > 14)
+                {
+                    // invalid
+                }
+                else if (strlen(pszFormat) == strlen("UTC+HH"))
+                {
+                    psOptions->nTZOffsetInSec = nHour * 3600;
+                    if (pszFormat[3] == '-')
+                        psOptions->nTZOffsetInSec = -psOptions->nTZOffsetInSec;
+                }
+                else  // if( strlen(pszFormat) == strlen("UTC+HH:MM") )
+                {
+                    const int nMin = atoi(pszFormat + strlen("UTC+HH:"));
+                    if (nMin == 0 || nMin == 15 || nMin == 30 || nMin == 45)
+                    {
+                        psOptions->nTZOffsetInSec = nHour * 3600 + nMin * 60;
+                        if (pszFormat[3] == '-')
+                            psOptions->nTZOffsetInSec =
+                                -psOptions->nTZOffsetInSec;
+                    }
+                }
+            }
+            if (psOptions->nTZOffsetInSec == TZ_OFFSET_INVALID)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Value of -dateTimeTo should be UTC, UTC(+|-)HH or "
+                         "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
+                return nullptr;
+            }
         }
         else if (papszArgv[i][0] == '-')
         {

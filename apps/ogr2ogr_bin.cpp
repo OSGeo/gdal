@@ -104,6 +104,7 @@ static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
         "[-unsetFieldWidth]\n"
         "               [-mapFieldType "
         "srctype|All=dsttype[,srctype2=dsttype2]*]\n"
+        "               [-dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]]\n"
         "               [-fieldmap identity | index1[,index2]*]\n"
         "               [-splitlistfields] [-maxsubfields val]\n"
         "               [-resolveDomains]\n"

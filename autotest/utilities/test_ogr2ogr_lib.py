@@ -1502,3 +1502,79 @@ def test_ogr2ogr_lib_transaction_size(transaction_size):
     finally:
         ds = None
         gdal.Unlink("/vsimem/out.gpkg")
+
+
+###############################################################################
+# Test -dateTimeTo
+
+
+def test_ogr2ogr_lib_dateTimeTo():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("layer")
+    src_lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    src_lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["dt"] = "2023/02/01 02:34:56.789+0315"
+    f["int"] = 1
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["dt"] = "2023/02/01 01:34:56.789+0300"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["dt"] = "2023/02/01 00:34:56.789"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    src_lyr.CreateFeature(f)
+
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo foo")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTCx")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTCx12")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+15")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:3")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:34")
+        with pytest.raises(Exception):
+            gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+12:345")
+
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC+03:00")
+    dst_lyr = dst_ds.GetLayer(0)
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/02/01 02:19:56.789+03"
+    assert f["int"] == 1
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/02/01 01:34:56.789+03"
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/02/01 00:34:56.789"
+    f = dst_lyr.GetNextFeature()
+    assert not f.IsFieldSet("dt")
+
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC")
+    dst_lyr = dst_ds.GetLayer(0)
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/01/31 23:19:56.789+00"
+
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:15")
+    dst_lyr = dst_ds.GetLayer(0)
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/01/31 10:04:56.789-1315"
+
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:30")
+    dst_lyr = dst_ds.GetLayer(0)
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/01/31 09:49:56.789-1330"
+
+    dst_ds = gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo UTC-13:45")
+    dst_lyr = dst_ds.GetLayer(0)
+    f = dst_lyr.GetNextFeature()
+    assert f["dt"] == "2023/01/31 09:34:56.789-1345"
