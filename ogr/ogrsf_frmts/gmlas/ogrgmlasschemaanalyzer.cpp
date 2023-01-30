@@ -1722,6 +1722,7 @@ static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
         OGRwkbGeometryType eType;
     } asArray[] = {{"GeometryPropertyType", wkbUnknown},
                    {"PointPropertyType", wkbPoint},
+                   {"BoundingShapeType", wkbPolygon},
                    {"PolygonPropertyType", wkbPolygon},
                    {"LineStringPropertyType", wkbLineString},
                    {"MultiPointPropertyType", wkbMultiPoint},

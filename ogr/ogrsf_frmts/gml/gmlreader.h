@@ -353,6 +353,8 @@ class CPL_DLL GMLFeature
     // string list of named non-schema properties - used by NAS driver.
     char **m_papszOBProperties;
 
+    CPLXMLNode *m_psBoundedByGeometry = nullptr;
+
   public:
     explicit GMLFeature(GMLFeatureClass *);
     ~GMLFeature();
@@ -374,6 +376,12 @@ class CPL_DLL GMLFeature
         return m_papsGeometry;
     }
     const CPLXMLNode *GetGeometryRef(int nIdx) const;
+
+    void SetBoundedByGeometry(CPLXMLNode *psGeom);
+    const CPLXMLNode *GetBoundedByGeometry() const
+    {
+        return m_psBoundedByGeometry;
+    }
 
     void SetPropertyDirectly(int i, char *pszValue);
 

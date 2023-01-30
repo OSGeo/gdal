@@ -104,6 +104,7 @@ typedef enum
     STATE_GEOMETRY,
     STATE_IGNORED_FEATURE,
     STATE_BOUNDED_BY,
+    STATE_BOUNDED_BY_IN_FEATURE,
     STATE_CITYGML_ATTRIBUTE
 } HandlerState;
 
@@ -164,6 +165,8 @@ class GMLHandler
 
     OGRErr startElementBoundedBy(const char *pszName, int nLenName, void *attr);
     OGRErr endElementBoundedBy();
+
+    OGRErr endElementBoundedByInFeature();
 
     OGRErr startElementFeatureAttribute(const char *pszName, int nLenName,
                                         void *attr);

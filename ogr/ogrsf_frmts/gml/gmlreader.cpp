@@ -1341,25 +1341,40 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
 
         const CPLXMLNode *const *papsGeometry = poFeature->GetGeometryList();
         bool bGeometryColumnJustCreated = false;
+
+        const CPLXMLNode *apsGeometries[2] = {nullptr, nullptr};
+        const CPLXMLNode *psBoundedByGeometry =
+            poFeature->GetBoundedByGeometry();
+        int nFeatureGeomCount = poFeature->GetGeometryCount();
+        if (psBoundedByGeometry && nFeatureGeomCount == 0 &&
+            strcmp(psBoundedByGeometry->pszValue, "null") != 0)
+        {
+            apsGeometries[0] = psBoundedByGeometry;
+            papsGeometry = apsGeometries;
+            nFeatureGeomCount = 1;
+        }
+
         if (!bOnlyDetectSRS && papsGeometry != nullptr &&
             papsGeometry[0] != nullptr)
         {
             if (poClass->GetGeometryPropertyCount() == 0)
             {
-                std::string osGeomName(m_osSingleGeomElemPath);
+                std::string osPath(m_osSingleGeomElemPath);
+                if (osPath.empty() && psBoundedByGeometry)
+                    osPath = "boundedBy";
+                std::string osGeomName(osPath);
                 const auto nPos = osGeomName.rfind('|');
                 if (nPos != std::string::npos)
                     osGeomName = osGeomName.substr(nPos + 1);
                 bGeometryColumnJustCreated = true;
                 poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    osGeomName.c_str(), m_osSingleGeomElemPath.c_str(),
-                    wkbUnknown, -1, true));
+                    osGeomName.c_str(), osPath.c_str(), wkbUnknown, -1, true));
             }
         }
 
         if (bGetExtents && papsGeometry != nullptr)
         {
-            const int nIters = std::min(poFeature->GetGeometryCount(),
+            const int nIters = std::min(nFeatureGeomCount,
                                         poClass->GetGeometryPropertyCount());
             for (int i = 0; i < nIters; ++i)
             {

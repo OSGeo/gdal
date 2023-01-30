@@ -2069,6 +2069,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                             oPoints.getZ(0));
         poBoxRing->setPoint(4, oPoints.getX(0), oPoints.getY(0),
                             oPoints.getZ(0));
+        poBoxRing->set3D(oPoints.Is3D());
 
         poBoxPoly->addRingDirectly(poBoxRing);
 
@@ -3838,6 +3839,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
         delete poLS;
         return poMP;
+    }
+
+    if (strcmp(pszBaseGeometry, "null") == 0)
+    {
+        return nullptr;
     }
 
     CPLError(CE_Failure, CPLE_AppDefined,
