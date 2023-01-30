@@ -549,7 +549,7 @@ typedef int OGRErr;
 #define OLCMeasuredGeometries  "MeasuredGeometries"
 #define OLCZGeometries         "ZGeometries"
 #define OLCRename              "Rename"
-#define OLCFastGetArrowStream  "FastGetArrowStream";
+#define OLCFastGetArrowStream  "FastGetArrowStream"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -557,11 +557,11 @@ typedef int OGRErr;
 #define ODsCCurveGeometries    "CurveGeometries"
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
-#define ODsCMeasuredGeometries  "MeasuredGeometries";
-#define ODsCZGeometries        "ZGeometries";
-#define ODsCRandomLayerRead    "RandomLayerRead";
+#define ODsCMeasuredGeometries  "MeasuredGeometries"
+#define ODsCZGeometries        "ZGeometries"
+#define ODsCRandomLayerRead    "RandomLayerRead"
 /* Note the unfortunate trailing space at the end of the string */
-#define ODsCRandomLayerWrite   "RandomLayerWrite ";
+#define ODsCRandomLayerWrite   "RandomLayerWrite "
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
