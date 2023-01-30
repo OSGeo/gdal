@@ -8,7 +8,7 @@ RFC 91: GDALDataset::Close() method
 Author:        Even Rouault
 Contact:       even.rouault at spatialys.com
 Started:       2023-Jan-20
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
@@ -191,11 +191,12 @@ The candidate implementation does the following:
 
 * Update all drivers that implements GDALDataset::FlushCache().
 * Implements GDALDataset::Close() for all drivers that derive from RawDataset.
-* Implements GDALDataset::Close() in the GeoJSON driver.
+* Implements GDALDataset::Close() in the GeoJSON, GTiff, ODS, XLSX, SQLite,
+  GPKG, netCDF, JP2OpenJPEG, FlatGeoBuf and OpenFileGDB drivers.
 * Modifies all C/C++ command line utilities to test the return value of GDALClose()
 * Tests GDALClose() return value in gdal.Dataset destructor.
 
 Voting history
 --------------
 
-TBD
++1 from PSC members KurtS, MateuszL and me, and +0 from JukkaR
