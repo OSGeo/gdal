@@ -5,6 +5,8 @@
 # For a CMake build, the script should be run from the build directory
 # typically if the build dir is a subdirectory in the source tree,
 # ". ../scripts/setdevenv.sh"
+#
+# The script can be sourced from either bash or zsh.
 
 # Do *NOT* use set set -e|-u flags as this script is intended to be sourced
 # and thus an error emitted will kill the shell.
@@ -12,14 +14,18 @@
 
 called=$_
 
-if [[ $called == "$0" ]]; then
+if [[ $BASH_VERSION && $(realpath $called) == $(realpath "$0") ]]; then
     echo "Script should be sourced with '. $0', instead of run."
     exit 1
 fi
 
+# The following line uses a zsh expansion that is not supported by shellcheck
+# shellcheck disable=SC2296
+SETDEVENV_SH=${BASH_SOURCE[0]:-${(%):-%x}}
+
 # SC2164 is "Use cd ... || exit in case cd fails"
 # shellcheck disable=SC2164
-GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
+GDAL_ROOT=$(cd $(dirname ${SETDEVENV_SH})/..; pwd)
 CUR_DIR=$PWD
 
 echo "Setting environment for a CMake build from ${CUR_DIR}..."
