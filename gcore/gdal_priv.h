@@ -351,7 +351,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                const char *const *papszAllowedDrivers,
                const char *const *papszOpenOptions,
                const char *const *papszSiblingFiles);
-    friend void CPL_STDCALL GDALClose(GDALDatasetH hDS);
+    friend CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS);
 
     friend class GDALDriver;
     friend class GDALDefaultOverviews;
@@ -375,7 +375,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int nBands = 0;
     GDALRasterBand **papoBands = nullptr;
 
-    int nOpenFlags = 0;
+    static constexpr int OPEN_FLAGS_CLOSED = -1;
+    int nOpenFlags =
+        0;  // set to OPEN_FLAGS_CLOSED after Close() has been called
 
     int nRefCount = 1;
     bool bForceCachedIO = false;
@@ -407,7 +409,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     BlockBasedRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                        GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
                        GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
-    void BlockBasedFlushCache(bool bAtClosing);
+    CPLErr BlockBasedFlushCache(bool bAtClosing);
 
     CPLErr
     BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -472,6 +474,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
   public:
     ~GDALDataset() override;
 
+    virtual CPLErr Close();
+
     int GetRasterXSize();
     int GetRasterYSize();
     int GetRasterCount();
@@ -527,7 +531,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Bands GetBands();
 
-    virtual void FlushCache(bool bAtClosing = false);
+    virtual CPLErr FlushCache(bool bAtClosing = false);
 
     virtual GIntBig GetEstimatedRAMUsage();
 

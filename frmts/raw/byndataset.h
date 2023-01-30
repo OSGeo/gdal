@@ -217,6 +217,8 @@ class BYNDataset final : public RawDataset
     static void header2buffer(const BYNHeader *pohHeader, GByte *pabyBuf);
     static void buffer2header(const GByte *pabyBuf, BYNHeader *pohHeader);
 
+    CPLErr Close() override;
+
   public:
     BYNDataset();
     ~BYNDataset();

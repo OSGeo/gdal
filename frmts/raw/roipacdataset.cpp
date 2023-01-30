@@ -54,6 +54,8 @@ class ROIPACDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
+    CPLErr Close() override;
+
   public:
     ROIPACDataset();
     ~ROIPACDataset() override;
@@ -64,7 +66,7 @@ class ROIPACDataset final : public RawDataset
                                int nBandsIn, GDALDataType eType,
                                char **papszOptions);
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *padfTransform) override;
 
@@ -152,16 +154,37 @@ ROIPACDataset::ROIPACDataset()
 
 ROIPACDataset::~ROIPACDataset()
 {
-    ROIPACDataset::FlushCache(true);
-    if (fpRsc != nullptr && VSIFCloseL(fpRsc) != 0)
+    ROIPACDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ROIPACDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        if (ROIPACDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpRsc != nullptr && VSIFCloseL(fpRsc) != 0)
+        {
+            eErr = CE_Failure;
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+        if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+        {
+            eErr = CE_Failure;
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+        CPLFree(pszRscFilename);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-    }
-    CPLFree(pszRscFilename);
+    return eErr;
 }
 
 /************************************************************************/
@@ -689,30 +712,29 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ROIPACDataset::FlushCache(bool bAtClosing)
+CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 {
-    RawDataset::FlushCache(bAtClosing);
+    CPLErr eErr = RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = (GetRasterCount() > 0) ? GetRasterBand(1) : nullptr;
 
     if (eAccess == GA_ReadOnly || band == nullptr)
-        return;
+        return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make
     // sure any existing content is cleared, otherwise the file may contain
     // trailing content from the previous write.
-    CPL_IGNORE_RET_VAL(VSIFTruncateL(fpRsc, 0));
+    bool bOK = VSIFTruncateL(fpRsc, 0) == 0;
 
-    CPL_IGNORE_RET_VAL(VSIFSeekL(fpRsc, 0, SEEK_SET));
+    bOK &= VSIFSeekL(fpRsc, 0, SEEK_SET) == 0;
     /* -------------------------------------------------------------------- */
     /*      Rewrite out the header.                                         */
     /* -------------------------------------------------------------------- */
     /* -------------------------------------------------------------------- */
     /*      Raster dimensions.                                              */
     /* -------------------------------------------------------------------- */
-    CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %d\n", "WIDTH", nRasterXSize));
-    CPL_IGNORE_RET_VAL(
-        VSIFPrintfL(fpRsc, "%-40s %d\n", "FILE_LENGTH", nRasterYSize));
+    bOK &= VSIFPrintfL(fpRsc, "%-40s %d\n", "WIDTH", nRasterXSize) > 0;
+    bOK &= VSIFPrintfL(fpRsc, "%-40s %d\n", "FILE_LENGTH", nRasterYSize) > 0;
 
     /* -------------------------------------------------------------------- */
     /*      Georeferencing.                                                 */
@@ -723,13 +745,12 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
         int iUTMZone = m_oSRS.GetUTMZone(&bNorth);
         if (iUTMZone != 0)
         {
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %s%d\n", "PROJECTION",
-                                           "UTM", iUTMZone));
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %s%d\n", "PROJECTION", "UTM",
+                               iUTMZone) > 0;
         }
         else if (m_oSRS.IsGeographic())
         {
-            CPL_IGNORE_RET_VAL(
-                VSIFPrintfL(fpRsc, "%-40s %s\n", "PROJECTION", "LL"));
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", "PROJECTION", "LL") > 0;
         }
         else
         {
@@ -742,8 +763,7 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
         {
             if (strcmp(m_oSRS.GetAttrValue("DATUM"), "WGS_1984") == 0)
             {
-                CPL_IGNORE_RET_VAL(
-                    VSIFPrintfL(fpRsc, "%-40s %s\n", "DATUM", "WGS84"));
+                bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", "DATUM", "WGS84") > 0;
             }
             else
             {
@@ -751,16 +771,16 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
                          "Datum \"%s\" probably not supported in the "
                          "ROI_PAC format, saving it anyway",
                          m_oSRS.GetAttrValue("DATUM"));
-                CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %s\n", "DATUM",
-                                               m_oSRS.GetAttrValue("DATUM")));
+                bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", "DATUM",
+                                   m_oSRS.GetAttrValue("DATUM")) > 0;
             }
         }
         if (m_oSRS.GetAttrValue("UNIT") != nullptr)
         {
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %s\n", "X_UNIT",
-                                           m_oSRS.GetAttrValue("UNIT")));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %s\n", "Y_UNIT",
-                                           m_oSRS.GetAttrValue("UNIT")));
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", "X_UNIT",
+                               m_oSRS.GetAttrValue("UNIT")) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", "Y_UNIT",
+                               m_oSRS.GetAttrValue("UNIT")) > 0;
         }
     }
     if (bValidGeoTransform)
@@ -773,18 +793,18 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
         }
         else
         {
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST",
-                                           adfGeoTransform[0]));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP",
-                                           adfGeoTransform[1]));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST",
-                                           adfGeoTransform[3]));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP",
-                                           adfGeoTransform[5]));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_OFFSET",
-                                           band->GetOffset(nullptr)));
-            CPL_IGNORE_RET_VAL(VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_SCALE",
-                                           band->GetScale(nullptr)));
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST",
+                               adfGeoTransform[0]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP",
+                               adfGeoTransform[1]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST",
+                               adfGeoTransform[3]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP",
+                               adfGeoTransform[5]) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_OFFSET",
+                               band->GetOffset(nullptr)) > 0;
+            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_SCALE",
+                               band->GetScale(nullptr)) > 0;
         }
     }
 
@@ -816,10 +836,13 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
             CSLDestroy(papszTokens);
             continue;
         }
-        CPL_IGNORE_RET_VAL(
-            VSIFPrintfL(fpRsc, "%-40s %s\n", papszTokens[0], papszTokens[1]));
+        bOK &= VSIFPrintfL(fpRsc, "%-40s %s\n", papszTokens[0],
+                           papszTokens[1]) > 0;
         CSLDestroy(papszTokens);
     }
+    if (!bOK)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /************************************************************************/

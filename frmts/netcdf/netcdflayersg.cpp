@@ -232,7 +232,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
 
 /* Creates and fills any needed variables that haven't already been created
  */
-void netCDFDataset::SGCommitPendingTransaction()
+bool netCDFDataset::SGCommitPendingTransaction()
 {
     try
     {
@@ -348,7 +348,9 @@ void netCDFDataset::SGCommitPendingTransaction()
                  "An error occurred while writing the target netCDF File. "
                  "Translation will be terminated.\n%s",
                  sge.get_err_msg());
+        return false;
     }
+    return true;
 }
 
 void netCDFDataset::SGLogPendingTransaction()

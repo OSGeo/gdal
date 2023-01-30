@@ -279,7 +279,7 @@ class OGRNGWDataset final : public GDALDataset
                                const char *pszDomain = "") override;
     virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                                    const char *pszDomain = "") override;
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
     virtual OGRLayer *ExecuteSQL(const char *pszStatement,
                                  OGRGeometry *poSpatialFilter,
                                  const char *pszDialect) override;

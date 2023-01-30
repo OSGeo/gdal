@@ -636,8 +636,11 @@ exit:
     if (poResultLayer != nullptr)
         poDS->ReleaseResultSet(poResultLayer);
 
-    if (poDS != nullptr)
-        GDALClose(poDS);
+    if (poDS)
+    {
+        if (GDALClose(poDS) != CE_None)
+            nRet = 1;
+    }
 
     GDALDestroyDriverManager();
 

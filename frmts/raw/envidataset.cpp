@@ -143,76 +143,100 @@ ENVIDataset::ENVIDataset()
 ENVIDataset::~ENVIDataset()
 
 {
-    ENVIDataset::FlushCache(true);
-    if (fpImage)
+    ENVIDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ENVIDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        // Make sure the binary file has the expected size
-        if (!bSuppressOnClose && bFillFile && nBands > 0)
+        if (ENVIDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage)
         {
-            const int nDataSize =
-                GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
-            const vsi_l_offset nExpectedFileSize =
-                static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize *
-                nBands * nDataSize;
-            if (VSIFSeekL(fpImage, 0, SEEK_END) != 0)
+            // Make sure the binary file has the expected size
+            if (!bSuppressOnClose && bFillFile && nBands > 0)
             {
-                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-            }
-            if (VSIFTellL(fpImage) < nExpectedFileSize)
-            {
-                GByte byVal = 0;
-                if (VSIFSeekL(fpImage, nExpectedFileSize - 1, SEEK_SET) != 0 ||
-                    VSIFWriteL(&byVal, 1, 1, fpImage) == 0)
+                const int nDataSize = GDALGetDataTypeSizeBytes(
+                    GetRasterBand(1)->GetRasterDataType());
+                const vsi_l_offset nExpectedFileSize =
+                    static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize *
+                    nBands * nDataSize;
+                if (VSIFSeekL(fpImage, 0, SEEK_END) != 0)
                 {
+                    eErr = CE_Failure;
                     CPLError(CE_Failure, CPLE_FileIO, "I/O error");
                 }
+                if (VSIFTellL(fpImage) < nExpectedFileSize)
+                {
+                    GByte byVal = 0;
+                    if (VSIFSeekL(fpImage, nExpectedFileSize - 1, SEEK_SET) !=
+                            0 ||
+                        VSIFWriteL(&byVal, 1, 1, fpImage) == 0)
+                    {
+                        eErr = CE_Failure;
+                        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                    }
+                }
+            }
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
             }
         }
-        if (VSIFCloseL(fpImage) != 0)
+        if (fp)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fp) != 0)
+            {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
         }
-    }
-    if (fp)
-    {
-        if (VSIFCloseL(fp) != 0)
+        if (!m_asGCPs.empty())
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            GDALDeinitGCPs(static_cast<int>(m_asGCPs.size()), m_asGCPs.data());
         }
-    }
-    if (!m_asGCPs.empty())
-    {
-        GDALDeinitGCPs(static_cast<int>(m_asGCPs.size()), m_asGCPs.data());
-    }
 
-    // Should be called before pszHDRFilename is freed.
-    CleanupPostFileClosing();
+        // Should be called before pszHDRFilename is freed.
+        CleanupPostFileClosing();
 
-    CPLFree(pszHDRFilename);
+        CPLFree(pszHDRFilename);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ENVIDataset::FlushCache(bool bAtClosing)
+CPLErr ENVIDataset::FlushCache(bool bAtClosing)
 
 {
-    RawDataset::FlushCache(bAtClosing);
+    CPLErr eErr = RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
-    if (band == nullptr || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
-        return;
+    if (!band || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
+        return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make
     // sure any existing content is cleared, otherwise the file may contain
     // trailing content from the previous write.
     if (VSIFTruncateL(fp, 0) != 0)
-        return;
+        return CE_Failure;
 
     if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
-        return;
+        return CE_Failure;
 
     // Rewrite out the header.
     bool bOK = VSIFPrintfL(fp, "ENVI\n") >= 0;
@@ -492,9 +516,10 @@ void ENVIDataset::FlushCache(bool bAtClosing)
     }
 
     if (!bOK)
-        return;
+        return CE_Failure;
 
     bHeaderDirty = false;
+    return eErr;
 }
 
 /************************************************************************/

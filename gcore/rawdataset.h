@@ -56,6 +56,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
                      GDALDataType, int, int *, GSpacing nPixelSpace,
                      GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
+    virtual CPLErr Close() override = 0;
 
   public:
     RawDataset();

@@ -115,11 +115,13 @@ class ENVIDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
 
+    CPLErr Close() override;
+
   public:
     ENVIDataset();
     ~ENVIDataset() override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *) override;
 

@@ -124,7 +124,7 @@ class TileDBDataset final : public GDALPamDataset
     static void ErrorHandler(const std::string &msg);
     static void SetBlockSize(GDALRasterBand *poBand, char **&papszOptions);
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/
@@ -681,13 +681,14 @@ CPLErr TileDBDataset::AddDimensions(tiledb::Domain &domain,
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void TileDBDataset::FlushCache(bool bAtClosing)
+CPLErr TileDBDataset::FlushCache(bool bAtClosing)
 
 {
-    BlockBasedFlushCache(bAtClosing);
+    const CPLErr eErr = BlockBasedFlushCache(bAtClosing);
 
     if (nPamFlags & GPF_DIRTY)
         TrySaveXML();
+    return eErr;
 }
 
 /************************************************************************/

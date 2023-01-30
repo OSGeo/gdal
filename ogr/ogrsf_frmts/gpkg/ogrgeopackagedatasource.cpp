@@ -257,11 +257,11 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 #endif
 }
 
-void GDALGeoPackageDataset::CloseDB()
+bool GDALGeoPackageDataset::CloseDB()
 {
     OGRSQLiteUnregisterSQLFunctions(m_pSQLFunctionData);
     m_pSQLFunctionData = nullptr;
-    OGRSQLiteBaseDataSource::CloseDB();
+    return OGRSQLiteBaseDataSource::CloseDB();
 }
 
 bool GDALGeoPackageDataset::ReOpenDB()
@@ -958,55 +958,76 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
 
 GDALGeoPackageDataset::~GDALGeoPackageDataset()
 {
-    SetPamFlags(0);
+    GDALGeoPackageDataset::Close();
+}
 
-    if (eAccess == GA_Update && m_poParentDS == nullptr &&
-        !m_osRasterTable.empty() && !m_bGeoTransformValid)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr GDALGeoPackageDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Raster table %s not correctly initialized due to missing "
-                 "call to SetGeoTransform()",
-                 m_osRasterTable.c_str());
+        SetPamFlags(0);
+
+        if (eAccess == GA_Update && m_poParentDS == nullptr &&
+            !m_osRasterTable.empty() && !m_bGeoTransformValid)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Raster table %s not correctly initialized due to missing "
+                     "call to SetGeoTransform()",
+                     m_osRasterTable.c_str());
+        }
+
+        if (GDALGeoPackageDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (FlushMetadata() != CE_None)
+            eErr = CE_Failure;
+
+        // Destroy bands now since we don't want
+        // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
+        // destruction
+        for (int i = 0; i < nBands; i++)
+            delete papoBands[i];
+        nBands = 0;
+        CPLFree(papoBands);
+        papoBands = nullptr;
+
+        // Destroy overviews before cleaning m_hTempDB as they could still
+        // need it
+        for (int i = 0; i < m_nOverviewCount; i++)
+            delete m_papoOverviewDS[i];
+
+        if (m_poParentDS)
+        {
+            hDB = nullptr;
+        }
+
+        for (int i = 0; i < m_nLayers; i++)
+            delete m_papoLayers[i];
+
+        CPLFree(m_papoLayers);
+        CPLFree(m_papoOverviewDS);
+
+        std::map<int, OGRSpatialReference *>::iterator oIter =
+            m_oMapSrsIdToSrs.begin();
+        for (; oIter != m_oMapSrsIdToSrs.end(); ++oIter)
+        {
+            OGRSpatialReference *poSRS = oIter->second;
+            if (poSRS)
+                poSRS->Release();
+        }
+
+        if (!CloseDB())
+            eErr = CE_Failure;
+
+        if (OGRSQLiteBaseDataSource::Close() != CE_None)
+            eErr = CE_Failure;
     }
-
-    GDALGeoPackageDataset::FlushCache(true);
-    FlushMetadata();
-
-    // Destroy bands now since we don't want
-    // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
-    // destruction
-    for (int i = 0; i < nBands; i++)
-        delete papoBands[i];
-    nBands = 0;
-    CPLFree(papoBands);
-    papoBands = nullptr;
-
-    // Destroy overviews before cleaning m_hTempDB as they could still
-    // need it
-    for (int i = 0; i < m_nOverviewCount; i++)
-        delete m_papoOverviewDS[i];
-
-    if (m_poParentDS != nullptr)
-    {
-        hDB = nullptr;
-    }
-
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-
-    CPLFree(m_papoLayers);
-    CPLFree(m_papoOverviewDS);
-
-    std::map<int, OGRSpatialReference *>::iterator oIter =
-        m_oMapSrsIdToSrs.begin();
-    for (; oIter != m_oMapSrsIdToSrs.end(); ++oIter)
-    {
-        OGRSpatialReference *poSRS = oIter->second;
-        if (poSRS)
-            poSRS->Release();
-    }
-
-    CloseDB();
+    return eErr;
 }
 
 /************************************************************************/
@@ -3285,7 +3306,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void GDALGeoPackageDataset::FlushCache(bool bAtClosing)
+CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 {
     if (m_bRemoveOGREmptyTable)
     {
@@ -3293,7 +3314,7 @@ void GDALGeoPackageDataset::FlushCache(bool bAtClosing)
         RemoveOGREmptyTable();
     }
 
-    IFlushCacheWithErrCode(bAtClosing);
+    return IFlushCacheWithErrCode(bAtClosing);
 }
 
 CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)

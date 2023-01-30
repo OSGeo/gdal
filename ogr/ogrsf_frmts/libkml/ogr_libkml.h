@@ -264,7 +264,7 @@ class OGRLIBKMLDataSource final : public OGRDataSource
     int Open(const char *pszFilename, int bUpdate);
     int Create(const char *pszFilename, char **papszOptions);
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     int TestCapability(const char *) override;
 
     kmldom::KmlFactory *GetKmlFactory()
@@ -313,9 +313,9 @@ class OGRLIBKMLDataSource final : public OGRDataSource
 
   private:
     /***** methods to write out various datasource types at destroy *****/
-    void WriteKml();
-    void WriteKmz();
-    void WriteDir();
+    bool WriteKml();
+    bool WriteKmz();
+    bool WriteDir();
 
     /***** methods to open various datasource types *****/
     int OpenKmz(const char *pszFilename, int bUpdate);

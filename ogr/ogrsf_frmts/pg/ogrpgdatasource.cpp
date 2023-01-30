@@ -117,9 +117,9 @@ OGRErr OGRPGDataSource::FlushCacheWithRet(bool /* bAtClosing */)
     return eErr;
 }
 
-void OGRPGDataSource::FlushCache(bool bAtClosing)
+CPLErr OGRPGDataSource::FlushCache(bool bAtClosing)
 {
-    FlushCacheWithRet(bAtClosing);
+    return FlushCacheWithRet(bAtClosing) == OGRERR_NONE ? CE_None : CE_Failure;
 }
 
 /************************************************************************/

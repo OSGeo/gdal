@@ -308,7 +308,7 @@ class PostGISRasterDataset final : public VRTDataset
 
   protected:
     virtual int CloseDependentDatasets() override;
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
   public:
     PostGISRasterDataset();

@@ -406,7 +406,7 @@ class FGdbDataSource final : public OGRDataSource
         return !m_oSetSelectLayers.empty();
     }
 
-    int Close(int bCloseGeodatabase = FALSE);
+    int CloseInternal(int bCloseGeodatabase = FALSE);
     int ReOpen();
 
     int HasPerLayerCopyingForTransaction();

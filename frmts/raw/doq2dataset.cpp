@@ -71,6 +71,8 @@ class DOQ2Dataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(DOQ2Dataset)
 
+    CPLErr Close() override;
+
   public:
     DOQ2Dataset();
     ~DOQ2Dataset();
@@ -100,10 +102,34 @@ DOQ2Dataset::DOQ2Dataset()
 DOQ2Dataset::~DOQ2Dataset()
 
 {
-    FlushCache(true);
+    DOQ2Dataset::Close();
+}
 
-    if (fpImage != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr DOQ2Dataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (DOQ2Dataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

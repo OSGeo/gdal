@@ -130,6 +130,8 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
             0, line, 200, 1, raw_data, buf_type=gdal.GDT_Int16, band_list=[1, 2, 3]
         )
 
+    assert ds.FlushCache() == gdal.CE_None
+
     if createcopy:
         ds = drv.CreateCopy("tmp/test_create.ntf", ds, options=creation_options)
 

@@ -161,14 +161,16 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ReadCompressedData,
                          panBandList, ppBuffer, pnBufferSize,
                          ppszDetailedFormat))
 
-void GDALProxyDataset::FlushCache(bool bAtClosing)
+CPLErr GDALProxyDataset::FlushCache(bool bAtClosing)
 {
+    CPLErr eErr = CE_None;
     GDALDataset *poUnderlyingDataset = RefUnderlyingDataset();
     if (poUnderlyingDataset)
     {
-        poUnderlyingDataset->FlushCache(bAtClosing);
+        eErr = poUnderlyingDataset->FlushCache(bAtClosing);
         UnrefUnderlyingDataset(poUnderlyingDataset);
     }
+    return eErr;
 }
 
 D_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadataDomainList, (), ())

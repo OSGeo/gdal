@@ -188,6 +188,31 @@ OGRFlatGeobufDataset::OGRFlatGeobufDataset(const char *pszName, bool bIsDir,
 
 OGRFlatGeobufDataset::~OGRFlatGeobufDataset()
 {
+    OGRFlatGeobufDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGRFlatGeobufDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRFlatGeobufDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        for (auto &poLayer : m_apoLayers)
+        {
+            if (poLayer->Close() != CE_None)
+                eErr = CE_Failure;
+        }
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

@@ -208,7 +208,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
                                 char **papszOptions = nullptr) override;
 
     virtual int CloseDependentDatasets() override;
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     // GNMNetwork Interface
 
@@ -453,7 +453,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
                      double dfTolerance);
     virtual OGRFeature *FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
                                        GNMGFID nConFID);
-    virtual void SaveRules();
+    virtual bool SaveRules();
     virtual GNMGFID GetNewVirtualFID();
     virtual void FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
                                  const GNMPATH &path, int nNoOfPath,

@@ -488,7 +488,8 @@ MAIN_START(argc, argv)
         GDALContourGenerateEx(hBand, hLayer, options, pfnProgress, nullptr);
 
     CSLDestroy(options);
-    OGR_DS_Destroy(hDS);
+    if (GDALClose(hDS) != CE_None)
+        eErr = CE_Failure;
     GDALClose(hSrcDS);
 
     CSLDestroy(argv);

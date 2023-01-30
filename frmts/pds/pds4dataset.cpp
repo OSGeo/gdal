@@ -503,15 +503,38 @@ PDS4Dataset::PDS4Dataset()
 
 PDS4Dataset::~PDS4Dataset()
 {
-    if (m_bMustInitImageFile)
-        CPL_IGNORE_RET_VAL(InitImageFile());
-    PDS4Dataset::FlushCache(true);
-    if (m_bCreateHeader || m_bDirtyHeader)
-        WriteHeader();
-    if (m_fpImage)
-        VSIFCloseL(m_fpImage);
-    CSLDestroy(m_papszCreationOptions);
-    PDS4Dataset::CloseDependentDatasets();
+    PDS4Dataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr PDS4Dataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (m_bMustInitImageFile)
+        {
+            if (!InitImageFile())
+                eErr = CE_Failure;
+        }
+
+        if (PDS4Dataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (m_bCreateHeader || m_bDirtyHeader)
+            WriteHeader();
+        if (m_fpImage)
+            VSIFCloseL(m_fpImage);
+        CSLDestroy(m_papszCreationOptions);
+        PDS4Dataset::CloseDependentDatasets();
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

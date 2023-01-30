@@ -60,6 +60,8 @@ class PAuxDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(PAuxDataset)
 
+    CPLErr Close() override;
+
   public:
     PAuxDataset();
     ~PAuxDataset() override;
@@ -311,23 +313,46 @@ PAuxDataset::PAuxDataset()
 PAuxDataset::~PAuxDataset()
 
 {
-    FlushCache(true);
-    if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+    PAuxDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr PAuxDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        if (PAuxDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        if (bAuxUpdated)
+        {
+            CSLSetNameValueSeparator(papszAuxLines, ": ");
+            CSLSave(papszAuxLines, pszAuxFilename);
+        }
+
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
+
+        CPLFree(pszAuxFilename);
+        CSLDestroy(papszAuxLines);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-
-    if (bAuxUpdated)
-    {
-        CSLSetNameValueSeparator(papszAuxLines, ": ");
-        CSLSave(papszAuxLines, pszAuxFilename);
-    }
-
-    GDALDeinitGCPs(nGCPCount, pasGCPList);
-    CPLFree(pasGCPList);
-
-    CPLFree(pszAuxFilename);
-    CSLDestroy(papszAuxLines);
+    return eErr;
 }
 
 /************************************************************************/

@@ -651,7 +651,7 @@ class OGRPGDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *pszName) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
                                    OGRSpatialReference * = nullptr,

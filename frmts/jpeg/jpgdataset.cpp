@@ -1975,13 +1975,13 @@ CPLErr JPGDatasetCommon::IBuildOverviews(const char *pszResampling,
 }
 
 /************************************************************************/
-/*                           FlushCache(bool bAtClosing) */
+/*                           FlushCache()                               */
 /************************************************************************/
 
-void JPGDatasetCommon::FlushCache(bool bAtClosing)
+CPLErr JPGDatasetCommon::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (bHasDoneJpegStartDecompress)
     {
@@ -1990,7 +1990,11 @@ void JPGDatasetCommon::FlushCache(bool bAtClosing)
 
     // For the needs of the implicit JPEG-in-TIFF overview mechanism.
     for (int i = 0; i < nInternalOverviewsCurrent; i++)
-        papoInternalOverviews[i]->FlushCache(bAtClosing);
+    {
+        if (papoInternalOverviews[i]->FlushCache(bAtClosing) != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 #endif  // !defined(JPGDataset)
@@ -2830,6 +2834,10 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
             {
                 nRasterXSize = nXSizeIn;
                 nRasterYSize = nYSizeIn;
+            }
+            CPLErr Close() override
+            {
+                return GDALPamDataset::Close();
             }
             ~JPEGRawDataset() = default;
 

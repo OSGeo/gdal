@@ -956,14 +956,15 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
     return f;
 }
 
-void GNMGenericNetwork::SaveRules()
+bool GNMGenericNetwork::SaveRules()
 {
     if (!m_bIsRulesChanged)
-        return;
+        return true;
 
     if (DeleteAllRules() != CE_None)
-        return;
+        return false;
 
+    bool bOK = true;
     OGRFeature *poFeature;
     for (int i = 0; i < (int)m_asRules.size(); ++i)
     {
@@ -976,12 +977,14 @@ void GNMGenericNetwork::SaveRules()
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
                      m_asRules[i].c_str());
+            bOK = false;
             // TODO: do we need interrupt here?
             // OGRFeature::DestroyFeature( poFeature );
             // return CE_Failure;
         }
         OGRFeature::DestroyFeature(poFeature);
     }
+    return bOK;
 }
 
 GNMGFID GNMGenericNetwork::GetNewVirtualFID()
@@ -1430,11 +1433,15 @@ int GNMGenericNetwork::CloseDependentDatasets()
     return nCount > 0 ? TRUE : FALSE;
 }
 
-void GNMGenericNetwork::FlushCache(bool bAtClosing)
+CPLErr GNMGenericNetwork::FlushCache(bool bAtClosing)
 {
-    SaveRules();
+    CPLErr eErr = CE_None;
+    if (!SaveRules())
+        eErr = CE_Failure;
 
-    GNMNetwork::FlushCache(bAtClosing);
+    if (GNMNetwork::FlushCache(bAtClosing) != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 //--- C API --------------------------------------------------------------------

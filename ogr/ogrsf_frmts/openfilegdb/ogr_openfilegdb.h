@@ -459,6 +459,8 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
 
     bool BackupSystemTablesForTransaction();
 
+    CPLErr Close() override;
+
   public:
     OGROpenFileGDBDataSource();
     virtual ~OGROpenFileGDBDataSource();
@@ -466,7 +468,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     int Open(const GDALOpenInfo *poOpenInfo);
     bool Create(const char *pszName);
 
-    virtual void FlushCache(bool bAtClosing = false) override;
+    virtual CPLErr FlushCache(bool bAtClosing = false) override;
 
     virtual const char *GetName() override
     {

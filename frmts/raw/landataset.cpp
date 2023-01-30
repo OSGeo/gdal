@@ -148,6 +148,8 @@ class LANDataset final : public RawDataset
 
     char **GetFileList() override;
 
+    CPLErr Close() override;
+
   public:
     LANDataset();
     ~LANDataset() override;
@@ -331,18 +333,37 @@ LANDataset::LANDataset() : fpImage(nullptr)
 LANDataset::~LANDataset()
 
 {
-    FlushCache(true);
+    LANDataset::Close();
+}
 
-    if (fpImage != nullptr)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr LANDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-        }
-    }
+        if (LANDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-    if (m_poSRS)
-        m_poSRS->Release();
+        if (fpImage)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        if (m_poSRS)
+            m_poSRS->Release();
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

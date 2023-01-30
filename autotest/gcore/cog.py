@@ -750,7 +750,7 @@ def test_cog_invalidation_by_data_change():
     data = src_ds.ReadRaster()
     ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, data)
     with gdaltest.error_handler():
-        ds.FlushCache()
+        assert ds.FlushCache() == gdal.CE_None
     ds = None
 
     with gdaltest.error_handler():

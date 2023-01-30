@@ -958,14 +958,16 @@ void GDALProxyPoolDataset::UnrefUnderlyingDataset(
 /*                         FlushCache()                                 */
 /************************************************************************/
 
-void GDALProxyPoolDataset::FlushCache(bool bAtClosing)
+CPLErr GDALProxyPoolDataset::FlushCache(bool bAtClosing)
 {
+    CPLErr eErr = CE_None;
     GDALDataset *poUnderlyingDataset = RefUnderlyingDataset(false);
     if (poUnderlyingDataset)
     {
-        poUnderlyingDataset->FlushCache(bAtClosing);
+        eErr = poUnderlyingDataset->FlushCache(bAtClosing);
         UnrefUnderlyingDataset(poUnderlyingDataset);
     }
+    return eErr;
 }
 
 /************************************************************************/

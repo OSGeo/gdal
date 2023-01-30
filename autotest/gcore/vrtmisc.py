@@ -578,6 +578,7 @@ def test_vrtmisc_write_srs():
     sr.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     sr.ImportFromEPSG(4326)
     ds.SetSpatialRef(sr)
+    assert ds.FlushCache() == gdal.CE_None
     ds = None
 
     ds = gdal.Open(tmpfile)

@@ -81,6 +81,7 @@ def test_tiff_write_2():
     src_ds = gdal.Open("data/cfloat64.tif")
 
     new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_2.tif", src_ds)
+    assert new_ds.FlushCache() == gdal.CE_None
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 5028, "Didn't get expected checksum on still-open file"

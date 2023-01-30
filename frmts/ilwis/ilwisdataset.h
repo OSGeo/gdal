@@ -188,7 +188,7 @@ class ILWISDataset final : public GDALPamDataset
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 };
 
 // IniFile.h: interface for the IniFile class.

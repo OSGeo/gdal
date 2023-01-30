@@ -1025,10 +1025,10 @@ void PCIDSK2Dataset::ProcessRPC()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void PCIDSK2Dataset::FlushCache(bool bAtClosing)
+CPLErr PCIDSK2Dataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (poFile)
     {
@@ -1038,9 +1038,11 @@ void PCIDSK2Dataset::FlushCache(bool bAtClosing)
         }
         catch (const PCIDSKException &ex)
         {
+            eErr = CE_Failure;
             CPLError(CE_Failure, CPLE_AppDefined, "%s", ex.what());
         }
     }
+    return eErr;
 }
 
 /************************************************************************/

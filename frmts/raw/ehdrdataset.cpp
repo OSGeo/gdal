@@ -373,36 +373,57 @@ EHdrDataset::EHdrDataset()
 EHdrDataset::~EHdrDataset()
 
 {
-    FlushCache(true);
+    EHdrDataset::Close();
+}
 
-    if (nBands > 0 && GetAccess() == GA_Update)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr EHdrDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        int bNoDataSet;
-        RawRasterBand *poBand =
-            reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+        if (EHdrDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-        const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
-        if (bNoDataSet)
+        if (nBands > 0 && GetAccess() == GA_Update)
         {
-            ResetKeyValue("NODATA", CPLString().Printf("%.8g", dfNoData));
+            int bNoDataSet;
+            RawRasterBand *poBand =
+                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+
+            const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
+            if (bNoDataSet)
+            {
+                ResetKeyValue("NODATA", CPLString().Printf("%.8g", dfNoData));
+            }
+
+            if (bCLRDirty)
+                RewriteCLR(poBand);
+
+            if (bHDRDirty)
+            {
+                if (RewriteHDR() != CE_None)
+                    eErr = CE_Failure;
+            }
         }
 
-        if (bCLRDirty)
-            RewriteCLR(poBand);
-
-        if (bHDRDirty)
-            RewriteHDR();
-    }
-
-    if (fpImage != nullptr)
-    {
-        if (VSIFCloseL(fpImage) != 0)
+        if (fpImage)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
         }
-    }
 
-    CSLDestroy(papszHDR);
+        CSLDestroy(papszHDR);
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

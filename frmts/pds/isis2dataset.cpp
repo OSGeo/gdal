@@ -75,6 +75,8 @@ class ISIS2Dataset final : public RawDataset
     const char *GetKeywordSub(const char *pszPath, int iSubscript,
                               const char *pszDefault = "");
 
+    CPLErr Close() override;
+
   public:
     ISIS2Dataset();
     virtual ~ISIS2Dataset();
@@ -138,9 +140,29 @@ ISIS2Dataset::ISIS2Dataset() : fpImage(nullptr), bGotTransform(FALSE)
 ISIS2Dataset::~ISIS2Dataset()
 
 {
-    FlushCache(true);
-    if (fpImage != nullptr)
-        VSIFCloseL(fpImage);
+    ISIS2Dataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ISIS2Dataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (ISIS2Dataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+        if (fpImage != nullptr)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+                eErr = CE_Failure;
+        }
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

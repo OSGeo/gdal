@@ -4651,7 +4651,11 @@ SWIGINTERN void GDALAsyncReaderShadow_UnlockBuffer(GDALAsyncReaderShadow *self){
     }
 SWIGINTERN void delete_GDALDatasetShadow(GDALDatasetShadow *self){
     if ( GDALDereferenceDataset( self ) <= 0 ) {
-      GDALClose(self);
+      if( GDALClose(self) != CE_None )
+      {
+          if( CPLGetLastErrorType() == CE_None )
+              CPLError(CE_Failure, CPLE_AppDefined, "Error occurred in GDALClose()");
+      }
     }
   }
 SWIGINTERN GDALDriverShadow *GDALDatasetShadow_GetDriver(GDALDatasetShadow *self){
@@ -4767,8 +4771,8 @@ SWIGINTERN CPLErr GDALDatasetShadow_SetGCPs(GDALDatasetShadow *self,int nGCPs,GD
 SWIGINTERN CPLErr GDALDatasetShadow_SetGCPs2(GDALDatasetShadow *self,int nGCPs,GDAL_GCP const *pGCPs,OSRSpatialReferenceShadow *hSRS){
     return GDALSetGCPs2( self, nGCPs, pGCPs, (OGRSpatialReferenceH)hSRS );
   }
-SWIGINTERN void GDALDatasetShadow_FlushCache(GDALDatasetShadow *self){
-    GDALFlushCache( self );
+SWIGINTERN CPLErr GDALDatasetShadow_FlushCache(GDALDatasetShadow *self){
+    return GDALFlushCache( self );
   }
 SWIGINTERN CPLErr GDALDatasetShadow_AddBand(GDALDatasetShadow *self,GDALDataType datatype=GDT_Byte,char **options=0){
     return GDALAddBand( self, datatype, options );
@@ -19443,6 +19447,7 @@ SWIGINTERN PyObject *_wrap_Dataset_FlushCache(PyObject *SWIGUNUSEDPARM(self), Py
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject *swig_obj[1] ;
+  CPLErr result;
   
   if (!args) SWIG_fail;
   swig_obj[0] = args;
@@ -19457,7 +19462,7 @@ SWIGINTERN PyObject *_wrap_Dataset_FlushCache(PyObject *SWIGUNUSEDPARM(self), Py
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      GDALDatasetShadow_FlushCache(arg1);
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALDatasetShadow_FlushCache(arg1));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -19469,7 +19474,7 @@ SWIGINTERN PyObject *_wrap_Dataset_FlushCache(PyObject *SWIGUNUSEDPARM(self), Py
     }
 #endif
   }
-  resultobj = SWIG_Py_Void();
+  resultobj = SWIG_From_int(static_cast< int >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -47227,7 +47232,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_GetGCPs", _wrap_Dataset_GetGCPs, METH_O, "Dataset_GetGCPs(Dataset self)"},
 	 { "Dataset__SetGCPs", _wrap_Dataset__SetGCPs, METH_VARARGS, "Dataset__SetGCPs(Dataset self, int nGCPs, char const * pszGCPProjection) -> CPLErr"},
 	 { "Dataset__SetGCPs2", _wrap_Dataset__SetGCPs2, METH_VARARGS, "Dataset__SetGCPs2(Dataset self, int nGCPs, SpatialReference hSRS) -> CPLErr"},
-	 { "Dataset_FlushCache", _wrap_Dataset_FlushCache, METH_O, "Dataset_FlushCache(Dataset self)"},
+	 { "Dataset_FlushCache", _wrap_Dataset_FlushCache, METH_O, "Dataset_FlushCache(Dataset self) -> CPLErr"},
 	 { "Dataset_AddBand", (PyCFunction)(void(*)(void))_wrap_Dataset_AddBand, METH_VARARGS|METH_KEYWORDS, "Dataset_AddBand(Dataset self, GDALDataType datatype=GDT_Byte, char ** options=None) -> CPLErr"},
 	 { "Dataset_CreateMaskBand", _wrap_Dataset_CreateMaskBand, METH_VARARGS, "Dataset_CreateMaskBand(Dataset self, int nFlags) -> CPLErr"},
 	 { "Dataset_GetFileList", _wrap_Dataset_GetFileList, METH_O, "Dataset_GetFileList(Dataset self) -> char **"},

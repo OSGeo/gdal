@@ -1051,7 +1051,7 @@ void CPL_DLL CPL_STDCALL GDALSetDescription(GDALMajorObjectH, const char *);
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDatasetDriver(GDALDatasetH);
 char CPL_DLL **CPL_STDCALL GDALGetFileList(GDALDatasetH);
-void CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
+CPLErr CPL_DLL CPL_STDCALL GDALClose(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);
@@ -1126,7 +1126,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALBuildOverviewsEx(
     GDALProgressFunc, void *, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALGetOpenDatasets(GDALDatasetH **hDS, int *pnCount);
 int CPL_DLL CPL_STDCALL GDALGetAccess(GDALDatasetH hDS);
-void CPL_DLL CPL_STDCALL GDALFlushCache(GDALDatasetH hDS);
+CPLErr CPL_DLL CPL_STDCALL GDALFlushCache(GDALDatasetH hDS);
 
 CPLErr CPL_DLL CPL_STDCALL GDALCreateDatasetMaskBand(GDALDatasetH hDS,
                                                      int nFlags);

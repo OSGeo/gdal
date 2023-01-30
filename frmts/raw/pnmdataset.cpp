@@ -47,6 +47,8 @@ class PNMDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
 
+    CPLErr Close() override;
+
   public:
     PNMDataset();
     ~PNMDataset() override;
@@ -81,11 +83,34 @@ PNMDataset::PNMDataset() : fpImage(nullptr), bGeoTransformValid(false)
 PNMDataset::~PNMDataset()
 
 {
-    FlushCache(true);
-    if (fpImage != nullptr && VSIFCloseL(fpImage) != 0)
+    PNMDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr PNMDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        if (PNMDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
+        }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/

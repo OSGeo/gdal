@@ -82,11 +82,13 @@ class ERSDataset final : public RawDataset
   protected:
     int CloseDependentDatasets() override;
 
+    CPLErr Close() override;
+
   public:
     ERSDataset();
     ~ERSDataset() override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *padfTransform) override;
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -137,23 +139,41 @@ ERSDataset::ERSDataset()
 ERSDataset::~ERSDataset()
 
 {
-    ERSDataset::FlushCache(true);
+    ERSDataset::Close();
+}
 
-    if (fpImage != nullptr)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ERSDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        VSIFCloseL(fpImage);
+        if (ERSDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage != nullptr)
+        {
+            VSIFCloseL(fpImage);
+        }
+
+        ERSDataset::CloseDependentDatasets();
+
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+            CPLFree(pasGCPList);
+        }
+
+        if (poHeader != nullptr)
+            delete poHeader;
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-
-    ERSDataset::CloseDependentDatasets();
-
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
-
-    if (poHeader != nullptr)
-        delete poHeader;
+    return eErr;
 }
 
 /************************************************************************/
@@ -162,7 +182,7 @@ ERSDataset::~ERSDataset()
 
 int ERSDataset::CloseDependentDatasets()
 {
-    int bHasDroppedRef = RawDataset::CloseDependentDatasets();
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
     if (poDepFile != nullptr)
     {
@@ -186,27 +206,34 @@ int ERSDataset::CloseDependentDatasets()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void ERSDataset::FlushCache(bool bAtClosing)
+CPLErr ERSDataset::FlushCache(bool bAtClosing)
 
 {
+    CPLErr eErr = CE_None;
     if (bHDRDirty)
     {
         VSILFILE *fpERS = VSIFOpenL(GetDescription(), "w");
         if (fpERS == nullptr)
         {
+            eErr = CE_Failure;
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Unable to rewrite %s header.", GetDescription());
         }
         else
         {
-            VSIFPrintfL(fpERS, "DatasetHeader Begin\n");
+            if (VSIFPrintfL(fpERS, "DatasetHeader Begin\n") <= 0)
+                eErr = CE_Failure;
             poHeader->WriteSelf(fpERS, 1);
-            VSIFPrintfL(fpERS, "DatasetHeader End\n");
-            VSIFCloseL(fpERS);
+            if (VSIFPrintfL(fpERS, "DatasetHeader End\n") <= 0)
+                eErr = CE_Failure;
+            if (VSIFCloseL(fpERS) != 0)
+                eErr = CE_Failure;
         }
     }
 
-    RawDataset::FlushCache(bAtClosing);
+    if (RawDataset::FlushCache(bAtClosing) != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /************************************************************************/

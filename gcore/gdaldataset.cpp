@@ -390,6 +390,88 @@ GDALDataset::~GDALDataset()
 }
 
 /************************************************************************/
+/*                             Close()                                  */
+/************************************************************************/
+
+/** Do final cleanup before a dataset is destroyed.
+ *
+ * This method is typically called by GDALClose() or the destructor of a
+ * GDALDataset subclass. It might also be called by C++ users before
+ * destroying a dataset. It should not be called on a shared dataset whose
+ * reference count is greater than one.
+ *
+ * It gives a last chance to the closing process to return an error code if
+ * something goes wrong, in particular in creation / update scenarios where
+ * file write or network communication might occur when finalizing the dataset.
+ *
+ * Implementations should be robust to this method to be called several times
+ * (on subsequent calls, it should do nothing and return CE_None).
+ * Once it has been called, no other method than Close() or the dataset
+ * destructor should be called. RasterBand or OGRLayer owned by the dataset
+ * should be assumed as no longer being valid.
+ *
+ * If a driver implements this method, it must also call it from its
+ * dataset destructor.
+ *
+ * A typical implementation might look as the following
+ * \code{.cpp}
+ *
+ *  MyDataset::~MyDataset()
+ *  {
+ *     try
+ *     {
+ *         MyDataset::Close();
+ *     }
+ *     catch (const std::exception &exc)
+ *     {
+ *         // If Close() can throw exception
+ *         CPLError(CE_Failure, CPLE_AppDefined,
+ *                  "Exception thrown in MyDataset::Close(): %s",
+ *                  exc.what());
+ *     }
+ *     catch (...)
+ *     {
+ *         // If Close() can throw exception
+ *         CPLError(CE_Failure, CPLE_AppDefined,
+ *                  "Exception thrown in MyDataset::Close()");
+ *     }
+ *  }
+ *
+ *  CPLErr MyDataset::Close()
+ *  {
+ *      CPLErr eErr = CE_None;
+ *      if( nOpenFlags != OPEN_FLAGS_CLOSED )
+ *      {
+ *          if( MyDataset::FlushCache(true) != CE_None )
+ *              eErr = CE_Failure;
+ *
+ *          // Do something driver specific
+ *          if (m_fpImage)
+ *          {
+ *              if( VSIFCloseL(m_fpImage) != 0 )
+ *              {
+ *                  CPLError(CE_Failure, CPLE_FileIO, "VSIFCloseL() failed");
+ *                  eErr = CE_Failure;
+ *              }
+ *          }
+ *
+ *          // Call parent Close() implementation.
+ *          if( MyParentDatasetClass::Close() != CE_None )
+ *              eErr = CE_Failure;
+ *      }
+ *      return eErr;
+ *  }
+ * \endcode
+ *
+ * @since GDAL 3.7
+ */
+CPLErr GDALDataset::Close()
+{
+    nOpenFlags = OPEN_FLAGS_CLOSED;
+    return CE_None;
+}
+
+/************************************************************************/
 /*                      AddToDatasetOpenList()                          */
 /************************************************************************/
 
@@ -430,20 +512,25 @@ void GDALDataset::AddToDatasetOpenList()
  * This method is the same as the C function GDALFlushCache().
  *
  * @param bAtClosing Whether this is called from a GDALDataset destructor
+ * @return CE_None in case of success (note: return value added in GDAL 3.7)
  */
 
-void GDALDataset::FlushCache(bool bAtClosing)
+CPLErr GDALDataset::FlushCache(bool bAtClosing)
 
 {
+    CPLErr eErr = CE_None;
     // This sometimes happens if a dataset is destroyed before completely
     // built.
 
-    if (papoBands != nullptr)
+    if (papoBands)
     {
         for (int i = 0; i < nBands; ++i)
         {
-            if (papoBands[i] != nullptr)
-                papoBands[i]->FlushCache(bAtClosing);
+            if (papoBands[i])
+            {
+                if (papoBands[i]->FlushCache(bAtClosing) != CE_None)
+                    eErr = CE_Failure;
+            }
         }
     }
 
@@ -458,10 +545,13 @@ void GDALDataset::FlushCache(bool bAtClosing)
 
             if (poLayer)
             {
-                poLayer->SyncToDisk();
+                if (poLayer->SyncToDisk() != OGRERR_NONE)
+                    eErr = CE_Failure;
             }
         }
     }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -472,14 +562,15 @@ void GDALDataset::FlushCache(bool bAtClosing)
  * \brief Flush all write cached data to disk.
  *
  * @see GDALDataset::FlushCache().
+ * @return CE_None in case of success (note: return value added in GDAL 3.7)
  */
 
-void CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
+CPLErr CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 
 {
-    VALIDATE_POINTER0(hDS, "GDALFlushCache");
+    VALIDATE_POINTER1(hDS, "GDALFlushCache", CE_Failure);
 
-    GDALDataset::FromHandle(hDS)->FlushCache(false);
+    return GDALDataset::FromHandle(hDS)->FlushCache(false);
 }
 
 /************************************************************************/
@@ -524,14 +615,13 @@ GIntBig GDALDataset::GetEstimatedRAMUsage()
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
+CPLErr GDALDataset::BlockBasedFlushCache(bool bAtClosing)
 
 {
     GDALRasterBand *poBand1 = GetRasterBand(1);
     if (poBand1 == nullptr || (bSuppressOnClose && bAtClosing))
     {
-        GDALDataset::FlushCache(bAtClosing);
-        return;
+        return GDALDataset::FlushCache(bAtClosing);
     }
 
     int nBlockXSize = 0;
@@ -549,8 +639,7 @@ void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
         poBand->GetBlockSize(&nThisBlockXSize, &nThisBlockYSize);
         if (nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize)
         {
-            GDALDataset::FlushCache(bAtClosing);
-            return;
+            return GDALDataset::FlushCache(bAtClosing);
         }
     }
 
@@ -568,10 +657,11 @@ void GDALDataset::BlockBasedFlushCache(bool bAtClosing)
                 const CPLErr eErr = poBand->FlushBlock(iX, iY);
 
                 if (eErr != CE_None)
-                    return;
+                    return CE_Failure;
             }
         }
     }
+    return CE_None;
 }
 
 /************************************************************************/
@@ -3682,13 +3772,16 @@ GDALDatasetH CPL_STDCALL GDALOpenShared(const char *pszFilename,
  * dereferenced, and closed only if the referenced count has dropped below 1.
  *
  * @param hDS The dataset to close.  May be cast from a "GDALDataset *".
+ * @return CE_None in case of success (return value since GDAL 3.7). On a
+ * shared dataset whose reference count is not dropped below 1, CE_None will
+ * be returned.
  */
 
-void CPL_STDCALL GDALClose(GDALDatasetH hDS)
+CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
 
 {
-    if (hDS == nullptr)
-        return;
+    if (!hDS)
+        return CE_None;
 
 #ifdef OGRAPISPY_ENABLED
     if (bOGRAPISpyEnabled)
@@ -3707,8 +3800,9 @@ void CPL_STDCALL GDALClose(GDALDatasetH hDS)
         /* --------------------------------------------------------------------
          */
         if (poDS->Dereference() > 0)
-            return;
+            return CE_None;
 
+        CPLErr eErr = poDS->Close();
         delete poDS;
 
 #ifdef OGRAPISPY_ENABLED
@@ -3716,18 +3810,20 @@ void CPL_STDCALL GDALClose(GDALDatasetH hDS)
             OGRAPISpyPostClose();
 #endif
 
-        return;
+        return eErr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      This is not shared dataset, so directly delete it.              */
     /* -------------------------------------------------------------------- */
+    CPLErr eErr = poDS->Close();
     delete poDS;
 
 #ifdef OGRAPISPY_ENABLED
     if (bOGRAPISpyEnabled)
         OGRAPISpyPostClose();
 #endif
+    return eErr;
 }
 
 /************************************************************************/

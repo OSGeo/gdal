@@ -477,17 +477,15 @@ MAIN_START(argc, argv)
             GDALDestroyDriverManager();
             exit(1);
         }
-        const bool bWasFailureBefore = (CPLGetLastErrorType() == CE_Failure);
-        GDALFlushCache(hOutDS);
-        if (!bWasFailureBefore && CPLGetLastErrorType() == CE_Failure)
+        if (GDALClose(hOutDS) != CE_None)
         {
             bHasGotErr = true;
         }
-        GDALClose(hOutDS);
     }
 
     const bool bWasFailureBefore = (CPLGetLastErrorType() == CE_Failure);
-    GDALClose(hDS);
+    if (GDALClose(hDS) != CE_None)
+        bHasGotErr = true;
     if (!bWasFailureBefore && CPLGetLastErrorType() == CE_Failure)
     {
         bHasGotErr = true;

@@ -105,6 +105,8 @@ class VICARDataset final : public RawDataset
     void BuildLabelPropertyMap(CPLJSONObject &oLabel);
     void BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel);
 
+    CPLErr Close() override;
+
   public:
     VICARDataset();
     virtual ~VICARDataset();

@@ -1731,7 +1731,8 @@ MAIN_START(nArgc, papszArgv)
 
         GDALClose(poLnDS);
         GDALClose(poPkDS);
-        GDALClose(poODS);
+        if (GDALClose(poODS) != CE_None)
+            eErr = CE_Failure;
 
         if (nullptr != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
@@ -1942,7 +1943,8 @@ MAIN_START(nArgc, papszArgv)
                              bDisplayProgress, bQuiet);
 
         GDALClose(poPartsDS);
-        GDALClose(poODS);
+        if (GDALClose(poODS) != CE_None)
+            eErr = CE_Failure;
 
         if (nullptr != pszOutputLayerName)
             CPLFree(pszOutputLayerName);

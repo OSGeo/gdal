@@ -235,18 +235,38 @@ OGRODSDataSource::OGRODSDataSource()
 OGRODSDataSource::~OGRODSDataSource()
 
 {
-    OGRODSDataSource::FlushCache(true);
+    OGRODSDataSource::Close();
+}
 
-    CPLFree(pszName);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    if (fpContent)
-        VSIFCloseL(fpContent);
-    if (fpSettings)
-        VSIFCloseL(fpSettings);
+CPLErr OGRODSDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRODSDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
+        CPLFree(pszName);
+
+        // Those are read-only files, so we can ignore VSIFCloseL() return
+        // value.
+        if (fpContent)
+            VSIFCloseL(fpContent);
+        if (fpSettings)
+            VSIFCloseL(fpSettings);
+
+        for (int i = 0; i < nLayers; i++)
+            delete papoLayers[i];
+        CPLFree(papoLayers);
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1868,10 +1888,10 @@ static void WriteLayer(VSILFILE *fp, OGRLayer *poLayer)
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
+CPLErr OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 {
     if (!bUpdated)
-        return;
+        return CE_None;
 
     CPLAssert(fpSettings == nullptr);
     CPLAssert(fpContent == nullptr);
@@ -1882,7 +1902,7 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
         if (VSIUnlink(pszName) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot delete %s", pszName);
-            return;
+            return CE_Failure;
         }
     }
 
@@ -1890,11 +1910,11 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     /* Maintain new ZIP files opened */
     void *hZIP = CPLCreateZip(pszName, nullptr);
-    if (hZIP == nullptr)
+    if (!hZIP)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s", pszName,
                  VSIGetLastErrorMsg());
-        return;
+        return CE_Failure;
     }
 
     /* Write uncompressed mimetype */
@@ -1903,7 +1923,7 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
     {
         CSLDestroy(papszOptions);
         CPLCloseZip(hZIP);
-        return;
+        return CE_Failure;
     }
     CSLDestroy(papszOptions);
     if (CPLWriteFileInZip(
@@ -1912,7 +1932,7 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
                 "application/vnd.oasis.opendocument.spreadsheet"))) != CE_None)
     {
         CPLCloseZip(hZIP);
-        return;
+        return CE_Failure;
     }
     CPLCloseFileInZip(hZIP);
 
@@ -1924,14 +1944,14 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
     CPLString osTmpFilename(CPLSPrintf("/vsizip/%s", pszName));
     VSILFILE *fpZIP = VSIFOpenL(osTmpFilename, "ab");
     if (fpZIP == nullptr)
-        return;
+        return CE_Failure;
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName);
     VSILFILE *fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
-        return;
+        return CE_Failure;
     }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<manifest:manifest "
@@ -1954,10 +1974,10 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/meta.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
-        return;
+        return CE_Failure;
     }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
@@ -1969,10 +1989,10 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/settings.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
-        return;
+        return CE_Failure;
     }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
@@ -2025,10 +2045,10 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/styles.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
-        return;
+        return CE_Failure;
     }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
@@ -2046,10 +2066,10 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
 
     osTmpFilename = CPLSPrintf("/vsizip/%s/content.xml", pszName);
     fp = VSIFOpenL(osTmpFilename, "wb");
-    if (fp == nullptr)
+    if (!fp)
     {
         VSIFCloseL(fpZIP);
-        return;
+        return CE_Failure;
     }
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
@@ -2160,7 +2180,7 @@ void OGRODSDataSource::FlushCache(bool /* bAtClosing */)
         reinterpret_cast<OGRODSLayer *>(papoLayers[i])->SetUpdated(false);
     }
 
-    return;
+    return CE_None;
 }
 
 /************************************************************************/

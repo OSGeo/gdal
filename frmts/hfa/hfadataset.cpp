@@ -3109,13 +3109,13 @@ HFADataset::~HFADataset()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void HFADataset::FlushCache(bool bAtClosing)
+CPLErr HFADataset::FlushCache(bool bAtClosing)
 
 {
-    GDALPamDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALPamDataset::FlushCache(bAtClosing);
 
     if (eAccess != GA_Update)
-        return;
+        return eErr;
 
     if (bGeoDirty)
         WriteProjection();
@@ -3137,10 +3137,7 @@ void HFADataset::FlushCache(bool bAtClosing)
         }
     }
 
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, asGCPList);
-    }
+    return eErr;
 }
 
 /************************************************************************/

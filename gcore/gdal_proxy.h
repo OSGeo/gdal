@@ -69,7 +69,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain) override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
@@ -277,7 +277,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     // the one added.
     void AddSrcBand(int nBand, GDALDataType eDataType, int nBlockXSize,
                     int nBlockYSize);
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;

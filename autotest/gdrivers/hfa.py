@@ -358,6 +358,7 @@ def test_hfa_metadata_1():
     ds = gdal.Open("tmp/md_1.img")
     md = ds.GetRasterBand(1).GetMetadata()
     assert md["test"] == md_val, "got wrong metadata back"
+    assert ds.FlushCache() == gdal.CE_None
     ds = None
 
 

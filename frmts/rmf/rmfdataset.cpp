@@ -1021,10 +1021,10 @@ CPLErr RMFDataset::WriteHeader()
 /*                             FlushCache()                             */
 /************************************************************************/
 
-void RMFDataset::FlushCache(bool bAtClosing)
+CPLErr RMFDataset::FlushCache(bool bAtClosing)
 
 {
-    GDALDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
 
     if (poCompressData != nullptr &&
         poCompressData->oThreadPool.GetThreadCount() > 0)
@@ -1046,9 +1046,9 @@ void RMFDataset::FlushCache(bool bAtClosing)
             bHeaderDirty = true;
         }
     }
-    if (!bHeaderDirty)
-        return;
-    WriteHeader();
+    if (bHeaderDirty && WriteHeader() != CE_None)
+        eErr = CE_Failure;
+    return eErr;
 }
 
 /************************************************************************/

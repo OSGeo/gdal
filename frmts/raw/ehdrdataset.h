@@ -97,6 +97,8 @@ class EHdrDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(EHdrDataset)
 
+    CPLErr Close() override;
+
   public:
     EHdrDataset();
     ~EHdrDataset() override;

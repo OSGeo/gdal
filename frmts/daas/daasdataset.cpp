@@ -163,7 +163,7 @@ class GDALDAASDataset final : public GDALDataset
                       int /* nBufXSize */, int /* nBufYSize */,
                       GDALDataType /* eBufType */, int /*nBands*/,
                       int * /*panBands*/, char ** /* papszOptions */) override;
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
 };
 
 /************************************************************************/
@@ -1619,13 +1619,14 @@ CPLErr GDALDAASDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 /*                          FlushCache()                                */
 /************************************************************************/
 
-void GDALDAASDataset::FlushCache(bool bAtClosing)
+CPLErr GDALDAASDataset::FlushCache(bool bAtClosing)
 {
-    GDALDataset::FlushCache(bAtClosing);
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
     m_nXOffFetched = 0;
     m_nYOffFetched = 0;
     m_nXSizeFetched = 0;
     m_nYSizeFetched = 0;
+    return eErr;
 }
 
 /************************************************************************/

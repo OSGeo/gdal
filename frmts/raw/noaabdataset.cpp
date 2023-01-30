@@ -57,6 +57,11 @@ class NOAA_B_Dataset final : public RawDataset
 
     static int IdentifyEx(GDALOpenInfo *poOpenInfo, bool &bBigEndianOut);
 
+    CPLErr Close() override
+    {
+        return GDALPamDataset::Close();
+    }
+
   public:
     NOAA_B_Dataset()
     {

@@ -691,6 +691,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     void CreateRL2OverviewDatasetIfNeeded(double dfXRes, double dfYRes);
 #endif
 
+    CPLErr Close() override;
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -728,7 +730,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;

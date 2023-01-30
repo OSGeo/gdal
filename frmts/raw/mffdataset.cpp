@@ -68,6 +68,8 @@ class MFFDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(MFFDataset)
 
+    CPLErr Close() override;
+
   public:
     MFFDataset();
     ~MFFDataset() override;
@@ -267,29 +269,49 @@ MFFDataset::MFFDataset()
 MFFDataset::~MFFDataset()
 
 {
-    FlushCache(true);
-    CSLDestroy(papszHdrLines);
-    if (pafpBandFiles != nullptr)
+    MFFDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr MFFDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        for (int i = 0; i < GetRasterCount(); i++)
+        if (MFFDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        CSLDestroy(papszHdrLines);
+        if (pafpBandFiles)
         {
-            if (pafpBandFiles[i] != nullptr)
+            for (int i = 0; i < GetRasterCount(); i++)
             {
-                if (VSIFCloseL(pafpBandFiles[i]) != 0)
+                if (pafpBandFiles[i])
                 {
-                    CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                    if (VSIFCloseL(pafpBandFiles[i]) != 0)
+                    {
+                        eErr = CE_Failure;
+                        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                    }
                 }
             }
+            CPLFree(pafpBandFiles);
         }
-        CPLFree(pafpBandFiles);
-    }
 
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        if (nGCPCount > 0)
+        {
+            GDALDeinitGCPs(nGCPCount, pasGCPList);
+        }
+        CPLFree(pasGCPList);
+        CSLDestroy(m_papszFileList);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    CPLFree(pasGCPList);
-    CSLDestroy(m_papszFileList);
+    return eErr;
 }
 
 /************************************************************************/

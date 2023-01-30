@@ -2952,8 +2952,8 @@ class Dataset(MajorObject):
         r"""_SetGCPs2(Dataset self, int nGCPs, SpatialReference hSRS) -> CPLErr"""
         return _gdal.Dataset__SetGCPs2(self, *args)
 
-    def FlushCache(self, *args) -> "void":
-        r"""FlushCache(Dataset self)"""
+    def FlushCache(self, *args) -> "CPLErr":
+        r"""FlushCache(Dataset self) -> CPLErr"""
         return _gdal.Dataset_FlushCache(self, *args)
 
     def AddBand(self, *args, **kwargs) -> "CPLErr":

@@ -288,7 +288,7 @@ class RMFDataset final : public GDALDataset
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
                                char **, RMFDataset *poParentDS,
                                double dfOvFactor);
-    virtual void FlushCache(bool bAtClosing) override;
+    virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual CPLErr GetGeoTransform(double *padfTransform) override;
     virtual CPLErr SetGeoTransform(double *) override;

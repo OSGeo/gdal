@@ -69,11 +69,13 @@ class ISCEDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(ISCEDataset)
 
+    CPLErr Close() override;
+
   public:
     ISCEDataset();
     ~ISCEDataset() override;
 
-    void FlushCache(bool bAtClosing) override;
+    CPLErr FlushCache(bool bAtClosing) override;
     char **GetFileList() override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -153,34 +155,55 @@ ISCEDataset::ISCEDataset()
 }
 
 /************************************************************************/
-/*                            ~ISCEDataset()                          */
+/*                            ~ISCEDataset()                            */
 /************************************************************************/
 
-ISCEDataset::~ISCEDataset(void)
+ISCEDataset::~ISCEDataset()
+
 {
-    ISCEDataset::FlushCache(true);
-    if (fpImage != nullptr)
+    ISCEDataset::Close();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ISCEDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
+        if (ISCEDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (fpImage)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                eErr = CE_Failure;
+            }
         }
+        CPLFree(pszXMLFilename);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-    CPLFree(pszXMLFilename);
+    return eErr;
 }
 
 /************************************************************************/
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void ISCEDataset::FlushCache(bool bAtClosing)
+CPLErr ISCEDataset::FlushCache(bool bAtClosing)
 {
-    RawDataset::FlushCache(bAtClosing);
+    CPLErr eErr = RawDataset::FlushCache(bAtClosing);
 
     GDALRasterBand *band = (GetRasterCount() > 0) ? GetRasterBand(1) : nullptr;
 
     if (eAccess == GA_ReadOnly || band == nullptr)
-        return;
+        return eErr;
 
     /* -------------------------------------------------------------------- */
     /*      Recreate a XML doc with the dataset information.                */
@@ -362,12 +385,15 @@ void ISCEDataset::FlushCache(bool bAtClosing)
     /* -------------------------------------------------------------------- */
     /*      Write the XML file.                                             */
     /* -------------------------------------------------------------------- */
-    CPLSerializeXMLTreeToFile(psDocNode, pszXMLFilename);
+    if (!CPLSerializeXMLTreeToFile(psDocNode, pszXMLFilename))
+        eErr = CE_Failure;
 
     /* -------------------------------------------------------------------- */
     /*      Free the XML Doc.                                               */
     /* -------------------------------------------------------------------- */
     CPLDestroyXMLNode(psDocNode);
+
+    return eErr;
 }
 
 /************************************************************************/

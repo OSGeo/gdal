@@ -58,6 +58,8 @@ class EIRDataset final : public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(EIRDataset)
 
+    CPLErr Close() override;
+
   public:
     EIRDataset();
     ~EIRDataset() override;
@@ -89,25 +91,46 @@ EIRDataset::EIRDataset() = default;
 EIRDataset::~EIRDataset()
 
 {
-    FlushCache(true);
+    EIRDataset::Close();
+}
 
-    if (nBands > 0 && GetAccess() == GA_Update)
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr EIRDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        RawRasterBand *poBand =
-            reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+        if (EIRDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
 
-        int bNoDataSet = FALSE;
-        const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
-        if (bNoDataSet)
+        if (nBands > 0 && GetAccess() == GA_Update)
         {
-            ResetKeyValue("NODATA", CPLString().Printf("%.8g", dfNoData));
+            RawRasterBand *poBand =
+                reinterpret_cast<RawRasterBand *>(GetRasterBand(1));
+
+            int bNoDataSet = FALSE;
+            const double dfNoData = poBand->GetNoDataValue(&bNoDataSet);
+            if (bNoDataSet)
+            {
+                ResetKeyValue("NODATA", CPLString().Printf("%.8g", dfNoData));
+            }
         }
+
+        if (fpImage)
+        {
+            if (VSIFCloseL(fpImage) != 0)
+                eErr = CE_Failure;
+        }
+
+        CSLDestroy(papszExtraFiles);
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
-
-    if (fpImage != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
-
-    CSLDestroy(papszExtraFiles);
+    return eErr;
 }
 
 #ifdef unused

@@ -459,9 +459,10 @@ MAIN_START(nArgc, papszArgv)
     {
         if (nRetCode == 0)
             CPLErrorReset();
-        GDALClose(hDstDS);
-        // Works around https://github.com/Toblerity/Fiona/issues/1169
-        // Ideally GDALClose() should return an error code to avoid this hack
+        if (GDALClose(hDstDS) != CE_None)
+            nRetCode = 1;
+        // TODO: Below code can be removed once all drivers have implemented
+        // GDALDataset::Close()
         if (nRetCode == 0 && CPLGetLastErrorType() == CE_Failure)
             nRetCode = 1;
     }

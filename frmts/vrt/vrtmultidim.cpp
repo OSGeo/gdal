@@ -221,10 +221,10 @@ bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup> &poRoot,
 /*                             Serialize()                              */
 /************************************************************************/
 
-void VRTGroup::Serialize() const
+bool VRTGroup::Serialize() const
 {
     if (!m_bDirty || m_osFilename.empty())
-        return;
+        return true;
     m_bDirty = false;
 
     /* -------------------------------------------------------------------- */
@@ -235,7 +235,7 @@ void VRTGroup::Serialize() const
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to write .vrt file in Serialize().");
-        return;
+        return false;
     }
 
     CPLXMLNode *psDSTree = SerializeToXML(m_osVRTPath.c_str());
@@ -258,8 +258,8 @@ void VRTGroup::Serialize() const
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to write .vrt file in Serialize().");
-        return;
     }
+    return bOK;
 }
 
 /************************************************************************/

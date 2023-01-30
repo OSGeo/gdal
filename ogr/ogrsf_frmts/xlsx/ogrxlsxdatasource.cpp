@@ -210,13 +210,31 @@ OGRXLSXDataSource::OGRXLSXDataSource()
 OGRXLSXDataSource::~OGRXLSXDataSource()
 
 {
-    OGRXLSXDataSource::FlushCache(true);
+    OGRXLSXDataSource::Close();
+}
 
-    CPLFree(pszName);
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
+CPLErr OGRXLSXDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (OGRXLSXDataSource::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        CPLFree(pszName);
+
+        for (int i = 0; i < nLayers; i++)
+            delete papoLayers[i];
+        CPLFree(papoLayers);
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -2409,10 +2427,10 @@ static bool WriteDotRels(const char *pszName)
 /*                            FlushCache()                              */
 /************************************************************************/
 
-void OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
+CPLErr OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
 {
     if (!bUpdated)
-        return;
+        return CE_None;
 
     /* Cause all layers to be loaded */
     for (int i = 0; i < nLayers; i++)
@@ -2426,7 +2444,7 @@ void OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
         if (VSIUnlink(pszName) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot delete %s", pszName);
-            return;
+            return CE_Failure;
         }
     }
 
@@ -2439,7 +2457,7 @@ void OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s", pszName,
                  VSIGetLastErrorMsg());
-        return;
+        return CE_Failure;
     }
 
     bool bOK = WriteContentTypes(pszName, nLayers);
@@ -2470,7 +2488,8 @@ void OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
     bOK &= WriteDotRels(pszName);
 
     /* Now close ZIP file */
-    VSIFCloseL(fpZIP);
+    if (VSIFCloseL(fpZIP) != 0)
+        bOK = false;
 
     /* Reset updated flag at datasource and layer level */
     bUpdated = false;
@@ -2484,7 +2503,7 @@ void OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
         CPLError(CE_Failure, CPLE_FileIO, "Failure when saving %s", pszName);
     }
 
-    return;
+    return bOK ? CE_None : CE_Failure;
 }
 
 }  // namespace OGRXLSX

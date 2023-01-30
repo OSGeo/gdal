@@ -187,6 +187,9 @@ class ISIS3Dataset final : public RawDataset
     static void SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                                int nDepth = 0);
 
+  protected:
+    CPLErr Close() override;
+
   public:
     ISIS3Dataset();
     virtual ~ISIS3Dataset();
@@ -1308,20 +1311,44 @@ ISIS3Dataset::ISIS3Dataset()
 ISIS3Dataset::~ISIS3Dataset()
 
 {
-    if (!m_bIsLabelWritten)
-        WriteLabel();
-    if (m_poExternalDS && m_bGeoTIFFAsRegularExternal && !m_bGeoTIFFInitDone)
-    {
-        reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
-            ->InitFile();
-    }
-    ISIS3Dataset::FlushCache(true);
-    if (m_fpLabel != nullptr)
-        VSIFCloseL(m_fpLabel);
-    if (m_fpImage != nullptr && m_fpImage != m_fpLabel)
-        VSIFCloseL(m_fpImage);
+    ISIS3Dataset::Close();
+}
 
-    ISIS3Dataset::CloseDependentDatasets();
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr ISIS3Dataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (!m_bIsLabelWritten)
+            WriteLabel();
+        if (m_poExternalDS && m_bGeoTIFFAsRegularExternal &&
+            !m_bGeoTIFFInitDone)
+        {
+            reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+                ->InitFile();
+        }
+        if (ISIS3Dataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+        if (m_fpLabel)
+        {
+            if (VSIFCloseL(m_fpLabel) != 0)
+                eErr = CE_Failure;
+        }
+        if (m_fpImage && m_fpImage != m_fpLabel)
+        {
+            if (VSIFCloseL(m_fpImage) != 0)
+                eErr = CE_Failure;
+        }
+
+        ISIS3Dataset::CloseDependentDatasets();
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

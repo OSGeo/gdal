@@ -135,7 +135,7 @@ FGdbDataSource::~FGdbDataSource()
     if (m_pConnection && m_pConnection->IsLocked())
         CommitTransaction();
 
-    // Close();
+    // CloseInternal();
     size_t count = m_layers.size();
     for (size_t i = 0; i < count; ++i)
     {
@@ -248,10 +248,10 @@ int FGdbDataSource::Open(const char *pszNewName, int bUpdate,
 }
 
 /************************************************************************/
-/*                               Close()                                */
+/*                           CloseInternal()                            */
 /************************************************************************/
 
-int FGdbDataSource::Close(int bCloseGeodatabase)
+int FGdbDataSource::CloseInternal(int bCloseGeodatabase)
 {
     size_t count = m_layers.size();
     for (size_t i = 0; i < count; ++i)
@@ -795,7 +795,7 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
 {
     if (m_pConnection && m_pConnection->IsFIDHackInProgress())
     {
-        if (Close())
+        if (CloseInternal())
             ReOpen();
     }
     if (m_pGeodatabase == nullptr)

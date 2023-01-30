@@ -143,18 +143,37 @@ BYNDataset::BYNDataset()
 BYNDataset::~BYNDataset()
 
 {
-    FlushCache(true);
+    BYNDataset::Close();
+}
 
-    if (GetAccess() == GA_Update)
-        UpdateHeader();
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
 
-    if (fpImage != nullptr)
+CPLErr BYNDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (VSIFCloseL(fpImage) != 0)
+        if (BYNDataset::FlushCache(true) != CE_None)
+            eErr = CE_Failure;
+
+        if (GetAccess() == GA_Update)
+            UpdateHeader();
+
+        if (fpImage != nullptr)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            if (VSIFCloseL(fpImage) != 0)
+            {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
         }
+
+        if (GDALPamDataset::Close() != CE_None)
+            eErr = CE_Failure;
     }
+    return eErr;
 }
 
 /************************************************************************/
