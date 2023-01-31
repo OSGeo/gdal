@@ -4664,3 +4664,18 @@ def test_ogr_gml_read_boundedby_invalid():
         ds = gdal.OpenEx("data/gml/only_boundedby_invalid.gml")
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test reading a file with 2 boundedBy property in features: a first empty one,
+# and a second valid one (this mostly tests we don't crash)
+
+
+def test_ogr_gml_read_boundedby_repeated():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = gdal.OpenEx("data/gml/only_boundedby_repeated.gml")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1

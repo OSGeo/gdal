@@ -1,0 +1,17 @@
+<GMLFeatureClassList>
+  <GMLFeatureClass>
+    <Name>Foo</Name>
+    <ElementPath>Foo</ElementPath>
+    <GeometryName>boundedBy</GeometryName>
+    <GeometryElementPath>boundedBy</GeometryElementPath>
+    <!--POLYGON-->
+    <GeometryType>3</GeometryType>
+    <DatasetSpecificInfo>
+      <FeatureCount>1</FeatureCount>
+      <ExtentXMin>0.00000</ExtentXMin>
+      <ExtentXMax>2.00000</ExtentXMax>
+      <ExtentYMin>1.00000</ExtentYMin>
+      <ExtentYMax>3.00000</ExtentYMax>
+    </DatasetSpecificInfo>
+  </GMLFeatureClass>
+</GMLFeatureClassList>

@@ -1556,6 +1556,9 @@ OGRErr GMLHandler::endElementBoundedByInFeature()
     else
     {
         POP_STATE();
+        if (apsXMLNode.size() >= 2 && apsXMLNode[1].psNode != nullptr)
+            CPLDestroyXMLNode(apsXMLNode[1].psNode);
+        apsXMLNode.clear();
         return OGRERR_NONE;
     }
 }
