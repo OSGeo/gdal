@@ -2311,8 +2311,10 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
     m_bDeferredSpatialIndexCreation = bFlag;
     if (bFlag)
     {
+        // This method is invoked before the layer is added to the dataset,
+        // so GetLayerCount() will return 0 for the first layer added.
         m_bAllowedRTreeThread =
-            m_poDS->GetLayerCount() == 1 && sqlite3_threadsafe() != 0 &&
+            m_poDS->GetLayerCount() == 0 && sqlite3_threadsafe() != 0 &&
             CPLGetNumCPUs() >= 2 &&
             CPLTestBool(
                 CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
