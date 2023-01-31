@@ -4648,3 +4648,19 @@ def test_ogr_gml_read_boundedby_only_gml_null_only():
     assert os.path.exists("data/gml/only_boundedby_only_null.gfs")
     check()
     gdal.Unlink("data/gml/only_boundedby_only_null.gfs")
+
+
+###############################################################################
+# Test reading a file with only a boundedBy property in features that is
+# invalid
+
+
+def test_ogr_gml_read_boundedby_invalid():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("data/gml/only_boundedby_invalid.gml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0

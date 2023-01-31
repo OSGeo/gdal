@@ -749,6 +749,13 @@ OGRErr GMLHandler::startElementBoundedBy(const char *pszName, int /*nLenName*/,
 OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
                                         void *attr)
 {
+    if (stateStack[nStackDepth] == STATE_BOUNDED_BY_IN_FEATURE &&
+        apsXMLNode.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid <boundedBy> construct");
+        return OGRERR_FAILURE;
+    }
+
     /* Create new XML Element */
     CPLXMLNode *psCurNode = (CPLXMLNode *)CPLCalloc(sizeof(CPLXMLNode), 1);
     psCurNode->eType = CXT_Element;
