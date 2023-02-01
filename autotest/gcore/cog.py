@@ -1563,6 +1563,38 @@ def test_cog_webp_overview_turn_on_lossy_if_webp_level():
 
 
 ###############################################################################
+# Test lossless WEBP compression
+
+
+def test_cog_webp_lossless_webp():
+
+    tmpfilename = "/vsimem/test_cog_webp_lossless_webp.tif"
+    md = gdal.GetDriverByName("COG").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
+        pytest.skip()
+    if gdal.GetDriverByName("WEBP") is None:
+        pytest.skip()
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    gdal.ErrorReset()
+    gdal.Translate(
+        tmpfilename,
+        src_ds,
+        options="-of COG -co COMPRESS=WEBP -co QUALITY=100",
+    )
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = gdal.Open(tmpfilename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 # Test OVERVIEW_COUNT option
 
 
