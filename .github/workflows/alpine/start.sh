@@ -47,6 +47,11 @@ esac
 ccache -M 1G
 ccache -s
 
+# install pip and use it to install test dependencies
+python3 -m venv myvenv
+. ./myvenv/bin/activate
+pip3 install -U -r autotest/requirements.txt
+
 # Configure GDAL
 mkdir -p build_ci_alpine
 cd build_ci_alpine
@@ -58,6 +63,7 @@ cmake .. \
 make -j$(nproc)
 make install
 ldconfig || /bin/true
+(cd swig/python && python3 setup.py install)
 cd ..
 
 ccache -s
@@ -73,9 +79,5 @@ projsync --system-directory --file us_nga_egm96
 projsync --system-directory --file ca_nrc_ntv1_can.tif
 
 (cd build_ci_alpine && make quicktest)
-
-# install pip and use it to install test dependencies
-pip3 install -U -r autotest/requirements.txt
-
 (cd autotest && $PYTEST)
 
