@@ -66,6 +66,7 @@ class RequestResponse(object):
         expected_body=None,
         add_content_length_header=True,
         unexpected_headers=[],
+        silence_server_exception=False,
     ):
         self.method = method
         self.path = path
@@ -77,6 +78,7 @@ class RequestResponse(object):
         self.expected_body = expected_body
         self.add_content_length_header = add_content_length_header
         self.unexpected_headers = unexpected_headers
+        self.silence_server_exception = silence_server_exception
 
     def __repr__(self):
         return (
@@ -155,6 +157,7 @@ class SequentialHandler(object):
         expected_body=None,
         add_content_length_header=True,
         unexpected_headers=[],
+        silence_server_exception=False,
     ):
         hdrs = {} if headers is None else headers
         expected_hdrs = {} if expected_headers is None else expected_headers
@@ -171,6 +174,7 @@ class SequentialHandler(object):
                 expected_body,
                 add_content_length_header,
                 unexpected_headers,
+                silence_server_exception,
             )
         )
 
@@ -186,6 +190,7 @@ class SequentialHandler(object):
         expected_body=None,
         add_content_length_header=True,
         unexpected_headers=[],
+        silence_server_exception=False,
     ):
         hdrs = {} if headers is None else headers
         expected_hdrs = {} if expected_headers is None else expected_headers
@@ -200,12 +205,19 @@ class SequentialHandler(object):
             expected_body,
             add_content_length_header,
             unexpected_headers,
+            silence_server_exception,
         )
 
     @staticmethod
     def _process_req_resp(req_resp, request):
         if req_resp.custom_method:
-            req_resp.custom_method(request)
+            if req_resp.silence_server_exception:
+                try:
+                    req_resp.custom_method(request)
+                except Exception:
+                    pass
+            else:
+                req_resp.custom_method(request)
         else:
 
             if req_resp.expected_headers:
