@@ -225,6 +225,8 @@ static const char *index_type_name(TILEDB_INTERLEAVE_MODE eMode)
 /*                             SetBuffer()                              */
 /************************************************************************/
 
+#if ((TILEDB_VERSION_MAJOR > 2) ||                                             \
+     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4))
 static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
                         const CPLString &osAttrName, void *pImage, int nSize)
 {
@@ -279,6 +281,62 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
     }
     return CE_None;
 }
+#else
+static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
+                        const CPLString &osAttrName, void *pImage, int nSize)
+{
+    switch (eType)
+    {
+        case GDT_Byte:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned char *>(pImage), nSize);
+            break;
+        case GDT_UInt16:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned short *>(pImage), nSize);
+            break;
+        case GDT_UInt32:
+            poQuery->set_buffer(
+                osAttrName, reinterpret_cast<unsigned int *>(pImage), nSize);
+            break;
+        case GDT_Int16:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
+                                nSize);
+            break;
+        case GDT_Int32:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
+                                nSize);
+            break;
+        case GDT_Float32:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
+                                nSize);
+            break;
+        case GDT_Float64:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
+                                nSize);
+            break;
+        case GDT_CInt16:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
+                                nSize * 2);
+            break;
+        case GDT_CInt32:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
+                                nSize * 2);
+            break;
+        case GDT_CFloat32:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
+                                nSize * 2);
+            break;
+        case GDT_CFloat64:
+            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
+                                nSize * 2);
+            break;
+        default:
+            return CE_Failure;
+    }
+    return CE_None;
+}
+#endif
 
 /************************************************************************/
 /*                          TileDBRasterBand()                          */
