@@ -48,9 +48,9 @@ specification, that is to say the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
 counterclockwise. If a Shapefile is broken w.r.t. that rule, it is
 possible to define the configuration option
-:decl_configoption:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to 
-a full analysis based on topological relationships of the parts of the 
-polygons so that the resulting polygons are correctly defined in the 
+:decl_configoption:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to
+a full analysis based on topological relationships of the parts of the
+polygons so that the resulting polygons are correctly defined in the
 OGC Simple Feature convention.
 
 Driver capabilities
@@ -85,10 +85,10 @@ Starting with GDAL 3.1, the following metadata items are available in the
 -  **ENCODING_FROM_CPG**\ =string: Encoding name deduced from CPG_VALUE. Only
    present if CPG_VALUE is present
 -  **SOURCE_ENCODING**\ =string: Encoding used by GDAL to encode/recode strings.
-   If the user has provided the :decl_configoption:`SHAPE_ENCODING` 
-   configuration option or ``ENCODING`` open option have been provided 
-   (included to empty value), then their value is used to fill this metadata 
-   item. Otherwise it is equal to ENCODING_FROM_CPG if it is present. 
+   If the user has provided the :decl_configoption:`SHAPE_ENCODING`
+   configuration option or ``ENCODING`` open option have been provided
+   (included to empty value), then their value is used to fill this metadata
+   item. Otherwise it is equal to ENCODING_FROM_CPG if it is present.
    Otherwise it is equal to ENCODING_FROM_LDID.
 
 Spatial and attribute indexing
@@ -260,9 +260,9 @@ arbitrarily large.
 However, for compatibility with other software implementation, it is not
 recommended to use a file size over 2GB for both .SHP and .DBF files.
 
-The 2GB_LIMIT=YES layer creation option can be used to strictly enforce that 
-limit. For update mode, the :decl_configoption:`SHAPE_2GB_LIMIT` 
-configuration option can be set to YES for similar effect. If nothing is set, 
+The 2GB_LIMIT=YES layer creation option can be used to strictly enforce that
+limit. For update mode, the :decl_configoption:`SHAPE_2GB_LIMIT`
+configuration option can be set to YES for similar effect. If nothing is set,
 a warning will be emitted when the 2GB limit is reached.
 
 Compressed files
@@ -348,31 +348,37 @@ Layer creation options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
-- :decl_configoption:`SHAPE_REWIND_ON_WRITE` can be set to NO to prevent the 
-  shapefile writer to correct the winding order of exterior/interior rings to 
-  be conformant with the one mandated by the Shapefile specification. This can 
-  be useful in some situations where a MultiPolygon passed to the shapefile 
-  writer is not really a compliant Single Feature polygon, but originates from 
+- :decl_configoption:`SHAPE_REWIND_ON_WRITE` can be set to NO to prevent the
+  shapefile writer to correct the winding order of exterior/interior rings to
+  be conformant with the one mandated by the Shapefile specification. This can
+  be useful in some situations where a MultiPolygon passed to the shapefile
+  writer is not really a compliant Single Feature polygon, but originates from
   example from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
 
-- :decl_configoption:`SHAPE_RESTORE_SHX` (GDAL >= 2.1): can be set to YES 
-  (default NO) to restore broken or absent .shx file from associated .shp file 
+  Starting with GDAL 3.7, for Polygon/MultiPolygon, the default value is NO,
+  with the effect that the winding order of rings will be determined from the
+  outer/inner rings of the input Polygon/MultiPolygon, and not as a post process
+  topological analysis like done in previous GDAL versions, which could cause
+  troubles for non-planar 3D geometries.
+
+- :decl_configoption:`SHAPE_RESTORE_SHX` (GDAL >= 2.1): can be set to YES
+  (default NO) to restore broken or absent .shx file from associated .shp file
   during opening.
 
-- :decl_configoption:`SHAPE_2GB_LIMIT` can be set to YES to strictly enforce 
-  the 2 GB file size limit when updating a shapefile. If nothing is set, a 
+- :decl_configoption:`SHAPE_2GB_LIMIT` can be set to YES to strictly enforce
+  the 2 GB file size limit when updating a shapefile. If nothing is set, a
   warning will be emitted when the 2 GB limit is reached.
 
-- :decl_configoption:`OGR_ORGANIZE_POLYGONS` can be set to DEFAULT to activate 
-  a full analysis based on topological relationships of the parts of the 
-  polygons to make sure that the ring ordering of all polygons are correct 
+- :decl_configoption:`OGR_ORGANIZE_POLYGONS` can be set to DEFAULT to activate
+  a full analysis based on topological relationships of the parts of the
+  polygons to make sure that the ring ordering of all polygons are correct
   according to the OGC Simple Feature convention.
 
-- :decl_configoption:`SHAPE_ENCODING` may be used to override the encoding 
-  interpretation of the shapefile with any encoding supported by CPLRecode 
+- :decl_configoption:`SHAPE_ENCODING` may be used to override the encoding
+  interpretation of the shapefile with any encoding supported by CPLRecode
   or to "" to avoid any recoding.
 
 Examples

@@ -225,8 +225,9 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
     }
 
     SetDescription(poFeatureDefn->GetName());
-    bRewindOnWrite =
-        CPLTestBool(CPLGetConfigOption("SHAPE_REWIND_ON_WRITE", "YES"));
+    bRewindOnWrite = CPLTestBool(CPLGetConfigOption(
+        "SHAPE_REWIND_ON_WRITE",
+        hSHP != nullptr && hSHP->nShapeType != SHPT_MULTIPATCH ? "NO" : "YES"));
 }
 
 /************************************************************************/
