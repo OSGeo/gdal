@@ -118,7 +118,6 @@ struct WriteFuncStruct
     VSICurlReadCbkFunc pfnReadCbk = nullptr;
     void *pReadCbkUserData = nullptr;
     bool bInterrupted = false;
-    bool bInterruptIfNonErrorPayload = false;
 
 #if !CURL_AT_LEAST_VERSION(7, 54, 0)
     // Workaround to ignore extra HTTP response headers from

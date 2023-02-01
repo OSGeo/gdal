@@ -696,31 +696,24 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 }
                 else
 #endif  //! CURL_AT_LEAST_VERSION(7,54,0)
-                    if (psStruct->bInterruptIfNonErrorPayload &&
-                        psStruct->nHTTPCode >= 400)
+                {
+                    // Detect servers that don't support range downloading.
+                    if (psStruct->nHTTPCode == 200 &&
+                        psStruct->bDetectRangeDownloadingError &&
+                        !psStruct->bMultiRange &&
+                        !psStruct->bFoundContentRange &&
+                        (psStruct->nStartOffset != 0 ||
+                         psStruct->nContentLength >
+                             10 * (psStruct->nEndOffset -
+                                   psStruct->nStartOffset + 1)))
                     {
-                        psStruct->bInterrupted = true;
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Range downloading not supported by this "
+                                 "server!");
+                        psStruct->bError = true;
                         return 0;
                     }
-                    else
-                    {
-                        // Detect servers that don't support range downloading.
-                        if (psStruct->nHTTPCode == 200 &&
-                            psStruct->bDetectRangeDownloadingError &&
-                            !psStruct->bMultiRange &&
-                            !psStruct->bFoundContentRange &&
-                            (psStruct->nStartOffset != 0 ||
-                             psStruct->nContentLength >
-                                 10 * (psStruct->nEndOffset -
-                                       psStruct->nStartOffset + 1)))
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Range downloading not supported by this "
-                                     "server!");
-                            psStruct->bError = true;
-                            return 0;
-                        }
-                    }
+                }
             }
         }
         else
@@ -1134,7 +1127,7 @@ retry:
     else if (bRetryWithGet || strstr(osURL, ".tiles.mapbox.com/") != nullptr ||
              VSICurlIsS3LikeSignedURL(osURL) || !m_bUseHead)
     {
-        sWriteFuncData.bInterruptIfNonErrorPayload = true;
+        sWriteFuncData.bInterrupted = true;
         osVerb = "GET";
     }
     else
