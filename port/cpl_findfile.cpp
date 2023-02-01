@@ -145,8 +145,7 @@ void CPLFinderClean()
 /************************************************************************/
 
 /** CPLDefaultFindFile */
-const char *CPLDefaultFindFile(const char * /* pszClass */,
-                               const char *pszBasename)
+const char *CPLDefaultFindFile(const char *pszClass, const char *pszBasename)
 
 {
     FindFileTLS *pTLSData = CPLGetFindFileTLS();
@@ -162,6 +161,12 @@ const char *CPLDefaultFindFile(const char * /* pszClass */,
         VSIStatBufL sStat;
         if (VSIStatL(pszResult, &sStat) == 0)
             return pszResult;
+    }
+
+    if (EQUAL(pszClass, "gdal") && !CPLGetConfigOption("GDAL_DATA", nullptr))
+    {
+        CPLError(CE_Warning, CPLE_FileIO,
+                 "Cannot find %s (GDAL_DATA is not defined)", pszBasename);
     }
 
     return nullptr;
