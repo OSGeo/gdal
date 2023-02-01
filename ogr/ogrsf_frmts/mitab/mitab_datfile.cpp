@@ -694,6 +694,8 @@ int TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
            (m_pasFieldDef[i].cType != 'C' || m_pasFieldDef[i].byLength != 4)) ||
           (eType == TABFSmallInt &&
            (m_pasFieldDef[i].cType != 'C' || m_pasFieldDef[i].byLength != 2)) ||
+          (eType == TABFLargeInt &&
+           (m_pasFieldDef[i].cType != 'C' || m_pasFieldDef[i].byLength != 8)) ||
           (eType == TABFFloat &&
            (m_pasFieldDef[i].cType != 'C' || m_pasFieldDef[i].byLength != 8)) ||
           (eType == TABFDate &&
@@ -764,6 +766,10 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef *psFieldDef,
         case TABFSmallInt:
             psFieldDef->cType = 'C';
             psFieldDef->byLength = 2;
+            break;
+        case TABFLargeInt:
+            psFieldDef->cType = 'C';
+            psFieldDef->byLength = 8;
             break;
         case TABFFloat:
             psFieldDef->cType = 'C';
@@ -1415,6 +1421,11 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                 snprintf(pabyNewField, sFieldDef.byLength, "%d",
                          ReadSmallIntField(m_pasFieldDef[iField].byLength));
             }
+            else if (m_pasFieldDef[iField].eTABType == TABFLargeInt)
+            {
+                snprintf(pabyNewField, sFieldDef.byLength, CPL_FRMT_GIB,
+                         ReadLargeIntField(m_pasFieldDef[iField].byLength));
+            }
             else if (m_pasFieldDef[iField].eTABType == TABFFloat)
             {
                 CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f",
@@ -1663,6 +1674,36 @@ GInt16 TABDATFile::ReadSmallIntField(int nWidth)
         return static_cast<GInt16>(atoi(ReadCharField(nWidth)));
 
     return m_poRecordBlock->ReadInt16();
+}
+
+/**********************************************************************
+ *                   TABDATFile::ReadLargeIntField()
+ *
+ * Read the largeint field value at the current position in the data
+ * block.
+ *
+ * Note: nWidth is used only with TABTableDBF types.
+ *
+ * CPLError() will have been called if something fails.
+ **********************************************************************/
+GInt64 TABDATFile::ReadLargeIntField(int nWidth)
+{
+    // If current record has been deleted, then return an acceptable
+    // default value.
+    if (m_bCurRecordDeletedFlag)
+        return 0;
+
+    if (m_poRecordBlock == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "Can't read field value: file is not opened.");
+        return 0;
+    }
+
+    if (m_eTableType == TABTableDBF)
+        return static_cast<GIntBig>(CPLAtoGIntBig(ReadCharField(nWidth)));
+
+    return m_poRecordBlock->ReadInt64();
 }
 
 /**********************************************************************
@@ -2105,6 +2146,36 @@ int TABDATFile::WriteSmallIntField(GInt16 nValue, TABINDFile *poINDFile,
     }
 
     return m_poRecordBlock->WriteInt16(nValue);
+}
+
+/**********************************************************************
+ *                   TABDATFile::WriteLargeIntField()
+ *
+ * Write the smallint field value at the current position in the data
+ * block.
+ *
+ * CPLError() will have been called if something fails.
+ **********************************************************************/
+int TABDATFile::WriteLargeIntField(GInt64 nValue, TABINDFile *poINDFile,
+                                   int nIndexNo)
+{
+    if (m_poRecordBlock == nullptr)
+    {
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
+            "Can't write field value: GetRecordBlock() has not been called.");
+        return -1;
+    }
+
+    // Update Index
+    if (poINDFile && nIndexNo > 0)
+    {
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, nValue);
+        if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
+            return -1;
+    }
+
+    return m_poRecordBlock->WriteInt64(nValue);
 }
 
 /**********************************************************************

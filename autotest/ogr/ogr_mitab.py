@@ -2794,6 +2794,47 @@ def test_ogr_mitab_read_single_field_mid():
 
 
 ###############################################################################
+# Test reading a .mif/.tab with all data types
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+def test_ogr_mitab_read_write_all_data_types(ext):
+
+    ds = ogr.Open("data/mitab/all_possible_fields." + ext)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["field1"] == "test"
+    assert f["Field2"] == 120
+    assert f["Field3"] == 12345
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("Field4"))
+        .GetType()
+        == ogr.OFTInteger64
+    )
+    assert f["Field4"] == 123456789012345
+    assert f["Field5"] == 12.34
+    assert f["Field6"] == 12.34
+    assert f["Field7"] == "2022/12/31"
+    assert f["Field8"] == "23:59:00"
+    assert f["Field9"] == "2022/03/23 14:56:00"
+    assert f["Field10"] == "T"
+
+    filename = "/vsimem/test_ogr_mitab_read_write_all_data_types." + ext
+    out_ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    out_lyr = out_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        out_lyr.CreateField(lyr.GetLayerDefn().GetFieldDefn(i))
+    out_f = ogr.Feature(out_lyr.GetLayerDefn())
+    out_f.SetFrom(f)
+    assert out_lyr.CreateFeature(out_f) == ogr.OGRERR_NONE
+    out_f = None
+    out_ds = None
+
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)
+
+
+###############################################################################
 
 
 def _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs):

@@ -1,0 +1,17 @@
+Version   900
+Charset "WindowsLatin1"
+Delimiter ","
+Columns 10
+  field1 Char(10)
+  Field2 Integer
+  Field3 Smallint
+  Field4 LargeInt
+  Field5 Float
+  Field6 Decimal(10, 2)
+  Field7 Date
+  Field8 Time
+  Field9 DateTime
+  Field10 Logical
+Data
+
+none
