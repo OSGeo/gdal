@@ -239,6 +239,10 @@ const MapInfoDatumInfo asDatumInfoList[] = {
     {0, 159, "Schwarzeck (updated) datum for Namibia", 14, 616.8, 103.3, -256.9,
      0, 0, 0, 0, 0},
     {0, 161, "NOAA GCS_Sphere", 55, 0, 0, 0, 0, 0, 0, 0, 0},
+    // Ellipsoid 40 got from https://docs.precisely.com/docs/sftw/mapinfo-pro/v2021/en-us/pdf/mapinfo-pro-v2021-user-guide.pdf
+    // Ellipsoid 40 is "Everest (India 1956)", 6377301.243, 300.80174
+    // but EPSG uses "Everest 1830 (RSO 1969)",6377295.664,300.8017
+    {6751, 164, "Kertau (RSO)", 40, -11, 851, 5, 0, 0, 0, 0, 0},
     {0, 1000, "DHDN_Potsdam_Rauenberg", 10, 582, 105, 414, -1.04, -0.35, 3.08,
      8.3, 0},
     {6284, 1001, "Pulkovo_1942", 3, 24, -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
@@ -910,9 +914,21 @@ TABFile::GetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
             break;
 
             /*--------------------------------------------------------------
+             * Hotine Oblique Mercator with Angle from Rectified to Skew Grid
+             *-------------------------------------------------------------*/
+        case 35:
+            poSpatialRef->SetHOM(
+                sTABProj.adProjParams[1], sTABProj.adProjParams[0],
+                sTABProj.adProjParams[2], sTABProj.adProjParams[3],
+                sTABProj.adProjParams[4], sTABProj.adProjParams[5],
+                sTABProj.adProjParams[6]);
+            break;
+
+            /*--------------------------------------------------------------
              * Transverse Mercator
              *-------------------------------------------------------------*/
         case 8:
+        case 34:  // Extended Transverse Mercator
             poSpatialRef->SetTM(
                 sTABProj.adProjParams[1], sTABProj.adProjParams[0],
                 sTABProj.adProjParams[2], sTABProj.adProjParams[3],
@@ -1128,6 +1144,8 @@ TABFile::GetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
             break;
 
         default:
+            poSpatialRef->SetProjection(CPLSPrintf(
+                "Unhandled MapInfo projection method %d", sTABProj.nProjId));
             break;
     }
 
@@ -1396,6 +1414,18 @@ TABFile::GetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
         OGRSpatialReference oSRS_EPSG_4683;
         if (oSRS_EPSG_4683.importFromEPSG(4683) == OGRERR_NONE)
             poSpatialRef->CopyGeogCSFrom(&oSRS_EPSG_4683);
+    }
+
+    /*-----------------------------------------------------------------
+     * Special case for Kertau (RSO), to override
+     * the MapInfo ellipsoid=40 "Everest (India 1956)", 6377301.243, 300.80174
+     * with EPSG's "Everest 1830 (RSO 1969)",6377295.664,300.8017
+     *----------------------------------------------------------------*/
+    if (sTABProj.nDatumId == 164 && sTABProj.nEllipsoidId == 40)
+    {
+        OGRSpatialReference oSRS_EPSG_4751;
+        if (oSRS_EPSG_4751.importFromEPSG(4751) == OGRERR_NONE)
+            poSpatialRef->CopyGeogCSFrom(&oSRS_EPSG_4751);
     }
 
     return poSpatialRef;
@@ -1706,16 +1736,36 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
 
     else if (EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR))
     {
-        sTABProj.nProjId = 7;
-        params[0] =
-            poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
-        params[1] =
-            poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
-        params[2] = poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
-        params[3] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
-        params[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
-        params[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
-        nParamCount = 6;
+        if (std::abs(poSpatialRef->GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,
+                                                   90.0) -
+                     90.0) < 1e-8)
+        {
+            sTABProj.nProjId = 7;
+            params[0] =
+                poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+            params[1] =
+                poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+            params[2] = poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
+            params[3] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            params[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
+            params[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+            nParamCount = 6;
+        }
+        else
+        {
+            sTABProj.nProjId = 35;
+            params[0] =
+                poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+            params[1] =
+                poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0);
+            params[2] = poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH, 0.0);
+            params[3] =
+                poSpatialRef->GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, 0.0);
+            params[4] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+            params[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
+            params[6] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+            nParamCount = 7;
+        }
     }
 
     else if (EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA))

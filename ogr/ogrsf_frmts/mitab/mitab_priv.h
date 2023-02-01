@@ -262,7 +262,7 @@ typedef struct TABProjInfo_t
     GByte nProjId;  // See MapInfo Ref. Manual, App. F and G
     GByte nEllipsoidId;
     GByte nUnitsId;
-    double adProjParams[6];  // params in same order as in .MIF COORDSYS
+    double adProjParams[7];  // params in same order as in .MIF COORDSYS
 
     GInt16 nDatumId;      // Datum Id added in MapInfo 7.8+ (.map V500)
     double dDatumShiftX;  // Before that, we had to always lookup datum
