@@ -5183,6 +5183,122 @@ def test_nitf_create_three_images_final_uncompressed():
 
 
 ###############################################################################
+# Test update of CLEVEL
+
+
+def test_nitf_CLEVEL_update():
+
+    gdal.Unlink("/vsimem/out.ntf")
+
+    if False:
+        # Realistic use case, but a bit slow
+
+        src_ds = gdal.GetDriverByName("MEM").Create("", 2048, 2048, 3)
+        # Fill with "random" data that compresses poorly
+        for b in range(3):
+            src_ds.GetRasterBand(b + 1).WriteRaster(
+                0,
+                0,
+                2048,
+                2048,
+                array.array(
+                    "B", [((i + b * 569) * 4391) % 251 for i in range(2048 * 2048)]
+                ),
+            )
+
+        # Write first image segment, reserve space for other ones
+        NUMI = 8
+        assert (
+            gdal.GetDriverByName("NITF").CreateCopy(
+                "/vsimem/out.ntf",
+                src_ds,
+                options=["NUMI=%d" % NUMI, "IC=C3", "QUALITY=100"],
+            )
+            is not None
+        )
+
+        # Check CLEVEL value
+        f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+        gdal.VSIFSeekL(f, 9, 0)
+        assert gdal.VSIFReadL(1, 2, f) == b"03"
+        gdal.VSIFCloseL(f)
+
+        got_clevel_05 = False
+        for i in range(NUMI - 1):
+            assert (
+                gdal.GetDriverByName("NITF").CreateCopy(
+                    "/vsimem/out.ntf",
+                    src_ds,
+                    options=["APPEND_SUBDATASET=YES", "IC=C3", "QUALITY=100"],
+                )
+                is not None
+            )
+
+            # Check CLEVEL value
+            f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+            gdal.VSIFSeekL(f, 9, 0)
+            if gdal.VSIStatL("/vsimem/out.ntf").size > 52428799:
+                assert gdal.VSIFReadL(1, 2, f) == b"05"
+                got_clevel_05 = True
+            else:
+                assert gdal.VSIFReadL(1, 2, f) == b"03"
+            gdal.VSIFCloseL(f)
+
+        assert got_clevel_05
+
+        gdal.GetDriverByName("NITF").Delete("/vsimem/out.ntf")
+
+    else:
+        # Artifical use case
+        src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+        assert (
+            gdal.GetDriverByName("NITF").CreateCopy(
+                "/vsimem/out.ntf", src_ds, options=["NUMI=2", "IC=C3"]
+            )
+            is not None
+        )
+
+        # Check CLEVEL value
+        f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb+")
+        gdal.VSIFSeekL(f, 9, 0)
+        assert gdal.VSIFReadL(1, 2, f) == b"03"
+        file_size_before = gdal.VSIStatL("/vsimem/out.ntf").size
+
+        # Grow the image/file artificially up to the level where we'll have to
+        # switch to CLEVEL=5
+        file_size_after = 52428799
+        gdal.VSIFSeekL(f, file_size_after - 1, 0)
+        gdal.VSIFWriteL(b"\0", 1, 1, f)
+
+        # Read image size field...
+        gdal.VSIFSeekL(f, 369, 0)
+        image_size_before = int(gdal.VSIFReadL(1, 10, f))
+
+        # Update image size field...
+        gdal.VSIFSeekL(f, 369, 0)
+        gdal.VSIFWriteL(
+            "%010d" % (image_size_before + file_size_after - file_size_before), 10, 1, f
+        )
+        gdal.VSIFCloseL(f)
+
+        # Add second image
+        assert (
+            gdal.GetDriverByName("NITF").CreateCopy(
+                "/vsimem/out.ntf", src_ds, options=["APPEND_SUBDATASET=YES", "IC=C3"]
+            )
+            is not None
+        )
+
+        # Check CLEVEL value
+        f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+        gdal.VSIFSeekL(f, 9, 0)
+        assert gdal.VSIFReadL(1, 2, f) == b"05"
+        gdal.VSIFCloseL(f)
+
+        gdal.GetDriverByName("NITF").Delete("/vsimem/out.ntf")
+
+
+###############################################################################
 # Test writing/reading PAM metadata
 
 

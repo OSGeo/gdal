@@ -5577,7 +5577,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Update COMRAT, the compression rate variable.                   */
+    /*      Update COMRAT, the compression rate variable, and CLEVEL        */
     /* -------------------------------------------------------------------- */
 
     /* Set to IC position */
@@ -5640,6 +5640,47 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
         }
 
         bOK &= VSIFWriteL(szCOMRAT, 4, 1, fpVSIL) == 1;
+
+        /* ---------------------------------------------------------------- */
+        /*      Update CLEVEL.                                              */
+        /* ---------------------------------------------------------------- */
+        // Get existing CLEVEL
+        constexpr int OFFSET_CLEVEL = 9;
+        constexpr int SIZE_CLEVEL = 2;
+        bOK &= VSIFSeekL(fpVSIL, OFFSET_CLEVEL, SEEK_SET) == 0;
+        char szCLEVEL[SIZE_CLEVEL + 1] = {0};
+        bOK &= VSIFReadL(szCLEVEL, 1, SIZE_CLEVEL, fpVSIL) != 0;
+        int nCLevel = atoi(szCLEVEL);
+        if (nCLevel >= 3 && nCLevel <= 7)
+        {
+            const int nCLevelOri = nCLevel;
+            if (nFileLen > 2147483647)
+            {
+                nCLevel = MAX(nCLevel, 7);
+            }
+            else if (nFileLen > 1073741833)
+            {
+                nCLevel = MAX(nCLevel, 6);
+            }
+            else if (nFileLen > 52428799)
+            {
+                nCLevel = MAX(nCLevel, 5);
+            }
+            if (nCLevel != nCLevelOri)
+            {
+                CPLDebug("NITF", "Updating CLEVEL from %02d to %02d",
+                         nCLevelOri, nCLevel);
+                snprintf(szCLEVEL, sizeof(szCLEVEL), "%02d", nCLevel);
+                bOK &= VSIFSeekL(fpVSIL, OFFSET_CLEVEL, SEEK_SET) == 0;
+                bOK &= VSIFWriteL(szCLEVEL, 1, SIZE_CLEVEL, fpVSIL) != 0;
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Invalid CLEVEL=%s value found when updating NITF header.",
+                     szCLEVEL);
+        }
     }
 
     if (VSIFCloseL(fpVSIL) != 0)
