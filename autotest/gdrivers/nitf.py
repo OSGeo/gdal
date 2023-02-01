@@ -1299,6 +1299,9 @@ def test_nitf_33():
 
 def test_nitf_34():
 
+    if gdal.GetDriverByName("DTED") is None:
+        pytest.skip("DTED driver missing")
+
     tst = gdaltest.GDALTest("NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"])
     return tst.testCreateCopy()
 
