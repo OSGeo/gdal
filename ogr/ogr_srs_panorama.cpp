@@ -802,7 +802,7 @@ OGRErr OGRSpatialReference::exportVertCSToPanorama(int *piVert) const
             }
         }
     }
-    CPLError(CE_Warning, CPLE_None,
+    CPLDebug("OSR_Panorama",
              "Vertical coordinate system not supported by Panorama");
     return OGRERR_UNSUPPORTED_SRS;
 }

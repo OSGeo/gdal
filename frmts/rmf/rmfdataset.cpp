@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Andrey Kiselev <dron@ak4719.spb.edu>
  * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2023, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +53,18 @@ static const char RMF_UnitsMM[] = "mm";
 
 constexpr double RMF_DEFAULT_SCALE = 10000.0;
 constexpr double RMF_DEFAULT_RESOLUTION = 100.0;
+
+constexpr const char *MD_VERSION_KEY = "VERSION";
+constexpr const char *MD_NAME_KEY = "NAME";
+constexpr const char *MD_SCALE_KEY = "SCALE";
+constexpr const char *MD_FRAME_KEY = "FRAME";
+
+constexpr const char *MD_MATH_BASE_MAP_TYPE_KEY = "MATH_BASE.Map type";
+constexpr const char *MD_MATH_BASE_PROJECTION_KEY = "MATH_BASE.Projection";
+
+constexpr int nMaxFramePointCount = 2048;
+constexpr GInt32 nPolygonType =
+    2147385342;  // 2147385342 magic number for polygon
 
 /* -------------------------------------------------------------------- */
 /*  Note: Due to the fact that in the early versions of RMF             */
@@ -840,11 +853,13 @@ CPLErr RMFDataset::WriteHeader()
         long iDatum = 0;
         long iEllips = 0;
         long iZone = 0;
+        int iVertCS = 0;
         double adfPrjParams[7] = {};
 
         m_oSRS.exportToPanorama(&iProjection, &iDatum, &iEllips, &iZone,
                                 adfPrjParams);
-        sHeader.iProjection = static_cast<int>(iProjection);
+        m_oSRS.exportVertCSToPanorama(&iVertCS);
+        sHeader.iProjection = static_cast<GInt32>(iProjection);
         sHeader.dfStdP1 = adfPrjParams[0];
         sHeader.dfStdP2 = adfPrjParams[1];
         sHeader.dfCenterLat = adfPrjParams[2];
@@ -856,9 +871,17 @@ CPLErr RMFDataset::WriteHeader()
             sHeader.iEPSGCode = atoi(m_oSRS.GetAuthorityCode(nullptr));
         }
 
-        sExtHeader.nEllipsoid = static_cast<int>(iEllips);
-        sExtHeader.nDatum = static_cast<int>(iDatum);
-        sExtHeader.nZone = static_cast<int>(iZone);
+        sExtHeader.nEllipsoid = static_cast<GInt32>(iEllips);
+        sExtHeader.nDatum = static_cast<GInt32>(iDatum);
+        sExtHeader.nZone = static_cast<GInt32>(iZone);
+        sExtHeader.nVertDatum = static_cast<GInt32>(iVertCS);
+
+        // Set map type
+        auto pszMapType = GetMetadataItem(MD_MATH_BASE_MAP_TYPE_KEY);
+        if (pszMapType != nullptr)
+        {
+            sHeader.iMapType = static_cast<GInt32>(atoi(pszMapType));
+        }
     }
 
 #define RMF_WRITE_LONG(ptr, value, offset)                                     \
@@ -882,6 +905,77 @@ CPLErr RMFDataset::WriteHeader()
         CPL_LSBPTR64(&dfDouble);                                               \
         memcpy((ptr) + (offset), &dfDouble, 8);                                \
     } while (false);
+
+    // Frame if present
+    std::vector<RSWFrameCoord> astFrameCoords;
+    auto pszFrameWKT = GetMetadataItem(MD_FRAME_KEY);
+    if (pszFrameWKT != nullptr)
+    {
+        CPLDebug("RMF", "Write to header frame: %s", pszFrameWKT);
+        OGRGeometry *poFrameGeom = nullptr;
+        if (OGRGeometryFactory::createFromWkt(pszFrameWKT, nullptr,
+                                              &poFrameGeom) == OGRERR_NONE)
+        {
+            if (poFrameGeom->getGeometryType() == wkbPolygon)
+            {
+                double adfReverseGeoTransform[6] = {0};
+                if (GDALInvGeoTransform(adfGeoTransform,
+                                        adfReverseGeoTransform) == TRUE)
+                {
+                    OGRPolygon *poFramePoly = poFrameGeom->toPolygon();
+                    if (!poFramePoly->IsEmpty())
+                    {
+                        OGRLinearRing *poFrameRing =
+                            poFramePoly->getExteriorRing();
+                        for (int i = 0; i < poFrameRing->getNumPoints(); i++)
+                        {
+                            int nX = int(adfReverseGeoTransform[0] +
+                                         poFrameRing->getX(i) *
+                                             adfReverseGeoTransform[1] -
+                                         0.5);
+                            int nY = int(adfReverseGeoTransform[3] +
+                                         poFrameRing->getY(i) *
+                                             adfReverseGeoTransform[5] -
+                                         0.5);
+
+                            CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
+
+                            astFrameCoords.push_back({nX, nY});
+                        }
+                    }
+
+                    if (astFrameCoords.empty() ||
+                        astFrameCoords.size() > nMaxFramePointCount)
+                    {
+                        // CPLError(CE_Warning, CPLE_AppDefined, "Invalid frame WKT: %s", pszFrameWKT);
+                        CPLDebug("RMF", "Write to header frame failed: no "
+                                        "points or too many");
+                        astFrameCoords.clear();
+                    }
+                    else
+                    {
+                        sHeader.nROISize = static_cast<GUInt32>(
+                            sizeof(RSWFrame) +
+                            sizeof(RSWFrameCoord) *
+                                astFrameCoords
+                                    .size());  // Set real size and real point count
+                        sHeader.iFrameFlag = 0;
+                    }
+                }
+                else
+                {
+                    CPLDebug("RMF", "Write to header frame failed: "
+                                    "GDALInvGeoTransform == FALSE");
+                }
+            }
+            OGRGeometryFactory::destroyGeometry(poFrameGeom);
+        }
+        else
+        {
+            CPLDebug("RMF", "Write to header frame failed: "
+                            "OGRGeometryFactory::createFromWkt error");
+        }
+    }
 
     vsi_l_offset iCurrentFileSize(GetLastOffset());
     sHeader.nFileSize0 = GetRMFOffset(iCurrentFileSize, &iCurrentFileSize);
@@ -976,10 +1070,6 @@ CPLErr RMFDataset::WriteHeader()
         CPLFree(pabyExtHeader);
     }
 
-#undef RMF_WRITE_DOUBLE
-#undef RMF_WRITE_ULONG
-#undef RMF_WRITE_LONG
-
     /* -------------------------------------------------------------------- */
     /*  Write out the color table.                                          */
     /* -------------------------------------------------------------------- */
@@ -989,6 +1079,68 @@ CPLErr RMFDataset::WriteHeader()
         VSIFSeekL(fp, GetFileOffset(sHeader.nClrTblOffset), SEEK_SET);
         VSIFWriteL(pabyColorTable, 1, sHeader.nClrTblSize, fp);
     }
+
+    if (sHeader.nROIOffset && sHeader.nROISize)
+    {
+        GByte *pabyROI =
+            reinterpret_cast<GByte *>(CPLCalloc(sHeader.nROISize, 1));
+        memset(pabyROI, 0, sHeader.nROISize);
+
+        auto nPointCount = astFrameCoords.size();
+        size_t offset = 0;
+        RMF_WRITE_LONG(pabyROI, nPolygonType, offset);
+        offset += 4;
+        RMF_WRITE_LONG(pabyROI, static_cast<GInt32>((4 + nPointCount * 2) * 4),
+                       offset);
+        offset += 4;
+        RMF_WRITE_LONG(pabyROI, 0, offset);
+        offset += 4;
+        RMF_WRITE_LONG(pabyROI, static_cast<GInt32>(32768 * nPointCount * 2),
+                       offset);
+        offset += 4;
+
+        // Write points
+        for (size_t i = 0; i < nPointCount; i++)
+        {
+            RMF_WRITE_LONG(pabyROI, astFrameCoords[i].nX, offset);
+            offset += 4;
+            RMF_WRITE_LONG(pabyROI, astFrameCoords[i].nY, offset);
+            offset += 4;
+        }
+
+        VSIFSeekL(fp, GetFileOffset(sHeader.nROIOffset), SEEK_SET);
+        VSIFWriteL(pabyROI, 1, sHeader.nROISize, fp);
+
+        CPLFree(pabyROI);
+    }
+
+    if (sHeader.nFlagsTblOffset && sHeader.nFlagsTblSize)
+    {
+        GByte *pabyFlagsTbl =
+            reinterpret_cast<GByte *>(CPLCalloc(sHeader.nFlagsTblSize, 1));
+
+        if (sHeader.iFrameFlag == 0)
+        {
+            // TODO: Add more strictly check for flag value
+            memset(
+                pabyFlagsTbl, 2,
+                sHeader
+                    .nFlagsTblSize);  // Mark all blocks as intersected with ROI. 0 - complete outside, 1 - complete inside.
+        }
+        else
+        {
+            memset(pabyFlagsTbl, 0, sHeader.nFlagsTblSize);
+        }
+
+        VSIFSeekL(fp, GetFileOffset(sHeader.nFlagsTblOffset), SEEK_SET);
+        VSIFWriteL(pabyFlagsTbl, 1, sHeader.nFlagsTblSize, fp);
+
+        CPLFree(pabyFlagsTbl);
+    }
+
+#undef RMF_WRITE_DOUBLE
+#undef RMF_WRITE_ULONG
+#undef RMF_WRITE_LONG
 
     /* -------------------------------------------------------------------- */
     /*  Write out the block table, swap if needed.                          */
@@ -1255,6 +1407,16 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
         poDS->sHeader.iElevationType = *(abyHeader + 308);
         RMF_READ_ULONG(abyHeader, poDS->sHeader.nExtHdrOffset, 312);
         RMF_READ_ULONG(abyHeader, poDS->sHeader.nExtHdrSize, 316);
+        poDS->SetMetadataItem(MD_SCALE_KEY,
+                              CPLSPrintf("1 : %u", int(poDS->sHeader.dfScale)));
+        poDS->SetMetadataItem(MD_NAME_KEY,
+                              CPLSPrintf("%s", poDS->sHeader.byName));
+        poDS->SetMetadataItem(MD_VERSION_KEY,
+                              CPLSPrintf("%d", poDS->sHeader.iVersion));
+        poDS->SetMetadataItem(MD_MATH_BASE_MAP_TYPE_KEY,
+                              CPLSPrintf("%d", poDS->sHeader.iMapType));
+        poDS->SetMetadataItem(MD_MATH_BASE_PROJECTION_KEY,
+                              CPLSPrintf("%d", poDS->sHeader.iProjection));
     }
 
     if (poDS->sHeader.nTileTblSize % (sizeof(GUInt32) * 2))
@@ -1351,10 +1513,6 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
         CPLFree(pabyExtHeader);
     }
 
-#undef RMF_READ_DOUBLE
-#undef RMF_READ_LONG
-#undef RMF_READ_ULONG
-
     CPLDebug("RMF", "Version %d", poDS->sHeader.iVersion);
 
 #ifdef DEBUG
@@ -1384,26 +1542,29 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
              poDS->sHeader.dfLLY);
     if (poDS->sHeader.nROIOffset && poDS->sHeader.nROISize)
     {
-        GInt32 nValue = 0;
+        GByte *pabyROI =
+            reinterpret_cast<GByte *>(CPLCalloc(poDS->sHeader.nROISize, 1));
+        if (pabyROI == nullptr)
+        {
+            delete poDS;
+            return nullptr;
+        }
+
+        VSIFSeekL(poDS->fp, poDS->GetFileOffset(poDS->sHeader.nROIOffset),
+                  SEEK_SET);
+        VSIFReadL(pabyROI, 1, poDS->sHeader.nROISize, poDS->fp);
+
+        GInt32 nValue;
 
         CPLDebug("RMF", "ROI coordinates:");
         /* coverity[tainted_data] */
         for (GUInt32 i = 0; i < poDS->sHeader.nROISize; i += sizeof(nValue))
         {
-            if (VSIFSeekL(poDS->fp,
-                          poDS->GetFileOffset(poDS->sHeader.nROIOffset + i),
-                          SEEK_SET) != 0 ||
-                VSIFReadL(&nValue, 1, sizeof(nValue), poDS->fp) !=
-                    sizeof(nValue))
-            {
-                CPLDebug("RMF", "Cannot read ROI at index %u", i);
-                break;
-                // delete poDS;
-                // return nullptr;
-            }
-
+            RMF_READ_LONG(pabyROI, nValue, i);
             CPLDebug("RMF", "%d", nValue);
         }
+
+        CPLFree(pabyROI);
     }
 #endif
     if (poDS->sHeader.nWidth >= INT_MAX || poDS->sHeader.nHeight >= INT_MAX ||
@@ -1785,6 +1946,85 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
         poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
     }
 
+    /* Set frame */
+    if (poDS->sHeader.nROIOffset && poDS->sHeader.nROISize)
+    {
+        GByte *pabyROI =
+            reinterpret_cast<GByte *>(CPLCalloc(poDS->sHeader.nROISize, 1));
+        if (pabyROI == nullptr)
+        {
+            delete poDS;
+            return nullptr;
+        }
+
+        VSIFSeekL(poDS->fp, poDS->GetFileOffset(poDS->sHeader.nROIOffset),
+                  SEEK_SET);
+        VSIFReadL(pabyROI, 1, poDS->sHeader.nROISize, poDS->fp);
+
+        GInt32 nFrameType;
+        RMF_READ_LONG(pabyROI, nFrameType, 0);
+        if (nFrameType == nPolygonType)
+        {
+            CPLString osWKT = "POLYGON((";
+            bool bFirst = true;
+
+            CPLDebug("RMF", "ROI coordinates:");
+            /* coverity[tainted_data] */
+            for (GUInt32 i = sizeof(RSWFrame); i < poDS->sHeader.nROISize;
+                 i += sizeof(RSWFrameCoord))
+            {
+                GInt32 nX, nY;
+                RMF_READ_LONG(pabyROI, nX, i);
+                RMF_READ_LONG(pabyROI, nY, i + 4);
+
+                CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
+
+                double dfX = poDS->adfGeoTransform[0] +
+                             nX * poDS->adfGeoTransform[1] +
+                             nY * poDS->adfGeoTransform[2];
+                double dfY = poDS->adfGeoTransform[3] +
+                             nX * poDS->adfGeoTransform[4] +
+                             nY * poDS->adfGeoTransform[5];
+
+                if (bFirst)
+                {
+                    osWKT += CPLSPrintf("%f %f", dfX, dfY);
+                    bFirst = false;
+                }
+                else
+                {
+                    osWKT += CPLSPrintf(", %f %f", dfX, dfY);
+                }
+            }
+            osWKT += "))";
+            CPLDebug("RMF", "Frame WKT: %s", osWKT.c_str());
+            poDS->SetMetadataItem(MD_FRAME_KEY, osWKT);
+        }
+        CPLFree(pabyROI);
+    }
+
+#undef RMF_READ_DOUBLE
+#undef RMF_READ_LONG
+#undef RMF_READ_ULONG
+
+    if (poDS->sHeader.nFlagsTblOffset && poDS->sHeader.nFlagsTblSize)
+    {
+        VSIFSeekL(poDS->fp, poDS->GetFileOffset(poDS->sHeader.nFlagsTblOffset),
+                  SEEK_SET);
+        CPLDebug("RMF", "Blocks flags:");
+        /* coverity[tainted_data] */
+        for (GUInt32 i = 0; i < poDS->sHeader.nFlagsTblSize; i += sizeof(GByte))
+        {
+            GByte nValue;
+            if (VSIFReadL(&nValue, 1, sizeof(nValue), poDS->fp) !=
+                sizeof(nValue))
+            {
+                CPLDebug("RMF", "Cannot read Block flag at index %u", i);
+                break;
+            }
+            CPLDebug("RMF", "Block %u -- flag %d", i, nValue);
+        }
+    }
     return poDS;
 }
 
@@ -1861,7 +2101,16 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
             return nullptr;
         }
 
-        dfScale = RMF_DEFAULT_SCALE;
+        const char *pszScaleValue =
+            CSLFetchNameValue(papszParamList, MD_SCALE_KEY);
+        if (pszScaleValue != nullptr && CPLStrnlen(pszScaleValue, 10) > 4)
+        {
+            dfScale = atof(pszScaleValue + 4);
+        }
+        else
+        {
+            dfScale = RMF_DEFAULT_SCALE;
+        }
         dfResolution = RMF_DEFAULT_RESOLUTION;
         dfPixelSize = 1;
 
@@ -1968,8 +2217,8 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (!poDS->sHeader.nLastTileWidth)
         poDS->sHeader.nLastTileWidth = poDS->sHeader.nTileWidth;
 
-    poDS->sHeader.nROIOffset = 0x00;
-    poDS->sHeader.nROISize = 0x00;
+    // poDS->sHeader.nROIOffset = 0x00;
+    // poDS->sHeader.nROISize = 0x00;
 
     vsi_l_offset nCurPtr = poDS->nHeaderOffset + RMF_HEADER_SIZE;
 
@@ -2015,6 +2264,20 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         poDS->sHeader.nClrTblSize = 0x00;
     }
 
+    // Add room for ROI (frame)
+    poDS->sHeader.nROIOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
+    poDS->sHeader.nROISize = 0x00;
+    nCurPtr +=
+        sizeof(RSWFrame) +
+        sizeof(RSWFrameCoord) *
+            nMaxFramePointCount;  // Allocate nMaxFramePointCount coordinates for frame
+
+    // Add blocks flags
+    poDS->sHeader.nFlagsTblOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
+    poDS->sHeader.nFlagsTblSize =
+        poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * sizeof(GByte);
+    nCurPtr += poDS->sHeader.nFlagsTblSize;
+
     // Blocks table
     poDS->sHeader.nTileTblOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
     poDS->sHeader.nTileTblSize =
@@ -2039,9 +2302,9 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     poDS->sHeader.dfPixelSize = dfPixelSize;
     poDS->sHeader.iMaskType = 0;
     poDS->sHeader.iMaskStep = 0;
-    poDS->sHeader.iFrameFlag = 0;
-    poDS->sHeader.nFlagsTblOffset = 0x00;
-    poDS->sHeader.nFlagsTblSize = 0x00;
+    poDS->sHeader.iFrameFlag = 1;  // 1 - Frame not using
+    // poDS->sHeader.nFlagsTblOffset = 0x00;
+    // poDS->sHeader.nFlagsTblSize = 0x00;
     poDS->sHeader.nFileSize0 = 0x00;
     poDS->sHeader.nFileSize1 = 0x00;
     poDS->sHeader.iUnknown = 0;
@@ -3107,4 +3370,62 @@ GDALSuggestedBlockAccessPattern
 RMFRasterBand::GetSuggestedBlockAccessPattern() const
 {
     return GSBAP_RANDOM;
+}
+
+CPLErr RMFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
+                                   const char *pszDomain)
+{
+    if (GetAccess() == GA_Update)
+    {
+        CPLDebug("RMF", "SetMetadataItem: %s=%s", pszName, pszValue);
+        if (EQUAL(pszName, MD_NAME_KEY))
+        {
+            memcpy(sHeader.byName, pszValue,
+                   CPLStrnlen(pszValue, RMF_NAME_SIZE));
+            bHeaderDirty = true;
+        }
+        else if (EQUAL(pszName, MD_SCALE_KEY) && CPLStrnlen(pszValue, 10) > 4)
+        {
+            sHeader.dfScale = atof(pszValue + 4);
+            sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
+            bHeaderDirty = true;
+        }
+        else if (EQUAL(pszName, MD_FRAME_KEY))
+        {
+            bHeaderDirty = true;
+        }
+    }
+    return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+CPLErr RMFDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
+{
+    if (GetAccess() == GA_Update)
+    {
+        auto pszName = CSLFetchNameValue(papszMetadata, MD_NAME_KEY);
+        if (pszName != nullptr)
+        {
+            memcpy(sHeader.byName, pszName, CPLStrnlen(pszName, RMF_NAME_SIZE));
+            bHeaderDirty = true;
+
+            CPLDebug("RMF", "SetMetadata: %s", pszName);
+        }
+        auto pszScale = CSLFetchNameValue(papszMetadata, MD_SCALE_KEY);
+        if (pszScale != nullptr && CPLStrnlen(pszScale, 10) > 4)
+        {
+            sHeader.dfScale = atof(pszScale + 4);
+            sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
+            bHeaderDirty = true;
+
+            CPLDebug("RMF", "SetMetadata: %s", pszScale);
+        }
+        auto pszFrame = CSLFetchNameValue(papszMetadata, MD_FRAME_KEY);
+        if (pszFrame != nullptr)
+        {
+            bHeaderDirty = true;
+
+            CPLDebug("RMF", "SetMetadata: %s", pszFrame);
+        }
+    }
+    return GDALDataset::SetMetadata(papszMetadata, pszDomain);
 }

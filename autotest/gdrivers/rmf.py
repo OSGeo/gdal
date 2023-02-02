@@ -8,6 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2008, Andrey Kiselev <dron@ak4719.spb.edu>
+# Copyright (c) 2023, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -911,6 +912,33 @@ def test_rmf_34():
     assert max_valid_data == int(tst_ds.GetMetadataItem("ELEVATION_MAXIMUM"))
     tst_ds = None
     os.remove(tst_name)
+
+
+###############################################################################
+# Write/Read frame to/from RSW
+
+
+def test_rmf_35():
+    src_path = "data/small_world.tif"
+
+    wkt = "POLYGON ((27.2 35.4,30.4 37.8,32.8 34.6,29.6 32.2,27.2 35.4))"
+    name = "Test metadata"
+    scale = "1 : 1000000"
+
+    tmpfilename = "/vsimem/rmf_35.rsw"
+
+    options = '-of RMF -mo "SCALE={}" -mo "NAME={}" -mo "FRAME={}"'.format(
+        scale, name, wkt
+    )
+    dst_ds = gdal.Translate(tmpfilename, src_path, options=options)
+    assert dst_ds is not None
+    assert dst_ds.GetMetadataItem("NAME") == name
+    assert dst_ds.GetMetadataItem("SCALE") == scale
+    assert dst_ds.GetMetadataItem("FRAME") == wkt
+
+    dst_ds = None
+
+    gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
