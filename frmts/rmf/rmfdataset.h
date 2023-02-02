@@ -8,6 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Andrey Kiselev <dron@ak4719.spb.edu>
+ * Copyright (c) 2023, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,6 +138,23 @@ typedef struct
     GInt32 nDatum;
     GInt32 nZone;
 } RMFExtHeader;
+
+/************************************************************************/
+/*                              RSWFrame                                */
+/************************************************************************/
+
+typedef struct
+{
+    GInt32 nType;
+    GInt32 nSize;
+    GInt32 nSubCount;
+    GInt32 nCoordsSize;
+} RSWFrame;
+
+typedef struct
+{
+    GInt32 nX, nY;
+} RSWFrameCoord;
 
 /************************************************************************/
 /*                            RMFCompressionJob                         */
@@ -308,6 +326,10 @@ class RMFDataset final : public GDALDataset
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
+    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                                   const char *pszDomain = "") override;
+    virtual CPLErr SetMetadata(char **papszMetadata,
+                               const char *pszDomain = "") override;
     vsi_l_offset GetFileOffset(GUInt32 iRMFOffset) const;
     GUInt32 GetRMFOffset(vsi_l_offset iFileOffset,
                          vsi_l_offset *piNewFileOffset) const;
