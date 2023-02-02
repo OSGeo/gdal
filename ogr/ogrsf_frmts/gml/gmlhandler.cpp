@@ -780,6 +780,17 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
 
     /* Add attributes to the element */
     CPLXMLNode *psLastChildCurNode = AddAttributes(psCurNode, attr);
+    for (CPLXMLNode *psIter = psCurNode->psChild; psIter;
+         psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Attribute &&
+            strcmp(psIter->pszValue, "xlink:href") == 0 &&
+            psIter->psChild->pszValue && psIter->psChild->pszValue[0] == '#')
+        {
+            m_oMapElementToSubstitute[psIter->psChild->pszValue + 1] =
+                psCurNode;
+        }
+    }
 
     /* Some CityGML lack a srsDimension="3" in posList, such as in */
     /* http://www.citygml.org/fileadmin/count.php?f=fileadmin%2Fcitygml%2Fdocs%2FFrankfurt_Street_Setting_LOD3.zip
@@ -1643,6 +1654,34 @@ OGRErr GMLHandler::endElementGeometry()
         m_nGeomLen = 0;
     }
 
+    CPLXMLNode *psThisNode = apsXMLNode.back().psNode;
+    CPLXMLNode *psThisNodeChild = psThisNode->psChild;
+    if (!m_oMapElementToSubstitute.empty() && psThisNodeChild &&
+        psThisNodeChild->eType == CXT_Attribute &&
+        strcmp(psThisNodeChild->pszValue, "gml:id") == 0 &&
+        psThisNodeChild->psChild->pszValue)
+    {
+        auto oIter =
+            m_oMapElementToSubstitute.find(psThisNodeChild->psChild->pszValue);
+        if (oIter != m_oMapElementToSubstitute.end())
+        {
+            // CPLDebug("GML", "Substitution of xlink:href=\"#%s\" with actual content", psThisNodeChild->psChild->pszValue);
+            CPLXMLNode *psAfter = psThisNode->psNext;
+            psThisNode->psNext = nullptr;
+            // We can patch oIter->second as it stored as it in the current
+            // GMLFeature.
+            // Of course that would no longer be the case in case of
+            // cross-references between different GMLFeature, hence we clear
+            // m_oMapElementToSubstitute at the end of the current feature.
+            auto psLastChild = oIter->second->psChild;
+            CPLAssert(psLastChild);
+            while (psLastChild->psNext)
+                psLastChild = psLastChild->psNext;
+            psLastChild->psNext = CPLCloneXMLTree(psThisNode);
+            psThisNode->psNext = psAfter;
+        }
+    }
+
     if (m_nDepth == m_nGeometryDepth)
     {
         CPLXMLNode *psInterestNode = apsXMLNode.back().psNode;
@@ -1883,6 +1922,7 @@ OGRErr GMLHandler::endElementFeature()
     /* -------------------------------------------------------------------- */
     if (m_nDepth == m_nDepthFeature)
     {
+        m_oMapElementToSubstitute.clear();
         m_poReader->PopState();
 
         POP_STATE();

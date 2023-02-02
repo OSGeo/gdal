@@ -1608,18 +1608,29 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
     }
 
     // Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitly set to TRUE.
-    if (poSRS != nullptr &&
-        !CPLTestBool(CPLGetConfigOption("GML_REPORT_COMPD_CS", "FALSE")))
+    if (poSRS != nullptr && poSRS->IsCompound())
     {
-        OGR_SRSNode *poCOMPD_CS = poSRS->GetAttrNode("COMPD_CS");
-        if (poCOMPD_CS != nullptr)
+        const char *pszReportCompdCS =
+            CPLGetConfigOption("GML_REPORT_COMPD_CS", nullptr);
+        if (pszReportCompdCS == nullptr)
         {
-            OGR_SRSNode *poCandidateRoot = poCOMPD_CS->GetNode("PROJCS");
-            if (poCandidateRoot == nullptr)
-                poCandidateRoot = poCOMPD_CS->GetNode("GEOGCS");
-            if (poCandidateRoot != nullptr)
+            CPLDebug("GML", "Compound CRS detected but only horizontal part "
+                            "will be reported. Set the GML_REPORT_COMPD_CS=YES "
+                            "configuration option to get the Compound CRS");
+            pszReportCompdCS = "FALSE";
+        }
+        if (!CPLTestBool(pszReportCompdCS))
+        {
+            OGR_SRSNode *poCOMPD_CS = poSRS->GetAttrNode("COMPD_CS");
+            if (poCOMPD_CS != nullptr)
             {
-                poSRS->SetRoot(poCandidateRoot->Clone());
+                OGR_SRSNode *poCandidateRoot = poCOMPD_CS->GetNode("PROJCS");
+                if (poCandidateRoot == nullptr)
+                    poCandidateRoot = poCOMPD_CS->GetNode("GEOGCS");
+                if (poCandidateRoot != nullptr)
+                {
+                    poSRS->SetRoot(poCandidateRoot->Clone());
+                }
             }
         }
     }
@@ -1644,6 +1655,14 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
     {
         GMLGeometryPropertyDefn *poProperty =
             poClass->GetGeometryProperty(iField);
+
+        // Patch wrong .gfs file produced by earlier versions
+        if (poProperty->GetType() == wkbPolyhedralSurface &&
+            strcmp(poProperty->GetName(), "lod2Solid") == 0)
+        {
+            poProperty->SetType(wkbPolyhedralSurfaceZ);
+        }
+
         OGRGeomFieldDefn oField(poProperty->GetName(),
                                 (OGRwkbGeometryType)poProperty->GetType());
         if (poClass->GetGeometryPropertyCount() == 1 &&
@@ -1651,6 +1670,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
         {
             oField.SetType(wkbUnknown);
         }
+
         const auto &osSRSName = poProperty->GetSRSName();
         if (!osSRSName.empty())
         {
