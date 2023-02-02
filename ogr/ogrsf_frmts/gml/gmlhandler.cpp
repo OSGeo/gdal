@@ -1702,7 +1702,10 @@ OGRErr GMLHandler::endElementGeometry()
         GMLFeature *poGMLFeature = m_poReader->GetState()->m_poFeature;
         if (stateStack[nStackDepth] == STATE_BOUNDED_BY_IN_FEATURE)
         {
-            poGMLFeature->SetBoundedByGeometry(psInterestNode);
+            if (eAppSchemaType == APPSCHEMA_CITYGML)
+                CPLDestroyXMLNode(psInterestNode);
+            else
+                poGMLFeature->SetBoundedByGeometry(psInterestNode);
         }
         else
         {
