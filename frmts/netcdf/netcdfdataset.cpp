@@ -824,13 +824,35 @@ netCDFRasterBand::netCDFRasterBand(
         SetOffsetNoUpdate(dfOffset);
     }
 
+    bool bHasScale = false;
     if (nc_inq_attid(cdfid, nZId, CF_SCALE_FACTOR, nullptr) == NC_NOERR)
     {
+        bHasScale = true;
         double dfScale = 1;
         status = nc_get_att_double(cdfid, nZId, CF_SCALE_FACTOR, &dfScale);
         CPLDebug("GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale,
                  status);
         SetScaleNoUpdate(dfScale);
+    }
+
+    if (bValidRangeValid && GDALDataTypeIsInteger(eDataType) &&
+        eDataType != GDT_Int64 && eDataType != GDT_UInt64 &&
+        (std::fabs(std::round(adfValidRange[0]) - adfValidRange[0]) > 1e-5 ||
+         std::fabs(std::round(adfValidRange[1]) - adfValidRange[1]) > 1e-5) &&
+        CSLFetchNameValue(poNCDFDS->GetOpenOptions(), "HONOUR_VALID_RANGE") ==
+            nullptr)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "validity range = %f, %f contains floating-point values, "
+                 "whereas data type is integer. valid_range is thus likely "
+                 "wrong%s. Ignoring it.",
+                 adfValidRange[0], adfValidRange[1],
+                 bHasScale ? " (likely scaled using scale_factor/add_factor "
+                             "whereas it should be using the packed data type)"
+                           : "");
+        bValidRangeValid = false;
+        adfValidRange[0] = 0.0;
+        adfValidRange[1] = 0.0;
     }
 
     // Should we check for longitude values > 360?

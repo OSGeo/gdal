@@ -6273,6 +6273,20 @@ def test_netcdf_read_lon_lat_indexed_irregularly_spaced():
     }
 
 
+###############################################################################
+# Test opening a dataset with invalid min_valid/max_valid attributes,
+# which are scaled instead of being in the raw data type
+
+
+def test_netcdf_read_invalid_valid_min_valid_max():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/netcdf/invalid_valid_min_valid_max.nc")
+    assert gdal.GetLastErrorType() == gdal.CE_Warning
+    assert struct.unpack("i" * 4, ds.ReadRaster()) == (-9999, 0, 1, 2)
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
