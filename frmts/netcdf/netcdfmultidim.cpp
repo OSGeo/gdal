@@ -1587,7 +1587,6 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
     netCDFGroup oGroup(m_poShared, m_gid);
     const auto arrayNames = oGroup.GetMDArrayNames(nullptr);
     std::shared_ptr<GDALMDArray> candidateIndexingVariable;
-    int nCountCandidateIndexingVariable = 0;
     for (const auto &arrayName : arrayNames)
     {
         const auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
@@ -1608,15 +1607,14 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                 // If the array doesn't have a coordinates variable, but is a 1D
                 // array indexed by our dimension, then use it as the indexing
                 // variable, provided it is the only such variable.
-                if (nCountCandidateIndexingVariable == 0)
+                if (!candidateIndexingVariable)
                 {
                     candidateIndexingVariable = poArray;
                 }
                 else
                 {
-                    candidateIndexingVariable.reset();
+                    return nullptr;
                 }
-                nCountCandidateIndexingVariable++;
                 continue;
             }
         }
