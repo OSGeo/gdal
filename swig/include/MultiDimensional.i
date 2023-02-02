@@ -1032,6 +1032,17 @@ public:
   }
 %clear char **;
 
+%newobject GetGridded;
+%feature ("kwargs") GetGridded;
+%apply Pointer NONNULL {const char* pszGridOptions};
+  GDALMDArrayHS* GetGridded(const char* pszGridOptions,
+                            GDALMDArrayHS* xArray = NULL,
+                            GDALMDArrayHS* yArray = NULL,
+                            char** options = 0)
+  {
+    return GDALMDArrayGetGridded(self, pszGridOptions, xArray, yArray, options);
+  }
+
 %newobject AsClassicDataset;
   GDALDatasetShadow* AsClassicDataset(size_t iXDim, size_t iYDim)
   {

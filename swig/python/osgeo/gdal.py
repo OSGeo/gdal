@@ -3630,6 +3630,10 @@ class MDArray(object):
         r"""GetMask(MDArray self, char ** options=None) -> MDArray"""
         return _gdal.MDArray_GetMask(self, *args)
 
+    def GetGridded(self, *args, **kwargs) -> "GDALMDArrayHS *":
+        r"""GetGridded(MDArray self, char const * pszGridOptions, MDArray xArray=None, MDArray yArray=None, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetGridded(self, *args, **kwargs)
+
     def AsClassicDataset(self, *args) -> "GDALDatasetShadow *":
         r"""AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"""
         return _gdal.MDArray_AsClassicDataset(self, *args)

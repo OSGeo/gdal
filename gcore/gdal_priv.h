@@ -2857,6 +2857,12 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                  const OGRSpatialReference *poTargetSRS,
                  CSLConstList papszOptions) const;
 
+    std::shared_ptr<GDALMDArray>
+    GetGridded(const std::string &osGridOptions,
+               const std::shared_ptr<GDALMDArray> &poXArray = nullptr,
+               const std::shared_ptr<GDALMDArray> &poYArray = nullptr,
+               CSLConstList papszOptions = nullptr) const;
+
     virtual GDALDataset *AsClassicDataset(size_t iXDim, size_t iYDim) const;
 
     virtual CPLErr GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,

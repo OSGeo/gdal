@@ -6027,6 +6027,9 @@ SWIGINTERN GDALMDArrayHS *GDALMDArrayHS_GetUnscaled(GDALMDArrayHS *self){
 SWIGINTERN GDALMDArrayHS *GDALMDArrayHS_GetMask(GDALMDArrayHS *self,char **options=0){
     return GDALMDArrayGetMask(self, options);
   }
+SWIGINTERN GDALMDArrayHS *GDALMDArrayHS_GetGridded(GDALMDArrayHS *self,char const *pszGridOptions,GDALMDArrayHS *xArray=NULL,GDALMDArrayHS *yArray=NULL,char **options=0){
+    return GDALMDArrayGetGridded(self, pszGridOptions, xArray, yArray, options);
+  }
 SWIGINTERN GDALDatasetShadow *GDALMDArrayHS_AsClassicDataset(GDALMDArrayHS *self,size_t iXDim,size_t iYDim){
     return (GDALDatasetShadow*)GDALMDArrayAsClassicDataset(self, iXDim, iYDim);
   }
@@ -27706,6 +27709,109 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_MDArray_GetGridded(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
+  char *arg2 = (char *) 0 ;
+  GDALMDArrayHS *arg3 = (GDALMDArrayHS *) NULL ;
+  GDALMDArrayHS *arg4 = (GDALMDArrayHS *) NULL ;
+  char **arg5 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"pszGridOptions",  (char *)"xArray",  (char *)"yArray",  (char *)"options",  NULL 
+  };
+  GDALMDArrayHS *result = 0 ;
+  
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OOO:MDArray_GetGridded", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_GetGridded" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MDArray_GetGridded" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  if (obj2) {
+    res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MDArray_GetGridded" "', argument " "3"" of type '" "GDALMDArrayHS *""'"); 
+    }
+    arg3 = reinterpret_cast< GDALMDArrayHS * >(argp3);
+  }
+  if (obj3) {
+    res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "MDArray_GetGridded" "', argument " "4"" of type '" "GDALMDArrayHS *""'"); 
+    }
+    arg4 = reinterpret_cast< GDALMDArrayHS * >(argp4);
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg5 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALMDArrayHS *)GDALMDArrayHS_GetGridded(arg1,(char const *)arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALMDArrayHS, SWIG_POINTER_OWN |  0 );
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_MDArray_AsClassicDataset(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
@@ -47346,6 +47452,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "MDArray_Transpose", _wrap_MDArray_Transpose, METH_VARARGS, "MDArray_Transpose(MDArray self, int nList) -> MDArray"},
 	 { "MDArray_GetUnscaled", _wrap_MDArray_GetUnscaled, METH_O, "MDArray_GetUnscaled(MDArray self) -> MDArray"},
 	 { "MDArray_GetMask", _wrap_MDArray_GetMask, METH_VARARGS, "MDArray_GetMask(MDArray self, char ** options=None) -> MDArray"},
+	 { "MDArray_GetGridded", (PyCFunction)(void(*)(void))_wrap_MDArray_GetGridded, METH_VARARGS|METH_KEYWORDS, "MDArray_GetGridded(MDArray self, char const * pszGridOptions, MDArray xArray=None, MDArray yArray=None, char ** options=None) -> MDArray"},
 	 { "MDArray_AsClassicDataset", _wrap_MDArray_AsClassicDataset, METH_VARARGS, "MDArray_AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"},
 	 { "MDArray_GetStatistics", (PyCFunction)(void(*)(void))_wrap_MDArray_GetStatistics, METH_VARARGS|METH_KEYWORDS, "MDArray_GetStatistics(MDArray self, bool approx_ok=FALSE, bool force=TRUE, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
 	 { "MDArray_ComputeStatistics", (PyCFunction)(void(*)(void))_wrap_MDArray_ComputeStatistics, METH_VARARGS|METH_KEYWORDS, "MDArray_ComputeStatistics(MDArray self, bool approx_ok=FALSE, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},

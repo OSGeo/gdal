@@ -10810,6 +10810,34 @@ GDALMDArrayH *GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
+/*                     GDALMDArrayGetGridded()                          */
+/************************************************************************/
+
+/** Return a gridded array from scattered point data, that is from an array
+ * whose last dimension is the indexing variable of X and Y arrays.
+ *
+ * The returned object should be released with GDALMDArrayRelease().
+ *
+ * This is the same as the C++ method GDALMDArray::GetGridded().
+ *
+ * @since GDAL 3.7
+ */
+GDALMDArrayH GDALMDArrayGetGridded(GDALMDArrayH hArray,
+                                   const char *pszGridOptions,
+                                   GDALMDArrayH hXArray, GDALMDArrayH hYArray,
+                                   CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hArray, __func__, nullptr);
+    VALIDATE_POINTER1(pszGridOptions, __func__, nullptr);
+    auto gridded = hArray->m_poImpl->GetGridded(
+        pszGridOptions, hXArray ? hXArray->m_poImpl : nullptr,
+        hYArray ? hYArray->m_poImpl : nullptr, papszOptions);
+    if (!gridded)
+        return nullptr;
+    return new GDALMDArrayHS(gridded);
+}
+
+/************************************************************************/
 /*                        GDALReleaseArrays()                           */
 /************************************************************************/
 

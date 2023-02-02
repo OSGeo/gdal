@@ -43,6 +43,7 @@ add_library(
   rasterio.cpp
   rawdataset.cpp
   gdalmultidim.cpp
+  gdalmultidim_gridded.cpp
   gdalpython.cpp
   gdalpythondriverloader.cpp
   tilematrixset.cpp
