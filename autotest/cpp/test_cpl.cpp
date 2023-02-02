@@ -82,6 +82,12 @@ struct test_cpl : public ::testing::Test
         // Compose data path for test group
         data_ = tut::common::data_basedir;
     }
+
+    void SetUp() override
+    {
+        CPLSetConfigOptions(nullptr);
+        CPLSetThreadLocalConfigOptions(nullptr);
+    }
 };
 
 // Test cpl_list API
