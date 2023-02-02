@@ -65,6 +65,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libopenexr-dev${APT_ARCH_SUFFIX} libheif-dev${APT_ARCH_SUFFIX} \
        libdeflate-dev${APT_ARCH_SUFFIX} libblosc-dev${APT_ARCH_SUFFIX} liblz4-dev${APT_ARCH_SUFFIX} libbz2-dev${APT_ARCH_SUFFIX} \
        libbrotli-dev${APT_ARCH_SUFFIX} \
+       libarchive-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -297,6 +298,7 @@ RUN apt-get update \
         libarmadillo10 libpython3.10 libopenexr25 libheif1 \
         libdeflate0 libblosc1 liblz4-1 \
         libbrotli1 \
+        libarchive13 \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \

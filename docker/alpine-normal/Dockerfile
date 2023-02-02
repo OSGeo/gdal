@@ -33,6 +33,7 @@ RUN apk add --no-cache \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
     lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    libarchive-dev \
     kealib-dev libjxl-dev \
     json-c-dev giflib-dev \
     mariadb-connector-c-dev \
@@ -276,6 +277,7 @@ RUN apk add --no-cache \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
         lz4-libs blosc libdeflate brotli-libs liburiparser \
+        libarchive \
         kealib libjxl \
         json-c giflib \
         mariadb-connector-c \

@@ -217,11 +217,12 @@ retry:  // TODO(schwehr): Stop using goto.
     /* Check if the filename might be a directory of a special virtual file
      * system */
     if (STARTS_WITH(pszFilename, "/vsizip/") ||
-        STARTS_WITH(pszFilename, "/vsitar/"))
+        STARTS_WITH(pszFilename, "/vsitar/") ||
+        STARTS_WITH(pszFilename, "/vsi7z/"))
     {
         const char *pszExt = CPLGetExtension(pszFilename);
         if (EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") ||
-            EQUAL(pszExt, "gz") ||
+            EQUAL(pszExt, "gz") || EQUAL(pszExt, "7z") ||
             pszFilename[strlen(pszFilename) - 1] == '}'
 #ifdef DEBUG
             // For AFL, so that .cur_input is detected as the archive filename.

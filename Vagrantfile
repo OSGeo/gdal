@@ -130,6 +130,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "doxygen",
     "libproj-dev",
     "proj-data",
+    "libarchive-dev",
     "libcurl4-gnutls-dev",
     "libtiff5-dev",
     "libopenjp2-7-dev",

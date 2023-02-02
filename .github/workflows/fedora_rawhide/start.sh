@@ -6,7 +6,7 @@ dnf upgrade -y
 dnf install -y --setopt=install_weak_deps=False proj-devel
 dnf install -y clang make diffutils ccache cmake \
               libxml2-devel libxslt-devel expat-devel xerces-c-devel \
-              zlib-devel xz-devel libzstd-devel blosc-devel \
+              zlib-devel xz-devel libzstd-devel blosc-devel libarchive-devel \
               giflib-devel libjpeg-devel libpng-devel \
               openjpeg2-devel cfitsio-devel libwebp-devel \
               libkml-devel json-c-devel \

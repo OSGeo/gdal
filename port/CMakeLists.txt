@@ -66,6 +66,7 @@ set(CPL_SOURCES
     cpl_vsil_sparsefile.cpp
     cpl_vsil_abstract_archive.cpp
     cpl_vsil_tar.cpp
+    cpl_vsil_libarchive.cpp
     cpl_vsil_stdin.cpp
     cpl_vsil_buffered_reader.cpp
     cpl_vsil_plugin.cpp
@@ -198,6 +199,11 @@ if (NOT GDAL_USE_ZLIB_INTERNAL)
     target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
   endif (MSVC)
   gdal_target_link_libraries(cpl PRIVATE ZLIB::ZLIB)
+endif ()
+
+if (GDAL_USE_ARCHIVE)
+  target_compile_definitions(cpl PRIVATE -DHAVE_LIBARCHIVE)
+  gdal_target_link_libraries(cpl PRIVATE ARCHIVE::ARCHIVE)
 endif ()
 
 if (GDAL_USE_CURL)

@@ -218,6 +218,27 @@ detected. The behavior can also be globally controlled with the following variab
     required: ZLIB, TIFF, GEOTIFF and JSONC. Enabling them as external or internal
     libraries is thus required.
 
+
+Archive
+*******
+
+`libarchive <https://www.libarchive.org/>`_ is a library that supports a variety
+of archive and compression formats. It might be used since GDAL 3.7 to enable
+the :ref:`/vsi7z/ <vsi7z>` virtual file system.
+
+.. option:: ARCHIVE_INCLUDE_DIR
+
+    Path to an include directory with the ``archive.h`` header file.
+
+.. option:: ARCHIVE_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_ARC=ON/OFF
+
+    Control whether to use libarchive. Defaults to ON when libarchive is found.
+
+
 Armadillo
 *********
 

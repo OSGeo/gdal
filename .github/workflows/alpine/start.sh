@@ -14,6 +14,7 @@ apk add \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev libaec-dev hdf5-dev freexl-dev \
     lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    libarchive-dev \
     kealib-dev libjxl-dev \
     json-c-dev giflib-dev \
     libspatialite-dev librasterlite2-dev \

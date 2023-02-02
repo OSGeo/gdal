@@ -18,7 +18,7 @@ RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig 
 RUN apk add --no-cache \
     linux-headers \
     curl-dev tiff-dev \
-    zlib-dev zstd-dev lz4-dev libdeflate-dev \
+    zlib-dev zstd-dev lz4-dev libdeflate-dev libarchive-dev \
     libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
 
 # Build openjpeg
@@ -171,7 +171,7 @@ RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
         libcurl tiff \
-        zlib zstd-libs lz4-libs libdeflate \
+        zlib zstd-libs lz4-libs libdeflate libarchive \
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
