@@ -103,8 +103,16 @@ CPLErr GDALGridDataMetricAverageDistancePts(const void *, GUInt32,
 CPLErr GDALGridLinear(const void *, GUInt32, const double *, const double *,
                       const double *, double, double, double *, void *);
 
-CPLErr CPL_DLL ParseAlgorithmAndOptions(const char *, GDALGridAlgorithm *,
-                                        void **);
+#ifndef GDAL_COMPILATION
+/* ParseAlgorithmAndOptions() is used by PostGIS Raster, hence this alias */
+
+/** Compatibility deprecated alias for GDALGridParseAlgorithmAndOptions() */
+#define ParseAlgorithmAndOptions GDALGridParseAlgorithmAndOptions
+#endif
+
+CPLErr CPL_DLL GDALGridParseAlgorithmAndOptions(const char *,
+                                                GDALGridAlgorithm *, void **);
+
 CPL_C_END
 
 #endif /* GDALGRID_H_INCLUDED */

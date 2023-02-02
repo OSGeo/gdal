@@ -985,8 +985,8 @@ GDALGridOptionsNew(char **papszArgv,
     psOptions->bNoDataSet = false;
     psOptions->dfNoDataValue = 0;
 
-    ParseAlgorithmAndOptions(szAlgNameInvDist, &psOptions->eAlgorithm,
-                             &psOptions->pOptions);
+    GDALGridParseAlgorithmAndOptions(szAlgNameInvDist, &psOptions->eAlgorithm,
+                                     &psOptions->pOptions);
 
     bool bGotSourceFilename = false;
     bool bGotDestFilename = false;
@@ -1236,8 +1236,9 @@ GDALGridOptionsNew(char **papszArgv,
         {
             const char *pszAlgorithm = papszArgv[++i];
             CPLFree(psOptions->pOptions);
-            if (ParseAlgorithmAndOptions(pszAlgorithm, &psOptions->eAlgorithm,
-                                         &psOptions->pOptions) != CE_None)
+            if (GDALGridParseAlgorithmAndOptions(
+                    pszAlgorithm, &psOptions->eAlgorithm,
+                    &psOptions->pOptions) != CE_None)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to process algorithm name and parameters");
