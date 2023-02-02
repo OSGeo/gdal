@@ -3905,6 +3905,18 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         return importFromEPSG(27700);
     }
 
+    // Used by German CityGML files
+    if (EQUAL(pszDefinition, "urn:adv:crs:ETRS89_UTM32*DE_DHHN92_NH"))
+    {
+        // "ETRS89 / UTM Zone 32N + DHHN92 height"
+        return SetFromUserInput("EPSG:25832+5783");
+    }
+    else if (EQUAL(pszDefinition, "urn:adv:crs:ETRS89_UTM32*DE_DHHN2016_NH"))
+    {
+        // "ETRS89 / UTM Zone 32N + DHHN2016 height"
+        return SetFromUserInput("EPSG:25832+7837");
+    }
+
     // Deal with IGNF:xxx, ESRI:xxx, etc from the PROJ database
     const char *pszDot = strrchr(pszDefinition, ':');
     if (pszDot)
