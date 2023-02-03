@@ -534,6 +534,10 @@ class LayerTranslator
                   GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
                   GIntBig &nTotalEventsDone, GDALProgressFunc pfnProgress,
                   void *pProgressArg, GDALVectorTranslateOptions *psOptions);
+
+  private:
+    const OGRGeometry *GetDstClipGeom(OGRSpatialReference *poGeomSRS);
+    const OGRGeometry *GetSrcClipGeom(OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -5271,51 +5275,14 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 if (nDstGeomFieldCount == 0 && poStolenGeometry &&
                     m_poClipSrcOri)
                 {
-                    auto poGeomSRS = poStolenGeometry->getSpatialReference();
-                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+                    const OGRGeometry *poClipGeom =
+                        GetSrcClipGeom(poStolenGeometry->getSpatialReference());
+
+                    if (poClipGeom != nullptr &&
+                        !poClipGeom->Intersects(poStolenGeometry))
                     {
-                        auto poClipSrcSRS =
-                            m_poClipSrcOri->getSpatialReference();
-                        if (poClipSrcSRS && poGeomSRS &&
-                            !poClipSrcSRS->IsSame(poGeomSRS))
-                        {
-                            // Transform clip geom to geometry SRS
-                            m_poClipSrcReprojectedToSrcSRS.reset(
-                                m_poClipSrcOri->clone());
-                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
-                                    poGeomSRS) != OGRERR_NONE)
-                            {
-                                delete poStolenGeometry;
-                                goto end_loop;
-                            }
-                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
-                        }
-                        else if (!poClipSrcSRS && poGeomSRS)
-                        {
-                            if (!m_bWarnedClipSrcSRS)
-                            {
-                                m_bWarnedClipSrcSRS = true;
-                                CPLError(
-                                    CE_Warning, CPLE_AppDefined,
-                                    "Clip source geometry has no attached SRS, "
-                                    "but the feature's geometry has one. "
-                                    "Assuming clip source geometry SRS is the "
-                                    "same as the feature's geometry");
-                            }
-                        }
-                    }
-                    OGRGeometry *poClipped = poStolenGeometry->Intersection(
-                        m_poClipSrcReprojectedToSrcSRS
-                            ? m_poClipSrcReprojectedToSrcSRS.get()
-                            : m_poClipSrcOri);
-                    delete poStolenGeometry;
-                    poStolenGeometry = nullptr;
-                    if (poClipped == nullptr || poClipped->IsEmpty())
-                    {
-                        delete poClipped;
                         goto end_loop;
                     }
-                    delete poClipped;
                 }
 
                 poDstFeature->Reset();
@@ -5474,47 +5441,20 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 
                 if (m_poClipSrcOri)
                 {
-                    auto poGeomSRS = poDstGeometry->getSpatialReference();
-                    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+
+                    const OGRGeometry *clipGeom =
+                        GetSrcClipGeom(poDstGeometry->getSpatialReference());
+
+                    std::unique_ptr<OGRGeometry> poClipped;
+                    if (clipGeom != nullptr &&
+                        clipGeom->Intersects(poDstGeometry))
                     {
-                        auto poClipSrcSRS =
-                            m_poClipSrcOri->getSpatialReference();
-                        if (poClipSrcSRS && poGeomSRS &&
-                            !poClipSrcSRS->IsSame(poGeomSRS))
-                        {
-                            // Transform clip geom to geometry SRS
-                            m_poClipSrcReprojectedToSrcSRS.reset(
-                                m_poClipSrcOri->clone());
-                            if (m_poClipSrcReprojectedToSrcSRS->transformTo(
-                                    poGeomSRS) != OGRERR_NONE)
-                            {
-                                delete poDstGeometry;
-                                goto end_loop;
-                            }
-                            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
-                        }
-                        else if (!poClipSrcSRS && poGeomSRS)
-                        {
-                            if (!m_bWarnedClipSrcSRS)
-                            {
-                                m_bWarnedClipSrcSRS = true;
-                                CPLError(
-                                    CE_Warning, CPLE_AppDefined,
-                                    "Clip source geometry has no attached SRS, "
-                                    "but the feature's geometry has one. "
-                                    "Assuming clip source geometry SRS is the "
-                                    "same as the feature's geometry");
-                            }
-                        }
+                        poClipped.reset(clipGeom->Intersection(poDstGeometry));
                     }
-                    OGRGeometry *poClipped = poDstGeometry->Intersection(
-                        m_poClipSrcReprojectedToSrcSRS
-                            ? m_poClipSrcReprojectedToSrcSRS.get()
-                            : m_poClipSrcOri);
+
                     if (poClipped == nullptr || poClipped->IsEmpty())
                     {
                         delete poDstGeometry;
-                        delete poClipped;
                         goto end_loop;
                     }
 
@@ -5533,12 +5473,11 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                             OGRToOGCGeomType(poClipped->getGeometryType()),
                             OGRToOGCGeomType(poDstGeometry->getGeometryType()));
                         delete poDstGeometry;
-                        delete poClipped;
                         goto end_loop;
                     }
 
                     delete poDstGeometry;
-                    poDstGeometry = poClipped;
+                    poDstGeometry = poClipped.release();
                 }
 
                 OGRCoordinateTransformation *const poCT =
@@ -5592,47 +5531,25 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 {
                     if (m_poClipDstOri)
                     {
-                        auto poGeomSRS = poDstGeometry->getSpatialReference();
-                        if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
+                        const OGRGeometry *poClipGeom = GetDstClipGeom(
+                            poDstGeometry->getSpatialReference());
+                        if (poClipGeom == nullptr)
                         {
-                            auto poClipDstSRS =
-                                m_poClipDstOri->getSpatialReference();
-                            if (poClipDstSRS && poGeomSRS &&
-                                !poClipDstSRS->IsSame(poGeomSRS))
-                            {
-                                // Transform clip geom to geometry SRS
-                                m_poClipDstReprojectedToDstSRS.reset(
-                                    m_poClipDstOri->clone());
-                                if (m_poClipDstReprojectedToDstSRS->transformTo(
-                                        poGeomSRS) != OGRERR_NONE)
-                                {
-                                    delete poDstGeometry;
-                                    goto end_loop;
-                                }
-                                m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
-                            }
-                            else if (!poClipDstSRS && poGeomSRS)
-                            {
-                                if (!m_bWarnedClipDstSRS)
-                                {
-                                    m_bWarnedClipDstSRS = true;
-                                    CPLError(CE_Warning, CPLE_AppDefined,
-                                             "Clip destination geometry has no "
-                                             "attached SRS, but the feature's "
-                                             "geometry has one. Assuming clip "
-                                             "destination geometry SRS is the "
-                                             "same as the feature's geometry");
-                                }
-                            }
+                            delete poDstGeometry;
+                            goto end_loop;
                         }
-                        OGRGeometry *poClipped = poDstGeometry->Intersection(
-                            m_poClipDstReprojectedToDstSRS
-                                ? m_poClipDstReprojectedToDstSRS.get()
-                                : m_poClipDstOri);
+
+                        std::unique_ptr<OGRGeometry> poClipped;
+
+                        if (poClipGeom->Intersects(poDstGeometry))
+                        {
+                            poClipped.reset(
+                                poClipGeom->Intersection(poDstGeometry));
+                        }
+
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
                             delete poDstGeometry;
-                            delete poClipped;
                             goto end_loop;
                         }
 
@@ -5652,12 +5569,11 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                                 OGRToOGCGeomType(
                                     poDstGeometry->getGeometryType()));
                             delete poDstGeometry;
-                            delete poClipped;
                             goto end_loop;
                         }
 
                         delete poDstGeometry;
-                        poDstGeometry = poClipped;
+                        poDstGeometry = poClipped.release();
                     }
 
                     if (m_bMakeValid)
@@ -5798,6 +5714,85 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
     }
 
     return bRet;
+}
+
+/************************************************************************/
+/*                LayerTranslator::GetDstClipGeom()                     */
+/************************************************************************/
+
+const OGRGeometry *
+LayerTranslator::GetDstClipGeom(OGRSpatialReference *poGeomSRS)
+{
+    if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
+    {
+        auto poClipDstSRS = m_poClipDstOri->getSpatialReference();
+        if (poClipDstSRS && poGeomSRS && !poClipDstSRS->IsSame(poGeomSRS))
+        {
+            // Transform clip geom to geometry SRS
+            m_poClipDstReprojectedToDstSRS.reset(m_poClipDstOri->clone());
+            if (m_poClipDstReprojectedToDstSRS->transformTo(poGeomSRS) !=
+                OGRERR_NONE)
+            {
+                return nullptr;
+            }
+            m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
+        }
+        else if (!poClipDstSRS && poGeomSRS)
+        {
+            if (!m_bWarnedClipDstSRS)
+            {
+                m_bWarnedClipDstSRS = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Clip destination geometry has no "
+                         "attached SRS, but the feature's "
+                         "geometry has one. Assuming clip "
+                         "destination geometry SRS is the "
+                         "same as the feature's geometry");
+            }
+        }
+    }
+
+    return m_poClipDstReprojectedToDstSRS ? m_poClipDstReprojectedToDstSRS.get()
+                                          : m_poClipDstOri;
+}
+
+/************************************************************************/
+/*                LayerTranslator::GetSrcClipGeom()                     */
+/************************************************************************/
+
+const OGRGeometry *
+LayerTranslator::GetSrcClipGeom(OGRSpatialReference *poGeomSRS)
+{
+    if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
+    {
+        auto poClipSrcSRS = m_poClipSrcOri->getSpatialReference();
+        if (poClipSrcSRS && poGeomSRS && !poClipSrcSRS->IsSame(poGeomSRS))
+        {
+            // Transform clip geom to geometry SRS
+            m_poClipSrcReprojectedToSrcSRS.reset(m_poClipSrcOri->clone());
+            if (m_poClipSrcReprojectedToSrcSRS->transformTo(poGeomSRS) !=
+                OGRERR_NONE)
+            {
+                return nullptr;
+            }
+            m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
+        }
+        else if (!poClipSrcSRS && poGeomSRS)
+        {
+            if (!m_bWarnedClipSrcSRS)
+            {
+                m_bWarnedClipSrcSRS = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Clip source geometry has no attached SRS, "
+                         "but the feature's geometry has one. "
+                         "Assuming clip source geometry SRS is the "
+                         "same as the feature's geometry");
+            }
+        }
+    }
+
+    return m_poClipSrcReprojectedToSrcSRS ? m_poClipSrcReprojectedToSrcSRS.get()
+                                          : m_poClipSrcOri;
 }
 
 /************************************************************************/
