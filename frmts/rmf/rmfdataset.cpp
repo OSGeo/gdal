@@ -1515,6 +1515,8 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
     CPLDebug("RMF", "Version %d", poDS->sHeader.iVersion);
 
+    constexpr GUInt32 ROI_MAX_SIZE_TO_AVOID_EXCESSIVE_RAM_USAGE =
+        10 * 1024 * 1024;
 #ifdef DEBUG
 
     CPLDebug("RMF",
@@ -1540,10 +1542,13 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     CPLDebug("RMF", "Georeferencing: pixel size %f, LLX %f, LLY %f",
              poDS->sHeader.dfPixelSize, poDS->sHeader.dfLLX,
              poDS->sHeader.dfLLY);
-    if (poDS->sHeader.nROIOffset && poDS->sHeader.nROISize)
+
+    if (poDS->sHeader.nROIOffset &&
+        poDS->sHeader.nROISize >= sizeof(RSWFrame) &&
+        poDS->sHeader.nROISize <= ROI_MAX_SIZE_TO_AVOID_EXCESSIVE_RAM_USAGE)
     {
-        GByte *pabyROI =
-            reinterpret_cast<GByte *>(CPLCalloc(poDS->sHeader.nROISize, 1));
+        GByte *pabyROI = reinterpret_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(poDS->sHeader.nROISize));
         if (pabyROI == nullptr)
         {
             delete poDS;
@@ -1552,13 +1557,20 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
         VSIFSeekL(poDS->fp, poDS->GetFileOffset(poDS->sHeader.nROIOffset),
                   SEEK_SET);
-        VSIFReadL(pabyROI, 1, poDS->sHeader.nROISize, poDS->fp);
+        if (VSIFReadL(pabyROI, poDS->sHeader.nROISize, 1, poDS->fp) != 1)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot read ROI");
+            CPLFree(pabyROI);
+            delete poDS;
+            return nullptr;
+        }
 
         GInt32 nValue;
 
         CPLDebug("RMF", "ROI coordinates:");
         /* coverity[tainted_data] */
-        for (GUInt32 i = 0; i < poDS->sHeader.nROISize; i += sizeof(nValue))
+        for (GUInt32 i = 0; i + sizeof(nValue) <= poDS->sHeader.nROISize;
+             i += sizeof(nValue))
         {
             RMF_READ_LONG(pabyROI, nValue, i);
             CPLDebug("RMF", "%d", nValue);
@@ -1947,10 +1959,12 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     }
 
     /* Set frame */
-    if (poDS->sHeader.nROIOffset && poDS->sHeader.nROISize)
+    if (poDS->sHeader.nROIOffset &&
+        poDS->sHeader.nROISize >= sizeof(RSWFrame) &&
+        poDS->sHeader.nROISize <= ROI_MAX_SIZE_TO_AVOID_EXCESSIVE_RAM_USAGE)
     {
-        GByte *pabyROI =
-            reinterpret_cast<GByte *>(CPLCalloc(poDS->sHeader.nROISize, 1));
+        GByte *pabyROI = reinterpret_cast<GByte *>(
+            VSI_MALLOC_VERBOSE(poDS->sHeader.nROISize));
         if (pabyROI == nullptr)
         {
             delete poDS;
@@ -1959,7 +1973,13 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
         VSIFSeekL(poDS->fp, poDS->GetFileOffset(poDS->sHeader.nROIOffset),
                   SEEK_SET);
-        VSIFReadL(pabyROI, 1, poDS->sHeader.nROISize, poDS->fp);
+        if (VSIFReadL(pabyROI, poDS->sHeader.nROISize, 1, poDS->fp) != 1)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot read ROI");
+            CPLFree(pabyROI);
+            delete poDS;
+            return nullptr;
+        }
 
         GInt32 nFrameType;
         RMF_READ_LONG(pabyROI, nFrameType, 0);
@@ -1970,7 +1990,8 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
             CPLDebug("RMF", "ROI coordinates:");
             /* coverity[tainted_data] */
-            for (GUInt32 i = sizeof(RSWFrame); i < poDS->sHeader.nROISize;
+            for (GUInt32 i = sizeof(RSWFrame);
+                 i + sizeof(RSWFrameCoord) <= poDS->sHeader.nROISize;
                  i += sizeof(RSWFrameCoord))
             {
                 GInt32 nX, nY;
