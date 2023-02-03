@@ -7190,6 +7190,8 @@ def test_ogr_gpkg_add_relationship_complex_names():
     ds = None
     assert validate(filename), "validation failed"
 
+    gdal.Unlink(filename)
+
 
 ###############################################################################
 # Test AlterGeomFieldDefn()
