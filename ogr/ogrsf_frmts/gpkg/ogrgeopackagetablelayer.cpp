@@ -836,6 +836,44 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     }
 #endif
 
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    if (m_poDS->m_bHasGPKGOGRContents)
+    {
+        char *pszSQL = sqlite3_mprintf("SELECT feature_count "
+                                       "FROM gpkg_ogr_contents "
+                                       "WHERE table_name = '%q'"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                                       " OR 0"
+#endif
+                                       " LIMIT 2",
+                                       m_pszTableName);
+        auto oResultFeatureCount = SQLQuery(poDb, pszSQL);
+        sqlite3_free(pszSQL);
+        if (oResultFeatureCount && oResultFeatureCount->RowCount() == 0)
+        {
+            pszSQL = sqlite3_mprintf("SELECT feature_count "
+                                     "FROM gpkg_ogr_contents "
+                                     "WHERE lower(table_name) = lower('%q')"
+#ifdef WORKAROUND_SQLITE3_BUGS
+                                     " OR 0"
+#endif
+                                     " LIMIT 2",
+                                     m_pszTableName);
+            oResultFeatureCount = SQLQuery(poDb, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+
+        if (oResultFeatureCount && oResultFeatureCount->RowCount() == 1)
+        {
+            const char *pszFeatureCount = oResultFeatureCount->GetValue(0, 0);
+            if (pszFeatureCount)
+            {
+                m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+            }
+        }
+    }
+#endif
+
     if (m_bIsInGpkgContents)
     {
         /* Check that the table name is registered in gpkg_contents */
@@ -859,45 +897,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         const char *pszDescription = oContents.osDescription.c_str();
         if (pszDescription[0])
             OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
-
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-        if (m_poDS->m_bHasGPKGOGRContents)
-        {
-            char *pszSQL = sqlite3_mprintf("SELECT feature_count "
-                                           "FROM gpkg_ogr_contents "
-                                           "WHERE table_name = '%q'"
-#ifdef WORKAROUND_SQLITE3_BUGS
-                                           " OR 0"
-#endif
-                                           " LIMIT 2",
-                                           m_pszTableName);
-            auto oResultFeatureCount = SQLQuery(poDb, pszSQL);
-            sqlite3_free(pszSQL);
-            if (oResultFeatureCount && oResultFeatureCount->RowCount() == 0)
-            {
-                pszSQL = sqlite3_mprintf("SELECT feature_count "
-                                         "FROM gpkg_ogr_contents "
-                                         "WHERE lower(table_name) = lower('%q')"
-#ifdef WORKAROUND_SQLITE3_BUGS
-                                         " OR 0"
-#endif
-                                         " LIMIT 2",
-                                         m_pszTableName);
-                oResultFeatureCount = SQLQuery(poDb, pszSQL);
-                sqlite3_free(pszSQL);
-            }
-
-            if (oResultFeatureCount && oResultFeatureCount->RowCount() == 1)
-            {
-                const char *pszFeatureCount =
-                    oResultFeatureCount->GetValue(0, 0);
-                if (pszFeatureCount)
-                {
-                    m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
-                }
-            }
-        }
-#endif
 
         if (m_bIsSpatial)
         {
@@ -4863,7 +4862,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
     const char *pszIdentifier, const char *pszDescription)
 {
     m_bIsSpatial = eGType != wkbNone;
-    m_bIsInGpkgContents = true;
+    m_bIsInGpkgContents =
+        m_bIsSpatial ||
+        !m_poDS->HasNonSpatialTablesNonRegisteredInGpkgContents();
     m_bFeatureDefnCompleted = true;
     m_bDeferredCreation = true;
     m_bTableCreatedInTransaction = m_poDS->IsInTransaction();
@@ -5115,30 +5116,30 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
         sqlite3_free(pszSQL);
         if (err != OGRERR_NONE)
             return OGRERR_FAILURE;
+    }
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-        if (m_poDS->m_bHasGPKGOGRContents)
-        {
-            pszSQL = sqlite3_mprintf("DELETE FROM gpkg_ogr_contents WHERE "
-                                     "lower(table_name) = lower('%q')",
-                                     pszLayerName);
-            SQLCommand(m_poDS->GetDB(), pszSQL);
-            sqlite3_free(pszSQL);
+    if (m_poDS->m_bHasGPKGOGRContents)
+    {
+        pszSQL = sqlite3_mprintf("DELETE FROM gpkg_ogr_contents WHERE "
+                                 "lower(table_name) = lower('%q')",
+                                 pszLayerName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
 
-            pszSQL = sqlite3_mprintf(
-                "INSERT INTO gpkg_ogr_contents (table_name, feature_count) "
-                "VALUES ('%q', NULL)",
-                pszLayerName);
-            err = SQLCommand(m_poDS->GetDB(), pszSQL);
-            sqlite3_free(pszSQL);
-            if (err == OGRERR_NONE)
-            {
-                m_nTotalFeatureCount = 0;
-                m_bAddOGRFeatureCountTriggers = true;
-            }
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO gpkg_ogr_contents (table_name, feature_count) "
+            "VALUES ('%q', NULL)",
+            pszLayerName);
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if (err == OGRERR_NONE)
+        {
+            m_nTotalFeatureCount = 0;
+            m_bAddOGRFeatureCountTriggers = true;
         }
-#endif
     }
+#endif
 
     ResetReading();
 

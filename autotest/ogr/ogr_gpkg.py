@@ -8298,3 +8298,58 @@ def test_ogr_gpkg_sozip():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test inserting a non-spatial layer into a database that has non-spatial
+# layers which are not registered in gpkg_contents
+# Cf https://github.com/qgis/QGIS/issues/51721
+
+
+@pytest.mark.parametrize("with_gpkg_ogr_contents", [True, False])
+def test_ogr_gpkg_add_non_spatial_layer_in_existing_database_with_unregistered(
+    with_gpkg_ogr_contents,
+):
+
+    filename = "/vsimem/ogr_gpkg_add_non_spatial_layer_in_existing_database_with_unregistered.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    ds.CreateLayer("point", geom_type=ogr.wkbPoint)
+    ds.ExecuteSQL(
+        "CREATE TABLE non_spatial(fid INTEGER PRIMARY KEY AUTOINCREMENT, str TEXT)"
+    )
+    ds = None
+
+    if not with_gpkg_ogr_contents:
+        ds = ogr.Open(filename, update=1)
+        ds.ExecuteSQL("DROP TABLE gpkg_ogr_contents")
+        ds = None
+
+    ds = ogr.Open(filename, update=1)
+    assert ds.GetLayerCount() == 2
+    assert set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())) == set(
+        ["point", "non_spatial"]
+    )
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert ds.CreateLayer("non_spatial2", geom_type=ogr.wkbNone) is not None
+    ds = None
+
+    assert validate(filename), "validation failed"
+
+    ds = ogr.Open(filename)
+    assert ds.GetLayerCount() == 3
+    assert set(ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())) == set(
+        ["point", "non_spatial", "non_spatial2"]
+    )
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    if with_gpkg_ogr_contents:
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_ogr_contents")
+        assert sql_lyr.GetFeatureCount() == 2
+        ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(filename)
