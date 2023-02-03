@@ -1645,6 +1645,9 @@ OGRErr GMLHandler::endElementGeometry()
 
     if (m_nDepth == m_nGeometryDepth)
     {
+        m_nGeometryDepth = 0;
+
+        CPLAssert(apsXMLNode.size() == 2);
         CPLXMLNode *psInterestNode = apsXMLNode.back().psNode;
 
         /*char* pszXML = CPLSerializeXMLTree(psInterestNode);
