@@ -350,6 +350,11 @@
         </loop>
     </tre>
 
+
+    <tre name="COMNTA">
+        <field name="COMMENT" length_var="*"/>
+    </tre>
+
     <tre name="CSDIDA" md_prefix="NITF_CSDIDA_" length="70" location="file">
         <field name="DAY" length="2"/>
         <field name="MONTH" length="3"/>

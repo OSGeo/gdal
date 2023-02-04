@@ -4231,6 +4231,42 @@ def test_nitf_91():
 
 
 ###############################################################################
+# Test parsing COMNTA TRE
+
+
+def test_nitf_comnta_doc():
+    tre_data = (
+        "FILE_TRE=HEX/COMNTA="
+        + hex_string("Hyperion data courtesy of the U.S. Geological Survey.")
+        + "0d0a"
+        + hex_string("Relative Spectral Response for SWIR FPA bands only.")
+        + "0d0a"
+        + hex_string("Thanks USGS! ")
+        + "f09f8e89"
+    )
+
+    ds = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/nitf_comnta.ntf", 1, 1, options=[tre_data]
+    )
+    ds = None
+
+    ds = gdal.Open("/vsimem/nitf_comnta.ntf")
+    data = ds.GetMetadata("xml:TRE")[0]
+    ds = None
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_comnta.ntf")
+
+    expected_data = """<tres>
+  <tre name="COMNTA" location="file">
+    <field name="COMMENT" value="Hyperion data courtesy of the U.S. Geological Survey.\r\nRelative Spectral Response for SWIR FPA bands only.\r\nThanks USGS! 🎉" />
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+
+###############################################################################
 # Test parsing RSMAPB TRE (STDI-0002-1-v5.0 App U)
 
 
