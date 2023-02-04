@@ -1637,6 +1637,9 @@ OGRFeature *OGROpenFileGDBLayer::GetCurrentFeature()
     int iRow = m_poLyrTable->GetCurRow();
     for (int iGDBIdx = 0; iGDBIdx < m_poLyrTable->GetFieldCount(); iGDBIdx++)
     {
+        if (iOGRIdx == m_iFIDAsRegularColumnIndex)
+            iOGRIdx++;
+
         if (iGDBIdx == m_iGeomFieldIdx)
         {
             if (m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
@@ -1754,6 +1757,10 @@ OGRFeature *OGROpenFileGDBLayer::GetCurrentFeature()
     }
 
     poFeature->SetFID(iRow + 1);
+
+    if (m_iFIDAsRegularColumnIndex >= 0)
+        poFeature->SetField(m_iFIDAsRegularColumnIndex, poFeature->GetFID());
+
     return poFeature;
 }
 

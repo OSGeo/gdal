@@ -3960,3 +3960,114 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn():
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test CreateField() with name = OBJECTID
+# Cf https://github.com/qgis/QGIS/issues/51435
+
+
+@pytest.mark.parametrize("field_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTReal])
+def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
+
+    dirname = "/vsimem/test_ogr_openfilegdb_write_create_OBJECTID.gdb"
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+        assert (
+            lyr.CreateField(ogr.FieldDefn("unused_before", ogr.OFTString))
+            == ogr.OGRERR_NONE
+        )
+        assert (
+            lyr.CreateField(ogr.FieldDefn(lyr.GetFIDColumn(), field_type))
+            == ogr.OGRERR_NONE
+        )
+        assert (
+            lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
+            == ogr.OGRERR_NONE
+        )
+        assert lyr.GetLayerDefn().GetFieldCount() == 3
+
+        # No FID, but OBJECTID
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f[lyr.GetFIDColumn()] = 10
+        f["int_field"] = 2
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert f.GetFID() == 10
+        f = None
+
+        field_idx = lyr.GetLayerDefn().GetFieldIndex("unused_before")
+        assert lyr.DeleteField(field_idx) == ogr.OGRERR_NONE
+
+        assert (
+            lyr.CreateField(ogr.FieldDefn("int_field2", ogr.OFTInteger))
+            == ogr.OGRERR_NONE
+        )
+
+        # FID and OBJECTID, both equal
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(11)
+        f[lyr.GetFIDColumn()] = 11
+        f["int_field"] = 3
+        f["int_field2"] = 30
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert f.GetFID() == 11
+
+        f["int_field"] = 4
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+
+        # FID and OBJECTID, different ==> error
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(12)
+        f[lyr.GetFIDColumn()] = 13
+        with gdaltest.error_handler():
+            assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 10
+        assert f[lyr.GetFIDColumn()] == 10
+        assert f["int_field"] == 2
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 11
+        assert f[lyr.GetFIDColumn()] == 11
+        assert f["int_field"] == 4
+        assert f["int_field2"] == 30
+
+        # Can't delete or alter OBJECTID field
+        field_idx = lyr.GetLayerDefn().GetFieldIndex(lyr.GetFIDColumn())
+        with gdaltest.error_handler():
+            assert lyr.DeleteField(field_idx) == ogr.OGRERR_FAILURE
+            assert (
+                lyr.AlterFieldDefn(
+                    field_idx,
+                    lyr.GetLayerDefn().GetFieldDefn(field_idx),
+                    ogr.ALTER_ALL_FLAG,
+                )
+                == ogr.OGRERR_FAILURE
+            )
+
+        ds = None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 10
+        assert f["int_field"] == 2
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 11
+        assert f["int_field"] == 4
+        assert f["int_field2"] == 30
+
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)

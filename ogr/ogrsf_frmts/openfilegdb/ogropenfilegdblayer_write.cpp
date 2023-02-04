@@ -37,6 +37,7 @@
 #include <cstring>
 #include <cwchar>
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -1060,6 +1061,28 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     OGRFieldDefn oField(poField);
     poField = &oField;
 
+    const std::string osFidColumn = GetFIDColumn();
+    if (!osFidColumn.empty() &&
+        EQUAL(poField->GetNameRef(), osFidColumn.c_str()))
+    {
+        if (poField->GetType() != OFTInteger &&
+            poField->GetType() != OFTInteger64 &&
+            // typically a GeoPackage exported with QGIS as a shapefile and
+            // re-imported See https://github.com/qgis/QGIS/pull/43118
+            !(poField->GetType() == OFTReal && poField->GetWidth() <= 20 &&
+              poField->GetPrecision() == 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Wrong field type for %s : %d", poField->GetNameRef(),
+                     poField->GetType());
+            return OGRERR_FAILURE;
+        }
+
+        m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount();
+        m_poFeatureDefn->AddFieldDefn(poField);
+        return OGRERR_NONE;
+    }
+
     const std::string osFieldNameOri(poField->GetNameRef());
     const std::string osFieldName = GetLaunderedFieldName(osFieldNameOri);
     if (osFieldName != osFieldNameOri)
@@ -1255,6 +1278,13 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
     if (iFieldToAlter < 0 || iFieldToAlter >= m_poFeatureDefn->GetFieldCount())
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    if (iFieldToAlter == m_iFIDAsRegularColumnIndex)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Cannot alter field %s",
+                 GetFIDColumn());
         return OGRERR_FAILURE;
     }
 
@@ -1716,6 +1746,13 @@ OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
         return OGRERR_FAILURE;
     }
 
+    if (iFieldToDelete == m_iFIDAsRegularColumnIndex)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Cannot delete field %s",
+                 GetFIDColumn());
+        return OGRERR_FAILURE;
+    }
+
     const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(iFieldToDelete);
     const int nGDBIdx = m_poLyrTable->GetFieldIdx(poFieldDefn->GetNameRef());
     if (nGDBIdx < 0)
@@ -1731,6 +1768,9 @@ OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
         std::string(poFieldDefn->GetDomainName());
 
     m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+
+    if (m_iFIDAsRegularColumnIndex > iFieldToDelete)
+        m_iFIDAsRegularColumnIndex--;
 
     if (iFieldToDelete < m_iAreaField)
         m_iAreaField--;
@@ -2011,6 +2051,8 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
     m_aosTempStrings.clear();
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
     {
+        if (i == m_iFIDAsRegularColumnIndex)
+            continue;
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         const int idxFileGDB =
             m_poLyrTable->GetFieldIdx(poFieldDefn->GetNameRef());
@@ -2135,6 +2177,47 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
+/*                   CheckFIDAndFIDColumnConsistency()                  */
+/************************************************************************/
+
+static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
+                                            int iFIDAsRegularColumnIndex)
+{
+    bool ok = false;
+    if (!poFeature->IsFieldSetAndNotNull(iFIDAsRegularColumnIndex))
+    {
+        // nothing to do
+    }
+    else if (poFeature->GetDefnRef()
+                 ->GetFieldDefn(iFIDAsRegularColumnIndex)
+                 ->GetType() == OFTReal)
+    {
+        const double dfFID =
+            poFeature->GetFieldAsDouble(iFIDAsRegularColumnIndex);
+        if (dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+            dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()))
+        {
+            const auto nFID = static_cast<GIntBig>(dfFID);
+            if (nFID == poFeature->GetFID())
+            {
+                ok = true;
+            }
+        }
+    }
+    else if (poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) ==
+             poFeature->GetFID())
+    {
+        ok = true;
+    }
+    if (!ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Inconsistent values of FID and field of same name");
+    }
+    return ok;
+}
+
+/************************************************************************/
 /*                           ICreateFeature()                           */
 /************************************************************************/
 
@@ -2150,6 +2233,54 @@ OGRErr OGROpenFileGDBLayer::ICreateFeature(OGRFeature *poFeature)
         !BeginEmulatedTransaction())
     {
         return OGRERR_FAILURE;
+    }
+
+    /* In case the FID column has also been created as a regular field */
+    if (m_iFIDAsRegularColumnIndex >= 0)
+    {
+        if (poFeature->GetFID() == OGRNullFID)
+        {
+            if (poFeature->IsFieldSetAndNotNull(m_iFIDAsRegularColumnIndex))
+            {
+                if (m_poFeatureDefn->GetFieldDefn(m_iFIDAsRegularColumnIndex)
+                        ->GetType() == OFTReal)
+                {
+                    bool ok = false;
+                    const double dfFID =
+                        poFeature->GetFieldAsDouble(m_iFIDAsRegularColumnIndex);
+                    if (dfFID >= static_cast<double>(
+                                     std::numeric_limits<int64_t>::min()) &&
+                        dfFID <= static_cast<double>(
+                                     std::numeric_limits<int64_t>::max()))
+                    {
+                        const auto nFID = static_cast<GIntBig>(dfFID);
+                        if (static_cast<double>(nFID) == dfFID)
+                        {
+                            poFeature->SetFID(nFID);
+                            ok = true;
+                        }
+                    }
+                    if (!ok)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Value of FID %g cannot be parsed to an Integer64",
+                            dfFID);
+                        return OGRERR_FAILURE;
+                    }
+                }
+                else
+                {
+                    poFeature->SetFID(poFeature->GetFieldAsInteger64(
+                        m_iFIDAsRegularColumnIndex));
+                }
+            }
+        }
+        else if (!CheckFIDAndFIDColumnConsistency(poFeature,
+                                                  m_iFIDAsRegularColumnIndex))
+        {
+            return OGRERR_FAILURE;
+        }
     }
 
     const auto nFID64Bit = poFeature->GetFID();
@@ -2193,6 +2324,13 @@ OGRErr OGROpenFileGDBLayer::ISetFeature(OGRFeature *poFeature)
 
     if (m_poDS->IsInTransaction() && !m_bHasCreatedBackupForTransaction &&
         !BeginEmulatedTransaction())
+    {
+        return OGRERR_FAILURE;
+    }
+
+    /* In case the FID column has also been created as a regular field */
+    if (m_iFIDAsRegularColumnIndex >= 0 &&
+        !CheckFIDAndFIDColumnConsistency(poFeature, m_iFIDAsRegularColumnIndex))
     {
         return OGRERR_FAILURE;
     }
