@@ -1,0 +1,1051 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CityModel xmlns:tex="http://www.opengis.net/citygml/texturedsurface/1.0" xmlns:app="http://www.opengis.net/citygml/appearance/1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:bldg="http://www.opengis.net/citygml/building/1.0" xmlns:base="http://www.citygml.org/citygml/profiles/base/1.0" xmlns:smil20="http://www.w3.org/2001/SMIL20/" xmlns:grp="http://www.opengis.net/citygml/cityobjectgroup/1.0" xmlns:wtr="http://www.opengis.net/citygml/waterbody/1.0" xmlns:sch="http://www.ascc.net/xml/schematron" xmlns:veg="http://www.opengis.net/citygml/vegetation/1.0" xmlns:frn="http://www.opengis.net/citygml/cityfurniture/1.0" xmlns:gml="http://www.opengis.net/gml" xmlns:tran="http://www.opengis.net/citygml/transportation/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:smil20lang="http://www.w3.org/2001/SMIL20/Language" xmlns:gen="http://www.opengis.net/citygml/generics/1.0" xmlns:dem="http://www.opengis.net/citygml/relief/1.0" xmlns:xAL="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0" xmlns="http://www.opengis.net/citygml/1.0" xmlns:luse="http://www.opengis.net/citygml/landuse/1.0" xsi:schemaLocation="http://www.opengis.net/citygml/1.0 http://repository.gdi-de.org/schemas/adv/citygml/1.0/cityGMLBaseLoD2.xsd http://www.opengis.net/citygml/building/1.0 http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD2.xsd http://www.opengis.net/citygml/appearance/1.0 http://repository.gdi-de.org/schemas/adv/citygml/appearance/1.0/appearanceLoD2.xsd http://www.opengis.net/citygml/generics/1.0 http://repository.gdi-de.org/schemas/adv/citygml/generics/1.0/genericsLoD2.xsd">
+<gml:name>LoD2_713_5322_1_BY</gml:name>
+<gml:boundedBy>
+<gml:Envelope srsName="urn:adv:crs:ETRS89_UTM32*DE_DHHN2016_NH" srsDimension="3">
+<gml:lowerCorner>713229.269 5322510.533 579.210</gml:lowerCorner>
+<gml:upperCorner>713794.941 5322988.002 588.330</gml:upperCorner>
+</gml:Envelope>
+</gml:boundedBy>
+<cityObjectMember>
+<bldg:Building gml:id="DEBY_LOD2_5706948">
+<gml:name>DEBY_LOD2_5706948</gml:name>
+<creationDate>2014-10-08</creationDate>
+<externalReference>
+<informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</informationSystem>
+<externalObject>
+<name>DEBYvAAAAAAS3by3</name>
+</externalObject>
+</externalReference>
+<gen:stringAttribute name="StandLK">
+<gen:value>2014-07-28</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Gemeindeschluessel">
+<gen:value>09175128</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleDachhoehe">
+<gen:value>1000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleLage">
+<gen:value>1000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleBodenhoehe">
+<gen:value>1100</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="HoeheGrund">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="HoeheDach">
+<gen:value>588.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="NiedrigsteTraufeDesGebaeudes">
+<gen:value>587.126</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Methode">
+<gen:value>2000</gen:value>
+</gen:stringAttribute>
+<bldg:function>31001_2000</bldg:function>
+<bldg:roofType>3100</bldg:roofType>
+<bldg:measuredHeight uom="urn:adv:uom:m">4.11</bldg:measuredHeight>
+<bldg:lod2Solid>
+<gml:Solid>
+<gml:exterior>
+<gml:CompositeSurface>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_192348bb-0888-4b77-b8df-355f94444c49_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_2166a046-796e-4e04-b8ef-7f92fd08633c_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_4ef5c71d-1639-4cf1-acb4-dd1f386470cd_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_58a23c31-a23c-4392-a548-6ae3dc4e53c4_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_5df4be70-899d-43b6-85f0-bd7eb37fd7ce_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_69272219-91ca-418f-b117-b2d07cb4dbfe_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_6c0d2377-07e6-4664-b3d3-9dc7377fbaa3_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_92caa221-2cdf-4de3-be99-626e3887338e_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_b950fd8e-5056-44bc-9d5e-a26cb3eeeb00_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_c9a72e5a-075e-48fc-9811-7751e4e1e763_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_e0e7b943-416f-48e0-bc70-409f9a28e455_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_e881a298-694b-496b-a822-52c849ea832e_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5706948_f6995cbb-c138-4069-ab24-3e1e04ded310_poly"/>
+</gml:CompositeSurface>
+</gml:exterior>
+</gml:Solid>
+</bldg:lod2Solid>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_e0e7b943-416f-48e0-bc70-409f9a28e455">
+<gen:stringAttribute name="Flaeche">
+<gen:value>6.669</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.446</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>587.666</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_e0e7b943-416f-48e0-bc70-409f9a28e455_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713234.768 5322984.981 584.220 713234.820 5322985.017 584.220 713236.493 5322986.180 584.220 713236.493 5322986.180 587.126 713234.820 5322985.017 587.650 713234.768 5322984.981 587.666 713234.768 5322984.981 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_69272219-91ca-418f-b117-b2d07cb4dbfe">
+<gen:stringAttribute name="Flaeche">
+<gen:value>17.108</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.443</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>587.663</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_69272219-91ca-418f-b117-b2d07cb4dbfe_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713232.071 5322979.751 584.220 713232.071 5322979.751 587.663 713229.269 5322983.856 587.663 713229.269 5322983.856 584.220 713232.071 5322979.751 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_2166a046-796e-4e04-b8ef-7f92fd08633c">
+<gen:stringAttribute name="Flaeche">
+<gen:value>14.343</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.446</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>587.666</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_2166a046-796e-4e04-b8ef-7f92fd08633c_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713236.374 5322982.678 587.658 713237.154 5322981.561 587.655 713237.154 5322981.561 584.220 713236.374 5322982.678 584.220 713234.768 5322984.981 584.220 713234.768 5322984.981 587.666 713236.374 5322982.678 587.658</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_4ef5c71d-1639-4cf1-acb4-dd1f386470cd">
+<gen:stringAttribute name="Flaeche">
+<gen:value>4.767</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.990</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.210</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_4ef5c71d-1639-4cf1-acb4-dd1f386470cd_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713234.612 5322981.452 584.220 713235.347 5322980.429 584.220 713235.347 5322980.429 587.860 713234.612 5322981.452 587.853 713234.612 5322981.452 588.210 713234.585 5322981.490 588.210 713234.585 5322981.490 584.220 713234.612 5322981.452 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5706948_f6995cbb-c138-4069-ab24-3e1e04ded310">
+<gen:stringAttribute name="Flaeche">
+<gen:value>13.322</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>75.582</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>237.909</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.110</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>3.443</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>587.663</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_f6995cbb-c138-4069-ab24-3e1e04ded310_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713232.071 5322979.751 587.663 713234.205 5322981.227 588.330 713231.399 5322985.337 588.330 713229.269 5322983.856 587.663 713232.071 5322979.751 587.663</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_192348bb-0888-4b77-b8df-355f94444c49">
+<gen:stringAttribute name="Flaeche">
+<gen:value>7.792</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.810</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.030</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_192348bb-0888-4b77-b8df-355f94444c49_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713235.347 5322980.429 584.220 713235.909 5322980.781 584.220 713237.154 5322981.561 584.220 713237.154 5322981.561 587.655 713235.909 5322980.781 588.030 713235.347 5322980.429 587.860 713235.347 5322980.429 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_5df4be70-899d-43b6-85f0-bd7eb37fd7ce">
+<gen:stringAttribute name="Flaeche">
+<gen:value>6.446</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>2.910</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>587.130</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_5df4be70-899d-43b6-85f0-bd7eb37fd7ce_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713235.231 5322988.002 584.220 713235.231 5322988.002 587.130 713236.493 5322986.180 587.126 713236.493 5322986.180 584.220 713235.231 5322988.002 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5706948_e881a298-694b-496b-a822-52c849ea832e">
+<gen:stringAttribute name="Flaeche">
+<gen:value>20.197</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>75.581</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>57.958</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.110</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>2.906</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>587.126</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_e881a298-694b-496b-a822-52c849ea832e_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713234.205 5322981.227 588.330 713234.585 5322981.490 588.210 713234.612 5322981.452 588.210 713235.181 5322981.849 588.032 713235.909 5322980.781 588.030 713237.154 5322981.561 587.655 713236.374 5322982.678 587.658 713234.768 5322984.981 587.666 713234.820 5322985.017 587.650 713236.493 5322986.180 587.126 713235.231 5322988.002 587.130 713233.571 5322986.847 587.650 713231.399 5322985.337 588.330 713234.205 5322981.227 588.330</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_58a23c31-a23c-4392-a548-6ae3dc4e53c4">
+<gen:stringAttribute name="Flaeche">
+<gen:value>26.183</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.110</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_58a23c31-a23c-4392-a548-6ae3dc4e53c4_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713229.269 5322983.856 587.663 713231.399 5322985.337 588.330 713233.571 5322986.847 587.650 713235.231 5322988.002 587.130 713235.231 5322988.002 584.220 713233.571 5322986.847 584.220 713231.399 5322985.337 584.220 713229.269 5322983.856 584.220 713229.269 5322983.856 587.663</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5706948_c9a72e5a-075e-48fc-9811-7751e4e1e763">
+<gen:stringAttribute name="Flaeche">
+<gen:value>0.894</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>75.613</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>237.771</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.812</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.032</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>3.633</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>587.853</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_c9a72e5a-075e-48fc-9811-7751e4e1e763_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713235.347 5322980.429 587.860 713235.909 5322980.781 588.030 713235.181 5322981.849 588.032 713234.612 5322981.452 587.853 713235.347 5322980.429 587.860</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_92caa221-2cdf-4de3-be99-626e3887338e">
+<gen:stringAttribute name="Flaeche">
+<gen:value>11.671</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.110</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_92caa221-2cdf-4de3-be99-626e3887338e_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713232.071 5322979.751 584.220 713234.205 5322981.227 584.220 713234.585 5322981.490 584.220 713234.585 5322981.490 588.210 713234.205 5322981.227 588.330 713232.071 5322979.751 587.663 713232.071 5322979.751 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5706948_b950fd8e-5056-44bc-9d5e-a26cb3eeeb00">
+<gen:stringAttribute name="Flaeche">
+<gen:value>0.124</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>3.990</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>588.210</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>3.633</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>587.853</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_b950fd8e-5056-44bc-9d5e-a26cb3eeeb00_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713235.181 5322981.849 588.032 713234.612 5322981.452 588.210 713234.612 5322981.452 587.853 713235.181 5322981.849 588.032</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:GroundSurface gml:id="DEBY_LOD2_5706948_6c0d2377-07e6-4664-b3d3-9dc7377fbaa3">
+<gen:stringAttribute name="Flaeche">
+<gen:value>33.330</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>584.220</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5706948_6c0d2377-07e6-4664-b3d3-9dc7377fbaa3_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713235.909 5322980.781 584.220 713235.347 5322980.429 584.220 713234.612 5322981.452 584.220 713234.585 5322981.490 584.220 713234.205 5322981.227 584.220 713232.071 5322979.751 584.220 713229.269 5322983.856 584.220 713231.399 5322985.337 584.220 713233.571 5322986.847 584.220 713235.231 5322988.002 584.220 713236.493 5322986.180 584.220 713234.820 5322985.017 584.220 713234.768 5322984.981 584.220 713236.374 5322982.678 584.220 713237.154 5322981.561 584.220 713235.909 5322980.781 584.220</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:GroundSurface>
+</bldg:boundedBy>
+<bldg:address>
+<Address gml:id="fme-gen-b59521eb-f4ae-4075-bd94-efd01e532729"><xalAddress><xAL:AddressDetails>
+ <xAL:Country>
+  <xAL:CountryName>Germany</xAL:CountryName>
+  <xAL:Locality Type="Town">
+   <xAL:LocalityName>Moosach</xAL:LocalityName>
+   <xAL:Thoroughfare Type="Street">
+    <xAL:ThoroughfareName>In der Flur Niederseeon</xAL:ThoroughfareName>
+   </xAL:Thoroughfare>
+  </xAL:Locality>
+ </xAL:Country>
+</xAL:AddressDetails></xalAddress>
+</Address>
+</bldg:address>
+</bldg:Building>
+</cityObjectMember>
+<cityObjectMember>
+<bldg:Building gml:id="DEBY_LOD2_5744266">
+<gml:name>DEBY_LOD2_5744266</gml:name>
+<creationDate>2014-10-08</creationDate>
+<externalReference>
+<informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</informationSystem>
+<externalObject>
+<name>DEBYvAAAAAAS0oyF</name>
+</externalObject>
+</externalReference>
+<gen:stringAttribute name="StandLK">
+<gen:value>2014-07-28</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Gemeindeschluessel">
+<gen:value>09175128</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleDachhoehe">
+<gen:value>1000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleLage">
+<gen:value>1000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="DatenquelleBodenhoehe">
+<gen:value>1100</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="HoeheGrund">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="HoeheDach">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="NiedrigsteTraufeDesGebaeudes">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Methode">
+<gen:value>2000</gen:value>
+</gen:stringAttribute>
+<bldg:function>31001_1000</bldg:function>
+<bldg:roofType>3200</bldg:roofType>
+<bldg:measuredHeight uom="urn:adv:uom:m">6.61</bldg:measuredHeight>
+<bldg:lod2Solid>
+<gml:Solid>
+<gml:exterior>
+<gml:CompositeSurface>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_121b3c75-1f0a-4409-bb83-b7dcd1b42fee_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_14478f89-9194-4957-a219-1e102f79b11a_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_1c73c30b-cfbd-46c5-9fd3-94bf7fa81429_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_1c957e91-cd19-4308-a483-c82976cd5515_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_1ea7c1f4-45ba-48ed-b997-532877edc012_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_2e2eb7ef-3d47-4831-8f07-853b85187fda_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_31bee86d-3085-485b-9d40-d04c6585892a_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_379f12ea-f2c3-4da3-9e7a-30ac75f18e6c_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_5f3cfc3b-79ea-475f-8de0-64c056ad1268_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_aebef151-88da-426a-a5f7-3fac0ee88737_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_b9e247c7-282f-46d0-8df9-2b6aa0fdee9f_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_e4ea4b10-2fb9-4ca3-a0e2-e3e48244e573_poly"/>
+<gml:surfaceMember xlink:href="#DEBY_LOD2_5744266_f6653bc1-5081-47ea-91f7-c90457109394_poly"/>
+</gml:CompositeSurface>
+</gml:exterior>
+</gml:Solid>
+</bldg:lod2Solid>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_b9e247c7-282f-46d0-8df9-2b6aa0fdee9f">
+<gen:stringAttribute name="Flaeche">
+<gen:value>13.123</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>59.393</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>276.229</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_b9e247c7-282f-46d0-8df9-2b6aa0fdee9f_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713784.563 5322520.005 584.489 713786.966 5322522.103 585.820 713783.744 5322525.792 583.768 713783.346 5322520.091 583.768 713784.563 5322520.005 584.489</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_1c957e91-cd19-4308-a483-c82976cd5515">
+<gen:stringAttribute name="Flaeche">
+<gen:value>51.141</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>-0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_1c957e91-cd19-4308-a483-c82976cd5515_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713788.076 5322525.509 583.768 713794.941 5322525.058 583.768 713794.941 5322525.058 579.210 713788.076 5322525.509 579.210 713783.744 5322525.792 579.210 713783.744 5322525.792 583.768 713788.076 5322525.509 583.768</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_f6653bc1-5081-47ea-91f7-c90457109394">
+<gen:stringAttribute name="Flaeche">
+<gen:value>26.040</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_f6653bc1-5081-47ea-91f7-c90457109394_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713783.346 5322520.091 579.210 713783.346 5322520.091 583.768 713783.744 5322525.792 583.768 713783.744 5322525.792 579.210 713783.346 5322520.091 579.210</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_14478f89-9194-4957-a219-1e102f79b11a">
+<gen:stringAttribute name="Flaeche">
+<gen:value>66.359</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>-0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_14478f89-9194-4957-a219-1e102f79b11a_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713793.897 5322510.533 579.210 713794.440 5322518.084 579.210 713794.941 5322525.058 579.210 713794.941 5322525.058 583.768 713794.440 5322518.084 583.768 713793.897 5322510.533 583.768 713793.897 5322510.533 579.210</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_e4ea4b10-2fb9-4ca3-a0e2-e3e48244e573">
+<gen:stringAttribute name="Flaeche">
+<gen:value>12.239</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>59.393</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>185.985</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_e4ea4b10-2fb9-4ca3-a0e2-e3e48244e573_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713787.665 5322519.785 584.479 713787.712 5322519.782 584.479 713787.628 5322518.581 583.768 713791.285 5322521.820 585.820 713787.827 5322522.047 585.820 713786.966 5322522.103 585.820 713784.563 5322520.005 584.489 713787.665 5322519.785 584.479</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_aebef151-88da-426a-a5f7-3fac0ee88737">
+<gen:stringAttribute name="Flaeche">
+<gen:value>44.264</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>58.994</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>96.347</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_aebef151-88da-426a-a5f7-3fac0ee88737_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713793.897 5322510.533 583.768 713794.440 5322518.084 583.768 713794.941 5322525.058 583.768 713791.285 5322521.820 585.820 713791.032 5322518.307 585.820 713790.735 5322514.179 585.820 713793.897 5322510.533 583.768</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_5f3cfc3b-79ea-475f-8de0-64c056ad1268">
+<gen:stringAttribute name="Flaeche">
+<gen:value>13.582</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>59.032</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>186.145</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_5f3cfc3b-79ea-475f-8de0-64c056ad1268_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713793.897 5322510.533 583.768 713790.735 5322514.179 585.820 713787.093 5322511.009 583.774 713793.897 5322510.533 583.768</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_2e2eb7ef-3d47-4831-8f07-853b85187fda">
+<gen:stringAttribute name="Flaeche">
+<gen:value>40.525</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>5.269</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>584.479</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>-0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_2e2eb7ef-3d47-4831-8f07-853b85187fda_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713787.093 5322511.009 583.774 713787.624 5322518.531 583.768 713787.628 5322518.581 583.768 713787.712 5322519.782 584.479 713787.712 5322519.782 579.210 713787.628 5322518.581 579.210 713787.624 5322518.531 579.210 713787.093 5322511.009 579.210 713787.093 5322511.009 583.774</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_379f12ea-f2c3-4da3-9e7a-30ac75f18e6c">
+<gen:stringAttribute name="Flaeche">
+<gen:value>31.107</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>4.564</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>583.774</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_379f12ea-f2c3-4da3-9e7a-30ac75f18e6c_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713793.897 5322510.533 579.210 713793.897 5322510.533 583.768 713787.093 5322511.009 583.774 713787.093 5322511.009 579.210 713793.897 5322510.533 579.210</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:WallSurface gml:id="DEBY_LOD2_5744266_31bee86d-3085-485b-9d40-d04c6585892a">
+<gen:stringAttribute name="Flaeche">
+<gen:value>22.648</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>5.279</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>584.489</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>-0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_31bee86d-3085-485b-9d40-d04c6585892a_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713784.563 5322520.005 579.210 713787.665 5322519.785 579.210 713787.712 5322519.782 579.210 713787.712 5322519.782 584.479 713787.665 5322519.785 584.479 713784.563 5322520.005 584.489 713783.346 5322520.091 583.768 713783.346 5322520.091 579.210 713784.563 5322520.005 579.210</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:WallSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_121b3c75-1f0a-4409-bb83-b7dcd1b42fee">
+<gen:stringAttribute name="Flaeche">
+<gen:value>30.359</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>58.995</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>276.349</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_121b3c75-1f0a-4409-bb83-b7dcd1b42fee_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713790.735 5322514.179 585.820 713791.032 5322518.307 585.820 713791.285 5322521.820 585.820 713787.628 5322518.581 583.768 713787.624 5322518.531 583.768 713787.093 5322511.009 583.774 713790.735 5322514.179 585.820</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:RoofSurface gml:id="DEBY_LOD2_5744266_1c73c30b-cfbd-46c5-9fd3-94bf7fa81429">
+<gen:stringAttribute name="Flaeche">
+<gen:value>31.348</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachneigung">
+<gen:value>59.393</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Dachorientierung">
+<gen:value>5.985</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>6.610</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>585.820</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>4.558</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>583.768</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_1c73c30b-cfbd-46c5-9fd3-94bf7fa81429_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713786.966 5322522.103 585.820 713787.827 5322522.047 585.820 713791.285 5322521.820 585.820 713794.941 5322525.058 583.768 713788.076 5322525.509 583.768 713783.744 5322525.792 583.768 713786.966 5322522.103 585.820</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:RoofSurface>
+</bldg:boundedBy>
+<bldg:boundedBy>
+<bldg:GroundSurface gml:id="DEBY_LOD2_5744266_1ea7c1f4-45ba-48ed-b997-532877edc012">
+<gen:stringAttribute name="Flaeche">
+<gen:value>124.416</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX">
+<gen:value>0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MAX_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN">
+<gen:value>-0.000</gen:value>
+</gen:stringAttribute>
+<gen:stringAttribute name="Z_MIN_ASL">
+<gen:value>579.210</gen:value>
+</gen:stringAttribute>
+<bldg:lod2MultiSurface>
+<gml:MultiSurface>
+<gml:surfaceMember>
+<gml:Polygon gml:id="DEBY_LOD2_5744266_1ea7c1f4-45ba-48ed-b997-532877edc012_poly">
+<gml:exterior>
+<gml:LinearRing>
+<gml:posList>713794.440 5322518.084 579.210 713793.897 5322510.533 579.210 713787.093 5322511.009 579.210 713787.624 5322518.531 579.210 713787.628 5322518.581 579.210 713787.712 5322519.782 579.210 713787.665 5322519.785 579.210 713784.563 5322520.005 579.210 713783.346 5322520.091 579.210 713783.744 5322525.792 579.210 713788.076 5322525.509 579.210 713794.941 5322525.058 579.210 713794.440 5322518.084 579.210</gml:posList>
+</gml:LinearRing>
+</gml:exterior>
+</gml:Polygon>
+</gml:surfaceMember>
+</gml:MultiSurface>
+</bldg:lod2MultiSurface>
+</bldg:GroundSurface>
+</bldg:boundedBy>
+<bldg:address>
+<Address gml:id="fme-gen-3c25e401-e6df-4860-9da0-90188a5290f6"><xalAddress><xAL:AddressDetails>
+ <xAL:Country>
+  <xAL:CountryName>Germany</xAL:CountryName>
+  <xAL:Locality Type="Town">
+   <xAL:LocalityName>Moosach</xAL:LocalityName>
+   <xAL:Thoroughfare Type="Street">
+    <xAL:ThoroughfareName>Niederseeon 45</xAL:ThoroughfareName>
+   </xAL:Thoroughfare>
+  </xAL:Locality>
+ </xAL:Country>
+</xAL:AddressDetails></xalAddress>
+</Address>
+</bldg:address>
+</bldg:Building>
+</cityObjectMember>
+</CityModel>
+

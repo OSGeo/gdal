@@ -45,6 +45,7 @@
 #include "cpl_multiproc.h"
 #include "gmlutils.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -137,6 +138,7 @@ class GMLHandler
     int m_nGeometryDepth;
     bool m_bAlreadyFoundGeometry;
     int m_nGeometryPropertyIndex;
+    std::map<std::string, CPLXMLNode *> m_oMapElementToSubstitute{};
 
     int m_nDepth;
     int m_nDepthFeature;
