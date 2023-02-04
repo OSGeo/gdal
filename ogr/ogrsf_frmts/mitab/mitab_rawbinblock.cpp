@@ -736,6 +736,18 @@ GInt32 TABRawBinBlock::ReadInt32()
 #endif
 }
 
+GInt64 TABRawBinBlock::ReadInt64()
+{
+    GInt64 n64Value = 0;
+
+    ReadBytes(8, reinterpret_cast<GByte *>(&n64Value));
+
+#ifdef CPL_MSB
+    CPL_LSBPTR64(&n64Value);
+#endif
+    return n64Value;
+}
+
 float TABRawBinBlock::ReadFloat()
 {
     float fValue = 0.0f;
@@ -852,6 +864,15 @@ int TABRawBinBlock::WriteInt32(GInt32 n32Value)
 #endif
 
     return WriteBytes(4, reinterpret_cast<GByte *>(&n32Value));
+}
+
+int TABRawBinBlock::WriteInt64(GInt64 n64Value)
+{
+#ifdef CPL_MSB
+    CPL_SWAP64PTR(&n64Value);
+#endif
+
+    return WriteBytes(8, reinterpret_cast<GByte *>(&n64Value));
 }
 
 int TABRawBinBlock::WriteFloat(float fValue)

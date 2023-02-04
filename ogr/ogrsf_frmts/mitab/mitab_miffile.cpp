@@ -647,6 +647,24 @@ int MIFFile::AddFields(const char *pszLine)
                 AddFieldNative(osFieldName, TABFSmallInt, atoi(papszToken[2]));
         }
     }
+    else if (numTok >= 2 && EQUAL(papszToken[1], "largeint"))
+    {
+        if (numTok == 2)
+        {
+            /*-------------------------------------------------
+             * LargeInt type without a specified width
+             *------------------------------------------------*/
+            nStatus = AddFieldNative(osFieldName, TABFLargeInt);
+        }
+        else /* if (numTok > 2) */
+        {
+            /*-------------------------------------------------
+             * LargeInt type with a specified width
+             *------------------------------------------------*/
+            nStatus =
+                AddFieldNative(osFieldName, TABFLargeInt, atoi(papszToken[2]));
+        }
+    }
     else if (numTok >= 4 && EQUAL(papszToken[1], "decimal"))
     {
         /*-------------------------------------------------
@@ -988,6 +1006,9 @@ int MIFFile::WriteMIFHeader()
                 break;
             case TABFSmallInt:
                 m_poMIFFile->WriteLine("  %s SmallInt\n", osFieldName.c_str());
+                break;
+            case TABFLargeInt:
+                m_poMIFFile->WriteLine("  %s LargeInt\n", osFieldName.c_str());
                 break;
             case TABFFloat:
                 m_poMIFFile->WriteLine("  %s Float\n", osFieldName.c_str());
@@ -1671,6 +1692,13 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
              * SMALLINT type
              *------------------------------------------------*/
             poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
+            poFieldDefn->SetWidth(nWidth);
+            break;
+        case TABFLargeInt:
+            /*-------------------------------------------------
+             * LargeInt type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger64);
             poFieldDefn->SetWidth(nWidth);
             break;
         case TABFDecimal:

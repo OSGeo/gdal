@@ -374,6 +374,13 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
                 SetField(iField, nValue);
                 break;
             }
+            case TABFLargeInt:
+            {
+                const GInt64 nValue = poDATFile->ReadLargeIntField(
+                    poDATFile->GetFieldWidth(iField));
+                SetField(iField, nValue);
+                break;
+            }
             case TABFFloat:
             {
                 const double dValue =
@@ -538,6 +545,11 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
             case TABFSmallInt:
                 nStatus = poDATFile->WriteSmallIntField(
                     static_cast<GInt16>(GetFieldAsInteger(iField)), poINDFile,
+                    panIndexNo[iField]);
+                break;
+            case TABFLargeInt:
+                nStatus = poDATFile->WriteLargeIntField(
+                    static_cast<GInt64>(GetFieldAsInteger64(iField)), poINDFile,
                     panIndexNo[iField]);
                 break;
             case TABFFloat:

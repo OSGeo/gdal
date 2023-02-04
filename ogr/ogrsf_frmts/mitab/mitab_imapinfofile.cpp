@@ -447,6 +447,12 @@ int IMapInfoFile::GetTABType(OGRFieldDefn *poField, TABFieldType *peTABType,
         if (nWidth == 0)
             nWidth = 12;
     }
+    else if (poField->GetType() == OFTInteger64)
+    {
+        eTABType = TABFLargeInt;
+        if (nWidth == 0)
+            nWidth = 20;
+    }
     else if (poField->GetType() == OFTReal)
     {
         if (nWidth == 0 && poField->GetPrecision() == 0)

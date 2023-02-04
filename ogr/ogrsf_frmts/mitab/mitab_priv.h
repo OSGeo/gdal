@@ -207,13 +207,15 @@ typedef enum
     TABFDate,
     TABFLogical,
     TABFTime,
-    TABFDateTime
+    TABFDateTime,
+    TABFLargeInt
 } TABFieldType;
 
 #define TABFIELDTYPE_2_STRING(type)                                            \
     (type == TABFChar       ? "Char"                                           \
      : type == TABFInteger  ? "Integer"                                        \
      : type == TABFSmallInt ? "SmallInt"                                       \
+     : type == TABFLargeInt ? "LargeInt"                                       \
      : type == TABFDecimal  ? "Decimal"                                        \
      : type == TABFFloat    ? "Float"                                          \
      : type == TABFDate     ? "Date"                                           \
@@ -883,6 +885,8 @@ class TABRawBinBlock
     // cppcheck-suppress functionStatic
     GInt32 ReadInt32();
     // cppcheck-suppress functionStatic
+    GInt64 ReadInt64();
+    // cppcheck-suppress functionStatic
     float ReadFloat();
     // cppcheck-suppress functionStatic
     double ReadDouble();
@@ -893,6 +897,8 @@ class TABRawBinBlock
     int WriteInt16(GInt16 n16Value);
     // cppcheck-suppress functionStatic
     int WriteInt32(GInt32 n32Value);
+    // cppcheck-suppress functionStatic
+    int WriteInt64(GInt64 n64Value);
     // cppcheck-suppress functionStatic
     int WriteFloat(float fValue);
     // cppcheck-suppress functionStatic
@@ -1752,6 +1758,7 @@ class TABINDFile
     int SetIndexFieldType(int nIndexNumber, TABFieldType eType);
     int SetIndexUnique(int nIndexNumber, GBool bUnique = TRUE);
     GByte *BuildKey(int nIndexNumber, GInt32 nValue);
+    GByte *BuildKey(int nIndexNumber, GInt64 nValue);
     GByte *BuildKey(int nIndexNumber, const char *pszStr);
     GByte *BuildKey(int nIndexNumber, double dValue);
     GInt32 FindFirst(int nIndexNumber, GByte *pKeyValue);
@@ -1849,6 +1856,7 @@ class TABDATFile
     const char *ReadCharField(int nWidth);
     GInt32 ReadIntegerField(int nWidth);
     GInt16 ReadSmallIntField(int nWidth);
+    GInt64 ReadLargeIntField(int nWidth);
     double ReadFloatField(int nWidth);
     double ReadDecimalField(int nWidth);
     const char *ReadLogicalField(int nWidth);
@@ -1865,6 +1873,7 @@ class TABDATFile
                        int nIndexNo);
     int WriteIntegerField(GInt32 nValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteSmallIntField(GInt16 nValue, TABINDFile *poINDFile, int nIndexNo);
+    int WriteLargeIntField(GInt64 nValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteFloatField(double dValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteDecimalField(double dValue, int nWidth, int nPrecision,
                           TABINDFile *poINDFile, int nIndexNo);

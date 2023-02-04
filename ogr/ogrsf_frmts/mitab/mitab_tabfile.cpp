@@ -908,6 +908,17 @@ int TABFile::ParseTABFileFields()
                     if (numTok > 2 && atoi(papszTok[2]) > 0)
                         poFieldDefn->SetWidth(atoi(papszTok[2]));
                 }
+                else if (numTok >= 2 && EQUAL(papszTok[1], "largeint"))
+                {
+                    /*-------------------------------------------------
+                     * LargeInt type
+                     *------------------------------------------------*/
+                    nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
+                        iField, osFieldName, TABFLargeInt, 0, 0);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger64);
+                    if (numTok > 2 && atoi(papszTok[2]) > 0)
+                        poFieldDefn->SetWidth(atoi(papszTok[2]));
+                }
                 else if (numTok >= 4 && EQUAL(papszTok[1], "decimal"))
                 {
                     /*-------------------------------------------------
@@ -1137,6 +1148,13 @@ int TABFile::WriteTABFile()
                             pszFieldType = "SmallInt";
                         else
                             pszFieldType = CPLSPrintf("SmallInt (%d)",
+                                                      poFieldDefn->GetWidth());
+                        break;
+                    case TABFLargeInt:
+                        if (poFieldDefn->GetWidth() == 0)
+                            pszFieldType = "LargeInt";
+                        else
+                            pszFieldType = CPLSPrintf("LargeInt (%d)",
                                                       poFieldDefn->GetWidth());
                         break;
                     case TABFFloat:
@@ -2141,6 +2159,12 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
             poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
             if (nWidth <= 5)
                 poFieldDefn->SetWidth(nWidth);
+            break;
+        case TABFLargeInt:
+            /*-------------------------------------------------
+             * SMALLINT type
+             *------------------------------------------------*/
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger64);
             break;
         case TABFDecimal:
             /*-------------------------------------------------
