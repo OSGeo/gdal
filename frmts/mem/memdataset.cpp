@@ -1424,6 +1424,7 @@ std::shared_ptr<GDALGroup> MEMGroup::CreateGroup(const std::string &osName,
         return nullptr;
     }
     auto newGroup(std::make_shared<MEMGroup>(GetFullName(), osName.c_str()));
+    newGroup->SetSelf(newGroup);
     m_oMapGroups[osName] = newGroup;
     return newGroup;
 }
@@ -1476,6 +1477,7 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
     }
     if (!newArray->Init(pabyData, anStrides))
         return nullptr;
+    newArray->RegisterGroup(m_pSelf);
     m_oMapMDArrays[osName] = newArray;
     return newArray;
 }
@@ -2118,6 +2120,56 @@ MEMMDArray::CreateAttribute(const std::string &osName,
 }
 
 /************************************************************************/
+/*                      GetCoordinateVariables()                        */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALMDArray>>
+MEMMDArray::GetCoordinateVariables() const
+{
+    std::vector<std::shared_ptr<GDALMDArray>> ret;
+    const auto poCoordinates = GetAttribute("coordinates");
+    if (poCoordinates &&
+        poCoordinates->GetDataType().GetClass() == GEDTC_STRING &&
+        poCoordinates->GetDimensionCount() == 0)
+    {
+        const char *pszCoordinates = poCoordinates->ReadAsString();
+        if (pszCoordinates)
+        {
+            auto poGroup = m_poGroupWeak.lock();
+            if (!poGroup)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot access coordinate variables of %s has "
+                         "belonging group has gone out of scope",
+                         GetName().c_str());
+            }
+            else
+            {
+                const CPLStringList aosNames(
+                    CSLTokenizeString2(pszCoordinates, " ", 0));
+                for (int i = 0; i < aosNames.size(); i++)
+                {
+                    auto poCoordinateVar = poGroup->OpenMDArray(aosNames[i]);
+                    if (poCoordinateVar)
+                    {
+                        ret.emplace_back(poCoordinateVar);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot find variable corresponding to "
+                                 "coordinate %s",
+                                 aosNames[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+/************************************************************************/
 /*                            BuildDimensions()                         */
 /************************************************************************/
 
@@ -2228,8 +2280,9 @@ MEMDataset::CreateMultiDimensional(const char *pszFilename,
     auto poDS = new MEMDataset();
 
     poDS->SetDescription(pszFilename);
-    poDS->m_poPrivate->m_poRootGroup.reset(
-        new MEMGroup(std::string(), nullptr));
+    auto poRootGroup = std::make_shared<MEMGroup>(std::string(), nullptr);
+    poRootGroup->SetSelf(poRootGroup);
+    poDS->m_poPrivate->m_poRootGroup = poRootGroup;
 
     return poDS;
 }

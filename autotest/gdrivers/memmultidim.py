@@ -2311,6 +2311,45 @@ def test_mem_md_array_nodata_uint64():
     assert ds.GetRasterBand(1).GetNoDataValue() == val
 
 
+def test_mem_md_getcoordinatevariables():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+
+    dimOther = rg.CreateDimension("other", None, None, 4)
+    other = rg.CreateMDArray(
+        "other", [dimOther], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert other
+
+    dimNode = rg.CreateDimension("node", None, None, 4)
+    varX = rg.CreateMDArray(
+        "varX", [dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert varX
+    varY = rg.CreateMDArray(
+        "varY", [dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert varY
+
+    ar = rg.CreateMDArray(
+        "ar", [dimOther, dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    coordinates = ar.CreateAttribute(
+        "coordinates", [], gdal.ExtendedDataType.CreateString()
+    )
+    assert coordinates.WriteString("other varY varX") == 0
+
+    coordVars = ar.GetCoordinateVariables()
+    assert len(coordVars) == 3
+
+    assert coordinates.WriteString("other non_existing") == 0
+    with gdaltest.error_handler():
+        coordVars = ar.GetCoordinateVariables()
+        assert len(coordVars) == 1
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

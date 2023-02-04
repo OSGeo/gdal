@@ -48,11 +48,17 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup
     std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
     std::map<CPLString, std::shared_ptr<GDALAttribute>> m_oMapAttributes{};
     std::map<CPLString, std::shared_ptr<GDALDimension>> m_oMapDimensions{};
+    std::weak_ptr<MEMGroup> m_pSelf{};
 
   public:
     MEMGroup(const std::string &osParentName, const char *pszName)
         : GDALGroup(osParentName, pszName ? pszName : "")
     {
+    }
+
+    void SetSelf(std::weak_ptr<MEMGroup> self)
+    {
+        m_pSelf = self;
     }
 
     std::vector<std::string>
@@ -216,6 +222,7 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray, public GDALMDArray
     GDALDataType m_eOffsetStorageType = GDT_Unknown;
     GDALDataType m_eScaleStorageType = GDT_Unknown;
     std::string m_osFilename{};
+    std::weak_ptr<GDALGroup> m_poGroupWeak{};
 
     MEMMDArray(const MEMMDArray &) = delete;
     MEMMDArray &operator=(const MEMMDArray &) = delete;
@@ -247,6 +254,11 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray, public GDALMDArray
     const std::string &GetFilename() const override
     {
         return m_osFilename;
+    }
+
+    void RegisterGroup(std::weak_ptr<GDALGroup> group)
+    {
+        m_poGroupWeak = group;
     }
 
     std::shared_ptr<GDALAttribute>
@@ -322,6 +334,9 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray, public GDALMDArray
         m_eScaleStorageType = eStorageType;
         return true;
     }
+
+    std::vector<std::shared_ptr<GDALMDArray>>
+    GetCoordinateVariables() const override;
 };
 
 /************************************************************************/
