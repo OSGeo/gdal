@@ -124,6 +124,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     int m_iAreaField = -1;    // index of Shape_Area field
     int m_iLengthField = -1;  // index of Shape_Length field
     int m_iCurFeat = 0;
+    int m_iFIDAsRegularColumnIndex = -1;
     std::string m_osDefinition{};
     std::string m_osDocumentation{};
     std::string m_osConfigurationKeyword{};
