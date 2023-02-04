@@ -2971,3 +2971,48 @@ def test_ogr_mitab_write_epsg_3125_philippine_reference_system_1992():
     ds = None
 
     ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)
+
+
+###############################################################################
+
+
+def test_ogr_mitab_read_read_extended_transverse_mercator():
+
+    ds = ogr.Open("data/mitab/proj_34.mif")
+    lyr = ds.GetLayer(0)
+    ref_srs = lyr.GetSpatialRef()
+    assert ref_srs.ExportToProj4() == "+proj=utm +zone=1 +datum=WGS84 +units=m +no_defs"
+    ds = None
+
+
+###############################################################################
+
+
+def test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle():
+
+    ds = ogr.Open("data/mitab/proj_35.mif")
+    lyr = ds.GetLayer(0)
+    ref_srs = lyr.GetSpatialRef()
+    assert (
+        ref_srs.ExportToProj4()
+        == "+proj=omerc +no_uoff +lat_0=4 +lonc=102.25 +alpha=323.025796466667 +gamma=323.130102361111 +k=0.99984 +x_0=804671 +y_0=0 +ellps=evrst69 +units=m +no_defs"
+    )
+    ds = None
+
+    filename = "/vsimem/test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle.tab"
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test", srs=ref_srs, geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs.ExportToProj4() == ref_srs.ExportToProj4()
+    ds = None
+
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)
