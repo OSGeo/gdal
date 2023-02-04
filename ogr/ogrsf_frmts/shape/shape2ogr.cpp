@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -751,7 +752,8 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
              hSHP->nShapeType == SHPT_POLYGONM ||
              hSHP->nShapeType == SHPT_POLYGONZ)
     {
-        std::vector<const OGRLinearRing *> apoRings;
+        // bool = true means outer ring
+        std::vector<std::pair<const OGRLinearRing *, bool>> apoRings;
         const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
         std::unique_ptr<OGRGeometry> poGeomToDelete;
 
@@ -768,6 +770,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
             {
                 const int nSrcRings = poPoly->getNumInteriorRings() + 1;
                 apoRings.reserve(nSrcRings);
+                bool bFirstRing = true;
                 for (const auto poRing : poPoly)
                 {
                     const int nNumPoints = poRing->getNumPoints();
@@ -775,7 +778,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
                     // Ignore LINEARRING EMPTY.
                     if (nNumPoints != 0)
                     {
-                        apoRings.push_back(poRing);
+                        apoRings.push_back(std::make_pair(poRing, bFirstRing));
                     }
                     else
                     {
@@ -783,6 +786,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
                                  "Ignore LINEARRING EMPTY inside POLYGON in "
                                  "shapefile writer.");
                     }
+                    bFirstRing = false;
                 }
             }
         }
@@ -842,6 +846,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
                         2 * apoRings.size(), apoRings.size() + apoRings.size() +
                                                  nNumInteriorRings + 1));
                 }
+                bool bFirstRing = true;
                 for (const auto poRing : poPoly)
                 {
                     const int nNumPoints = poRing->getNumPoints();
@@ -849,7 +854,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
                     // Ignore LINEARRING EMPTY.
                     if (nNumPoints != 0)
                     {
-                        apoRings.push_back(poRing);
+                        apoRings.push_back(std::make_pair(poRing, bFirstRing));
                     }
                     else
                     {
@@ -857,6 +862,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
                                  "Ignore LINEARRING EMPTY inside POLYGON in "
                                  "shapefile writer.");
                     }
+                    bFirstRing = false;
                 }
             }
         }
@@ -892,8 +898,8 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
 
         // Count vertices.
         int nVertex = 0;
-        for (const auto &poRing : apoRings)
-            nVertex += poRing->getNumPoints();
+        for (const auto &ring : apoRings)
+            nVertex += ring.first->getNumPoints();
 
         const bool bHasZ = (hSHP->nShapeType == SHPT_POLYGONM ||
                             hSHP->nShapeType == SHPT_POLYGONZ);
@@ -922,13 +928,20 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
         }
 
         // Collect vertices.
-        for (const auto &poRing : apoRings)
+        for (const auto &ring : apoRings)
         {
+            const auto poRing = ring.first;
+            const bool bIsOuterRing = ring.second;
             anRingStart.push_back(static_cast<int>(adfX.size()));
 
             const int nNumPoints = poRing->getNumPoints();
-            for (int iPoint = 0; iPoint < nNumPoints; iPoint++)
+            // Exterior ring must be clockwise oriented in shapefiles
+            const bool bInvertOrder =
+                !bRewind && CPL_TO_BOOL(bIsOuterRing ? !poRing->isClockwise()
+                                                     : poRing->isClockwise());
+            for (int i = 0; i < nNumPoints; i++)
             {
+                const int iPoint = bInvertOrder ? nNumPoints - 1 - i : i;
                 adfX.push_back(poRing->getX(iPoint));
                 adfY.push_back(poRing->getY(iPoint));
                 if (bHasZ)

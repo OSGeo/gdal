@@ -394,7 +394,7 @@ def test_ogr_shape_13():
     feat.SetField("AREA", "6000.00")
 
     geom = ogr.CreateGeometryFromWkt(
-        "POLYGON ((0 0, 0 60, 100 60, 100 0, 200 30, 0 0))"
+        "POLYGON ((0 0, 0 60, 100 60, 100 0, 200 -30, 0 0))"
     )
     feat.SetGeometry(geom)
 
@@ -434,7 +434,7 @@ def test_ogr_shape_14():
 
     assert (
         ogrtest.check_feature_geometry(
-            feat, "POLYGON ((0 0, 0 60, 100 60, 100 0, 200 30, 0 0))"
+            feat, "POLYGON ((0 0, 0 60, 100 60, 100 0, 200 -30, 0 0))"
         )
         == 0
     ), "Geometry update failed, FID 9."
@@ -5820,6 +5820,43 @@ def test_ogr_shape_alter_geom_field_defn():
     ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(outfilename)
+
+
+###############################################################################
+# Test writing non-planar polygon with inner ring
+
+
+def test_ogr_shape_write_non_planar_polygon():
+
+    layer_name = "test_ogr_shape_write_non_planar_polygon"
+    filename = "/vsimem/" + layer_name + ".shp"
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon25D)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON Z ((516113.631069 5041435.137874 137.334, 516141.2239 5041542.465874 137.614, 515998.390418 5041476.527121 137.288, 516113.631069 5041435.137874 137.334), (516041.808551 5041476.527121 137.418, 516111.602184 5041505.337284 137.322, 516098.617322 5041456.644051 137.451, 516041.808551 5041476.527121 137.418))"
+        )
+    )
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(
+        f,
+        "POLYGON Z ((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418))",
+    ):
+        f.DumpReadable()
+        pytest.fail()
+    ds = None
+
+    shape_drv.DeleteDataSource(filename)
 
 
 ###############################################################################
