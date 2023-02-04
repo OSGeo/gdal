@@ -1083,8 +1083,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     {
         if (pszQuality && atoi(pszQuality) == 100)
             aosOptions.SetNameValue("WEBP_LOSSLESS", "YES");
-        else
-            aosOptions.SetNameValue("WEBP_LEVEL", pszQuality);
+        aosOptions.SetNameValue("WEBP_LEVEL", pszQuality);
     }
     else if (EQUAL(osCompress, "DEFLATE") || EQUAL(osCompress, "LERC_DEFLATE"))
     {
