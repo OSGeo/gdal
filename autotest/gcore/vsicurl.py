@@ -1091,6 +1091,53 @@ def test_vsicurl_GDAL_HTTP_HEADERS():
 
 
 ###############################################################################
+# Test CPL_VSIL_CURL_USE_HEAD=NO
+
+
+def test_vsicurl_test_CPL_VSIL_CURL_USE_HEAD_NO():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_CPL_VSIL_CURL_USE_HEAD_NO/", 404)
+
+    def method(request):
+        response = "HTTP/1.1 200\r\n"
+        response += "Server: foo\r\n"
+        response += "Content-type: text/plain\r\n"
+        response += "Content-Length: 1000000\r\n"
+        response += "Connection: close\r\n"
+        response += "\r\n"
+        request.wfile.write(response.encode("ascii"))
+        # This will be interrupted by the client
+        for i in range(1000000):
+            request.wfile.write(b"X")
+
+    handler.add(
+        "GET",
+        "/test_CPL_VSIL_CURL_USE_HEAD_NO/test.bin",
+        custom_method=method,
+        silence_server_exception=True,
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option("CPL_VSIL_CURL_USE_HEAD", "NO"):
+            f = gdal.VSIFOpenL(
+                "/vsicurl/http://localhost:%d/test_CPL_VSIL_CURL_USE_HEAD_NO/test.bin"
+                % gdaltest.webserver_port,
+                "rb",
+            )
+    assert f is not None
+    gdal.VSIFSeekL(f, 0, 2)
+    assert gdal.VSIFTellL(f) == 1000000
+
+    gdal.VSIFCloseL(f)
+
+
+###############################################################################
 
 
 def test_vsicurl_stop_webserver():
