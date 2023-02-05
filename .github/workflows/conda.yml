@@ -70,6 +70,7 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: |
+          patch -p1 < ../ci/travis/conda/libarchive.patch
           source ../ci/travis/conda/compile.sh
       working-directory: ./gdal-feedstock
 
