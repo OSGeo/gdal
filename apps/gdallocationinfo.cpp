@@ -434,14 +434,18 @@ MAIN_START(argc, argv)
             /*      Report the pixel value of this band. */
             /* --------------------------------------------------------------------
              */
-            double adfPixel[2];
+            double adfPixel[2] = {0, 0};
+            const bool bIsComplex = CPL_TO_BOOL(
+                GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
             if (GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
-                             adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None)
+                             adfPixel, 1, 1,
+                             bIsComplex ? GDT_CFloat64 : GDT_Float64, 0,
+                             0) == CE_None)
             {
                 CPLString osValue;
 
-                if (GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)))
+                if (bIsComplex)
                     osValue.Printf("%.15g+%.15gi", adfPixel[0], adfPixel[1]);
                 else
                     osValue.Printf("%.15g", adfPixel[0]);
@@ -482,11 +486,13 @@ MAIN_START(argc, argv)
                 if (dfOffset != 0.0 || dfScale != 1.0)
                 {
                     adfPixel[0] = adfPixel[0] * dfScale + dfOffset;
-                    adfPixel[1] = adfPixel[1] * dfScale + dfOffset;
 
-                    if (GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)))
+                    if (bIsComplex)
+                    {
+                        adfPixel[1] = adfPixel[1] * dfScale + dfOffset;
                         osValue.Printf("%.15g+%.15gi", adfPixel[0],
                                        adfPixel[1]);
+                    }
                     else
                         osValue.Printf("%.15g", adfPixel[0]);
 
