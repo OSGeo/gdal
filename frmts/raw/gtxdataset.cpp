@@ -248,8 +248,8 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     CPL_MSBPTR64(poDS->adfGeoTransform + 3);
     CPL_MSBPTR64(poDS->adfGeoTransform + 5);
 
-    poDS->adfGeoTransform[3] +=
-        poDS->adfGeoTransform[5] * (poDS->nRasterYSize - 1);
+    poDS->adfGeoTransform[3] += poDS->adfGeoTransform[5] *
+                                (static_cast<double>(poDS->nRasterYSize) - 1);
 
     poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
     poDS->adfGeoTransform[3] += poDS->adfGeoTransform[5] * 0.5;
