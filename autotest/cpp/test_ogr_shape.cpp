@@ -47,14 +47,14 @@ using namespace tut;  // for CheckEqualGeometries
 struct test_ogr_shape : public ::testing::Test
 {
     OGRSFDriverH drv_ = nullptr;
-    std::string drv_name_{};
+    const char *drv_name_ = "ESRI Shapefile";
     std::string data_{};
     std::string data_tmp_{};
-    const char *test_name_;
+    const char *test_name_ = nullptr;
 
-    test_ogr_shape() : drv_(nullptr), drv_name_("ESRI Shapefile")
+    test_ogr_shape()
     {
-        drv_ = OGRGetDriverByName(drv_name_.c_str());
+        drv_ = OGRGetDriverByName(drv_name_);
 
         // Compose data path for test group
         data_ = tut::common::data_basedir;
@@ -70,14 +70,16 @@ struct test_ogr_shape : public ::testing::Test
             return;
         }
 
-        int nlyr = OGR_DS_GetLayerCount(ds);
-
-        for (int i = 0; i < nlyr; i++)
+        if (test_name_)
         {
-            OGRLayerH lyr = OGR_DS_GetLayer(ds, i);
-            if (EQUAL(OGR_L_GetName(lyr), test_name_))
+            const int nlyr = OGR_DS_GetLayerCount(ds);
+            for (int i = 0; i < nlyr; i++)
             {
-                OGR_DS_DeleteLayer(ds, i);
+                OGRLayerH lyr = OGR_DS_GetLayer(ds, i);
+                if (EQUAL(OGR_L_GetName(lyr), test_name_))
+                {
+                    OGR_DS_DeleteLayer(ds, i);
+                }
             }
         }
     }
