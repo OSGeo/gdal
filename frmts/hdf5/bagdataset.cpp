@@ -1452,7 +1452,8 @@ CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
         poRAT->CreateColumn(poComponent->GetName().c_str(), eType, GFU_Generic);
     }
 
-    std::vector<GByte> abyRow(poValues->GetDataType().GetSize());
+    const auto &oValuesDT = poValues->GetDataType();
+    std::vector<GByte> abyRow(oValuesDT.GetSize());
     const int nRows = static_cast<int>(poValues->GetDimensions()[0]->GetSize());
     for (int iRow = 0; iRow < nRows; iRow++)
     {
@@ -1461,7 +1462,7 @@ CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
         const GInt64 arrayStep = 0;
         const GPtrDiff_t bufferStride = 0;
         poValues->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
-                       poValues->GetDataType(), &abyRow[0]);
+                       oValuesDT, &abyRow[0]);
         int iCol = 0;
         for (const auto &poComponent : poComponents)
         {
@@ -1496,6 +1497,7 @@ CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
             }
             iCol++;
         }
+        oValuesDT.FreeDynamicMemory(&abyRow[0]);
     }
     return poRAT;
 }
