@@ -313,7 +313,7 @@ if (Python_Interpreter_FOUND)
           OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate_gdal_symbols_txt.cmake"
           CONTENT
               "cmake_policy(VERSION 3.12)
-               execute_process(COMMAND ${CMAKE_NM} ${NM_OPTIONS} $<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>
+               execute_process(COMMAND ${CMAKE_NM} ${NM_OPTIONS} \"$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>\"
                                OUTPUT_VARIABLE symbols
                                RESULT_VARIABLE res)
                if( \${res} EQUAL 0 )
