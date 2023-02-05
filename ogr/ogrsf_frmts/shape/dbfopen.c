@@ -1462,25 +1462,29 @@ int SHPAPI_CALL DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity,
     if (!DBFLoadRecord(psDBF, hEntity))
         return FALSE;
 
-    unsigned char *pabyRec =
-        REINTERPRET_CAST(unsigned char *, psDBF->pszCurrentRecord);
-
-    /* -------------------------------------------------------------------- */
-    /*      Assign all the record fields.                                   */
-    /* -------------------------------------------------------------------- */
-    int j;
-    if (STATIC_CAST(int, strlen(STATIC_CAST(char *, pValue))) >
-        psDBF->panFieldSize[iField])
-        j = psDBF->panFieldSize[iField];
-    else
+    if (iField >= 0)
     {
-        memset(pabyRec + psDBF->panFieldOffset[iField], ' ',
-               psDBF->panFieldSize[iField]);
-        j = STATIC_CAST(int, strlen(STATIC_CAST(char *, pValue)));
-    }
+        unsigned char *pabyRec =
+            REINTERPRET_CAST(unsigned char *, psDBF->pszCurrentRecord);
 
-    strncpy(REINTERPRET_CAST(char *, pabyRec + psDBF->panFieldOffset[iField]),
+        /* -------------------------------------------------------------------- */
+        /*      Assign all the record fields.                                   */
+        /* -------------------------------------------------------------------- */
+        int j;
+        if (STATIC_CAST(int, strlen(STATIC_CAST(char *, pValue))) >
+            psDBF->panFieldSize[iField])
+            j = psDBF->panFieldSize[iField];
+        else
+        {
+            memset(pabyRec + psDBF->panFieldOffset[iField], ' ',
+                   psDBF->panFieldSize[iField]);
+            j = STATIC_CAST(int, strlen(STATIC_CAST(char *, pValue)));
+        }
+
+        strncpy(
+            REINTERPRET_CAST(char *, pabyRec + psDBF->panFieldOffset[iField]),
             STATIC_CAST(const char *, pValue), j);
+    }
 
     psDBF->bCurrentRecordModified = TRUE;
     psDBF->bUpdated = TRUE;
