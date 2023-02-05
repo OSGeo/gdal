@@ -32,6 +32,7 @@
 #include "vrtdataset.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -1336,6 +1337,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 {
                     auto poSimpleSource =
                         cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
+                    assert(poSimpleSource);
                     auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
                     auto poSourceDataset = poSimpleSourceBand->GetDataset();
                     if (poSourceDataset == nullptr)
@@ -1379,6 +1381,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         {
             auto poSimpleSource =
                 static_cast<VRTSimpleSource *>(papoSources[i]);
+            assert(poSimpleSource);
             auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
             sContext.nTotalPixelsOfSources +=
                 static_cast<uint64_t>(poSimpleSourceBand->GetXSize()) *
@@ -1395,6 +1398,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             {
                 auto poSimpleSource =
                     static_cast<VRTSimpleSource *>(papoSources[i]);
+                assert(poSimpleSource);
                 auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
                 asJobs[i].psContext = &sContext;
                 asJobs[i].poRasterBand = poSimpleSourceBand;
