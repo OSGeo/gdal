@@ -1962,6 +1962,26 @@ int GDALValidateOptions(const char *pszOptionList,
                     break;
                 }
 
+                // For options names with * in the middle
+                const char *pszStarInOptionName = strchr(pszOptionName, '*');
+                if (pszStarInOptionName &&
+                    pszStarInOptionName != pszOptionName &&
+                    pszStarInOptionName !=
+                        pszOptionName + strlen(pszOptionName) - 1 &&
+                    strlen(pszKey) > static_cast<size_t>(pszStarInOptionName -
+                                                         pszOptionName) &&
+                    EQUALN(pszKey, pszOptionName,
+                           static_cast<size_t>(pszStarInOptionName -
+                                               pszOptionName)) &&
+                    EQUAL(pszKey +
+                              static_cast<size_t>(pszStarInOptionName -
+                                                  pszOptionName) +
+                              1,
+                          pszStarInOptionName + 1))
+                {
+                    break;
+                }
+
                 if (EQUAL(pszOptionName, pszKey))
                 {
                     break;
