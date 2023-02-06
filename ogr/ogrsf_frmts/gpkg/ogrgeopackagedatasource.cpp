@@ -1683,6 +1683,8 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                 const char *pszM = oResult->GetValue(6, i);
                 bool bIsInGpkgContents =
                     CPL_TO_BOOL(oResult->GetValueAsInteger(11, i));
+                if (!bIsInGpkgContents)
+                    m_bNonSpatialTablesNonRegisteredInGpkgContentsFound = true;
                 const char *pszObjectType = oResult->GetValue(12, i);
                 if (pszObjectType == nullptr ||
                     !(EQUAL(pszObjectType, "table") ||
@@ -6454,7 +6456,10 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     if (eGType == wkbNone)
     {
         const char *pszASpatialVariant = CSLFetchNameValueDef(
-            papszOptions, "ASPATIAL_VARIANT", "GPKG_ATTRIBUTES");
+            papszOptions, "ASPATIAL_VARIANT",
+            m_bNonSpatialTablesNonRegisteredInGpkgContentsFound
+                ? "NOT_REGISTERED"
+                : "GPKG_ATTRIBUTES");
         GPKGASpatialVariant eASpatialVariant = GPKG_ATTRIBUTES;
         if (EQUAL(pszASpatialVariant, "GPKG_ATTRIBUTES"))
             eASpatialVariant = GPKG_ATTRIBUTES;

@@ -139,6 +139,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool m_bHasDefinition12_063 = false;
     bool m_bHasEpochColumn =
         false;  // whether gpkg_spatial_ref_sys has a epoch column
+    bool m_bNonSpatialTablesNonRegisteredInGpkgContentsFound = false;
 
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
@@ -362,6 +363,10 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool HasGpkgextRelationsTable() const;
     bool CreateRelationsTableIfNecessary();
     bool HasQGISLayerStyles() const;
+    bool HasNonSpatialTablesNonRegisteredInGpkgContents() const
+    {
+        return m_bNonSpatialTablesNonRegisteredInGpkgContentsFound;
+    }
 
     const char *GetGeometryTypeString(OGRwkbGeometryType eType);
 
@@ -787,6 +792,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void SetASpatialVariant(GPKGASpatialVariant eASpatialVariant)
     {
         m_eASpatialVariant = eASpatialVariant;
+        if (eASpatialVariant == GPKG_ATTRIBUTES)
+            m_bIsInGpkgContents = true;
     }
 
     void CreateSpatialIndexIfNecessary();
