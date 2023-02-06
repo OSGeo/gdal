@@ -5028,3 +5028,31 @@ def test_tiff_warning_get_metadata_item_PIXELTYPE():
         gdal.GetLastErrorMsg()
         == "Starting with GDAL 3.7, PIXELTYPE=SIGNEDBYTE is no longer used to signal signed 8-bit raster. Change your code to test for the new GDT_Int8 data type instead."
     )
+
+
+###############################################################################
+# Test reading projection from ESRI .xml side car file
+
+
+def test_tiff_read_projection_from_esri_xml():
+
+    ds = gdal.Open("data/gtiff/projection_from_esri_xml.tif")
+    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "25833"
+    assert ds.GetGeoTransform() == pytest.approx((250000, 0.2, 0.0, 5887000, 0.0, -0.2))
+
+
+###############################################################################
+# Test reading projection from ESRI .xml side car file
+
+
+def test_tiff_read_projection_from_esri_xml_get_file_list():
+
+    ds = gdal.Open("data/gtiff/projection_from_esri_xml.tif")
+    assert set(ds.GetFileList()) == set(
+        [
+            "data/gtiff/projection_from_esri_xml.tif",
+            "data/gtiff/projection_from_esri_xml.tfw",
+            "data/gtiff/projection_from_esri_xml.xml",
+        ]
+    )

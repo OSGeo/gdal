@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata lang="de"><Esri><CreaDate>20150602</CreaDate><CreaTime>11305500</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>FALSE</SyncOnce><DataProperties><lineage><Process ToolSource="d:\program files (x86)\arcgis\engine10.2\ArcToolbox\Toolboxes\Data Management Tools.tbx\ChangePrivileges" Date="20150602" Time="113055">ChangePrivileges C:/Users/svcRDS/AppData/Local/Temp/sdeAYDt3cIpCT.sde/novadata.LY_DOP_DOP novaf GRANT GRANT</Process><Process ToolSource="d:\program files (x86)\arcgis\engine10.2\ArcToolbox\Toolboxes\Data Management Tools.tbx\ChangePrivileges" Date="20150602" Time="113118">ChangePrivileges C:/Users/svcRDS/AppData/Local/Temp/sdej5wKimcCRi.sde/novadata.LY_DOP_DOP novaf GRANT GRANT</Process><Process ToolSource="c:\program files (x86)\arcgis\desktop10.2\ArcToolbox\Toolboxes\Data Management Tools.tbx\CalculateStatistics" Date="20150611" Time="164359">CalculateStatistics Datenbankverbindungen\GDS_novadata.sde\NOVADATA.LY_DOP_DOP 1 1 # OVERWRITE Feature-Set</Process></lineage><itemProps><itemName Sync="TRUE">NOVADATA.LY_DOP_DOP</itemName><imsContentType Sync="TRUE">002</imsContentType><nativeExtBox><westBL Sync="TRUE">200000.000000</westBL><eastBL Sync="TRUE">530000.000001</eastBL><southBL Sync="TRUE">5660000.000070</southBL><northBL Sync="TRUE">5960000.000000</northBL><exTypeCode Sync="TRUE">1</exTypeCode></nativeExtBox><itemLocation><linkage Sync="TRUE">Server=localhost; Service=sde:oracle11g; User=novadata; Version=SDE.DEFAULT</linkage><protocol Sync="TRUE">ArcSDE Connection</protocol></itemLocation></itemProps><coordRef><type Sync="TRUE">Projected</type><geogcsn Sync="TRUE">GCS_ETRS_1989</geogcsn><csUnits Sync="TRUE">Linear Unit: Meter (1.000000)</csUnits><projcsn Sync="TRUE">ETRS_1989_UTM_Zone_33N</projcsn><peXml Sync="TRUE">&lt;ProjectedCoordinateSystem xsi:type='typens:ProjectedCoordinateSystem' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns:typens='http://www.esri.com/schemas/ArcGIS/10.6'&gt;&lt;WKT&gt;PROJCS[&amp;quot;ETRS_1989_UTM_Zone_33N&amp;quot;,GEOGCS[&amp;quot;GCS_ETRS_1989&amp;quot;,DATUM[&amp;quot;D_ETRS_1989&amp;quot;,SPHEROID[&amp;quot;GRS_1980&amp;quot;,6378137.0,298.257222101]],PRIMEM[&amp;quot;Greenwich&amp;quot;,0.0],UNIT[&amp;quot;Degree&amp;quot;,0.0174532925199433]],PROJECTION[&amp;quot;Transverse_Mercator&amp;quot;],PARAMETER[&amp;quot;False_Easting&amp;quot;,500000.0],PARAMETER[&amp;quot;False_Northing&amp;quot;,0.0],PARAMETER[&amp;quot;Central_Meridian&amp;quot;,15.0],PARAMETER[&amp;quot;Scale_Factor&amp;quot;,0.9996],PARAMETER[&amp;quot;Latitude_Of_Origin&amp;quot;,0.0],UNIT[&amp;quot;Meter&amp;quot;,1.0],AUTHORITY[&amp;quot;EPSG&amp;quot;,25833]]&lt;/WKT&gt;&lt;XOrigin&gt;-5120900&lt;/XOrigin&gt;&lt;YOrigin&gt;-9998100&lt;/YOrigin&gt;&lt;XYScale&gt;450445547.3910538&lt;/XYScale&gt;&lt;ZOrigin&gt;-100000&lt;/ZOrigin&gt;&lt;ZScale&gt;10000&lt;/ZScale&gt;&lt;MOrigin&gt;-100000&lt;/MOrigin&gt;&lt;MScale&gt;10000&lt;/MScale&gt;&lt;XYTolerance&gt;0.001&lt;/XYTolerance&gt;&lt;ZTolerance&gt;0.001&lt;/ZTolerance&gt;&lt;MTolerance&gt;0.001&lt;/MTolerance&gt;&lt;HighPrecision&gt;true&lt;/HighPrecision&gt;&lt;WKID&gt;25833&lt;/WKID&gt;&lt;LatestWKID&gt;25833&lt;/LatestWKID&gt;&lt;/ProjectedCoordinateSystem&gt;</peXml></coordRef></DataProperties><SyncDate>20210826</SyncDate><SyncTime>10113800</SyncTime><ModDate>20210826</ModDate><ModTime>10113800</ModTime></Esri><dataIdInfo><envirDesc Sync="TRUE"> Version 6.3 (Build 9600) ; Esri ArcGIS 10.6.1.9270</envirDesc><dataLang><languageCode value="deu" Sync="TRUE"/><countryCode value="DEU" Sync="TRUE"/></dataLang><idCitation><resTitle Sync="TRUE">NOVADATA.LY_DOP_DOP</resTitle><presForm><PresFormCd value="011" Sync="TRUE"/></presForm></idCitation><spatRpType><SpatRepTypCd value="002" Sync="TRUE"/></spatRpType><dataExt><geoEle><GeoBndBox esriExtentType="search"><exTypeCode Sync="TRUE">1</exTypeCode><westBL Sync="TRUE">10.454243</westBL><eastBL Sync="TRUE">15.455357</eastBL><northBL Sync="TRUE">53.788586</northBL><southBL Sync="TRUE">51.013161</southBL></GeoBndBox></geoEle></dataExt></dataIdInfo><mdLang><languageCode value="deu" Sync="TRUE"/><countryCode value="DEU" Sync="TRUE"/></mdLang><distInfo><distFormat><formatName Sync="TRUE">SDE-Raster-Dataset</formatName></distFormat></distInfo><mdHrLv><ScopeCd value="005" Sync="TRUE"/></mdHrLv><mdHrLvName Sync="TRUE">dataset</mdHrLvName><refSysInfo><RefSystem><refSysID><identCode code="25833" Sync="TRUE"/><idCodeSpace Sync="TRUE">EPSG</idCodeSpace><idVersion Sync="TRUE">7.1(4.0.0)</idVersion></refSysID></RefSystem></refSysInfo><spdoinfo><rastinfo><rasttype Sync="TRUE">Pixel</rasttype><rowcount Sync="TRUE">1500000</rowcount><colcount Sync="TRUE">1650000</colcount><rastxsz Sync="TRUE">0.200000</rastxsz><rastysz Sync="TRUE">0.200000</rastysz><rastbpp Sync="TRUE">8</rastbpp><vrtcount Sync="TRUE">1</vrtcount><rastorig Sync="TRUE">Upper Left</rastorig><rastcmap Sync="TRUE">FALSE</rastcmap><rastcomp Sync="TRUE">LZ77</rastcomp><rastband Sync="TRUE">4</rastband><rastdtyp Sync="TRUE">pixel codes</rastdtyp><rastifor Sync="TRUE">SDR</rastifor><rastplyr Sync="TRUE">TRUE</rastplyr></rastinfo></spdoinfo><spref><horizsys><planar><planci><plance Sync="TRUE">row and column</plance><coordrep><absres Sync="TRUE">0.200000</absres><ordres Sync="TRUE">0.200000</ordres></coordrep></planci></planar></horizsys></spref><mdDateSt Sync="TRUE">20210826</mdDateSt><auftrag><targetProduct short="DOP">
+        DOP Digitale 4-Kanal-Orthophotos
+      </targetProduct><targetSrs code="25833">
+        ETRS_1989_UTM_33N
+      </targetSrs><layers><layer short="photo" product="DOP">
+        photo-information
+      </layer></layers><EXPORT_JOB version="1.0.0">
+    <job>
+        <initiator>43</initiator>
+        <jobnumber>DOP_33250-5886</jobnumber>
+        <account>ms</account>
+    </job>
+    <product>DOP</product>
+    <layers color="0" mono="0" plotLabelSrs="-1" plotframe="0" single="1">
+        <layer bandMapping="0,1,2,3" name="photo" product="DOP" style="#ffffff"/>
+    </layers>
+    <srs>25833</srs>
+    <extent merge_mapsheets="off" pixelAlign="0">
+        <unit exterior="1" frame="0" gazId="78616" select_mapsheets="0" subdivision="3">33250-5886</unit>
+    </extent>
+    <resolution>250.0</resolution>
+    <scale>5000.0</scale>
+    <format compression="0" nbands="4" pixelType="3" tiffType="5">TIFF</format>
+    <orientation>upper-left</orientation>
+    <exportmetadata calibration="0" enabled="1" xmetadata="0"/>
+    <addfile col="0" eck="0"/>
+    <usenodatamask>0</usenodatamask>
+    <usepdctborderpoly>0</usepdctborderpoly>
+    <usepdctborderpoly4tile>0</usepdctborderpoly4tile>
+    <dhkresolvereferences>1</dhkresolvereferences>
+    <zipresult>0</zipresult>
+    <userdescription/>
+    <postCommand>ZipTif</postCommand>
+    <namingpattern>dop_[gaz]</namingpattern>
+    <dataDir>//od-share.lgb.local/opendata/od/geobasis/daten/dop/rgbi_tif</dataDir>
+</EXPORT_JOB></auftrag><einheiten><extent nr="0"><filelist><file>dop_33250-5886.tfw</file><file>dop_33250-5886.tif</file><file>DOP_33250-5886.xml</file></filelist><polygon><ring><exterior><vertex x="250000.00001" y="5886000.0"/><vertex x="251000.00001" y="5886000.0"/><vertex x="251000.00001" y="5887000.0"/><vertex x="250000.00001" y="5887000.0"/><vertex x="250000.00001" y="5886000.0"/></exterior></ring></polygon><bbox><vertex x="250000.00001 " y="5886000.0 "/><vertex x="251000.00001 " y="5887000.0 "/></bbox><mapsheetlist><mapsheet nr="78616"><designation>
+              33250-5886
+            </designation><name>
+              33250-5886
+            </name><product>
+              DOP
+            </product></mapsheet></mapsheetlist><csw:GetRecordsResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:srv="http://www.isotc211.org/2005/srv" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd" version="2.0.2">
+  <csw:SearchStatus/>
+  <csw:SearchResults numberOfRecordsMatched="1" numberOfRecordsReturned="1" nextRecord="0">
+  	<gmd:MD_Metadata xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.isotc211.org/2005/gmd" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
+  		<gmd:fileIdentifier>
+  			<gco:CharacterString>e9030e96-1eba-4a33-be1f-c1f13f22b9c2</gco:CharacterString>
+  		</gmd:fileIdentifier>
+  		<gmd:language>
+  			<gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="ger">ger</gmd:LanguageCode>
+  		</gmd:language>
+  		<gmd:characterSet>
+  			<gmd:MD_CharacterSetCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_CharacterSetCode" codeListValue="utf8">utf8</gmd:MD_CharacterSetCode>
+  		</gmd:characterSet>
+  		<gmd:parentIdentifier>
+  			<gco:CharacterString>253b7d3d-6b42-47dc-b127-682de078b7ae</gco:CharacterString>
+  		</gmd:parentIdentifier>
+  		<gmd:hierarchyLevel>
+  			<gmd:MD_ScopeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="tile">tile</gmd:MD_ScopeCode>
+  		</gmd:hierarchyLevel>
+  		<gmd:hierarchyLevelName>
+  			<gco:CharacterString>Geobasisdaten/-dienste der LGB</gco:CharacterString>
+  		</gmd:hierarchyLevelName>
+  		<gmd:contact>
+  			<gmd:CI_ResponsibleParty>
+  				<gmd:organisationName>
+  					<gco:CharacterString>Landesvermessung und Geobasisinformation Brandenburg (LGB)</gco:CharacterString>
+  				</gmd:organisationName>
+  				<gmd:contactInfo>
+  					<gmd:CI_Contact>
+  						<gmd:phone>
+  							<gmd:CI_Telephone>
+  								<gmd:voice>
+  									<gco:CharacterString>+49-331-8844-123</gco:CharacterString>
+  								</gmd:voice>
+  								<gmd:facsimile>
+  									<gco:CharacterString>+49-331-8844-16123</gco:CharacterString>
+  								</gmd:facsimile>
+  							</gmd:CI_Telephone>
+  						</gmd:phone>
+  						<gmd:address>
+  							<gmd:CI_Address>
+  								<gmd:deliveryPoint>
+  									<gco:CharacterString>Heinrich-Mann-Allee 103</gco:CharacterString>
+  								</gmd:deliveryPoint>
+  								<gmd:city>
+  									<gco:CharacterString>Potsdam</gco:CharacterString>
+  								</gmd:city>
+  								<gmd:administrativeArea>
+  									<gco:CharacterString>Brandenburg</gco:CharacterString>
+  								</gmd:administrativeArea>
+  								<gmd:postalCode>
+  									<gco:CharacterString>14473</gco:CharacterString>
+  								</gmd:postalCode>
+  								<gmd:electronicMailAddress>
+  									<gco:CharacterString>kundenservice@geobasis-bb.de</gco:CharacterString>
+  								</gmd:electronicMailAddress>
+  							</gmd:CI_Address>
+  						</gmd:address>
+  					</gmd:CI_Contact>
+  				</gmd:contactInfo>
+  				<gmd:role>
+  					<gmd:CI_RoleCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact">pointOfContact</gmd:CI_RoleCode>
+  				</gmd:role>
+  			</gmd:CI_ResponsibleParty>
+  		</gmd:contact>
+  		<gmd:dateStamp>
+  			<gco:DateTime>2021-08-17T12:38:15.0806304</gco:DateTime>
+  		</gmd:dateStamp>
+  		<gmd:metadataStandardName>
+  			<gco:CharacterString>ISO 19115:2003/Cor 1:2006, 19119:2005/Amd 1:2008 (AdV-Metadatenprofil)</gco:CharacterString>
+  		</gmd:metadataStandardName>
+  		<gmd:metadataStandardVersion>
+  			<gco:CharacterString>1.2.0</gco:CharacterString>
+  		</gmd:metadataStandardVersion>
+  		<gmd:referenceSystemInfo>
+  			<gmd:MD_ReferenceSystem>
+  				<gmd:referenceSystemIdentifier>
+  					<gmd:RS_Identifier>
+  						<gmd:code>
+  							<gco:CharacterString>25833</gco:CharacterString>
+  						</gmd:code>
+  						<gmd:codeSpace>
+  							<gco:CharacterString>EPSG</gco:CharacterString>
+  						</gmd:codeSpace>
+  					</gmd:RS_Identifier>
+  				</gmd:referenceSystemIdentifier>
+  			</gmd:MD_ReferenceSystem>
+  		</gmd:referenceSystemInfo>
+  		<gmd:identificationInfo>
+  			<gmd:MD_DataIdentification>
+  				<gmd:citation>
+  					<gmd:CI_Citation>
+  						<gmd:title>
+  							<gco:CharacterString>Digitale Orthophotos - dop_33250_5886</gco:CharacterString>
+  						</gmd:title>
+  						<gmd:alternateTitle>
+  							<gco:CharacterString>dop_33250_5886</gco:CharacterString>
+  						</gmd:alternateTitle>
+  						<gmd:date>
+  							<gmd:CI_Date>
+  								<gmd:date>
+  									<gco:DateTime>2020-04-22T00:00:00</gco:DateTime>
+  								</gmd:date>
+  								<gmd:dateType>
+  									<gmd:CI_DateTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="creation">creation</gmd:CI_DateTypeCode>
+  								</gmd:dateType>
+  							</gmd:CI_Date>
+  						</gmd:date>
+  						<gmd:date>
+  							<gmd:CI_Date>
+  								<gmd:date>
+  									<gco:DateTime>2020-11-21T08:38:23</gco:DateTime>
+  								</gmd:date>
+  								<gmd:dateType>
+  									<gmd:CI_DateTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
+  								</gmd:dateType>
+  							</gmd:CI_Date>
+  						</gmd:date>
+  						<gmd:identifier>
+  							<gmd:MD_Identifier>
+  								<gmd:code>
+  									<gco:CharacterString>https://registry.gdi-de.org/id/de.bb.metadata/e9030e96-1eba-4a33-be1f-c1f13f22b9c2</gco:CharacterString>
+  								</gmd:code>
+  							</gmd:MD_Identifier>
+  						</gmd:identifier>
+  						<gmd:presentationForm>
+  							<gmd:CI_PresentationFormCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_PresentationFormCode" codeListValue="imageDigital">imageDigital</gmd:CI_PresentationFormCode>
+  						</gmd:presentationForm>
+  					</gmd:CI_Citation>
+  				</gmd:citation>
+  				<gmd:abstract>
+  					<gco:CharacterString>Digitale Orthophotos sind digital entzerrte Luftbilder und bilden alle zum Aufnahmezeitpunkt luftsichtbaren Objekte und Sachverhalte parallelperspektivisch ab. Sie besitzen eine hohe Informationsdichte zu ökologischen, phänologischen, geographischen und anderen Themen. Die DOP ab dem Befliegungsjahr 2020 sind im TrueDOP Verfahren erstellt. Die DOP sind Farbbilder mit Infrarotkanal. Der Ausgabemaßstab beträgt 1: 5 000. Die Bodenauflösung bzw. Pixelgröße beträgt 0.2 m x 0.2 m (635 dpi = 250 L/ cm). Auslieferung in Farbe mit Infrarotkanal (RGBI, 32 Bit), in Farbe (RGB, 24 Bit), in Farbinfrarot (CIR, 24 Bit), in schwarz-weiss (8 Bit) oder in schwarz-weiss Infrarot (8 Bit), blattschnittfrei; ETRS89 (GRS80, UTM-Abbildung) bzw. Transformation in andere Bezugssysteme möglich. Die Datenabgabe über den Geobroker erfolgt blattschnittfrei. Wenn die Größe des Gebietes in eine Richtung 2000 m überschreitet wird das Gesamtgebiet automatisch in 2000m x 2000m Kacheln aufgeteilt. Die Daten werden über automatisierte Verfahren oder durch Selbstentnahme kostenfrei bereitgestellt. Bei Nutzung der Daten sind die Lizenzbedingungen zu beachten.</gco:CharacterString>
+  				</gmd:abstract>
+  				<gmd:purpose>
+  					<gco:CharacterString>Grundlage zur Erfassung der topographischen Objekte auf der Erdoberfläche für Topographische Karten und Basis-DLM.</gco:CharacterString>
+  				</gmd:purpose>
+  				<gmd:status>
+  					<gmd:MD_ProgressCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ProgressCode" codeListValue="onGoing">onGoing</gmd:MD_ProgressCode>
+  				</gmd:status>
+  				<gmd:pointOfContact>
+  					<gmd:CI_ResponsibleParty>
+  						<gmd:organisationName>
+  							<gco:CharacterString>Landesvermessung und Geobasisinformation Brandenburg (LGB)</gco:CharacterString>
+  						</gmd:organisationName>
+  						<gmd:contactInfo>
+  							<gmd:CI_Contact>
+  								<gmd:phone>
+  									<gmd:CI_Telephone>
+  										<gmd:voice>
+  											<gco:CharacterString>+49-331-8844-123</gco:CharacterString>
+  										</gmd:voice>
+  										<gmd:facsimile>
+  											<gco:CharacterString>+49-331-8844-16123</gco:CharacterString>
+  										</gmd:facsimile>
+  									</gmd:CI_Telephone>
+  								</gmd:phone>
+  								<gmd:address>
+  									<gmd:CI_Address>
+  										<gmd:deliveryPoint>
+  											<gco:CharacterString>Heinrich-Mann-Allee 103</gco:CharacterString>
+  										</gmd:deliveryPoint>
+  										<gmd:city>
+  											<gco:CharacterString>Potsdam</gco:CharacterString>
+  										</gmd:city>
+  										<gmd:administrativeArea>
+  											<gco:CharacterString>Brandenburg</gco:CharacterString>
+  										</gmd:administrativeArea>
+  										<gmd:postalCode>
+  											<gco:CharacterString>14473</gco:CharacterString>
+  										</gmd:postalCode>
+  										<gmd:electronicMailAddress>
+  											<gco:CharacterString>kundenservice@geobasis-bb.de</gco:CharacterString>
+  										</gmd:electronicMailAddress>
+  									</gmd:CI_Address>
+  								</gmd:address>
+  							</gmd:CI_Contact>
+  						</gmd:contactInfo>
+  						<gmd:role>
+  							<gmd:CI_RoleCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="publisher">publisher</gmd:CI_RoleCode>
+  						</gmd:role>
+  					</gmd:CI_ResponsibleParty>
+  				</gmd:pointOfContact>
+  				<gmd:resourceMaintenance>
+  					<gmd:MD_MaintenanceInformation>
+  						<gmd:maintenanceAndUpdateFrequency>
+  							<gmd:MD_MaintenanceFrequencyCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="continual">continual</gmd:MD_MaintenanceFrequencyCode>
+  						</gmd:maintenanceAndUpdateFrequency>
+  					</gmd:MD_MaintenanceInformation>
+  				</gmd:resourceMaintenance>
+  				<gmd:graphicOverview>
+  					<gmd:MD_BrowseGraphic>
+  						<gmd:fileName>
+  							<gco:CharacterString>https://isk.geobasis-bb.de/md-thumbnail/kachel-lgb-DOP.png</gco:CharacterString>
+  						</gmd:fileName>
+  						<gmd:fileDescription>
+  							<gco:CharacterString>Ausschnitt aus Digitale Orthophotos (DOP) in Schwarz-Weiss, Farbinfrarot (CIR), Farbe (RGB) und Schwarz-Weiss-Infrarot</gco:CharacterString>
+  						</gmd:fileDescription>
+  						<gmd:fileType>
+  							<gco:CharacterString>png</gco:CharacterString>
+  						</gmd:fileType>
+  					</gmd:MD_BrowseGraphic>
+  				</gmd:graphicOverview>
+  				<gmd:descriptiveKeywords>
+  					<gmd:MD_Keywords>
+  						<gmd:keyword>
+  							<gco:CharacterString>33250-5886</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>DOP20RGBI</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>DOP</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:type>
+  							<gmd:MD_KeywordTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme">theme</gmd:MD_KeywordTypeCode>
+  						</gmd:type>
+  					</gmd:MD_Keywords>
+  				</gmd:descriptiveKeywords>
+  				<gmd:descriptiveKeywords>
+  					<gmd:MD_Keywords>
+  						<gmd:keyword>
+  							<gco:CharacterString>opendata</gco:CharacterString>
+  						</gmd:keyword>
+  					</gmd:MD_Keywords>
+  				</gmd:descriptiveKeywords>
+  				<gmd:descriptiveKeywords>
+  					<gmd:MD_Keywords>
+  						<gmd:keyword>
+  							<gco:CharacterString>Rasterdaten</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>1:1.000 - 1:5.000</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:type>
+  							<gmd:MD_KeywordTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme">theme</gmd:MD_KeywordTypeCode>
+  						</gmd:type>
+  					</gmd:MD_Keywords>
+  				</gmd:descriptiveKeywords>
+  				<gmd:descriptiveKeywords>
+  					<gmd:MD_Keywords>
+  						<gmd:keyword>
+  							<gco:CharacterString>Bodenbedeckung</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:type>
+  							<gmd:MD_KeywordTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme">theme</gmd:MD_KeywordTypeCode>
+  						</gmd:type>
+  						<gmd:thesaurusName>
+  							<gmd:CI_Citation>
+  								<gmd:title>
+  									<gco:CharacterString>GEMET - INSPIRE themes, version 1.0</gco:CharacterString>
+  								</gmd:title>
+  								<gmd:date>
+  									<gmd:CI_Date>
+  										<gmd:date>
+  											<gco:Date>2009-06-30</gco:Date>
+  										</gmd:date>
+  										<gmd:dateType>
+  											<gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmx Codelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
+  										</gmd:dateType>
+  									</gmd:CI_Date>
+  								</gmd:date>
+  							</gmd:CI_Citation>
+  						</gmd:thesaurusName>
+  					</gmd:MD_Keywords>
+  				</gmd:descriptiveKeywords>
+  				<gmd:descriptiveKeywords>
+  					<gmd:MD_Keywords>
+  						<gmd:keyword>
+  							<gco:CharacterString>Photogrammetrie</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Luftbild</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Flora</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Naturschutz</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Artenschutz</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Landwirtschaft</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Vermessung</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Biotop</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:keyword>
+  							<gco:CharacterString>Forst</gco:CharacterString>
+  						</gmd:keyword>
+  						<gmd:type>
+  							<gmd:MD_KeywordTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme">theme</gmd:MD_KeywordTypeCode>
+  						</gmd:type>
+  						<gmd:thesaurusName>
+  							<gmd:CI_Citation>
+  								<gmd:title>
+  									<gco:CharacterString>BE/BB Schlagwortliste, Version 1.0</gco:CharacterString>
+  								</gmd:title>
+  								<gmd:date>
+  									<gmd:CI_Date>
+  										<gmd:date>
+  											<gco:Date>2004-06-25</gco:Date>
+  										</gmd:date>
+  										<gmd:dateType>
+  											<gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmx Codelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
+  										</gmd:dateType>
+  									</gmd:CI_Date>
+  								</gmd:date>
+  							</gmd:CI_Citation>
+  						</gmd:thesaurusName>
+  					</gmd:MD_Keywords>
+  				</gmd:descriptiveKeywords>
+  				<gmd:resourceConstraints>
+  					<gmd:MD_LegalConstraints>
+  						<gmd:useConstraints>
+  							<gmd:MD_RestrictionCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/gmxCodelists.xml#MD_RestrictionCode" codeListValue="otherRestrictions"/>
+  						</gmd:useConstraints>
+  						<gmd:otherConstraints>
+  							<gco:CharacterString>Die Daten können gemäß der „Datenlizenz Deutschland - Namensnennung - Version 2.0“ (https://www.govdata.de/dl-de/by-2-0) genutzt werden. Namensnennung: "GeoBasis-DE/LGB“, Beispiel: „© GeoBasis-DE/LGB, dl-de/by-2-0, (Daten geändert)“, (Klammer = optional) Hinweis: werden auch Daten des Bundeslandes Berlin genutzt, ist der Copyright-Vermerk um den Hinweis “© Geoportal Berlin, dl-de/by-2-0“ zu ergänzen. Beispiel: „© GeoBasis-DE/LGB, dl-de/by-2-0; © Geoportal Berlin, dl-de/by-2-0 (Daten geändert)“, (Klammer = optional)</gco:CharacterString>
+  						</gmd:otherConstraints>
+  						<gmd:otherConstraints>
+  							<gco:CharacterString>{"id":"dl-by-de/2.0","name":"Datenlizenz Deutschland - Namensnennung - Version 2.0","url":"https://www.govdata.de/dl-de/by-2-0","quelle":"Quelle: © GeoBasis-DE/LGB, dl-de/by-2-0; © Geoportal Berlin, dl-de/by-2-0"}</gco:CharacterString>
+  						</gmd:otherConstraints>
+  					</gmd:MD_LegalConstraints>
+  				</gmd:resourceConstraints>
+  				<gmd:spatialRepresentationType>
+  					<gmd:MD_SpatialRepresentationTypeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="grid">grid</gmd:MD_SpatialRepresentationTypeCode>
+  				</gmd:spatialRepresentationType>
+  				<gmd:spatialResolution>
+  					<gmd:MD_Resolution>
+  						<gmd:distance>
+  							<gco:Distance uom="meter">0.2</gco:Distance>
+  						</gmd:distance>
+  					</gmd:MD_Resolution>
+  				</gmd:spatialResolution>
+  				<gmd:language>
+  					<gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="ger">ger</gmd:LanguageCode>
+  				</gmd:language>
+  				<gmd:characterSet>
+  					<gmd:MD_CharacterSetCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_CharacterSetCode" codeListValue="utf8">utf8</gmd:MD_CharacterSetCode>
+  				</gmd:characterSet>
+  				<gmd:topicCategory>
+  					<gmd:MD_TopicCategoryCode>imageryBaseMapsEarthCover</gmd:MD_TopicCategoryCode>
+  				</gmd:topicCategory>
+  				<gmd:extent>
+  					<gmd:EX_Extent>
+  						<gmd:geographicElement>
+  							<gmd:EX_GeographicBoundingBox>
+  								<gmd:extentTypeCode>
+  									<gco:Boolean>true</gco:Boolean>
+  								</gmd:extentTypeCode>
+  								<gmd:westBoundLongitude>
+  									<gco:Decimal>11.2677</gco:Decimal>
+  								</gmd:westBoundLongitude>
+  								<gmd:eastBoundLongitude>
+  									<gco:Decimal>11.2834</gco:Decimal>
+  								</gmd:eastBoundLongitude>
+  								<gmd:southBoundLatitude>
+  									<gco:Decimal>53.0649</gco:Decimal>
+  								</gmd:southBoundLatitude>
+  								<gmd:northBoundLatitude>
+  									<gco:Decimal>53.0743</gco:Decimal>
+  								</gmd:northBoundLatitude>
+  							</gmd:EX_GeographicBoundingBox>
+  						</gmd:geographicElement>
+  					</gmd:EX_Extent>
+  				</gmd:extent>
+  				<gmd:extent>
+  					<gmd:EX_Extent>
+  						<gmd:geographicElement>
+  							<gmd:EX_BoundingPolygon>
+  								<gmd:extentTypeCode>
+  									<gco:Boolean>true</gco:Boolean>
+  								</gmd:extentTypeCode>
+  								<gmd:polygon>
+  									<gml:Polygon gml:id="ID10" srsName="EPSG:4326">
+  										<gml:exterior>
+  											<gml:LinearRing>
+  												<gml:posList srsDimension="2">53.065354769905035 11.283357098351528 53.06488806764809 11.268465347915397 53.07385831392655 11.267688822925408 53.0743251673952 11.28258365485892 53.065354769905035 11.283357098351528</gml:posList>
+  											</gml:LinearRing>
+  										</gml:exterior>
+  									</gml:Polygon>
+  								</gmd:polygon>
+  							</gmd:EX_BoundingPolygon>
+  						</gmd:geographicElement>
+  					</gmd:EX_Extent>
+  				</gmd:extent>
+  			</gmd:MD_DataIdentification>
+  		</gmd:identificationInfo>
+  		<gmd:distributionInfo>
+  			<gmd:MD_Distribution>
+  				<gmd:distributor>
+  					<gmd:MD_Distributor>
+  						<gmd:distributorContact>
+  							<gmd:CI_ResponsibleParty>
+  								<gmd:organisationName>
+  									<gco:CharacterString>Landesvermessung und Geobasisinformation Brandenburg (LGB)</gco:CharacterString>
+  								</gmd:organisationName>
+  								<gmd:contactInfo>
+  									<gmd:CI_Contact>
+  										<gmd:phone>
+  											<gmd:CI_Telephone>
+  												<gmd:voice>
+  													<gco:CharacterString>+49-331-8844-123</gco:CharacterString>
+  												</gmd:voice>
+  												<gmd:facsimile>
+  													<gco:CharacterString>+49-331-8844-16123</gco:CharacterString>
+  												</gmd:facsimile>
+  											</gmd:CI_Telephone>
+  										</gmd:phone>
+  										<gmd:address>
+  											<gmd:CI_Address>
+  												<gmd:deliveryPoint>
+  													<gco:CharacterString>Heinrich-Mann-Allee 103</gco:CharacterString>
+  												</gmd:deliveryPoint>
+  												<gmd:city>
+  													<gco:CharacterString>Potsdam</gco:CharacterString>
+  												</gmd:city>
+  												<gmd:administrativeArea>
+  													<gco:CharacterString>Brandenburg</gco:CharacterString>
+  												</gmd:administrativeArea>
+  												<gmd:postalCode>
+  													<gco:CharacterString>14473</gco:CharacterString>
+  												</gmd:postalCode>
+  												<gmd:electronicMailAddress>
+  													<gco:CharacterString>kundenservice@geobasis-bb.de</gco:CharacterString>
+  												</gmd:electronicMailAddress>
+  											</gmd:CI_Address>
+  										</gmd:address>
+  									</gmd:CI_Contact>
+  								</gmd:contactInfo>
+  								<gmd:role>
+  									<gmd:CI_RoleCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="distributor">distributor</gmd:CI_RoleCode>
+  								</gmd:role>
+  							</gmd:CI_ResponsibleParty>
+  						</gmd:distributorContact>
+  						<gmd:distributionOrderProcess>
+  							<gmd:MD_StandardOrderProcess>
+  								<gmd:fees>
+  									<gco:CharacterString>kostenfrei, unter Beachtung der Lizenzbedingungen</gco:CharacterString>
+  								</gmd:fees>
+  								<gmd:orderingInstructions>
+  									<gco:CharacterString>Download über Geobroker (https://geobroker.geobasis-bb.de) möglich</gco:CharacterString>
+  								</gmd:orderingInstructions>
+  								<gmd:turnaround>
+  									<gco:CharacterString>Download nach Online-Aufbereitung</gco:CharacterString>
+  								</gmd:turnaround>
+  							</gmd:MD_StandardOrderProcess>
+  						</gmd:distributionOrderProcess>
+  					</gmd:MD_Distributor>
+  				</gmd:distributor>
+  				<gmd:transferOptions>
+  					<gmd:MD_DigitalTransferOptions>
+  						<gmd:onLine>
+  							<gmd:CI_OnlineResource>
+  								<gmd:linkage>
+  									<gmd:URL>https://geobroker.geobasis-bb.de/gbss.php?MODE=GetProductInformation&amp;PRODUCTID=253b7d3d-6b42-47dc-b127-682de078b7ae</gmd:URL>
+  								</gmd:linkage>
+  								<gmd:description>
+  									<gco:CharacterString>Internetshop der LGB</gco:CharacterString>
+  								</gmd:description>
+  								<gmd:function>
+  									<gmd:CI_OnLineFunctionCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="order">order</gmd:CI_OnLineFunctionCode>
+  								</gmd:function>
+  							</gmd:CI_OnlineResource>
+  						</gmd:onLine>
+  						<gmd:onLine>
+  							<gmd:CI_OnlineResource>
+  								<gmd:linkage>
+  									<gmd:URL>https://data.geobasis-bb.de/geobasis/daten/dop/rgbi_tif/dop_33250-5886.zip</gmd:URL>
+  								</gmd:linkage>
+  								<gmd:description>
+  									<gco:CharacterString>Datendownload (Format=tiff, Ausgabe=RGBI)</gco:CharacterString>
+  								</gmd:description>
+  								<gmd:function>
+  									<gmd:CI_OnLineFunctionCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="download">download</gmd:CI_OnLineFunctionCode>
+  								</gmd:function>
+  							</gmd:CI_OnlineResource>
+  						</gmd:onLine>
+  						<gmd:onLine>
+  							<gmd:CI_OnlineResource>
+  								<gmd:linkage>
+  									<gmd:URL>https://data.geobasis-bb.de/geobasis/daten/dop/rgb_jpg/dop_33250-5886.zip</gmd:URL>
+  								</gmd:linkage>
+  								<gmd:description>
+  									<gco:CharacterString>Datendownload (Format=jpeg, Ausgabe=RGB)</gco:CharacterString>
+  								</gmd:description>
+  								<gmd:function>
+  									<gmd:CI_OnLineFunctionCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="download">download</gmd:CI_OnLineFunctionCode>
+  								</gmd:function>
+  							</gmd:CI_OnlineResource>
+  						</gmd:onLine>
+  						<gmd:onLine>
+  							<gmd:CI_OnlineResource>
+  								<gmd:linkage>
+  									<gmd:URL>https://geobasis-bb.de/lgb/de/startseite/geodaten/luftbilder/luftbilder-aktuell/</gmd:URL>
+  								</gmd:linkage>
+  								<gmd:description>
+  									<gco:CharacterString>statische Informationsseite</gco:CharacterString>
+  								</gmd:description>
+  								<gmd:function>
+  									<gmd:CI_OnLineFunctionCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="information">information</gmd:CI_OnLineFunctionCode>
+  								</gmd:function>
+  							</gmd:CI_OnlineResource>
+  						</gmd:onLine>
+  					</gmd:MD_DigitalTransferOptions>
+  				</gmd:transferOptions>
+  			</gmd:MD_Distribution>
+  		</gmd:distributionInfo>
+  		<gmd:dataQualityInfo>
+  			<gmd:DQ_DataQuality>
+  				<gmd:scope>
+  					<gmd:DQ_Scope>
+  						<gmd:level>
+  							<gmd:MD_ScopeCode codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="tile">tile</gmd:MD_ScopeCode>
+  						</gmd:level>
+  						<gmd:levelDescription>
+  							<gmd:MD_ScopeDescription>
+  								<gmd:other>
+  									<gco:CharacterString>Pflichtangabe gemäß ISO, wenn LEVEL ungleich dataset/series</gco:CharacterString>
+  								</gmd:other>
+  							</gmd:MD_ScopeDescription>
+  						</gmd:levelDescription>
+  					</gmd:DQ_Scope>
+  				</gmd:scope>
+  				<gmd:report>
+  					<gmd:DQ_AbsoluteExternalPositionalAccuracy>
+  						<gmd:result>
+  							<gmd:DQ_QuantitativeResult>
+  								<gmd:valueUnit>
+  									<gml:BaseUnit gml:id="ID7">
+  										<gml:identifier codeSpace="SI">meter</gml:identifier>
+  										<gml:unitsSystem/>
+  									</gml:BaseUnit>
+  								</gmd:valueUnit>
+  								<gmd:value>
+  									<gco:Record>1.0</gco:Record>
+  								</gmd:value>
+  							</gmd:DQ_QuantitativeResult>
+  						</gmd:result>
+  					</gmd:DQ_AbsoluteExternalPositionalAccuracy>
+  				</gmd:report>
+  				<gmd:report>
+  					<gmd:DQ_CompletenessCommission>
+  						<gmd:result>
+  							<gmd:DQ_QuantitativeResult>
+  								<gmd:valueUnit>
+  									<gml:BaseUnit gml:id="ID8">
+  										<gml:identifier codeSpace="SI">percent</gml:identifier>
+  										<gml:unitsSystem/>
+  									</gml:BaseUnit>
+  								</gmd:valueUnit>
+  								<gmd:value>
+  									<gco:Record>100.0</gco:Record>
+  								</gmd:value>
+  							</gmd:DQ_QuantitativeResult>
+  						</gmd:result>
+  					</gmd:DQ_CompletenessCommission>
+  				</gmd:report>
+  				<gmd:lineage>
+  					<gmd:LI_Lineage>
+  						<gmd:statement>
+  							<gco:CharacterString>Erstellt aus Luftbildbefliegungen, korrigiert durch DGM bzw. bDOM.</gco:CharacterString>
+  						</gmd:statement>
+  						<gmd:processStep>
+  							<gmd:LI_ProcessStep>
+  								<gmd:description>
+  									<gco:CharacterString>Veröffentlichung als schnell verfügbares digitales Orthophoto (SDOP)</gco:CharacterString>
+  								</gmd:description>
+  								<gmd:dateTime>
+  									<gco:DateTime>2020-08-15T07:58:15</gco:DateTime>
+  								</gmd:dateTime>
+  							</gmd:LI_ProcessStep>
+  						</gmd:processStep>
+  					</gmd:LI_Lineage>
+  				</gmd:lineage>
+  			</gmd:DQ_DataQuality>
+  		</gmd:dataQualityInfo>
+  	</gmd:MD_Metadata>
+  </csw:SearchResults>
+</csw:GetRecordsResponse><ReprojectedExtents titleProperty="DOP Digitale 4-Kanal-Orthophotos">
+<mditem fileIdentifier="e9030e96-1eba-4a33-be1f-c1f13f22b9c2">
+<title>Digitale Orthophotos - dop_33250_5886</title>
+<alternateTitle>Digitale Orthophotos - dop_33250_5886</alternateTitle>
+<Date>2020-04-22T00:00:00</Date>
+<Extent srs="25833">
+<sw x="249948.813685" y="5886003.9988143"/>
+<se x="251000.247909" y="5885949.2903619"/>
+<ne x="251054.5137739" y="5886994.3631638"/>
+<nw x="250003.3091636" y="5887049.0664141"/>
+</Extent>
+</mditem>
+</ReprojectedExtents></extent></einheiten></metadata>
