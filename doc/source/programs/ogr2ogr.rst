@@ -43,6 +43,7 @@ Synopsis
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
             [-mapFieldType type1|All=type2[,type3=type4]*]
+            [-dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]]
             [-fieldmap identity | index1[,index2]*]
             [-splitlistfields] [-maxsubfields val]
             [-resolveDomains]
@@ -397,6 +398,16 @@ output coordinate system or even reprojecting the features during translation.
     typing a long SQL query. This is a generalization of -fieldTypeToString.
     Note that this does not influence the field types used by the source
     driver, and is only an afterwards conversion.
+
+.. option:: -dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]
+
+    .. versionadded: 3.7
+
+    Converts date time values from the timezone specified in the source value
+    to the target timezone expressed with :option:`-dateTimeTo`.
+    Datetime whose timezone is unknown or localtime are not modified.
+
+    HH must be in the [0,14] range and MM=00, 15, 30 or 45.
 
 .. option:: -unsetFieldWidth
 
