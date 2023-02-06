@@ -652,8 +652,9 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
         pszInput = OGRWktReadToken(pszInput, szTokenY);
 
         if ((!isdigit(szTokenX[0]) && szTokenX[0] != '-' &&
-             szTokenX[0] != '.') ||
-            (!isdigit(szTokenY[0]) && szTokenY[0] != '-' && szTokenY[0] != '.'))
+             szTokenX[0] != '.' && !EQUAL(szTokenX, "nan")) ||
+            (!isdigit(szTokenY[0]) && szTokenY[0] != '-' &&
+             szTokenY[0] != '.' && !EQUAL(szTokenY, "nan")))
             return nullptr;
 
         /* --------------------------------------------------------------------
@@ -703,7 +704,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
 
         if (!(*flags & OGRGeometry::OGR_G_3D) &&
             !(*flags & OGRGeometry::OGR_G_MEASURED) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.'))
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
+             EQUAL(szDelim, "nan")))
         {
             *flags |= OGRGeometry::OGR_G_3D;
         }
@@ -722,7 +724,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
                 *ppadfZ = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints));
             }
-            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.')
+            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
+                EQUAL(szDelim, "nan"))
             {
                 (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
                 pszInput = OGRWktReadToken(pszInput, szDelim);
@@ -746,7 +749,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
          */
 
         if (!(*flags & OGRGeometry::OGR_G_MEASURED) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.'))
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
+             EQUAL(szDelim, "nan")))
         {
             if (bNoFlags)
             {
@@ -772,7 +776,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
                 *ppadfM = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints));
             }
-            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.')
+            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
+                EQUAL(szDelim, "nan"))
             {
                 (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
                 pszInput = OGRWktReadToken(pszInput, szDelim);
@@ -796,7 +801,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
          */
 
         if (!(*flags & OGRGeometry::OGR_G_3D) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.'))
+            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
+             EQUAL(szDelim, "nan")))
         {
             *flags |= OGRGeometry::OGR_G_3D;
             if (*ppadfZ == nullptr)

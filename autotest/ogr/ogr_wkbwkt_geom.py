@@ -751,6 +751,34 @@ def test_ogr_wkt_multipoint_postgis():
 
 
 ###############################################################################
+# Test accepting nan which is an extension to the WKT spec, but both
+# GEOS (https://github.com/libgeos/geos/pull/817) and PostGIS
+# (https://trac.osgeo.org/postgis/ticket/4827) can now output such things...
+# (actually GDAL too could output, but not ingest it back...)
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POINT (nan nan)",
+        "POINT (1.5 nan)",
+        "POINT (nan 1.5)",
+        "POINT Z (nan nan nan)",
+        "POINT Z (1.5 1.5 nan)",
+        "POINT M (nan nan nan)",
+        "POINT M (1.5 1.5 nan)",
+        "POINT ZM (nan nan nan nan)",
+        "POINT ZM (1.5 1.5 nan nan)",
+        "LINESTRING ZM (nan nan nan nan)",
+    ],
+)
+def test_ogr_wkt_nan(wkt):
+    g = ogr.CreateGeometryFromWkt(wkt)
+    assert g is not None
+    assert g.ExportToIsoWkt() == wkt
+
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 # print 'hit enter'
