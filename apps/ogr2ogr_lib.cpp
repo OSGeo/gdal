@@ -554,10 +554,10 @@ static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 /*                           LoadGeometry()                             */
 /************************************************************************/
 
-static OGRGeometry *LoadGeometry(const std::string &osDS,
-                                 const std::string &osSQL,
-                                 const std::string &osLyr,
-                                 const std::string &osWhere)
+static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
+                                                 const std::string &osSQL,
+                                                 const std::string &osLyr,
+                                                 const std::string &osWhere)
 {
     auto poDS = std::unique_ptr<GDALDataset>(
         GDALDataset::Open(osDS.c_str(), GDAL_OF_VECTOR));
@@ -629,7 +629,7 @@ static OGRGeometry *LoadGeometry(const std::string &osDS,
     if (!osSQL.empty())
         poDS->ReleaseResultSet(poLyr);
 
-    return poMP.release();
+    return poMP;
 }
 
 /************************************************************************/
@@ -2248,9 +2248,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     if (!psOptions->poClipSrc && !psOptions->osClipSrcDS.empty())
     {
-        psOptions->poClipSrc.reset(
+        psOptions->poClipSrc =
             LoadGeometry(psOptions->osClipSrcDS, psOptions->osClipSrcSQL,
-                         psOptions->osClipSrcLayer, psOptions->osClipSrcWhere));
+                         psOptions->osClipSrcLayer, psOptions->osClipSrcWhere);
         if (psOptions->poClipSrc == nullptr)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2282,9 +2282,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     if (!psOptions->osClipDstDS.empty())
     {
-        psOptions->poClipDst.reset(
+        psOptions->poClipDst =
             LoadGeometry(psOptions->osClipDstDS, psOptions->osClipDstSQL,
-                         psOptions->osClipDstLayer, psOptions->osClipDstWhere));
+                         psOptions->osClipDstLayer, psOptions->osClipDstWhere);
         if (psOptions->poClipDst == nullptr)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
