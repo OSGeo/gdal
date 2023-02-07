@@ -28,6 +28,7 @@
 #include <jxl/decode.h>
 #include <jxl/encode.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <assert.h>
@@ -96,6 +97,13 @@ static int GetJXLDataType(TIFF *tif)
     {
         return JXL_TYPE_FLOAT;
     }
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    if (td->td_sampleformat == SAMPLEFORMAT_UINT && td->td_bitspersample > 8 &&
+        td->td_bitspersample < 16)
+    {
+        return JXL_TYPE_UINT16;
+    }
+#endif
 
     TIFFErrorExtR(tif, module,
                   "Unsupported combination of SampleFormat and BitsPerSample");
@@ -366,6 +374,7 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
             }
         }
     }
+
     uint32_t nFirstExtraChannel = (bAlphaEmbedded) ? 1 : 0;
     size_t main_buffer_size = sp->uncompressed_size;
     size_t channel_size = main_buffer_size / td->td_samplesperpixel;
@@ -500,6 +509,25 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
         return 0;
     }
 
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    if ((format.data_type == JXL_TYPE_UINT8 && td->td_bitspersample != 8) ||
+        (format.data_type == JXL_TYPE_UINT16 && td->td_bitspersample != 16))
+    {
+        JxlBitDepth bit_depth;
+        bit_depth.type = JXL_BIT_DEPTH_FROM_CODESTREAM;
+        bit_depth.bits_per_sample = 0;
+        bit_depth.exponent_bits_per_sample = 0;
+        if (JxlDecoderSetImageOutBitDepth(sp->decoder, &bit_depth) !=
+            JXL_DEC_SUCCESS)
+        {
+            TIFFErrorExtR(tif, module,
+                          "JxlDecoderSetImageOutBitDepth() failed");
+            JxlDecoderReleaseInput(sp->decoder);
+            return 0;
+        }
+    }
+#endif
+
     status = JxlDecoderProcessInput(sp->decoder);
     if (status != JXL_DEC_FULL_IMAGE)
     {
@@ -570,6 +598,77 @@ static int JXLDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         return 0;
     }
 
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    TIFFDirectory *td = &tif->tif_dir;
+    if (td->td_sampleformat == SAMPLEFORMAT_UINT && td->td_bitspersample > 8 &&
+        td->td_bitspersample < 16)
+    {
+        const unsigned nSamplesPerPixel =
+            (td->td_planarconfig == PLANARCONFIG_CONTIG ? td->td_samplesperpixel
+                                                        : 1);
+        if (((uint64_t)sp->segment_width * sp->segment_height *
+                 td->td_bitspersample * nSamplesPerPixel +
+             7) /
+                8 !=
+            (uint64_t)occ)
+        {
+            TIFFErrorExtR(tif, module, "Unexpected number of output bytes");
+            return 0;
+        }
+
+        // Bits per line round up to next byte boundary.
+        uint64_t nBitsPerLine = (uint64_t)sp->segment_width * nSamplesPerPixel *
+                                td->td_bitspersample;
+        if ((nBitsPerLine & 7) != 0)
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
+
+        // Initialize to zero as we set the buffer with binary or operations.
+        memset(op, 0, occ);
+
+        const unsigned nBitsPerSample = td->td_bitspersample;
+        uint64_t iPixel = 0;
+        const unsigned nMaxVal = (1U << nBitsPerSample) - 1U;
+        bool bClipWarn = false;
+
+        for (unsigned iY = 0; iY < sp->segment_height; ++iY)
+        {
+            uint64_t iBitOffset = iY * nBitsPerLine;
+
+            for (unsigned iX = 0; iX < sp->segment_width * nSamplesPerPixel;
+                 ++iX)
+            {
+                unsigned nInWord =
+                    ((uint16_t *)sp->uncompressed_buffer)[iPixel++];
+
+                if (nInWord > nMaxVal)
+                {
+                    /* Should not happen hopefully ! */
+                    if (!bClipWarn)
+                    {
+                        bClipWarn = true;
+                        TIFFWarningExtR(
+                            tif, module,
+                            "One or more pixels clipped to fit %u bit domain.",
+                            nBitsPerSample);
+                    }
+                    nInWord = nMaxVal;
+                }
+
+                for (unsigned iBit = 0; iBit < nBitsPerSample; ++iBit)
+                {
+                    if (nInWord & (1 << (nBitsPerSample - 1 - iBit)))
+                    {
+                        op[iBitOffset >> 3] |= (0x80 >> (iBitOffset & 7));
+                    }
+                    ++iBitOffset;
+                }
+            }
+        }
+
+        return 1;
+    }
+#endif
+
     if ((uint64_t)sp->uncompressed_offset + (uint64_t)occ >
         sp->uncompressed_size)
     {
@@ -631,6 +730,62 @@ static int JXLEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
     (void)s;
     assert(sp != NULL);
     assert(sp->state == LSTATE_INIT_ENCODE);
+
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    TIFFDirectory *td = &tif->tif_dir;
+    if (td->td_sampleformat == SAMPLEFORMAT_UINT && td->td_bitspersample > 8 &&
+        td->td_bitspersample < 16)
+    {
+        const unsigned nSamplesPerPixel =
+            (td->td_planarconfig == PLANARCONFIG_CONTIG ? td->td_samplesperpixel
+                                                        : 1);
+        if (((uint64_t)sp->segment_width * sp->segment_height *
+                 td->td_bitspersample * nSamplesPerPixel +
+             7) /
+                8 !=
+            (uint64_t)cc)
+        {
+            TIFFErrorExtR(tif, module, "Unexpected number of input bytes");
+            return 0;
+        }
+
+        // Bits per line round up to next byte boundary.
+        uint64_t nBitsPerLine = (uint64_t)sp->segment_width * nSamplesPerPixel *
+                                td->td_bitspersample;
+        if ((nBitsPerLine & 7) != 0)
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
+
+        const unsigned nBitsPerSample = td->td_bitspersample;
+        uint64_t iPixel = 0;
+
+        for (unsigned iY = 0; iY < sp->segment_height; ++iY)
+        {
+            uint64_t iBitOffset = iY * nBitsPerLine;
+
+            for (unsigned iX = 0; iX < sp->segment_width * nSamplesPerPixel;
+                 ++iX)
+            {
+                unsigned nOutWord = 0;
+
+                for (unsigned iBit = 0; iBit < nBitsPerSample; ++iBit)
+                {
+                    if (bp[iBitOffset >> 3] & (0x80 >> (iBitOffset & 7)))
+                    {
+                        nOutWord |= (1 << (nBitsPerSample - 1 - iBit));
+                    }
+                    ++iBitOffset;
+                }
+
+                ((uint16_t *)sp->uncompressed_buffer)[iPixel++] =
+                    (uint16_t)nOutWord;
+            }
+        }
+
+        sp->uncompressed_offset = sp->segment_width * sp->segment_height *
+                                  (unsigned)sizeof(uint16_t) * nSamplesPerPixel;
+        return 1;
+    }
+#endif
 
     if ((uint64_t)sp->uncompressed_offset + (uint64_t)cc >
         sp->uncompressed_size)
@@ -776,6 +931,23 @@ static int JXLPostEncode(TIFF *tif)
         }
 #endif
     }
+
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    if ((format.data_type == JXL_TYPE_UINT8 && td->td_bitspersample != 8) ||
+        (format.data_type == JXL_TYPE_UINT16 && td->td_bitspersample != 16))
+    {
+        JxlBitDepth bit_depth;
+        bit_depth.type = JXL_BIT_DEPTH_FROM_CODESTREAM;
+        bit_depth.bits_per_sample = 0;
+        bit_depth.exponent_bits_per_sample = 0;
+        if (JxlEncoderSetFrameBitDepth(opts, &bit_depth) != JXL_ENC_SUCCESS)
+        {
+            TIFFErrorExtR(tif, module, "JxlEncoderSetFrameBitDepth() failed");
+            JxlEncoderDestroy(enc);
+            return 0;
+        }
+    }
+#endif
 
     if (sp->lossless)
     {

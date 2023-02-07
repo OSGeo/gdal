@@ -23597,6 +23597,11 @@ void GDALRegister_GTiff()
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 
+#ifdef HAVE_JxlEncoderSetFrameBitDepth
+    poDriver->SetMetadataItem("JXL_NON_POWER_OF_TWO_BIT_DEPTH_SUPPORTED", "YES",
+                              "TIFF");
+#endif
+
     poDriver->pfnOpen = GTiffDataset::Open;
     poDriver->pfnCreate = GTiffDataset::Create;
     poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;

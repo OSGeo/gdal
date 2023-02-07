@@ -10696,5 +10696,107 @@ def test_tiff_write_lossless_extraction_of_JPEGXL_tile():
     gdal.Unlink(tmpfilename_jxl)
 
 
+###############################################################################
+# Test encoding and decoding of 12-bit JXL
+
+
+def test_tiff_write_12bit_JXL():
+
+    drv = gdal.GetDriverByName("GTiff")
+    if "JXL" not in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
+        pytest.skip("JXL support missing in GTiff driver")
+    if drv.GetMetadataItem("JXL_NON_POWER_OF_TWO_BIT_DEPTH_SUPPORTED", "TIFF") is None:
+        pytest.skip("JXL_NON_POWER_OF_TWO_BIT_DEPTH_SUPPORTED not found")
+
+    mem_ds = gdal.Translate(
+        "", "data/byte.tif", options="-f MEM -ot UInt16 -scale 0 255 0 4095"
+    )
+    tmpfilename_gtiff = "/vsimem/test_tiff_write_12bit_JXL.tif"
+
+    assert (
+        gdal.Translate(
+            tmpfilename_gtiff, mem_ds, options="-co COMPRESS=JXL -co NBITS=12"
+        )
+        is not None
+    )
+    ds = gdal.Open(tmpfilename_gtiff)
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).Checksum() == mem_ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    assert (
+        gdal.Translate(
+            tmpfilename_gtiff,
+            mem_ds,
+            options="-co COMPRESS=JXL -co NBITS=12 -co JXL_LOSSLESS=NO",
+        )
+        is not None
+    )
+    ds = gdal.Open(tmpfilename_gtiff)
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).ComputeStatistics(True)[2:] == pytest.approx(
+        mem_ds.GetRasterBand(1).ComputeStatistics(True)[2:], rel=0.1
+    )
+    ds = None
+
+    drv.Delete(tmpfilename_gtiff)
+
+
+###############################################################################
+# Test encoding and decoding of 12-bit JXL
+
+
+def test_tiff_write_12bit_JXL_multi_band():
+
+    drv = gdal.GetDriverByName("GTiff")
+    if "JXL" not in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
+        pytest.skip("JXL support missing in GTiff driver")
+    if drv.GetMetadataItem("JXL_NON_POWER_OF_TWO_BIT_DEPTH_SUPPORTED", "TIFF") is None:
+        pytest.skip("JXL_NON_POWER_OF_TWO_BIT_DEPTH_SUPPORTED not found")
+
+    mem_ds = gdal.Translate(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-f MEM -ot UInt16 -scale 0 255 0 4095",
+    )
+    tmpfilename_gtiff = "/vsimem/test_tiff_write_12bit_JXL_multi_band.tif"
+
+    assert (
+        gdal.Translate(
+            tmpfilename_gtiff, mem_ds, options="-co COMPRESS=JXL -co NBITS=12"
+        )
+        is not None
+    )
+    ds = gdal.Open(tmpfilename_gtiff)
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).Checksum() == mem_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == mem_ds.GetRasterBand(2).Checksum()
+    assert ds.GetRasterBand(3).Checksum() == mem_ds.GetRasterBand(3).Checksum()
+    ds = None
+
+    assert (
+        gdal.Translate(
+            tmpfilename_gtiff,
+            mem_ds,
+            options="-co COMPRESS=JXL -co NBITS=12 -co JXL_LOSSLESS=NO -co JXL_DISTANCE=0.1",
+        )
+        is not None
+    )
+    ds = gdal.Open(tmpfilename_gtiff)
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).ComputeStatistics(True)[2:] == pytest.approx(
+        mem_ds.GetRasterBand(1).ComputeStatistics(True)[2:], rel=0.02
+    )
+    assert ds.GetRasterBand(2).ComputeStatistics(True)[2:] == pytest.approx(
+        mem_ds.GetRasterBand(2).ComputeStatistics(True)[2:], rel=0.02
+    )
+    assert ds.GetRasterBand(3).ComputeStatistics(True)[2:] == pytest.approx(
+        mem_ds.GetRasterBand(3).ComputeStatistics(True)[2:], rel=0.02
+    )
+    ds = None
+
+    drv.Delete(tmpfilename_gtiff)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
