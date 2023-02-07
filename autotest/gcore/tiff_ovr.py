@@ -2734,6 +2734,54 @@ def test_tiff_ovr_internal_overview_different_planar_config_to_band():
 
 
 ###############################################################################
+
+
+def test_tiff_ovr_external_1_px_wide_3_px_tall():
+
+    temp_path = "/vsimem/test.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 1, 3)
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+    ds = gdal.OpenEx(temp_path)
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path + ".ovr")
+    assert ds.GetRasterBand(1).Checksum() == 2
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path + ".ovr.ovr")
+    assert ds.GetRasterBand(1).Checksum() == 1
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_external_3_px_wide_1_px_tall():
+
+    temp_path = "/vsimem/test.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 3, 1)
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+    ds = gdal.OpenEx(temp_path)
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path + ".ovr")
+    assert ds.GetRasterBand(1).Checksum() == 2
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path + ".ovr.ovr")
+    assert ds.GetRasterBand(1).Checksum() == 1
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
 # Cleanup
 
 

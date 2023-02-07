@@ -496,7 +496,7 @@ int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
     // Select the larger dimension to have increased accuracy, but
     // with a slight preference to x even if (a bit) smaller than y
     // in an attempt to behave closer as previous behavior.
-    if (nRasterXSize >= nRasterYSize / 2)
+    if (nRasterXSize != 1 && nRasterXSize >= nRasterYSize / 2)
     {
         return static_cast<int>(0.5 +
                                 nRasterXSize / static_cast<double>(nOvrXSize));
