@@ -5151,6 +5151,54 @@ def test_ogr_shape_111_delete_field_no_record():
 ###############################################################################
 
 
+def test_ogr_shape_delete_all_fields_with_records():
+
+    # Scenario of https://github.com/qgis/QGIS/issues/51247
+    layer_name = "ogr_shape_delete_all_fields_with_records"
+    filename = "/vsimem/" + layer_name + ".shp"
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("field_1"))
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    # We could question if this is allowed...
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 0
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+    ds = None
+
+    shape_drv.DeleteDataSource(filename)
+
+
+###############################################################################
+
+
 def test_ogr_shape_112_delete_layer():
 
     dirname = "/vsimem/test_ogr_shape_112_delete_layer"

@@ -1499,10 +1499,21 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
     /* -------------------------------------------------------------------- */
     /*      Write out dummy field value if it exists.                       */
     /* -------------------------------------------------------------------- */
-    if (DBFGetFieldCount(hDBF) == 1 && poDefn->GetFieldCount() == 0)
+    if (poDefn->GetFieldCount() == 0)
     {
-        DBFWriteIntegerAttribute(hDBF, static_cast<int>(poFeature->GetFID()), 0,
-                                 static_cast<int>(poFeature->GetFID()));
+        if (DBFGetFieldCount(hDBF) == 1)
+        {
+            DBFWriteIntegerAttribute(hDBF,
+                                     static_cast<int>(poFeature->GetFID()), 0,
+                                     static_cast<int>(poFeature->GetFID()));
+        }
+        else if (DBFGetFieldCount(hDBF) == 0)
+        {
+            // Far from being nominal... Could happen if deleting all fields
+            // of a DBF with rows
+            DBFWriteAttributeDirectly(
+                hDBF, static_cast<int>(poFeature->GetFID()), -1, nullptr);
+        }
     }
 
     /* -------------------------------------------------------------------- */
