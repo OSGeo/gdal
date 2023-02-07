@@ -250,12 +250,27 @@ static int CutlineTransformer(void *pTransformArg, int bDstToSrc,
 /*      provided cutline, and optional blend distance.                  */
 /************************************************************************/
 
-CPLErr GDALWarpCutlineMasker(void *pMaskFuncArg, int /* nBandCount */,
-                             GDALDataType /* eType */, int nXOff, int nYOff,
-                             int nXSize, int nYSize, GByte ** /*ppImageData */,
+CPLErr GDALWarpCutlineMasker(void *pMaskFuncArg, int nBandCount,
+                             GDALDataType eType, int nXOff, int nYOff,
+                             int nXSize, int nYSize, GByte **ppImageData,
                              int bMaskIsFloat, void *pValidityMask)
 
 {
+    return GDALWarpCutlineMaskerEx(pMaskFuncArg, nBandCount, eType, nXOff,
+                                   nYOff, nXSize, nYSize, ppImageData,
+                                   bMaskIsFloat, pValidityMask, nullptr);
+}
+
+CPLErr GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int /* nBandCount */,
+                               GDALDataType /* eType */, int nXOff, int nYOff,
+                               int nXSize, int nYSize,
+                               GByte ** /*ppImageData */, int bMaskIsFloat,
+                               void *pValidityMask, int *pnValidityFlag)
+
+{
+    if (pnValidityFlag)
+        *pnValidityFlag = GCMVF_PARTIAL_INTERSECTION;
+
     if (nXSize < 1 || nYSize < 1)
         return CE_None;
 
@@ -307,6 +322,9 @@ CPLErr GDALWarpCutlineMasker(void *pMaskFuncArg, int /* nBandCount */,
         sEnvelope.MaxY + psWO->dfCutlineBlendDist < nYOff ||
         sEnvelope.MinY - psWO->dfCutlineBlendDist > nYOff + nYSize)
     {
+        if (pnValidityFlag)
+            *pnValidityFlag = GCMVF_NO_INTERSECTION;
+
         // We are far from the blend line - everything is masked to zero.
         // It would be nice to realize no work is required for this whole
         // chunk!
@@ -342,6 +360,9 @@ CPLErr GDALWarpCutlineMasker(void *pMaskFuncArg, int /* nBandCount */,
         if (sEnvelope.Contains(sChunkEnvelope) &&
             OGRGeometry::FromHandle(hPolygon)->Contains(&oChunkFootprint))
         {
+            if (pnValidityFlag)
+                *pnValidityFlag = GCMVF_CHUNK_FULLY_WITHIN_CUTLINE;
+
             CPLDebug("WARP", "Source chunk fully contained within cutline.");
             return CE_None;
         }
