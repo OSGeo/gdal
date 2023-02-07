@@ -5442,14 +5442,23 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 if (m_poClipSrcOri)
                 {
 
-                    const OGRGeometry *clipGeom =
+                    const OGRGeometry *poClipGeom =
                         GetSrcClipGeom(poDstGeometry->getSpatialReference());
 
                     std::unique_ptr<OGRGeometry> poClipped;
-                    if (clipGeom != nullptr &&
-                        clipGeom->Intersects(poDstGeometry))
+                    if (poClipGeom != nullptr)
                     {
-                        poClipped.reset(clipGeom->Intersection(poDstGeometry));
+                        OGREnvelope oClipEnv;
+                        OGREnvelope oDstEnv;
+
+                        poClipGeom->getEnvelope(&oClipEnv);
+                        poDstGeometry->getEnvelope(&oDstEnv);
+
+                        if (oClipEnv.Intersects(oDstEnv))
+                        {
+                            poClipped.reset(
+                                poClipGeom->Intersection(poDstGeometry));
+                        }
                     }
 
                     if (poClipped == nullptr || poClipped->IsEmpty())
@@ -5541,7 +5550,13 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 
                         std::unique_ptr<OGRGeometry> poClipped;
 
-                        if (poClipGeom->Intersects(poDstGeometry))
+                        OGREnvelope oClipEnv;
+                        OGREnvelope oDstEnv;
+
+                        poClipGeom->getEnvelope(&oClipEnv);
+                        poDstGeometry->getEnvelope(&oDstEnv);
+
+                        if (oClipEnv.Intersects(oDstEnv))
                         {
                             poClipped.reset(
                                 poClipGeom->Intersection(poDstGeometry));
