@@ -1022,7 +1022,7 @@ static bool TranslateArray(
                 indexingVarSpec = srcIndexVar->GetFullName();
             }
         }
-        if (srcIndexVar &&
+        if (srcIndexVar && !indexingVarSpec.empty() &&
             srcIndexVar->GetFullName() != srcArray->GetFullName())
         {
             if (poSrcRootGroup)
