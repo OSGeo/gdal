@@ -1665,20 +1665,22 @@ OGRErr GMLHandler::endElementGeometry()
             m_oMapElementToSubstitute.find(psThisNodeChild->psChild->pszValue);
         if (oIter != m_oMapElementToSubstitute.end())
         {
-            // CPLDebug("GML", "Substitution of xlink:href=\"#%s\" with actual content", psThisNodeChild->psChild->pszValue);
-            CPLXMLNode *psAfter = psThisNode->psNext;
-            psThisNode->psNext = nullptr;
-            // We can patch oIter->second as it stored as it in the current
-            // GMLFeature.
-            // Of course that would no longer be the case in case of
-            // cross-references between different GMLFeature, hence we clear
-            // m_oMapElementToSubstitute at the end of the current feature.
             auto psLastChild = oIter->second->psChild;
-            CPLAssert(psLastChild);
-            while (psLastChild->psNext)
-                psLastChild = psLastChild->psNext;
-            psLastChild->psNext = CPLCloneXMLTree(psThisNode);
-            psThisNode->psNext = psAfter;
+            if (psLastChild)
+            {
+                // CPLDebug("GML", "Substitution of xlink:href=\"#%s\" with actual content", psThisNodeChild->psChild->pszValue);
+                CPLXMLNode *psAfter = psThisNode->psNext;
+                psThisNode->psNext = nullptr;
+                // We can patch oIter->second as it stored as it in the current
+                // GMLFeature.
+                // Of course that would no longer be the case in case of
+                // cross-references between different GMLFeature, hence we clear
+                // m_oMapElementToSubstitute at the end of the current feature.
+                while (psLastChild->psNext)
+                    psLastChild = psLastChild->psNext;
+                psLastChild->psNext = CPLCloneXMLTree(psThisNode);
+                psThisNode->psNext = psAfter;
+            }
         }
     }
 
