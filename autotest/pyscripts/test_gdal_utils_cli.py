@@ -50,15 +50,11 @@ Resources used:
 """
 
 import subprocess
-import sys
 
 import pytest
 
-# Skip if gdal-utils is not known to pip (and therefore not registered in
-# python 'site-packages' and 'Scripts')
-installed = subprocess.run([sys.executable, "-m", "pip", "show", "gdal-utils"])
-if installed.returncode != 0:
-    pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
+# test that osgeo_utils is available, if not skip all tests
+pytest.importorskip("osgeo_utils")
 
 utils = [
     "gdal2tiles",
@@ -87,7 +83,7 @@ params = [pytest.param(util) for util in utils]
 
 @pytest.mark.parametrize("input", params)
 def test_program(input):
-    completed_process = run_program(input)
+    completed_process = run_program(input + ".py")
     assert (
         "usage:" in completed_process.stderr.lower()
         or "usage:" in completed_process.stdout.lower()
