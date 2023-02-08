@@ -106,7 +106,7 @@ if (Python_Interpreter_FOUND)
     # This allows parallel testing of files with `ctest -j`
     file(GLOB_RECURSE pytestpaths CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${pytest_dir}/test_*.py)
     foreach(pytestpath ${pytestpaths})
-        get_filename_component(pytestfile ${pytestpath} NAME_WLE)
+        get_filename_component(pytestfile ${pytestpath} NAME_WE)
         string(REPLACE "test_" "" pytestfile ${pytestfile})
         string(REPLACE "_" "-" pytestfile ${pytestfile})
         string(CONCAT pytest_target "pytest-" ${pytest_dir} "-" ${pytestfile})

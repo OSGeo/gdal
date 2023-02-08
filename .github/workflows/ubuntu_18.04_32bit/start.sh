@@ -119,4 +119,4 @@ for i in autotest/gcore/tiff_ovr.py \
     rm -f $i
 done
 
-(cd autotest && $PYTEST)
+ctest -R pytest -v --output-on-failure -j 3

@@ -38,4 +38,4 @@ AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} python3 -c 
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
 
-(cd autotest && $PYTEST)
+ctest -R pytest -v --output-on-failure -j 3

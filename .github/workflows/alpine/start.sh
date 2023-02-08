@@ -85,4 +85,4 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 (cd build_ci_alpine && make quicktest)
 
-(cd build_ci_alpine/autotest && $PYTEST)
+(cd build_ci_alpine/autotest && ctest -R pytest -v --output-on-failure -j 3)

@@ -85,5 +85,5 @@ pip3 install -U pytest pytest-sugar pytest-env
 # test_virtualmem_1 and test_virtualmem_3 fail on CI
 mv autotest/gcore/virtualmem.py autotest/gcore/virtualmem.py.disabled
 
-(cd build_fedora_rawhide/autotest && $PYTEST)
+(cd build_fedora_rawhide && ctest -R pytest -v --output-on-failure -j 3)
 
