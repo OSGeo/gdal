@@ -117,20 +117,18 @@ sparams = [pytest.param(script) for script in scripts]
 @pytest.mark.parametrize("input", params)
 def test_program(input):
     completed_process = run_program(input)
-    assert (
-        "usage:" in completed_process.stderr.lower()
-        or "usage:" in completed_process.stdout.lower()
-    )
+    output = (completed_process.stderr + completed_process.stdout).decode()
+
+    assert "usage:" in output.lower()
     assert completed_process.returncode == 2
 
 
 @pytest.mark.parametrize("input", sparams)
 def test_script(input):
     completed_process = run_script(input)
-    assert (
-        "usage:" in completed_process.stderr.lower()
-        or "usage:" in completed_process.stdout.lower()
-    )
+    output = (completed_process.stderr + completed_process.stdout).decode()
+
+    assert "usage:" in output.lower()
     assert completed_process.returncode == 2
 
 
@@ -138,9 +136,8 @@ def run_program(program, args=None):
     return subprocess.run(
         [program + ".py"],
         input=args,
-        capture_output=True,
-        shell=True,
-        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
 
@@ -148,6 +145,6 @@ def run_script(program, args=None):
     return subprocess.run(
         [sys.executable, program],  # ["path/to/this/env's/python", 'path/to/script.py']
         input=args,
-        capture_output=True,
-        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )

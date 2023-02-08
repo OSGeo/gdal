@@ -84,17 +84,14 @@ params = [pytest.param(util) for util in utils]
 @pytest.mark.parametrize("input", params)
 def test_program(input):
     completed_process = run_program(input + ".py")
-    assert (
-        "usage:" in completed_process.stderr.lower()
-        or "usage:" in completed_process.stdout.lower()
-    )
+    output = completed_process.stderr.decode() + completed_process.stdout.decode()
+    assert "usage:" in output.lower()
 
 
 def run_program(program, args=None):
     return subprocess.run(
         [program],
         input=args,
-        capture_output=True,
-        shell=True,
-        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
