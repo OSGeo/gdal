@@ -5277,17 +5277,17 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                  */
                 /* target feature : we steal it from the source feature for
                  * now... */
-                OGRGeometry *poStolenGeometry = nullptr;
+                std::unique_ptr<OGRGeometry> poStolenGeometry;
                 if (!bExplodeCollections && nSrcGeomFieldCount == 1 &&
                     (nDstGeomFieldCount == 1 ||
                      (nDstGeomFieldCount == 0 && m_poClipSrcOri)))
                 {
-                    poStolenGeometry = poFeature->StealGeometry();
+                    poStolenGeometry.reset(poFeature->StealGeometry());
                 }
                 else if (!bExplodeCollections && iRequestedSrcGeomField >= 0)
                 {
-                    poStolenGeometry =
-                        poFeature->StealGeometry(iRequestedSrcGeomField);
+                    poStolenGeometry.reset(
+                        poFeature->StealGeometry(iRequestedSrcGeomField));
                 }
 
                 if (nDstGeomFieldCount == 0 && poStolenGeometry &&
@@ -5297,7 +5297,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         GetSrcClipGeom(poStolenGeometry->getSpatialReference());
 
                     if (poClipGeom != nullptr &&
-                        !poClipGeom->Intersects(poStolenGeometry))
+                        !poClipGeom->Intersects(poStolenGeometry.get()))
                     {
                         goto end_loop;
                     }
@@ -5313,8 +5313,6 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         {
                             if (poDstLayer->CommitTransaction() != OGRERR_NONE)
                             {
-                                OGRGeometryFactory::destroyGeometry(
-                                    poStolenGeometry);
                                 return false;
                             }
                         }
@@ -5325,14 +5323,14 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                              " from layer %s.",
                              nSrcFID, poSrcLayer->GetName());
 
-                    OGRGeometryFactory::destroyGeometry(poStolenGeometry);
                     return false;
                 }
 
                 /* ... and now we can attach the stolen geometry */
                 if (poStolenGeometry)
                 {
-                    poDstFeature->SetGeometryDirectly(poStolenGeometry);
+                    poDstFeature->SetGeometryDirectly(
+                        poStolenGeometry.release());
                 }
 
                 if (!psInfo->m_oMapResolved.empty())
