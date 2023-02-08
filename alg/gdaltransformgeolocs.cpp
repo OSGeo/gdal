@@ -48,8 +48,8 @@ CPL_CVSID("$Id$")
  * Transform locations held in bands.
  *
  * The X/Y and possibly Z values in the identified bands are transformed
- * using a spatial transformer.  The changes values are written back to the
- * source bands so they need to updatable.
+ * using a spatial transformer.  The changed values are written back to the
+ * source bands so they need to be updateable.
  *
  * @param hXBand the band containing the X locations (usually long/easting).
  * @param hYBand the band containing the Y locations (usually lat/northing).

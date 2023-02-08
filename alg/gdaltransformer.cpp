@@ -218,7 +218,7 @@ points may have failed) or FALSE if the overall transformation fails.
  * output file georeferenced coordinates.  This can be accomplished with
  * GDALCreateGenImgProjTransformer() by passing a NULL for the hDstDS.
  *
- * @param hSrcDS the input image (it is assumed the whole input images is
+ * @param hSrcDS the input image (it is assumed the whole input image is
  * being transformed).
  * @param pfnTransformer the transformer function.
  * @param pTransformArg the callback data for the transformer function.
@@ -388,7 +388,7 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
  * output file georeferenced coordinates.  This can be accomplished with
  * GDALCreateGenImgProjTransformer() by passing a NULL for the hDstDS.
  *
- * @param hSrcDS the input image (it is assumed the whole input images is
+ * @param hSrcDS the input image (it is assumed the whole input image is
  * being transformed).
  * @param pfnTransformer the transformer function.
  * @param pTransformArg the callback data for the transformer function.
@@ -3584,22 +3584,21 @@ static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
  * precision.
  *
  * The approximation is actually done at the point where GDALApproxTransform()
- * calls are made, and depend on the assumption that the roughly linear.  The
- * first and last point passed in must be the extreme values and the
+ * calls are made, and depend on the assumption that they are roughly linear.
+ * The first and last point passed in must be the extreme values and the
  * intermediate values should describe a curve between the end points.  The
- * approximator transforms and center using the approximate transformer, and
+ * approximator transforms and centers using the approximate transformer, and
  * then compares the true middle transformed value to a linear approximation
- * based on the end points.  If the error is within the supplied threshold
- * then the end points are used to linearly approximate all the values
- * otherwise the inputs points are split into two smaller sets, and the
- * function recursively called till a sufficiently small set of points if found
- * that the linear approximation is OK, or that all the points are exactly
- * computed.
+ * based on the end points.  If the error is within the supplied threshold then
+ * the end points are used to linearly approximate all the values otherwise the
+ * input points are split into two smaller sets, and the function is recursively
+ * called until a sufficiently small set of points is found that the linear
+ * approximation is OK, or that all the points are exactly computed.
  *
  * This function is very suitable for approximating transformation results
  * from output pixel/line space to input coordinates for warpers that operate
  * on one input scanline at a time.  Care should be taken using it in other
- * circumstances as little internal validation is done, in order to keep things
+ * circumstances as little internal validation is done in order to keep things
  * fast.
  *
  * @param pfnBaseTransformer the high precision transformer which should be
