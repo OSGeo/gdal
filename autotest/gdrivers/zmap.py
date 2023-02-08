@@ -28,8 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
+import pytest
+
+from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("ZMap")
 
 ###############################################################################
 # Test CreateCopy() of byte.tif
@@ -42,3 +46,22 @@ def test_zmap_1():
         vsimem=1,
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
+
+
+###############################################################################
+# Test setting nodata value to -3.402823E+38
+
+
+def test_zmap_nodata():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_Float32)
+    src_ds.GetRasterBand(1).SetNoDataValue(-3.402823e38)
+    filename = "/vsimem/out.zmap"
+    gdal.GetDriverByName("ZMap").CreateCopy(filename, src_ds)
+    ds = gdal.Open(filename)
+    assert ds
+    assert (
+        ds.GetRasterBand(1).GetNoDataValue() == src_ds.GetRasterBand(1).GetNoDataValue()
+    )
+    ds = None
+    gdal.GetDriverByName("ZMap").Delete(filename)
