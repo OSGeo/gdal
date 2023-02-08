@@ -3,3 +3,4 @@ pytest-sugar
 pytest-env
 lxml
 jsonschema
+numpy
