@@ -47,10 +47,8 @@ from pathlib import Path
 
 import pytest
 
-# pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
+pytest.importorskip("osgeo_utils")
 
-# here = r"D:\code\public\gdal\autotest\pyscripts"
-# script_path = r"D:\code\public\gdal\swig\python\gdal-utils\osgeo_utils"
 here = Path(__file__).parent.absolute()
 script_path = Path(here / "../../swig/python/gdal-utils/osgeo_utils/").resolve()
 
@@ -58,6 +56,7 @@ excludes = [
     "setup.py",
     "__init__.py",
     "gdal_auth.py",  # gdal_auth doesn't take arguments
+    "fft.py",  # returns 1 after ImportError
 ]
 
 
@@ -89,13 +88,6 @@ if not Path(script_path).exists():
 else:
     scripts = get_scripts(script_path, excludes)
 
-
-# Programs - standard gdal-utils we expect to be installed in PYTHONHOME\Scripts
-# Skip if gdal-utils is not known to pip (and therefore not registered in
-# python 'site-packages' and 'Scripts')
-installed = subprocess.run([sys.executable, "-m", "pip", "show", "gdal-utils"])
-if installed.returncode != 0:
-    pytest.skip("The 'gdal-utils' package is not installed.", allow_module_level=True)
 utils = [
     "gdal2tiles",
     "gdal2xyz",
@@ -128,8 +120,8 @@ def test_program(input):
     assert (
         "usage:" in completed_process.stderr.lower()
         or "usage:" in completed_process.stdout.lower()
-        and completed_process.returncode == 2
     )
+    assert completed_process.returncode == 2
 
 
 @pytest.mark.parametrize("input", sparams)
@@ -138,13 +130,13 @@ def test_script(input):
     assert (
         "usage:" in completed_process.stderr.lower()
         or "usage:" in completed_process.stdout.lower()
-        and completed_process.returncode == 2
     )
+    assert completed_process.returncode == 2
 
 
 def run_program(program, args=None):
     return subprocess.run(
-        [program],
+        [program + ".py"],
         input=args,
         capture_output=True,
         shell=True,
@@ -157,6 +149,5 @@ def run_script(program, args=None):
         [sys.executable, program],  # ["path/to/this/env's/python", 'path/to/script.py']
         input=args,
         capture_output=True,
-        shell=True,
         text=True,
     )
