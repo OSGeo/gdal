@@ -261,7 +261,7 @@ GDALSuggestedWarpOutput(GDALDatasetH hSrcDS, GDALTransformerFunc pfnTransformer,
 CPLErr CPL_DLL CPL_STDCALL GDALSuggestedWarpOutput2(
     GDALDatasetH hSrcDS, GDALTransformerFunc pfnTransformer,
     void *pTransformArg, double *padfGeoTransformOut, int *pnPixels,
-    int *pnLines, double *padfExtents, int nOptions);
+    int *pnLines, double *padfExtent, int nOptions);
 
 /*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL *GDALSerializeTransformer(GDALTransformerFunc pfnFunc,
