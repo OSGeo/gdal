@@ -101,6 +101,14 @@ static int GetJXLDataType(TIFF *tif)
     if (td->td_sampleformat == SAMPLEFORMAT_UINT && td->td_bitspersample > 8 &&
         td->td_bitspersample < 16)
     {
+        // Restrict to 12 bit for performance reasons, as we haven't implemented
+        // efficient bit packing/unpacking for other bit depths.
+        if (td->td_bitspersample != 12)
+        {
+            TIFFErrorExtR(tif, module,
+                          "Only BitsPerSample=12 or 16 are supported");
+            return -1;
+        }
         return JXL_TYPE_UINT16;
     }
 #endif
@@ -629,13 +637,83 @@ static int JXLDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         uint64_t iPixel = 0;
         const unsigned nMaxVal = (1U << nBitsPerSample) - 1U;
         bool bClipWarn = false;
+        const unsigned nValsPerLine = sp->segment_width * nSamplesPerPixel;
 
         for (unsigned iY = 0; iY < sp->segment_height; ++iY)
         {
             uint64_t iBitOffset = iY * nBitsPerLine;
 
-            for (unsigned iX = 0; iX < sp->segment_width * nSamplesPerPixel;
-                 ++iX)
+            if (nBitsPerSample == 12)
+            {
+                size_t iByte = (size_t)(iBitOffset >> 3);
+                for (unsigned iX = 0; iX < nValsPerLine - 1U;
+                     iX += 2, iByte += 3)
+                {
+                    unsigned nInWord1 =
+                        ((uint16_t *)sp->uncompressed_buffer)[iPixel++];
+                    unsigned nInWord2 =
+                        ((uint16_t *)sp->uncompressed_buffer)[iPixel++];
+
+                    if (nInWord1 > nMaxVal)
+                    {
+                        /* Should not happen hopefully ! */
+                        if (!bClipWarn)
+                        {
+                            bClipWarn = true;
+                            TIFFWarningExtR(tif, module,
+                                            "One or more pixels clipped to fit "
+                                            "%u bit domain.",
+                                            nBitsPerSample);
+                        }
+                        nInWord1 = nMaxVal;
+                    }
+                    if (nInWord2 > nMaxVal)
+                    {
+                        /* Should not happen hopefully ! */
+                        if (!bClipWarn)
+                        {
+                            bClipWarn = true;
+                            TIFFWarningExtR(tif, module,
+                                            "One or more pixels clipped to fit "
+                                            "%u bit domain.",
+                                            nBitsPerSample);
+                        }
+                        nInWord2 = nMaxVal;
+                    }
+
+                    op[iByte] = (uint8_t)(nInWord1 >> 4);
+                    op[iByte + 1] =
+                        (uint8_t)(((nInWord1 & 0xf) << 4) | (nInWord2 >> 8));
+                    op[iByte + 2] = (uint8_t)(nInWord2 & 0xff);
+                }
+
+                if ((nValsPerLine % 2) != 0)
+                {
+                    unsigned nInWord =
+                        ((uint16_t *)sp->uncompressed_buffer)[iPixel++];
+
+                    if (nInWord > nMaxVal)
+                    {
+                        /* Should not happen hopefully ! */
+                        if (!bClipWarn)
+                        {
+                            bClipWarn = true;
+                            TIFFWarningExtR(tif, module,
+                                            "One or more pixels clipped to fit "
+                                            "%u bit domain.",
+                                            nBitsPerSample);
+                        }
+                        nInWord = nMaxVal;
+                    }
+
+                    op[iByte] = (uint8_t)((op[iByte] & 0xf0) | (nInWord >> 8));
+                    op[iByte + 1] = (uint8_t)(nInWord & 0xff);
+                }
+
+                continue;
+            }
+#ifdef disabled
+            for (unsigned iX = 0; iX < nValsPerLine; ++iX)
             {
                 unsigned nInWord =
                     ((uint16_t *)sp->uncompressed_buffer)[iPixel++];
@@ -663,6 +741,7 @@ static int JXLDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                     ++iBitOffset;
                 }
             }
+#endif
         }
 
         return 1;
@@ -762,6 +841,31 @@ static int JXLEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
         {
             uint64_t iBitOffset = iY * nBitsPerLine;
 
+            if (nBitsPerSample == 12)
+            {
+                for (unsigned iX = 0; iX < sp->segment_width * nSamplesPerPixel;
+                     ++iX)
+                {
+                    const size_t iByte = (size_t)(iBitOffset >> 3);
+
+                    if ((iBitOffset & 0x7) == 0)
+                    {
+                        /* Starting on byte boundary. */
+                        ((uint16_t *)sp->uncompressed_buffer)[iPixel++] =
+                            (uint16_t)((bp[iByte] << 4) | (bp[iByte + 1] >> 4));
+                    }
+                    else
+                    {
+                        /* Starting off byte boundary. */
+                        ((uint16_t *)sp->uncompressed_buffer)[iPixel++] =
+                            (uint16_t)(((bp[iByte] & 0xf) << 8) |
+                                       (bp[iByte + 1]));
+                    }
+                    iBitOffset += nBitsPerSample;
+                }
+                continue;
+            }
+#ifdef disabled
             for (unsigned iX = 0; iX < sp->segment_width * nSamplesPerPixel;
                  ++iX)
             {
@@ -779,6 +883,7 @@ static int JXLEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
                 ((uint16_t *)sp->uncompressed_buffer)[iPixel++] =
                     (uint16_t)nOutWord;
             }
+#endif
         }
 
         sp->uncompressed_offset = sp->segment_width * sp->segment_height *
