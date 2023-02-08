@@ -356,7 +356,6 @@ jobs:
           python -m pip install pytest-env
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
-      # GDAL_USE_MSSQL_ODBC=OFF because of linking issue with mingw-w64-x86_64-binutils-2.40-1. Cf https://github.com/msys2/MINGW-packages/issues/15469#issuecomment-1417600483
       - name: Configure
         run: |
           cmake -S . -B build -G "${generator}" -Werror=dev \
@@ -370,7 +369,6 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$PWD/install-gdal \
             "-DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD}" \
             -DGDAL_USE_MYSQL:BOOL=OFF \
-            -DGDAL_USE_MSSQL_ODBC=OFF \
             -DBUILD_CSHARP_BINDINGS=ON
         working-directory: ${{ github.workspace }}
       - name: Build
