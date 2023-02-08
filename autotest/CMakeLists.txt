@@ -85,7 +85,7 @@ if (Python_Interpreter_FOUND)
   endif()
 
   foreach (
-    tgt IN
+    pytest_dir IN
     ITEMS ogr
           gcore
           gdrivers
@@ -96,19 +96,27 @@ if (Python_Interpreter_FOUND)
           utilities)
     if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
         if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
+          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${pytest_dir}")
         else ()
-          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
+          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${pytest_dir} ${CMAKE_CURRENT_BINARY_DIR}/${pytest_dir})
         endif ()
     endif()
-    add_custom_target(
-      autotest_${tgt}
-      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
-              ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${tgt}
-      DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
-    add_test(NAME autotest_${tgt} COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-                                          ${tgt})
-    set_property(TEST autotest_${tgt} PROPERTY ENVIRONMENT "${PYTHON_RUN_ENV}")
+
+    # Collect each python test file and register it as a separate test with cunit
+    # This allows parallel testing of files with `ctest -j`
+    file(GLOB_RECURSE pytestpaths CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${pytest_dir}/test_*.py)
+    foreach(pytestpath ${pytestpaths})
+        get_filename_component(pytestfile ${pytestpath} NAME_WLE)
+        string(REPLACE "test_" "" pytestfile ${pytestfile})
+        string(REPLACE "_" "-" pytestfile ${pytestfile})
+        string(CONCAT pytest_target "pytest-" ${pytest_dir} "-" ${pytestfile})
+
+        add_test(NAME ${pytest_target}
+                 COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${pytestpath}
+                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        set_property(TEST ${pytest_target}
+                     PROPERTY ENVIRONMENT "${PYTHON_RUN_ENV}")
+    endforeach()
   endforeach ()
   add_custom_target(
     autotest
