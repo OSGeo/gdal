@@ -68,17 +68,8 @@ class CPL_DLL RawDataset : public GDALPamDataset
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
   protected:
-    typedef union
-    {
-        struct
-        {
-            bool valid;  // false if no value is cached
-            char value;
-        } data;
-        int all;  // this unioned field can be used to help query/update the
-                  // cached value with atomic operations
-    } CachedValidValue_t;
-    CachedValidValue_t cachedCPLOneBigReadOption;
+    int cachedCPLOneBigReadOption =
+        0;  // [0-7] bits are "valid", [8-15] bits are "value"
 };
 
 /************************************************************************/

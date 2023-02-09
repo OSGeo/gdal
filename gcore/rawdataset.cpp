@@ -963,29 +963,29 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
     }
 
     RawDataset *rawDataset = dynamic_cast<RawDataset *>(this->GetDataset());
-    RawDataset::CachedValidValue_t oldCachedCPLOneBigReadOption = {{false, 0}};
+    int oldCachedCPLOneBigReadOption = 0;
     if (rawDataset != nullptr)
-        oldCachedCPLOneBigReadOption.all = CPLAtomicCompareAndExchange(
-            &rawDataset->cachedCPLOneBigReadOption.all, 0,
+    {
+        oldCachedCPLOneBigReadOption = CPLAtomicCompareAndExchange(
+            &rawDataset->cachedCPLOneBigReadOption, 0,
             0);  // just query the value
-    RawDataset::CachedValidValue_t newCachedCPLOneBigReadOption =
-        oldCachedCPLOneBigReadOption;
+    }
 
     const char *pszGDAL_ONE_BIG_READ =
-        !oldCachedCPLOneBigReadOption.data.valid
+        !(oldCachedCPLOneBigReadOption & 0xff)  // Test valid
             ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr)
-        : (oldCachedCPLOneBigReadOption.data.value == 0) ? "0"
-        : (oldCachedCPLOneBigReadOption.data.value == 1) ? "1"
-                                                         : nullptr;
+            : (((oldCachedCPLOneBigReadOption >> 8) & 0xff) == 0)   ? "0"
+              : (((oldCachedCPLOneBigReadOption >> 8) & 0xff) == 1) ? "1"
+                                                                    : nullptr;
     if (pszGDAL_ONE_BIG_READ == nullptr)
     {
-        newCachedCPLOneBigReadOption.data.value = -1;
-        newCachedCPLOneBigReadOption.data.valid = true;
+        const int newCachedCPLOneBigReadOption = (0xff << 8) | 1;
         if (rawDataset != nullptr)
-            CPLAtomicCompareAndExchange(
-                &rawDataset->cachedCPLOneBigReadOption.all,
-                oldCachedCPLOneBigReadOption.all,
-                newCachedCPLOneBigReadOption.all);
+        {
+            CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption,
+                                        oldCachedCPLOneBigReadOption,
+                                        newCachedCPLOneBigReadOption);
+        }
 
         if (nLineSize < 50000 || nXSize > nLineSize / nPixelOffset / 5 * 2 ||
             IsSignificantNumberOfLinesLoaded(nYOff, nYSize))
@@ -997,12 +997,13 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
 
-    newCachedCPLOneBigReadOption.data.value = result ? 1 : 0;
-    newCachedCPLOneBigReadOption.data.valid = true;
+    const int newCachedCPLOneBigReadOption = (result ? 1 : 0) << 8 | 1;
     if (rawDataset != nullptr)
-        CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all,
-                                    oldCachedCPLOneBigReadOption.all,
-                                    newCachedCPLOneBigReadOption.all);
+    {
+        CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption,
+                                    oldCachedCPLOneBigReadOption,
+                                    newCachedCPLOneBigReadOption);
+    }
 
     return result;
 }
@@ -1525,7 +1526,7 @@ CPLVirtualMem *RawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset() : cachedCPLOneBigReadOption({{false, 0}})
+RawDataset::RawDataset()
 {
 }
 
@@ -1877,6 +1878,6 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 
 void RawDataset::ClearCachedConfigOption(void)
 {
-    CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption.all,
-                                this->cachedCPLOneBigReadOption.all, 0);
+    CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption,
+                                this->cachedCPLOneBigReadOption, 0);
 }
