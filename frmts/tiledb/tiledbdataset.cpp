@@ -421,7 +421,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBandIdx);
                 GDALDataType eAttrType = poAttrBand->GetRasterDataType();
                 int nBytes = GDALGetDataTypeSizeBytes(eAttrType);
-                int nValues = nBufXSize * nBufYSize;
+                size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
                 void *pAttrBlock = VSIMalloc(nBytes * nValues);
                 aBlocks.emplace_back(pAttrBlock, &VSIFree);
 
@@ -594,7 +594,7 @@ CPLErr TileDBDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
             (uint64_t)nXOff + nXSize - 1};
 
-        if ((eRWFlag == GF_Read) && ((eAccess == GA_Update) && (m_roArray)))
+        if ((eRWFlag == GF_Read) && (eAccess == GA_Update && m_roArray))
         {
             poQuery.reset(new tiledb::Query(*m_roCtx, *m_roArray));
         }
