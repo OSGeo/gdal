@@ -896,7 +896,7 @@ CPLErr OGRSQLiteDataSource::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (!OGRSQLiteDataSource::FlushCache(true))
+        if (OGRSQLiteDataSource::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
 #ifdef HAVE_RASTERLITE2
