@@ -37,18 +37,15 @@ if "APPLY_LOCALE" in os.environ:
 def setup_proj_search_paths():
     proj_grids_path = os.path.join(os.path.dirname(__file__), "proj_grids")
     assert os.path.exists(proj_grids_path)
-    import shutil
 
     from osgeo import osr
 
-    proj_db_tmpdir = os.path.join(os.path.dirname(__file__), "proj_db_tmpdir")
-    if not os.path.exists(proj_db_tmpdir):
-        os.mkdir(proj_db_tmpdir, 0o755)
-    for path in osr.GetPROJSearchPaths():
-        if os.path.exists(os.path.join(path, "proj.db")):
-            shutil.copy(os.path.join(path, "proj.db"), proj_db_tmpdir)
-            osr.SetPROJSearchPaths([proj_db_tmpdir, proj_grids_path])
-            break
+    proj_db_tmpdir = os.path.join(
+        os.path.dirname(__file__), "gcore", "tmp", "proj_db_tmpdir"
+    )
+    assert os.path.exists(proj_db_tmpdir)
+    assert os.path.exists(os.path.join(proj_db_tmpdir, "proj.db"))
+    osr.SetPROJSearchPaths([proj_db_tmpdir, proj_grids_path])
 
 
 setup_proj_search_paths()
