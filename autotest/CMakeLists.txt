@@ -104,9 +104,14 @@ if (Python_Interpreter_FOUND)
 
     # Collect each python test file and register it as a separate test with cunit
     # This allows parallel testing of files with `ctest -j`
-    file(GLOB_RECURSE pytestpaths CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${pytest_dir}/test_*.py)
+    file(GLOB_RECURSE pytestpaths CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${pytest_dir}/*.py)
     foreach(pytestpath ${pytestpaths})
         get_filename_component(pytestfile ${pytestpath} NAME_WE)
+
+        if (${pytestfile} STREQUAL "__init__")
+            continue()
+        endif()
+
         string(REPLACE "test_" "" pytestfile ${pytestfile})
         string(REPLACE "_" "-" pytestfile ${pytestfile})
         string(CONCAT pytest_target "pytest-" ${pytest_dir} "-" ${pytestfile})
