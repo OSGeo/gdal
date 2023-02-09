@@ -83,7 +83,7 @@ SANITIZE_FLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=unsigned-integer-overflow -fno-
 mkdir build
 cd build
 export LDFLAGS="-fsanitize=undefined -fsanitize=address -shared-libasan -lstdc++"
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_CXX_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_TIFF_INTERNAL=ON -DFileGDB_ROOT:PATH=$PWD/../FileGDB_API-64gcc51 -DFileGDB_LIBRARY=/usr/lib/libFileGDBAPI.so
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_CXX_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_TIFF_INTERNAL=ON -DFileGDB_ROOT:PATH=$PWD/../FileGDB_API-64gcc51 -DFileGDB_LIBRARY=/usr/lib/libFileGDBAPI.so -DSKIP_RUN_SETUP_PROJ_DB_TMPDIR=ON
 make -j$NPROC
 
 sudo rm -f /usr/lib/libgdal.so*
@@ -105,11 +105,6 @@ export PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 sudo python3 -m pip install -U -r autotest/requirements.txt
 sudo python3 -m pip install -U hdbcli
 
-cd build/autotest
-
-# Don't run these
-rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
-
 # Run each module in its own pytest process.
 # This makes sure the output from the address sanitizer is relevant
 # and it doesn't blow out RAM too much.
@@ -124,11 +119,20 @@ rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
 export SKIP_MEM_INTENSIVE_TEST=YES
 export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$PRELOAD
-export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../../autotest/asan_suppressions.txt
-export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../../autotest/lsan_suppressions.txt
+export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/autotest/asan_suppressions.txt
+export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/autotest/lsan_suppressions.txt
 
-gdalinfo gcore/data/byte.tif
+gdalinfo autotest/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
+
+# Normally run at 'make' stage for regular builds, but given this is an ASAN build,
+# python couldn't run without the above LD_PRELOAD. So run it manually
+python3 autotest/setup_proj_db_tmpdir.py build/autotest
+
+cd build/autotest
+
+# Don't run these
+rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
 
 echo "#!/bin/sh" > pytest_wrapper.sh
 echo 'ARGS="$*"' >> pytest_wrapper.sh
