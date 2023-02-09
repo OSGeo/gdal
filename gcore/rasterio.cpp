@@ -4622,7 +4622,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
         bInterleave = false;
     // attributes is specific to the TileDB driver
     else if (pszInterleave != nullptr && EQUAL(pszInterleave, "ATTRIBUTES"))
-        bInterleave = false;
+        bInterleave = true;
     else if (pszInterleave != nullptr)
     {
         CPLError(CE_Warning, CPLE_NotSupported,

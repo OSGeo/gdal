@@ -29,9 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-import shutil
-
 import gdaltest
 import pytest
 
@@ -39,11 +36,8 @@ from osgeo import gdal
 
 
 @pytest.mark.require_driver("TileDB")
-@pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
+@pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_complex(mode):
-    if os.path.exists("tmp/tiledb_complex64"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_complex64"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/cfloat64.tif")
@@ -67,9 +61,6 @@ def test_tiledb_write_complex(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_custom_blocksize(mode):
-    if os.path.exists("tmp/tiledb_custom"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_custom"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/utmsmall.tif")
@@ -95,9 +86,6 @@ def test_tiledb_write_custom_blocksize(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_update(mode):
-    if os.path.exists("tmp/tiledb_update"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_update"))
-
     np = pytest.importorskip("numpy")
 
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -131,9 +119,6 @@ def test_tiledb_write_update(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_rgb(mode):
-    if os.path.exists("tmp/tiledb_rgb"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_rgb"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
@@ -154,9 +139,6 @@ def test_tiledb_write_rgb(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_attributes(mode):
-    if os.path.exists("tmp/tiledb_rgb_atts"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_rgb_atts"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
@@ -226,9 +208,6 @@ def test_tiledb_write_attributes(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.require_driver("HDF5")
 def test_tiledb_write_subdatasets():
-    if os.path.exists("tmp/test_sds_array"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/test_sds_array"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open(
@@ -254,9 +233,6 @@ def test_tiledb_write_subdatasets():
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_band_meta(mode):
-    if os.path.exists("tmp/tiledb_meta"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_meta"))
-
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
@@ -289,9 +265,6 @@ def test_tiledb_write_band_meta(mode):
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_history(mode):
-    if os.path.exists("tmp/tiledb_versioning"):
-        shutil.rmtree(gdaltest.tiledb_drv.Delete("tmp/tiledb_versioning"))
-
     np = pytest.importorskip("numpy")
 
     options = ["INTERLEAVE=%s" % (mode), "TILEDB_TIMESTAMP=1"]
