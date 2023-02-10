@@ -132,6 +132,17 @@ CPLErr CPL_DLL GDALWarpCutlineMasker(void *pMaskFuncArg, int nBandCount,
                                      int nXSize, int nYSize,
                                      GByte ** /* ppImageData */,
                                      int bMaskIsFloat, void *pValidityMask);
+
+/* GCMVF stands for GDALWARP_CUTLINE_MASKER_VALIDITY_FLAG */
+#define GCMVF_PARTIAL_INTERSECTION 0
+#define GCMVF_NO_INTERSECTION 1
+#define GCMVF_CHUNK_FULLY_WITHIN_CUTLINE 2
+CPLErr CPL_DLL GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int nBandCount,
+                                       GDALDataType eType, int nXOff, int nYOff,
+                                       int nXSize, int nYSize,
+                                       GByte ** /* ppImageData */,
+                                       int bMaskIsFloat, void *pValidityMask,
+                                       int *pnValidityFlag);
 /*! @endcond */
 
 /************************************************************************/
