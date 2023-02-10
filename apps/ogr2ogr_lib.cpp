@@ -2262,26 +2262,23 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
     }
+    else if (psOptions->bClipSrc && !psOptions->poClipSrc &&
+             psOptions->poSpatialFilter)
+    {
+        psOptions->poClipSrc.reset(psOptions->poSpatialFilter->clone());
+        if (poSpatSRS)
+        {
+            psOptions->poClipSrc->assignSpatialReference(poSpatSRS.get());
+        }
+    }
     else if (psOptions->bClipSrc && !psOptions->poClipSrc)
     {
-        if (psOptions->poSpatialFilter)
-        {
-            psOptions->poClipSrc.reset(psOptions->poSpatialFilter->clone());
-            if (poSpatSRS)
-            {
-                psOptions->poClipSrc->assignSpatialReference(poSpatSRS.get());
-            }
-        }
-        if (psOptions->poClipSrc == nullptr)
-        {
-            CPLError(
-                CE_Failure, CPLE_IllegalArg,
-                "-clipsrc must be used with -spat option or a\n"
-                "bounding box, WKT string or datasource must be specified");
-            if (pbUsageError)
-                *pbUsageError = TRUE;
-            return nullptr;
-        }
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "-clipsrc must be used with -spat option or a\n"
+                 "bounding box, WKT string or datasource must be specified");
+        if (pbUsageError)
+            *pbUsageError = TRUE;
+        return nullptr;
     }
 
     if (!psOptions->osClipDstDS.empty())
