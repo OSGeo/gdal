@@ -438,6 +438,45 @@ static bool CPLZSTDCompressor(const void *input_data, size_t input_size,
     return false;
 }
 
+static size_t CPLZSTDGetDecompressedSize(const void *input_data,
+                                         size_t input_size)
+{
+#if (ZSTD_VERSION_MAJOR > 1) ||                                                \
+    (ZSTD_VERSION_MAJOR == 1 && ZSTD_VERSION_MINOR >= 3)
+    uint64_t nRet = ZSTD_getFrameContentSize(input_data, input_size);
+    if (nRet == ZSTD_CONTENTSIZE_ERROR)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error while retrieving decompressed size of ZSTD frame.");
+        nRet = 0;
+    }
+    else if (nRet == ZSTD_CONTENTSIZE_UNKNOWN)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Decompressed size of ZSTD frame is unknown.");
+        nRet = 0;
+    }
+#else
+    uint64_t nRet = ZSTD_getDecompressedSize(input_data, input_size);
+    if (nRet == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Decompressed size of ZSTD frame is unknown.");
+    }
+#endif
+
+#if SIZEOF_VOIDP == 4
+    if (nRet > std::numeric_limits<size_t>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Decompressed size of ZSTD frame is bigger than 4GB.");
+        nRet = 0;
+    }
+#endif
+
+    return static_cast<size_t>(nRet);
+}
+
 static bool CPLZSTDDecompressor(const void *input_data, size_t input_size,
                                 void **output_data, size_t *output_size,
                                 CSLConstList /* options */,
@@ -450,8 +489,7 @@ static bool CPLZSTDDecompressor(const void *input_data, size_t input_size,
             ZSTD_decompress(*output_data, *output_size, input_data, input_size);
         if (ZSTD_isError(ret))
         {
-            *output_size = static_cast<size_t>(
-                ZSTD_getDecompressedSize(input_data, input_size));
+            *output_size = CPLZSTDGetDecompressedSize(input_data, input_size);
             return false;
         }
 
@@ -461,16 +499,14 @@ static bool CPLZSTDDecompressor(const void *input_data, size_t input_size,
 
     if (output_data == nullptr && output_size != nullptr)
     {
-        *output_size = static_cast<size_t>(
-            ZSTD_getDecompressedSize(input_data, input_size));
+        *output_size = CPLZSTDGetDecompressedSize(input_data, input_size);
         return *output_size != 0;
     }
 
     if (output_data != nullptr && *output_data == nullptr &&
         output_size != nullptr)
     {
-        size_t nOutSize = static_cast<size_t>(
-            ZSTD_getDecompressedSize(input_data, input_size));
+        size_t nOutSize = CPLZSTDGetDecompressedSize(input_data, input_size);
         *output_data = VSI_MALLOC_VERBOSE(nOutSize);
         if (*output_data == nullptr)
         {
