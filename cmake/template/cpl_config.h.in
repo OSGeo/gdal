@@ -49,6 +49,9 @@
 
 #ifdef GDAL_COMPILATION
 
+/* The size of `long int', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
+
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD 1
 
