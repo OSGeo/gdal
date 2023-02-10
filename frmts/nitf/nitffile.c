@@ -2604,7 +2604,7 @@ static int NITFEvaluateCond(const char *pszCond, char **papszMD, int *pnMDSize,
             CPLDebug("NITF", "Cannot find if cond variable %s", pszCondVar);
         }
         else if (strtoul(pszCondVal, CPL_NULLPTR, 10) &
-                 (1 << atoi(pszCondTestBit)))
+                 (1U << (unsigned)atoi(pszCondTestBit)))
         {
             nRet = 1;
         }
