@@ -6375,19 +6375,15 @@ static bool ComputeMinMaxGenericIterBlocks(
         int nXCheck = 0, nYCheck = 0;
         poBand->GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
 
-        if (poMaskBand)
+        if (poMaskBand &&
+            poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
+                                 iYBlock * nBlockYSize, nXCheck, nYCheck,
+                                 pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
+                                 nBlockXSize, nullptr) != CE_None)
         {
-
-            if (poMaskBand &&
-                poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
-                                     iYBlock * nBlockYSize, nXCheck, nYCheck,
-                                     pabyMaskData, nXCheck, nYCheck, GDT_Byte,
-                                     0, nBlockXSize, nullptr) != CE_None)
-            {
-                poBlock->DropLock();
-                CPLFree(pabyMaskData);
-                return false;
-            }
+            poBlock->DropLock();
+            CPLFree(pabyMaskData);
+            return false;
         }
 
         ComputeMinMaxGeneric(pData, eDataType, bSignedByte, nXCheck, nYCheck,
