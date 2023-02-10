@@ -26,7 +26,7 @@ This module will set the following variables if found:
   Copyright (c) 2018,2021 Hiroshi Miura
   Copyright (c) 2019 Chuck Atkins
 #]=======================================================================]
-
+include (CMakePushCheckState)
 # Accept upper case variant for SQLite3_INCLUDE_DIR
 if(SQLITE3_INCLUDE_DIR)
   if(SQLite3_INCLUDE_DIR AND NOT "${SQLite3_INCLUDE_DIR}" STREQUAL "${SQLITE3_INCLUDE_DIR}")
