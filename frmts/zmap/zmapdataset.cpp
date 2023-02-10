@@ -504,6 +504,7 @@ static void WriteRightJustified(VSILFILE *fp, double dfValue, int nWidth,
 
     if (static_cast<int>(strlen(pszValue)) > nWidth)
     {
+        CPLAssert(nDecimals >= 0);
         snprintf(szFormat, sizeof(szFormat), "%%.%dg", nDecimals);
         pszValue = const_cast<char *>(CPLSPrintf(szFormat, dfValue));
         pszE = strchr(pszValue, 'e');
@@ -597,7 +598,7 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 
     WriteRightJustified(fp, nFieldSize, 10);
     VSIFPrintfL(fp, ",");
-    WriteRightJustified(fp, dfNoDataValue, 10);
+    WriteRightJustified(fp, dfNoDataValue, nFieldSize, nDecimalCount);
     VSIFPrintfL(fp, ",");
     WriteRightJustified(fp, "", 10);
     VSIFPrintfL(fp, ",");
