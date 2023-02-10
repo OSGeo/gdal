@@ -388,7 +388,7 @@ int OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
         if (FileExists(m_pszName))
         {
             const char *pszLyrName = nullptr;
-            if (nInterestTable <= (int)aosTableNames.size() &&
+            if (nInterestTable <= static_cast<int>(aosTableNames.size()) &&
                 !aosTableNames[nInterestTable - 1].empty())
                 pszLyrName = aosTableNames[nInterestTable - 1].c_str();
             else
@@ -929,7 +929,7 @@ int OGROpenFileGDBDataSource::TestCapability(const char *pszCap)
 
 OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex)
 {
-    if (iIndex < 0 || iIndex >= (int)m_apoLayers.size())
+    if (iIndex < 0 || iIndex >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
     return m_apoLayers[iIndex].get();
 }
@@ -1051,6 +1051,8 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     GIntBig m_nLimit;
     GIntBig m_nSkipped = 0;
     GIntBig m_nIterated = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBSimpleSQLLayer)
 
   public:
     OGROpenFileGDBSimpleSQLLayer(OGRLayer *poBaseLayer, FileGDBIterator *poIter,
@@ -1637,14 +1639,14 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                    : (col_func == SWQCF_SUM) ? "SUM"
                                                              : "COUNT",
                                    oSelect.column_defs[i].field_name);
-                    OGRFieldDefn oFieldDefn(pszMinMaxFieldName,
-                                            (OGRFieldType)eOutOGRType);
+                    OGRFieldDefn oFieldDefn(
+                        pszMinMaxFieldName,
+                        static_cast<OGRFieldType>(eOutOGRType));
                     poMemLayer->CreateField(&oFieldDefn);
                     if (psField != nullptr)
                     {
                         OGRFeature *poFeature = poMemLayer->GetFeature(0);
-                        poFeature->SetField(oFieldDefn.GetNameRef(),
-                                            (OGRField *)psField);
+                        poFeature->SetField(oFieldDefn.GetNameRef(), psField);
                         CPL_IGNORE_RET_VAL(poMemLayer->SetFeature(poFeature));
                         delete poFeature;
                     }

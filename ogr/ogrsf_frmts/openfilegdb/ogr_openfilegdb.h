@@ -179,6 +179,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
                                std::vector<OGRField> &fields,
                                const OGRGeometry *&poGeom);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBLayer)
+
   public:
     OGROpenFileGDBLayer(OGROpenFileGDBDataSource *poDS,
                         const char *pszGDBFilename, const char *pszName,
@@ -300,6 +302,8 @@ class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
 {
     OGROpenFileGDBLayer *m_poLayer;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBGeomFieldDefn)
+
   public:
     OGROpenFileGDBGeomFieldDefn(OGROpenFileGDBLayer *poLayer,
                                 const char *pszNameIn,
@@ -346,6 +350,8 @@ class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
             (void)m_poLayer->BuildLayerDefinition();
         }
     }
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBFeatureDefn)
 
   public:
     OGROpenFileGDBFeatureDefn(OGROpenFileGDBLayer *poLayer, const char *pszName,
@@ -405,12 +411,12 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
 {
     friend class OGROpenFileGDBLayer;
 
-    char *m_pszName;
-    CPLString m_osDirName;
+    char *m_pszName = nullptr;
+    CPLString m_osDirName{};
     std::vector<std::unique_ptr<OGROpenFileGDBLayer>> m_apoLayers{};
     std::vector<std::unique_ptr<OGROpenFileGDBLayer>> m_apoHiddenLayers{};
-    char **m_papszFiles;
-    std::map<std::string, int> m_osMapNameToIdx;
+    char **m_papszFiles = nullptr;
+    std::map<std::string, int> m_osMapNameToIdx{};
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 
     lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>>
@@ -461,6 +467,8 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     bool BackupSystemTablesForTransaction();
 
     CPLErr Close() override;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBDataSource)
 
   public:
     OGROpenFileGDBDataSource();
@@ -608,6 +616,8 @@ class OGROpenFileGDBSingleFeatureLayer final : public OGRLayer
     char *pszVal;
     OGRFeatureDefn *poFeatureDefn;
     int iNextShapeId;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBSingleFeatureLayer)
 
   public:
     OGROpenFileGDBSingleFeatureLayer(const char *pszLayerName,

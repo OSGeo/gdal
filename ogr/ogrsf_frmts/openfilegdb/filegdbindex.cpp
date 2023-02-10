@@ -81,9 +81,12 @@ std::string FileGDBIndex::GetFieldName() const
 
 class FileGDBTrivialIterator final : public FileGDBIterator
 {
-    FileGDBIterator *poParentIter;
-    FileGDBTable *poTable;
-    int iRow;
+    FileGDBIterator *poParentIter = nullptr;
+    FileGDBTable *poTable = nullptr;
+    int iRow = 0;
+
+    FileGDBTrivialIterator(const FileGDBTrivialIterator &) = delete;
+    FileGDBTrivialIterator &operator=(const FileGDBTrivialIterator &) = delete;
 
   public:
     explicit FileGDBTrivialIterator(FileGDBIterator *poParentIter);
@@ -133,11 +136,14 @@ class FileGDBTrivialIterator final : public FileGDBIterator
 
 class FileGDBNotIterator final : public FileGDBIterator
 {
-    FileGDBIterator *poIterBase;
-    FileGDBTable *poTable;
-    int iRow;
-    int iNextRowBase;
-    int bNoHoles;
+    FileGDBIterator *poIterBase = nullptr;
+    FileGDBTable *poTable = nullptr;
+    int iRow = 0;
+    int iNextRowBase = -1;
+    int bNoHoles = 0;
+
+    FileGDBNotIterator(const FileGDBNotIterator &) = delete;
+    FileGDBNotIterator &operator=(const FileGDBNotIterator &) = delete;
 
   public:
     explicit FileGDBNotIterator(FileGDBIterator *poIterBase);
@@ -158,11 +164,14 @@ class FileGDBNotIterator final : public FileGDBIterator
 
 class FileGDBAndIterator final : public FileGDBIterator
 {
-    FileGDBIterator *poIter1;
-    FileGDBIterator *poIter2;
-    int iNextRow1;
-    int iNextRow2;
-    bool m_bTakeOwnershipOfIterators;
+    FileGDBIterator *poIter1 = nullptr;
+    FileGDBIterator *poIter2 = nullptr;
+    int iNextRow1 = -1;
+    int iNextRow2 = -1;
+    bool m_bTakeOwnershipOfIterators = false;
+
+    FileGDBAndIterator(const FileGDBAndIterator &) = delete;
+    FileGDBAndIterator &operator=(const FileGDBAndIterator &) = delete;
 
   public:
     FileGDBAndIterator(FileGDBIterator *poIter1, FileGDBIterator *poIter2,
@@ -183,12 +192,15 @@ class FileGDBAndIterator final : public FileGDBIterator
 
 class FileGDBOrIterator final : public FileGDBIterator
 {
-    FileGDBIterator *poIter1;
-    FileGDBIterator *poIter2;
-    int bIteratorAreExclusive;
-    int iNextRow1;
-    int iNextRow2;
-    bool bHasJustReset;
+    FileGDBIterator *poIter1 = nullptr;
+    FileGDBIterator *poIter2 = nullptr;
+    int bIteratorAreExclusive = false;
+    int iNextRow1 = -1;
+    int iNextRow2 = -1;
+    bool bHasJustReset = true;
+
+    FileGDBOrIterator(const FileGDBOrIterator &) = delete;
+    FileGDBOrIterator &operator=(const FileGDBOrIterator &) = delete;
 
   public:
     FileGDBOrIterator(FileGDBIterator *poIter1, FileGDBIterator *poIter2,
@@ -214,8 +226,8 @@ constexpr int FGDB_PAGE_SIZE = 4096;
 class FileGDBIndexIteratorBase : virtual public FileGDBIterator
 {
   protected:
-    FileGDBTable *poParent;
-    bool bAscending;
+    FileGDBTable *poParent = nullptr;
+    bool bAscending = false;
     VSILFILE *fpCurIdx = nullptr;
     GUInt32 m_nPageCount = 0;
     GUInt32 nMaxPerPages = 0;
@@ -254,6 +266,10 @@ class FileGDBIndexIteratorBase : virtual public FileGDBIterator
 
     FileGDBIndexIteratorBase(FileGDBTable *poParent, int bAscending);
 
+    FileGDBIndexIteratorBase(const FileGDBIndexIteratorBase &) = delete;
+    FileGDBIndexIteratorBase &
+    operator=(const FileGDBIndexIteratorBase &) = delete;
+
   public:
     virtual ~FileGDBIndexIteratorBase();
     virtual FileGDBTable *GetTable() override
@@ -274,7 +290,7 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
 {
     FileGDBFieldType eFieldType = FGFT_UNDEFINED;
     FileGDBSQLOp eOp = FGSO_ISNOTNULL;
-    OGRField sValue;
+    OGRField sValue{};
 
     bool bEvaluateToFALSE = false;
 
@@ -287,7 +303,8 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
     int nStrLen = 0;
     char szUUID[UUID_LEN_AS_STRING + 1];
 
-    OGRField sMin, sMax;
+    OGRField sMin{};
+    OGRField sMax{};
     char szMin[MAX_UTF8_LEN_STR + 1];
     char szMax[MAX_UTF8_LEN_STR + 1];
     const OGRField *GetMinMaxValue(OGRField *psField, int &eOutType,
@@ -303,6 +320,9 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
     template <class Getter>
     void GetMinMaxSumCount(double &dfMin, double &dfMax, double &dfSum,
                            int &nCount);
+
+    FileGDBIndexIterator(const FileGDBIndexIterator &) = delete;
+    FileGDBIndexIterator &operator=(const FileGDBIndexIterator &) = delete;
 
   public:
     virtual ~FileGDBIndexIterator();
@@ -459,7 +479,7 @@ int FileGDBIterator::GetRowCount()
 /************************************************************************/
 
 FileGDBTrivialIterator::FileGDBTrivialIterator(FileGDBIterator *poParentIterIn)
-    : poParentIter(poParentIterIn), poTable(poParentIterIn->GetTable()), iRow(0)
+    : poParentIter(poParentIterIn), poTable(poParentIterIn->GetTable())
 {
 }
 
@@ -480,8 +500,7 @@ int FileGDBTrivialIterator::GetNextRowSortedByFID()
 /************************************************************************/
 
 FileGDBNotIterator::FileGDBNotIterator(FileGDBIterator *poIterBaseIn)
-    : poIterBase(poIterBaseIn), poTable(poIterBaseIn->GetTable()), iRow(0),
-      iNextRowBase(-1)
+    : poIterBase(poIterBaseIn), poTable(poIterBaseIn->GetTable())
 {
     bNoHoles =
         (poTable->GetValidRecordCount() == poTable->GetTotalRecordCount());
@@ -635,8 +654,7 @@ FileGDBOrIterator::FileGDBOrIterator(FileGDBIterator *poIter1In,
                                      FileGDBIterator *poIter2In,
                                      int bIteratorAreExclusiveIn)
     : poIter1(poIter1In), poIter2(poIter2In),
-      bIteratorAreExclusive(bIteratorAreExclusiveIn), iNextRow1(-1),
-      iNextRow2(-1), bHasJustReset(true)
+      bIteratorAreExclusive(bIteratorAreExclusiveIn)
 {
     CPLAssert(poIter1->GetTable() == poIter2->GetTable());
 }
@@ -902,16 +920,17 @@ static const char *FileGDBValueToStr(OGRFieldType eOGRFieldType,
         case OFTString:
             return psValue->String;
         case OFTDateTime:
-            return CPLSPrintf("%04d/%02d/%02d %02d:%02d:%02d",
-                              psValue->Date.Year, psValue->Date.Month,
-                              psValue->Date.Day, psValue->Date.Hour,
-                              psValue->Date.Minute, (int)psValue->Date.Second);
+            return CPLSPrintf(
+                "%04d/%02d/%02d %02d:%02d:%02d", psValue->Date.Year,
+                psValue->Date.Month, psValue->Date.Day, psValue->Date.Hour,
+                psValue->Date.Minute, static_cast<int>(psValue->Date.Second));
         case OFTDate:
             return CPLSPrintf("%04d/%02d/%02d", psValue->Date.Year,
                               psValue->Date.Month, psValue->Date.Day);
         case OFTTime:
             return CPLSPrintf("%02d:%02d:%02d", psValue->Date.Hour,
-                              psValue->Date.Minute, (int)psValue->Date.Second);
+                              psValue->Date.Minute,
+                              static_cast<int>(psValue->Date.Second));
         default:
             break;
     }
@@ -981,7 +1000,8 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
 
     if (!ReadTrailer(pszAtxName))
         return FALSE;
-    returnErrorIf(nValueCountInIdx > (GUInt32)poParent->GetValidRecordCount());
+    returnErrorIf(nValueCountInIdx >
+                  static_cast<GUInt32>(poParent->GetValidRecordCount()));
 
     switch (eFieldType)
     {
@@ -1249,8 +1269,9 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 for (int j = 0; j < nStrLen; j++)
                     CPL_LSBPTR16(&asMax[j]);
 #else
-                pasMax = (GUInt16 *)(abyPage[iLevel] + nOffsetFirstValInPage +
-                                     nStrLen * sizeof(GUInt16) * i);
+                pasMax = reinterpret_cast<GUInt16 *>(
+                    abyPage[iLevel] + nOffsetFirstValInPage +
+                    nStrLen * sizeof(GUInt16) * i);
 #endif
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 && FileGDBUTF16StrCompare(pasMax, asLastMax,
@@ -1264,9 +1285,9 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             case FGFT_GUID:
             case FGFT_GLOBALID:
             {
-                const char *psNonzMaxUUID =
-                    (char *)(abyPage[iLevel] + nOffsetFirstValInPage +
-                             UUID_LEN_AS_STRING * i);
+                const char *psNonzMaxUUID = reinterpret_cast<char *>(
+                    abyPage[iLevel] + nOffsetFirstValInPage +
+                    UUID_LEN_AS_STRING * i);
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 && memcmp(psNonzMaxUUID, szLastMaxUUID,
                                               UUID_LEN_AS_STRING) < 0);
@@ -1293,11 +1314,12 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             case FGSO_LE:
                 if (iFirstPageIdx[iLevel] < 0)
                 {
-                    iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] = (int)i;
+                    iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] =
+                        static_cast<int>(i);
                 }
                 else
                 {
-                    iLastPageIdx[iLevel] = (int)i;
+                    iLastPageIdx[iLevel] = static_cast<int>(i);
                     if (nComp < 0)
                     {
                         bStop = TRUE;
@@ -1309,12 +1331,13 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 if (iFirstPageIdx[iLevel] < 0)
                 {
                     if (nComp <= 0)
-                        iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] = (int)i;
+                        iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] =
+                            static_cast<int>(i);
                 }
                 else
                 {
                     if (nComp == 0)
-                        iLastPageIdx[iLevel] = (int)i;
+                        iLastPageIdx[iLevel] = static_cast<int>(i);
                     else
                         bStop = TRUE;
                 }
@@ -1325,7 +1348,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 {
                     if (nComp <= 0)
                     {
-                        iFirstPageIdx[iLevel] = (int)i;
+                        iFirstPageIdx[iLevel] = static_cast<int>(i);
                         iLastPageIdx[iLevel] = nSubPagesCount[iLevel];
                         bStop = TRUE;
                     }
@@ -1337,7 +1360,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 {
                     if (nComp < 0)
                     {
-                        iFirstPageIdx[iLevel] = (int)i;
+                        iFirstPageIdx[iLevel] = static_cast<int>(i);
                         iLastPageIdx[iLevel] = nSubPagesCount[iLevel];
                         bStop = TRUE;
                     }
@@ -1356,7 +1379,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
     {
         iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] = nSubPagesCount[iLevel];
     }
-    else if (iLastPageIdx[iLevel] < (int)nSubPagesCount[iLevel])
+    else if (iLastPageIdx[iLevel] < static_cast<int>(nSubPagesCount[iLevel]))
     {
         iLastPageIdx[iLevel]++;
     }
@@ -1503,7 +1526,7 @@ int FileGDBIndexIteratorBase::LoadNextFeaturePage()
     GUInt32 nFeatures = GetUInt32(abyPageFeature + 4, 0);
     returnErrorIf(nFeatures > nMaxPerPages);
 
-    nFeaturesInPage = (int)nFeatures;
+    nFeaturesInPage = static_cast<int>(nFeatures);
     iCurFeatureInPage = (bAscending) ? 0 : nFeaturesInPage - 1;
     if (nFeatures == 0)
         return FALSE;
@@ -1606,8 +1629,9 @@ int FileGDBIndexIterator::GetNextRow()
 #else
                     nComp = FileGDBUTF16StrCompare(
                         asUTF16Str,
-                        (GUInt16 *)(abyPageFeature + nOffsetFirstValInPage +
-                                    nStrLen * 2 * iCurFeatureInPage),
+                        reinterpret_cast<GUInt16 *>(
+                            abyPageFeature + nOffsetFirstValInPage +
+                            nStrLen * 2 * iCurFeatureInPage),
                         nStrLen);
 #endif
                     break;
@@ -1683,9 +1707,10 @@ int FileGDBIndexIterator::GetNextRow()
             else
                 iCurFeatureInPage--;
             returnErrorAndCleanupIf(
-                nFID < 1 || nFID > (GUInt32)poParent->GetTotalRecordCount(),
+                nFID < 1 || nFID > static_cast<GUInt32>(
+                                       poParent->GetTotalRecordCount()),
                 bEOF = true);
-            return (int)(nFID - 1);
+            return static_cast<int>(nFID - 1);
         }
         else
         {
@@ -1715,8 +1740,8 @@ int FileGDBIndexIterator::SortRows()
         if (nSortedCount == nSortedAlloc)
         {
             int nNewSortedAlloc = 4 * nSortedAlloc / 3 + 16;
-            int *panNewSortedRows = (int *)VSI_REALLOC_VERBOSE(
-                panSortedRows, sizeof(int) * nNewSortedAlloc);
+            int *panNewSortedRows = static_cast<int *>(VSI_REALLOC_VERBOSE(
+                panSortedRows, sizeof(int) * nNewSortedAlloc));
             if (panNewSortedRows == nullptr)
             {
                 nSortedCount = 0;
@@ -2429,7 +2454,7 @@ bool FileGDBSpatialIndexIteratorImpl::FindPages(int iLevel, int nPage)
     {
         iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] = nSubPagesCount[iLevel];
     }
-    else if (iLastPageIdx[iLevel] < (int)nSubPagesCount[iLevel])
+    else if (iLastPageIdx[iLevel] < static_cast<int>(nSubPagesCount[iLevel]))
     {
         // Candidate values might extend to the following sub-page
         iLastPageIdx[iLevel]++;
@@ -2505,9 +2530,10 @@ int FileGDBSpatialIndexIteratorImpl::GetNextRow()
         const GUInt32 nFID = GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
         iCurFeatureInPage++;
         returnErrorAndCleanupIf(
-            nFID < 1 || nFID > (GUInt32)poParent->GetTotalRecordCount(),
+            nFID < 1 ||
+                nFID > static_cast<GUInt32>(poParent->GetTotalRecordCount()),
             bEOF = true);
-        return (int)(nFID - 1);
+        return static_cast<int>(nFID - 1);
     }
 }
 
