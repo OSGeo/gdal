@@ -929,7 +929,8 @@ void OGROpenFileGDBLayer::SetSpatialFilter(OGRGeometry *poGeom)
                 CPLQuadTreeSearch(m_pQuadTree, &aoi, &m_nFilteredFeatureCount);
             if (m_nFilteredFeatureCount >= 0)
             {
-                size_t *panStart = (size_t *)m_pahFilteredFeatures;
+                size_t *panStart =
+                    reinterpret_cast<size_t *>(m_pahFilteredFeatures);
                 std::sort(panStart, panStart + m_nFilteredFeatureCount);
             }
         }
@@ -963,13 +964,13 @@ static int CompValues(OGRFieldDefn *poFieldDefn, const swq_expr_node *poValue1,
         {
             int n1, n2;
             if (poValue1->field_type == SWQ_FLOAT)
-                n1 = (int)poValue1->float_value;
+                n1 = static_cast<int>(poValue1->float_value);
             else
-                n1 = (int)poValue1->int_value;
+                n1 = static_cast<int>(poValue1->int_value);
             if (poValue2->field_type == SWQ_FLOAT)
-                n2 = (int)poValue2->float_value;
+                n2 = static_cast<int>(poValue2->float_value);
             else
-                n2 = (int)poValue2->int_value;
+                n2 = static_cast<int>(poValue2->int_value);
             if (n1 < n2)
                 ret = -1;
             else if (n1 == n2)
@@ -1114,9 +1115,11 @@ static int FillTargetValueFromSrcExpr(OGRFieldDefn *poFieldDefn,
     {
         case OFTInteger:
             if (poSrcValue->field_type == SWQ_FLOAT)
-                poTargetValue->Integer = (int)poSrcValue->float_value;
+                poTargetValue->Integer =
+                    static_cast<int>(poSrcValue->float_value);
             else
-                poTargetValue->Integer = (int)poSrcValue->int_value;
+                poTargetValue->Integer =
+                    static_cast<int>(poSrcValue->int_value);
             break;
 
         case OFTReal:
@@ -1144,12 +1147,12 @@ static int FillTargetValueFromSrcExpr(OGRFieldDefn *poFieldDefn,
                     sscanf(poSrcValue->string_value, "%02d:%02d:%02d", &nHour,
                            &nMin, &nSec) == 3)
                 {
-                    poTargetValue->Date.Year = (GInt16)nYear;
-                    poTargetValue->Date.Month = (GByte)nMonth;
-                    poTargetValue->Date.Day = (GByte)nDay;
-                    poTargetValue->Date.Hour = (GByte)nHour;
-                    poTargetValue->Date.Minute = (GByte)nMin;
-                    poTargetValue->Date.Second = (GByte)nSec;
+                    poTargetValue->Date.Year = static_cast<GInt16>(nYear);
+                    poTargetValue->Date.Month = static_cast<GByte>(nMonth);
+                    poTargetValue->Date.Day = static_cast<GByte>(nDay);
+                    poTargetValue->Date.Hour = static_cast<GByte>(nHour);
+                    poTargetValue->Date.Minute = static_cast<GByte>(nMin);
+                    poTargetValue->Date.Second = static_cast<GByte>(nSec);
                     poTargetValue->Date.TZFlag = 0;
                     poTargetValue->Date.Reserved = 0;
                 }
@@ -1592,7 +1595,8 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter(const char *pszFilter)
 
     if (m_poAttrQuery != nullptr && m_nFilteredFeatureCount < 0)
     {
-        swq_expr_node *poNode = (swq_expr_node *)m_poAttrQuery->GetSWQExpr();
+        swq_expr_node *poNode =
+            static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
         poNode->ReplaceBetweenByGEAndLERecurse();
         m_bIteratorSufficientToEvaluateFilter = -1;
         m_poAttributeIterator = BuildIteratorFromExprNode(poNode);
@@ -1790,7 +1794,8 @@ OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return nullptr;
                 }
-                int iRow = (int)(GUIntptr_t)m_pahFilteredFeatures[m_iCurFeat++];
+                int iRow = static_cast<int>(reinterpret_cast<GUIntptr_t>(
+                    m_pahFilteredFeatures[m_iCurFeat++]));
                 if (m_poLyrTable->SelectRow(iRow))
                 {
                     poFeature = GetCurrentFeature();
@@ -1880,7 +1885,7 @@ OGRFeature *OGROpenFileGDBLayer::GetFeature(GIntBig nFeatureId)
 
     if (nFeatureId < 1 || nFeatureId > m_poLyrTable->GetTotalRecordCount())
         return nullptr;
-    if (!m_poLyrTable->SelectRow((int)nFeatureId - 1))
+    if (!m_poLyrTable->SelectRow(static_cast<int>(nFeatureId) - 1))
         return nullptr;
 
     /* Temporarily disable spatial filter */
@@ -1919,7 +1924,7 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
     {
         if (nIndex < 0 || nIndex >= m_nFilteredFeatureCount)
             return OGRERR_FAILURE;
-        m_iCurFeat = (int)nIndex;
+        m_iCurFeat = static_cast<int>(nIndex);
         return OGRERR_NONE;
     }
     else if (m_poLyrTable->GetValidRecordCount() ==
@@ -1927,7 +1932,7 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
     {
         if (nIndex < 0 || nIndex >= m_poLyrTable->GetValidRecordCount())
             return OGRERR_FAILURE;
-        m_iCurFeat = (int)nIndex;
+        m_iCurFeat = static_cast<int>(nIndex);
         return OGRERR_NONE;
     }
     else

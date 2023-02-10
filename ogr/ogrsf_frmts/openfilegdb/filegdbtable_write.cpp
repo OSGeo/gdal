@@ -293,8 +293,9 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
     if (m_bDirtyTableXTrailer && fpTableX)
     {
         m_nOffsetTableXTrailer =
-            TABLX_HEADER_SIZE + m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE *
-                                    (vsi_l_offset)m_n1024BlocksPresent;
+            TABLX_HEADER_SIZE +
+            m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE *
+                static_cast<vsi_l_offset>(m_n1024BlocksPresent);
         VSIFSeekL(fpTableX, m_nOffsetTableXTrailer, SEEK_SET);
         const uint32_t n1024BlocksTotal =
             DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE);

@@ -14,7 +14,7 @@ add_gdal_driver(
           ogropenfilegdbdriver.cpp
           ogropenfilegdblayer.cpp
           ogropenfilegdblayer_write.cpp
-  PLUGIN_CAPABLE NO_DEPS)
+  PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS)
 gdal_standard_includes(ogr_OpenFileGDB)
 target_include_directories(ogr_OpenFileGDB PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 

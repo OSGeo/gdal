@@ -101,9 +101,12 @@ class FileGDBField
     bool m_bNullable = false;
     int m_nMaxWidth = 0; /* for string */
 
-    OGRField m_sDefault;
+    OGRField m_sDefault{};
 
     FileGDBIndex *m_poIndex = nullptr;
+
+    FileGDBField(const FileGDBField &) = delete;
+    FileGDBField &operator=(const FileGDBField &) = delete;
 
   public:
     static const OGRField UNSET_FIELD;
@@ -313,9 +316,12 @@ class FileGDBRasterField : public FileGDBGeomField
   private:
     friend class FileGDBTable;
 
-    std::string m_osRasterColumnName;
+    std::string m_osRasterColumnName{};
 
     Type m_eRasterType = Type::EXTERNAL;
+
+    FileGDBRasterField(const FileGDBRasterField &) = delete;
+    FileGDBRasterField &operator=(const FileGDBRasterField &) = delete;
 
   public:
     explicit FileGDBRasterField(FileGDBTable *poParentIn)
@@ -343,8 +349,8 @@ class FileGDBRasterField : public FileGDBGeomField
 class FileGDBIndex
 {
     friend class FileGDBTable;
-    std::string m_osIndexName;
-    std::string m_osExpression;
+    std::string m_osIndexName{};
+    std::string m_osExpression{};
 
   public:
     FileGDBIndex()
@@ -434,7 +440,7 @@ class FileGDBTable
     GByte *m_pabyIterVals = nullptr;
     int m_iAccNullable = 0;
     GUInt32 m_nRowBlobLength = 0;
-    OGRField m_sCurField;
+    OGRField m_sCurField{};
 
     FileGDBTableGeometryType m_eTableGeomType = FGTGT_NONE;
     bool m_bGeomTypeHasZ = false;
@@ -481,6 +487,9 @@ class FileGDBTable
         uint32_t m_nOldFieldDescLength = 0;
         bool m_bIsInit = false;
 
+        WholeFileRewriter(const WholeFileRewriter &) = delete;
+        WholeFileRewriter &operator=(const WholeFileRewriter &) = delete;
+
       public:
         VSILFILE *m_fpOldGdbtable = nullptr;
         VSILFILE *m_fpOldGdbtablx = nullptr;
@@ -520,6 +529,9 @@ class FileGDBTable
     bool CreateAttributeIndex(const FileGDBIndex *poIndex);
     uint64_t GetOffsetOfFreeAreaFromFreeList(uint32_t nSize);
     void AddEntryToFreelist(uint64_t nOffset, uint32_t nSize);
+
+    FileGDBTable(const FileGDBTable &) = delete;
+    FileGDBTable &operator=(const FileGDBTable &) = delete;
 
   public:
     FileGDBTable();
@@ -566,7 +578,7 @@ class FileGDBTable
     }
     int GetFieldCount() const
     {
-        return (int)m_apoFields.size();
+        return static_cast<int>(m_apoFields.size());
     }
     FileGDBField *GetField(int i) const
     {
