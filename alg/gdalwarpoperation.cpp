@@ -1949,7 +1949,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     if (eErr == CE_None && psOptions->hCutline != nullptr && nSrcXSize > 0 &&
         nSrcYSize > 0)
     {
-        if (oWK.pafUnifiedSrcDensity == nullptr)
+        const bool bUnifiedSrcDensityJustCreated =
+            (oWK.pafUnifiedSrcDensity == nullptr);
+        if (bUnifiedSrcDensityJustCreated)
         {
             eErr =
                 CreateKernelMask(&oWK, 0 /* not used */, "UnifiedSrcDensity");
@@ -1963,11 +1965,19 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             }
         }
 
+        int nValidityFlag = 0;
         if (eErr == CE_None)
-            eErr = GDALWarpCutlineMasker(
+            eErr = GDALWarpCutlineMaskerEx(
                 psOptions, psOptions->nBandCount, psOptions->eWorkingDataType,
                 oWK.nSrcXOff, oWK.nSrcYOff, oWK.nSrcXSize, oWK.nSrcYSize,
-                oWK.papabySrcImage, TRUE, oWK.pafUnifiedSrcDensity);
+                oWK.papabySrcImage, TRUE, oWK.pafUnifiedSrcDensity,
+                &nValidityFlag);
+        if (nValidityFlag == GCMVF_CHUNK_FULLY_WITHIN_CUTLINE &&
+            bUnifiedSrcDensityJustCreated)
+        {
+            VSIFree(oWK.pafUnifiedSrcDensity);
+            oWK.pafUnifiedSrcDensity = nullptr;
+        }
     }
 
     /* -------------------------------------------------------------------- */

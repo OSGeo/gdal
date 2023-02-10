@@ -1214,12 +1214,47 @@ CPLErr GDALWarpKernel::PerformWarp()
         !bApplyVerticalShift &&
         CPLFetchBool(papszWarpOptions, "USE_OPENCL", true))
     {
-        const CPLErr eResult = GWKOpenCLCase(this);
+        if (pafUnifiedSrcDensity != nullptr)
+        {
+            // If pafUnifiedSrcDensity is only set to 1.0, then we can
+            // discard it.
+            bool bFoundNotOne = false;
+            for (GPtrDiff_t j = 0;
+                 j < static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize; j++)
+            {
+                if (pafUnifiedSrcDensity[j] != 1.0)
+                {
+                    bFoundNotOne = true;
+                    break;
+                }
+            }
+            if (!bFoundNotOne)
+            {
+                CPLFree(pafUnifiedSrcDensity);
+                pafUnifiedSrcDensity = nullptr;
+            }
+        }
 
-        // CE_Warning tells us a suitable OpenCL environment was not available
-        // so we fall through to other CPU based methods.
-        if (eResult != CE_Warning)
-            return eResult;
+        if (pafUnifiedSrcDensity != nullptr)
+        {
+            // Typically if there's a cutline or an alpha band
+            static bool bHasWarned = false;
+            if (!bHasWarned)
+            {
+                bHasWarned = true;
+                CPLDebug("WARP", "pafUnifiedSrcDensity is not null, "
+                                 "hence OpenCL warper cannot be used");
+            }
+        }
+        else
+        {
+            const CPLErr eResult = GWKOpenCLCase(this);
+
+            // CE_Warning tells us a suitable OpenCL environment was not available
+            // so we fall through to other CPU based methods.
+            if (eResult != CE_Warning)
+                return eResult;
+        }
     }
 #endif  // defined HAVE_OPENCL
 
