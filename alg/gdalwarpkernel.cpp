@@ -1212,7 +1212,11 @@ CPLErr GDALWarpKernel::PerformWarp()
         (eResample == GRA_Bilinear || eResample == GRA_Cubic ||
          eResample == GRA_CubicSpline || eResample == GRA_Lanczos) &&
         !bApplyVerticalShift &&
-        CPLFetchBool(papszWarpOptions, "USE_OPENCL", true))
+        // OpenCL warping gives different results than the ones expected by autotest,
+        // so disable it by default even if found.
+        CPLTestBool(
+            CSLFetchNameValueDef(papszWarpOptions, "USE_OPENCL",
+                                 CPLGetConfigOption("GDAL_USE_OPENCL", "NO"))))
     {
         if (pafUnifiedSrcDensity != nullptr)
         {
