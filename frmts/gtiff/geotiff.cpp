@@ -822,6 +822,12 @@ class GTiffJPEGOverviewBand final : public GDALRasterBand
     }
 
     virtual CPLErr IReadBlock(int, int, void *) override;
+    GDALColorInterp GetColorInterpretation() override
+    {
+        return cpl::down_cast<GTiffJPEGOverviewDS *>(poDS)
+            ->m_poParentDS->GetRasterBand(nBand)
+            ->GetColorInterpretation();
+    }
 };
 
 /************************************************************************/

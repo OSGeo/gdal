@@ -905,3 +905,19 @@ def test_stats_computeminmax(datatype, minval, maxval, nodata):
         buf_ysize=1,
     )
     assert ds.GetRasterBand(1).ComputeRasterMinMax(0) == (expected_minval, maxval)
+
+
+###############################################################################
+# Test statistics on band with mask band
+
+
+def test_stats_mask_band():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1, gdal.GDT_Int16)
+    src_ds.WriteRaster(0, 0, 3, 1, struct.pack("h" * 3, 1, 2, 3))
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    mask_band = src_ds.GetRasterBand(1).GetMaskBand()
+    mask_band.WriteRaster(0, 0, 3, 1, struct.pack("B" * 3, 0, 255, 255))
+    assert src_ds.GetRasterBand(1).ComputeRasterMinMax(False) == (2, 3)
+    assert src_ds.GetRasterBand(1).ComputeStatistics(False) == [2, 3, 2.5, 0.5]
+    assert src_ds.GetRasterBand(1).GetHistogram(False) == [0, 0, 1, 1] + ([0] * 252)

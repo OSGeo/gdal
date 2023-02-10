@@ -1636,7 +1636,7 @@ def test_ecw_41():
 
     # Now compute the stats
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
-    expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
+    expected_stats = [0.0, 255.0, 41.122843450479, 66.517011844777]
     for i in range(4):
         assert stats[i] == pytest.approx(expected_stats[i], abs=1)
 
@@ -1649,7 +1649,7 @@ def test_ecw_41():
     assert ds.GetRasterBand(1).GetMinimum() == 0
     assert ds.GetRasterBand(1).GetMaximum() == 255
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
-    expected_stats = [0.0, 255.0, 21.662427983539093, 51.789457392268119]
+    expected_stats = [0.0, 255.0, 41.122843450479, 66.517011844777]
     for i in range(4):
         assert stats[i] == pytest.approx(expected_stats[i], abs=1)
     ds = None
@@ -1662,10 +1662,10 @@ def test_ecw_41():
         255.5,
         256,
         [
-            1006,
-            16106,
-            548,
-            99,
+            603,
+            4870,
+            428,
+            78,
             13,
             24,
             62,
