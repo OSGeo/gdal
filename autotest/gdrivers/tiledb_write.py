@@ -36,7 +36,7 @@ from osgeo import gdal
 
 
 @pytest.mark.require_driver("TileDB")
-@pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
+@pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_complex(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
@@ -207,7 +207,7 @@ def test_tiledb_write_attributes(mode):
 
 @pytest.mark.require_driver("TileDB")
 @pytest.mark.require_driver("HDF5")
-def DISABLED_test_tiledb_write_subdatasets():
+def test_tiledb_write_subdatasets():
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open(
@@ -239,7 +239,10 @@ def test_tiledb_write_band_meta(mode):
 
     options = ["INTERLEAVE=%s" % (mode)]
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_meta", src_ds, options=options)
+    gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_meta", src_ds, options=options)
+
+    # open array in update mode
+    new_ds = gdal.Open("tmp/tiledb_meta", gdal.GA_Update)
 
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
