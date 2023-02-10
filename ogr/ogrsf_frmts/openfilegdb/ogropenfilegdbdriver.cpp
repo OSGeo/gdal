@@ -239,6 +239,39 @@ static GDALDataset *OGROpenFileGDBDriverCreate(const char *pszName, int nXSize,
     return poDS.release();
 }
 
+/************************************************************************/
+/*                     OGROpenFileGDBDriverDelete()                     */
+/************************************************************************/
+
+static CPLErr OGROpenFileGDBDriverDelete(const char *pszFilename)
+{
+    CPLStringList aosFiles(VSIReadDir(pszFilename));
+    if (aosFiles.empty())
+        return CE_Failure;
+
+    for (int i = 0; i < aosFiles.size(); ++i)
+    {
+        if (strcmp(aosFiles[i], ".") != 0 && strcmp(aosFiles[i], "..") != 0)
+        {
+            const std::string osFilename(
+                CPLFormFilename(pszFilename, aosFiles[i], nullptr));
+            if (VSIUnlink(osFilename.c_str()) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot delete %s",
+                         osFilename.c_str());
+                return CE_Failure;
+            }
+        }
+    }
+    if (VSIRmdir(pszFilename) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot delete %s", pszFilename);
+        return CE_Failure;
+    }
+
+    return CE_None;
+}
+
 /***********************************************************************/
 /*                       RegisterOGROpenFileGDB()                      */
 /***********************************************************************/
@@ -387,6 +420,7 @@ void RegisterOGROpenFileGDB()
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;
     poDriver->pfnCreate = OGROpenFileGDBDriverCreate;
+    poDriver->pfnDelete = OGROpenFileGDBDriverDelete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
