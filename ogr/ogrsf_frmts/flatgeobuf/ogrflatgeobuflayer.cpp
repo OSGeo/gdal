@@ -1055,9 +1055,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 
     if (m_bVerifyBuffers)
     {
-        const auto vBuf = const_cast<const uint8_t *>(
-            reinterpret_cast<uint8_t *>(m_featureBuf));
-        Verifier v(vBuf, featureSize);
+        Verifier v(m_featureBuf, featureSize);
         const auto ok = VerifyFeatureBuffer(v);
         if (!ok)
         {
@@ -1499,9 +1497,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         if (m_bVerifyBuffers)
         {
-            const auto vBuf = const_cast<const uint8_t *>(
-                reinterpret_cast<uint8_t *>(m_featureBuf));
-            Verifier v(vBuf, featureSize);
+            Verifier v(m_featureBuf, featureSize);
             const auto ok = VerifyFeatureBuffer(v);
             if (!ok)
             {
