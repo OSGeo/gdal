@@ -3642,14 +3642,20 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                     iSampleBlock /
                         (static_cast<double>(nBlocksPerRow) * nBlocksPerColumn),
                     "Compute Histogram", pProgressData))
+            {
+                CPLFree(pabyMaskData);
                 return CE_Failure;
+            }
 
             const int iYBlock = iSampleBlock / nBlocksPerRow;
             const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
 
             GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
             if (poBlock == nullptr)
+            {
+                CPLFree(pabyMaskData);
                 return CE_Failure;
+            }
 
             void *pData = poBlock->GetDataRef();
 
@@ -5948,7 +5954,10 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             GDALRasterBlock *const poBlock =
                 GetLockedBlockRef(iXBlock, iYBlock);
             if (poBlock == nullptr)
+            {
+                CPLFree(pabyMaskData);
                 return CE_Failure;
+            }
 
             void *const pData = poBlock->GetDataRef();
 
