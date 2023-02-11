@@ -1353,6 +1353,10 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     /* -------------------------------------------------------------------- */
     if (nShapeId == -1 && psSHP->nRecords + 1 > psSHP->nMaxRecords)
     {
+        /* This cannot overflow given that we check that the file size does
+         * not grow over 4 GB, and the minimum size of a record is 12 bytes,
+         * hence the maximm value for nMaxRecords is 357,913,941
+         */
         int nNewMaxRecords = psSHP->nMaxRecords + psSHP->nMaxRecords / 3 + 100;
         unsigned int *panRecOffsetNew;
         unsigned int *panRecSizeNew;
@@ -1361,14 +1365,22 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
             unsigned int *, SfRealloc(psSHP->panRecOffset,
                                       sizeof(unsigned int) * nNewMaxRecords));
         if (panRecOffsetNew == SHPLIB_NULLPTR)
+        {
+            psSHP->sHooks.Error("Failed to write shape object. "
+                                "Memory allocation error.");
             return -1;
+        }
         psSHP->panRecOffset = panRecOffsetNew;
 
         panRecSizeNew = STATIC_CAST(
             unsigned int *, SfRealloc(psSHP->panRecSize,
                                       sizeof(unsigned int) * nNewMaxRecords));
         if (panRecSizeNew == SHPLIB_NULLPTR)
+        {
+            psSHP->sHooks.Error("Failed to write shape object. "
+                                "Memory allocation error.");
             return -1;
+        }
         psSHP->panRecSize = panRecSizeNew;
 
         psSHP->nMaxRecords = nNewMaxRecords;
@@ -1377,11 +1389,27 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     /* -------------------------------------------------------------------- */
     /*      Initialize record.                                              */
     /* -------------------------------------------------------------------- */
-    uchar *pabyRec =
-        STATIC_CAST(uchar *, malloc(psObject->nVertices * 4 * sizeof(double) +
-                                    psObject->nParts * 8 + 128));
-    if (pabyRec == SHPLIB_NULLPTR)
+
+    /* The following computation cannot overflow on 32-bit platforms given that
+     * the user had to allocate arrays of at least that size. */
+    size_t nRecMaxSize =
+        psObject->nVertices * 4 * sizeof(double) + psObject->nParts * 8;
+    /* But the following test could trigger on 64-bit platforms on huge
+     * geometries. */
+    const unsigned nExtraSpaceForGeomHeader = 128;
+    if (nRecMaxSize > UINT_MAX - nExtraSpaceForGeomHeader)
+    {
+        psSHP->sHooks.Error("Failed to write shape object. Too big geometry.");
         return -1;
+    }
+    nRecMaxSize += nExtraSpaceForGeomHeader;
+    uchar *pabyRec = STATIC_CAST(uchar *, malloc(nRecMaxSize));
+    if (pabyRec == SHPLIB_NULLPTR)
+    {
+        psSHP->sHooks.Error("Failed to write shape object. "
+                            "Memory allocation error.");
+        return -1;
+    }
 
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				*/
