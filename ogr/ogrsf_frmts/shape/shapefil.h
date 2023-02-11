@@ -290,14 +290,10 @@ extern "C"
     int SHPAPI_CALL SHPRestoreSHX(const char *pszShapeFile,
                                   const char *pszAccess, SAHooks *psHooks);
 
-    /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by
-     * the SHPHandle. */
-    /* So you cannot have 2 valid instances of SHPReadObject() simultaneously.
-     */
-    /* The SHPObject padfZ and padfM members may be NULL depending on the
-     * geometry */
-    /* type. It is illegal to free at hand any of the pointer members of the
-     * SHPObject structure */
+    /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
+    /* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
+    /* The SHPObject padfZ and padfM members may be NULL depending on the geometry */
+    /* type. It is illegal to free at hand any of the pointer members of the SHPObject structure */
     void SHPAPI_CALL SHPSetFastModeReadObject(SHPHandle hSHP, int bFastMode);
 
     SHPHandle SHPAPI_CALL SHPCreate(const char *pszShapeFile, int nShapeType);
