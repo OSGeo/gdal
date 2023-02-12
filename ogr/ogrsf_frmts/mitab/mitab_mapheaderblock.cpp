@@ -334,6 +334,13 @@ int TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
         }
     }
 
+    if (m_sProj.nProjId == 35 && m_nMAPVersionNumber >= 500 &&
+        m_nSizeUsed >= 0x0268 + 8)
+    {
+        GotoByteInBlock(0x0268);
+        m_sProj.adProjParams[6] = ReadDouble();
+    }
+
     UpdatePrecision();
 
     return 0;
@@ -827,6 +834,17 @@ int TABMAPHeaderBlock::CommitToFile()
         WriteDouble(m_sProj.dAffineParamF);
 
         WriteZeros(456);  // Pad rest of block with zeros (Bounds info here ?)
+    }
+
+    if (m_nMAPVersionNumber >= 500 && m_nBlockSize == 1024 &&
+        m_sProj.nProjId == 35)
+    {
+        const auto nCurPosBak = m_nCurPos;
+        if (m_nCurPos == 512)
+            WriteZeros(512);
+        m_nCurPos = 0x0268;
+        WriteDouble(m_sProj.adProjParams[6]);
+        m_nCurPos = nCurPosBak;
     }
 
     /*-----------------------------------------------------------------

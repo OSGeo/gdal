@@ -377,7 +377,7 @@ int MITABCoordSys2TABProjInfo(const char *pszCoordSys, TABProjInfo *psProj)
     }
 
     // Finally the projection parameters.
-    for (int iParam = 0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
+    for (int iParam = 0; iParam < 7 && CSLCount(papszNextField) > 0; iParam++)
     {
         psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
         papszNextField++;
