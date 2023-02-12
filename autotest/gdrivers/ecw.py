@@ -56,6 +56,13 @@ def has_write_support():
     if ecw_drv is None or ecw_drv.GetMetadataItem("DMD_CREATIONDATATYPES") is None:
         return False
 
+    if (
+        "ECW_ENCODE_KEY" in ecw_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
+        and gdal.GetConfigOption("ECW_ENCODE_KEY") is None
+    ):
+        print("ECW_ENCODE_KEY not defined. Write support not available")
+        return False
+
     ds = gdal.Open("data/ecw/jrc.ecw")
     if ds:
         out_ds = ecw_drv.CreateCopy("tmp/jrc_out.ecw", ds, options=["TARGET=75"])
