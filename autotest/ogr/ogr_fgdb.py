@@ -2316,6 +2316,7 @@ def test_ogr_fgdb_21(fgdb_drv, fgdb_sdk_1_4_or_later):
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
         or gdaltest.is_travis_branch("python3")
+        or gdaltest.is_ci()
     ):
         pytest.skip()
 
@@ -3153,6 +3154,12 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
 def test_ogr_filegdb_incompatible_geometry_types(fgdb_drv, layer_geom_type, wkt):
 
     dirname = "tmp/test_ogr_filegdb_incompatible_geometry_types.gdb"
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass
+
     ds = fgdb_drv.CreateDataSource(dirname)
 
     srs = osr.SpatialReference()
@@ -3163,6 +3170,7 @@ def test_ogr_filegdb_incompatible_geometry_types(fgdb_drv, layer_geom_type, wkt)
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
     with gdaltest.error_handler():
         assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
+    ds = None
 
     try:
         shutil.rmtree(dirname)
