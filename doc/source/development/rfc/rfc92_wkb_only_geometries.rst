@@ -1,15 +1,15 @@
 .. _rfc-92:
 
 =============================================================
-RFC 92: WKB Only geometries
+RFC 92: WKB Only geometries (on hold)
 =============================================================
 
 ============== =============================================
 Author:        Even Rouault
 Contact:       even.rouault at spatialys.com
 Started:       2023-Jan-31
-Status:        Draft / discussion
-Target:        GDAL 3.7 ?
+Status:        On hold
+Target:        N/A
 ============== =============================================
 
 Summary
@@ -18,6 +18,8 @@ Summary
 This RFC provides shortcuts to avoid instantiation of full OGRGeometry instances
 in scenarios where only the WKB representation of geometries is needed. The
 hope is to save CPU time.
+
+.. note:: This RFC is on hold.
 
 Motivation
 ----------
@@ -35,7 +37,7 @@ GDAL side:
 
 1. acquire GeoPackage geometry blob (WKB with a GeoPackage specific header) from
    the database
-2. instanciate the relevant OGRGeometry subclass instance (OGRPoint, OGRLineString,
+2. instantiate the relevant OGRGeometry subclass instance (OGRPoint, OGRLineString,
    OGRPolygon, etc.) from WKB
 3. store it in a OGRFeature
 
@@ -44,7 +46,7 @@ QGIS side:
 4. get the OGRGeometry from the OGRFeature
 5. asks for its WKB representation, build from the subclass members (not the
    original WKB of step 2.)
-6. instanciate QgsGeometry from WKB
+6. instantiate QgsGeometry from WKB
 
 One can see that if we were able to store the original WKB representation and
 get it back we could save OGRGeometry subclass object creation, destruction and
@@ -213,6 +215,67 @@ Should methods of OGRWKBOnlyGeometry that cannot work without materialization
 of the real geometry return an error like done currently, or do the materialization
 on-the-fly when needed ? The motivation for erroring out is to avoid silent
 performance issues related to materialization.
+
+Points raised during discussion
+-------------------------------
+
+Sean Gillies: Wouldn't it be possible for all OGRFeatures to carry WKB data by
+default and add a method to provide it to callers?
+
+Even: That involve massive code rewrites in all drivers and wouldn't be desirable
+from a performance point of view, because most drivers can't generate WKB easily
+(PostGIS and GPKG are the exceptions rather the norm). So either all other drivers
+should be modified to compose WKB at hand (massive coding effort. Probably
+several weeks of effort and significant risk of regressions). Or get it from the
+ExportToWkb() method of the OGRGeometry instance they currently build, but then
+you pay the price in memory and CPU time to generate WKB that might not be
+consumed by users.
+
+Sean Gillies: And only construct an OGRGeometry when it's asked for? Such as when
+GetGeometryRef is called?
+
+Even: we could both make GetGeometryRef() and GetGeomFieldRef() virtual methods
+whose default implementation would be the same as currently, ie. return the value
+of the corresponding member variable in the base OGRFeature class stored with
+SetGeometry[Directly]()/SetGeomField[Directly]()
+
+And add a new virtual method:
+
+virtual GByte* OGRFeature::GetWKBGeometry(int iGeomField, size_t* pnOutSize) const
+
+whose default implementation would just use GetGeomFieldRef(iGeomField)->ExportToWkb().
+
+The few drivers that can provide a more efficient implementation (GPKG typically)
+would create a derived class OGRFeatureGPKG with a specific implementation of
+those new virtual methods to avoid systematic OGRGeometry instantiation. The only
+drawback I see is that making GetGeometryRef() and GetGeomFieldRef() virtual would
+have a slight performance impact, but probably small enough.
+
+Dan Baston: I'm wondering about a more broad application of this. Would it be
+helpful to have the ability to lazy-initialize an OGRGeometry from multiple
+source types such as WKB and GEOS, initially storing only a reference to the
+external data in WKB/GEOS/etc and actually materializing the geometry when
+required? Then methods such as OGRGeometry::exportToWkb and
+OGRGeometry::exportToGEOS could check the external data type and use it directly
+if it is compatible, avoiding materialization. This would avoid multiple
+conversions to/from GEOS in cases where operations are chained, as well as
+allowing WKB to pass directly between input and output drivers that support it.
+Relatedly, this ability could be used to cache external-format data when it is
+generated for an OGRGeometry, avoiding inefficiencies such as two conversions
+to GEOS when checking to see if two geometries intersect before calculating
+their intersection.
+
+Even: That's definitely something doable. At a minimum, you would have to
+inspect the top geometry type to instantiate the appropriate OGRGeometry
+subclass, and then its members could be lazy initialized, but that means that
+all methods of OGRGeometry and its subclasses would have to do a check whether
+the object has been fully initialized. There might be performance implications
+for people doing for example lineString->getX(idx) to iterate on big geometries,
+although branch predictors of modern CPUs are probably very good at repeatedly
+evaluating stuff like "if (!materialized) materialize();". The main drawback is
+that is a substantial & risky change that requires to revisit *all* methods of
+the geometry classes. For setters, you would also have to make sure to invalidate
+the potentially initial WKB / GEOS source.
 
 Issues / pull requests
 ----------------------
