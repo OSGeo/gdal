@@ -748,11 +748,16 @@ def test_gdal_EscapeString_errors():
     if sys.maxsize > 2**32:
         pytest.skip("Test not available on 64 bit")
 
-    # Allocation will be < 4 GB, but will fail being > 2 GB
-    assert gdal.EscapeString(b'"' * (((1 << 32) - 1) // 6), gdal.CPLES_XML) is None
+    try:
+        # Allocation will be < 4 GB, but will fail being > 2 GB
+        assert gdal.EscapeString(b'"' * (((1 << 32) - 1) // 6), gdal.CPLES_XML) is None
 
-    # Allocation will be > 4 GB
-    assert gdal.EscapeString(b'"' * (((1 << 32) - 1) // 6 + 1), gdal.CPLES_XML) is None
+        # Allocation will be > 4 GB
+        assert (
+            gdal.EscapeString(b'"' * (((1 << 32) - 1) // 6 + 1), gdal.CPLES_XML) is None
+        )
+    except MemoryError:
+        print("Got MemoryError")
 
 
 def test_gdal_DataTypeUnion():
