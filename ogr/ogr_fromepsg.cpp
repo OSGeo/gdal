@@ -310,7 +310,8 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
     /*      guessing it.                                                    */
     /* -------------------------------------------------------------------- */
     if ((IsProjected() || IsGeographic()) &&
-        GetAuthorityCode("GEOGCS") == nullptr)
+        GetAuthorityCode("GEOGCS") == nullptr &&
+        GetAttrValue("PROJCRS|BASEGEOGCRS|ID") == nullptr)
     {
         const int nGCS = GetEPSGGeogCS();
         if (nGCS != -1)

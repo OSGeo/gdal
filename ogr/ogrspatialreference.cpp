@@ -1249,6 +1249,14 @@ const char *OGRSpatialReference::GetAttrValue(const char *pszNodeName,
         {
             return GetAttrValue("METHOD", iAttr);
         }
+        else if (d->m_bNodesWKT2 && EQUAL(pszNodeName, "PROJCS|PROJECTION"))
+        {
+            return GetAttrValue("PROJCRS|METHOD", iAttr);
+        }
+        else if (d->m_bNodesWKT2 && EQUAL(pszNodeName, "PROJCS"))
+        {
+            return GetAttrValue("PROJCRS", iAttr);
+        }
         return nullptr;
     }
 
