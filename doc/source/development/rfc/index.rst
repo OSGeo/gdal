@@ -98,3 +98,4 @@ RFC list
     rfc89_sql_logging_callback
     rfc90_read_compressed_data
     rfc91_dataset_close
+    rfc92_wkb_only_geometries
