@@ -388,7 +388,8 @@ def test_gdal_rasterize_6():
 # Test SQLITE dialect in SQL
 
 
-def test_gdal_rasterize_7():
+@pytest.mark.parametrize("sql_in_file", [False, True])
+def test_gdal_rasterize_7(sql_in_file):
 
     pytest.importorskip("numpy")
     if test_cli_utilities.get_gdal_rasterize_path() is None:
@@ -419,13 +420,25 @@ def test_gdal_rasterize_7():
 
     f.close()
 
-    cmds = """tmp/test_gdal_rasterize_7.csv
+    sql = "SELECT ST_Buffer(GEOMETRY, 2) FROM test_gdal_rasterize_7"
+    if sql_in_file:
+        open("tmp/sql.txt", "wt").write(sql)
+        sql = "@tmp/sql.txt"
+    else:
+        sql = '"' + sql + '"'
+    cmds = (
+        """tmp/test_gdal_rasterize_7.csv
               tmp/test_gdal_rasterize_7.tif
               -init 0 -burn 1
-              -sql "SELECT ST_Buffer(GEOMETRY, 2) FROM test_gdal_rasterize_7"
+              -sql %s
               -dialect sqlite -tr 1 1 -te -1 -1 51 51"""
+        % sql
+    )
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + " " + cmds)
+
+    if sql_in_file:
+        os.unlink("tmp/sql.txt")
 
     ds = gdal.Open("tmp/test_gdal_rasterize_7.tif")
     data = ds.GetRasterBand(1).ReadAsArray()
