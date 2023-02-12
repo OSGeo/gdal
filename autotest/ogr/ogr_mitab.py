@@ -2979,18 +2979,22 @@ def test_ogr_mitab_read_read_extended_transverse_mercator():
 ###############################################################################
 
 
-def test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle():
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+def test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle(ext):
 
     ds = ogr.Open("data/mitab/proj_35.mif")
     lyr = ds.GetLayer(0)
     ref_srs = lyr.GetSpatialRef()
     assert (
         ref_srs.ExportToProj4()
-        == "+proj=omerc +no_uoff +lat_0=4 +lonc=102.25 +alpha=323.025796466667 +gamma=323.130102361111 +k=0.99984 +x_0=804671 +y_0=0 +ellps=evrst69 +units=m +no_defs"
+        == "+proj=omerc +no_uoff +lat_0=4 +lonc=102.25 +alpha=323.025796466667 +gamma=323.130102361111 +k=0.99984 +x_0=804671 +y_0=123456 +ellps=evrst69 +units=m +no_defs"
     )
     ds = None
 
-    filename = "/vsimem/test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle.tab"
+    filename = (
+        "/vsimem/test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle."
+        + ext
+    )
     ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
     lyr = ds.CreateLayer("test", srs=ref_srs, geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("foo"))
