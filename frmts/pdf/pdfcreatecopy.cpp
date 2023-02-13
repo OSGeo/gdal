@@ -4297,6 +4297,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         char szTmp[64];
         char **papszOptions = nullptr;
 
+        bool bEcwEncodeKeyRequiredButNotFound = false;
         if (eCompressMethod == COMPRESS_JPEG)
         {
             poJPEGDriver = (GDALDriver *)GDALGetDriverByName("JPEG");
@@ -4321,6 +4322,19 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
                             GDAL_DMD_CREATIONDATATYPES) == nullptr)
                     {
                         poJPEGDriver = nullptr;
+                    }
+                    else if (poJPEGDriver)
+                    {
+                        if (strstr(poJPEGDriver->GetMetadataItem(
+                                       GDAL_DMD_CREATIONOPTIONLIST),
+                                   "ECW_ENCODE_KEY"))
+                        {
+                            if (!CPLGetConfigOption("ECW_ENCODE_KEY", nullptr))
+                            {
+                                bEcwEncodeKeyRequiredButNotFound = true;
+                                poJPEGDriver = nullptr;
+                            }
+                        }
                     }
                 }
                 if (poJPEGDriver)
@@ -4348,8 +4362,18 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
 
         if (poJPEGDriver == nullptr)
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "No %s driver found",
-                     (eCompressMethod == COMPRESS_JPEG) ? "JPEG" : "JPEG2000");
+            if (bEcwEncodeKeyRequiredButNotFound)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "No JPEG2000 driver usable (JP2ECW detected but "
+                         "ECW_ENCODE_KEY configuration option not set");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "No %s driver found",
+                         (eCompressMethod == COMPRESS_JPEG) ? "JPEG"
+                                                            : "JPEG2000");
+            }
             eErr = CE_Failure;
             goto end;
         }
