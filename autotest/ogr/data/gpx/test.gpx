@@ -1,8 +1,24 @@
 <?xml version="1.0"?>
 <!-- GPX sample. MIT licence -->
 <gpx creator="E. Rouault" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+    <name>metadata name</name>
+    <desc>metadata desc</desc>
+    <author>
+        <name>metadata author name</name>
+        <email id="foo" domain="example.com"/>
+        <link href="author_href"><text>author_text</text><type>author_type</type></link>
+    </author>
+    <copyright author="copyright author"><year>2023</year><license>my license</license></copyright>
+    <link href="href"><text>text</text><type>type</type></link>
+    <link href="href2"><text>text2</text><type>type2</type></link>
+    <time>2007-11-25T17:58:00+01:00</time>
+    <keywords>kw</keywords>
+    <bounds minlat="-90" minlon="-180" maxlat="90" maxlon="179.9999999"/>
+</metadata>
 <wpt lat="0" lon="1">
-  <ele>2</ele> 
+  <ele>2</ele>
+  <time>2007-11-25T17:58:00+01:00</time>
   <name>waypoint name</name>
   <cmt>waypoint comment</cmt>
   <desc>waypoint description</desc>
@@ -10,22 +26,21 @@
   <link href="href"><text>text</text><type>type</type></link>
   <link href="href2"><text>text2</text><type>type2</type></link>
   <link href="href3"><text>text3</text><type>type3</type></link>
-  <time>2007-11-25T17:58:00+01:00</time>
   <extensions></extensions>
 </wpt>
 <wpt lat="3" lon="4"/>
 <rte>
   <name>route name</name>
   <rtept lat="5" lon="6">
-      <ele>7</ele> 
-      <name>route point name</name>
+      <ele>7</ele>
       <time>2007-11-25T17:58:00Z</time>
+      <name>route point name</name>
   </rtept>
   <rtept lat="8" lon="9">
-      <ele>10</ele> 
+      <ele>10</ele>
   </rtept>
   <rtept lat="11" lon="12">
-      <ele>13</ele> 
+      <ele>13</ele>
   </rtept>
 </rte>
 <rte>
@@ -35,19 +50,19 @@
     <name>track name</name>
     <trkseg>
         <trkpt lat="14" lon="15">
-            <ele>16</ele> 
+            <ele>16</ele>
             <name>track point name</name>
         </trkpt>
         <trkpt lat="17" lon="18">
-            <ele>19</ele> 
+            <ele>19</ele>
         </trkpt>
     </trkseg>
     <trkseg>
         <trkpt lat="20" lon="21">
-            <ele>22</ele> 
+            <ele>22</ele>
         </trkpt>
         <trkpt lat="23" lon="24">
-            <ele>25</ele> 
+            <ele>25</ele>
         </trkpt>
     </trkseg>
 </trk>

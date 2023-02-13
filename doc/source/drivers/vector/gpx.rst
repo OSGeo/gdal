@@ -5,7 +5,7 @@ GPX - GPS Exchange Format
 
 .. shortname:: GPX
 
-.. build_dependencies:: (read support needs libexpat) 
+.. build_dependencies:: (read support needs libexpat)
 
 GPX (the GPS Exchange Format) is a light-weight XML data format for the
 interchange of GPS data (waypoints, routes, and tracks) between
@@ -44,6 +44,9 @@ routes and tracks.
 By default, up to 2 *<link>* elements can be taken into account by
 feature. This default number can be changed with the GPX_N_MAX_LINKS
 environment variable.
+
+Starting with GDAL 3.7, metadata from the top <metadata> element is reported
+at dataset level.
 
 Driver capabilities
 -------------------
@@ -114,11 +117,11 @@ will be interpreted in the OGR SF model as :
      navaid_runways (String) = <navaid:runway designation="H1" length="80" width="80" surface="ASPH-G" ></navaid:runway>
      navaid_magvar (Integer) = 12
 
-| 
+|
 | Note : the GPX driver will output content of the extensions element
   only if it is found in the first records of the GPX file. If
   extensions appear later, you can force an explicit parsing of the
-  whole file with the :decl_configoption:`GPX_USE_EXTENSIONS` configuration 
+  whole file with the :decl_configoption:`GPX_USE_EXTENSIONS` configuration
   option.
 
 Creation Issues
@@ -191,6 +194,26 @@ Dataset creation options
    of the LINEFORMAT layer creation option which may have a value of
    **CRLF** (DOS format) or **LF** (Unix format).
 
+Dataset creation options to fill the top <metadata> element have been added in
+GDAL 3.7:
+
+- **METADATA_AUTHOR_EMAIL**
+- **METADATA_AUTHOR_NAME**
+- **METADATA_AUTHOR_LINK_HREF**
+- **METADATA_AUTHOR_LINK_TEXT**
+- **METADATA_AUTHOR_LINK_TYPE**
+- **METADATA_COPYRIGHT_AUTHOR**
+- **METADATA_COPYRIGHT_LICENSE**
+- **METADATA_COPYRIGHT_YEAR**
+- **METADATA_DESCRIPTION**
+- **METADATA_KEYWORDS**
+- **METADATA_LINK_*_HREF**: where * should be substituted with a serial number (1, 2, ...)
+- **METADATA_LINK_*_TEXT**: where * should be substituted with a serial number (1, 2, ...)
+- **METADATA_LINK_*_TYPE**: where * should be substituted with a serial number (1, 2, ...)
+- **METADATA_NAME**
+- **METADATA_TIME**
+
+
 Waypoints, routes and tracks must be written into that order to be valid
 against the XML Schema.
 
@@ -208,7 +231,7 @@ Issues when translating to Shapefile
    characters in the .DBF file, thus leading to duplicate names.
 
    To avoid this, you can define the
-   :decl_configoption:`GPX_SHORT_NAMES` configuration option to TRUE to 
+   :decl_configoption:`GPX_SHORT_NAMES` configuration option to TRUE to
    make them be reported
    respectively as "trksegid" and "trksegptid", which will allow them to
    be unique once translated to DBF. The "route_point_id" field of
@@ -260,7 +283,7 @@ The ogrinfo utility can be used to dump the content of a GPX datafile :
 
    ogrinfo -ro -al input.gpx
 
-| 
+|
 
 The ogr2ogr utility can be used to do GPX to GPX translation :
 
@@ -268,12 +291,12 @@ The ogr2ogr utility can be used to do GPX to GPX translation :
 
    ogr2ogr -f GPX output.gpx input.gpx waypoints routes tracks
 
-| 
+|
 | Note : in the case of GPX to GPX translation, you need to specify the
   layer names, in order to discard the route_points and track_points
   layers.
 
-| 
+|
 
 Use of the *<extensions>* tag for output :
 

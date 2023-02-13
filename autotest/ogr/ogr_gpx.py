@@ -460,3 +460,77 @@ def test_ogr_gpx_9():
     if f["time"] != "2015-10-11T15:06:33Z":
         f.DumpReadable()
         pytest.fail("did not get expected result")
+
+
+###############################################################################
+# Test reading metadata
+
+
+def test_ogr_gpx_metadata_read():
+
+    ds = ogr.Open("data/gpx/test.gpx")
+    assert ds.GetMetadata() == {
+        "AUTHOR_EMAIL": "foo@example.com",
+        "AUTHOR_LINK_HREF": "author_href",
+        "AUTHOR_LINK_TEXT": "author_text",
+        "AUTHOR_LINK_TYPE": "author_type",
+        "AUTHOR_NAME": "metadata author name",
+        "COPYRIGHT_AUTHOR": "copyright author",
+        "COPYRIGHT_LICENSE": "my license",
+        "COPYRIGHT_YEAR": "2023",
+        "DESCRIPTION": "metadata desc",
+        "KEYWORDS": "kw",
+        "LINK_1_HREF": "href",
+        "LINK_1_TEXT": "text",
+        "LINK_1_TYPE": "type",
+        "LINK_2_HREF": "href2",
+        "LINK_2_TEXT": "text3",
+        "LINK_2_TYPE": "type3",
+        "NAME": "metadata name",
+        "TIME": "2007-11-25T17:58:00+01:00",
+    }
+
+
+###############################################################################
+# Test writing metadata
+
+
+def test_ogr_gpx_metadata_write():
+
+    md = {
+        "AUTHOR_EMAIL": "foo@example.com",
+        "AUTHOR_LINK_HREF": "author_href",
+        "AUTHOR_LINK_TEXT": "author_text",
+        "AUTHOR_LINK_TYPE": "author_type",
+        "AUTHOR_NAME": "metadata author name",
+        "COPYRIGHT_AUTHOR": "copyright author",
+        "COPYRIGHT_LICENSE": "my license",
+        "COPYRIGHT_YEAR": "2023",
+        "DESCRIPTION": "metadata desc",
+        "KEYWORDS": "kw",
+        "LINK_1_HREF": "href",
+        "LINK_1_TEXT": "text",
+        "LINK_1_TYPE": "type",
+        "LINK_2_HREF": "href2",
+        "LINK_2_TEXT": "text3",
+        "LINK_2_TYPE": "type3",
+        "NAME": "metadata name",
+        "TIME": "2007-11-25T17:58:00+01:00",
+    }
+
+    options = []
+    for key in md:
+        options.append("METADATA_" + key + "=" + md[key])
+
+    gpx_ds = ogr.GetDriverByName("GPX").CreateDataSource(
+        "/vsimem/gpx.gpx", options=options
+    )
+    assert gpx_ds is not None
+    gpx_ds = None
+
+    ds = ogr.Open("/vsimem/gpx.gpx")
+    # print(ds.GetMetadata())
+    assert ds.GetMetadata() == md
+    ds = None
+
+    gdal.Unlink("/vsimem/gpx.gpx")

@@ -45,8 +45,9 @@
 #include "ogr_expat.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "ogr_p.h"
 
-constexpr int SPACE_FOR_METADATA = 160;
+constexpr int SPACE_FOR_METADATA_BOUNDS = 160;
 
 /************************************************************************/
 /*                          OGRGPXDataSource()                          */
@@ -85,19 +86,19 @@ OGRGPXDataSource::~OGRGPXDataSource()
         PrintLine("</gpx>");
         if (bIsBackSeekable)
         {
-            /* Write the <bound> element in the reserved space */
+            /* Write the <bounds> element in the reserved space */
             if (dfMinLon <= dfMaxLon)
             {
-                char szMetadata[SPACE_FOR_METADATA + 1];
-                int nRet = CPLsnprintf(
-                    szMetadata, SPACE_FOR_METADATA,
-                    "<metadata><bounds minlat=\"%.15f\" minlon=\"%.15f\""
-                    " maxlat=\"%.15f\" maxlon=\"%.15f\"/></metadata>",
-                    dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
-                if (nRet < SPACE_FOR_METADATA)
+                char szBounds[SPACE_FOR_METADATA_BOUNDS + 1];
+                int nRet =
+                    CPLsnprintf(szBounds, SPACE_FOR_METADATA_BOUNDS,
+                                "<bounds minlat=\"%.15f\" minlon=\"%.15f\""
+                                " maxlat=\"%.15f\" maxlon=\"%.15f\"/>",
+                                dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
+                if (nRet < SPACE_FOR_METADATA_BOUNDS)
                 {
                     VSIFSeekL(fpOutput, nOffsetBounds, SEEK_SET);
-                    VSIFWriteL(szMetadata, 1, strlen(szMetadata), fpOutput);
+                    VSIFWriteL(szBounds, 1, strlen(szBounds), fpOutput);
                 }
             }
         }
@@ -234,11 +235,197 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
     }
     else if (validity == GPX_VALIDITY_VALID)
     {
-        if (strcmp(pszNameIn, "extensions") == 0)
+        if (m_nDepth == 1 && strcmp(pszNameIn, "metadata") == 0)
+        {
+            m_bInMetadata = true;
+        }
+        else if (m_nDepth == 2 && m_bInMetadata)
+        {
+            if (strcmp(pszNameIn, "name") == 0)
+            {
+                m_osMetadataKey = "NAME";
+            }
+            else if (strcmp(pszNameIn, "desc") == 0)
+            {
+                m_osMetadataKey = "DESCRIPTION";
+            }
+            else if (strcmp(pszNameIn, "time") == 0)
+            {
+                m_osMetadataKey = "TIME";
+            }
+            else if (strcmp(pszNameIn, "author") == 0)
+            {
+                m_bInMetadataAuthor = true;
+            }
+            else if (strcmp(pszNameIn, "keywords") == 0)
+            {
+                m_osMetadataKey = "KEYWORDS";
+            }
+            else if (strcmp(pszNameIn, "copyright") == 0)
+            {
+                std::string osAuthor;
+                for (int i = 0; ppszAttr[i] != nullptr; i += 2)
+                {
+                    if (strcmp(ppszAttr[i], "author") == 0)
+                    {
+                        osAuthor = ppszAttr[i + 1];
+                    }
+                }
+                if (!osAuthor.empty())
+                {
+                    SetMetadataItem("COPYRIGHT_AUTHOR", osAuthor.c_str());
+                }
+                m_bInMetadataCopyright = true;
+            }
+            else if (strcmp(pszNameIn, "link") == 0)
+            {
+                ++m_nMetadataLinkCounter;
+                std::string osHref;
+                for (int i = 0; ppszAttr[i] != nullptr; i += 2)
+                {
+                    if (strcmp(ppszAttr[i], "href") == 0)
+                    {
+                        osHref = ppszAttr[i + 1];
+                    }
+                }
+                if (!osHref.empty())
+                {
+                    SetMetadataItem(
+                        CPLSPrintf("LINK_%d_HREF", m_nMetadataLinkCounter),
+                        osHref.c_str());
+                }
+                m_bInMetadataLink = true;
+            }
+        }
+        else if (m_nDepth == 3 && m_bInMetadataAuthor)
+        {
+            if (strcmp(pszNameIn, "name") == 0)
+            {
+                m_osMetadataKey = "AUTHOR_NAME";
+            }
+            else if (strcmp(pszNameIn, "email") == 0)
+            {
+                std::string osId, osDomain;
+                for (int i = 0; ppszAttr[i] != nullptr; i += 2)
+                {
+                    if (strcmp(ppszAttr[i], "id") == 0)
+                    {
+                        osId = ppszAttr[i + 1];
+                    }
+                    else if (strcmp(ppszAttr[i], "domain") == 0)
+                    {
+                        osDomain = ppszAttr[i + 1];
+                    }
+                }
+                if (!osId.empty() && !osDomain.empty())
+                {
+                    SetMetadataItem(
+                        "AUTHOR_EMAIL",
+                        std::string(osId).append("@").append(osDomain).c_str());
+                }
+            }
+            else if (strcmp(pszNameIn, "link") == 0)
+            {
+                std::string osHref;
+                for (int i = 0; ppszAttr[i] != nullptr; i += 2)
+                {
+                    if (strcmp(ppszAttr[i], "href") == 0)
+                    {
+                        osHref = ppszAttr[i + 1];
+                    }
+                }
+                if (!osHref.empty())
+                {
+                    SetMetadataItem("AUTHOR_LINK_HREF", osHref.c_str());
+                }
+                m_bInMetadataAuthorLink = true;
+            }
+        }
+        else if (m_nDepth == 3 && m_bInMetadataCopyright)
+        {
+            if (strcmp(pszNameIn, "year") == 0)
+            {
+                m_osMetadataKey = "COPYRIGHT_YEAR";
+            }
+            else if (strcmp(pszNameIn, "license") == 0)
+            {
+                m_osMetadataKey = "COPYRIGHT_LICENSE";
+            }
+        }
+        else if (m_nDepth == 3 && m_bInMetadataLink)
+        {
+            if (strcmp(pszNameIn, "text") == 0)
+            {
+                m_osMetadataKey =
+                    CPLSPrintf("LINK_%d_TEXT", m_nMetadataLinkCounter);
+            }
+            else if (strcmp(pszNameIn, "type") == 0)
+            {
+                m_osMetadataKey =
+                    CPLSPrintf("LINK_%d_TYPE", m_nMetadataLinkCounter);
+            }
+        }
+        else if (m_nDepth == 4 && m_bInMetadataAuthorLink)
+        {
+            if (strcmp(pszNameIn, "text") == 0)
+            {
+                m_osMetadataKey = "AUTHOR_LINK_TEXT";
+            }
+            else if (strcmp(pszNameIn, "type") == 0)
+            {
+                m_osMetadataKey = "AUTHOR_LINK_TYPE";
+            }
+        }
+        else if (m_nDepth == 2 && strcmp(pszNameIn, "extensions") == 0)
         {
             bUseExtensions = true;
         }
         nElementsRead++;
+    }
+    m_nDepth++;
+}
+
+/************************************************************************/
+/*                    endElementValidateCbk()                           */
+/************************************************************************/
+
+void OGRGPXDataSource::endElementValidateCbk(const char * /*pszName */)
+{
+    m_nDepth--;
+    if (m_nDepth == 4 && m_bInMetadataAuthorLink)
+    {
+        if (!m_osMetadataKey.empty())
+        {
+            SetMetadataItem(m_osMetadataKey.c_str(), m_osMetadataValue.c_str());
+        }
+        m_osMetadataKey.clear();
+        m_osMetadataValue.clear();
+    }
+    else if (m_nDepth == 3 && (m_bInMetadataAuthor || m_bInMetadataCopyright ||
+                               m_bInMetadataLink))
+    {
+        if (!m_osMetadataKey.empty())
+        {
+            SetMetadataItem(m_osMetadataKey.c_str(), m_osMetadataValue.c_str());
+        }
+        m_osMetadataKey.clear();
+        m_osMetadataValue.clear();
+        m_bInMetadataAuthorLink = false;
+    }
+    else if (m_nDepth == 2 && m_bInMetadata)
+    {
+        if (!m_osMetadataKey.empty())
+        {
+            SetMetadataItem(m_osMetadataKey.c_str(), m_osMetadataValue.c_str());
+        }
+        m_osMetadataKey.clear();
+        m_osMetadataValue.clear();
+        m_bInMetadataAuthor = false;
+        m_bInMetadataCopyright = false;
+    }
+    else if (m_nDepth == 1 && m_bInMetadata)
+    {
+        m_bInMetadata = false;
     }
 }
 
@@ -246,9 +433,13 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
 
-void OGRGPXDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
-                                              CPL_UNUSED int nLen)
+void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
 {
+    if (!m_osMetadataKey.empty())
+    {
+        m_osMetadataValue.append(data, nLen);
+    }
+
     nDataHandlerCounter++;
     if (nDataHandlerCounter >= BUFSIZ)
     {
@@ -264,6 +455,12 @@ static void XMLCALL startElementValidateCbk(void *pUserData,
 {
     OGRGPXDataSource *poDS = static_cast<OGRGPXDataSource *>(pUserData);
     poDS->startElementValidateCbk(pszName, ppszAttr);
+}
+
+static void XMLCALL endElementValidateCbk(void *pUserData, const char *pszName)
+{
+    OGRGPXDataSource *poDS = static_cast<OGRGPXDataSource *>(pUserData);
+    poDS->endElementValidateCbk(pszName);
 }
 
 static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data,
@@ -307,7 +504,8 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
-    XML_SetElementHandler(oParser, ::startElementValidateCbk, nullptr);
+    XML_SetElementHandler(oParser, ::startElementValidateCbk,
+                          ::endElementValidateCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];
@@ -553,15 +751,193 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     VSIFPrintfL(fpOutput, "xmlns=\"http://www.topografix.com/GPX/1/1\" ");
     PrintLine("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 "
               "http://www.topografix.com/GPX/1/1/gpx.xsd\">");
+    PrintLine("<metadata>");
+    /*
+    Something like:
+        <metadata>
+            <name>metadata name</name>
+            <desc>metadata desc</desc>
+            <author>
+                <name>metadata author name</name>
+                <email id="foo" domain="example.com"/>
+                <link href="author_href"><text>author_text</text><type>author_type</type></link>
+            </author>
+            <copyright author="copyright author"><year>2023</year><license>my license</license></copyright>
+            <link href="href"><text>text</text><type>type</type></link>
+            <link href="href2"><text>text2</text><type>type2</type></link>
+            <time>2007-11-25T17:58:00+01:00</time>
+            <keywords>kw</keywords>
+            <bounds minlat="-90" minlon="-180" maxlat="90" maxlon="179.9999999"/>
+        </metadata>
+    */
+
+    if (const char *pszMetadataName =
+            CSLFetchNameValue(papszOptions, "METADATA_NAME"))
+    {
+        char *pszXML = OGRGetXML_UTF8_EscapedString(pszMetadataName);
+        PrintLine("  <name>%s</name>", pszXML);
+        CPLFree(pszXML);
+    }
+
+    if (const char *pszMetadataDesc =
+            CSLFetchNameValue(papszOptions, "METADATA_DESCRIPTION"))
+    {
+        char *pszXML = OGRGetXML_UTF8_EscapedString(pszMetadataDesc);
+        PrintLine("  <desc>%s</desc>", pszXML);
+        CPLFree(pszXML);
+    }
+
+    const char *pszMetadataAuthorName =
+        CSLFetchNameValue(papszOptions, "METADATA_AUTHOR_NAME");
+    const char *pszMetadataAuthorEmail =
+        CSLFetchNameValue(papszOptions, "METADATA_AUTHOR_EMAIL");
+    const char *pszMetadataAuthorLinkHref =
+        CSLFetchNameValue(papszOptions, "METADATA_AUTHOR_LINK_HREF");
+    if (pszMetadataAuthorName || pszMetadataAuthorEmail ||
+        pszMetadataAuthorLinkHref)
+    {
+        PrintLine("  <author>");
+        if (pszMetadataAuthorName)
+        {
+            char *pszXML = OGRGetXML_UTF8_EscapedString(pszMetadataAuthorName);
+            PrintLine("    <name>%s</name>", pszXML);
+            CPLFree(pszXML);
+        }
+        if (pszMetadataAuthorEmail)
+        {
+            std::string osEmail = pszMetadataAuthorEmail;
+            auto nPos = osEmail.find('@');
+            if (nPos != std::string::npos)
+            {
+                char *pszId = OGRGetXML_UTF8_EscapedString(
+                    osEmail.substr(0, nPos).c_str());
+                char *pszDomain = OGRGetXML_UTF8_EscapedString(
+                    osEmail.substr(nPos + 1).c_str());
+                PrintLine("    <email id=\"%s\" domain=\"%s\"/>", pszId,
+                          pszDomain);
+                CPLFree(pszId);
+                CPLFree(pszDomain);
+            }
+        }
+        if (pszMetadataAuthorLinkHref)
+        {
+            {
+                char *pszXML =
+                    OGRGetXML_UTF8_EscapedString(pszMetadataAuthorLinkHref);
+                PrintLine("    <link href=\"%s\">", pszXML);
+                CPLFree(pszXML);
+            }
+            if (const char *pszMetadataAuthorLinkText = CSLFetchNameValue(
+                    papszOptions, "METADATA_AUTHOR_LINK_TEXT"))
+            {
+                char *pszXML =
+                    OGRGetXML_UTF8_EscapedString(pszMetadataAuthorLinkText);
+                PrintLine("      <text>%s</text>", pszXML);
+                CPLFree(pszXML);
+            }
+            if (const char *pszMetadataAuthorLinkType = CSLFetchNameValue(
+                    papszOptions, "METADATA_AUTHOR_LINK_TYPE"))
+            {
+                char *pszXML =
+                    OGRGetXML_UTF8_EscapedString(pszMetadataAuthorLinkType);
+                PrintLine("      <type>%s</type>", pszXML);
+                CPLFree(pszXML);
+            }
+            PrintLine("    </link>");
+        }
+        PrintLine("  </author>");
+    }
+
+    if (const char *pszMetadataCopyrightAuthor =
+            CSLFetchNameValue(papszOptions, "METADATA_COPYRIGHT_AUTHOR"))
+    {
+        {
+            char *pszXML =
+                OGRGetXML_UTF8_EscapedString(pszMetadataCopyrightAuthor);
+            PrintLine("  <copyright author=\"%s\">", pszXML);
+            CPLFree(pszXML);
+        }
+        if (const char *pszMetadataCopyrightYear =
+                CSLFetchNameValue(papszOptions, "METADATA_COPYRIGHT_YEAR"))
+        {
+            char *pszXML =
+                OGRGetXML_UTF8_EscapedString(pszMetadataCopyrightYear);
+            PrintLine("      <year>%s</year>", pszXML);
+            CPLFree(pszXML);
+        }
+        if (const char *pszMetadataCopyrightLicense =
+                CSLFetchNameValue(papszOptions, "METADATA_COPYRIGHT_LICENSE"))
+        {
+            char *pszXML =
+                OGRGetXML_UTF8_EscapedString(pszMetadataCopyrightLicense);
+            PrintLine("      <license>%s</license>", pszXML);
+            CPLFree(pszXML);
+        }
+        PrintLine("  </copyright>");
+    }
+
+    for (CSLConstList papszIter = papszOptions; papszIter && *papszIter;
+         ++papszIter)
+    {
+        if (STARTS_WITH_CI(*papszIter, "METADATA_LINK_") &&
+            strstr(*papszIter, "_HREF"))
+        {
+            const int nLinkNum = atoi(*papszIter + strlen("METADATA_LINK_"));
+            const char *pszVal = strchr(*papszIter, '=');
+            if (pszVal)
+            {
+                {
+                    char *pszXML = OGRGetXML_UTF8_EscapedString(pszVal + 1);
+                    PrintLine("  <link href=\"%s\">", pszXML);
+                    CPLFree(pszXML);
+                }
+                if (const char *pszText = CSLFetchNameValue(
+                        papszOptions,
+                        CPLSPrintf("METADATA_LINK_%d_TEXT", nLinkNum)))
+                {
+                    char *pszXML = OGRGetXML_UTF8_EscapedString(pszText);
+                    PrintLine("      <text>%s</text>", pszXML);
+                    CPLFree(pszXML);
+                }
+                if (const char *pszType = CSLFetchNameValue(
+                        papszOptions,
+                        CPLSPrintf("METADATA_LINK_%d_TYPE", nLinkNum)))
+                {
+                    char *pszXML = OGRGetXML_UTF8_EscapedString(pszType);
+                    PrintLine("      <type>%s</type>", pszXML);
+                    CPLFree(pszXML);
+                }
+                PrintLine("  </link>");
+            }
+        }
+    }
+
+    if (const char *pszMetadataTime =
+            CSLFetchNameValue(papszOptions, "METADATA_TIME"))
+    {
+        char *pszXML = OGRGetXML_UTF8_EscapedString(pszMetadataTime);
+        PrintLine("  <time>%s</time>", pszXML);
+        CPLFree(pszXML);
+    }
+
+    if (const char *pszMetadataKeywords =
+            CSLFetchNameValue(papszOptions, "METADATA_KEYWORDS"))
+    {
+        char *pszXML = OGRGetXML_UTF8_EscapedString(pszMetadataKeywords);
+        PrintLine("  <keywords>%s</keywords>", pszXML);
+        CPLFree(pszXML);
+    }
+
     if (bIsBackSeekable)
     {
-        /* Reserve space for <metadata><bounds/></metadata> */
-        char szMetadata[SPACE_FOR_METADATA + 1];
-        memset(szMetadata, ' ', SPACE_FOR_METADATA);
-        szMetadata[SPACE_FOR_METADATA] = '\0';
+        /* Reserve space for <bounds .../> within <metadata> */
+        char szBounds[SPACE_FOR_METADATA_BOUNDS + 1];
+        memset(szBounds, ' ', SPACE_FOR_METADATA_BOUNDS);
+        szBounds[SPACE_FOR_METADATA_BOUNDS] = '\0';
         nOffsetBounds = static_cast<int>(VSIFTellL(fpOutput));
-        PrintLine("%s", szMetadata);
+        PrintLine("%s", szBounds);
     }
+    PrintLine("</metadata>");
 
     return TRUE;
 }

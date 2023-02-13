@@ -142,6 +142,21 @@ void RegisterOGRGPX()
         "description='Namespace value used for extension tags' default='ogr'/>"
         "  <Option name='GPX_EXTENSIONS_NS_URL' type='string' "
         "description='Namespace URI' default='http://osgeo.org/gdal'/>"
+        "  <Option name='METADATA_AUTHOR_EMAIL' type='string'/>"
+        "  <Option name='METADATA_AUTHOR_NAME' type='string'/>"
+        "  <Option name='METADATA_AUTHOR_LINK_HREF' type='string'/>"
+        "  <Option name='METADATA_AUTHOR_LINK_TEXT' type='string'/>"
+        "  <Option name='METADATA_AUTHOR_LINK_TYPE' type='string'/>"
+        "  <Option name='METADATA_COPYRIGHT_AUTHOR' type='string'/>"
+        "  <Option name='METADATA_COPYRIGHT_LICENSE' type='string'/>"
+        "  <Option name='METADATA_COPYRIGHT_YEAR' type='string'/>"
+        "  <Option name='METADATA_DESCRIPTION' type='string'/>"
+        "  <Option name='METADATA_KEYWORDS' type='string'/>"
+        "  <Option name='METADATA_LINK_*_HREF' type='string'/>"
+        "  <Option name='METADATA_LINK_*_TEXT' type='string'/>"
+        "  <Option name='METADATA_LINK_*_TYPE' type='string'/>"
+        "  <Option name='METADATA_NAME' type='string'/>"
+        "  <Option name='METADATA_TIME' type='string'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
