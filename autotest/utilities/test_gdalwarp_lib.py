@@ -242,12 +242,12 @@ def test_gdalwarp_lib_11():
 
     ref_ds = gdal.Open("ref_data/testgdalwarp11.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
-    ref_ds = None
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
         pytest.fail("Image too different from reference")
 
+    ref_ds = None
     ds = None
 
 
@@ -268,12 +268,12 @@ def test_gdalwarp_lib_12():
 
     ref_ds = gdal.Open("ref_data/testgdalwarp12.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
-    ref_ds = None
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
         pytest.fail("Image too different from reference")
 
+    ref_ds = None
     ds = None
 
 
@@ -294,12 +294,12 @@ def test_gdalwarp_lib_13():
 
     ref_ds = gdal.Open("ref_data/testgdalwarp13.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
-    ref_ds = None
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
         pytest.fail("Image too different from reference")
 
+    ref_ds = None
     ds = None
 
 
@@ -320,12 +320,12 @@ def test_gdalwarp_lib_14():
 
     ref_ds = gdal.Open("ref_data/testgdalwarp14.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds, verbose=0)
-    ref_ds = None
 
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ref_ds, verbose=1)
         pytest.fail("Image too different from reference")
 
+    ref_ds = None
     ds = None
 
 
