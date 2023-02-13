@@ -4323,7 +4323,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
                     {
                         poJPEGDriver = nullptr;
                     }
-                    else
+                    else if (poJPEGDriver)
                     {
                         if (strstr(poJPEGDriver->GetMetadataItem(
                                        GDAL_DMD_CREATIONOPTIONLIST),
