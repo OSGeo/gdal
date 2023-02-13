@@ -4071,3 +4071,20 @@ def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test driver Delete() method
+
+
+def test_ogr_openfilegdb_write_delete():
+
+    dirname = "tmp/test_ogr_openfilegdb_write_delete.gdb"
+    gdal.RmdirRecursive(dirname)
+    drv = ogr.GetDriverByName("OpenFileGDB")
+    ds = drv.CreateDataSource(dirname)
+    ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    ds = None
+    assert gdal.VSIStatL(dirname) is not None
+    assert drv.DeleteDataSource(dirname) == gdal.CE_None
+    assert gdal.VSIStatL(dirname) is None
