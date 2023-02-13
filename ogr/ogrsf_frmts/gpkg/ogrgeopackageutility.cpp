@@ -29,6 +29,8 @@
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 
+#include <limits>
+
 /* Requirement 20: A GeoPackage SHALL store feature table geometries */
 /* with the basic simple feature geometry types (Geometry, Point, */
 /* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
@@ -263,7 +265,14 @@ GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
 
     /* Total BLOB size is header + WKB size */
     size_t nWkbLen = nHeaderLen + poGeometry->WkbSize();
-    GByte *pabyWkb = static_cast<GByte *>(CPLMalloc(nWkbLen));
+    if (nWkbLen > static_cast<size_t>(std::numeric_limits<int>::max()))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "too big geometry blob");
+        return nullptr;
+    }
+    GByte *pabyWkb = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbLen));
+    if (!pabyWkb)
+        return nullptr;
     if (pnWkbLen)
         *pnWkbLen = nWkbLen;
 

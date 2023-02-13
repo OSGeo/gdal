@@ -209,8 +209,6 @@ bool OGRGeoPackageTableLayer::IsGeomFieldSet(OGRFeature *poFeature)
            poFeature->GetGeomFieldRef(0);
 }
 
-#define MY_CPLAssert CPLAssert
-
 OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
                                                       sqlite3_stmt *poStmt,
                                                       int *pnColCount,
@@ -220,15 +218,19 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
     int nColCount = 1;
-    int err = SQLITE_OK;
     if (bAddFID)
     {
-        err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
-        MY_CPLAssert(err == SQLITE_OK);
+        int err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
+        if (err != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "sqlite3_bind_int64() failed");
+            return OGRERR_FAILURE;
+        }
     }
 
     /* Bind data values to the statement, here bind the blob for geometry */
-    if (err == SQLITE_OK && poFeatureDefn->GetGeomFieldCount())
+    if (poFeatureDefn->GetGeomFieldCount())
     {
         // Non-NULL geometry.
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(0);
@@ -236,17 +238,36 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
         {
             size_t szWkb = 0;
             GByte *pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
-            err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
-                                    static_cast<int>(szWkb), CPLFree);
-            MY_CPLAssert(err == SQLITE_OK);
-
+            if (!pabyWkb)
+                return OGRERR_FAILURE;
+            int err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
+                                        static_cast<int>(szWkb), CPLFree);
+            if (err != SQLITE_OK)
+            {
+                if (err == SQLITE_TOOBIG)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "sqlite3_bind_blob() failed: too big");
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "sqlite3_bind_blob() failed");
+                }
+                return OGRERR_FAILURE;
+            }
             CreateGeometryExtensionIfNecessary(poGeom);
         }
         /* NULL geometry */
         else
         {
-            err = sqlite3_bind_null(poStmt, nColCount++);
-            MY_CPLAssert(err == SQLITE_OK);
+            int err = sqlite3_bind_null(poStmt, nColCount++);
+            if (err != SQLITE_OK)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "sqlite3_bind_null() failed");
+                return OGRERR_FAILURE;
+            }
         }
     }
 
@@ -258,7 +279,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
         m_osInsertionBuffer.resize(OGR_SIZEOF_ISO8601_DATETIME_BUFFER *
                                    nFieldCount);
 
-    for (int i = 0; err == SQLITE_OK && i < nFieldCount; i++)
+    for (int i = 0; i < nFieldCount; i++)
     {
         if (i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i])
             continue;
@@ -266,13 +287,19 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
         {
             if (bBindUnsetFields)
             {
-                err = sqlite3_bind_null(poStmt, nColCount++);
-                MY_CPLAssert(err == SQLITE_OK);
+                int err = sqlite3_bind_null(poStmt, nColCount++);
+                if (err != SQLITE_OK)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "sqlite3_bind_null() failed");
+                    return OGRERR_FAILURE;
+                }
             }
             continue;
         }
 
         const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        int err = SQLITE_OK;
 
         if (!poFeature->IsFieldNull(i))
         {
@@ -481,12 +508,13 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(OGRFeature *poFeature,
                      "sqlite3_bind_() for column %s failed: %s",
                      poFieldDefn->GetNameRef(),
                      sqlite3_errmsg(m_poDS->GetDB()));
+            return OGRERR_FAILURE;
         }
     }
 
     if (pnColCount != nullptr)
         *pnColCount = nColCount;
-    return (err == SQLITE_OK) ? OGRERR_NONE : OGRERR_FAILURE;
+    return OGRERR_NONE;
 }
 
 //----------------------------------------------------------------------
