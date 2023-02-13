@@ -57,18 +57,22 @@ file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
 By default, information is fetched in following order (first listed is
 the most prioritary): PAM (Persistent Auxiliary metadata) .aux.xml
 sidecar file, INTERNAL (GeoTIFF keys and tags), TABFILE (.tab),
-WORLDFILE (.tfw, .tifw/.tiffw or .wld).
+WORLDFILE (.tfw, .tifw/.tiffw or .wld), XML (.xml)
 
 Starting with GDAL 2.2, the allowed sources and their priority order can
 be changed with the GDAL_GEOREF_SOURCES configuration option (or
 GEOREF_SOURCES open option) whose value is a comma-separated list of the
-following keywords : PAM, INTERNAL, TABFILE, WORLDFILE, NONE. First
-mentioned sources are the most prioritary over the next ones. A non
+following keywords : PAM, INTERNAL, TABFILE, WORLDFILE, XML (added in 3.7), NONE.
+First mentioned sources are the most prioritary over the next ones. A non
 mentioned source will be ignored.
 
 For example setting it to "WORLDFILE,PAM,INTERNAL" will make a
 geotransformation matrix from a potential worldfile prioritary over PAM
 or GeoTIFF.
+
+Minimum support for extracting the CRS from ESRI .xml side car files has been
+added in GDAL 3.7, using the metadata.refSysInfo.RefSystem.refSysID.identCode.code
+CRS code.
 
 GDAL can read and write the *RPCCoefficientTag* as described in the
 `RPCs in GeoTIFF <http://geotiff.maptools.org/rpc_prop.html>`__ proposed
@@ -810,7 +814,7 @@ the default behavior of the GTiff driver.
    GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is
    used in priority, and if not possible, the later is tried.
 -  :decl_configoption:`GDAL_GEOREF_SOURCES` =comma-separated list with one or several of PAM,
-   INTERNAL, TABFILE or WORLDFILE. (GDAL >= 2.2). See
+   INTERNAL, TABFILE, WORLDFILE or XML (XML added in 3.7). (GDAL >= 2.2). See
    `Georeferencing <#georeferencing>`__ paragraph.
 -  :decl_configoption:`GDAL_NUM_THREADS` =number_of_threads/ALL_CPUS: (GDAL >= 2.1) Enable
    multi-threaded compression by specifying the number of worker

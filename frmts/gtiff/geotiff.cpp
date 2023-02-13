@@ -418,6 +418,7 @@ class GTiffDataset final : public GDALPamDataset
     char *m_pszFilename = nullptr;
     char *m_pszTmpFilename = nullptr;
     char *m_pszGeorefFilename = nullptr;
+    char *m_pszXMLFilename = nullptr;
 
     double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     double m_dfMaxZError = 0.0;
@@ -465,6 +466,7 @@ class GTiffDataset final : public GDALPamDataset
     signed char m_nINTERNALGeorefSrcIndex = -1;
     signed char m_nTABFILEGeorefSrcIndex = -1;
     signed char m_nWORLDFILEGeorefSrcIndex = -1;
+    signed char m_nXMLGeorefSrcIndex = -1;
     signed char m_nGeoTransformGeorefSrcIndex = -1;
 
     signed char m_nHasOptimizedReadMultiRange = -1;
@@ -560,6 +562,8 @@ class GTiffDataset final : public GDALPamDataset
 
     void LoadMDAreaOrPoint();
     void LookForProjection();
+    void LookForProjectionFromGeoTIFF();
+    void LookForProjectionFromXML();
 
     void Crystalize();  // TODO: Spelling.
     void RestoreVolatileParameters(TIFF *hTIFF);
@@ -9936,6 +9940,9 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
     CPLFree(m_pszGeorefFilename);
     m_pszGeorefFilename = nullptr;
 
+    CPLFree(m_pszXMLFilename);
+    m_pszXMLFilename = nullptr;
+
     m_bIsFinalized = true;
 
     return std::tuple<CPLErr, bool>(eErr, bDroppedRef);
@@ -15620,13 +15627,36 @@ void GTiffDataset::LookForProjection()
     m_bLookedForProjection = true;
 
     IdentifyAuthorizedGeoreferencingSources();
-    if (m_nINTERNALGeorefSrcIndex < 0)
-        return;
 
+    m_oSRS.Clear();
+
+    std::set<signed char> aoSetPriorities;
+    if (m_nINTERNALGeorefSrcIndex >= 0)
+        aoSetPriorities.insert(m_nINTERNALGeorefSrcIndex);
+    if (m_nXMLGeorefSrcIndex >= 0)
+        aoSetPriorities.insert(m_nXMLGeorefSrcIndex);
+    for (const auto nIndex : aoSetPriorities)
+    {
+        if (m_nINTERNALGeorefSrcIndex == nIndex)
+        {
+            LookForProjectionFromGeoTIFF();
+        }
+        else if (m_nXMLGeorefSrcIndex == nIndex)
+        {
+            LookForProjectionFromXML();
+        }
+    }
+}
+
+/************************************************************************/
+/*                      LookForProjectionFromGeoTIFF()                  */
+/************************************************************************/
+
+void GTiffDataset::LookForProjectionFromGeoTIFF()
+{
     /* -------------------------------------------------------------------- */
     /*      Capture the GeoTIFF projection, if available.                   */
     /* -------------------------------------------------------------------- */
-    m_oSRS.Clear();
 
     GTIF *hGTIF = GTiffDatasetGTIFNew(m_hTIFF);
 
@@ -15667,6 +15697,9 @@ void GTiffDataset::LookForProjection()
 
             if (hSRS)
             {
+                CPLFree(m_pszXMLFilename);
+                m_pszXMLFilename = nullptr;
+
                 m_oSRS = *(OGRSpatialReference::FromHandle(hSRS));
                 OSRDestroySpatialReference(hSRS);
             }
@@ -15696,7 +15729,7 @@ void GTiffDataset::LookForProjection()
             CPLErrorReset();
         }
 
-        if (m_oSRS.IsCompound())
+        if (ret && m_oSRS.IsCompound())
         {
             const char *pszVertUnit = nullptr;
             m_oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
@@ -15731,6 +15764,93 @@ void GTiffDataset::LookForProjection()
 
         GTIFFree(hGTIF);
     }
+}
+
+/************************************************************************/
+/*                      LookForProjectionFromXML()                      */
+/************************************************************************/
+
+void GTiffDataset::LookForProjectionFromXML()
+{
+    char **papszSiblingFiles = GetSiblingFiles();
+
+    if (!GDALCanFileAcceptSidecarFile(m_pszFilename))
+        return;
+
+    const std::string osXMLFilenameLowerCase =
+        CPLResetExtension(m_pszFilename, "xml");
+
+    CPLString osXMLFilename;
+    if (papszSiblingFiles &&
+        GDALCanReliablyUseSiblingFileList(osXMLFilenameLowerCase.c_str()))
+    {
+        const int iSibling = CSLFindString(
+            papszSiblingFiles, CPLGetFilename(osXMLFilenameLowerCase.c_str()));
+        if (iSibling >= 0)
+        {
+            osXMLFilename = m_pszFilename;
+            osXMLFilename.resize(strlen(m_pszFilename) -
+                                 strlen(CPLGetFilename(m_pszFilename)));
+            osXMLFilename += papszSiblingFiles[iSibling];
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    if (osXMLFilename.empty())
+    {
+        VSIStatBufL sStatBuf;
+        bool bGotXML = VSIStatExL(osXMLFilenameLowerCase.c_str(), &sStatBuf,
+                                  VSI_STAT_EXISTS_FLAG) == 0;
+
+        if (bGotXML)
+        {
+            osXMLFilename = osXMLFilenameLowerCase;
+        }
+        else if (VSIIsCaseSensitiveFS(osXMLFilenameLowerCase.c_str()))
+        {
+            const std::string osXMLFilenameUpperCase =
+                CPLResetExtension(m_pszFilename, "XML");
+            bGotXML = VSIStatExL(osXMLFilenameUpperCase.c_str(), &sStatBuf,
+                                 VSI_STAT_EXISTS_FLAG) == 0;
+            if (bGotXML)
+            {
+                osXMLFilename = osXMLFilenameUpperCase;
+            }
+        }
+
+        if (osXMLFilename.empty())
+        {
+            return;
+        }
+    }
+
+    GByte *pabyRet = nullptr;
+    vsi_l_offset nSize = 0;
+    constexpr int nMaxSize = 10 * 1024 * 1024;
+    if (!VSIIngestFile(nullptr, osXMLFilename.c_str(), &pabyRet, &nSize,
+                       nMaxSize))
+        return;
+    CPLXMLTreeCloser oXML(
+        CPLParseXMLString(reinterpret_cast<const char *>(pabyRet)));
+    VSIFree(pabyRet);
+    if (!oXML.get())
+        return;
+    const char *pszCode = CPLGetXMLValue(
+        oXML.get(), "=metadata.refSysInfo.RefSystem.refSysID.identCode.code",
+        "0");
+    const int nCode = atoi(pszCode);
+    if (nCode <= 0)
+        return;
+    if (nCode <= 32767)
+        m_oSRS.importFromEPSG(nCode);
+    else
+        m_oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nCode));
+
+    CPLFree(m_pszXMLFilename);
+    m_pszXMLFilename = CPLStrdup(osXMLFilename.c_str());
 }
 
 /************************************************************************/
@@ -17500,7 +17620,7 @@ void GTiffDataset::IdentifyAuthorizedGeoreferencingSources()
     CPLString osGeorefSources = CSLFetchNameValueDef(
         papszOpenOptions, "GEOREF_SOURCES",
         CPLGetConfigOption("GDAL_GEOREF_SOURCES",
-                           "PAM,INTERNAL,TABFILE,WORLDFILE"));
+                           "PAM,INTERNAL,TABFILE,WORLDFILE,XML"));
     char **papszTokens = CSLTokenizeString2(osGeorefSources, ",", 0);
     m_nPAMGeorefSrcIndex =
         static_cast<signed char>(CSLFindString(papszTokens, "PAM"));
@@ -17510,6 +17630,8 @@ void GTiffDataset::IdentifyAuthorizedGeoreferencingSources()
         static_cast<signed char>(CSLFindString(papszTokens, "TABFILE"));
     m_nWORLDFILEGeorefSrcIndex =
         static_cast<signed char>(CSLFindString(papszTokens, "WORLDFILE"));
+    m_nXMLGeorefSrcIndex =
+        static_cast<signed char>(CSLFindString(papszTokens, "XML"));
     CSLDestroy(papszTokens);
 }
 
@@ -22650,6 +22772,15 @@ char **GTiffDataset::GetFileList()
         papszFileList = CSLAddString(papszFileList, m_pszGeorefFilename);
     }
 
+    if (m_nXMLGeorefSrcIndex >= 0)
+        LookForProjection();
+
+    if (m_pszXMLFilename &&
+        CSLFindString(papszFileList, m_pszXMLFilename) == -1)
+    {
+        papszFileList = CSLAddString(papszFileList, m_pszXMLFilename);
+    }
+
     return papszFileList;
 }
 
@@ -23584,9 +23715,10 @@ void GDALRegister_GTiff()
         "       <Value>ESRI_PE</Value>"
         "   </Option>"
         "   <Option name='GEOREF_SOURCES' type='string' description='Comma "
-        "separated list made with values INTERNAL/TABFILE/WORLDFILE/PAM/NONE "
+        "separated list made with values "
+        "INTERNAL/TABFILE/WORLDFILE/PAM/XML/NONE "
         "that describe the priority order for georeferencing' "
-        "default='PAM,INTERNAL,TABFILE,WORLDFILE'/>"
+        "default='PAM,INTERNAL,TABFILE,WORLDFILE,XML'/>"
         "   <Option name='SPARSE_OK' type='boolean' description='Should empty "
         "blocks be omitted on disk?' default='FALSE'/>"
         "</OpenOptionList>");
