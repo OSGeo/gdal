@@ -1060,9 +1060,16 @@ def _validate(content):
     except ImportError:
         return
 
+    import os
+
+    gdal_data = gdal.GetConfigOption("GDAL_DATA")
+    if gdal_data is None:
+        print("GDAL_DATA not defined")
+        return
+
     doc = etree.XML(content)
     try:
-        schema_content = open("../../gdal/data/gdalvrt.xsd", "rb").read()
+        schema_content = open(os.path.join(gdal_data, "gdalvrt.xsd"), "rb").read()
     except IOError:
         print("Cannot read gdalvrt.xsd schema")
         return
