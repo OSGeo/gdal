@@ -913,6 +913,105 @@ def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
     _compare_arrays(ds, [[expected_val]])
 
 
+def test_gdal_grid_lib_skip_null_zfield():
+
+    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_lyr = mem_ds.CreateLayer("test")
+    mem_lyr.CreateField(ogr.FieldDefn("val", ogr.OFTInteger))
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    f["val"] = 10
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 0)"))
+    f["val"] = 10
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    f["val"] = 10
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    f["val"] = 10
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0.5 0.5)"))
+    # no value!
+    mem_lyr.CreateFeature(f)
+    ds = gdal.Grid(
+        "",
+        mem_ds,
+        width=3,
+        height=3,
+        outputBounds=[-0.25, -0.25, 1.25, 1.25],
+        format="MEM",
+        algorithm="invdist",
+        zfield="val",
+    )
+    assert struct.unpack("d" * 9, ds.ReadRaster()) == pytest.approx(
+        (
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+        )
+    )
+
+
+###############################################################################
+# Test that features whose zfield value is unset are ignored
+
+
+def test_gdal_grid_lib_skip_nan_zvalue():
+
+    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_lyr = mem_ds.CreateLayer("test")
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0 10)"))
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 0 10)"))
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 10)"))
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 1 10)"))
+    mem_lyr.CreateFeature(f)
+    f = ogr.Feature(mem_lyr.GetLayerDefn())
+    p = ogr.Geometry(ogr.wkbPoint25D)
+    p.SetPoint(0, 0.5, 0.5, float("nan"))
+    f.SetGeometry(p)
+    mem_lyr.CreateFeature(f)
+    ds = gdal.Grid(
+        "",
+        mem_ds,
+        width=3,
+        height=3,
+        outputBounds=[-0.25, -0.25, 1.25, 1.25],
+        format="MEM",
+        algorithm="invdist",
+    )
+    assert struct.unpack("d" * 9, ds.ReadRaster()) == pytest.approx(
+        (
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+        )
+    )
+
+
 ###############################################################################
 # Cleanup
 
