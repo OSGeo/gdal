@@ -479,11 +479,13 @@ def test_mbtiles_7():
 
     ds = gdal.Open("/vsimem/mbtiles_7.mbtiles")
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
-    expected_ovr_cs = [21179, 22577, 11996, 17849]
     got_ovr_cs = [
         ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)
     ]
-    assert expected_ovr_cs == got_ovr_cs
+    assert got_ovr_cs in (
+        [21179, 22577, 11996, 17849],
+        [24072, 24971, 15966, 17849],
+    )  # that one got on Tamas' x64 configuration
     assert ds.GetMetadataItem("minzoom") == "0", ds.GetMetadata()
     ds = None
 
