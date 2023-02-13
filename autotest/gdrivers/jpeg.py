@@ -324,9 +324,8 @@ def test_jpeg_8():
 
 def test_jpeg_9():
 
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
-    ds = gdal.Open("data/jpeg/rgb_ntf_cmyk.jpg")
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "YES")
+    with gdaltest.config_option("GDAL_JPEG_TO_RGB", "NO"):
+        ds = gdal.Open("data/jpeg/rgb_ntf_cmyk.jpg")
 
     expected_cs = 21187
 
@@ -637,43 +636,42 @@ def test_jpeg_18():
     src_ds = None
     gdal.Unlink("/vsimem/jpeg_18.tif")
 
-    oldSize = gdal.GetCacheMax()
-    gdal.SetCacheMax(0)
+    with gdaltest.SetCacheMax(0):
 
-    line0 = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
-    data = struct.unpack("B" * width, line0)
-    assert data[0] == pytest.approx(0, abs=10)
-    line1023 = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
-    data = struct.unpack("B" * width, line1023)
-    assert data[0] == pytest.approx(255, abs=10)
-    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, int(width / 4), 1)
-    data = struct.unpack("B" * (int(width / 4)), line0_ovr1)
-    assert data[0] == pytest.approx(0, abs=10)
-    line1023_bis = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
-    assert line1023_bis != line0 and line1023 == line1023_bis
-    line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
-    assert line0 == line0_bis
-    line255_ovr1 = (
-        ds.GetRasterBand(1)
-        .GetOverview(1)
-        .ReadRaster(0, int(height / 4) - 1, int(width / 4), 1)
-    )
-    data = struct.unpack("B" * int(width / 4), line255_ovr1)
-    assert data[0] == pytest.approx(255, abs=10)
-    line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
-    assert line0 == line0_bis
-    line0_ovr1_bis = (
-        ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, int(width / 4), 1)
-    )
-    assert line0_ovr1 == line0_ovr1_bis
-    line255_ovr1_bis = (
-        ds.GetRasterBand(1)
-        .GetOverview(1)
-        .ReadRaster(0, int(height / 4) - 1, int(width / 4), 1)
-    )
-    assert line255_ovr1 == line255_ovr1_bis
-
-    gdal.SetCacheMax(oldSize)
+        line0 = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
+        data = struct.unpack("B" * width, line0)
+        assert data[0] == pytest.approx(0, abs=10)
+        line1023 = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
+        data = struct.unpack("B" * width, line1023)
+        assert data[0] == pytest.approx(255, abs=10)
+        line0_ovr1 = (
+            ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, int(width / 4), 1)
+        )
+        data = struct.unpack("B" * (int(width / 4)), line0_ovr1)
+        assert data[0] == pytest.approx(0, abs=10)
+        line1023_bis = ds.GetRasterBand(1).ReadRaster(0, height - 1, width, 1)
+        assert line1023_bis != line0 and line1023 == line1023_bis
+        line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
+        assert line0 == line0_bis
+        line255_ovr1 = (
+            ds.GetRasterBand(1)
+            .GetOverview(1)
+            .ReadRaster(0, int(height / 4) - 1, int(width / 4), 1)
+        )
+        data = struct.unpack("B" * int(width / 4), line255_ovr1)
+        assert data[0] == pytest.approx(255, abs=10)
+        line0_bis = ds.GetRasterBand(1).ReadRaster(0, 0, width, 1)
+        assert line0 == line0_bis
+        line0_ovr1_bis = (
+            ds.GetRasterBand(1).GetOverview(1).ReadRaster(0, 0, int(width / 4), 1)
+        )
+        assert line0_ovr1 == line0_ovr1_bis
+        line255_ovr1_bis = (
+            ds.GetRasterBand(1)
+            .GetOverview(1)
+            .ReadRaster(0, int(height / 4) - 1, int(width / 4), 1)
+        )
+        assert line255_ovr1 == line255_ovr1_bis
 
     ds = None
     gdal.Unlink("/vsimem/jpeg_18.jpg")

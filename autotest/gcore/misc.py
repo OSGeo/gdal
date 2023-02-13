@@ -570,10 +570,8 @@ def test_misc_8():
 
 def test_misc_9():
 
-    old_val = gdal.GetCacheMax()
-    gdal.SetCacheMax(3000000000)
-    ret_val = gdal.GetCacheMax()
-    gdal.SetCacheMax(old_val)
+    with gdaltest.SetCacheMax(3000000000):
+        ret_val = gdal.GetCacheMax()
 
     assert ret_val == 3000000000, "did not get expected value"
 
