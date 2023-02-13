@@ -745,6 +745,60 @@ def test_gdalwarp_lib_cutline_all_touched_single_pixel():
 
 
 ###############################################################################
+# Test -crop_to_cutline where the geometry is very close to pixel boundaries
+# (#7226)s
+
+
+def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
+    cutlineDSName = (
+        "/vsimem/test_gdalwarp_lib_crop_to_cutline_close_to_pixel_boundaries.json"
+    )
+    cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(26711)
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((440720.001 3751320.001,440720.001 3750120.001,441920.001 3750120.001,441920.001 3751320.001,440720.001 3751320.001))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    f = None
+    cutline_lyr = None
+    cutline_ds = None
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=cutlineDSName, cropToCutline=True
+    )
+    assert ds.RasterXSize == src_ds.RasterXSize
+    assert ds.RasterYSize == src_ds.RasterYSize
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        cutlineDSName=cutlineDSName,
+        cropToCutline=True,
+        warpOptions=["CUTLINE_ALL_TOUCHED=YES"],
+    )
+    assert ds.RasterXSize == src_ds.RasterXSize
+    assert ds.RasterYSize == src_ds.RasterYSize
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    gdal.Unlink(cutlineDSName)
+
+
+###############################################################################
 # Test callback
 
 
