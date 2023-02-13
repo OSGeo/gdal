@@ -1086,9 +1086,11 @@ set to VRTDerivedRasterBand) are :
 
 - **BufferRadius** (optional, defaults to 0): Amount of extra pixels, with respect to the original RasterIO() request to satisfy, that are fetched at the left, right, bottom and top of the input and output buffers passed to the pixel function. Note that the values of the output buffer in this buffer zone willbe ignored.
 
+- **SkipNonContributingSources** (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
+
 The signature of the Python pixel function must have the following arguments:
 
-- **in_ar**: list of input NumPy arrays (one NumPy array for each source)
+- **in_ar**: list of input NumPy arrays. One NumPy array for each source. If SkipNonContributingSources=true, only contributing sources will be passed.
 - **out_ar**: output NumPy array to fill. The array is initialized at the right dimensions and with the VRTRasterBand.dataType.
 - **xoff**: pixel offset to the top left corner of the accessed region of the band. Generally not needed except if the processing depends on the pixel position in the raster.
 - **yoff** line offset to the top left corner of the accessed region of the band. Generally not needed.

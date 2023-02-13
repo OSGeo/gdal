@@ -148,24 +148,19 @@ class VRTDerivedRasterBandPrivateData
 
   public:
     CPLString m_osCode{};
-    CPLString m_osLanguage;
-    int m_nBufferRadius;
-    PyObject *m_poGDALCreateNumpyArray;
-    PyObject *m_poUserFunction;
-    bool m_bPythonInitializationDone;
-    bool m_bPythonInitializationSuccess;
-    bool m_bExclusiveLock;
-    bool m_bFirstTime;
+    CPLString m_osLanguage = "C";
+    int m_nBufferRadius = 0;
+    PyObject *m_poGDALCreateNumpyArray = nullptr;
+    PyObject *m_poUserFunction = nullptr;
+    bool m_bPythonInitializationDone = false;
+    bool m_bPythonInitializationSuccess = false;
+    bool m_bExclusiveLock = false;
+    bool m_bFirstTime = true;
     std::vector<std::pair<CPLString, CPLString>> m_oFunctionArgs{};
+    bool m_bSkipNonContributingSourcesSpecified = false;
+    bool m_bSkipNonContributingSources = false;
 
-    VRTDerivedRasterBandPrivateData()
-        : m_osLanguage("C"), m_nBufferRadius(0),
-          m_poGDALCreateNumpyArray(nullptr), m_poUserFunction(nullptr),
-          m_bPythonInitializationDone(false),
-          m_bPythonInitializationSuccess(false), m_bExclusiveLock(false),
-          m_bFirstTime(true)
-    {
-    }
+    VRTDerivedRasterBandPrivateData() = default;
 
     virtual ~VRTDerivedRasterBandPrivateData()
     {
@@ -977,15 +972,48 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     }
     const int nExtBufXSize = nBufXSize + 2 * nBufferRadius;
     const int nExtBufYSize = nBufYSize + 2 * nBufferRadius;
+    int nBufferCount = 0;
     void **pBuffers =
         static_cast<void **>(CPLMalloc(sizeof(void *) * nSources));
+    std::vector<int> anMapBufferIdxToSourceIdx(nSources);
     for (int iSource = 0; iSource < nSources; iSource++)
     {
-        pBuffers[iSource] =
-            VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
-        if (pBuffers[iSource] == nullptr)
+        if (m_poPrivate->m_bSkipNonContributingSources &&
+            papoSources[iSource]->IsSimpleSource())
         {
-            for (int i = 0; i < iSource; i++)
+            bool bError = false;
+            double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
+            int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+            int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+            auto poSource =
+                static_cast<VRTSimpleSource *>(papoSources[iSource]);
+            if (!poSource->GetSrcDstWindow(
+                    nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                    &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
+                    &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                    &nOutXSize, &nOutYSize, bError))
+            {
+                if (bError)
+                {
+                    for (int i = 0; i < nBufferCount; i++)
+                    {
+                        VSIFree(pBuffers[i]);
+                    }
+                    CPLFree(pBuffers);
+                    return CE_Failure;
+                }
+
+                // Skip non contributing source
+                continue;
+            }
+        }
+
+        anMapBufferIdxToSourceIdx[nBufferCount] = iSource;
+        pBuffers[nBufferCount] =
+            VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
+        if (pBuffers[nBufferCount] == nullptr)
+        {
+            for (int i = 0; i < nBufferCount; i++)
             {
                 VSIFree(pBuffers[i]);
             }
@@ -1001,16 +1029,18 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         /* ------------------------------------------------------------ */
         if (!m_bNoDataValueSet || m_dfNoDataValue == 0)
         {
-            memset(pBuffers[iSource], 0,
+            memset(pBuffers[nBufferCount], 0,
                    static_cast<size_t>(nSrcTypeSize) * nExtBufXSize *
                        nExtBufYSize);
         }
         else
         {
             GDALCopyWords(&m_dfNoDataValue, GDT_Float64, 0,
-                          static_cast<GByte *>(pBuffers[iSource]), eSrcType,
-                          nSrcTypeSize, nExtBufXSize * nExtBufYSize);
+                          static_cast<GByte *>(pBuffers[nBufferCount]),
+                          eSrcType, nSrcTypeSize, nExtBufXSize * nExtBufYSize);
         }
+
+        ++nBufferCount;
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -1082,9 +1112,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 
     // Load values for sources into packed buffers.
     CPLErr eErr = CE_None;
-    for (int iSource = 0; iSource < nSources && eErr == CE_None; iSource++)
+    for (int iBuffer = 0; iBuffer < nBufferCount && eErr == CE_None; iBuffer++)
     {
-        GByte *pabyBuffer = static_cast<GByte *>(pBuffers[iSource]);
+        const int iSource = anMapBufferIdxToSourceIdx[iBuffer];
+        GByte *pabyBuffer = static_cast<GByte *>(pBuffers[iBuffer]);
         eErr = static_cast<VRTSource *>(papoSources[iSource])
                    ->RasterIO(
                        eSrcType, nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
@@ -1199,8 +1230,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             }
 
             // Wrap source buffers as input numpy arrays
-            PyObject *pyArgInputArray = PyTuple_New(nSources);
-            for (int i = 0; i < nSources; i++)
+            PyObject *pyArgInputArray = PyTuple_New(nBufferCount);
+            for (int i = 0; i < nBufferCount; i++)
             {
                 GByte *pabyBuffer = static_cast<GByte *>(pBuffers[i]);
                 PyObject *poPySrcArray = GDALCreateNumpyArray(
@@ -1302,18 +1333,18 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             papszArgs = CSLSetNameValue(papszArgs, pszKey, pszValue);
         }
 
-        eErr = (poPixelFunc->first)(static_cast<void **>(pBuffers), nSources,
-                                    pData, nBufXSize, nBufYSize, eSrcType,
-                                    eBufType, static_cast<int>(nPixelSpace),
-                                    static_cast<int>(nLineSpace), papszArgs);
+        eErr = (poPixelFunc->first)(
+            static_cast<void **>(pBuffers), nBufferCount, pData, nBufXSize,
+            nBufYSize, eSrcType, eBufType, static_cast<int>(nPixelSpace),
+            static_cast<int>(nLineSpace), papszArgs);
 
         CSLDestroy(papszArgs);
     }
 end:
     // Release buffers.
-    for (int iSource = 0; iSource < nSources; iSource++)
+    for (int iBuffer = 0; iBuffer < nBufferCount; iBuffer++)
     {
-        VSIFree(pBuffers[iSource]);
+        VSIFree(pBuffers[iBuffer]);
     }
     CPLFree(pBuffers);
 
@@ -1413,6 +1444,16 @@ CPLErr VRTDerivedRasterBand::XMLInit(
         eSourceTransferType = GDALGetDataTypeByName(pszTypeName);
     }
 
+    // Whether to skip non contributing sources
+    const char *pszSkipNonContributiongSources =
+        CPLGetXMLValue(psTree, "SkipNonContributingSources", nullptr);
+    if (pszSkipNonContributiongSources)
+    {
+        m_poPrivate->m_bSkipNonContributingSourcesSpecified = true;
+        m_poPrivate->m_bSkipNonContributingSources =
+            CPLTestBool(pszSkipNonContributiongSources);
+    }
+
     return CE_None;
 }
 
@@ -1471,6 +1512,13 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
     if (this->eSourceTransferType != GDT_Unknown)
         CPLSetXMLValue(psTree, "SourceTransferType",
                        GDALGetDataTypeName(eSourceTransferType));
+
+    if (m_poPrivate->m_bSkipNonContributingSourcesSpecified)
+    {
+        CPLSetXMLValue(psTree, "SkipNonContributingSources",
+                       m_poPrivate->m_bSkipNonContributingSources ? "true"
+                                                                  : "false");
+    }
 
     return psTree;
 }
