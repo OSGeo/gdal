@@ -490,6 +490,7 @@ typedef void retGetPoints;
 %constant char *OLCAlterGeomFieldDefn  = "AlterGeomFieldDefn";
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
+%constant char *OLCUpsertFeature       = "UpsertFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
 %constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
 %constant char *OLCIgnoreFields        = "IgnoreFields";
@@ -542,6 +543,7 @@ typedef int OGRErr;
 #define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
+#define OLCUpsertFeature       "UpsertFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"

@@ -349,6 +349,8 @@ OLCTransactions = _ogr.OLCTransactions
 
 OLCDeleteFeature = _ogr.OLCDeleteFeature
 
+OLCUpsertFeature = _ogr.OLCUpsertFeature
+
 OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
 
 OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
