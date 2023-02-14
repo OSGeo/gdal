@@ -975,6 +975,9 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
     "DeleteFeature" /**< Layer capability for feature deletion */
 #define OLCUpsertFeature                                                       \
     "UpsertFeature" /**< Layer capability for feature upsert */
+#define OLCUpdateFeature                                                       \
+    "UpdateFeature" /**< Layer capability for specialized \
+                                              UpdateFeature() implementation */
 #define OLCFastSetNextByIndex                                                  \
     "FastSetNextByIndex" /**< Layer capability for setting next feature index  \
                           */
