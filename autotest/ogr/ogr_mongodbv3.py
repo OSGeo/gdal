@@ -933,6 +933,97 @@ def test_ogr_mongodbv3_upsert_feature():
 
 
 ###############################################################################
+# Test updating a feature.
+
+
+def test_ogr_mongodbv3_update_feature():
+    if ogrtest.mongodbv3_drv is None:
+        pytest.skip()
+
+    # Open database in read-write
+    ogrtest.mongodbv3_ds = None
+    ogrtest.mongodbv3_ds = ogr.Open(ogrtest.mongodbv3_test_uri, update=1)
+
+    # Create a layer
+    ogrtest.mongodbv3_layer_name_update_feature = (
+        ogrtest.mongodbv3_layer_name + "_update_feature"
+    )
+    lyr = ogrtest.mongodbv3_ds.CreateLayer(
+        ogrtest.mongodbv3_layer_name_update_feature,
+        geom_type=ogr.wkbNone,
+        options=["FID=", "WRITE_OGR_METADATA=NO"],
+    )
+
+    # Add a string field
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
+
+    # Create a feature with some data
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f["_id"] = "000000000000000000000001"  # 24-digit hex MongoDB object id
+    f.SetField("test", "original")
+    assert lyr.CreateFeature(f) == 0
+
+    # Update an existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f["_id"] = "000000000000000000000001"
+    f.SetField("test", "updated")
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NONE
+    )
+
+    # Verify that we have set an existing feature
+    f = lyr.GetFeature(1)
+    assert f is not None
+    assert f.GetField("test") == "updated"
+
+    # Update an existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f["_id"] = "000000000000000000000001"
+    f.SetField("test", "updated2")
+    assert (
+        lyr.UpdateFeature(
+            f,
+            [
+                lyr.GetLayerDefn().GetFieldIndex("_id"),
+                lyr.GetLayerDefn().GetFieldIndex("test"),
+            ],
+            [],
+            False,
+        )
+        == ogr.OGRERR_NONE
+    )
+
+    # Verify that we have set an existing feature
+    f = lyr.GetFeature(1)
+    assert f is not None
+    assert f.GetField("test") == "updated2"
+
+    # Update a feature without _id
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f.SetField("test", "updated")
+    with gdaltest.error_handler():
+        assert (
+            lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+            != ogr.OGRERR_NONE
+        )
+
+    # Update a non-existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(2)
+    f["_id"] = "000000000000000000000002"
+    f.SetField("test", "updated")
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NON_EXISTING_FEATURE
+    )
+
+
+###############################################################################
 # Cleanup
 
 
@@ -967,5 +1058,8 @@ def test_ogr_mongodbv3_cleanup():
         ogrtest.mongodbv3_ds.ExecuteSQL(
             "DELLAYER:" + ogrtest.mongodbv3_layer_name_upsert_feature
         )
-
+    if ogrtest.mongodbv3_layer_name_update_feature is not None:
+        ogrtest.mongodbv3_ds.ExecuteSQL(
+            "DELLAYER:" + ogrtest.mongodbv3_layer_name_update_feature
+        )
     ogrtest.mongodbv3_ds = None
