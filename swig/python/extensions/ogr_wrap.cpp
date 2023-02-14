@@ -37148,6 +37148,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCAlterGeomFieldDefn",SWIG_FromCharPtr("AlterGeomFieldDefn"));
   SWIG_Python_SetConstant(d, "OLCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "OLCDeleteFeature",SWIG_FromCharPtr("DeleteFeature"));
+  SWIG_Python_SetConstant(d, "OLCUpsertFeature",SWIG_FromCharPtr("UpsertFeature"));
   SWIG_Python_SetConstant(d, "OLCFastSetNextByIndex",SWIG_FromCharPtr("FastSetNextByIndex"));
   SWIG_Python_SetConstant(d, "OLCStringsAsUTF8",SWIG_FromCharPtr("StringsAsUTF8"));
   SWIG_Python_SetConstant(d, "OLCIgnoreFields",SWIG_FromCharPtr("IgnoreFields"));

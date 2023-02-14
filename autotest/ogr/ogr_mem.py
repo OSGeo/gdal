@@ -955,6 +955,7 @@ def test_ogr_mem_upsert_feature():
     assert f.GetFID() == 0
 
     # Upsert an existing feature
+    assert lyr.TestCapability(ogr.OLCUpsertFeature) == 1
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(0)
     f.SetField("test", "updated")
