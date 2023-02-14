@@ -3902,6 +3902,59 @@ SWIGINTERN OGRErr OGRLayerShadow_CreateFeature(OGRLayerShadow *self,OGRFeatureSh
 SWIGINTERN OGRErr OGRLayerShadow_UpsertFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
     return OGR_L_UpsertFeature(self, feature);
   }
+
+static int*
+CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  int* ret = (int*) malloc(*pnSize*sizeof(int));
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"i",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_bool (PyObject *obj, bool *val)
+{
+  int r;
+  if (!PyBool_Check(obj))
+    return SWIG_ERROR;
+  r = PyObject_IsTrue(obj);
+  if (r == -1)
+    return SWIG_ERROR;
+  if (val) *val = r ? true : false;
+  return SWIG_OK;
+}
+
+SWIGINTERN OGRErr OGRLayerShadow_UpdateFeature(OGRLayerShadow *self,OGRFeatureShadow *feature,int nUpdatedFieldsCount,int const *panUpdatedFieldsIdx,int nUpdatedGeomFieldsCount,int const *panUpdatedGeomFieldsIdx,bool bUpdateStyleString){
+    return OGR_L_UpdateFeature(self, feature,
+                               nUpdatedFieldsCount,
+                               panUpdatedFieldsIdx,
+                               nUpdatedGeomFieldsCount,
+                               panUpdatedGeomFieldsIdx,
+                               bUpdateStyleString);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_DeleteFeature(OGRLayerShadow *self,GIntBig fid){
     return OGR_L_DeleteFeature(self, fid);
   }
@@ -3934,37 +3987,6 @@ SWIGINTERN OGRErr OGRLayerShadow_DeleteField(OGRLayerShadow *self,int iField){
 SWIGINTERN OGRErr OGRLayerShadow_ReorderField(OGRLayerShadow *self,int iOldFieldPos,int iNewFieldPos){
     return OGR_L_ReorderField(self, iOldFieldPos, iNewFieldPos);
   }
-
-static int*
-CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
-  /* check if is List */
-  if ( !PySequence_Check(pySeq) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
-    *pnSize = -1;
-    return NULL;
-  }
-  Py_ssize_t size = PySequence_Size(pySeq);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
-    *pnSize = -1;
-    return NULL;
-  }
-  *pnSize = (int)size;
-  int* ret = (int*) malloc(*pnSize*sizeof(int));
-  for( int i = 0; i<*pnSize; i++ ) {
-    PyObject *o = PySequence_GetItem(pySeq,i);
-    if ( !PyArg_Parse(o,"i",&ret[i]) ) {
-        PyErr_SetString(PyExc_TypeError, "not an integer");
-        Py_DECREF(o);
-        free(ret);
-        *pnSize = -1;
-        return NULL;
-    }
-    Py_DECREF(o);
-  }
-  return ret;
-}
-
 SWIGINTERN OGRErr OGRLayerShadow_ReorderFields(OGRLayerShadow *self,int nList,int *pList){
     if (nList != OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)))
     {
@@ -5287,20 +5309,6 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetBoundary(OGRGeometryShadow *s
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_ConvexHull(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
   }
-
-SWIGINTERN int
-SWIG_AsVal_bool (PyObject *obj, bool *val)
-{
-  int r;
-  if (!PyBool_Check(obj))
-    return SWIG_ERROR;
-  r = PyObject_IsTrue(obj);
-  if (r == -1)
-    return SWIG_ERROR;
-  if (val) *val = r ? true : false;
-  return SWIG_OK;
-}
-
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_ConcaveHull(OGRGeometryShadow *self,double ratio,bool allowHoles){
     return (OGRGeometryShadow*) OGR_G_ConcaveHull(self, ratio, allowHoles);
   }
@@ -10482,6 +10490,117 @@ SWIGINTERN PyObject *_wrap_Layer_UpsertFeature(PyObject *SWIGUNUSEDPARM(self), P
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_UpdateFeature(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
+  int arg3 ;
+  int *arg4 = (int *) 0 ;
+  int arg5 ;
+  int *arg6 = (int *) 0 ;
+  bool arg7 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  bool val7 ;
+  int ecode7 = 0 ;
+  PyObject *swig_obj[5] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_UpdateFeature", 5, 5, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_UpdateFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_UpdateFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
+  {
+    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+    arg4 = CreateCIntListFromSequence(swig_obj[2], &arg3);
+    if( arg3 < 0 ) {
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+    arg6 = CreateCIntListFromSequence(swig_obj[3], &arg5);
+    if( arg5 < 0 ) {
+      SWIG_fail;
+    }
+  }
+  ecode7 = SWIG_AsVal_bool(swig_obj[4], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "Layer_UpdateFeature" "', argument " "7"" of type '" "bool""'");
+  } 
+  arg7 = static_cast< bool >(val7);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_UpdateFeature(arg1,arg2,arg3,(int const *)arg4,arg5,(int const *)arg6,arg7);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg4);
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg6);
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg4);
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg6);
+  }
   return NULL;
 }
 
@@ -32020,6 +32139,7 @@ static PyMethodDef SwigMethods[] = {
 		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
 		""},
+	 { "Layer_UpdateFeature", _wrap_Layer_UpdateFeature, METH_VARARGS, "Layer_UpdateFeature(Layer self, Feature feature, int nUpdatedFieldsCount, int nUpdatedGeomFieldsCount, bool bUpdateStyleString) -> OGRErr"},
 	 { "Layer_DeleteFeature", _wrap_Layer_DeleteFeature, METH_VARARGS, "\n"
 		"Layer_DeleteFeature(Layer self, GIntBig fid) -> OGRErr\n"
 		"\n"
@@ -37149,6 +37269,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "OLCDeleteFeature",SWIG_FromCharPtr("DeleteFeature"));
   SWIG_Python_SetConstant(d, "OLCUpsertFeature",SWIG_FromCharPtr("UpsertFeature"));
+  SWIG_Python_SetConstant(d, "OLCUpdateFeature",SWIG_FromCharPtr("UpdateFeature"));
   SWIG_Python_SetConstant(d, "OLCFastSetNextByIndex",SWIG_FromCharPtr("FastSetNextByIndex"));
   SWIG_Python_SetConstant(d, "OLCStringsAsUTF8",SWIG_FromCharPtr("StringsAsUTF8"));
   SWIG_Python_SetConstant(d, "OLCIgnoreFields",SWIG_FromCharPtr("IgnoreFields"));
