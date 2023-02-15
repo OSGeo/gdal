@@ -1259,18 +1259,34 @@ OGRErr OGRPGTableLayer::DeleteFeature(GIntBig nFID)
 OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
 
 {
+    return IUpdateFeature(poFeature, -1, nullptr, -1, nullptr, false);
+}
+
+/************************************************************************/
+/*                           UpdateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
+                                       int nUpdatedFieldsCount,
+                                       const int *panUpdatedFieldsIdx,
+                                       int nUpdatedGeomFieldsCount,
+                                       const int *panUpdatedGeomFieldsIdx,
+                                       bool /* bUpdateStyleString*/)
+
+{
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
-    int i = 0;
-    int bNeedComma = FALSE;
+    bool bNeedComma = false;
     OGRErr eErr = OGRERR_FAILURE;
 
     GetLayerDefn()->GetFieldCount();
 
+    const char *pszMethodName =
+        nUpdatedFieldsCount >= 0 ? "UpdateFeature" : "SetFeature";
     if (!bUpdateAccess)
     {
         CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
-                 "SetFeature");
+                 pszMethodName);
         return OGRERR_FAILURE;
     }
 
@@ -1281,14 +1297,14 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
     if (nullptr == poFeature)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "NULL pointer to OGRFeature passed to SetFeature().");
+                 "NULL pointer to OGRFeature passed to %s().", pszMethodName);
         return eErr;
     }
 
     if (poFeature->GetFID() == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "FID required on features given to SetFeature().");
+                 "FID required on features given to %s().", pszMethodName);
         return eErr;
     }
 
@@ -1319,17 +1335,22 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
     osCommand.Printf("UPDATE %s SET ", pszSqlTableName);
 
     /* Set the geometry */
-    for (i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+    const int nGeomStop = nUpdatedGeomFieldsCount >= 0
+                              ? nUpdatedGeomFieldsCount
+                              : poFeatureDefn->GetGeomFieldCount();
+    for (int i = 0; i < nGeomStop; i++)
     {
+        const int iField =
+            nUpdatedGeomFieldsCount >= 0 ? panUpdatedGeomFieldsIdx[i] : i;
         OGRPGGeomFieldDefn *poGeomFieldDefn =
-            poFeatureDefn->GetGeomFieldDefn(i);
-        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
+            poFeatureDefn->GetGeomFieldDefn(iField);
+        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iField);
         if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB)
         {
             if (bNeedComma)
                 osCommand += ", ";
             else
-                bNeedComma = TRUE;
+                bNeedComma = true;
 
             osCommand += OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
             osCommand += " = ";
@@ -1372,7 +1393,7 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
             if (bNeedComma)
                 osCommand += ", ";
             else
-                bNeedComma = TRUE;
+                bNeedComma = true;
 
             osCommand += OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
             osCommand += " = ";
@@ -1433,31 +1454,35 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
         }
     }
 
-    for (i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+    const int nStop = nUpdatedFieldsCount >= 0 ? nUpdatedFieldsCount
+                                               : poFeatureDefn->GetFieldCount();
+    for (int i = 0; i < nStop; i++)
     {
-        if (iFIDAsRegularColumnIndex == i)
+        const int iField =
+            nUpdatedFieldsCount >= 0 ? panUpdatedFieldsIdx[i] : i;
+        if (iFIDAsRegularColumnIndex == iField)
             continue;
-        if (!poFeature->IsFieldSet(i))
+        if (!poFeature->IsFieldSet(iField))
             continue;
-        if (m_abGeneratedColumns[i])
+        if (m_abGeneratedColumns[iField])
             continue;
 
         if (bNeedComma)
             osCommand += ", ";
         else
-            bNeedComma = TRUE;
+            bNeedComma = true;
 
-        osCommand +=
-            OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        osCommand += OGRPGEscapeColumnName(
+            poFeatureDefn->GetFieldDefn(iField)->GetNameRef());
         osCommand += " = ";
 
-        if (poFeature->IsFieldNull(i))
+        if (poFeature->IsFieldNull(iField))
         {
             osCommand += "NULL";
         }
         else
         {
-            OGRPGCommonAppendFieldValue(osCommand, poFeature, i,
+            OGRPGCommonAppendFieldValue(osCommand, poFeature, iField,
                                         OGRPGEscapeString, hPGConn);
         }
     }
@@ -1466,7 +1491,8 @@ OGRErr OGRPGTableLayer::ISetFeature(OGRFeature *poFeature)
 
     /* Add the WHERE clause */
     osCommand += " WHERE ";
-    osCommand = osCommand + OGRPGEscapeColumnName(pszFIDColumn) + " = ";
+    osCommand += OGRPGEscapeColumnName(pszFIDColumn);
+    osCommand += +" = ";
     osCommand += CPLString().Printf(CPL_FRMT_GIB, poFeature->GetFID());
 
     /* -------------------------------------------------------------------- */
@@ -2119,6 +2145,7 @@ int OGRPGTableLayer::TestCapability(const char *pszCap)
             return TRUE;
 
         else if (EQUAL(pszCap, OLCRandomWrite) ||
+                 EQUAL(pszCap, OLCUpdateFeature) ||
                  EQUAL(pszCap, OLCDeleteFeature))
         {
             GetLayerDefn()->GetFieldCount();
