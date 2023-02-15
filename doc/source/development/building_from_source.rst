@@ -2210,6 +2210,38 @@ First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.htm
 and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
 an example of a build script to cross-compile from Ubuntu.
 
+
+Typical build issues
+++++++++++++++++++++
+
+How do I get PROJ ?
+*******************
+
+PROJ is the only required build-time dependency of GDAL that is not vendorized
+in the GDAL source code tree. Consequently, the PROJ header and library must be available
+when configuring GDAL's CMake. Consult `PROJ installation <https://proj.org/install.html>`.
+
+Conflicting PROJ libraries
+**************************
+
+If using a custom PROJ build (that is a PROJ build that does not come from
+a distribution channel), it can sometimes happen that this custom PROJ build
+conflicts with packaged dependencies, such as spatialite or libgeotiff, that
+themselves link to another copy of PROJ.
+
+The clean way to solve this is to rebuild from sources those other libraries
+against the custom PROJ build.
+For Linux based systems, given that C API/ABI has been preserved in the
+PROJ 6, 7, 8, 9 series, if the custom PROJ build is more recent than the
+PROJ used by those other libraries, doing aliases of the older ``libproj.so.XX``
+name to the newer ``libproj.so.YY`` (with ``ln -s``) should work, although it is
+definitely not recommended to use this solution in a production environment.
+
+In any case, if ``ldd libgdal.so | grep libproj`` reports more than one line,
+crashes will occur at runtime (often at process termination with a
+``malloc_consolidate(): invalid chunk size`` and/or ``Aborted (core dumped)`` error message)
+
+
 Autoconf/nmake (GDAL versions < 3.5.0)
 --------------------------------------------------------------------------------
 
