@@ -2193,11 +2193,54 @@ def test_ogr_csv_43():
     ):
         f.DumpReadable()
         pytest.fail()
+
+    # Test UpdateFeature() through generic OGRLayer::IUpdateFeature()
+    f["id"] = 1234567890123
+    f["foo"] = "bar2"
+    f.SetGeometry(None)
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("foo")], [], False)
+        == ogr.OGRERR_NONE
+    )
+    f = lyr.GetFeature(1)
+    assert f["id"] == 1
+    assert f["foo"] == "bar2"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+    f.SetGeometry(None)
+    assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
+    f = lyr.GetFeature(1)
+    assert f.GetGeometryRef() is None
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
+    f = lyr.GetFeature(1)
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+    # Invalid index
+    with gdaltest.error_handler():
+        assert lyr.UpdateFeature(f, [-1], [], False) == ogr.OGRERR_FAILURE
+        assert (
+            lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldCount()], [], False)
+            == ogr.OGRERR_FAILURE
+        )
+        assert lyr.UpdateFeature(f, [], [-1], False) == ogr.OGRERR_FAILURE
+        assert (
+            lyr.UpdateFeature(f, [], [lyr.GetLayerDefn().GetGeomFieldCount()], False)
+            == ogr.OGRERR_FAILURE
+        )
+
+    f.SetFID(123456)
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("foo")], [], False)
+        == ogr.OGRERR_NON_EXISTING_FEATURE
+    )
+
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if (
         f["id"] != 1
-        or f["foo"] != "bar"
+        or f["foo"] != "bar2"
         or f.GetGeometryRef().ExportToWkt() != "POINT (2 49)"
     ):
         f.DumpReadable()
