@@ -251,20 +251,16 @@ int VSILibArchiveReader::GotoFirstFile()
 
         if (m_osPrefix == "/vsi7z")
         {
-            fprintf(stderr, "read 7z\n");
             archive_read_support_format_7zip(m_pArchive);
         }
         else
         {
-            fprintf(stderr, "read rar\n");
             archive_read_support_format_rar(m_pArchive);
             archive_read_support_format_rar5(m_pArchive);
         }
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
         {
-            fprintf(stderr, "### %s: %s\n", m_osArchiveFileName.c_str(),
-                     archive_error_string(m_pArchive));
             CPLDebug("VSIARCH", "%s: %s", m_osArchiveFileName.c_str(),
                      archive_error_string(m_pArchive));
             return false;
@@ -533,20 +529,16 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
     auto pArchive = archive_read_new();
     if (m_osPrefix == "/vsi7z")
     {
-        fprintf(stderr, "read 7z\n");
         archive_read_support_format_7zip(pArchive);
     }
     else
     {
-        fprintf(stderr, "read rar\n");
         archive_read_support_format_rar(pArchive);
         archive_read_support_format_rar5(pArchive);
     }
 
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
     {
-        fprintf(stderr, "@@@ %s: %s\n", pszArchiveFileName,
-                 archive_error_string(pArchive));
         CPLDebug("VSIARCH", "%s: %s", pszArchiveFileName,
                  archive_error_string(pArchive));
         archive_read_free(pArchive);
@@ -591,7 +583,6 @@ void VSIInstall7zFileHandler(void)
  */
 void VSIInstallRarFileHandler(void)
 {
-    fprintf(stderr, "install rar\n");
     VSIFileManager::InstallHandler(
         "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
 }
