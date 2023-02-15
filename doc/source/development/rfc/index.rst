@@ -99,3 +99,4 @@ RFC list
     rfc90_read_compressed_data
     rfc91_dataset_close
     rfc92_wkb_only_geometries
+    rfc93_update_feature
