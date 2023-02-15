@@ -300,6 +300,32 @@ OGRErr OGRWarpedLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                            IUpdateFeature()                          */
+/************************************************************************/
+
+OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
+                                      int nUpdatedFieldsCount,
+                                      const int *panUpdatedFieldsIdx,
+                                      int nUpdatedGeomFieldsCount,
+                                      const int *panUpdatedGeomFieldsIdx,
+                                      bool bUpdateStyleString)
+{
+    OGRErr eErr;
+
+    OGRFeature *poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
+    if (poFeatureNew == nullptr)
+        return OGRERR_FAILURE;
+
+    eErr = m_poDecoratedLayer->UpdateFeature(
+        poFeatureNew, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+
+    delete poFeatureNew;
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                            GetLayerDefn()                           */
 /************************************************************************/
 

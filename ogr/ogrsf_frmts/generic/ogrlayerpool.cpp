@@ -367,6 +367,24 @@ OGRErr OGRProxiedLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                            IUpdateFeature()                          */
+/************************************************************************/
+
+OGRErr OGRProxiedLayer::IUpdateFeature(OGRFeature *poFeature,
+                                       int nUpdatedFieldsCount,
+                                       const int *panUpdatedFieldsIdx,
+                                       int nUpdatedGeomFieldsCount,
+                                       const int *panUpdatedGeomFieldsIdx,
+                                       bool bUpdateStyleString)
+{
+    if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
+        return OGRERR_FAILURE;
+    return poUnderlyingLayer->UpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
+
+/************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
 

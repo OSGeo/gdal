@@ -158,6 +158,20 @@ OGRErr OGRLayerDecorator::IUpsertFeature(OGRFeature *poFeature)
     return m_poDecoratedLayer->UpsertFeature(poFeature);
 }
 
+OGRErr OGRLayerDecorator::IUpdateFeature(OGRFeature *poFeature,
+                                         int nUpdatedFieldsCount,
+                                         const int *panUpdatedFieldsIdx,
+                                         int nUpdatedGeomFieldsCount,
+                                         const int *panUpdatedGeomFieldsIdx,
+                                         bool bUpdateStyleString)
+{
+    if (!m_poDecoratedLayer)
+        return OGRERR_FAILURE;
+    return m_poDecoratedLayer->UpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
+
 OGRErr OGRLayerDecorator::DeleteFeature(GIntBig nFID)
 {
     if (!m_poDecoratedLayer)

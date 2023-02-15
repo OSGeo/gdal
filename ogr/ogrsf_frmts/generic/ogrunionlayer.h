@@ -142,6 +142,12 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
 
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;

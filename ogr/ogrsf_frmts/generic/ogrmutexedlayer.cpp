@@ -137,6 +137,19 @@ OGRErr OGRMutexedLayer::IUpsertFeature(OGRFeature *poFeature)
     return OGRLayerDecorator::IUpsertFeature(poFeature);
 }
 
+OGRErr OGRMutexedLayer::IUpdateFeature(OGRFeature *poFeature,
+                                       int nUpdatedFieldsCount,
+                                       const int *panUpdatedFieldsIdx,
+                                       int nUpdatedGeomFieldsCount,
+                                       const int *panUpdatedGeomFieldsIdx,
+                                       bool bUpdateStyleString)
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::IUpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
+
 OGRErr OGRMutexedLayer::DeleteFeature(GIntBig nFID)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);

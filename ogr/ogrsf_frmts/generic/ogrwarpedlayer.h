@@ -82,6 +82,11 @@ class OGRWarpedLayer : public OGRLayerDecorator
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
