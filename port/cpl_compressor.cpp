@@ -438,6 +438,9 @@ static bool CPLZSTDCompressor(const void *input_data, size_t input_size,
     return false;
 }
 
+// CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because ZSTD_CONTENTSIZE_ERROR expands
+// to (0ULL - 2)...
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static size_t CPLZSTDGetDecompressedSize(const void *input_data,
                                          size_t input_size)
 {
