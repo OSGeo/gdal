@@ -1043,6 +1043,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         ++nBufferCount;
     }
 
+    // No contributing sources and SkipNonContributingSources mode ?
+    // Do not call the pixel function and just return the 0/nodata initialized
+    // output buffer.
+    if (nBufferCount == 0 && m_poPrivate->m_bSkipNonContributingSources)
+    {
+        return CE_None;
+    }
+
     GDALRasterIOExtraArg sExtraArg;
     GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 

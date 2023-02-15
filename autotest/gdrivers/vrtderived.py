@@ -1027,8 +1027,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 
         assert ds.ReadRaster(0, 10, 1, 1) == ref_ds.ReadRaster(0, 10, 1, 1)
 
-        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 0
-        os.unlink("tmp/num_sources_skip_true.txt")
+        assert not os.path.exists("tmp/num_sources_skip_true.txt")
 
         assert int(open("tmp/num_sources_skip_false.txt", "rt").read()) == 2
         os.unlink("tmp/num_sources_skip_false.txt")
