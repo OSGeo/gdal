@@ -49,6 +49,8 @@ void VSIInstall7zFileHandler(void)
     // dummy
 }
 
+#ifndef HAVE_BLAKE2
+
 /************************************************************************/
 /*                    VSIInstallRarFileHandler()                         */
 /************************************************************************/
@@ -66,6 +68,8 @@ void VSIInstallRarFileHandler(void)
 {
     // dummy
 }
+
+#endif
 
 #else
 
@@ -255,8 +259,10 @@ int VSILibArchiveReader::GotoFirstFile()
         }
         else
         {
+#ifdef HAVE_BLAKE2
             archive_read_support_format_rar(m_pArchive);
             archive_read_support_format_rar5(m_pArchive);
+#endif
         }
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
@@ -533,8 +539,10 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
     }
     else
     {
+#ifdef HAVE_BLAKE2
         archive_read_support_format_rar(pArchive);
         archive_read_support_format_rar5(pArchive);
+#endif
     }
 
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
@@ -568,6 +576,8 @@ void VSIInstall7zFileHandler(void)
         "/vsi7z/", new VSILibArchiveFilesystemHandler("/vsi7z"));
 }
 
+#ifdef HAVE_BLAKE2
+
 /************************************************************************/
 /*                    VSIInstallRarFileHandler()                         */
 /************************************************************************/
@@ -586,5 +596,7 @@ void VSIInstallRarFileHandler(void)
     VSIFileManager::InstallHandler(
         "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
 }
+
+#endif
 
 #endif
