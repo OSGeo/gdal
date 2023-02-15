@@ -258,6 +258,7 @@ int VSILibArchiveReader::GotoFirstFile()
         {
             fprintf(stderr, "read rar\n");
             archive_read_support_format_rar(m_pArchive);
+            archive_read_support_format_rar5(m_pArchive);
         }
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
@@ -539,6 +540,7 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
     {
         fprintf(stderr, "read rar\n");
         archive_read_support_format_rar(pArchive);
+        archive_read_support_format_rar5(pArchive);
     }
 
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
