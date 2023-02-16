@@ -263,10 +263,10 @@ def gdal_pansharpen(
             f"      <SpatialExtentAdjustment>{spat_adjust}</SpatialExtentAdjustment>\n"
         )
     if ms_shiftx is not None:
-        vrt_xml += "      <MSShiftX>%s</MSShiftX>\n" % ms_shiftx
+        vrt_xml += f"      <MSShiftX>{ms_shiftx}</MSShiftX>\n"
 
     if ms_shifty is not None:
-        vrt_xml += "      <MSShiftY>%s</MSShiftY>\n" % ms_shifty
+        vrt_xml += f"      <MSShiftY>{ms_shifty}</MSShiftY>\n"
 
     pan_relative = "0"
     if driver_name.upper() == "VRT":
