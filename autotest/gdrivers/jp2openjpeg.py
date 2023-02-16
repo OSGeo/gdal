@@ -568,13 +568,12 @@ def test_jp2openjpeg_20():
             shutil.copy("../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip", "tmp/cache")
         except OSError:
             url = "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip"
-            if not gdaltest.download_file(
+            gdaltest.download_or_skip(
                 url,
                 "SCHEMAS_OPENGIS_NET.zip",
                 force_download=True,
                 max_download_duration=20,
-            ):
-                pytest.skip("Cannot get SCHEMAS_OPENGIS_NET.zip")
+            )
 
     try:
         os.mkdir("tmp/cache/SCHEMAS_OPENGIS_NET")
@@ -601,13 +600,12 @@ def test_jp2openjpeg_20():
             max_download_duration=10,
         ):
             xlink_xsd_url = "http://even.rouault.free.fr/xlink.xsd"
-            if not gdaltest.download_file(
+            gdaltest.download_or_skip(
                 xlink_xsd_url,
                 "SCHEMAS_OPENGIS_NET/xlink.xsd",
                 force_download=True,
                 max_download_duration=10,
-            ):
-                pytest.skip("Cannot get xlink.xsd")
+            )
 
     try:
         os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd")
@@ -620,13 +618,12 @@ def test_jp2openjpeg_20():
             max_download_duration=10,
         ):
             xlink_xsd_url = "http://even.rouault.free.fr/xml.xsd"
-            if not gdaltest.download_file(
+            gdaltest.download_or_skip(
                 xlink_xsd_url,
                 "SCHEMAS_OPENGIS_NET/xml.xsd",
                 force_download=True,
                 max_download_duration=10,
-            ):
-                pytest.skip("Cannot get xml.xsd")
+            )
 
     xmlvalidate.transform_abs_links_to_ref_links("tmp/cache/SCHEMAS_OPENGIS_NET")
 
@@ -3092,11 +3089,10 @@ def test_jp2openjpeg_48():
 
 def test_jp2openjpeg_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k",
         "7sisters200.j2k",
-    ):
-        pytest.skip()
+    )
 
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest(
@@ -3115,10 +3111,9 @@ def test_jp2openjpeg_online_1():
 
 def test_jp2openjpeg_online_2():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
-    ):
-        pytest.skip()
+    )
 
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest(
@@ -3141,14 +3136,13 @@ def test_jp2openjpeg_online_2():
 
 def test_jp2openjpeg_online_3():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne1.j2k", "Bretagne1.j2k"
-    ):
-        pytest.skip()
-    if not gdaltest.download_file(
+    )
+
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "JP2OpenJPEG", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
@@ -3174,14 +3168,13 @@ def test_jp2openjpeg_online_3():
 
 def test_jp2openjpeg_online_4():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne2.j2k", "Bretagne2.j2k"
-    ):
-        pytest.skip()
-    if not gdaltest.download_file(
+    )
+
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "JP2OpenJPEG", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
@@ -3208,11 +3201,10 @@ def test_jp2openjpeg_online_4():
 
 def test_jp2openjpeg_online_5():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9.jp2",
         "file9.jp2",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/file9.jp2")
     cs1 = ds.GetRasterBand(1).Checksum()
@@ -3229,11 +3221,10 @@ def test_jp2openjpeg_online_5():
 
 def test_jp2openjpeg_online_6():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_03/file3.jp2",
         "file3.jp2",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/file3.jp2")
     cs1 = ds.GetRasterBand(1).Checksum()

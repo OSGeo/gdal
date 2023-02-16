@@ -578,11 +578,10 @@ def test_pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix",
         "irvine_gcp2.pix",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/irvine_gcp2.pix")
 
@@ -754,10 +753,9 @@ def test_pcidsk_tile_v2_overview():
 
 def test_pcidsk_online_rpc():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://github.com/OSGeo/gdal/files/6822835/pix-test.zip", "pix-test.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/demo.PIX")

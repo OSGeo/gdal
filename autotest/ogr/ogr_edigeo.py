@@ -60,8 +60,7 @@ def test_ogr_edigeo_1():
     base_url = "https://raw.githubusercontent.com/geotools/geotools/affa340d16681f1bb78673d23fb38a6c1eb2b38a/modules/unsupported/edigeo/src/test/resources/org/geotools/data/edigeo/test-data/"
 
     for filename in filelist:
-        if not gdaltest.download_file(base_url + filename, filename):
-            pytest.skip()
+        gdaltest.download_or_skip(base_url + filename, filename)
 
     try:
         for filename in filelist:

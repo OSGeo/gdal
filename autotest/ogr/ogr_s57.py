@@ -334,10 +334,7 @@ def test_ogr_s57_11():
 
 def test_ogr_s57_online_1():
 
-    if not gdaltest.download_file(
-        "ftp://sdg.ivs90.nl/ENC/1R5MK050.000", "1R5MK050.000"
-    ):
-        pytest.skip()
+    gdaltest.download_or_skip("ftp://sdg.ivs90.nl/ENC/1R5MK050.000", "1R5MK050.000")
 
     ds = ogr.Open("tmp/cache/1R5MK050.000")
     assert ds is not None
@@ -362,10 +359,9 @@ def test_ogr_s57_online_1():
 
 def test_ogr_s57_online_2():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000", "GB5X01SW.000"
-    ):
-        pytest.skip()
+    )
 
     gdaltest.clean_tmp()
     shutil.copy("tmp/cache/GB5X01SW.000", "tmp/GB5X01SW.000")
@@ -394,10 +390,9 @@ def test_ogr_s57_online_2():
 
 def test_ogr_s57_online_3():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001", "GB5X01SW.001"
-    ):
-        pytest.skip()
+    )
 
     shutil.copy("tmp/cache/GB5X01SW.001", "tmp/GB5X01SW.001")
     ds = ogr.Open("tmp/GB5X01SW.000")
@@ -427,10 +422,9 @@ def test_ogr_s57_online_3():
 
 def test_ogr_s57_online_4():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip", "sample.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/ENC_ROOT/JP34NC94.000")
@@ -475,10 +469,9 @@ def test_ogr_s57_update_dsid():
 
 def test_ogr_s57_more_than_255_updates_to_feature():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://www.charts.noaa.gov/ENCs/US5ME51M.zip", "US5ME51M.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/US5ME51M")

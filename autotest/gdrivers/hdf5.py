@@ -345,11 +345,10 @@ def test_hdf5_11():
 
 def test_hdf5_12():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf",
         "norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf")
     got_projection = ds.GetProjection()
@@ -374,11 +373,10 @@ def test_hdf5_12():
 
 def test_hdf5_13():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc",
         "A2016273115000.L2_LAC_OC.nc",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open(
         'HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490'
@@ -522,10 +520,7 @@ hdf5_list = [
     ids=['HDF5:"' + item[1] + '"://' + item[2] for item in hdf5_list],
 )
 def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
-    if not gdaltest.download_file(
-        downloadURL + "/" + fileName, fileName, download_size
-    ):
-        pytest.skip("no download")
+    gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
     ds = gdal.Open('HDF5:"tmp/cache/' + fileName + '"://' + subdatasetname)
 

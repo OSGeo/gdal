@@ -347,10 +347,9 @@ def test_ecrgtoc_4():
 
 def test_ecrgtoc_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.falconview.org/trac/FalconView/downloads/17", "ECRG_Sample.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/ECRG_Sample.zip")

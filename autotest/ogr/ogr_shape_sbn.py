@@ -110,11 +110,10 @@ def search_all_features(lyr):
 
 def test_ogr_shape_sbn_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip",
         "Cochiti_shapefiles.zip",
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp")

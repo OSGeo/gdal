@@ -1812,10 +1812,7 @@ def test_grib_online_grib2_jpeg2000_single_line():
         pytest.skip()
 
     filename = "CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2"
-    if not gdaltest.download_file(
-        "http://download.osgeo.org/gdal/data/grib/" + filename
-    ):
-        pytest.skip()
+    gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/grib/" + filename)
 
     ds = gdal.Open("tmp/cache/" + filename)
     cs = ds.GetRasterBand(1).Checksum()

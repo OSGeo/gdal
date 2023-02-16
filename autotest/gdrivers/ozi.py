@@ -43,10 +43,9 @@ pytestmark = pytest.mark.require_driver("OZI")
 
 def test_ozi_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.oziexplorer2.com/maps/Europe2001_setup.exe", "Europe2001_setup.exe"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/Europe 2001_OZF.map")

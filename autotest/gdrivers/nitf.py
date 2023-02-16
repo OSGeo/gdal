@@ -5545,11 +5545,10 @@ def test_nitf_metadata_validation_des():
 
 def test_nitf_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/bugs/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf",
         "NITF21_CGM_ANNO_Uncompressed_unmasked.ntf",
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF",
@@ -5573,10 +5572,9 @@ def test_nitf_online_1():
 
 def test_nitf_online_2():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf", "U_0001a.ntf"
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/U_0001a.ntf")
 
@@ -5591,10 +5589,9 @@ def test_nitf_online_2():
 
 def test_nitf_online_3():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf", "U_0001a.ntf"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "NITF_IM:3:tmp/cache/U_0001a.ntf", 1, 23463, filename_absolute=1
@@ -5609,10 +5606,9 @@ def test_nitf_online_3():
 
 def test_nitf_online_4():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/cadrg/001zc013.on1", "001zc013.on1"
-    ):
-        pytest.skip()
+    )
 
     # check that the RPF attribute metadata was carried through.
     ds = gdal.Open("tmp/cache/001zc013.on1")
@@ -5638,10 +5634,9 @@ def test_nitf_online_4():
 
 def test_nitf_online_5():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr", "overview.ovr"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/overview.ovr", 1, 60699, filename_absolute=1
@@ -5656,10 +5651,9 @@ def test_nitf_online_5():
 
 def test_nitf_online_6():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4001b.ntf", "U_4001b.ntf"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/U_4001b.ntf", 1, 60030, filename_absolute=1
@@ -5675,12 +5669,11 @@ def test_nitf_online_6():
 def test_nitf_online_7():
 
     for filename in ["ns3228b.nsf", "i_3228c.ntf", "ns3228d.nsf", "i_3228e.ntf"]:
-        if not gdaltest.download_file(
+        gdaltest.download_or_skip(
             "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/"
             + filename,
             filename,
-        ):
-            pytest.skip()
+        )
 
         ds = gdal.Open("tmp/cache/" + filename)
         assert ds.RasterCount == 6
@@ -5712,11 +5705,10 @@ def test_nitf_online_7():
 
 def test_nitf_online_8():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3301j.nsf",
         "ns3301j.nsf",
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/ns3301j.nsf", 1, 56861, filename_absolute=1
@@ -5731,11 +5723,10 @@ def test_nitf_online_8():
 
 def test_nitf_online_9():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3304a.nsf",
         "ns3304a.nsf",
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/ns3304a.nsf", 1, 32419, filename_absolute=1
@@ -5750,11 +5741,10 @@ def test_nitf_online_9():
 
 def test_nitf_online_10():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3119b.nsf",
         "ns3119b.nsf",
-    ):
-        pytest.skip()
+    )
 
     # Shut up the warning about missing image segment
     gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -5804,10 +5794,9 @@ def test_nitf_online_10():
 
 def test_nitf_online_11():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_1122a.ntf", "U_1122a.ntf"
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/U_1122a.ntf")
 
@@ -5838,10 +5827,9 @@ def test_nitf_online_11():
 
 def test_nitf_online_12():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/bugs/i_3430a.ntf", "i_3430a.ntf"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/i_3430a.ntf", 1, 38647, filename_absolute=1
@@ -5856,10 +5844,9 @@ def test_nitf_online_12():
 
 def test_nitf_online_13():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/u_3054a.ntf", "u_3054a.ntf"
-    ):
-        pytest.skip()
+    )
 
     # Shut up the warning about missing image segment
     ds = gdal.Open("NITF_IM:2:tmp/cache/u_3054a.ntf")
@@ -5906,10 +5893,9 @@ def test_nitf_online_13():
 
 def test_nitf_online_14(not_jpeg_9b):
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4020h.ntf", "U_4020h.ntf"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.remove("tmp/cache/U_4020h.ntf.aux.xml")
@@ -5939,11 +5925,10 @@ def test_nitf_online_14(not_jpeg_9b):
 
 
 def nitf_online_15(driver_to_test, expected_cs=1054):
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf",
         "p0_01a.ntf",
-    ):
-        pytest.skip()
+    )
 
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
@@ -5986,11 +5971,10 @@ def test_nitf_online_15_openjpeg():
 
 
 def nitf_online_16(driver_to_test):
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_jp2_2places.ntf",
         "file9_jp2_2places.ntf",
-    ):
-        pytest.skip()
+    )
 
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
@@ -6046,11 +6030,10 @@ def test_nitf_online_16_openjpeg():
 
 
 def nitf_online_17(driver_to_test):
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf",
         "file9_j2c.ntf",
-    ):
-        pytest.skip()
+    )
 
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
@@ -6099,10 +6082,9 @@ def test_nitf_online_17_openjpeg():
 
 
 def test_nitf_online_18():
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/bugs/bug3337.ntf", "bug3337.ntf"
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/bug3337.ntf")
 
@@ -6151,10 +6133,9 @@ def test_nitf_online_18():
 
 def test_nitf_online_19():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/0000M033.GN3", "0000M033.GN3"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/0000M033.GN3", 1, 38928, filename_absolute=1
@@ -6180,10 +6161,9 @@ def test_nitf_online_19():
 
 def test_nitf_online_20():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/0000M033.GN3", "0000M033.GN3"
-    ):
-        pytest.skip()
+    )
 
     # check that the RPF attribute metadata was carried through.
     # Special case where the reported size of the attribute subsection is
@@ -6204,11 +6184,10 @@ def test_nitf_online_20():
 
 def test_nitf_online_21():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3321a.nsf",
         "ns3321a.nsf",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/ns3321a.nsf")
     md = ds.GetMetadata()
@@ -6225,11 +6204,10 @@ def test_nitf_online_21():
 
 def test_nitf_online_22():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0001C.NTF",
         "U_0001C.NTF",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("NITF_IM:1:tmp/cache/U_0001C.NTF")
     md = ds.GetMetadata()
@@ -6326,10 +6304,9 @@ def test_nitf_online_22():
 
 def test_nitf_online_23():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf", "U_3058b.ntf"
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF", "tmp/cache/U_3058b.ntf", 1, 44748, filename_absolute=1
@@ -6344,10 +6321,9 @@ def test_nitf_online_23():
 
 def test_nitf_online_24():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.falconview.org/trac/FalconView/downloads/17", "ECRG_Sample.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/ECRG_Sample.zip")
@@ -6380,11 +6356,10 @@ def test_nitf_online_24():
 
 def test_nitf_online_25():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.gwg.nga.mil/ntb/baseline/docs/HRE_spec/Case1_HRE10G324642N1170747W_Uxx.hr5",
         "Case1_HRE10G324642N1170747W_Uxx.hr5",
-    ):
-        pytest.skip()
+    )
 
     tst = gdaltest.GDALTest(
         "NITF",

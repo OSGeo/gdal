@@ -72,10 +72,9 @@ def setup_driver():
 
 @pytest.fixture()
 def download_test_data():
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip", "PGeoTest.zip"
-    ):
-        pytest.skip("Test data could not be downloaded")
+    )
 
     try:
         os.stat("tmp/cache/Autodesk Test.mdb")

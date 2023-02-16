@@ -42,11 +42,10 @@ def test_ogr_sosi_1():
     if ogr.GetDriverByName("SOSI") is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://trac.osgeo.org/gdal/raw-attachment/ticket/3638/20BygnAnlegg.SOS",
         "20BygnAnlegg.SOS",
-    ):
-        pytest.skip()
+    )
 
     import test_cli_utilities
 

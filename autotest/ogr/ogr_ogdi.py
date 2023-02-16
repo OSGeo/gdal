@@ -52,11 +52,10 @@ def test_ogr_ogdi_1():
     if ogrtest.ogdi_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://freefr.dl.sourceforge.net/project/ogdi/OGDI_Test_Suite/3.1/ogdits-3.1.0.zip",
         "ogdits-3.1.0.zip",
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/ogdits-3.1")

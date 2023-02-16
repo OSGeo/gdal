@@ -155,10 +155,9 @@ def test_ntv2_7():
 
 def test_ntv2_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/proj/nzgd2kgrid0005.gsb", "nzgd2kgrid0005.gsb"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/nzgd2kgrid0005.gsb")

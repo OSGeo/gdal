@@ -142,11 +142,10 @@ def pdf_checksum_available():
 
 
 def test_pdf_online_1(poppler_or_pdfium):
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.agc.army.mil/GeoPDFgallery/Imagery/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf",
         "Cherrydale_eDOQQ_1m_0_033_R1C1.pdf",
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/Cherrydale_eDOQQ_1m_0_033_R1C1.pdf")
