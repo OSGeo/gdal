@@ -461,8 +461,8 @@ const char *NSIDCbinRasterBand::GetUnitType()
     // undecided, atm stick with Byte but may switch to Float and lose values >
     // 250 or generalize to non-raw driver
     // https://lists.osgeo.org/pipermail/gdal-dev/2022-August/056144.html
-    if (eDataType == GDT_Float32)
-        return "Percentage";  // or "Fraction [0,1]"
+    // if (eDataType == GDT_Float32)
+    //     return "Percentage";  // or "Fraction [0,1]"
 
     // Byte values don't have a clear unit type
     return "";
