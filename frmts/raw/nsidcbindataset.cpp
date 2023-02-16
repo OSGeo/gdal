@@ -118,7 +118,7 @@ static const char *stripLeadingSpaces_nsidc(const char *buf)
 {
     const char *ptr = buf;
     /* Go until we run out of characters  or hit something non-zero */
-    while (*ptr == ' ' && *(ptr + 1) != '\0')
+    while (*ptr == ' ')
     {
         ptr++;
     }
