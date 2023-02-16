@@ -336,7 +336,7 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
 
     NSIDCbinRasterBand *poBand = new NSIDCbinRasterBand(
         poDS.get(), 1, poDS->fp, 300, nBytesPerSample, poDS->nRasterXSize,
-        poDS->eRasterDataType, CPL_IS_LSB);
+        GDT_Byte, CPL_IS_LSB);
     poDS->SetBand(1, poBand);
 
     if (CPLGetLastErrorType() != CE_None)
