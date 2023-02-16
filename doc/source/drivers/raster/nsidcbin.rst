@@ -21,8 +21,7 @@ both 25000m resolution polar stereographic grids centred on the north and south
 pole respectively. Metadata from the file including julian day and year are
 recorded.
 
-This driver is implemented based on the NSIDC documentation in the User Guide at
-<https://nsidc.org/data/nsidc-0051>.
+This driver is implemented based on the NSIDC documentation in the `User Guide <https://nsidc.org/data/nsidc-0051>`__.
 
 Band values are Byte, sea ice concentration (fractional coverage scaled by 250).
 
