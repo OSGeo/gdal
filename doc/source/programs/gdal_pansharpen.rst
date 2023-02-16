@@ -22,6 +22,7 @@ Synopsis
                     [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
                     [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]
                     [-spat_adjust {union,intersection,none,nonewithoutwarning}]
+                    [-msshift shiftx shifty]
                     [-co NAME=VALUE]* [-q]
 
 Description
@@ -76,6 +77,13 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
     Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`
+
+.. option:: -msshift <shiftx> <shifty>
+
+   Specify that the multispectral bands are offset by shiftx,shifty pixels
+   compared to the panchromatic band. e.g. -msshift 1 2 specifies that the top
+   left multispectral pixel corresponds to the top left of the panchromatic
+   pixel of row 2 and column 1.
 
 .. include:: options/co.rst
 
