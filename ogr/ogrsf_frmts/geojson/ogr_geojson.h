@@ -120,7 +120,6 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
-    GIntBig nNextFID_;
 
     bool IngestAll();
     void TerminateAppendSession();

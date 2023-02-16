@@ -199,6 +199,7 @@ class OGRGeoJSONReader : public OGRGeoJSONBaseReader
     VSILFILE *fp_;
     bool bCanEasilyAppend_;
     bool bFCHasBBOX_;
+    bool bOriginalIdModifiedEmitted_ = false;
 
     size_t nBufferSize_;
     GByte *pabyBuffer_;
