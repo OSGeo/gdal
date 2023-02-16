@@ -353,7 +353,7 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_11_X64" >> ${GITHUB_ENV}
       - name: Install python dependencies for autotest
         run: |
-          python -m pip install pytest-env
+          python -m pip install -r autotest/requirements.txt
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
       - name: Configure
@@ -424,7 +424,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre pcre2 postgresql \
@@ -533,7 +533,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache pytest pytest-env lxml
+        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache pytest pytest-env filelock lxml
     - name: Configure
       shell: bash -l {0}
       run: |
@@ -668,7 +668,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge libgdal
     - name: Configure
       shell: bash -l {0}

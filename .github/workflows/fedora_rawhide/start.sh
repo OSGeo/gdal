@@ -79,8 +79,7 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 (cd build_fedora_rawhide && SKIP_TESTVIRTUALMEM=YES make quicktest)
 
 # install pip and use it to install test dependencies
-#pip3 install -U -r autotest/requirements.txt
-pip3 install -U pytest pytest-sugar pytest-env
+pip3 install -U -r autotest/requirements.txt
 
 # test_virtualmem_1 and test_virtualmem_3 fail on CI
 mv autotest/gcore/virtualmem.py autotest/gcore/virtualmem.py.disabled

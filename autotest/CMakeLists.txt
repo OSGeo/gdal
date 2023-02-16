@@ -45,12 +45,8 @@ if (Python_Interpreter_FOUND)
   string(REPLACE ";" "\n   " TEST_ENV "${_TEST_ENV}")
 
   set(AUTOTEST_LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/autotest.log")
-  if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini)
-    # FIXME: remove this branch if we remove pytest.ini from source tree
-  else()
-    configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/conftest.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-  endif()
+  configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py COPYONLY)
 
   function (symlink_or_copy source destination)
 
@@ -164,13 +160,5 @@ int main(int argc, char **argv) {
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif ()
-
-  if (BUILD_PYTHON_BINDINGS AND NOT SKIP_RUN_SETUP_PROJ_DB_TMPDIR)
-      add_custom_target(
-          run_setup_proj_db_tmpdir
-          ALL
-          COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/setup_proj_db_tmpdir.py ${CMAKE_CURRENT_BINARY_DIR}
-          DEPENDS ${GDAL_LIB_TARGET_NAME} python_binding)
-  endif()
 
 endif ()
