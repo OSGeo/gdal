@@ -208,7 +208,7 @@ file). Performance will be the best in sequential reading.
 .. _vsirar:
 
 /vsirar/ (.rar archives)
-----------------------
+------------------------
 
 .. versionadded:: 3.7
 
