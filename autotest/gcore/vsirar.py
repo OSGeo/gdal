@@ -48,7 +48,9 @@ def test_vsirar_basic():
     assert set(content) == set(["poly.PRJ", "poly.dbf", "poly.shp", "poly.shx"])
 
     assert gdal.ReadDir("/vsirar/i_do/not/exist") is None
-    assert gdal.VSIFOpenL("/vsirar/../ogr/data/poly.shp.rar/i_do_not_exist", "rb") is None
+    assert (
+        gdal.VSIFOpenL("/vsirar/../ogr/data/poly.shp.rar/i_do_not_exist", "rb") is None
+    )
 
     f = gdal.VSIFOpenL("/vsirar/../ogr/data/poly.shp.rar/poly.PRJ", "rb")
     assert f is not None
