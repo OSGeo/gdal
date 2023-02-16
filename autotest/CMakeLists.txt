@@ -161,12 +161,4 @@ int main(int argc, char **argv) {
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif ()
 
-  if (BUILD_PYTHON_BINDINGS AND NOT SKIP_RUN_SETUP_PROJ_DB_TMPDIR)
-      add_custom_target(
-          run_setup_proj_db_tmpdir
-          ALL
-          COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/setup_proj_db_tmpdir.py ${CMAKE_CURRENT_BINARY_DIR}
-          DEPENDS ${GDAL_LIB_TARGET_NAME} python_binding)
-  endif()
-
 endif ()

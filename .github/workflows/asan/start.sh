@@ -83,7 +83,7 @@ SANITIZE_FLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=unsigned-integer-overflow -fno-
 mkdir build
 cd build
 export LDFLAGS="-fsanitize=undefined -fsanitize=address -shared-libasan -lstdc++"
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_CXX_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_TIFF_INTERNAL=ON -DFileGDB_ROOT:PATH=$PWD/../FileGDB_API-64gcc51 -DFileGDB_LIBRARY=/usr/lib/libFileGDBAPI.so -DSKIP_RUN_SETUP_PROJ_DB_TMPDIR=ON
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_CXX_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_TIFF_INTERNAL=ON -DFileGDB_ROOT:PATH=$PWD/../FileGDB_API-64gcc51 -DFileGDB_LIBRARY=/usr/lib/libFileGDBAPI.so
 make -j$NPROC
 
 sudo rm -f /usr/lib/libgdal.so*
@@ -124,10 +124,6 @@ export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/autote
 
 gdalinfo autotest/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
-
-# Normally run at 'make' stage for regular builds, but given this is an ASAN build,
-# python couldn't run without the above LD_PRELOAD. So run it manually
-python3 autotest/setup_proj_db_tmpdir.py build/autotest
 
 cd build/autotest
 
