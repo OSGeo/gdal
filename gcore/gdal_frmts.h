@@ -200,6 +200,7 @@ void CPL_DLL GDALRegister_OGCAPI(void);
 void CPL_DLL GDALRegister_STACTA(void);
 void CPL_DLL GDALRegister_Zarr(void);
 void CPL_DLL GDALRegister_STACIT(void);
+void CPL_DLL GDALRegister_NSIDCbin(void);
 void CPL_DLL GDALRegister_JPEGXL(void);
 void CPL_DLL GDALRegister_BASISU(void);
 void CPL_DLL GDALRegister_KTX2(void);

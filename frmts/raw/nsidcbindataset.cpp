@@ -99,7 +99,7 @@ class NSIDCbinDataset final : public GDALPamDataset
     VSILFILE *fp = nullptr;
     CPLString osSRS{};
     NSIDCbinHeader sHeader{};
-    GDALDataType eRasterDataType;
+
     double adfGeoTransform[6];
     CPL_DISALLOW_COPY_ASSIGN(NSIDCbinDataset)
     OGRSpatialReference m_oSRS{};
@@ -209,7 +209,7 @@ double NSIDCbinRasterBand::GetScale(int *pbSuccess)
 /************************************************************************/
 
 NSIDCbinDataset::NSIDCbinDataset()
-    : fp(nullptr), eRasterDataType(GDT_Unknown), m_oSRS(OGRSpatialReference())
+    : fp(nullptr), m_oSRS(OGRSpatialReference())
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;

@@ -423,11 +423,8 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ROIPAC();
     GDALRegister_RRASTER();
     GDALRegister_BYN();
-<<<<<<< HEAD
     GDALRegister_NOAA_B();
-=======
     GDALRegister_NSIDCbin();
->>>>>>> nsidc
 #endif
 
 #ifdef FRMT_arg
@@ -561,7 +558,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_STACIT();
 #endif
 
-<<<<<<< HEAD
 #ifdef FRMT_jpegxl
     GDALRegister_JPEGXL();
 #endif
@@ -570,9 +566,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_BASISU();
     GDALRegister_KTX2();
 #endif
-=======
-
->>>>>>> nsidc
 
     // NOTE: you need to generally insert your own driver before that line.
 
