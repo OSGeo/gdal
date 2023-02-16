@@ -67,7 +67,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer(const char *pszName,
                                  OGRGeoJSONReader *poReader)
     : OGRMemLayer(pszName, poSRSIn, eGType), poDS_(poDS), poReader_(poReader),
       bHasAppendedFeatures_(false), bUpdated_(false),
-      bOriginalIdModified_(false), nTotalFeatureCount_(0), nNextFID_(0)
+      bOriginalIdModified_(false), nTotalFeatureCount_(0)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable(poDS->IsUpdatable());
@@ -126,7 +126,6 @@ void OGRGeoJSONLayer::ResetReading()
     if (poReader_)
     {
         TerminateAppendSession();
-        nNextFID_ = 0;
         poReader_->ResetReading();
     }
     else
@@ -150,11 +149,6 @@ OGRFeature *OGRGeoJSONLayer::GetNextFeature()
             OGRFeature *poFeature = poReader_->GetNextFeature(this);
             if (poFeature == nullptr)
                 return nullptr;
-            if (poFeature->GetFID() == OGRNullFID)
-            {
-                poFeature->SetFID(nNextFID_);
-                nNextFID_++;
-            }
             if ((m_poFilterGeom == nullptr ||
                  FilterGeometry(
                      poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
@@ -232,7 +226,6 @@ bool OGRGeoJSONLayer::IngestAll()
         OGRGeoJSONReader *poReader = poReader_;
         poReader_ = nullptr;
 
-        nNextFID_ = 0;
         nTotalFeatureCount_ = -1;
         bool bRet = poReader->IngestAll(this);
         delete poReader;
@@ -497,7 +490,7 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
                     CE_Warning, CPLE_AppDefined,
                     "Several features with id = " CPL_FRMT_GIB " have been "
                     "found. Altering it to be unique. This warning will not "
-                    "be emitted for this layer",
+                    "be emitted anymore for this layer",
                     nFID);
                 bOriginalIdModified_ = true;
             }

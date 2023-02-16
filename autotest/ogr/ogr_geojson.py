@@ -4093,3 +4093,93 @@ def test_ogr_geojson_ogr2ogr_nln_with_input_dataset_having_name():
     assert ds.GetLayer(0).GetName() == "new_name"
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test reading a file with a id property with a mix of features where it is set
+# and others none
+
+
+@pytest.mark.parametrize("read_from_file", [True, False])
+def test_ogr_geojson_ids_0_1_null_unset(read_from_file):
+
+    connection_name = "data/geojson/ids_0_1_null_unset.json"
+    if not read_from_file:
+        connection_name = open(connection_name, "rb").read().decode("ascii")
+    ds = ogr.Open(connection_name)
+    assert ds
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 0
+    assert f["id"] == 0
+    assert f["seq"] == 0
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["id"] == 1
+    assert f["seq"] == 1
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 2
+    assert f["id"] is None
+    assert f["seq"] == 2
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 3
+    assert not f.IsFieldSet("id")
+    assert f["seq"] == 3
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    for i in range(4):
+        f = lyr.GetFeature(i)
+        assert f.GetFID() == i
+        assert f["seq"] == i
+
+
+###############################################################################
+# Test reading a file with a id property with a mix of features where it is set
+# and others none, and a conflicting id
+
+
+@pytest.mark.parametrize("read_from_file", [True, False])
+def test_ogr_geojson_ids_0_1_null_1_null(read_from_file):
+
+    connection_name = "data/geojson/ids_0_1_null_1_null.json"
+    if not read_from_file:
+        connection_name = open(connection_name, "rb").read().decode("ascii")
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        ds = ogr.Open(connection_name)
+        assert ds
+        if not read_from_file:
+            assert gdal.GetLastErrorType() == gdal.CE_Warning
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
+        assert f["id"] == 0
+        assert f["seq"] == 0
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 1
+        assert f["id"] == 1
+        assert f["seq"] == 1
+        f = lyr.GetNextFeature()
+        if read_from_file:
+            assert gdal.GetLastErrorType() == gdal.CE_Warning
+        assert f.GetFID() == 2
+        assert f["id"] is None
+        assert f["seq"] == 2
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 3
+        assert f["id"] == 1
+        assert f["seq"] == 3
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 4
+        assert f["id"] is None
+        assert f["seq"] == 4
+        f = lyr.GetNextFeature()
+        assert f is None
+
+    gdal.ErrorReset()
+    for i in range(5):
+        f = lyr.GetFeature(i)
+        assert f.GetFID() == i
+        assert f["seq"] == i
+    assert gdal.GetLastErrorType() == gdal.CE_None
