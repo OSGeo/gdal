@@ -4224,3 +4224,23 @@ def test_ogr_geojson_ids_0_1_null_1_null(read_from_file):
         assert f.GetFID() == i
         assert f["seq"] == i
     assert gdal.GetLastErrorType() == gdal.CE_None
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_geojson_test_ogrsf():
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -ro data/geojson/ids_0_1_null_1_null.json"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
