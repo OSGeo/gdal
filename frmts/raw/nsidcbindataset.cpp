@@ -331,7 +331,6 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
     int nBytesPerSample = 1;
-    poDS->eRasterDataType = GDT_Byte;
 
     CPLErrorReset();
 
