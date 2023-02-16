@@ -8,7 +8,7 @@ NSIDCbin -- National Snow and Ice Data Centre Sea Ice Concentrations
 
 .. built_in_by_default::
 
-.. versionadded:: 3.6
+.. versionadded:: 3.7
 
 
 Supported by GDAL for read access. This format is a raw binary format for the
