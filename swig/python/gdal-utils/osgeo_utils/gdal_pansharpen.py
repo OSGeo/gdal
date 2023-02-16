@@ -55,7 +55,7 @@ def Usage():
         "                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]"
     )
     print(
-        "                       [-msshift xshift yshift]"
+        "                       [-ms_shift shiftx shifty]"
     )
     print("                       [-verbose_vrt] [-co NAME=VALUE]* [-q]")
     print("")
@@ -83,8 +83,8 @@ def main(argv=sys.argv):
     num_threads = None
     bitdepth = None
     nodata_value = None
-    msshiftx = None
-    msshifty = None
+    ms_shiftx = None
+    ms_shifty = None
 
     i = 1
     argc = len(argv)
@@ -116,9 +116,9 @@ def main(argv=sys.argv):
         elif argv[i] == "-nodata" and i < len(argv) - 1:
             nodata_value = argv[i + 1]
             i = i + 1
-        elif argv[i] == "-msshift" and i < len(argv) - 2:
-            msshiftx = argv[i + 1]
-            msshifty = argv[i + 2]
+        elif argv[i] == "-ms_shift" and i < len(argv) - 2:
+            ms_shiftx = argv[i + 1]
+            ms_shifty = argv[i + 2]
             i = i + 2
         elif argv[i] == "-q":
             progress_callback = None
@@ -154,8 +154,8 @@ def main(argv=sys.argv):
         num_threads=num_threads,
         bitdepth=bitdepth,
         nodata_value=nodata_value,
-        msshiftx=msshiftx,
-        msshifty=msshifty,
+        ms_shiftx=ms_shiftx,
+        ms_shifty=ms_shifty,
         verbose_vrt=verbose_vrt,
         progress_callback=progress_callback,
     )
@@ -177,8 +177,8 @@ def gdal_pansharpen(
     num_threads: Optional[Union[int, str]] = None,
     bitdepth: Optional[Union[int, str]] = None,
     nodata_value: Optional[Union[Real, str]] = None,
-    msshiftx: Optional[float] = None,
-    msshifty: Optional[float] = None,
+    ms_shiftx: Optional[float] = None,
+    ms_shifty: Optional[float] = None,
     verbose_vrt: bool = False,
     progress_callback: Optional = gdal.TermProgress_nocb,
 ):
@@ -264,11 +264,11 @@ def gdal_pansharpen(
         vrt_xml += (
             f"      <SpatialExtentAdjustment>{spat_adjust}</SpatialExtentAdjustment>\n"
         )
-    if msshiftx is not None:
-        vrt_xml += '      <MSShiftX>%s</MSShiftX>\n' % msshiftx
+    if ms_shiftx is not None:
+        vrt_xml += '      <MSShiftX>%s</MSShiftX>\n' % ms_shiftx
 
-    if msshifty is not None:
-        vrt_xml += '      <MSShiftY>%s</MSShiftY>\n' % msshifty
+    if ms_shifty is not None:
+        vrt_xml += '      <MSShiftY>%s</MSShiftY>\n' % ms_shifty
 
     pan_relative = "0"
     if driver_name.upper() == "VRT":
