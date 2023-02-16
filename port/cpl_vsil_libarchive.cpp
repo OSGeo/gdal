@@ -193,8 +193,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
 
   public:
     VSILibArchiveReader(const char *pszArchiveFileName,
-                        struct archive *pArchive,
-                        const std::string &osPrefix)
+                        struct archive *pArchive, const std::string &osPrefix)
         : m_osArchiveFileName(pszArchiveFileName), m_pArchive(pArchive),
           m_osPrefix(osPrefix)
     {

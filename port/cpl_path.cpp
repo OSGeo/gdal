@@ -510,8 +510,7 @@ static bool RequiresUnixPathSeparator(const char *pszPath)
            STARTS_WITH(pszPath, "/vsiswift/") ||
            STARTS_WITH(pszPath, "/vsiswift_streaming/") ||
            STARTS_WITH(pszPath, "/vsizip/") ||
-           STARTS_WITH(pszPath, "/vsi7z/") ||
-           STARTS_WITH(pszPath, "/vsirar/");
+           STARTS_WITH(pszPath, "/vsi7z/") || STARTS_WITH(pszPath, "/vsirar/");
 }
 #endif
 
