@@ -953,6 +953,13 @@ static
 {
     register int vi, ui;
 
+    /* check for NaN */
+    if (u != u || v != v)
+    {
+        u = U_NEU;
+        v = V_NEU;
+    }
+
     if (v < UV_VSTART)
         return oog_encode(u, v);
     vi = tiff_itrunc((v - UV_VSTART) * (1. / UV_SQSIZ), em);

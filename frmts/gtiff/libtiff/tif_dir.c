@@ -2143,6 +2143,13 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
                       "Can not unlink directory in read-only file");
         return (0);
     }
+    if (dirn == 0)
+    {
+        TIFFErrorExtR(tif, module,
+                      "For TIFFUnlinkDirectory() first directory starts with "
+                      "number 1 and not 0");
+        return (0);
+    }
     /*
      * Go to the directory before the one we want
      * to unlink and nab the offset of the link
@@ -2205,6 +2212,17 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
             return (0);
         }
     }
+
+    /* For dirn=1 (first directory) also update the libtiff internal
+     * base offset variables. */
+    if (dirn == 1)
+    {
+        if (!(tif->tif_flags & TIFF_BIGTIFF))
+            tif->tif_header.classic.tiff_diroff = (uint32_t)nextdir;
+        else
+            tif->tif_header.big.tiff_diroff = nextdir;
+    }
+
     /*
      * Leave directory state setup safely.  We don't have
      * facilities for doing inserting and removing directories,
