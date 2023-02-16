@@ -49,28 +49,6 @@ void VSIInstall7zFileHandler(void)
     // dummy
 }
 
-#ifndef HAVE_BLAKE2
-
-/************************************************************************/
-/*                    VSIInstallRarFileHandler()                         */
-/************************************************************************/
-
-/*!
- \brief Install /vsirar/ rar file system handler (requires libarchive)
-
- \verbatim embed:rst
- See :ref:`/vsirar/ documentation <vsirar>`
- \endverbatim
-
- @since GDAL 3.7
- */
-void VSIInstallRarFileHandler(void)
-{
-    // dummy
-}
-
-#endif
-
 #else
 
 //! @cond Doxygen_Suppress
@@ -477,7 +455,14 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     }
     virtual std::vector<CPLString> GetExtensions() override
     {
-        return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx", ".rar"};
+        if (m_osPrefix == "/vsi7z")
+        {
+            return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx"};
+        }
+        else
+        {
+            return {".rar"};
+        }
     }
     virtual VSIArchiveReader *
     CreateReader(const char *pszArchiveFileName) override;
@@ -576,8 +561,6 @@ void VSIInstall7zFileHandler(void)
         "/vsi7z/", new VSILibArchiveFilesystemHandler("/vsi7z"));
 }
 
-#ifdef HAVE_BLAKE2
-
 /************************************************************************/
 /*                    VSIInstallRarFileHandler()                         */
 /************************************************************************/
@@ -593,10 +576,10 @@ void VSIInstall7zFileHandler(void)
  */
 void VSIInstallRarFileHandler(void)
 {
+#ifdef HAVE_BLAKE2
     VSIFileManager::InstallHandler(
         "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
-}
-
 #endif
+}
 
 #endif
