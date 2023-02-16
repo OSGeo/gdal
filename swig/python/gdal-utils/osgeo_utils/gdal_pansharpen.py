@@ -54,9 +54,7 @@ def Usage():
     print(
         "                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]"
     )
-    print(
-        "                       [-ms_shift shiftx shifty]"
-    )
+    print("                       [-ms_shift shiftx shifty]")
     print("                       [-verbose_vrt] [-co NAME=VALUE]* [-q]")
     print("")
     print("Create a dataset resulting from a pansharpening operation.")
@@ -265,10 +263,10 @@ def gdal_pansharpen(
             f"      <SpatialExtentAdjustment>{spat_adjust}</SpatialExtentAdjustment>\n"
         )
     if ms_shiftx is not None:
-        vrt_xml += '      <MSShiftX>%s</MSShiftX>\n' % ms_shiftx
+        vrt_xml += "      <MSShiftX>%s</MSShiftX>\n" % ms_shiftx
 
     if ms_shifty is not None:
-        vrt_xml += '      <MSShiftY>%s</MSShiftY>\n' % ms_shifty
+        vrt_xml += "      <MSShiftY>%s</MSShiftY>\n" % ms_shifty
 
     pan_relative = "0"
     if driver_name.upper() == "VRT":
