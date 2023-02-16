@@ -1,3 +1,5 @@
+; @PYTEST_INI_HEADER_MESSAGE@
+
 [pytest]
 python_files = *.py
 testpaths = ogr gcore gdrivers osr alg gnm utilities pyscripts

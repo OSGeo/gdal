@@ -45,8 +45,10 @@ if (Python_Interpreter_FOUND)
   string(REPLACE ";" "\n   " TEST_ENV "${_TEST_ENV}")
 
   set(AUTOTEST_LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/autotest.log")
+  set(PYTEST_INI_HEADER_MESSAGE "This file was generated from ${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in using ${CMAKE_CURRENT_LIST_FILE}")
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py COPYONLY)
+  unset(PYTEST_INI_HEADER_MESSAGE)
 
   function (symlink_or_copy source destination)
 
