@@ -48,6 +48,12 @@ jobs:
           ldconfig
           popd
 
+    - name: Pin sphinx version
+      # Avoid https://github.com/sphinx-doc/sphinx/issues/11163
+      shell: bash -l {0}
+      run: |
+          python3 -m pip install --user "sphinx==6.0.1"
+
     - name: Print versions
       shell: bash -l {0}
       run: |
