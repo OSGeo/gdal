@@ -206,11 +206,6 @@ if (GDAL_USE_ARCHIVE)
   gdal_target_link_libraries(cpl PRIVATE ARCHIVE::ARCHIVE)
 endif ()
 
-if (GDAL_USE_BLAKE2)
-  target_compile_definitions(cpl PRIVATE -DHAVE_BLAKE2)
-  gdal_target_link_libraries(cpl PRIVATE BLAKE2::BLAKE2)
-endif ()
-
 if (GDAL_USE_CURL)
   target_compile_definitions(cpl PRIVATE -DHAVE_CURL)
   gdal_target_link_libraries(cpl PRIVATE CURL::libcurl)

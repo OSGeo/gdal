@@ -49,6 +49,24 @@ void VSIInstall7zFileHandler(void)
     // dummy
 }
 
+/************************************************************************/
+/*                    VSIInstallRarFileHandler()                         */
+/************************************************************************/
+
+/*!
+ \brief Install /vsirar/ RAR file system handler (requires libarchive)
+
+ \verbatim embed:rst
+ See :ref:`/vsirar/ documentation <vsirar>`
+ \endverbatim
+
+ @since GDAL 3.7
+ */
+void VSIInstallRarFileHandler(void)
+{
+    // dummy
+}
+
 #else
 
 //! @cond Doxygen_Suppress
@@ -237,10 +255,8 @@ int VSILibArchiveReader::GotoFirstFile()
         }
         else
         {
-#ifdef HAVE_BLAKE2
             archive_read_support_format_rar(m_pArchive);
             archive_read_support_format_rar5(m_pArchive);
-#endif
         }
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
@@ -524,10 +540,8 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
     }
     else
     {
-#ifdef HAVE_BLAKE2
         archive_read_support_format_rar(pArchive);
         archive_read_support_format_rar5(pArchive);
-#endif
     }
 
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
@@ -576,10 +590,8 @@ void VSIInstall7zFileHandler(void)
  */
 void VSIInstallRarFileHandler(void)
 {
-#ifdef HAVE_BLAKE2
     VSIFileManager::InstallHandler(
         "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
-#endif
 }
 
 #endif
