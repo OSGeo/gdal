@@ -205,6 +205,36 @@ Note that random seeking within a large compressed file will be inefficient when
 backward seeking is needed (decompression will be restarted from the start of the
 file). Performance will be the best in sequential reading.
 
+.. _vsirar:
+
+/vsirar/ (.rar archives)
+----------------------
+
+.. versionadded:: 3.7
+
+/vsirar/ is a file handler that allows reading `RAR <https://en.wikipedia.org/wiki/RAR_(file_format)>`__
+archives on-the-fly without decompressing them beforehand. This file system is
+read-only. Directory listing and :cpp:func:`VSIStatL` are available, similarly
+to above mentioned file systems.
+
+It requires GDAL to be built against `libarchive <https://libarchive.org/>`__
+(and libarchive having LZMA support to be of practical use).
+
+To point to a file inside a RAR file, the filename must be of the form
+:file:`/vsirar/path/to/the/file.rar/path/inside/the/rar/file`, where
+:file:`path/to/the/file.rar` is relative or absolute and :file:`path/inside/the/rar/file`
+is the relative path to the file inside the archive.`
+
+The default extension recognized by this virtual file system is: ``rar``
+
+An alternate syntax is available so as to enable chaining and not being
+dependent on those extensions, e.g.: :file:`/vsirar/{/path/to/the/archive}/path/inside/the/archive`.
+Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+
+Note that random seeking within a large compressed file will be inefficient when
+backward seeking is needed (decompression will be restarted from the start of the
+file). Performance will be the best in sequential reading.
+
 Network based file systems
 --------------------------
 
