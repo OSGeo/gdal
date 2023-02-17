@@ -44,6 +44,9 @@
 #define TIFFTAG_JXL_DISTANCE                                                   \
     65537 /* Sets the distance level for lossy compression: target max         \
              butteraugli distance, lower = higher quality. Range: 0 .. 15. */
+#define TIFFTAG_JXL_ALPHA_DISTANCE                                             \
+    65538 /* Sets the distance level for compression of alpha channel: target  \
+             max butteraugli distance, lower = higher quality. Range: 0 .. 15.*/
 #endif
 
 #if defined(__cplusplus)

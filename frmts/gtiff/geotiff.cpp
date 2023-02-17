@@ -428,6 +428,7 @@ class GTiffDataset final : public GDALPamDataset
 #if HAVE_JXL
     bool m_bJXLLossless = true;
     float m_fJXLDistance = 1.0f;
+    float m_fJXLAlphaDistance = -1.0f;  // -1 = same as non-alpha channel
     uint32_t m_nJXLEffort = 5;
 #endif
     double m_dfNoDataValue = DEFAULT_NODATA_VALUE;
@@ -12692,6 +12693,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
 #ifdef HAVE_JXL
     poODS->m_bJXLLossless = m_bJXLLossless;
     poODS->m_fJXLDistance = m_fJXLDistance;
+    poODS->m_fJXLAlphaDistance = m_fJXLAlphaDistance;
     poODS->m_nJXLEffort = m_nJXLEffort;
 #endif
 
@@ -14363,6 +14365,12 @@ static float GTiffGetJXLDistance(CSLConstList papszOptions)
         CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
 }
 
+static float GTiffGetJXLAlphaDistance(CSLConstList papszOptions)
+{
+    return static_cast<float>(CPLAtof(
+        CSLFetchNameValueDef(papszOptions, "JXL_ALPHA_DISTANCE", "-1.0")));
+}
+
 #endif
 
 /************************************************************************/
@@ -14574,6 +14582,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 #if HAVE_JXL
         else if (pszCompress && EQUAL(pszCompress, "JXL"))
         {
+            float fDistance = 0.0f;
             if (GTiffGetJXLLossless(l_papszCreationOptions))
             {
                 AppendMetadataItem(&psRoot, &psTail,
@@ -14582,11 +14591,18 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             }
             else
             {
-                AppendMetadataItem(
-                    &psRoot, &psTail, "JXL_DISTANCE",
-                    CPLSPrintf("%f",
-                               GTiffGetJXLDistance(l_papszCreationOptions)),
-                    0, nullptr, "IMAGE_STRUCTURE");
+                fDistance = GTiffGetJXLDistance(l_papszCreationOptions);
+                AppendMetadataItem(&psRoot, &psTail, "JXL_DISTANCE",
+                                   CPLSPrintf("%f", fDistance), 0, nullptr,
+                                   "IMAGE_STRUCTURE");
+            }
+            const float fAlphaDistance =
+                GTiffGetJXLAlphaDistance(l_papszCreationOptions);
+            if (fAlphaDistance >= 0.0f && fAlphaDistance != fDistance)
+            {
+                AppendMetadataItem(&psRoot, &psTail, "JXL_ALPHA_DISTANCE",
+                                   CPLSPrintf("%f", fAlphaDistance), 0, nullptr,
+                                   "IMAGE_STRUCTURE");
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
@@ -15009,6 +15025,8 @@ void GTiffDataset::RestoreVolatileParameters(TIFF *hTIFF)
                          m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
             TIFFSetField(hTIFF, TIFFTAG_JXL_EFFORT, m_nJXLEffort);
             TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, m_fJXLDistance);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
+                         m_fJXLAlphaDistance);
         }
 #endif
     }
@@ -17398,6 +17416,18 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     }
                 }
                 else if (m_nCompression == COMPRESSION_JXL &&
+                         EQUAL(pszKey, "JXL_ALPHA_DISTANCE"))
+                {
+                    const double dfVal = CPLAtof(pszValue);
+                    if (dfVal > 0 && dfVal <= 15)
+                    {
+                        m_oGTiffMDMD.SetMetadataItem(
+                            "COMPRESSION_REVERSIBILITY", "LOSSY",
+                            "IMAGE_STRUCTURE");
+                        m_fJXLAlphaDistance = static_cast<float>(dfVal);
+                    }
+                }
+                else if (m_nCompression == COMPRESSION_JXL &&
                          EQUAL(pszKey, "JXL_EFFORT"))
                 {
                     const int nEffort = atoi(pszValue);
@@ -18847,6 +18877,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     const bool l_bJXLLossless = GTiffGetJXLLossless(papszParamList);
     const uint32_t l_nJXLEffort = GTiffGetJXLEffort(papszParamList);
     const float l_fJXLDistance = GTiffGetJXLDistance(papszParamList);
+    const float l_fJXLAlphaDistance = GTiffGetJXLAlphaDistance(papszParamList);
 #endif
     /* -------------------------------------------------------------------- */
     /*      Streaming related code                                          */
@@ -19359,6 +19390,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                      l_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, l_nJXLEffort);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, l_fJXLDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE, l_fJXLAlphaDistance);
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
@@ -20055,6 +20087,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->m_bJXLLossless = GTiffGetJXLLossless(papszParamList);
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszParamList);
     poDS->m_fJXLDistance = GTiffGetJXLDistance(papszParamList);
+    poDS->m_fJXLAlphaDistance = GTiffGetJXLAlphaDistance(papszParamList);
 #endif
     poDS->InitCreationOrOpenOptions(true, papszParamList);
 
@@ -21348,6 +21381,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     poDS->m_bJXLLossless = GTiffGetJXLLossless(papszOptions);
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszOptions);
     poDS->m_fJXLDistance = GTiffGetJXLDistance(papszOptions);
+    poDS->m_fJXLAlphaDistance = GTiffGetJXLAlphaDistance(papszOptions);
 #endif
     poDS->InitCreationOrOpenOptions(true, papszOptions);
 
@@ -21395,6 +21429,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                      poDS->m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_EFFORT, poDS->m_nJXLEffort);
         TIFFSetField(l_hTIFF, TIFFTAG_JXL_DISTANCE, poDS->m_fJXLDistance);
+        TIFFSetField(l_hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE,
+                     poDS->m_fJXLAlphaDistance);
     }
 #endif
     if (l_nCompression == COMPRESSION_WEBP)
@@ -22542,6 +22578,10 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         {
             return CPLSPrintf("%f", m_fJXLDistance);
         }
+        else if (EQUAL(pszName, "JXL_ALPHA_DISTANCE"))
+        {
+            return CPLSPrintf("%f", m_fJXLAlphaDistance);
+        }
         else if (EQUAL(pszName, "JXL_EFFORT"))
         {
             return CPLSPrintf("%u", m_nJXLEffort);
@@ -23591,6 +23631,13 @@ void GDALRegister_GTiff()
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+#ifdef HAVE_JxlEncoderSetExtraChannelDistance
+    osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
+                 "description='Distance level for alpha channel "
+                 "(-1=same as non-alpha channels, "
+                 "0=mathematically lossless, 1.0=visually lossless, "
+                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+#endif
 #endif
     osOptions +=
         ""

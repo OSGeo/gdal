@@ -1686,3 +1686,30 @@ def test_cog_write_jpegxl_alpha():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test JXL_ALPHA_DISTANCE creation option
+
+
+def test_cog_write_jpegxl_alpha_distance_zero():
+
+    drv = gdal.GetDriverByName("COG")
+    md = drv.GetMetadata()
+    if "JXL_ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
+        pytest.skip("libjxl > 0.8.1 required")
+
+    src_ds = gdal.Open("data/stefan_full_rgba.tif")
+    filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
+    drv.CreateCopy(
+        filename,
+        src_ds,
+        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
+    )
+    ds = gdal.Open(filename)
+    assert float(ds.GetMetadataItem("JXL_ALPHA_DISTANCE", "IMAGE_STRUCTURE")) == 0
+    assert ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    gdal.Unlink(filename)

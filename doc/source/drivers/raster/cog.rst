@@ -91,6 +91,12 @@ General creation options
    0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
    Default is 1.0
 
+-  **JXL_ALPHA_DISTANCE=[-1,0,0.1-15]**: (GDAL >= 3.7, libjxl > 0.8.1)
+   Distance level for alpha channel for lossy JPEG-XL compression.
+   -1=same as non-alpha channels, 0=mathematically lossless,
+   1.0=visually lossless, usual range [0.5,3].
+   Default is -1.0
+
 -  **NUM_THREADS=number_of_threads/ALL_CPUS**: Enable
    multi-threaded compression by specifying the number of worker
    threads. Default is compression in the main thread. This also determines

@@ -506,6 +506,12 @@ Creation Options
    0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
    Default is 1.0
 
+-  **JXL_ALPHA_DISTANCE=[-1,0,0.1-15]**: (GDAL >= 3.7, libjxl > 0.8.1)
+   Distance level for alpha channel for lossy JPEG-XL compression.
+   -1=same as non-alpha channels, 0=mathematically lossless,
+   1.0=visually lossless, usual range [0.5,3].
+   Default is -1.0
+
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if
    the input image has 3 or 4 bands of Byte type, then RGB will be

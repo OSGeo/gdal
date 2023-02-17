@@ -1109,12 +1109,13 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
 
     if (STARTS_WITH_CI(osCompress, "JXL"))
     {
-        aosOptions.SetNameValue(
-            "JXL_LOSSLESS", CSLFetchNameValue(papszOptions, "JXL_LOSSLESS"));
-        aosOptions.SetNameValue("JXL_EFFORT",
-                                CSLFetchNameValue(papszOptions, "JXL_EFFORT"));
-        aosOptions.SetNameValue(
-            "JXL_DISTANCE", CSLFetchNameValue(papszOptions, "JXL_DISTANCE"));
+        for (const char *pszKey : {"JXL_LOSSLESS", "JXL_EFFORT", "JXL_DISTANCE",
+                                   "JXL_ALPHA_DISTANCE"})
+        {
+            const char *pszValue = CSLFetchNameValue(papszOptions, pszKey);
+            if (pszValue)
+                aosOptions.SetNameValue(pszKey, pszValue);
+        }
     }
 
     aosOptions.SetNameValue("BIGTIFF",
@@ -1367,6 +1368,13 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+#ifdef HAVE_JxlEncoderSetExtraChannelDistance
+    osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
+                 "description='Distance level for alpha channel "
+                 "(-1=same as non-alpha channels, "
+                 "0=mathematically lossless, 1.0=visually lossless, "
+                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+#endif
 #endif
     osOptions +=
         "   <Option name='NUM_THREADS' type='string' "
