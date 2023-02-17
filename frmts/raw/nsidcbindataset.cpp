@@ -208,8 +208,7 @@ double NSIDCbinRasterBand::GetScale(int *pbSuccess)
 /*                            NSIDCbinDataset()                         */
 /************************************************************************/
 
-NSIDCbinDataset::NSIDCbinDataset()
-    : fp(nullptr), m_oSRS(OGRSpatialReference())
+NSIDCbinDataset::NSIDCbinDataset() : fp(nullptr), m_oSRS(OGRSpatialReference())
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -334,9 +333,9 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLErrorReset();
 
-    NSIDCbinRasterBand *poBand = new NSIDCbinRasterBand(
-        poDS.get(), 1, poDS->fp, 300, nBytesPerSample, poDS->nRasterXSize,
-        GDT_Byte, CPL_IS_LSB);
+    NSIDCbinRasterBand *poBand =
+        new NSIDCbinRasterBand(poDS.get(), 1, poDS->fp, 300, nBytesPerSample,
+                               poDS->nRasterXSize, GDT_Byte, CPL_IS_LSB);
     poDS->SetBand(1, poBand);
 
     if (CPLGetLastErrorType() != CE_None)
