@@ -1216,15 +1216,15 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Set Projection Information                                      */
     /* -------------------------------------------------------------------- */
-    
+
     pszOption = CSLFetchNameValue(papszOptions, "SPATIALREFERENCE");
     if (pszOption != nullptr)
     {
-     if (poDS->m_oSRS.SetFromUserInput(pszOption) != OGRERR_NONE) 
-     {
-       CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized crs: %s",
-                 pszOption);
-      }
+        if (poDS->m_oSRS.SetFromUserInput(pszOption) != OGRERR_NONE)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized crs: %s",
+                     pszOption);
+        }
     }
     /* -------------------------------------------------------------------- */
     /*      Try to return a regular handle on the file.                     */
