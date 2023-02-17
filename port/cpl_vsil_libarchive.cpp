@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  CPL - Common Portability Library
- * Purpose:  Implement VSI large file api for /vsi7z/
+ * Purpose:  Implement VSI large file api for /vsi7z/ and /vsirar/
  * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
@@ -45,6 +45,24 @@
  @since GDAL 3.7
  */
 void VSIInstall7zFileHandler(void)
+{
+    // dummy
+}
+
+/************************************************************************/
+/*                    VSIInstallRarFileHandler()                         */
+/************************************************************************/
+
+/*!
+ \brief Install /vsirar/ RAR file system handler (requires libarchive)
+
+ \verbatim embed:rst
+ See :ref:`/vsirar/ documentation <vsirar>`
+ \endverbatim
+
+ @since GDAL 3.7
+ */
+void VSIInstallRarFileHandler(void)
 {
     // dummy
 }
@@ -167,6 +185,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
 
     std::string m_osArchiveFileName;
     struct archive *m_pArchive;
+    std::string m_osPrefix;
     bool m_bFirst = true;
     std::string m_osFilename{};
     GUIntBig m_nFilesize = 0;
@@ -174,8 +193,9 @@ class VSILibArchiveReader final : public VSIArchiveReader
 
   public:
     VSILibArchiveReader(const char *pszArchiveFileName,
-                        struct archive *pArchive)
-        : m_osArchiveFileName(pszArchiveFileName), m_pArchive(pArchive)
+                        struct archive *pArchive, const std::string &osPrefix)
+        : m_osArchiveFileName(pszArchiveFileName), m_pArchive(pArchive),
+          m_osPrefix(osPrefix)
     {
     }
     ~VSILibArchiveReader() override;
@@ -227,7 +247,16 @@ int VSILibArchiveReader::GotoFirstFile()
         archive_free(m_pArchive);
 
         m_pArchive = archive_read_new();
-        archive_read_support_format_7zip(m_pArchive);
+
+        if (m_osPrefix == "/vsi7z")
+        {
+            archive_read_support_format_7zip(m_pArchive);
+        }
+        else
+        {
+            archive_read_support_format_rar(m_pArchive);
+            archive_read_support_format_rar5(m_pArchive);
+        }
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
         {
@@ -441,7 +470,14 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     }
     virtual std::vector<CPLString> GetExtensions() override
     {
-        return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx"};
+        if (m_osPrefix == "/vsi7z")
+        {
+            return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx"};
+        }
+        else
+        {
+            return {".rar"};
+        }
     }
     virtual VSIArchiveReader *
     CreateReader(const char *pszArchiveFileName) override;
@@ -497,7 +533,16 @@ VSIArchiveReader *
 VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
 {
     auto pArchive = archive_read_new();
-    archive_read_support_format_7zip(pArchive);
+    if (m_osPrefix == "/vsi7z")
+    {
+        archive_read_support_format_7zip(pArchive);
+    }
+    else
+    {
+        archive_read_support_format_rar(pArchive);
+        archive_read_support_format_rar5(pArchive);
+    }
+
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
     {
         CPLDebug("VSIARCH", "%s: %s", pszArchiveFileName,
@@ -505,7 +550,7 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
         archive_read_free(pArchive);
         return nullptr;
     }
-    return new VSILibArchiveReader(pszArchiveFileName, pArchive);
+    return new VSILibArchiveReader(pszArchiveFileName, pArchive, m_osPrefix);
 }
 
 //! @endcond
@@ -527,6 +572,25 @@ void VSIInstall7zFileHandler(void)
 {
     VSIFileManager::InstallHandler(
         "/vsi7z/", new VSILibArchiveFilesystemHandler("/vsi7z"));
+}
+
+/************************************************************************/
+/*                    VSIInstallRarFileHandler()                         */
+/************************************************************************/
+
+/*!
+ \brief Install /vsirar/ rar file system handler (requires libarchive)
+
+ \verbatim embed:rst
+ See :ref:`/vsirar/ documentation <vsirar>`
+ \endverbatim
+
+ @since GDAL 3.7
+ */
+void VSIInstallRarFileHandler(void)
+{
+    VSIFileManager::InstallHandler(
+        "/vsirar/", new VSILibArchiveFilesystemHandler("/vsirar"));
 }
 
 #endif

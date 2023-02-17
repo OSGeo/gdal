@@ -218,11 +218,13 @@ retry:  // TODO(schwehr): Stop using goto.
      * system */
     if (STARTS_WITH(pszFilename, "/vsizip/") ||
         STARTS_WITH(pszFilename, "/vsitar/") ||
-        STARTS_WITH(pszFilename, "/vsi7z/"))
+        STARTS_WITH(pszFilename, "/vsi7z/") ||
+        STARTS_WITH(pszFilename, "/vsirar/"))
     {
         const char *pszExt = CPLGetExtension(pszFilename);
         if (EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") ||
             EQUAL(pszExt, "gz") || EQUAL(pszExt, "7z") ||
+            EQUAL(pszExt, "rar") ||
             pszFilename[strlen(pszFilename) - 1] == '}'
 #ifdef DEBUG
             // For AFL, so that .cur_input is detected as the archive filename.

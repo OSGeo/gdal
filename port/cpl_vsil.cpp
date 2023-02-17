@@ -3079,6 +3079,7 @@ VSIFileManager *VSIFileManager::Get()
 #endif
 #ifdef HAVE_LIBARCHIVE
     VSIInstall7zFileHandler();
+    VSIInstallRarFileHandler();
 #endif
 #ifdef HAVE_CURL
     VSIInstallCurlFileHandler();
