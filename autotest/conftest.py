@@ -137,3 +137,18 @@ def pytest_collection_modifyitems(config, items):
         if not gdal.GetConfigOption("RUN_ON_DEMAND"):
             for mark in item.iter_markers("require_run_on_demand"):
                 item.add_marker(skip_run_on_demand_not_set)
+
+
+def pytest_addoption(parser):
+    parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
+
+
+def pytest_configure(config):
+    test_version = config.getini("gdal_version")
+    lib_version = gdal.__version__
+
+    if not lib_version.startswith(test_version):
+        raise Exception(
+            f"Attempting to run tests for GDAL {test_version} but library version is "
+            f"{lib_version}. Do you need to run setdevenv.sh ?"
+        )
