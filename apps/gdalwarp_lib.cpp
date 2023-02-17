@@ -546,34 +546,41 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
         double adfGT[6];
         if (GDALGetGeoTransform(pahSrcDS[0], adfGT) == CE_None)
         {
+            // We allow for a relative error in coordinates up to 0.1% of the
+            // pixel size for rounding purposes.
+            constexpr double REL_EPS_PIXEL = 1e-3;
             if (CPLFetchBool(papszWarpOptions, "CUTLINE_ALL_TOUCHED", false))
             {
                 // All touched ? Then make the extent a bit larger than the
                 // cutline envelope
-                dfMinX =
-                    adfGT[0] +
-                    floor((dfMinX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                dfMinX = adfGT[0] +
+                         floor((dfMinX - adfGT[0]) / adfGT[1] + REL_EPS_PIXEL) *
+                             adfGT[1];
                 dfMinY = adfGT[3] +
-                         ceil((dfMinY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+                         ceil((dfMinY - adfGT[3]) / adfGT[5] - REL_EPS_PIXEL) *
+                             adfGT[5];
                 dfMaxX = adfGT[0] +
-                         ceil((dfMaxX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
-                dfMaxY =
-                    adfGT[3] +
-                    floor((dfMaxY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
+                         ceil((dfMaxX - adfGT[0]) / adfGT[1] - REL_EPS_PIXEL) *
+                             adfGT[1];
+                dfMaxY = adfGT[3] +
+                         floor((dfMaxY - adfGT[3]) / adfGT[5] + REL_EPS_PIXEL) *
+                             adfGT[5];
             }
             else
             {
                 // Otherwise, make it a bit smaller
                 dfMinX = adfGT[0] +
-                         ceil((dfMinX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
-                dfMinY =
-                    adfGT[3] +
-                    floor((dfMinY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
-                dfMaxX =
-                    adfGT[0] +
-                    floor((dfMaxX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                         ceil((dfMinX - adfGT[0]) / adfGT[1] - REL_EPS_PIXEL) *
+                             adfGT[1];
+                dfMinY = adfGT[3] +
+                         floor((dfMinY - adfGT[3]) / adfGT[5] + REL_EPS_PIXEL) *
+                             adfGT[5];
+                dfMaxX = adfGT[0] +
+                         floor((dfMaxX - adfGT[0]) / adfGT[1] + REL_EPS_PIXEL) *
+                             adfGT[1];
                 dfMaxY = adfGT[3] +
-                         ceil((dfMaxY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+                         ceil((dfMaxY - adfGT[3]) / adfGT[5] - REL_EPS_PIXEL) *
+                             adfGT[5];
             }
         }
     }
