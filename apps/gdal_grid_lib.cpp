@@ -282,6 +282,9 @@ class GDALGridGeometryVisitor final : public OGRDefaultConstGeometryVisitor
         if (poClipSrc && !p->Within(poClipSrc))
             return;
 
+        if (iBurnField < 0 && std::isnan(p->getZ()))
+            return;
+
         adfX.push_back(p->getX());
         adfY.push_back(p->getY());
         if (iBurnField < 0)
@@ -345,11 +348,14 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         const OGRGeometry *poGeom = poFeat->GetGeometryRef();
         if (poGeom)
         {
-            double dfBurnValue = 0.0;
-
             if (iBurnField >= 0)
-                dfBurnValue = poFeat->GetFieldAsDouble(iBurnField);
-            oVisitor.dfBurnValue = dfBurnValue;
+            {
+                if (!poFeat->IsFieldSetAndNotNull(iBurnField))
+                {
+                    continue;
+                }
+                oVisitor.dfBurnValue = poFeat->GetFieldAsDouble(iBurnField);
+            }
 
             poGeom->accept(&oVisitor);
         }
