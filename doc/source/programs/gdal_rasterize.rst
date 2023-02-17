@@ -17,7 +17,7 @@ Synopsis
 
     gdal_rasterize [-b band]* [-i] [-at]
         {[-burn value]* | [-a attribute_name] | [-3d]} [-add]
-        [-l layername]* [-where expression] [-sql select_statement]
+        [-l layername]* [-where expression] [-sql select_statement|@filename]
         [-dialect dialect] [-of format] [-a_srs srs_def] [-to NAME=VALUE]*
         [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
         [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
@@ -94,6 +94,8 @@ raster data is only supported since GDAL 2.1.0.
 
     An SQL statement to be evaluated against the datasource to produce a
     virtual layer of features to be burned in.
+    Starting with GDAL 3.7, the ``@filename`` syntax can be used to indicate
+    that the content is in the pointed filename.
 
 .. option:: -dialect <dialect>
 

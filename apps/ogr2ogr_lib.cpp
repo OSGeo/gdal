@@ -5869,65 +5869,6 @@ LayerTranslator::GetSrcClipGeom(OGRSpatialReference *poGeomSRS)
 }
 
 /************************************************************************/
-/*                             RemoveBOM()                              */
-/************************************************************************/
-
-/* Remove potential UTF-8 BOM from data (must be NUL terminated) */
-static void RemoveBOM(GByte *pabyData)
-{
-    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
-    {
-        memmove(pabyData, pabyData + 3,
-                strlen(reinterpret_cast<char *>(pabyData) + 3) + 1);
-    }
-}
-
-static void RemoveSQLComments(char *&pszSQL)
-{
-    char **papszLines = CSLTokenizeStringComplex(pszSQL, "\r\n", FALSE, FALSE);
-    CPLString osSQL;
-    for (char **papszIter = papszLines; papszIter && *papszIter; ++papszIter)
-    {
-        const char *pszLine = *papszIter;
-        char chQuote = 0;
-        int i = 0;
-        for (; pszLine[i] != '\0'; ++i)
-        {
-            if (chQuote)
-            {
-                if (pszLine[i] == chQuote)
-                {
-                    if (pszLine[i + 1] == chQuote)
-                    {
-                        i++;
-                    }
-                    else
-                    {
-                        chQuote = 0;
-                    }
-                }
-            }
-            else if (pszLine[i] == '\'' || pszLine[i] == '"')
-            {
-                chQuote = pszLine[i];
-            }
-            else if (pszLine[i] == '-' && pszLine[i + 1] == '-')
-            {
-                break;
-            }
-        }
-        if (i > 0)
-        {
-            osSQL.append(pszLine, i);
-        }
-        osSQL += ' ';
-    }
-    CSLDestroy(papszLines);
-    CPLFree(pszSQL);
-    pszSQL = CPLStrdup(osSQL);
-}
-
-/************************************************************************/
 /*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
 /************************************************************************/
 
@@ -6068,10 +6009,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 VSIIngestFile(nullptr, papszArgv[i] + 1, &pabyRet, nullptr,
                               1024 * 1024))
             {
-                RemoveBOM(pabyRet);
+                GDALRemoveBOM(pabyRet);
                 char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
-                RemoveSQLComments(pszSQLStatement);
-                psOptions->osSQLStatement = pszSQLStatement;
+                psOptions->osSQLStatement =
+                    GDALRemoveSQLComments(pszSQLStatement);
                 VSIFree(pszSQLStatement);
             }
             else
@@ -6274,7 +6215,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 VSIIngestFile(nullptr, papszArgv[i] + 1, &pabyRet, nullptr,
                               1024 * 1024))
             {
-                RemoveBOM(pabyRet);
+                GDALRemoveBOM(pabyRet);
                 char *pszWHERE = reinterpret_cast<char *>(pabyRet);
                 psOptions->osWHERE = pszWHERE;
                 VSIFree(pszWHERE);

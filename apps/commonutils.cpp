@@ -191,3 +191,66 @@ void EarlySetConfigOptions(int argc, char **argv)
         }
     }
 }
+
+/************************************************************************/
+/*                          GDALRemoveBOM()                             */
+/************************************************************************/
+
+/* Remove potential UTF-8 BOM from data (must be NUL terminated) */
+void GDALRemoveBOM(GByte *pabyData)
+{
+    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
+    {
+        memmove(pabyData, pabyData + 3,
+                strlen(reinterpret_cast<char *>(pabyData) + 3) + 1);
+    }
+}
+
+/************************************************************************/
+/*                      GDALRemoveSQLComments()                         */
+/************************************************************************/
+
+std::string GDALRemoveSQLComments(const std::string &osInput)
+{
+    char **papszLines =
+        CSLTokenizeStringComplex(osInput.c_str(), "\r\n", FALSE, FALSE);
+    std::string osSQL;
+    for (char **papszIter = papszLines; papszIter && *papszIter; ++papszIter)
+    {
+        const char *pszLine = *papszIter;
+        char chQuote = 0;
+        int i = 0;
+        for (; pszLine[i] != '\0'; ++i)
+        {
+            if (chQuote)
+            {
+                if (pszLine[i] == chQuote)
+                {
+                    if (pszLine[i + 1] == chQuote)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        chQuote = 0;
+                    }
+                }
+            }
+            else if (pszLine[i] == '\'' || pszLine[i] == '"')
+            {
+                chQuote = pszLine[i];
+            }
+            else if (pszLine[i] == '-' && pszLine[i + 1] == '-')
+            {
+                break;
+            }
+        }
+        if (i > 0)
+        {
+            osSQL.append(pszLine, i);
+        }
+        osSQL += ' ';
+    }
+    CSLDestroy(papszLines);
+    return osSQL;
+}

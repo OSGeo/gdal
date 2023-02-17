@@ -1107,8 +1107,23 @@ GDALRasterizeOptionsNew(char **papszArgv,
         }
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-sql"))
         {
+            ++i;
             CPLFree(psOptions->pszSQL);
-            psOptions->pszSQL = CPLStrdup(papszArgv[++i]);
+            GByte *pabyRet = nullptr;
+            if (papszArgv[i][0] == '@' &&
+                VSIIngestFile(nullptr, papszArgv[i] + 1, &pabyRet, nullptr,
+                              1024 * 1024))
+            {
+                GDALRemoveBOM(pabyRet);
+                char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
+                psOptions->pszSQL =
+                    CPLStrdup(GDALRemoveSQLComments(pszSQLStatement).c_str());
+                VSIFree(pszSQLStatement);
+            }
+            else
+            {
+                psOptions->pszSQL = CPLStrdup(papszArgv[i]);
+            }
         }
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-dialect"))
         {
