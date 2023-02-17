@@ -275,10 +275,9 @@ def test_ogr_dgn_8():
 
 def test_ogr_dgn_online_1():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn", "DGNSample_v7.dgn"
-    ):
-        pytest.skip()
+    )
 
     ds = ogr.Open("tmp/cache/DGNSample_v7.dgn")
     assert ds is not None

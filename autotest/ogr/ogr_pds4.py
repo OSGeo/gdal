@@ -48,99 +48,86 @@ def validate_xml(filename):
 
     # for GDAL 3.4 / PDS4_PDS_1G00
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1G00.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1G00.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1950.xsd",
         "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1G00_1950.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1G00_1500.xsd",
         "pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1G00_1500.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
     # Used by PDS4_CART_1G00_1950.xsd
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1G00_1920.xsd",
         "pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1G00_1920.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1D00.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd",
         "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1D00_1933.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1B00.xsd",
         "pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1B00.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B00.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
     # Needed by PDS4_CART_1D00_1933
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1B10_1700.xsd",
         "pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1B10_1700.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B10.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1B10.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
     # Older schemas
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1800.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1700.xsd",
         "pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1700.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd",
         "pds.nasa.gov_pds4_cart_v1_PDS4_CART_1700.xsd",
         force_download=True,
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.OpenEx(
         "GMLAS:" + filename,

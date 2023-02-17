@@ -337,11 +337,10 @@ def test_ogr_pdf_online_1():
     if not has_read_support():
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.terragotech.com/images/pdf/webmap_urbansample.pdf",
         "webmap_urbansample.pdf",
-    ):
-        pytest.skip()
+    )
 
     expected_layers = [
         ["Cadastral Boundaries", ogr.wkbPolygon],
@@ -398,11 +397,10 @@ def test_ogr_pdf_online_2():
     if not has_read_support():
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf",
         "340711752_Azusa_FSTopo.pdf",
-    ):
-        pytest.skip()
+    )
 
     expected_layers = [
         ["Other_5", 0],

@@ -1335,10 +1335,9 @@ def test_netcdf_34():
     except ImportError:
         pytest.skip("from multiprocessing import Process failed")
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/netcdf/" + filename, filename
-    ):
-        pytest.skip()
+    )
 
     sys.stdout.write(".")
     sys.stdout.flush()

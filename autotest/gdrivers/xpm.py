@@ -45,10 +45,7 @@ pytestmark = pytest.mark.require_driver("XPM")
     ids=[item[1] for item in xpm_list],
 )
 def test_xpm(downloadURL, fileName, checksum, download_size):
-    if not gdaltest.download_file(
-        downloadURL + "/" + fileName, fileName, download_size
-    ):
-        pytest.skip()
+    gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
     ds = gdal.Open("tmp/cache/" + fileName)
 

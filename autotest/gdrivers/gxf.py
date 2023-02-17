@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test read/write functionality for NITF driver.
+# Purpose:  Test read/write functionality for GXF driver.
 # Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
@@ -88,10 +88,7 @@ gxf_list = [
     ids=[tup[1] for tup in gxf_list],
 )
 def test_gxf(downloadURL, fileName, checksum, download_size):
-    if not gdaltest.download_file(
-        downloadURL + "/" + fileName, fileName, download_size
-    ):
-        pytest.skip()
+    gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
     ds = gdal.Open("tmp/cache/" + fileName)
 

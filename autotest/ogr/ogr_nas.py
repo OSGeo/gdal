@@ -52,11 +52,10 @@ def test_ogr_nas_1():
     if drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip",
         "nas_testdaten_peine.zip",
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/BKG_NAS_Peine.xml")
@@ -115,11 +114,10 @@ def test_ogr_nas_2():
     if drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://trac.wheregroup.com/PostNAS/browser/trunk/demodaten/lverm_geo_rlp/gid-6.0/gm2566-testdaten-gid60-2008-11-11.xml.zip?format=raw",
         "gm2566-testdaten-gid60-2008-11-11.xml.zip",
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")

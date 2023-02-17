@@ -101,10 +101,7 @@ l1b_list = [
     ids=[item[1] for item in l1b_list],
 )
 def test_l1b(downloadURL, fileName, checksum, download_size, gcpNumber):
-    if not gdaltest.download_file(
-        downloadURL + "/" + fileName, fileName, download_size
-    ):
-        pytest.skip()
+    gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
     ds = gdal.Open("tmp/cache/" + fileName)
 

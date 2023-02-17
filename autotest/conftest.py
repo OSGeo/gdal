@@ -152,3 +152,17 @@ def pytest_configure(config):
             f"Attempting to run tests for GDAL {test_version} but library version is "
             f"{lib_version}. Do you need to run setdevenv.sh ?"
         )
+
+    import gdaltest
+
+    if not gdaltest.download_test_data():
+        print(
+            "As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, tests relying on downloaded data may be skipped.",
+            file=sys.stderr,
+        )
+
+    if not gdaltest.run_slow_tests():
+        print(
+            'As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped.',
+            file=sys.stderr,
+        )

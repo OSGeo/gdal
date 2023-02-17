@@ -414,11 +414,10 @@ def test_mrsid_online_1():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k",
         "7sisters200.j2k",
-    ):
-        pytest.skip()
+    )
 
     # Checksum = 29473 on my PC
     tst = gdaltest.GDALTest(
@@ -440,10 +439,9 @@ def test_mrsid_online_2():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
-    ):
-        pytest.skip()
+    )
 
     # Checksum = 209 on my PC
     tst = gdaltest.GDALTest(
@@ -475,14 +473,13 @@ def test_mrsid_online_3():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne1.j2k", "Bretagne1.j2k"
-    ):
-        pytest.skip()
-    if not gdaltest.download_file(
+    )
+
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
-    ):
-        pytest.skip()
+    )
 
     # checksum = 14443 on my PC
     tst = gdaltest.GDALTest(
@@ -515,14 +512,13 @@ def test_mrsid_online_4():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne2.j2k", "Bretagne2.j2k"
-    ):
-        pytest.skip()
-    if not gdaltest.download_file(
+    )
+
+    gdaltest.download_or_skip(
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
-    ):
-        pytest.skip()
+    )
 
     # Checksum = 53186 on my PC
     tst = gdaltest.GDALTest(

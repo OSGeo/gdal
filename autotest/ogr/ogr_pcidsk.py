@@ -282,11 +282,10 @@ def test_ogr_pcidsk_online_1():
     if ogr.GetDriverByName("PCIDSK") is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix",
         "polygon.pix",
-    ):
-        pytest.skip()
+    )
 
     ds = ogr.Open("tmp/cache/polygon.pix")
     assert ds is not None
@@ -317,11 +316,10 @@ def test_ogr_pcidsk_online_2():
     if ogr.GetDriverByName("PCIDSK") is None:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix",
         "polygon.pix",
-    ):
-        pytest.skip()
+    )
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/cache/polygon.pix"

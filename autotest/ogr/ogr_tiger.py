@@ -45,10 +45,9 @@ def test_ogr_tiger_1():
 
     ogrtest.tiger_ds = None
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://www2.census.gov/geo/tiger/tiger2006se/AL/TGR01001.ZIP", "TGR01001.ZIP"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/TGR01001/TGR01001.MET")

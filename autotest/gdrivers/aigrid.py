@@ -202,11 +202,10 @@ def test_aigrid_online_1():
         pass
 
     for filename in list_files:
-        if not gdaltest.download_file(
+        gdaltest.download_or_skip(
             "http://download.osgeo.org/gdal/data/aig/nzdem/" + filename,
             "nzdem/" + filename,
-        ):
-            pytest.skip()
+        )
 
     tst = gdaltest.GDALTest(
         "AIG", "tmp/cache/nzdem/nzdem500/hdr.adf", 1, 45334, filename_absolute=1
@@ -252,10 +251,9 @@ def test_aigrid_online_1():
 
 def test_aigrid_online_2():
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip", "ai_bug_6886.zip"
-    ):
-        pytest.skip()
+    )
 
     try:
         os.stat("tmp/cache/ai_bug")

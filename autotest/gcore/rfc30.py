@@ -32,7 +32,6 @@
 import urllib.parse
 
 import gdaltest
-import pytest
 
 from osgeo import gdal
 
@@ -45,10 +44,9 @@ def test_rfc30_1():
     filename = "xx\u4E2D\u6587.\u4E2D\u6587"
     filename_escaped = urllib.parse.quote(filename)
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/gtiff/" + filename_escaped, filename
-    ):
-        pytest.skip()
+    )
 
     filename = "tmp/cache/" + filename
 

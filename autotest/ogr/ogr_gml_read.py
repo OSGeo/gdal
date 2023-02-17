@@ -668,10 +668,7 @@ def test_ogr_gml_14():
 
     files = ["xlink1.gml", "xlink2.gml", "expected1.gml", "expected2.gml"]
     for f in files:
-        if not gdaltest.download_file(
-            "http://download.osgeo.org/gdal/data/gml/" + f, f
-        ):
-            pytest.skip()
+        gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/gml/" + f, f)
 
     gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", "NONE")
     gdal.SetConfigOption("GML_SAVE_RESOLVED_TO", "tmp/cache/xlink1resolved.gml")
@@ -1699,10 +1696,9 @@ def test_ogr_gml_41():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip", "SCHEMAS_OPENGIS_NET.zip"
-    ):
-        pytest.skip()
+    )
 
     ds = ogr.Open("data/gml/expected_gml_gml3.gml")
 

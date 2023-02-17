@@ -1166,11 +1166,10 @@ def test_tiff_read_online_1():
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
         pytest.skip()
 
-    if not gdaltest.download_file(
+    gdaltest.download_or_skip(
         "http://trac.osgeo.org/gdal/raw-attachment/ticket/3259/imgpb17.tif",
         "imgpb17.tif",
-    ):
-        pytest.skip()
+    )
 
     ds = gdal.Open("tmp/cache/imgpb17.tif")
     gdal.ErrorReset()
