@@ -63,6 +63,14 @@ or
    the next.
 -  GEOTRANSFORM: Set the affine transformation coefficients. 6 real
    numbers with '/' as separator (optional)
+-  SPATIALREFERENCE: (GDAL >= 3.7) Set the projection. The coordinate reference 
+   systems that can be passed are anything supported by the 
+   OGRSpatialReference.SetFromUserInput() as per '-a_srs' in  
+   :ref:`gdal_translate`. If the passed string includes comma or double-quote characters (typically WKT),
+   it should be surrounded by double-quote characters and the double-quote characters inside it
+   should be escaped with anti-slash.
+   e.g ``SPATIALREFERENCE="GEOGCRS[\"WGS 84\",[... snip ...],ID[\"EPSG\",4326]]"``
+
 
 Creation Options
 ----------------
