@@ -174,6 +174,27 @@ static int VSILibArchiveReadOpen(struct archive *pArchive,
 }
 
 /************************************************************************/
+/*                    VSICreateArchiveHandle()                          */
+/************************************************************************/
+
+static struct archive *VSICreateArchiveHandle(const std::string &osFSPrefix)
+{
+    auto pArchive = archive_read_new();
+
+    if (osFSPrefix == "/vsi7z")
+    {
+        archive_read_support_format_7zip(pArchive);
+    }
+    else
+    {
+        archive_read_support_format_rar(pArchive);
+        archive_read_support_format_rar5(pArchive);
+    }
+
+    return pArchive;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                      VSILibArchiveReader                             */
 /* ==================================================================== */
@@ -246,17 +267,7 @@ int VSILibArchiveReader::GotoFirstFile()
     {
         archive_free(m_pArchive);
 
-        m_pArchive = archive_read_new();
-
-        if (m_osPrefix == "/vsi7z")
-        {
-            archive_read_support_format_7zip(m_pArchive);
-        }
-        else
-        {
-            archive_read_support_format_rar(m_pArchive);
-            archive_read_support_format_rar5(m_pArchive);
-        }
+        m_pArchive = VSICreateArchiveHandle(m_osPrefix);
 
         if (VSILibArchiveReadOpen(m_pArchive, m_osArchiveFileName.c_str()))
         {
@@ -532,16 +543,7 @@ VSIVirtualHandle *VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
 VSIArchiveReader *
 VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
 {
-    auto pArchive = archive_read_new();
-    if (m_osPrefix == "/vsi7z")
-    {
-        archive_read_support_format_7zip(pArchive);
-    }
-    else
-    {
-        archive_read_support_format_rar(pArchive);
-        archive_read_support_format_rar5(pArchive);
-    }
+    auto pArchive = VSICreateArchiveHandle(m_osPrefix);
 
     if (VSILibArchiveReadOpen(pArchive, pszArchiveFileName))
     {
