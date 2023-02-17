@@ -330,6 +330,8 @@ typedef struct
     uint16_t nPredictor;
     bool bTIFFIsBigEndian;
     bool bReady;
+    uint16_t *pExtraSamples;
+    uint16_t nExtraSampleCount;
 } GTiffCompressionJob;
 #if !defined(__MINGW32__)
 }
@@ -10877,6 +10879,11 @@ void GTiffDataset::ThreadCompressionFunc(void *pData)
         TIFFSetField(hTIFFTmp, TIFFTAG_LERC_PARAMETERS, 2,
                      poDS->m_anLercAddCompressionAndVersion);
     }
+    if (psJob->nExtraSampleCount)
+    {
+        TIFFSetField(hTIFFTmp, TIFFTAG_EXTRASAMPLES, psJob->nExtraSampleCount,
+                     psJob->pExtraSamples);
+    }
 
     poDS->RestoreVolatileParameters(hTIFFTmp);
 
@@ -11238,6 +11245,11 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
             {
                 TIFFGetField(m_hTIFF, TIFFTAG_PREDICTOR, &sJob.nPredictor);
             }
+
+            sJob.pExtraSamples = nullptr;
+            sJob.nExtraSampleCount = 0;
+            TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sJob.nExtraSampleCount,
+                         &sJob.pExtraSamples);
 
             ThreadCompressionFunc(&sJob);
 
