@@ -1214,6 +1214,20 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     /* -------------------------------------------------------------------- */
+    /*      Set Projection Information                                      */
+    /* -------------------------------------------------------------------- */
+
+    pszOption = CSLFetchNameValue(papszOptions, "SPATIALREFERENCE");
+    if (pszOption != nullptr)
+    {
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poDS->m_oSRS.SetFromUserInput(pszOption) != OGRERR_NONE)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized crs: %s",
+                     pszOption);
+        }
+    }
+    /* -------------------------------------------------------------------- */
     /*      Try to return a regular handle on the file.                     */
     /* -------------------------------------------------------------------- */
     CSLDestroy(papszOptions);
