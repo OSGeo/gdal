@@ -384,6 +384,7 @@ jobs:
           SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
           SKIP_OGR_GMLAS_HTTP_RELATED: YES
           SKIP_TIFF_JPEG12: YES
+          SKIP_VSIRAR: YES
         working-directory: ${{ github.workspace }}
       - name: Install
         run: cmake --build build --target install -j 3

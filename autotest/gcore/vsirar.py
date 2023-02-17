@@ -39,6 +39,10 @@ from osgeo import gdal, ogr
 # Test /vsirar/
 
 
+@pytest.mark.skipif(
+    "SKIP_VSIRAR" in os.environ,
+    reason="test skipped due to random crashes",
+)
 def test_vsirar_basic():
 
     content = gdal.ReadDir("/vsirar/../ogr/data/poly.shp.rar")
@@ -69,6 +73,10 @@ def test_vsirar_basic():
 # Test /vsirar/
 
 
+@pytest.mark.skipif(
+    "SKIP_VSIRAR" in os.environ,
+    reason="test skipped due to random crashes",
+)
 def test_vsirar_ogr():
 
     content = gdal.ReadDir("/vsirar/../ogr/data/poly.shp.rar")
