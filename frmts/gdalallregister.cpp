@@ -424,6 +424,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_RRASTER();
     GDALRegister_BYN();
     GDALRegister_NOAA_B();
+    GDALRegister_NSIDCbin();
 #endif
 
 #ifdef FRMT_arg

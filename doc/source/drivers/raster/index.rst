@@ -129,6 +129,7 @@ Raster drivers
    ngw
    nitf
    noaa_b
+   nsidcbin
    ntv2
    nwtgrd
    ogcapi
