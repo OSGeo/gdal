@@ -44,7 +44,7 @@ import gdaltest
 ## wget ftp://sidads.colorado.edu/pub/DATASETS/nsidc0081_nrt_nasateam_seaice/south/nt_20220409_f18_nrt_s.bin
 ## ## /vsicurl/ftp://sidads.colorado.edu/pub/DATASETS/nsidc0081_nrt_nasateam_seaice/south/nt_20220409_f18_nrt_s.bin
 def test_nsidcbin_1(filename='data/nsidcbin/nt_20220409_f18_nrt_s.bin'):
-   ds = gdal.Open(filename)
+    ds = gdal.Open(filename)
     band = ds.GetRasterBand(1)
     assert band.XSize == 316
     assert band.DataType == gdal.GDT_Byte
