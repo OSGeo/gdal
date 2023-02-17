@@ -29,7 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("NSIDCbin")
 
 ###############################################################################
 # Perform simple read test.
