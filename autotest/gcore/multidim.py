@@ -29,6 +29,7 @@
 ###############################################################################
 
 import array
+import math
 
 import gdaltest
 import pytest
@@ -410,3 +411,201 @@ def test_multidim_getresampled_bad_input_dim_count():
             [None, None, None], gdal.GRIORA_NearestNeighbour, None
         )
         assert resampled_ar is None
+
+
+def test_multidim_getgridded():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+
+    dimOther = rg.CreateDimension("other", None, None, 2)
+    other = rg.CreateMDArray(
+        "other", [dimOther], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert other
+
+    dimNode = rg.CreateDimension("node", None, None, 6)
+    varX = rg.CreateMDArray(
+        "varX", [dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert varX
+    varX.Write(array.array("d", [0, 0, 1, 1, 2, 2]))
+    varY = rg.CreateMDArray(
+        "varY", [dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert varY
+    varY.Write(array.array("d", [0, 1, 0, 1, 0, 1]))
+
+    ar = rg.CreateMDArray(
+        "ar", [dimOther, dimNode], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert (
+        ar.Write(array.array("d", [1, 2, 3, 4, 5, 6, 20, 30, 20, 30, 20, 30]))
+        == gdal.CE_None
+    )
+
+    with gdaltest.error_handler():
+        assert ar.GetGridded("invdist") is None
+        assert ar.GetGridded("invdist", varX) is None
+        assert ar.GetGridded("invdist", None, varY) is None
+
+        assert ar.GetGridded("invalid", varX, varY) is None
+
+        zero_dim_ar = rg.CreateMDArray(
+            "zero_dim_ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        assert zero_dim_ar.GetGridded("invdist", varX, varY) is None
+
+        dimUnrelated = rg.CreateDimension("unrelated", None, None, 2)
+        unrelated = rg.CreateMDArray(
+            "unrelated", [dimUnrelated], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        unrelated.Write(array.array("d", [0, 0, 1, 1, 2, 2]))
+        assert ar.GetGridded("invdist", unrelated, varY) is None
+        assert ar.GetGridded("invdist", varX, unrelated) is None
+
+        non_numeric = rg.CreateMDArray(
+            "non_numeric", [dimNode], gdal.ExtendedDataType.CreateString()
+        )
+        assert ar.GetGridded("invdist", non_numeric, varY) is None
+        assert ar.GetGridded("invdist", varX, non_numeric) is None
+
+        assert non_numeric.GetGridded("invdist", varX, varY) is None
+
+        assert ar.GetGridded("invdist", ar, varX) is None
+        assert ar.GetGridded("invdist", varX, ar) is None
+
+        dimOneSample = rg.CreateDimension("dimOneSample", None, None, 1)
+        varXOneSample = rg.CreateMDArray(
+            "varXOneSample",
+            [dimOneSample],
+            gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+        )
+        assert varXOneSample.GetGridded("invdist", varXOneSample, varXOneSample) is None
+
+        dimNodeHuge = rg.CreateDimension("node_huge", None, None, 20 * 1024 * 1024)
+        varXHuge = rg.CreateMDArray(
+            "varXHuge", [dimNodeHuge], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        varYHuge = rg.CreateMDArray(
+            "varYHuge", [dimNodeHuge], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        arHuge = rg.CreateMDArray(
+            "arHuge", [dimNodeHuge], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        assert arHuge.GetGridded("invdist", varXHuge, varYHuge) is None
+
+    # Explicit varX, varY provided
+    gridded = ar.GetGridded("invdist", varX, varY)
+    assert gridded
+    assert gridded.GetDimensionCount() == 3
+    assert gridded.GetDimensions()[0].GetName() == "other"
+    assert gridded.GetDimensions()[1].GetName() == "dimY"
+    assert gridded.GetDimensions()[1].GetSize() == 2
+    dimY = gridded.GetDimensions()[1].GetIndexingVariable()
+    assert dimY.Read() == array.array("d", [0, 1])
+    assert gridded.GetDimensions()[2].GetName() == "dimX"
+    assert gridded.GetDimensions()[2].GetSize() == 3
+    dimX = gridded.GetDimensions()[2].GetIndexingVariable()
+    assert dimX.Read() == array.array("d", [0, 1, 2])
+
+    # varX and varY guessed from coordinates attribute
+    coordinates = ar.CreateAttribute(
+        "coordinates", [], gdal.ExtendedDataType.CreateString()
+    )
+
+    # Not enough coordinate variables
+    assert coordinates.WriteString("other varY") == 0
+    with gdaltest.error_handler():
+        assert ar.GetGridded("invdist:nodata=nan") is None
+
+    # Too many coordinate variables
+    assert coordinates.WriteString("other unrelated varY varX") == 0
+    with gdaltest.error_handler():
+        assert ar.GetGridded("invdist:nodata=nan") is None
+
+    # poYArray->GetDimensions()[0]->GetFullName() != poXArray->GetDimensions()[0]->GetFullName()
+    assert coordinates.WriteString("other unrelated varX") == 0
+    with gdaltest.error_handler():
+        assert ar.GetGridded("invdist:nodata=nan") is None
+
+    assert coordinates.WriteString("other varY varX") == 0
+    ar.SetUnit("foo")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ar.SetSpatialRef(srs)
+    gridded = ar.GetGridded("nearest:radius1=2:radius2=2:nodata=nan")
+    assert gridded
+    assert math.isnan(gridded.GetNoDataValueAsDouble())
+    assert gridded.GetDimensionCount() == 3
+    assert gridded.GetDimensions()[0].GetName() == "other"
+    assert gridded.GetDimensions()[1].GetName() == "dimY"
+    assert gridded.GetDimensions()[1].GetSize() == 2
+    dimY = gridded.GetDimensions()[1].GetIndexingVariable()
+    assert dimY.Read() == array.array("d", [0, 1])
+    assert gridded.GetDimensions()[2].GetName() == "dimX"
+    assert gridded.GetDimensions()[2].GetSize() == 3
+    dimX = gridded.GetDimensions()[2].GetIndexingVariable()
+    assert dimX.Read() == array.array("d", [0, 1, 2])
+    assert gridded.GetBlockSize() == [0, 256, 256]
+    assert gridded.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert gridded.GetUnit() == ar.GetUnit()
+    assert gridded.GetSpatialRef().IsSame(ar.GetSpatialRef())
+    assert (
+        gridded.GetAttribute("coordinates").Read()
+        == ar.GetAttribute("coordinates").Read()
+    )
+    assert len(gridded.GetAttributes()) == len(ar.GetAttributes())
+    # print(gridded.ReadAsArray(array_start_idx=[0, 0, 0], count=[1, 2, 3]))
+    assert gridded.Read(array_start_idx=[0, 0, 0], count=[1, 2, 3]) == array.array(
+        "d", [1, 3, 5, 2, 4, 6]
+    )
+    assert gridded.Read(array_start_idx=[0, 1, 2], count=[1, 1, 1]) == array.array(
+        "d", [6]
+    )
+    assert gridded.Read(array_start_idx=[1, 0, 0], count=[1, 2, 3]) == array.array(
+        "d", [20, 20, 20, 30, 30, 30]
+    )
+
+    with gdaltest.error_handler():
+        # Cannot read more than one sample in the non X/Y dimensions
+        assert gridded.Read() is None
+
+        # Negative array_step not support currently
+        assert (
+            gridded.Read(
+                array_start_idx=[0, 0, 2], count=[1, 2, 3], array_step=[1, 1, -1]
+            )
+            is None
+        )
+
+        assert ar.GetGridded("invdist", options=["RESOLUTION=0"]) is None
+
+        assert ar.GetGridded("invdist", options=["RESOLUTION=1e-200"]) is None
+
+    gridded = ar.GetGridded("average:radius1=1:radius2=1", options=["RESOLUTION=0.5"])
+    assert gridded
+    assert gridded.GetDimensions()[1].GetSize() == 3
+    assert gridded.GetDimensions()[2].GetSize() == 5
+    # print(gridded.ReadAsArray(array_start_idx = [0, 0, 0], count = [1, 3, 5]))
+    assert gridded.Read(array_start_idx=[0, 0, 0], count=[1, 3, 5]) == array.array(
+        "d",
+        [
+            2,
+            2,
+            3.25,
+            4,
+            4.666666666666666667,
+            1.5,
+            2.5,
+            3.5,
+            4.5,
+            5.5,
+            2.333333333333333333,
+            3.0,
+            3.75,
+            5,
+            5,
+        ],
+    )

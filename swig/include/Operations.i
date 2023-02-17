@@ -470,11 +470,11 @@ int wrapper_GridCreate( char* algorithmOptions,
 
     if ( algorithmOptions )
     {
-        eErr = ParseAlgorithmAndOptions( algorithmOptions, &eAlgorithm, &pOptions );
+        eErr = GDALGridParseAlgorithmAndOptions( algorithmOptions, &eAlgorithm, &pOptions );
     }
     else
     {
-        eErr = ParseAlgorithmAndOptions( szAlgNameInvDist, &eAlgorithm, &pOptions );
+        eErr = GDALGridParseAlgorithmAndOptions( szAlgNameInvDist, &eAlgorithm, &pOptions );
     }
 
     if ( eErr != CE_None )

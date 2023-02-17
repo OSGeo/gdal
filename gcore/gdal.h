@@ -2188,6 +2188,10 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
                                              GDALRIOResampleAlg resampleAlg,
                                              OGRSpatialReferenceH hTargetSRS,
                                              CSLConstList papszOptions);
+GDALMDArrayH CPL_DLL GDALMDArrayGetGridded(
+    GDALMDArrayH hArray, const char *pszGridOptions, GDALMDArrayH hXArray,
+    GDALMDArrayH hYArray, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+
 GDALMDArrayH CPL_DLL *
 GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
                                   size_t *pnCount) CPL_WARN_UNUSED_RESULT;

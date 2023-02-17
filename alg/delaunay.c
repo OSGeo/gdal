@@ -627,7 +627,16 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation *psDT,
         }
     }
 
-    CPLDebug("GDAL", "Using brute force lookup");
+    static int nDebugMsgCount = 0;
+    if (nDebugMsgCount <= 20)
+    {
+        CPLDebug("GDAL", "Using brute force lookup%s",
+                 (nDebugMsgCount == 20)
+                     ? " (this debug message will no longer be emitted)"
+                     : "");
+        nDebugMsgCount++;
+    }
+
     return GDALTriangulationFindFacetBruteForce(psDT, dfX, dfY,
                                                 panOutputFacetIdx);
 }
