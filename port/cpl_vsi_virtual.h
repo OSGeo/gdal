@@ -258,6 +258,13 @@ class CPL_DLL VSIFilesystemHandler
     {
         return true;
     }
+
+    virtual VSIFilesystemHandler *Duplicate(const char * /* pszPrefix */)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Duplicate() not supported on this file system");
+        return nullptr;
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

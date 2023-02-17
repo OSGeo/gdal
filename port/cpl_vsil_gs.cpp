@@ -68,6 +68,7 @@ namespace cpl
 class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIGSFSHandler)
+    const std::string m_osPrefix;
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
@@ -78,7 +79,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     CPLString GetFSPrefix() const override
     {
-        return "/vsigs/";
+        return m_osPrefix;
     }
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
 
@@ -93,7 +94,9 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     }
 
   public:
-    VSIGSFSHandler() = default;
+    explicit VSIGSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
+    {
+    }
     ~VSIGSFSHandler() override;
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
@@ -130,6 +133,11 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
+
+    VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
+    {
+        return new VSIGSFSHandler(pszPrefix);
+    }
 };
 
 /************************************************************************/
@@ -857,7 +865,8 @@ VSIGSHandle::GetCurlHeaders(const CPLString &osVerb,
 
 void VSIInstallGSFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsigs/", new cpl::VSIGSFSHandler);
+    VSIFileManager::InstallHandler("/vsigs/",
+                                   new cpl::VSIGSFSHandler("/vsigs/"));
 }
 
 #endif /* HAVE_CURL */

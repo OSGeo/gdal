@@ -72,6 +72,7 @@ namespace cpl
 
 class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
 {
+    const std::string m_osPrefix;
     CPL_DISALLOW_COPY_ASSIGN(VSIWebHDFSFSHandler)
 
   protected:
@@ -88,7 +89,9 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
 
   public:
-    VSIWebHDFSFSHandler() = default;
+    explicit VSIWebHDFSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
+    {
+    }
     ~VSIWebHDFSFSHandler() override = default;
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
@@ -104,7 +107,7 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
 
     CPLString GetFSPrefix() const override
     {
-        return "/vsiwebhdfs/";
+        return m_osPrefix;
     }
 
     const char *GetOptions() override;
@@ -122,6 +125,11 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
     }
     bool SupportsRandomWrite(const char * /* pszPath */,
                              bool /* bAllowLocalTempFile */) override;
+
+    VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
+    {
+        return new VSIWebHDFSFSHandler(pszPrefix);
+    }
 };
 
 /************************************************************************/
@@ -1245,8 +1253,8 @@ retry:
  */
 void VSIInstallWebHdfsHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiwebhdfs/",
-                                   new cpl::VSIWebHDFSFSHandler);
+    VSIFileManager::InstallHandler(
+        "/vsiwebhdfs/", new cpl::VSIWebHDFSFSHandler("/vsiwebhdfs/"));
 }
 
 #endif /* HAVE_CURL */

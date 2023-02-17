@@ -207,6 +207,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
 
 class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 {
+    const std::string m_osPrefix;
     CPL_DISALLOW_COPY_ASSIGN(VSISwiftFSHandler)
 
   protected:
@@ -223,7 +224,7 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 
     CPLString GetFSPrefix() const override
     {
-        return "/vsiswift/";
+        return m_osPrefix;
     }
 
     char **GetFileList(const char *pszFilename, int nMaxFiles,
@@ -232,7 +233,9 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
     void ClearCache() override;
 
   public:
-    VSISwiftFSHandler() = default;
+    explicit VSISwiftFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
+    {
+    }
     ~VSISwiftFSHandler() override;
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
@@ -263,6 +266,11 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
     }
     bool SupportsRandomWrite(const char * /* pszPath */,
                              bool /* bAllowLocalTempFile */) override;
+
+    VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
+    {
+        return new VSISwiftFSHandler(pszPrefix);
+    }
 };
 
 /************************************************************************/
@@ -783,7 +791,8 @@ bool VSISwiftHandle::Authenticate(const char *pszFilename)
  */
 void VSIInstallSwiftFileHandler(void)
 {
-    VSIFileManager::InstallHandler("/vsiswift/", new cpl::VSISwiftFSHandler);
+    VSIFileManager::InstallHandler("/vsiswift/",
+                                   new cpl::VSISwiftFSHandler("/vsiswift/"));
 }
 
 #endif /* HAVE_CURL */

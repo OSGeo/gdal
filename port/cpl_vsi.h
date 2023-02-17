@@ -483,6 +483,9 @@ void CPL_DLL VSISetCryptKey(const GByte *pabyKey, int nKeySize);
 void CPL_DLL VSICleanupFileManager(void);
 /*! @endcond */
 
+bool CPL_DLL VSIDuplicateFileSystemHandler(const char *pszSourceFSName,
+                                           const char *pszNewFSName);
+
 VSILFILE CPL_DLL *
 VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
                      vsi_l_offset nDataLength,
