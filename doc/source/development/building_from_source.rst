@@ -1341,8 +1341,11 @@ OpenCL
 The OpenCL library may be used to accelerate warping computations, typically
 with a GPU.
 
-.. note:: It is disabled by default even when detected, since the current OpenCL
+.. note:: (GDAL 3.5 and 3.6) It is disabled by default even when detected, since the current OpenCL
           warping implementation lags behind the generic implementation.
+          Starting with GDAL 3.7, build support is enabled by default when OpenCL is detected,
+          but it is disabled by default at runtime. The warping option USE_OPENCL
+          or the configuration option GDAL_USE_OPENCL must be set to YES to enable it.
 
 .. option:: OpenCL_INCLUDE_DIR
 
