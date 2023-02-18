@@ -71,7 +71,7 @@ def test_polygonize_1(is_int_polygonize=True):
     expected_feature_number = 13
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [107, 123, 115, 115, 140, 148, 123, 140, 156, 100, 101, 102, 103]
+    expect = [107, 123, 115, 115, 140, 148, 123, 140, 100, 101, 102, 156, 103]
 
     tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
@@ -132,17 +132,17 @@ def test_polygonize_2():
         115,
         132,
         115,
-        132,
         140,
+        132,
         132,
         148,
         123,
         140,
         132,
-        156,
         100,
         101,
         102,
+        156,
         103,
     ]
 
@@ -233,19 +233,19 @@ def test_polygonize_4():
     expect = [
         107,
         123,
-        132,
         115,
         132,
         115,
         140,
+        132,
         148,
         123,
         140,
         132,
-        156,
         100,
         101,
         102,
+        156,
         103,
     ]
 
@@ -284,11 +284,11 @@ def test_polygonize_5():
     expected_feature_number = 3
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [1, 0, 0]
+    expect = [0, 0, 1]
     expect_wkt = [
-        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(1 3,1 2,2 2,2 3,1 3),(2 2,2 1,3 1,3 2,2 2))",
         "POLYGON ((1 3,1 2,2 2,2 3,1 3))",
         "POLYGON ((2 2,2 1,3 1,3 2,2 2))",
+        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(1 3,2 3,2 2,1 2,1 3),(2 2,3 2,3 1,2 1,2 2))",
     ]
 
     idx = 0
@@ -337,7 +337,7 @@ def test_polygonize_6():
     expect_wkt = [
         "POLYGON ((2 3,2 2,3 2,3 3,2 3))",
         "POLYGON ((1 2,1 1,2 1,2 2,1 2))",
-        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(2 3,2 2,3 2,3 3,2 3),(1 2,1 1,2 1,2 2,1 2))",
+        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(2 3,3 3,3 2,2 2,2 3),(1 2,2 2,2 1,1 1,1 2))",
     ]
 
     idx = 0
