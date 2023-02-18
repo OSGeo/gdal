@@ -4793,6 +4793,8 @@ char **GDALJPGDriver::GetMetadata(const char *pszDomain)
     return GDALDriver::GetMetadata(pszDomain);
 }
 
+// C_ARITH_CODING_SUPPORTED is defined in libjpeg-turbo's jconfig.h
+#ifndef C_ARITH_CODING_SUPPORTED
 static void GDALJPEGIsArithmeticCodingAvailableErrorExit(j_common_ptr cinfo)
 {
     jmp_buf *p_setjmp_buffer = static_cast<jmp_buf *>(cinfo->client_data);
@@ -4829,6 +4831,7 @@ static bool GDALJPEGIsArithmeticCodingAvailable()
 
     return true;
 }
+#endif
 
 const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
                                            const char *pszDomain)
@@ -4855,10 +4858,14 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
             "   <Option name='INTERNAL_MASK' type='boolean' "
             "description='whether to generate a validity mask' "
             "default='YES'/>\n";
+#ifndef C_ARITH_CODING_SUPPORTED
         if (GDALJPEGIsArithmeticCodingAvailable())
+#endif
+        {
             osCreationOptions += "   <Option name='ARITHMETIC' type='boolean' "
                                  "description='whether to use arithmetic "
                                  "encoding' default='NO'/>\n";
+        }
         osCreationOptions +=
 #if JPEG_LIB_VERSION_MAJOR >= 8 &&                                             \
     (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
