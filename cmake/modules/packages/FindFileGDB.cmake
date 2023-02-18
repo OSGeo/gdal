@@ -48,6 +48,7 @@ if(FileGDB_INCLUDE_DIR)
 
         find_library(FileGDB_LIBRARY NAMES FileGDBAPI PATHS "${FileGDB_ROOT}/lib" "${FileGDB_ROOT}/lib64")
         include(CheckCXXSourceCompiles)
+        include(CMakePushCheckState)
         cmake_push_check_state(RESET)
         check_cxx_source_compiles("#include <FileGDBAPI.h>\nusing namespace FileGDBAPI;\n
                 int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" TEST_FileGDB_COMPILE)
