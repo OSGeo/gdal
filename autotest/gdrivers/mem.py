@@ -175,13 +175,17 @@ def test_mem_2():
 
         dsup = None
 
+    wktll = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
+
     dsnames2 = [
         "MEM:::DATAPOINTER=0x%X,SPATIALREFERENCE=+proj=laea +lon_0=147 +lat_0=-42,GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=%d,LINES=%d,DATATYPE=Float32"
         % (p, width, height),
         "MEM:::DATAPOINTER=0x%X,SPATIALREFERENCE=bogus,GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=%d,LINES=%d,DATATYPE=Float32"
         % (p, width, height),
+        'MEM:::DATAPOINTER=0x%X,SPATIALREFERENCE="%s",GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=%d,LINES=%d,DATATYPE=Float32'
+        % (p, wktll, width, height),
     ]
-
+    print(dsnames2[2])
     cnt = 0
     for dsname in dsnames2:
         cnt = cnt + 1
@@ -192,11 +196,14 @@ def test_mem_2():
         if dsro is None:
             free(p)
             pytest.fail("opening MEM dataset failed in read only mode.")
+        assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
         if cnt == 1:
             assert "Lambert" in dsro.GetProjectionRef()
         if cnt == 2:
             assert dsro.GetProjectionRef() == ""
-            assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
+        if cnt == 3:
+            assert "GEOGCS" in dsro.GetProjectionRef()
+
     free(p)
 
 
