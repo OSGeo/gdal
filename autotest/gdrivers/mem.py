@@ -175,6 +175,28 @@ def test_mem_2():
 
         dsup = None
 
+    dsnames2 = [
+        "MEM:::DATAPOINTER=0x%X,SPATIALREFERENCE=+proj=laea +lon_0=147 +lat_0=-42,GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=%d,LINES=%d,DATATYPE=Float32"
+        % (p, width, height),
+        "MEM:::DATAPOINTER=0x%X,SPATIALREFERENCE=bogus,GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=%d,LINES=%d,DATATYPE=Float32"
+        % (p, width, height),
+    ]
+
+    cnt = 0
+    for dsname in dsnames2:
+        cnt = cnt + 1
+        for i in range(width * height):
+            float_p[i] = 5.0
+
+        dsro = gdal.Open(dsname)
+        if dsro is None:
+            free(p)
+            pytest.fail("opening MEM dataset failed in read only mode.")
+        if cnt == 1:
+            assert "Lambert" in dsro.GetProjectionRef()
+        if cnt == 2:
+            assert dsro.GetProjectionRef() == ""
+            assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
     free(p)
 
 

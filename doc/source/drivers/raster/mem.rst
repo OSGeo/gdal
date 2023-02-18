@@ -63,15 +63,11 @@ or
    the next.
 -  GEOTRANSFORM: Set the affine transformation coefficients. 6 real
    numbers with '/' as separator (optional)
+-  SPATIALREFERENCE: (GDAL >= 3.7) Set the projection. The coordinate reference 
+   systems that can be passed are anything supported by the 
+   OGRSpatialReference.SetFromUserInput() as per '-a_srs' in  
+   :ref:`gdal_translate`. 
 
-Coordinate reference system
---------------------------
-
-.. versionadded:: 3.7
-
--  SPATIALREFERENCE: Set the projection. The coordinate reference systems that 
-   can be passed are anything supported by the 
-   OGRSpatialReference.SetFromUserInput() similarly to '-a_srs' in :ref:`gdal_translate`. 
 
 Creation Options
 ----------------
