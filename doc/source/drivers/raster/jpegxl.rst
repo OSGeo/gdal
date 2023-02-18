@@ -91,6 +91,12 @@ The following creation options are available:
    0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
    Default is 1.0
 
+-  **ALPHA_DISTANCE=[-1,0,0.1-15]**: (GDAL >= 3.7, libjxl > 0.8.1)
+   Distance level for alpha channel for lossy JPEG-XL compression.
+   -1=same as non-alpha channels, 0=mathematically lossless,
+   1.0=visually lossless, usual range [0.5,3].
+   Default is -1.0
+
 -  **QUALITY=[-inf,100]**: Alternative setting to DISTANCE to specify lossy
    compression, roughly matching libjpeg quality setting in the [0,100] range.
    Default is 90.0
