@@ -85,7 +85,7 @@ def test_gdal_polygonize_1(script_path):
     expected_feature_number = 13
     assert shp_lyr.GetFeatureCount() == expected_feature_number
 
-    expect = [107, 123, 115, 115, 140, 148, 123, 140, 156, 100, 101, 102, 103]
+    expect = [115, 123, 107, 140, 115, 148, 123, 140, 102, 101, 100, 103, 156]
 
     tr = ogrtest.check_features_against_list(shp_lyr, "DN", expect)
 
@@ -139,25 +139,7 @@ def test_gdal_polygonize_2(script_path):
     expected_feature_number = 17
     assert lyr.GetFeatureCount() == expected_feature_number
 
-    expect = [
-        107,
-        123,
-        115,
-        132,
-        115,
-        132,
-        140,
-        132,
-        148,
-        123,
-        140,
-        132,
-        156,
-        100,
-        101,
-        102,
-        103,
-    ]
+    expect = [132, 115, 123, 107, 132, 140, 115, 148, 123, 132, 132, 140, 102, 101, 100, 103, 156]
 
     tr = ogrtest.check_features_against_list(lyr, "DN", expect)
 
