@@ -1220,7 +1220,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     pszOption = CSLFetchNameValue(papszOptions, "SPATIALREFERENCE");
     if (pszOption != nullptr)
     {
-        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poDS->m_oSRS.SetFromUserInput(pszOption) != OGRERR_NONE)
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized crs: %s",
