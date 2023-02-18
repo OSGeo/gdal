@@ -142,6 +142,10 @@ def test_jpeg_3():
 
     ds = None
 
+    ds = gdal.Open("tmp/byte.jpg")
+    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+    ds = None
+
     os.unlink("tmp/byte.jpg.aux.xml")
 
     try:

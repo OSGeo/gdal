@@ -1835,12 +1835,6 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
                    nJpegIFByteCount, GetDescription());
     JPGDatasetOpenArgs sArgs;
     sArgs.pszFilename = pszSubfile;
-    sArgs.fpLin = nullptr;
-    sArgs.papszSiblingFiles = nullptr;
-    sArgs.nScaleFactor = 1;
-    sArgs.bDoPAMInitialize = false;
-    sArgs.bUseInternalOverviews = false;
-    sArgs.bIsLossless = false;
     return JPGDataset::Open(&sArgs);
 }
 
@@ -1920,12 +1914,7 @@ void JPGDatasetCommon::InitInternalOverviews()
                 }
                 JPGDatasetOpenArgs sArgs;
                 sArgs.pszFilename = GetDescription();
-                sArgs.fpLin = nullptr;
-                sArgs.papszSiblingFiles = nullptr;
                 sArgs.nScaleFactor = 1 << (i + 1);
-                sArgs.bDoPAMInitialize = false;
-                sArgs.bUseInternalOverviews = false;
-                sArgs.bIsLossless = false;
                 JPGDatasetCommon *poImplicitOverview = JPGDataset::Open(&sArgs);
                 if (poImplicitOverview == nullptr)
                     break;
@@ -2652,17 +2641,22 @@ static bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
             return false;
 
         int nMarker = pabyHeader[nOffset + 1];
+        if (nMarker == 0xDA)
+            return false;
+
         if (nMarker == 0xF7)  // JPEG Extension 7, JPEG-LS.
             return true;
         if (nMarker == 0xF8)  // JPEG Extension 8, JPEG-LS Extension.
             return true;
-        if (nMarker == 0xC3)  // Start of Frame 3.
+        if (nMarker == 0xC3)  // Start of Frame 3 (Lossless Huffman)
             return true;
-        if (nMarker == 0xC7)  // Start of Frame 7.
+        if (nMarker ==
+            0xC7)  // Start of Frame 7 (Differential Lossless Huffman)
             return true;
-        if (nMarker == 0xCB)  // Start of Frame 11.
+        if (nMarker == 0xCB)  // Start of Frame 11 (Lossless Arithmetic)
             return true;
-        if (nMarker == 0xCF)  // Start of Frame 15.
+        if (nMarker ==
+            0xCF)  // Start of Frame 15 (Differential Lossless Arithmetic)
             return true;
 
         nOffset += 2 + pabyHeader[nOffset + 2] * 256 + pabyHeader[nOffset + 3];
@@ -2759,14 +2753,11 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     sArgs.pszFilename = osFilename.c_str();
     sArgs.fpLin = fpL;
     sArgs.papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-    sArgs.nScaleFactor = 1;
     sArgs.bDoPAMInitialize = true;
     sArgs.bUseInternalOverviews = CPLFetchBool(poOpenInfo->papszOpenOptions,
                                                "USE_INTERNAL_OVERVIEWS", true);
 #ifdef D_LOSSLESS_SUPPORTED
     sArgs.bIsLossless = JPEGDatasetIsJPEGLS(poOpenInfo);
-#else
-    sArgs.bIsLossless = false;
 #endif
 
     auto poJPG_DS = JPGDataset::Open(&sArgs);
@@ -4348,9 +4339,6 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
                     JPGDatasetOpenArgs sArgs;
                     sArgs.pszFilename = pszFilename;
-                    sArgs.fpLin = nullptr;
-                    sArgs.papszSiblingFiles = nullptr;
-                    sArgs.nScaleFactor = 1;
                     sArgs.bDoPAMInitialize = true;
                     sArgs.bUseInternalOverviews = true;
 
@@ -4771,9 +4759,6 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
         JPGDatasetOpenArgs sArgs;
         sArgs.pszFilename = pszFilename;
-        sArgs.fpLin = nullptr;
-        sArgs.papszSiblingFiles = nullptr;
-        sArgs.nScaleFactor = 1;
         sArgs.bDoPAMInitialize = true;
         sArgs.bUseInternalOverviews = true;
 

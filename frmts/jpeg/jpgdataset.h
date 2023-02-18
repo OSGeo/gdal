@@ -85,16 +85,16 @@ typedef struct
 #pragma warning(disable : 4611)
 #endif
 
-typedef struct
+struct JPGDatasetOpenArgs
 {
-    const char *pszFilename;
-    VSILFILE *fpLin;
-    char **papszSiblingFiles;
-    int nScaleFactor;
-    bool bDoPAMInitialize;
-    bool bUseInternalOverviews;
-    bool bIsLossless;
-} JPGDatasetOpenArgs;
+    const char *pszFilename = nullptr;
+    VSILFILE *fpLin = nullptr;
+    char **papszSiblingFiles = nullptr;
+    int nScaleFactor = 1;
+    bool bDoPAMInitialize = false;
+    bool bUseInternalOverviews = false;
+    bool bIsLossless = false;
+};
 
 class JPGDatasetCommon;
 
