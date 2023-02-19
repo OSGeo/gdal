@@ -66,7 +66,7 @@ GDALAllValidMaskBand::~GDALAllValidMaskBand() = default;
 CPLErr GDALAllValidMaskBand::IReadBlock(int /* nXBlockOff */,
                                         int /* nYBlockOff */, void *pImage)
 {
-    memset(pImage, 255, nBlockXSize * nBlockYSize);
+    memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
 
     return CE_None;
 }
