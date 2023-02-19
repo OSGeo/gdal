@@ -765,27 +765,25 @@ CPLErr GDALRasterBand::GetActualBlockSize(int nXBlockOff, int nYBlockOff,
                                           int *pnXValid, int *pnYValid)
 {
     if (nXBlockOff < 0 || nBlockXSize == 0 ||
-        nXBlockOff >= nRasterXSize / nBlockXSize +
-                          ((nRasterXSize % nBlockXSize) ? 1 : 0) ||
+        nXBlockOff >= DIV_ROUND_UP(nRasterXSize, nBlockXSize) ||
         nYBlockOff < 0 || nBlockYSize == 0 ||
-        nYBlockOff >=
-            nRasterYSize / nBlockYSize + ((nRasterYSize % nBlockYSize) ? 1 : 0))
+        nYBlockOff >= DIV_ROUND_UP(nRasterYSize, nBlockYSize))
     {
         return CE_Failure;
     }
 
-    int nXPixelOff = nXBlockOff * nBlockXSize;
-    int nYPixelOff = nYBlockOff * nBlockYSize;
+    const int nXPixelOff = nXBlockOff * nBlockXSize;
+    const int nYPixelOff = nYBlockOff * nBlockYSize;
 
     *pnXValid = nBlockXSize;
     *pnYValid = nBlockYSize;
 
-    if (nXPixelOff + nBlockXSize >= nRasterXSize)
+    if (nXPixelOff >= nRasterXSize - nBlockXSize)
     {
         *pnXValid = nRasterXSize - nXPixelOff;
     }
 
-    if (nYPixelOff + nBlockYSize >= nRasterYSize)
+    if (nYPixelOff >= nRasterYSize - nBlockYSize)
     {
         *pnYValid = nRasterYSize - nYPixelOff;
     }
