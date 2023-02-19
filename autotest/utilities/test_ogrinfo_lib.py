@@ -105,6 +105,7 @@ def test_ogrinfo_lib_json():
         ],
         "metadata": {},
         "domains": {},
+        "relationships": {},
     }
     assert ret == expected_ret
 
@@ -578,6 +579,7 @@ def test_ogrinfo_lib_json_features():
         ],
         "metadata": {},
         "domains": {},
+        "relationships": {},
     }
     assert ret == expected_ret
 
@@ -621,3 +623,63 @@ def test_ogrinfo_lib_json_zm():
 
     ret = gdal.VectorInfo(ds, format="json")
     assert ret["layers"][0]["geometryFields"][0]["type"] == "PointZM"
+
+
+###############################################################################
+# Test text output of relationships
+
+
+def test_ogrinfo_lib_relationships():
+
+    if gdal.GetDriverByName("OpenFileGDB") is None:
+        pytest.skip("OpenFileGDB driver missing")
+
+    ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
+
+    ret = gdal.VectorInfo(ds)
+    expected = """Relationship: composite_many_to_many
+  Type: Composite
+  Related table type: feature
+  Cardinality: ManyToMany
+  Left table name: table6
+  Right table name: table7
+  Left table fields: pk
+  Right table fields: parent_pk
+  Mapping table name: composite_many_to_many
+  Left mapping table fields: origin_foreign_key
+  Right mapping table fields: dest_foreign_key
+  Forward path label: table7
+  Backward path label: table6
+"""
+    assert expected.replace("\r\n", "\n") in ret.replace("\r\n", "\n")
+
+
+###############################################################################
+# Test json output of relationships
+
+
+def test_ogrinfo_lib_json_relationships():
+
+    if gdal.GetDriverByName("OpenFileGDB") is None:
+        pytest.skip("OpenFileGDB driver missing")
+
+    ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
+
+    ret = gdal.VectorInfo(ds, format="json")
+    _validate_json_output(ret)
+
+    # print(ret["relationships"]["composite_many_to_many"])
+    assert ret["relationships"]["composite_many_to_many"] == {
+        "type": "Composite",
+        "related_table_type": "feature",
+        "cardinality": "ManyToMany",
+        "left_table_name": "table6",
+        "right_table_name": "table7",
+        "left_table_fields": ["pk"],
+        "right_table_fields": ["parent_pk"],
+        "mapping_table_name": "composite_many_to_many",
+        "left_mapping_table_fields": ["origin_foreign_key"],
+        "right_mapping_table_fields": ["dest_foreign_key"],
+        "forward_path_label": "table7",
+        "backward_path_label": "table6",
+    }

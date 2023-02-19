@@ -465,6 +465,8 @@ Example of retrieving information on a file in JSON format without showing detai
       "metadata":{
       },
       "domains":{
+      },
+      "relationships":{
       }
     }
 
