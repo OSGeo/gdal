@@ -35,6 +35,7 @@
 #include "ogrsf_frmts.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <new>
 
@@ -316,9 +317,10 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
             CPLAssert(poGeom->getGeometryType() == wkbPoint);
             adfX.push_back(poGeom->toPoint()->getX());
             adfY.push_back(poGeom->toPoint()->getY());
-            const size_t nIdxInDataset =
-                static_cast<size_t>(poFeat->GetFieldAsInteger64(0));
-            adfZ.push_back(m_adfZ[nIdxInDataset]);
+            const auto nIdxInDataset = poFeat->GetFieldAsInteger64(0);
+            assert(nIdxInDataset >= 0 &&
+                   static_cast<size_t>(nIdxInDataset) < m_adfZ.size());
+            adfZ.push_back(m_adfZ[static_cast<size_t>(nIdxInDataset)]);
         }
     }
     catch (const std::bad_alloc &e)
