@@ -137,27 +137,40 @@ int main(int argc, char **argv) {
         args.append(\"]\");
     }
     std::string pycode = \"import pytest\\npytest.main(\" + args + \")\\n\";
+#if PY_VERSION_HEX >= 0x03080000
+    PyConfig config;
+    PyConfig_InitPythonConfig(&config);
+    config.install_signal_handlers = 0;
+    PyStatus status;
+    status = PyConfig_SetBytesString(&config, &config.program_name, argv[0]);
+    if (PyStatus_Exception(status)) {
+        PyConfig_Clear(&config);
+        Py_ExitStatusException(status);
+        return 1;
+    }
+    status = Py_InitializeFromConfig(&config);
+    if (PyStatus_Exception(status)) {
+        PyConfig_Clear(&config);
+        Py_ExitStatusException(status);
+        return 1;
+    }
+    PyConfig_Clear(&config);
+#else
     wchar_t * program_name = Py_DecodeLocale(argv[0], NULL);
     Py_SetProgramName(program_name);
     Py_Initialize();
+#endif
     PyRun_SimpleString(&*pycode.begin());
     Py_Finalize();
     return 0;
 }")
-
-    # To avoid -Werror to trigger on deprecated Py_SetProgramName() used above
-    # See https://github.com/python/cpython/pull/26083 as an example how to port
-    if (CMAKE_CXX_FLAGS)
-      string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
-      string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
-    endif ()
 
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
     add_custom_target(
       autotest_runner
-      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_NAME:pytest_runner> -c
+      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_FILE:pytest_runner> -c
               ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
