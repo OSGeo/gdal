@@ -637,7 +637,7 @@ static bool LoadPythonAPI()
         for (size_t i = 0;
              libHandle == nullptr && i < CPL_ARRAYSIZE(apszPythonSO); ++i)
         {
-            CPLDebug("GAL", "Trying %s", apszPythonSO[i]);
+            CPLDebug("GDAL", "Trying %s", apszPythonSO[i]);
             libHandle = LoadLibrary(apszPythonSO[i]);
             if (libHandle != nullptr)
                 CPLDebug("GDAL", "... success");
