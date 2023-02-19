@@ -217,6 +217,9 @@ def test_ehdr_11():
 
 def test_ehdr_12():
 
+    if gdal.GetDriverByName("BMP") is None:
+        pytest.skip("BMP driver missing")
+
     src_ds = gdal.Open("../gcore/data/1bit.bmp")
     ds = gdal.GetDriverByName("EHDR").CreateCopy(
         "/vsimem/1bit.bil", src_ds, options=["NBITS=1"]

@@ -3024,7 +3024,11 @@ def test_gpkg_39():
     ds = None
 
     # From a AREA_OR_POINT=Point dataset
-    gdal.Translate("/vsimem/gpkg_39.gpkg", "data/n43.dt0", format="GPKG")
+    src_ds2 = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_Int16)
+    src_ds2.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src_ds2.SetMetadataItem("AREA_OR_POINT", "Point")
+    src_ds2.GetRasterBand(1).SetUnitType("m")
+    gdal.Translate("/vsimem/gpkg_39.gpkg", src_ds2, format="GPKG")
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
     assert ds.GetMetadataItem("AREA_OR_POINT") == "Point", ds.GetMetadata()
     assert ds.GetRasterBand(1).GetUnitType() == "m"

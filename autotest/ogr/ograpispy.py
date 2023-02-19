@@ -56,6 +56,9 @@ def test_ograpispy_1():
         ogrtest.has_apispy = False
         pytest.skip()
 
+    if ogr.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ref_data = open("data/testograpispy.py", "rt").read()
     got_data = open("tmp/ograpispy_1.py", "rt").read()
 

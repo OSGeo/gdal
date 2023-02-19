@@ -634,6 +634,9 @@ def test_ogr_pds4_create_table_binary():
 @pytest.mark.parametrize("line_ending", [None, "CRLF", "LF", "error"])
 def test_ogr_pds4_create_table_delimited(line_ending):
 
+    if ogr.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
         "VAR_TITLE=title",

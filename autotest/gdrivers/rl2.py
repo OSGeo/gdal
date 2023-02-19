@@ -345,6 +345,9 @@ def test_rl2_14():
 
 def test_rl2_15():
 
+    if gdal.GetDriverByName("BMP") is None:
+        pytest.skip("BMP driver missing")
+
     if gdaltest.rl2_drv is None:
         pytest.skip()
 

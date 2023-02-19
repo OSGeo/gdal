@@ -123,6 +123,9 @@ def test_gdal2tiles_py_zoom_option():
     assert not os.path.exists("tmp/out_gdal2tiles_smallworld/0/0/0.png.aux.xml")
     assert not os.path.exists("tmp/out_gdal2tiles_smallworld/1/0/0.png.aux.xml")
 
+    if gdal.GetDriverByName("KMLSuperOverlay") is None:
+        pytest.skip("KMLSuperOverlay driver missing")
+
     ds = gdal.Open("tmp/out_gdal2tiles_smallworld/doc.kml")
     assert ds is not None, "did not get kml"
 
@@ -434,22 +437,27 @@ def test_gdal2tiles_py_profile_raster():
         + "small_world.tif tmp/out_gdal2tiles_smallworld",
     )
 
-    if sys.platform != "win32":
-        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+    try:
         _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-            expected_cs=[29839, 34244, 42706, 64319],
+            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
+            expected_cs=[10125, 10802, 27343, 48852],
         )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/0/0/0.png",
-        expected_cs=[10125, 10802, 27343, 48852],
-    )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/1/0/0.png",
-        expected_cs=[62125, 59756, 43894, 38539],
-    )
+        _verify_raster_band_checksums(
+            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
+            expected_cs=[62125, 59756, 43894, 38539],
+        )
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+        if gdal.GetDriverByName("KMLSuperOverlay") is None:
+            pytest.skip("KMLSuperOverlay driver missing")
+
+        if sys.platform != "win32":
+            # For some reason, the checksums on the kml file on Windows are the ones of the below png
+            _verify_raster_band_checksums(
+                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
+                expected_cs=[29839, 34244, 42706, 64319],
+            )
+    finally:
+        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 def test_gdal2tiles_py_profile_raster_oversample():
@@ -503,22 +511,28 @@ def test_gdal2tiles_py_profile_raster_xyz():
         + "small_world.tif tmp/out_gdal2tiles_smallworld",
     )
 
-    if sys.platform != "win32":
-        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+    try:
         _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-            expected_cs=[27644, 31968, 38564, 64301],
+            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
+            expected_cs=[11468, 10719, 27582, 48827],
         )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/0/0/0.png",
-        expected_cs=[11468, 10719, 27582, 48827],
-    )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/1/0/0.png",
-        expected_cs=[60550, 62572, 46338, 38489],
-    )
+        _verify_raster_band_checksums(
+            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
+            expected_cs=[60550, 62572, 46338, 38489],
+        )
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+        if gdal.GetDriverByName("KMLSuperOverlay") is None:
+            pytest.skip("KMLSuperOverlay driver missing")
+
+        if sys.platform != "win32":
+            # For some reason, the checksums on the kml file on Windows are the ones of the below png
+            _verify_raster_band_checksums(
+                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
+                expected_cs=[27644, 31968, 38564, 64301],
+            )
+
+    finally:
+        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
@@ -540,20 +554,28 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
         + "small_world.tif tmp/out_gdal2tiles_smallworld",
     )
 
-    if sys.platform != "win32":
-        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+    try:
         _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-            expected_cs=[12361, 18212, 21827, 5934],
+            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
+            expected_cs=[8560, 8031, 7209, 17849],
         )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/0/0/0.png", expected_cs=[8560, 8031, 7209, 17849]
-    )
-    _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/1/0/0.png", expected_cs=[2799, 3468, 8686, 17849]
-    )
+        _verify_raster_band_checksums(
+            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
+            expected_cs=[2799, 3468, 8686, 17849],
+        )
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+        if gdal.GetDriverByName("KMLSuperOverlay") is None:
+            pytest.skip("KMLSuperOverlay driver missing")
+
+        if sys.platform != "win32":
+            # For some reason, the checksums on the kml file on Windows are the ones of the below png
+            _verify_raster_band_checksums(
+                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
+                expected_cs=[12361, 18212, 21827, 5934],
+            )
+
+    finally:
+        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 def test_gdal2tiles_py_mapml():

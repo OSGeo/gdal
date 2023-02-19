@@ -3334,6 +3334,9 @@ def test_ogr_sqlite_43():
 
 def test_ogr_sqlite_44():
 
+    if ogr.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     if gdaltest.sl_ds is None:
         pytest.skip()
 

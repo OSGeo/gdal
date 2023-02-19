@@ -517,6 +517,9 @@ def test_ogr_sql_sqlite_left_join():
 
 def test_ogr_sql_sqlite_join_layers_without_fast_feature_count():
 
+    if ogr.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/tblmain.csv",
         """id,attr1
