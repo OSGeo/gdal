@@ -54,7 +54,7 @@ crs_list = [
         2062,
         False,
         True,
-    ],  # lcc "Lambert Conic Conformal (1SP)". We morph it to LCC_2SP in the Imagine representaiton
+    ],  # lcc "Lambert Conic Conformal (1SP)". We morph it to LCC_2SP in the Imagine representation
     [3943, False, False],  # lcc "Lambert Conic Conformal (2SP)"
     # [2065, True, False],  # krovak South-West
     [5221, True, False],  # krovak east-north
@@ -68,7 +68,7 @@ crs_list = [
         5641,
         False,
         True,
-    ],  # merc, "Mercator (variant B)". We morph it to Mercator Variant A in the Imagine representaiton
+    ],  # merc, "Mercator (variant B)". We morph it to Mercator Variant A in the Imagine representation
     [27200, False, False],  # nzmg
     [6842, False, False],  # omerc, "Hotine Oblique Mercator (variant A)"
     [2057, False, False],  # omerc, "Hotine Oblique Mercator (variant B)"

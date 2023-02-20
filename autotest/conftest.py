@@ -67,7 +67,7 @@ def setup_proj_search_paths():
         from filelock import FileLock
 
         # We need to do the copy of proj.db from its source directory to
-        # gcore/tmp/proj_db_tmpdir under a lock to prevent pytest invokations
+        # gcore/tmp/proj_db_tmpdir under a lock to prevent pytest invocations
         # run concurrently to overwrite in parallel, leading to PROJ being
         # confused by the file being overwritten after opening, whereas PROJ
         # assumes it to be immutable.

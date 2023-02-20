@@ -5264,7 +5264,7 @@ def test_nitf_CLEVEL_update():
         gdal.GetDriverByName("NITF").Delete("/vsimem/out.ntf")
 
     else:
-        # Artifical use case
+        # Artificial use case
         src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
         assert (
             gdal.GetDriverByName("NITF").CreateCopy(
