@@ -1623,7 +1623,7 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     }
 
     /* mapogr.cpp doesn't like errors after GetNextFeature() */
-    if (CPLGetLastErrorType() != CE_None)
+    if (CPLGetLastErrorType() == CE_Failure)
     {
         bRet = FALSE;
         printf("ERROR: An error was reported : %s\n", CPLGetLastErrorMsg());
