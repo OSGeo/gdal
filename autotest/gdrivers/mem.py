@@ -107,7 +107,6 @@ def test_mem_2():
     ds = gdal.Open("MEM:::")
     gdal.PopErrorHandler()
     assert ds is None, "opening MEM dataset should have failed."
-
     for libname in ["msvcrt", "libc.so.6"]:
         try:
             crt = ctypes.CDLL(libname)
@@ -175,6 +174,37 @@ def test_mem_2():
 
         dsup = None
 
+    ## more ds names, ensure GEOTRANSFORM and SPATIALREFERENCE get tested
+    gt = "-1e+06/1953.125/0/1e+06/0/-3906.25"
+    proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
+    ll_crs = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
+    test_data = [
+        (
+            "MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE=%s,DATATYPE=Float32"
+            % (p, gt, width, height, proj_crs),
+            "Lambert",
+        ),
+        (
+            "MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE=%s,DATATYPE=Float32"
+            % (p, gt, width, height, "bogus"),
+            "",
+        ),
+        (
+            """MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE="%s",DATATYPE=Float32"""
+            % (p, gt, width, height, ll_crs),
+            "GEOGCS",
+        ),
+    ]
+
+    for ds_definition, expected_sr in test_data:
+        dsro = gdal.Open(ds_definition)
+        if dsro is None:
+            free(p)
+            pytest.fail("opening MEM dataset failed in read only mode.")
+
+        assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
+        assert expected_sr in dsro.GetProjectionRef()
+        dsro = None
     free(p)
 
 
