@@ -502,15 +502,24 @@ Creation Options
 -  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
    The higher, the smaller file and slower compression time. Default is 5.
 
--  **JXL_DISTANCE=[0.1-15]**: Distance level for lossy JPEG-XL compression
-   0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
-   Default is 1.0
+-  **JXL_DISTANCE=[0.1-15]**: Distance level for lossy JPEG-XL compression.
+   It is specified in multiples of a just-noticeable difference.
+   (cf `butteraugli <https://github.com/google/butteraugli>`__ for the definition
+   of the distance)
+   That is, 0 is mathematically lossless, 1 should be visually lossless, and
+   higher distances yield denser and denser files with lower and lower fidelity.
+   The recommended range is [0.5,3]. Default is 1.0.
 
 -  **JXL_ALPHA_DISTANCE=[-1,0,0.1-15]**: (GDAL >= 3.7, libjxl > 0.8.1)
    Distance level for alpha channel for lossy JPEG-XL compression.
-   -1=same as non-alpha channels, 0=mathematically lossless,
-   1.0=visually lossless, usual range [0.5,3].
-   Default is -1.0
+   It is specified in multiples of a just-noticeable difference.
+   (cf `butteraugli <https://github.com/google/butteraugli>`__ for the definition
+   of the distance)
+   That is, 0 is mathematically lossless, 1 should be visually lossless, and
+   higher distances yield denser and denser files with lower and lower fidelity.
+   For lossy compression, the recommended range is [0.5,3].
+   The default value is the special value -1.0, which means to use the same
+   distance value as non-alpha channel (ie JXL_DISTANCE).
 
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if
