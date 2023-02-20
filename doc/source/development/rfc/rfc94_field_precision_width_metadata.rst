@@ -34,10 +34,15 @@ There is currently no way for an application to access this information and this
 can lead to loss of width or precision while converting between formats or when the
 application decides to stay on the safe side and reduce the width reported by GDAL.
 
+Additionally, attention must be paid to the meaning of "width" and "precision":
+OGR "width" corresponds to SQL "precision" and OGR "precision" corresponds to SQL "scale".
+
+
 For reference:
 
 - https://trac.osgeo.org/gdal/ticket/6960
 - https://issues.qgis.org/issues/11755
+- https://issues.qgis.org/issues/15188#note-8
 - https://github.com/qgis/QGIS/issues/51849
 
 
