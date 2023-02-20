@@ -995,9 +995,6 @@ def test_ogr_wfs_deegree_sortby():
 
 def ogr_wfs_get_multiple_layer_defn(url):
 
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
-
     ds = ogr.Open("WFS:" + url)
     if ds is None:
         if gdaltest.gdalurlopen(url) is None:
@@ -1028,6 +1025,7 @@ def test_ogr_wfs_esri():
 # Test a ESRI server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_esri_2():
     return ogr_wfs_get_multiple_layer_defn(
         "http://sentinel.ga.gov.au/wfsconnector/com.esri.wfs.Esrimap"
@@ -1038,6 +1036,7 @@ def test_ogr_wfs_esri_2():
 # Test a CubeWerx server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_cubewerx():
     return ogr_wfs_get_multiple_layer_defn(
         "http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATASTORE=vgi"
@@ -1048,6 +1047,7 @@ def test_ogr_wfs_cubewerx():
 # Test a TinyOWS server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_tinyows():
     return ogr_wfs_get_multiple_layer_defn("http://www.tinyows.org/cgi-bin/tinyows")
 
@@ -1056,6 +1056,7 @@ def test_ogr_wfs_tinyows():
 # Test a ERDAS Apollo server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_erdas_apollo():
     return ogr_wfs_get_multiple_layer_defn(
         "http://apollo.erdas.com/erdas-apollo/vector/Cherokee"
@@ -1066,6 +1067,7 @@ def test_ogr_wfs_erdas_apollo():
 # Test a Integraph server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_intergraph():
     return ogr_wfs_get_multiple_layer_defn("http://ideg.xunta.es/WFS_POL/request.aspx")
 
@@ -1074,6 +1076,7 @@ def test_ogr_wfs_intergraph():
 # Test a MapInfo server
 
 
+@pytest.mark.slow()
 def test_ogr_wfs_mapinfo():
     return ogr_wfs_get_multiple_layer_defn("http://www.mapinfo.com/miwfs")
 

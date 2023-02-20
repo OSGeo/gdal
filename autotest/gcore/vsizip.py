@@ -652,10 +652,8 @@ def test_vsizip_multi_thread_below_threshold():
 # data stream < 4 GB
 
 
+@pytest.mark.slow()
 def test_vsizip_create_zip64():
-
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     niters = 1000
     s = "hello" * 1000 * 1000
@@ -686,10 +684,8 @@ def test_vsizip_create_zip64():
 # Test creating ZIP64 file: compressed data stream > 4 GB
 
 
+@pytest.mark.slow()
 def test_vsizip_create_zip64_stream_larger_than_4G():
-
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     zip_name = "tmp/vsizip_create_zip64_stream_larger_than_4G.zip"
 

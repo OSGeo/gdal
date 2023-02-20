@@ -137,6 +137,10 @@ def pytest_collection_modifyitems(config, items):
             for mark in item.iter_markers("require_run_on_demand"):
                 item.add_marker(skip_run_on_demand_not_set)
 
+        for mark in item.iter_markers("slow"):
+            if not gdaltest.run_slow_tests():
+                item.add_marker(pytest.mark.skip("GDAL_RUN_SLOW_TESTS not set"))
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")

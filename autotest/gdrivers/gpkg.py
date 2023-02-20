@@ -3961,11 +3961,10 @@ def test_gpkg_wkt2():
 # Test reading a 50000x25000 block uint16
 
 
+@pytest.mark.slow()
 def test_gpkg_50000_25000_uint16():
 
     if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if not gdaltest.run_slow_tests():
         pytest.skip()
     if sys.maxsize < 2**32:
         pytest.skip("Test not available on 32 bit")
@@ -3994,11 +3993,10 @@ def test_gpkg_50000_25000_uint16():
 # Test reading a 50000x50000 block uint16
 
 
+@pytest.mark.slow()
 def test_gpkg_50000_50000_uint16():
 
     if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if not gdaltest.run_slow_tests():
         pytest.skip()
     if sys.maxsize < 2**32:
         pytest.skip("Test not available on 32 bit")
