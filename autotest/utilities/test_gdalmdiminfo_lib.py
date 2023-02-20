@@ -272,10 +272,8 @@ def test_gdalmdiminfo_lib_mem_dataset():
 # Test arrayoption
 
 
+@pytest.mark.require_driver("netCDF")
 def test_gdalmdiminfo_lib_arrayoption():
-
-    if gdal.GetDriverByName("netCDF") is None:
-        pytest.skip("netCDF driver not enabled")
 
     ret = gdal.MultiDimInfo("../gdrivers/data/netcdf/with_bounds.nc")
     assert len(ret["arrays"]) == 2

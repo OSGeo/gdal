@@ -92,12 +92,10 @@ def test_gdalinfo_3():
 # Test -noct option
 
 
+@pytest.mark.require_driver("GIF")
 def test_gdalinfo_4():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GIF") is None:
-        pytest.skip("GIF driver is missing")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_gdalinfo_path() + " ../gdrivers/data/gif/bug407.gif"
@@ -222,12 +220,10 @@ def test_gdalinfo_8():
 # Test -mdd option
 
 
+@pytest.mark.require_driver("NITF")
 def test_gdalinfo_9():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("NITF") is None:
-        pytest.skip("NITF driver is missing")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_gdalinfo_path() + " ../gdrivers/data/nitf/fake_nsif.ntf"
@@ -536,12 +532,10 @@ def test_gdalinfo_26():
 # Test -oo
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_gdalinfo_path()
@@ -609,12 +603,10 @@ def test_gdalinfo_30():
 # Test -json -noct option
 
 
+@pytest.mark.require_driver("GIF")
 def test_gdalinfo_31():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GIF") is None:
-        pytest.skip("GIF driver is missing")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_gdalinfo_path()
@@ -994,12 +986,10 @@ def test_gdalinfo_35():
 # Test -mdd option
 
 
+@pytest.mark.require_driver("NITF")
 def test_gdalinfo_36():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("NITF") is None:
-        pytest.skip("NITF driver is missing")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_gdalinfo_path()

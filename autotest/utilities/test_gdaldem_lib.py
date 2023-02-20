@@ -103,10 +103,8 @@ def test_gdaldem_lib_hillshade_float():
 # Test gdaldem hillshade with source being floating point
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdaldem_lib_hillshade_float_png():
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver is missing")
 
     src_ds = gdal.Translate(
         "",

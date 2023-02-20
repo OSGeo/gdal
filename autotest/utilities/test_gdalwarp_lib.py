@@ -446,10 +446,8 @@ def test_gdalwarp_lib_19():
 # Test cutline from OGR datasource.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_lib_21():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -509,10 +507,8 @@ def test_gdalwarp_lib_cutline_larger_source_dataset(options):
 # Test cutline with ALL_TOUCHED enabled.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_lib_23():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -612,10 +608,8 @@ def test_gdalwarp_lib_45():
 # Test -crop_to_cutline
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_lib_46():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -758,10 +752,8 @@ def test_gdalwarp_lib_cutline_all_touched_single_pixel():
 # (#7226)s
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     cutlineDSName = (
         "/vsimem/test_gdalwarp_lib_crop_to_cutline_close_to_pixel_boundaries.json"
@@ -977,10 +969,8 @@ def test_gdalwarp_lib_110():
 # Test cutline SQL
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_lib_111():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -1705,10 +1695,8 @@ def test_gdalwarp_lib_134():
 # Test vertical datum shift
 
 
+@pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135():
-
-    if gdal.GetDriverByName("GTX") is None:
-        pytest.skip("GTX driver is missing")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])

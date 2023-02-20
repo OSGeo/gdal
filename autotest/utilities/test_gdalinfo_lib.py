@@ -86,10 +86,8 @@ def test_gdalinfo_lib_2():
 # Test extraMDDomains()
 
 
+@pytest.mark.require_driver("NITF")
 def test_gdalinfo_lib_3():
-
-    if gdal.GetDriverByName("NITF") is None:
-        pytest.skip("NITF driver is missing")
 
     ds = gdal.Open("../gdrivers/data/nitf/fake_nsif.ntf")
 

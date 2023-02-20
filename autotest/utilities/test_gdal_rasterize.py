@@ -127,13 +127,11 @@ def test_gdal_rasterize_1():
 # Test rasterization with ALL_TOUCHED (adapted from alg/rasterize.py).
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_rasterize_2():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     # Create a raster to rasterize into.
 
@@ -269,13 +267,11 @@ def test_gdal_rasterize_4():
 # Test point rasterization (#3774)
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_rasterize_5():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test_gdal_rasterize_5.csv", "wb")
     f.write(
@@ -338,13 +334,11 @@ def test_gdal_rasterize_5():
 # Test on the fly reprojection of input data
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_rasterize_6():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test_gdal_rasterize_6.csv", "wb")
     f.write(
@@ -388,6 +382,8 @@ def test_gdal_rasterize_6():
 # Test SQLITE dialect in SQL
 
 
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("sql_in_file", [False, True])
 def test_gdal_rasterize_7(sql_in_file):
 
@@ -395,20 +391,13 @@ def test_gdal_rasterize_7(sql_in_file):
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
 
-    drv = ogr.GetDriverByName("SQLite")
-    if drv is None:
-        pytest.skip("SQLite driver missing")
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
-
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = drv.CreateDataSource("/vsimem/foo.db", options=["SPATIALITE=YES"])
-    if ds is None:
-        pytest.skip()
-    ds = None
-    gdal.Unlink("/vsimem/foo.db")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        drv = ogr.GetDriverByName("SQLITE")
+        ds = drv.CreateDataSource("/vsimem/foo.db", options=["SPATIALITE=YES"])
+        if ds is None:
+            pytest.skip("Spatialite not available")
+        ds = None
+        gdal.Unlink("/vsimem/foo.db")
 
     f = open("tmp/test_gdal_rasterize_7.csv", "wb")
     x = (0, 0, 50, 50, 25)
@@ -457,13 +446,11 @@ def test_gdal_rasterize_7(sql_in_file):
 # layer, #6058.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_rasterize_8():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test_gdal_rasterize_8.csv", "wb")
     f.write("WKT,Value\n".encode("ascii"))
