@@ -121,3 +121,164 @@ follows:
    reference the suppression files and other common arguments in a
    ``~/.valgrindrc`` file.
 
+
+Recommendations on how to write new tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Python-based tests should be preferred when possible, as productivity is higher
+in Python and there is no associated compilation time (compilation time affects
+feedback received from continuous integration).
+
+C/C++-based test should be reserved for C++-specific aspects that cannot be tested
+with the SWIG Python bindings, which use the C interface. For example testing
+of C++ operators (copy/move constructors/assignment operators, iterator interfaces,
+etc.) or C/C++ functionality not mapped to SWIG (e.g. CPL utility functions/classes)
+
+Python tests
+------------
+
+Python tests use the `pytest <https://docs.pytest.org/en/latest/>`__
+framework since :ref:`rfc-72`.
+
+Test cases should be written in a way where they are independent from other
+ones, so they can potentially be run in a isolated way or in parallel of other
+test cases. In particular temporary files should be created with a name that
+cannot conflict with other tests.
+
+Use ``@pytest.mark.require_driver(driver_name)`` as an annotation for a test
+case that requires an optional driver to be present.
+
+Use ``pytestmark = pytest.mark.require_driver("driver_name")`` towards the
+beginning of a test file that requires a given driver to be available for
+all its test cases. This is typically when writing tests for a particular
+driver.
+
+Use ``@pytest.mark.require_run_on_demand`` as an annotation to signal a test
+that should not be run by default, typically because it requires special
+pre-conditions, use a lot of RAM, etc. and is thus not appropriate to be
+automatically run by continuous integration.
+
+Use ``@pytest.mark.parametrize(...)`` as an annotation for test functions
+that test for variations, instead of for() constructs.
+More details at https://docs.pytest.org/en/latest/parametrize.html
+
+e.g.:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize("dt,expected_size", [(gdal.GDT_Byte, 1),
+                                                  (gdal.GDT_UInt16, 2)]
+    def test_datatypesize(dt,expected_size):
+        assert gdal.GetDataTypeSizeBytes(input_dt) == expected_size
+
+
+`Fixtures <https://docs.pytest.org/en/latest/how-to/fixtures.html>`__ can
+be used to share set-up and tear-down code between test cases.
+
+e.g. a fixture automatically loaded for all test cases of a test file, that
+takes care to unregister a given driver before the test case is run, and
+re-register it afterwards:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="module", autouse=True)
+    def setup_driver():
+    # remove FileGDB driver before running tests
+    filegdb_driver = ogr.GetDriverByName("FileGDB")
+    if filegdb_driver is not None:
+        filegdb_driver.Deregister()
+
+    yield
+
+    if filegdb_driver is not None:
+        print("Reregistering FileGDB driver")
+        filegdb_driver.Register()
+
+or a fixture that runs preliminary checks to discover if a driver has
+some optional capabilities, and skip a test case if not:
+
+.. code-block:: python
+
+    @pytest.fixture()
+    def require_auto_load_extension():
+    if ogr.GetDriverByName("SQLite") is None:
+        pytest.skip()
+
+    ds = ogr.Open(":memory:")
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("PRAGMA compile_options")
+    if sql_lyr:
+        for f in sql_lyr:
+            if f.GetField(0) == "OMIT_LOAD_EXTENSION":
+                ds.ReleaseResultSet(sql_lyr)
+                pytest.skip("SQLite3 built with OMIT_LOAD_EXTENSION")
+        ds.ReleaseResultSet(sql_lyr)
+
+    def test_ogr_virtualogr_1(require_auto_load_extension):
+        # Invalid syntax
+        assert not ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()")
+
+C++ tests
+---------
+
+GDAL C++ tests use the `GoogleTest <https://github.com/google/googletest>`__
+framework since :ref:`rfc-88`.
+
+Common non-failing assertions are: ``EXPECT_TRUE(cond)``, ``EXPECT_FALSE(cond)``,
+``EXPECT_EQ(a, b)``, ``EXPECT_NE(a, b)``, ``EXPECT_STREQ(a, b)``, ``EXPECT_LE(a, b)``,
+``EXPECT_LT(a, b)``, ``EXPECT_GE(a, b)``, ``EXPECT_GT(a, b)``, ``EXPECT_NEAR(a, b, tolerance)``
+If one of those assertions fail, the execution of the rest of the test cases
+continues, hence they should not typically be used if testing a pointer against
+NULL and dereferencing it unconditionally afterwards. The ASSERT_xxxx family
+of assertions should be used for such cases where early exit of the test case
+is desired.
+
+GoogleTest also offers capabilities for parametrized tests. For example:
+
+.. code-block:: c++
+
+    class DataTypeTupleFixture:
+            public test_gdal,
+            public ::testing::WithParamInterface<std::tuple<GDALDataType, GDALDataType>>
+    {
+    public:
+        static std::vector<std::tuple<GDALDataType, GDALDataType>> GetTupleValues()
+        {
+            std::vector<std::tuple<GDALDataType, GDALDataType>> ret;
+            for( GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
+            {
+                for( GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
+                {
+                    ret.emplace_back(std::make_tuple(eIn, eOut));
+                }
+            }
+            return ret;
+        }
+    };
+
+    // Test GDALDataTypeUnion() on all (GDALDataType, GDALDataType) combinations
+    TEST_P(DataTypeTupleFixture, GDALDataTypeUnion_generic)
+    {
+        GDALDataType eDT1 = std::get<0>(GetParam());
+        GDALDataType eDT2 = std::get<1>(GetParam());
+        GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
+        EXPECT_EQ( eDT, GDALDataTypeUnion(eDT2,eDT1) );
+        EXPECT_GE( GDALGetDataTypeSize(eDT), GDALGetDataTypeSize(eDT1) );
+        EXPECT_GE( GDALGetDataTypeSize(eDT), GDALGetDataTypeSize(eDT2) );
+        EXPECT_TRUE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
+                (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
+
+        EXPECT_TRUE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
+        EXPECT_TRUE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
+    }
+
+    INSTANTIATE_TEST_SUITE_P(
+            test_gdal,
+            DataTypeTupleFixture,
+            ::testing::ValuesIn(DataTypeTupleFixture::GetTupleValues()),
+            [](const ::testing::TestParamInfo<DataTypeTupleFixture::ParamType>& l_info) {
+                GDALDataType eDT1 = std::get<0>(l_info.param);
+                GDALDataType eDT2 = std::get<1>(l_info.param);
+                return std::string(GDALGetDataTypeName(eDT1)) + "_" + GDALGetDataTypeName(eDT2);
+            }
+    );
