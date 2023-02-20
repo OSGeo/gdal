@@ -195,17 +195,16 @@ def test_mem_2():
             "GEOGCS",
         ),
     ]
-    for i in range(width * height):
-        float_p[i] = 5.0
 
     for ds_definition, expected_sr in test_data:
         dsro = gdal.Open(ds_definition)
         if dsro is None:
             free(p)
             pytest.fail("opening MEM dataset failed in read only mode.")
-        print(expected_sr)
+
         assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
         assert expected_sr in dsro.GetProjectionRef()
+        dsro = None
     free(p)
 
 
