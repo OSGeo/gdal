@@ -4374,11 +4374,10 @@ def test_tiff_write_100():
 # reloading. tiff_write_78 doesn't produce enough big data to trigger this...
 
 
+@pytest.mark.slow()
 def test_tiff_write_101():
 
     md = gdaltest.tiff_drv.GetMetadata()
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if sys.platform.startswith("linux"):
         # Much faster to use /dev/urandom than python random generator !
@@ -9105,12 +9104,10 @@ def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micr
 #
 
 
+@pytest.mark.slow()
 def test_tiff_write_deflate_4GB():
 
     if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if not gdaltest.run_slow_tests():
         pytest.skip()
 
     ref_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)

@@ -702,12 +702,9 @@ def test_wms_15():
 ###############################################################################
 # Test getting subdatasets from WMS-C Capabilities
 
-
+# server often returns a 504 after ages; this test can take minutes
+@pytest.mark.slow()
 def test_wms_16():
-
-    if not gdaltest.run_slow_tests():
-        # server often returns a 504 after ages; this test can take minutes
-        pytest.skip()
 
     name = "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE"
     ds = gdal.Open(name)
@@ -993,8 +990,6 @@ def test_twms_GIBS():
         "Failing because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
     )
 
-    # if not gdaltest.run_slow_tests():
-    #     pytest.skip()
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
 
     try:

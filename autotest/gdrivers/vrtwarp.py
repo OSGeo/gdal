@@ -446,10 +446,9 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
 # Test reading a warped VRT with blocks > 2 gigapixels
 
 
+@pytest.mark.slow()
 def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
 
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
     if sys.maxsize < 2**32:
         pytest.skip("Test not available on 32 bit")
 

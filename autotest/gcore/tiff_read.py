@@ -4159,6 +4159,7 @@ def test_tiff_read_strip_larger_than_2GB():
 # Test reading a deflate compressed file with a uncompressed strip larger than 4 GB
 
 
+@pytest.mark.slow()
 def test_tiff_read_deflate_4GB():
 
     if not check_libtiff_internal_or_at_least(4, 0, 11):
@@ -4169,9 +4170,6 @@ def test_tiff_read_deflate_4GB():
         assert ds is None
         return
     assert ds is not None
-
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     data = ds.ReadRaster(
         0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize=20, buf_ysize=20

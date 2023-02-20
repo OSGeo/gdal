@@ -1838,10 +1838,8 @@ def test_tiff_ovr_sparse_ok_external_overview(apply_sparse):
 # Test overview on a dataset where width * height > 2 billion
 
 
+@pytest.mark.slow()
 def test_tiff_ovr_46():
-
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     # Test NEAREST
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):

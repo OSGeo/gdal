@@ -40,9 +40,8 @@ from osgeo import gdal, ogr
 #
 
 
+@pytest.mark.slow()
 def test_vsicurl_1():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -57,9 +56,8 @@ def test_vsicurl_1():
 #
 
 
+@pytest.mark.slow()
 def vsicurl_2():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -74,9 +72,8 @@ def vsicurl_2():
 # This server doesn't support range downloading
 
 
+@pytest.mark.slow()
 def vsicurl_3():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -91,9 +88,8 @@ def vsicurl_3():
 # This server doesn't support range downloading
 
 
+@pytest.mark.slow()
 def test_vsicurl_4():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -108,10 +104,8 @@ def test_vsicurl_4():
 # Test URL unescaping when reading HTTP file list
 
 
+@pytest.mark.slow()
 def test_vsicurl_5():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
-
     if not gdaltest.built_against_curl():
         pytest.skip()
 
@@ -125,9 +119,8 @@ def test_vsicurl_5():
 # Test with FTP server that doesn't support EPSV command
 
 
+@pytest.mark.slow()
 def vsicurl_6_disabled():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -140,9 +133,8 @@ def vsicurl_6_disabled():
 # Test Microsoft-IIS/6.0 listing
 
 
+@pytest.mark.slow()
 def test_vsicurl_7():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -155,9 +147,8 @@ def test_vsicurl_7():
 # Test interleaved reading between 2 datasets
 
 
+@pytest.mark.slow()
 def vsicurl_8():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -177,9 +168,8 @@ def vsicurl_8():
 # returns escaped sequences instead of the Chinese characters.
 
 
+@pytest.mark.slow()
 def test_vsicurl_9():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -195,9 +185,8 @@ def test_vsicurl_9():
 # Test reading a file with escaped Chinese characters.
 
 
+@pytest.mark.slow()
 def test_vsicurl_10():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -212,9 +201,8 @@ def test_vsicurl_10():
 # Test ReadDir() after reading a file on the same server
 
 
+@pytest.mark.slow()
 def test_vsicurl_11():
-    if not gdaltest.run_slow_tests():
-        pytest.skip()
 
     if not gdaltest.built_against_curl():
         pytest.skip()

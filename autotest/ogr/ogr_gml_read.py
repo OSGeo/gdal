@@ -3915,12 +3915,10 @@ version="1.0.0">
 # Test we are robust to content of XML elements bigger than 2 GB
 
 
+@pytest.mark.slow()
 def test_ogr_gml_76():
 
     if not gdaltest.have_gml_reader:
-        pytest.skip()
-
-    if not gdaltest.run_slow_tests():
         pytest.skip()
 
     with gdaltest.error_handler():
