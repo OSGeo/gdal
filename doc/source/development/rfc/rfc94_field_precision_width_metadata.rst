@@ -41,6 +41,38 @@ For reference:
 - https://github.com/qgis/QGIS/issues/51849
 
 
+Current drivers behavior
+------------------------
+
+Here is a list of the drivers and how they behave with respect to the width and precision,
+(for databases we refer to the `NUMERIC` data type).
+
+================== ================================== =====================
+ Driver             Width Includes Decimal Separator   Width Includes Sign
+================== ================================== =====================
+ Shapefile          YES                                YES
+ MapInfo            ?                                  ?
+ PostgreSQL         NO                                 NO
+ MySQL              NO                                 NO
+ MSSQL              NO                                 NO
+ OCI                NO                                 NO
+ GPKG               N/A                                N/A
+ CSV (from .csvt)   N/A                                N/A
+ HANA               ?                                  ?
+ FlatGeoBuf         ?                                  ?
+ FileGDB            ?                                  ?
+ GML                ?                                  ?
+ MEM                ?                                  ?
+================== ================================== =====================
+
+
+Notes about specific drivers
+............................
+
++ GPKG: SQLite column affinity storage is 8-byte IEEE floating point number
++ GML: `xsd:decimal` with `totalDigits` and `fractionDigits`, I could not find any detail in the specs.
+
+
 Technical details
 -----------------
 
