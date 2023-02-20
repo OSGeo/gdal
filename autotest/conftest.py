@@ -116,8 +116,6 @@ def chdir_to_test_file(request):
 
 
 def pytest_collection_modifyitems(config, items):
-    # skip tests with @pytest.mark.require_driver(name) when the driver isn't available
-    skip_driver_not_present = pytest.mark.skip("Driver not present")
     # skip test with @ptest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
     skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
     import gdaltest
@@ -133,7 +131,8 @@ def pytest_collection_modifyitems(config, items):
                     # Store the driver on gdaltest module so test functions can assume it's there.
                     setattr(gdaltest, "%s_drv" % driver_name.lower(), driver)
             if not drivers_checked[driver_name]:
-                item.add_marker(skip_driver_not_present)
+                # skip tests with @pytest.mark.require_driver(name) when the driver isn't available
+                item.add_marker(pytest.mark.skip(f"Driver {driver_name} not present"))
         if not gdal.GetConfigOption("RUN_ON_DEMAND"):
             for mark in item.iter_markers("require_run_on_demand"):
                 item.add_marker(skip_run_on_demand_not_set)
