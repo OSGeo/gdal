@@ -171,6 +171,14 @@ e.g.:
     def test_datatypesize(dt,expected_size):
         assert gdal.GetDataTypeSizeBytes(dt) == expected_size
 
+instead of
+
+.. code-block:: python
+
+    def test_datatypesize_DO_NOT_DO_THAT():
+        for dt, expected_size in [(gdal.GDT_Byte, 1), (gdal.GDT_UInt16, 2)]:
+            assert gdal.GetDataTypeSizeBytes(dt) == expected_size
+
 
 `Fixtures <https://docs.pytest.org/en/latest/how-to/fixtures.html>`__ can
 be used to share set-up and tear-down code between test cases.
