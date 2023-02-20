@@ -42,6 +42,7 @@
 #include "ogr_api.h"
 
 #include <limits>
+#include <set>
 
 static OGRGeometry *OGRGeoJSONReadGeometry(json_object *poObj,
                                            OGRSpatialReference *poParentSRS);
@@ -99,6 +100,8 @@ class OGRGeoJSONReaderStreamingParser : public CPLJSonStreamingParser
 
     std::vector<OGRFeature *> m_apoFeatures;
     size_t m_nCurFeatureIdx;
+    bool m_bOriginalIdModifiedEmitted = false;
+    std::set<GIntBig> m_oSetUsedFIDs{};
 
     bool m_bStartFeature = false;
     bool m_bEndFeature = false;
@@ -167,6 +170,15 @@ class OGRGeoJSONReaderStreamingParser : public CPLJSonStreamingParser
     inline bool IsEndFeature() const
     {
         return m_bEndFeature;
+    }
+
+    inline bool GetOriginalIdModifiedEmitted() const
+    {
+        return m_bOriginalIdModifiedEmitted;
+    }
+    inline void SetOriginalIdModifiedEmitted(bool b)
+    {
+        m_bOriginalIdModifiedEmitted = b;
     }
 };
 
@@ -501,6 +513,37 @@ void OGRGeoJSONReaderStreamingParser::EndObject()
                 m_oReader.ReadFeature(m_poLayer, m_poCurObj, m_osJson.c_str());
             if (poFeat)
             {
+                GIntBig nFID = poFeat->GetFID();
+                if (nFID == OGRNullFID)
+                {
+                    nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
+                    while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+                    {
+                        ++nFID;
+                    }
+                }
+                else if (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+                {
+                    if (!m_bOriginalIdModifiedEmitted)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Several features with id = " CPL_FRMT_GIB
+                                 " have "
+                                 "been found. Altering it to be unique. "
+                                 "This warning will not be emitted anymore for "
+                                 "this layer",
+                                 nFID);
+                        m_bOriginalIdModifiedEmitted = true;
+                    }
+                    nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
+                    while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+                    {
+                        ++nFID;
+                    }
+                }
+                m_oSetUsedFIDs.insert(nFID);
+                poFeat->SetFID(nFID);
+
                 m_apoFeatures.push_back(poFeat);
             }
         }
@@ -1098,6 +1141,9 @@ size_t OGRGeoJSONReader::SkipPrologEpilogAndUpdateJSonPLikeWrapper(size_t nRead)
 void OGRGeoJSONReader::ResetReading()
 {
     CPLAssert(fp_);
+    if (poStreamingParser_)
+        bOriginalIdModifiedEmitted_ =
+            poStreamingParser_->GetOriginalIdModifiedEmitted();
     delete poStreamingParser_;
     poStreamingParser_ = nullptr;
 }
@@ -1113,6 +1159,8 @@ OGRFeature *OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer *poLayer)
     {
         poStreamingParser_ = new OGRGeoJSONReaderStreamingParser(
             *this, poLayer, false, bStoreNativeData_);
+        poStreamingParser_->SetOriginalIdModifiedEmitted(
+            bOriginalIdModifiedEmitted_);
         VSIFSeekL(fp_, 0, SEEK_SET);
         bFirstSeg_ = true;
         bJSonPLikeWrapper_ = false;
@@ -1166,17 +1214,20 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
         CPLDebug("GeoJSON",
                  "Establishing index to features for first GetFeature() call");
 
+        if (poStreamingParser_)
+            bOriginalIdModifiedEmitted_ =
+                poStreamingParser_->GetOriginalIdModifiedEmitted();
         delete poStreamingParser_;
         poStreamingParser_ = nullptr;
 
         OGRGeoJSONReaderStreamingParser oParser(*this, poLayer, false,
                                                 bStoreNativeData_);
+        oParser.SetOriginalIdModifiedEmitted(bOriginalIdModifiedEmitted_);
         VSIFSeekL(fp_, 0, SEEK_SET);
         bFirstSeg_ = true;
         bJSonPLikeWrapper_ = false;
         vsi_l_offset nCurOffset = 0;
         vsi_l_offset nFeatureOffset = 0;
-        GIntBig nSeqFID = 0;
         while (true)
         {
             size_t nRead = VSIFReadL(pabyBuffer_, 1, nBufferSize_, fp_);
@@ -1210,12 +1261,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
                     auto poFeat = oParser.GetNextFeature();
                     if (poFeat)
                     {
-                        GIntBig nThisFID = poFeat->GetFID();
-                        if (nThisFID < 0)
-                        {
-                            nThisFID = nSeqFID;
-                            nSeqFID++;
-                        }
+                        const GIntBig nThisFID = poFeat->GetFID();
                         if (oMapFIDToOffsetSize_.find(nThisFID) ==
                             oMapFIDToOffsetSize_.end())
                         {
@@ -1232,6 +1278,8 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
                 break;
             nCurOffset += nRead;
         }
+
+        bOriginalIdModifiedEmitted_ = oParser.GetOriginalIdModifiedEmitted();
     }
 
     auto oIter = oMapFIDToOffsetSize_.find(nFID);

@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { "id": 0, "seq": 0 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": 1, "seq": 1 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": null, "seq": 2 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": 1, "seq": 3 }, "geometry": null },
+{ "type": "Feature", "properties": { "id": null, "seq": 4 }, "geometry": null }
+]
+}
