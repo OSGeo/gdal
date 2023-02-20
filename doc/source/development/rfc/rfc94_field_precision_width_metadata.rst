@@ -62,7 +62,7 @@ Here is a list of the drivers and how they behave with respect to the width and 
  MSSQL              NO                                 NO
  OCI                NO                                 NO
  GPKG               N/A                                N/A
- CSV (from .csvt)   N/A                                N/A
+ CSV (from .csvt)   YES                                YES
  HANA               ?                                  ?
  FlatGeoBuf         ?                                  ?
  FileGDB            ?                                  ?
