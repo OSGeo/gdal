@@ -169,7 +169,7 @@ e.g.:
     @pytest.mark.parametrize("dt,expected_size", [(gdal.GDT_Byte, 1),
                                                   (gdal.GDT_UInt16, 2)]
     def test_datatypesize(dt,expected_size):
-        assert gdal.GetDataTypeSizeBytes(input_dt) == expected_size
+        assert gdal.GetDataTypeSizeBytes(dt) == expected_size
 
 
 `Fixtures <https://docs.pytest.org/en/latest/how-to/fixtures.html>`__ can
