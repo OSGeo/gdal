@@ -364,7 +364,7 @@ inline uint64_t OGRQuantizeValue(uint64_t nVal,
 
 inline uint64_t OGRQuantizeValue(uint64_t nVal, int nBitsPrecision)
 {
-    // Extact the binary exponent from the IEEE754 representation
+    // Extract the binary exponent from the IEEE754 representation
     const int nExponent = ((nVal >> 52) & 2047) - 1023;
     // Add 1 to round-up and the desired precision
     const int nBitsRequired = 1 + nExponent + nBitsPrecision;
