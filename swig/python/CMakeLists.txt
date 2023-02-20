@@ -435,12 +435,15 @@ if (Python_Interpreter_FOUND)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   set(INSTALL_ARGS "--single-version-externally-managed --record=record.txt")
+  set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL FALSE)
+  set(IGNORE_CMAKE_INSTALL_PREFIX_CONFIGURE_TIME_DIFFERENT_FROM_RUNTIME FALSE)
   if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${GDAL_PYTHON_INSTALL_PREFIX}" NATIVE_GDAL_PYTHON_INSTALL_PREFIX)
     if (WIN32)
       string(REPLACE "\\" "\\\\" NATIVE_GDAL_PYTHON_INSTALL_PREFIX "${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}")
     endif ()
     set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_GDAL_PYTHON_INSTALL_PREFIX}\"")
+    set(IGNORE_CMAKE_INSTALL_PREFIX_CONFIGURE_TIME_DIFFERENT_FROM_RUNTIME TRUE)
   elseif (CMAKE_INSTALL_PREFIX)
     file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" NATIVE_CMAKE_INSTALL_PREFIX)
     if (WIN32)
@@ -454,12 +457,12 @@ if (Python_Interpreter_FOUND)
         OUTPUT_VARIABLE STD_UNIX_LAYOUT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
       if ("${STD_UNIX_LAYOUT}" STREQUAL "TRUE")
-        set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_CMAKE_INSTALL_PREFIX}\"")
+        set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL TRUE)
       elseif (DEFINED GDAL_PYTHON_INSTALL_LIB)
         set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${GDAL_PYTHON_INSTALL_LIB}\"")
       endif ()
     else ()
-      set(INSTALL_ARGS "${INSTALL_ARGS} \"--prefix=${NATIVE_CMAKE_INSTALL_PREFIX}\"")
+      set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL TRUE)
     endif ()
   endif ()
 
@@ -497,10 +500,7 @@ if (Python_Interpreter_FOUND)
   else ()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake"
                    @ONLY)
-    install(
-      CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake\"
-                                  WORKING_DIRECTORY \"${INSTALL_WORKING_DIRECTORY}\")")
-
+    install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake")
   endif ()
 
 elseif (Python_Development_FOUND)
