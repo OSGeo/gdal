@@ -182,7 +182,7 @@ re-register it afterwards:
 .. code-block:: python
 
     @pytest.fixture(scope="module", autouse=True)
-    def setup_driver():
+    def without_filegdb_driver():
     # remove FileGDB driver before running tests
     filegdb_driver = ogr.GetDriverByName("FileGDB")
     if filegdb_driver is not None:
