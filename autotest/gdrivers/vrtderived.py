@@ -44,6 +44,30 @@ def _xmlsearch(root, nodetype, name):
             return node
 
 
+def _validate(content):
+
+    try:
+        from lxml import etree
+    except ImportError:
+        return
+
+    import os
+
+    gdal_data = gdal.GetConfigOption("GDAL_DATA")
+    if gdal_data is None:
+        print("GDAL_DATA not defined")
+        return
+
+    doc = etree.XML(content)
+    try:
+        schema_content = open(os.path.join(gdal_data, "gdalvrt.xsd"), "rb").read()
+    except IOError:
+        print("Cannot read gdalvrt.xsd schema")
+        return
+    schema = etree.XMLSchema(etree.XML(schema_content))
+    schema.assertValid(doc)
+
+
 ###############################################################################
 # Verify raster band subClass
 
@@ -929,6 +953,88 @@ def test_vrtderived_15():
     gdal.SetConfigOption("GDAL_VRT_ENABLE_PYTHON", None)
 
     assert ret
+
+
+###############################################################################
+# Check the effect of the SkipNonContributingSources element
+
+
+def test_vrtderived_skip_non_contributing_sources():
+
+    try:
+        import numpy
+
+        numpy.ones
+    except (ImportError, AttributeError):
+        pytest.skip()
+
+    def create_vrt(SkipNonContributingSources):
+        Trace = ""
+        if SkipNonContributingSources:
+            Trace = 'open("tmp/num_sources_skip_true.txt", "wt").write(str(len(in_ar)))'
+        else:
+            Trace = (
+                'open("tmp/num_sources_skip_false.txt", "wt").write(str(len(in_ar)))'
+            )
+        SkipNonContributingSources = "true" if SkipNonContributingSources else "false"
+        ret = f"""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>identity</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
+    {Trace}
+    out_ar[:] = sum(in_ar)
+]]>
+    </PixelFunctionCode>
+    <SkipNonContributingSources>{SkipNonContributingSources}</SkipNonContributingSources>
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="10" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="10" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+        # print(ret)
+        return ret
+
+    ds = gdal.Open(create_vrt(True))
+    ref_ds = gdal.Open(create_vrt(False))
+
+    with gdaltest.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        assert ds.ReadRaster(0, 0, 20, 20) == ref_ds.ReadRaster(0, 0, 20, 20)
+
+        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 2
+        os.unlink("tmp/num_sources_skip_true.txt")
+
+        assert ds.ReadRaster(0, 0, 1, 1) == ref_ds.ReadRaster(0, 0, 1, 1)
+
+        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink("tmp/num_sources_skip_true.txt")
+
+        assert ds.ReadRaster(10, 0, 10, 10) == ref_ds.ReadRaster(10, 0, 10, 10)
+
+        assert int(open("tmp/num_sources_skip_true.txt", "rt").read()) == 1
+        os.unlink("tmp/num_sources_skip_true.txt")
+
+        assert ds.ReadRaster(0, 10, 1, 1) == ref_ds.ReadRaster(0, 10, 1, 1)
+
+        assert not os.path.exists("tmp/num_sources_skip_true.txt")
+
+        assert int(open("tmp/num_sources_skip_false.txt", "rt").read()) == 2
+        os.unlink("tmp/num_sources_skip_false.txt")
+
+    xml = ds.GetMetadata("xml:VRT")[0]
+    assert "<SkipNonContributingSources>true</SkipNonContributingSources>" in xml
+    _validate(xml)
 
 
 ###############################################################################

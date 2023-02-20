@@ -200,6 +200,7 @@
                     </xs:complexType>
                 </xs:element>
                 <xs:element name="BufferRadius" type="xs:nonNegativeInteger"/>
+                <xs:element name="SkipNonContributingSources" type="xs:boolean"/>
 
                 <!-- for a VRTRawRasterBand -->
                 <xs:element name="SourceFilename" type="SourceFilenameType"/>
