@@ -143,7 +143,7 @@ framework since :ref:`rfc-72`.
 Test cases should be written in a way where they are independent from other
 ones, so they can potentially be run in a isolated way or in parallel of other
 test cases. In particular temporary files should be created with a name that
-cannot conflict with other tests.
+cannot conflict with other tests: preferably use pytest's ```tmp_path`` fixture <https://docs.pytest.org/en/7.1.x/how-to/tmp_path.html#the-tmp-path-fixture>`__.
 
 Use ``@pytest.mark.require_driver(driver_name)`` as an annotation for a test
 case that requires an optional driver to be present.
