@@ -34,8 +34,6 @@ import ogrtest
 import pytest
 import test_py_scripts
 
-from osgeo import gdal
-
 ###############################################################################
 # Simple test
 
@@ -233,13 +231,11 @@ def test_ogrinfo_py_11():
 # Test RFC 41 support
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogrinfo_py_22():
     script_path = test_py_scripts.get_py_script("ogrinfo")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     f = open("tmp/test_ogrinfo_22.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
@@ -321,13 +317,11 @@ OGRFeature(test_ogrinfo_22):1
 # Test -geomfield (RFC 41) support
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogrinfo_py_23():
     script_path = test_py_scripts.get_py_script("ogrinfo")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     f = open("tmp/test_ogrinfo_23.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")

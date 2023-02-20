@@ -758,13 +758,11 @@ def test_ogr2ogr_py_19():
 # FIXME: Any field is skipped if a subsequent field with same name is found.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr2ogr_py_20():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     try:
         os.remove("tmp/Fields.dbf")
@@ -855,12 +853,10 @@ def test_ogr2ogr_py_20():
 # at dataset creation (#3247)
 
 
+@pytest.mark.require_driver("GPX")
 def test_ogr2ogr_py_21():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
-        pytest.skip()
-
-    if ogr.GetDriverByName("GPX") is None:
         pytest.skip()
 
     try:
@@ -884,16 +880,12 @@ def test_ogr2ogr_py_21():
 # Test ogr2ogr when the output driver delays the destination layer defn creation (#3384)
 
 
+@pytest.mark.require_driver("MapInfo File")
+@pytest.mark.require_driver("CSV")
 def test_ogr2ogr_py_22():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("MapInfo File") is None:
-        pytest.skip("MapInfo File driver is missing")
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     test_py_scripts.run_py_script(
         script_path,
@@ -926,18 +918,14 @@ def test_ogr2ogr_py_22():
 # Same as previous but with -select
 
 
+@pytest.mark.require_driver("MapInfo File")
+@pytest.mark.require_driver("CSV")
 def test_ogr2ogr_py_23():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("MapInfo File") is None:
-        pytest.skip("MapInfo File driver is missing")
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path()
@@ -969,12 +957,10 @@ def test_ogr2ogr_py_23():
 # Test -clipsrc with WKT geometry (#3530)
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_ogr2ogr_py_24():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
-        pytest.skip()
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1010,15 +996,11 @@ def test_ogr2ogr_py_24():
 # Test -clipsrc with clip from external datasource
 
 
+@pytest.mark.require_driver("CSV")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_ogr2ogr_py_25():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
-        pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1062,12 +1044,10 @@ def test_ogr2ogr_py_25():
 # Test -clipdst with WKT geometry (#3530)
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_ogr2ogr_py_26():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
-        pytest.skip()
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1103,15 +1083,11 @@ def test_ogr2ogr_py_26():
 # Test -clipdst with clip from external datasource
 
 
+@pytest.mark.require_driver("CSV")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_ogr2ogr_py_27():
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
-        pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1236,14 +1212,12 @@ def test_ogr2ogr_py_32():
 # Test -explodecollections
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr2ogr_py_33():
 
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_33_src.csv")
@@ -1685,14 +1659,12 @@ def test_ogr2ogr_py_43():
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
 
 
+@pytest.mark.require_driver("GML")
 def test_ogr2ogr_py_44():
 
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GML") is None:
-        pytest.skip("GML driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_44_src.shp")
@@ -1755,14 +1727,12 @@ def test_ogr2ogr_py_44():
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
 
 
+@pytest.mark.require_driver("GML")
 def test_ogr2ogr_py_45():
 
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GML") is None:
-        pytest.skip("GML driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_44_src.shp")
@@ -1825,14 +1795,12 @@ def test_ogr2ogr_py_45():
 # Test -nlt PROMOTE_TO_MULTI for linestring/multilinestring
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr2ogr_py_46():
 
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     try:
         os.stat("tmp/test_ogr2ogr_45_src.shp")

@@ -476,6 +476,7 @@ def _validate_check(filename):
 # Test GPKG optimization
 
 
+@pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize(
     "src_has_spatial_index,dst_has_spatial_index,has_progress,a_srs,s_srs,t_srs",
     [
@@ -500,9 +501,6 @@ def test_ogrmerge_gpkg(
     script_path = test_py_scripts.get_py_script("ogrmerge")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GPKG") is None:
-        pytest.skip("GPKG driver missing")
 
     lco = [] if src_has_spatial_index else ["SPATIAL_INDEX=NO"]
     gdal.VectorTranslate(
@@ -575,14 +573,12 @@ def test_ogrmerge_gpkg(
 # Test GPKG optimization for non-spatial layers
 
 
+@pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("has_progress", [True, False])
 def test_ogrmerge_gpkg_non_spatial(has_progress):
     script_path = test_py_scripts.get_py_script("ogrmerge")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GPKG") is None:
-        pytest.skip("GPKG driver missing")
 
     src_ds = gdal.VectorTranslate(
         "tmp/in.gpkg", test_py_scripts.get_data_path("ogr") + "idlink.dbf"
@@ -624,13 +620,11 @@ def test_ogrmerge_gpkg_non_spatial(has_progress):
 # Test GPKG optimization when a curve geometry is in a GEOMETRY typed column
 
 
+@pytest.mark.require_driver("GPKG")
 def test_ogrmerge_gpkg_curve_geom_in_generic_layer():
     script_path = test_py_scripts.get_py_script("ogrmerge")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GPKG") is None:
-        pytest.skip("GPKG driver missing")
 
     gdal.Unlink("tmp/out.gpkg")
     gdal.Unlink("tmp/in.gpkg")

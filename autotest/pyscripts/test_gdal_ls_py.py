@@ -125,14 +125,8 @@ def test_gdal_ls_py_4():
 # List dir in /vsicurl/
 
 
+@pytest.mark.require_driver("HTTP")
 def test_gdal_ls_py_5():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
-
-    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
-        pytest.skip("would stall for a long time")
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
@@ -157,11 +151,8 @@ def test_gdal_ls_py_5():
 # List in a .zip in /vsicurl/
 
 
+@pytest.mark.require_driver("HTTP")
 def test_gdal_ls_py_6():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
@@ -200,18 +191,12 @@ def test_gdal_ls_py_6():
 # List dir in /vsicurl/ and recurse in zip
 
 
+@pytest.mark.require_driver("HTTP")
 def test_gdal_ls_py_7():
 
     # Super slow on AppVeyor since a few weeks (Apr 2016)
     if gdal.GetConfigOption("APPVEYOR") is not None:
         pytest.skip("Slow on AppVeyor")
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
-
-    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
-        pytest.skip("would stall for a long time")
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
@@ -235,16 +220,10 @@ def test_gdal_ls_py_7():
 # List FTP dir in /vsicurl/
 
 
+@pytest.mark.require_driver("HTTP")
 def test_gdal_ls_py_8():
     if not gdaltest.run_slow_tests():
         pytest.skip()
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
-
-    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
-        pytest.skip("would stall for a long time")
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
