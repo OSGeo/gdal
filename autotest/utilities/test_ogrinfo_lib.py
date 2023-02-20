@@ -629,10 +629,8 @@ def test_ogrinfo_lib_json_zm():
 # Test text output of relationships
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogrinfo_lib_relationships():
-
-    if gdal.GetDriverByName("OpenFileGDB") is None:
-        pytest.skip("OpenFileGDB driver missing")
 
     ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
 
@@ -658,10 +656,8 @@ def test_ogrinfo_lib_relationships():
 # Test json output of relationships
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogrinfo_lib_json_relationships():
-
-    if gdal.GetDriverByName("OpenFileGDB") is None:
-        pytest.skip("OpenFileGDB driver missing")
 
     ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
 
