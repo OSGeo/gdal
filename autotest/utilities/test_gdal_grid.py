@@ -129,12 +129,12 @@ def test_gdal_grid_1():
 
 ###############################################################################
 # Test Nearest Neighbour gridding algorithm
+
+
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_2():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     # Open reference dataset
     ds_ref = gdal.Open("../gcore/data/byte.tif")
@@ -193,13 +193,11 @@ def test_gdal_grid_2():
     ds = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_3(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     # Open reference dataset
     ds_ref = gdal.Open("../gcore/data/byte.tif")
@@ -311,12 +309,10 @@ def test_gdal_grid_3(use_quadtree):
 # Test Inverse Distance to a Power gridding algorithm
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_4():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -493,12 +489,10 @@ def test_gdal_grid_4():
 # Test Moving Average gridding algorithm
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_5():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_average.tif")
@@ -552,13 +546,11 @@ def test_gdal_grid_5():
     ds = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_6(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_average_190_190.tif")
@@ -618,12 +610,10 @@ def test_gdal_grid_6(use_quadtree):
 # Test Minimum data metric
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_7():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_minimum.tif")
@@ -680,13 +670,11 @@ def test_gdal_grid_7():
     ds = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_8(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_minimum_180_180.tif")
@@ -750,12 +738,10 @@ def test_gdal_grid_8(use_quadtree):
 # Test Maximum data metric
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_9():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_maximum.tif")
@@ -812,13 +798,11 @@ def test_gdal_grid_9():
     ds = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_10(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_maximum_180_180.tif")
@@ -882,12 +866,10 @@ def test_gdal_grid_10(use_quadtree):
 # Test Range data metric
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_11():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_range.tif")
@@ -917,13 +899,11 @@ def test_gdal_grid_11():
     ds = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_12(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_range_90_90_8p.tif")
@@ -961,13 +941,11 @@ def test_gdal_grid_12(use_quadtree):
 # Test Count data metric
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_13(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_count_70_70.tif")
@@ -1029,12 +1007,10 @@ def test_gdal_grid_13(use_quadtree):
 # Test Average Distance data metric
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_14():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdist.tif")
@@ -1063,13 +1039,11 @@ def test_gdal_grid_14():
     ds_ref = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_15(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdist_150_150.tif")
@@ -1105,12 +1079,10 @@ def test_gdal_grid_15(use_quadtree):
 # Test Average Distance Between Points data metric
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_16():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdistpts_150_50_-15.tif")
@@ -1139,13 +1111,11 @@ def test_gdal_grid_16():
     ds_ref = None
 
 
+@pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("use_quadtree", [True, False])
 def test_gdal_grid_17(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdistpts_150_150.tif")
@@ -1181,12 +1151,10 @@ def test_gdal_grid_17(use_quadtree):
 # Test linear
 
 
+@pytest.mark.skipif(not gdal.HasTriangulation(), reason="qhull missing")
 def test_gdal_grid_18():
     if gdal_grid is None:
         pytest.skip()
-
-    if not gdal.HasTriangulation():
-        pytest.skip("qhull missing")
 
     outfiles.append("tmp/n43_linear.tif")
 
@@ -1216,12 +1184,10 @@ def test_gdal_grid_18():
 # Test Inverse Distance to a Power with Nearest Neighbor gridding algorithm
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_19():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -1303,14 +1269,10 @@ def test_gdal_grid_19():
 # Test -clipsrc
 
 
+@pytest.mark.require_driver("CSV")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_gdal_grid_clipsrc():
     if gdal_grid is None:
-        pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     #################
@@ -1345,12 +1307,10 @@ def test_gdal_grid_clipsrc():
 # Test -tr
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdal_grid_tr():
     if gdal_grid is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_count_70_70.tif")

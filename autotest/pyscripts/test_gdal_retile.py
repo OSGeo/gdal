@@ -342,10 +342,8 @@ def test_gdal_retile_5():
 # Test gdal_retile.py
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdal_retile_png():
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver missing")
 
     script_path = test_py_scripts.get_py_script("gdal_retile")
     if script_path is None:

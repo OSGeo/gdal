@@ -197,12 +197,10 @@ def test_gdaldem_hillshade_azimuth():
 # Test gdaldem hillshade to PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdaldem_hillshade_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -222,12 +220,10 @@ def test_gdaldem_hillshade_png():
 # Test gdaldem hillshade to PNG with -compute_edges
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdaldem_hillshade_png_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -443,12 +439,10 @@ def test_gdaldem_color_relief_from_float32():
 # Test gdaldem color relief to PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdaldem_color_relief_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -470,14 +464,12 @@ def test_gdaldem_color_relief_png():
 # Test gdaldem color relief from a Float32 to PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gdaldem_color_relief_from_float32_to_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -547,12 +539,10 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
 # Test gdaldem color relief with a nan nodata
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdaldem_color_relief_nodata_nan():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/nodata_nan_src.asc", "wt")
     f.write(
@@ -595,12 +585,10 @@ NODATA_value nan
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdaldem_color_relief_repeated_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/test_gdaldem_color_relief_repeated_entry.asc", "wt")
     f.write(

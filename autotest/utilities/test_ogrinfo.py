@@ -380,12 +380,10 @@ def test_ogrinfo_21():
 # Test RFC 41 support
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogrinfo_22():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     f = open("tmp/test_ogrinfo_22.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
@@ -472,12 +470,10 @@ OGRFeature(test_ogrinfo_22):1
 # Test -geomfield (RFC 41) support
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogrinfo_23():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     f = open("tmp/test_ogrinfo_23.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
@@ -673,11 +669,10 @@ def test_ogrinfo_nogeomtype():
 # Test field domains
 
 
+@pytest.mark.require_driver("GPKG")
 def test_ogrinfo_fielddomains():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-    if gdal.GetDriverByName("GPKG") is None:
-        pytest.skip("GPKG driver missing")
 
     (ret, err) = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_ogrinfo_path() + " -al ../ogr/data/gpkg/domains.gpkg"
@@ -762,12 +757,10 @@ def test_ogrinfo_fielddomains():
 # Test hiearchical presentation of layers
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogrinfo_hiearchical():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("OpenFileGDB") is None:
-        pytest.skip("OpenFileGDB driver is missing")
 
     (ret, err) = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_ogrinfo_path()

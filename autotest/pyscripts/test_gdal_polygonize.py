@@ -41,14 +41,12 @@ from osgeo import gdal, ogr
 # Test a fairly simple case, with nodata masking.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdal_polygonize_1():
 
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     outfilename = "tmp/poly.shp"
     # Create a OGR datasource to put results in.
@@ -110,14 +108,12 @@ def test_gdal_polygonize_1():
 # Test a simple case without masking.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdal_polygonize_2():
 
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     outfilename = "tmp/out.geojson"
     gdal.Unlink(outfilename)
@@ -169,6 +165,7 @@ def test_gdal_polygonize_2():
     assert tr
 
 
+@pytest.mark.require_driver("GPKG")
 def test_gdal_polygonize_3():
 
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
@@ -176,8 +173,6 @@ def test_gdal_polygonize_3():
         pytest.skip()
 
     drv = ogr.GetDriverByName("GPKG")
-    if drv is None:
-        pytest.skip()
     outfilename = "tmp/out.gpkg"
     if os.path.exists(outfilename):
         drv.DeleteDataSource(outfilename)
@@ -215,14 +210,12 @@ def test_gdal_polygonize_3():
 # Test -b mask
 
 
+@pytest.mark.require_driver("GML")
 def test_gdal_polygonize_4():
 
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
     if script_path is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GML") is None:
-        pytest.skip("GML driver is missing")
 
     outfilename = "tmp/out.gml"
     # Test mask syntax

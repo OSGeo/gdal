@@ -132,12 +132,10 @@ def test_gdal_translate_4():
 # Test -expand option
 
 
+@pytest.mark.require_driver("GIF")
 def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GIF") is None:
-        pytest.skip("GIF driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -380,12 +378,10 @@ def test_gdal_translate_14():
 # Test -sds option
 
 
+@pytest.mark.require_driver("RPFTOC")
 def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("RPFCTOC") is None:
-        pytest.skip("RPFTOC driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -423,12 +419,10 @@ def test_gdal_translate_16():
 # Test -expand option to VRT
 
 
+@pytest.mark.require_driver("GIF")
 def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("GIF") is None:
-        pytest.skip("GIF driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -469,12 +463,10 @@ def test_gdal_translate_17():
 # Test translation of a VRT made of VRT
 
 
+@pytest.mark.require_driver("BMP")
 def test_gdal_translate_18():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("BMP") is None:
-        pytest.skip("BMP driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -682,12 +674,10 @@ def test_gdal_translate_25():
 # Test -a_nodata and -stats (#5463)
 
 
+@pytest.mark.require_driver("XYZ")
 def test_gdal_translate_26():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("XYZ") is None:
-        pytest.skip("XYZ driver is missing")
 
     f = open("tmp/test_gdal_translate_26.xyz", "wb")
     f.write(
@@ -716,14 +706,12 @@ def test_gdal_translate_26():
 # Test that we don't preserve statistics when we ought not.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdal_translate_27():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/test_gdal_translate_27.asc", "wb")
     f.write(
@@ -779,12 +767,10 @@ cellsize     60.000000000000
 # Test -oo
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()

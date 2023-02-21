@@ -499,12 +499,10 @@ def test_gdalwarp_20():
 # Test cutline from OGR datasource.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_21():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -523,12 +521,10 @@ def test_gdalwarp_21():
 # Test with a cutline and an output at a different resolution.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_22():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -547,12 +543,10 @@ def test_gdalwarp_22():
 # Test cutline with ALL_TOUCHED enabled.
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_23():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -1125,12 +1119,10 @@ def test_gdalwarp_37():
 # Test implicit nodata setting (#5675)
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdalwarp_38():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -1147,12 +1139,10 @@ def test_gdalwarp_38():
 # Test -oo
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -1602,14 +1592,12 @@ def test_gdalwarp_45():
 # Test -crop_to_cutline
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalwarp_46():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
