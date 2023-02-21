@@ -1657,6 +1657,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, and ``ovr``. 
+
 Other options may be added in the future.
 
 The effect of the ``bands`` option is to change the band composition. The values specified
