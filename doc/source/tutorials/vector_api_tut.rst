@@ -158,6 +158,16 @@ With GDAL 2.3 and C++11:
 
     for( auto&& oField: *poFeature )
     {
+        if( oField.IsUnset() )
+        {
+            printf("(unset),");
+            continue;
+        }
+        if( oField.IsNull() )
+        {
+            printf("(null),");
+            continue;
+        }
         switch( oField.GetType() )
         {
             case OFTInteger:
@@ -170,9 +180,13 @@ With GDAL 2.3 and C++11:
                 printf( "%.3f,", oField.GetDouble() );
                 break;
             case OFTString:
+                // GetString() returns a C string
                 printf( "%s,", oField.GetString() );
                 break;
             default:
+                // Note: we use GetAsString() and not GetString(), since
+                // the later assumes the field type to be OFTString while the
+                // former will do a conversion from the original type to string.
                 printf( "%s,", oField.GetAsString() );
                 break;
         }
@@ -185,6 +199,16 @@ With GDAL < 2.3 and C++ :
     OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
     for( int iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
     {
+        if( !poFeature->IsFieldSet(iField) )
+        {
+            printf("(unset),");
+            continue;
+        }
+        if( poFeature->IsFieldNull(iField) )
+        {
+            printf("(null),");
+            continue;
+        }
         OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
 
         switch( poFieldDefn->GetType() )
@@ -217,6 +241,17 @@ In C :
     for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
     {
         OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
+
+        if( !OGR_F_IsFieldSet(hFeature, iField) )
+        {
+            printf("(unset),");
+            continue;
+        }
+        if( OGR_F_IsFieldNull(hFeature, iField) )
+        {
+            printf("(null),");
+            continue;
+        }
 
         switch( OGR_Fld_GetType(hFieldDefn) )
         {
@@ -448,6 +483,16 @@ With GDAL 2.3 and C++11 :
             {
                 for( const auto& oField: *poFeature )
                 {
+                    if( oField.IsUnset() )
+                    {
+                        printf("(unset),");
+                        continue;
+                    }
+                    if( oField.IsNull() )
+                    {
+                        printf("(null),");
+                        continue;
+                    }
                     switch( oField.GetType() )
                     {
                         case OFTInteger:
@@ -460,9 +505,13 @@ With GDAL 2.3 and C++11 :
                             printf( "%.3f,", oField.GetDouble() );
                             break;
                         case OFTString:
+                            // GetString() returns a C string
                             printf( "%s,", oField.GetString() );
                             break;
                         default:
+                            // Note: we use GetAsString() and not GetString(), since
+                            // the later assumes the field type to be OFTString while the
+                            // former will do a conversion from the original type to string.
                             printf( "%s,", oField.GetAsString() );
                             break;
                     }
@@ -513,6 +562,16 @@ In C++ :
         {
             for( int iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
             {
+                if( !poFeature->IsFieldSet(iField) )
+                {
+                    printf("(unset),");
+                    continue;
+                }
+                if( poFeature->IsFieldNull(iField) )
+                {
+                    printf("(null),");
+                    continue;
+                }
                 OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn( iField );
 
                 switch( poFieldDefn->GetType() )
@@ -588,6 +647,17 @@ In C :
             for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
             {
                 OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
+
+                if( !OGR_F_IsFieldSet(hFeature, iField) )
+                {
+                    printf("(unset),");
+                    continue;
+                }
+                if( OGR_F_IsFieldNull(hFeature, iField) )
+                {
+                    printf("(null),");
+                    continue;
+                }
 
                 switch( OGR_Fld_GetType(hFieldDefn) )
                 {
