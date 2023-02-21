@@ -68,6 +68,12 @@ def test_vrtovr_1():
     fl = ds.GetFileList()
     assert fl == ["data/byte.tif", "data/int16.tif"], "did not get expected file list"
 
+    ds = gdal.Open("/vsigzip/data/rmf/overviews.rsw.gz")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 3
+
+    ds = gdal.Open("vrt:///vsigzip/data/rmf/overviews.rsw.gz?ovr=1")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
     ds = None
 
 
