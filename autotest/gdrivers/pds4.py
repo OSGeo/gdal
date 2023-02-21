@@ -46,7 +46,7 @@ pytestmark = pytest.mark.require_driver("PDS4")
 def validate_xml(filename):
 
     if ogr.GetDriverByName("GMLAS") is None:
-        pytest.skip()
+        pytest.skip("GMLAS driver missing")
 
     # for GDAL 3.4 / PDS4_PDS_1G00
 

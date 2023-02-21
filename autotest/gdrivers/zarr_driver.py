@@ -2782,10 +2782,8 @@ def test_zarr_read_nczarr_v2(filename, path):
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.require_driver("netCDF")
 def test_zarr_cache_tile_presence(format):
-
-    if gdal.GetDriverByName("netCDF") is None:
-        pytest.skip("netCDF driver missing")
 
     filename = "tmp/test.zarr"
     try:

@@ -92,18 +92,11 @@ def test_pcidsk_4():
 
 def test_pcidsk_5():
 
-    # Are we using the new PCIDSK SDK based driver?
-    driver = gdal.GetDriverByName("PCIDSK")
-    col = driver.GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    if col.find("COMPRESSION") == -1:
-        gdaltest.pcidsk_new = 0
-        pytest.skip()
-    else:
-        gdaltest.pcidsk_new = 1
-
     # Create testing file.
 
-    gdaltest.pcidsk_ds = driver.Create("tmp/pcidsk_5.pix", 400, 600, 1, gdal.GDT_Byte)
+    gdaltest.pcidsk_ds = gdal.GetDriverByName("PCIDSK").Create(
+        "tmp/pcidsk_5.pix", 400, 600, 1, gdal.GDT_Byte
+    )
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -140,9 +133,6 @@ def test_pcidsk_5():
 
 
 def test_pcidsk_6():
-
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -182,9 +172,6 @@ def test_pcidsk_6():
 
 
 def test_pcidsk_7():
-
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
@@ -256,9 +243,6 @@ def test_pcidsk_8():
 
 def pcidsk_9():
 
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
-
     ogr_drv = ogr.GetDriverByName("PCIDSK")
     if ogr_drv is None:
         pytest.skip()
@@ -281,8 +265,6 @@ def pcidsk_9():
 
 
 def test_pcidsk_10():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     src_ds = gdal.Open("data/byte.tif")
     ds = gdal.GetDriverByName("PCIDSK").CreateCopy("/vsimem/pcidsk_10.pix", src_ds)
@@ -309,8 +291,6 @@ def test_pcidsk_10():
 
 
 def test_pcidsk_11():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -324,8 +304,6 @@ def test_pcidsk_11():
 
 
 def test_pcidsk_11_v1():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -339,8 +317,6 @@ def test_pcidsk_11_v1():
 
 
 def test_pcidsk_11_v2():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -358,8 +334,6 @@ def test_pcidsk_11_v2():
 
 
 def test_pcidsk_12():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -373,8 +347,6 @@ def test_pcidsk_12():
 
 
 def test_pcidsk_12_v1():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -393,8 +365,6 @@ def test_pcidsk_12_v1():
 
 
 def test_pcidsk_12_v2():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "PCIDSK",
@@ -416,12 +386,8 @@ def test_pcidsk_12_v2():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=JPEG
 
 
+@pytest.mark.require_driver("JPEG")
 def test_pcidsk_13():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     src_ds = gdal.Open("data/byte.tif")
     ds = gdal.GetDriverByName("PCIDSK").CreateCopy(
@@ -450,8 +416,6 @@ def test_pcidsk_13():
 
 
 def test_pcidsk_14():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     ds = gdal.GetDriverByName("PCIDSK").Create("/vsimem/pcidsk_14.pix", 1, 1)
     band = ds.GetRasterBand(1).SetDescription("mydescription")
@@ -475,8 +439,6 @@ def test_pcidsk_14():
 
 
 def test_pcidsk_15():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     # One raster band and vector layer
     ds = gdal.GetDriverByName("PCIDSK").Create("/vsimem/pcidsk_15.pix", 1, 1)
@@ -575,8 +537,6 @@ def test_pcidsk_external_ovr_rrd():
 
 
 def test_pcidsk_online_1():
-    if gdaltest.pcidsk_new == 0:
-        pytest.skip()
 
     gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/irvine_gcp2.pix",

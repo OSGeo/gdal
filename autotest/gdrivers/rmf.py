@@ -550,10 +550,8 @@ def test_rmf_26():
 # Test read JPEG compressed RMF dataset
 
 
+@pytest.mark.require_driver("JPEG")
 def test_rmf_27():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     cs1 = [50553, 27604, 36652]  #
     cs2 = [51009, 27640, 37765]  # osx, clang

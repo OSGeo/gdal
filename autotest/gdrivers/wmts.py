@@ -37,25 +37,45 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = [pytest.mark.require_driver("WMTS"), pytest.mark.require_driver("WMS")]
+
 ###############################################################################
-# Find WMTS driver
 
 
-def test_wmts_1():
+@pytest.fixture(autouse=True, scope="module")
+def wmts_setup():
+    with gdaltest.config_options(
+        {
+            "CPL_CURL_ENABLE_VSIMEM": "YES",
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "/vsimem/cache",
+        }
+    ):
+        yield
 
-    gdaltest.wmts_drv = gdal.GetDriverByName("WMTS")
+    wmts_CleanCache()
 
-    if gdaltest.wmts_drv is not None and gdal.GetDriverByName("WMS") is None:
-        print("Missing WMS driver")
-        gdaltest.wmts_drv = None
+    lst = gdal.ReadDir("/vsimem/")
+    if lst:
+        for f in lst:
+            gdal.Unlink("/vsimem/" + f)
 
-    if gdaltest.wmts_drv is not None:
+    try:
+        shutil.rmtree("tmp/wmts_cache")
+    except OSError:
+        pass
 
-        gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-        gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", "/vsimem/cache")
 
-        return
-    pytest.skip()
+###############################################################################
+
+
+def wmts_CleanCache():
+    hexstr = "012346789abcdef"
+    for i in range(len(hexstr)):
+        for j in range(len(hexstr)):
+            lst = gdal.ReadDir("/vsimem/cache/%s/%s" % (i, j))
+            if lst is not None:
+                for f in lst:
+                    gdal.Unlink("/vsimem/cache/%s/%s/%s" % (i, j, f))
 
 
 ###############################################################################
@@ -63,9 +83,6 @@ def test_wmts_1():
 
 
 def test_wmts_2():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.PushErrorHandler()
     ds = gdal.Open("WMTS:")
@@ -94,9 +111,6 @@ def test_wmts_2():
 
 def test_wmts_3():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     ds = gdal.Open("WMTS:https://non_existing")
     gdal.PopErrorHandler()
@@ -109,9 +123,6 @@ def test_wmts_3():
 
 def test_wmts_4():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     ds = gdal.Open("WMTS:/vsimem/non_existing")
     gdal.PopErrorHandler()
@@ -123,9 +134,6 @@ def test_wmts_4():
 
 
 def test_wmts_5():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<invalid_xml")
 
@@ -141,9 +149,6 @@ def test_wmts_5():
 
 def test_wmts_6():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<Capabilities/>")
 
     gdal.PushErrorHandler()
@@ -157,9 +162,6 @@ def test_wmts_6():
 
 
 def test_wmts_7():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/empty_getcapabilities.xml", "<Capabilities><Contents/></Capabilities>"
@@ -176,9 +178,6 @@ def test_wmts_7():
 
 
 def test_wmts_8():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/missing.xml",
@@ -202,9 +201,6 @@ def test_wmts_8():
 
 
 def test_wmts_9():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/missing_tms.xml",
@@ -235,9 +231,6 @@ def test_wmts_9():
 
 
 def test_wmts_10():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/missing_SupportedCRS.xml",
@@ -271,9 +264,6 @@ def test_wmts_10():
 
 
 def test_wmts_11():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/no_tilematrix.xml",
@@ -309,9 +299,6 @@ def test_wmts_11():
 
 def test_wmts_12():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/missing_required_element_in_tilematrix.xml",
         """<Capabilities>
@@ -346,9 +333,6 @@ def test_wmts_12():
 
 
 def test_wmts_12bis():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_12bis.xml",
@@ -392,9 +376,6 @@ def test_wmts_12bis():
 
 def test_wmts_tilematrixsetlink_to_non_existing_tilematrix():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     xml = """<Capabilities>
     <Contents>
         <Layer>
@@ -432,9 +413,6 @@ def test_wmts_tilematrixsetlink_to_non_existing_tilematrix():
 
 
 def test_wmts_13():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/minimal.xml",
@@ -550,9 +528,6 @@ def test_wmts_13():
 
 
 def test_wmts_14():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/nominal.xml",
@@ -821,9 +796,6 @@ def test_wmts_14():
 
 def test_wmts_15():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities",
         """<Capabilities xmlns="http://www.opengis.net/wmts/1.0">
@@ -975,9 +947,6 @@ def test_wmts_15():
 
 def test_wmts_16():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_16.xml",
         """<Capabilities>
@@ -1054,9 +1023,6 @@ def test_wmts_16():
 
 def test_wmts_17():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_17.xml",
         """<Capabilities>
@@ -1132,9 +1098,6 @@ def test_wmts_17():
 
 def test_wmts_18():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_18.xml",
         """<Capabilities>
@@ -1209,9 +1172,6 @@ def test_wmts_18():
 
 
 def test_wmts_19():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_19.xml",
@@ -1292,9 +1252,6 @@ def test_wmts_19():
 
 
 def test_wmts_20():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_20.xml",
@@ -1382,9 +1339,6 @@ def test_wmts_20():
 
 
 def test_wmts_21():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_21.xml",
@@ -1488,9 +1442,6 @@ def test_wmts_21():
 
 def test_wmts_22():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_22.xml",
         """<Capabilities>
@@ -1546,10 +1497,17 @@ def test_wmts_22():
 #
 
 
-def wmts_23(imagetype, expected_cs):
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
+@pytest.mark.parametrize(
+    "imagetype,expected_cs",
+    [
+        ("gray", [60137, 60137, 60137, 4428]),
+        ("gray+alpha", [39910, 39910, 39910, 63180]),
+        ("pal", [62950, 59100, 63864, 453]),
+        ("rgb", [1020, 3665, 6180, 4428]),
+        ("rgba", [65530, 51449, 1361, 59291]),
+    ],
+)
+def test_wmts_23(imagetype, expected_cs):
 
     inputXml = "/vsimem/" + imagetype + ".xml"
     serviceUrl = "/vsimem/wmts_23/" + imagetype
@@ -1603,30 +1561,7 @@ def wmts_23(imagetype, expected_cs):
         assert cs == expected_cs[i]
 
 
-def test_wmts_23_gray():
-    return wmts_23("gray", [60137, 60137, 60137, 4428])
-
-
-def test_wmts_23_grayalpha():
-    return wmts_23("gray+alpha", [39910, 39910, 39910, 63180])
-
-
-def test_wmts_23_pal():
-    return wmts_23("pal", [62950, 59100, 63864, 453])
-
-
-def test_wmts_23_rgb():
-    return wmts_23("rgb", [1020, 3665, 6180, 4428])
-
-
-def test_wmts_23_rgba():
-    return wmts_23("rgba", [65530, 51449, 1361, 59291])
-
-
 def test_wmts_invalid_global_to_tm_reprojection():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     inputXml = "/vsimem/wmts_invalid_global_to_tm_reprojection.xml"
     gdal.FileFromMemBuffer(
@@ -1686,9 +1621,6 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 
 
 def test_wmts_check_no_overflow_zoom_level():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
 
     inputXml = "/vsimem/wmts_check_no_overflow_zoom_level.xml"
     gdal.FileFromMemBuffer(
@@ -1958,9 +1890,6 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 
 def test_wmts_24():
 
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/wmts_missing_local_tiles.xml",
         """<Capabilities>
@@ -2010,42 +1939,3 @@ def test_wmts_24():
     data = struct.unpack("h", structval)
     #   Expect a null value for the pixel data
     assert data[0] == 0
-
-
-###############################################################################
-#
-
-
-def wmts_CleanCache():
-    hexstr = "012346789abcdef"
-    for i in range(len(hexstr)):
-        for j in range(len(hexstr)):
-            lst = gdal.ReadDir("/vsimem/cache/%s/%s" % (i, j))
-            if lst is not None:
-                for f in lst:
-                    gdal.Unlink("/vsimem/cache/%s/%s/%s" % (i, j, f))
-
-
-###############################################################################
-#
-
-
-def test_wmts_cleanup():
-
-    if gdaltest.wmts_drv is None:
-        pytest.skip()
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
-    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", None)
-
-    wmts_CleanCache()
-
-    lst = gdal.ReadDir("/vsimem/")
-    if lst:
-        for f in lst:
-            gdal.Unlink("/vsimem/" + f)
-
-    try:
-        shutil.rmtree("tmp/wmts_cache")
-    except OSError:
-        pass

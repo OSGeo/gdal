@@ -1552,12 +1552,12 @@ def test_jp2lura_43():
 # Test GMLJP2v2
 
 
+@pytest.mark.require_driver("GML")
+@pytest.mark.skipif(
+    gdal.GetDriverByName("KML") is None and gdal.GetDriverByName("LIBKML") is None,
+    reason="KML or LIBKML driver missing",
+)
 def test_jp2lura_45():
-
-    if gdal.GetDriverByName("GML") is None:
-        pytest.skip()
-    if gdal.GetDriverByName("KML") is None and gdal.GetDriverByName("LIBKML") is None:
-        pytest.skip()
 
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open("data/byte.tif")

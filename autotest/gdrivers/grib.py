@@ -232,10 +232,8 @@ def test_grib_grib2_read_template_4_15():
 # Test support for PNG compressed
 
 
+@pytest.mark.require_driver("PNG")
 def test_grib_grib2_read_png():
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip()
 
     ds = gdal.Open("data/grib/MRMS_EchoTop_18_00.50_20161015-133230.grib2")
     cs = ds.GetRasterBand(1).Checksum()
@@ -384,11 +382,10 @@ def test_grib_grib2_read_rotated_pole_lonlat():
 # Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
 
 
+@pytest.mark.skipif(not has_jp2kdrv(), reason="No JPEG2000 driver")
 def test_grib_grib2_read_template_4_40():
 
     # We could use some other encoding that JP2K...
-    if not has_jp2kdrv():
-        pytest.skip()
 
     # First band extracted from https://download.regional.atmosphere.copernicus.eu/services/CAMS50?token=__M0bChV6QsoOFqHz31VRqnpr4GhWPtcpaRy3oeZjBNSg__&grid=0.1&model=ENSEMBLE&package=ANALYSIS_PM10_SURFACE&time=-24H-1H&referencetime=2017-09-12T00:00:00Z&format=GRIB2&licence=yes
     # with data nullified
@@ -1806,10 +1803,8 @@ def test_grib_grib2_write_mix_nodata_and_a_single_data():
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 
 
+@pytest.mark.skipif(not has_jp2kdrv(), reason="No JPEG2000 driver")
 def test_grib_online_grib2_jpeg2000_single_line():
-
-    if not has_jp2kdrv():
-        pytest.skip()
 
     filename = "CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2"
     gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/grib/" + filename)
