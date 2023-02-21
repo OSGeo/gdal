@@ -36,15 +36,22 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdalmove") is None,
+    reason="gdalmove.py not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdalmove")
+
+
 ###############################################################################
 #
 
 
-def test_gdalmove_1():
-
-    script_path = test_py_scripts.get_py_script("gdalmove")
-    if script_path is None:
-        pytest.skip()
+def test_gdalmove_1(script_path):
 
     shutil.copy(
         test_py_scripts.get_data_path("gcore") + "byte.tif", "tmp/test_gdalmove_1.tif"

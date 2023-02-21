@@ -41,6 +41,16 @@ import test_py_scripts  # noqa  # pylint: disable=E0401
 from osgeo import gdal  # noqa
 from osgeo_utils.gdalcompare import compare_db
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal2tiles") is None,
+    reason="gdal2tiles not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal2tiles")
+
 
 def _verify_raster_band_checksums(filename, expected_cs=[]):
     ds = gdal.Open(filename)
@@ -57,10 +67,7 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_simple():
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_simple(script_path):
 
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
@@ -92,11 +99,7 @@ def test_gdal2tiles_py_simple():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_zoom_option():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_zoom_option(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -127,11 +130,7 @@ def test_gdal2tiles_py_zoom_option():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_resampling_option():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_resampling_option(script_path):
 
     resampling_list = [
         "average",
@@ -185,10 +184,7 @@ def test_gdal2tiles_py_resampling_option():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_xyz():
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_xyz(script_path):
 
     try:
         shutil.copy(
@@ -229,14 +225,11 @@ def test_gdal2tiles_py_xyz():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_invalid_srs():
+def test_gdal2tiles_py_invalid_srs(script_path):
     """
     Case where the input image is not georeferenced, i.e. it's missing the SRS info,
     and no --s_srs option is provided. The script should fail validation and terminate.
     """
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
 
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "test_nosrs.vrt",
@@ -266,7 +259,7 @@ def test_gdal2tiles_py_invalid_srs():
     assert "ERROR ret code" not in ret2
 
 
-def test_does_not_error_when_source_bounds_close_to_tiles_bound():
+def test_does_not_error_when_source_bounds_close_to_tiles_bound(script_path):
     """
     Case where the border coordinate of the input file is inside a tile T but the first pixel is
     actually assigned to the tile next to T (nearest neighbour), meaning that when the query is done
@@ -282,10 +275,6 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     except Exception:
         pass
 
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
-
     try:
         for in_file in in_files:
             test_py_scripts.run_py_script(
@@ -298,7 +287,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
         )
 
 
-def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
+def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile(script_path):
     """
     Case when the highest zoom level asked is actually too low for any pixel of the raster to be
     selected
@@ -309,10 +298,6 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
         shutil.rmtree(out_folder)
     except OSError:
         pass
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
 
     try:
         test_py_scripts.run_py_script(
@@ -326,11 +311,8 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
 
 
 @pytest.mark.require_driver("PNG")
-def test_handle_utf8_filename():
+def test_handle_utf8_filename(script_path):
     input_file = "data/test_utf8_漢字.vrt"
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
 
     out_folder = "tmp/utf8_test"
 
@@ -365,10 +347,7 @@ def test_gdal2tiles_py_cleanup():
 
 
 @pytest.mark.require_driver("PNG")
-def test_exclude_transparent_tiles():
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_exclude_transparent_tiles(script_path):
 
     output_folder = "tmp/test_exclude_transparent_tiles"
     os.makedirs(output_folder)
@@ -405,11 +384,7 @@ def test_exclude_transparent_tiles():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_profile_raster(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -445,11 +420,7 @@ def test_gdal2tiles_py_profile_raster():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster_oversample():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_profile_raster_oversample(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -475,11 +446,7 @@ def test_gdal2tiles_py_profile_raster_oversample():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster_xyz():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_profile_raster_xyz(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -516,11 +483,7 @@ def test_gdal2tiles_py_profile_raster_xyz():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -557,11 +520,7 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_mapml():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_mapml(script_path):
 
     shutil.rmtree("tmp/out_gdal2tiles_mapml", ignore_errors=True)
 
@@ -656,11 +615,7 @@ def _run_webp_test(script_path, resampling):
 
 
 @pytest.mark.require_driver("WEBP")
-def test_gdal2tiles_py_webp():
-
-    script_path = test_py_scripts.get_py_script("gdal2tiles")
-    if script_path is None:
-        pytest.skip()
+def test_gdal2tiles_py_webp(script_path):
 
     _run_webp_test(script_path, "average")
     try:

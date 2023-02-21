@@ -36,15 +36,22 @@ import test_py_scripts
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_retile") is None,
+    reason="gdal_retile not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_retile")
+
+
 ###############################################################################
 # Test gdal_retile.py
 
 
-def test_gdal_retile_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_retile_1(script_path):
 
     try:
         os.mkdir("tmp/outretile")
@@ -82,11 +89,7 @@ def test_gdal_retile_1():
 # Test gdal_retile.py with RGBA dataset
 
 
-def test_gdal_retile_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_retile_2(script_path):
 
     try:
         os.mkdir("tmp/outretile2")
@@ -111,11 +114,7 @@ def test_gdal_retile_2():
 # Test gdal_retile.py with input images of different pixel sizes
 
 
-def test_gdal_retile_3():
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_retile_3(script_path):
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -194,11 +193,7 @@ def test_gdal_retile_3():
 # Test gdal_retile.py -overlap
 
 
-def test_gdal_retile_4():
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_retile_4(script_path):
 
     try:
         os.mkdir("tmp/outretile4")
@@ -284,16 +279,12 @@ def test_gdal_retile_4():
 # Test gdal_retile.py with input having a NoData value
 
 
-def test_gdal_retile_5():
+def test_gdal_retile_5(script_path):
 
     np = pytest.importorskip("numpy")
 
     nodata_value = -3.4028234663852886e38
     raster_array = np.array(([0.0, 2.0], [-1.0, nodata_value]))
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -343,11 +334,7 @@ def test_gdal_retile_5():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal_retile_png():
-
-    script_path = test_py_scripts.get_py_script("gdal_retile")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_retile_png(script_path):
 
     out_dirname = os.path.join("tmp", "outretile_png")
     os.mkdir(out_dirname)

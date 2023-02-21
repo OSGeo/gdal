@@ -37,16 +37,23 @@ import test_py_scripts
 
 from osgeo import gdal, ogr
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_polygonize") is None,
+    reason="gdal_polygonize not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_polygonize")
+
+
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdal_polygonize_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_polygonize")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_polygonize_1(script_path):
 
     outfilename = "tmp/poly.shp"
     # Create a OGR datasource to put results in.
@@ -109,11 +116,7 @@ def test_gdal_polygonize_1():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdal_polygonize_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_polygonize")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_polygonize_2(script_path):
 
     outfilename = "tmp/out.geojson"
     gdal.Unlink(outfilename)
@@ -166,11 +169,7 @@ def test_gdal_polygonize_2():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdal_polygonize_3():
-
-    script_path = test_py_scripts.get_py_script("gdal_polygonize")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_polygonize_3(script_path):
 
     drv = ogr.GetDriverByName("GPKG")
     outfilename = "tmp/out.gpkg"
@@ -211,11 +210,7 @@ def test_gdal_polygonize_3():
 
 
 @pytest.mark.require_driver("GML")
-def test_gdal_polygonize_4():
-
-    script_path = test_py_scripts.get_py_script("gdal_polygonize")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_polygonize_4(script_path):
 
     outfilename = "tmp/out.gml"
     # Test mask syntax
@@ -263,11 +258,7 @@ def test_gdal_polygonize_4():
 # Test -8
 
 
-def test_gdal_polygonize_minus_8():
-
-    script_path = test_py_scripts.get_py_script("gdal_polygonize")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_polygonize_minus_8(script_path):
 
     outfilename = "tmp/out.geojson"
     test_py_scripts.run_py_script(

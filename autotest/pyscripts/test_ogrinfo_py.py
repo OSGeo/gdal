@@ -34,14 +34,22 @@ import ogrtest
 import pytest
 import test_py_scripts
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("ogrinfo") is None,
+    reason="ogrinfo.py not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("ogrinfo")
+
+
 ###############################################################################
 # Simple test
 
 
-def test_ogrinfo_py_1():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_1(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path, "ogrinfo", test_py_scripts.get_data_path("ogr") + "poly.shp"
@@ -53,10 +61,7 @@ def test_ogrinfo_py_1():
 # Test -ro option
 
 
-def test_ogrinfo_py_2():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_2(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -70,10 +75,7 @@ def test_ogrinfo_py_2():
 # Test -al option
 
 
-def test_ogrinfo_py_3():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_3(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -87,10 +89,7 @@ def test_ogrinfo_py_3():
 # Test layer name
 
 
-def test_ogrinfo_py_4():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_4(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path, "ogrinfo", test_py_scripts.get_data_path("ogr") + "poly.shp poly"
@@ -102,10 +101,7 @@ def test_ogrinfo_py_4():
 # Test -sql option
 
 
-def test_ogrinfo_py_5():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_5(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -119,10 +115,7 @@ def test_ogrinfo_py_5():
 # Test -geom=NO option
 
 
-def test_ogrinfo_py_6():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_6(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -137,10 +130,7 @@ def test_ogrinfo_py_6():
 # Test -geom=SUMMARY option
 
 
-def test_ogrinfo_py_7():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_7(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -156,10 +146,7 @@ def test_ogrinfo_py_7():
 # Test -spat option
 
 
-def test_ogrinfo_py_8():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_8(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -179,10 +166,7 @@ def test_ogrinfo_py_8():
 # Test -where option
 
 
-def test_ogrinfo_py_9():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_9(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -196,10 +180,7 @@ def test_ogrinfo_py_9():
 # Test -fid option
 
 
-def test_ogrinfo_py_10():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_10(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -213,10 +194,7 @@ def test_ogrinfo_py_10():
 # Test -fields=no option
 
 
-def test_ogrinfo_py_11():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_11(script_path):
 
     ret = test_py_scripts.run_py_script(
         script_path,
@@ -232,10 +210,7 @@ def test_ogrinfo_py_11():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogrinfo_py_22():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_22(script_path):
 
     f = open("tmp/test_ogrinfo_22.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
@@ -318,10 +293,7 @@ OGRFeature(test_ogrinfo_22):1
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogrinfo_py_23():
-    script_path = test_py_scripts.get_py_script("ogrinfo")
-    if script_path is None:
-        pytest.skip()
+def test_ogrinfo_py_23(script_path):
 
     f = open("tmp/test_ogrinfo_23.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")

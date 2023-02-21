@@ -52,6 +52,17 @@ except AttributeError:
         "osgeo.gdal_array.GDALTypeCodeToNumericTypeCode is unavailable"
     )
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_calc") is None,
+    reason="gdal_calc not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_calc")
+
+
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 
@@ -112,14 +123,8 @@ def make_temp_filename_list(test_id, test_count, is_opt=False):
     return list(make_temp_filename(test_id, is_opt) for _ in range(test_count))
 
 
-def test_gdal_calc_py_1():
+def test_gdal_calc_py_1(script_path):
     """test basic copy"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 1, 3
@@ -166,14 +171,8 @@ def test_gdal_calc_py_1():
     check_file(out[2], zero_cs)
 
 
-def test_gdal_calc_py_2():
+def test_gdal_calc_py_2(script_path):
     """test simple formulas"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 2, 3
@@ -202,14 +201,8 @@ def test_gdal_calc_py_2():
         check_file(out[i], checksum, i + 1)
 
 
-def test_gdal_calc_py_3():
+def test_gdal_calc_py_3(script_path):
     """test --allBands option (simple copy)"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 3, 1
@@ -226,14 +219,8 @@ def test_gdal_calc_py_3():
         check_file(out[0], checksum, 1, bnd_idx=i + 1)
 
 
-def test_gdal_calc_py_4():
+def test_gdal_calc_py_4(script_path):
     """test --allBands option (simple calc)"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 4, 3
@@ -267,14 +254,8 @@ def test_gdal_calc_py_4():
         check_file(out[2], checksum, 3, bnd_idx=i + 1)
 
 
-def test_gdal_calc_py_5():
+def test_gdal_calc_py_5(script_path):
     """test python interface, basic copy"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 5, 4
@@ -303,14 +284,8 @@ def test_gdal_calc_py_5():
         check_file(out[3], checksum, 4, bnd_idx=i + 1)
 
 
-def test_gdal_calc_py_6():
+def test_gdal_calc_py_6(script_path):
     """test nodata"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     test_id, test_count = 6, 2
     out = make_temp_filename_list(test_id, test_count)
@@ -332,14 +307,8 @@ def test_gdal_calc_py_6():
         ds = None
 
 
-def test_gdal_calc_py_7():
+def test_gdal_calc_py_7(script_path):
     """test --optfile"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 7, 4
@@ -391,14 +360,8 @@ def test_gdal_calc_py_7():
             check_file(out[i], checksum, i + 1)
 
 
-def test_gdal_calc_py_8():
+def test_gdal_calc_py_8(script_path):
     """test multiple calcs"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     infile = get_input_file()
     test_id, test_count = 8, 1
@@ -433,7 +396,7 @@ def my_max(a):
     return ret
 
 
-def test_gdal_calc_py_9():
+def test_gdal_calc_py_9(script_path):
     """
     test calculating sum in different ways. testing the following features:
     * noDataValue
@@ -443,13 +406,6 @@ def test_gdal_calc_py_9():
     * single alpha for multiple datasets
     * extent = 'fail'
     """
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
-
     infile = get_input_file()
     test_id, test_count = 9, 9
     out = make_temp_filename_list(test_id, test_count)
@@ -575,14 +531,8 @@ def test_gdal_calc_py_9():
     i += 1
 
 
-def test_gdal_calc_py_multiple_inputs_same_alpha():
+def test_gdal_calc_py_multiple_inputs_same_alpha(script_path):
     """test multiple values for -A flag, including wildcards"""
-
-    script_path = test_py_scripts.get_py_script("gdal_calc")
-    if script_path is None:
-        pytest.skip(
-            "gdal_calc script not found, skipping all tests", allow_module_level=True
-        )
 
     shutil.copy("../gcore/data/byte.tif", "tmp/input_wildcard_1.tif")
     shutil.copy("../gcore/data/byte.tif", "tmp/input_wildcard_2.tif")

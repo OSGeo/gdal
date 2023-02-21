@@ -40,15 +40,22 @@ import osgeo_utils.auxiliary.color_table as color_table
 from osgeo import gdal
 from osgeo_utils import gdalattachpct, rgb2pct
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("rgb2pct") is None,
+    reason="rgb2pct.py not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("rgb2pct")
+
+
 ###############################################################################
 # Test rgb2pct
 
 
-def test_rgb2pct_1():
-
-    script_path = test_py_scripts.get_py_script("rgb2pct")
-    if script_path is None:
-        pytest.skip()
+def test_rgb2pct_1(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -65,16 +72,12 @@ def test_rgb2pct_1():
 # Test pct2rgb
 
 
-def test_pct2rgb_1():
+def test_pct2rgb_1(script_path):
     gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
         pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
-
-    script_path = test_py_scripts.get_py_script("pct2rgb")
-    if script_path is None:
-        pytest.skip()
 
     test_py_scripts.run_py_script(
         script_path, "pct2rgb", "tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif"
@@ -95,11 +98,7 @@ def test_pct2rgb_1():
 # Test rgb2pct -n option
 
 
-def test_rgb2pct_2():
-
-    script_path = test_py_scripts.get_py_script("rgb2pct")
-    if script_path is None:
-        pytest.skip()
+def test_rgb2pct_2(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -126,11 +125,7 @@ def test_rgb2pct_2():
 # Test rgb2pct -pct option
 
 
-def test_rgb2pct_3():
-
-    script_path = test_py_scripts.get_py_script("rgb2pct")
-    if script_path is None:
-        pytest.skip()
+def test_rgb2pct_3(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -157,16 +152,12 @@ def test_rgb2pct_3():
 # Test pct2rgb with big CT (>256 entries)
 
 
-def test_pct2rgb_4():
+def test_pct2rgb_4(script_path):
     gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
         pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
-
-    script_path = test_py_scripts.get_py_script("pct2rgb")
-    if script_path is None:
-        pytest.skip()
 
     test_py_scripts.run_py_script(
         script_path,

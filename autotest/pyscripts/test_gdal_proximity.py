@@ -36,15 +36,22 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_proximity") is None,
+    reason="gdal_proximity not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_proximity")
+
+
 ###############################################################################
 # Test a fairly default case.
 
 
-def test_gdal_proximity_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_proximity")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_proximity_1(script_path):
 
     drv = gdal.GetDriverByName("GTiff")
     dst_ds = drv.Create("tmp/proximity_1.tif", 25, 25, 1, gdal.GDT_Byte)
@@ -74,11 +81,7 @@ def test_gdal_proximity_1():
 # Try several options
 
 
-def test_gdal_proximity_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_proximity")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_proximity_2(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -106,11 +109,7 @@ def test_gdal_proximity_2():
 # Try input nodata option
 
 
-def test_gdal_proximity_3():
-
-    script_path = test_py_scripts.get_py_script("gdal_proximity")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_proximity_3(script_path):
 
     test_py_scripts.run_py_script(
         script_path,

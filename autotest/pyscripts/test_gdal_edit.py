@@ -38,6 +38,17 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_edit") is None,
+    reason="gdal_edit not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_edit")
+
+
 # Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
 #                 [-tr xres yres] [-a_nodata value]
 #                 [-unsetgt] [-stats] [-approx_stats]
@@ -50,11 +61,7 @@ from osgeo import gdal
 
 
 @pytest.mark.parametrize("read_only", [True, False])
-def test_gdal_edit_py_1(read_only):
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_1(script_path, read_only):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -112,12 +119,7 @@ def test_gdal_edit_py_1(read_only):
 # Test -a_ulurll
 
 
-def test_gdal_edit_py_1b():
-
-    script = "gdal_edit"
-    folder = test_py_scripts.get_py_script(script)
-    if folder is None:
-        pytest.skip()
+def test_gdal_edit_py_1b(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -129,7 +131,9 @@ def test_gdal_edit_py_1b():
             ("25 70 55 65 20 40", (25, 1.5, -0.25, 70, -0.25, -1.5)),  # rotated CW
         ):
             arguments = filename + " -a_ulurll " + points
-            assert test_py_scripts.run_py_script(folder, script, arguments) == ""
+            assert (
+                test_py_scripts.run_py_script(script_path, "gdal_edit", arguments) == ""
+            )
             assert gdal.Open(filename).GetGeoTransform() == pytest.approx(expected)
     finally:
         gdal.GetDriverByName("GTiff").Delete(filename)
@@ -139,11 +143,7 @@ def test_gdal_edit_py_1b():
 # Test -unsetgt
 
 
-def test_gdal_edit_py_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_2(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -167,11 +167,7 @@ def test_gdal_edit_py_2():
 # Test -a_srs ''
 
 
-def test_gdal_edit_py_3():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_3(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -195,11 +191,7 @@ def test_gdal_edit_py_3():
 # Test -unsetstats
 
 
-def test_gdal_edit_py_4():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_4(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -240,11 +232,7 @@ def test_gdal_edit_py_4():
 # Test -stats
 
 
-def test_gdal_edit_py_5():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_5(script_path):
 
     gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
@@ -301,11 +289,7 @@ def test_gdal_edit_py_5():
 # Test -setstats
 
 
-def test_gdal_edit_py_6():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_6(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -355,11 +339,7 @@ def test_gdal_edit_py_6():
 # Test -scale and -offset
 
 
-def test_gdal_edit_py_7():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_7(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
@@ -394,11 +374,7 @@ def test_gdal_edit_py_7():
 # Test -colorinterp_X
 
 
-def test_gdal_edit_py_8():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_8(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     try:
@@ -429,11 +405,7 @@ def test_gdal_edit_py_8():
 ###############################################################################
 
 
-def test_gdal_edit_py_unsetrpc():
-
-    script_path = test_py_scripts.get_py_script("gdal_edit")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_edit_py_unsetrpc(script_path):
 
     filename = "tmp/test_gdal_edit_py.tif"
     try:
