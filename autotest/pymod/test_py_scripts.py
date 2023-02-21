@@ -52,12 +52,12 @@ def get_data_path(dir):
 
 
 def get_py_script(script_name):
-    # how to get to {root_dir}/gdal from {root_dir}/autotest/X
-    base_gdal_path = os.path.join(os.getcwd(), "..", "..")
+    build_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
     # now we need to look for the script in the utils or samples subdirs...
     for subdir in [scripts_subdir, samples_subdir]:
         try:
-            test_path = os.path.join(base_gdal_path, subdir)
+            test_path = os.path.join(build_dir, subdir)
             test_file_path = os.path.join(test_path, script_name + ".py")
             os.stat(test_file_path)
             return test_path
