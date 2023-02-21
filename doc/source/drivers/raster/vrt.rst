@@ -1650,10 +1650,14 @@ For example:
 ::
 
     vrt://my.tif?a_ullr=0,1,1,-1
+    
+::
+
+    vrt://my.tif?bands=2&ovr=4
 
 
-The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``. Other options may be
-added in the future.
+The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``, ``ovr``. 
+Other options may be added in the future.
 
 The effect of the ``bands`` option is to change the band composition. The values specified
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
@@ -1668,6 +1672,9 @@ definition.
 The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) the georeferenced
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
 values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y).
+
+The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview 
+level of source file must be used, or control any automatic choice as with (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
