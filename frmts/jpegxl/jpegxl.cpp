@@ -2076,6 +2076,95 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             return nullptr;
     }
 
+    const char *pszLossLess = CSLFetchNameValue(papszOptions, "LOSSLESS");
+    const char *pszDistance = CSLFetchNameValue(papszOptions, "DISTANCE");
+    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    const char *pszAlphaDistance =
+        CSLFetchNameValue(papszOptions, "ALPHA_DISTANCE");
+
+    const bool bLossless = (pszLossLess == nullptr && pszDistance == nullptr &&
+                            pszQuality == nullptr) ||
+                           (pszLossLess != nullptr && CPLTestBool(pszLossLess));
+    if (pszLossLess == nullptr &&
+        (pszDistance != nullptr || pszQuality != nullptr))
+    {
+        CPLDebug("JPEGXL", "Using lossy mode");
+    }
+    if ((pszLossLess != nullptr && bLossless) && pszDistance != nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DISTANCE and LOSSLESS=YES are mutually exclusive");
+        return nullptr;
+    }
+    if ((pszLossLess != nullptr && bLossless) && pszAlphaDistance != nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ALPHA_DISTANCE and LOSSLESS=YES are mutually exclusive");
+        return nullptr;
+    }
+    if ((pszLossLess != nullptr && bLossless) && pszQuality != nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "QUALITY and LOSSLESS=YES are mutually exclusive");
+        return nullptr;
+    }
+    if (pszDistance != nullptr && pszQuality != nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "QUALITY and DISTANCE are mutually exclusive");
+        return nullptr;
+    }
+
+    float fDistance = 0.0f;
+    float fAlphaDistance = -1.0;
+    if (!bLossless)
+    {
+        fDistance =
+            pszDistance ? static_cast<float>(CPLAtof(pszDistance)) : 1.0f;
+        if (pszQuality != nullptr)
+        {
+            const double quality = CPLAtof(pszQuality);
+            // Quality settings roughly match libjpeg qualities.
+            // Formulas taken from cjxl.cc
+            if (quality >= 100)
+            {
+                fDistance = 0;
+            }
+            else if (quality >= 30)
+            {
+                fDistance = static_cast<float>(0.1 + (100 - quality) * 0.09);
+            }
+            else
+            {
+                fDistance = static_cast<float>(
+                    6.4 + pow(2.5, (30 - quality) / 5.0f) / 6.25f);
+            }
+        }
+        if (fDistance >= 0.0f && fDistance < 0.1f)
+            fDistance = 0.1f;
+
+        if (pszAlphaDistance)
+        {
+            fAlphaDistance = static_cast<float>(CPLAtof(pszAlphaDistance));
+            if (fAlphaDistance > 0.0f && fAlphaDistance < 0.1f)
+                fAlphaDistance = 0.1f;
+        }
+    }
+
+    const bool bAlphaDistanceSameAsMainChannel =
+        (fAlphaDistance < 0.0f) ||
+        ((bLossless && fAlphaDistance == 0.0f) ||
+         (!bLossless && fAlphaDistance == fDistance));
+#ifndef HAVE_JxlEncoderSetExtraChannelDistance
+    if (!bAlphaDistanceSameAsMainChannel)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "ALPHA_DISTANCE ignored due to "
+                 "JxlEncoderSetExtraChannelDistance() not being "
+                 "available. Please upgrade libjxl to > 0.8.1");
+    }
+#endif
+
     auto encoder = JxlEncoderMake(nullptr);
     if (!encoder)
     {
@@ -2115,7 +2204,8 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         basic_info.num_color_channels = 1;
         basic_info.num_extra_channels = 1;
         if (poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
-            GCI_AlphaBand)
+                GCI_AlphaBand &&
+            bAlphaDistanceSameAsMainChannel)
         {
             bHasInterleavedAlphaBand = true;
             basic_info.alpha_bits = basic_info.bits_per_sample;
@@ -2135,7 +2225,8 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             basic_info.num_extra_channels = nSrcBands - 3;
             if (nSrcBands >= 4 &&
                 poSrcDS->GetRasterBand(4)->GetColorInterpretation() ==
-                    GCI_AlphaBand)
+                    GCI_AlphaBand &&
+                bAlphaDistanceSameAsMainChannel)
             {
                 bHasInterleavedAlphaBand = true;
                 basic_info.alpha_bits = basic_info.bits_per_sample;
@@ -2210,37 +2301,6 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszLossLess = CSLFetchNameValue(papszOptions, "LOSSLESS");
-    const char *pszDistance = CSLFetchNameValue(papszOptions, "DISTANCE");
-    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
-
-    const bool bLossless = (pszLossLess == nullptr && pszDistance == nullptr &&
-                            pszQuality == nullptr) ||
-                           (pszLossLess != nullptr && CPLTestBool(pszLossLess));
-    if (pszLossLess == nullptr &&
-        (pszDistance != nullptr || pszQuality != nullptr))
-    {
-        CPLDebug("JPEGXL", "Using lossy mode");
-    }
-    if ((pszLossLess != nullptr && bLossless) && pszDistance != nullptr)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "DISTANCE and LOSSLESS=YES are mutually exclusive");
-        return nullptr;
-    }
-    if ((pszLossLess != nullptr && bLossless) && pszQuality != nullptr)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "QUALITY and LOSSLESS=YES are mutually exclusive");
-        return nullptr;
-    }
-    if (pszDistance != nullptr && pszQuality != nullptr)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "QUALITY and DISTANCE are mutually exclusive");
-        return nullptr;
-    }
-
 #ifdef HAVE_JxlEncoderSetCodestreamLevel
     if (poSrcDS->GetRasterXSize() > 262144 ||
         poSrcDS->GetRasterYSize() > 262144 ||
@@ -2264,30 +2324,6 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     }
     else
     {
-        float fDistance =
-            pszDistance ? static_cast<float>(CPLAtof(pszDistance)) : 1.0f;
-        if (pszQuality != nullptr)
-        {
-            const double quality = CPLAtof(pszQuality);
-            // Quality settings roughly match libjpeg qualities.
-            // Formulas taken from cjxl.cc
-            if (quality >= 100)
-            {
-                fDistance = 0;
-            }
-            else if (quality >= 30)
-            {
-                fDistance = static_cast<float>(0.1 + (100 - quality) * 0.09);
-            }
-            else
-            {
-                fDistance = static_cast<float>(
-                    6.4 + pow(2.5, (30 - quality) / 5.0f) / 6.25f);
-            }
-        }
-        if (fDistance >= 0.0f && fDistance < 0.1f)
-            fDistance = 0.1f;
-
 #ifdef HAVE_JxlEncoderSetFrameDistance
         if (JxlEncoderSetFrameDistance(opts, fDistance) != JXL_ENC_SUCCESS)
 #else
@@ -2505,11 +2541,11 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                 static_cast<int>(1 + basic_info.num_color_channels + i);
             const auto poBand = poSrcDS->GetRasterBand(nBand);
             JxlExtraChannelInfo extra_channel_info;
-            JxlEncoderInitExtraChannelInfo(poBand->GetColorInterpretation() ==
-                                                   GCI_AlphaBand
-                                               ? JXL_CHANNEL_ALPHA
-                                               : JXL_CHANNEL_OPTIONAL,
-                                           &extra_channel_info);
+            const JxlExtraChannelType channelType =
+                poBand->GetColorInterpretation() == GCI_AlphaBand
+                    ? JXL_CHANNEL_ALPHA
+                    : JXL_CHANNEL_OPTIONAL;
+            JxlEncoderInitExtraChannelInfo(channelType, &extra_channel_info);
             extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
             extra_channel_info.exponent_bits_per_sample =
                 basic_info.exponent_bits_per_sample;
@@ -2536,6 +2572,18 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                          "JxlEncoderSetExtraChannelName() failed");
                 return nullptr;
             }
+#if HAVE_JxlEncoderSetExtraChannelDistance
+            if (channelType == JXL_CHANNEL_ALPHA && fAlphaDistance >= 0.0f)
+            {
+                if (JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelDistance(
+                                           opts, nIndex, fAlphaDistance))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "JxlEncoderSetExtraChannelDistance failed");
+                    return nullptr;
+                }
+            }
+#endif
         }
     }
 #endif
@@ -2976,6 +3024,13 @@ void GDALRegister_JPEGXL()
         "   <Option name='DISTANCE' type='float' description='Distance level "
         "for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>"
+#ifdef HAVE_JxlEncoderSetExtraChannelDistance
+        "  <Option name='ALPHA_DISTANCE' type='float' "
+        "description='Distance level for alpha channel "
+        "(-1=same as non-alpha channels, "
+        "0=mathematically lossless, 1.0=visually lossless, "
+        "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>"
+#endif
         "   <Option name='QUALITY' type='float' description='Alternative "
         "setting to DISTANCE to specify lossy compression, roughly matching "
         "libjpeg quality setting in the [0,100] range' default='90' max='100'/>"

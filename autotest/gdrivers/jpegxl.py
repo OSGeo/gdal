@@ -626,6 +626,18 @@ def test_jpegxl_createcopy_errors():
         gdal.ErrorReset()
         assert (
             gdal.GetDriverByName("JPEGXL").CreateCopy(
+                outfilename, src_ds, options=["LOSSLESS=YES", "ALPHA_DISTANCE=1"]
+            )
+            is None
+        )
+        assert gdal.GetLastErrorMsg() != ""
+
+    # mutually exclusive options
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert (
+            gdal.GetDriverByName("JPEGXL").CreateCopy(
                 outfilename, src_ds, options=["LOSSLESS=YES", "QUALITY=90"]
             )
             is None
@@ -797,3 +809,29 @@ def test_jpegxl_apply_orientation(orientation):
         assert ds.GetMetadataItem("original_EXIF_Orientation", "EXIF") == str(
             orientation
         )
+
+
+###############################################################################
+# Test ALPHA_DISTANCE option
+
+
+def test_jpegxl_alpha_distance_zero():
+
+    drv = gdal.GetDriverByName("JPEGXL")
+    md = drv.GetMetadata()
+    if "ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
+        pytest.skip("libjxl > 0.8.1 required")
+
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    filename = "/vsimem/test_jpegxl_alpha_distance_zero.jxl"
+    drv.CreateCopy(
+        filename,
+        src_ds,
+        options=["LOSSLESS=NO", "ALPHA_DISTANCE=0"],
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    gdal.Unlink(filename)

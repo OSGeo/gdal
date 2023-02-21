@@ -62,7 +62,7 @@ ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 # libjxl being still unstable, if the main branch fails to compile/test
 # you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
 JXL_TREEISH=main
-# Mention commit ea2612d6df99e9878b51e315935f9d6201f5fe47 to force rebuild of dep
+# Mention commit 9066c91546e6bda3623fa14b83613d90cbfddfd3 to force rebuild of dep
 git clone https://github.com/libjxl/libjxl.git --recursive \
     && cd libjxl \
     && git checkout ${JXL_TREEISH} \

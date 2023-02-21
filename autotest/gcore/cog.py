@@ -1643,3 +1643,73 @@ def test_cog_overview_count_existing():
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test JPEGXL compression with alpha
+
+
+def test_cog_write_jpegxl_alpha():
+
+    drv = gdal.GetDriverByName("COG")
+    md = drv.GetMetadata()
+    if "JXL" not in md["DMD_CREATIONOPTIONLIST"]:
+        pytest.skip("JXL support not available")
+
+    src_ds = gdal.Open("data/stefan_full_rgba.tif")
+    filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename,
+        src_ds,
+        options=[
+            "COMPRESS=JXL",
+            "JXL_LOSSLESS=NO",
+            "TILED=YES",
+            "BLOCKSIZE=512",
+            "BLOCKYSIZE=512",
+        ],
+    )
+    ds = gdal.Open(filename)
+    ref_checksum = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
+    ds = None
+
+    gdal.Unlink(filename)
+
+    drv.CreateCopy(
+        filename,
+        src_ds,
+        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO"],
+    )
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == ref_checksum
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test JXL_ALPHA_DISTANCE creation option
+
+
+def test_cog_write_jpegxl_alpha_distance_zero():
+
+    drv = gdal.GetDriverByName("COG")
+    md = drv.GetMetadata()
+    if "JXL_ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
+        pytest.skip("libjxl > 0.8.1 required")
+
+    src_ds = gdal.Open("data/stefan_full_rgba.tif")
+    filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
+    drv.CreateCopy(
+        filename,
+        src_ds,
+        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "JXL_ALPHA_DISTANCE=0"],
+    )
+    ds = gdal.Open(filename)
+    assert float(ds.GetMetadataItem("JXL_ALPHA_DISTANCE", "IMAGE_STRUCTURE")) == 0
+    assert ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(4).Checksum() == src_ds.GetRasterBand(4).Checksum()
+    ds = None
+
+    gdal.Unlink(filename)
