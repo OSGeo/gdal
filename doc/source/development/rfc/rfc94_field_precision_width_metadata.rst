@@ -56,7 +56,7 @@ Here is a list of the drivers and how they behave with respect to the width and 
  Driver             Width Includes Decimal Separator   Width Includes Sign
 ================== ================================== =====================
  Shapefile          YES                                YES
- MapInfo            ?                                  ?
+ MapInfo            YES                                YES
  PostgreSQL         NO                                 NO
  MySQL              NO                                 NO
  MSSQL              NO                                 NO
@@ -64,10 +64,10 @@ Here is a list of the drivers and how they behave with respect to the width and 
  GPKG               N/A                                N/A
  CSV (from .csvt)   YES                                YES
  HANA               ?                                  ?
- FlatGeoBuf         ?                                  ?
- FileGDB            ?                                  ?
- GML                ?                                  ?
- MEM                ?                                  ?
+ FlatGeoBuf         NO                                 NO
+ FileGDB            N/A                                N/A
+ GML                NO                                 NO
+ MEM                N/A                                N/A
 ================== ================================== =====================
 
 
@@ -75,8 +75,19 @@ Notes about specific drivers
 ............................
 
 + GPKG: SQLite column affinity storage is 8-byte IEEE floating point number
-+ GML: `xsd:decimal` with `totalDigits` and `fractionDigits`, I could not find any detail in the specs.
-
++ GML: `xsd:decimal` with `totalDigits` and `fractionDigits`, `xs:totalDigits`
+  defines the maximum number of digits of decimal and derived datatypes
+  (both after and before the decimal point, not counting the decimal point itself).
+  `xs:fractionDigits`` defines the maximum number of fractional digits (i.e.,
+  digits that are after the decimal point) of an xs:decimal datatype.
++ FlatGeoBuf: for Float fields, OGR_width = flatgeobuf_precision and OGR_precision = flatgeobuf_scale
+  (if flatgeobuf_scale != -1, or 0 if flatgeobuf_scale == -1)
++ FileGDB: Scale is the number of digits to the right of the decimal point in a number.
+  For example, the number 56.78 has a scale of 2. Scale applies only to fields that are double.
+  Scale is always returned as 0 from personal or File geodatabase fields.
+  Precision is the number of digits in a number. For example, the number 56.78 has a precision of 4.
+  Precision is only valid for fields that are numeric. Precision is always returned as 0 from personal or
+  File geodatabase fields
 
 Technical details
 -----------------
