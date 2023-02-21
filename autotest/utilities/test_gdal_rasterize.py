@@ -42,14 +42,22 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdal_rasterize_path() is None,
+    reason="gdal_rasterize not available",
+)
+
+
+@pytest.fixture()
+def gdal_rasterize_path():
+    return test_cli_utilities.get_gdal_rasterize_path()
+
+
 ###############################################################################
 # Simple polygon rasterization (adapted from alg/rasterize.py).
 
 
-def test_gdal_rasterize_1():
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+def test_gdal_rasterize_1(gdal_rasterize_path):
 
     # Setup working spatial reference
     # sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -105,7 +113,7 @@ def test_gdal_rasterize_1():
 
     # Run the algorithm.
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -128,10 +136,7 @@ def test_gdal_rasterize_1():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdal_rasterize_2():
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+def test_gdal_rasterize_2(gdal_rasterize_path):
 
     # Create a raster to rasterize into.
 
@@ -145,7 +150,7 @@ def test_gdal_rasterize_2():
 
     # Run the algorithm.
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -at -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l cutline ../alg/data/cutline.csv tmp/rast2.tif"
     )
 
@@ -165,13 +170,10 @@ def test_gdal_rasterize_2():
 # Test creating an output file
 
 
-def test_gdal_rasterize_3():
+def test_gdal_rasterize_3(gdal_rasterize_path):
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+        pytest.skip("gdal_contour missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
@@ -179,7 +181,7 @@ def test_gdal_rasterize_3():
     )
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -3d tmp/n43dt0.shp tmp/n43dt0.tif -l n43dt0 -ts 121 121 -a_nodata 0 -q"
     )
 
@@ -212,13 +214,10 @@ def test_gdal_rasterize_3():
 # Same but with -tr argument
 
 
-def test_gdal_rasterize_4():
+def test_gdal_rasterize_4(gdal_rasterize_path):
 
     if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+        pytest.skip("gdal_contour missing")
 
     gdal.GetDriverByName("GTiff").Delete("tmp/n43dt0.tif")
 
@@ -228,7 +227,7 @@ def test_gdal_rasterize_4():
     )
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -3d tmp/n43dt0.shp tmp/n43dt0.tif -l n43dt0 -tr 0.008333333333333  0.008333333333333 -a_nodata 0 -a_srs EPSG:4326"
     )
 
@@ -268,10 +267,7 @@ def test_gdal_rasterize_4():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdal_rasterize_5():
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+def test_gdal_rasterize_5(gdal_rasterize_path):
 
     f = open("tmp/test_gdal_rasterize_5.csv", "wb")
     f.write(
@@ -302,7 +298,7 @@ def test_gdal_rasterize_5():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -l test tmp/test_gdal_rasterize_5.vrt tmp/test_gdal_rasterize_5.tif -a Value -tr 1 1 -ot Byte"
     )
 
@@ -335,10 +331,7 @@ def test_gdal_rasterize_5():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdal_rasterize_6():
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+def test_gdal_rasterize_6(gdal_rasterize_path):
 
     f = open("tmp/test_gdal_rasterize_6.csv", "wb")
     f.write(
@@ -364,7 +357,7 @@ def test_gdal_rasterize_6():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_rasterize_path()
+        gdal_rasterize_path
         + " -l test_gdal_rasterize_6 tmp/test_gdal_rasterize_6.csv tmp/test_gdal_rasterize_6.tif -a Value"
     )
 
@@ -385,11 +378,9 @@ def test_gdal_rasterize_6():
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_driver("CSV")
 @pytest.mark.parametrize("sql_in_file", [False, True])
-def test_gdal_rasterize_7(sql_in_file):
+def test_gdal_rasterize_7(gdal_rasterize_path, sql_in_file):
 
     pytest.importorskip("numpy")
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         drv = ogr.GetDriverByName("SQLITE")
@@ -424,7 +415,7 @@ def test_gdal_rasterize_7(sql_in_file):
         % sql
     )
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + " " + cmds)
+    gdaltest.runexternal(gdal_rasterize_path + " " + cmds)
 
     if sql_in_file:
         os.unlink("tmp/sql.txt")
@@ -447,10 +438,7 @@ def test_gdal_rasterize_7(sql_in_file):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdal_rasterize_8():
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
-        pytest.skip()
+def test_gdal_rasterize_8(gdal_rasterize_path):
 
     f = open("tmp/test_gdal_rasterize_8.csv", "wb")
     f.write("WKT,Value\n".encode("ascii"))
@@ -459,7 +447,7 @@ def test_gdal_rasterize_8():
 
     cmds = """tmp/test_gdal_rasterize_8.csv tmp/test_gdal_rasterize_8.tif -init 0 -burn 1 -tr 1 1"""
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + " " + cmds)
+    gdaltest.runexternal(gdal_rasterize_path + " " + cmds)
 
     ds = gdal.Open("tmp/test_gdal_rasterize_8.tif")
     cs = ds.GetRasterBand(1).Checksum()

@@ -35,23 +35,24 @@ import test_cli_utilities
 
 from osgeo import gdal
 
-###############################################################################
-#
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_cli_utility_path("sozip") is None,
+    reason="sozip_path not available",
+)
 
 
-def get_sozip_path():
+@pytest.fixture()
+def sozip_path():
     return test_cli_utilities.get_cli_utility_path("sozip")
 
 
 ###############################################################################
 
 
-def test_sozip_list():
-    if get_sozip_path() is None:
-        pytest.skip()
+def test_sozip_list(sozip_path):
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path() + " --list ../gcore/data/zero_5GB_sozip_of_sozip.zip"
+        sozip_path + " --list ../gcore/data/zero_5GB_sozip_of_sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
     assert " 5232873 " in out
@@ -64,12 +65,10 @@ def test_sozip_list():
 ###############################################################################
 
 
-def test_sozip_create():
-    if get_sozip_path() is None:
-        pytest.skip()
+def test_sozip_create(sozip_path):
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path()
+        sozip_path
         + " -j --overwrite --enable-sozip=yes --sozip-chunk-size 128 --content-type=image/tiff tmp/sozip.zip ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -87,20 +86,18 @@ def test_sozip_create():
 ###############################################################################
 
 
-def test_sozip_append():
-    if get_sozip_path() is None:
-        pytest.skip()
+def test_sozip_append(sozip_path):
 
     gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path()
+        sozip_path
         + " -j --enable-sozip=yes --sozip-chunk-size 128 tmp/sozip.zip ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path() + " -j tmp/sozip.zip ../gcore/data/uint16.tif"
+        sozip_path + " -j tmp/sozip.zip ../gcore/data/uint16.tif"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -118,20 +115,18 @@ def test_sozip_append():
 ###############################################################################
 
 
-def test_sozip_validate():
-    if get_sozip_path() is None:
-        pytest.skip()
+def test_sozip_validate(sozip_path):
 
     gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path()
+        sozip_path
         + " -j --enable-sozip=yes --sozip-chunk-size 128 tmp/sozip.zip ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path() + " --validate tmp/sozip.zip"
+        sozip_path + " --validate tmp/sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
     assert "File byte.tif has a valid SOZip index, using chunk_size = 128" in out
@@ -146,20 +141,18 @@ def test_sozip_validate():
 ###############################################################################
 
 
-def test_sozip_optimize_from():
-    if get_sozip_path() is None:
-        pytest.skip()
+def test_sozip_optimize_from(sozip_path):
 
     gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path()
+        sozip_path
         + " --optimize-from=../ogr/data/filegdb/test_spatial_index.gdb.zip tmp/sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        get_sozip_path() + " --validate tmp/sozip.zip"
+        sozip_path + " --validate tmp/sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
     assert (

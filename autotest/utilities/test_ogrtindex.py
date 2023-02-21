@@ -38,13 +38,21 @@ import test_cli_utilities
 
 from osgeo import ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_ogrtindex_path() is None, reason="ogrtindex not available"
+)
+
+
+@pytest.fixture()
+def ogrtindex_path():
+    return test_cli_utilities.get_ogrtindex_path()
+
+
 ###############################################################################
 # Simple test
 
 
-def test_ogrtindex_1(srs=None):
-    if test_cli_utilities.get_ogrtindex_path() is None:
-        pytest.skip()
+def test_ogrtindex_1(ogrtindex_path, srs=None):
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
 
@@ -84,7 +92,7 @@ def test_ogrtindex_1(srs=None):
     shape_ds.Destroy()
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogrtindex_path()
+        ogrtindex_path
         + " -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp"
     )
     assert err is None or err == "", "got error/warning"
@@ -124,22 +132,19 @@ def test_ogrtindex_1(srs=None):
 # Same test but with a SRS set on the different tiles to index
 
 
-def test_ogrtindex_2():
+def test_ogrtindex_2(ogrtindex_path):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
-    return test_ogrtindex_1(srs)
+    return test_ogrtindex_1(ogrtindex_path, srs)
 
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format and -t_srs
 
 
-def test_ogrtindex_3():
-
-    if test_cli_utilities.get_ogrtindex_path() is None:
-        pytest.skip()
+def test_ogrtindex_3(ogrtindex_path):
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
 
@@ -199,7 +204,7 @@ def test_ogrtindex_3():
             output_format = " -f SQLite"
 
         (_, err) = gdaltest.runexternal_out_and_err(
-            test_cli_utilities.get_ogrtindex_path()
+            ogrtindex_path
             + " -src_srs_name src_srs -t_srs EPSG:4326 "
             + output_filename
             + " tmp/point1.shp tmp/point2.shp "
@@ -248,8 +253,6 @@ def test_ogrtindex_3():
 
 
 def test_ogrtindex_cleanup():
-    if test_cli_utilities.get_ogrtindex_path() is None:
-        pytest.skip()
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
     shape_drv.DeleteDataSource("tmp/tileindex.shp")

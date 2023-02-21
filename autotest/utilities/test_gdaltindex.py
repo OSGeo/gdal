@@ -37,13 +37,21 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdaltindex_path() is None, reason="gdaltindex not available"
+)
+
+
+@pytest.fixture()
+def gdaltindex_path():
+    return test_cli_utilities.get_gdaltindex_path()
+
+
 ###############################################################################
 # Simple test
 
 
-def test_gdaltindex_1():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_1(gdaltindex_path):
 
     try:
         os.remove("tmp/tileindex.shp")
@@ -86,14 +94,12 @@ def test_gdaltindex_1():
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaltindex_path()
-        + " tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif"
+        gdaltindex_path + " tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif"
     )
     assert err is None or err == "", "got error/warning"
 
     (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaltindex_path()
-        + " tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif"
+        gdaltindex_path + " tmp/tileindex.shp tmp/gdaltindex3.tif tmp/gdaltindex4.tif"
     )
 
     ds = ogr.Open("tmp/tileindex.shp")
@@ -126,12 +132,10 @@ def test_gdaltindex_1():
 # Try adding the same rasters again
 
 
-def test_gdaltindex_2():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_2(gdaltindex_path):
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaltindex_path()
+        gdaltindex_path
         + " tmp/tileindex.shp tmp/gdaltindex1.tif tmp/gdaltindex2.tif tmp/gdaltindex3.tif tmp/gdaltindex4.tif"
     )
 
@@ -164,9 +168,7 @@ def test_gdaltindex_2():
 # 5th tile should NOT be inserted
 
 
-def test_gdaltindex_3():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_3(gdaltindex_path):
 
     drv = gdal.GetDriverByName("GTiff")
     wkt = """GEOGCS["WGS 72",
@@ -182,7 +184,7 @@ def test_gdaltindex_3():
     ds = None
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaltindex_path()
+        gdaltindex_path
         + " -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif"
     )
 
@@ -207,9 +209,7 @@ def test_gdaltindex_3():
 # 5th tile should be inserted, will not be if there is a srs transformation error
 
 
-def test_gdaltindex_4():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_4(gdaltindex_path):
 
     drv = gdal.GetDriverByName("GTiff")
     wkt = """GEOGCS["WGS 72",
@@ -225,8 +225,7 @@ def test_gdaltindex_4():
     ds = None
 
     gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaltindex_path()
-        + " -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif"
+        gdaltindex_path + " -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif"
     )
 
     ds = ogr.Open("tmp/tileindex.shp")
@@ -240,9 +239,7 @@ def test_gdaltindex_4():
 # Test -src_srs_name, -src_srs_format options
 
 
-def test_gdaltindex_5():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_5(gdaltindex_path):
 
     drv = gdal.GetDriverByName("GTiff")
 
@@ -266,7 +263,7 @@ def test_gdaltindex_5():
         )
         gdal.PopErrorHandler()
         gdaltest.runexternal_out_and_err(
-            test_cli_utilities.get_gdaltindex_path()
+            gdaltindex_path
             + " -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif"
             % src_srs_format
         )
@@ -299,9 +296,7 @@ def test_gdaltindex_5():
 # Test -f, -lyr_name
 
 
-def test_gdaltindex_6():
-    if test_cli_utilities.get_gdaltindex_path() is None:
-        pytest.skip()
+def test_gdaltindex_6(gdaltindex_path):
 
     for option in ["", "-lyr_name tileindex"]:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -310,7 +305,7 @@ def test_gdaltindex_6():
         )
         gdal.PopErrorHandler()
         gdaltest.runexternal_out_and_err(
-            test_cli_utilities.get_gdaltindex_path()
+            gdaltindex_path
             + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif'
             % option
         )

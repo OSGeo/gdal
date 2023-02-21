@@ -40,13 +40,21 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_ogr2ogr_path() is None, reason="ogr2ogr not available"
+)
+
+
+@pytest.fixture()
+def ogr2ogr_path():
+    return test_cli_utilities.get_ogr2ogr_path()
+
+
 ###############################################################################
 # Simple test
 
 
-def test_ogr2ogr_1():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_1(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -55,7 +63,7 @@ def test_ogr2ogr_1():
         pass
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogr2ogr_path() + " tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " tmp/poly.shp ../ogr/data/poly.shp"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -79,9 +87,7 @@ def test_ogr2ogr_1():
 # Test -sql
 
 
-def test_ogr2ogr_2():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_2(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -90,8 +96,7 @@ def test_ogr2ogr_2():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + ' tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"'
+        ogr2ogr_path + ' tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"'
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -105,9 +110,7 @@ def test_ogr2ogr_2():
 # Test -spat
 
 
-def test_ogr2ogr_3():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_3(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -116,7 +119,7 @@ def test_ogr2ogr_3():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/poly.shp ../ogr/data/poly.shp -spat 479609 4764629 479764 4764817"
     )
 
@@ -134,9 +137,7 @@ def test_ogr2ogr_3():
 # Test -where
 
 
-def test_ogr2ogr_4():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_4(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -145,8 +146,7 @@ def test_ogr2ogr_4():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + ' tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"'
+        ogr2ogr_path + ' tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"'
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -160,9 +160,7 @@ def test_ogr2ogr_4():
 # Test -append
 
 
-def test_ogr2ogr_5():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_5(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -170,21 +168,14 @@ def test_ogr2ogr_5():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " tmp/poly.shp ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " tmp/poly.shp ../ogr/data/poly.shp")
     # All 3 variants below should be equivalent
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -update -append tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -update -append tmp/poly.shp ../ogr/data/poly.shp"
     )
+    gdaltest.runexternal(ogr2ogr_path + " -append tmp/poly.shp ../ogr/data/poly.shp")
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -append tmp/poly.shp ../ogr/data/poly.shp"
-    )
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -append -update tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -append -update tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -221,12 +212,10 @@ def check_if_has_ogr_pg():
 # Test -overwrite
 
 
-def test_ogr2ogr_6():
+def test_ogr2ogr_6(ogr2ogr_path):
 
     check_if_has_ogr_pg()
 
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
@@ -238,13 +227,13 @@ def test_ogr2ogr_6():
     )
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f PostgreSQL PG:"'
         + gdaltest.pg_connection_string
         + '" ../ogr/data/poly.shp -nln tpoly'
     )
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -update -overwrite -f PostgreSQL PG:"'
         + gdaltest.pg_connection_string
         + '" ../ogr/data/poly.shp -nln tpoly'
@@ -266,12 +255,10 @@ def test_ogr2ogr_6():
 # Test -gt
 
 
-def test_ogr2ogr_7():
+def test_ogr2ogr_7(ogr2ogr_path):
 
     check_if_has_ogr_pg()
 
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
@@ -283,7 +270,7 @@ def test_ogr2ogr_7():
     )
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f PostgreSQL PG:"'
         + gdaltest.pg_connection_string
         + '" ../ogr/data/poly.shp -nln tpoly -gt 1'
@@ -305,9 +292,7 @@ def test_ogr2ogr_7():
 # Test -t_srs
 
 
-def test_ogr2ogr_8():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_8(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -316,8 +301,7 @@ def test_ogr2ogr_8():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -331,9 +315,7 @@ def test_ogr2ogr_8():
 # Test -a_srs
 
 
-def test_ogr2ogr_9():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_9(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -342,8 +324,7 @@ def test_ogr2ogr_9():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -357,9 +338,7 @@ def test_ogr2ogr_9():
 # Test -select
 
 
-def test_ogr2ogr_10():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_10(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -369,8 +348,7 @@ def test_ogr2ogr_10():
 
     # Voluntary don't use the exact case of the source field names (#4502)
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -select eas_id,prfedea tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -select eas_id,prfedea tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -389,9 +367,7 @@ def test_ogr2ogr_10():
 # Test -lco
 
 
-def test_ogr2ogr_11():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_11(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -400,8 +376,7 @@ def test_ogr2ogr_11():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -415,9 +390,7 @@ def test_ogr2ogr_11():
 # Test -nlt
 
 
-def test_ogr2ogr_12():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_12(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -426,8 +399,7 @@ def test_ogr2ogr_12():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -441,9 +413,7 @@ def test_ogr2ogr_12():
 # Add explicit source layer name
 
 
-def test_ogr2ogr_13():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_13(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -451,10 +421,7 @@ def test_ogr2ogr_13():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/poly.shp ../ogr/data/poly.shp poly"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " tmp/poly.shp ../ogr/data/poly.shp poly")
 
     ds = ogr.Open("tmp/poly.shp")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -467,9 +434,7 @@ def test_ogr2ogr_13():
 # Test -segmentize
 
 
-def test_ogr2ogr_14():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_14(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -478,8 +443,7 @@ def test_ogr2ogr_14():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly"
+        ogr2ogr_path + " -segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly"
     )
 
     ds = ogr.Open("tmp/poly.shp")
@@ -495,10 +459,7 @@ def test_ogr2ogr_14():
 # Test -overwrite with a shapefile
 
 
-def test_ogr2ogr_15():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_15(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -506,18 +467,14 @@ def test_ogr2ogr_15():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " tmp/poly.shp ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " tmp/poly.shp ../ogr/data/poly.shp")
 
     ds = ogr.Open("tmp/poly.shp")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     # Overwrite
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " -overwrite tmp ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " -overwrite tmp ../ogr/data/poly.shp")
 
     ds = ogr.Open("tmp/poly.shp")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -530,10 +487,7 @@ def test_ogr2ogr_15():
 # Test -fid
 
 
-def test_ogr2ogr_16():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_16(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -541,10 +495,7 @@ def test_ogr2ogr_16():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -fid 8 tmp/poly.shp ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " -fid 8 tmp/poly.shp ../ogr/data/poly.shp")
 
     src_ds = ogr.Open("../ogr/data/poly.shp")
     ds = ogr.Open("tmp/poly.shp")
@@ -562,10 +513,7 @@ def test_ogr2ogr_16():
 # Test -progress
 
 
-def test_ogr2ogr_17():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_17(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -574,8 +522,7 @@ def test_ogr2ogr_17():
         pass
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -progress tmp/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -progress tmp/poly.shp ../ogr/data/poly.shp"
     )
     assert (
         ret.find("0...10...20...30...40...50...60...70...80...90...100 - done.") != -1
@@ -593,10 +540,7 @@ def test_ogr2ogr_17():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_18():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_18(ogr2ogr_path):
 
     try:
         os.stat("tmp/wrapdateline_src.shp")
@@ -630,7 +574,7 @@ def test_ogr2ogr_18():
     ds.Destroy()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp"
     )
 
@@ -662,10 +606,7 @@ def test_ogr2ogr_18():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_polygon_splitting():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_polygon_splitting(ogr2ogr_path):
 
     try:
         os.stat("tmp/wrapdateline_src.shp")
@@ -699,7 +640,7 @@ def test_ogr2ogr_polygon_splitting():
     ds.Destroy()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp"
     )
 
@@ -720,9 +661,7 @@ def test_ogr2ogr_polygon_splitting():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_19():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_19(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -731,7 +670,7 @@ def test_ogr2ogr_19():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817"
     )
 
@@ -757,9 +696,7 @@ def test_ogr2ogr_19():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_20():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_20(ogr2ogr_path):
 
     expected_fields = [
         "a",
@@ -796,7 +733,7 @@ def test_ogr2ogr_20():
         "15",
     ]
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp data/Fields.csv")
+    gdaltest.runexternal(ogr2ogr_path + " tmp data/Fields.csv")
 
     ds = ogr.Open("tmp/Fields.dbf")
 
@@ -843,9 +780,7 @@ def test_ogr2ogr_20():
 
 @pytest.mark.require_driver("GPX")
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_21():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_21(ogr2ogr_path):
 
     try:
         os.remove("tmp/testogr2ogr21.gpx")
@@ -853,7 +788,7 @@ def test_ogr2ogr_21():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GPX tmp/testogr2ogr21.gpx data/dataforogr2ogr21.csv "
         + '-sql "SELECT name AS route_name, 0 as route_fid FROM dataforogr2ogr21" -nlt POINT -nln route_points'
     )
@@ -867,12 +802,10 @@ def test_ogr2ogr_21():
 
 @pytest.mark.require_driver("MapInfo File")
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_22():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_22(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f "MapInfo File" tmp/testogr2ogr22.mif data/dataforogr2ogr21.csv '
         + '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT'
     )
@@ -901,12 +834,10 @@ def test_ogr2ogr_22():
 
 @pytest.mark.require_driver("MapInfo File")
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_23():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_23(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f "MapInfo File" tmp/testogr2ogr23.mif data/dataforogr2ogr21.csv '
         + '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT'
     )
@@ -934,9 +865,7 @@ def test_ogr2ogr_23():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_24():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_24(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -945,7 +874,7 @@ def test_ogr2ogr_24():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' tmp/poly.shp ../ogr/data/poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"'
     )
 
@@ -970,9 +899,7 @@ def test_ogr2ogr_24():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_25():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_25(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -988,7 +915,7 @@ def test_ogr2ogr_25():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/poly.shp ../ogr/data/poly.shp -clipsrc tmp/clip.csv -clipsrcwhere foo='foo'"
     )
 
@@ -1013,9 +940,7 @@ def test_ogr2ogr_25():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_26():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_26(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -1024,7 +949,7 @@ def test_ogr2ogr_26():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' tmp/poly.shp ../ogr/data/poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"'
     )
 
@@ -1049,9 +974,7 @@ def test_ogr2ogr_26():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_27():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_27(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -1067,7 +990,7 @@ def test_ogr2ogr_27():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -nlt MULTIPOLYGON tmp/poly.shp ../ogr/data/poly.shp -clipdst tmp/clip.csv -clipdstsql "SELECT * from clip"'
     )
 
@@ -1091,10 +1014,7 @@ def test_ogr2ogr_27():
 # Test -wrapdateline on linestrings
 
 
-def test_ogr2ogr_28():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_28(ogr2ogr_path):
 
     try:
         os.stat("tmp/wrapdateline_src.shp")
@@ -1128,7 +1048,7 @@ def test_ogr2ogr_28():
     ds.Destroy()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -wrapdateline tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp"
     )
 
@@ -1153,10 +1073,7 @@ def test_ogr2ogr_28():
 
 
 @pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-def test_ogr2ogr_29():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_29(ogr2ogr_path):
 
     for i in range(2):
         try:
@@ -1197,7 +1114,7 @@ def test_ogr2ogr_29():
         ds.Destroy()
 
         gdaltest.runexternal(
-            test_cli_utilities.get_ogr2ogr_path()
+            ogr2ogr_path
             + " -wrapdateline tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp"
         )
 
@@ -1229,10 +1146,7 @@ def test_ogr2ogr_29():
 # Test -splitlistfields option
 
 
-def test_ogr2ogr_30():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_30(ogr2ogr_path):
 
     ds = ogr.Open("../ogr/data/gml/testlistfields.gml")
     if ds is None:
@@ -1240,7 +1154,7 @@ def test_ogr2ogr_30():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/gml/testlistfields.gml"
     )
     gdal.Unlink("../ogr/data/gml/testlistfields.gfs")
@@ -1270,10 +1184,7 @@ def test_ogr2ogr_30():
 # Test that -overwrite work if the output file doesn't yet exist (#3825)
 
 
-def test_ogr2ogr_31():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_31(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -1281,10 +1192,7 @@ def test_ogr2ogr_31():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -overwrite tmp/poly.shp ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " -overwrite tmp/poly.shp ../ogr/data/poly.shp")
 
     ds = ogr.Open("tmp/poly.shp")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -1297,10 +1205,7 @@ def test_ogr2ogr_31():
 # Test that -append/-overwrite to a single-file shapefile work without specifying -nln
 
 
-def test_ogr2ogr_32():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_32(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_32.shp")
@@ -1310,13 +1215,9 @@ def test_ogr2ogr_32():
     except (OSError, AttributeError):
         pass
 
+    gdaltest.runexternal(ogr2ogr_path + " tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp")
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp"
-    )
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -append tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -append tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_32.shp")
@@ -1324,8 +1225,7 @@ def test_ogr2ogr_32():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -overwrite tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " -overwrite tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_32.shp")
@@ -1342,10 +1242,7 @@ def test_ogr2ogr_32():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_33():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_33(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_33_src.csv")
@@ -1370,7 +1267,7 @@ def test_ogr2ogr_33():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -explodecollections tmp/test_ogr2ogr_33_dst.shp tmp/test_ogr2ogr_33_src.csv -select foo"
     )
 
@@ -1422,10 +1319,7 @@ def test_ogr2ogr_33():
 # someDirThatDoesNotExist.shp/dbf/shx inside this directory
 
 
-def test_ogr2ogr_34():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_34(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_34_dir")
@@ -1436,7 +1330,7 @@ def test_ogr2ogr_34():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir"
     )
 
@@ -1447,7 +1341,7 @@ def test_ogr2ogr_34():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -append tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir"
     )
 
@@ -1456,7 +1350,7 @@ def test_ogr2ogr_34():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -overwrite tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir"
     )
 
@@ -1473,10 +1367,7 @@ def test_ogr2ogr_34():
 # Test 'ogr2ogr someDirThatDoesNotExist src.shp'
 
 
-def test_ogr2ogr_35():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_35(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_35_dir")
@@ -1487,8 +1378,7 @@ def test_ogr2ogr_35():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp "
+        ogr2ogr_path + " tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp "
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_35_dir/poly.shp")
@@ -1498,8 +1388,7 @@ def test_ogr2ogr_35():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -append tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp"
+        ogr2ogr_path + " -append tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_35_dir/poly.shp")
@@ -1507,8 +1396,7 @@ def test_ogr2ogr_35():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -overwrite tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp"
+        ogr2ogr_path + " -overwrite tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_35_dir/poly.shp")
@@ -1524,10 +1412,7 @@ def test_ogr2ogr_35():
 # Test ogr2ogr -zfield
 
 
-def test_ogr2ogr_36():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_36(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_36.shp")
@@ -1538,8 +1423,7 @@ def test_ogr2ogr_36():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_36.shp ../ogr/data/poly.shp -zfield EAS_ID"
+        ogr2ogr_path + " tmp/test_ogr2ogr_36.shp ../ogr/data/poly.shp -zfield EAS_ID"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_36.shp")
@@ -1556,10 +1440,7 @@ def test_ogr2ogr_36():
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer'
 
 
-def test_ogr2ogr_37():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_37(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_37_dir.shp")
@@ -1581,8 +1462,7 @@ def test_ogr2ogr_37():
     shutil.copy("../ogr/data/shp/testpoly.dbf", "tmp/test_ogr2ogr_37_src")
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src"
+        ogr2ogr_path + " tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_37_dir.shp")
@@ -1600,10 +1480,7 @@ def test_ogr2ogr_37():
 # -select and -where (#4015)
 
 
-def test_ogr2ogr_38():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_38(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_38.shp")
@@ -1614,7 +1491,7 @@ def test_ogr2ogr_38():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' tmp/test_ogr2ogr_38.shp ../ogr/data/poly.shp -select AREA -where "EAS_ID = 170"'
     )
 
@@ -1631,10 +1508,7 @@ def test_ogr2ogr_38():
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer -sql "select * from alayer"' (#4268)
 
 
-def test_ogr2ogr_39():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_39(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_39_dir.shp")
@@ -1656,7 +1530,7 @@ def test_ogr2ogr_39():
     shutil.copy("../ogr/data/shp/testpoly.dbf", "tmp/test_ogr2ogr_39_src")
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"'
     )
 
@@ -1673,10 +1547,7 @@ def test_ogr2ogr_39():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr2ogr_40():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_40(ogr2ogr_path):
 
     try:
         ogr.GetDriverByName("SQLite").DeleteDataSource("tmp/test_ogr2ogr_40.db")
@@ -1684,11 +1555,10 @@ def test_ogr2ogr_40():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f SQlite tmp/test_ogr2ogr_40.db ../ogr/data/poly.shp"
+        ogr2ogr_path + " -f SQlite tmp/test_ogr2ogr_40.db ../ogr/data/poly.shp"
     )
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -update tmp/test_ogr2ogr_40.db tmp/test_ogr2ogr_40.db poly -nln poly2"
     )
 
@@ -1704,12 +1574,9 @@ def test_ogr2ogr_40():
 # Test 'ogr2ogr -update PG:xxxx PG:xxxx layersrc -nln layerdst' (#4270)
 
 
-def test_ogr2ogr_41():
+def test_ogr2ogr_41(ogr2ogr_path):
 
     check_if_has_ogr_pg()
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
     ds.ExecuteSQL("DELLAYER:test_ogr2ogr_41_src")
@@ -1727,7 +1594,7 @@ def test_ogr2ogr_41():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -update PG:"'
         + gdaltest.pg_connection_string
         + '" PG:"'
@@ -1747,10 +1614,7 @@ def test_ogr2ogr_41():
 # Test combination of -select and -where FID=xx (#4500)
 
 
-def test_ogr2ogr_42():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_42(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_42.shp")
@@ -1761,7 +1625,7 @@ def test_ogr2ogr_42():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' tmp/test_ogr2ogr_42.shp ../ogr/data/poly.shp -select AREA -where "FID = 0"'
     )
 
@@ -1777,10 +1641,7 @@ def test_ogr2ogr_42():
 # Test -dim 3 and -dim 2
 
 
-def test_ogr2ogr_43():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_43(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_43_3d.shp")
@@ -1791,8 +1652,7 @@ def test_ogr2ogr_43():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_43_3d.shp ../ogr/data/poly.shp -dim 3"
+        ogr2ogr_path + " tmp/test_ogr2ogr_43_3d.shp ../ogr/data/poly.shp -dim 3"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_43_3d.shp")
@@ -1809,8 +1669,7 @@ def test_ogr2ogr_43():
         pass
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/test_ogr2ogr_43_2d.shp tmp/test_ogr2ogr_43_3d.shp -dim 2"
+        ogr2ogr_path + " tmp/test_ogr2ogr_43_2d.shp tmp/test_ogr2ogr_43_3d.shp -dim 2"
     )
 
     ds = ogr.Open("tmp/test_ogr2ogr_43_2d.shp")
@@ -1827,10 +1686,7 @@ def test_ogr2ogr_43():
 
 
 @pytest.mark.require_driver("GML")
-def test_ogr2ogr_44():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_44(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_44_src.shp")
@@ -1860,7 +1716,7 @@ def test_ogr2ogr_44():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI"
     )
 
@@ -1891,10 +1747,7 @@ def test_ogr2ogr_44():
 
 
 @pytest.mark.require_driver("GML")
-def test_ogr2ogr_45():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_45(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_45_src.shp")
@@ -1924,7 +1777,7 @@ def test_ogr2ogr_45():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GML tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI"
     )
 
@@ -1955,10 +1808,7 @@ def test_ogr2ogr_45():
 
 
 @pytest.mark.require_driver("GML")
-def test_ogr2ogr_46():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_46(ogr2ogr_path):
 
     try:
         os.stat("tmp/test_ogr2ogr_46_src.shp")
@@ -1991,7 +1841,7 @@ def test_ogr2ogr_46():
         " -s_srs EPSG:4326 -t_srs EPSG:3857",
     ]:
         gdaltest.runexternal(
-            test_cli_utilities.get_ogr2ogr_path()
+            ogr2ogr_path
             + " -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s"
             % option
         )
@@ -2020,10 +1870,7 @@ def test_ogr2ogr_46():
 # Test reprojection with features with different SRS
 
 
-def test_ogr2ogr_47():
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_47(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_47_src.gml", "wt")
     f.write(
@@ -2060,7 +1907,7 @@ def test_ogr2ogr_47():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GML -dsco FORMAT=GML2 -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml"
     )
 
@@ -2086,17 +1933,14 @@ def test_ogr2ogr_47():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_48():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_48(ogr2ogr_path):
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp data/Fields.csv")
+    gdaltest.runexternal(ogr2ogr_path + " tmp data/Fields.csv")
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -append -fieldmap identity tmp data/Fields.csv"
+        ogr2ogr_path + " -append -fieldmap identity tmp data/Fields.csv"
     )
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -append -fieldmap 14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 tmp data/Fields.csv"
     )
 
@@ -2145,13 +1989,10 @@ def test_ogr2ogr_48():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_49():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_49(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f CSV tmp/test_ogr2ogr_49.csv data/duplicatedfields.csv"
+        ogr2ogr_path + " -f CSV tmp/test_ogr2ogr_49.csv data/duplicatedfields.csv"
     )
     f = open("tmp/test_ogr2ogr_49.csv")
     lines = f.readlines()
@@ -2171,12 +2012,10 @@ def test_ogr2ogr_49():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("KML")
-def test_ogr2ogr_49_bis():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_49_bis(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f KML tmp/test_ogr2ogr_49_bis.kml data/grid.csv -sql "SELECT field_1 AS name FROM grid WHERE fid = 1"'
     )
     f = open("tmp/test_ogr2ogr_49_bis.kml")
@@ -2207,9 +2046,7 @@ def test_ogr2ogr_49_bis():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_50():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_50(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_50_1.csv", "wt")
     f.write("id,field1\n")
@@ -2222,11 +2059,11 @@ def test_ogr2ogr_50():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/test_ogr2ogr_50.dbf tmp/test_ogr2ogr_50_1.csv -nln test_ogr2ogr_50"
     )
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -addfields tmp/test_ogr2ogr_50.dbf tmp/test_ogr2ogr_50_2.csv -nln test_ogr2ogr_50"
     )
 
@@ -2253,9 +2090,7 @@ def test_ogr2ogr_50():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_51():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_51(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_51_src.csv", "wt")
     f.write("id,_WKTgeom1_EPSG_4326,foo,_WKTgeom2_EPSG_32631\n")
@@ -2264,7 +2099,7 @@ def test_ogr2ogr_51():
 
     # Test conversion from a multi-geometry format into a multi-geometry format
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT -lco STRING_QUOTING=ALWAYS"
     )
 
@@ -2281,7 +2116,7 @@ def test_ogr2ogr_51():
 
     # Test conversion from a multi-geometry format into a single-geometry format
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/test_ogr2ogr_51_dst.shp tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst"
     )
 
@@ -2298,7 +2133,7 @@ def test_ogr2ogr_51():
 
     # Test -append into a multi-geometry format
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -append tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst"
     )
 
@@ -2318,7 +2153,7 @@ def test_ogr2ogr_51():
 
     # Test -select with geometry field names
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -select foo,geom__WKTgeom2_EPSG_32631,id,geom__WKTgeom1_EPSG_4326 -f CSV tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -dsco GEOMETRY=AS_WKT -lco STRING_QUOTING=ALWAYS"
     )
 
@@ -2335,7 +2170,7 @@ def test_ogr2ogr_51():
 
     # Test -geomfield option
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -append tmp/test_ogr2ogr_51_dst.csv tmp/test_ogr2ogr_51_src.csv -nln test_ogr2ogr_51_dst -spat 1 2 1 2 -geomfield geom__WKTgeom1_EPSG_4326"
     )
 
@@ -2360,9 +2195,7 @@ def test_ogr2ogr_51():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_52():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_52(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_52_src.csv", "wt")
     f.write("id,WKT\n")
@@ -2370,7 +2203,7 @@ def test_ogr2ogr_52():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f CSV tmp/test_ogr2ogr_52_dst.csv tmp/test_ogr2ogr_52_src.csv -select id -nln test_ogr2ogr_52_dst -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_LINEAR"
     )
 
@@ -2381,7 +2214,7 @@ def test_ogr2ogr_52():
     assert "LINESTRING (0 0," in content
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f CSV tmp/test_ogr2ogr_52_dst2.csv tmp/test_ogr2ogr_52_dst.csv -select id -nln test_ogr2ogr_52_dst2 -dsco GEOMETRY=AS_WKT -nlt CONVERT_TO_CURVE"
     )
 
@@ -2402,9 +2235,7 @@ def test_ogr2ogr_52():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("KML")
-def test_ogr2ogr_53():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_53(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_53.csv", "wt")
     f.write("id,i64,b,WKT\n")
@@ -2416,7 +2247,7 @@ def test_ogr2ogr_53():
 
     # Default behaviour with a driver that declares GDAL_DMD_CREATIONFIELDDATATYPES
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + ' -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv -mapFieldType "Integer(Boolean)=String"'
     )
 
@@ -2436,7 +2267,7 @@ def test_ogr2ogr_53():
     os.unlink("tmp/test_ogr2ogr_53.kml")
 
     # Default behaviour with a driver that does not GDAL_DMD_CREATIONFIELDDATATYPES
-    # gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
+    # gdaltest.runexternal(ogr2ogr_path + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
 
     # f = open('tmp/test_ogr2ogr_53.bna', 'rt')
     # content = f.read()
@@ -2448,7 +2279,7 @@ def test_ogr2ogr_53():
 
     # with -mapFieldType
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv -mapFieldType Integer64=String"
     )
 
@@ -2473,9 +2304,7 @@ def test_ogr2ogr_53():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("GML")
-def test_ogr2ogr_54():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_54(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_54.csv", "wt")
     f.write("fld1,fld2,WKT\n")
@@ -2499,8 +2328,7 @@ def test_ogr2ogr_54():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f GML tmp/test_ogr2ogr_54.gml tmp/test_ogr2ogr_54.vrt"
+        ogr2ogr_path + " -f GML tmp/test_ogr2ogr_54.gml tmp/test_ogr2ogr_54.vrt"
     )
 
     f = open("tmp/test_ogr2ogr_54.xsd", "rt")
@@ -2521,7 +2349,7 @@ def test_ogr2ogr_54():
 
     # Test -forceNullable
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -forceNullable -f GML tmp/test_ogr2ogr_54.gml tmp/test_ogr2ogr_54.vrt"
     )
 
@@ -2551,9 +2379,7 @@ def test_ogr2ogr_54():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("GML")
-def test_ogr2ogr_55():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_55(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_55.csv", "wt")
     f.write("fld1,fld2,WKT\n")
@@ -2581,8 +2407,7 @@ def test_ogr2ogr_55():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f GML tmp/test_ogr2ogr_55.gml tmp/test_ogr2ogr_55.vrt"
+        ogr2ogr_path + " -f GML tmp/test_ogr2ogr_55.gml tmp/test_ogr2ogr_55.vrt"
     )
 
     f = open("tmp/test_ogr2ogr_55.gml", "rt")
@@ -2596,7 +2421,7 @@ def test_ogr2ogr_55():
 
     # Test -unsetDefault
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -forceNullable -unsetDefault -f GML tmp/test_ogr2ogr_55.gml tmp/test_ogr2ogr_55.vrt"
     )
 
@@ -2620,9 +2445,7 @@ def test_ogr2ogr_55():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("PGDump")
-def test_ogr2ogr_56():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_56(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_56.csv", "wt")
     f.write("str,myid,WKT\n")
@@ -2634,7 +2457,7 @@ def test_ogr2ogr_56():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f PGDump tmp/test_ogr2ogr_56.sql tmp/test_ogr2ogr_56.csv -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME NO"
     )
 
@@ -2659,9 +2482,7 @@ def test_ogr2ogr_56():
 
 @pytest.mark.require_driver("CSV")
 @pytest.mark.require_driver("PGDump")
-def test_ogr2ogr_57():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_57(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_57.csv", "wt")
     f.write("id,str,WKT\n")
@@ -2689,8 +2510,7 @@ def test_ogr2ogr_57():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f PGDump tmp/test_ogr2ogr_57.sql tmp/test_ogr2ogr_57.vrt"
+        ogr2ogr_path + " -f PGDump tmp/test_ogr2ogr_57.sql tmp/test_ogr2ogr_57.vrt"
     )
 
     f = open("tmp/test_ogr2ogr_57.sql", "rt")
@@ -2708,7 +2528,7 @@ def test_ogr2ogr_57():
 
     # Test -unsetFid
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f PGDump tmp/test_ogr2ogr_57.sql tmp/test_ogr2ogr_57.vrt -unsetFid"
     )
 
@@ -2735,12 +2555,10 @@ def test_ogr2ogr_57():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr2ogr_58():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_58(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -gt 3 -f SQLite tmp/test_ogr2ogr_58.sqlite ../ogr/data/poly.shp"
     )
 
@@ -2757,9 +2575,7 @@ def test_ogr2ogr_58():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_ogr2ogr_59():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_59(ogr2ogr_path):
 
     ds = ogr.GetDriverByName("GPKG").CreateDataSource("tmp/test_ogr2ogr_59_src.gpkg")
     ds.SetMetadataItem("FOO", "BAR")
@@ -2770,7 +2586,7 @@ def test_ogr2ogr_59():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -mo BAZ=BAW"
     )
 
@@ -2785,7 +2601,7 @@ def test_ogr2ogr_59():
     ogr.GetDriverByName("GPKG").DeleteDataSource("tmp/test_ogr2ogr_59_dest.gpkg")
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -nomd"
     )
     ds = ogr.Open("tmp/test_ogr2ogr_59_dest.gpkg")
@@ -2804,12 +2620,10 @@ def test_ogr2ogr_59():
 
 
 @pytest.mark.require_driver("OpenFileGDB")
-def test_ogr2ogr_60():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_60(ogr2ogr_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " -ds_transaction -f OpenFileGDB tmp/test_ogr2ogr_60.gdb ../ogr/data/poly.shp -mapFieldType Integer64=Integer"
     )
 
@@ -2826,9 +2640,7 @@ def test_ogr2ogr_60():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_61():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_61(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_61.csv", "wt")
     f.write("foo,WKT\n")
@@ -2836,7 +2648,7 @@ def test_ogr2ogr_61():
     f.close()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/test_ogr2ogr_61.shp tmp/test_ogr2ogr_61.csv -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631 -s_srs EPSG:4326 -a_srs EPSG:4326"
     )
 
@@ -2845,7 +2657,7 @@ def test_ogr2ogr_61():
     ds.Destroy()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/test_ogr2ogr_61_2.shp tmp/test_ogr2ogr_61.shp -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631"
     )
 
@@ -2862,9 +2674,7 @@ def test_ogr2ogr_61():
 # Test -noNativeData
 
 
-def test_ogr2ogr_62():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_62(ogr2ogr_path):
 
     # Default behaviour
 
@@ -2875,7 +2685,7 @@ def test_ogr2ogr_62():
     fp = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json"""
     )
     fp = gdal.VSIFOpenL("tmp/test_ogr2ogr_62.json", "rb")
@@ -2888,7 +2698,7 @@ def test_ogr2ogr_62():
 
     # Test -noNativeData
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + """ -f GeoJSON tmp/test_ogr2ogr_62.json tmp/test_ogr2ogr_62_in.json -noNativeData"""
     )
     fp = gdal.VSIFOpenL("tmp/test_ogr2ogr_62.json", "rb")
@@ -2905,9 +2715,7 @@ def test_ogr2ogr_62():
 # Test --formats
 
 
-def test_ogr2ogr_63():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_63(ogr2ogr_path):
 
     try:
         os.stat("tmp/poly.shp")
@@ -2915,9 +2723,7 @@ def test_ogr2ogr_63():
     except (OSError, AttributeError):
         pass
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogr2ogr_path() + " --formats"
-    )
+    (ret, err) = gdaltest.runexternal_out_and_err(ogr2ogr_path + " --formats")
     assert "Supported Formats" in ret, err
     assert "ERROR" not in err, ret
 
@@ -2927,9 +2733,7 @@ def test_ogr2ogr_63():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_64():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_64(ogr2ogr_path):
 
     try:
         shutil.rmtree("tmp/in_csv")
@@ -2950,13 +2754,9 @@ def test_ogr2ogr_64():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f CSV tmp/out_csv tmp/in_csv "
-        + second_layer
+        ogr2ogr_path + " -f CSV tmp/out_csv tmp/in_csv " + second_layer
     )
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " -append tmp/out_csv tmp/in_csv"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " -append tmp/out_csv tmp/in_csv")
 
     ds = ogr.Open("tmp/out_csv")
     assert ds.GetLayerByName(first_layer).GetFeatureCount() == 1
@@ -2972,20 +2772,16 @@ def test_ogr2ogr_64():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_65():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_65(ogr2ogr_path):
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " tmp/out.csv ../ogr/data/poly.shp"
-    )
+    gdaltest.runexternal(ogr2ogr_path + " tmp/out.csv ../ogr/data/poly.shp")
     ds = gdal.OpenEx("tmp/out.csv")
     assert ds.GetDriver().ShortName == "CSV"
     ds = None
     gdal.Unlink("tmp/out.csv")
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogr2ogr_path() + " /vsimem/out.xxx ../ogr/data/poly.shp"
+        ogr2ogr_path + " /vsimem/out.xxx ../ogr/data/poly.shp"
     )
     if "Cannot guess" not in err:
         print(ret)
@@ -2996,13 +2792,10 @@ def test_ogr2ogr_65():
 # Test accidental overriding of dataset when dst and src filenames are the same (#1465)
 
 
-def test_ogr2ogr_66():
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
+def test_ogr2ogr_66(ogr2ogr_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " ../ogr/data/poly.shp ../ogr/data/poly.shp"
+        ogr2ogr_path + " ../ogr/data/poly.shp ../ogr/data/poly.shp"
     )
     assert (
         "Source and destination datasets must be different in non-update mode" in err
@@ -3022,11 +2815,8 @@ def hexify_double(val):
 # If the coordinates are converted to radians and back to degrees the value of x will be altered
 @pytest.mark.parametrize("x,y,srid", [(float.fromhex("0x1.5EB3ED959A307p6"), 0, 4326)])
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_check_identity_transformation(x, y, srid):
+def test_ogr2ogr_check_identity_transformation(ogr2ogr_path, x, y, srid):
     import struct
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
     for output_shp in ["tmp/output_point.shp", "tmp/output_point2.shp"]:
@@ -3052,7 +2842,7 @@ def test_ogr2ogr_check_identity_transformation(x, y, srid):
     # Note that when transforming CSV to SHP the same internal definition of EPSG:srid is being used for source and target,
     # so that this transformation will have identically defined input and output units
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/output_point.shp tmp/input_point.csv -oo GEOM_POSSIBLE_NAMES=wkb_geom -s_srs EPSG:%(srid)d  -t_srs EPSG:%(srid)d"
         % locals()
     )
@@ -3070,7 +2860,7 @@ def test_ogr2ogr_check_identity_transformation(x, y, srid):
     # For angular units in degrees the .prj is saved with greater precision than the internally used value.
     # We perform this additional transformation to exercise the case of units defined with different precision
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
+        ogr2ogr_path
         + " tmp/output_point2.shp tmp/output_point.shp -t_srs EPSG:%(srid)d" % locals()
     )
     ds = ogr.Open("tmp/output_point2.shp")

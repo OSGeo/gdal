@@ -39,20 +39,26 @@ import test_cli_utilities
 from gcore import tiff_ovr
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdaladdo_path() is None, reason="gdaladdo not available"
+)
+
+
+@pytest.fixture()
+def gdaladdo_path():
+    return test_cli_utilities.get_gdaladdo_path()
+
+
 ###############################################################################
 # Similar to tiff_ovr_1
 
 
-def test_gdaladdo_1():
-    if test_cli_utilities.get_gdaladdo_path() is None:
-        pytest.skip()
+def test_gdaladdo_1(gdaladdo_path):
 
     shutil.copy("../gcore/data/mfloat32.vrt", "tmp/mfloat32.vrt")
     shutil.copy("../gcore/data/float32.tif", "tmp/float32.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdaladdo_path() + " tmp/mfloat32.vrt 2 4"
-    )
+    (_, err) = gdaltest.runexternal_out_and_err(gdaladdo_path + " tmp/mfloat32.vrt 2 4")
     assert err is None or err == "", "got error/warning"
 
     ds = gdal.Open("tmp/mfloat32.vrt")
@@ -70,15 +76,11 @@ def test_gdaladdo_1():
 # Test -r average. Similar to tiff_ovr_5
 
 
-def test_gdaladdo_2():
-    if test_cli_utilities.get_gdaladdo_path() is None:
-        pytest.skip()
+def test_gdaladdo_2(gdaladdo_path):
 
     shutil.copyfile("../gcore/data/nodata_byte.tif", "tmp/ovr5.tif")
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " -r average tmp/ovr5.tif 2"
-    )
+    gdaltest.runexternal(gdaladdo_path + " -r average tmp/ovr5.tif 2")
 
     ds = gdal.Open("tmp/ovr5.tif")
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -95,9 +97,7 @@ def test_gdaladdo_2():
 # Test -ro
 
 
-def test_gdaladdo_3():
-    if test_cli_utilities.get_gdaladdo_path() is None:
-        pytest.skip()
+def test_gdaladdo_3(gdaladdo_path):
 
     gdal.Translate(
         "tmp/test_gdaladdo_3.tif",
@@ -105,9 +105,7 @@ def test_gdaladdo_3():
         options="-outsize 1024 1024",
     )
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " -ro tmp/test_gdaladdo_3.tif 2"
-    )
+    gdaltest.runexternal(gdaladdo_path + " -ro tmp/test_gdaladdo_3.tif 2")
 
     ds = gdal.Open("tmp/test_gdaladdo_3.tif")
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -127,13 +125,9 @@ def test_gdaladdo_3():
 # Test -clean
 
 
-def test_gdaladdo_4():
-    if test_cli_utilities.get_gdaladdo_path() is None:
-        pytest.skip()
+def test_gdaladdo_4(gdaladdo_path):
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " -clean tmp/test_gdaladdo_3.tif"
-    )
+    gdaltest.runexternal(gdaladdo_path + " -clean tmp/test_gdaladdo_3.tif")
 
     ds = gdal.Open("tmp/test_gdaladdo_3.tif")
     cnt = ds.GetRasterBand(1).GetOverviewCount()
@@ -150,16 +144,12 @@ def test_gdaladdo_4():
 # Test implicit levels
 
 
-def test_gdaladdo_5():
-    if test_cli_utilities.get_gdaladdo_path() is None:
-        pytest.skip()
+def test_gdaladdo_5(gdaladdo_path):
 
     shutil.copyfile("../gcore/data/nodata_byte.tif", "tmp/test_gdaladdo_5.tif")
 
     # Will not do anything given than the file is smaller than 256x256 already
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " tmp/test_gdaladdo_5.tif"
-    )
+    gdaltest.runexternal(gdaladdo_path + " tmp/test_gdaladdo_5.tif")
 
     ds = gdal.Open("tmp/test_gdaladdo_5.tif")
     cnt = ds.GetRasterBand(1).GetOverviewCount()
@@ -168,9 +158,7 @@ def test_gdaladdo_5():
     assert cnt == 0
 
     # Will generate overviews of size 10 5 3 2 1
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " -minsize 1 tmp/test_gdaladdo_5.tif"
-    )
+    gdaltest.runexternal(gdaladdo_path + " -minsize 1 tmp/test_gdaladdo_5.tif")
 
     ds = gdal.Open("tmp/test_gdaladdo_5.tif")
     cnt = ds.GetRasterBand(1).GetOverviewCount()
@@ -185,9 +173,7 @@ def test_gdaladdo_5():
     )
 
     # Will generate overviews of size 129x129
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdaladdo_path() + " tmp/test_gdaladdo_5.tif"
-    )
+    gdaltest.runexternal(gdaladdo_path + " tmp/test_gdaladdo_5.tif")
 
     ds = gdal.Open("tmp/test_gdaladdo_5.tif")
     cnt = ds.GetRasterBand(1).GetOverviewCount()

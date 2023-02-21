@@ -35,16 +35,25 @@ import gdaltest
 import pytest
 import test_cli_utilities
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdalsrsinfo_path() is None,
+    reason="gdalsrsinfo not available",
+)
+
+
+@pytest.fixture()
+def gdalsrsinfo_path():
+    return test_cli_utilities.get_gdalsrsinfo_path()
+
+
 ###############################################################################
 # Simple test
 
 
-def test_gdalsrsinfo_1():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_1(gdalsrsinfo_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalsrsinfo_path() + " ../gcore/data/byte.tif",
+        gdalsrsinfo_path + " ../gcore/data/byte.tif",
         encoding="utf-8",
     )
     assert err is None or err == "", "got error/warning"
@@ -57,13 +66,9 @@ def test_gdalsrsinfo_1():
 # Test -o proj4 option
 
 
-def test_gdalsrsinfo_2():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_2(gdalsrsinfo_path):
 
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " -o proj4 ../gcore/data/byte.tif"
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + " -o proj4 ../gcore/data/byte.tif")
 
     assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
 
@@ -72,13 +77,10 @@ def test_gdalsrsinfo_2():
 # Test -o wkt1 option
 
 
-def test_gdalsrsinfo_3():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_3(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " --single-line -o wkt1 ../gcore/data/byte.tif"
+        gdalsrsinfo_path + " --single-line -o wkt1 ../gcore/data/byte.tif"
     )
 
     assert (
@@ -91,13 +93,10 @@ def test_gdalsrsinfo_3():
 # Test -o wkt_esri option
 
 
-def test_gdalsrsinfo_4():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_4(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " --single-line -o wkt_esri ../gcore/data/byte.tif"
+        gdalsrsinfo_path + " --single-line -o wkt_esri ../gcore/data/byte.tif"
     )
 
     assert (
@@ -110,13 +109,10 @@ def test_gdalsrsinfo_4():
 # Test -o wkt_old option
 
 
-def test_gdalsrsinfo_5():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_5(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " --single-line -o wkt_noct ../gcore/data/byte.tif"
+        gdalsrsinfo_path + " --single-line -o wkt_noct ../gcore/data/byte.tif"
     )
 
     assert (
@@ -129,16 +125,13 @@ def test_gdalsrsinfo_5():
 # Test -o wkt_simple option
 
 
-def test_gdalsrsinfo_6():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_6(gdalsrsinfo_path):
 
     if gdaltest.is_travis_branch("mingw"):
         pytest.skip()
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " --single-line -o wkt_simple ../gcore/data/byte.tif"
+        gdalsrsinfo_path + " --single-line -o wkt_simple ../gcore/data/byte.tif"
     )
     ret = ret.replace("\r\n", "\n")
 
@@ -151,13 +144,9 @@ def test_gdalsrsinfo_6():
 # Test -o mapinfo option
 
 
-def test_gdalsrsinfo_7():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_7(gdalsrsinfo_path):
 
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " -o mapinfo ../gcore/data/byte.tif"
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + " -o mapinfo ../gcore/data/byte.tif")
 
     assert (
         ret.strip() == """'Earth Projection 8, 62, "m", -117, 0, 0.9996, 500000, 0'"""
@@ -168,13 +157,9 @@ def test_gdalsrsinfo_7():
 # Test nonexistent file.
 
 
-def test_gdalsrsinfo_9():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_9(gdalsrsinfo_path):
 
-    _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalsrsinfo_path() + " nonexistent_file"
-    )
+    _, err = gdaltest.runexternal_out_and_err(gdalsrsinfo_path + " nonexistent_file")
 
     assert "ERROR - failed to load SRS definition from nonexistent_file" in err.strip()
 
@@ -183,21 +168,15 @@ def test_gdalsrsinfo_9():
 # Test -V option - valid
 
 
-def test_gdalsrsinfo_10():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_10(gdalsrsinfo_path):
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
     if sys.platform == "win32":
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '"')
-        ret = gdaltest.runexternal(
-            test_cli_utilities.get_gdalsrsinfo_path() + " -V -o proj4 " " + wkt + " ""
-        )
+        ret = gdaltest.runexternal(gdalsrsinfo_path + " -V -o proj4 " " + wkt + " "")
     else:
-        ret = gdaltest.runexternal(
-            test_cli_utilities.get_gdalsrsinfo_path() + " -V -o proj4 '" + wkt + "'"
-        )
+        ret = gdaltest.runexternal(gdalsrsinfo_path + " -V -o proj4 '" + wkt + "'")
 
     ret = ret
     # assert ret.find('Validate Succeeds') != -1
@@ -207,21 +186,15 @@ def test_gdalsrsinfo_10():
 # Test -V option - invalid
 
 
-def test_gdalsrsinfo_11():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_11(gdalsrsinfo_path):
 
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],BADAUTHORITY["EPSG","4326"]]'
     if sys.platform == "win32":
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '"')
-        ret = gdaltest.runexternal(
-            test_cli_utilities.get_gdalsrsinfo_path() + " -V -o proj4 " " + wkt + " ""
-        )
+        ret = gdaltest.runexternal(gdalsrsinfo_path + " -V -o proj4 " " + wkt + " "")
     else:
-        ret = gdaltest.runexternal(
-            test_cli_utilities.get_gdalsrsinfo_path() + " -V -o proj4 '" + wkt + "'"
-        )
+        ret = gdaltest.runexternal(gdalsrsinfo_path + " -V -o proj4 '" + wkt + "'")
 
     if ret.find("Validate Fails") == -1:
         pytest.xfail("validation currently broken. FIXME")
@@ -231,13 +204,9 @@ def test_gdalsrsinfo_11():
 # Test EPSG:epsg format
 
 
-def test_gdalsrsinfo_12():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_12(gdalsrsinfo_path):
 
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " --single-line -o wkt1 EPSG:4326"
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + " --single-line -o wkt1 EPSG:4326")
 
     assert (
         ret.strip()
@@ -249,12 +218,10 @@ def test_gdalsrsinfo_12():
 # Test proj4 format
 
 
-def test_gdalsrsinfo_13():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_13(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
+        gdalsrsinfo_path
         + ' --single-line -o wkt1 "+proj=longlat +datum=WGS84 +no_defs"'
     )
 
@@ -268,13 +235,10 @@ def test_gdalsrsinfo_13():
 # Test VSILFILE format
 
 
-def test_gdalsrsinfo_14():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_14(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " -o proj4 /vsizip/../gcore/data/byte.tif.zip"
+        gdalsrsinfo_path + " -o proj4 /vsizip/../gcore/data/byte.tif.zip"
     )
 
     assert ret.strip() == "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs"
@@ -284,13 +248,10 @@ def test_gdalsrsinfo_14():
 # Test .shp format
 
 
-def test_gdalsrsinfo_14bis():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_14bis(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + " -o proj4 ../ogr/data/shp/Stacks.shp"
+        gdalsrsinfo_path + " -o proj4 ../ogr/data/shp/Stacks.shp"
     )
 
     assert (
@@ -303,13 +264,9 @@ def test_gdalsrsinfo_14bis():
 # Test .prj format
 
 
-def test_gdalsrsinfo_15():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_15(gdalsrsinfo_path):
 
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " -o proj4 ../osr/data/lcc_esri.prj"
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + " -o proj4 ../osr/data/lcc_esri.prj")
 
     assert (
         ret.strip()
@@ -321,13 +278,9 @@ def test_gdalsrsinfo_15():
 # Test DRIVER:file syntax (bug #4493) -  similar test should be done with OGR
 
 
-def test_gdalsrsinfo_16():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_16(gdalsrsinfo_path):
 
-    cmd = (
-        test_cli_utilities.get_gdalsrsinfo_path() + " GTIFF_RAW:../gcore/data/byte.tif"
-    )
+    cmd = gdalsrsinfo_path + " GTIFF_RAW:../gcore/data/byte.tif"
 
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
@@ -341,21 +294,15 @@ def test_gdalsrsinfo_16():
 # Test -e
 
 
-def test_gdalsrsinfo_17():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_17(gdalsrsinfo_path):
 
     # Zero match
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + ' -e "LOCAL_CS[foo]"'
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + ' -e "LOCAL_CS[foo]"')
 
     assert "EPSG:-1" in ret
 
     # One match
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " -e ../osr/data/lcc_esri.prj"
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + " -e ../osr/data/lcc_esri.prj")
 
     assert "EPSG:32119" in ret
 
@@ -363,10 +310,7 @@ def test_gdalsrsinfo_17():
     open("tmp/test_gdalsrsinfo_17.wkt", "wt").write(
         'GEOGCS["myLKS94",DATUM["Lithuania_1994_ETRS89",SPHEROID["GRS_1980",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
     )
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path()
-        + """ -e tmp/test_gdalsrsinfo_17.wkt"""
-    )
+    ret = gdaltest.runexternal(gdalsrsinfo_path + """ -e tmp/test_gdalsrsinfo_17.wkt""")
     assert "EPSG:4669" in ret
 
 
@@ -374,12 +318,10 @@ def test_gdalsrsinfo_17():
 # Test -o all option
 
 
-def test_gdalsrsinfo_all():
-    if test_cli_utilities.get_gdalsrsinfo_path() is None:
-        pytest.skip()
+def test_gdalsrsinfo_all(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_gdalsrsinfo_path() + " -o all ../gcore/data/byte.tif",
+        gdalsrsinfo_path + " -o all ../gcore/data/byte.tif",
         encoding="UTF-8",
     )
 
