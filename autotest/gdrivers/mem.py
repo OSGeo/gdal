@@ -37,6 +37,43 @@ import pytest
 
 from osgeo import gdal
 
+
+@pytest.fixture
+def mem_native_memory():
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    ds = gdal.Open("MEM:::")
+    gdal.PopErrorHandler()
+    assert ds is None, "opening MEM dataset should have failed."
+    for libname in ["msvcrt", "libc.so.6"]:
+        try:
+            crt = ctypes.CDLL(libname)
+        except OSError:
+            crt = None
+        if crt is not None:
+            break
+
+    if crt is None:
+        pytest.skip()
+
+    malloc = crt.malloc
+    malloc.argtypes = [ctypes.c_size_t]
+    malloc.restype = ctypes.c_void_p
+
+    free = crt.free
+    free.argtypes = [ctypes.c_void_p]
+    free.restype = None
+
+    # allocate band data array.
+    width = 50
+    height = 3
+    p = malloc(width * height * 4)
+    if p is None:
+        pytest.skip()
+
+    return p, free, width, height
+
+
 ###############################################################################
 # Create a MEM dataset, and set some data, then test it.
 
@@ -101,37 +138,9 @@ def test_mem_1():
 # Open an in-memory array.
 
 
-def test_mem_2():
+def test_mem_2(mem_native_memory):
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("MEM:::")
-    gdal.PopErrorHandler()
-    assert ds is None, "opening MEM dataset should have failed."
-    for libname in ["msvcrt", "libc.so.6"]:
-        try:
-            crt = ctypes.CDLL(libname)
-        except OSError:
-            crt = None
-        if crt is not None:
-            break
-
-    if crt is None:
-        pytest.skip()
-
-    malloc = crt.malloc
-    malloc.argtypes = [ctypes.c_size_t]
-    malloc.restype = ctypes.c_void_p
-
-    free = crt.free
-    free.argtypes = [ctypes.c_void_p]
-    free.restype = None
-
-    # allocate band data array.
-    width = 50
-    height = 3
-    p = malloc(width * height * 4)
-    if p is None:
-        pytest.skip()
+    p, free, width, height = mem_native_memory
     float_p = ctypes.cast(p, ctypes.POINTER(ctypes.c_float))
 
     # build ds name.
@@ -192,38 +201,10 @@ def test_mem_2():
         ),
     ],
 )
-def test_geotransform(ds_definition, expected_sr):
+def test_geotransform(ds_definition, expected_sr, mem_native_memory):
     """Test GEOTRANSFORM and SPATIALREFERENCE"""
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("MEM:::")
-    gdal.PopErrorHandler()
-    assert ds is None, "opening MEM dataset should have failed."
-    for libname in ["msvcrt", "libc.so.6"]:
-        try:
-            crt = ctypes.CDLL(libname)
-        except OSError:
-            crt = None
-        if crt is not None:
-            break
-
-    if crt is None:
-        pytest.skip()
-
-    malloc = crt.malloc
-    malloc.argtypes = [ctypes.c_size_t]
-    malloc.restype = ctypes.c_void_p
-
-    free = crt.free
-    free.argtypes = [ctypes.c_void_p]
-    free.restype = None
-
-    # allocate band data array.
-    width = 50
-    height = 3
-    p = malloc(width * height * 4)
-    if p is None:
-        pytest.skip()
+    p, free, width, height = mem_native_memory
 
     ## more ds names, ensure GEOTRANSFORM and SPATIALREFERENCE get tested
     proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
