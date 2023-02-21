@@ -101,4 +101,3 @@ RFC list
     rfc92_wkb_only_geometries
     rfc93_update_feature
     rfc94_field_precision_width_metadata
->>>>>>> 236190f1fd (RFC 94: Numeric fields width/precision metadata)

@@ -15,8 +15,8 @@ Target:        GDAL 3.7
 Summary
 -------
 
-The document proposes and describes the introduction of a new method
-to the `OGRFieldDefn` class that returns information for numeric real
+The document proposes and describes the introduction of a couple of new
+vector driver metadata that return information for numeric real
 fields about how the precision and width have been calculated by the
 driver and have to be interpreted.
 
@@ -92,74 +92,42 @@ Notes about specific drivers
 Technical details
 -----------------
 
-The implementation details are still to be defined, a possible
-approach would be to define a flag with values to define if
-the decimal place is included in the width and if the minus sign
-is included in the width.
+The vector drivers will expose a metadata entry to define if the width
+of the fields includes the decimal separator and/or the sign.
 
-Additional flag values related to the field definition can be added if
-needed.
+If the metadata entry is undefined the feature is not supported (there is no
+client-accessible width or precision constraint for numeric fields).
 
 Example API:
 
 .. code-block:: c++
 
-    /** Field width includes decimal separator */
-    #define OGR_F_WIDTH_INCLUDES_DECIMAL_SEPARATOR 0x1
-
-    /** Field width includes sign */
-    #define OGR_F_WIDTH_INCLUDES_SIGN 0x2
-
-
-    /************************************************************************/
-    /*                        OGR_Fld_GetWidthPrecisionFlags()              */
-    /************************************************************************/
-    /**
-    * \brief Returns flags representing information about how the width and
-    *        precision for this field must be interpreted.
+    /** Capability set by a vector driver that supports field width and precision.
     *
-    * This function returns zero for fields of types other than OFTReal or OFTRealList.
+    * This capability reflects that a vector driver includes the decimal separator
+    * in the field width.
     *
-    * This function is the same as the CPP method OGRFieldDefn::GetWidthPrecisionFlags().
-    *
-    * @param hDefn handle to the field definition to get width and precision flags from.
-    * @return the width and precision flags.
+    * See GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN for a related capability flag.
+    * @since GDAL 3.7
     */
+    #define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR"
 
-    int OGR_Fld_GetWidthPrecisionFlags(OGRFieldDefnH hDefn)
-
-    {
-        return OGRFieldDefn::FromHandle(hDefn)->GetWidthPrecisionFlags();
-    }
-
-    /************************************************************************/
-    /*                        OGR_Fld_SetWidthPrecisionFlags()              */
-    /************************************************************************/
-    /**
-    * \brief Set the flags representing information about how the width and
-    *        precision for this field must be interpreted.
+    /** Capability set by a vector driver that supports field width and precision.
     *
-    * Calling this function on fields of types other than OFTReal or OFTRealList
-    * does nothing.
+    * This capability reflects that a vector driver includes the sign
+    * in the field width.
     *
-    * This function is the same as the CPP method OGRFieldDefn::SetWidthPrecisionFlags().
-    *
-    * @param hDefn handle to the field definition to set precision to.
-    * @param nFlags the new width and precision flags.
+    * See GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES__DECIMAL_SEPARATOR for a related capability flag.
+    * @since GDAL 3.7
     */
+    #define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN"
 
-    void OGR_Fld_SetWidthPrecisionFlags(OGRFieldDefnH hDefn, int nFlags)
-    {
-        return OGRFieldDefn::FromHandle(hDefn)->SetWidthPrecisionFlags(nFlags);
-    }
 
 
 Efficiency considerations
 --------------------------
 
-Field definitions will have to set an additional integer field for real and list of
-reals fields, only if the driver has any of the flags set, the default for the flags
-will be zero (no flags set).
+None.
 
 
 Backward compatibility
