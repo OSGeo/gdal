@@ -42,45 +42,29 @@ cli_exe_path = {}
 def get_cli_utility_path_internal(cli_utility_name):
 
     if sys.platform == "win32":
-        cli_utility_name = cli_utility_name + ".exe"
+        cli_utility_name += ".exe"
 
-    # First try : in the apps directory of the GDAL source tree
-    # This is the case for the buildbot directory tree
+    build_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
     try:
-        cli_utility_path = os.path.join(
-            os.getcwd(), "..", "..", "gdal", "apps", cli_utility_name
-        )
+        cli_utility_path = os.path.join(build_dir, "apps", cli_utility_name)
         if sys.platform == "win32":
             cli_utility_path = cli_utility_path.replace("\\", "/")
         if os.path.isfile(cli_utility_path):
             ret = gdaltest.runexternal(cli_utility_path + " --utility_version")
 
-            if ret.find("GDAL") != -1:
-                return cli_utility_path
-    except OSError:
-        pass
-
-    # Second try : the autotest directory is a subdirectory of gdal/ (FrankW's layout)
-    try:
-        cli_utility_path = os.path.join(
-            os.getcwd(), "..", "..", "apps", cli_utility_name
-        )
-        if sys.platform == "win32":
-            cli_utility_path = cli_utility_path.replace("\\", "/")
-        if os.path.isfile(cli_utility_path):
-            ret = gdaltest.runexternal(cli_utility_path + " --utility_version")
-
-            if ret.find("GDAL") != -1:
+            if "GDAL" in ret:
                 return cli_utility_path
     except OSError:
         pass
 
     # Otherwise look up in the system path
+    print(f"Could not find {cli_utility_name} in {build_dir}/apps. Trying with PATH")
     try:
         cli_utility_path = cli_utility_name
         ret = gdaltest.runexternal(cli_utility_path + " --utility_version")
 
-        if ret.find("GDAL") != -1:
+        if "GDAL" in ret:
             return cli_utility_path
     except OSError:
         pass
