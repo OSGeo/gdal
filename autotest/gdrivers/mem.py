@@ -37,6 +37,43 @@ import pytest
 
 from osgeo import gdal
 
+
+@pytest.fixture
+def mem_native_memory():
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    ds = gdal.Open("MEM:::")
+    gdal.PopErrorHandler()
+    assert ds is None, "opening MEM dataset should have failed."
+    for libname in ["msvcrt", "libc.so.6"]:
+        try:
+            crt = ctypes.CDLL(libname)
+        except OSError:
+            crt = None
+        if crt is not None:
+            break
+
+    if crt is None:
+        pytest.skip()
+
+    malloc = crt.malloc
+    malloc.argtypes = [ctypes.c_size_t]
+    malloc.restype = ctypes.c_void_p
+
+    free = crt.free
+    free.argtypes = [ctypes.c_void_p]
+    free.restype = None
+
+    # allocate band data array.
+    width = 50
+    height = 3
+    p = malloc(width * height * 4)
+    if p is None:
+        pytest.skip()
+
+    return p, free, width, height
+
+
 ###############################################################################
 # Create a MEM dataset, and set some data, then test it.
 
@@ -101,37 +138,9 @@ def test_mem_1():
 # Open an in-memory array.
 
 
-def test_mem_2():
+def test_mem_2(mem_native_memory):
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("MEM:::")
-    gdal.PopErrorHandler()
-    assert ds is None, "opening MEM dataset should have failed."
-    for libname in ["msvcrt", "libc.so.6"]:
-        try:
-            crt = ctypes.CDLL(libname)
-        except OSError:
-            crt = None
-        if crt is not None:
-            break
-
-    if crt is None:
-        pytest.skip()
-
-    malloc = crt.malloc
-    malloc.argtypes = [ctypes.c_size_t]
-    malloc.restype = ctypes.c_void_p
-
-    free = crt.free
-    free.argtypes = [ctypes.c_void_p]
-    free.restype = None
-
-    # allocate band data array.
-    width = 50
-    height = 3
-    p = malloc(width * height * 4)
-    if p is None:
-        pytest.skip()
+    p, free, width, height = mem_native_memory
     float_p = ctypes.cast(p, ctypes.POINTER(ctypes.c_float))
 
     # build ds name.
@@ -174,37 +183,43 @@ def test_mem_2():
 
         dsup = None
 
-    ## more ds names, ensure GEOTRANSFORM and SPATIALREFERENCE get tested
-    gt = "-1e+06/1953.125/0/1e+06/0/-3906.25"
-    proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
-    ll_crs = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
-    test_data = [
+
+@pytest.mark.parametrize(
+    "ds_definition, expected_sr",
+    [
         (
-            "MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE=%s,DATATYPE=Float32"
-            % (p, gt, width, height, proj_crs),
+            r"MEM:::DATAPOINTER=0x{datapointer:X},GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=50,LINES=3,SPATIALREFERENCE={proj_crs},DATATYPE=Float32",
             "Lambert",
         ),
         (
-            "MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE=%s,DATATYPE=Float32"
-            % (p, gt, width, height, "bogus"),
+            r"MEM:::DATAPOINTER=0x{datapointer:X},GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=50,LINES=3,SPATIALREFERENCE=bogus,DATATYPE=Float32",
             "",
         ),
         (
-            """MEM:::DATAPOINTER=0x%X,GEOTRANSFORM=%s,PIXELS=%d,LINES=%d,SPATIALREFERENCE="%s",DATATYPE=Float32"""
-            % (p, gt, width, height, ll_crs),
+            r'MEM:::DATAPOINTER=0x{datapointer:X},GEOTRANSFORM=-1e+06/1953.125/0/1e+06/0/-3906.25,PIXELS=50,LINES=3,SPATIALREFERENCE="{ll_crs}",DATATYPE=Float32',
             "GEOGCS",
         ),
-    ]
+    ],
+)
+def test_geotransform(ds_definition, expected_sr, mem_native_memory):
+    """Test GEOTRANSFORM and SPATIALREFERENCE"""
 
-    for ds_definition, expected_sr in test_data:
-        dsro = gdal.Open(ds_definition)
-        if dsro is None:
-            free(p)
-            pytest.fail("opening MEM dataset failed in read only mode.")
+    p, free, width, height = mem_native_memory
 
-        assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
-        assert expected_sr in dsro.GetProjectionRef()
-        dsro = None
+    ## more ds names, ensure GEOTRANSFORM and SPATIALREFERENCE get tested
+    proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
+    ll_crs = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
+
+    dsro = gdal.Open(
+        ds_definition.format(datapointer=p, proj_crs=proj_crs, ll_crs=ll_crs)
+    )
+    if dsro is None:
+        free(p)
+        pytest.fail("opening MEM dataset failed in read only mode.")
+
+    assert dsro.GetGeoTransform() == (-1e06, 1953.125, 0, 1e06, 0, -3906.25)
+    assert expected_sr in dsro.GetProjectionRef()
+    dsro = None
     free(p)
 
 
