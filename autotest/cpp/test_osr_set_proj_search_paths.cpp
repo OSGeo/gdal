@@ -34,8 +34,6 @@
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
 
-#include "proj.h"
-
 #include "test_data.h"
 #include "gtest_include.h"
 
@@ -58,52 +56,6 @@ static void func2(void *)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
     EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
-    OSRDestroySpatialReference(hSRS);
-}
-
-static void func3(void *)
-{
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
-
-    // Test cleanup effect
-    OSRCleanup();
-
-    for (int epsg = 32601; epsg <= 32661; epsg++)
-    {
-        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE);
-        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE);
-    }
-    OSRDestroySpatialReference(hSRS);
-}
-
-static void func4()
-{
-    // This test use auxiliary database created with proj 6.3.2
-    // (tested up to 8.0.0) and can be sensitive to future
-    // database structure change.
-    //
-    // See PR https://github.com/OSGeo/gdal/pull/3590
-    //
-    // Starting with sqlite 3.41, and commit
-    // https://github.com/sqlite/sqlite/commit/ed07d0ea765386c5bdf52891154c70f048046e60
-    // we must use the same exact table definition in the auxiliary db, otherwise
-    // SQLite3 is confused regarding column types. Hence this PROJ >= 9 check,
-    // to use a table structure identical to proj.db of PROJ 9.
-    int nPROJMajor = 0;
-    OSRGetPROJVersion(&nPROJMajor, nullptr, nullptr);
-    const char *apszAux0[] = {nPROJMajor >= 9
-                                  ? TUT_ROOT_DATA_DIR "/test_aux_proj_9.db"
-                                  : TUT_ROOT_DATA_DIR "/test_aux.db",
-                              nullptr};
-    OSRSetPROJAuxDbPaths(apszAux0);
-
-    CPLStringList aosAux1(OSRGetPROJAuxDbPaths());
-    ASSERT_EQ(aosAux1.size(), 1);
-    ASSERT_STREQ(apszAux0[0], aosAux1[0]);
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    EXPECT_EQ(OSRImportFromEPSG(hSRS, 4326), OGRERR_NONE);
-    EXPECT_EQ(OSRImportFromEPSG(hSRS, 111111), OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
@@ -142,19 +94,67 @@ TEST(test_osr_set_proj_search_paths, test)
 
     CSLDestroy(tokens);
     OSRCleanup();
+}
 
+static void osr_cleanup_in_threads_thread_func(void *)
+{
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE);
+
+    // Test cleanup effect
+    OSRCleanup();
+
+    for (int epsg = 32601; epsg <= 32661; epsg++)
+    {
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE);
+        EXPECT_EQ(OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE);
+    }
+    OSRDestroySpatialReference(hSRS);
+}
+
+TEST(test_osr_set_proj_search_paths, osr_cleanup_in_threads)
+{
     // Test fix for #2744
     CPLJoinableThread *ahThreads[4];
     for (int i = 0; i < 4; i++)
     {
-        ahThreads[i] = CPLCreateJoinableThread(func3, nullptr);
+        ahThreads[i] = CPLCreateJoinableThread(
+            osr_cleanup_in_threads_thread_func, nullptr);
     }
     for (int i = 0; i < 4; i++)
     {
         CPLJoinThread(ahThreads[i]);
     }
+}
 
-    func4();
+TEST(test_osr_set_proj_search_paths, auxiliary_db)
+{
+    // This test use auxiliary database created with proj 6.3.2
+    // (tested up to 8.0.0) and can be sensitive to future
+    // database structure change.
+    //
+    // See PR https://github.com/OSGeo/gdal/pull/3590
+    //
+    // Starting with sqlite 3.41, and commit
+    // https://github.com/sqlite/sqlite/commit/ed07d0ea765386c5bdf52891154c70f048046e60
+    // we must use the same exact table definition in the auxiliary db, otherwise
+    // SQLite3 is confused regarding column types. Hence this PROJ >= 9 check,
+    // to use a table structure identical to proj.db of PROJ 9.
+    int nPROJMajor = 0;
+    OSRGetPROJVersion(&nPROJMajor, nullptr, nullptr);
+    const char *apszAux0[] = {nPROJMajor >= 9
+                                  ? TUT_ROOT_DATA_DIR "/test_aux_proj_9.db"
+                                  : TUT_ROOT_DATA_DIR "/test_aux.db",
+                              nullptr};
+    OSRSetPROJAuxDbPaths(apszAux0);
+
+    CPLStringList aosAux1(OSRGetPROJAuxDbPaths());
+    ASSERT_EQ(aosAux1.size(), 1);
+    ASSERT_STREQ(apszAux0[0], aosAux1[0]);
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 4326), OGRERR_NONE);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 111111), OGRERR_NONE);
+    OSRDestroySpatialReference(hSRS);
 }
 
 }  // namespace
