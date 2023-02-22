@@ -1040,7 +1040,11 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-ovr");
                 argv.AddString(pszValue);
             }
-
+            else if (EQUAL(pszKey, "expand"))
+            {
+                argv.AddString("-expand");
+                argv.AddString(pszValue);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",

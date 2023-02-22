@@ -1454,6 +1454,9 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/byte_with_ovr.tif?ovr=0")
     assert ds.RasterXSize == 10
 
+    ds = gdal.Open("vrt://data/8bit_pal.bmp?expand=rgb")
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
+
 
 def test_vrt_source_no_dstrect():
 
