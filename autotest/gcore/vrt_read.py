@@ -1451,8 +1451,8 @@ def test_vrt_protocol():
     assert geotransform == (0.0, 1.0, 0.0, 10.0, 0.0, -0.5)
 
     # test #7282
-    ds = gdal.Open("vrt://data/byte_with_ovr.tif?ovr=2")
-    assert ds.RasterXSize == 5
+    ds = gdal.Open("vrt://data/byte_with_ovr.tif?ovr=0")
+    assert ds.RasterXSize == 10
 
 
 def test_vrt_source_no_dstrect():
