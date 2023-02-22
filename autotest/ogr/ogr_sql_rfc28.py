@@ -203,10 +203,8 @@ def test_ogr_rfc28_8_good_quoting():
 # Test with quoted funky (non-identifier) name.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_rfc28_9():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.GetLayer(0)
@@ -227,10 +225,8 @@ def test_ogr_rfc28_9():
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_rfc28_10():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
@@ -251,10 +247,8 @@ def test_ogr_rfc28_10():
 # test quoted funky names in output columns list.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_rfc28_11():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.ExecuteSQL(

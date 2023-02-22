@@ -44,7 +44,7 @@ pytestmark = pytest.mark.require_driver("PDS4")
 def validate_xml(filename):
 
     if ogr.GetDriverByName("GMLAS") is None:
-        pytest.skip()
+        pytest.skip("GMLAS driver missing")
 
     # for GDAL 3.4 / PDS4_PDS_1G00
 
@@ -632,10 +632,8 @@ def test_ogr_pds4_create_table_binary():
 
 
 @pytest.mark.parametrize("line_ending", [None, "CRLF", "LF", "error"])
+@pytest.mark.require_driver("CSV")
 def test_ogr_pds4_create_table_delimited(line_ending):
-
-    if ogr.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",

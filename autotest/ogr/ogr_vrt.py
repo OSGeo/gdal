@@ -344,12 +344,10 @@ def test_ogr_vrt_10():
 # Test also the reportGeomSrcColumn attribute
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_11():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("x,val1,y,val2,style\n".encode("ascii"))
@@ -437,12 +435,10 @@ def test_ogr_vrt_11():
 # Test VRT write capabilities with WKT geometries
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_12():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
@@ -481,12 +477,10 @@ def test_ogr_vrt_12():
 # Test VRT write capabilities with WKB geometries
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_13():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("wkb_geom,val1,val2\n".encode("ascii"))
@@ -612,12 +606,10 @@ def test_ogr_vrt_14():
 # Test SrcRegion element for VGS_WKT
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_15():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
@@ -667,12 +659,10 @@ def test_ogr_vrt_15():
 # Test SrcRegion element for VGS_PointFromColumns
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_16():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csvt", "wb")
     f.write("Real,Real,String,String\n".encode("ascii"))
@@ -733,13 +723,11 @@ def test_ogr_vrt_16():
 # Test explicit field definitions.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_17():
 
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -803,13 +791,11 @@ def test_ogr_vrt_17():
 # when explicit fields are defined.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_18():
 
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -1331,10 +1317,8 @@ def test_ogr_vrt_25():
 # Test transaction support
 
 
+@pytest.mark.require_driver("SQLite")
 def test_ogr_vrt_26():
-
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
 
     sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/ogr_vrt_26.db")
     if sqlite_ds is None:
@@ -2367,10 +2351,8 @@ def test_ogr_vrt_32():
 # Test multi-geometry support
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_33():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     try:
         import shutil
@@ -3113,12 +3095,10 @@ def test_ogr_vrt_33():
 # Test SetIgnoredFields() with with PointFromColumns geometries
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_34():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("x,y\n".encode("ascii"))
@@ -3157,12 +3137,10 @@ def test_ogr_vrt_34():
 # Test nullable fields
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_35():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("c1,c2,WKT,WKT2\n".encode("ascii"))
@@ -3358,12 +3336,10 @@ def test_ogr_vrt_38():
 # Test that attribute filtering works with <FID>
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_39():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_vrt_39.csv",
@@ -3409,12 +3385,10 @@ def test_ogr_vrt_39():
 # Test PointZM support with encoding="PointFromColumns"
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_vrt_40():
     if gdaltest.vrt_ds is None:
         pytest.skip()
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_vrt_40.csv",

@@ -343,10 +343,8 @@ def test_ogr_join_14():
 # Test multiple joins with expressions (#4521)
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_join_15():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.GetDriverByName("CSV").CreateDataSource("/vsimem/ogr_join_14")
     lyr = ds.CreateLayer("first")

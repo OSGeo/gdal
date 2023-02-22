@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("PDF")
+
 
 def has_read_support():
 
@@ -56,9 +58,6 @@ def has_read_support():
 
 
 def test_ogr_pdf_1(name="tmp/ogr_pdf_1.pdf", write_attributes="YES"):
-
-    if ogr.GetDriverByName("PDF") is None:
-        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -141,10 +140,8 @@ def test_ogr_pdf_1(name="tmp/ogr_pdf_1.pdf", write_attributes="YES"):
 # Test read support
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_2(name="tmp/ogr_pdf_1.pdf", has_attributes=True):
-
-    if not has_read_support():
-        pytest.skip()
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -263,6 +260,7 @@ def test_ogr_pdf_3():
 # Check read support without writing attributes
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_4():
     return test_ogr_pdf_2("tmp/ogr_pdf_2.pdf", False)
 
@@ -291,10 +289,8 @@ def test_ogr_pdf_4_podofo():
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_5():
-
-    if not has_read_support():
-        pytest.skip()
 
     with gdaltest.config_option("OGR_PDF_READ_NON_STRUCTURED", "YES"):
         ds = ogr.Open("data/pdf/drawing.pdf")
@@ -308,10 +304,8 @@ def test_ogr_pdf_5():
 # Test read support of polygon with holes and Bezier curves
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_bezier_curve_and_polygon_holes():
-
-    if not has_read_support():
-        pytest.skip()
 
     with gdaltest.config_option("OGR_PDF_READ_NON_STRUCTURED", "YES"):
         ds = ogr.Open("data/pdf/bezier_curve_and_polygon_holes.pdf")
@@ -332,10 +326,8 @@ def test_ogr_pdf_bezier_curve_and_polygon_holes():
 # Test read support with a non-OGR datasource
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_online_1():
-
-    if not has_read_support():
-        pytest.skip()
 
     gdaltest.download_or_skip(
         "http://www.terragotech.com/images/pdf/webmap_urbansample.pdf",
@@ -392,10 +384,8 @@ def test_ogr_pdf_online_1():
 # Test read support of non-structured content
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_online_2():
-
-    if not has_read_support():
-        pytest.skip()
 
     gdaltest.download_or_skip(
         "https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf",
@@ -463,10 +453,8 @@ def test_ogr_pdf_online_2():
 # Test PDF with no attributes
 
 
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_no_attributes():
-
-    if not has_read_support():
-        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -494,9 +482,6 @@ def test_ogr_pdf_no_attributes():
 
 
 def test_ogr_pdf_cleanup():
-
-    if ogr.GetDriverByName("PDF") is None:
-        pytest.skip()
 
     ogr.GetDriverByName("PDF").DeleteDataSource("tmp/ogr_pdf_1.pdf")
     ogr.GetDriverByName("PDF").DeleteDataSource("tmp/ogr_pdf_2.pdf")
