@@ -1455,6 +1455,12 @@ def test_vrt_protocol():
     assert ds.RasterXSize == 10
 
 
+@pytest.mark.require_driver("BMP")
+def test_vrt_protocol_expand_option():
+    ds = gdal.Open("vrt://data/8bit_pal.bmp?expand=rgb")
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
+
+
 def test_vrt_source_no_dstrect():
 
     vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">

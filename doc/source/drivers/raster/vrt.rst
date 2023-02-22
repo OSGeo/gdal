@@ -1656,7 +1656,7 @@ For example:
     vrt://my.tif?bands=2&ovr=4
 
 
-The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, and ``ovr``. 
+The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, and ``expand``. 
 
 Other options may be added in the future.
 
@@ -1676,6 +1676,9 @@ values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, 
 
 The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview 
 level of source file must be used, with the first overview level being 0 (:ref:`gdal_translate`).
+
+The effect of the ``expand`` option (added in GDAL 3.7) is to expose a dataset with 1 band with 
+a color table as a dataset with 3 (RGB) or 4 (RGBA) bands, as with (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
