@@ -1456,7 +1456,7 @@ def test_vrt_protocol():
 
 
 @pytest.mark.require_driver("BMP")
-def test_vrt_protocol_bmp():
+def test_vrt_protocol_expand_option():
     ds = gdal.Open("vrt://data/8bit_pal.bmp?expand=rgb")
     assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_RedBand
 
