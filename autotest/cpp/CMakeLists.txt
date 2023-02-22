@@ -309,7 +309,6 @@ gdal_gtest_target(testlog test-log testlog.cpp)
 if (UNIX)
   list(APPEND QUICKTEST_LIST test-osr-set-proj-search-paths)
   gdal_gtest_target(test_osr_set_proj_search_paths test-osr-set-proj-search-paths test_osr_set_proj_search_paths.cpp)
-  target_link_libraries(test_osr_set_proj_search_paths PRIVATE PROJ::proj)
 endif()
 
 if (UNIX)
