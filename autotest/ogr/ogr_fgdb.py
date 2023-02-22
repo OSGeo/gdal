@@ -449,7 +449,7 @@ def test_ogr_fgdb_2(ogrsf_path):
 # Run ogr2ogr
 
 
-def test_ogr_fgdb_3():
+def test_ogr_fgdb_3(openfilegdb_drv):
 
     import test_cli_utilities
 
@@ -472,6 +472,10 @@ def test_ogr_fgdb_3():
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
+
+    if openfilegdb_drv is None:
+        # OpenFileGDB is required for CreateFeature() with a FID set
+        pytest.skip("skipping test_ogrsf due to missing OpenFileGDB driver")
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
@@ -2424,6 +2428,7 @@ def test_ogr_fgdb_21(fgdb_drv, fgdb_sdk_1_4_or_later):
 # Read curves
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_fgdb_22():
 
     ds = ogr.Open("data/filegdb/curves.gdb")
@@ -2473,6 +2478,7 @@ def test_ogr_fgdb_23():
 # one of the starting point (#7017)
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_fgdb_24():
 
     ds = ogr.Open("data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb")
@@ -2599,6 +2605,7 @@ def test_ogr_fgdb_alias(fgdb_drv):
 # Test field alias with ampersand character. Requires OpenFileGDB to be read back
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogr_fgdb_alias_with_ampersand(fgdb_drv, openfilegdb_drv):
 
     try:
@@ -2855,6 +2862,7 @@ def test_ogr_fgdb_rename_layer(fgdb_drv, options):
 # see https://github.com/OSGeo/gdal/issues/4463
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
@@ -3012,6 +3020,7 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(fgdb_drv):
         pass
 
 
+@pytest.mark.require_driver("OpenFileGDB")
 def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()

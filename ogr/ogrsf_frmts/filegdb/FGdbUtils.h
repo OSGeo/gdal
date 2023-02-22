@@ -69,10 +69,9 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType,
                        std::string *gdbType);
 
 //
-// GDB Field Width defaults
+// GDB Field Length
 //
-bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width,
-                                  int *precision);
+bool GDBFieldTypeToLengthInBytes(const std::string &gdbType, int &lengthOut);
 
 //
 // GDBAPI error to OGR

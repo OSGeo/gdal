@@ -271,58 +271,53 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType,
 }
 
 /*************************************************************************/
-/*                       GDBFieldTypeToWidthPrecision()                  */
+/*                       GDBFieldTypeToLengthInBytes()                   */
 /*************************************************************************/
 
-bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width,
-                                  int *precision)
+bool GDBFieldTypeToLengthInBytes(const std::string &gdbType, int &lengthOut)
 {
-    *precision = 0;
-
-    /* Width (Length in FileGDB terms) based on
+    /* Length based on
      * FileGDB_API/samples/XMLsamples/OneOfEachFieldType.xml */
     /* Length is in bytes per doc of FileGDB_API/xmlResources/FileGDBAPI.xsd */
     if (gdbType == "esriFieldTypeSmallInteger")
     {
-        *width = 2;
+        lengthOut = 2;
     }
     else if (gdbType == "esriFieldTypeInteger")
     {
-        *width = 4;
+        lengthOut = 4;
     }
     else if (gdbType == "esriFieldTypeSingle")
     {
-        *width = 4;
-        *precision = 5;  // FIXME ?
+        lengthOut = 4;
     }
     else if (gdbType == "esriFieldTypeDouble")
     {
-        *width = 8;
-        *precision = 15;  // FIXME ?
+        lengthOut = 8;
     }
     else if (gdbType == "esriFieldTypeString" || gdbType == "esriFieldTypeXML")
     {
-        *width = atoi(CPLGetConfigOption("FGDB_STRING_WIDTH", "65536"));
+        lengthOut = atoi(CPLGetConfigOption("FGDB_STRING_WIDTH", "65536"));
     }
     else if (gdbType == "esriFieldTypeDate")
     {
-        *width = 8;
+        lengthOut = 8;
     }
     else if (gdbType == "esriFieldTypeOID")
     {
-        *width = 4;
+        lengthOut = 4;
     }
     else if (gdbType == "esriFieldTypeGUID")
     {
-        *width = 16;
+        lengthOut = 16;
     }
     else if (gdbType == "esriFieldTypeBlob")
     {
-        *width = 0;
+        lengthOut = 0;
     }
     else if (gdbType == "esriFieldTypeGlobalID")
     {
-        *width = 38;
+        lengthOut = 38;
     }
     else
     {
@@ -335,7 +330,7 @@ bool GDBFieldTypeToWidthPrecision(const std::string &gdbType, int *width,
 }
 
 /*************************************************************************/
-/*                       GDBFieldTypeToWidthPrecision()                  */
+/*                        GDBGeometryToOGRGeometry()                     */
 /*************************************************************************/
 
 bool GDBGeometryToOGRGeometry(bool forceMulti,

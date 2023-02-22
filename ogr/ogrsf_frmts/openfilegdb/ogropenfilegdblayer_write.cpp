@@ -1333,8 +1333,8 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
     }
     if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
-        oField.SetWidth(poNewFieldDefn->GetWidth());
-        oField.SetPrecision(poNewFieldDefn->GetPrecision());
+        if (oField.GetType() == OFTString)
+            oField.SetWidth(poNewFieldDefn->GetWidth());
     }
     if (nFlagsIn & ALTER_DEFAULT_FLAG)
     {
@@ -1394,7 +1394,6 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
     poFieldDefn->SetType(oField.GetType());
     poFieldDefn->SetSubType(oField.GetSubType());
     poFieldDefn->SetWidth(oField.GetWidth());
-    poFieldDefn->SetPrecision(oField.GetPrecision());
     poFieldDefn->SetDefault(oField.GetDefault());
     poFieldDefn->SetNullable(oField.IsNullable());
     poFieldDefn->SetDomainName(oField.GetDomainName());
@@ -2463,7 +2462,7 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
             CPLCreateXMLElementAndValue(GPFieldInfoEx, "FieldType",
                                         "esriFieldTypeOID");
             CPLCreateXMLElementAndValue(GPFieldInfoEx, "IsNullable", "false");
-            CPLCreateXMLElementAndValue(GPFieldInfoEx, "Length", "12");
+            CPLCreateXMLElementAndValue(GPFieldInfoEx, "Length", "4");
             CPLCreateXMLElementAndValue(GPFieldInfoEx, "Precision", "0");
             CPLCreateXMLElementAndValue(GPFieldInfoEx, "Scale", "0");
             CPLCreateXMLElementAndValue(GPFieldInfoEx, "Required", "true");

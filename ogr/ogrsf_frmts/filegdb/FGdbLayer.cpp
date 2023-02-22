@@ -1788,20 +1788,27 @@ char *FGdbLayer::CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
     CPLCreateXMLElementAndValue(defn_xml, "Type", gdbFieldType.c_str());
     CPLCreateXMLElementAndValue(defn_xml, "IsNullable", nullable.c_str());
 
-    /* Get the Width and Precision if we know them */
-    int width = oField.GetWidth();
-    int precision = oField.GetPrecision();
-    if (width <= 0)
-        GDBFieldTypeToWidthPrecision(gdbFieldType, &width, &precision);
+    /* Get the Length */
+    int nLength = 0;
+    GDBFieldTypeToLengthInBytes(gdbFieldType, nLength);
+    if (oField.GetType() == OFTString)
+    {
+        const int nFieldWidth = oField.GetWidth();
+        if (nFieldWidth > 0)
+            nLength = nFieldWidth;
+    }
 
-    /* Write out the Width and Precision */
+    /* Write out the Length */
     char buf[100];
-    snprintf(buf, 100, "%d", width);
+    snprintf(buf, 100, "%d", nLength);
     CPLCreateXMLElementAndValue(defn_xml, "Length", buf);
-    snprintf(buf, 100, "%d", precision);
-    CPLCreateXMLElementAndValue(defn_xml, "Precision", buf);
 
-    /* We know nothing about Scale, so zero it out */
+    // According to https://resources.arcgis.com/en/help/arcobjects-java/api/arcobjects/com/esri/arcgis/geodatabase/Field.html#getPrecision()
+    // always 0
+    CPLCreateXMLElementAndValue(defn_xml, "Precision", "0");
+
+    // According to https://resources.arcgis.com/en/help/arcobjects-java/api/arcobjects/com/esri/arcgis/geodatabase/Field.html#getScale()
+    // always 0
     CPLCreateXMLElementAndValue(defn_xml, "Scale", "0");
 
     const char *pszAlternativeName = oField.GetAlternativeNameRef();
@@ -2020,8 +2027,8 @@ OGRErr FGdbLayer::AlterFieldDefn(int iFieldToAlter,
     }
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
-        oField.SetWidth(poNewFieldDefn->GetWidth());
-        oField.SetPrecision(poNewFieldDefn->GetPrecision());
+        if (oField.GetType() == OFTString)
+            oField.SetWidth(poNewFieldDefn->GetWidth());
     }
 
     std::string fieldname_clean =
@@ -2054,7 +2061,6 @@ OGRErr FGdbLayer::AlterFieldDefn(int iFieldToAlter,
     poFieldDefn->SetType(oField.GetType());
     poFieldDefn->SetType(oField.GetSubType());
     poFieldDefn->SetWidth(oField.GetWidth());
-    poFieldDefn->SetPrecision(oField.GetPrecision());
 
     return OGRERR_NONE;
 }
@@ -2689,7 +2695,7 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
     CPLCreateXMLElementAndValue(oid_xml, "Name", fid_name.c_str());
     CPLCreateXMLElementAndValue(oid_xml, "Type", "esriFieldTypeOID");
     CPLCreateXMLElementAndValue(oid_xml, "IsNullable", "false");
-    CPLCreateXMLElementAndValue(oid_xml, "Length", "12");
+    CPLCreateXMLElementAndValue(oid_xml, "Length", "4");
     CPLCreateXMLElementAndValue(oid_xml, "Precision", "0");
     CPLCreateXMLElementAndValue(oid_xml, "Scale", "0");
     CPLCreateXMLElementAndValue(oid_xml, "Required", "true");
@@ -3176,7 +3182,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
             std::string fieldAlias;
             std::string fieldType;
             int nLength = 0;
-            // int nPrecision = 0;
             int bNullable = TRUE;
             std::string osDefault;
             std::string osDomainName;
@@ -3213,10 +3218,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
                     else if (EQUAL(psFieldItemNode->pszValue, "Length"))
                     {
                         nLength = atoi(pszValue);
-                    }
-                    else if (EQUAL(psFieldItemNode->pszValue, "Precision"))
-                    {
-                        // nPrecision = atoi(pszValue);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue, "IsNullable"))
                     {
@@ -3280,14 +3281,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
                 fieldTemplate.SetAlternativeName(fieldAlias.c_str());
             }
             fieldTemplate.SetSubType(eSubType);
-            /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0,
+            /* On creation (GDBFieldTypeToLengthInBytes) if string width is 0,
              * we pick up */
             /* 65536 by default to mean unlimited string length, but we don't
              * want */
             /* to advertise such a big number */
             if (ogrType == OFTString && nLength < 65536)
                 fieldTemplate.SetWidth(nLength);
-            // fieldTemplate.SetPrecision(nPrecision);
             fieldTemplate.SetNullable(bNullable);
             if (!osDefault.empty())
             {
