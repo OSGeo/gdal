@@ -34,7 +34,7 @@
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
 
-#include "proj.h"
+#include "test_data.h"
 
 static void func1(void *)
 {
@@ -92,7 +92,18 @@ static void func4()
     // database structure change.
     //
     // See PR https://github.com/OSGeo/gdal/pull/3590
-    const char *apszAux0[] = {"data/test_aux.db", nullptr};
+    //
+    // Starting with sqlite 3.41, and commit
+    // https://github.com/sqlite/sqlite/commit/ed07d0ea765386c5bdf52891154c70f048046e60
+    // we must use the same exact table definition in the auxiliary db, otherwise
+    // SQLite3 is confused regarding column types. Hence this PROJ >= 9 check,
+    // to use a table structure identical to proj.db of PROJ 9.
+    int nPROJMajor = 0;
+    OSRGetPROJVersion(&nPROJMajor, nullptr, nullptr);
+    const char *apszAux0[] = {nPROJMajor >= 9
+                                  ? TUT_ROOT_DATA_DIR "/test_aux_proj_9.db"
+                                  : TUT_ROOT_DATA_DIR "/test_aux.db",
+                              nullptr};
     OSRSetPROJAuxDbPaths(apszAux0);
 
     char **papszAux1 = OSRGetPROJAuxDbPaths();
