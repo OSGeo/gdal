@@ -1675,7 +1675,7 @@ bounds of the source in the same way as (:ref:`gdal_translate`). The value consi
 values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y).
 
 The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview 
-level of source file must be used, or control any automatic choice as with (:ref:`gdal_translate`).
+level of source file must be used, with the first overview level being 0 (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
