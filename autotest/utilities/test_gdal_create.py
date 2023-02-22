@@ -42,15 +42,23 @@ def get_gdal_create_path():
     return test_cli_utilities.get_cli_utility_path("gdal_create")
 
 
+pytestmark = pytest.mark.skipif(
+    get_gdal_create_path() is None, reason="gdal_create not available"
+)
+
+
+@pytest.fixture()
+def gdal_create_path():
+    return get_gdal_create_path()
+
+
 ###############################################################################
 
 
-def test_gdal_create_pdf_tif():
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_pdf_tif(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path()
+        gdal_create_path
         + " tmp/tmp.tif -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 -burn 1 2 -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR"
     )
     assert err is None or err == "", "got error/warning"
@@ -77,13 +85,10 @@ def test_gdal_create_pdf_tif():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal_create_pdf_no_direct_write_capabilities():
-
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_pdf_no_direct_write_capabilities(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path() + " tmp/tmp.png -of PNG -outsize 1 2"
+        gdal_create_path + " tmp/tmp.png -of PNG -outsize 1 2"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -104,14 +109,12 @@ def test_gdal_create_pdf_no_direct_write_capabilities():
 ###############################################################################
 
 
-def test_gdal_create_pdf_composition():
-    if get_gdal_create_path() is None:
-        pytest.skip()
-    drv = gdal.GetDriverByName("PDF")
-    if drv is None:
-        pytest.skip()
-    if drv.GetMetadataItem("HAVE_POPPLER") is None:
-        pytest.skip()
+@pytest.mark.skipif(
+    gdal.GetDriverByName("PDF") is None
+    or gdal.GetDriverByName("PDF").GetMetadataItem("HAVE_POPPLER") is None,
+    reason="Poppler PDF support missing",
+)
+def test_gdal_create_pdf_composition(gdal_create_path):
 
     open("tmp/tmp.xml", "wt").write(
         """<PDFComposition>
@@ -129,7 +132,7 @@ def test_gdal_create_pdf_composition():
     )
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path() + " tmp/tmp.pdf -co COMPOSITION_FILE=tmp/tmp.xml"
+        gdal_create_path + " tmp/tmp.pdf -co COMPOSITION_FILE=tmp/tmp.xml"
     )
     os.unlink("tmp/tmp.xml")
     assert err is None or err == "", "got error/warning"
@@ -143,13 +146,10 @@ def test_gdal_create_pdf_composition():
 
 
 @pytest.mark.require_driver("TGA")
-def test_gdal_create_not_write_driver():
-
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_not_write_driver(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path() + " /vsimem/tmp.tga -of TGA -outsize 1 2"
+        gdal_create_path + " /vsimem/tmp.tga -of TGA -outsize 1 2"
     )
     assert "This driver has no creation capabilities" in err
 
@@ -157,12 +157,10 @@ def test_gdal_create_not_write_driver():
 ###############################################################################
 
 
-def test_gdal_create_input_file_invalid():
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_input_file_invalid(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path() + " tmp/tmp.tif -if ../gdrivers/data/i_do_not_exist"
+        gdal_create_path + " tmp/tmp.tif -if ../gdrivers/data/i_do_not_exist"
     )
     assert err != ""
 
@@ -172,12 +170,10 @@ def test_gdal_create_input_file_invalid():
 ###############################################################################
 
 
-def test_gdal_create_input_file():
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_input_file(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path() + " tmp/tmp.tif -if ../gdrivers/data/small_world.tif"
+        gdal_create_path + " tmp/tmp.tif -if ../gdrivers/data/small_world.tif"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -199,12 +195,10 @@ def test_gdal_create_input_file():
 ###############################################################################
 
 
-def test_gdal_create_input_file_overrrides():
-    if get_gdal_create_path() is None:
-        pytest.skip()
+def test_gdal_create_input_file_overrrides(gdal_create_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        get_gdal_create_path()
+        gdal_create_path
         + " tmp/tmp.tif -if ../gdrivers/data/small_world.tif -bands 2 -outsize 1 3 -a_nodata 1"
     )
     assert err is None or err == "", "got error/warning"

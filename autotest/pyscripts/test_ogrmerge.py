@@ -36,14 +36,22 @@ from test_py_scripts import samples_path
 
 from osgeo import gdal, ogr
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("ogrmerge") is None,
+    reason="ogrmerge.py not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("ogrmerge")
+
+
 ###############################################################################
 # Test -single
 
 
-def test_ogrmerge_1():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_1(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -67,10 +75,7 @@ def test_ogrmerge_1():
 # Test -append and glob
 
 
-def test_ogrmerge_2():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_2(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -97,10 +102,7 @@ def test_ogrmerge_2():
 # Test -overwrite_ds
 
 
-def test_ogrmerge_3():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_3(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -129,10 +131,7 @@ def test_ogrmerge_3():
 # Test -f VRT
 
 
-def test_ogrmerge_4():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_4(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -153,10 +152,7 @@ def test_ogrmerge_4():
 # Test -nln
 
 
-def test_ogrmerge_5():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_5(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -193,10 +189,7 @@ def test_ogrmerge_5():
 # Test -src_layer_field_name -src_layer_field_content
 
 
-def test_ogrmerge_6():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_6(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -226,10 +219,7 @@ def test_ogrmerge_6():
 # Test -src_geom_type
 
 
-def test_ogrmerge_7():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_7(script_path):
 
     # No match in -single mode
     test_py_scripts.run_py_script(
@@ -296,10 +286,7 @@ def test_ogrmerge_7():
 # Test -s_srs -t_srs in -single mode
 
 
-def test_ogrmerge_8():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_8(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -330,10 +317,7 @@ def test_ogrmerge_8():
 # Test -s_srs -t_srs in default mode
 
 
-def test_ogrmerge_9():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_9(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -362,10 +346,7 @@ def test_ogrmerge_9():
 # Test -a_srs in -single mode
 
 
-def test_ogrmerge_10():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_10(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -394,10 +375,7 @@ def test_ogrmerge_10():
 # Test -a_srs in default mode
 
 
-def test_ogrmerge_11():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_11(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -424,10 +402,7 @@ def test_ogrmerge_11():
 # Test layer names with accents
 
 
-def test_ogrmerge_12():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_12(script_path):
 
     with open("tmp/tmp.json", "wb") as f:
         f.write(
@@ -496,11 +471,14 @@ def _validate_check(filename):
     ],
 )
 def test_ogrmerge_gpkg(
-    src_has_spatial_index, dst_has_spatial_index, has_progress, a_srs, s_srs, t_srs
+    script_path,
+    src_has_spatial_index,
+    dst_has_spatial_index,
+    has_progress,
+    a_srs,
+    s_srs,
+    t_srs,
 ):
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
 
     lco = [] if src_has_spatial_index else ["SPATIAL_INDEX=NO"]
     gdal.VectorTranslate(
@@ -575,10 +553,7 @@ def test_ogrmerge_gpkg(
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("has_progress", [True, False])
-def test_ogrmerge_gpkg_non_spatial(has_progress):
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_gpkg_non_spatial(script_path, has_progress):
 
     src_ds = gdal.VectorTranslate(
         "tmp/in.gpkg", test_py_scripts.get_data_path("ogr") + "idlink.dbf"
@@ -621,10 +596,7 @@ def test_ogrmerge_gpkg_non_spatial(has_progress):
 
 
 @pytest.mark.require_driver("GPKG")
-def test_ogrmerge_gpkg_curve_geom_in_generic_layer():
-    script_path = test_py_scripts.get_py_script("ogrmerge")
-    if script_path is None:
-        pytest.skip()
+def test_ogrmerge_gpkg_curve_geom_in_generic_layer(script_path):
 
     gdal.Unlink("tmp/out.gpkg")
     gdal.Unlink("tmp/in.gpkg")

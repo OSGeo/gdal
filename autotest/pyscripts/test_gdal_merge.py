@@ -36,15 +36,22 @@ import test_py_scripts
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_merge") is None,
+    reason="gdal_merge not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_merge")
+
+
 ###############################################################################
 # Basic test
 
 
-def test_gdal_merge_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_merge")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_merge_1(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -63,11 +70,7 @@ def test_gdal_merge_1():
 # Merge 4 tiles
 
 
-def test_gdal_merge_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_merge")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_merge_2(script_path):
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -130,11 +133,7 @@ def test_gdal_merge_2():
 # Test -separate and -v options
 
 
-def test_gdal_merge_3():
-
-    script_path = test_py_scripts.get_py_script("gdal_merge")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_merge_3(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -168,11 +167,7 @@ def test_gdal_merge_3():
 # Test -init option
 
 
-def test_gdal_merge_4():
-
-    script_path = test_py_scripts.get_py_script("gdal_merge")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_merge_4(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -189,15 +184,11 @@ def test_gdal_merge_4():
 # Test merging with alpha band (#3669)
 
 
-def test_gdal_merge_5():
+def test_gdal_merge_5(script_path):
     gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
-        pytest.skip()
-
-    script_path = test_py_scripts.get_py_script("gdal_merge")
-    if script_path is None:
         pytest.skip()
 
     drv = gdal.GetDriverByName("GTiff")

@@ -35,15 +35,22 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_fillnodata") is None,
+    reason="gdal_fillnodata not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_fillnodata")
+
+
 ###############################################################################
 # Dummy test : there is no nodata value in the source dataset !
 
 
-def test_gdal_fillnodata_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_fillnodata")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_fillnodata_1(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -65,11 +72,7 @@ def test_gdal_fillnodata_1():
 # No data value for nodata_byte.tif is 0.
 
 
-def test_gdal_fillnodata_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_fillnodata")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_fillnodata_2(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -93,11 +96,7 @@ def test_gdal_fillnodata_2():
 # Test -si 1 and -md
 
 
-def test_gdal_fillnodata_smoothing():
-
-    script_path = test_py_scripts.get_py_script("gdal_fillnodata")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_fillnodata_smoothing(script_path):
 
     ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/test_gdal_fillnodata_smoothing_in.tif", 4, 4

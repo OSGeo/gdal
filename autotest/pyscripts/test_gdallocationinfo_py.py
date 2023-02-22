@@ -48,14 +48,23 @@ from osgeo_utils.auxiliary.util import open_ds
 from osgeo_utils.samples import gdallocationinfo
 from osgeo_utils.samples.gdallocationinfo import LocationInfoSRS
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdallocationinfo") is None,
+    reason="gdallocationinfo.py not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdallocationinfo")
+
+
 temp_files = []
 
 
-def test_gdallocationinfo_py_1():
+def test_gdallocationinfo_py_1(script_path):
     """Test basic usage"""
-    script_path = test_py_scripts.get_py_script("gdallocationinfo")
-    if script_path is None:
-        pytest.skip()
+
     ret = test_py_scripts.run_py_script(
         script_path, "gdallocationinfo", " ../gcore/data/byte.tif 0 0"
     )
@@ -67,11 +76,9 @@ def test_gdallocationinfo_py_1():
     assert ret.startswith(expected_ret)
 
 
-def test_gdallocationinfo_py_3():
+def test_gdallocationinfo_py_3(script_path):
     """Test -valonly"""
-    script_path = test_py_scripts.get_py_script("gdallocationinfo")
-    if script_path is None:
-        pytest.skip()
+
     ret = test_py_scripts.run_py_script(
         script_path, "gdallocationinfo", " -b 1 -valonly ../gcore/data/byte.tif 0 0"
     )
@@ -79,11 +86,9 @@ def test_gdallocationinfo_py_3():
     assert ret.startswith(expected_ret)
 
 
-def test_gdallocationinfo_py_4():
+def test_gdallocationinfo_py_4(script_path):
     """Test -geoloc"""
-    script_path = test_py_scripts.get_py_script("gdallocationinfo")
-    if script_path is None:
-        pytest.skip()
+
     ret = test_py_scripts.run_py_script(
         script_path,
         "gdallocationinfo",
@@ -97,11 +102,9 @@ def test_gdallocationinfo_py_4():
     assert ret.startswith(expected_ret)
 
 
-def test_gdallocationinfo_py_6():
+def test_gdallocationinfo_py_6(script_path):
     """Test -overview"""
-    script_path = test_py_scripts.get_py_script("gdallocationinfo")
-    if script_path is None:
-        pytest.skip()
+
     src_ds = gdal.Open("../gcore/data/byte.tif")
     ds = gdal.GetDriverByName("GTiff").CreateCopy(
         "tmp/test_gdallocationinfo_py_6.tif", src_ds
@@ -121,10 +124,8 @@ def test_gdallocationinfo_py_6():
     assert expected_ret in ret
 
 
-def test_gdallocationinfo_py_wgs84():
-    script_path = test_py_scripts.get_py_script("gdallocationinfo")
-    if script_path is None:
-        pytest.skip()
+def test_gdallocationinfo_py_wgs84(script_path):
+
     ret = test_py_scripts.run_py_script(
         script_path,
         "gdallocationinfo",

@@ -39,13 +39,22 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdal_contour_path() is None,
+    reason="gdal_contour not available",
+)
+
+
+@pytest.fixture()
+def gdal_contour_path():
+    return test_cli_utilities.get_gdal_contour_path()
+
+
 ###############################################################################
 # Test with -a and -i options
 
 
-def test_gdal_contour_1():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
+def test_gdal_contour_1(gdal_contour_path):
 
     try:
         os.remove("tmp/contour.shp")
@@ -111,8 +120,7 @@ def test_gdal_contour_1():
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_contour_path()
-        + " -a elev -i 10 tmp/gdal_contour.tif tmp/contour.shp"
+        gdal_contour_path + " -a elev -i 10 tmp/gdal_contour.tif tmp/contour.shp"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -155,9 +163,7 @@ def test_gdal_contour_1():
 # Test with -fl option and -3d option
 
 
-def test_gdal_contour_2():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
+def test_gdal_contour_2(gdal_contour_path):
 
     try:
         os.remove("tmp/contour.shp")
@@ -174,7 +180,7 @@ def test_gdal_contour_2():
 
     # put -3d just after -fl to test #2793
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_contour_path()
+        gdal_contour_path
         + " -a elev -fl 10 20 25 -3d tmp/gdal_contour.tif tmp/contour.shp"
     )
 
@@ -225,9 +231,7 @@ def test_gdal_contour_2():
 # Test on a real DEM
 
 
-def test_gdal_contour_3():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
+def test_gdal_contour_3(gdal_contour_path):
 
     try:
         os.remove("tmp/contour.shp")
@@ -244,8 +248,7 @@ def test_gdal_contour_3():
 
     # put -3d just after -fl to test #2793
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_contour_path()
-        + " -a elev -i 50 ../gdrivers/data/n43.tif tmp/contour.shp"
+        gdal_contour_path + " -a elev -i 50 ../gdrivers/data/n43.tif tmp/contour.shp"
     )
 
     ds = ogr.Open("tmp/contour.shp")
@@ -270,9 +273,7 @@ def test_gdal_contour_3():
 # Test contour orientation
 
 
-def test_gdal_contour_4():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
+def test_gdal_contour_4(gdal_contour_path):
 
     try:
         os.remove("tmp/contour_orientation.shp")
@@ -333,7 +334,7 @@ def test_gdal_contour_4():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_contour_path()
+        gdal_contour_path
         + " -a elev -i 10 tmp/gdal_contour_orientation.tif tmp/contour_orientation1.shp"
     )
 
@@ -392,14 +393,12 @@ def test_gdal_contour_4():
 # Test contour orientation
 
 
-def test_gdal_contour_5():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
+def test_gdal_contour_5(gdal_contour_path):
 
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdal_contour_path()
+        gdal_contour_path
         + " -a elev -i 10 data/contour_orientation.tif tmp/contour_orientation2.shp"
     )
 
@@ -447,8 +446,6 @@ def test_gdal_contour_5():
 
 
 def test_gdal_contour_cleanup():
-    if test_cli_utilities.get_gdal_contour_path() is None:
-        pytest.skip()
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/contour.shp")
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(

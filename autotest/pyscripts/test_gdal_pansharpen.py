@@ -35,15 +35,22 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_pansharpen") is None,
+    reason="gdal_pansharpen not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_pansharpen")
+
+
 ###############################################################################
 # Simple test
 
 
-def test_gdal_pansharpen_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_pansharpen")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_pansharpen_1(script_path):
 
     src_ds = gdal.Open(test_py_scripts.get_data_path("gdrivers") + "small_world.tif")
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -79,11 +86,7 @@ def test_gdal_pansharpen_1():
 # Full options
 
 
-def test_gdal_pansharpen_2():
-
-    script_path = test_py_scripts.get_py_script("gdal_pansharpen")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_pansharpen_2(script_path):
 
     test_py_scripts.run_py_script(
         script_path,
@@ -110,9 +113,5 @@ def test_gdal_pansharpen_2():
 
 
 def test_gdal_pansharpen_cleanup():
-
-    script_path = test_py_scripts.get_py_script("gdal_pansharpen")
-    if script_path is None:
-        pytest.skip()
 
     gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")

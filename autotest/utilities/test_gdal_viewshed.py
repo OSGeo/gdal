@@ -35,11 +35,21 @@ import test_cli_utilities
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.skipif(
-    test_cli_utilities.get_gdalwarp_path() is None
-    or test_cli_utilities.get_gdal_viewshed_path() is None,
-    reason="gdal_viewshed not available",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        test_cli_utilities.get_gdalwarp_path() is None, reason="gdalwarp not available"
+    ),
+    pytest.mark.skipif(
+        test_cli_utilities.get_gdal_viewshed_path() is None,
+        reason="gdal_viewshed not available",
+    ),
+]
+
+
+@pytest.fixture()
+def gdal_viewshed_path():
+    return test_cli_utilities.get_gdal_viewshed_path()
+
 
 ###############################################################################
 
@@ -59,10 +69,10 @@ def make_viewshed_input(output=viewshed_in):
     )
 
 
-def test_gdal_viewshed():
+def test_gdal_viewshed(gdal_viewshed_path):
     make_viewshed_input()
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -oz {} -ox {} -oy {} {} {}".format(
             oz[0], ox[0], oy[0], viewshed_in, viewshed_out
         )
@@ -80,14 +90,14 @@ def test_gdal_viewshed():
 
 
 @pytest.mark.parametrize("cc_option", ["", " -cc 1.0"])
-def test_gdal_viewshed_non_earth_crs(cc_option):
+def test_gdal_viewshed_non_earth_crs(gdal_viewshed_path, cc_option):
     make_viewshed_input()
     viewshed_tmp = "tmp/test_gdal_viewshed_tmp.tif"
     gdal.Translate(
         viewshed_tmp, viewshed_in, outputSRS="+proj=utm +zone=17 +a=1000000 +rf=300"
     )
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + cc_option
         + " -oz {} -ox {} -oy {} {} {}".format(
             oz[0], ox[0], oy[0], viewshed_tmp, viewshed_out
@@ -109,10 +119,10 @@ def test_gdal_viewshed_non_earth_crs(cc_option):
 ###############################################################################
 
 
-def test_gdal_viewshed_alternative_modes():
+def test_gdal_viewshed_alternative_modes(gdal_viewshed_path):
     make_viewshed_input()
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -om DEM -oz {} -ox {} -oy {} {} {}".format(
             oz[0], ox[0], oy[0], viewshed_in, viewshed_out
         )
@@ -128,7 +138,7 @@ def test_gdal_viewshed_alternative_modes():
     assert nodata is None
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -om GROUND -oz {} -ox {} -oy {} {} {}".format(
             oz[0], ox[0], oy[0], viewshed_in, viewshed_out
         )
@@ -177,10 +187,10 @@ def test_gdal_viewshed_api():
 ###############################################################################
 
 
-def test_gdal_viewshed_all_options():
+def test_gdal_viewshed_all_options(gdal_viewshed_path):
     make_viewshed_input()
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0 -iv 127 -vv 254 -ov 0 {} {}".format(
             oz[1], ox[0], oy[0], viewshed_in, viewshed_out
         )
@@ -200,32 +210,28 @@ def test_gdal_viewshed_all_options():
 ###############################################################################
 
 
-def test_gdal_viewshed_missing_source():
+def test_gdal_viewshed_missing_source(gdal_viewshed_path):
 
-    _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
-    )
+    _, err = gdaltest.runexternal_out_and_err(gdal_viewshed_path)
     assert "Missing source filename" in err
 
 
 ###############################################################################
 
 
-def test_gdal_viewshed_missing_destination():
+def test_gdal_viewshed_missing_destination(gdal_viewshed_path):
 
-    _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path() + " /dev/null"
-    )
+    _, err = gdaltest.runexternal_out_and_err(gdal_viewshed_path + " /dev/null")
     assert "Missing destination filename" in err
 
 
 ###############################################################################
 
 
-def test_gdal_viewshed_missing_ox():
+def test_gdal_viewshed_missing_ox(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path() + " /dev/null /dev/null"
+        gdal_viewshed_path + " /dev/null /dev/null"
     )
     assert "Missing -ox" in err
 
@@ -233,10 +239,10 @@ def test_gdal_viewshed_missing_ox():
 ###############################################################################
 
 
-def test_gdal_viewshed_missing_oy():
+def test_gdal_viewshed_missing_oy(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path() + " -ox 0 /dev/null /dev/null"
+        gdal_viewshed_path + " -ox 0 /dev/null /dev/null"
     )
     assert "Missing -oy" in err
 
@@ -244,10 +250,10 @@ def test_gdal_viewshed_missing_oy():
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_input():
+def test_gdal_viewshed_invalid_input(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path() + " -ox 0 -oy 0 /dev/null /dev/null"
+        gdal_viewshed_path + " -ox 0 -oy 0 /dev/null /dev/null"
     )
     assert ("not recognized as" in err) or ("No such file or directory" in err)
 
@@ -255,11 +261,10 @@ def test_gdal_viewshed_invalid_input():
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_band():
+def test_gdal_viewshed_invalid_band(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox 0 -oy 0 -b 2 ../gdrivers/data/n43.tif tmp/tmp.tif"
+        gdal_viewshed_path + " -ox 0 -oy 0 -b 2 ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     assert "Illegal band" in err
 
@@ -267,11 +272,10 @@ def test_gdal_viewshed_invalid_band():
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_observer_point():
+def test_gdal_viewshed_invalid_observer_point(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
-        + " -ox 0 -oy 0 ../gdrivers/data/n43.tif tmp/tmp.tif"
+        gdal_viewshed_path + " -ox 0 -oy 0 ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     gdal.Unlink("tmp/tmp.tif")
     assert "The observer location falls outside of the DEM area" in err
@@ -280,10 +284,10 @@ def test_gdal_viewshed_invalid_observer_point():
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_output_driver():
+def test_gdal_viewshed_invalid_output_driver(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -ox -79.5 -oy 43.5 -of FOOBAR ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
     assert "Cannot get driver" in err
@@ -292,10 +296,10 @@ def test_gdal_viewshed_invalid_output_driver():
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_output_filename():
+def test_gdal_viewshed_invalid_output_filename(gdal_viewshed_path):
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdal_viewshed_path()
+        gdal_viewshed_path
         + " -ox -79.5 -oy 43.5 ../gdrivers/data/n43.tif i/do_not/exist.tif"
     )
     assert "Cannot create dataset" in err

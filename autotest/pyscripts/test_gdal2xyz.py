@@ -47,6 +47,16 @@ from osgeo_utils import gdal2xyz
 from osgeo_utils.auxiliary.raster_creation import create_flat_raster
 from osgeo_utils.samples import gdallocationinfo
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal2xyz") is None,
+    reason="gdal2xyz not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal2xyz")
+
 
 def test_gdal2xyz_py_1():
     """test get_ovr_idx, create_flat_raster"""
@@ -102,18 +112,13 @@ def test_gdal2xyz_py_1():
 # Test -b at beginning
 
 
-def test_gdal2xyz_py_2():
-
-    script = "gdal2xyz"
-    folder = test_py_scripts.get_py_script(script)
-    if folder is None:
-        pytest.skip()
+def test_gdal2xyz_py_2(script_path):
 
     arguments = "-b 1"
     arguments += " " + test_py_scripts.get_data_path("gcore") + "byte.tif"
     arguments += " tmp/out.xyz"
 
-    test_py_scripts.run_py_script(folder, script, arguments)
+    test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
 
     assert os.path.exists("tmp/out.xyz")
     os.unlink("tmp/out.xyz")
@@ -123,18 +128,13 @@ def test_gdal2xyz_py_2():
 # Test -b at end
 
 
-def test_gdal2xyz_py_3():
-
-    script = "gdal2xyz"
-    folder = test_py_scripts.get_py_script(script)
-    if folder is None:
-        pytest.skip()
+def test_gdal2xyz_py_3(script_path):
 
     arguments = test_py_scripts.get_data_path("gcore") + "byte.tif"
     arguments += " tmp/out.xyz"
     arguments += " -b 1"
 
-    test_py_scripts.run_py_script(folder, script, arguments)
+    test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
 
     assert os.path.exists("tmp/out.xyz")
     os.unlink("tmp/out.xyz")

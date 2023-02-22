@@ -41,19 +41,31 @@ import test_cli_utilities
 
 from osgeo import ogr
 
+pytestmark = [
+    pytest.mark.skipif(
+        test_cli_utilities.get_ogrlineref_path() is None,
+        reason="ogrlineref not available",
+    ),
+    pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing"),
+]
+
+
+@pytest.fixture()
+def ogrlineref_path():
+    return test_cli_utilities.get_ogrlineref_path()
+
+
 ###############################################################################
 # create test
 
 
-def test_ogrlineref_1():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
+def test_ogrlineref_1(ogrlineref_path):
 
     if os.path.exists("tmp/parts.shp"):
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/parts.shp")
 
     _, err = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogrlineref_path()
+        ogrlineref_path
         + " -create -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.shp -s 1000"
     )
     assert err is None or err == "", 'got error/warning: "%s"' % err
@@ -66,13 +78,10 @@ def test_ogrlineref_1():
 # get_pos test
 
 
-def test_ogrlineref_2():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
+def test_ogrlineref_2(ogrlineref_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_ogrlineref_path()
-        + " -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet"
+        ogrlineref_path + " -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet"
     ).strip()
 
     expected = "15977.724709"
@@ -83,13 +92,10 @@ def test_ogrlineref_2():
 # get_coord test
 
 
-def test_ogrlineref_3():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
+def test_ogrlineref_3(ogrlineref_path):
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_ogrlineref_path()
-        + " -get_coord -r tmp/parts.shp -m 15977.724709 -quiet"
+        ogrlineref_path + " -get_coord -r tmp/parts.shp -m 15977.724709 -quiet"
     ).strip()
 
     expected = "-1.435097,51.950080,0.000000"
@@ -100,15 +106,13 @@ def test_ogrlineref_3():
 # get_subline test
 
 
-def test_ogrlineref_4():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
+def test_ogrlineref_4(ogrlineref_path):
 
     if os.path.exists("tmp/subline.shp"):
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/subline.shp")
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogrlineref_path()
+        ogrlineref_path
         + " -get_subline -r tmp/parts.shp -mb 13300 -me 17400 -o tmp/subline.shp"
     )
 
@@ -126,15 +130,13 @@ def test_ogrlineref_4():
 # test kml
 
 
-def test_ogrlineref_5():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
+def test_ogrlineref_5(ogrlineref_path):
 
     if os.path.exists("tmp/parts.kml"):
         ogr.GetDriverByName("KML").DeleteDataSource("tmp/parts.kml")
 
     gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_ogrlineref_path()
+        ogrlineref_path
         + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222'
     )
     if os.path.exists("tmp/parts.kml"):
@@ -144,8 +146,6 @@ def test_ogrlineref_5():
 
 
 def test_ogrlineref_cleanup():
-    if not ogrtest.have_geos() or test_cli_utilities.get_ogrlineref_path() is None:
-        pytest.skip()
 
     if os.path.exists("tmp/parts.shp"):
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/parts.shp")

@@ -37,6 +37,16 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdalbuildvrt_path() is None,
+    reason="gdalbuildvrt not available",
+)
+
+
+@pytest.fixture()
+def gdalbuildvrt_path():
+    return test_cli_utilities.get_gdalbuildvrt_path()
+
 
 ###############################################################################
 def gdalbuildvrt_check():
@@ -70,9 +80,7 @@ def gdalbuildvrt_check():
 # Simple test
 
 
-def test_gdalbuildvrt_1():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_1(gdalbuildvrt_path):
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -104,7 +112,7 @@ def test_gdalbuildvrt_1():
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -116,9 +124,8 @@ def test_gdalbuildvrt_1():
 # Test with tile index
 
 
-def test_gdalbuildvrt_2():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_2(gdalbuildvrt_path):
+
     if test_cli_utilities.get_gdaltindex_path() is None:
         pytest.skip()
 
@@ -144,9 +151,7 @@ def test_gdalbuildvrt_2():
         + " tmp/tileindex.shp tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif"
     )
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path() + " tmp/mosaic.vrt tmp/tileindex.shp"
-    )
+    gdaltest.runexternal(gdalbuildvrt_path + " tmp/mosaic.vrt tmp/tileindex.shp")
 
     return gdalbuildvrt_check()
 
@@ -155,17 +160,14 @@ def test_gdalbuildvrt_2():
 # Test with file list
 
 
-def test_gdalbuildvrt_3():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_3(gdalbuildvrt_path):
 
     open("tmp/filelist.txt", "wt").write(
         "tmp/gdalbuildvrt1.tif\ntmp/gdalbuildvrt2.tif\ntmp/gdalbuildvrt3.tif\ntmp/gdalbuildvrt4.tif"
     )
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " -input_file_list tmp/filelist.txt tmp/mosaic.vrt"
+        gdalbuildvrt_path + " -input_file_list tmp/filelist.txt tmp/mosaic.vrt"
     )
 
     return gdalbuildvrt_check()
@@ -175,9 +177,7 @@ def test_gdalbuildvrt_3():
 # Try adding a raster in another projection
 
 
-def test_gdalbuildvrt_4():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_4(gdalbuildvrt_path):
 
     drv = gdal.GetDriverByName("GTiff")
     wkt = """GEOGCS["WGS 72",
@@ -193,7 +193,7 @@ def test_gdalbuildvrt_4():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif"
     )
 
@@ -206,9 +206,7 @@ def test_gdalbuildvrt_4():
 
 # NOTE: fails. commented out originally in 4ef886421c99a4451f8873cb6e094d45ecc86d3f, not sure why
 @pytest.mark.skip()
-def test_gdalbuildvrt_5():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_5(gdalbuildvrt_path):
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -221,7 +219,7 @@ def test_gdalbuildvrt_5():
     ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " tmp/mosaic.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif tmp/gdalbuildvrt5.tif"
     )
 
@@ -232,12 +230,10 @@ def test_gdalbuildvrt_5():
 # Test -separate option
 
 
-def test_gdalbuildvrt_6():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_6(gdalbuildvrt_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -separate tmp/stacked.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif"
     )
 
@@ -267,9 +263,7 @@ def test_gdalbuildvrt_6():
 # Test source rasters with nodata
 
 
-def test_gdalbuildvrt_7():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_7(gdalbuildvrt_path):
 
     out_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/vrtnull1.tif", 20, 10, 3, gdal.GDT_UInt16
@@ -323,8 +317,7 @@ def test_gdalbuildvrt_7():
     out_ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif"
+        gdalbuildvrt_path + " tmp/gdalbuildvrt7.vrt tmp/vrtnull1.tif tmp/vrtnull2.tif"
     )
 
     ds = gdal.Open("tmp/gdalbuildvrt7.vrt")
@@ -342,12 +335,10 @@ def test_gdalbuildvrt_7():
 # Test -tr option
 
 
-def test_gdalbuildvrt_8():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_8(gdalbuildvrt_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -tr 0.05 0.05 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif"
     )
 
@@ -366,8 +357,7 @@ def test_gdalbuildvrt_8():
     ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt"
+        gdalbuildvrt_path + " -tr 0.1 0.1 tmp/mosaic.vrt tmp/mosaic2.vrt"
     )
 
     return gdalbuildvrt_check()
@@ -377,12 +367,10 @@ def test_gdalbuildvrt_8():
 # Test -te option
 
 
-def test_gdalbuildvrt_9():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_9(gdalbuildvrt_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -te 1 46 5 50 tmp/mosaic2.vrt tmp/gdalbuildvrt1.tif tmp/gdalbuildvrt2.tif tmp/gdalbuildvrt3.tif tmp/gdalbuildvrt4.tif"
     )
 
@@ -401,8 +389,7 @@ def test_gdalbuildvrt_9():
     ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt"
+        gdalbuildvrt_path + " -te 2 47 4 49 tmp/mosaic.vrt tmp/mosaic2.vrt"
     )
 
     return gdalbuildvrt_check()
@@ -412,9 +399,7 @@ def test_gdalbuildvrt_9():
 # Test explicit nodata setting (#3254)
 
 
-def test_gdalbuildvrt_10():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_10(gdalbuildvrt_path):
 
     out_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/test_gdalbuildvrt_10_1.tif",
@@ -453,7 +438,7 @@ def test_gdalbuildvrt_10():
     out_ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -srcnodata 0 tmp/gdalbuildvrt10.vrt tmp/test_gdalbuildvrt_10_1.tif tmp/test_gdalbuildvrt_10_2.tif"
     )
 
@@ -468,9 +453,7 @@ def test_gdalbuildvrt_10():
 # Test that we can stack ungeoreference single band images with -separate (#3432)
 
 
-def test_gdalbuildvrt_11():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_11(gdalbuildvrt_path):
 
     out_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/test_gdalbuildvrt_11_1.tif", 10, 10, 1
@@ -487,7 +470,7 @@ def test_gdalbuildvrt_11():
     out_ds = None
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -separate tmp/gdalbuildvrt11.vrt tmp/test_gdalbuildvrt_11_1.tif tmp/test_gdalbuildvrt_11_2.tif"
     )
 
@@ -504,13 +487,10 @@ def test_gdalbuildvrt_11():
 # Test -tap option
 
 
-def test_gdalbuildvrt_12():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_12(gdalbuildvrt_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif",
+        gdalbuildvrt_path + " -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif",
         check_memleak=False,
     )
     assert (
@@ -518,7 +498,7 @@ def test_gdalbuildvrt_12():
     ), "expected error"
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " -tr 100 50 -tap tmp/gdalbuildvrt12.vrt ../gcore/data/byte.tif"
     )
 
@@ -541,12 +521,10 @@ def test_gdalbuildvrt_12():
 # Test -a_srs
 
 
-def test_gdalbuildvrt_13():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_13(gdalbuildvrt_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " tmp/gdalbuildvrt13.vrt ../gcore/data/byte.tif -a_srs EPSG:4326"
     )
 
@@ -559,14 +537,12 @@ def test_gdalbuildvrt_13():
 # Test -r
 
 
-def test_gdalbuildvrt_14():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_14(gdalbuildvrt_path):
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " tmp/test_gdalbuildvrt_14.vrt ../gcore/data/byte.tif -r cubic -tr 30 30"
     )
 
@@ -589,13 +565,10 @@ def test_gdalbuildvrt_14():
 # Test -b
 
 
-def test_gdalbuildvrt_15():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_15(gdalbuildvrt_path):
 
     gdaltest.runexternal(
-        test_cli_utilities.get_gdalbuildvrt_path()
-        + " tmp/test_gdalbuildvrt_15.vrt ../gcore/data/byte.tif -b 1"
+        gdalbuildvrt_path + " tmp/test_gdalbuildvrt_15.vrt ../gcore/data/byte.tif -b 1"
     )
 
     ds = gdal.Open("tmp/test_gdalbuildvrt_15.vrt")
@@ -609,12 +582,10 @@ def test_gdalbuildvrt_15():
 # Test output to non writable file
 
 
-def test_gdalbuildvrt_16():
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
+def test_gdalbuildvrt_16(gdalbuildvrt_path):
 
     (out, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalbuildvrt_path()
+        gdalbuildvrt_path
         + " /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif"
     )
 
@@ -631,7 +602,7 @@ def test_gdalbuildvrt_16():
 
 def test_gdalbuildvrt_cleanup():
 
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+    if gdalbuildvrt_path is None:
         pytest.skip()
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/tileindex.shp")

@@ -37,16 +37,25 @@ import test_cli_utilities
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_gdalmdimtranslate_path() is None,
+    reason="gdalmdimtranslate not available",
+)
+
+
+@pytest.fixture()
+def gdalmdimtranslate_path():
+    return test_cli_utilities.get_gdalmdimtranslate_path()
+
+
 ###############################################################################
 # Simple test
 
 
-def test_gdalmdimtranslate_1():
-    if test_cli_utilities.get_gdalmdimtranslate_path() is None:
-        pytest.skip()
+def test_gdalmdimtranslate_1(gdalmdimtranslate_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalmdimtranslate_path() + " data/mdim.vrt tmp/out.vrt"
+        gdalmdimtranslate_path + " data/mdim.vrt tmp/out.vrt"
     )
     assert err is None or err == "", "got error/warning"
     assert os.path.exists("tmp/out.vrt")
@@ -57,21 +66,17 @@ def test_gdalmdimtranslate_1():
 # Test -if option
 
 
-def test_gdalmdimtranslate_if():
-    if test_cli_utilities.get_gdalmdimtranslate_path() is None:
-        pytest.skip()
+def test_gdalmdimtranslate_if(gdalmdimtranslate_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalmdimtranslate_path()
-        + " -if VRT data/mdim.vrt tmp/out.vrt"
+        gdalmdimtranslate_path + " -if VRT data/mdim.vrt tmp/out.vrt"
     )
     assert err is None or err == "", "got error/warning"
     assert os.path.exists("tmp/out.vrt")
     gdal.Unlink("tmp/out.vrt")
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        test_cli_utilities.get_gdalmdimtranslate_path()
-        + " -if i_do_not_exist data/mdim.vrt tmp/out.vrt"
+        gdalmdimtranslate_path + " -if i_do_not_exist data/mdim.vrt tmp/out.vrt"
     )
     assert "i_do_not_exist is not a recognized driver" in err
     assert not os.path.exists("tmp/out.vrt")

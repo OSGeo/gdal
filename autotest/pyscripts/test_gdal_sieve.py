@@ -35,16 +35,23 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_sieve") is None,
+    reason="gdal_sieve not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_sieve")
+
+
 ###############################################################################
 # Test a fairly default case.
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdal_sieve_1():
-
-    script_path = test_py_scripts.get_py_script("gdal_sieve")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_sieve_1(script_path):
 
     drv = gdal.GetDriverByName("GTiff")
     dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_Byte)
@@ -82,11 +89,7 @@ def test_gdal_sieve_1():
 # Test with source dataset without nodata
 
 
-def test_gdal_sieve_src_without_nodata():
-
-    script_path = test_py_scripts.get_py_script("gdal_sieve")
-    if script_path is None:
-        pytest.skip()
+def test_gdal_sieve_src_without_nodata(script_path):
 
     test_py_scripts.run_py_script(
         script_path,

@@ -38,13 +38,21 @@ import test_py_scripts
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    test_py_scripts.get_py_script("gdal_ls") is None,
+    reason="gdal_ls not available",
+)
+
+
+@pytest.fixture()
+def script_path():
+    return test_py_scripts.get_py_script("gdal_ls")
+
+
 ###############################################################################
 
 
-def run_gdal_ls(argv):
-    script_path = test_py_scripts.get_py_script("gdal_ls")
-    if script_path is None:
-        pytest.skip()
+def run_gdal_ls(script_path, argv):
 
     saved_syspath = sys.path
     sys.path.append(script_path)
@@ -69,9 +77,11 @@ def run_gdal_ls(argv):
 # List one file
 
 
-def test_gdal_ls_py_1():
+def test_gdal_ls_py_1(script_path):
     # TODO: Why the '' as the first element of the list here and below?
-    ret_str = run_gdal_ls(["", "-l", test_py_scripts.get_data_path("ogr") + "poly.shp"])
+    ret_str = run_gdal_ls(
+        script_path, ["", "-l", test_py_scripts.get_data_path("ogr") + "poly.shp"]
+    )
 
     assert ret_str.find("poly.shp") != -1
 
@@ -80,8 +90,8 @@ def test_gdal_ls_py_1():
 # List one dir
 
 
-def test_gdal_ls_py_2():
-    ret_str = run_gdal_ls(["", "-l", test_py_scripts.get_data_path("ogr")])
+def test_gdal_ls_py_2(script_path):
+    ret_str = run_gdal_ls(script_path, ["", "-l", test_py_scripts.get_data_path("ogr")])
 
     assert ret_str.find("poly.shp") != -1
 
@@ -90,8 +100,8 @@ def test_gdal_ls_py_2():
 # List recursively
 
 
-def test_gdal_ls_py_3():
-    ret_str = run_gdal_ls(["", "-R", test_py_scripts.get_data_path("ogr")])
+def test_gdal_ls_py_3(script_path):
+    ret_str = run_gdal_ls(script_path, ["", "-R", test_py_scripts.get_data_path("ogr")])
 
     assert "topojson1.topojson" in ret_str
 
@@ -100,9 +110,10 @@ def test_gdal_ls_py_3():
 # List in a .zip
 
 
-def test_gdal_ls_py_4():
+def test_gdal_ls_py_4(script_path):
     ret_str = run_gdal_ls(
-        ["", "-l", "/vsizip/" + test_py_scripts.get_data_path("ogr") + "shp/poly.zip"]
+        script_path,
+        ["", "-l", "/vsizip/" + test_py_scripts.get_data_path("ogr") + "shp/poly.zip"],
     )
 
     if (
@@ -126,7 +137,7 @@ def test_gdal_ls_py_4():
 
 
 @pytest.mark.require_driver("HTTP")
-def test_gdal_ls_py_5():
+def test_gdal_ls_py_5(script_path):
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
@@ -139,7 +150,7 @@ def test_gdal_ls_py_5():
     if not d:
         pytest.skip()
 
-    # ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
+    # ret_str = run_gdal_ls(script_path, ['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
 
     #
     # if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
@@ -152,7 +163,7 @@ def test_gdal_ls_py_5():
 
 
 @pytest.mark.require_driver("HTTP")
-def test_gdal_ls_py_6():
+def test_gdal_ls_py_6(script_path):
 
     f = gdal.VSIFOpenL(
         "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
@@ -166,11 +177,12 @@ def test_gdal_ls_py_6():
         pytest.skip()
 
     ret_str = run_gdal_ls(
+        script_path,
         [
             "",
             "-l",
             "/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
-        ]
+        ],
     )
 
     if (
@@ -192,7 +204,7 @@ def test_gdal_ls_py_6():
 
 
 @pytest.mark.require_driver("HTTP")
-def test_gdal_ls_py_7():
+def test_gdal_ls_py_7(script_path):
 
     # Super slow on AppVeyor since a few weeks (Apr 2016)
     if gdal.GetConfigOption("APPVEYOR") is not None:
@@ -209,7 +221,7 @@ def test_gdal_ls_py_7():
     if not d:
         pytest.skip()
 
-    # ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
+    # ret_str = run_gdal_ls(script_path, ['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
 
     # if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
     #    print(ret_str)
@@ -221,7 +233,7 @@ def test_gdal_ls_py_7():
 
 
 @pytest.mark.require_driver("HTTP")
-def test_gdal_ls_py_8():
+def test_gdal_ls_py_8(script_path):
     if not gdaltest.run_slow_tests():
         pytest.skip()
 
@@ -237,7 +249,7 @@ def test_gdal_ls_py_8():
         pytest.skip()
 
     ret_str = run_gdal_ls(
-        ["", "-l", "-R", "-Rzip", "ftp://download.osgeo.org/gdal/data/aig"]
+        script_path, ["", "-l", "-R", "-Rzip", "ftp://download.osgeo.org/gdal/data/aig"]
     )
 
     assert (
