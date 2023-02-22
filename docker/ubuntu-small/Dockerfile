@@ -223,7 +223,9 @@ RUN apt-get update -y; \
         libexpat1 \
         libxerces-c3.2 \
         libwebp7 libpng16-16 \
-        libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite7
+        libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite7 \
+        # pil for antialias option of gdal2tiles
+        python3-pil
 
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3

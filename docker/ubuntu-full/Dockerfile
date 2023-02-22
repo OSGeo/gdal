@@ -300,6 +300,8 @@ RUN apt-get update \
         libbrotli1 \
         libarchive13 \
         python-is-python3 \
+        # pil for antialias option of gdal2tiles
+        python3-pil \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
     # Install Arrow C++

@@ -294,6 +294,11 @@ RUN apk add --no-cache \
     # Only libwebp.so is used by GDAL
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
+# Install Pillow for -antialias option of gdal2tiles
+RUN apk add --no-cache py3-pip \
+    && pip3 install Pillow \
+    && apk del py3-pip
+
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
