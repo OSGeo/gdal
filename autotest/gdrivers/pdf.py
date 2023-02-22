@@ -463,8 +463,6 @@ def test_pdf_no_compression(poppler_or_pdfium):
 
 
 def _test_pdf_jpeg_compression(filename):
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("PDF", filename, 1, None, options=["COMPRESS=JPEG"])
     tst.testCreateCopy(
@@ -475,6 +473,7 @@ def _test_pdf_jpeg_compression(filename):
     )
 
 
+@pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_compression(poppler_or_pdfium):
     _test_pdf_jpeg_compression("byte.tif")
 
@@ -491,7 +490,17 @@ def pdf_get_J2KDriver(drv_name):
     return drv
 
 
-def pdf_jpx_compression(filename, drv_name=None):
+@pytest.mark.parametrize(
+    "filename,drv_name",
+    [
+        ("utm.tif", None),
+        ("utm.tif", "JP2KAK"),
+        ("utm.tif", "JP2ECW"),
+        ("utm.tif", "JP2OpenJpeg"),
+        ("rgbsmall.tif", "JP2ECW"),
+    ],
+)
+def test_pdf_jpx_compression(filename, drv_name):
     if drv_name is None:
         if (
             pdf_get_J2KDriver("JP2KAK") is None
@@ -509,40 +518,15 @@ def pdf_jpx_compression(filename, drv_name=None):
         options = ["COMPRESS=JPEG2000", "JPEG2000_DRIVER=%s" % drv_name]
 
     tst = gdaltest.GDALTest("PDF", filename, 1, None, options=options)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
 
-    return ret
 
-
-def test_pdf_jp2_auto_compression(poppler_or_pdfium):
-    return pdf_jpx_compression("utm.tif")
-
-
-def test_pdf_jp2kak_compression(poppler_or_pdfium):
-    return pdf_jpx_compression("utm.tif", "JP2KAK")
-
-
-def test_pdf_jp2ecw_compression(poppler_or_pdfium):
-    return pdf_jpx_compression("utm.tif", "JP2ECW")
-
-
-def test_pdf_jp2openjpeg_compression(poppler_or_pdfium):
-    return pdf_jpx_compression("utm.tif", "JP2OpenJpeg")
-
-
-def test_pdf_jpeg2000_compression(poppler_or_pdfium):
-    return pdf_jpx_compression("utm.tif", "JPEG2000")
-
-
-def test_pdf_jp2ecw_compression_rgb(poppler_or_pdfium):
-    return pdf_jpx_compression("rgbsmall.tif", "JP2ECW")
-
-
+@pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_compression_rgb(poppler_or_pdfium):
     return _test_pdf_jpeg_compression("rgbsmall.tif")
 
@@ -610,6 +594,7 @@ def test_pdf_rgba_default_compression_tiled(poppler_or_pdfium_or_podofo):
     return pdf_rgba_default_compression(["BLOCKXSIZE=32", "BLOCKYSIZE=32"])
 
 
+@pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_compression_rgba(poppler_or_pdfium):
     return _test_pdf_jpeg_compression("../../gcore/data/stefan_full_rgba.tif")
 
@@ -678,9 +663,8 @@ def test_pdf_tiled_128(poppler_or_pdfium):
 # Test raster with color table
 
 
+@pytest.mark.require_driver("GIF")
 def test_pdf_color_table(poppler_or_pdfium):
-    if gdal.GetDriverByName("GIF") is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None)
     ret = tst.testCreateCopy(
@@ -1688,9 +1672,8 @@ def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
 # Test direct copy of source JPEG file
 
 
+@pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     src_ds = gdal.Open("data/jpeg/byte_with_xmp.jpg")
     ds = gdaltest.pdf_drv.CreateCopy(
@@ -1721,9 +1704,8 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
 # Test direct copy of source JPEG file within VRT file
 
 
+@pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     src_ds = gdal.Open(
         """<VRTDataset rasterXSize="20" rasterYSize="20">

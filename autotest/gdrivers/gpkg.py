@@ -4120,7 +4120,7 @@ def test_gpkg_flushing_not_all_bands(tile_format):
         drv_req = [drv_req]
     for drv in drv_req:
         if gdal.GetDriverByName(drv) is None:
-            pytest.skip()
+            pytest.skip(f"Driver {drv} is missing")
 
     out_filename = "/vsimem/test.gpkg"
     ds = gdal.GetDriverByName("GPKG").Create(

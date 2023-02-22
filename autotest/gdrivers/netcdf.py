@@ -726,16 +726,11 @@ def test_netcdf_16():
 # check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
 
 
+@pytest.mark.require_driver("HDF5")
+@pytest.mark.require_driver("HDF5Image")
 def test_netcdf_17():
 
     ifile = "data/hdf5/groups.h5"
-
-    # skip test if Hdf5 is not enabled
-    if (
-        gdal.GetDriverByName("HDF5") is None
-        and gdal.GetDriverByName("HDF5Image") is None
-    ):
-        pytest.skip()
 
     if gdaltest.netcdf_drv_has_nc4:
 
@@ -885,14 +880,9 @@ def test_netcdf_22():
 # check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
 
 
+@pytest.mark.require_driver("HDF4")
+@pytest.mark.require_driver("HDF4Image")
 def test_netcdf_23():
-
-    # skip test if Hdf4 is not enabled in GDAL
-    if (
-        gdal.GetDriverByName("HDF4") is None
-        and gdal.GetDriverByName("HDF4Image") is None
-    ):
-        pytest.skip()
 
     ifile = "data/hdf4/hdifftst2.hdf"
 
