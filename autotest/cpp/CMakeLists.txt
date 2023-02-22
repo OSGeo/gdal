@@ -227,6 +227,11 @@ if (UNIX)
   list(APPEND QUICKTEST_LIST test-proj-with-fork)
 endif ()
 
+if (UNIX)
+  list(APPEND QUICKTEST_LIST test-osr-set-proj-search-paths)
+  gdal_autotest_target(test_osr_set_proj_search_paths test-osr-set-proj-search-paths test_osr_set_proj_search_paths.cpp "")
+endif()
+
 if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
   add_custom_target(quicktest DEPENDS ${QUICKTEST_LIST})
 endif ()
