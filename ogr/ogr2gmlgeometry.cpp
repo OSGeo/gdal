@@ -792,10 +792,17 @@ static bool OGR2GML3GeometryAppend(
         for (int i = 0; i < poCC->getNumCurves(); i++)
         {
             AppendString(ppszText, pnLength, pnMaxLength, "<gml:curveMember>");
+
+            char *pszGMLIdSub = nullptr;
+            if (pszGMLId != nullptr)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, i));
+
             CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
                 poCC->getCurve(i), poSRS, ppszText, pnLength, pnMaxLength, true,
-                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
+                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, pszGMLIdSub,
                 nSRSDimensionLocFlags, false, nullptr, nullptr));
+
+            CPLFree(pszGMLIdSub);
 
             AppendString(ppszText, pnLength, pnMaxLength, "</gml:curveMember>");
         }
@@ -826,33 +833,89 @@ static bool OGR2GML3GeometryAppend(
         // Free tag buffer.
         CPLFree(pszPolyTagName);
 
+        const auto AppendCompoundCurveMembers =
+            [&](const OGRGeometry *poRing, const char *pszGMLIdRing)
+        {
+            const auto eRingType = wkbFlatten(poRing->getGeometryType());
+            if (eRingType == wkbCompoundCurve)
+            {
+                AppendString(ppszText, pnLength, pnMaxLength, "<gml:Ring>");
+                const auto poCC = poRing->toCompoundCurve();
+                const int nNumCurves = poCC->getNumCurves();
+                for (int i = 0; i < nNumCurves; i++)
+                {
+                    AppendString(ppszText, pnLength, pnMaxLength,
+                                 "<gml:curveMember>");
+
+                    char *pszGMLIdSub = nullptr;
+                    if (pszGMLIdRing != nullptr)
+                        pszGMLIdSub =
+                            CPLStrdup(CPLSPrintf("%s.%d", pszGMLIdRing, i));
+
+                    CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                        poCC->getCurve(i), poSRS, ppszText, pnLength,
+                        pnMaxLength, true, eSRSNameFormat, bCoordSwap,
+                        bLineStringAsCurve, pszGMLIdSub, nSRSDimensionLocFlags,
+                        false, nullptr, nullptr));
+
+                    CPLFree(pszGMLIdSub);
+
+                    AppendString(ppszText, pnLength, pnMaxLength,
+                                 "</gml:curveMember>");
+                }
+                AppendString(ppszText, pnLength, pnMaxLength, "</gml:Ring>");
+            }
+            else
+            {
+                if (eRingType != wkbLineString)
+                {
+                    AppendString(ppszText, pnLength, pnMaxLength,
+                                 "<gml:Ring><gml:curveMember>");
+                }
+
+                CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
+                    poRing, poSRS, ppszText, pnLength, pnMaxLength, true,
+                    eSRSNameFormat, bCoordSwap, bLineStringAsCurve,
+                    pszGMLIdRing, nSRSDimensionLocFlags, true, nullptr,
+                    nullptr));
+
+                if (eRingType != wkbLineString)
+                {
+                    AppendString(ppszText, pnLength, pnMaxLength,
+                                 "</gml:curveMember></gml:Ring>");
+                }
+            }
+        };
+
         // Don't add srsName to polygon rings.
 
-        if (poCP->getExteriorRingCurve() != nullptr)
+        const auto poExteriorRing = poCP->getExteriorRingCurve();
+        if (poExteriorRing != nullptr)
         {
             AppendString(ppszText, pnLength, pnMaxLength, "<gml:exterior>");
 
-            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
-                poCP->getExteriorRingCurve(), poSRS, ppszText, pnLength,
-                pnMaxLength, true, eSRSNameFormat, bCoordSwap,
-                bLineStringAsCurve, nullptr, nSRSDimensionLocFlags, true,
-                nullptr, nullptr));
+            AppendCompoundCurveMembers(
+                poExteriorRing,
+                pszGMLId ? (std::string(pszGMLId) + ".exterior").c_str()
+                         : nullptr);
 
             AppendString(ppszText, pnLength, pnMaxLength, "</gml:exterior>");
-        }
 
-        for (int iRing = 0; iRing < poCP->getNumInteriorRings(); iRing++)
-        {
-            const OGRCurve *poRing = poCP->getInteriorRingCurve(iRing);
+            for (int iRing = 0; iRing < poCP->getNumInteriorRings(); iRing++)
+            {
+                const OGRCurve *poRing = poCP->getInteriorRingCurve(iRing);
 
-            AppendString(ppszText, pnLength, pnMaxLength, "<gml:interior>");
+                AppendString(ppszText, pnLength, pnMaxLength, "<gml:interior>");
 
-            CPL_IGNORE_RET_VAL(OGR2GML3GeometryAppend(
-                poRing, poSRS, ppszText, pnLength, pnMaxLength, true,
-                eSRSNameFormat, bCoordSwap, bLineStringAsCurve, nullptr,
-                nSRSDimensionLocFlags, true, nullptr, nullptr));
+                AppendCompoundCurveMembers(
+                    poRing, pszGMLId ? (std::string(pszGMLId) + ".interior." +
+                                        std::to_string(iRing))
+                                           .c_str()
+                                     : nullptr);
 
-            AppendString(ppszText, pnLength, pnMaxLength, "</gml:interior>");
+                AppendString(ppszText, pnLength, pnMaxLength,
+                             "</gml:interior>");
+            }
         }
 
         AppendString(ppszText, pnLength, pnMaxLength, "</gml:");
