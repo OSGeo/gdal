@@ -492,7 +492,7 @@ bool VRTDerivedRasterBand::InitializePython()
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
-                    "Python code needs to be executed, but it uses online code "
+                    "Python code needs to be executed, but it uses inline code "
                     "in the VRT whereas the current policy is to trust only "
                     "code from external trusted modules (defined in the "
                     "GDAL_VRT_PYTHON_TRUSTED_MODULES configuration option). "
