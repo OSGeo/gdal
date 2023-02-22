@@ -32,8 +32,6 @@ curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
 sudo apt-get update
 sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
-# Works around a bug in Microsoft unixodbc-dev 2.3.11 whose sqltypes.h includes a non existing unixodbc.h, whereas they meant unixodbc_conf.h
-sudo ln -s /usr/include/x86_64-linux-gnu/unixodbc_conf.h /usr/include/x86_64-linux-gnu/unixodbc.h
 
 # Initialize MySQL & MariaDB databases
 echo 'CREATE DATABASE test' | mysql -uroot -ppasswd --port=33060 -h "$IP"
