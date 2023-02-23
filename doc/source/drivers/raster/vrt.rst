@@ -1656,7 +1656,8 @@ For example:
     vrt://my.tif?bands=2&ovr=4
 
 
-The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, and ``expand``. 
+The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
+``a_scale``, and ``a_offset``. 
 
 Other options may be added in the future.
 
