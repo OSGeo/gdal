@@ -782,6 +782,7 @@ def test_ogr_ngw_15():
 #  Run test_ogrsf
 
 
+@pytest.mark.slow()  # 460 s
 def test_ogr_ngw_test_ogrsf():
     # FIXME: depends on previous test
     if gdaltest.ngw_ds is None:
