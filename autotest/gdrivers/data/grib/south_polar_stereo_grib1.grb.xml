@@ -1,0 +1,19 @@
+<VSISparseFile>
+  <Length>1311132</Length>
+  <SubfileRegion>
+    <Filename relative="1">south_polar_stereo_grib1.grb.begin</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>132</RegionLength>
+  </SubfileRegion>
+  <ConstantRegion>
+    <DestinationOffset>132</DestinationOffset>
+    <RegionLength>1310996</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+  <ConstantRegion>
+    <DestinationOffset>1311128</DestinationOffset>
+    <RegionLength>4</RegionLength>
+    <Value>55</Value> <!-- 7 -->
+  </ConstantRegion>
+</VSISparseFile>
