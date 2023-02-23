@@ -1428,13 +1428,12 @@ def test_jpeg_apply_orientation(orientation):
 # Test lossless conversion from JPEGXL
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOXES")
 def test_jpeg_from_jpegxl():
 
     jpegxl_drv = gdal.GetDriverByName("JPEGXL")
     if jpegxl_drv is None:
         pytest.skip("JPEGXL driver missing")
-    if "COMPRESS_BOXES" not in jpegxl_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
-        pytest.skip("not enough recent libjxl")
 
     src_ds = gdal.Open("data/jpeg/albania.jpg")
 

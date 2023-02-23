@@ -89,13 +89,10 @@ def test_webp_3():
 # CreateCopy() on RGBA
 
 
+@gdaltest.require_creation_option("WEBP", "LOSSLESS")
 def test_webp_4():
 
     if gdaltest.webp_drv is None:
-        pytest.skip()
-
-    md = gdaltest.webp_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1:
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
@@ -129,13 +126,10 @@ def test_webp_4():
 # CreateCopy() on RGBA with lossless compression
 
 
+@gdaltest.require_creation_option("WEBP", "LOSSLESS")
 def test_webp_5():
 
     if gdaltest.webp_drv is None:
-        pytest.skip()
-
-    md = gdaltest.webp_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1:
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
@@ -163,16 +157,11 @@ def test_webp_5():
 # CreateCopy() on RGBA with lossless compression and exact rgb values
 
 
+@gdaltest.require_creation_option("WEBP", "LOSSLESS")
+@gdaltest.require_creation_option("WEBP", "EXACT")
 def test_webp_6():
 
     if gdaltest.webp_drv is None:
-        pytest.skip()
-
-    md = gdaltest.webp_drv.GetMetadata()
-    if (
-        md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1
-        or md["DMD_CREATIONOPTIONLIST"].find("EXACT") == -1
-    ):
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")

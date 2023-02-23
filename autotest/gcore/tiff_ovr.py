@@ -372,12 +372,8 @@ def test_tiff_ovr_rms_palette(both_endian):
 
 @pytest.mark.parametrize("option_name_suffix", ["", "_OVERVIEW"])
 @pytest.mark.parametrize("read_only", [True, False])
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
     tiff_drv.Delete("tmp/ovr9.tif")
@@ -434,12 +430,8 @@ def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
 # Similar to tiff_ovr_9 but with internal overviews.
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_ovr_10(both_endian):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     src_ds = gdal.Open("data/rgbsmall.tif", gdal.GA_ReadOnly)
 
@@ -1602,11 +1594,8 @@ def test_tiff_ovr_42(both_endian):
 @pytest.mark.skipif(
     "SKIP_TIFF_JPEG12" in os.environ, reason="Crashes on build-windows-msys2-mingw"
 )
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_ovr_43(both_endian):
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     with gdaltest.config_option("CPL_ACCUM_ERROR_MSG", "ON"):
         gdal.ErrorReset()
@@ -2153,12 +2142,8 @@ def test_tiff_ovr_53():
 # Test external overviews building in several steps with jpeg compression
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_ovr_54():
-
-    drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open("../gdrivers/data/small_world.tif")
     gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/tiff_ovr_54.tif", src_ds)

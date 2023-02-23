@@ -543,12 +543,8 @@ def test_gdalwarp_24(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=sinu (#2305)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_25(gdalwarp_path):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif'
@@ -579,12 +575,8 @@ def test_gdalwarp_25(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=eck4 (#2305)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_26(gdalwarp_path):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif'
@@ -615,12 +607,8 @@ def test_gdalwarp_26(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=vandg (#2305)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_27(gdalwarp_path):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path
@@ -653,12 +641,8 @@ def test_gdalwarp_27(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=aeqd +lat_0=45 +lon_0=90 (#2305)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_28(gdalwarp_path):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path
@@ -692,16 +676,12 @@ def test_gdalwarp_28(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def DISABLED_test_gdalwarp_29(gdalwarp_path):
 
     # This test has been disabled since PROJ 8 will reproject a coordinates at
     # lat=90 to a finite value, due to 90deg being < PI/2 due to numerical
     # accuracy
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path + " -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif"
@@ -732,12 +712,8 @@ def DISABLED_test_gdalwarp_29(gdalwarp_path):
 # Test the effect of the -wo OPTIMIZE_SIZE=TRUE and -wo STREAMABLE_OUTPUT=TRUE options (#3459, #1866)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_30(gdalwarp_path):
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     te = " -te -20037508.343 -16206629.152 20036845.112 16213801.068"
 
@@ -870,15 +846,11 @@ def test_gdalwarp_32(gdalwarp_path):
 # Test warping a JPEG compressed image with a mask into a RGBA image
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_33(gdalwarp_path):
 
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         gdalwarp_path

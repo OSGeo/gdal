@@ -421,11 +421,8 @@ def test_mrf_overview_external():
     cleanup()
 
 
+@gdaltest.require_creation_option("MRF", "LERC")
 def test_mrf_lerc_nodata():
-
-    mrf_co = gdal.GetDriverByName("MRF").GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    if "LERC" not in mrf_co:
-        pytest.skip()
 
     gdal.Translate(
         "/vsimem/out.mrf",
@@ -444,11 +441,8 @@ def test_mrf_lerc_nodata():
     cleanup()
 
 
+@gdaltest.require_creation_option("MRF", "LERC")
 def test_mrf_lerc_with_huffman():
-
-    mrf_co = gdal.GetDriverByName("MRF").GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    if "LERC" not in mrf_co:
-        pytest.skip()
 
     gdal.Translate(
         "/vsimem/out.mrf",
@@ -466,11 +460,8 @@ def test_mrf_lerc_with_huffman():
     cleanup()
 
 
+@gdaltest.require_creation_option("MRF", "LERC")
 def test_raw_lerc():
-
-    mrf_co = gdal.GetDriverByName("MRF").GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    if "LERC" not in mrf_co:
-        pytest.skip()
 
     # Defaults to LERC2
     for opt in "OPTIONS=V1:1", None:

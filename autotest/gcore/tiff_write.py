@@ -9501,12 +9501,10 @@ def test_tiff_write_jpegxl_uint16_single_band():
 # Test JXL_ALPHA_DISTANCE option
 
 
+@gdaltest.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
 def test_tiff_write_jpegxl_alpha_distance_zero():
 
     drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if "JXL_ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
-        pytest.skip("libjxl > 0.8.1 required")
 
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
     filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
