@@ -1148,6 +1148,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          if (gdsMeta->center & GRIB2BIT_1) {
             /* South polar stereographic. */
             gdsMeta->scaleLat1 = gdsMeta->scaleLat2 = -90;
+            gdsMeta->meshLat = -gdsMeta->meshLat;
          } else {
             /* North polar stereographic. */
             gdsMeta->scaleLat1 = gdsMeta->scaleLat2 = 90;

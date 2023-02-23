@@ -2166,3 +2166,15 @@ def test_grib_grib2_parameter_in_wmo_tables_only():
         ds.GetRasterBand(1).GetMetadataItem("GRIB_ELEMENT")
         == "Latent heat net flux due to evaporation"
     )
+
+
+# Test reading a south polar stereographic GRIB1 dataset (#7298)
+
+
+def test_grib_grib1_south_polar_stereographic():
+
+    ds = gdal.Open("/vsisparse/data/grib/south_polar_stereo_grib1.grb.xml")
+    assert "+proj=stere +lat_0=-90 +lat_ts=-60" in ds.GetSpatialRef().ExportToProj4()
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-3243994.6063763676, 7673.0, 0.0, 3286668.2989108698, 0.0, -7673.0)
+    )
