@@ -1454,6 +1454,12 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/byte_with_ovr.tif?ovr=0")
     assert ds.RasterXSize == 10
 
+    ds = gdal.Open("vrt://data/int32.tif?a_scale=2")
+    assert ds.GetRasterBand(1).GetScale() == 2.0
+
+    ds = gdal.Open("vrt://data/int32.tif?a_offset=-132")
+    assert ds.GetRasterBand(1).GetOffset() == -132.0
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
