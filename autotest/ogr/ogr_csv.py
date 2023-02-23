@@ -2748,3 +2748,16 @@ def test_ogr_csv_iter_and_set_feature():
     gdal.Unlink("/vsimem/ogr_csv_iter_and_set_feature.csv")
 
     assert count == 2
+
+
+###############################################################################
+
+
+def test_ogr_csv_double_quotes_in_middle_of_field():
+
+    ds = ogr.Open("data/csv/double_quotes_in_middle_of_field.csv")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["id"] == "1"
+    assert f["coord"] == """50°46'06.6"N 116°42'04.4"""
+    assert f["str"] == "foo"

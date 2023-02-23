@@ -312,7 +312,13 @@ static char **CSVSplitLine(const char *pszString, const char *pszDelimiter,
 
             if (*pszIter == '"')
             {
-                if (!bInString || pszIter[1] != '"')
+                if (!bInString && nTokenLen > 0)
+                {
+                    // do not treat in a special way double quotes that appear
+                    // in the middle of a field (similarly to OpenOffice)
+                    // Like in records: 1,50°46'06.6"N 116°42'04.4,foo
+                }
+                else if (!bInString || pszIter[1] != '"')
                 {
                     bInString = !bInString;
                     if (!bKeepLeadingAndClosingQuotes)
