@@ -780,9 +780,11 @@ def test_ogr_wfs_xmldescriptionfile():
     wkt = sr.ExportToWkt()
     assert wkt.find("WGS 84") != -1
 
-    # WFSLayerMetadata uses CSV driver internally...
-    if ogr.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_wfs_xmldescriptionfile_requires_csv():
+
+    ds = ogr.Open("data/wfs/testwfs.xml")
 
     layermetadata = ds.GetLayerByName("WFSLayerMetadata")
     count_layers = layermetadata.GetFeatureCount()
@@ -4186,6 +4188,7 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
 
 
 ###############################################################################
+@pytest.mark.require_driver("CSV")
 def test_ogr_wfs_vsimem_wfs200_multipart(with_and_without_streaming):
 
     gdal.FileFromMemBuffer(
@@ -4289,9 +4292,6 @@ Content-Disposition: attachment; filename=my.json
 
     f = lyr.GetNextFeature()
     assert f is not None
-
-    if ogr.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart")
     lyr = ds.GetLayer(0)

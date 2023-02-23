@@ -55,7 +55,7 @@ pytestmark = pytest.mark.usefixtures("require_ogr_sql_sqlite")
 @pytest.fixture()
 def require_auto_load_extension():
     if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
+        pytest.skip("SQLite missing")
 
     ds = ogr.Open(":memory:")
     with gdaltest.error_handler():

@@ -563,7 +563,7 @@ def test_ogr_ngw_9():
 
 
 def test_ogr_ngw_10():
-    if gdal.GetDriverByName("NGW") is None or gdaltest.ngw_ds is None:
+    if gdaltest.ngw_ds is None:
         pytest.skip()
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem("id", "")

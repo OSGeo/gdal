@@ -42,6 +42,8 @@ wkts = [
     ("LINESTRING (0 1 2,3 4 5)", "lines2", 32631),
 ]
 
+pytestmark = pytest.mark.require_driver("PCIDSK")
+
 ###############################################################################
 # Test creation
 
@@ -49,9 +51,6 @@ wkts = [
 def test_ogr_pcidsk_1():
 
     ogr_drv = ogr.GetDriverByName("PCIDSK")
-    if ogr_drv is None:
-        pytest.skip()
-
     ds = ogr_drv.CreateDataSource("tmp/ogr_pcidsk_1.pix")
 
     lyr = ds.CreateLayer("nothing", geom_type=ogr.wkbNone)
@@ -120,10 +119,6 @@ def test_ogr_pcidsk_1():
 
 def test_ogr_pcidsk_2():
 
-    ogr_drv = ogr.GetDriverByName("PCIDSK")
-    if ogr_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("tmp/ogr_pcidsk_1.pix")
     assert ds.GetLayerCount() == 2 + len(wkts)
 
@@ -170,9 +165,6 @@ def test_ogr_pcidsk_3():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " tmp/ogr_pcidsk_1.pix"
     )
@@ -199,12 +191,6 @@ def test_ogr_pcidsk_3():
 
 def test_ogr_pcidsk_4():
 
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
-    if gdal.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
     ds = ogr.Open("../gdrivers/data/utm.pix")
     assert ds is None
     ds = None
@@ -216,12 +202,6 @@ def test_ogr_pcidsk_4():
 
 def test_ogr_pcidsk_5():
 
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
-    if gdal.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
     ds = ogr.Open("../gdrivers/data/pcidsk/utm.pix", update=1)
     assert ds is not None
     ds = None
@@ -231,9 +211,6 @@ def test_ogr_pcidsk_5():
 
 
 def test_ogr_pcidsk_add_field_to_non_empty_layer():
-
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
 
     tmpfile = "/vsimem/tmp.pix"
     ds = ogr.GetDriverByName("PCIDSK").CreateDataSource(tmpfile)
@@ -259,9 +236,6 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
 
 def test_ogr_pcidsk_too_many_layers():
 
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
-
     tmpfile = "/vsimem/tmp.pix"
     ds = ogr.GetDriverByName("PCIDSK").CreateDataSource(tmpfile)
     for i in range(1023):
@@ -278,9 +252,6 @@ def test_ogr_pcidsk_too_many_layers():
 
 
 def test_ogr_pcidsk_online_1():
-
-    if ogr.GetDriverByName("PCIDSK") is None:
-        pytest.skip()
 
     gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/pcidsk/sdk_testsuite/polygon.pix",
@@ -311,9 +282,6 @@ def test_ogr_pcidsk_online_2():
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    if ogr.GetDriverByName("PCIDSK") is None:
         pytest.skip()
 
     gdaltest.download_or_skip(

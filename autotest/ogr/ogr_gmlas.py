@@ -2170,10 +2170,8 @@ def test_ogr_gmlas_identifier_case_ambiguity():
 # Test writing support
 
 
+@pytest.mark.require_driver("SQLite")
 def test_ogr_gmlas_writer():
-
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
 
     src_ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_test1.xml", open_options=["EXPOSE_METADATA_LAYERS=YES"]
@@ -2198,10 +2196,8 @@ def test_ogr_gmlas_writer():
 # Check the generated .xml and .xsd
 
 
+@pytest.mark.require_driver("SQLite")
 def test_ogr_gmlas_writer_check_xml_xsd():
-
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
 
     got = open("tmp/gmlas_test1_generated.xml", "rt").read()
     got = got.replace("\r\n", "\n")
@@ -2251,10 +2247,8 @@ def test_ogr_gmlas_writer_check_xml_xsd():
 # as the original one.
 
 
+@pytest.mark.require_driver("SQLite")
 def test_ogr_gmlas_writer_check_xml_read_back():
-
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch("sanitize"):
@@ -2381,6 +2375,7 @@ def test_ogr_gmlas_writer_gml():
 # Test writing support with geometries and -a_srs
 
 
+@pytest.mark.require_driver("SQLite")
 def test_ogr_gmlas_writer_gml_assign_srs():
 
     src_ds = gdal.OpenEx(

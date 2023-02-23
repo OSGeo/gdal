@@ -240,10 +240,8 @@ def test_ogr_sql_9():
 # Test the ILIKE operator.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_ilike():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
@@ -276,10 +274,8 @@ def test_ogr_sql_ilike():
 # Test the LIKE operator.
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_like():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
@@ -598,10 +594,8 @@ def test_ogr_sql_23():
 # Test that style strings get carried with OGR SQL SELECT results. (#2808)
 
 
+@pytest.mark.require_driver("DGN")
 def test_ogr_sql_24():
-
-    if gdal.GetDriverByName("DGN") is None:
-        pytest.skip("DGN driver missing")
 
     ds = ogr.Open("data/dgn/smalltest.dgn")
 
@@ -682,10 +676,8 @@ def test_ogr_sql_26():
 #
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_27():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/testdatetime.csv")
 

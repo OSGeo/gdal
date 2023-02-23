@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("MSSQLSpatial")
+
 ###############################################################################
 # Open Database.
 
@@ -43,9 +45,6 @@ from osgeo import gdal, ogr, osr
 def test_ogr_mssqlspatial_1():
 
     gdaltest.mssqlspatial_ds = None
-
-    if ogr.GetDriverByName("MSSQLSpatial") is None:
-        pytest.skip()
 
     gdaltest.mssqlspatial_dsname = gdal.GetConfigOption(
         "OGR_MSSQL_CONNECTION_STRING",

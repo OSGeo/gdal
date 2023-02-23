@@ -1495,15 +1495,11 @@ def test_ogr_gml_34():
 # Test GML_SKIP_RESOLVE_ELEMS=HUGE (#4380)
 
 
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
 def test_ogr_gml_35():
 
     if not gdaltest.have_gml_reader:
-        pytest.skip()
-
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1605,19 +1601,12 @@ def test_ogr_gml_37():
 
 
 ###############################################################################
-# Test new GMLTopoSurface interpretation (#3934) with HUGE xlink resolver
+# Test new GMLTopoSurface interpretation (#3934) with xlink resolver
 
 
-def test_ogr_gml_38(resolver="HUGE"):
+def internal_ogr_gml_38(resolver):
 
     if not gdaltest.have_gml_reader:
-        pytest.skip()
-
-    if resolver == "HUGE":
-        if ogr.GetDriverByName("SQLite") is None:
-            pytest.skip()
-
-    if not ogrtest.have_geos():
         pytest.skip()
 
     try:
@@ -1657,11 +1646,22 @@ def test_ogr_gml_38(resolver="HUGE"):
 
 
 ###############################################################################
+# Test new GMLTopoSurface interpretation (#3934) with HUGE xlink resolver
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+def test_ogr_gml_resolver_huge():
+    return internal_ogr_gml_38("HUGE")
+
+
+###############################################################################
 # Test new GMLTopoSurface interpretation (#3934) with standard xlink resolver
 
 
-def test_ogr_gml_39():
-    return test_ogr_gml_38("NONE")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+def test_ogr_gml_resolver_none():
+    return internal_ogr_gml_38("NONE")
 
 
 ###############################################################################

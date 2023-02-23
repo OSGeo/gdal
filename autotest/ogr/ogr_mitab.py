@@ -1966,10 +1966,8 @@ def test_ogr_mitab_38():
 # Read various geometry types from .mif
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_mitab_39():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = ogr.Open("data/mitab/all_geoms.mif")
     lyr = ds.GetLayer(0)
@@ -2015,10 +2013,8 @@ def test_ogr_mitab_40():
 # Read various geometry types from .tab
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_mitab_41():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = ogr.Open("data/mitab/all_geoms.tab")
     lyr = ds.GetLayer(0)
@@ -2044,10 +2040,8 @@ def test_ogr_mitab_41():
 # Read various geometry types from .tab with block size = 32256
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_mitab_42():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver is missing")
 
     ds = ogr.Open("/vsizip/data/mitab/all_geoms_block_32256.zip")
     lyr = ds.GetLayer(0)
