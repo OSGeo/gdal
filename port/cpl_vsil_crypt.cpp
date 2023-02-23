@@ -129,7 +129,7 @@ extern "C" __declspec(dllexport) void __cdecl SetNewAndDeleteFromCryptoPP(
     s_pDelete = pDelete;
 }
 
-void *__cdecl operator new(vsize_t size)
+void *__cdecl operator new(size_t size)
 {
     return s_pNew(size);
 }
