@@ -364,11 +364,8 @@ def test_tiff_write_11():
 # Read JPEG Compressed YCbCr subsampled image.
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_12():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     ds = gdal.Open("data/sasha.tif")
     cs = ds.GetRasterBand(3).Checksum()
@@ -379,11 +376,8 @@ def test_tiff_write_12():
 # Write JPEG Compressed YCbCr subsampled image.
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_13():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open("data/sasha.tif")
     ds = gdaltest.tiff_drv.CreateCopy(
@@ -412,6 +406,7 @@ def test_tiff_write_13():
         14135,  # libjpeg 9e
     )
 
+    md = gdaltest.tiff_drv.GetMetadata()
     if md["LIBTIFF"] == "INTERNAL":
         # 22816 with libjpeg-6b or libjpeg-turbo
         # 22828 with libjpeg-9d
@@ -1905,11 +1900,8 @@ def test_tiff_write_53_bis():
 # and write data into it without closing it and re-opening it (#2645)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_54():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     ds = gdaltest.tiff_drv.Create(
         "tmp/tiff_write_54.tif",
@@ -2565,11 +2557,8 @@ def test_tiff_write_73():
 @pytest.mark.skipif(
     "SKIP_TIFF_JPEG12" in os.environ, reason="Crashes on build-windows-msys2-mingw"
 )
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_74():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     old_accum = gdal.GetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
@@ -2743,11 +2732,8 @@ def test_tiff_write_77():
 # Test generating & reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_78():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdaltest.tiff_drv.Create("tmp/tiff_write_78_src.tif", 16, 2048, 3)
     src_ds.GetRasterBand(2).Fill(255)
@@ -3094,12 +3080,8 @@ def test_tiff_write_83():
 # changes in the midst of encoding of tiles (#3539)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_84():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     with gdaltest.SetCacheMax(0):
         ds = gdal.GetDriverByName("GTiff").Create("tmp/tiff_write_84.tif", 128, 128, 3)
@@ -3424,10 +3406,8 @@ def test_tiff_write_88():
 # Test JPEG_QUALITY propagation while creating a (default compressed) mask band
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_89():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     last_size = 0
     for quality in [90, 75, 30]:
@@ -3479,10 +3459,8 @@ def test_tiff_write_89():
 # Test JPEG_QUALITY propagation/override while creating (internal) overviews
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_90():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     checksums = {}
     qualities = [90, 75, 75]
@@ -3538,10 +3516,8 @@ def test_tiff_write_90():
 
 
 @pytest.mark.parametrize("external_ovr", [True, False])
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_90_webp(external_ovr):
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
 
     checksums = {}
     qualities = [90, 75, 75]
@@ -3599,18 +3575,15 @@ def test_tiff_write_90_webp(external_ovr):
 
 
 @pytest.mark.parametrize("external_ovr", [True, False])
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_90_webp_lossless(external_ovr):
-    drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
 
     checksums = {}
     for i in range(2):
         src_ds = gdal.Open("../gdrivers/data/utm.tif")
         fname = "tmp/tiff_write_90_webp_lossless_%d" % i
 
-        ds = drv.Create(fname, 512, 512, 3, options=["COMPRESS=WEBP"])
+        ds = gdaltest.tiff_drv.Create(fname, 512, 512, 3, options=["COMPRESS=WEBP"])
 
         data = src_ds.GetRasterBand(1).ReadRaster()
         ds.GetRasterBand(1).WriteRaster(0, 0, 512, 512, data)
@@ -3636,7 +3609,7 @@ def test_tiff_write_90_webp_lossless(external_ovr):
             ds.GetRasterBand(1).GetOverview(0).Checksum(),
         ]
         ds = None
-        drv.Delete(fname)
+        gdaltest.tiff_drv.Delete(fname)
 
     assert checksums[0][0] == checksums[1][0]
     assert checksums[0][1] != checksums[1][1]
@@ -3646,10 +3619,8 @@ def test_tiff_write_90_webp_lossless(external_ovr):
 # Test JPEG_QUALITY propagation while creating (internal) overviews after re-opening
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_91():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     checksums = {}
     for quality in [90, 75, 30]:
@@ -3704,10 +3675,8 @@ def test_tiff_write_91():
 # Test WEBP_LEVEL_OVERVIEW while creating (internal) overviews after re-opening
 
 
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_91_webp():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
 
     checksums = {}
     for quality in [90, 75, 30]:
@@ -3759,10 +3728,8 @@ def test_tiff_write_91_webp():
 # This will test that we correctly guess the quality of the main dataset
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_92():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     last_size = 0
     quality = 30
@@ -3814,10 +3781,8 @@ def test_tiff_write_92():
 # Test JPEG_QUALITY_OVERVIEW propagation while creating external overviews
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_93():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open("../gdrivers/data/utm.tif")
     ds = gdal.GetDriverByName("GTiff").Create(
@@ -3878,10 +3843,8 @@ def test_tiff_write_93():
 # and check JPEG_QUALITY propagation without warning
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_94():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/tiff_write_94_src.tif", 1024, 1024, 3
@@ -4313,12 +4276,8 @@ def test_tiff_write_tiepoints_pixelispoint():
 # Create copy into a RGB JPEG-IN-TIFF (#3887)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_99():
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     src_ds = gdal.Open("data/rgbsmall.tif")
     new_ds = gdaltest.tiff_drv.CreateCopy(
@@ -4342,12 +4301,8 @@ def test_tiff_write_99():
 # Create copy into a 2 band JPEG-IN-TIFF (#3887)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_100():
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     src_ds = gdaltest.tiff_drv.Create("/vsimem/test_100_src.tif", 16, 16, 2)
     src_ds.GetRasterBand(1).Fill(255)
@@ -4585,6 +4540,7 @@ def test_tiff_write_105():
 # Test the direct copy mechanism of JPEG source
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_106(
     filename="../gdrivers/data/jpeg/byte_with_xmp.jpg", options=None, check_cs=True
 ):
@@ -4594,10 +4550,6 @@ def test_tiff_write_106(
 
     if options is None:
         options = ["COMPRESS=JPEG"]
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open(filename)
     nbands = src_ds.RasterCount
@@ -4710,10 +4662,8 @@ def test_tiff_write_114():
 # Test writing a pixel interleaved RGBA JPEG-compressed TIFF
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_115():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     tmpfilename = "/vsimem/tiff_write_115.tif"
 
@@ -4760,10 +4710,8 @@ def test_tiff_write_115():
 # Test writing a band interleaved RGBA JPEG-compressed TIFF
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_116():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     tmpfilename = "/vsimem/tiff_write_116.tif"
 
@@ -5423,14 +5371,11 @@ def test_tiff_write_125():
 # Test implicit JPEG-in-TIFF overviews
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_126():
 
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open("../gdrivers/data/small_world_400pct.vrt")
 
@@ -5619,6 +5564,7 @@ def test_tiff_write_126():
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_126.tif")
 
     # We need libtiff 4.0.4 (unreleased at that time)
+    md = gdaltest.tiff_drv.GetMetadata()
     if md["LIBTIFF"] != "INTERNAL":
         print("skipping tests that will fail without internal libtiff")
         return
@@ -5717,14 +5663,11 @@ def test_tiff_write_127():
 # Test lossless copying of a CMYK JPEG into JPEG-in-TIFF (#5712)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_128():
 
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     src_ds = gdal.Open("../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg")
@@ -5809,10 +5752,8 @@ def test_tiff_write_128():
 # Check effective guessing of existing JPEG quality
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_129():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     for jpegtablesmode in ["1", "3"]:
         for photometric in ["RGB", "YCBCR"]:
@@ -5862,10 +5803,8 @@ def test_tiff_write_129():
 # Test cases where JPEG quality will fail
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_130():
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     shutil.copyfile(
         "data/byte_jpg_unusual_jpegtable.tif", "tmp/byte_jpg_unusual_jpegtable.tif"
@@ -5900,11 +5839,8 @@ def test_tiff_write_130():
 # Test LZMA compression
 
 
+@gdaltest.require_creation_option("GTiff", "LZMA")
 def test_tiff_write_131(level=1):
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LZMA") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_131.tif"
     src_ds = gdal.Open("data/byte.tif")
@@ -5926,6 +5862,7 @@ def test_tiff_write_131(level=1):
     gdal.Unlink(filename)
 
 
+@gdaltest.require_creation_option("GTiff", "LZMA")
 def test_tiff_write_131_level_9():
     return test_tiff_write_131(level=9)
 
@@ -7217,14 +7154,11 @@ def test_tiff_write_145():
 # is a legal formulation since 4 bands should probably be seen as CMYK)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_146():
 
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     tmp_ds = gdal.Translate("", "data/stefan_full_rgba.tif", format="MEM")
     original_stats = [
@@ -7257,14 +7191,11 @@ def test_tiff_write_146():
 # to RGBA
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_147():
 
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
@@ -7285,14 +7216,11 @@ def test_tiff_write_147():
 # Test that we can use implicit JPEG-in-TIFF overviews with CMYK in raw mode
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_148():
 
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     tmp_ds = gdal.Translate("", "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg", format="MEM")
@@ -7914,11 +7842,8 @@ def test_tiff_write_158():
 # result in a https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_159():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     prev_table = ""
     for options in [[], ["JPEG_QUALITY=50"], ["PHOTOMETRIC=YCBCR"]]:
@@ -8061,12 +7986,8 @@ def test_tiff_write_161():
 # Test creating a JPEG compressed file with big tiles (#6757)
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_162():
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 3)
 
@@ -8347,11 +8268,8 @@ def test_tiff_write_170_invalid_compresion():
 # Test ZSTD compression
 
 
+@gdaltest.require_creation_option("GTiff", "ZSTD")
 def test_tiff_write_171_zstd():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("ZSTD") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=ZSTD", "ZSTD_LEVEL=1"]
@@ -8363,11 +8281,8 @@ def test_tiff_write_171_zstd():
 # Test ZSTD compression with PREDICTOR = 2
 
 
+@gdaltest.require_creation_option("GTiff", "ZSTD")
 def test_tiff_write_171_zstd_predictor():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("ZSTD") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff",
@@ -8384,12 +8299,8 @@ def test_tiff_write_171_zstd_predictor():
 
 
 @pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_webp(writeImageStructureMetadata):
-
-    drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
 
     filename = "/vsimem/test_tiff_write_webp.tif"
     src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
@@ -8397,7 +8308,9 @@ def test_tiff_write_webp(writeImageStructureMetadata):
         "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
         "YES" if writeImageStructureMetadata else "NO",
     ):
-        drv.CreateCopy(filename, src_ds, options=["COMPRESS=WEBP", "WEBP_LEVEL=50"])
+        gdaltest.tiff_drv.CreateCopy(
+            filename, src_ds, options=["COMPRESS=WEBP", "WEBP_LEVEL=50"]
+        )
     ds = gdal.Open(filename)
 
     assert ds.GetMetadataItem("WEBP_LOSSLESS", "_DEBUG_") == "0"
@@ -8414,7 +8327,7 @@ def test_tiff_write_webp(writeImageStructureMetadata):
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs != [0, 0, 0]
 
-    drv.Delete(filename)
+    gdaltest.tiff_drv.Delete(filename)
     gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
 
 
@@ -8423,15 +8336,9 @@ def test_tiff_write_webp(writeImageStructureMetadata):
 
 
 @pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+@gdaltest.require_creation_option("GTiff", "WEBP")
+@gdaltest.require_creation_option("GTiff", "WEBP_LOSSLESS")
 def test_tiff_write_tiled_webp(writeImageStructureMetadata):
-
-    drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
-
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP_LOSSLESS") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_tiled_webp.tif"
     src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
@@ -8439,7 +8346,7 @@ def test_tiff_write_tiled_webp(writeImageStructureMetadata):
         "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
         "YES" if writeImageStructureMetadata else "NO",
     ):
-        drv.CreateCopy(
+        gdaltest.tiff_drv.CreateCopy(
             filename,
             src_ds,
             options=["COMPRESS=WEBP", "WEBP_LOSSLESS=true", "TILED=true"],
@@ -8466,7 +8373,7 @@ def test_tiff_write_tiled_webp(writeImageStructureMetadata):
         )
     ds = None
 
-    drv.Delete(filename)
+    gdaltest.tiff_drv.Delete(filename)
     gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
 
 
@@ -8474,11 +8381,8 @@ def test_tiff_write_tiled_webp(writeImageStructureMetadata):
 # Test WEBP compression with huge single strip
 
 
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_webp_huge_single_strip():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tif_webp_huge_single_strip.tif"
     src_ds = gdal.Open("data/tif_webp_huge_single_strip.tif")
@@ -8533,11 +8437,8 @@ def test_tiff_write_172_geometadata_tiff_rsid():
 # Test LERC compression
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_173_lerc():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC"])
     return ut.testCreateCopy()
@@ -8547,11 +8448,8 @@ def test_tiff_write_173_lerc():
 # Test LERC_DEFLATE compression
 
 
+@gdaltest.require_creation_option("GTiff", "LERC_DEFLATE")
 def test_tiff_write_174_lerc_deflate():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC_DEFLATE") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE"]
@@ -8563,11 +8461,8 @@ def test_tiff_write_174_lerc_deflate():
 # Test LERC_DEFLATE compression
 
 
+@gdaltest.require_creation_option("GTiff", "LERC_DEFLATE")
 def test_tiff_write_174_lerc_deflate_with_level():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC_DEFLATE") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE", "ZLEVEL=1"]
@@ -8579,11 +8474,8 @@ def test_tiff_write_174_lerc_deflate_with_level():
 # Test LERC_ZSTD compression
 
 
+@gdaltest.require_creation_option("GTiff", "LERC_ZSTD")
 def test_tiff_write_175_lerc_zstd():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC_ZSTD") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD"])
     return ut.testCreateCopy()
@@ -8593,11 +8485,8 @@ def test_tiff_write_175_lerc_zstd():
 # Test LERC_ZSTD compression
 
 
+@gdaltest.require_creation_option("GTiff", "LERC_ZSTD")
 def test_tiff_write_175_lerc_zstd_with_level():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC_ZSTD") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD", "ZSTD_LEVEL=1"]
@@ -8609,11 +8498,8 @@ def test_tiff_write_175_lerc_zstd_with_level():
 # Test LERC compression with MAX_Z_ERROR
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_176_lerc_max_z_error():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4529, options=["COMPRESS=LERC", "MAX_Z_ERROR=1"]
@@ -8625,11 +8511,8 @@ def test_tiff_write_176_lerc_max_z_error():
 # Test LERC compression with several bands and tiling
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_177_lerc_several_bands_tiling():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_177_lerc_several_bands_tiling.tif"
     gdal.Translate(
@@ -8648,11 +8531,8 @@ def test_tiff_write_177_lerc_several_bands_tiling():
 # Test LERC compression with alpha band
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_178_lerc_with_alpha():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_178_lerc_with_alpha.tif"
     gdal.Translate(
@@ -8669,11 +8549,8 @@ def test_tiff_write_178_lerc_with_alpha():
 # Test LERC compression with alpha band with only 0 and 255
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_178_lerc_with_alpha_0_and_255():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_178_lerc_with_alpha_0_and_255.tif"
     gdal.Translate(
@@ -8692,11 +8569,8 @@ def test_tiff_write_178_lerc_with_alpha_0_and_255():
 # Test LERC compression with different data types
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_179_lerc_data_types():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_179_lerc_data_types.tif"
     for src_filename in [
@@ -8740,11 +8614,8 @@ def test_tiff_write_179_lerc_data_types():
 # Test LERC compression with several bands and separate
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_180_lerc_separate():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/tiff_write_180_lerc_separate.tif"
     gdal.Translate(
@@ -8841,10 +8712,8 @@ def test_tiff_write_lerc_overview(external_ovr, compression):
 
 
 @pytest.mark.parametrize("external_ovr", [True, False])
+@gdaltest.require_creation_option("GTiff", "LERC_DEFLATE")
 def test_tiff_write_lerc_zlevel(external_ovr):
-    md = gdaltest.tiff_drv.GetMetadata()
-    if "LERC_DEFLATE" not in md["DMD_CREATIONOPTIONLIST"]:
-        pytest.skip()
 
     filesize = {}
     src_ds = gdal.Open("../gdrivers/data/utm.tif")
@@ -8880,10 +8749,8 @@ def test_tiff_write_lerc_zlevel(external_ovr):
 
 
 @pytest.mark.parametrize("external_ovr", [True, False])
+@gdaltest.require_creation_option("GTiff", "LERC_ZSTD")
 def test_tiff_write_lerc_zstd_level(external_ovr):
-    md = gdaltest.tiff_drv.GetMetadata()
-    if "LERC_ZSTD" not in md["DMD_CREATIONOPTIONLIST"]:
-        pytest.skip()
 
     filesize = {}
     src_ds = gdal.Open("../gdrivers/data/utm.tif")
@@ -9040,11 +8907,8 @@ def test_tiff_write_184_create_append_subdataset():
 # Fixes https://github.com/OSGeo/gdal/issues/1257
 
 
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_185_lerc_create_and_overview():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     filename = "/vsimem/test_tiff_write_185_lerc_create_and_overview.tif"
     ds = gdaltest.tiff_drv.Create(filename, 20, 20, options=["COMPRESS=LERC_DEFLATE"])
@@ -9207,11 +9071,8 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
 # Test that -co PHOTOMETRIC=YCBCR -co COMPRESS=JPEG does not create a TIFFTAG_GDAL_METADATA
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     tmpfile = "/vsimem/test_tiff_write_no_gdal_metadata_tag_for_ycbcr_jpeg.tif"
     assert gdaltest.tiff_drv.Create(
@@ -9406,11 +9267,8 @@ def test_tiff_write_too_many_tiles():
 #
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_jpeg_incompatible_of_paletted():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
 
     src_ds = gdal.Open("data/test_average_palette.tif")
     with gdaltest.error_handler():
@@ -9508,11 +9366,8 @@ def test_tiff_write_internal_ovr_default_blocksize(blockSize, numThreads):
 @pytest.mark.parametrize(
     "gdalDataType,structType", [[gdal.GDT_Float32, "f"], [gdal.GDT_Float64, "d"]]
 )
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_lerc_float(gdalDataType, structType):
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdalDataType)
     src_ds.GetRasterBand(1).WriteRaster(
@@ -9533,11 +9388,8 @@ def test_tiff_write_lerc_float(gdalDataType, structType):
 @pytest.mark.parametrize(
     "gdalDataType,structType", [[gdal.GDT_Float32, "f"], [gdal.GDT_Float64, "d"]]
 )
+@gdaltest.require_creation_option("GTiff", "LERC")
 def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("LERC") == -1:
-        pytest.skip()
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdalDataType)
     src_ds.GetRasterBand(1).WriteRaster(
@@ -9559,12 +9411,8 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
 
 @pytest.mark.parametrize("lossless", ["YES", "NO", None])
 @pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+@gdaltest.require_creation_option("GTiff", "JXL")
 def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadata):
-
-    drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
-        pytest.skip()
 
     outfile = "/vsimem/test_tiff_write_jpegxl_byte_single_band.tif"
     options = ["COMPRESS=JXL"]
@@ -9576,7 +9424,9 @@ def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadat
         "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
         "YES" if writeImageStructureMetadata else "NO",
     ):
-        drv.CreateCopy(outfile, gdal.Open("data/byte.tif"), options=options)
+        gdaltest.tiff_drv.CreateCopy(
+            outfile, gdal.Open("data/byte.tif"), options=options
+        )
     ds = gdal.Open(outfile)
 
     if writeImageStructureMetadata:
@@ -9622,18 +9472,15 @@ def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadat
         )
     ds = None
 
-    drv.Delete(outfile)
+    gdaltest.tiff_drv.Delete(outfile)
 
 
 ###############################################################################
 # Test JXL compression
 
 
+@gdaltest.require_creation_option("GTiff", "JXL")
 def test_tiff_write_jpegxl_byte_three_band():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest("GTiff", "rgbsmall.tif", 1, 21212, options=["COMPRESS=JXL"])
     return ut.testCreateCopy()
@@ -9643,11 +9490,8 @@ def test_tiff_write_jpegxl_byte_three_band():
 # Test JXL compression
 
 
+@gdaltest.require_creation_option("GTiff", "JXL")
 def test_tiff_write_jpegxl_uint16_single_band():
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
-        pytest.skip()
 
     ut = gdaltest.GDALTest("GTiff", "uint16.tif", 1, 4672, options=["COMPRESS=JXL"])
     return ut.testCreateCopy()
@@ -9657,12 +9501,10 @@ def test_tiff_write_jpegxl_uint16_single_band():
 # Test JXL_ALPHA_DISTANCE option
 
 
+@gdaltest.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
 def test_tiff_write_jpegxl_alpha_distance_zero():
 
     drv = gdal.GetDriverByName("GTiff")
-    md = drv.GetMetadata()
-    if "JXL_ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
-        pytest.skip("libjxl > 0.8.1 required")
 
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
     filename = "/vsimem/test_tiff_write_jpegxl_alpha_distance_zero.tif"
@@ -10465,12 +10307,10 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
 
 ###############################################################################
 # Test JXL compression
+@gdaltest.require_creation_option("GTiff", "JXL")
 def test_tiff_write_jpegxl_band_combinations():
 
     tmpfilename = "/vsimem/test_tiff_write_jpegxl_band_combinations.tif"
-    md = gdal.GetDriverByName("GTiff").GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
-        pytest.skip()
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
     for b in range(6):
@@ -10612,14 +10452,12 @@ def test_tiff_write_jpegxl_band_combinations():
 # Test turning on lossy WEBP compression if WEBP_LEVEL_OVERVIEW specified
 
 
+@gdaltest.require_creation_option("GTiff", "WEBP")
 def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
 
     tmpfilename = (
         "/vsimem/test_tiff_write_webp_overview_turn_on_lossy_if_webp_level.tif"
     )
-    md = gdal.GetDriverByName("GTiff").GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
-        pytest.skip()
     if gdal.GetDriverByName("WEBP") is None:
         pytest.skip()
 
@@ -10651,11 +10489,9 @@ def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
 
 
 @pytest.mark.parametrize("extra_options", ["-co PHOTOMETRIC=YCBCR", ""])
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_lossless_extraction_of_JPEG_tile(extra_options):
 
-    md = gdal.GetDriverByName("GTiff").GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
-        pytest.skip()
     if gdal.GetDriverByName("JPEG") is None:
         pytest.skip()
 
@@ -10686,11 +10522,9 @@ def test_tiff_write_lossless_extraction_of_JPEG_tile(extra_options):
 # Test lossless extraction of a JPEGXL compressed tile to JPEGXL
 
 
+@gdaltest.require_creation_option("GTiff", "JXL")
 def test_tiff_write_lossless_extraction_of_JPEGXL_tile():
 
-    md = gdal.GetDriverByName("GTiff").GetMetadata()
-    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
-        pytest.skip()
     if gdal.GetDriverByName("JPEGXL") is None:
         pytest.skip()
 

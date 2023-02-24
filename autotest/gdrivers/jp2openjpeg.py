@@ -3575,15 +3575,8 @@ def test_jp2openjpeg_50():
 # Test CODEBLOCK_STYLE
 
 
+@gdaltest.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
 def test_jp2openjpeg_codeblock_style():
-
-    if (
-        gdaltest.jp2openjpeg_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST").find(
-            "CODEBLOCK_STYLE"
-        )
-        < 0
-    ):
-        pytest.skip()
 
     filename = "/vsimem/jp2openjpeg_codeblock_style.jp2"
     for options in [
@@ -3688,16 +3681,8 @@ def test_jp2openjpeg_odd_dimensions():
 ###############################################################################
 
 
+@gdaltest.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
 def test_jp2openjpeg_odd_dimensions_overviews():
-
-    # Only try the rest with openjpeg >= 2.3 to avoid potential memory issues
-    if (
-        gdaltest.jp2openjpeg_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST").find(
-            "CODEBLOCK_STYLE"
-        )
-        < 0
-    ):
-        pytest.skip()
 
     # Check that we don't request outside of the full resolution coordinates
     ds = gdal.Open("data/jpeg2000/single_block_32769_16385.jp2")
@@ -3733,14 +3718,10 @@ def test_jp2openjpeg_tilesize_16():
 # Test generation of PLT marker segments
 
 
+@gdaltest.require_creation_option(
+    "JP2OpenJPEG", "PLT"
+)  # Only try the test with openjpeg >= 2.4.0 that supports it
 def test_jp2openjpeg_generate_PLT():
-
-    # Only try the test with openjpeg >= 2.4.0 that supports it
-    if (
-        gdaltest.jp2openjpeg_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST").find("PLT")
-        < 0
-    ):
-        pytest.skip()
 
     filename = "/vsimem/temp.jp2"
     gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -3764,14 +3745,10 @@ def test_jp2openjpeg_generate_PLT():
 # Test generation of TLM marker segments
 
 
+@gdaltest.require_creation_option(
+    "JP2OpenJPEG", "TLM"
+)  # Only try the test with openjpeg >= 2.5.0 that supports it
 def test_jp2openjpeg_generate_TLM():
-
-    # Only try the test with openjpeg >= 2.5.0 that supports it
-    if (
-        gdaltest.jp2openjpeg_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST").find("TLM")
-        < 0
-    ):
-        pytest.skip()
 
     filename = "/vsimem/temp.jp2"
     gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -3795,11 +3772,10 @@ def test_jp2openjpeg_generate_TLM():
 # Test STRICT=NO open option
 
 
+@gdaltest.require_creation_option(
+    "JP2OpenJPEG", "'STRICT'"
+)  # Only try the test with openjpeg >= 2.5.0 that supports it
 def test_jp2openjpeg_STRICT_NO():
-
-    # Only try the test with openjpeg >= 2.5.0 that supports it
-    if "'STRICT'" not in gdaltest.jp2openjpeg_drv.GetMetadataItem("DMD_OPENOPTIONLIST"):
-        pytest.skip()
 
     filename = "data/jpeg2000/small_world_truncated.jp2"
 

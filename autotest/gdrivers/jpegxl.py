@@ -162,12 +162,8 @@ def test_jpegxl_rgba_quality(quality, equivalent_distance):
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_xmp():
-
-    if "COMPRESS_BOX" not in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip()
 
     src_ds = gdal.Open("data/gtiff/byte_with_xmp.tif")
     outfilename = "/vsimem/out.jxl"
@@ -183,12 +179,8 @@ def test_jpegxl_xmp():
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_exif():
-
-    if "COMPRESS_BOX" not in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/exif_and_gps.tif")
     outfilename = "/vsimem/out.jxl"
@@ -204,12 +196,8 @@ def test_jpegxl_exif():
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_read_huge_xmp_compressed_box():
-
-    if "COMPRESS_BOX" not in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip()
 
     with gdaltest.error_handler():
         gdal.ErrorReset()
@@ -370,17 +358,12 @@ def test_jpegxl_lossless_copy_of_jpeg():
             )
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_lossless_copy_of_jpeg_disabled():
 
     jpeg_drv = gdal.GetDriverByName("JPEG")
     if jpeg_drv is None:
         pytest.skip("JPEG driver missing")
-
-    has_box_api = "COMPRESS_BOX" in gdal.GetDriverByName("JPEGXL").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    )
-    if not has_box_api:
-        pytest.skip()
 
     src_ds = gdal.Open("data/jpeg/albania.jpg")
     outfilename = "/vsimem/out.jxl"
@@ -447,15 +430,13 @@ def test_jpegxl_lossless_copy_of_jpeg_with_mask_band():
     jpeg_drv.Delete(outfilename_jpg)
 
 
+@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_lossless_copy_of_jpeg_xmp():
 
     jpeg_drv = gdal.GetDriverByName("JPEG")
     if jpeg_drv is None:
         pytest.skip("JPEG driver missing")
     drv = gdal.GetDriverByName("JPEGXL")
-    has_box_api = "COMPRESS_BOX" in drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    if not has_box_api:
-        pytest.skip()
 
     src_ds = gdal.Open("data/jpeg/byte_with_xmp.jpg")
     outfilename = "/vsimem/out.jxl"
@@ -815,12 +796,12 @@ def test_jpegxl_apply_orientation(orientation):
 # Test ALPHA_DISTANCE option
 
 
+@gdaltest.require_creation_option(
+    "JPEGXL", "ALPHA_DISTANCE"
+)  # "libjxl > 0.8.1 required"
 def test_jpegxl_alpha_distance_zero():
 
     drv = gdal.GetDriverByName("JPEGXL")
-    md = drv.GetMetadata()
-    if "ALPHA_DISTANCE" not in md["DMD_CREATIONOPTIONLIST"]:
-        pytest.skip("libjxl > 0.8.1 required")
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     filename = "/vsimem/test_jpegxl_alpha_distance_zero.jxl"

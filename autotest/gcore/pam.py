@@ -184,12 +184,8 @@ def test_pam_4():
 #
 
 
+@gdaltest.require_creation_option("GTiff", "JPEG")
 def test_pam_5():
-
-    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    ):
-        pytest.skip("JPEG support missing")
 
     ds = gdal.Open("data/sasha.tif")
     filelist = ds.GetFileList()
