@@ -1657,7 +1657,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
-``a_scale``, ``a_offset``, and ``ot``. 
+``a_scale``, ``a_offset``, ``ot``, and ``gcp``. 
 
 Other options may be added in the future.
 
@@ -1689,6 +1689,11 @@ modification of pixel values is done), as with (:ref:`gdal_translate`).
 
 The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a 
 specific data type supported by the driver as with (:ref:`gdal_translate`).
+
+The effect of the ``gcp`` option (added in GDAL 3.7) is to add the indicated ground control point 
+to the output dataset. Values are a set of as per (:ref:`gdal_translate`)``pixel,line,easting,northing,elevation``.  
+Multiple entries may be included. This can also be seen as an equivalent of running 
+`gdal_translate -of VRT -gcp pixel1 line1 easting1 northing1 [elevation1] -gcp pixel2 line2 easting2 northing2 [elevation2] ... -gcp pixelN lineN eastingN northingN [elevationN]`. 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

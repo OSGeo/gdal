@@ -1060,6 +1060,29 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-ot");
                 argv.AddString(pszValue);
             }
+            else if (EQUAL(pszKey, "gcp"))
+            {
+                CPLStringList aosGCP(CSLTokenizeString2(pszValue, ",", 0));
+
+                //FIXME:  not robust to gcp=0,0,00
+                if (aosGCP.size() < 4 || aosGCP.size() > 5)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid value for GCP: %s\n  need 4, or 5 "
+                             "numbers, comma separated: "
+                             "'gcp=<pixel>,<line>,<easting>,<northing>[,<"
+                             "elevation>]'",
+                             pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                argv.AddString("-gcp");
+                for (int j = 0; j < aosGCP.size(); j++)
+                {
+                    argv.AddString(aosGCP[j]);
+                }
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
