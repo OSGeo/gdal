@@ -1064,7 +1064,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 CPLStringList aosGCP(CSLTokenizeString2(pszValue, ",", 0));
 
-                //FIXME:  not robust to gcp=0,0,00
                 if (aosGCP.size() < 4 || aosGCP.size() > 5)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
