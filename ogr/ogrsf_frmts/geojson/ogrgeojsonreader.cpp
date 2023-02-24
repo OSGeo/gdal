@@ -1934,7 +1934,13 @@ void OGRGeoJSONReaderAddOrUpdateField(
             if (eSubType == OFSTNone)
             {
                 if (eNewType == OFTStringList)
+                {
                     poFDefn->SetType(OFTStringList);
+                }
+                else if (eNewType == OFTInteger)
+                {
+                    poFDefn->SetSubType(OFSTJSON);
+                }
             }
         }
         else if (eType == OFTIntegerList)

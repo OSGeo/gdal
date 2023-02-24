@@ -4203,3 +4203,44 @@ def test_ogr_geojson_test_ogrsf():
 
     assert "INFO" in ret
     assert "ERROR" not in ret
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/7313
+
+
+@pytest.mark.parametrize(
+    "properties",
+    [
+        ["a_string", 42, {"a_field": "a_value"}],
+        ["a_string", {"a_field": "a_value"}, 42],
+        [42, "a_string", {"a_field": "a_value"}],
+        [42, {"a_field": "a_value"}, "a_string"],
+        [{"a_field": "a_value"}, 42, "a_string"],
+        [{"a_field": "a_value"}, "a_string", 42],
+    ],
+)
+def test_ogr_geojson_mixed_type_promotion(properties):
+
+    tmpfilename = "/vsimem/temp.json"
+
+    jdata = {"type": "FeatureCollection", "features": []}
+
+    for prop_val in properties:
+        jdata["features"].append({"type": "Feature", "properties": {"prop0": prop_val}})
+
+    gdal.FileFromMemBuffer(
+        tmpfilename,
+        json.dumps(jdata),
+    )
+
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR)
+    assert ds is not None
+
+    lyr = ds.GetLayer(0)
+    lyr_def = lyr.GetLayerDefn()
+    fld_def = lyr_def.GetFieldDefn(0)
+    assert fld_def.GetTypeName() == "String"
+    assert fld_def.GetSubType() == ogr.OFSTJSON
+
+    gdal.Unlink(tmpfilename)
