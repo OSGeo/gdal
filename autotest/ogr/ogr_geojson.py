@@ -4212,6 +4212,7 @@ def test_ogr_geojson_test_ogrsf():
 @pytest.mark.parametrize(
     "properties",
     [
+        ["a_string", 42.0, {"a_field": "a_value"}],
         ["a_string", 42, {"a_field": "a_value"}],
         ["a_string", {"a_field": "a_value"}, 42],
         [42, "a_string", {"a_field": "a_value"}],

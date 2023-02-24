@@ -1937,7 +1937,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
                 {
                     poFDefn->SetType(OFTStringList);
                 }
-                else if (eNewType == OFTInteger)
+                else if (eNewType != OFTString)
                 {
                     poFDefn->SetSubType(OFSTJSON);
                 }
