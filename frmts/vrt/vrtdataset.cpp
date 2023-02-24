@@ -1055,6 +1055,11 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-a_offset");
                 argv.AddString(pszValue);
             }
+            else if (EQUAL(pszKey, "ot"))
+            {
+                argv.AddString("-ot");
+                argv.AddString(pszValue);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",

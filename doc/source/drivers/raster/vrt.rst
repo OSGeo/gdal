@@ -1657,7 +1657,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
-``a_scale``, and ``a_offset``. 
+``a_scale``, ``a_offset``, and ``ot``. 
 
 Other options may be added in the future.
 
@@ -1686,6 +1686,9 @@ modification of pixel values is done), as with (:ref:`gdal_translate`).
 
 The effect of the ``a_offset`` option (added in GDAL 3.7) is to set band offset value (no 
 modification of pixel values is done), as with (:ref:`gdal_translate`).
+
+The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a 
+specific data type supported by the driver as with (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
