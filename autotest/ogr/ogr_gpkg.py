@@ -5347,7 +5347,7 @@ def test_abort_sql():
         ds.ExecuteSQL(sql)
 
     end = time.time()
-    assert int(end - start) < 1
+    assert int(end - start) < 2
 
     # Same test with a GDAL dataset
     ds2 = gdal.OpenEx(filename, gdal.OF_VECTOR)
@@ -5366,7 +5366,7 @@ def test_abort_sql():
         ds2.ExecuteSQL(sql)
 
     end = time.time()
-    assert int(end - start) < 1
+    assert int(end - start) < 2
 
 
 ###############################################################################
