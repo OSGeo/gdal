@@ -296,7 +296,6 @@ class OGRShapeDataSource final : public OGRDataSource
     OGRShapeLayer **papoLayers;
     int nLayers;
     char *pszName;
-    bool bDSUpdate;
     bool bSingleFileDataSource;
     OGRLayerPool *poPool;
 
