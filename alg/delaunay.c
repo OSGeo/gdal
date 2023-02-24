@@ -69,8 +69,17 @@ CPL_CVSID("$Id$")
     disable : 4324)  // 'qhT': structure was padded due to alignment specifier
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include "libqhull_r/libqhull_r.h"
 #include "libqhull_r/qset_r.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #pragma warning(pop)
