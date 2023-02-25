@@ -1082,11 +1082,13 @@ def test_ogr_shape_25():
     wkt = "MULTIPOLYGON(((10 5, 5 5,5 0,0 0,0 10,10 10,10 5)),((10 5,10 0,5 0,5 4.9,10 5)), ((100 100,100 200,200 200,200 100,100 100)))"
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT")
-    ogr_shape_23_write_geom(
-        layer_name, geom, ogr.CreateGeometryFromWkt(geom.ExportToWkt()), ogr.wkbUnknown
-    )
-    gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", "")
+    with gdaltest.config_option("OGR_ORGANIZE_POLYGONS", "DEFAULT"):
+        ogr_shape_23_write_geom(
+            layer_name,
+            geom,
+            ogr.CreateGeometryFromWkt(geom.ExportToWkt()),
+            ogr.wkbUnknown,
+        )
 
 
 ###############################################################################
@@ -1195,9 +1197,8 @@ def test_ogr_shape_28():
     ds = None
 
     # Re-open and check the new value
-    gdal.SetConfigOption("SHAPE_2GB_LIMIT", "TRUE")
-    ds = ogr.Open("tmp/hugedbf.dbf", 1)
-    gdal.SetConfigOption("SHAPE_2GB_LIMIT", None)
+    with gdaltest.config_option("SHAPE_2GB_LIMIT", "TRUE"):
+        ds = ogr.Open("tmp/hugedbf.dbf", 1)
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(23900000)
     assert feat.GetFieldAsString(0) == "updated_value"
@@ -3195,11 +3196,8 @@ def test_ogr_shape_70():
     f = open("tmp/ogr_shape_70.dbf", "r+")
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        old_val = gdal.GetConfigOption("OGR_SHAPE_PACK_IN_PLACE")
-        gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", "NO")
+    with gdaltest.error_handler(), gdal.config_option("OGR_SHAPE_PACK_IN_PLACE", "NO"):
         ds.ExecuteSQL("REPACK ogr_shape_70")
-        gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", old_val)
     errmsg = gdal.GetLastErrorMsg()
     ds = None
 
@@ -3277,9 +3275,8 @@ def test_ogr_shape_72():
     f.close()
 
     # Test creating a feature over 2 GB file limit -> should fail
-    gdal.SetConfigOption("SHAPE_2GB_LIMIT", "TRUE")
-    ds = ogr.Open("tmp/ogr_shape_72.shp", update=1)
-    gdal.SetConfigOption("SHAPE_2GB_LIMIT", None)
+    with gdaltest.config_option("SHAPE_2GB_LIMIT", "TRUE"):
+        ds = ogr.Open("tmp/ogr_shape_72.shp", update=1)
     lyr = ds.GetLayer(0)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
@@ -3369,9 +3366,8 @@ def test_ogr_shape_74():
     assert geom.ExportToWkt() == got_geom.ExportToWkt()
 
     lyr.ResetReading()
-    gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT")
-    feat = lyr.GetNextFeature()
-    gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", None)
+    with gdaltest.config_option("OGR_ORGANIZE_POLYGONS", "DEFAULT"):
+        feat = lyr.GetNextFeature()
     got_geom = feat.GetGeometryRef()
     assert geom.ExportToWkt() == got_geom.ExportToWkt()
     ds = None
@@ -4214,18 +4210,16 @@ def test_ogr_shape_98():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    gdal.SetConfigOption("SHAPE_RESTORE_SHX", "TRUE")
-    shutil.copy("data/shp/can_caps.shp", "tmp/can_caps.shp")
+    with gdaltest.config_option("SHAPE_RESTORE_SHX", "TRUE"):
+        shutil.copy("data/shp/can_caps.shp", "tmp/can_caps.shp")
 
-    shp_ds = ogr.Open("tmp/can_caps.shp", update=1)
-    shp_lyr = shp_ds.GetLayer(0)
+        shp_ds = ogr.Open("tmp/can_caps.shp", update=1)
+        shp_lyr = shp_ds.GetLayer(0)
 
-    assert shp_lyr.GetFeatureCount() == 13, "Got wrong number of features."
+        assert shp_lyr.GetFeatureCount() == 13, "Got wrong number of features."
 
-    shp_lyr = None
-    shp_ds = None
-
-    gdal.SetConfigOption("SHAPE_RESTORE_SHX", None)
+        shp_lyr = None
+        shp_ds = None
 
     ref_shx = open("data/shp/can_caps.shx", "rb").read()
     got_shx = open("tmp/can_caps.shx", "rb").read()
@@ -4299,8 +4293,6 @@ def test_ogr_shape_etrs89_with_zero_TOWGS84():
 @pytest.mark.parametrize("variant", ["YES", "NO"])
 def test_ogr_shape_100(variant):
 
-    old_val = gdal.GetConfigOption("OGR_SHAPE_PACK_IN_PLACE")
-
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_shape_100.shp")
     lyr = ds.CreateLayer("ogr_shape_100")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
@@ -4314,24 +4306,22 @@ def test_ogr_shape_100(variant):
     lyr.CreateFeature(f)
     f = None
     lyr.DeleteFeature(0)
-    gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", variant)
+    with gdaltest.config_option("OGR_SHAPE_PACK_IN_PLACE", variant):
 
-    f_dbf = None
-    f_shp = None
-    f_shx = None
-    if sys.platform == "win32" and variant == "YES":
-        # Locks the files. No way to do this on Unix easily
-        f_dbf = open("tmp/ogr_shape_100.dbf", "rb")
-        f_shp = open("tmp/ogr_shape_100.shp", "rb")
-        f_shx = open("tmp/ogr_shape_100.shx", "rb")
+        f_dbf = None
+        f_shp = None
+        f_shx = None
+        if sys.platform == "win32" and variant == "YES":
+            # Locks the files. No way to do this on Unix easily
+            f_dbf = open("tmp/ogr_shape_100.dbf", "rb")
+            f_shp = open("tmp/ogr_shape_100.shp", "rb")
+            f_shx = open("tmp/ogr_shape_100.shx", "rb")
 
-    ds.ExecuteSQL("REPACK ogr_shape_100")
+        ds.ExecuteSQL("REPACK ogr_shape_100")
 
-    del f_dbf
-    del f_shp
-    del f_shx
-
-    gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", old_val)
+        del f_dbf
+        del f_shp
+        del f_shx
 
     assert gdal.GetLastErrorMsg() == "", variant
 
