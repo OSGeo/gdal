@@ -671,9 +671,8 @@ def test_ogr_shape_21(f):
     ds = ogr.Open(f)
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = lyr.GetNextFeature()
 
     assert feat.GetGeometryRef() is None
 
@@ -681,9 +680,8 @@ def test_ogr_shape_21(f):
     lyr.ResetReading()
     (minx, maxx, miny, maxy) = lyr.GetExtent()
     lyr.SetSpatialFilterRect(minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = lyr.GetNextFeature()
 
     assert feat is None or feat.GetGeometryRef() is None
 
@@ -766,9 +764,8 @@ def ogr_shape_23_write_valid_and_invalid(
     # Write an invalid geometry for this layer type
     dst_feat = ogr.Feature(feature_def=gdaltest.shape_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(invalid_wkt))
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.shape_lyr.CreateFeature(dst_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.shape_lyr.CreateFeature(dst_feat)
 
     #######################################################
     # Check feature
@@ -950,9 +947,8 @@ def test_ogr_shape_23():
     geom = ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(POINT (0 0))")
     dst_feat = ogr.Feature(feature_def=gdaltest.shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(geom)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.shape_lyr.CreateFeature(dst_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.shape_lyr.CreateFeature(dst_feat)
 
     # This geometry will be dealt as a multipolygon
     wkt = "GEOMETRYCOLLECTION(POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1,0.5 1,0.25 0.5)),POLYGON((100 0,100 10,110 10,100 0),(100.25 0.5,100.5 1,100 1,100.25 0.5)))"
@@ -1188,9 +1184,8 @@ def test_ogr_shape_28():
     # Test creating a feature over 2 GB file limit -> should work
     gdal.ErrorReset()
     feat = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret == 0
     feat = None
     assert (
@@ -1211,9 +1206,8 @@ def test_ogr_shape_28():
     # Test creating a feature over 2 GB file limit -> should fail
     gdal.ErrorReset()
     feat = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
     feat = None
     assert (
@@ -1359,9 +1353,8 @@ def test_ogr_shape_31():
 
     #######################################################
     # Setup Schema with weird field names
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ogrtest.quick_create_layer_def(gdaltest.shape_lyr, fields)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ogrtest.quick_create_layer_def(gdaltest.shape_lyr, fields)
 
     layer_defn = gdaltest.shape_lyr.GetLayerDefn()
     error_occurred = False
@@ -1679,9 +1672,8 @@ def test_ogr_shape_37_bis():
 def test_ogr_shape_38():
 
     ds = ogr.Open("/vsimem/", update=1)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("test35")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("test35")
     ds = None
 
     assert lyr is None, "should not have created a new layer"
@@ -2226,9 +2218,8 @@ def test_ogr_shape_53():
 
     # Test REPACK when there are no features
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.ExecuteSQL("REPACK ogr_shape_53")
     # Should work without any error
     assert gdal.GetLastErrorMsg() == ""
 
@@ -2238,35 +2229,31 @@ def test_ogr_shape_53():
 
     # GetFeature() on a invalid FID
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = lyr.GetFeature(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = lyr.GetFeature(-1)
     assert feat is None and gdal.GetLastErrorMsg() != ""
 
     # SetFeature() on a invalid FID
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    ret = lyr.SetFeature(feat)
-    feat = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        ret = lyr.SetFeature(feat)
+        feat = None
     assert ret != 0
 
     # SetFeature() on a invalid FID
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(1000)
-    ret = lyr.SetFeature(feat)
-    feat = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(1000)
+        ret = lyr.SetFeature(feat)
+        feat = None
     assert ret != 0
 
     # DeleteFeature() on a invalid FID
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteFeature(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteFeature(-1)
     assert ret != 0
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2278,46 +2265,40 @@ def test_ogr_shape_53():
 
     # Try deleting an already deleted feature
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteFeature(0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteFeature(0)
     assert ret != 0
 
     # Test DeleteField() on a invalid index
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(-1)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test ReorderFields() with invalid permutation
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.ReorderFields([1])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([1])
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test AlterFieldDefn() on a invalid index
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fd = ogr.FieldDefn("foo2", ogr.OFTString)
-    ret = lyr.AlterFieldDefn(-1, fd, 0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fd = ogr.FieldDefn("foo2", ogr.OFTString)
+        ret = lyr.AlterFieldDefn(-1, fd, 0)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test AlterFieldDefn() when attempting to convert from OFTString to something else
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fd = ogr.FieldDefn("foo", ogr.OFTInteger)
-    ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fd = ogr.FieldDefn("foo", ogr.OFTInteger)
+        ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test DROP SPATIAL INDEX ON layer without index
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
     assert gdal.GetLastErrorMsg() != ""
 
     # Re-create a feature
@@ -2343,70 +2324,61 @@ def test_ogr_shape_53():
     fd = ogr.FieldDefn("bar", ogr.OFTString)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateField(fd)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(fd)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test ReorderFields()
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.ReorderFields([0])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([0])
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test DeleteField()
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(0)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test AlterFieldDefn()
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fd = ogr.FieldDefn("foo2", ogr.OFTString)
-    ret = lyr.AlterFieldDefn(0, fd, 0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fd = ogr.FieldDefn("foo2", ogr.OFTString)
+        ret = lyr.AlterFieldDefn(0, fd, 0)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test CreateFeature()
     feat = ogr.Feature(lyr.GetLayerDefn())
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test DeleteFeature()
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteFeature(0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteFeature(0)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test SetFeature()
     feat = lyr.GetNextFeature()
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test REPACK
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.ExecuteSQL("REPACK ogr_shape_53")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.ExecuteSQL("REPACK ogr_shape_53")
     assert gdal.GetLastErrorMsg() != ""
 
     # Test RECOMPUTE EXTENT ON
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
     assert gdal.GetLastErrorMsg() != ""
 
     feat = None
@@ -2419,9 +2391,8 @@ def test_ogr_shape_53():
     lyr = ds.GetLayer(0)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteFeature(0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteFeature(0)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
     # Test REPACK
@@ -2440,9 +2411,8 @@ def test_ogr_shape_53():
 
     # Test RECOMPUTE EXTENT ON
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
     assert gdal.GetLastErrorMsg() != ""
 
     lyr = None
@@ -2552,15 +2522,13 @@ def test_ogr_shape_54():
     # Test corner case where we cannot reopen a closed layer
     ideletedlayer = 0
     gdal.Unlink(ds_name + "/" + "layer%03d.shp" % ideletedlayer)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.GetLayerByName("layer%03d" % ideletedlayer)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.GetLayerByName("layer%03d" % ideletedlayer)
     if lyr is not None:
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        lyr.ResetReading()
-        lyr.GetNextFeature()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            lyr.ResetReading()
+            lyr.GetNextFeature()
         assert gdal.GetLastErrorMsg() != ""
     gdal.ErrorReset()
 
@@ -2568,10 +2536,9 @@ def test_ogr_shape_54():
     gdal.Unlink(ds_name + "/" + "layer%03d.dbf" % ideletedlayer)
     lyr = ds.GetLayerByName("layer%03d" % ideletedlayer)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.ResetReading()
-    lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.ResetReading()
+        lyr.GetNextFeature()
     # if gdal.GetLastErrorMsg() == '':
     #    gdaltest.post_reason('failed')
     #    return 'fail'
@@ -2605,9 +2572,8 @@ def test_ogr_shape_55():
         assert ret == 0, "failed creating field foo%d" % i
 
     i = max_field_count
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTInteger))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTInteger))
     assert ret != 0, "should have failed creating field foo%d" % i
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2648,9 +2614,8 @@ def test_ogr_shape_56():
         assert ret == 0, "failed creating field foo%d" % i
 
     i = max_field_count
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTString))
     assert ret != 0, "should have failed creating field foo%d" % i
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2680,9 +2645,8 @@ def test_ogr_shape_57():
     field_defn.SetWidth(1024)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateField(field_defn)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateField(field_defn)
     # print(gdal.GetLastErrorMsg())
     assert gdal.GetLastErrorMsg() != "", "expecting a warning"
 
@@ -2690,9 +2654,8 @@ def test_ogr_shape_57():
     feat.SetField(0, "0123456789" * 27)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(feat)
     # print(gdal.GetLastErrorMsg())
     assert gdal.GetLastErrorMsg() != "", "expecting a warning"
 
@@ -2964,17 +2927,15 @@ def test_ogr_shape_63():
     chinese_str = struct.pack("B" * 6, 229, 144, 141, 231, 167, 176)
     chinese_str = chinese_str.decode("UTF-8")
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(
-        0, ogr.FieldDefn(chinese_str, ogr.OFTString), ogr.ALTER_NAME_FLAG
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(
+            0, ogr.FieldDefn(chinese_str, ogr.OFTString), ogr.ALTER_NAME_FLAG
+        )
 
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
 
     assert ret != 0
 
@@ -3019,9 +2980,8 @@ def test_ogr_shape_64():
     assert lyr.GetName() == "a.c"
 
     # Test that we cannot create a duplicate layer
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("a.b")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("a.b")
     assert lyr is None
 
     ds = None
@@ -3064,29 +3024,25 @@ def test_ogr_shape_65():
 def test_ogr_shape_66():
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar.dbf")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("bar", geom_type=ogr.wkbNone)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("bar", geom_type=ogr.wkbNone)
     assert lyr is None
     ds = None
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar.shp")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
     assert lyr is None
     ds = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar")
     assert ds is None
 
     f = open("tmp/foo", "wb")
     f.close()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/foo")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/foo")
     assert ds is None
     os.unlink("tmp/foo")
 
@@ -3157,9 +3113,8 @@ def test_ogr_shape_68():
             assert lyr.GetGeomType() == ogr.wkbNone
             lyr = ds.GetLayerByName("mixedcase")
             assert lyr.GetGeomType() == ogr.wkbPolygon
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-            ret = lyr.DeleteFeature(0)
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                ret = lyr.DeleteFeature(0)
             assert ret != 0, "expected failure on DeleteFeature()"
             # gdal.ErrorReset()
             # gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -3240,12 +3195,11 @@ def test_ogr_shape_70():
     f = open("tmp/ogr_shape_70.dbf", "r+")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    old_val = gdal.GetConfigOption("OGR_SHAPE_PACK_IN_PLACE")
-    gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", "NO")
-    ds.ExecuteSQL("REPACK ogr_shape_70")
-    gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", old_val)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        old_val = gdal.GetConfigOption("OGR_SHAPE_PACK_IN_PLACE")
+        gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", "NO")
+        ds.ExecuteSQL("REPACK ogr_shape_70")
+        gdal.SetConfigOption("OGR_SHAPE_PACK_IN_PLACE", old_val)
     errmsg = gdal.GetLastErrorMsg()
     ds = None
 
@@ -3312,9 +3266,8 @@ def test_ogr_shape_72():
     lyr = ds.GetLayer(0)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
     ds = None
 
@@ -3331,9 +3284,8 @@ def test_ogr_shape_72():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
     ds = None
 
@@ -3343,9 +3295,8 @@ def test_ogr_shape_72():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (7 8)"))
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret == 0
     assert (
         gdal.GetLastErrorMsg().find("2GB file size limit reached") >= 0
@@ -3526,18 +3477,16 @@ def test_ogr_shape_78():
     gdal.ErrorReset()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("dblfield2", 1e21)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != "", "did not get expected error/warning"
 
     # Likely precision loss
     gdal.ErrorReset()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("dblfield", (2**53) * 1.0 + 2)  # 2^53+1 == 2^53 !
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != "", "did not get expected error/warning"
 
     gdal.ErrorReset()
