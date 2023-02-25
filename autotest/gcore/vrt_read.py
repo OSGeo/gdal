@@ -1475,10 +1475,8 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?gcp=0,0,0,10&gcp=20,0,10,10")
     assert ds.GetGCPCount() == 2
 
-    try:
-        ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
-    except SyntaxError:
-        pass
+    ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
+    assert ds is None
 
 
 @pytest.mark.require_driver("BMP")
