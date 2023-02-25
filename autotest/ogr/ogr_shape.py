@@ -50,9 +50,7 @@ def test_ogr_shape_1():
 
     gdaltest.shape_ds = shape_drv.CreateDataSource("tmp")
 
-    if gdaltest.shape_ds is not None:
-        return
-    pytest.fail()
+    assert gdaltest.shape_ds is not None
 
 
 ###############################################################################
@@ -158,9 +156,7 @@ def test_ogr_shape_4():
     feat_read = gdaltest.shape_lyr.GetNextFeature()
     assert feat_read is not None, "Didn't get feature with null geometry back."
 
-    if feat_read.GetGeometryRef() is not None:
-        print(feat_read.GetGeometryRef().ExportToWkt())
-        pytest.fail("Didn't get null geometry as expected.")
+    assert feat_read.GetGeometryRef() is None, "Didn't get null geometry as expected."
 
 
 ###############################################################################
@@ -286,11 +282,10 @@ def test_ogr_shape_9():
 
     gdaltest.shape_lyr.SetSpatialFilterRect(-10, -130, 10, -110)
 
-    if ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 0:
-        return
-    if not ogrtest.have_geos() and gdaltest.shape_lyr.GetFeatureCount() == 1:
-        return
-    pytest.fail()
+    if ogrtest.have_geos():
+        assert gdaltest.shape_lyr.GetFeatureCount() == 0
+    else:
+        assert gdaltest.shape_lyr.GetFeatureCount() == 1
 
 
 ###############################################################################
@@ -2019,22 +2014,17 @@ def test_ogr_shape_48():
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     lyr.SetFeature(feat)
     extent = lyr.GetExtent()
-    if extent != (1, 3, 2, 4):
-        print(lyr.GetExtent())
-        pytest.fail("did not get expected extent (1)")
+    assert extent == (1, 3, 2, 4), "did not get expected extent (1)"
+
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     extent = lyr.GetExtent()
-    if extent != (3, 3, 4, 4):
-        print(lyr.GetExtent())
-        pytest.fail("did not get expected extent (2)")
+    assert extent == (3, 3, 4, 4), "did not get expected extent (2)"
     ds = None
 
     ds = ogr.Open("/vsimem/ogr_shape_48.shp")
     lyr = ds.GetLayer(0)
     extent = lyr.GetExtent()
-    if extent != (3, 3, 4, 4):
-        print(lyr.GetExtent())
-        pytest.fail("did not get expected extent (3)")
+    assert extent == (3, 3, 4, 4), "did not get expected extent (3)"
     ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/ogr_shape_48.shp")
@@ -2051,9 +2041,7 @@ def test_ogr_shape_48():
     lyr.SetFeature(feat)
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     extent = lyr.GetExtent()
-    if extent != (0, 1, 0, 1):
-        print(lyr.GetExtent())
-        pytest.fail("did not get expected extent (4)")
+    assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/ogr_shape_48.shp")
 
@@ -2074,9 +2062,7 @@ def test_ogr_shape_48():
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     # FIXME: when we have a GetExtent3D
     extent = lyr.GetExtent()
-    if extent != (0, 1, 0, 1):
-        print(lyr.GetExtent())
-        pytest.fail("did not get expected extent (4)")
+    assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/ogr_shape_48.shp")
 
@@ -2788,9 +2774,7 @@ def test_ogr_shape_59():
 
     assert geom.GetCoordinateDimension() == 2, "dimension wrong."
 
-    if geom.GetPointZM(0) != (1.0, 2.0, 0.0, 3.0):
-        print(geom.GetPoint(0))
-        pytest.fail("Did not get right point result.")
+    assert geom.GetPointZM(0) == (1.0, 2.0, 0.0, 3.0), "Did not get right point result."
 
     shp_ds = ogr.Open("data/shp/arcm_with_m.shp")
     shp_lyr = shp_ds.GetLayer(0)
@@ -3403,9 +3387,7 @@ def test_ogr_shape_73():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     got_geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != got_geom.ExportToWkt():
-        feat.DumpReadable()
-        pytest.fail()
+    assert geom.ExportToWkt() == got_geom.ExportToWkt()
     ds = None
 
 
@@ -3433,18 +3415,14 @@ def test_ogr_shape_74():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     got_geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != got_geom.ExportToWkt():
-        feat.DumpReadable()
-        pytest.fail()
+    assert geom.ExportToWkt() == got_geom.ExportToWkt()
 
     lyr.ResetReading()
     gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", "DEFAULT")
     feat = lyr.GetNextFeature()
     gdal.SetConfigOption("OGR_ORGANIZE_POLYGONS", None)
     got_geom = feat.GetGeometryRef()
-    if geom.ExportToWkt() != got_geom.ExportToWkt():
-        feat.DumpReadable()
-        pytest.fail()
+    assert geom.ExportToWkt() == got_geom.ExportToWkt()
     ds = None
 
 
@@ -3568,9 +3546,7 @@ def test_ogr_shape_78():
     ds = ogr.Open("/vsimem/ogr_shape_78.dbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetField("dblfield") != 9007199254740992.0:
-        f.DumpReadable()
-        pytest.fail("did not get expected value")
+    assert f.GetField("dblfield") == 9007199254740992.0
     ds = None
 
 
@@ -4414,24 +4390,17 @@ def test_ogr_shape_100(variant):
         assert gdal.VSIStatL("tmp/ogr_shape_100_packed." + ext) is None, variant
 
     f = lyr.GetFeature(0)
-    if (
-        f["foo"] != "2"
-        or f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 1,2 2,3 3)"
-    ):
-        f.DumpReadable()
-        pytest.fail(variant)
+    assert f["foo"] == "2"
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2,3 3)"
+
     with gdaltest.error_handler():
         f = lyr.GetFeature(1)
     assert f is None, variant
     lyr.ResetReading()
     assert lyr.GetFeatureCount() == 1, variant
     f = lyr.GetNextFeature()
-    if (
-        f["foo"] != "2"
-        or f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 1,2 2,3 3)"
-    ):
-        f.DumpReadable()
-        pytest.fail(variant)
+    assert f["foo"] == "2"
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2,3 3)"
     f = lyr.GetNextFeature()
     assert f is None, variant
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -4445,19 +4414,13 @@ def test_ogr_shape_100(variant):
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, variant
     f = lyr.GetNextFeature()
-    if (
-        f["foo"] != "2"
-        or f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 1,2 2,3 3)"
-    ):
-        f.DumpReadable()
-        pytest.fail(variant)
+    assert f["foo"] == "2"
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2,3 3)"
+
     f = lyr.GetNextFeature()
-    if (
-        f["foo"] != "3"
-        or f.GetGeometryRef().ExportToWkt() != "LINESTRING (3 3,4 4,5 5,6 6)"
-    ):
-        f.DumpReadable()
-        pytest.fail(variant)
+    assert f["foo"] == "3"
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (3 3,4 4,5 5,6 6)"
+
     f = lyr.GetNextFeature()
     assert f is None, variant
     ds = None
@@ -4502,13 +4465,10 @@ def test_ogr_shape_101():
         lyr = ds_read.GetLayer(0)
         assert lyr.GetFeatureCount() == 1, i
         f = lyr.GetNextFeature()
-        if (
-            f.GetFID() != 0
-            or f["foo"] != "2"
-            or f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 1,2 2,3 3)"
-        ):
-            f.DumpReadable()
-            pytest.fail(i)
+        assert f.GetFID() == 0
+        assert f["foo"] == "2"
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2,3 3)"
+
         f = lyr.GetNextFeature()
         assert f is None, i
 
@@ -4533,13 +4493,10 @@ def test_ogr_shape_101():
             lyr = ds.GetLayer(0)
             assert lyr.GetFeatureCount() == 1, i
             f = lyr.GetNextFeature()
-            if (
-                f.GetFID() != 0
-                or f["foo"] != "3"
-                or f.GetGeometryRef().ExportToWkt() != "LINESTRING (3 3,4 4,5 5,6 6)"
-            ):
-                f.DumpReadable()
-                pytest.fail(i)
+            assert f.GetFID() == 0
+            assert f["foo"] == "3"
+            assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (3 3,4 4,5 5,6 6)"
+
             f = lyr.GetNextFeature()
             assert f is None, i
             ds = None
@@ -4563,9 +4520,8 @@ def test_ogr_shape_101():
             lyr = ds.GetLayer(0)
             assert lyr.GetFeatureCount() == 2, i
             f = lyr.GetNextFeature()
-            if f.GetFID() != 1 or f["foo"] != "4":
-                f.DumpReadable()
-                pytest.fail(i)
+            assert f.GetFID() == 1
+            assert f["foo"] == "4"
 
             ds = None
 
@@ -4876,9 +4832,7 @@ def test_ogr_shape_104(wkt, lyr_type, options, expected_wkt):
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
-        f.DumpReadable()
-        pytest.fail(wkt, lyr_type, options)
+    assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
     ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)
@@ -5006,13 +4960,10 @@ def test_ogr_shape_107():
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 2,3 4)":
-        f.DumpReadable()
-        pytest.fail()
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 2,3 4)"
+
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != "LINESTRING (5 6)":
-        f.DumpReadable()
-        pytest.fail()
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (5 6)"
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
@@ -5038,9 +4989,7 @@ def test_ogr_shape_107():
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != "LINESTRING (1 2,3 4)":
-        f.DumpReadable()
-        pytest.fail()
+    assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 2,3 4)"
     ds = None
 
     gdal.VectorTranslate(copy_filename, filename)
@@ -5881,12 +5830,13 @@ def test_ogr_shape_write_non_planar_polygon():
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(
-        f,
-        "POLYGON Z ((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418))",
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    assert (
+        ogrtest.check_feature_geometry(
+            f,
+            "POLYGON Z ((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418))",
+        )
+        == 0
+    )
     ds = None
 
     shape_drv.DeleteDataSource(filename)
