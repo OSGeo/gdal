@@ -25,6 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/*! @cond Doxygen_Suppress */
+
 #include "polygonize_polygonizer.h"
 
 #include <algorithm>
@@ -489,3 +491,5 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
 
     OGR_F_Destroy(hFeat);
 }
+
+/*! @endcond */
