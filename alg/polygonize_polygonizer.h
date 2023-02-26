@@ -73,22 +73,16 @@ struct RPolygon
 
     /**
      * create a new arc object
-     * @param bFollowRighthand
-     * @return
      */
     IndexedArc newArc(bool bFollowRighthand);
 
     /**
      * set the next arc index of the current arc
-     * @param oArc
-     * @param oNextArc
      */
     void setArcConnection(IndexedArc &oArc, IndexedArc &oNextArc);
 
     /**
      * update the bottom-right most cell index of the current polygon
-     * @param iRow
-     * @param iCol
      */
     void updateBottomRightPos(IndexType iRow, IndexType iCol);
 };
@@ -116,9 +110,6 @@ struct TwoArm
 
 /**
  * Process different kinds of Arm connections.
- * @param poCurrent
- * @param poAbove
- * @param poLeft
  */
 void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft);
 
@@ -139,8 +130,6 @@ template <typename DataType> class PolygonReceiver
 
 /**
  * Polygonizer is used to manage polygon memory and do the edge tracing process
- * @tparam PolyIdType
- * @tparam DataType
  */
 template <typename PolyIdType, typename DataType> class Polygonizer
 {
@@ -182,7 +171,6 @@ template <typename PolyIdType, typename DataType> class Polygonizer
 
 /**
  * Write raster polygon object to OGR layer.
- * @tparam DataType
  */
 template <typename DataType>
 class OGRPolygonWriter : public PolygonReceiver<DataType>

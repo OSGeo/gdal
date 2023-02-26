@@ -126,7 +126,25 @@ def test_polygonize_2():
     expected_feature_number = 17
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [132, 115, 123, 107, 132, 140, 115, 148, 123, 132, 132, 140, 102, 101, 100, 103, 156]
+    expect = [
+        132,
+        115,
+        123,
+        107,
+        132,
+        140,
+        115,
+        148,
+        123,
+        132,
+        132,
+        140,
+        102,
+        101,
+        100,
+        103,
+        156,
+    ]
 
     tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
@@ -212,7 +230,24 @@ def test_polygonize_4():
     expected_feature_number = 16
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [132, 115, 123, 107, 140, 115, 148, 123, 132, 140, 132, 102, 101, 100, 103, 156]
+    expect = [
+        132,
+        115,
+        123,
+        107,
+        140,
+        115,
+        148,
+        123,
+        132,
+        140,
+        132,
+        102,
+        101,
+        100,
+        103,
+        156,
+    ]
 
     tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
