@@ -69,8 +69,10 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
     poCurrent->poPolyLeft = poLeft->poPolyInside;
 
     int nArmConnectionType =
-        (poAbove->bSolidVertical << 3) | (poLeft->bSolidHorizontal << 2) |
-        (poCurrent->bSolidVertical << 1) | (poCurrent->bSolidHorizontal);
+        (static_cast<int>(poAbove->bSolidVertical) << 3) |
+        (static_cast<int>(poLeft->bSolidHorizontal) << 2) |
+        (static_cast<int>(poCurrent->bSolidVertical) << 1) |
+        static_cast<int>(poCurrent->bSolidHorizontal);
 
     /**
      * There are 12 valid connection types depending on the arm types(virtual or solid)
@@ -478,7 +480,8 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
     OGR_F_SetGeometryDirectly(hFeat, hPolygon);
 
     if (iPixValField_ >= 0)
-        OGR_F_SetFieldDouble(hFeat, iPixValField_, nPolygonCellValue);
+        OGR_F_SetFieldDouble(hFeat, iPixValField_,
+                             static_cast<double>(nPolygonCellValue));
 
     // Write the to the layer.
     if (OGR_L_CreateFeature(hOutLayer_, hFeat) != OGRERR_NONE)
