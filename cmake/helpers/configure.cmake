@@ -110,9 +110,9 @@ else ()
     "
         #define _GNU_SOURCE
         #include <pthread.h>
-        int main() { pthread_spinlock_t spin; return 1; }
+        int main() { pthread_spinlock_t spin; return pthread_spin_lock(&spin); }
         "
-    HAVE_PTHREAD_SPINLOCK)
+    HAVE_PTHREAD_SPIN_LOCK)
 
   check_c_source_compiles(
     "

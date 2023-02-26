@@ -2232,7 +2232,7 @@ void CPLCleanupTLS()
 /*                          CPLCreateSpinLock()                         */
 /************************************************************************/
 
-#if defined(HAVE_PTHREAD_SPINLOCK)
+#if defined(HAVE_PTHREAD_SPIN_LOCK)
 #define HAVE_SPINLOCK_IMPL
 
 struct _CPLSpinLock
@@ -2310,7 +2310,7 @@ void CPLDestroySpinLock(CPLSpinLock *psSpin)
     pthread_spin_destroy(&(psSpin->spin));
     free(psSpin);
 }
-#endif  // HAVE_PTHREAD_SPINLOCK
+#endif  // HAVE_PTHREAD_SPIN_LOCK
 
 #endif  // def CPL_MULTIPROC_PTHREAD
 

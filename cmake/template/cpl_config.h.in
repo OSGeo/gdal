@@ -61,8 +61,8 @@
 /* Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant. */
 #cmakedefine HAVE_PTHREAD_MUTEX_ADAPTIVE_NP 1
 
-/* Define to 1 if you have the `pthread_spinlock_t' type. */
-#cmakedefine HAVE_PTHREAD_SPINLOCK 1
+/* Define to 1 if you have the `pthread_spin_lock' function. */
+#cmakedefine HAVE_PTHREAD_SPIN_LOCK 1
 
 /* Define to 1 if you have the `pthread_atfork' function. */
 #cmakedefine HAVE_PTHREAD_ATFORK 1
