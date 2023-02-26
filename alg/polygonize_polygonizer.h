@@ -29,6 +29,7 @@
 #define POLYGONIZE_POLYGONIZER_H_INCLUDED
 
 #include <array>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 

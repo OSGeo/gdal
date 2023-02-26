@@ -172,6 +172,9 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1, panThisLineVal,
                             nXSize, 1, eDT, 0, 0);
 
+        if (eErr != CE_None)
+            break;
+
         if (iY == 0)
             eErr = oFirstEnum.ProcessLine(nullptr, panThisLineVal, nullptr,
                                           panThisLineId, nXSize)
@@ -182,6 +185,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
                                           panLastLineId, panThisLineId, nXSize)
                        ? CE_None
                        : CE_Failure;
+
         if (eErr != CE_None)
             break;
 
@@ -231,7 +235,6 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     }
     else
     {
-
         for (int i = 0; i < nXSize + 2; ++i)
         {
             paoLastLineArm[i].poPolyInside = oPolygonizer.getTheOuterPolygon();
@@ -346,8 +349,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         /*      Report progress, and support interrupts. */
         /* --------------------------------------------------------------------
          */
-        if (eErr == CE_None &&
-            !pfnProgress(0.10 + 0.90 * ((iY + 1) / static_cast<double>(nYSize)),
+        if (!pfnProgress(0.10 + 0.90 * ((iY + 1) / static_cast<double>(nYSize)),
                          "", pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
