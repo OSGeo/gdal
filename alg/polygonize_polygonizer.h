@@ -28,6 +28,8 @@
 #ifndef POLYGONIZE_POLYGONIZER_H_INCLUDED
 #define POLYGONIZE_POLYGONIZER_H_INCLUDED
 
+/*! @cond Doxygen_Suppress */
+
 #include <array>
 #include <cstdint>
 #include <vector>
@@ -200,5 +202,7 @@ class OGRPolygonWriter : public PolygonReceiver<DataType>
         return eErr_;
     }
 };
+
+/*! @endcond */
 
 #endif /* POLYGONIZE_POLYGONIZER_H_INCLUDED */
