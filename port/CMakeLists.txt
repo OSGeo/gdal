@@ -179,9 +179,9 @@ endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(cpl PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
-  if (MSVC)
+  if (MSVC AND NOT ZLIB_IS_STATIC)
     target_compile_definitions(cpl PRIVATE -DZLIB_DLL)
-  endif (MSVC)
+  endif ()
   gdal_target_link_libraries(cpl PRIVATE ZLIB::ZLIB)
 endif ()
 

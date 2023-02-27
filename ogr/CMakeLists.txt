@@ -115,7 +115,7 @@ endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
-  if (MSVC)
+  if (MSVC AND NOT ZLIB_IS_STATIC)
     target_compile_definitions(ogr PRIVATE -DZLIB_DLL)
   endif ()
   gdal_target_link_libraries(ogr PRIVATE ZLIB::ZLIB)
