@@ -1463,6 +1463,21 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?ot=Int32")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int32
 
+    ## 5-element GCP
+    ds = gdal.Open("vrt://data/float32.tif?gcp=0,0,0,10,0")
+    assert ds.GetGCPCount() == 1
+
+    ## multiple GCPs
+    ds = gdal.Open("vrt://data/float32.tif?gcp=0,0,0,10,0&gcp=20,0,10,10,0")
+    assert ds.GetGCPCount() == 2
+
+    ## 4-element GCP also ok
+    ds = gdal.Open("vrt://data/float32.tif?gcp=0,0,0,10&gcp=20,0,10,10")
+    assert ds.GetGCPCount() == 2
+
+    ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
+    assert ds is None
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
