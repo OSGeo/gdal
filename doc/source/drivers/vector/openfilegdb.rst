@@ -8,7 +8,8 @@ ESRI File Geodatabase (OpenFileGDB)
 .. built_in_by_default::
 
 The OpenFileGDB driver provides read, write and update access to vector layers of File
-Geodatabases (.gdb directories) created by ArcGIS 9 and above. The
+Geodatabases (.gdb directories) created by ArcGIS 10 and above (it has also
+read-only support for ArcGIS 9.x geodatabases). The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
