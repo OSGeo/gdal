@@ -21,7 +21,7 @@ The minimum requirements to build GDAL are:
 Additional requirements to run the GDAL test suite are:
 
 - SWIG >= 4.0.2, for building bindings to other programming languages
-- Python >= 3.5
+- Python >= 3.6
 - Python packages listed in `autotest/requirements.txt`
 
 A number of optional libraries are also strongly recommended for most builds:
