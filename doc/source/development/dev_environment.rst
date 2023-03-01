@@ -11,14 +11,18 @@ Setting up a development environment
 Build requirements
 --------------------------------------------------------------------------------
 
-The minimum requirements are:
+The minimum requirements to build GDAL are:
 
 - CMake >= 3.10, and an associated build system (make, ninja, Visual Studio, etc.)
 - C99 compiler
 - C++11 compiler
 - PROJ >= 6.0
-- SWIG >= 4.0.2, for building bindings to other programming languages, such as Python
-- Python, for running the test suite
+
+Additional requirements to run the GDAL test suite are:
+
+- SWIG >= 4.0.2, for building bindings to other programming languages
+- Python >= 3.6
+- Python packages listed in `autotest/requirements.txt`
 
 A number of optional libraries are also strongly recommended for most builds:
 SQLite3, expat, libcurl, zlib, libtiff, libgeotiff, libpng, libjpeg, etc.
