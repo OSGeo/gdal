@@ -1657,7 +1657,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
-``a_scale``, ``a_offset``, ``ot``, and ``gcp``. 
+``a_scale``, ``a_offset``, ``ot``, ``gcp``, and ``if``. 
 
 Other options may be added in the future.
 
@@ -1694,6 +1694,10 @@ The effect of the ``gcp`` option (added in GDAL 3.7) is to add the indicated gro
 to the output dataset. Values are a set of numbers as per (:ref:`gdal_translate`)``pixel,line,easting,northing[,elevation]``.  
 Multiple entries may be included. This can also be seen as an equivalent of running 
 `gdal_translate -of VRT -gcp pixel1 line1 easting1 northing1 [elevation1] -gcp pixel2 line2 easting2 northing2 [elevation2] ... -gcp pixelN lineN eastingN northingN [elevationN]`. 
+
+The effect of the ``if`` option (added in GDAL 3.7) is to specify the format/driver name/s
+to be attempted to open the input file (:ref:`gdal_translate`). Values may be repeated separated by comma
+This can also be seen as an equivalent of running `gdal_translate -of VRT -if DRV1 -if DRV2 ... -if DRVN`.
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

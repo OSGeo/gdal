@@ -1478,6 +1478,15 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
     assert ds is None
 
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,COG")
+    assert ds is not None
+
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid")
+    assert ds is not None
+
+    ds = gdal.Open("vrt://data/float32.tif?if=doesnotexist")
+    assert ds is not None
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
