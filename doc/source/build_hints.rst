@@ -1803,6 +1803,11 @@ the lossless Deflate/Zip compression algorithm.
     ``ZLIB_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
 
+.. option:: ZLIB_IS_STATIC
+
+    Link to static external ZLIB directory.
+    Only used if GDAL_USE_ZLIB_INTERNAL=OFF and MSVC.
+
 .. option:: GDAL_USE_ZLIB=ON/OFF
 
     Control whether to use ZLIB. Defaults to ON when ZLIB is found.
