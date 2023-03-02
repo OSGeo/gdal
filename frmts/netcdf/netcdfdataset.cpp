@@ -12911,7 +12911,7 @@ static CPLErr NCDFResolveElem(int nStartGroupId, const char *pszVar,
                 aoQueueGroupIdsToVisit.push(nParentGroupId);
             else if (status2 != NC_ENOGRP)
                 NCDF_ERR(status2);
-            if (pszVar)
+            else if (pszVar)
                 // When resolving a variable, if there is no more
                 // parent group then we switch to width-wise search mode
                 // starting from the latest found parent group.

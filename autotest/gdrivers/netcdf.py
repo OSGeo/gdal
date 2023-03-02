@@ -6235,3 +6235,24 @@ def test_clean_tmp():
     # Not actually a test, just cleans up tmp...
     gdaltest.clean_tmp()
     pytest.skip()
+
+
+###############################################################################
+# Test resolving variable name from a give group.
+# In practice, this may occur with CF-Convention when the 'grid_mapping'
+# attribute of a variable in a group references a variable in another group.
+# Example in real life: level-1c data from sensor FCI on Meteosat Third
+# Generation satellites.
+
+
+def test_netcdf_resolve_var_name():
+    ds = gdal.Open(
+        'NETCDF:data/netcdf/resolve_var_name.nc:/data/vis_08/measured/effective_radiance"'
+    )
+    assert ds
+    sr = ds.GetSpatialRef()
+    assert sr
+    assert (
+        sr.ExportToProj4()
+        == "+proj=geos +lon_0=0 +h=35786400 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
+    )
