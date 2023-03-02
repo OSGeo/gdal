@@ -3019,9 +3019,8 @@ def test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle(
 
 def test_ogr_mitab_label_without_text():
 
-    ds = gdaltest.mapinfo_drv.CreateDataSource(
-        "/vsimem/test_ogr_mitab_label_without_text.tab"
-    )
+    filename = "/vsimem/test_ogr_mitab_label_without_text.tab"
+    ds = gdaltest.mapinfo_drv.CreateDataSource(filename)
     lyr = ds.CreateLayer("label")
     lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3029,3 +3028,4 @@ def test_ogr_mitab_label_without_text():
     f.SetStyleString("LABEL(f:DejaVu Sans,s:0.705557,c:#FF0000FF,b:#000000FF)")
     lyr.CreateFeature(f)
     ds = None
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)
