@@ -435,7 +435,6 @@ OGRErr OGRSpatialReference::importFromPanorama(long iProjSys, long iDatum,
     switch (iProjSys)
     {
         case -1L:
-        case 0L:
         case 255L:
             break;
 
