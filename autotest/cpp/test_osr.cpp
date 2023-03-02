@@ -539,6 +539,13 @@ TEST_F(test_osr, importFromPanorama)
         oSRS.importFromPanorama(1, 1, 1, adfPrjParams);
         EXPECT_EQ(GetEPSGCode(oSRS), 28431);
     }
+    {
+        // Invalid data
+        double adfPrjParams[8] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        oSRS.importFromPanorama(0, 0, 0, adfPrjParams);
+        EXPECT_EQ(oSRS.IsLocal(), true);
+        EXPECT_EQ(GetEPSGCode(oSRS), 0);
+    }
 }
 
 // Test exportToPanorama
