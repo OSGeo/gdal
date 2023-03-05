@@ -1506,7 +1506,7 @@ static int MITABGetCustomDatum(const OGRSpatialReference *poSpatialRef,
     sTABProj.adDatumParams[0] = -adfTOWGS[3];
     sTABProj.adDatumParams[1] = -adfTOWGS[4];
     sTABProj.adDatumParams[2] = -adfTOWGS[5];
-    sTABProj.adDatumParams[3] = -adfTOWGS[6];
+    sTABProj.adDatumParams[3] = adfTOWGS[6];
 
     int nSpheroidId = -1;
 
