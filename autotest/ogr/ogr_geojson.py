@@ -4286,3 +4286,30 @@ def test_ogr_geojson_mixed_type_promotion(properties):
     assert fld_def.GetSubType() == ogr.OFSTJSON
 
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/7319
+
+
+def test_ogr_geojson_coordinate_precision():
+
+    filename = "/vsimem/test_ogr_geojson_coordinate_precision.json"
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo", options=["COORDINATE_PRECISION=1", "WRITE_BBOX=YES"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1.23456789 2.3456789)"))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink(filename)
+
+    assert '"bbox": [ 1.2, 2.3, 1.2, 2.3 ]' in data
+    assert '"coordinates": [ 1.2, 2.3 ]' in data
+    assert "3456" not in data
