@@ -5713,7 +5713,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     GInt32 nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
     // This string was escaped before 20050714
-    CPLString oTmpString(m_pszString);
+    CPLString oTmpString(m_pszString ? m_pszString : "");
     if (!poMapFile->GetEncoding().empty())
     {
         oTmpString.Recode(CPL_ENC_UTF8, poMapFile->GetEncoding());
