@@ -1892,6 +1892,8 @@ GDALVectorInfoOptionsNew(char **papszArgv,
 {
     auto psOptions = cpl::make_unique<GDALVectorInfoOptions>();
     bool bGotFilename = false;
+    bool bFeatures = false;
+    bool bSummary = false;
 
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */
@@ -2019,11 +2021,11 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[iArg], "-so") ||
                  EQUAL(papszArgv[iArg], "-summary"))
         {
-            psOptions->bSummaryOnly = true;
+            bSummary = true;
         }
         else if (EQUAL(papszArgv[iArg], "-features"))
         {
-            psOptions->bSummaryOnly = false;
+            bFeatures = true;
         }
         else if (STARTS_WITH_CI(papszArgv[iArg], "-fields="))
         {
@@ -2119,6 +2121,18 @@ GDALVectorInfoOptionsNew(char **papszArgv,
             psOptions->bAllLayers = false;
         }
     }
+
+    if (bSummary && bFeatures)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "-so or -summary are incompatible with -features");
+        return nullptr;
+    }
+
+    if (bSummary)
+        psOptions->bSummaryOnly = true;
+    else if (bFeatures)
+        psOptions->bSummaryOnly = false;
 
     if (psOptionsForBinary)
         psOptionsForBinary->osSQLStatement = psOptions->osSQLStatement;
