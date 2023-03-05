@@ -2592,24 +2592,60 @@ def test_gml_OGRCompoundCurve():
 # Test OGRCurvePolygon
 
 
-def test_gml_OGRCurvePolygon():
+def test_gml_OGRCurvePolygon_one_CircularString():
 
     # Test one CircularString
-    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
     assert geom.ExportToWkt() == "CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))"
 
-    gml2 = geom.ExportToGML(["FORMAT=GML3"])
-    expected_gml2 = "<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:exterior></gml:Polygon>"
-    assert gml2 == expected_gml2
+    gml_out = geom.ExportToGML(["FORMAT=GML3"])
+    expected_gml = "<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"
+    assert gml_out == expected_gml
 
-    # Test two CircularString
-    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
+    gml_out = geom.ExportToGML(["FORMAT=GML3", "GMLID=gmlid"])
+    expected_gml = '<gml:Polygon gml:id="gmlid"><gml:exterior><gml:Ring><gml:curveMember><gml:Curve gml:id="gmlid.exterior"><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>'
+    assert gml_out == expected_gml
+
+
+def test_gml_OGRCurvePolygon_one_CircularString_with_interior_CircularString():
+
+    # Test one CircularString inside one CircularString
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
     assert (
         geom.ExportToWkt()
         == "CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))"
     )
+
+    gml_out = geom.ExportToGML(["FORMAT=GML3"])
+    expected_gml = "<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:Circle><gml:posList>0.25 0.0 0.5 0.25 0.75 0.0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"
+    assert gml_out == expected_gml
+
+    gml_out = geom.ExportToGML(["FORMAT=GML3", "GMLID=gmlid"])
+    expected_gml = '<gml:Polygon gml:id="gmlid"><gml:exterior><gml:Ring><gml:curveMember><gml:Curve gml:id="gmlid.exterior"><gml:segments><gml:Circle><gml:posList>0 0 0.5 0.5 1 0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Curve gml:id="gmlid.interior.0"><gml:segments><gml:Circle><gml:posList>0.25 0.0 0.5 0.25 0.75 0.0</gml:posList></gml:Circle></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>'
+    assert gml_out == expected_gml
+
+
+def test_gml_OGRCurvePolygon_CompoundCurve():
+
+    # Test one CompoundCurve with one LineString and on CircularString
+    gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:LineString><gml:posList>0 -1 0 1</gml:posList></gml:LineString></gml:curveMember><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList>0 1 1 0 0 -1</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>"""
+    geom = ogr.CreateGeometryFromGML(gml)
+    assert (
+        geom.ExportToWkt()
+        == "CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1)))"
+    )
+
+    gml_out = geom.ExportToGML(["FORMAT=GML3"])
+    assert gml_out == gml
+
+    gml_out = geom.ExportToGML(["FORMAT=GML3", "GMLID=gmlid"])
+    expected_gml = '<gml:Polygon gml:id="gmlid"><gml:exterior><gml:Ring><gml:curveMember><gml:LineString gml:id="gmlid.exterior.0"><gml:posList>0 -1 0 1</gml:posList></gml:LineString></gml:curveMember><gml:curveMember><gml:Curve gml:id="gmlid.exterior.1"><gml:segments><gml:ArcString><gml:posList>0 1 1 0 0 -1</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior></gml:Polygon>'
+    assert gml_out == expected_gml
+
+
+def test_gml_OGRCurvePolygon_LinearRing_with_interior_CircularString():
 
     # Test a LinearRing followed by a CircularString
     gml = """<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:exterior><gml:interior><gml:Ring><gml:curveMember><gml:Arc><gml:posList>0.25 0 0.75 0 0.25 0</gml:posList></gml:Arc></gml:curveMember></gml:Ring></gml:interior></gml:Polygon>"""
@@ -2618,6 +2654,9 @@ def test_gml_OGRCurvePolygon():
         geom.ExportToWkt()
         == "CURVEPOLYGON ((-2 -2,-2 2,2 2,2 -2,-2 -2),CIRCULARSTRING (0.25 0.0,0.75 0.0,0.25 0.0))"
     )
+
+
+def test_gml_OGRCurvePolygon_CircularString_with_interior_LinearRing():
 
     # Test a CircularString followed by a LinearRing
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Circle><gml:posList>-1 0 1 2 3 0</gml:posList></gml:Circle></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>"""
