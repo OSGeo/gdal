@@ -734,6 +734,15 @@ detect the HDF5 library.
 
     Control whether to use HDF5. Defaults to ON when HDF5 is found.
 
+.. option:: GDAL_ENABLE_HDF5_GLOBAL_LOCK=ON/OFF
+
+    Control whether to add a global lock around calls to HDF5 library. This is
+    needed if the HDF5 library is not built with thread-safety enabled and if
+    the HDF5 driver is used in a multi-threaded way. On Unix, a heuristics
+    try to detect if the HDF5 library has been built with thread-safety enabled
+    when linking against a HDF5 library. In other situations, the setting must
+    be manually set when needed.
+
 
 HDFS
 ****
