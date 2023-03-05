@@ -158,9 +158,14 @@ def gdal_polygonize(
     else:
         prog_func = gdal.TermProgress_nocb
 
+    dst_layer.StartTransaction()
     result = gdal.Polygonize(
         srcband, maskband, dst_layer, dst_field, options, callback=prog_func
     )
+    if result == gdal.CE_None:
+        dst_layer.CommitTransaction()
+    else:
+        dst_layer.RollbackTransaction()
 
     srcband = None
     src_ds = None
