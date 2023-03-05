@@ -287,6 +287,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
             break;
 
         default:
+            // Impossible case
+            CPLAssert(false);
             break;
     }
 }
