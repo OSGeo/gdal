@@ -36,6 +36,18 @@
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
+#ifdef ENABLE_HDF5_GLOBAL_LOCK
+#include <mutex>
+std::recursive_mutex &GetHDF5GlobalMutex();
+#define HDF5_GLOBAL_LOCK()                                                     \
+    std::lock_guard<std::recursive_mutex> oLock(GetHDF5GlobalMutex())
+#else
+#define HDF5_GLOBAL_LOCK()                                                     \
+    do                                                                         \
+    {                                                                          \
+    } while (0)
+#endif
+
 typedef struct HDF5GroupObjects
 {
     char *pszName;

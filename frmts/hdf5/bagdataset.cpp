@@ -423,6 +423,8 @@ BAGRasterBand::BAGRasterBand(BAGDataset *poDSIn, int nBandIn)
 
 BAGRasterBand::~BAGRasterBand()
 {
+    HDF5_GLOBAL_LOCK();
+
     if (eAccess == GA_Update)
     {
         CreateDatasetIfNeeded();
@@ -740,6 +742,8 @@ CPLErr BAGRasterBand::SetNoDataValue(double dfNoData)
 /************************************************************************/
 CPLErr BAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     if (!CreateDatasetIfNeeded())
         return CE_Failure;
 
@@ -824,6 +828,8 @@ CPLErr BAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 CPLErr BAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     if (!CreateDatasetIfNeeded())
         return CE_Failure;
 
@@ -939,6 +945,8 @@ BAGSuperGridBand::~BAGSuperGridBand() = default;
 
 CPLErr BAGSuperGridBand::IReadBlock(int, int nBlockYOff, void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
     H5OFFSET_TYPE offset[2] = {
         static_cast<H5OFFSET_TYPE>(0),
@@ -1103,6 +1111,8 @@ double BAGResampledBand::GetMaximum(int *pbSuccess)
 CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                     void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
 #ifdef DEBUG_VERBOSE
     CPLDebug(
@@ -1642,6 +1652,8 @@ BAGGeorefMDBand::BAGGeorefMDBand(const std::shared_ptr<GDALMDArray> &poValues,
 
 CPLErr BAGGeorefMDBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_poKeys)
     {
         const GUInt64 arrayStartIdx[2] = {
@@ -1958,6 +1970,8 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     // Confirm that this appears to be a BAG file.
     if (!Identify(poOpenInfo))
         return nullptr;
+
+    HDF5_GLOBAL_LOCK();
 
     if (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER)
     {

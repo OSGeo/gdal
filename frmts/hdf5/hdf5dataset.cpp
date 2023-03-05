@@ -49,6 +49,20 @@
 
 constexpr size_t MAX_METADATA_LEN = 32768;
 
+#ifdef ENABLE_HDF5_GLOBAL_LOCK
+
+/************************************************************************/
+/*                          GetHDF5GlobalMutex()                        */
+/************************************************************************/
+
+std::recursive_mutex &GetHDF5GlobalMutex()
+{
+    static std::recursive_mutex oMutex;
+    return oMutex;
+}
+
+#endif
+
 /************************************************************************/
 /*                          HDF5GetFileDriver()                         */
 /************************************************************************/
@@ -130,6 +144,8 @@ HDF5Dataset::HDF5Dataset()
 /************************************************************************/
 HDF5Dataset::~HDF5Dataset()
 {
+    HDF5_GLOBAL_LOCK();
+
     CSLDestroy(papszMetadata);
     if (hGroupID > 0)
         H5Gclose(hGroupID);
@@ -517,6 +533,8 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return nullptr;
+
+    HDF5_GLOBAL_LOCK();
 
     if (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER)
     {
