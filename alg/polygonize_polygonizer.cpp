@@ -431,7 +431,7 @@ void Polygonizer<PolyIdType, DataType>::processLine(
     {
         RPolygon *poPolygon = entry.second;
 
-        if (poPolygon->iBottomRightRow == nCurrentRow - 1)
+        if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
         {
             oCompletedPolygons.push_back(entry);
         }
