@@ -583,6 +583,11 @@ def test_ogrinfo_lib_json_features():
     }
     assert ret == expected_ret
 
+    # Test bugfix of https://github.com/OSGeo/gdal/pull/7345
+    ret_json_features = gdal.VectorInfo(ds, options="-json -features")
+    ret_features_json = gdal.VectorInfo(ds, options="-features -json")
+    assert ret_json_features == ret_features_json
+
 
 ###############################################################################
 # Validate json schema output
