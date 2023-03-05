@@ -30,6 +30,9 @@
 
 /*! @cond Doxygen_Suppress */
 
+// Implements Junhua Teng, Fahui Wang, Yu Liu: An Efficient Algorithm for
+// Raster-to-Vector Data Conversion: https://doi.org/10.1080/10824000809480639
+
 #include <array>
 #include <cstdint>
 #include <vector>
