@@ -38,6 +38,11 @@
 #include "cpl_error.h"
 #include "ogr_api.h"
 
+namespace gdal
+{
+namespace polygonizer
+{
+
 #define THE_OUTER_POLYGON_ID 0
 
 using IndexType = std::uint32_t;
@@ -202,6 +207,9 @@ class OGRPolygonWriter : public PolygonReceiver<DataType>
         return eErr_;
     }
 };
+
+}  // namespace polygonizer
+}  // namespace gdal
 
 /*! @endcond */
 

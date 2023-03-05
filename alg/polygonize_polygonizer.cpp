@@ -31,6 +31,11 @@
 
 #include <algorithm>
 
+namespace gdal
+{
+namespace polygonizer
+{
+
 RPolygon::~RPolygon()
 {
     for (auto &arc : oArcs)
@@ -530,5 +535,8 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
 
     OGR_F_Destroy(hFeat);
 }
+
+}  // namespace polygonizer
+}  // namespace gdal
 
 /*! @endcond */
