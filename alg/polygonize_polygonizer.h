@@ -116,11 +116,6 @@ struct TwoArm
     bool bSolidVertical{false};
 };
 
-/**
- * Process different kinds of Arm connections.
- */
-void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft);
-
 template <typename DataType> class PolygonReceiver
 {
   public:

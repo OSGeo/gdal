@@ -65,7 +65,11 @@ void RPolygon::updateBottomRightPos(IndexType iRow, IndexType iCol)
     iBottomRightCol = iCol;
 }
 
-void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
+/**
+ * Process different kinds of Arm connections.
+ */
+static void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove,
+                                  TwoArm *poLeft)
 {
     poCurrent->poPolyInside->updateBottomRightPos(poCurrent->iRow,
                                                   poCurrent->iCol);
