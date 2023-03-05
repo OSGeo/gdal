@@ -1528,6 +1528,9 @@ Poppler
 The `Poppler <https://poppler.freedesktop.org/>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
+Note that GDAL requires Poppler private headers, that are only installed
+if configuring Poppler with -DENABLE_UNSTABLE_API_ABI_HEADERS.
+
 .. option:: Poppler_INCLUDE_DIR
 
     Path to an include directory with the ``poppler-config.h`` header file.
