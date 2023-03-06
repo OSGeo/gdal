@@ -135,6 +135,14 @@ find_package_handle_standard_args(Poppler
 mark_as_advanced(Poppler_INCLUDE_DIR Poppler_LIBRARY)
 
 if(Poppler_FOUND)
+  if (NOT EXISTS "${Poppler_INCLUDE_DIR}/Object.h")
+    message(WARNING "Poppler private headers not found. Make sure you build Poppler with -DENABLE_UNSTABLE_API_ABI_HEADERS")
+    unset(Poppler_FOUND)
+    unset(POPPLER_FOUND)
+  endif()
+endif()
+
+if(Poppler_FOUND)
   set(Poppler_INCLUDE_DIRS "${Poppler_INCLUDE_DIR}")
   if(Poppler_INCLUDE_DIR MATCHES ".*/poppler" OR Poppler_INCLUDE_DIR MATCHES ".*\\poppler")
       # poppler/splash/SplashBitmap.h unfortunately has a #include "poppler/GfxState.h"
