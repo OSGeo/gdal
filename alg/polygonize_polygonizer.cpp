@@ -31,6 +31,11 @@
 
 #include <algorithm>
 
+namespace gdal
+{
+namespace polygonizer
+{
+
 RPolygon::~RPolygon()
 {
     for (auto &arc : oArcs)
@@ -60,7 +65,11 @@ void RPolygon::updateBottomRightPos(IndexType iRow, IndexType iCol)
     iBottomRightCol = iCol;
 }
 
-void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
+/**
+ * Process different kinds of Arm connections.
+ */
+static void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove,
+                                  TwoArm *poLeft)
 {
     poCurrent->poPolyInside->updateBottomRightPos(poCurrent->iRow,
                                                   poCurrent->iCol);
@@ -70,11 +79,31 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
     poCurrent->poPolyAbove = poAbove->poPolyInside;
     poCurrent->poPolyLeft = poLeft->poPolyInside;
 
-    int nArmConnectionType =
-        (static_cast<int>(poAbove->bSolidVertical) << 3) |
-        (static_cast<int>(poLeft->bSolidHorizontal) << 2) |
-        (static_cast<int>(poCurrent->bSolidVertical) << 1) |
-        static_cast<int>(poCurrent->bSolidHorizontal);
+    constexpr int BIT_CUR_HORIZ = 0;
+    constexpr int BIT_CUR_VERT = 1;
+    constexpr int BIT_LEFT = 2;
+    constexpr int BIT_ABOVE = 3;
+
+    const int nArmConnectionType =
+        (static_cast<int>(poAbove->bSolidVertical) << BIT_ABOVE) |
+        (static_cast<int>(poLeft->bSolidHorizontal) << BIT_LEFT) |
+        (static_cast<int>(poCurrent->bSolidVertical) << BIT_CUR_VERT) |
+        (static_cast<int>(poCurrent->bSolidHorizontal) << BIT_CUR_HORIZ);
+
+    constexpr int VIRTUAL = 0;
+    constexpr int SOLID = 1;
+
+    constexpr int ABOVE_VIRTUAL = VIRTUAL << BIT_ABOVE;
+    constexpr int ABOVE_SOLID = SOLID << BIT_ABOVE;
+
+    constexpr int LEFT_VIRTUAL = VIRTUAL << BIT_LEFT;
+    constexpr int LEFT_SOLID = SOLID << BIT_LEFT;
+
+    constexpr int CUR_VERT_VIRTUAL = VIRTUAL << BIT_CUR_VERT;
+    constexpr int CUR_VERT_SOLID = SOLID << BIT_CUR_VERT;
+
+    constexpr int CUR_HORIZ_VIRTUAL = VIRTUAL << BIT_CUR_HORIZ;
+    constexpr int CUR_HORIZ_SOLID = SOLID << BIT_CUR_HORIZ;
 
     /**
      * There are 12 valid connection types depending on the arm types(virtual or solid)
@@ -104,11 +133,13 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
 
     switch (nArmConnectionType)
     {
-        case 0:
+        case ABOVE_VIRTUAL | LEFT_VIRTUAL | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_VIRTUAL:  // 0
             // nothing to do
             break;
 
-        case 3:
+        case ABOVE_VIRTUAL | LEFT_VIRTUAL | CUR_VERT_SOLID |
+            CUR_HORIZ_SOLID:  // 3
             // add inner arcs
             poCurrent->oArcVerInner = poCurrent->poPolyInside->newArc(true);
             poCurrent->oArcHorInner = poCurrent->poPolyInside->newArc(false);
@@ -126,13 +157,15 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 5:
+        case ABOVE_VIRTUAL | LEFT_SOLID | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_SOLID:  // 5
             // pass arcs
             poCurrent->oArcHorInner = poLeft->oArcHorInner;
             poCurrent->oArcHorOuter = poLeft->oArcHorOuter;
 
             break;
-        case 6:
+        case ABOVE_VIRTUAL | LEFT_SOLID | CUR_VERT_SOLID |
+            CUR_HORIZ_VIRTUAL:  // 6
             // pass arcs
             poCurrent->oArcVerInner = poLeft->oArcHorOuter;
             poCurrent->oArcVerOuter = poLeft->oArcHorInner;
@@ -142,7 +175,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 7:
+        case ABOVE_VIRTUAL | LEFT_SOLID | CUR_VERT_SOLID |
+            CUR_HORIZ_SOLID:  // 7
             // pass arcs
             poCurrent->oArcHorOuter = poLeft->oArcHorOuter;
             poCurrent->oArcVerOuter = poLeft->oArcHorInner;
@@ -158,7 +192,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 9:
+        case ABOVE_SOLID | LEFT_VIRTUAL | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_SOLID:  // 9
             // pass arcs
             poCurrent->oArcHorOuter = poAbove->oArcVerInner;
             poCurrent->oArcHorInner = poAbove->oArcVerOuter;
@@ -168,13 +203,15 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 10:
+        case ABOVE_SOLID | LEFT_VIRTUAL | CUR_VERT_SOLID |
+            CUR_HORIZ_VIRTUAL:  // 10
             // pass arcs
             poCurrent->oArcVerInner = poAbove->oArcVerInner;
             poCurrent->oArcVerOuter = poAbove->oArcVerOuter;
 
             break;
-        case 11:
+        case ABOVE_SOLID | LEFT_VIRTUAL | CUR_VERT_SOLID |
+            CUR_HORIZ_SOLID:  // 11
             // pass arcs
             poCurrent->oArcHorOuter = poAbove->oArcVerInner;
             poCurrent->oArcVerOuter = poAbove->oArcVerOuter;
@@ -189,7 +226,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 12:
+        case ABOVE_SOLID | LEFT_SOLID | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_VIRTUAL:  // 12
             // close arcs
             poLeft->oArcHorOuter.poArc->push_back(
                 Point{poCurrent->iRow, poCurrent->iCol});
@@ -202,7 +240,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                                                       poLeft->oArcHorInner);
 
             break;
-        case 13:
+        case ABOVE_SOLID | LEFT_SOLID | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_SOLID:  // 13
             // close arcs
             poLeft->oArcHorOuter.poArc->push_back(
                 Point{poCurrent->iRow, poCurrent->iCol});
@@ -215,7 +254,8 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 14:
+        case ABOVE_SOLID | LEFT_SOLID | CUR_VERT_SOLID |
+            CUR_HORIZ_VIRTUAL:  // 14
             // close arcs
             poLeft->oArcHorOuter.poArc->push_back(
                 Point{poCurrent->iRow, poCurrent->iCol});
@@ -228,7 +268,7 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
                 Point{poCurrent->iRow, poCurrent->iCol});
 
             break;
-        case 15:
+        case ABOVE_SOLID | LEFT_SOLID | CUR_VERT_SOLID | CUR_HORIZ_SOLID:  // 15
             // Tow pixels of the main diagonal belong to the same polygon
             if (poAbove->poPolyLeft == poCurrent->poPolyInside)
             {
@@ -286,7 +326,15 @@ void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft)
 
             break;
 
+        case ABOVE_VIRTUAL | LEFT_VIRTUAL | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_SOLID:  // 1
+        case ABOVE_VIRTUAL | LEFT_VIRTUAL | CUR_VERT_SOLID |
+            CUR_HORIZ_VIRTUAL:  // 2
+        case ABOVE_VIRTUAL | LEFT_SOLID | CUR_VERT_VIRTUAL |
+            CUR_HORIZ_VIRTUAL:  // 4
         default:
+            // Impossible case
+            CPLAssert(false);
             break;
     }
 }
@@ -383,7 +431,7 @@ void Polygonizer<PolyIdType, DataType>::processLine(
     {
         RPolygon *poPolygon = entry.second;
 
-        if (poPolygon->iBottomRightRow == nCurrentRow - 1)
+        if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
         {
             oCompletedPolygons.push_back(entry);
         }
@@ -491,5 +539,8 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
 
     OGR_F_Destroy(hFeat);
 }
+
+}  // namespace polygonizer
+}  // namespace gdal
 
 /*! @endcond */

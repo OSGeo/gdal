@@ -30,6 +30,9 @@
 
 /*! @cond Doxygen_Suppress */
 
+// Implements Junhua Teng, Fahui Wang, Yu Liu: An Efficient Algorithm for
+// Raster-to-Vector Data Conversion: https://doi.org/10.1080/10824000809480639
+
 #include <array>
 #include <cstdint>
 #include <vector>
@@ -37,6 +40,11 @@
 
 #include "cpl_error.h"
 #include "ogr_api.h"
+
+namespace gdal
+{
+namespace polygonizer
+{
 
 #define THE_OUTER_POLYGON_ID 0
 
@@ -110,11 +118,6 @@ struct TwoArm
     bool bSolidHorizontal{false};
     bool bSolidVertical{false};
 };
-
-/**
- * Process different kinds of Arm connections.
- */
-void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove, TwoArm *poLeft);
 
 template <typename DataType> class PolygonReceiver
 {
@@ -202,6 +205,9 @@ class OGRPolygonWriter : public PolygonReceiver<DataType>
         return eErr_;
     }
 };
+
+}  // namespace polygonizer
+}  // namespace gdal
 
 /*! @endcond */
 

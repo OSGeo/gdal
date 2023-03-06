@@ -53,6 +53,8 @@
 
 #include "polygonize_polygonizer.h"
 
+using namespace gdal::polygonizer;
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
