@@ -296,6 +296,8 @@ class HDF5Array final : public GDALMDArray
            const std::shared_ptr<HDF5SharedResources> &poShared, hid_t hArray,
            const HDF5Group *poGroup, bool bSkipFullDimensionInstantiation)
     {
+        HDF5_GLOBAL_LOCK();
+
         auto ar(std::shared_ptr<HDF5Array>(
             new HDF5Array(osParentName, osName, poShared, hArray, poGroup,
                           bSkipFullDimensionInstantiation)));
@@ -433,6 +435,8 @@ class HDF5Attribute final : public GDALAttribute
            const std::shared_ptr<HDF5SharedResources> &poShared,
            hid_t hAttribute)
     {
+        HDF5_GLOBAL_LOCK();
+
         auto ar(std::shared_ptr<HDF5Attribute>(new HDF5Attribute(
             osGroupFullName, osParentName, osName, poShared, hAttribute)));
         if (ar->m_dt.GetClass() == GEDTC_NUMERIC &&
@@ -471,6 +475,8 @@ HDF5SharedResources::HDF5SharedResources(const std::string &osFilename)
 
 HDF5SharedResources::~HDF5SharedResources()
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_hHDF5 > 0)
         H5Fclose(m_hHDF5);
 }
@@ -482,6 +488,8 @@ HDF5SharedResources::~HDF5SharedResources()
 std::vector<std::shared_ptr<GDALDimension>>
 HDF5Group::GetDimensions(CSLConstList) const
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_bGotDims)
         return m_cachedDims;
 
@@ -607,6 +615,8 @@ herr_t HDF5Group::GetGroupNamesCallback(hid_t hGroup, const char *pszObjName,
 
 std::vector<std::string> HDF5Group::GetGroupNames(CSLConstList) const
 {
+    HDF5_GLOBAL_LOCK();
+
     m_osListSubGroups.clear();
     H5Giterate(m_poShared->GetHDF5(), GetFullName().c_str(), nullptr,
                GetGroupNamesCallback,
@@ -621,6 +631,8 @@ std::vector<std::string> HDF5Group::GetGroupNames(CSLConstList) const
 std::shared_ptr<GDALGroup> HDF5Group::OpenGroup(const std::string &osName,
                                                 CSLConstList) const
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_osListSubGroups.empty())
         GetGroupNames(nullptr);
     if (std::find(m_osListSubGroups.begin(), m_osListSubGroups.end(), osName) ==
@@ -690,6 +702,8 @@ herr_t HDF5Group::GetArrayNamesCallback(hid_t hGroup, const char *pszObjName,
 
 std::vector<std::string> HDF5Group::GetMDArrayNames(CSLConstList) const
 {
+    HDF5_GLOBAL_LOCK();
+
     m_osListArrays.clear();
     H5Giterate(m_poShared->GetHDF5(), GetFullName().c_str(), nullptr,
                GetArrayNamesCallback,
@@ -704,6 +718,8 @@ std::vector<std::string> HDF5Group::GetMDArrayNames(CSLConstList) const
 std::shared_ptr<GDALMDArray> HDF5Group::OpenMDArray(const std::string &osName,
                                                     CSLConstList) const
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_osListArrays.empty())
         GetMDArrayNames(nullptr);
     if (std::find(m_osListArrays.begin(), m_osListArrays.end(), osName) ==
@@ -753,6 +769,8 @@ herr_t HDF5Group::GetAttributesCallback(hid_t hGroup, const char *pszObjName,
 std::vector<std::shared_ptr<GDALAttribute>>
 HDF5Group::GetAttributes(CSLConstList papszOptions) const
 {
+    HDF5_GLOBAL_LOCK();
+
     m_oListAttributes.clear();
     m_bShowAllAttributes =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_ALL", "NO"));
@@ -767,6 +785,8 @@ HDF5Group::GetAttributes(CSLConstList papszOptions) const
 
 HDF5Array::~HDF5Array()
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_hArray > 0)
         H5Dclose(m_hArray);
     if (m_hNativeDT > 0)
@@ -1099,6 +1119,8 @@ HDF5Array::GetAttribute(const std::string &osName) const
 std::vector<std::shared_ptr<GDALAttribute>>
 HDF5Array::GetAttributes(CSLConstList papszOptions) const
 {
+    HDF5_GLOBAL_LOCK();
+
     m_oListAttributes.clear();
     m_bShowAllAttributes =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_ALL", "NO"));
@@ -1663,6 +1685,8 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
+    HDF5_GLOBAL_LOCK();
+
     const size_t nDims(m_dims.size());
     std::vector<H5OFFSET_TYPE> anOffset(nDims);
     std::vector<hsize_t> anCount(nDims);
@@ -1849,6 +1873,8 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
 HDF5Attribute::~HDF5Attribute()
 {
+    HDF5_GLOBAL_LOCK();
+
     if (m_hAttribute > 0)
         H5Aclose(m_hAttribute);
     if (m_hNativeDT > 0)
@@ -1929,6 +1955,8 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                           const GDALExtendedDataType &bufferDataType,
                           void *pDstBuffer) const
 {
+    HDF5_GLOBAL_LOCK();
+
     const size_t nDims(m_dims.size());
     if (m_dt.GetClass() == GEDTC_STRING)
     {
@@ -2047,6 +2075,8 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
 std::shared_ptr<GDALMDArray> HDF5Dimension::GetIndexingVariable() const
 {
+    HDF5_GLOBAL_LOCK();
+
     auto hGroup = H5Gopen(m_poShared->GetHDF5(), m_osGroupFullname.c_str());
     if (hGroup >= 0)
     {
@@ -2082,6 +2112,8 @@ std::shared_ptr<GDALMDArray> HDF5Dimension::GetIndexingVariable() const
 
 GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 {
+    HDF5_GLOBAL_LOCK();
+
     const char *pszFilename = STARTS_WITH(poOpenInfo->pszFilename, "HDF5:")
                                   ? poOpenInfo->pszFilename + strlen("HDF5:")
                                   : poOpenInfo->pszFilename;
@@ -2121,6 +2153,8 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
     std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
 {
+    HDF5_GLOBAL_LOCK();
+
     H5G_stat_t oStatbuf;
     if (H5Gget_objinfo(poSharedResources->m_hHDF5, "/", FALSE, &oStatbuf) < 0)
     {

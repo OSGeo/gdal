@@ -12,6 +12,33 @@ set(SOURCE
 
 add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)
 
+if(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK AND UNIX AND
+   (HDF5_C_LIBRARIES MATCHES ".so" OR HDF5_C_LIBRARIES MATCHES ".dylib"))
+  # We try to infer if the HDF5 library is built with thread-safe support
+  # by checking if it links against pthread
+  include(CheckCSourceRuns)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_LIBRARIES "${HDF5_C_LIBRARIES}")
+  check_c_source_runs(
+      "
+      #include <pthread.h>
+      int main()
+      {
+          pthread_cancel(0);
+          return 0;
+      }
+      "
+      HDF5_LINKS_TO_PTHREAD)
+  cmake_pop_check_state()
+  if (NOT HDF5_LINKS_TO_PTHREAD)
+    message(WARNING "HDF5 library does not seem to have thread-safety enabled. Adding a global lock on GDAL side")
+    target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
+  endif()
+elseif(GDAL_ENABLE_HDF5_GLOBAL_LOCK)
+  target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
+endif()
+
 # When build as plugin, initialize all drivers from Register_HDF5
 if (GDAL_ENABLE_DRIVER_HDF5_PLUGIN)
   target_compile_definitions(gdal_HDF5 PRIVATE -DHDF5_PLUGIN)
