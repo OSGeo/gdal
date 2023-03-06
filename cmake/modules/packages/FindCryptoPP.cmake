@@ -78,7 +78,20 @@ if(CRYPTOPP_FOUND)
         add_library(CRYPTOPP::CRYPTOPP UNKNOWN IMPORTED)
         set_target_properties(CRYPTOPP::CRYPTOPP PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES "${CRYPTOPP_INCLUDE_DIR}"
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
-                              IMPORTED_LOCATION "${CRYPTOPP_LIBRARY}")
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "CXX")
+
+        if(CRYPTOPP_LIBRARY_RELEASE)
+            set_property(TARGET CRYPTOPP::CRYPTOPP APPEND PROPERTY
+                    IMPORTED_CONFIGURATIONS RELEASE)
+            set_target_properties(CRYPTOPP::CRYPTOPP PROPERTIES
+                    IMPORTED_LOCATION_RELEASE "${CRYPTOPP_LIBRARY_RELEASE}")
+        endif()
+
+        if(CRYPTOPP_LIBRARY_DEBUG)
+            set_property(TARGET CRYPTOPP::CRYPTOPP APPEND PROPERTY
+                    IMPORTED_CONFIGURATIONS DEBUG)
+            set_target_properties(CRYPTOPP::CRYPTOPP PROPERTIES
+                    IMPORTED_LOCATION_DEBUG "${CRYPTOPP_LIBRARY_DEBUG}")
+        endif()
    endif()
 endif()

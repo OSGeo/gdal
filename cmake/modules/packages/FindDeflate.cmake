@@ -107,10 +107,5 @@ if(Deflate_FOUND)
             set_target_properties(Deflate::Deflate PROPERTIES
                     IMPORTED_LOCATION_DEBUG "${Deflate_LIBRARY_DEBUG}")
         endif()
-
-        if(NOT Deflate_LIBRARY_RELEASE AND NOT Deflate_LIBRARY_DEBUG)
-            set_target_properties(Deflate::Deflate PROPERTIES
-                    IMPORTED_LOCATION_RELEASE "${Deflate_LIBRARY}")
-        endif()
     endif()
 endif()
