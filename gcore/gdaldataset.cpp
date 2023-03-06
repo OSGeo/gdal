@@ -5136,7 +5136,9 @@ GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
  @param papszOptions a StringList of name=value options.  Options are driver
                      specific. There is a common option to set output layer
                      spatial reference: DST_SRSWKT. The option should be in
-                     WKT format.
+                     WKT format. Starting with GDAL 3.7, the common option
+                     COPY_MD can be set to NO to prevent the default copying
+                     of the metadata from the source layer to the target layer.
 
  @return a handle to the layer, or NULL if an error occurs.
 */
@@ -5161,33 +5163,33 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
     OGRLayer *poDstLayer = nullptr;
 
+    CPLStringList aosCleanedUpOptions(CSLDuplicate(papszOptions));
+    aosCleanedUpOptions.SetNameValue("DST_SRSWKT", nullptr);
+    aosCleanedUpOptions.SetNameValue("COPY_MD", nullptr);
+
     CPLErrorReset();
     if (poSrcDefn->GetGeomFieldCount() > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer))
     {
-        poDstLayer = ICreateLayer(pszNewName, nullptr, wkbNone, papszOptions);
+        poDstLayer = ICreateLayer(pszNewName, nullptr, wkbNone,
+                                  aosCleanedUpOptions.List());
     }
     else
     {
-        if (nullptr == pszSRSWKT)
-        {
-            poDstLayer = ICreateLayer(pszNewName, poSrcLayer->GetSpatialRef(),
-                                      poSrcDefn->GetGeomType(), papszOptions);
-        }
-        else
-        {
-            // Remove DST_WKT from option list to prevent warning from driver.
-            const int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
-            CPLStringList aosOptionsWithoutDstSRSWKT(CSLRemoveStrings(
-                CSLDuplicate(papszOptions), nSRSPos, 1, nullptr));
-            poDstLayer =
-                ICreateLayer(pszNewName, &oDstSpaRef, poSrcDefn->GetGeomType(),
-                             aosOptionsWithoutDstSRSWKT.List());
-        }
+        poDstLayer = ICreateLayer(
+            pszNewName, pszSRSWKT ? &oDstSpaRef : poSrcLayer->GetSpatialRef(),
+            poSrcDefn->GetGeomType(), aosCleanedUpOptions.List());
     }
 
     if (poDstLayer == nullptr)
         return nullptr;
+
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "COPY_MD", "YES")))
+    {
+        char **papszMD = poSrcLayer->GetMetadata();
+        if (papszMD)
+            poDstLayer->SetMetadata(papszMD);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Add fields.  Default to copy all fields, and make sure to       */
