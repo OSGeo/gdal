@@ -38,6 +38,7 @@
 #include "ograrrowarrayhelper.h"
 
 #include <condition_variable>
+#include <limits>
 #include <mutex>
 #include <queue>
 #include <vector>
@@ -272,6 +273,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     GDALGeoPackageDataset();
     virtual ~GDALGeoPackageDataset();
 
+    char **GetFileList(void) override;
+
     virtual char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
@@ -459,7 +462,25 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
 class GDALGeoPackageRasterBand final : public GDALGPKGMBTilesLikeRasterBand
 {
-    bool m_bStatsComputed = false;
+    // Whether STATISTICS_MINIMUM and/or STATISTICS_MAXIMUM have been computed
+    // from the min, max columns of the gpkg_2d_gridded_tile_ancillary table
+    // (only for non-Byte data)
+    bool m_bMinMaxComputedFromTileAncillary = false;
+    double m_dfStatsMinFromTileAncillary =
+        std::numeric_limits<double>::quiet_NaN();
+    double m_dfStatsMaxFromTileAncillary =
+        std::numeric_limits<double>::quiet_NaN();
+    CPLStringList m_aosMD{};
+
+    // Whether gpkg_metadata has been read to set initial metadata
+    bool m_bHasReadMetadataFromStorage = false;
+
+    // Whether STATISTICS_* have been set in this "session"
+    bool m_bStatsMetadataSetInThisSession = false;
+
+    bool m_bAddImplicitStatistics = true;
+
+    void LoadBandMetadata();
 
   public:
     GDALGeoPackageRasterBand(GDALGeoPackageDataset *poDS, int nTileWidth,
@@ -473,6 +494,20 @@ class GDALGeoPackageRasterBand final : public GDALGPKGMBTilesLikeRasterBand
     virtual char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
+    virtual CPLErr SetMetadata(char **papszMetadata,
+                               const char *pszDomain = "") override;
+    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                                   const char *pszDomain = "") override;
+
+    void AddImplicitStatistics(bool b)
+    {
+        m_bAddImplicitStatistics = b;
+    }
+    inline bool HaveStatsMetadataBeenSetInThisSession() const
+    {
+        return m_bStatsMetadataSetInThisSession;
+    }
+    void InvalidateStatistics();
 };
 
 /************************************************************************/
