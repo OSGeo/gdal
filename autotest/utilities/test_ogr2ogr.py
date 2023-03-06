@@ -539,7 +539,7 @@ def test_ogr2ogr_17(ogr2ogr_path):
 # Test -wrapdateline
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_18(ogr2ogr_path):
 
     try:
@@ -605,7 +605,7 @@ def test_ogr2ogr_18(ogr2ogr_path):
 # at line of constant easting.
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_polygon_splitting(ogr2ogr_path):
 
     try:
@@ -660,7 +660,7 @@ def test_ogr2ogr_polygon_splitting(ogr2ogr_path):
 # Test -clipsrc
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_19(ogr2ogr_path):
 
     try:
@@ -864,7 +864,7 @@ def test_ogr2ogr_23(ogr2ogr_path):
 # Test -clipsrc with WKT geometry (#3530)
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_24(ogr2ogr_path):
 
     try:
@@ -898,7 +898,7 @@ def test_ogr2ogr_24(ogr2ogr_path):
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_25(ogr2ogr_path):
 
     try:
@@ -939,7 +939,7 @@ def test_ogr2ogr_25(ogr2ogr_path):
 # Test -clipdst with WKT geometry (#3530)
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_26(ogr2ogr_path):
 
     try:
@@ -973,7 +973,7 @@ def test_ogr2ogr_26(ogr2ogr_path):
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_27(ogr2ogr_path):
 
     try:
@@ -1072,7 +1072,7 @@ def test_ogr2ogr_28(ogr2ogr_path):
 # Test -wrapdateline on polygons
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_29(ogr2ogr_path):
 
     for i in range(2):

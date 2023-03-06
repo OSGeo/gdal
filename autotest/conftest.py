@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
@@ -119,6 +119,7 @@ def pytest_collection_modifyitems(config, items):
     # skip test with @ptest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
     skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
     import gdaltest
+    import ogrtest
 
     drivers_checked = {}
     # Note: when adding a new custom marker, document it in cmake/template/pytest.ini.in
@@ -141,6 +142,29 @@ def pytest_collection_modifyitems(config, items):
         for mark in item.iter_markers("slow"):
             if not gdaltest.run_slow_tests():
                 item.add_marker(pytest.mark.skip("GDAL_RUN_SLOW_TESTS not set"))
+
+        for mark in item.iter_markers("require_geos"):
+            if not ogrtest.have_geos():
+                item.add_marker(pytest.mark.skip("GEOS not available"))
+
+            required_version = (
+                mark.args[0] if len(mark.args) > 0 else 0,
+                mark.args[1] if len(mark.args) > 1 else 0,
+                mark.args[2] if len(mark.args) > 2 else 0,
+            )
+
+            actual_version = (
+                ogr.GetGEOSVersionMajor(),
+                ogr.GetGEOSVersionMinor(),
+                ogr.GetGEOSVersionMicro(),
+            )
+
+            if actual_version < required_version:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"Requires GEOS >= {'.'.join(str(x) for x in required_version)}"
+                    )
+                )
 
         for mark in item.iter_markers("require_curl"):
             if not gdaltest.built_against_curl():

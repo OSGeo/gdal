@@ -1,4 +1,4 @@
-#!/usr/bin/env pytest
+# ve!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -1273,10 +1273,8 @@ def test_gdalwarp_lib_125():
 # Test cutline with invalid geometry
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_126():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
     lyr = ds.CreateLayer("cutline")
@@ -1411,9 +1409,8 @@ def test_gdalwarp_lib_128():
 # to an invalid geometry (#6375)
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_129():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1000, 2000)
     rpc = [
@@ -2463,10 +2460,8 @@ def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_no_intersection(
 # Test warping from a RPC dataset to an existing dataset, with using RPC_FOOTPRINT
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     with gdaltest.config_option("RESTRICT_OUTPUT_DATASET_UPDATE", "NO"):
         dstDS = gdal.Translate(

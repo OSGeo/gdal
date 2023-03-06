@@ -2238,10 +2238,8 @@ def test_ogr_geojson_55():
 # Test RFC 7946 (that require geos)
 
 
+@pytest.mark.require_geos
 def test_ogr_geojson_56():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     # Test offsetting longitudes beyond antimeridian
     gdal.VectorTranslate(
@@ -2435,10 +2433,8 @@ def test_ogr_geojson_56():
 # Test RFC 7946 and reprojection
 
 
+@pytest.mark.require_geos
 def test_ogr_geojson_57():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     # Standard case: EPSG:32662: WGS 84 / Plate Carre
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
@@ -3526,10 +3522,8 @@ def test_ogr_geojson_read_fields_with_different_case():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1068
 
 
+@pytest.mark.require_geos
 def test_ogr_geojson_clip_geometries_rfc7946():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     tmpfilename = "/vsimem/out.json"
     gdal.VectorTranslate(

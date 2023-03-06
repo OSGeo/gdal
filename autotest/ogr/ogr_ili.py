@@ -49,10 +49,8 @@ def startup_and_cleanup():
 # Check that Ili1 point layer is properly read.
 
 
+@pytest.mark.require_geos
 def test_ogr_interlis1_2():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
     layers = [
@@ -345,10 +343,8 @@ def test_ogr_interlis1_9():
 # Ili1 Area with polygonizing
 
 
+@pytest.mark.require_geos
 def test_ogr_interlis1_10():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
 
