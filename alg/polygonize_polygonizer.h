@@ -36,6 +36,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <limits>
 #include <map>
 
 #include "cpl_error.h"
@@ -45,8 +46,6 @@ namespace gdal
 {
 namespace polygonizer
 {
-
-#define THE_OUTER_POLYGON_ID 0
 
 using IndexType = std::uint32_t;
 using Point = std::array<IndexType, 2>;
@@ -139,9 +138,15 @@ template <typename DataType> class PolygonReceiver
  */
 template <typename PolyIdType, typename DataType> class Polygonizer
 {
+  public:
+    static constexpr PolyIdType THE_OUTER_POLYGON_ID =
+        std::numeric_limits<PolyIdType>::max();
+
+  private:
     using PolygonMap = std::map<PolyIdType, RPolygon *>;
     using PolygonMapEntry = typename PolygonMap::value_type;
 
+    PolyIdType nInvalidPolyId_;
     RPolygon *poTheOuterPolygon_{nullptr};
     PolygonMap oPolygonMap_{};
 
@@ -154,7 +159,8 @@ template <typename PolyIdType, typename DataType> class Polygonizer
     void destroyPolygon(PolyIdType nPolygonId);
 
   public:
-    explicit Polygonizer(PolygonReceiver<DataType> *poPolygonReceiver);
+    explicit Polygonizer(PolyIdType nInvalidPolyId,
+                         PolygonReceiver<DataType> *poPolygonReceiver);
 
     Polygonizer(const Polygonizer<PolyIdType, DataType> &) = delete;
 
@@ -169,8 +175,7 @@ template <typename PolyIdType, typename DataType> class Polygonizer
     }
 
     void processLine(const PolyIdType *panThisLineId,
-                     const DataType *panLastLineVal,
-                     const GByte *pabyLastLineValMask, TwoArm *poThisLineArm,
+                     const DataType *panLastLineVal, TwoArm *poThisLineArm,
                      TwoArm *poLastLineArm, IndexType nCurrentRow,
                      IndexType nCols);
 };

@@ -58,6 +58,32 @@ using namespace gdal::polygonizer;
 CPL_CVSID("$Id$")
 
 /************************************************************************/
+/*                          GPMaskImageData()                           */
+/*                                                                      */
+/*      Mask out image pixels to a special nodata value if the mask     */
+/*      band is zero.                                                   */
+/************************************************************************/
+
+template <class DataType>
+static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
+                              int iY, int nXSize, DataType *panImageLine)
+
+{
+    const CPLErr eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY, nXSize, 1,
+                                     pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0);
+    if (eErr != CE_None)
+        return eErr;
+
+    for (int i = 0; i < nXSize; i++)
+    {
+        if (pabyMaskLine[i] == 0)
+            panImageLine[i] = GP_NODATA_MARKER;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           GDALPolygonizeT()                          */
 /************************************************************************/
 
@@ -109,18 +135,17 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     GInt32 *panThisLineId =
         static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
 
-    GByte *pabyLastLineValMask =
-        static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
+    GByte *pabyMaskLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
 
     if (panLastLineVal == nullptr || panThisLineVal == nullptr ||
         panLastLineId == nullptr || panThisLineId == nullptr ||
-        pabyLastLineValMask == nullptr)
+        pabyMaskLine == nullptr)
     {
         CPLFree(panThisLineId);
         CPLFree(panLastLineId);
         CPLFree(panThisLineVal);
         CPLFree(panLastLineVal);
-        CPLFree(pabyLastLineValMask);
+        CPLFree(pabyMaskLine);
         return CE_Failure;
     }
 
@@ -174,6 +199,10 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1, panThisLineVal,
                             nXSize, 1, eDT, 0, 0);
 
+        if (eErr == CE_None && hMaskBand != nullptr)
+            eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
+                                   panThisLineVal);
+
         if (eErr != CE_None)
             break;
 
@@ -225,7 +254,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 
     OGRPolygonWriter<DataType> oPolygonWriter{hOutLayer, iPixValField,
                                               adfGeoTransform};
-    Polygonizer<GInt32, DataType> oPolygonizer{&oPolygonWriter};
+    Polygonizer<GInt32, DataType> oPolygonizer{-1, &oPolygonWriter};
     TwoArm *paoLastLineArm =
         static_cast<TwoArm *>(VSI_CALLOC_VERBOSE(sizeof(TwoArm), nXSize + 2));
     TwoArm *paoThisLineArm =
@@ -240,11 +269,6 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         for (int i = 0; i < nXSize + 2; ++i)
         {
             paoLastLineArm[i].poPolyInside = oPolygonizer.getTheOuterPolygon();
-        }
-
-        for (int i = 0; i < nXSize; ++i)
-        {
-            pabyLastLineValMask[i] = 1;
         }
     }
 
@@ -263,24 +287,13 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         {
             eErr = GDALRasterIO(hSrcBand, GF_Read, 0, iY, nXSize, 1,
                                 panThisLineVal, nXSize, 1, eDT, 0, 0);
+            if (eErr == CE_None && hMaskBand != nullptr)
+                eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
+                                       panThisLineVal);
         }
 
         if (eErr != CE_None)
             continue;
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Read the mask data. */
-        /* --------------------------------------------------------------------
-         */
-        if (iY > 0 && hMaskBand != nullptr)
-        {
-            eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iY - 1, nXSize, 1,
-                                pabyLastLineValMask, nXSize, 1, GDT_Byte, 0, 0);
-
-            if (eErr != CE_None)
-                continue;
-        }
 
         /* --------------------------------------------------------------------
          */
@@ -291,7 +304,8 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         if (iY == nYSize)
         {
             for (int iX = 0; iX < nXSize; iX++)
-                panThisLineId[iX] = THE_OUTER_POLYGON_ID;
+                panThisLineId[iX] =
+                    decltype(oPolygonizer)::THE_OUTER_POLYGON_ID;
         }
         else if (iY == 0)
         {
@@ -315,21 +329,25 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         {
             for (int iX = 0; iX < nXSize; iX++)
             {
-                // Ensure that polygon id is greator that zero, id zero is used by Polygonizer internally.
+                // TODO: maybe we can reserve -1 as the lookup result for -1 polygon id in the panPolyIdMap,
+                //       so the this expression becomes: panLastLineId[iX] = *(oFirstEnum.panPolyIdMap + panThisLineId[iX]).
+                //       This would eliminate the condition checking.
                 panLastLineId[iX] =
-                    oFirstEnum.panPolyIdMap[panThisLineId[iX]] + 1;
+                    panThisLineId[iX] == -1
+                        ? -1
+                        : oFirstEnum.panPolyIdMap[panThisLineId[iX]];
             }
 
             oPolygonizer.processLine(panLastLineId, panLastLineVal,
-                                     pabyLastLineValMask, paoThisLineArm,
-                                     paoLastLineArm, iY, nXSize);
+                                     paoThisLineArm, paoLastLineArm, iY,
+                                     nXSize);
             eErr = oPolygonWriter.getErr();
         }
         else
         {
             oPolygonizer.processLine(panThisLineId, panLastLineVal,
-                                     pabyLastLineValMask, paoThisLineArm,
-                                     paoLastLineArm, iY, nXSize);
+                                     paoThisLineArm, paoLastLineArm, iY,
+                                     nXSize);
             eErr = oPolygonWriter.getErr();
         }
 
@@ -368,7 +386,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
     CPLFree(panLastLineVal);
     CPLFree(paoThisLineArm);
     CPLFree(paoLastLineArm);
-    CPLFree(pabyLastLineValMask);
+    CPLFree(pabyMaskLine);
 
     return eErr;
 }

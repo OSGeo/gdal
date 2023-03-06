@@ -341,8 +341,8 @@ static void ProcessArmConnections(TwoArm *poCurrent, TwoArm *poAbove,
 
 template <typename PolyIdType, typename DataType>
 Polygonizer<PolyIdType, DataType>::Polygonizer(
-    PolygonReceiver<DataType> *poPolygonReceiver)
-    : poPolygonReceiver_(poPolygonReceiver)
+    PolyIdType nInvalidPolyId, PolygonReceiver<DataType> *poPolygonReceiver)
+    : nInvalidPolyId_(nInvalidPolyId), poPolygonReceiver_(poPolygonReceiver)
 {
     poTheOuterPolygon_ = createPolygon(THE_OUTER_POLYGON_ID);
 }
@@ -388,8 +388,8 @@ void Polygonizer<PolyIdType, DataType>::destroyPolygon(PolyIdType nPolygonId)
 template <typename PolyIdType, typename DataType>
 void Polygonizer<PolyIdType, DataType>::processLine(
     const PolyIdType *panThisLineId, const DataType *panLastLineVal,
-    const GByte *pabyLastLineValMask, TwoArm *poThisLineArm,
-    TwoArm *poLastLineArm, const IndexType nCurrentRow, const IndexType nCols)
+    TwoArm *poThisLineArm, TwoArm *poLastLineArm, const IndexType nCurrentRow,
+    const IndexType nCols)
 {
     TwoArm *poCurrent, *poAbove, *poLeft;
 
@@ -442,7 +442,7 @@ void Polygonizer<PolyIdType, DataType>::processLine(
         RPolygon *poPolygon = entry.second;
 
         // emit valid polygon only
-        if (pabyLastLineValMask[poPolygon->iBottomRightCol])
+        if (nPolyId != nInvalidPolyId_)
         {
             poPolygonReceiver_->receive(
                 poPolygon, panLastLineVal[poPolygon->iBottomRightCol]);
