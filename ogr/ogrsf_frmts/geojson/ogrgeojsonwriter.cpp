@@ -871,10 +871,41 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             const size_t nLen = strlen(pszStr);
             poObjProp = nullptr;
             if (eSubType == OFSTJSON ||
-                (pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
-                (pszStr[0] == '[' && pszStr[nLen - 1] == ']'))
+                ((pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
+                 (pszStr[0] == '[' && pszStr[nLen - 1] == ']')))
             {
-                OGRJSonParse(pszStr, &poObjProp, false);
+                if (poFeature->GetNativeMediaType() &&
+                    strcmp(poFeature->GetNativeMediaType(),
+                           "application/vnd.geo+json") == 0 &&
+                    poFeature->GetNativeData())
+                {
+                    json_object *poNativeObjProp = nullptr;
+                    OGRJSonParse(poFeature->GetNativeData(), &poNativeObjProp,
+                                 false);
+                    if (json_object *poProperties = OGRGeoJSONFindMemberByName(
+                            poNativeObjProp, "properties"))
+                    {
+                        if (json_object *poProperty =
+                                OGRGeoJSONFindMemberByName(
+                                    poProperties, poFieldDefn->GetNameRef()))
+                        {
+                            if (strcmp(json_object_get_string(poProperty),
+                                       pszStr) == 0)
+                            {
+                                poObjProp = poProperty;
+                            }
+                        }
+                    }
+                }
+
+                if (poObjProp == nullptr)
+                {
+                    if ((pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
+                        (pszStr[0] == '[' && pszStr[nLen - 1] == ']'))
+                    {
+                        OGRJSonParse(pszStr, &poObjProp, false);
+                    }
+                }
             }
             if (poObjProp == nullptr)
                 poObjProp = json_object_new_string(pszStr);
