@@ -441,6 +441,24 @@ OGRErr OGREditableLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                            IUpdateFeature()                          */
+/************************************************************************/
+
+OGRErr OGREditableLayer::IUpdateFeature(OGRFeature *poFeature,
+                                        int nUpdatedFieldsCount,
+                                        const int *panUpdatedFieldsIdx,
+                                        int nUpdatedGeomFieldsCount,
+                                        const int *panUpdatedGeomFieldsIdx,
+                                        bool bUpdateStyleString)
+{
+    // Do not use OGRLayerDecorator::IUpdateFeature() which will forward
+    // to the decorated layer
+    return OGRLayer::IUpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
+
+/************************************************************************/
 /*                          DeleteFeature()                             */
 /************************************************************************/
 

@@ -491,6 +491,7 @@ typedef void retGetPoints;
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCUpsertFeature       = "UpsertFeature";
+%constant char *OLCUpdateFeature       = "UpdateFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
 %constant char *OLCStringsAsUTF8       = "StringsAsUTF8";
 %constant char *OLCIgnoreFields        = "IgnoreFields";
@@ -544,6 +545,7 @@ typedef int OGRErr;
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCUpsertFeature       "UpsertFeature"
+#define OLCUpdateFeature       "UpdateFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
 #define OLCStringsAsUTF8       "StringsAsUTF8"
 #define OLCCreateGeomField     "CreateGeomField"
@@ -1210,6 +1212,24 @@ public:
   OGRErr UpsertFeature(OGRFeatureShadow *feature) {
     return OGR_L_UpsertFeature(self, feature);
   }
+
+%apply (int nList, int *pList ) { (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx ) };
+%apply (int nList, int *pList ) { (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx ) };
+  OGRErr UpdateFeature(OGRFeatureShadow *feature,
+                       int nUpdatedFieldsCount,
+                       const int *panUpdatedFieldsIdx,
+                       int nUpdatedGeomFieldsCount,
+                       const int *panUpdatedGeomFieldsIdx,
+                       bool bUpdateStyleString) {
+    return OGR_L_UpdateFeature(self, feature,
+                               nUpdatedFieldsCount,
+                               panUpdatedFieldsIdx,
+                               nUpdatedGeomFieldsCount,
+                               panUpdatedGeomFieldsIdx,
+                               bUpdateStyleString);
+  }
+%clear (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx );
+%clear (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx );
 %clear OGRFeatureShadow *feature;
 
   OGRErr DeleteFeature(GIntBig fid) {

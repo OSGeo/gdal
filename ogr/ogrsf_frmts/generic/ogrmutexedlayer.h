@@ -75,6 +75,11 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
     virtual GDALDataset *GetDataset() override;

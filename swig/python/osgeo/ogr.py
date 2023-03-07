@@ -351,6 +351,8 @@ OLCDeleteFeature = _ogr.OLCDeleteFeature
 
 OLCUpsertFeature = _ogr.OLCUpsertFeature
 
+OLCUpdateFeature = _ogr.OLCUpdateFeature
+
 OLCFastSetNextByIndex = _ogr.OLCFastSetNextByIndex
 
 OLCStringsAsUTF8 = _ogr.OLCStringsAsUTF8
@@ -1549,6 +1551,10 @@ class Layer(MajorObject):
 
         """
         return _ogr.Layer_UpsertFeature(self, *args)
+
+    def UpdateFeature(self, *args) -> "OGRErr":
+        r"""UpdateFeature(Layer self, Feature feature, int nUpdatedFieldsCount, int nUpdatedGeomFieldsCount, bool bUpdateStyleString) -> OGRErr"""
+        return _ogr.Layer_UpdateFeature(self, *args)
 
     def DeleteFeature(self, *args) -> "OGRErr":
         r"""

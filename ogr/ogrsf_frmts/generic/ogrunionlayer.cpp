@@ -905,6 +905,108 @@ OGRErr OGRUnionLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                           IUpdateFeature()                           */
+/************************************************************************/
+
+OGRErr OGRUnionLayer::IUpdateFeature(OGRFeature *poFeature,
+                                     int nUpdatedFieldsCount,
+                                     const int *panUpdatedFieldsIdx,
+                                     int nUpdatedGeomFieldsCount,
+                                     const int *panUpdatedGeomFieldsIdx,
+                                     bool bUpdateStyleString)
+{
+    if (!bPreserveSrcFID)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateFeature() not supported when PreserveSrcFID is OFF");
+        return OGRERR_FAILURE;
+    }
+
+    if (osSourceLayerFieldName.empty())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateFeature() not supported when SourceLayerFieldName is "
+                 "not set");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeature->GetFID() == OGRNullFID)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateFeature() not supported when FID is not set");
+        return OGRERR_FAILURE;
+    }
+
+    if (!poFeature->IsFieldSetAndNotNull(0))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateFeature() not supported when '%s' field is not set",
+                 osSourceLayerFieldName.c_str());
+        return OGRERR_FAILURE;
+    }
+
+    const char *pszSrcLayerName = poFeature->GetFieldAsString(0);
+    for (int i = 0; i < nSrcLayers; i++)
+    {
+        if (strcmp(pszSrcLayerName, papoSrcLayers[i]->GetName()) == 0)
+        {
+            pabModifiedLayers[i] = TRUE;
+
+            const auto poSrcLayerDefn = papoSrcLayers[i]->GetLayerDefn();
+            OGRFeature *poSrcFeature = new OGRFeature(poSrcLayerDefn);
+            poSrcFeature->SetFrom(poFeature, TRUE);
+            poSrcFeature->SetFID(poFeature->GetFID());
+
+            // We could potentially have a pre-computed map from indices in
+            // poLayerDefn to indices in poSrcLayerDefn
+            std::vector<int> anSrcUpdatedFieldIdx;
+            const auto poLayerDefn = GetLayerDefn();
+            for (int j = 0; j < nUpdatedFieldsCount; ++j)
+            {
+                if (panUpdatedFieldsIdx[j] != 0)
+                {
+                    const int nNewIdx = poSrcLayerDefn->GetFieldIndex(
+                        poLayerDefn->GetFieldDefn(panUpdatedFieldsIdx[j])
+                            ->GetNameRef());
+                    if (nNewIdx >= 0)
+                    {
+                        anSrcUpdatedFieldIdx.push_back(nNewIdx);
+                    }
+                }
+            }
+            std::vector<int> anSrcUpdatedGeomFieldIdx;
+            for (int j = 0; j < nUpdatedGeomFieldsCount; ++j)
+            {
+                if (panUpdatedGeomFieldsIdx[j] != 0)
+                {
+                    const int nNewIdx = poSrcLayerDefn->GetGeomFieldIndex(
+                        poLayerDefn
+                            ->GetGeomFieldDefn(panUpdatedGeomFieldsIdx[j])
+                            ->GetNameRef());
+                    if (nNewIdx >= 0)
+                    {
+                        anSrcUpdatedGeomFieldIdx.push_back(nNewIdx);
+                    }
+                }
+            }
+
+            OGRErr eErr = papoSrcLayers[i]->UpdateFeature(
+                poSrcFeature, static_cast<int>(anSrcUpdatedFieldIdx.size()),
+                anSrcUpdatedFieldIdx.data(),
+                static_cast<int>(anSrcUpdatedGeomFieldIdx.size()),
+                anSrcUpdatedGeomFieldIdx.data(), bUpdateStyleString);
+            delete poSrcFeature;
+            return eErr;
+        }
+    }
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "UpdateFeature() not supported : '%s' source layer does not exist",
+             pszSrcLayerName);
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 

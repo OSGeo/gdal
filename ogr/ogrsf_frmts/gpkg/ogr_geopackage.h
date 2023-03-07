@@ -588,6 +588,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool m_bExtentChanged = false;
     bool m_bContentChanged = false;
     sqlite3_stmt *m_poUpdateStatement = nullptr;
+    std::string m_osUpdateStatementSQL{};
     bool m_bInsertStatementWithFID = false;
     bool m_bInsertStatementWithUpsert = false;
     std::string m_osInsertStatementUpsertUniqueColumnName{};
@@ -750,6 +751,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
     virtual void SetSpatialFilter(OGRGeometry *) override;
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
@@ -868,7 +874,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr SaveTimestamp();
     OGRErr BuildColumns();
     bool IsGeomFieldSet(OGRFeature *poFeature);
-    CPLString FeatureGenerateUpdateSQL(OGRFeature *poFeature);
+    std::string FeatureGenerateUpdateSQL(const OGRFeature *poFeature) const;
+    std::string FeatureGenerateUpdateSQL(
+        const OGRFeature *poFeature, int nUpdatedFieldsCount,
+        const int *panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount,
+        const int *panUpdatedGeomFieldsIdx) const;
     CPLString
     FeatureGenerateInsertSQL(OGRFeature *poFeature, bool bAddFID,
                              bool bBindUnsetFields, bool bUpsert,
@@ -880,7 +890,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                        bool bBindUnsetFields);
     OGRErr FeatureBindParameters(OGRFeature *poFeature, sqlite3_stmt *poStmt,
                                  int *pnColCount, bool bAddFID,
-                                 bool bBindUnsetFields);
+                                 bool bBindUnsetFields, int nUpdatedFieldsCount,
+                                 const int *panUpdatedFieldsIdx,
+                                 int nUpdatedGeomFieldsCount,
+                                 const int *panUpdatedGeomFieldsIdx);
+
     void UpdateContentsToNullExtent();
 
     void CheckUnknownExtensions();

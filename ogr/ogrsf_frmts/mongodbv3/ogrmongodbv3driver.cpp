@@ -176,8 +176,10 @@ class OGRMongoDBv3Layer final : public OGRLayer
                             std::map<std::vector<CPLString>, IntOrMap *> &aoMap,
                             const std::vector<CPLString> &aosFieldPathFull,
                             int nField);
-    bsoncxx::document::value BuildBSONObjFromFeature(OGRFeature *poFeature,
-                                                     bool bUpdate);
+    bsoncxx::document::value BuildBSONObjFromFeature(
+        OGRFeature *poFeature, bool bUpdate, int nUpdatedFieldsCount,
+        const int *panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount,
+        const int *panUpdatedGeomFieldsIdx);
     std::vector<bsoncxx::document::value> m_aoDocsToInsert{};
 
   public:
@@ -204,6 +206,11 @@ class OGRMongoDBv3Layer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
 
     OGRErr SyncToDisk() override;
 };
@@ -1743,17 +1750,35 @@ void OGRMongoDBv3Layer::InsertInMap(
 }
 
 /************************************************************************/
+/*                               IsInList()                             */
+/************************************************************************/
+
+static bool IsInList(int nVal, int nCount, const int *panList)
+{
+    for (int i = 0; i < nCount; ++i)
+    {
+        if (panList[i] == nVal)
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                       BuildBSONObjFromFeature()                      */
 /************************************************************************/
 
-bsoncxx::document::value
-OGRMongoDBv3Layer::BuildBSONObjFromFeature(OGRFeature *poFeature, bool bUpdate)
+bsoncxx::document::value OGRMongoDBv3Layer::BuildBSONObjFromFeature(
+    OGRFeature *poFeature, bool bUpdate, int nUpdatedFieldsCount,
+    const int *panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount,
+    const int *panUpdatedGeomFieldsIdx)
 {
     bsoncxx::builder::basic::document b{};
 
     int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
     if (nJSonFieldIndex >= 0 &&
-        poFeature->IsFieldSetAndNotNull(nJSonFieldIndex))
+        poFeature->IsFieldSetAndNotNull(nJSonFieldIndex) &&
+        (nUpdatedFieldsCount < 0 ||
+         IsInList(nJSonFieldIndex, nUpdatedFieldsCount, panUpdatedFieldsIdx)))
     {
         CPLString osJSon(poFeature->GetFieldAsString(nJSonFieldIndex));
 
@@ -1795,20 +1820,30 @@ OGRMongoDBv3Layer::BuildBSONObjFromFeature(OGRFeature *poFeature, bool bUpdate)
     rootMap->u.poMap = new std::map<CPLString, IntOrMap *>;
     std::map<std::vector<CPLString>, IntOrMap *> aoMap;
 
-    for (int i = 1; i < m_poFeatureDefn->GetFieldCount(); i++)
     {
-        if (!poFeature->IsFieldSet(i))
-            continue;
+        const int nStart = nUpdatedFieldsCount >= 0 ? 0 : 1;
+        const int nStop = nUpdatedFieldsCount >= 0
+                              ? nUpdatedFieldsCount
+                              : m_poFeatureDefn->GetFieldCount();
+        for (int i = nStart; i < nStop; i++)
+        {
+            const int iField =
+                nUpdatedFieldsCount >= 0 ? panUpdatedFieldsIdx[i] : i;
+            if (iField == 0)
+                continue;
+            if (!poFeature->IsFieldSet(iField))
+                continue;
 
-        if (m_aaosFieldPaths[i].size() > 1)
-        {
-            InsertInMap(rootMap, aoMap, m_aaosFieldPaths[i], i);
-        }
-        else
-        {
-            const char *pszFieldName =
-                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef();
-            SerializeField(b, poFeature, i, pszFieldName);
+            if (m_aaosFieldPaths[iField].size() > 1)
+            {
+                InsertInMap(rootMap, aoMap, m_aaosFieldPaths[iField], iField);
+            }
+            else
+            {
+                const char *pszFieldName =
+                    m_poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+                SerializeField(b, poFeature, iField, pszFieldName);
+            }
         }
     }
 
@@ -1816,23 +1851,28 @@ OGRMongoDBv3Layer::BuildBSONObjFromFeature(OGRFeature *poFeature, bool bUpdate)
               m_poFeatureDefn->GetGeomFieldCount());
     CPLAssert(static_cast<int>(m_apoCT.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
-    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
+    const int nStop = nUpdatedGeomFieldsCount >= 0
+                          ? nUpdatedGeomFieldsCount
+                          : m_poFeatureDefn->GetGeomFieldCount();
+    for (int i = 0; i < nStop; i++)
     {
-        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
+        const int iField =
+            nUpdatedGeomFieldsCount >= 0 ? panUpdatedGeomFieldsIdx[i] : i;
+        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iField);
         if (poGeom == nullptr)
             continue;
-        if (!bUpdate && m_apoCT[i] != nullptr)
+        if (!bUpdate && m_apoCT[iField] != nullptr)
             poGeom->transform(m_apoCT[i].get());
 
-        if (m_aaosGeomFieldPaths[i].size() > 1)
+        if (m_aaosGeomFieldPaths[iField].size() > 1)
         {
-            InsertInMap(rootMap, aoMap, m_aaosGeomFieldPaths[i], -i - 1);
+            InsertInMap(rootMap, aoMap, m_aaosGeomFieldPaths[i], -iField - 1);
         }
         else
         {
             const char *pszFieldName =
-                m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef();
-            SerializeGeometry(b, poGeom, i, pszFieldName);
+                m_poFeatureDefn->GetGeomFieldDefn(iField)->GetNameRef();
+            SerializeGeometry(b, poGeom, iField, pszFieldName);
         }
     }
 
@@ -1868,7 +1908,8 @@ OGRErr OGRMongoDBv3Layer::ICreateFeature(OGRFeature *poFeature)
             poFeature->SetFID(++m_nNextFID);
         }
 
-        auto bsonObj(BuildBSONObjFromFeature(poFeature, false));
+        auto bsonObj(BuildBSONObjFromFeature(poFeature, false, -1, nullptr, -1,
+                                             nullptr));
 
         if (m_poDS->m_bBulkInsert)
         {
@@ -1908,7 +1949,8 @@ OGRErr OGRMongoDBv3Layer::ISetFeature(OGRFeature *poFeature)
 
     try
     {
-        auto bsonObj(BuildBSONObjFromFeature(poFeature, true));
+        auto bsonObj(
+            BuildBSONObjFromFeature(poFeature, true, -1, nullptr, -1, nullptr));
         auto view(bsonObj.view());
         auto filter(BuildIDMatchFilter(view, poFeature));
         auto ret =
@@ -1983,7 +2025,8 @@ OGRErr OGRMongoDBv3Layer::IUpsertFeature(OGRFeature *poFeature)
 
     try
     {
-        auto bsonObj(BuildBSONObjFromFeature(poFeature, true));
+        auto bsonObj(
+            BuildBSONObjFromFeature(poFeature, true, -1, nullptr, -1, nullptr));
         auto view(bsonObj.view());
         auto filter(BuildIDMatchFilter(view, poFeature));
         m_oColl.find_one_and_update(
@@ -1994,6 +2037,45 @@ OGRErr OGRMongoDBv3Layer::IUpsertFeature(OGRFeature *poFeature)
     catch (const std::exception &ex)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s: %s", "UpsertFeature()",
+                 ex.what());
+        return OGRERR_FAILURE;
+    }
+}
+
+/************************************************************************/
+/*                           IUpdateFeature()                           */
+/************************************************************************/
+
+OGRErr OGRMongoDBv3Layer::IUpdateFeature(OGRFeature *poFeature,
+                                         int nUpdatedFieldsCount,
+                                         const int *panUpdatedFieldsIdx,
+                                         int nUpdatedGeomFieldsCount,
+                                         const int *panUpdatedGeomFieldsIdx,
+                                         bool /* bUpdateStyleString */)
+{
+    if (!TestCapability(OLCUpdateFeature))
+        return OGRERR_FAILURE;
+
+    const OGRErr err = PrepareForUpdateOrUpsert(poFeature);
+    if (err != OGRERR_NONE)
+    {
+        return err;
+    }
+
+    try
+    {
+        auto bsonObj(BuildBSONObjFromFeature(
+            poFeature, true, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+            nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx));
+        auto view(bsonObj.view());
+        auto filter(BuildIDMatchFilter(view, poFeature));
+        auto ret =
+            m_oColl.find_one_and_update(std::move(filter), std::move(bsonObj));
+        return ret ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    }
+    catch (const std::exception &ex)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: %s", "UpdateFeature()",
                  ex.what());
         return OGRERR_FAILURE;
     }
@@ -2028,7 +2110,7 @@ int OGRMongoDBv3Layer::TestCapability(const char *pszCap)
     }
     if (EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCCreateGeomField) ||
         EQUAL(pszCap, OLCUpsertFeature) || EQUAL(pszCap, OLCSequentialWrite) ||
-        EQUAL(pszCap, OLCRandomWrite))
+        EQUAL(pszCap, OLCRandomWrite) || EQUAL(pszCap, OLCUpdateFeature))
     {
         return m_poDS->GetAccess() == GA_Update;
     }

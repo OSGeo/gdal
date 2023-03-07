@@ -383,6 +383,11 @@ class OGRPGTableLayer final : public OGRPGLayer
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 

@@ -65,6 +65,11 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
 
     virtual GDALDataset *GetDataset() override;
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
