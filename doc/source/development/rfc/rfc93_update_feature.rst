@@ -8,7 +8,7 @@ RFC 93: OGRLayer::UpdateFeature() method
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2023-Feb-15
-Status:        Development
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
@@ -274,4 +274,4 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members Jukka, MateuszL and EvenR
