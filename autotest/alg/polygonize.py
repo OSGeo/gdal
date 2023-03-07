@@ -408,6 +408,7 @@ def test_polygonize_7():
 # Test a none nodata mask(a user defined mask) case to make sure the polygonized area match that mask.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_8():
 
     src_ds = gdal.Open("data/polygonize_in_5.grd")
