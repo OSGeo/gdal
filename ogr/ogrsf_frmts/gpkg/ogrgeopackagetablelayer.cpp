@@ -229,7 +229,13 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         }
     }
 
-    /* Bind data values to the statement, here bind the blob for geometry */
+    // Bind data values to the statement, here bind the blob for geometry.
+    // We bind only if there's a geometry column (poFeatureDefn->GetGeomFieldCount() > 0)
+    // and if we are:
+    // - either in CreateFeature/SetFeature mode: nUpdatedGeomFieldsCount < 0
+    // - or in UpdateFeature mode with nUpdatedGeomFieldsCount == 1, which
+    //   implicitly involves that panUpdatedGeomFieldsIdx[0] == 0, so we don't
+    //   need to test this condition.
     if ((nUpdatedGeomFieldsCount < 0 || nUpdatedGeomFieldsCount == 1) &&
         poFeatureDefn->GetGeomFieldCount())
     {
