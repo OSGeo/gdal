@@ -402,3 +402,80 @@ def test_polygonize_7():
         assert (
             abs(value - dn_area_vector[key]) < pixel_area
         ), "polygonized vector area not match raster area"
+
+
+###############################################################################
+# Test a none nodata mask(a user defined mask) case to make sure the polygonized area match that mask.
+
+
+def test_polygonize_8():
+
+    src_ds = gdal.Open("data/polygonize_in_5.grd")
+    src_band = src_ds.GetRasterBand(1)
+
+    mask_ds = gdal.Open("data/polygonize_in_5_mask.grd")
+    mask_band = mask_ds.GetRasterBand(1)
+
+    # Create a memory OGR datasource to put results in.
+    mem_drv = ogr.GetDriverByName("Memory")
+    mem_ds = mem_drv.CreateDataSource("out")
+
+    ######################################
+    # Test four connectedness conversion
+    ######################################
+
+    mem_layer = mem_ds.CreateLayer("poly_4connected", None, ogr.wkbPolygon)
+
+    fd = ogr.FieldDefn("DN", ogr.OFTInteger)
+    mem_layer.CreateField(fd)
+
+    # run the algorithm.
+    result = gdal.Polygonize(src_band, mask_band, mem_layer, 0)
+    assert result == 0, "Polygonize failed"
+
+    expected_feature_number = 4
+    assert mem_layer.GetFeatureCount() == expected_feature_number
+
+    expect = [1, 1, 1, 1]
+    expect_wkt = [
+        "POLYGON ((1 4,1 3,3 3,3 4,1 4))",
+        "POLYGON ((0 3,0 1,1 1,1 3,0 3))",
+        "POLYGON ((3 3,3 1,4 1,4 3,3 3))",
+        "POLYGON ((1 1,1 0,3 0,3 1,1 1))",
+    ]
+    idx = 0
+    for feature in mem_layer:
+        id = feature.GetField("DN")
+        assert id == expect[idx]
+
+        geom_poly = feature.GetGeometryRef()
+        wkt = geom_poly.ExportToWkt()
+        assert wkt == expect_wkt[idx]
+
+        idx += 1
+
+    ######################################
+    # Test eight connectedness conversion
+    ######################################
+
+    mem_layer = mem_ds.CreateLayer("poly_8connected", None, ogr.wkbPolygon)
+
+    fd = ogr.FieldDefn("DN", ogr.OFTInteger)
+    mem_layer.CreateField(fd)
+
+    # run the algorithm.
+    result = gdal.Polygonize(src_band, mask_band, mem_layer, 0, ["8CONNECTED=8"])
+    assert result == 0, "Polygonize failed"
+
+    expected_feature_number = 1
+    assert mem_layer.GetFeatureCount() == expected_feature_number
+
+    feature = mem_layer.GetNextFeature()
+    assert feature.GetField("DN") == 1
+
+    geom_poly = feature.GetGeometryRef()
+    wkt = geom_poly.ExportToWkt()
+    assert (
+        wkt
+        == "POLYGON ((1 4,1 3,0 3,0 1,1 1,1 0,3 0,3 1,4 1,4 3,3 3,3 4,1 4),(1 3,3 3,3 1,1 1,1 3))"
+    )
