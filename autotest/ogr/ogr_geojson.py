@@ -4272,3 +4272,41 @@ def test_ogr_geojson_coordinate_precision():
     assert '"bbox": [ 1.2, 2.3, 1.2, 2.3 ]' in data
     assert '"coordinates": [ 1.2, 2.3 ]' in data
     assert "3456" not in data
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/7319
+
+
+def test_ogr_geojson_field_types():
+
+    filename = "/vsimem/test_ogr_geojson_field_types.json"
+
+    test_data = """{"type":"FeatureCollection","name":"My Collection","features":[
+            { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": "42" }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": "astring" }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": { "nested": 75 } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": { "a": "b" } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
+        ]}
+        """
+
+    srcds = gdal.OpenEx(
+        test_data,
+        gdal.OF_VECTOR,
+        open_options=["NATIVE_DATA=TRUE"],
+    )
+
+    gdal.VectorTranslate(filename, srcds, options="-f GeoJSON -lco NATIVE_DATA=TRUE")
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    assert '{ "prop0": "42" }' in data
+    assert '{ "prop0": "astring" }' in data
+    assert '{ "prop0": { "nested": 75 } }' in data
+    assert '{ "prop0": 42 }' in data
+    assert '{ "prop0": { "a": "b" } }' in data
+
+    gdal.Unlink(filename)
