@@ -892,11 +892,12 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
                             if (strcmp(json_object_get_string(poProperty),
                                        pszStr) == 0)
                             {
-                                poObjProp = poProperty;
+                                poObjProp = json_object_get(poProperty);
                             }
                         }
                     }
                 }
+                json_object_put(poNativeObjProp);
 
                 if (poObjProp == nullptr)
                 {
