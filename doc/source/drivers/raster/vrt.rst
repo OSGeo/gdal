@@ -1650,14 +1650,14 @@ For example:
 ::
 
     vrt://my.tif?a_ullr=0,1,1,-1
-    
+
 ::
 
     vrt://my.tif?bands=2&ovr=4
 
 
-The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
-``a_scale``, ``a_offset``, ``ot``, and ``gcp``. 
+The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
+``a_scale``, ``a_offset``, ``ot``, and ``gcp``.
 
 Other options may be added in the future.
 
@@ -1675,25 +1675,25 @@ The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) 
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
 values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y).
 
-The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview 
+The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview
 level of source file must be used, with the first overview level being 0 (:ref:`gdal_translate`).
 
-The effect of the ``expand`` option (added in GDAL 3.7) is to expose a dataset with 1 band with 
+The effect of the ``expand`` option (added in GDAL 3.7) is to expose a dataset with 1 band with
 a color table as a dataset with 3 (RGB) or 4 (RGBA) bands, as with (:ref:`gdal_translate`).
 
-The effect of the ``a_scale`` option (added in GDAL 3.7) is to set band scaling value (no 
+The effect of the ``a_scale`` option (added in GDAL 3.7) is to set band scaling value (no
 modification of pixel values is done), as with (:ref:`gdal_translate`).
 
-The effect of the ``a_offset`` option (added in GDAL 3.7) is to set band offset value (no 
+The effect of the ``a_offset`` option (added in GDAL 3.7) is to set band offset value (no
 modification of pixel values is done), as with (:ref:`gdal_translate`).
 
-The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a 
+The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a
 specific data type supported by the driver as with (:ref:`gdal_translate`).
 
-The effect of the ``gcp`` option (added in GDAL 3.7) is to add the indicated ground control point 
-to the output dataset. Values are a set of numbers as per (:ref:`gdal_translate`)``pixel,line,easting,northing[,elevation]``.  
-Multiple entries may be included. This can also be seen as an equivalent of running 
-`gdal_translate -of VRT -gcp pixel1 line1 easting1 northing1 [elevation1] -gcp pixel2 line2 easting2 northing2 [elevation2] ... -gcp pixelN lineN eastingN northingN [elevationN]`. 
+The effect of the ``gcp`` option (added in GDAL 3.7) is to add the indicated ground control point
+to the output dataset. Values are a set of numbers as per (:ref:`gdal_translate`)``pixel,line,easting,northing[,elevation]``.
+Multiple entries may be included. This can also be seen as an equivalent of running
+`gdal_translate -of VRT -gcp pixel1 line1 easting1 northing1 [elevation1] -gcp pixel2 line2 easting2 northing2 [elevation2] ... -gcp pixelN lineN eastingN northingN [elevationN]`.
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
