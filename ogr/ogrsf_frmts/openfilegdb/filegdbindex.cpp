@@ -2235,7 +2235,7 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
             if (bReferenceOtherPages)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cannot use %s as the index depth(=1) is suspicous "
+                         "Cannot use %s as the index depth(=1) is suspicious "
                          "(it should rather be 2)",
                          pszSpxName);
                 return false;
