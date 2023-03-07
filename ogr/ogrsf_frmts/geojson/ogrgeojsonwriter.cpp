@@ -795,6 +795,35 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             : MAX_SIGNIFICANT_DIGITS_FLOAT32;
 
     const int nFieldCount = poDefn->GetFieldCount();
+
+    json_object *poNativeObjProp = nullptr;
+    json_object *poProperties = nullptr;
+
+    // Scan the fields to determine if there is a chance of
+    // mixed types and we can use native media
+    bool bUseNativeMedia{false};
+
+    if (poFeature->GetNativeMediaType() &&
+        strcmp(poFeature->GetNativeMediaType(), "application/vnd.geo+json") ==
+            0 &&
+        poFeature->GetNativeData())
+    {
+        for (int nField = 0; nField < nFieldCount; ++nField)
+        {
+            if (poDefn->GetFieldDefn(nField)->GetSubType() == OFSTJSON)
+            {
+                if (OGRJSonParse(poFeature->GetNativeData(), &poNativeObjProp,
+                                 false))
+                {
+                    poProperties = OGRGeoJSONFindMemberByName(poNativeObjProp,
+                                                              "properties");
+                    bUseNativeMedia = poProperties != nullptr;
+                }
+                break;
+            }
+        }
+    }
+
     for (int nField = 0; nField < nFieldCount; ++nField)
     {
         if (!poFeature->IsFieldSet(nField) || nField == nIDField)
@@ -869,35 +898,23 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
         {
             const char *pszStr = poFeature->GetFieldAsString(nField);
             const size_t nLen = strlen(pszStr);
-            poObjProp = nullptr;
+
             if (eSubType == OFSTJSON ||
                 ((pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
                  (pszStr[0] == '[' && pszStr[nLen - 1] == ']')))
             {
-                if (poFeature->GetNativeMediaType() &&
-                    strcmp(poFeature->GetNativeMediaType(),
-                           "application/vnd.geo+json") == 0 &&
-                    poFeature->GetNativeData())
+                if (bUseNativeMedia)
                 {
-                    json_object *poNativeObjProp = nullptr;
-                    OGRJSonParse(poFeature->GetNativeData(), &poNativeObjProp,
-                                 false);
-                    if (json_object *poProperties = OGRGeoJSONFindMemberByName(
-                            poNativeObjProp, "properties"))
+                    if (json_object *poProperty = OGRGeoJSONFindMemberByName(
+                            poProperties, poFieldDefn->GetNameRef()))
                     {
-                        if (json_object *poProperty =
-                                OGRGeoJSONFindMemberByName(
-                                    poProperties, poFieldDefn->GetNameRef()))
+                        const char *pszProp{json_object_get_string(poProperty)};
+                        if (pszProp && strcmp(pszProp, pszStr) == 0)
                         {
-                            if (strcmp(json_object_get_string(poProperty),
-                                       pszStr) == 0)
-                            {
-                                poObjProp = json_object_get(poProperty);
-                            }
+                            poObjProp = json_object_get(poProperty);
                         }
                     }
                 }
-                json_object_put(poNativeObjProp);
 
                 if (poObjProp == nullptr)
                 {
@@ -908,6 +925,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
                     }
                 }
             }
+
             if (poObjProp == nullptr)
                 poObjProp = json_object_new_string(pszStr);
         }
@@ -999,6 +1017,11 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
 
         json_object_object_add(poObjProps, poFieldDefn->GetNameRef(),
                                poObjProp);
+    }
+
+    if (bUseNativeMedia)
+    {
+        json_object_put(poNativeObjProp);
     }
 
     return poObjProps;
