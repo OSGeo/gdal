@@ -1,5 +1,5 @@
 add_gdal_driver(TARGET gdal_MrSID SOURCES mrsidstream.h mrsidstream.cpp mrsiddataset.cpp PLUGIN_CAPABLE_IF
-                                          "NOT GDAL_USE_GEOTIFF_INTERNAL")
+                                          "NOT GDAL_USE_GEOTIFF_INTERNAL OR NOT GDAL_HIDE_INTERNAL_SYMBOLS")
 gdal_standard_includes(gdal_MrSID)
 gdal_target_link_libraries(gdal_MrSID PRIVATE MRSID::MRSID)
 
