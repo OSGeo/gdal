@@ -757,6 +757,24 @@ def test_ogr_basic_dataset_copy_layer_dst_srswkt():
     assert out_lyr.GetSpatialRef().IsSame(sr)
 
 
+def test_ogr_basic_dataset_copy_layer_metadata():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = ds.CreateLayer("lyr1")
+    src_lyr.SetMetadataItem("foo", "bar")
+    out_lyr = ds.CopyLayer(src_lyr, "lyr2")
+    assert out_lyr.GetMetadata() == {"foo": "bar"}
+
+
+def test_ogr_basic_dataset_no_copy_layer_metadata():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = ds.CreateLayer("lyr1")
+    src_lyr.SetMetadataItem("foo", "bar")
+    out_lyr = ds.CopyLayer(src_lyr, "lyr2", options=["COPY_MD=NO"])
+    assert out_lyr.GetMetadata() == {}
+
+
 def test_ogr_basic_field_alternative_name():
     field_defn = ogr.FieldDefn("test")
 
