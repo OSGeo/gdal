@@ -31,6 +31,7 @@
 #include "gdalpansharpen.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -148,8 +149,6 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
     psNewOptions->bHasNoData = psOptions->bHasNoData;
     psNewOptions->dfNoData = psOptions->dfNoData;
     psNewOptions->nThreads = psOptions->nThreads;
-    psNewOptions->dfMSShiftX = psOptions->dfMSShiftX;
-    psNewOptions->dfMSShiftY = psOptions->dfMSShiftY;
     return psNewOptions;
 }
 
@@ -210,8 +209,94 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                  "spectral bands");
         return CE_Failure;
     }
+
+    auto poPanchroBand = GDALRasterBand::FromHandle(psOptionsIn->hPanchroBand);
+    auto poPanchroDS = poPanchroBand->GetDataset();
+    if (poPanchroDS == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot retrieve dataset associated with hPanchroBand");
+        return CE_Failure;
+    }
+    // Make sure that the band is really a first level child of the owning dataset
+    if (poPanchroDS->GetRasterBand(poPanchroBand->GetBand()) != poPanchroBand)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "poPanchroDS->GetRasterBand(poPanchroBand->GetBand()) != "
+                 "poPanchroBand");
+        return CE_Failure;
+    }
+    std::array<double, 6> adfPanchroGT;
+    if (poPanchroDS->GetGeoTransform(adfPanchroGT.data()) != CE_None)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Panchromatic band has no associated geotransform");
+        return CE_Failure;
+    }
+
     GDALRasterBandH hRefBand = psOptionsIn->pahInputSpectralBands[0];
-    int bSameDataset = psOptionsIn->nInputSpectralBands > 1;
+    auto poRefBand = GDALRasterBand::FromHandle(hRefBand);
+    auto poRefBandDS = poRefBand->GetDataset();
+    if (poRefBandDS == nullptr)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot retrieve dataset associated with ahInputSpectralBands[0]");
+        return CE_Failure;
+    }
+    // Make sure that the band is really a first level child of the owning dataset
+    if (poRefBandDS->GetRasterBand(poRefBand->GetBand()) != poRefBand)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "poRefBandDS->GetRasterBand(poRefBand->GetBand()) != poRefBand");
+        return CE_Failure;
+    }
+
+    std::array<double, 6> adfRefMSGT;
+    if (poRefBandDS->GetGeoTransform(adfRefMSGT.data()) != CE_None)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ahInputSpectralBands[0] band has no associated geotransform");
+        return CE_Failure;
+    }
+
+    std::array<double, 6> adfInvMSGT;
+    if (!GDALInvGeoTransform(adfRefMSGT.data(), adfInvMSGT.data()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ahInputSpectralBands[0] geotransform is not invertible");
+        return CE_Failure;
+    }
+
+    // Do InvMSGT * PanchroGT multiplication
+    m_adfPanToMSGT[1] =
+        adfInvMSGT[1] * adfPanchroGT[1] + adfInvMSGT[2] * adfPanchroGT[4];
+    m_adfPanToMSGT[2] =
+        adfInvMSGT[1] * adfPanchroGT[2] + adfInvMSGT[2] * adfPanchroGT[5];
+    m_adfPanToMSGT[0] = adfInvMSGT[1] * adfPanchroGT[0] +
+                        adfInvMSGT[2] * adfPanchroGT[3] + adfInvMSGT[0];
+    m_adfPanToMSGT[4] =
+        adfInvMSGT[4] * adfPanchroGT[1] + adfInvMSGT[5] * adfPanchroGT[4];
+    m_adfPanToMSGT[5] =
+        adfInvMSGT[4] * adfPanchroGT[2] + adfInvMSGT[5] * adfPanchroGT[5];
+    m_adfPanToMSGT[3] = adfInvMSGT[4] * adfPanchroGT[0] +
+                        adfInvMSGT[5] * adfPanchroGT[3] + adfInvMSGT[3];
+#if 0
+    CPLDebug("GDAL", "m_adfPanToMSGT[] = %g %g %g %g %g %g",
+           m_adfPanToMSGT[0], m_adfPanToMSGT[1], m_adfPanToMSGT[2],
+           m_adfPanToMSGT[3], m_adfPanToMSGT[4], m_adfPanToMSGT[5]);
+#endif
+    if (std::fabs(m_adfPanToMSGT[2]) > 1e-10 ||
+        std::fabs(m_adfPanToMSGT[4]) > 1e-10)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Composition of panchromatic and multispectral geotransform "
+                 "has rotational terms");
+        return CE_Failure;
+    }
+
+    bool bSameDataset = psOptionsIn->nInputSpectralBands > 1;
     if (bSameDataset)
         anInputBands.push_back(GDALGetBandNumber(hRefBand));
     for (int i = 1; i < psOptionsIn->nInputSpectralBands; i++)
@@ -226,13 +311,49 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                      i);
             return CE_Failure;
         }
+
+        auto poBand = GDALRasterBand::FromHandle(hBand);
+        auto poBandDS = poBand->GetDataset();
+        if (poBandDS == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot retrieve dataset associated with "
+                     "ahInputSpectralBands[%i]",
+                     i);
+            return CE_Failure;
+        }
+        // Make sure that the band is really a first level child of the owning dataset
+        if (poBandDS->GetRasterBand(poBand->GetBand()) != poBand)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "poBandDS->GetRasterBand(poBand->GetBand()) != poBand");
+            return CE_Failure;
+        }
+
+        std::array<double, 6> adfMSGT;
+        if (poBandDS->GetGeoTransform(adfMSGT.data()) != CE_None)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "ahInputSpectralBands[%d] band has no associated geotransform",
+                i);
+            return CE_Failure;
+        }
+        if (adfMSGT != adfRefMSGT)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ahInputSpectralBands[%d] band has a different "
+                     "geotransform than ahInputSpectralBands[0]",
+                     i);
+            return CE_Failure;
+        }
+
         if (bSameDataset)
         {
-            if (GDALGetBandDataset(hBand) == nullptr ||
-                GDALGetBandDataset(hBand) != GDALGetBandDataset(hRefBand))
+            if (GDALGetBandDataset(hBand) != GDALGetBandDataset(hRefBand))
             {
                 anInputBands.resize(0);
-                bSameDataset = FALSE;
+                bSameDataset = false;
             }
             else
             {
@@ -258,8 +379,6 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         }
     }
 
-    GDALRasterBand *poPanchroBand =
-        GDALRasterBand::FromHandle(psOptionsIn->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
     if (psOptionsIn->nBitDepth)
     {
@@ -1100,14 +1219,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     // cppcheck-suppress redundantAssignment
     sExtraArg.eResampleAlg = eResampleAlg;
     sExtraArg.bFloatingPointWindowValidity = TRUE;
-    double dfRatioX = static_cast<double>(poPanchroBand->GetXSize()) /
-                      aMSBands[0]->GetXSize();
-    double dfRatioY = static_cast<double>(poPanchroBand->GetYSize()) /
-                      aMSBands[0]->GetYSize();
-    sExtraArg.dfXOff = (nXOff + psOptions->dfMSShiftX) / dfRatioX;
-    sExtraArg.dfYOff = (nYOff + psOptions->dfMSShiftY) / dfRatioY;
-    sExtraArg.dfXSize = nXSize / dfRatioX;
-    sExtraArg.dfYSize = nYSize / dfRatioY;
+    sExtraArg.dfXOff = m_adfPanToMSGT[0] + nXOff * m_adfPanToMSGT[1];
+    sExtraArg.dfYOff = m_adfPanToMSGT[3] + nYOff * m_adfPanToMSGT[5];
+    sExtraArg.dfXSize = nXSize * m_adfPanToMSGT[1];
+    sExtraArg.dfYSize = nYSize * m_adfPanToMSGT[5];
     if (sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize())
         sExtraArg.dfXOff = aMSBands[0]->GetXSize() - sExtraArg.dfXSize;
     if (sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize())
@@ -1257,12 +1372,11 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].eResampleAlg = eResampleAlg;
                     pasJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
                     pasJobs[i].dfYOff =
-                        (nYOff + psOptions->dfMSShiftY + iStartLine) /
-                            dfRatioY -
-                        nYOffExtract;
+                        m_adfPanToMSGT[3] +
+                        (nYOff + iStartLine) * m_adfPanToMSGT[5] - nYOffExtract;
                     pasJobs[i].dfXSize = sExtraArg.dfXSize;
                     pasJobs[i].dfYSize =
-                        (iNextStartLine - iStartLine) / dfRatioY;
+                        (iNextStartLine - iStartLine) * m_adfPanToMSGT[5];
                     if (pasJobs[i].dfXOff + pasJobs[i].dfXSize >
                         aMSBands[0]->GetXSize())
                     {

@@ -34,11 +34,9 @@ import pytest
 
 from osgeo import gdal
 
-###############################################################################
-# Error cases
 
-
-def test_vrtpansharpen_1():
+@pytest.fixture(autouse=True, scope="module")
+def startup_and_cleanup():
 
     src_ds = gdal.Open("data/small_world.tif")
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -53,6 +51,23 @@ def test_vrtpansharpen_1():
     pan_ds.SetProjection(wkt)
     pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
     pan_ds = None
+
+    yield
+
+    gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")
+    if gdal.VSIStatL("tmp/small_world.tif"):
+        gdal.GetDriverByName("GTiff").Delete("tmp/small_world.tif")
+    if gdal.VSIStatL("/vsimem/pan.tif"):
+        gdal.GetDriverByName("GTiff").Delete("/vsimem/pan.tif")
+    if gdal.VSIStatL("/vsimem/ms.tif"):
+        gdal.GetDriverByName("GTiff").Delete("/vsimem/ms.tif")
+
+
+###############################################################################
+# Error cases
+
+
+def test_vrtpansharpen_1():
 
     # Missing PansharpeningOptions
     gdal.PushErrorHandler()
@@ -1076,6 +1091,8 @@ def test_vrtpansharpen_2():
 
 def test_vrtpansharpen_3():
 
+    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
+
     ds = gdal.Open("tmp/small_world_pan.tif")
     ds.BuildOverviews("CUBIC", [2])
     ds = None
@@ -1103,27 +1120,7 @@ def test_vrtpansharpen_3():
 
     # Test when only Pan band has overviews
     vrt_ds = gdal.Open(xml)
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrt_ds.GetRasterBand(1).GetOverview(0) is not None
-    cs = [
-        vrt_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
-        for i in range(vrt_ds.RasterCount)
-    ]
-    assert cs in ([7123, 7445, 5025], [7120, 7440, 5025])
-
-    # Check VRTPansharpenedDataset::IRasterIO() in resampling case with overviews
-    data = vrt_ds.ReadRaster(0, 0, 800, 400, 400, 200)
-
-    data2 = vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 800, 400, 400, 200)
-    data2 += vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 800, 400, 400, 200)
-    data2 += vrt_ds.GetRasterBand(3).ReadRaster(0, 0, 800, 400, 400, 200)
-
-    assert data == data2
-
-    tmp_ds = gdal.GetDriverByName("MEM").Create("", 400, 200, 3)
-    tmp_ds.WriteRaster(0, 0, 400, 200, data)
-    cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(tmp_ds.RasterCount)]
-    assert cs in ([7123, 7445, 5025], [7120, 7440, 5025])
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
     vrt_ds = None
 
@@ -1143,12 +1140,16 @@ def test_vrtpansharpen_3():
 
     vrt_ds = None
 
+    gdal.Unlink("tmp/small_world_pan.tif.ovr")
+
 
 ###############################################################################
 # Test RasterIO() with various buffer datatypes
 
 
 def test_vrtpansharpen_4():
+
+    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
@@ -1313,6 +1314,7 @@ def test_vrtpansharpen_6():
             mem_ds = gdal.GetDriverByName("GTiff").Create(
                 "/vsimem/ms.tif", 4, 1, 1, dt, options=options
             )
+            mem_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
             ar = numpy.array([[80, 125, 125, 80]])
             if dt == gdal.GDT_UInt16:
                 ar = ar << (12 - 7)
@@ -1324,6 +1326,7 @@ def test_vrtpansharpen_6():
             mem_ds = gdal.GetDriverByName("GTiff").Create(
                 "/vsimem/pan.tif", 8, 2, 1, dt, options=options
             )
+            mem_ds.SetGeoTransform([0, 0.5, 0, 0, 0, 0.5])
             ar = numpy.array(
                 [
                     [76, 89, 115, 127, 127, 115, 89, 76],
@@ -1638,17 +1641,21 @@ def test_vrtpansharpen_9():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/small_world_pan_nodata.tif", 800, 400
     )
+    src_ds = gdal.Open("tmp/small_world_pan.tif")
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.GetRasterBand(1).SetNoDataValue(0)
-    ds.WriteRaster(0, 0, 800, 400, gdal.Open("tmp/small_world_pan.tif").ReadRaster())
+    ds.WriteRaster(0, 0, 800, 400, src_ds.ReadRaster())
     ds = None
 
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/small_world_nodata.tif", 400, 200, 3
     )
+    src_ds = gdal.Open("data/small_world.tif")
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.GetRasterBand(1).SetNoDataValue(0)
     ds.GetRasterBand(2).SetNoDataValue(0)
     ds.GetRasterBand(3).SetNoDataValue(0)
-    ds.WriteRaster(0, 0, 400, 200, gdal.Open("data/small_world.tif").ReadRaster())
+    ds.WriteRaster(0, 0, 400, 200, src_ds.ReadRaster())
     ds = None
 
     vrt_ds = gdal.Open(
@@ -1690,11 +1697,13 @@ def test_vrtpansharpen_10():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/pan.tif", 1023, 1023, 1, gdal.GDT_UInt16
     )
+    ds.SetGeoTransform([0, 1.0 / 1023, 0, 0, 0, 1.0 / 1023])
     ds.GetRasterBand(1).Fill(1000)
     ds = None
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/ms.tif", 256, 256, 4, gdal.GDT_UInt16
     )
+    ds.SetGeoTransform([0, 1.0 / 256, 0, 0, 0, 1.0 / 256])
     for i in range(4):
         ds.GetRasterBand(i + 1).Fill(1000)
     ds = None
@@ -2085,15 +2094,3 @@ def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
     cs2 = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
 
     assert cs2 == cs[::-1]
-
-
-###############################################################################
-# Cleanup
-
-
-def test_vrtpansharpen_cleanup():
-
-    gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")
-    gdal.GetDriverByName("GTiff").Delete("tmp/small_world.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/pan.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/ms.tif")
