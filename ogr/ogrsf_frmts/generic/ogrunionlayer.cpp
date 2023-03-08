@@ -127,7 +127,7 @@ OGRUnionLayer::~OGRUnionLayer()
     if (poFeatureDefn)
         poFeatureDefn->Release();
     if (poGlobalSRS != nullptr)
-        poGlobalSRS->Release();
+        const_cast<OGRSpatialReference *>(poGlobalSRS)->Release();
 }
 
 /************************************************************************/
@@ -295,7 +295,9 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                                 poGlobalSRS =
                                     poSrcGeomFieldDefn->GetSpatialRef();
                                 if (poGlobalSRS != nullptr)
-                                    poGlobalSRS->Reference();
+                                    const_cast<OGRSpatialReference *>(
+                                        poGlobalSRS)
+                                        ->Reference();
                             }
                         }
                         break;
@@ -629,10 +631,8 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
 
         for (int i = 0; i < GetLayerDefn()->GetGeomFieldCount(); i++)
         {
-            OGRSpatialReference *poSRS =
+            const OGRSpatialReference *poSRS =
                 GetLayerDefn()->GetGeomFieldDefn(i)->GetSpatialRef();
-            if (poSRS != nullptr)
-                poSRS->Reference();
 
             OGRFeatureDefn *poSrcFeatureDefn =
                 papoSrcLayers[iLayer]->GetLayerDefn();
@@ -640,7 +640,7 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                 GetLayerDefn()->GetGeomFieldDefn(i)->GetNameRef());
             if (iSrcGeomField >= 0)
             {
-                OGRSpatialReference *poSRS2 =
+                const OGRSpatialReference *poSRS2 =
                     poSrcFeatureDefn->GetGeomFieldDefn(iSrcGeomField)
                         ->GetSpatialRef();
 
@@ -682,9 +682,6 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                     }
                 }
             }
-
-            if (poSRS != nullptr)
-                poSRS->Release();
         }
     }
 }
@@ -1015,15 +1012,16 @@ OGRSpatialReference *OGRUnionLayer::GetSpatialRef()
     if (nGeomFields < 0)
         return nullptr;
     if (nGeomFields >= 1 && papoGeomFields[0]->bSRSSet)
-        return papoGeomFields[0]->GetSpatialRef();
+        return const_cast<OGRSpatialReference *>(
+            papoGeomFields[0]->GetSpatialRef());
 
     if (poGlobalSRS == nullptr)
     {
         poGlobalSRS = papoSrcLayers[0]->GetSpatialRef();
         if (poGlobalSRS != nullptr)
-            poGlobalSRS->Reference();
+            const_cast<OGRSpatialReference *>(poGlobalSRS)->Reference();
     }
-    return poGlobalSRS;
+    return const_cast<OGRSpatialReference *>(poGlobalSRS);
 }
 
 /************************************************************************/

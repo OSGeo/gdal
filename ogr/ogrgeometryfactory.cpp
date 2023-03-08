@@ -102,7 +102,7 @@
  */
 
 OGRErr OGRGeometryFactory::createFromWkb(const void *pabyData,
-                                         OGRSpatialReference *poSR,
+                                         const OGRSpatialReference *poSR,
                                          OGRGeometry **ppoReturn, size_t nBytes,
                                          OGRwkbVariant eWkbVariant)
 
@@ -147,7 +147,7 @@ OGRErr OGRGeometryFactory::createFromWkb(const void *pabyData,
  */
 
 OGRErr OGRGeometryFactory::createFromWkb(const void *pabyData,
-                                         OGRSpatialReference *poSR,
+                                         const OGRSpatialReference *poSR,
                                          OGRGeometry **ppoReturn, size_t nBytes,
                                          OGRwkbVariant eWkbVariant,
                                          size_t &nBytesConsumedOut)
@@ -352,7 +352,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkbEx(const void *pabyData,
  */
 
 OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
-                                         OGRSpatialReference *poSR,
+                                         const OGRSpatialReference *poSR,
                                          OGRGeometry **ppoReturn)
 
 {
@@ -489,7 +489,7 @@ OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
  */
 
 OGRErr OGRGeometryFactory::createFromWkt(const char *pszData,
-                                         OGRSpatialReference *poSR,
+                                         const OGRSpatialReference *poSR,
                                          OGRGeometry **ppoReturn)
 
 {

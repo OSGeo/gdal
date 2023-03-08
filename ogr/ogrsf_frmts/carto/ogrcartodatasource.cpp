@@ -351,7 +351,7 @@ const char *OGRCARTODataSource::GetAPIURL() const
 /*                             FetchSRSId()                             */
 /************************************************************************/
 
-int OGRCARTODataSource::FetchSRSId(OGRSpatialReference *poSRS)
+int OGRCARTODataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
 {
     const char *pszAuthorityName;

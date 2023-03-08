@@ -2314,7 +2314,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 /*                          GetSpatialRef()                             */
 /************************************************************************/
 
-OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
+const OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
 {
     if (poLayer == nullptr)
         return nullptr;
@@ -2325,7 +2325,7 @@ OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
     {
         poSRS = poLayer->GetDS()->FetchSRS(nSRSId);
         if (poSRS != nullptr)
-            poSRS->Reference();
+            const_cast<OGRSpatialReference *>(poSRS)->Reference();
     }
     return poSRS;
 }

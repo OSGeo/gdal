@@ -251,7 +251,7 @@ bool netCDFLayer::Create(char **papszOptions,
         }
     }
 
-    OGRSpatialReference *poSRS = nullptr;
+    const OGRSpatialReference *poSRS = nullptr;
     if (m_poFeatureDefn->GetGeomFieldCount())
         poSRS = m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
 

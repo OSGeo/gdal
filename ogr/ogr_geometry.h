@@ -3939,22 +3939,23 @@ class CPL_DLL OGRGeometryFactory
                                         int *pnBytesConsumed, int nRecLevel);
 
   public:
-    static OGRErr createFromWkb(const void *, OGRSpatialReference *,
+    static OGRErr createFromWkb(const void *, const OGRSpatialReference *,
                                 OGRGeometry **,
                                 size_t = static_cast<size_t>(-1),
                                 OGRwkbVariant = wkbVariantOldOgc);
-    static OGRErr createFromWkb(const void *pabyData, OGRSpatialReference *,
-                                OGRGeometry **, size_t nSize,
-                                OGRwkbVariant eVariant,
+    static OGRErr createFromWkb(const void *pabyData,
+                                const OGRSpatialReference *, OGRGeometry **,
+                                size_t nSize, OGRwkbVariant eVariant,
                                 size_t &nBytesConsumedOut);
-    static OGRErr createFromWkt(const char *, OGRSpatialReference *,
+    static OGRErr createFromWkt(const char *, const OGRSpatialReference *,
                                 OGRGeometry **);
-    static OGRErr createFromWkt(const char **, OGRSpatialReference *,
+    static OGRErr createFromWkt(const char **, const OGRSpatialReference *,
                                 OGRGeometry **);
     /** Deprecated.
      * @deprecated in GDAL 2.3
      */
-    static OGRErr createFromWkt(char **ppszInput, OGRSpatialReference *poSRS,
+    static OGRErr createFromWkt(char **ppszInput,
+                                const OGRSpatialReference *poSRS,
                                 OGRGeometry **ppoGeom)
         CPL_WARN_DEPRECATED("Use createFromWkt(const char**, ...) instead")
     {

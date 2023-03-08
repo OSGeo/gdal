@@ -2975,10 +2975,13 @@ OGRErr OGRElasticLayer::CreateGeomField(OGRGeomFieldDefn *poFieldIn,
     }
 
     OGRGeomFieldDefn oFieldDefn(poFieldIn);
-    if (oFieldDefn.GetSpatialRef())
+    auto poSRSOri = poFieldIn->GetSpatialRef();
+    if (poSRSOri)
     {
-        oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(
-            OAMS_TRADITIONAL_GIS_ORDER);
+        auto poSRS = poSRSOri->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oFieldDefn.SetSpatialRef(poSRS);
+        poSRS->Release();
     }
     if (EQUAL(oFieldDefn.GetNameRef(), ""))
         oFieldDefn.SetName("geometry");

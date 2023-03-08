@@ -94,7 +94,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     int bAttrFilterPassThroughValue;
     int *pabModifiedLayers;
     int *pabCheckIfAutoWrap;
-    OGRSpatialReference *poGlobalSRS;
+    const OGRSpatialReference *poGlobalSRS;
 
     void AutoWarpLayerIfNecessary(int iSubLayer);
     OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);

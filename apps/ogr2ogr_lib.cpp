@@ -1269,9 +1269,9 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
 /************************************************************************/
 
 static void ApplySpatialFilter(OGRLayer *poLayer, OGRGeometry *poSpatialFilter,
-                               OGRSpatialReference *poSpatSRS,
+                               const OGRSpatialReference *poSpatSRS,
                                const char *pszGeomField,
-                               OGRSpatialReference *poSourceSRS)
+                               const OGRSpatialReference *poSourceSRS)
 {
     if (poSpatialFilter == nullptr)
         return;
@@ -1281,7 +1281,7 @@ static void ApplySpatialFilter(OGRLayer *poLayer, OGRGeometry *poSpatialFilter,
     {
         poSpatialFilterReprojected = poSpatialFilter->clone();
         poSpatialFilterReprojected->assignSpatialReference(poSpatSRS);
-        OGRSpatialReference *poSpatialFilterTargetSRS =
+        const OGRSpatialReference *poSpatialFilterTargetSRS =
             poSourceSRS ? poSourceSRS : poLayer->GetSpatialRef();
         if (poSpatialFilterTargetSRS)
         {
@@ -1477,9 +1477,9 @@ GDALVectorTranslateWrappedLayer::New(OGRLayer *poBaseLayer, bool bOwnBaseLayer,
     {
         if (bTransform)
         {
-            OGRSpatialReference *poSourceSRS = poBaseLayer->GetLayerDefn()
-                                                   ->GetGeomFieldDefn(i)
-                                                   ->GetSpatialRef();
+            const OGRSpatialReference *poSourceSRS = poBaseLayer->GetLayerDefn()
+                                                         ->GetGeomFieldDefn(i)
+                                                         ->GetSpatialRef();
             if (poSourceSRS == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -3835,7 +3835,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
     }
 
-    OGRSpatialReference *poOutputSRS = m_poOutputSRS;
+    const OGRSpatialReference *poOutputSRS = m_poOutputSRS;
     if (poOutputSRS == nullptr && !m_bNullifyOutputSRS)
     {
         if (nSrcGeomFieldCount == 1 || anRequestedGeomFields.empty())
@@ -4838,13 +4838,12 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 /*                               SetupCT()                              */
 /************************************************************************/
 
-static bool SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer,
-                    bool bTransform, bool bWrapDateline,
-                    const CPLString &osDateLineOffset,
-                    OGRSpatialReference *poUserSourceSRS, OGRFeature *poFeature,
-                    OGRSpatialReference *poOutputSRS,
-                    OGRCoordinateTransformation *poGCPCoordTrans,
-                    bool bVerboseError)
+static bool
+SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
+        bool bWrapDateline, const CPLString &osDateLineOffset,
+        const OGRSpatialReference *poUserSourceSRS, OGRFeature *poFeature,
+        const OGRSpatialReference *poOutputSRS,
+        OGRCoordinateTransformation *poGCPCoordTrans, bool bVerboseError)
 {
     OGRLayer *poDstLayer = psInfo->m_poDstLayer;
     const int nDstGeomFieldCount =
@@ -5122,7 +5121,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                                GDALVectorTranslateOptions *psOptions)
 {
     const int eGType = m_eGType;
-    OGRSpatialReference *poOutputSRS = m_poOutputSRS;
+    const OGRSpatialReference *poOutputSRS = m_poOutputSRS;
 
     OGRLayer *poSrcLayer = psInfo->m_poSrcLayer;
     OGRLayer *poDstLayer = psInfo->m_poDstLayer;

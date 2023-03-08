@@ -323,7 +323,7 @@ class OGROpenFileGDBGeomFieldDefn : public OGRGeomFieldDefn
         m_poLayer = nullptr;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() const override
+    virtual const OGRSpatialReference *GetSpatialRef() const override
     {
         if (poSRS)
             return poSRS;

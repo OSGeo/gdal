@@ -268,7 +268,7 @@ class CPL_DLL OGRGeomFieldDefn
     char *pszName = nullptr;
     OGRwkbGeometryType eGeomType =
         wkbUnknown; /* all values possible except wkbNone */
-    mutable OGRSpatialReference *poSRS = nullptr;
+    mutable const OGRSpatialReference *poSRS = nullptr;
 
     int bIgnore = false;
     mutable int bNullable = true;
@@ -293,7 +293,7 @@ class CPL_DLL OGRGeomFieldDefn
     }
     void SetType(OGRwkbGeometryType eTypeIn);
 
-    virtual OGRSpatialReference *GetSpatialRef() const;
+    virtual const OGRSpatialReference *GetSpatialRef() const;
     void SetSpatialRef(const OGRSpatialReference *poSRSIn);
 
     int IsIgnored() const

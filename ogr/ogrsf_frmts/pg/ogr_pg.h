@@ -130,7 +130,7 @@ class OGRPGGeomFieldDefn final : public OGRGeomFieldDefn
     {
     }
 
-    virtual OGRSpatialReference *GetSpatialRef() const override;
+    virtual const OGRSpatialReference *GetSpatialRef() const override;
 
     void UnsetLayer()
     {

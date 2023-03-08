@@ -5736,7 +5736,7 @@ const char *NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
 /************************************************************************/
 
 void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID &vcdf, int nVarXID,
-                               int nVarYID, OGRSpatialReference *poSRS)
+                               int nVarYID, const OGRSpatialReference *poSRS)
 {
     const char *pszUnitsToWrite = NCDFGetProjectedCFUnit(poSRS);
 

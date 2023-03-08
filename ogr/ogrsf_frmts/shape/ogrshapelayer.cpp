@@ -2342,7 +2342,7 @@ OGRErr OGRShapeLayer::AlterGeomFieldDefn(
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
+const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
 
 {
     if (bSRSSet)
@@ -2368,8 +2368,8 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
     {
         osPrjFile = pszPrjFile;
 
-        poSRS = new OGRSpatialReference();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        auto poSRSNonConst = new OGRSpatialReference();
+        poSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // Remove UTF-8 BOM if found
         // http://lists.osgeo.org/pipermail/gdal-dev/2014-July/039527.html
         if (static_cast<unsigned char>(papszLines[0][0]) == 0xEF &&
@@ -2379,29 +2379,31 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
             memmove(papszLines[0], papszLines[0] + 3,
                     strlen(papszLines[0] + 3) + 1);
         }
-        if (poSRS->importFromESRI(papszLines) != OGRERR_NONE)
+        if (poSRSNonConst->importFromESRI(papszLines) != OGRERR_NONE)
         {
-            delete poSRS;
-            poSRS = nullptr;
+            delete poSRSNonConst;
+            poSRSNonConst = nullptr;
         }
         CSLDestroy(papszLines);
 
-        if (poSRS)
+        if (poSRSNonConst)
         {
             if (CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")))
             {
-                auto poSRSMatch = poSRS->FindBestMatch();
+                auto poSRSMatch = poSRSNonConst->FindBestMatch();
                 if (poSRSMatch)
                 {
-                    poSRS->Release();
-                    poSRS = poSRSMatch;
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poSRSNonConst->Release();
+                    poSRSNonConst = poSRSMatch;
+                    poSRSNonConst->SetAxisMappingStrategy(
+                        OAMS_TRADITIONAL_GIS_ORDER);
                 }
             }
             else
             {
-                poSRS->AutoIdentifyEPSG();
+                poSRSNonConst->AutoIdentifyEPSG();
             }
+            poSRS = poSRSNonConst;
         }
     }
 

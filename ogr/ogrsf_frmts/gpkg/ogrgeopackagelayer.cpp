@@ -381,7 +381,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
         if (sqlite3_column_type(hStmt, iGeomCol) != SQLITE_NULL &&
             !poGeomFieldDefn->IsIgnored())
         {
-            OGRSpatialReference *poSrs = poGeomFieldDefn->GetSpatialRef();
+            const OGRSpatialReference *poSrs = poGeomFieldDefn->GetSpatialRef();
             int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
             // coverity[tainted_data_return]
             const GByte *pabyGpkg = static_cast<const GByte *>(

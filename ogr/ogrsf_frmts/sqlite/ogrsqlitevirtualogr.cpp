@@ -717,7 +717,7 @@ static int OGR2SQLITE_ConnectCreate(sqlite3 *hDB, void *pAux, int argc,
                 osSQL += "Z";
             if (wkbHasM(poFieldDefn->GetType()))
                 osSQL += "M";
-            OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
+            const OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
             if (poSRS == nullptr && i == 0)
                 poSRS = poLayer->GetSpatialRef();
             int nSRID = poModule->FetchSRSId(poSRS);

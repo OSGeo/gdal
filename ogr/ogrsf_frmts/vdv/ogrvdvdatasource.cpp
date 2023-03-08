@@ -538,7 +538,7 @@ void OGRIDFDataSource::Parse()
         if (iLinkID >= 0)
         {
             poLinkLyr->ResetReading();
-            OGRSpatialReference *poSRS =
+            const OGRSpatialReference *poSRS =
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
             for (auto &&poFeat : poLinkLyr)
             {

@@ -658,10 +658,10 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         if (poFeatureDefn->GetGeomFieldCount() == 0)
             poGeomField->SetName("the_geom");
     }
-    auto l_poSRS = poGeomFieldIn->GetSpatialRef();
-    if (l_poSRS)
+    const auto poSRSIn = poGeomFieldIn->GetSpatialRef();
+    if (poSRSIn)
     {
-        l_poSRS = l_poSRS->Clone();
+        auto l_poSRS = poSRSIn->Clone();
         l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poGeomField->SetSpatialRef(l_poSRS);
         l_poSRS->Release();
@@ -675,7 +675,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         CPLFree(pszSafeName);
     }
 
-    OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
+    const OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
     int nSRID = 0;
     if (poSRS != nullptr)
         nSRID = poDS->FetchSRSId(poSRS);

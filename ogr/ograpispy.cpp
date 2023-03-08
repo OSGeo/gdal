@@ -1014,7 +1014,8 @@ void OGRAPISpy_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField,
     if (poGeomFieldDefn->GetSpatialRef() != nullptr)
         fprintf(fpSpyFile, "geom_fd.SetSpatialRef(%s)\n",
                 OGRAPISpyGetSRS(OGRSpatialReference::ToHandle(
-                                    poGeomFieldDefn->GetSpatialRef()))
+                                    const_cast<OGRSpatialReference *>(
+                                        poGeomFieldDefn->GetSpatialRef())))
                     .c_str());
     if (!poGeomFieldDefn->IsNullable())
         fprintf(fpSpyFile, "geom_fd.SetNullable(0)\n");

@@ -60,7 +60,7 @@ class OGRVRTGeomFieldProps
   public:
     CPLString osName;  // Name of the VRT geometry field */
     OGRwkbGeometryType eGeomType;
-    OGRSpatialReference *poSRS;
+    const OGRSpatialReference *poSRS;
 
     bool bSrcClip;
     OGRGeometry *poSrcRegion;

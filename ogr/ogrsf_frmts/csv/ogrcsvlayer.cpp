@@ -1875,10 +1875,13 @@ OGRErr OGRCSVLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
         return OGRERR_FAILURE;
     }
     OGRGeomFieldDefn oGeomField(poGeomField);
-    if (oGeomField.GetSpatialRef())
+    auto poSRSOri = poGeomField->GetSpatialRef();
+    if (poSRSOri)
     {
-        oGeomField.GetSpatialRef()->SetAxisMappingStrategy(
-            OAMS_TRADITIONAL_GIS_ORDER);
+        auto poSRS = poSRSOri->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oGeomField.SetSpatialRef(poSRS);
+        poSRS->Release();
     }
     poFeatureDefn->AddGeomFieldDefn(&oGeomField);
 

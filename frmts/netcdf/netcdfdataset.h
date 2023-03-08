@@ -1170,7 +1170,7 @@ void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID &vcdf, int nVarLonID,
 void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID &vcdf,
                                      int nVarRLonID, int nVarRLatID);
 void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID &vcdf, int nVarXID,
-                               int nVarYID, OGRSpatialReference *poSRS);
+                               int nVarYID, const OGRSpatialReference *poSRS);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
                          char **ppszCFProjection, bool bWriteGDALTags,
                          const std::string & = std::string());

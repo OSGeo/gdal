@@ -91,7 +91,7 @@ class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn
         CPLFree(pszFullName);
     }
 
-    OGRSpatialReference *GetSpatialRef() const override;
+    const OGRSpatialReference *GetSpatialRef() const override;
     void SetSRSSet()
     {
         bSRSSet = true;

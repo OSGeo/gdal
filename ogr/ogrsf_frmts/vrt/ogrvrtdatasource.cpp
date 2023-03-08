@@ -250,7 +250,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
         }
     }
 
-    OGRSpatialReference *poSrcSRS = nullptr;
+    const OGRSpatialReference *poSrcSRS = nullptr;
     const char *pszSourceSRS = CPLGetXMLValue(psLTree, "SrcSRS", nullptr);
 
     if (pszSourceSRS == nullptr)
@@ -266,15 +266,18 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
     }
     else
     {
-        poSrcSRS = new OGRSpatialReference();
-        poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (poSrcSRS->SetFromUserInput(
+        auto poSrcSRSNonConst = new OGRSpatialReference();
+        poSrcSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSrcSRSNonConst->SetFromUserInput(
                 pszSourceSRS,
                 OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
             OGRERR_NONE)
         {
-            delete poSrcSRS;
-            poSrcSRS = nullptr;
+            delete poSrcSRSNonConst;
+        }
+        else
+        {
+            poSrcSRS = poSrcSRSNonConst;
         }
     }
 
