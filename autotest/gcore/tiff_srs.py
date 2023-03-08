@@ -1212,3 +1212,18 @@ def test_tiff_srs_epsg_2193_override():
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
     assert srs.GetAuthorityCode(None) == "2193"
+
+
+def test_tiff_srs_projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoKey():
+
+    """Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2023-March/057011.html"""
+
+    ds = gdal.Open(
+        "data/gtiff/projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoKey.tif"
+    )
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "2039"
+    assert "+proj=tmerc" in srs.ExportToProj4()
+    if osr.GetPROJVersionMajor() >= 9:  # not necessarily the minimum version
+        assert srs.GetName() == "Israel 1993 / Israeli TM Grid"

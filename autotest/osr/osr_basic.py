@@ -2228,3 +2228,17 @@ def test_osr_basic_eqearth_central_meridian():
         "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
     )
     assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN, 0) == 150
+
+
+###############################################################################
+# Test SetProjCS() on a boundCRS
+
+
+def test_osr_basic_SetProjCS_Bound():
+
+    srs = osr.SpatialReference()
+    proj4str = "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=1,2,3,0,0,0,0 +units=m +no_defs"
+    srs.SetFromUserInput(proj4str)
+    srs.SetProjCS("Projected CRS name")
+    assert srs.GetName() == "Projected CRS name"
+    assert srs.ExportToProj4() == proj4str

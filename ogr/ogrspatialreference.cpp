@@ -5282,6 +5282,7 @@ OGRErr OGRSpatialReference::SetProjCS(const char *pszName)
 
 {
     d->refreshProjObj();
+    d->demoteFromBoundCRS();
     if (d->m_pjType == PJ_TYPE_PROJECTED_CRS)
     {
         d->setPjCRS(proj_alter_name(d->getPROJContext(), d->m_pj_crs, pszName));
@@ -5301,6 +5302,7 @@ OGRErr OGRSpatialReference::SetProjCS(const char *pszName)
 
         d->setPjCRS(projCRS);
     }
+    d->undoDemoteFromBoundCRS();
     return OGRERR_NONE;
 }
 
