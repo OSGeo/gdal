@@ -16,16 +16,26 @@ In C++:
 .. code-block:: c++
 
     #include "gdal_priv.h"
-    #include "cpl_conv.h" // for CPLMalloc()
-    int main()
+
+    #include <errno.h>
+
+    int main(int argc, const char* argv[])
     {
-        GDALDataset  *poDataset;
-        GDALAllRegister();
-        poDataset = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-        if( poDataset == NULL )
-        {
-            ...;
+        if (argc != 2) {
+            return EINVAL;
         }
+        const char* pszFilename = argv[1];
+
+        GDALDatasetUniquePtr poDataset;
+        GDALAllRegister();
+        const GDALAccess eAccess = GA_ReadOnly;
+        poDataset = GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALOpen( pszFilename, eAccess )));
+        if( !poDataset )
+        {
+            ...; // handle error
+        }
+        return 0;
+    }
 
 In C:
 
@@ -33,16 +43,26 @@ In C:
 
     #include "gdal.h"
     #include "cpl_conv.h" /* for CPLMalloc() */
-    int main()
+
+    #include <errno.h>
+
+    int main(int argc, const char* argv[])
     {
+        if (argc != 2) {
+            return EINVAL;
+        }
+        const char* pszFilename = argv[1];
+
         GDALDatasetH  hDataset;
         GDALAllRegister();
-        hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+        const GDALAccess eAccess = GA_ReadOnly;
+        hDataset = GDALOpen( pszFilename, eAccess );
         if( hDataset == NULL )
         {
-            ...;
+            ...; // handle error
         }
-
+        return 0;
+    }
 
 In Python:
 
