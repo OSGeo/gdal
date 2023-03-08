@@ -1003,6 +1003,26 @@ def test_gdal_translate_lib_overview_level():
             0, 0, 10, 10, 2, 2
         )
 
+        # Test requesting an overview level that doesn't exist when there is overview
+        out_ds = gdal.Translate(
+            "",
+            src_ds,
+            format="MEM",
+            overviewLevel=src_ds.GetRasterBand(1).GetOverviewCount(),
+        )
+        ovr_band = src_ds.GetRasterBand(1).GetOverview(
+            src_ds.GetRasterBand(1).GetOverviewCount() - 1
+        )
+        assert out_ds.RasterXSize == ovr_band.XSize
+        assert out_ds.RasterYSize == ovr_band.YSize
+
+        # Test requesting an overview level that doesn't exist when there is no overview
+        out_ds = gdal.Translate(
+            "", "../gcore/data/byte.tif", format="MEM", overviewLevel=0
+        )
+        assert out_ds.RasterXSize == 20
+        assert out_ds.RasterYSize == 20
+
     finally:
         src_ds = None
         gdal.Unlink(src_filename)
