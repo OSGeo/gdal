@@ -143,7 +143,7 @@ static SQLITE_EXTENSION_INIT1
     int AddExtraDS(OGRDataSource *poDS);
     OGRDataSource *GetExtraDS(int nIndex);
 
-    int FetchSRSId(OGRSpatialReference *poSRS);
+    int FetchSRSId(const OGRSpatialReference *poSRS);
 
     void RegisterVTable(const char *pszVTableName, OGRLayer *poLayer);
     void UnregisterVTable(const char *pszVTableName);
@@ -233,7 +233,7 @@ int OGR2SQLITEModule::Setup(GDALDataset *poDSIn,
 /************************************************************************/
 
 // TODO(schwehr): Refactor FetchSRSId to be much simpler.
-int OGR2SQLITEModule::FetchSRSId(OGRSpatialReference *poSRS)
+int OGR2SQLITEModule::FetchSRSId(const OGRSpatialReference *poSRS)
 {
     int nSRSId = -1;
 
@@ -1416,7 +1416,8 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
             {
                 CPLAssert(pMyCursor->pabyGeomBLOB == nullptr);
 
-                OGRSpatialReference *poSRS = poGeom->getSpatialReference();
+                const OGRSpatialReference *poSRS =
+                    poGeom->getSpatialReference();
                 int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
 
                 OGR2SQLITE_ExportGeometry(poGeom, nSRSId,
@@ -1452,7 +1453,7 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
         }
         else
         {
-            OGRSpatialReference *poSRS = poGeom->getSpatialReference();
+            const OGRSpatialReference *poSRS = poGeom->getSpatialReference();
             int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
 
             GByte *pabyGeomBLOB = nullptr;

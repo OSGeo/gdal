@@ -596,7 +596,7 @@ static OGRErr CreatePartsFromLineString(
     }
 
     double dfTolerance = 1.0;
-    OGRSpatialReference *pSpaRef = pPathGeom->getSpatialReference();
+    const OGRSpatialReference *pSpaRef = pPathGeom->getSpatialReference();
     if (pSpaRef->IsGeographic())
     {
         dfTolerance = TOLERANCE_DEGREE;

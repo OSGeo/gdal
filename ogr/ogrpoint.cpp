@@ -718,8 +718,7 @@ OGRErr OGRPoint::transform(OGRCoordinateTransformation *poCT)
 {
     if (poCT->Transform(1, &x, &y, &z))
     {
-        assignSpatialReference(
-            const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
+        assignSpatialReference(poCT->GetTargetCS());
         return OGRERR_NONE;
     }
 

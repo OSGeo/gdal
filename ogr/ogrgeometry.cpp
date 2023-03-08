@@ -120,7 +120,7 @@ OGRGeometry::OGRGeometry(const OGRGeometry &other)
     : poSRS(other.poSRS), flags(other.flags)
 {
     if (poSRS != nullptr)
-        poSRS->Reference();
+        const_cast<OGRSpatialReference *>(poSRS)->Reference();
 }
 
 /************************************************************************/
@@ -131,7 +131,7 @@ OGRGeometry::~OGRGeometry()
 
 {
     if (poSRS != nullptr)
-        poSRS->Release();
+        const_cast<OGRSpatialReference *>(poSRS)->Release();
 }
 
 /************************************************************************/
@@ -445,8 +445,6 @@ void OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char *pszPrefix)
 /************************************************************************/
 
 /**
- * \fn void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR );
- *
  * \brief Assign spatial reference to this object.
  *
  * Any existing spatial reference
@@ -467,14 +465,14 @@ void OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char *pszPrefix)
  * @param poSR new spatial reference system to apply.
  */
 
-void OGRGeometry::assignSpatialReference(OGRSpatialReference *poSR)
+void OGRGeometry::assignSpatialReference(const OGRSpatialReference *poSR)
 
 {
     // Do in that order to properly handle poSR == poSRS
     if (poSR != nullptr)
-        poSR->Reference();
+        const_cast<OGRSpatialReference *>(poSR)->Reference();
     if (poSRS != nullptr)
-        poSRS->Release();
+        const_cast<OGRSpatialReference *>(poSRS)->Release();
 
     poSRS = poSR;
 }
@@ -658,7 +656,7 @@ int OGR_G_Intersect(OGRGeometryH hGeom, OGRGeometryH hOtherGeom)
  * @return OGRERR_NONE on success, or an error code.
  */
 
-OGRErr OGRGeometry::transformTo(OGRSpatialReference *poSR)
+OGRErr OGRGeometry::transformTo(const OGRSpatialReference *poSR)
 
 {
     if (getSpatialReference() == nullptr)
@@ -2074,7 +2072,8 @@ OGRGeometryH OGR_G_Clone(OGRGeometryH hGeom)
  * OGRGeometry::getSpatialReference().
  *
  * @param hGeom handle on the geometry to get spatial reference from.
- * @return a reference to the spatial reference geometry.
+ * @return a reference to the spatial reference geometry, which should not be
+ * modified.
  */
 
 OGRSpatialReferenceH OGR_G_GetSpatialReference(OGRGeometryH hGeom)
@@ -2082,8 +2081,8 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference(OGRGeometryH hGeom)
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetSpatialReference", nullptr);
 
-    return OGRSpatialReference::ToHandle(
-        OGRGeometry::FromHandle(hGeom)->getSpatialReference());
+    return OGRSpatialReference::ToHandle(const_cast<OGRSpatialReference *>(
+        OGRGeometry::FromHandle(hGeom)->getSpatialReference()));
 }
 
 /**

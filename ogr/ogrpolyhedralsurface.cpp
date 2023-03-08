@@ -958,7 +958,8 @@ OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 
-void OGRPolyhedralSurface::assignSpatialReference(OGRSpatialReference *poSR)
+void OGRPolyhedralSurface::assignSpatialReference(
+    const OGRSpatialReference *poSR)
 {
     OGRGeometry::assignSpatialReference(poSR);
     oMP.assignSpatialReference(poSR);

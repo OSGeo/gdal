@@ -37,6 +37,8 @@ MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
 - OGRCoordinateTransformation::GetSourceCS() and GetTargetCS() now returns
   a const OGRSpatialReference*
 
+- OGRGeometry::getSpatialReference() now returns a const OGRSpatialReference*
+
 MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
 -----------------------------------------
 

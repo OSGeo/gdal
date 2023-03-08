@@ -664,7 +664,7 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
     OGRErr InitializeMetadataTables();
 
     OGRSpatialReference *FetchSRS(int nId);
-    int FetchSRSId(OGRSpatialReference *poSRS);
+    int FetchSRSId(const OGRSpatialReference *poSRS);
 
     OGRErr StartTransaction(CPL_UNUSED int bForce) override;
     OGRErr CommitTransaction() override;

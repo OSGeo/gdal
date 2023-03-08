@@ -543,8 +543,8 @@ class LayerTranslator
                   void *pProgressArg, GDALVectorTranslateOptions *psOptions);
 
   private:
-    const OGRGeometry *GetDstClipGeom(OGRSpatialReference *poGeomSRS);
-    const OGRGeometry *GetSrcClipGeom(OGRSpatialReference *poGeomSRS);
+    const OGRGeometry *GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
+    const OGRGeometry *GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -4856,7 +4856,7 @@ static bool SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer,
         /*      Setup coordinate transformation if we need it. */
         /* --------------------------------------------------------------------
          */
-        OGRSpatialReference *poSourceSRS = nullptr;
+        const OGRSpatialReference *poSourceSRS = nullptr;
         OGRCoordinateTransformation *poCT = nullptr;
         char **papszTransformOptions = nullptr;
 
@@ -5818,7 +5818,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 /************************************************************************/
 
 const OGRGeometry *
-LayerTranslator::GetDstClipGeom(OGRSpatialReference *poGeomSRS)
+LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
     {
@@ -5858,7 +5858,7 @@ LayerTranslator::GetDstClipGeom(OGRSpatialReference *poGeomSRS)
 /************************************************************************/
 
 const OGRGeometry *
-LayerTranslator::GetSrcClipGeom(OGRSpatialReference *poGeomSRS)
+LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
     {

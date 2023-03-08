@@ -481,11 +481,11 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  *
  * @since GDAL 1.11
  */
-void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference *poSRSIn)
+void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
     if (poSRS != nullptr)
         poSRS->Release();
-    poSRS = poSRSIn;
+    poSRS = const_cast<OGRSpatialReference *>(poSRSIn);
     if (poSRS != nullptr)
         poSRS->Reference();
 }

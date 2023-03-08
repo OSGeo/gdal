@@ -552,7 +552,7 @@ void OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
 /************************************************************************/
 
 void OGRCurveCollection::assignSpatialReference(OGRGeometry *poGeom,
-                                                OGRSpatialReference *poSR)
+                                                const OGRSpatialReference *poSR)
 {
     for (auto &&poSubGeom : *this)
     {
@@ -635,8 +635,7 @@ OGRErr OGRCurveCollection::transform(OGRGeometry *poGeom,
         }
     }
 
-    poGeom->assignSpatialReference(
-        const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
+    poGeom->assignSpatialReference(poCT->GetTargetCS());
 
     return OGRERR_NONE;
 }

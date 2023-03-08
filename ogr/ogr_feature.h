@@ -294,7 +294,7 @@ class CPL_DLL OGRGeomFieldDefn
     void SetType(OGRwkbGeometryType eTypeIn);
 
     virtual OGRSpatialReference *GetSpatialRef() const;
-    void SetSpatialRef(OGRSpatialReference *poSRSIn);
+    void SetSpatialRef(const OGRSpatialReference *poSRSIn);
 
     int IsIgnored() const
     {

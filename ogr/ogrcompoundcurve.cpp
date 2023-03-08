@@ -395,7 +395,7 @@ void OGRCompoundCurve::setMeasured(OGRBoolean bIsMeasured)
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 
-void OGRCompoundCurve::assignSpatialReference(OGRSpatialReference *poSR)
+void OGRCompoundCurve::assignSpatialReference(const OGRSpatialReference *poSR)
 {
     oCC.assignSpatialReference(this, poSR);
 }

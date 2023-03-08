@@ -969,8 +969,7 @@ OGRErr OGRGeometryCollection::transform(OGRCoordinateTransformation *poCT)
         iGeom++;
     }
 
-    assignSpatialReference(
-        const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
+    assignSpatialReference(poCT->GetTargetCS());
 
     return OGRERR_NONE;
 }
@@ -1128,7 +1127,8 @@ OGRBoolean OGRGeometryCollection::IsEmpty() const
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 
-void OGRGeometryCollection::assignSpatialReference(OGRSpatialReference *poSR)
+void OGRGeometryCollection::assignSpatialReference(
+    const OGRSpatialReference *poSR)
 {
     OGRGeometry::assignSpatialReference(poSR);
     for (auto &&poSubGeom : *this)
