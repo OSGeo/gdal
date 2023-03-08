@@ -2460,7 +2460,8 @@ OGRErr OGRSimpleCurve::transform(OGRCoordinateTransformation *poCT)
     CPLFree(xyz);
     CPLFree(pabSuccess);
 
-    assignSpatialReference(poCT->GetTargetCS());
+    assignSpatialReference(
+        const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
 
     return OGRERR_NONE;
 }

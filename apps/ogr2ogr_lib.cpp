@@ -1083,11 +1083,11 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
             poSRS->Dereference();
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return poSRS;
     }
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return poSRS;
     }
@@ -1148,14 +1148,14 @@ class CompositeCT : public OGRCoordinateTransformation
         return new CompositeCT(*this);
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return poCT1   ? poCT1->GetSourceCS()
                : poCT2 ? poCT2->GetSourceCS()
                        : nullptr;
     }
 
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return poCT2   ? poCT2->GetTargetCS()
                : poCT1 ? poCT1->GetTargetCS()
@@ -1235,12 +1235,12 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return new AxisMappingCoordinateTransformation(*this);
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }

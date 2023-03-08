@@ -754,8 +754,8 @@ class OGRProjCT : public OGRCoordinateTransformation
                    const char *pszTargetSRS,
                    const OGRCoordinateTransformationOptions &options);
 
-    OGRSpatialReference *GetSourceCS() override;
-    OGRSpatialReference *GetTargetCS() override;
+    const OGRSpatialReference *GetSourceCS() const override;
+    const OGRSpatialReference *GetTargetCS() const override;
 
     int Transform(int nCount, double *x, double *y, double *z, double *t,
                   int *pabSuccess) override;
@@ -1096,7 +1096,8 @@ OGRCoordinateTransformationH OCTClone(OGRCoordinateTransformationH hTransform)
  * @return handle to transformation's source coordinate system or NULL if not
  * present.
  *
- * The ownership of the returned CS belongs to the transformation object.
+ * The ownership of the returned SRS belongs to the transformation object, and
+ * the returned SRS should not be modified.
  *
  * @since GDAL 3.4
  */
@@ -1105,8 +1106,8 @@ OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
 
 {
     VALIDATE_POINTER1(hTransform, "OCTGetSourceCS", nullptr);
-    return OGRSpatialReference::ToHandle(
-        OGRCoordinateTransformation::FromHandle(hTransform)->GetSourceCS());
+    return OGRSpatialReference::ToHandle(const_cast<OGRSpatialReference *>(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetSourceCS()));
 }
 
 /************************************************************************/
@@ -1122,7 +1123,8 @@ OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
  * @return handle to transformation's target coordinate system or NULL if not
  * present.
  *
- * The ownership of the returned CS belongs to the transformation object.
+ * The ownership of the returned SRS belongs to the transformation object, and
+ * the returned SRS should not be modified.
  *
  * @since GDAL 3.4
  */
@@ -1131,8 +1133,8 @@ OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
 
 {
     VALIDATE_POINTER1(hTransform, "OCTGetTargetCS", nullptr);
-    return OGRSpatialReference::ToHandle(
-        OGRCoordinateTransformation::FromHandle(hTransform)->GetTargetCS());
+    return OGRSpatialReference::ToHandle(const_cast<OGRSpatialReference *>(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetTargetCS()));
 }
 
 /************************************************************************/
@@ -2045,7 +2047,7 @@ bool OGRProjCT::ListCoordinateOperations(
 /*                            GetSourceCS()                             */
 /************************************************************************/
 
-OGRSpatialReference *OGRProjCT::GetSourceCS()
+const OGRSpatialReference *OGRProjCT::GetSourceCS() const
 
 {
     return poSRSSource;
@@ -2055,7 +2057,7 @@ OGRSpatialReference *OGRProjCT::GetSourceCS()
 /*                            GetTargetCS()                             */
 /************************************************************************/
 
-OGRSpatialReference *OGRProjCT::GetTargetCS()
+const OGRSpatialReference *OGRProjCT::GetTargetCS() const
 
 {
     return poSRSTarget;

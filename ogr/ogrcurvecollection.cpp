@@ -635,7 +635,8 @@ OGRErr OGRCurveCollection::transform(OGRGeometry *poGeom,
         }
     }
 
-    poGeom->assignSpatialReference(poCT->GetTargetCS());
+    poGeom->assignSpatialReference(
+        const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
 
     return OGRERR_NONE;
 }

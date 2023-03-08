@@ -969,7 +969,8 @@ OGRErr OGRGeometryCollection::transform(OGRCoordinateTransformation *poCT)
         iGeom++;
     }
 
-    assignSpatialReference(poCT->GetTargetCS());
+    assignSpatialReference(
+        const_cast<OGRSpatialReference *>(poCT->GetTargetCS()));
 
     return OGRERR_NONE;
 }

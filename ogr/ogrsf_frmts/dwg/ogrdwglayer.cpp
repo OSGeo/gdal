@@ -1085,11 +1085,11 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
-    OGRSpatialReference *GetTargetCS() override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
