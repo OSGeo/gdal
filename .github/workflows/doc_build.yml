@@ -30,7 +30,7 @@ jobs:
       shell: bash -l {0}
       run: |
           apt update
-          apt install -y libproj-dev
+          apt install -y libproj-dev swig
           python3 -m pip install -r doc/requirements.txt
           python3 -m pip install numpy
           pushd .
