@@ -3370,7 +3370,8 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
 /**
  * \brief Fetch field value as a serialized JSon object.
  *
- * Currently this method only works for OFTStringList, OFTIntegerList,
+ * Currently this method only works for OFTString with OFSTJSON subtype,
+ * OFTStringList, OFTIntegerList,
  * OFTInteger64List and OFTRealList
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -3397,7 +3398,27 @@ char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
 
     char *pszRet = nullptr;
     OGRFieldType eType = poFDefn->GetType();
-    if (eType == OFTStringList)
+    if (eType == OFTString && poFDefn->GetSubType() == OFSTJSON)
+    {
+        if (pauFields[iField].String[0] != '[' &&
+            pauFields[iField].String[0] != '{' &&
+            strcmp(pauFields[iField].String, "true") != 0 &&
+            strcmp(pauFields[iField].String, "false") != 0 &&
+            CPLGetValueType(pauFields[iField].String) == CPL_VALUE_STRING)
+        {
+            pszRet = CPLStrdup(('"' +
+                                CPLString(pauFields[iField].String)
+                                    .replaceAll('\\', "\\\\")
+                                    .replaceAll('"', "\\\"") +
+                                '"')
+                                   .c_str());
+        }
+        else
+        {
+            pszRet = CPLStrdup(pauFields[iField].String);
+        }
+    }
+    else if (eType == OFTStringList)
     {
         char **papszValues = GetFieldAsStringList(iField);
         if (papszValues == nullptr)

@@ -684,3 +684,102 @@ def test_ogrinfo_lib_json_relationships():
         "forward_path_label": "table7",
         "backward_path_label": "table6",
     }
+
+
+###############################################################################
+# Test json output with OFSTJSON field
+
+
+def test_ogrinfo_lib_json_OFSTJSON():
+
+    ds = gdal.OpenEx(
+        """{"type":"FeatureCollection","features":[
+            { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": true }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": null }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": "astring" }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": { "nested": 75 } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
+            { "type": "Feature", "properties": { "prop0": { "a": "b" } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
+        ]}"""
+    )
+
+    ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True)
+    assert ret["layers"][0]["features"] == [
+        {
+            "type": "Feature",
+            "fid": 0,
+            "properties": {"prop0": 42},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+        {
+            "type": "Feature",
+            "fid": 1,
+            "properties": {"prop0": True},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+        {
+            "type": "Feature",
+            "fid": 2,
+            "properties": {"prop0": None},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+        {
+            "type": "Feature",
+            "fid": 3,
+            "properties": {"prop0": "astring"},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+        {
+            "type": "Feature",
+            "fid": 4,
+            "properties": {"prop0": {"nested": 75}},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+        {
+            "type": "Feature",
+            "fid": 5,
+            "properties": {"prop0": {"a": "b"}},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        },
+    ]
+
+
+###############################################################################
+# Test json output with -fields=NO
+
+
+def test_ogrinfo_lib_json_fields_NO():
+
+    ds = gdal.OpenEx(
+        """{"type":"FeatureCollection","features":[
+            { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
+        ]}"""
+    )
+
+    ret = gdal.VectorInfo(ds, options="-json -features -fields=NO")
+    assert ret["layers"][0]["features"] == [
+        {
+            "type": "Feature",
+            "fid": 0,
+            "properties": {},
+            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+        }
+    ]
+
+
+###############################################################################
+# Test json output with -geom=NO
+
+
+def test_ogrinfo_lib_json_geom_NO():
+
+    ds = gdal.OpenEx(
+        """{"type":"FeatureCollection","features":[
+            { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
+        ]}"""
+    )
+
+    ret = gdal.VectorInfo(ds, options="-json -features -geom=NO")
+    assert ret["layers"][0]["features"] == [
+        {"type": "Feature", "fid": 0, "properties": {"prop0": 42}, "geometry": None}
+    ]
