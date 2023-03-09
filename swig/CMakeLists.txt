@@ -32,7 +32,6 @@ endif ()
 # Java bindings
 if (SWIG_EXECUTABLE
     AND Java_JAVAC_EXECUTABLE
-    AND Java_JAVADOC_EXECUTABLE
     AND JNI_FOUND
     AND ANT)
     option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)

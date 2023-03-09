@@ -95,8 +95,15 @@ target_link_libraries(gdalalljni PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 # Build javadoc
 file(STRINGS ${PROJECT_SOURCE_DIR}/VERSION GDAL_VERSION)
 
-option(GDAL_JAVA_GENERATE_JAVADOC "Generate Javadoc of Java bindings" ON)
+if(Java_JAVADOC_EXECUTABLE)
+    option(GDAL_JAVA_GENERATE_JAVADOC "Generate Javadoc of Java bindings" ON)
+else()
+    option(GDAL_JAVA_GENERATE_JAVADOC "Generate Javadoc of Java bindings" OFF)
+endif()
 if (GDAL_JAVA_GENERATE_JAVADOC)
+  if (NOT Java_JAVADOC_EXECUTABLE)
+      message(FATAL_ERROR "javadoc executable is a requirement for GDAL_JAVA_GENERATE_JAVADOC")
+  endif()
   add_executable(add_javadoc add_javadoc.c)
   set(JAVADOC_ZIP ${CMAKE_CURRENT_BINARY_DIR}/javadoc.zip)
   add_custom_command(
