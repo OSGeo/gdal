@@ -15,6 +15,9 @@ files containing manually-edited content.
 
 |Sphinx| is used to combine the above components into a complete set of documentation in HTML, PDF, and other formats.
 
+|Sphinx| and extensions used by GDAL can be installed by running ``python3 -m pip install -r requirements.txt`` from
+the ``doc`` subdirectory.
+
 Building documentation
 ######################
 
@@ -24,7 +27,7 @@ HTML documentation can be built by running ``make html`` in the ``doc`` subdirec
 To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
 Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation
 and serve it on a local web server at ``http://127.0.0.1:8000``. The pages served will be automatically refreshed as changes
-are made to underlying ``rst`` documentatio files.
+are made to underlying ``rst`` documentation files.
 
 .. _rst_style:
 
