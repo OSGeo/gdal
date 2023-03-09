@@ -168,25 +168,9 @@ Skip down to the `Usage <https://trac.osgeo.org/gdal/wiki/GdalOgrInPython#usage>
 SWIG
 ----
 
-The GDAL Python package is built using `SWIG <http://www.swig.org/>`__. The earliest version of `SWIG <http://www.swig.org/>`__
-that is supported to generate the wrapper code is 1.3.40.  It is possible
-that usable bindings will build with a version earlier than 1.3.40, but no
-development efforts are targeted at versions below it.  You should not have
-to run SWIG in your development tree to generate the binding code, as it
-is usually included with the source.  However, if you do need to regenerate,
-you can do so with the following make command from within the ./swig/python
-directory:
-
-.. code-block:: Bash
-
-    $ make generate
-
-To ensure that all of the bindings are regenerated, you can clean the
-bindings code out before the generate command by issuing:
-
-.. code-block:: Bash
-
-    $ make veryclean
+The GDAL Python package is built using `SWIG <http://www.swig.org/>`__.
+Starting with GDAL 3.7.0, the presence of SWIG >= 4.0 is requirement to
+generate the binding code.
 
 Usage
 -----
