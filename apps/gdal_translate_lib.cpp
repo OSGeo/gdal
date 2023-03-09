@@ -1483,16 +1483,27 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         {
             if (!psOptions->bQuiet)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cannot get overview level %d. Defaulting to level %d",
-                         psOptions->nOvLevel, nOvCount - 1);
+                if (nOvCount > 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot get overview level %d. "
+                             "Defaulting to level %d.",
+                             psOptions->nOvLevel, nOvCount - 1);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot get overview level %d. "
+                             "Defaulting to full resolution.",
+                             psOptions->nOvLevel);
+                }
             }
             if (nOvCount > 0)
                 poSrcOvrDS =
                     GDALCreateOverviewDataset(poSrcDS, nOvCount - 1,
                                               /* bThisLevelOnly = */ true);
         }
-        if (psOptions->dfXRes == 0.0 && !bOutsizeExplicitlySet)
+        if (poSrcOvrDS && psOptions->dfXRes == 0.0 && !bOutsizeExplicitlySet)
         {
             const double dfRatioX =
                 static_cast<double>(poSrcDSOri->GetRasterXSize()) /
