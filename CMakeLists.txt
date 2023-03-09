@@ -216,7 +216,7 @@ endif ()
 if (Python_Interpreter_FOUND)
   file(
     GENERATE
-    OUTPUT "python_executable.txt"
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python_executable.txt"
     CONTENT "${Python_EXECUTABLE}")
 endif()
 
