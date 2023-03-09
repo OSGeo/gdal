@@ -2322,3 +2322,17 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
     )
     assert srs.GetName() == "WGS 84"
     assert srs.GetCoordinateEpoch() == 0.0
+
+
+###############################################################################
+# Test SetProjCS() on a boundCRS
+
+
+def test_osr_basic_SetProjCS_Bound():
+
+    srs = osr.SpatialReference()
+    proj4str = "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=1,2,3,0,0,0,0 +units=m +no_defs"
+    srs.SetFromUserInput(proj4str)
+    srs.SetProjCS("Projected CRS name")
+    assert srs.GetName() == "Projected CRS name"
+    assert srs.ExportToProj4() == proj4str
