@@ -29,10 +29,7 @@ Prerequisites:
 
 Process :
 
-1) a) Regenerate swig generated files for python bindings and commit if changed.
-      Currently SWIG 4.0.2 is used.
-
-   b) "make completion" to regenerate scripts/gdal-bash-completion.sh
+1)    "make completion" to regenerate scripts/gdal-bash-completion.sh
       if new command line switches have been added. scripts/completionFinder.py
       must also be edited before if new utilities/scripts are added/removed.
 
