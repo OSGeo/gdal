@@ -59,7 +59,7 @@ Process :
      git log --reverse -v v3.4.0..HEAD . ":(exclude)autotest" ":(exclude)doc" ":(exclude).github"
 
    For a feature release, e.g 3.6.0, you can use scripts/generate_log_feature_release.py to generate a log without commit that went in the previous 3.5.x bugfix releases with:
-     python scripts/generate_log_feature_release.py
+     python3 scripts/generate_log_feature_release.py
 
   - commit new version to NEWS.md file.
 
@@ -212,7 +212,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
     b) cd $BUILD_DIR/swig/python
 
-    c) python setup.py sdist
+    c) python3 setup.py sdist
 
     d) Check the output:
         twine check dist/GDAL-*.gz
@@ -227,7 +227,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
     a) cd $BUILD_DIR/swig/python/gdal-utils
 
-    b) python setup.py bdist_wheel
+    b) python3 setup.py bdist_wheel
 
     c) Check the output:
         twine check dist/gdal_utils-*.whl

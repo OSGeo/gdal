@@ -21,6 +21,7 @@ be greatly helpful for beginners with GDAL/OGR in Python.
 
 
 
+
 A cookbook full of recipes for using the Python GDAL/OGR bindings : `http://pcjericks.github.io/py-gdalogr-cookbook/index.html <http://pcjericks.github.io/py-gdalogr-cookbook/index.html>`__
 
 Examples
@@ -99,14 +100,14 @@ After modifying the location of gdal-config, you can build and install with the 
 
 .. code-block:: Bash
 
-    $ python setup.py build
-    $ python setup.py install
+    $ python3 setup.py build
+    $ python3 setup.py install
 
 If you have setuptools installed, you can also generate an egg:
 
 .. code-block:: Bash
 
-    $ python setup.py bdist_egg
+    $ python3 setup.py bdist_egg
 
 
 

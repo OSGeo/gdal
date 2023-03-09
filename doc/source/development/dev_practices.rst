@@ -111,7 +111,7 @@ hooks are cloned with the repository and can be installed using
 
 .. code-block:: bash
 
-    python -m pip install pre-commit
+    python3 -m pip install pre-commit
     pre-commit install
 
 
