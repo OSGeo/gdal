@@ -4,6 +4,7 @@ set -e
 
 sudo pip uninstall -y setuptools
 sudo rm -rf /usr/local/lib/python3.6/
+sudo apt-get remove -f python
 
 sudo apt-get update
 sudo apt-get install -y software-properties-common
@@ -12,3 +13,5 @@ sudo apt-get install -y --allow-unauthenticated python3-numpy python3-setuptools
 
 # Workaround bug in ogdi packaging
 sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
+
+sudo rm -rf /usr/bin/python
