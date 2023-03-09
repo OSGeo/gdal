@@ -407,6 +407,10 @@ def test_ogr_openfilegdb_1(gdb_source):
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
+    assert gdal.OpenEx(filename, gdal.OF_RASTER) is None
+
+    assert gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
+
     ds = ogr.Open(filename)
 
     for data in ogrtest.openfilegdb_datalist:

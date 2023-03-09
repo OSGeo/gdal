@@ -123,6 +123,22 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
         GDAL_IDENTIFY_FALSE)
         return nullptr;
 
+    // If this is a raster-only GDB, do not try to open it, to be consistent
+    // with OpenFileGDB behavior.
+    const char *const apszOpenFileGDBDriver[] = {"OpenFileGDB", nullptr};
+    auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        pszFilename, GDAL_OF_RASTER, apszOpenFileGDBDriver, nullptr, nullptr));
+    if (poOpenFileGDBDS)
+    {
+        poOpenFileGDBDS.reset();
+        poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(pszFilename, GDAL_OF_VECTOR,
+                              apszOpenFileGDBDriver, nullptr, nullptr));
+        if (!poOpenFileGDBDS)
+            return nullptr;
+    }
+    poOpenFileGDBDS.reset();
+
     const bool bUpdate = poOpenInfo->eAccess == GA_Update;
     long hr;
 

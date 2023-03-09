@@ -664,7 +664,7 @@ bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
 {
     // Write GDB_SystemCatalog file
     m_osGDBSystemCatalogFilename =
-        CPLFormFilename(m_pszName, "a00000001.gdbtable", nullptr);
+        CPLFormFilename(m_osDirName.c_str(), "a00000001.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBSystemCatalogFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
@@ -715,7 +715,7 @@ bool OGROpenFileGDBDataSource::CreateGDBDBTune()
 {
     // Write GDB_DBTune file
     const std::string osFilename(
-        CPLFormFilename(m_pszName, "a00000002.gdbtable", nullptr));
+        CPLFormFilename(m_osDirName.c_str(), "a00000002.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(cpl::make_unique<FileGDBField>(
@@ -807,7 +807,7 @@ bool OGROpenFileGDBDataSource::CreateGDBSpatialRefs()
 {
     // Write GDB_SpatialRefs file
     m_osGDBSpatialRefsFilename =
-        CPLFormFilename(m_pszName, "a00000003.gdbtable", nullptr);
+        CPLFormFilename(m_osDirName.c_str(), "a00000003.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBSpatialRefsFilename.c_str(), 4, FGTGT_NONE, false,
                        false) ||
@@ -887,7 +887,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItems()
     }
 
     m_osGDBItemsFilename =
-        CPLFormFilename(m_pszName, "a00000004.gdbtable", nullptr);
+        CPLFormFilename(m_osDirName.c_str(), "a00000004.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBItemsFilename.c_str(), 4, FGTGT_POLYGON, false,
                        false) ||
@@ -998,7 +998,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemTypes()
 {
     // Write GDB_ItemTypes file
     const std::string osFilename(
-        CPLFormFilename(m_pszName, "a00000005.gdbtable", nullptr));
+        CPLFormFilename(m_osDirName.c_str(), "a00000005.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(cpl::make_unique<FileGDBField>(
@@ -1112,7 +1112,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
 {
     // Write GDB_ItemRelationships file
     m_osGDBItemRelationshipsFilename =
-        CPLFormFilename(m_pszName, "a00000006.gdbtable", nullptr);
+        CPLFormFilename(m_osDirName.c_str(), "a00000006.gdbtable", nullptr);
     FileGDBTable oTable;
     if (!oTable.Create(m_osGDBItemRelationshipsFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
@@ -1156,7 +1156,7 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
 {
     // Write GDB_ItemRelationshipTypes file
     const std::string osFilename(
-        CPLFormFilename(m_pszName, "a00000007.gdbtable", nullptr));
+        CPLFormFilename(m_osDirName.c_str(), "a00000007.gdbtable", nullptr));
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(cpl::make_unique<FileGDBField>(
@@ -1308,8 +1308,7 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
         return false;
     }
 
-    m_pszName = CPLStrdup(pszName);
-    m_osDirName = m_pszName;
+    m_osDirName = pszName;
     eAccess = GA_Update;
 
     {
@@ -1370,7 +1369,7 @@ OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
     oTable.Close();
 
     const std::string osFilename(CPLFormFilename(
-        m_pszName, CPLSPrintf("a%08x.gdbtable", nTableNum), nullptr));
+        m_osDirName.c_str(), CPLSPrintf("a%08x.gdbtable", nTableNum), nullptr));
 
     if (wkbFlatten(eType) == wkbLineString)
         eType = OGR_GT_SetModifier(wkbMultiLineString, OGR_GT_HasZ(eType),

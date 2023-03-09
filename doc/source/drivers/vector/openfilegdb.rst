@@ -1,7 +1,7 @@
 .. _vector.openfilegdb:
 
-ESRI File Geodatabase (OpenFileGDB)
-===================================
+ESRI File Geodatabase vector (OpenFileGDB)
+==========================================
 
 .. shortname:: OpenFileGDB
 
@@ -22,6 +22,8 @@ directly.
 Curve in geometries are supported with GDAL >= 2.2.
 
 Write and update capabilities are supported since GDAL >= 3.6
+
+The driver also supports :ref:`raster layers<raster.openfilegdb>` since GDAL 3.7
 
 Driver capabilities
 -------------------
@@ -243,6 +245,7 @@ Examples
 Links
 -----
 
+-  :ref:`OpenFileGDB raster <raster.openfilegdb>` documentation page
 -  :ref:`FileGDB driver <vector.filegdb>`, relying on the FileGDB API SDK
 -  Reverse-engineered specification of the `FileGDB
    format <https://github.com/rouault/dump_gdbtable/wiki/FGDB-Spec>`__

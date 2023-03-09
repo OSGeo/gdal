@@ -685,22 +685,6 @@ int FileGDBTable::ReadTableXHeader()
 }
 
 /************************************************************************/
-/*                            ReadUTF16String()                         */
-/************************************************************************/
-
-static std::string ReadUTF16String(const GByte *pabyIter, int nCarCount)
-{
-    std::wstring osWideStr;
-    for (int j = 0; j < nCarCount; j++)
-        osWideStr += pabyIter[2 * j] | (pabyIter[2 * j + 1] << 8);
-    char *pszStr =
-        CPLRecodeFromWChar(osWideStr.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
-    std::string osRet(pszStr);
-    CPLFree(pszStr);
-    return osRet;
-}
-
-/************************************************************************/
 /*                                 Open()                               */
 /************************************************************************/
 

@@ -134,68 +134,6 @@ void OGROpenFileGDBLayer::Close()
 }
 
 /************************************************************************/
-/*                           BuildSRS()                                 */
-/************************************************************************/
-
-OGRSpatialReference *
-OGROpenFileGDBLayer::BuildSRS(const CPLXMLNode *psInfo) const
-{
-    const char *pszWKT =
-        CPLGetXMLValue(psInfo, "SpatialReference.WKT", nullptr);
-    const int nWKID =
-        atoi(CPLGetXMLValue(psInfo, "SpatialReference.WKID", "0"));
-    // The concept of LatestWKID is explained in
-    // http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000
-    int nLatestWKID =
-        atoi(CPLGetXMLValue(psInfo, "SpatialReference.LatestWKID", "0"));
-
-    OGRSpatialReference *poSRS = nullptr;
-    if (nWKID > 0 || nLatestWKID > 0)
-    {
-        int bSuccess = FALSE;
-        poSRS = new OGRSpatialReference();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        // Try first with nLatestWKID as there is a higher chance it is a
-        // EPSG code and not an ESRI one.
-        if (nLatestWKID > 0)
-        {
-            if (poSRS->importFromEPSG(nLatestWKID) == OGRERR_NONE)
-            {
-                bSuccess = TRUE;
-            }
-            else
-            {
-                CPLDebug("OpenFileGDB", "Cannot import SRID %d", nLatestWKID);
-            }
-        }
-        if (!bSuccess && nWKID > 0)
-        {
-            if (poSRS->importFromEPSG(nWKID) == OGRERR_NONE)
-            {
-                bSuccess = TRUE;
-            }
-            else
-            {
-                CPLDebug("OpenFileGDB", "Cannot import SRID %d", nWKID);
-            }
-        }
-        if (!bSuccess)
-        {
-            delete poSRS;
-            poSRS = nullptr;
-        }
-        CPLPopErrorHandler();
-        CPLErrorReset();
-    }
-    if (poSRS == nullptr && pszWKT != nullptr && pszWKT[0] != '{')
-    {
-        poSRS = m_poDS->BuildSRS(pszWKT);
-    }
-    return poSRS;
-}
-
-/************************************************************************/
 /*                     BuildGeometryColumnGDBv10()                      */
 /************************************************************************/
 
@@ -302,7 +240,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
                     CPLSearchXMLNode(psParentTree, "=DEFeatureDataset");
                 if (psParentInfo != nullptr)
                 {
-                    poParentSRS = BuildSRS(psParentInfo);
+                    poParentSRS = m_poDS->BuildSRS(psParentInfo);
                 }
                 CPLDestroyXMLNode(psParentTree);
             }
@@ -312,7 +250,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
             }
         }
 
-        auto poSRS = BuildSRS(psInfo);
+        auto poSRS = m_poDS->BuildSRS(psInfo);
         if (poParentSRS)
         {
             if (poSRS)
