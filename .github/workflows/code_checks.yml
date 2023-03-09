@@ -90,6 +90,28 @@ jobs:
             make .doxygen_up_to_date >log.txt 2>&1
             if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 
+  formatting-check:
+
+    name: Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GDAL
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 100
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: Install Run clang-format style check for C/C++ programs.
+        run: pip install clang-format==15.0.4
+
+      - name: Check new code with clang-format
+        run: ./scripts/clang-format.sh
+
   other_checks:
     runs-on: ubuntu-latest
     steps:
@@ -106,3 +128,39 @@ jobs:
             cffconvert --validate
             cffconvert -f bibtex
             cffconvert -f apalike
+
+  cmake-lint:
+    # Disabled because of https://github.com/OSGeo/gdal/pull/5326#issuecomment-1042617407
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Install lint tool
+      run: |
+        python -m pip install --upgrade pip
+        pip install cmake-format pyyaml
+    - name: Check cmakelist
+      run: find . -name CMakeLists.txt |xargs cmake-format --check
+
+  validate_xml:
+    runs-on: ubuntu-18.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install requirements
+        run: |
+          sudo apt update
+          sudo apt install -y libxml2-utils
+
+      - name: Run xmllint checks
+        run: |
+          xmllint --schema ./data/nitf_spec.xsd ./data/nitf_spec.xml --noout
+          xmllint --schema ./data/vdv452.xsd ./data/vdv452.xml --noout
+          xmllint --schema ./data/gmlasconf.xsd ./data/gmlasconf.xml --noout
