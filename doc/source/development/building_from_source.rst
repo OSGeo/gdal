@@ -2149,19 +2149,19 @@ the ``install`` CMake target.
 
     This option can be specified to a directory name, to override the
     ``CMAKE_INSTALL_PREFIX`` option.
-    It is used to set the value of the ``--prefix`` option of ``python setup.py install``.
+    It is used to set the value of the ``--prefix`` option of ``python3 setup.py install``.
 
 .. option:: GDAL_PYTHON_INSTALL_LAYOUT
 
     This option can be specified to set the value of the ``--install-layout``
-    option of ``python setup.py install``. The install layout is by default set to
+    option of ``python3 setup.py install``. The install layout is by default set to
     ``deb`` when it is detected that the Python installation looks for
     the ``site-packages`` subdirectory. Otherwise it is unspecified.
 
 .. option:: GDAL_PYTHON_INSTALL_LIB
 
     This option can be specified to set the value of the ``--install-lib``
-    option of ``python setup.py install``. It is only taken into account on
+    option of ``python3 setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
 Java bindings options

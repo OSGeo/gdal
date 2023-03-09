@@ -1003,7 +1003,7 @@ to import it into PostGIS and
 
 ::
 
-   python ogr_build_junction_table.py PG:dbname=mydb
+   python3 ogr_build_junction_table.py PG:dbname=mydb
 
 , a *myfeature_otherfeature* table will be created and will contain the
 following content :
