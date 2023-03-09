@@ -165,15 +165,21 @@ endif ()
 # ~~~
 #
 include(FeatureSummary)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
-if (BUILD_PYTHON_BINDINGS)
-  if (Python_LOOKUP_VERSION)
+
+find_package(SWIG)
+set_package_properties(
+  SWIG PROPERTIES
+  DESCRIPTION
+    "Software development tool that connects programs written in C and C++ with a variety of high-level programming languages."
+  URL "http://swig.org/"
+  TYPE RECOMMENDED)
+
+if (Python_LOOKUP_VERSION)
     set(Python_FIND_STRATEGY VERSION)
     find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
-  else ()
+else ()
     set(Python_FIND_STRATEGY LOCATION)
     find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
-  endif ()
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 
@@ -220,13 +226,27 @@ if (Python_Interpreter_FOUND)
     CONTENT "${Python_EXECUTABLE}")
 endif()
 
+if (Python_Interpreter_FOUND OR Python_FOUND)
+  option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+else()
+  option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
+endif()
+
+if (BUILD_PYTHON_BINDINGS)
+    if (NOT (Python_Interpreter_FOUND OR Python_FOUND))
+      message(FATAL_ERROR "Python is a requirement to build the Python bindings")
+    endif()
+endif()
+
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
 if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)
-  add_subdirectory(autotest)
+  if(BUILD_PYTHON_BINDINGS)
+      add_subdirectory(autotest)
+  endif()
 endif ()
 # Google OSS-Fuzz project utilities
 add_subdirectory(fuzzers)

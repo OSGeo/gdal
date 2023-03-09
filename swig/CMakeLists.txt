@@ -24,24 +24,54 @@ set(GDAL_SWIG_COMMON_INTERFACE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MultiDimensional.i)
 
 # BUILD_PYTHON_BINDINGS is already defined in ../CMakeLists.txt
-option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)
-option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
 
 if (BUILD_PYTHON_BINDINGS)
   add_subdirectory(python)
 endif ()
 
+# Java bindings
 if (SWIG_EXECUTABLE
     AND Java_JAVAC_EXECUTABLE
     AND Java_JAVADOC_EXECUTABLE
     AND JNI_FOUND
-    AND ANT
-    AND BUILD_JAVA_BINDINGS)
-  add_subdirectory(java)
+    AND ANT)
+    option(BUILD_JAVA_BINDINGS "Build Java bindings" ON)
+else()
+    option(BUILD_JAVA_BINDINGS "Build Java bindings" OFF)
+endif()
+
+if (BUILD_JAVA_BINDINGS)
+    if (NOT SWIG_FOUND)
+        message(FATAL_ERROR "SWIG is a requirement to build the Java bindings")
+    endif()
+    if (NOT Java_JAVAC_EXECUTABLE)
+        message(FATAL_ERROR "javac is a requirement to build the Java bindings")
+    endif()
+    if (NOT JNI_FOUND)
+        message(FATAL_ERROR "JNI is a requirement to build the Java bindings")
+    endif()
+    if (NOT ANT)
+        message(FATAL_ERROR "ant is a requirement to build the Java bindings")
+    endif()
+    add_subdirectory(java)
+endif()
+
+# CSharp bindings
+
+if (SWIG_EXECUTABLE AND CSHARP_FOUND)
+    option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
+else()
+    option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" OFF)
 endif ()
 
-if (BUILD_CSHARP_BINDINGS
-    AND SWIG_EXECUTABLE
-    AND CSHARP_FOUND)
-  add_subdirectory(csharp)
+option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
+
+if (BUILD_CSHARP_BINDINGS)
+    if (NOT SWIG_FOUND)
+        message(FATAL_ERROR "SWIG is a requirement to build the CSharp bindings")
+    endif()
+    if (NOT CSHARP_FOUND)
+        message(FATAL_ERROR "A CSharp/DotNet compiler is a requirement to build the CSharp bindings")
+    endif()
+    add_subdirectory(csharp)
 endif ()
