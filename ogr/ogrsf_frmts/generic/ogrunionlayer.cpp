@@ -1169,8 +1169,11 @@ OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 
     if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
+        if (iGeomField != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
         return OGRERR_FAILURE;
     }
 
