@@ -1043,7 +1043,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (nXSize == GetXSize() && nXSize == nBufXSize &&
             nYSize == nBufYSize && eBufType == eDataType &&
             nPixelOffset == nBandDataSize && nPixelSpace == nBufDataSize &&
-            nLineSpace == nPixelSpace * nXSize)
+            nLineSpace == nPixelSpace * nXSize &&
+            nLineOffset == nPixelOffset * nXSize)
         {
             vsi_l_offset nOffset = nImgOffset;
             if (nLineOffset >= 0)
@@ -1144,7 +1145,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (nXSize == GetXSize() && nXSize == nBufXSize &&
             nYSize == nBufYSize && eBufType == eDataType &&
             nPixelOffset == nBandDataSize && nPixelSpace == nBufDataSize &&
-            nLineSpace == nPixelSpace * nXSize)
+            nLineSpace == nPixelSpace * nXSize &&
+            nLineOffset == nPixelOffset * nXSize)
         {
             const size_t nValues = static_cast<size_t>(nXSize) * nYSize;
 
