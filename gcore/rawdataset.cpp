@@ -1174,10 +1174,12 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             nPixelOffset == nBandDataSize && nPixelSpace == nBufDataSize &&
             nLineSpace == nPixelSpace * nXSize)
         {
+            const size_t nValues = static_cast<size_t>(nXSize) * nYSize;
+
             // Byte swap the data buffer, if required.
             if (NeedsByteOrderChange())
             {
-                DoByteSwap(pData, nXSize, std::abs(nPixelOffset), false);
+                DoByteSwap(pData, nValues, std::abs(nPixelOffset), false);
             }
 
             // Seek to the correct block.
@@ -1197,8 +1199,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             }
 
             // Write the block.
-            const size_t nBytesToRW =
-                static_cast<size_t>(nXSize) * nYSize * nBandDataSize;
+            const size_t nBytesToRW = nValues * nBandDataSize;
 
             const size_t nBytesActuallyWritten = Write(pData, 1, nBytesToRW);
             if (nBytesActuallyWritten < nBytesToRW)
@@ -1216,7 +1217,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             // buffer is still usable for reading purposes.
             if (NeedsByteOrderChange())
             {
-                DoByteSwap(pData, nXSize, std::abs(nPixelOffset), true);
+                DoByteSwap(pData, nValues, std::abs(nPixelOffset), true);
             }
         }
         // 2. Case when we need deinterleave and/or subsample data.
