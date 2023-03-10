@@ -1201,7 +1201,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const double dfSrcYInc = static_cast<double>(nYSize) / nBufYSize;
 
             const size_t nBytesToRW =
-                static_cast<size_t>(nPixelOffset) * nXSize;
+                static_cast<size_t>(nPixelOffset) * (nXSize - 1) +
+                GDALGetDataTypeSizeBytes(eDataType);
             GByte *pabyData =
                 static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBytesToRW));
             if (pabyData == nullptr)
