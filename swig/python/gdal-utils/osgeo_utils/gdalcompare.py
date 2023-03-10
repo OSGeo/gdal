@@ -30,9 +30,9 @@
 # ******************************************************************************
 
 import filecmp
+import math
 import os
 import sys
-import numpy as np
 
 from osgeo import gdal, osr
 
@@ -105,7 +105,7 @@ def compare_band(golden_band, new_band, ident, options=None):
     
     if golden_band_nodata != new_band_nodata:
         if golden_band_nodata and new_band_nodata:
-            if not (np.isnan(golden_band_nodata) and np.isnan(new_band_nodata)):
+            if not (math.isnan(golden_band_nodata) and math.isnan(new_band_nodata)):
                 print("Band %s nodata values differ." % ident)
                 print("  Golden: " + str(golden_band_nodata))
                 print("  New:    " + str(new_band_nodata))
