@@ -128,6 +128,10 @@ CPLErr swq_select::preparse(const char *select_statement,
         return CE_Failure;
     }
 
+    // Restore poCurSelect as it might have been modified by UNION ALL
+    context.poCurSelect = this;
+    swq_fixup(&context);
+
     postpreparse();
 
     return CE_None;
