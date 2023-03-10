@@ -1024,6 +1024,9 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (bNeedFileFlush)
         RawRasterBand::FlushCache(false);
 
+    // Needed for ICC fast math approximations
+    constexpr double EPS = 1e-10;
+
     // Read data.
     if (eRWFlag == GF_Read)
     {
@@ -1080,7 +1083,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             {
                 const vsi_l_offset nLine =
                     static_cast<vsi_l_offset>(nYOff) +
-                    static_cast<vsi_l_offset>(iLine * dfSrcYInc);
+                    static_cast<vsi_l_offset>(iLine * dfSrcYInc + EPS);
                 vsi_l_offset nOffset = nImgOffset;
                 if (nLineOffset >= 0)
                     nOffset += nLine * nLineOffset;
@@ -1115,9 +1118,9 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iPixel = 0; iPixel < nBufXSize; iPixel++)
                     {
                         GDALCopyWords(
-                            pabyData +
-                                static_cast<vsi_l_offset>(iPixel * dfSrcXInc) *
-                                    nPixelOffset,
+                            pabyData + static_cast<vsi_l_offset>(
+                                           iPixel * dfSrcXInc + EPS) *
+                                           nPixelOffset,
                             eDataType, nPixelOffset,
                             static_cast<GByte *>(pData) +
                                 static_cast<vsi_l_offset>(iLine) * nLineSpace +
@@ -1213,7 +1216,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             {
                 const vsi_l_offset nLine =
                     static_cast<vsi_l_offset>(nYOff) +
-                    static_cast<vsi_l_offset>(iLine * dfSrcYInc);
+                    static_cast<vsi_l_offset>(iLine * dfSrcYInc + EPS);
                 vsi_l_offset nOffset = nImgOffset;
                 if (nLineOffset >= 0)
                     nOffset += nLine * static_cast<vsi_l_offset>(nLineOffset);
@@ -1248,9 +1251,9 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 static_cast<vsi_l_offset>(iLine) * nLineSpace +
                                 static_cast<vsi_l_offset>(iPixel) * nPixelSpace,
                             eBufType, static_cast<int>(nPixelSpace),
-                            pabyData +
-                                static_cast<vsi_l_offset>(iPixel * dfSrcXInc) *
-                                    nPixelOffset,
+                            pabyData + static_cast<vsi_l_offset>(
+                                           iPixel * dfSrcXInc + EPS) *
+                                           nPixelOffset,
                             eDataType, nPixelOffset, 1);
                     }
                 }
