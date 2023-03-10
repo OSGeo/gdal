@@ -44,7 +44,8 @@ From the build directory you can now configure CMake, build and install the bina
     The ``--prefix /installation/prefix`` option of CMake (>= 3.14) is supported since GDAL 3.7.0,
     but note that contrary to setting the CMAKE_INSTALL_PREFIX at configuration time,
     it will not result in the GDAL_DATA path to be hardcoded into the libgdal binary,
-    and is thus not recommended.
+    and is thus not recommended. It is also not supported on Windows multi-configuration
+    generator (such as VisualStudio).
 
 `
 On Windows, one may need to specify generator:
