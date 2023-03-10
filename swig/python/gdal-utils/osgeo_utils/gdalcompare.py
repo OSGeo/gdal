@@ -102,7 +102,6 @@ def compare_band(golden_band, new_band, ident, options=None):
 
     golden_band_nodata = golden_band.GetNoDataValue()
     new_band_nodata = new_band.GetNoDataValue()
-    
     if golden_band_nodata != new_band_nodata:
         if golden_band_nodata and new_band_nodata:
             if not (math.isnan(golden_band_nodata) and math.isnan(new_band_nodata)):
