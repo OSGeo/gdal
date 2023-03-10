@@ -491,8 +491,8 @@ if (Python_Interpreter_FOUND)
         GENERATE
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
         CONTENT
-          "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake,${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
-                                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+          "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake\",${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
+                                          WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
       install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
     else ()
       message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
