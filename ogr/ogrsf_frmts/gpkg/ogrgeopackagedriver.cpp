@@ -548,7 +548,7 @@ void RegisterOGRGeoPackage()
                               "Integer Integer64 Real String Date DateTime "
                               "Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Boolean Int16 Float32");
+                              "Boolean Int16 Float32 JSON");
     poDriver->SetMetadataItem(
         GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
         "Name Type WidthPrecision Nullable Default Unique Domain");

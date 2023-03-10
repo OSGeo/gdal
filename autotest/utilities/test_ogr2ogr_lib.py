@@ -1195,3 +1195,36 @@ def test_ogr2ogr_lib_clip_datasource_reprojection(clipSrc):
 
     # Cleanup
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(clip_path)
+
+
+###############################################################################
+# Test converting a list type to JSON (#7397)
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_convert_list_type_to_JSON():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("layer")
+    src_lyr.CreateField(ogr.FieldDefn("strlist", ogr.OFTStringList))
+    src_lyr.CreateField(ogr.FieldDefn("intlist", ogr.OFTIntegerList))
+    src_lyr.CreateField(ogr.FieldDefn("int64list", ogr.OFTInteger64List))
+    src_lyr.CreateField(ogr.FieldDefn("reallist", ogr.OFTRealList))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["strlist"] = ["one", "two"]
+    f["intlist"] = [1, 2]
+    f["int64list"] = [1234567890123, 1]
+    f["reallist"] = [1.5, 2.5]
+    src_lyr.CreateFeature(f)
+
+    out_filename = "/vsimem/test_ogr2ogr_lib_convert_list_type_to_JSON.gpkg"
+    dst_ds = gdal.VectorTranslate(out_filename, src_ds)
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = dst_lyr.GetNextFeature()
+    assert f["strlist"] == '[ "one", "two" ]'
+    assert f["intlist"] == "[ 1, 2 ]"
+    assert f["int64list"] == "[ 1234567890123, 1 ]"
+    assert f["reallist"] == "[ 1.5, 2.5 ]"
+    dst_ds = None
+    gdal.Unlink(out_filename)

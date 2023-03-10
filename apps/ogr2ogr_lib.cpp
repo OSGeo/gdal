@@ -3754,14 +3754,42 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
     if (bUnsetDefault)
         oFieldDefn.SetDefault(nullptr);
 
-    if (poDstDS->GetDriver() != nullptr &&
-        poDstDS->GetDriver()->GetMetadataItem(
-            GDAL_DMD_CREATIONFIELDDATATYPES) != nullptr &&
-        strstr(poDstDS->GetDriver()->GetMetadataItem(
-                   GDAL_DMD_CREATIONFIELDDATATYPES),
+    const auto poDstDriver = poDstDS->GetDriver();
+    const char *pszCreationFieldDataTypes =
+        poDstDriver
+            ? poDstDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES)
+            : nullptr;
+    const char *pszCreationFieldDataSubtypes =
+        poDstDriver
+            ? poDstDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES)
+            : nullptr;
+    if (pszCreationFieldDataTypes &&
+        strstr(pszCreationFieldDataTypes,
                OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType())) == nullptr)
     {
-        if (oFieldDefn.GetType() == OFTInteger64)
+        if (pszCreationFieldDataSubtypes &&
+            (oFieldDefn.GetType() == OFTIntegerList ||
+             oFieldDefn.GetType() == OFTInteger64List ||
+             oFieldDefn.GetType() == OFTRealList ||
+             oFieldDefn.GetType() == OFTStringList) &&
+            strstr(pszCreationFieldDataSubtypes, "JSON"))
+        {
+            if (!bQuiet)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "The output driver does not seem to natively support %s "
+                    "type for field %s. Converting it to String(JSON) instead. "
+                    "-mapFieldType can be used to control field type "
+                    "conversion.",
+                    OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                    oFieldDefn.GetNameRef());
+            }
+            oFieldDefn.SetSubType(OFSTNone);
+            oFieldDefn.SetType(OFTString);
+            oFieldDefn.SetSubType(OFSTJSON);
+        }
+        else if (oFieldDefn.GetType() == OFTInteger64)
         {
             if (!bQuiet)
             {
@@ -3787,9 +3815,7 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
                 oFieldDefn.GetNameRef());
         }
     }
-    else if (poDstDS->GetDriver() != nullptr &&
-             poDstDS->GetDriver()->GetMetadataItem(
-                 GDAL_DMD_CREATIONFIELDDATATYPES) == nullptr)
+    else if (!pszCreationFieldDataTypes)
     {
         // All drivers supporting OFTInteger64 should advertise it theoretically
         if (oFieldDefn.GetType() == OFTInteger64)

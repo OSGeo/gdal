@@ -6110,6 +6110,25 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
             }
         }
 
+        // Check if we must convert list types to JSON
+        if (eDstType == OFTString)
+        {
+            const auto eDstSubType =
+                poDefn->GetFieldDefnUnsafe(iDstField)->GetSubType();
+            if (eDstSubType == OFSTJSON &&
+                (eSrcType == OFTIntegerList || eSrcType == OFTInteger64List ||
+                 eSrcType == OFTRealList || eSrcType == OFTStringList))
+            {
+                char *pszVal = poSrcFeature->GetFieldAsSerializedJSon(iField);
+                if (pszVal)
+                {
+                    SetField(iDstField, pszVal);
+                    CPLFree(pszVal);
+                    continue;
+                }
+            }
+        }
+
         switch (eSrcType)
         {
             case OFTInteger:
