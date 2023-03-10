@@ -884,7 +884,7 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
 /************************************************************************/
 
 CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
-                                  void *pData)
+                                  void *pData, size_t nValues)
 {
     // Seek to the correct block.
     if (Seek(nBlockOff, SEEK_SET) == -1)
@@ -905,8 +905,7 @@ CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
     // Byte swap the interesting data, if required.
     if (NeedsByteOrderChange())
     {
-        DoByteSwap(pData, nBlockSize / nPixelOffset, std::abs(nPixelOffset),
-                   true);
+        DoByteSwap(pData, nValues, std::abs(nPixelOffset), true);
     }
 
     return CE_None;
@@ -1052,9 +1051,9 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             else
                 nOffset -= nYOff * static_cast<vsi_l_offset>(-nLineOffset);
 
-            const size_t nBytesToRead =
-                static_cast<size_t>(nXSize) * nYSize * nBandDataSize;
-            if (AccessBlock(nOffset, nBytesToRead, pData) != CE_None)
+            const size_t nValues = static_cast<size_t>(nXSize) * nYSize;
+            const size_t nBytesToRead = nValues * nBandDataSize;
+            if (AccessBlock(nOffset, nBytesToRead, pData, nValues) != CE_None)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Failed to read " CPL_FRMT_GUIB
@@ -1070,7 +1069,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const double dfSrcYInc = static_cast<double>(nYSize) / nBufYSize;
 
             const size_t nBytesToRW =
-                static_cast<size_t>(nPixelOffset) * nXSize;
+                static_cast<size_t>(nPixelOffset) * (nXSize - 1) +
+                GDALGetDataTypeSizeBytes(eDataType);
             GByte *pabyData =
                 static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBytesToRW));
             if (pabyData == nullptr)
@@ -1090,7 +1090,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
-                if (AccessBlock(nOffset, nBytesToRW, pabyData) != CE_None)
+                if (AccessBlock(nOffset, nBytesToRW, pabyData, nXSize) !=
+                    CE_None)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Failed to read " CPL_FRMT_GUIB
@@ -1226,7 +1227,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // If the data for this band is completely contiguous we don't
                 // have to worry about pre-reading from disk.
                 if (nPixelOffset > nBandDataSize)
-                    AccessBlock(nOffset, nBytesToRW, pabyData);
+                    AccessBlock(nOffset, nBytesToRW, pabyData, nXSize);
 
                 // Copy data from user block buffer to disk buffer and
                 // subsample, if needed.
