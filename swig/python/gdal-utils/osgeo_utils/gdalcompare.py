@@ -30,6 +30,7 @@
 # ******************************************************************************
 
 import filecmp
+import math
 import os
 import sys
 
@@ -99,11 +100,20 @@ def compare_band(golden_band, new_band, ident, options=None):
         print("  New:    " + gdal.GetDataTypeName(new_band.DataType))
         found_diff += 1
 
-    if golden_band.GetNoDataValue() != new_band.GetNoDataValue():
-        print("Band %s nodata values differ." % ident)
-        print("  Golden: " + str(golden_band.GetNoDataValue()))
-        print("  New:    " + str(new_band.GetNoDataValue()))
-        found_diff += 1
+    golden_band_nodata = golden_band.GetNoDataValue()
+    new_band_nodata = new_band.GetNoDataValue()
+    if golden_band_nodata != new_band_nodata:
+        if golden_band_nodata and new_band_nodata:
+            if not (math.isnan(golden_band_nodata) and math.isnan(new_band_nodata)):
+                print("Band %s nodata values differ." % ident)
+                print("  Golden: " + str(golden_band_nodata))
+                print("  New:    " + str(new_band_nodata))
+                found_diff += 1
+        else:
+            print("Band %s nodata values differ." % ident)
+            print("  Golden: " + str(golden_band_nodata))
+            print("  New:    " + str(new_band_nodata))
+            found_diff += 1
 
     if golden_band.GetColorInterpretation() != new_band.GetColorInterpretation():
         print("Band %s color interpretation values differ." % ident)
