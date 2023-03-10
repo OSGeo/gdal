@@ -955,6 +955,11 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
     //
     // or
     //
+    // the raster width is so small that the cost of a GDALRasterBlock is
+    // significant
+    //
+    // or
+    //
     // the length of a scanline on disk is more than 50000 bytes, and the
     // width of the requested chunk is less than 40% of the whole scanline and
     // no significant number of requested scanlines are already in the cache.
@@ -984,6 +989,11 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
         {
             rawDataset->cachedCPLOneBigReadOption.compare_exchange_strong(
                 oldCachedCPLOneBigReadOption, newCachedCPLOneBigReadOption);
+        }
+
+        if (nRasterXSize <= 64)
+        {
+            return TRUE;
         }
 
         if (nLineSize < 50000 || nXSize > nLineSize / nPixelOffset / 5 * 2 ||
