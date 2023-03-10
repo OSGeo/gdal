@@ -805,6 +805,34 @@ def test_ogr_rfc28_32():
 
 
 ###############################################################################
+# Test SELECT ... FROM ... WHERE ... AND ... AND ... AND .. UNION ALL ...
+# (https://github.com/OSGeo/gdal/issues/3395)
+
+
+def test_ogr_rfc28_union_all_three_branch_and():
+
+    lyr = gdaltest.ds.ExecuteSQL(
+        "select * from idlink where 1=1 and 1=1 and 1=0 union all select * from idlink2 where 1=1 and 1=1 and 1=0"
+    )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet(lyr)
+
+    assert count == 0 + 0
+
+    lyr = gdaltest.ds.ExecuteSQL(
+        "select * from idlink where 1=1 and 1=1 and 1=1 union all select * from idlink2 where 1=1 and 1=1 and 1=1"
+    )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet(lyr)
+
+    assert count == 7 + 7
+
+
+###############################################################################
 # Test lack of end-of-string character
 
 
