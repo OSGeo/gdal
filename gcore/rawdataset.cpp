@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_atomic_ops.h"
 #include "cpl_port.h"
 #include "cpl_vax.h"
 #include "rawdataset.h"
@@ -966,9 +965,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
     int oldCachedCPLOneBigReadOption = 0;
     if (rawDataset != nullptr)
     {
-        oldCachedCPLOneBigReadOption = CPLAtomicCompareAndExchange(
-            &rawDataset->cachedCPLOneBigReadOption, 0,
-            0);  // just query the value
+        oldCachedCPLOneBigReadOption = rawDataset->cachedCPLOneBigReadOption;
     }
 
     const char *pszGDAL_ONE_BIG_READ =
@@ -982,9 +979,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
         const int newCachedCPLOneBigReadOption = (0xff << 8) | 1;
         if (rawDataset != nullptr)
         {
-            CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption,
-                                        oldCachedCPLOneBigReadOption,
-                                        newCachedCPLOneBigReadOption);
+            rawDataset->cachedCPLOneBigReadOption.compare_exchange_strong(
+                oldCachedCPLOneBigReadOption, newCachedCPLOneBigReadOption);
         }
 
         if (nLineSize < 50000 || nXSize > nLineSize / nPixelOffset / 5 * 2 ||
@@ -1000,9 +996,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */, int nYOff, int nXSize,
     const int newCachedCPLOneBigReadOption = (result ? 1 : 0) << 8 | 1;
     if (rawDataset != nullptr)
     {
-        CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption,
-                                    oldCachedCPLOneBigReadOption,
-                                    newCachedCPLOneBigReadOption);
+        rawDataset->cachedCPLOneBigReadOption.compare_exchange_strong(
+            oldCachedCPLOneBigReadOption, newCachedCPLOneBigReadOption);
     }
 
     return result;
@@ -1878,6 +1873,5 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 
 void RawDataset::ClearCachedConfigOption(void)
 {
-    CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption,
-                                this->cachedCPLOneBigReadOption, 0);
+    cachedCPLOneBigReadOption = 0;
 }

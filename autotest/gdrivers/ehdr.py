@@ -292,20 +292,20 @@ def test_ehdr_14():
 
     for space in [1, 2]:
         out_ds = gdal.GetDriverByName("EHDR").Create("/vsimem/byte_reduced.bil", 10, 10)
-        gdal.SetConfigOption("GDAL_ONE_BIG_READ", "YES")
-        data_ori = ds.GetRasterBand(1).ReadRaster(
-            0, 0, 20, 20, 20, 20, buf_pixel_space=space
-        )
-        data = ds.GetRasterBand(1).ReadRaster(
-            0, 0, 20, 20, 10, 10, buf_pixel_space=space
-        )
-        out_ds.GetRasterBand(1).WriteRaster(
-            0, 0, 10, 10, data, 10, 10, buf_pixel_space=space
-        )
-        out_ds.FlushCache()
-        data2 = out_ds.ReadRaster(0, 0, 10, 10, 10, 10, buf_pixel_space=space)
-        cs1 = out_ds.GetRasterBand(1).Checksum()
-        gdal.SetConfigOption("GDAL_ONE_BIG_READ", None)
+        with gdaltest.config_option("GDAL_ONE_BIG_READ", "YES"):
+            data_ori = ds.GetRasterBand(1).ReadRaster(
+                0, 0, 20, 20, 20, 20, buf_pixel_space=space
+            )
+            data = ds.GetRasterBand(1).ReadRaster(
+                0, 0, 20, 20, 10, 10, buf_pixel_space=space
+            )
+            out_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 10, 10, data, 10, 10, buf_pixel_space=space
+            )
+            out_ds.FlushCache()
+            data2 = out_ds.ReadRaster(0, 0, 10, 10, 10, 10, buf_pixel_space=space)
+            cs1 = out_ds.GetRasterBand(1).Checksum()
+
         out_ds.FlushCache()
         cs2 = out_ds.GetRasterBand(1).Checksum()
 
@@ -313,11 +313,10 @@ def test_ehdr_14():
 
         assert not (cs1 != 1087 and cs1 != 1192) or (cs2 != 1087 and cs2 != 1192), space
 
-        gdal.SetConfigOption("GDAL_ONE_BIG_READ", "YES")
-        out_ds.GetRasterBand(1).WriteRaster(
-            0, 0, 10, 10, data_ori, 20, 20, buf_pixel_space=space
-        )
-        gdal.SetConfigOption("GDAL_ONE_BIG_READ", None)
+        with gdaltest.config_option("GDAL_ONE_BIG_READ", "YES"):
+            out_ds.GetRasterBand(1).WriteRaster(
+                0, 0, 10, 10, data_ori, 20, 20, buf_pixel_space=space
+            )
         out_ds.FlushCache()
         cs3 = out_ds.GetRasterBand(1).Checksum()
 
