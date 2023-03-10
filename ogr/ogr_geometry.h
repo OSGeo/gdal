@@ -533,6 +533,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *
     Union(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;
+    OGRGeometry *UnaryUnion() const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *
     Difference(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *
