@@ -380,6 +380,7 @@ CPLErr RawRasterBand::FlushCache(bool bAtClosing)
     if (!masterBand->FlushCurrentLine(false))
     {
         masterBand->bNeedFileFlush = false;
+        bNeedFileFlush = false;
         return CE_Failure;
     }
 
@@ -389,9 +390,12 @@ CPLErr RawRasterBand::FlushCache(bool bAtClosing)
         int nRet = VSIFFlushL(fpRawL);
 
         masterBand->bNeedFileFlush = false;
+        bNeedFileFlush = false;
         if (nRet < 0)
             return CE_Failure;
     }
+
+    bNeedFileFlush = false;
 
     return CE_None;
 }
