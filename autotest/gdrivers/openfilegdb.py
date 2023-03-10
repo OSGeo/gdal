@@ -307,7 +307,7 @@ def test_openfilegb_raster_rat():
     assert rat.GetRowCount() == 18
 
     # Not completely sure if the GDAL API guarantees that a cloned RAT is
-    # stanalone, but that's how we have implemented it
+    # standalone, but that's how we have implemented it
     rat = rat.Clone()
     assert rat
 
