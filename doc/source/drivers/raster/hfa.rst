@@ -68,7 +68,9 @@ Creation Options:
    absolute path). Optional
 -  **FORCETOPESTRING=YES**: Force use of ArcGIS PE String in file
    instead of Imagine coordinate system format. In some cases this
-   improves ArcGIS coordinate system compatibility.
+   improves ArcGIS coordinate system compatibility. Default is NO.
+-  **DISABLEPESTRING=YES**: (GDAL >= 3.7) Disable use of ArcGIS PE String in
+   file. Default is NO (that is ArcGIS PE String may be written if needed).
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for
 instance). To force them to be created in an .rrd file (rather than
