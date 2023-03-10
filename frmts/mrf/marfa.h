@@ -387,6 +387,14 @@ class MRFDataset final : public GDALPamDataset
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override
+    {
+        m_oSRS.Clear();
+        if (poSRS)
+            m_oSRS = *poSRS;
+        return CE_None;
+    }
+
     virtual CPLString const &GetPhotometricInterpretation()
     {
         return photometric;
