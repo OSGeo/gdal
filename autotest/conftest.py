@@ -156,16 +156,26 @@ def pytest_configure(config):
             f"{lib_version}. Do you need to run setdevenv.sh ?"
         )
 
+
+def pytest_report_header(config):
+    gdal_header_info = "GDAL Build Info:"
+    for item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+        gdal_header_info += "\n  " + item.replace("=", ": ")
+
     import gdaltest
 
+    gdal_download_test_data = gdal.GetConfigOption("GDAL_DOWNLOAD_TEST_DATA")
+    if gdal_download_test_data is None:
+        gdal_download_test_data = "undefined"
+    gdal_header_info += f"\nGDAL_DOWNLOAD_TEST_DATA: {gdal_download_test_data}"
     if not gdaltest.download_test_data():
-        print(
-            "As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, tests relying on downloaded data may be skipped.",
-            file=sys.stderr,
-        )
+        gdal_header_info += " (tests relying on downloaded data may be skipped)"
 
+    gdal_run_slow_tests = gdal.GetConfigOption("GDAL_RUN_SLOW_TESTS")
+    if gdal_run_slow_tests is None:
+        gdal_run_slow_tests = "undefined"
+    gdal_header_info += f"\nGDAL_RUN_SLOW_TESTS: {gdal_run_slow_tests}"
     if not gdaltest.run_slow_tests():
-        print(
-            'As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped.',
-            file=sys.stderr,
-        )
+        gdal_header_info += ' (tests marked as "slow" will be skipped)'
+
+    return gdal_header_info
