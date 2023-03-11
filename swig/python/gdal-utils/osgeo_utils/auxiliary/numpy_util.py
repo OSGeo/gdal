@@ -47,6 +47,7 @@ def GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte, default=None):
 def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
     band = ds.GetRasterBand(1)
     buf_type = band.DataType
+    signed_byte = False
     if buf_type == gdal.GDT_Byte:
         band._EnablePixelTypeSignedByteWarning(False)
         signed_byte = (
