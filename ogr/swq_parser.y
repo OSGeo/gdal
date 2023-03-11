@@ -129,7 +129,7 @@ input:
     | SWQT_SELECT_START select_statement
         {
             context->poRoot = $2;
-            swq_fixup(context);
+            // swq_fixup() must be done by caller
         }
 
 value_expr:
