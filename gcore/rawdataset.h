@@ -34,6 +34,7 @@
 
 #include "gdal_pam.h"
 
+#include <atomic>
 #include <utility>
 
 /************************************************************************/
@@ -68,8 +69,8 @@ class CPL_DLL RawDataset : public GDALPamDataset
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
   protected:
-    int cachedCPLOneBigReadOption =
-        0;  // [0-7] bits are "valid", [8-15] bits are "value"
+    std::atomic<int> cachedCPLOneBigReadOption = {
+        0};  // [0-7] bits are "valid", [8-15] bits are "value"
 };
 
 /************************************************************************/
@@ -125,7 +126,8 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     size_t Read(void *, size_t, size_t);
     size_t Write(void *, size_t, size_t);
 
-    CPLErr AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize, void *pData);
+    CPLErr AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize, void *pData,
+                       size_t nValues);
     int IsSignificantNumberOfLinesLoaded(int nLineOff, int nLines);
     void Initialize();
 
