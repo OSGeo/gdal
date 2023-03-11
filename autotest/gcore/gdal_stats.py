@@ -340,10 +340,8 @@ def test_stats_nodata_posinf_msvc():
 # Test standard deviation computation on huge values
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_stats_stddev_huge_values():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/stats_stddev_huge_values.asc",

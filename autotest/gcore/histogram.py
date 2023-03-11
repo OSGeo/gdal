@@ -346,10 +346,8 @@ def test_histogram_2():
 # try on a different data type with out of range values included.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_histogram_3():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     ds = gdal.Open("data/int32_withneg.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
@@ -365,10 +363,8 @@ def test_histogram_3():
 # try on a different data type without out of range values included.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_histogram_4():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     ds = gdal.Open("data/int32_withneg.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
@@ -668,10 +664,8 @@ def test_histogram_5():
 # Test GetDefaultHistogram( force = 0 ) on a JPG file (#3304)
 
 
+@pytest.mark.require_driver("JPEG")
 def test_histogram_6():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     shutil.copy("../gdrivers/data/jpeg/albania.jpg", "tmp/albania.jpg")
     ds = gdal.Open("tmp/albania.jpg")

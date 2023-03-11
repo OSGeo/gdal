@@ -41,10 +41,7 @@ from osgeo import gdal, osr
 
 def test_transformgeoloc_1():
 
-    try:
-        import numpy
-    except ImportError:
-        pytest.skip()
+    numpy = pytest.importorskip("numpy")
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 

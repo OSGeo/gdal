@@ -83,10 +83,8 @@ def test_rat_1():
 # Save a RAT in a file, written to .aux.xml, read it back and check it.
 
 
+@pytest.mark.require_driver("PNM")
 def test_rat_2():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     if gdaltest.saved_rat is None:
         pytest.skip()

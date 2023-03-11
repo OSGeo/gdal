@@ -306,12 +306,10 @@ def test_applyverticalshiftgrid_5():
 # Simulate EGM grids
 
 
+@pytest.mark.require_driver("GTX")
 def test_applyverticalshiftgrid_6():
 
     drv = gdal.GetDriverByName("GTX")
-    if drv is None:
-        pytest.skip("GTX driver missing")
-
     grid_ds = drv.Create(
         "tmp/applyverticalshiftgrid_6.gtx", 1440, 721, 1, gdal.GDT_Float32
     )
@@ -336,12 +334,10 @@ def test_applyverticalshiftgrid_6():
 # Simulate USA geoid grids with long origin > 180
 
 
+@pytest.mark.require_driver("GTX")
 def test_applyverticalshiftgrid_7():
 
     drv = gdal.GetDriverByName("GTX")
-    if drv is None:
-        pytest.skip("GTX driver missing")
-
     grid_ds = drv.Create(
         "tmp/applyverticalshiftgrid_7.gtx", 700, 721, 1, gdal.GDT_Float32
     )

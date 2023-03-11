@@ -177,23 +177,34 @@ def test_openfilegb_raster_jpeg():
     assert ds.RasterXSize == 400
     assert ds.RasterYSize == 200
     assert ds.RasterCount == 3
-    if gdal.GetDriverByName("JPEG") is not None:
-        assert ds.GetMetadata("IMAGE_STRUCTURE") == {
-            "COMPRESSION": "JPEG",
-            "INTERLEAVE": "BAND",
-            "JPEG_QUALITY": "75",
-        }
 
-    if gdal.GetDriverByName("JPEG") is None:
-        with gdaltest.error_handler():
-            assert ds.GetRasterBand(1).Checksum() == -1
-    else:
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
-            23495,
-            18034,
-            36999,
-        ]
-        assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 64269
+
+@pytest.mark.skipif(
+    gdal.GetDriverByName("JPEG") is not None,
+    reason="Test specific when JPEG driver is absent",
+)
+def test_openfilegb_raster_jpeg_driver_not_available():
+
+    ds = gdal.Open("OpenFileGDB:data/filegdb/gdal_test_data.gdb.zip:small_world_jpeg")
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Checksum() == -1
+
+
+@pytest.mark.require_driver("JPEG")
+def test_openfilegb_raster_jpeg_read_data():
+
+    ds = gdal.Open("OpenFileGDB:data/filegdb/gdal_test_data.gdb.zip:small_world_jpeg")
+    assert ds.GetMetadata("IMAGE_STRUCTURE") == {
+        "COMPRESSION": "JPEG",
+        "INTERLEAVE": "BAND",
+        "JPEG_QUALITY": "75",
+    }
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        23495,
+        18034,
+        36999,
+    ]
+    assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 64269
 
 
 ###############################################################################
@@ -213,9 +224,13 @@ def test_openfilegb_raster_jpeg2000():
         "INTERLEAVE": "BAND",
     }
 
-    if gdal.GetDriverByName("JP2OpenJPEG") is None:
-        pytest.skip("JP2OpenJPEG driver not available")
 
+@pytest.mark.require_driver("JP2OpenJPEG")
+def test_openfilegb_raster_jpeg2000_read_data():
+
+    ds = gdal.Open(
+        "OpenFileGDB:data/filegdb/gdal_test_data.gdb.zip:small_world_jpeg2000"
+    )
     assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] != [-1, -1, -1]
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 64269
 

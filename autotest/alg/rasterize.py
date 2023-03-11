@@ -102,10 +102,8 @@ def test_rasterize_1():
 # Test rasterization with ALL_TOUCHED.
 
 
+@pytest.mark.require_driver("CSV")
 def test_rasterize_2():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -452,10 +450,8 @@ def test_rasterize_6():
 # Test rasterization with ALL_TOUCHED.
 
 
+@pytest.mark.require_driver("CSV")
 def test_rasterize_7():
-
-    if gdal.GetDriverByName("CSV") is None:
-        pytest.skip("CSV driver missing")
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
