@@ -46,7 +46,8 @@ pytestmark = pytest.mark.require_driver("PDS4")
 def validate_xml(filename):
 
     if ogr.GetDriverByName("GMLAS") is None:
-        pytest.skip("GMLAS driver missing")
+        print("Validation of %s skipped as GMLAS driver missing" % filename)
+        return
 
     # for GDAL 3.4 / PDS4_PDS_1G00
 
@@ -141,7 +142,7 @@ def validate_xml(filename):
             "CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>",
         ],
     )
-    return ds is not None
+    assert ds is not None
 
 
 ###############################################################################
@@ -360,8 +361,7 @@ def test_pds4_projected_srs(proj4str):
     with gdaltest.error_handler():
         ds = None
 
-    ret = validate_xml(filename)
-    assert ret, "validation of file for %s failed" % proj4str
+    validate_xml(filename)
 
     ds = gdal.Open(filename)
     wkt = ds.GetProjectionRef()
@@ -392,8 +392,7 @@ def test_pds4_longlat_srs():
     with gdaltest.error_handler():
         ds = None
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     ds = gdal.Open(filename)
     wkt = ds.GetProjectionRef()
@@ -449,8 +448,7 @@ def test_pds4_9():
             creationOptions=options,
         )
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     ds = gdal.Open(filename)
     ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -473,8 +471,7 @@ def test_pds4_9():
                 creationOptions=["IMAGE_FORMAT=" + frmt] + options,
             )
 
-        ret = validate_xml(filename)
-        assert ret, "validation failed"
+        validate_xml(filename)
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -498,8 +495,7 @@ def test_pds4_9():
                 creationOptions=["USE_SRC_LABEL=NO", "IMAGE_FORMAT=" + frmt] + options,
             )
 
-        ret = validate_xml(filename)
-        assert ret, "validation failed"
+        validate_xml(filename)
 
         ds = gdal.Open(filename)
         ndv = ds.GetRasterBand(1).GetNoDataValue()
@@ -614,8 +610,7 @@ def test_pds4_9():
     assert "<Reference_List>" in data
     assert "other comments" in data
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     # Special_Constants with just saturated_constant
     gdal.FileFromMemBuffer(
@@ -680,8 +675,7 @@ def test_pds4_9():
     assert ndv == 10
     ds = None
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     gdal.GetDriverByName("PDS4").Delete(filename)
     gdal.Unlink(template)
@@ -1229,8 +1223,7 @@ def test_pds4_15():
             filename, 1, 1, options=["TEMPLATE=data/pds4/byte_pds4_cart_1700.xml"]
         )
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     f = gdal.VSIFOpenL(filename, "rb")
     if f:
@@ -1310,8 +1303,7 @@ def test_pds4_16():
         data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
         gdal.VSIFCloseL(f)
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed: %s" % data
+    validate_xml(filename)
 
     assert (
         'http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"'
@@ -1344,8 +1336,7 @@ def test_pds4_17():
             filename, 1, 1, 1, options=["ARRAY_TYPE=Array_2D"] + options
         )
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     f = gdal.VSIFOpenL(filename, "rb")
     if f:
@@ -1373,8 +1364,7 @@ def test_pds4_17():
             filename, 1, 1, 2, options=["ARRAY_TYPE=Array_3D_Spectrum"] + options
         )
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     f = gdal.VSIFOpenL(filename, "rb")
     if f:
@@ -1558,8 +1548,7 @@ def _test_createlabelonly(
     src_ds = None
 
     if validate:
-        ret = validate_xml(filename)
-        assert ret, "validation failed"
+        validate_xml(filename)
 
     f = gdal.VSIFOpenL(filename, "rb")
     if f:
@@ -1767,8 +1756,7 @@ def test_pds4_spectral_characteristics():
             filename, 1, 1, options=["TEMPLATE=data/pds4/template_with_sp.xml"]
         )
 
-    ret = validate_xml(filename)
-    assert ret, "validation failed"
+    validate_xml(filename)
 
     f = gdal.VSIFOpenL(filename, "rb")
     if f:
