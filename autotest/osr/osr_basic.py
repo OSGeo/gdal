@@ -1532,10 +1532,8 @@ def test_osr_basic_set_from_user_input_non_existing_authority():
 # Test IAU: CRS
 
 
+@gdaltest.require_proj_version(8, 2)
 def test_osr_basic_set_from_user_input_IAU():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 802:
-        pytest.skip("requires PROJ 8.2 or later")
 
     srs = osr.SpatialReference()
     assert srs.SetFromUserInput("IAU:49910") == ogr.OGRERR_NONE
@@ -1760,12 +1758,11 @@ def test_osr_get_name():
     assert sr.GetName() == "WGS 84"
 
 
+@gdaltest.require_proj_version(6, 1)
 def test_SetPROJSearchPath():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
     # starting with PROJ >= 6.1
-    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
-        pytest.skip()
 
     # Do the test in a new thread, so that SetPROJSearchPath() is taken
     # into account
@@ -1796,42 +1793,61 @@ def test_SetPROJSearchPath():
     assert sr.ImportFromEPSG(32631) == 0
 
 
-def test_osr_import_projjson():
+# Test for PROJ < 6.2
+def test_osr_import_projjson_possibly_error_out():
 
     sr = osr.SpatialReference()
     projjson = '{"$schema":"https://proj.org/schemas/v0.1/projjson.schema.json","type":"GeographicCRS","name":"WGS 84","datum":{"type":"GeodeticReferenceFrame","name":"World Geodetic System 1984","ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]},"area":"World","bbox":{"south_latitude":-90,"west_longitude":-180,"north_latitude":90,"east_longitude":180},"id":{"authority":"EPSG","code":4326}}'
     with gdaltest.error_handler():
-        ret = sr.SetFromUserInput(projjson)
-        if osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2:
-            assert ret == 0
+        sr.SetFromUserInput(projjson)
+
+
+@gdaltest.require_proj_version(6, 2)
+def test_osr_import_projjson():
+
+    sr = osr.SpatialReference()
+    projjson = '{"$schema":"https://proj.org/schemas/v0.1/projjson.schema.json","type":"GeographicCRS","name":"WGS 84","datum":{"type":"GeodeticReferenceFrame","name":"World Geodetic System 1984","ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]},"area":"World","bbox":{"south_latitude":-90,"west_longitude":-180,"north_latitude":90,"east_longitude":180},"id":{"authority":"EPSG","code":4326}}'
+    ret = sr.SetFromUserInput(projjson)
+    assert ret == 0
 
     broken_projjson = projjson[0:-10]
     with gdaltest.error_handler():
         assert sr.SetFromUserInput(broken_projjson) != 0
 
 
+# Test for PROJ < 6.2
+def test_osr_export_projjson_possibly_error_out():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    with gdaltest.error_handler():
+        sr.ExportToPROJJSON()
+
+
+@gdaltest.require_proj_version(6, 2)
 def test_osr_export_projjson():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
 
-    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
-        with gdaltest.error_handler():
-            sr.ExportToPROJJSON()
-        pytest.skip()
-
     assert sr.ExportToPROJJSON() != ""
 
 
+# Test for PROJ < 6.3
+def test_osr_promote_to_3D_possibly_error_out():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+    with gdaltest.error_handler():
+        sr.PromoteTo3D()
+
+
+@gdaltest.require_proj_version(6, 3)
 def test_osr_promote_to_3D():
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
-
-    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
-        with gdaltest.error_handler():
-            sr.PromoteTo3D()
-        pytest.skip()
 
     assert sr.PromoteTo3D() == 0
     assert sr.GetAuthorityCode(None) == "4979"
@@ -1948,10 +1964,8 @@ def test_SetPROJAuxDbPaths():
 # Test IsDynamic()
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_osr_basic_is_dynamic():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(7665)  # WGS 84 (G1762) (3D)
@@ -2163,10 +2177,9 @@ def test_osr_basic_export_derived_projected_crs_to_wkt():
 # Test osr.GetPROJEnableNetwork / osr.SetPROJEnableNetwork
 
 
+@gdaltest.require_proj_version(7)
 def test_osr_basic_proj_network():
 
-    if osr.GetPROJVersionMajor() < 7:
-        pytest.skip("requires PROJ 7 or later")
     initial_value = osr.GetPROJEnableNetwork()
     try:
         new_val = not initial_value
@@ -2211,10 +2224,9 @@ def test_osr_basic_get_linear_units_compound_engineering_crs():
 # Test EPSG:horizontal_code+geographic_code
 
 
+@gdaltest.require_proj_version(9)
 def test_osr_basic_epsg_horizontal_and_ellipsoidal_height():
 
-    if osr.GetPROJVersionMajor() < 9:
-        pytest.skip("requires PROJ 9 or later")
     sr = osr.SpatialReference()
     assert sr.SetFromUserInput("EPSG:3157+4617") == ogr.OGRERR_NONE
     assert sr.GetAxesCount() == 3
@@ -2249,10 +2261,8 @@ def test_osr_exceptions():
 # Test SetFromUserInput() with COORDINATEMETADATA[]
 
 
+@gdaltest.require_proj_version(9, 2)
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 902:
-        pytest.skip("requires PROJ 9.2 or later")
 
     srs = osr.SpatialReference()
     assert (
@@ -2290,10 +2300,8 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
 # Test SetFromUserInput() with COORDINATEMETADATA[]
 
 
+@gdaltest.require_proj_version(9, 2)
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 902:
-        pytest.skip("requires PROJ 9.2 or later")
 
     srs = osr.SpatialReference()
     assert (

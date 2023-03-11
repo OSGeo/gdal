@@ -3223,10 +3223,8 @@ def test_netcdf_81():
 # Write netCDF file in rotated_pole projection
 
 
+@gdaltest.require_proj_version(7, 1)
 def test_netcdf_write_rotated_pole_from_method_proj():
-
-    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70100:
-        pytest.skip("Not enough recent PROJ version")
 
     ds = gdal.GetDriverByName("netCDF").Create("tmp/rotated_pole.nc", 2, 2)
     gt = [2, 1, 0, 49, 0, -1]
@@ -3258,10 +3256,8 @@ def test_netcdf_write_rotated_pole_from_method_proj():
 # Write netCDF file in rotated_pole projection
 
 
+@gdaltest.require_proj_version(8, 2)
 def test_netcdf_write_rotated_pole_from_method_netcdf_cf():
-
-    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 80200:
-        pytest.skip("Not enough recent PROJ version")
 
     expected_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
 
@@ -3283,10 +3279,8 @@ def test_netcdf_write_rotated_pole_from_method_netcdf_cf():
 # Write netCDF file in rotated_pole projection
 
 
+@gdaltest.require_proj_version(7, 0)
 def test_netcdf_write_rotated_pole_from_method_grib():
-
-    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70000:
-        pytest.skip("Not enough recent PROJ version")
 
     ds = gdal.GetDriverByName("netCDF").Create("tmp/rotated_pole.nc", 2, 2)
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])

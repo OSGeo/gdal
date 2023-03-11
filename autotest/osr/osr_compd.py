@@ -356,11 +356,8 @@ def test_osr_compd_8():
 # Test COMPD_CS with a VERT_DATUM type = 2002 (Ellipsoid height)
 
 
+@gdaltest.require_proj_version(7, 1)
 def test_osr_compd_vert_datum_2002():
-
-    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70100:
-        # Not supported before PROJ 7.1
-        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput(

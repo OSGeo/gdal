@@ -856,10 +856,8 @@ def test_gdal_translate_lib_not_delete_shared_auxiliary_files():
 # Test preservation of IsDynamic() and support for coordinate epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_gdal_translate_lib_coord_epoch_is_dynamic():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
 
