@@ -453,6 +453,30 @@ OGRMongoDBv3GetFieldTypeFromBSON(const bsoncxx::document::element &elt,
 }
 
 /************************************************************************/
+/*                           get_string()                               */
+/************************************************************************/
+
+static std::string get_string(const bsoncxx::document::element &elt)
+{
+    CPLAssert(elt.type() == bsoncxx::type::k_utf8);
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
+    return std::string(elt.get_string().value);
+#else
+    return std::string(elt.get_utf8().value);
+#endif
+}
+
+static std::string get_string(const bsoncxx::array::element &elt)
+{
+    CPLAssert(elt.type() == bsoncxx::type::k_utf8);
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
+    return std::string(elt.get_string().value);
+#else
+    return std::string(elt.get_utf8().value);
+#endif
+}
+
+/************************************************************************/
 /*                         AddOrUpdateField()                           */
 /************************************************************************/
 
@@ -474,8 +498,8 @@ void OGRMongoDBv3Layer::AddOrUpdateField(
         auto eltType = doc["type"];
         if (eltType && eltType.type() == bsoncxx::type::k_utf8)
         {
-            OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(
-                std::string(eltType.get_utf8().value).c_str());
+            OGRwkbGeometryType eGeomType =
+                OGRFromOGCGeomType(get_string(eltType).c_str());
             if (eGeomType != wkbUnknown)
             {
                 int nIndex = m_poFeatureDefn->GetGeomFieldIndex(pszAttrName);
@@ -596,7 +620,7 @@ std::map<CPLString, CPLString> OGRMongoDBv3Layer::CollectGeomIndices()
                 {
                     if (field.type() == bsoncxx::type::k_utf8)
                     {
-                        std::string v(field.get_utf8().value);
+                        const std::string v(get_string(field));
                         if (v == "2d" || v == "2dsphere")
                         {
                             std::string idxColName(field.key());
@@ -635,7 +659,7 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
             auto doc = docOpt->view();
             auto fid = doc["fid"];
             if (fid && fid.type() == bsoncxx::type::k_utf8)
-                m_osFID = std::string(fid.get_utf8().value);
+                m_osFID = get_string(fid);
 
             auto fields = doc["fields"];
             if (fields && fields.type() == bsoncxx::type::k_array)
@@ -655,15 +679,14 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                             type && type.type() == bsoncxx::type::k_utf8 &&
                             path && path.type() == bsoncxx::type::k_array)
                         {
-                            if (std::string(name.get_utf8().value) == "_id")
+                            if (get_string(name) == "_id")
                                 continue;
                             OGRFieldType eType(OFTString);
                             for (int j = 0; j <= OFTMaxType; j++)
                             {
                                 if (EQUAL(OGR_GetFieldTypeName(
                                               static_cast<OGRFieldType>(j)),
-                                          std::string(type.get_utf8().value)
-                                              .c_str()))
+                                          get_string(type).c_str()))
                                 {
                                     eType = static_cast<OGRFieldType>(j);
                                     break;
@@ -680,19 +703,16 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                                     ok = false;
                                     break;
                                 }
-                                aosPaths.push_back(
-                                    std::string(eltPath.get_utf8().value));
+                                aosPaths.push_back(get_string(eltPath));
                             }
                             if (!ok)
                                 continue;
 
-                            OGRFieldDefn oFieldDefn(
-                                std::string(name.get_utf8().value).c_str(),
-                                eType);
+                            OGRFieldDefn oFieldDefn(get_string(name).c_str(),
+                                                    eType);
                             if (subtype &&
                                 subtype.type() == bsoncxx::type::k_utf8 &&
-                                std::string(subtype.get_utf8().value) ==
-                                    "Boolean")
+                                get_string(subtype) == "Boolean")
                             {
                                 // cppcheck-suppress danglingTemporaryLifetime
                                 oFieldDefn.SetSubType(OFSTBoolean);
@@ -734,17 +754,15 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
                                     ok = false;
                                     break;
                                 }
-                                aosPaths.push_back(
-                                    std::string(eltPath.get_utf8().value));
+                                aosPaths.push_back(get_string(eltPath));
                             }
                             if (!ok)
                                 continue;
 
-                            OGRwkbGeometryType eType(OGRFromOGCGeomType(
-                                std::string(type.get_utf8().value).c_str()));
+                            OGRwkbGeometryType eType(
+                                OGRFromOGCGeomType(get_string(type).c_str()));
                             OGRGeomFieldDefn oFieldDefn(
-                                std::string(name.get_utf8().value).c_str(),
-                                eType);
+                                get_string(name).c_str(), eType);
                             OGRSpatialReference *poSRS =
                                 new OGRSpatialReference();
                             poSRS->SetAxisMappingStrategy(
@@ -929,7 +947,11 @@ static CPLString Stringify(const bsoncxx::types::value &val)
     const auto eBSONType = val.type();
     if (eBSONType == bsoncxx::type::k_utf8)
     {
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 7
+        return std::string(val.get_string().value);
+#else
         return std::string(val.get_utf8().value);
+#endif
     }
     else if (eBSONType == bsoncxx::type::k_int32)
         return CPLSPrintf("%d", val.get_int32().value);
@@ -1196,8 +1218,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
     }
     else if (eBSONType == bsoncxx::type::k_utf8)
     {
-        std::string s(elt.get_utf8().value);
-        poFeature->SetField(nField, s.c_str());
+        poFeature->SetField(nField, get_string(elt).c_str());
     }
     else if (eBSONType == bsoncxx::type::k_oid)
         poFeature->SetField(nField, elt.get_oid().value.to_string().c_str());
@@ -2442,7 +2463,7 @@ bool OGRMongoDBv3Dataset::Open(GDALOpenInfo *poOpenInfo)
             auto dbs = m_oConn.list_databases();
             for (const auto &dbBson : dbs)
             {
-                std::string dbName(dbBson["name"].get_utf8().value);
+                std::string dbName(get_string(dbBson["name"]));
                 if (dbName == "admin" || dbName == "config" ||
                     dbName == "local")
                 {
