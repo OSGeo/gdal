@@ -119,6 +119,8 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     size_t Write(void *, size_t, size_t);
 
     CPLErr AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize, void *pData);
+    CPLErr AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize, void *pData,
+                       size_t nValues);
     int IsSignificantNumberOfLinesLoaded(int nLineOff, int nLines);
     void Initialize();
 
