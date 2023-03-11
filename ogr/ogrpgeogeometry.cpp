@@ -2035,9 +2035,8 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
     }
 
     if (!bHasCircularArcs)
-        return reinterpret_cast<OGRCurve *>(
-            OGR_G_ForceTo(reinterpret_cast<OGRGeometryH>(poCC.release()),
-                          wkbLineString, nullptr));
+        return reinterpret_cast<OGRCurve *>(OGR_G_ForceTo(
+            OGRGeometry::ToHandle(poCC.release()), wkbLineString, nullptr));
     else
         return poCC.release();
 }

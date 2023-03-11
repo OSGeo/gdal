@@ -4718,7 +4718,7 @@ static CPLErr TransformCutlineToSource(GDALDatasetH hSrcDS,
             if (eErr == OGRERR_NONE)
             {
                 const double dfMaxLengthInPixels = GetMaximumSegmentLength(
-                    reinterpret_cast<OGRGeometry *>(hMultiPolygon));
+                    OGRGeometry::FromHandle(hMultiPolygon));
                 if (bWasValidInitially)
                 {
                     // In some cases, the densification itself results in a

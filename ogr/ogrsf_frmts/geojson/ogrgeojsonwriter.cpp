@@ -1495,7 +1495,7 @@ char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
 {
     VALIDATE_POINTER1(hGeometry, "OGR_G_ExportToJson", nullptr);
 
-    OGRGeometry *poGeometry = reinterpret_cast<OGRGeometry *>(hGeometry);
+    OGRGeometry *poGeometry = OGRGeometry::FromHandle(hGeometry);
 
     const int nCoordPrecision =
         atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));

@@ -1389,7 +1389,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                     poFeature->SetGeomFieldDirectly(iGeom, poGeom);
                 }
                 else if (*pszStr == '{' &&
-                         (poGeom = reinterpret_cast<OGRGeometry *>(
+                         (poGeom = OGRGeometry::FromHandle(
                               OGR_G_CreateGeometryFromJson(pszStr))) != nullptr)
                 {
                     poFeature->SetGeomFieldDirectly(iGeom, poGeom);

@@ -862,8 +862,8 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         if (psOptions->poSpatialFilter != nullptr)
-            OGR_L_SetSpatialFilter(hLayer, reinterpret_cast<OGRGeometryH>(
-                                               psOptions->poSpatialFilter));
+            OGR_L_SetSpatialFilter(
+                hLayer, OGRGeometry::ToHandle(psOptions->poSpatialFilter));
 
         // Fetch the first meaningful SRS definition
         if (!pszOutputSRS)

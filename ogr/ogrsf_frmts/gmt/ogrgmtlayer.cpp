@@ -876,7 +876,7 @@ OGRErr OGRGmtLayer::ICreateFeature(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Write Geometry                                                  */
     /* -------------------------------------------------------------------- */
-    return WriteGeometry(reinterpret_cast<OGRGeometryH>(poGeom), true);
+    return WriteGeometry(OGRGeometry::ToHandle(poGeom), true);
 }
 
 /************************************************************************/

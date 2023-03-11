@@ -153,7 +153,7 @@ OGRGeometryH OGRBuildPolygonFromEdges(OGRGeometryH hLines,
     /*      Check for the case of a geometrycollection that can be          */
     /*      promoted to MultiLineString.                                    */
     /* -------------------------------------------------------------------- */
-    OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(hLines);
+    OGRGeometry *poGeom = OGRGeometry::FromHandle(hLines);
     if (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
         for (auto &&poMember : poGeom->toGeometryCollection())
@@ -373,5 +373,5 @@ OGRGeometryH OGRBuildPolygonFromEdges(OGRGeometryH hLines,
         *peErr = bSuccess ? OGRERR_NONE : OGRERR_FAILURE;
     }
 
-    return reinterpret_cast<OGRGeometryH>(poPolygon);
+    return OGRGeometry::ToHandle(poPolygon);
 }

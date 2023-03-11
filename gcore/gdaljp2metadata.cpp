@@ -949,16 +949,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     /* -------------------------------------------------------------------- */
     OGRPoint *poOriginGeometry = nullptr;
 
-    OGRGeometry *poGeom =
-        reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGMLTree(psOriginPoint));
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+        OGRGeometry::FromHandle(OGR_G_CreateFromGMLTree(psOriginPoint)));
 
     if (poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
     {
         poOriginGeometry = poGeom->toPoint();
-    }
-    else
-    {
-        delete poGeom;
     }
 
     // SRS?
@@ -996,9 +992,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     CSLDestroy(papszOffset1Tokens);
     CSLDestroy(papszOffset2Tokens);
-
-    if (poOriginGeometry != nullptr)
-        delete poOriginGeometry;
 
     /* -------------------------------------------------------------------- */
     /*      If we still don't have an srsName, check for it on the          */

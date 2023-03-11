@@ -1180,8 +1180,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
         for (int iShape = 0; iShape < nGeomCount; iShape++)
         {
 
-            OGRGeometry *poGeometry =
-                reinterpret_cast<OGRGeometry *>(pahGeometries[iShape]);
+            const OGRGeometry *poGeometry =
+                OGRGeometry::FromHandle(pahGeometries[iShape]);
             if (poGeometry == nullptr || poGeometry->IsEmpty())
                 continue;
             /* --------------------------------------------------------------------

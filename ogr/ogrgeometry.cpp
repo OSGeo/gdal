@@ -3825,8 +3825,7 @@ OGRGeometryH OGR_G_MakeValid(OGRGeometryH hGeom)
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_MakeValid", nullptr);
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->MakeValid());
 }
 
 /************************************************************************/
@@ -3856,8 +3855,8 @@ OGRGeometryH OGR_G_MakeValidEx(OGRGeometryH hGeom, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_MakeValidEx", nullptr);
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid(papszOptions));
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hGeom)->MakeValid(papszOptions));
 }
 
 /************************************************************************/
