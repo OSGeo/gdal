@@ -12,30 +12,49 @@ set(SOURCE
 
 add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)
 
+# Try to detect if libhdf5 has thread-safety enabled
 if(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK AND UNIX AND
    (HDF5_C_LIBRARIES MATCHES ".so" OR HDF5_C_LIBRARIES MATCHES ".dylib"))
-  # We try to infer if the HDF5 library is built with thread-safe support
-  # by checking if it links against pthread
-  include(CheckCSourceRuns)
-  include(CMakePushCheckState)
-  cmake_push_check_state(RESET)
-  set(CMAKE_REQUIRED_LIBRARIES "${HDF5_C_LIBRARIES}")
-  check_c_source_runs(
-      "
-      #include <pthread.h>
-      int main()
-      {
-          pthread_cancel(0);
-          return 0;
-      }
-      "
-      HDF5_LINKS_TO_PTHREAD)
-  cmake_pop_check_state()
+
+  set(HDF5_LINKS_TO_PTHREAD NO)
+  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    find_program(LDD_PROGRAM ldd)
+    if(LDD_PROGRAM)
+        foreach (lib IN LISTS HDF5_C_LIBRARIES)
+            if(lib MATCHES "libhdf5*.so")
+                execute_process(COMMAND "${LDD_PROGRAM}" "${lib}" OUTPUT_VARIABLE res)
+                if("${res}" MATCHES "libpthread")
+                    set(HDF5_LINKS_TO_PTHREAD YES)
+                    message(STATUS "${lib} links against pthread.")
+                    break()
+                endif()
+            endif()
+        endforeach()
+    endif()
+  elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    find_program(OTOOL_PROGRAM otool)
+    if(OTOOL_PROGRAM)
+        foreach (lib IN LISTS HDF5_C_LIBRARIES)
+            if(lib MATCHES "libhdf5*dylib")
+                execute_process(COMMAND "${OTOOL_PROGRAM}" -L "${lib}" OUTPUT_VARIABLE res)
+                if("${res}" MATCHES "libpthread")
+                    set(HDF5_LINKS_TO_PTHREAD YES)
+                    message(STATUS "${lib} links against pthread.")
+                    break()
+                endif()
+            endif()
+        endforeach()
+    endif()
+  endif()
+
   if (NOT HDF5_LINKS_TO_PTHREAD)
     message(WARNING "HDF5 library does not seem to have thread-safety enabled. Adding a global lock on GDAL side")
     target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
   endif()
 elseif(GDAL_ENABLE_HDF5_GLOBAL_LOCK)
+  target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
+elseif(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK)
+  message(WARNING "HDF5 library status regarding thread-safety is unknown (set GDAL_ENABLE_HDF5_GLOBAL_LOCK=NO if it is known to be thread-safe). Adding a global lock on GDAL side")
   target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
 endif()
 
