@@ -96,6 +96,7 @@ def test_gdal2xyz_py_1():
             dst_nodata=dst_nodata,
             skip_nodata=skip_nodata,
             pre_allocate_np_arrays=pre_allocate_np_arrays,
+            progress_callback=None,
         )
         _pixels, _lines, data2 = gdallocationinfo.gdallocationinfo(
             ds,
@@ -138,3 +139,23 @@ def test_gdal2xyz_py_3(script_path):
 
     assert os.path.exists("tmp/out.xyz")
     os.unlink("tmp/out.xyz")
+
+
+###############################################################################
+# Test -srcnodata and -dstnodata
+
+
+def test_gdal2xyz_py_srcnodata_dstnodata(script_path):
+
+    arguments = "-allbands -srcnodata 0 0 0 -dstnodata 1 2 3"
+    arguments += " " + test_py_scripts.get_data_path("gcore") + "rgbsmall.tif"
+    arguments += " tmp/out.xyz"
+
+    test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
+
+    assert os.path.exists("tmp/out.xyz")
+    with open("tmp/out.xyz", "rb") as f:
+        l = f.readline()
+    os.unlink("tmp/out.xyz")
+
+    assert l.startswith(b"-44.838604 -22.9343 1 2 3")

@@ -31,7 +31,7 @@
 ###############################################################################
 import sys
 import textwrap
-from numbers import Number, Real
+from numbers import Number
 from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -308,7 +308,7 @@ class GDAL2XYZ(GDALScript):
             "-srcnodata",
             "-nodatavalue",
             dest="src_nodata",
-            type=Real,
+            type=float,
             nargs="*",
             help="The nodata value of the dataset (for skipping or replacing) "
             "Default (None) - Use the dataset nodata value; "
@@ -318,7 +318,7 @@ class GDAL2XYZ(GDALScript):
         parser.add_argument(
             "-dstnodata",
             dest="dst_nodata",
-            type=Real,
+            type=float,
             nargs="*",
             help="Replace source nodata with a given nodata. "
             "Has an effect only if not setting -skipnodata. "
@@ -352,6 +352,13 @@ class GDAL2XYZ(GDALScript):
             except ValueError:
                 return False
 
+        def checkFloat(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
+
         # We allowed "-b band_number_1 [... band_number_X] srcfile dstfile" syntax
         # before switching to ArgParse. But ArgParse doesn't like that.
         # So manually parse -b argument and strip it before ArgParse.
@@ -359,6 +366,8 @@ class GDAL2XYZ(GDALScript):
         new_argv = []
         i = 0
         band_nums = []
+        src_nodata = []
+        dst_nodata = []
         while i < count:
             arg = argv[i]
             if arg in ("-b", "-band", "--band"):
@@ -370,6 +379,24 @@ class GDAL2XYZ(GDALScript):
                 while i < count and checkInt(argv[i]):
                     band_nums.append(int(argv[i]))
                     i += 1
+            elif arg in ("-srcnodata", "-nodatavalue"):
+                if i == count - 1:
+                    raise Exception(f"Missing argument following {arg}: ")
+                i += 1
+                if not checkFloat(argv[i]):
+                    raise Exception(f"Argument following {arg} should be a float")
+                while i < count and checkFloat(argv[i]):
+                    src_nodata.append(float(argv[i]))
+                    i += 1
+            elif arg in ("-dstnodata"):
+                if i == count - 1:
+                    raise Exception(f"Missing argument following {arg}: ")
+                i += 1
+                if not checkFloat(argv[i]):
+                    raise Exception(f"Argument following {arg} should be a float")
+                while i < count and checkFloat(argv[i]):
+                    dst_nodata.append(float(argv[i]))
+                    i += 1
             else:
                 i += 1
                 new_argv.append(arg)
@@ -377,6 +404,10 @@ class GDAL2XYZ(GDALScript):
         kwargs = super(GDAL2XYZ, self).parse(new_argv)
         if band_nums:
             kwargs["band_nums"] = band_nums
+        if src_nodata:
+            kwargs["src_nodata"] = src_nodata
+        if dst_nodata:
+            kwargs["dst_nodata"] = dst_nodata
         return kwargs
 
     def augment_kwargs(self, kwargs) -> dict:
