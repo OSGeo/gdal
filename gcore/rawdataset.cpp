@@ -884,6 +884,13 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
 /************************************************************************/
 
 CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
+                                  void *pData)
+{
+    return AccessBlock(nBlockOff, nBlockSize, pData,
+                       nBlockSize / std::abs(nPixelOffset));
+}
+
+CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
                                   void *pData, size_t nValues)
 {
     // Seek to the correct block.
