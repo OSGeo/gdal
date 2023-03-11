@@ -3,7 +3,7 @@
 set -eu
 
 apt update -y
-DEBIAN_FRONTEND=noninteractive apt install -y cmake libproj-dev wget python3-dev python3-numpy python3-pip
+DEBIAN_FRONTEND=noninteractive apt install -y cmake libproj-dev wget python3-dev python3-numpy python3-pip swig
 
 cd "$WORK_DIR"
 

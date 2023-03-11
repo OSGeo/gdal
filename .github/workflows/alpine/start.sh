@@ -9,7 +9,7 @@ apk add \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
-    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip \
+    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip swig \
     poppler-dev postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev libaec-dev hdf5-dev freexl-dev \

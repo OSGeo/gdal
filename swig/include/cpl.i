@@ -272,7 +272,7 @@ void EscapeBinary(int len, char *bin_string, size_t *pnLenOut, char** pOut, int 
 }
 %}
 %clear (int len, char *bin_string);
-%clean  (size_t *pnLenOut, char* pOut);
+%clear (size_t *pnLenOut, char* pOut);
 
 #else
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};

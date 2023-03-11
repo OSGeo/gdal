@@ -766,13 +766,6 @@ if (Arrow_FOUND)
 endif()
 
 # bindings
-gdal_check_package(SWIG "Enable language bindings" ALWAYS_ON_WHEN_FOUND)
-set_package_properties(
-  SWIG PROPERTIES
-  DESCRIPTION
-    "software development tool that connects programs written in C and C++ with a variety of high-level programming languages."
-  URL "http://swig.org/"
-  TYPE RECOMMENDED)
 
 # finding python in top of project because of common for autotest and bindings
 
