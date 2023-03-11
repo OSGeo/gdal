@@ -42,10 +42,9 @@ from osgeo import gdal, ogr
 # Test a fairly simple case, with nodata masking.
 
 
-def test_polygonize_1(is_int_polygonize=True):
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
+@pytest.mark.require_driver("AAIGRID")
+@pytest.mark.parametrize("is_int_polygonize", [True, False])
+def test_polygonize_1(is_int_polygonize):
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -92,18 +91,12 @@ def test_polygonize_1(is_int_polygonize=True):
     assert tr
 
 
-def test_polygonize_1_float():
-    return test_polygonize_1(is_int_polygonize=False)
-
-
 ###############################################################################
 # Test a simple case without masking.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_2():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -155,10 +148,8 @@ def test_polygonize_2():
 # A more involved case with a complex looping.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_3():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_2.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -204,10 +195,8 @@ def test_polygonize_3():
 # Test a simple case without masking but with 8-connectedness.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_4():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -258,10 +247,8 @@ def test_polygonize_4():
 # Test a simple case with two inner wholes touchs at a vertex.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_5():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_3.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -307,10 +294,8 @@ def test_polygonize_5():
 # Test a simple case with two inner wholes touchs at a vertex.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_6():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_4.grd")
     src_band = src_ds.GetRasterBand(1)

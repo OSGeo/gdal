@@ -49,10 +49,8 @@ def test_cutline_1():
 ###############################################################################
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS not available")
 def test_cutline_2():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     tst = gdaltest.GDALTest("VRT", "cutline_blend.vrt", 1, 21395)
     return tst.testOpen()
@@ -61,10 +59,8 @@ def test_cutline_2():
 ###############################################################################
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS not available")
 def test_cutline_3():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     tst = gdaltest.GDALTest("VRT", "cutline_multipolygon.vrt", 1, 20827)
     return tst.testOpen()
@@ -73,10 +69,8 @@ def test_cutline_3():
 ###############################################################################
 
 
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS not available")
 def test_cutline_4():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = gdal.Translate("/vsimem/utmsmall.tif", "../gcore/data/utmsmall.tif")
     ds.BuildOverviews("NEAR", [2])

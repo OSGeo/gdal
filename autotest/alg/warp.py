@@ -50,10 +50,6 @@ from osgeo import gdal, osr
 
 def test_warp_1():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_near.vrt")
     ref_ds = gdal.Open("data/utmsmall_near.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -64,10 +60,6 @@ def test_warp_1():
 
 
 def test_warp_1_short():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_near_short.vrt")
     ref_ds = gdal.Open("data/utmsmall_near.tiff")
@@ -80,10 +72,6 @@ def test_warp_1_short():
 
 def test_warp_1_ushort():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_near_ushort.vrt")
     ref_ds = gdal.Open("data/utmsmall_near.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -94,10 +82,6 @@ def test_warp_1_ushort():
 
 
 def test_warp_1_float():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_near_float.vrt")
     ref_ds = gdal.Open("data/utmsmall_near.tiff")
@@ -110,10 +94,6 @@ def test_warp_1_float():
 
 def test_warp_2():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_blinear.vrt")
     ref_ds = gdal.Open("data/utmsmall_blinear.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -124,10 +104,6 @@ def test_warp_2():
 
 
 def test_warp_2_short():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_blinear_short.vrt")
     ref_ds = gdal.Open("data/utmsmall_blinear.tiff")
@@ -140,10 +116,6 @@ def test_warp_2_short():
 
 def test_warp_2_ushort():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_blinear_ushort.vrt")
     ref_ds = gdal.Open("data/utmsmall_blinear.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -154,10 +126,6 @@ def test_warp_2_ushort():
 
 
 def test_warp_2_downsize():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_bilinear_2.vrt")
     ref_ds = gdal.Open("data/utmsmall_bilinear_2.tif")
@@ -170,10 +138,6 @@ def test_warp_2_downsize():
 
 def test_warp_3():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubic.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubic.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -184,10 +148,6 @@ def test_warp_3():
 
 
 def test_warp_3_short():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_cubic_short.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubic.tiff")
@@ -200,10 +160,6 @@ def test_warp_3_short():
 
 def test_warp_3_ushort():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubic_ushort.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubic.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -214,10 +170,6 @@ def test_warp_3_ushort():
 
 
 def test_warp_3_downsize():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_cubic_2.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubic_2.tif")
@@ -230,10 +182,6 @@ def test_warp_3_downsize():
 
 def test_warp_3_float_downsize():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubic_2_float.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubic_2.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -244,10 +192,6 @@ def test_warp_3_float_downsize():
 
 
 def test_warp_4():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_cubicspline.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline.tiff")
@@ -260,10 +204,6 @@ def test_warp_4():
 
 def test_warp_4_short():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubicspline_short.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -274,10 +214,6 @@ def test_warp_4_short():
 
 
 def test_warp_4_ushort():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_cubicspline_ushort.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline.tiff")
@@ -290,10 +226,6 @@ def test_warp_4_ushort():
 
 def test_warp_4_downsize():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubicspline_2.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline_2.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -304,10 +236,6 @@ def test_warp_4_downsize():
 
 
 def test_warp_4_short_downsize():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_cubicspline_wt_short.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline_2.tif")
@@ -320,10 +248,6 @@ def test_warp_4_short_downsize():
 
 def test_warp_4_float_downsize():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_cubicspline_wt_float32.vrt")
     ref_ds = gdal.Open("data/utmsmall_cubicspline_2.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -335,10 +259,6 @@ def test_warp_4_float_downsize():
 
 def test_warp_5():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_lanczos.vrt")
     ref_ds = gdal.Open("data/utmsmall_lanczos.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -349,10 +269,6 @@ def test_warp_5():
 
 
 def test_warp_5_downsize():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_lanczos_2.vrt")
     ref_ds = gdal.Open("data/utmsmall_lanczos_2.tif")
@@ -368,20 +284,12 @@ def test_warp_5_downsize():
 
 def test_warp_6():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_near.vrt", 1, 4770)
 
     return tst.testOpen()
 
 
 def test_warp_7():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_blinear.vrt", 1, 4755)
 
@@ -390,20 +298,12 @@ def test_warp_7():
 
 def test_warp_8():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_cubic.vrt", 1, 4833)
 
     return tst.testOpen()
 
 
 def test_warp_9():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_ds_cubicspline.vrt")
     ref_ds = gdal.Open("data/utmsmall_ds_cubicspline.tiff")
@@ -416,10 +316,6 @@ def test_warp_9():
 
 def test_warp_10():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_ds_lanczos.vrt")
     ref_ds = gdal.Open("data/utmsmall_ds_lanczos.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -431,10 +327,6 @@ def test_warp_10():
 
 def test_warp_11():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("VRT", "rgbsmall_dstalpha.vrt", 4, 30658)
 
     return tst.testOpen()
@@ -445,11 +337,8 @@ def test_warp_11():
 
 def test_warp_12():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -461,7 +350,7 @@ def test_warp_12():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/empty.tif")
+    tiff_drv.Delete("tmp/empty.tif")
 
     return ret
 
@@ -471,11 +360,8 @@ def test_warp_12():
 
 def test_warp_13():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -487,7 +373,7 @@ def test_warp_13():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/empty.tif")
+    tiff_drv.Delete("tmp/empty.tif")
 
     return ret
 
@@ -497,11 +383,8 @@ def test_warp_13():
 
 def test_warp_14():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -513,7 +396,7 @@ def test_warp_14():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/empty.tif")
+    tiff_drv.Delete("tmp/empty.tif")
 
     return ret
 
@@ -523,11 +406,8 @@ def test_warp_14():
 
 def test_warp_15():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -539,7 +419,7 @@ def test_warp_15():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/test.tif")
+    tiff_drv.Delete("tmp/test.tif")
 
     return ret
 
@@ -549,11 +429,8 @@ def test_warp_15():
 
 def test_warp_16():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -565,7 +442,7 @@ def test_warp_16():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/test.tif")
+    tiff_drv.Delete("tmp/test.tif")
 
     return ret
 
@@ -575,11 +452,8 @@ def test_warp_16():
 
 def test_warp_17():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -591,7 +465,7 @@ def test_warp_17():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/test.tif")
+    tiff_drv.Delete("tmp/test.tif")
 
     return ret
 
@@ -601,11 +475,8 @@ def test_warp_17():
 
 def test_warp_18():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -617,7 +488,7 @@ def test_warp_18():
 
     ret = tst.testOpen()
 
-    gdaltest.tiff_drv.Delete("tmp/test.tif")
+    tiff_drv.Delete("tmp/test.tif")
 
     return ret
 
@@ -651,11 +522,8 @@ def test_warp_19(tmpdir, size, datatype, resampling_string):
     test_file = str(tmpdir.join("test.tif"))
     warp_file = str(tmpdir.join("testwarp.tif"))
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
-    ds = gdaltest.tiff_drv.Create(test_file, size, size, 1, datatype)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    ds = tiff_drv.Create(test_file, size, size, 1, datatype)
     ds.SetGeoTransform((10, 5, 0, 30, 0, -5))
     ds.SetProjection(
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
@@ -672,19 +540,15 @@ def test_warp_19(tmpdir, size, datatype, resampling_string):
     ds = None
     ref_ds = None
 
-    gdaltest.tiff_drv.Delete(warp_file)
+    tiff_drv.Delete(warp_file)
 
     assert checksum == checksum_ref
 
-    gdaltest.tiff_drv.Delete(test_file)
+    tiff_drv.Delete(test_file)
 
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
 def test_warp_20():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("VRT", "white_nodata.vrt", 1, 1705)
 
@@ -1130,10 +994,6 @@ def test_warp_30():
 
 def test_warp_31():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_average.vrt")
     ref_ds = gdal.Open("data/utmsmall_average.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1147,10 +1007,6 @@ def test_warp_31():
 
 
 def test_warp_32():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_average_float.vrt")
     ref_ds = gdal.Open("data/utmsmall_average_float.tiff")
@@ -1166,10 +1022,6 @@ def test_warp_32():
 
 def test_warp_33():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_mode.vrt")
     ref_ds = gdal.Open("data/utmsmall_mode.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1183,10 +1035,6 @@ def test_warp_33():
 
 
 def test_warp_34():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_mode_int16.vrt")
     ref_ds = gdal.Open("data/utmsmall_mode_int16.tiff")
@@ -1202,10 +1050,6 @@ def test_warp_34():
 
 def test_warp_35():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall-int16-neg_mode.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_mode.tiff")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1219,10 +1063,6 @@ def test_warp_35():
 
 
 def test_warp_36():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_mode_int32.vrt")
     ref_ds = gdal.Open("data/utmsmall_mode_int32.tiff")
@@ -1336,10 +1176,6 @@ def test_warp_39():
 
 def test_warp_40():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/2by2.vrt")
     ref_ds = gdal.Open("data/2by2.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1354,10 +1190,6 @@ def test_warp_40():
 
 
 def test_warp_weighted_average():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/3by3_average.vrt")
     ref_ds = gdal.Open("data/3by3_average.tif")
@@ -1384,10 +1216,6 @@ def test_warp_weighted_average_with_srcoffset():
 
 
 def test_warp_sum():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/3by3_sum.vrt")
     ref_ds = gdal.Open("data/3by3_sum.tif")
@@ -1437,10 +1265,6 @@ def test_warp_41():
 
 def test_warp_42():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_max.vrt")
     ref_ds = gdal.Open("data/utmsmall_max.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1454,10 +1278,6 @@ def test_warp_42():
 
 
 def test_warp_43():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_min.vrt")
     ref_ds = gdal.Open("data/utmsmall_min.tif")
@@ -1473,10 +1293,6 @@ def test_warp_43():
 
 def test_warp_44():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_med.vrt")
     ref_ds = gdal.Open("data/utmsmall_med.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1490,10 +1306,6 @@ def test_warp_44():
 
 
 def test_warp_45():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_Q1.vrt")
     ref_ds = gdal.Open("data/utmsmall_Q1.tif")
@@ -1509,10 +1321,6 @@ def test_warp_45():
 
 def test_warp_46():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall_Q3.vrt")
     ref_ds = gdal.Open("data/utmsmall_Q3.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1526,10 +1334,6 @@ def test_warp_46():
 
 
 def test_warp_47():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall-int16-neg_max.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_max.tif")
@@ -1545,10 +1349,6 @@ def test_warp_47():
 
 def test_warp_48():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall-int16-neg_min.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_min.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1562,10 +1362,6 @@ def test_warp_48():
 
 
 def test_warp_49():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall-int16-neg_med.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_med.tif")
@@ -1581,10 +1377,6 @@ def test_warp_49():
 
 def test_warp_50():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     ds = gdal.Open("data/utmsmall-int16-neg_Q1.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_Q1.tif")
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
@@ -1598,10 +1390,6 @@ def test_warp_50():
 
 
 def test_warp_51():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall-int16-neg_Q3.vrt")
     ref_ds = gdal.Open("data/utmsmall-int16-neg_Q3.tif")
@@ -1761,11 +1549,8 @@ def test_warp_54(use_optim):
 # and subsampling (#6972)
 
 
+@pytest.mark.require_driver("PNG")  # data/warpedvrt_with_ovr.vrt uses a PNG
 def test_warp_55():
-
-    # data/warpedvrt_with_ovr.vrt uses a PNG
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver missing")
 
     ds = gdal.Open("data/warpedvrt_with_ovr.vrt")
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1852,10 +1637,6 @@ def test_warp_rpc_source_has_geotransform():
 
 def test_warp_ds_rms():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_rms.vrt", 1, 4926)
 
     return tst.testOpen()
@@ -1863,20 +1644,12 @@ def test_warp_ds_rms():
 
 def test_warp_rms_1():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("VRT", "utmsmall_rms_float.vrt", 1, 29819)
 
     return tst.testOpen()
 
 
 def test_warp_rms_2():
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.tiff_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/utmsmall_rms.vrt")
     # 29818 on non-Intel archs
