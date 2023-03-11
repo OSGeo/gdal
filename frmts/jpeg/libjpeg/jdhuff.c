@@ -19,6 +19,9 @@
 #include "jpeglib.h"
 #include "jdhuff.h"		/* Declarations shared with jdphuff.c */
 
+#if BITS_IN_JSAMPLE == 8
+#include "jstdhuff.c"
+#endif
 
 /*
  * Expanded entropy decoder object for Huffman decoding.
@@ -648,6 +651,14 @@ jinit_huff_decoder (j_decompress_ptr cinfo)
 {
   huff_entropy_ptr entropy;
   int i;
+
+#if BITS_IN_JSAMPLE == 8
+  /* Motion JPEG frames typically do not include the Huffman tables if they
+     are the default tables.  Thus, if the tables are not set by the time
+     the Huffman decoder is initialized (usually within the body of
+     jpeg_start_decompress()), we set them to default values. */
+  std_huff_tables((j_common_ptr) cinfo);
+#endif
 
   entropy = (huff_entropy_ptr)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,

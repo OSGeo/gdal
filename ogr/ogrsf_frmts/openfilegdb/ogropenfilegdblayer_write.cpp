@@ -469,7 +469,7 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
                 CPLSearchXMLNode(psParentTree, "=DEFeatureDataset");
             if (psParentInfo != nullptr)
             {
-                poFeatureDatasetSRS.reset(BuildSRS(psParentInfo));
+                poFeatureDatasetSRS.reset(m_poDS->BuildSRS(psParentInfo));
             }
             CPLDestroyXMLNode(psParentTree);
         }

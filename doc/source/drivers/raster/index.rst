@@ -133,6 +133,7 @@ Raster drivers
    ntv2
    nwtgrd
    ogcapi
+   openfilegdb
    ozi
    palsar
    paux

@@ -83,7 +83,7 @@ def test_ogr_openfilegdb_write_empty():
     assert ds is not None
     ds = None
 
-    ds = ogr.Open(dirname)
+    ds = ogr.Open(dirname, update=1)
     assert ds is not None
     assert ds.GetLayerCount() == 0
     ds = None
@@ -3232,23 +3232,6 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         # Implicit rollback
         ds = None
 
-        gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
-        with gdaltest.error_handler():
-            # Cannot open in update mode with an existing backup directory
-            assert ogr.Open(dirname, update=1) is None
-
-            # Emit warning in read-only mode when opening with an existing backup directory
-            gdal.ErrorReset()
-            assert ogr.Open(dirname) is not None
-            assert "A previous backup directory" in gdal.GetLastErrorMsg()
-        gdal.Rmdir(dirname + "/.ogrtransaction_backup")
-
-        # Transaction not supported in read-only mode
-        ds = ogr.Open(dirname)
-        assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
-        with gdaltest.error_handler():
-            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
-
         ds = ogr.Open(dirname, update=1)
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
         gdal.Rmdir(dirname + "/.ogrtransaction_backup")
@@ -3281,6 +3264,24 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is None
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
         assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is not None
+        ds = None
+
+        gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
+        with gdaltest.error_handler():
+            # Cannot open in update mode with an existing backup directory
+            assert ogr.Open(dirname, update=1) is None
+
+            # Emit warning in read-only mode when opening with an existing backup directory
+            gdal.ErrorReset()
+            assert ogr.Open(dirname) is not None
+            assert "A previous backup directory" in gdal.GetLastErrorMsg()
+        gdal.Rmdir(dirname + "/.ogrtransaction_backup")
+
+        # Transaction not supported in read-only mode
+        ds = ogr.Open(dirname)
+        assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
+        with gdaltest.error_handler():
+            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
         ds = None
 
         ds = ogr.Open(dirname, update=1)

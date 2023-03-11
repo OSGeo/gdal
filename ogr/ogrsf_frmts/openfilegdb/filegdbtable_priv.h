@@ -31,6 +31,8 @@
 #define FILEGDBTABLE_PRIV_H_INCLUDED
 
 #include "filegdbtable.h"
+
+#include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_time.h"
 
@@ -332,6 +334,22 @@ inline void WriteVarInt(std::vector<GByte> &abyBuffer, int64_t nVal)
     }
 
     WriteVarUInt(abyBuffer, nUVal);
+}
+
+/************************************************************************/
+/*                            ReadUTF16String()                         */
+/************************************************************************/
+
+inline std::string ReadUTF16String(const GByte *pabyIter, int nCarCount)
+{
+    std::wstring osWideStr;
+    for (int j = 0; j < nCarCount; j++)
+        osWideStr += pabyIter[2 * j] | (pabyIter[2 * j + 1] << 8);
+    char *pszStr =
+        CPLRecodeFromWChar(osWideStr.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
+    std::string osRet(pszStr);
+    CPLFree(pszStr);
+    return osRet;
 }
 
 /************************************************************************/

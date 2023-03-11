@@ -38,6 +38,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/jpeg/libjpeg/*)
+	  continue
+	  ;;
+
 	*swig/*)
 	  continue
 	  ;;
