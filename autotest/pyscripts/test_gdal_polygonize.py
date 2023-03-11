@@ -180,7 +180,7 @@ def test_gdal_polygonize_3(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_polygonize",
-        '-b 1 -f "GPKG" -q -nomask '
+        '-b 1 -f "GPKG" -q -nomask -lco FID=myfid '
         + test_py_scripts.get_data_path("alg")
         + "polygonize_in.grd "
         + outfilename,
@@ -189,6 +189,7 @@ def test_gdal_polygonize_3(script_path):
     # Confirm we get the set of expected features in the output layer.
     gpkg_ds = ogr.Open(outfilename)
     gpkg_lyr = gpkg_ds.GetLayerByName("out")
+    assert gpkg_lyr.GetFIDColumn() == "myfid"
     geom_type = gpkg_lyr.GetGeomType()
     geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
 

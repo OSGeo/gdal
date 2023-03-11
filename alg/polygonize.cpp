@@ -490,6 +490,9 @@ GBool GDALFloatEquals(float A, float B)
  * <ul>
  * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
  * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * <li>DATASET_FOR_GEOREF=dataset_name: Name of a dataset from which to read
+ * the geotransform. This useful if hSrcBand has no related dataset, which is
+ * typical for mask bands.</li>
  * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
@@ -561,6 +564,9 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
  * <ul>
  * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
  * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * <li>DATASET_FOR_GEOREF=dataset_name: Name of a dataset from which to read
+ * the geotransform. This useful if hSrcBand has no related dataset, which is
+ * typical for mask bands.</li>
  * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
