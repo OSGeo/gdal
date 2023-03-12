@@ -58,7 +58,7 @@
 /************************************************************************/
 
 /** Virtual file handle */
-class CPL_DLL VSIVirtualHandle
+struct CPL_DLL VSIVirtualHandle
 {
   public:
     virtual int Seek(vsi_l_offset nOffset, int nWhence) = 0;

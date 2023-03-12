@@ -148,7 +148,7 @@ typedef GUIntBig vsi_l_offset;
 #define VSI_L_OFFSET_MAX GUINTBIG_MAX
 
 /** Opaque type for a FILE that implements the VSIVirtualHandle API */
-typedef struct _VSILFILE VSILFILE;
+typedef struct VSIVirtualHandle VSILFILE;
 
 VSILFILE CPL_DLL *VSIFOpenL(const char *, const char *) CPL_WARN_UNUSED_RESULT;
 VSILFILE CPL_DLL *VSIFOpenExL(const char *, const char *,
