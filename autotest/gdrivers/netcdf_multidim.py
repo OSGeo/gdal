@@ -2276,25 +2276,25 @@ def test_netcdf_multidim_open_userfaultfd():
 
     # Can only work on Linux, with some kernel versions... not in Docker by default
     # so mostly test that we don't crash
-    with gdaltest.error_handler():
-        ds = gdal.OpenEx(
-            "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
-            gdal.OF_MULTIDIM_RASTER,
+    import netcdf
+
+    if netcdf.has_working_userfaultfd():
+        assert (
+            gdal.OpenEx(
+                "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
+                gdal.OF_MULTIDIM_RASTER,
+            )
+            is not None
         )
-
-    success_expected = False
-    if "CI" not in os.environ:
-        if sys.platform.startswith("linux"):
-            uname = os.uname()
-            version = uname.release.split(".")
-            major = int(version[0])
-            minor = int(version[1])
-            if (major, minor) >= (5, 11):
-                assert ds
-                success_expected = True
-
-    if ds and not success_expected:
-        print("/vsi access through userfaultfd succeeded")
+    else:
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx(
+                    "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
+                    gdal.OF_MULTIDIM_RASTER,
+                )
+                is None
+            )
 
     gdal.Unlink("tmp/test_netcdf_open_userfaultfd.zip")
 

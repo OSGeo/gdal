@@ -84,8 +84,8 @@ struct cpl_uffd_context
     int64_t page_limit = -1;
     int64_t pages_used = 0;
 
-    off_t file_size = 0;
-    off_t page_size = 0;
+    size_t file_size = 0;
+    size_t page_size = 0;
     void *page_ptr = nullptr;
     size_t vma_size = 0;
     void *vma_ptr = nullptr;
@@ -168,11 +168,6 @@ static void cpl_uffd_fault_handler(void *ptr)
     // Loop until told to stop
     while (ctx->keep_going)
     {
-        uintptr_t fault_addr;
-        uint64_t offset;
-        off_t bytes_needed;
-        ssize_t bytes_read;
-
         // Poll for event
         if (poll(&pollfd, 1, 16) == -1)
             break;  // 60Hz when no demand
@@ -182,7 +177,7 @@ static void cpl_uffd_fault_handler(void *ptr)
             continue;
 
         // Read page fault events
-        bytes_read = static_cast<ssize_t>(
+        ssize_t bytes_read = static_cast<ssize_t>(
             read(ctx->uffd, ctx->uffd_msgs, MAX_MESSAGES * sizeof(uffd_msg)));
         if (bytes_read < 1)
         {
@@ -339,19 +334,25 @@ static void cpl_uffd_fault_handler(void *ptr)
         for (int i = 0; i < static_cast<int>(bytes_read / sizeof(uffd_msg));
              ++i)
         {
-            fault_addr =
+            const uintptr_t fault_addr =
                 ctx->uffd_msgs[i].arg.pagefault.address & ~(ctx->page_size - 1);
-            offset = static_cast<uint64_t>(fault_addr) -
-                     reinterpret_cast<uint64_t>(ctx->vma_ptr);
-            bytes_needed = static_cast<off_t>(ctx->file_size - offset);
+            const uintptr_t offset =
+                fault_addr - reinterpret_cast<uintptr_t>(ctx->vma_ptr);
+            size_t bytes_needed = static_cast<size_t>(ctx->file_size - offset);
             if (bytes_needed > ctx->page_size)
                 bytes_needed = ctx->page_size;
 
             // Copy data into page
-            if (VSIFSeekL(file, offset, SEEK_SET))
-                break;
-            if (VSIFReadL(ctx->page_ptr, bytes_needed, 1, file) != 1)
-                break;
+            if (VSIFSeekL(file, offset, SEEK_SET) != 0 ||
+                VSIFReadL(ctx->page_ptr, bytes_needed, 1, file) != 1)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot get %d bytes at offset " CPL_FRMT_GUIB " of "
+                         "file %s",
+                         static_cast<int>(bytes_needed),
+                         static_cast<GUIntBig>(offset), ctx->filename.c_str());
+                memset(ctx->page_ptr, 0, bytes_needed);
+            }
             ctx->pages_used++;
 
             // Use the page to fulfill the page fault
@@ -361,7 +362,11 @@ static void cpl_uffd_fault_handler(void *ptr)
             uffdio_copy.mode = 0;
             uffdio_copy.copy = 0;
             if (ioctl(ctx->uffd, UFFDIO_COPY, &uffdio_copy) == -1)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ioctl(UFFDIO_COPY) failed");
                 break;
+            }
         }
     }  // end of while loop
 
@@ -397,8 +402,47 @@ bool CPLIsUserFaultMappingSupported()
         nEnableUserFaultFD =
             CPLTestBool(CPLGetConfigOption("CPL_ENABLE_USERFAULTFD", "YES"));
     }
+    if (!nEnableUserFaultFD)
+        return false;
 
-    return nEnableUserFaultFD != FALSE;
+    // Since kernel 5.2, raw userfaultfd is disabled since if the fault
+    // originates from the kernel, that could lead to easier exploitation of
+    // kernel bugs. Since kernel 5.11, UFFD_USER_MODE_ONLY can be used to
+    // restrict the mechanism to faults occurring only from user space, which is
+    // likely to be our use case.
+    int uffd = static_cast<int>(syscall(
+        __NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY));
+    if (uffd == -1 && errno == EINVAL)
+        uffd =
+            static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK));
+    if (uffd == -1)
+    {
+        const int l_errno = errno;
+        if (l_errno == EPERM)
+        {
+            // Since kernel 5.2
+            CPLDebug(
+                "GDAL",
+                "CPLIsUserFaultMappingSupported(): syscall(__NR_userfaultfd) "
+                "failed: "
+                "insufficient permission. add CAP_SYS_PTRACE capability, or "
+                "set /proc/sys/vm/unprivileged_userfaultfd to 1");
+        }
+        else
+        {
+            CPLDebug(
+                "GDAL",
+                "CPLIsUserFaultMappingSupported(): syscall(__NR_userfaultfd) "
+                "failed: "
+                "error = %d",
+                l_errno);
+        }
+        nEnableUserFaultFD = false;
+        return false;
+    }
+    close(uffd);
+    nEnableUserFaultFD = true;
+    return true;
 }
 
 /*
@@ -428,11 +472,12 @@ cpl_uffd_context *CPLCreateUserFaultMapping(const char *pszFilename,
     ctx->filename = std::string(pszFilename);
     ctx->page_limit = get_page_limit();
     ctx->pages_used = 0;
-    ctx->file_size = static_cast<off_t>(statbuf.st_size);
-    ctx->page_size = static_cast<off_t>(sysconf(_SC_PAGESIZE));
+    ctx->file_size = static_cast<size_t>(statbuf.st_size);
+    ctx->page_size = static_cast<size_t>(sysconf(_SC_PAGESIZE));
     ctx->vma_size = static_cast<size_t>(
-        ((statbuf.st_size / ctx->page_size) + 1) * ctx->page_size);
-    if (ctx->vma_size < static_cast<size_t>(statbuf.st_size))
+        ((static_cast<vsi_l_offset>(statbuf.st_size) / ctx->page_size) + 1) *
+        ctx->page_size);
+    if (ctx->vma_size < static_cast<vsi_l_offset>(statbuf.st_size))
     {  // Check for overflow
         uffd_cleanup(ctx);
         CPLError(
