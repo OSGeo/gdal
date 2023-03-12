@@ -2383,7 +2383,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
 #ifdef __VERSION__
 #ifdef __clang_version__
-        osBuildInfo += "COMPILER=" __clang_version__ "\n";
+        osBuildInfo += "COMPILER=clang " __clang_version__ "\n";
 #elif defined(__GNUC__)
         osBuildInfo += "COMPILER=GCC " __VERSION__ "\n";
 #elif defined(__INTEL_COMPILER)
