@@ -1265,8 +1265,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
             return -1;
         }
-        poFileHandleAutoClose.reset(
-            reinterpret_cast<VSIVirtualHandle *>(fpSource));
+        poFileHandleAutoClose.reset(fpSource);
     }
     if (nSourceSize == static_cast<vsi_l_offset>(-1) &&
         pProgressFunc != nullptr && pszSource != nullptr)
@@ -1919,8 +1918,8 @@ VSILFILE *VSIFOpenEx2L(const char *pszFilename, const char *pszAccess,
 
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
 
-    VSILFILE *fp = reinterpret_cast<VSILFILE *>(poFSHandler->Open(
-        pszFilename, pszAccess, CPL_TO_BOOL(bSetError), papszOptions));
+    VSILFILE *fp = poFSHandler->Open(pszFilename, pszAccess,
+                                     CPL_TO_BOOL(bSetError), papszOptions);
 
     VSIDebug4("VSIFOpenEx2L(%s,%s,%d) = %p", pszFilename, pszAccess, bSetError,
               fp);
@@ -1965,13 +1964,11 @@ VSILFILE *VSIFOpenEx2L(const char *pszFilename, const char *pszAccess,
 int VSIFCloseL(VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
     VSIDebug1("VSIFCloseL(%p)", fp);
 
-    const int nResult = poFileHandle->Close();
+    const int nResult = fp->Close();
 
-    delete poFileHandle;
+    delete fp;
 
     return nResult;
 }
@@ -2025,9 +2022,7 @@ int VSIFCloseL(VSILFILE *fp)
 int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Seek(nOffset, nWhence);
+    return fp->Seek(nOffset, nWhence);
 }
 
 /************************************************************************/
@@ -2068,9 +2063,7 @@ int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
 vsi_l_offset VSIFTellL(VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Tell();
+    return fp->Tell();
 }
 
 /************************************************************************/
@@ -2131,9 +2124,7 @@ void VSIRewindL(VSILFILE *fp)
 int VSIFFlushL(VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Flush();
+    return fp->Flush();
 }
 
 /************************************************************************/
@@ -2183,9 +2174,7 @@ int VSIFFlushL(VSILFILE *fp)
 size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Read(pBuffer, nSize, nCount);
+    return fp->Read(pBuffer, nSize, nCount);
 }
 
 /************************************************************************/
@@ -2244,9 +2233,7 @@ int VSIFReadMultiRangeL(int nRanges, void **ppData,
                         const vsi_l_offset *panOffsets, const size_t *panSizes,
                         VSILFILE *fp)
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->ReadMultiRange(nRanges, ppData, panOffsets, panSizes);
+    return fp->ReadMultiRange(nRanges, ppData, panOffsets, panSizes);
 }
 
 /************************************************************************/
@@ -2298,9 +2285,7 @@ size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount,
                   VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Write(pBuffer, nSize, nCount);
+    return fp->Write(pBuffer, nSize, nCount);
 }
 
 /************************************************************************/
@@ -2343,9 +2328,7 @@ size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount,
 int VSIFEofL(VSILFILE *fp)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Eof();
+    return fp->Eof();
 }
 
 /************************************************************************/
@@ -2385,9 +2368,7 @@ int VSIFEofL(VSILFILE *fp)
 int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
 
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->Truncate(nNewSize);
+    return fp->Truncate(nNewSize);
 }
 
 /************************************************************************/
@@ -2500,9 +2481,7 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
 VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
                                    vsi_l_offset nLength)
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->GetRangeStatus(nOffset, nLength);
+    return fp->GetRangeStatus(nOffset, nLength);
 }
 
 /************************************************************************/
@@ -2783,9 +2762,7 @@ int VSIOverwriteFile(VSILFILE *fpTarget, const char *pszSourceFilename)
 
 void *VSIFGetNativeFileDescriptorL(VSILFILE *fp)
 {
-    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
-
-    return poFileHandle->GetNativeFileDescriptor();
+    return fp->GetNativeFileDescriptor();
 }
 
 /************************************************************************/
