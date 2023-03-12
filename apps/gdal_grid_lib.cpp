@@ -821,13 +821,13 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
         {
             // Custom layer will be rasterized in the first band.
             eErr = ProcessLayer(
-                reinterpret_cast<OGRLayerH>(poLayer), hDstDS,
-                psOptions->poSpatialFilter, nXSize, nYSize, 1, bIsXExtentSet,
-                bIsYExtentSet, dfXMin, dfXMax, dfYMin, dfYMax,
-                psOptions->pszBurnAttribute, psOptions->dfIncreaseBurnValue,
-                psOptions->dfMultiplyBurnValue, psOptions->eOutputType,
-                psOptions->eAlgorithm, psOptions->pOptions, psOptions->bQuiet,
-                psOptions->pfnProgress, psOptions->pProgressData);
+                OGRLayer::ToHandle(poLayer), hDstDS, psOptions->poSpatialFilter,
+                nXSize, nYSize, 1, bIsXExtentSet, bIsYExtentSet, dfXMin, dfXMax,
+                dfYMin, dfYMax, psOptions->pszBurnAttribute,
+                psOptions->dfIncreaseBurnValue, psOptions->dfMultiplyBurnValue,
+                psOptions->eOutputType, psOptions->eAlgorithm,
+                psOptions->pOptions, psOptions->bQuiet, psOptions->pfnProgress,
+                psOptions->pProgressData);
 
             poSrcDS->ReleaseResultSet(poLayer);
         }
