@@ -4550,4 +4550,32 @@ TEST_F(test_cpl, VSIDuplicateFileSystemHandler)
     }
 }
 
+TEST_F(test_cpl, CPLAtoGIntBigEx)
+{
+    {
+        int bOverflow = 0;
+        EXPECT_EQ(CPLAtoGIntBigEx("9223372036854775807", false, &bOverflow),
+                  std::numeric_limits<int64_t>::max());
+        EXPECT_EQ(bOverflow, FALSE);
+    }
+    {
+        int bOverflow = 0;
+        EXPECT_EQ(CPLAtoGIntBigEx("9223372036854775808", false, &bOverflow),
+                  std::numeric_limits<int64_t>::max());
+        EXPECT_EQ(bOverflow, TRUE);
+    }
+    {
+        int bOverflow = 0;
+        EXPECT_EQ(CPLAtoGIntBigEx("-9223372036854775808", false, &bOverflow),
+                  std::numeric_limits<int64_t>::min());
+        EXPECT_EQ(bOverflow, FALSE);
+    }
+    {
+        int bOverflow = 0;
+        EXPECT_EQ(CPLAtoGIntBigEx("-9223372036854775809", false, &bOverflow),
+                  std::numeric_limits<int64_t>::min());
+        EXPECT_EQ(bOverflow, TRUE);
+    }
+}
+
 }  // namespace
