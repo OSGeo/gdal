@@ -33,32 +33,17 @@ import os
 import shutil
 import struct
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
 
-###############################################################################
-# Find PLMosaic driver
-
-
-def test_plmosaic_1():
-
-    gdaltest.plmosaic_drv = gdal.GetDriverByName("PLMosaic")
-
-    if gdaltest.plmosaic_drv is not None:
-        return
-    pytest.skip()
-
+pytestmark = pytest.mark.require_driver("PLMosaic")
 
 ###############################################################################
 # Error: no API_KEY
 
 
 def test_plmosaic_2():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.PushErrorHandler()
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
@@ -74,9 +59,6 @@ def test_plmosaic_2():
 
 def test_plmosaic_3():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     gdal.SetConfigOption("PL_URL", "/vsimem/does_not_exist/")
     ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
@@ -90,9 +72,6 @@ def test_plmosaic_3():
 
 
 def test_plmosaic_4():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/root", """{""")
 
@@ -110,9 +89,6 @@ def test_plmosaic_4():
 
 def test_plmosaic_5():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer("/vsimem/root", """null""")
 
     gdal.PushErrorHandler()
@@ -129,9 +105,6 @@ def test_plmosaic_5():
 
 def test_plmosaic_6():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer("/vsimem/root", """{}""")
 
     gdal.PushErrorHandler()
@@ -147,9 +120,6 @@ def test_plmosaic_6():
 
 
 def test_plmosaic_7():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root",
@@ -170,9 +140,6 @@ def test_plmosaic_7():
 
 
 def test_plmosaic_8():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root",
@@ -236,9 +203,6 @@ def test_plmosaic_8():
 
 def test_plmosaic_9():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.PushErrorHandler()
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     ds = gdal.OpenEx(
@@ -260,9 +224,6 @@ def test_plmosaic_9():
 
 def test_plmosaic_9bis():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer("/vsimem/root/?name__is=my_mosaic", """{""")
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     gdal.PushErrorHandler()
@@ -280,9 +241,6 @@ def test_plmosaic_9bis():
 
 def test_plmosaic_9ter():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer("/vsimem/root/?name__is=my_mosaic", """{}""")
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     gdal.PushErrorHandler()
@@ -299,9 +257,6 @@ def test_plmosaic_9ter():
 
 
 def test_plmosaic_10():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
@@ -327,9 +282,6 @@ def test_plmosaic_10():
 
 
 def test_plmosaic_11():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
@@ -364,9 +316,6 @@ def test_plmosaic_11():
 
 def test_plmosaic_12():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
         """{
@@ -397,9 +346,6 @@ def test_plmosaic_12():
 
 
 def test_plmosaic_13():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
@@ -432,9 +378,6 @@ def test_plmosaic_13():
 
 def test_plmosaic_14():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
         """{
@@ -465,9 +408,6 @@ def test_plmosaic_14():
 
 
 def test_plmosaic_15():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
@@ -510,9 +450,6 @@ def test_plmosaic_15():
 
 
 def test_plmosaic_16():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/plmosaic_cache")
@@ -586,9 +523,6 @@ def test_plmosaic_16():
 
 
 def test_plmosaic_17():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     ds = gdal.OpenEx(
@@ -756,9 +690,6 @@ def test_plmosaic_17():
 
 def test_plmosaic_18():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     shutil.rmtree("tmp/plmosaic_cache")
 
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
@@ -811,9 +742,6 @@ def test_plmosaic_18():
 
 def test_plmosaic_19():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     ds = gdal.OpenEx(
         "PLMosaic:",
@@ -839,9 +767,6 @@ def test_plmosaic_19():
 
 def test_plmosaic_20():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     ds = gdal.OpenEx(
         "PLMosaic:",
@@ -864,9 +789,6 @@ def test_plmosaic_20():
 
 
 def test_plmosaic_21():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption("PL_URL", "/vsimem/root")
     ds = gdal.OpenEx(
@@ -993,9 +915,6 @@ def test_plmosaic_21():
 
 def test_plmosaic_with_bbox():
 
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
-
     try:
         shutil.rmtree("tmp/plmosaic_cache")
     except OSError:
@@ -1107,9 +1026,6 @@ def test_plmosaic_with_bbox():
 
 
 def test_plmosaic_cleanup():
-
-    if gdaltest.plmosaic_drv is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/root_no_mosaics")
     gdal.Unlink("/vsimem/root")

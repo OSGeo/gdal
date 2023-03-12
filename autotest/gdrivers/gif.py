@@ -42,20 +42,9 @@ pytestmark = pytest.mark.require_driver("GIF")
 
 def test_gif_1():
 
-    gdaltest.gif_drv = gdal.GetDriverByName("GIF")
-    if gdaltest.gif_drv is None:
-        gdaltest.post_reason("GIF driver not found!")
-        return "false"
-
-    # Move the BIGGIF driver after the GIF driver.
-    drv = gdal.GetDriverByName("BIGGIF")
-    drv.Deregister()
-    drv.Register()
-
-    drv_md = gdaltest.gif_drv.GetMetadata()
-    if drv_md["DMD_MIMETYPE"] != "image/gif":
-        gdaltest.post_reason("mime type is wrong")
-        return "false"
+    gif_drv = gdal.GetDriverByName("GIF")
+    drv_md = gif_drv.GetMetadata()
+    assert drv_md["DMD_MIMETYPE"] == "image/gif"
 
 
 ###############################################################################
