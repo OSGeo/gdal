@@ -86,9 +86,6 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
-# userfaultfd doesn't seem to work under Docker and/or 32bit (stalls on netcdf.py otherwise)
-export CPL_ENABLE_USERFAULTFD=NO
-
 (cd build && make quicktest)
 
 # install pip and use it to install test dependencies
