@@ -743,8 +743,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 
     if (!bUpdate && strstr(pszFilename, "/vsigzip/") == nullptr &&
         strstr(pszFilename, "/vsizip/") == nullptr)
-        fp = reinterpret_cast<VSILFILE *>(VSICreateBufferedReaderHandle(
-            reinterpret_cast<VSIVirtualHandle *>(fp)));
+        fp = VSICreateBufferedReaderHandle(fp);
 
     CPLString osLayerName = CPLGetBasename(pszFilename);
     CPLString osExt = CPLGetExtension(pszFilename);

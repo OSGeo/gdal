@@ -925,8 +925,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     /* For better performance of CPLReadLine2L() we create a buffered reader */
     /* (except for /vsigzip/ since it has one internally) */
     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/"))
-        fp = reinterpret_cast<VSILFILE *>(VSICreateBufferedReaderHandle(
-            reinterpret_cast<VSIVirtualHandle *>(fp)));
+        fp = VSICreateBufferedReaderHandle(fp);
 
     int nMinTokens = 0;
 
