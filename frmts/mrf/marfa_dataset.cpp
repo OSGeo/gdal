@@ -134,14 +134,14 @@ int MRFDataset::CloseDependentDatasets()
     if (poSrcDS)
     {
         bHasDroppedRef = TRUE;
-        GDALClose(reinterpret_cast<GDALDatasetH>(poSrcDS));
+        GDALClose(GDALDataset::ToHandle(poSrcDS));
         poSrcDS = nullptr;
     }
 
     if (cds)
     {
         bHasDroppedRef = TRUE;
-        GDALClose(reinterpret_cast<GDALDatasetH>(cds));
+        GDALClose(GDALDataset::ToHandle(cds));
         cds = nullptr;
     }
 
