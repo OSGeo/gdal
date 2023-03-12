@@ -287,8 +287,8 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
     {
         if (nElementValueLen)
         {
-            OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(
-                OGR_G_CreateFromGML(pszElementValue));
+            OGRGeometry *poGeom =
+                OGRGeometry::FromHandle(OGR_G_CreateFromGML(pszElementValue));
             if (poGeom != nullptr &&
                 poGeom->getGeometryType() == wkbGeometryCollection &&
                 poGeom->IsEmpty())

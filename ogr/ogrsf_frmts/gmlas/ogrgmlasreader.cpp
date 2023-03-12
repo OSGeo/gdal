@@ -3059,7 +3059,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode *psRoot)
 #endif
 
     OGRGeometry *poGeom =
-        reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGMLTree(psRoot));
+        OGRGeometry::FromHandle(OGR_G_CreateFromGMLTree(psRoot));
     if (poGeom != nullptr)
     {
         const char *pszSRSName = GMLASGetSRSName(psRoot);

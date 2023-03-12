@@ -3860,7 +3860,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
 
 {
-    return reinterpret_cast<OGRGeometryH>(GML2OGRGeometry_XMLNode(psTree, -1));
+    return OGRGeometry::ToHandle(GML2OGRGeometry_XMLNode(psTree, -1));
 }
 
 /************************************************************************/
@@ -3927,5 +3927,5 @@ OGRGeometryH OGR_G_CreateFromGML(const char *pszGML)
 
     CPLDestroyXMLNode(psGML);
 
-    return reinterpret_cast<OGRGeometryH>(poGeometry);
+    return OGRGeometry::ToHandle(poGeometry);
 }

@@ -427,8 +427,8 @@ OGRFeature *GDALEEDALayer::GetNextRawFeature()
         }
         if (m_poFilterGeom != nullptr)
         {
-            char *pszGeoJSON = OGR_G_ExportToJson(
-                reinterpret_cast<OGRGeometryH>(m_poFilterGeom));
+            char *pszGeoJSON =
+                OGR_G_ExportToJson(OGRGeometry::ToHandle(m_poFilterGeom));
             query += "&region=";
             query += CPLEscapeURLQueryParameter(pszGeoJSON);
             CPLFree(pszGeoJSON);
@@ -485,7 +485,7 @@ OGRFeature *GDALEEDALayer::GetNextRawFeature()
         const char *pszGeoJSON = json_object_get_string(poJSonGeom);
         if (strstr(pszGeoJSON, "Infinity") == nullptr)
         {
-            OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(
+            OGRGeometry *poGeom = OGRGeometry::FromHandle(
                 OGR_G_CreateGeometryFromJson(pszGeoJSON));
             if (poGeom != nullptr)
             {

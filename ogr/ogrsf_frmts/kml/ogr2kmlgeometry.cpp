@@ -505,8 +505,8 @@ char *OGR_G_ExportToKML(OGRGeometryH hGeometry, const char *pszAltitudeMode)
     }
 
     size_t nLength = 0;
-    if (!OGR2KMLGeometryAppend(reinterpret_cast<OGRGeometry *>(hGeometry),
-                               &pszText, &nLength, &nMaxLength, szAltitudeMode))
+    if (!OGR2KMLGeometryAppend(OGRGeometry::FromHandle(hGeometry), &pszText,
+                               &nLength, &nMaxLength, szAltitudeMode))
     {
         CPLFree(pszText);
         return nullptr;

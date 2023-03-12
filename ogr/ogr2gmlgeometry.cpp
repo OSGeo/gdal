@@ -430,7 +430,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree(OGRGeometryH hGeometry)
 {
     OGREnvelope sEnvelope;
 
-    reinterpret_cast<OGRGeometry *>(hGeometry)->getEnvelope(&sEnvelope);
+    OGRGeometry::FromHandle(hGeometry)->getEnvelope(&sEnvelope);
 
     if (!sEnvelope.IsInit())
     {
@@ -1245,7 +1245,7 @@ char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
         return CPLStrdup("");
 
     // Do not use hGeometry after here.
-    OGRGeometry *poGeometry = reinterpret_cast<OGRGeometry *>(hGeometry);
+    OGRGeometry *poGeometry = OGRGeometry::FromHandle(hGeometry);
 
     size_t nLength = 0;
     size_t nMaxLength = 1;

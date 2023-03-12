@@ -116,6 +116,7 @@ CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
     /*      Extract origin location.                                        */
     /* -------------------------------------------------------------------- */
     OGRPoint *poOriginGeometry = nullptr;
+    std::unique_ptr<OGRGeometry> poGeom;
     const char *pszSRSName = nullptr;
 
     {
@@ -129,17 +130,13 @@ CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
             strcpy(psOriginPoint->pszValue, "Point");
             bOldWrap = true;
         }
-        OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(
-            OGR_G_CreateFromGMLTree(psOriginPoint));
+        poGeom.reset(
+            OGRGeometry::FromHandle(OGR_G_CreateFromGMLTree(psOriginPoint)));
 
         if (poGeom != nullptr &&
             wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
             poOriginGeometry = poGeom->toPoint();
-        }
-        else
-        {
-            delete poGeom;
         }
 
         if (bOldWrap)
@@ -180,9 +177,6 @@ CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
 
     CSLDestroy(papszOffset1Tokens);
     CSLDestroy(papszOffset2Tokens);
-
-    if (poOriginGeometry != nullptr)
-        delete poOriginGeometry;
 
     /* -------------------------------------------------------------------- */
     /*      If we have gotten a geotransform, then try to interpret the     */
