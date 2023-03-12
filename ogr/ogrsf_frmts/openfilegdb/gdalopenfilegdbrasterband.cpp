@@ -1194,6 +1194,7 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "poGDS->m_oMapGDALBandToGDBBandId.find(%d) failed",
                  nGDALBandId);
+        return CE_Failure;
     }
     const int nGDBRasterBandId = oIter->second;
 
