@@ -537,6 +537,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_HTTP_PROXYUSERPWD", "PROXYUSERPWD"},
     {"GDAL_PROXY_AUTH", "PROXYAUTH"},
     {"GDAL_HTTP_NETRC", "NETRC"},
+    {"GDAL_HTTP_NETRC_FILE", "NETRC_FILE"},
     {"GDAL_HTTP_MAX_RETRY", "MAX_RETRY"},
     {"GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY"},
     {"GDAL_CURL_CA_BUNDLE", "CAINFO"},
@@ -984,7 +985,8 @@ int CPLHTTPPopFetchCallback(void)
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to
  * specify an proxy authentication scheme to use.</li>
  * <li>NETRC=[YES/NO] to
- * enable or disable use of $HOME/.netrc, default YES.</li>
+ * enable or disable use of $HOME/.netrc (or NETRC_FILE), default YES.</li>
+ * <li>NETRC_FILE=file name to read .netrc info from  (GDAL >= 3.7).</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL
  * >= 1.9.0)</li>
  * <li>FORM_FILE_NAME=val, where val is upload file name. If this
@@ -1043,14 +1045,14 @@ int CPLHTTPPopFetchCallback(void)
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD,
- * PROXYAUTH, NETRC, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
+ * PROXYAUTH, NETRC, NETRC_FILE, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
  * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, TCP_KEEPALIVE,
  * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT values are searched in the
  * configuration options
  * respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
- * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
+ * GDAL_HTTP_NETRC, GDAL_HTTP_NETC_FILE, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
  * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION,
  * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL,
@@ -2184,6 +2186,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         pszHttpNetrc = CPLGetConfigOption("GDAL_HTTP_NETRC", "YES");
     if (pszHttpNetrc == nullptr || CPLTestBool(pszHttpNetrc))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_NETRC, 1L);
+
+    // Custom .netrc file location
+    const char *pszHttpNetrcFile =
+        CSLFetchNameValue(papszOptions, "NETRC_FILE");
+    if (pszHttpNetrcFile == nullptr)
+        pszHttpNetrcFile = CPLGetConfigOption("GDAL_HTTP_NETRC_FILE", nullptr);
+    if (pszHttpNetrcFile)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_NETRC_FILE,
+                                   pszHttpNetrcFile);
 
     // Support setting userid:password.
     const char *pszUserPwd = CSLFetchNameValue(papszOptions, "USERPWD");
