@@ -147,7 +147,6 @@ Raster drivers
    pnm
    postgisraster
    prf
-   rasdaman
    rasterlite
    rasterlite2
    r

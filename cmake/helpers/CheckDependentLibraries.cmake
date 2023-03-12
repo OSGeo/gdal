@@ -247,7 +247,6 @@ endfunction ()
 # Custom find_package definitions
 
 define_find_package2(Crnlib crunch/crnlib.h crunch)
-define_find_package2(RASDAMAN rasdaman.hh raslib)
 
 if (WIN32)
   gdal_check_package(ODBC "Enable DB support through ODBC" CAN_DISABLE)
@@ -709,8 +708,6 @@ gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
-# TODO: implement FindRASDAMAN libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
-gdal_check_package(RASDAMAN "enable rasdaman driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
 gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE)
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)

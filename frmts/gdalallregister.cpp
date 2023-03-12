@@ -154,10 +154,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JDEM();
 #endif
 
-#ifdef FRMT_rasdaman
-    GDALRegister_RASDAMAN();
-#endif
-
 #ifdef FRMT_gif
     GDALRegister_GIF();
     GDALRegister_BIGGIF();
