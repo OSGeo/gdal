@@ -892,7 +892,7 @@ void GDALWarpOperation::CollectChunkList(int nDstXOff, int nDstYOff,
         // This is really a gross heuristics, but should work in most cases
         if (dfApproxAccArea >= dfTotalArea * 0.80)
         {
-            reinterpret_cast<GDALDataset *>(psOptions->hSrcDS)
+            GDALDataset::FromHandle(psOptions->hSrcDS)
                 ->AdviseRead(nSrcXOff, nSrcYOff, nSrcX2Off - nSrcXOff,
                              nSrcY2Off - nSrcYOff, nDstXSize, nDstYSize,
                              psOptions->eWorkingDataType, psOptions->nBandCount,
@@ -1570,7 +1570,7 @@ CPLErr GDALWarpOperation::WarpRegion(
     /*      If we aren't doing fixed initialization of the output buffer    */
     /*      then read it from disk so we can overlay on existing imagery.   */
     /* -------------------------------------------------------------------- */
-    GDALDataset *poDstDS = reinterpret_cast<GDALDataset *>(psOptions->hDstDS);
+    GDALDataset *poDstDS = GDALDataset::FromHandle(psOptions->hDstDS);
     if (!bDstBufferInitialized)
     {
         CPLErr eErr = CE_None;
@@ -1861,8 +1861,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     if (eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0)
     {
-        GDALDataset *poSrcDS =
-            reinterpret_cast<GDALDataset *>(psOptions->hSrcDS);
+        GDALDataset *poSrcDS = GDALDataset::FromHandle(psOptions->hSrcDS);
         if (psOptions->nBandCount == 1)
         {
             // Particular case to simplify the stack a bit.

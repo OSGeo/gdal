@@ -306,7 +306,7 @@ HKVRasterBand::HKVRasterBand(HKVDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                              unsigned int nImgOffsetIn, int nPixelOffsetIn,
                              int nLineOffsetIn, GDALDataType eDataTypeIn,
                              int bNativeOrderIn)
-    : RawRasterBand(reinterpret_cast<GDALDataset *>(poDSIn), nBandIn, fpRawIn,
+    : RawRasterBand(GDALDataset::FromHandle(poDSIn), nBandIn, fpRawIn,
                     nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
                     bNativeOrderIn, RawRasterBand::OwnFP::NO)
 
@@ -1607,7 +1607,7 @@ GDALDataset *HKVDataset::Create(const char *pszFilenameIn, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Open the dataset normally.                                      */
     /* -------------------------------------------------------------------- */
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilenameIn, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilenameIn, GA_Update));
 }
 
 /************************************************************************/

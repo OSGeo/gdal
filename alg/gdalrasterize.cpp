@@ -1391,7 +1391,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
     if (nBandCount == 0 || nLayerCount == 0)
         return CE_None;
 
-    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(hDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
 
     // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand(panBandList[0]);

@@ -630,7 +630,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
             // to be opened by a random driver.
             static const char *const apszDrivers[] = {
                 "JP2KAK", "JP2ECW", "JP2MRSID", "JP2OPENJPEG", nullptr};
-            poDS->poJ2KDataset = reinterpret_cast<GDALDataset *>(GDALOpenEx(
+            poDS->poJ2KDataset = GDALDataset::FromHandle(GDALOpenEx(
                 osDSName, GDAL_OF_RASTER, apszDrivers, nullptr, nullptr));
 
             if (poDS->poJ2KDataset == nullptr)
@@ -756,7 +756,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         CPLDebug("GDAL", "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
 
         poDS->poJPEGDataset =
-            reinterpret_cast<GDALDataset *>(GDALOpen(osDSName, GA_ReadOnly));
+            GDALDataset::FromHandle(GDALOpen(osDSName, GA_ReadOnly));
         if (poDS->poJPEGDataset == nullptr)
         {
             int bFoundJPEGDriver = GDALGetDriverByName("JPEG") != nullptr;
@@ -3827,7 +3827,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
                       panJPEGBlockOffset[iBlock], 0, osNITFFilename.c_str());
 
     GDALDataset *poDS =
-        reinterpret_cast<GDALDataset *>(GDALOpen(osFilename, GA_ReadOnly));
+        GDALDataset::FromHandle(GDALOpen(osFilename, GA_ReadOnly));
     if (poDS == nullptr)
         return CE_Failure;
 

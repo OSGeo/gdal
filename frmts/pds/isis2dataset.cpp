@@ -995,7 +995,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
                                    pszInterleaving))
         return nullptr;
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(osOutFile, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(osOutFile, GA_Update));
 }
 
 /************************************************************************/

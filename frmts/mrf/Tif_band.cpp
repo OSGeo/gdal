@@ -151,7 +151,7 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     VSIFCloseL(fp);
 
     static const char *const apszAllowedDrivers[] = {"GTiff", nullptr};
-    GDALDataset *poTiff = reinterpret_cast<GDALDataset *>(GDALOpenEx(
+    GDALDataset *poTiff = GDALDataset::FromHandle(GDALOpenEx(
         fname, GDAL_OF_RASTER, apszAllowedDrivers, nullptr, nullptr));
 
     if (poTiff == nullptr || 0 == poTiff->GetRasterCount())

@@ -1103,7 +1103,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
             /* Add a mask band if needed */
             if (GetMaskFlags() != GMF_ALL_VALID)
             {
-                reinterpret_cast<GDALDataset *>(hVRTDS)->CreateMaskBand(0);
+                GDALDataset::FromHandle(hVRTDS)->CreateMaskBand(0);
                 VRTSourcedRasterBand *poVRTMaskBand =
                     reinterpret_cast<VRTSourcedRasterBand *>(
                         reinterpret_cast<GDALRasterBand *>(hVRTBand)

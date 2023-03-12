@@ -734,7 +734,7 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (eErr == CE_Failure)
         return nullptr;
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

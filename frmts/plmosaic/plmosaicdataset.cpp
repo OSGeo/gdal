@@ -984,7 +984,7 @@ int PLMosaicDataset::OpenMosaic()
                     GM_ORIGIN, 256 << nZoomLevel, 256 << nZoomLevel, nZoomLevel,
                     pszSRS, osCacheStr.c_str());
 
-                GDALDataset *poTMSDS = reinterpret_cast<GDALDataset *>(
+                GDALDataset *poTMSDS = GDALDataset::FromHandle(
                     GDALOpenEx(osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                nullptr, nullptr, nullptr));
                 if (poTMSDS)
@@ -1022,7 +1022,7 @@ int PLMosaicDataset::OpenMosaic()
                     }
                     poTMSDS->Dereference();
 
-                    apoTMSDS.push_back(reinterpret_cast<GDALDataset *>(hVRTDS));
+                    apoTMSDS.push_back(GDALDataset::FromHandle(hVRTDS));
                 }
 
                 if (nOvrXSize < 256 && nOvrYSize < 256)
@@ -1231,7 +1231,7 @@ GDALDataset *PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
                                                       CPLString osTilename)
 {
     const char *const apszAllowedDrivers[2] = {"GTiff", nullptr};
-    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(
+    GDALDataset *poDS = GDALDataset::FromHandle(
         GDALOpenEx(osTmpFilename, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                    apszAllowedDrivers, nullptr, nullptr));
     if (poDS != nullptr)

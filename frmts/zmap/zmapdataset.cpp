@@ -692,7 +692,7 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
     if (eErr != CE_None)
         return nullptr;
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_ReadOnly));
 }
 
 /************************************************************************/

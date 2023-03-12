@@ -2411,7 +2411,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
     poDS->SetupNBits();
 
-    return reinterpret_cast<GDALDataset *>(poDS);
+    return GDALDataset::FromHandle(poDS);
 }
 
 // GIS Panorama 11 was introduced new format for huge files (greater than 3 Gb)

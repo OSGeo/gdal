@@ -891,7 +891,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         /* --------------------------------------------------------------------
          */
         GDALDataset *poBandFile =
-            reinterpret_cast<GDALDataset *>(GDALOpen(pszFullname, GA_ReadOnly));
+            GDALDataset::FromHandle(GDALOpen(pszFullname, GA_ReadOnly));
         if (poBandFile == nullptr)
         {
             CPLFree(pszFullname);

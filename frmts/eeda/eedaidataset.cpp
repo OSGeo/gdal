@@ -434,7 +434,7 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
     VSIFCloseL(VSIFileFromMemBuffer(
         osTmpFilename, const_cast<GByte *>(pabyData), nDataLen, false));
     const char *const apszDrivers[] = {"PNG", "JPEG", "GTIFF", nullptr};
-    GDALDataset *poTileDS = reinterpret_cast<GDALDataset *>(GDALOpenEx(
+    GDALDataset *poTileDS = GDALDataset::FromHandle(GDALOpenEx(
         osTmpFilename, GDAL_OF_RASTER, apszDrivers, nullptr, nullptr));
     if (poTileDS == nullptr)
     {

@@ -382,7 +382,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
     CPLErr eErr = CE_None;
     if (papszTO != nullptr)
     {
-        GDALDataset *poDS = reinterpret_cast<GDALDataset *>(hDstDS);
+        GDALDataset *poDS = GDALDataset::FromHandle(hDstDS);
         char **papszTransformerOptions = CSLDuplicate(papszTO);
         double adfGeoTransform[6] = {0.0};
         if (poDS->GetGeoTransform(adfGeoTransform) != CE_None &&

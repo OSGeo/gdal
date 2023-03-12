@@ -1572,8 +1572,8 @@ MAIN_START(nArgc, papszArgv)
         /* --------------------------------------------------------------------
          */
 
-        GDALDataset *poLnDS = reinterpret_cast<GDALDataset *>(
-            OGROpen(pszLineDataSource, FALSE, nullptr));
+        GDALDataset *poLnDS =
+            GDALDataset::FromHandle(OGROpen(pszLineDataSource, FALSE, nullptr));
 
         /* --------------------------------------------------------------------
          */
@@ -1599,7 +1599,7 @@ MAIN_START(nArgc, papszArgv)
             exit(1);
         }
 
-        GDALDataset *poPkDS = reinterpret_cast<GDALDataset *>(
+        GDALDataset *poPkDS = GDALDataset::FromHandle(
             OGROpen(pszPicketsDataSource, FALSE, nullptr));
         /* --------------------------------------------------------------------
          */
@@ -1749,7 +1749,7 @@ MAIN_START(nArgc, papszArgv)
         else if (dfX == -100000000.0 || dfY == -100000000.0)
             Usage("no coordinates provided");
 
-        GDALDataset *poPartsDS = reinterpret_cast<GDALDataset *>(
+        GDALDataset *poPartsDS = GDALDataset::FromHandle(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
         /* --------------------------------------------------------------------
          */
@@ -1803,7 +1803,7 @@ MAIN_START(nArgc, papszArgv)
         else if (dfPos == -100000000.0)
             Usage("no position provided");
 
-        GDALDataset *poPartsDS = reinterpret_cast<GDALDataset *>(
+        GDALDataset *poPartsDS = GDALDataset::FromHandle(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
         /* --------------------------------------------------------------------
          */
@@ -1856,7 +1856,7 @@ MAIN_START(nArgc, papszArgv)
             Usage("no end position provided");
 
         // Open data source.
-        GDALDataset *poPartsDS = reinterpret_cast<GDALDataset *>(
+        GDALDataset *poPartsDS = GDALDataset::FromHandle(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
 
         // Report failure.
