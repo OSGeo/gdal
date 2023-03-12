@@ -116,7 +116,7 @@ class GDALWMSFileCache : public GDALWMSCacheImpl
     virtual GDALDataset *GetDataset(const char *pszKey,
                                     char **papszOpenOptions) const override
     {
-        return reinterpret_cast<GDALDataset *>(GDALOpenEx(
+        return GDALDataset::FromHandle(GDALOpenEx(
             GetFilePath(pszKey),
             GDAL_OF_RASTER | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, nullptr,
             papszOpenOptions, nullptr));

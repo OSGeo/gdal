@@ -1040,12 +1040,11 @@ GDALDataset *NTv2Dataset::Create(const char *pszFilename, int nXSize,
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
     if (nNumFile == 1)
-        return reinterpret_cast<GDALDataset *>(
-            GDALOpen(pszFilename, GA_Update));
+        return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 
     CPLString osSubDSName;
     osSubDSName.Printf("NTv2:%d:%s", nNumFile - 1, pszFilename);
-    return reinterpret_cast<GDALDataset *>(GDALOpen(osSubDSName, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(osSubDSName, GA_Update));
 }
 
 /************************************************************************/

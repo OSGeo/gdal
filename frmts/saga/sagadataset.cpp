@@ -991,7 +991,7 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
 
     VSIFCloseL(fp);
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

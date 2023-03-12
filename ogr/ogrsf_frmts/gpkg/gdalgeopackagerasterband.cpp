@@ -248,7 +248,7 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
 
                     // Only PNG can have color table.
                     const char *apszDrivers[] = {"PNG", nullptr};
-                    GDALDataset *poDSTile = reinterpret_cast<GDALDataset *>(
+                    GDALDataset *poDSTile = GDALDataset::FromHandle(
                         GDALOpenEx(osMemFileName.c_str(),
                                    GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                    apszDrivers, nullptr, nullptr));
@@ -450,7 +450,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
     int nBlockXSize, nBlockYSize;
     IGetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nBands = IGetRasterCount();
-    GDALDataset *poDSTile = reinterpret_cast<GDALDataset *>(
+    GDALDataset *poDSTile = GDALDataset::FromHandle(
         GDALOpenEx(osMemFileName.c_str(), GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                    (m_eDT == GDT_Byte)                   ? apszDriversByte
                    : (m_eTF == GPKG_TF_TIFF_32BIT_FLOAT) ? apszDriversFloat

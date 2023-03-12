@@ -1907,8 +1907,8 @@ static bool GDALRPCOpenDEM(GDALRPCTransformInfo *psTransform)
         CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
     }
     CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
-    psTransform->poDS = reinterpret_cast<GDALDataset *>(
-        GDALOpen(psTransform->pszDEMPath, GA_ReadOnly));
+    psTransform->poDS =
+        GDALDataset::FromHandle(GDALOpen(psTransform->pszDEMPath, GA_ReadOnly));
     if (psTransform->poDS != nullptr &&
         psTransform->poDS->GetRasterCount() >= 1)
     {

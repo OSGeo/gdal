@@ -461,7 +461,7 @@ GDALDataset *GTXDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     CPL_IGNORE_RET_VAL(VSIFWriteL(header, 40, 1, fp));
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

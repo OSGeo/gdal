@@ -805,7 +805,7 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     VSIFCloseL(fp);
     CPLFree(pabyRLELine);
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

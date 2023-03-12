@@ -876,7 +876,7 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
     delete poDstBand;
     VSIFCloseL(fpImage);
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_ReadOnly));
 }
 
 /************************************************************************/
