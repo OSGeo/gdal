@@ -1594,5 +1594,5 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
  */
 void OGRGeocodeFreeResult(OGRLayerH hLayer)
 {
-    delete reinterpret_cast<OGRLayer *>(hLayer);
+    delete OGRLayer::FromHandle(hLayer);
 }
