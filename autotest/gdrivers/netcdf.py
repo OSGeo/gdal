@@ -5768,6 +5768,12 @@ def test_netcdf_polar_stereographic_variant_b():
 # Test /vsi access through userfaultfd
 
 
+def has_working_userfaultfd():
+    return (
+        gdal.GetDriverByName("netCDF").GetMetadataItem(gdal.DCAP_VIRTUALIO) is not None
+    )
+
+
 def test_netcdf_open_userfaultfd():
 
     gdal.Unlink("tmp/test_netcdf_open_userfaultfd.zip")
@@ -5780,22 +5786,17 @@ def test_netcdf_open_userfaultfd():
 
     # Can only work on Linux, with some kernel versions... not in Docker by default
     # so mostly test that we don't crash
-    with gdaltest.error_handler():
-        ds = gdal.Open("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc")
-
-    success_expected = False
-    if "CI" not in os.environ:
-        if sys.platform.startswith("linux"):
-            uname = os.uname()
-            version = uname.release.split(".")
-            major = int(version[0])
-            minor = int(version[1])
-            if (major, minor) >= (5, 11):
-                assert ds
-                success_expected = True
-
-    if ds and not success_expected:
-        print("/vsi access through userfaultfd succeeded")
+    if has_working_userfaultfd():
+        assert (
+            gdal.Open("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc")
+            is not None
+        )
+    else:
+        with gdaltest.error_handler():
+            assert (
+                gdal.Open("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc")
+                is None
+            )
 
     gdal.Unlink("tmp/test_netcdf_open_userfaultfd.zip")
 
