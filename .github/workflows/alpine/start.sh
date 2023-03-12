@@ -57,9 +57,13 @@ ccache -M 1G
 ccache -s
 
 # install pip and use it to install test dependencies
+PYTHON_VER=$(python3 -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))")
 python3 -m venv myvenv
 . ./myvenv/bin/activate
 pip3 install -U -r autotest/requirements.txt
+
+# Make sure system numpy is accessible
+export PYTHONPATH=/usr/lib/python${PYTHON_VER}/site-packages
 
 # Configure GDAL
 mkdir -p build_ci_alpine
