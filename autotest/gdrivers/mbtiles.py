@@ -117,7 +117,7 @@ def test_mbtiles_2():
 # Open a /vsicurl/ DB
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.skipif(
     sys.platform == "darwin" and gdal.GetConfigOption("TRAVIS", None) is not None,
     reason="Hangs on MacOSX Travis sometimes. Not sure why.",
@@ -166,7 +166,7 @@ def test_mbtiles_3():
 #
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_mbtiles_start_webserver():
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
@@ -180,7 +180,7 @@ def test_mbtiles_start_webserver():
 #
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
 def test_mbtiles_http_jpeg_three_bands():
 
@@ -201,7 +201,7 @@ def test_mbtiles_http_jpeg_three_bands():
 #
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
 def test_mbtiles_http_jpeg_single_band():
 
@@ -222,7 +222,7 @@ def test_mbtiles_http_jpeg_single_band():
 #
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
 def test_mbtiles_http_png():
 
@@ -243,7 +243,7 @@ def test_mbtiles_http_png():
 #
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_mbtiles_stop_webserver():
 
     if gdaltest.webserver_port != 0:

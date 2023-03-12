@@ -1168,7 +1168,7 @@ def test_tiff_read_online_1():
 # support
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_tiff_read_vsicurl_multirange():
 
     webserver_process = None
@@ -4149,13 +4149,12 @@ def test_tiff_read_cog_strile_arrays_zeroified_when_possible():
 # Check that our reading of a COG with /vsicurl is efficient
 
 
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_cog_vsicurl():
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -4284,13 +4283,12 @@ def test_tiff_read_cog_vsicurl():
 # Check that our reading of a COG with /vsicurl is efficient
 
 
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_cog_with_mask_vsicurl():
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -4788,7 +4786,7 @@ def test_tiff_read_multi_threaded(
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
 @pytest.mark.parametrize("advise_read", [True, False])
 @pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.skipif(
     not check_libtiff_internal_or_at_least(4, 0, 11),
     reason="libtiff >= 4.0.11 required",
@@ -4874,7 +4872,7 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster, advise_read):
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 @pytest.mark.skipif(
     not check_libtiff_internal_or_at_least(4, 0, 11),
     reason="libtiff >= 4.0.11 required",

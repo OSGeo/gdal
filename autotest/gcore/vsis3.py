@@ -41,6 +41,8 @@ import webserver
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_curl()
+
 
 def open_for_read(uri):
     """
@@ -88,8 +90,6 @@ def aws_test_config():
 
 @pytest.fixture(scope="module")
 def webserver_port():
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -124,9 +124,6 @@ def test_vsis3_init(aws_test_config):
 
 
 def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     options = {
         "AWS_S3_ENDPOINT": "s3.amazonaws.com",
@@ -168,10 +165,6 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
 def test_vsis3_sync_multithreaded_download(
     aws_test_config_as_config_options_or_credentials,
 ):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
     def cbk(pct, _, tab):
         assert pct >= tab[0]
         tab[0] = pct
@@ -213,10 +206,6 @@ def test_vsis3_sync_multithreaded_download(
 
 
 def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
     def cbk(pct, _, tab):
         assert pct >= tab[0]
         tab[0] = pct
@@ -255,9 +244,6 @@ def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
 
 
 def test_vsis3_1(aws_test_config):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     # Missing AWS_SECRET_ACCESS_KEY
     with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}, thread_local=False):
@@ -5249,9 +5235,6 @@ def test_vsis3_DISABLE_READDIR_ON_OPEN_option(aws_test_config, webserver_port):
 
 
 def test_vsis3_extra_1():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     credentials_filename = (
         gdal.GetConfigOption("HOME", gdal.GetConfigOption("USERPROFILE", ""))

@@ -1838,11 +1838,8 @@ def test_ogr_shape_42():
 # Test /vsizip//vsicurl/
 
 
+@pytest.mark.require_curl()
 def test_ogr_shape_43():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
 
     conn = gdaltest.gdalurlopen(
         "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip"
@@ -1870,11 +1867,9 @@ def test_ogr_shape_43():
 # Test /vsicurl/ on a directory
 
 
-def ogr_shape_44_DISABLED():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
+@pytest.mark.require_curl()
+@pytest.mark.skip(reason="file should be hosted on a non github server")
+def test_ogr_shape_44():
 
     conn = gdaltest.gdalurlopen(
         "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip"

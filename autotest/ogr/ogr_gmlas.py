@@ -1009,12 +1009,8 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
     "SKIP_OGR_GMLAS_HTTP_RELATED" in os.environ,
     reason="test skipped on CI due to timeout on Windows Conda builds with parallel ctest",
 )
+@pytest.mark.require_curl()
 def test_ogr_gmlas_cache():
-
-    drv = gdal.GetDriverByName("HTTP")
-
-    if drv is None:
-        pytest.skip()
 
     (webserver_process, webserver_port) = webserver.launch(handler=GMLASHTTPHandler)
     if webserver_port == 0:
@@ -1497,11 +1493,8 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
     "SKIP_OGR_GMLAS_HTTP_RELATED" in os.environ,
     reason="test skipped on CI due to timeout on Windows Conda builds with parallel ctest",
 )
+@pytest.mark.require_curl()
 def test_ogr_gmlas_xlink_resolver():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
 
     (webserver_process, webserver_port) = webserver.launch(handler=GMLASHTTPHandler)
     if webserver_port == 0:

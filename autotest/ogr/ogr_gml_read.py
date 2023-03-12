@@ -1806,7 +1806,7 @@ def test_ogr_gml_43():
         ):
             can_download_schema = False
         else:
-            can_download_schema = gdal.GetDriverByName("HTTP") is not None
+            can_download_schema = gdaltest.built_against_curl
 
         assert not can_download_schema, ".gfs found, but schema could be downloaded"
 
