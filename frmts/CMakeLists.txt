@@ -103,9 +103,8 @@ gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPP
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")
 gdal_dependent_format(gif "Graphics Interchange Format" "GDAL_USE_GIF OR GDAL_USE_GIF_INTERNAL")
 
-gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL" SKIP_ADD_SUBDIRECTORY)
-gdal_dependent_format(http "HTTP driver" "GDAL_USE_CURL" SKIP_ADD_SUBDIRECTORY)
-add_subdirectory(wcs)
+gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL")
+gdal_dependent_format(http "HTTP driver" "GDAL_USE_CURL")
 
 gdal_dependent_format(netcdf "NetCDF network Common Data Form" "GDAL_USE_NETCDF")
 gdal_optional_format(zarr "ZARR")
@@ -157,9 +156,3 @@ target_include_directories(
                      $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
 set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-
-# Special case for HTTP driver since it is included in the frmts/wcs/ directory We should ultimately make it a separate
-# frmts/http/ to clean up things.
-if (GDAL_ENABLE_DRIVER_HTTP AND NOT GDAL_ENABLE_DRIVER_HTTP_PLUGIN)
-  target_compile_definitions(gdal_frmts PRIVATE -DFRMT_http)
-endif ()
