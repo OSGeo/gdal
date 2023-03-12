@@ -43,14 +43,13 @@ import webserver
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("WCS")
+
 ###############################################################################
 # Verify we have the driver.
 
 
 def test_wcs_1():
-
-    # Disable wcs tests till we have a more reliable test server.
-    gdaltest.wcs_drv = gdal.GetDriverByName("WCS")
 
     # NOTE - mloskot:
     # This is a dirty hack checking if remote WCS service is online.
