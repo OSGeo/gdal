@@ -31,14 +31,11 @@
 import base64
 import stat
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.skipif(
-    not gdaltest.built_against_curl(), reason="GDAL not built against curl"
-)
+pytestmark = pytest.mark.require_curl()
 
 
 def open_for_read(uri):

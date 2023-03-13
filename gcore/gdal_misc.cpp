@@ -60,6 +60,10 @@
 
 #include "proj.h"
 
+#ifdef HAVE_CURL
+#include "cpl_curl_priv.h"
+#endif
+
 static int GetMinBitsForPair(const bool pabSigned[], const bool pabFloating[],
                              const int panBits[])
 {
@@ -2370,6 +2374,10 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
         osBuildInfo += "OGR_ENABLED=YES\n";  // Deprecated.  Always yes.
+#ifdef HAVE_CURL
+        osBuildInfo += "CURL_ENABLED=YES\n";
+        osBuildInfo += "CURL_VERSION=" LIBCURL_VERSION "\n";
+#endif
 #ifdef HAVE_GEOS
         osBuildInfo += "GEOS_ENABLED=YES\n";
 #ifdef GEOS_CAPI_VERSION

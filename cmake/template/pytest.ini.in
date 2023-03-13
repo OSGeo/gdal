@@ -19,6 +19,10 @@ env =
 gdal_version = @GDAL_VERSION@
 
 markers =
+    require_curl: Skip test(s) if curl support is absent
     require_driver: Skip test(s) if driver isn't present
     require_run_on_demand: Skip test(s) if RUN_ON_DEMAND environment variable is not set
     slow: Skip test(s) if GDAL_RUN_SLOW_TESTS environment variable is not set
+
+# Make sure that all markers are declared above
+addopts = --strict-markers

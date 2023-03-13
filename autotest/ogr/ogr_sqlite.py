@@ -1274,24 +1274,27 @@ def test_ogr_sqlite_24():
 
 
 ###############################################################################
+
+
+def get_sqlite_version():
+    ds = ogr.Open(":memory:")
+    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
+    feat = sql_lyr.GetNextFeature()
+    sqlite_version = feat.GetFieldAsString(0)
+    print("SQLite version : %s" % sqlite_version)
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+    return sqlite_version
+
+
+###############################################################################
 # Test opening a /vsicurl/ DB
 
 
+@pytest.mark.require_curl()
 def test_ogr_sqlite_25():
 
     if gdaltest.sl_ds is None:
-        pytest.skip()
-
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
-    feat = sql_lyr.GetNextFeature()
-    ogrtest.sqlite_version = feat.GetFieldAsString(0)
-    print("SQLite version : %s" % ogrtest.sqlite_version)
-    feat = None
-    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    drv = gdal.GetDriverByName("HTTP")
-
-    if drv is None:
         pytest.skip()
 
     # Check that we have SQLite VFS support
@@ -3317,7 +3320,7 @@ def test_ogr_sqlite_43():
         pytest.skip()
 
     # Only available since sqlite 3.8.0
-    version = ogrtest.sqlite_version.split(".")
+    version = get_sqlite_version().split(".")
     if not (
         len(version) >= 3
         and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30800
@@ -3393,7 +3396,7 @@ def test_ogr_sqlite_45():
         pytest.skip()
 
     # Only available since sqlite 3.7.0
-    version = ogrtest.sqlite_version.split(".")
+    version = get_sqlite_version().split(".")
     if not (
         len(version) >= 3
         and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30700

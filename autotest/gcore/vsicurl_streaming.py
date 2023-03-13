@@ -35,15 +35,13 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_curl()
+
 ###############################################################################
 #
 
 
 def test_vsicurl_streaming_1():
-    drv = gdal.GetDriverByName("HTTP")
-
-    if drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "5")
     fp = gdal.VSIFOpenL(

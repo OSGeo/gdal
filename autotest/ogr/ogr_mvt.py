@@ -752,13 +752,11 @@ def test_ogr_mvt_errors():
 ###############################################################################
 
 
+@pytest.mark.require_curl()
 def test_ogr_mvt_http_start():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -770,6 +768,7 @@ def test_ogr_mvt_http_start():
 ###############################################################################
 
 
+@pytest.mark.require_curl()
 def test_ogr_mvt_http():
 
     if gdaltest.webserver_port == 0:
@@ -895,6 +894,7 @@ def test_ogr_mvt_http():
 ###############################################################################
 
 
+@pytest.mark.require_curl()
 def test_ogr_mvt_http_stop():
 
     if gdaltest.webserver_port == 0:

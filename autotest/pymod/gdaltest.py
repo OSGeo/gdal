@@ -1890,7 +1890,7 @@ def is_file_open(filename):
 
 
 def built_against_curl():
-    return gdal.GetDriverByName("HTTP") is not None
+    return "CURL_ENABLED=YES" in gdal.VersionInfo("BUILD_INFO")
 
 
 ###############################################################################

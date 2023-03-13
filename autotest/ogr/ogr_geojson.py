@@ -4082,10 +4082,8 @@ def test_ogr_geojson_feature_large():
 # Test reading http:// resource
 
 
+@pytest.mark.require_curl()
 def test_ogr_geojson_read_from_http():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     import webserver
 

@@ -121,6 +121,7 @@ def pytest_collection_modifyitems(config, items):
     import gdaltest
 
     drivers_checked = {}
+    # Note: when adding a new custom marker, document it in cmake/template/pytest.ini.in
     for item in items:
         for mark in item.iter_markers("require_driver"):
             driver_name = mark.args[0]
@@ -140,6 +141,10 @@ def pytest_collection_modifyitems(config, items):
         for mark in item.iter_markers("slow"):
             if not gdaltest.run_slow_tests():
                 item.add_marker(pytest.mark.skip("GDAL_RUN_SLOW_TESTS not set"))
+
+        for mark in item.iter_markers("require_curl"):
+            if not gdaltest.built_against_curl():
+                item.add_marker(pytest.mark.skip("curl support not available"))
 
 
 def pytest_addoption(parser):

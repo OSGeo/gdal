@@ -37,6 +37,8 @@ import webserver
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_curl()
+
 
 def open_for_read(uri):
     """
@@ -65,8 +67,6 @@ def gs_test_config():
 
 @pytest.fixture(scope="module")
 def webserver_port():
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -101,9 +101,6 @@ def test_vsigs_init(gs_test_config):
 
 
 def test_vsigs_1(gs_test_config):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -179,9 +176,6 @@ def test_vsigs_1(gs_test_config):
 
 
 def test_vsigs_no_sign_request(gs_test_config):
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     with gdaltest.config_options({"CPL_GS_ENDPOINT": ""}, thread_local=False):
 
@@ -1555,9 +1549,6 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
 
 
 def test_vsigs_extra_1():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gs_resource = gdal.GetConfigOption("GS_RESOURCE")
     if gs_resource is None:
