@@ -200,18 +200,6 @@ if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
     set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
     set(Python_VERSION_MAJOR ${PYTHON_VERSION_MAJOR})
     set(Python_VERSION_MINOR ${PYTHON_VERSION_MINOR})
-
-    # Detect numpy
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
-         "try:\n  import numpy\n  print(numpy.get_include())\nexcept:\n  pass\n")
-    execute_process(
-      COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
-      OUTPUT_VARIABLE _numpy_include
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if (NOT _numpy_include STREQUAL "")
-      set(Python_NumPy_FOUND TRUE)
-      set(Python_NumPy_INCLUDE_DIRS ${Python_NumPy_INCLUDE_DIRS})
-    endif ()
   endif ()
   if (PYTHONLIBS_FOUND)
     set(Python_Development_FOUND TRUE)
@@ -224,6 +212,19 @@ if (Python_Interpreter_FOUND)
     GENERATE
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python_executable.txt"
     CONTENT "${Python_EXECUTABLE}")
+  if(NOT Python_NumPy_FOUND)
+    # Detect numpy
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
+         "try:\n  import numpy\n  print(numpy.get_include())\nexcept:\n  pass\n")
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
+      OUTPUT_VARIABLE _numpy_include
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (NOT _numpy_include STREQUAL "")
+      set(Python_NumPy_FOUND TRUE)
+      set(Python_NumPy_INCLUDE_DIRS ${Python_NumPy_INCLUDE_DIRS})
+    endif ()
+  endif()
 endif()
 
 if (SWIG_FOUND AND (Python_Interpreter_FOUND OR Python_FOUND))
