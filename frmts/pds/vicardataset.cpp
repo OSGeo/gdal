@@ -2880,6 +2880,12 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                                           nBandOffset * i),
                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset),
                 eDataType, eByteOrder);
+            if (CPLGetLastErrorType() != CE_None)
+            {
+                delete poBand;
+                delete poDS;
+                return nullptr;
+            }
         }
 
         poDS->SetBand(i + 1, poBand);
