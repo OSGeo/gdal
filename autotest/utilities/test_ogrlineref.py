@@ -36,7 +36,6 @@ import pytest
 sys.path.append("../ogr")
 
 import gdaltest
-import ogrtest
 import test_cli_utilities
 
 from osgeo import ogr
@@ -46,7 +45,7 @@ pytestmark = [
         test_cli_utilities.get_ogrlineref_path() is None,
         reason="ogrlineref not available",
     ),
-    pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing"),
+    pytest.mark.require_geos,
 ]
 
 

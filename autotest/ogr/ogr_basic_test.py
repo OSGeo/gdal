@@ -32,7 +32,6 @@ import os
 import struct
 
 import gdaltest
-import ogrtest
 import pytest
 
 from osgeo import gdal, ogr, osr
@@ -448,10 +447,8 @@ def test_ogr_basic_10():
 # Test double call to UseExceptions() (#5704)
 
 
+@pytest.mark.require_geos
 def test_ogr_basic_11():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     used_exceptions_before = ogr.GetUseExceptions()
     for _ in range(2):

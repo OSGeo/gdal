@@ -1819,10 +1819,8 @@ def test_ogr_sql_sqlite_25():
     assert val2_sql is None
 
 
+@pytest.mark.require_geos
 def test_ogr_sql_sqlite_26():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     # if ogrtest.has_spatialite is True:
     #    return 'skip'

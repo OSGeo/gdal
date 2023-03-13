@@ -1842,10 +1842,8 @@ def test_ogr_openfilegdb_21():
 # where a polygon with inner rings has its exterior ring with wrong orientation
 
 
+@pytest.mark.require_geos
 def test_ogr_openfilegdb_weird_winding_order():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open(
         "/vsizip/data/filegdb/weird_winding_order_fgdb.zip/roads_clip Drawing.gdb"

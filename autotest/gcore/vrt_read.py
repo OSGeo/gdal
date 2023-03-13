@@ -998,12 +998,8 @@ def test_vrt_read_24():
 # Test GetDataCoverageStatus()
 
 
+@pytest.mark.require_geos
 def test_vrt_read_25():
-
-    import ogrtest
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = gdal.Open(
         """<VRTDataset rasterXSize="2000" rasterYSize="200">

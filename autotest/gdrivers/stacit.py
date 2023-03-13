@@ -31,7 +31,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("STACIT")
 
@@ -153,10 +153,8 @@ def test_stacit_multiple_assets():
     assert ds is None
 
 
+@pytest.mark.require_geos
 def test_stacit_overlapping_sources():
-
-    if ogr.GetGEOSVersionMajor() == 0:
-        pytest.skip("GEOS not available")
 
     ds = gdal.Open("data/stacit/overlapping_sources.json")
     assert ds is not None

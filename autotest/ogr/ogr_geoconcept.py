@@ -254,10 +254,8 @@ def test_ogr_gxt_multipolygon_singlepart_nohole():
 #
 
 
+@pytest.mark.require_geos
 def test_ogr_gxt_multipolygon_singlepart_hole():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open("data/geoconcept/geoconcept_multipolygon_singlepart_hole.txt")
     lyr = ds.GetLayer(0)
@@ -279,10 +277,8 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
 #
 
 
+@pytest.mark.require_geos
 def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open(
         "data/geoconcept/geoconcept_multipolygon_twoparts_second_with_hole.txt"
@@ -306,10 +302,8 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
 #
 
 
+@pytest.mark.require_geos
 def test_ogr_gxt_line():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.Open("data/geoconcept/line.gxt")
     lyr = ds.GetLayer(0)

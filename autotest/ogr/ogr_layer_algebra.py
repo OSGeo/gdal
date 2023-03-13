@@ -35,13 +35,7 @@ import pytest
 
 from osgeo import ogr
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
+pytestmark = pytest.mark.require_geos
 
 
 ###############################################################################
