@@ -2242,8 +2242,7 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
         iFirstPageIdx[0] = iLastPageIdx[0] = -1;
         if (nFeaturesInPage >= 2 &&
             nFeaturesInPage < poParent->GetTotalRecordCount() / 10 &&
-            m_nPageCount > static_cast<GUInt32>(nFeaturesInPage) &&
-            m_nPageCount - static_cast<GUInt32>(nFeaturesInPage) <= 2)
+            m_nPageCount > static_cast<GUInt32>(nFeaturesInPage))
         {
             // Check if it looks like a non-feature page, that is that the
             // IDs pointed by it are index page IDs and not feature IDs.
