@@ -4089,3 +4089,85 @@ def test_ogr_openfilegdb_write_delete():
     assert gdal.VSIStatL(dirname) is not None
     assert drv.DeleteDataSource(dirname) == gdal.CE_None
     assert gdal.VSIStatL(dirname) is None
+
+
+###############################################################################
+# Test writing a CompoundCRS
+
+
+@pytest.mark.parametrize(
+    "write_wkid,write_vcswkid", [(True, True), (True, False), (False, False)]
+)
+@gdaltest.require_proj_version(7, 2)
+def test_ogr_openfilegdb_write_compound_crs(write_wkid, write_vcswkid):
+
+    dirname = "/vsimem/test_ogr_openfilegdb_write_compound_crs.gdb"
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(
+            """COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
+    PROJCRS["WGS_1984_Complex_UTM_Zone_22N",
+        BASEGEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,
+                ANGLEUNIT["Degree",0.0174532925199433]]],
+        CONVERSION["UTM zone 22N",
+            METHOD["Transverse Mercator",
+                ID["EPSG",9807]],
+            PARAMETER["Latitude of natural origin",0,
+                ANGLEUNIT["Degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-51,
+                ANGLEUNIT["Degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.9996,
+                SCALEUNIT["unity",1],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",500000,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",0,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8807]]],
+        CS[Cartesian,2],
+            AXIS["(E)",east,
+                ORDER[1],
+                LENGTHUNIT["metre",1]],
+            AXIS["(N)",north,
+                ORDER[2],
+                LENGTHUNIT["metre",1]],
+        USAGE[
+            SCOPE["Not known."],
+            AREA["Between 54°W and 48°W, northern hemisphere between equator and 84°N, onshore and offshore."],
+            BBOX[0,-54,84,-48]],
+        ID["ESRI",102572]],
+    VERTCRS["MSL height",
+        VDATUM["Mean Sea Level"],
+        CS[vertical,1],
+            AXIS["gravity-related height (H)",up,
+                LENGTHUNIT["metre",1]],
+        USAGE[
+            SCOPE["Hydrography, drilling."],
+            AREA["World."],
+            BBOX[-90,-180,90,180]],
+        ID["EPSG",5714]]]
+        """
+        )
+        d = {
+            "OPENFILEGDB_WRITE_WKID": None if write_wkid else "FALSE",
+            "OPENFILEGDB_WRITE_VCSWKID": None if write_vcswkid else "FALSE",
+        }
+        with gdaltest.config_options(d):
+            ds.CreateLayer("test", geom_type=ogr.wkbPoint, srs=srs)
+            ds = None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        got_srs = lyr.GetSpatialRef()
+        assert got_srs.IsSame(srs)
+
+    finally:
+        gdal.RmdirRecursive(dirname)

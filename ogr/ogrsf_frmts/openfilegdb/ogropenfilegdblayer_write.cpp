@@ -235,14 +235,44 @@ static void XMLSerializeGeomFieldBase(CPLXMLNode *psRoot,
     CPLCreateXMLElementAndValue(psSpatialReference, "HighPrecision", "true");
     if (poSRS)
     {
-        const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
-        if (pszAuthorityName && pszAuthorityCode &&
-            (EQUAL(pszAuthorityName, "EPSG") ||
-             EQUAL(pszAuthorityName, "ESRI")))
+        if (CPLTestBool(CPLGetConfigOption("OPENFILEGDB_WRITE_WKID", "YES")))
         {
-            CPLCreateXMLElementAndValue(psSpatialReference, "WKID",
-                                        pszAuthorityCode);
+            const char *pszKey = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
+            const char *pszAuthorityName = poSRS->GetAuthorityName(pszKey);
+            const char *pszAuthorityCode = poSRS->GetAuthorityCode(pszKey);
+            if (pszAuthorityName && pszAuthorityCode &&
+                (EQUAL(pszAuthorityName, "EPSG") ||
+                 EQUAL(pszAuthorityName, "ESRI")))
+            {
+                CPLCreateXMLElementAndValue(psSpatialReference, "WKID",
+                                            pszAuthorityCode);
+                if (CPLTestBool(CPLGetConfigOption(
+                        "OPENFILEGDB_WRITE_LATESTWKID", "YES")))
+                {
+                    CPLCreateXMLElementAndValue(psSpatialReference,
+                                                "LatestWKID", pszAuthorityCode);
+                }
+            }
+        }
+
+        if (poSRS->IsCompound() &&
+            CPLTestBool(CPLGetConfigOption("OPENFILEGDB_WRITE_VCSWKID", "YES")))
+        {
+            const char *pszAuthorityName = poSRS->GetAuthorityName("VERT_CS");
+            const char *pszAuthorityCode = poSRS->GetAuthorityCode("VERT_CS");
+            if (pszAuthorityName && pszAuthorityCode &&
+                (EQUAL(pszAuthorityName, "EPSG") ||
+                 EQUAL(pszAuthorityName, "ESRI")))
+            {
+                CPLCreateXMLElementAndValue(psSpatialReference, "VCSWKID",
+                                            pszAuthorityCode);
+                if (CPLTestBool(CPLGetConfigOption(
+                        "OPENFILEGDB_WRITE_LATESTVCSWKID", "YES")))
+                {
+                    CPLCreateXMLElementAndValue(
+                        psSpatialReference, "LatestVCSWKID", pszAuthorityCode);
+                }
+            }
         }
     }
 }
