@@ -638,9 +638,8 @@ def test_ogr_osm_10():
         ds = ogr.Open("/vsimem/foo.osm")
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        feat = lyr.GetNextFeature()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            feat = lyr.GetNextFeature()
         assert gdal.GetLastErrorMsg() != ""
         ds = None
 
@@ -655,9 +654,8 @@ def test_ogr_osm_10():
     ds = ogr.Open("/vsimem/foo.pbf")
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = lyr.GetNextFeature()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
 
@@ -668,9 +666,8 @@ def test_ogr_osm_10():
         ds = ogr.Open("data/osm/billionlaugh.osm")
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        feat = lyr.GetNextFeature()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            feat = lyr.GetNextFeature()
         assert feat is None and gdal.GetLastErrorMsg() != ""
 
 

@@ -620,9 +620,8 @@ def test_ogr_mysql_21():
     dst_feat.SetField("name", "name")
 
     # The insertion MUST fail
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    layer.CreateFeature(dst_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        layer.CreateFeature(dst_feat)
 
     dst_feat.Destroy()
 

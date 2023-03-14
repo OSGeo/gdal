@@ -65,9 +65,8 @@ def test_ogr_oci_2():
     if gdaltest.oci_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
 
     ######################################################
     # Create Oracle Layer

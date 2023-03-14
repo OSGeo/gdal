@@ -54,11 +54,10 @@ def test_ogr_rfc35_sqlite_1():
     gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
 
     gdaltest.rfc35_sqlite_ds_name = "/vsimem/rfc35_test.sqlite"
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource(
-        gdaltest.rfc35_sqlite_ds_name
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+            gdaltest.rfc35_sqlite_ds_name
+        )
     if gdaltest.rfc35_sqlite_ds is None:
         gdaltest.rfc35_sqlite_ds_name = "tmp/rfc35_test.sqlite"
         gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource(
@@ -210,9 +209,8 @@ def test_ogr_rfc35_sqlite_2():
     lyr.ReorderFields([3, 2, 1, 0])
     Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.ReorderFields([0, 0, 0, 0])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([0, 0, 0, 0])
     assert ret != 0
 
 
@@ -232,14 +230,12 @@ def test_ogr_rfc35_sqlite_3():
 
     lyr_defn = lyr.GetLayerDefn()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
@@ -377,14 +373,12 @@ def test_ogr_rfc35_sqlite_5():
 
     assert lyr.TestCapability(ogr.OLCDeleteField) == 1
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(-1)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     assert ret != 0
 
     assert lyr.DeleteField(0) == 0

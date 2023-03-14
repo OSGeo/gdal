@@ -248,9 +248,8 @@ def test_ogr_rfc35_mitab_2():
     # lyr = ds.GetLayer(0)
     Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.ReorderFields([0, 0, 0, 0])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([0, 0, 0, 0])
     assert ret != 0
 
     # ds = None
@@ -277,14 +276,12 @@ def test_ogr_rfc35_mitab_3():
 
     lyr_defn = lyr.GetLayerDefn()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
@@ -334,9 +331,10 @@ def test_ogr_rfc35_mitab_4():
     feat = None
 
     fd.SetWidth(10)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(
+            lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG
+        )
     assert ret != 0
 
     lyr.ResetReading()
@@ -460,14 +458,12 @@ def test_ogr_rfc35_mitab_5():
 
     assert lyr.DeleteField(0) == 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(-1)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     assert ret != 0
 
     CheckFeatures(lyr, field3="baz5")
@@ -495,9 +491,8 @@ def test_ogr_rfc35_mitab_5():
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("foo5")) == 0
 
     # We cannot delete the only one remaining field (well MapInfo prohibits that)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(lyr_defn.GetFieldIndex("bar10"))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(lyr_defn.GetFieldIndex("bar10"))
     assert ret != 0
 
     CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)

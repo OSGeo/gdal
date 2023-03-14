@@ -28,6 +28,7 @@
 ###############################################################################
 
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -388,13 +389,12 @@ def test_ogr_join_16():
     ds = ogr.Open("data")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL(
-        "SELECT * FROM poly "
-        + "LEFT JOIN idlink ON poly.eas_id = idlink.eas_id "
-        + "WHERE idlink.name = '_165'"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT * FROM poly "
+            + "LEFT JOIN idlink ON poly.eas_id = idlink.eas_id "
+            + "WHERE idlink.name = '_165'"
+        )
 
     assert gdal.GetLastErrorMsg().find("Cannot use field") == 0
 
@@ -412,13 +412,12 @@ def test_ogr_join_17():
     ds = ogr.Open("data")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL(
-        "SELECT * FROM poly "
-        + "LEFT JOIN idlink ON poly.eas_id = idlink.eas_id "
-        + "ORDER BY name"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT * FROM poly "
+            + "LEFT JOIN idlink ON poly.eas_id = idlink.eas_id "
+            + "ORDER BY name"
+        )
 
     assert gdal.GetLastErrorMsg().find("Cannot use field") == 0
 
@@ -456,11 +455,10 @@ def test_ogr_join_19():
     ds = ogr.Open("data")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL(
-        "SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id"
+        )
 
     assert (
         gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field')
@@ -481,11 +479,10 @@ def test_ogr_join_20():
     ds = ogr.Open("data")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL(
-        "SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo"
+        )
 
     assert (
         gdal.GetLastErrorMsg().find(
@@ -508,13 +505,12 @@ def test_ogr_join_21():
     ds = ogr.Open("data")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL(
-        "SELECT p.*, il.name, il2.eas_id FROM poly p "
-        + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id '
-        + "LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT p.*, il.name, il2.eas_id FROM poly p "
+            + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id '
+            + "LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id"
+        )
 
     assert (
         gdal.GetLastErrorMsg().find(

@@ -4586,9 +4586,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         f.DumpReadable()
         pytest.fail()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Empty content returned by server
@@ -4596,9 +4595,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         "/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits",
         """""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Invalid XML
@@ -4606,9 +4604,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         "/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits",
         """<invalid_xml""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Server exception
@@ -4616,9 +4613,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         "/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits",
         """<ServiceExceptionReport/>""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Missing FeatureCollection
@@ -4626,9 +4622,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         "/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits",
         """<dummy_xml/>""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Missing FeatureCollection.numberMatched
@@ -4636,9 +4631,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         "/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&RESULTTYPE=hits",
         """<FeatureCollection/>""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 2, gdal.GetLastErrorMsg()
 
     # Valid
@@ -4658,9 +4652,8 @@ xsi:schemaLocation="http://foo blabla
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
 </wfs:FeatureCollection>""",
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fc = sql_lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 3, gdal.GetLastErrorMsg()
 
     sql_lyr.TestCapability("foo")

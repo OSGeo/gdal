@@ -589,19 +589,18 @@ def test_ogr_sql_sqlite_4():
 
 def test_ogr_sql_sqlite_5():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.GetDriverByName("SQLite").CreateDataSource(
-        "/vsimem/foo.db", options=["SPATIALITE=YES"]
-    )
-    ogrtest.has_spatialite = ds is not None
-    if ogrtest.has_spatialite:
-        sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
-        feat = sql_lyr.GetNextFeature()
-        gdaltest.spatialite_version = feat.GetFieldAsString(0)
-        ds.ReleaseResultSet(sql_lyr)
-    ds = None
-    gdal.Unlink("/vsimem/foo.db")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+            "/vsimem/foo.db", options=["SPATIALITE=YES"]
+        )
+        ogrtest.has_spatialite = ds is not None
+        if ogrtest.has_spatialite:
+            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+            feat = sql_lyr.GetNextFeature()
+            gdaltest.spatialite_version = feat.GetFieldAsString(0)
+            ds.ReleaseResultSet(sql_lyr)
+        ds = None
+        gdal.Unlink("/vsimem/foo.db")
 
     if ogrtest.has_spatialite is False:
         pytest.skip("Spatialite not available")
@@ -787,21 +786,18 @@ def test_ogr_sql_sqlite_12():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
     # Invalid SQL
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("qdfdfdf", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("qdfdfdf", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing external datasource
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'foo'.'bar'", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM 'foo'.'bar'", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing layer in existing external datasource
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'data'.'azertyuio'", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM 'data'.'azertyuio'", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
@@ -830,9 +826,8 @@ def test_ogr_sql_sqlite_13():
     feat = None
 
     # Test with invalid parameter
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)", dialect="SQLite")
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
@@ -840,9 +835,8 @@ def test_ogr_sql_sqlite_13():
     assert geom is None
 
     # Test on non existing layer
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')", dialect="SQLite")
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     ds.ReleaseResultSet(sql_lyr)
@@ -1712,9 +1706,8 @@ def test_ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect="SQLite")
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
         pytest.fail()
@@ -1729,9 +1722,8 @@ def test_ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect="SQLite")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect="SQLite")
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
         pytest.fail()
@@ -2021,9 +2013,8 @@ def test_ogr_sql_sqlite_28():
 
     # Invalid parameters
     for sql in ["SELECT hstore_get_value('a')"]:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")
         assert sql_lyr is None, sql
 
     # Invalid hstore syntax or empty result

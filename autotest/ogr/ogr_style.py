@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+import gdaltest
+
 from osgeo import gdal, ogr
 
 ###############################################################################
@@ -43,25 +45,22 @@ def test_ogr_style_styletable():
     style_table.AddStyle(
         "style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)'
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = style_table.SaveStyleTable("/nonexistingdir/nonexistingfile")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = style_table.SaveStyleTable("/nonexistingdir/nonexistingfile")
     assert ret == 0
     assert style_table.SaveStyleTable("/vsimem/out.txt") == 1
     style_table = None
 
     style_table = ogr.StyleTable()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = style_table.LoadStyleTable("/nonexistent")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = style_table.LoadStyleTable("/nonexistent")
     assert ret == 0
     assert style_table.LoadStyleTable("/vsimem/out.txt") == 1
 
     gdal.Unlink("/vsimem/out.txt")
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = style_table.Find("non_existing_style")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = style_table.Find("non_existing_style")
     assert ret is None
 
     assert (

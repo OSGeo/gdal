@@ -235,9 +235,8 @@ def test_ogr_gpx_5():
 def test_ogr_gpx_6():
     gpx_ds = ogr.Open("data/gpx/test.gpx")
     try:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
     except Exception:
         pass
 

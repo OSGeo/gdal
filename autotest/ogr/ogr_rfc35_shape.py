@@ -30,6 +30,7 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -226,9 +227,8 @@ def test_ogr_rfc35_shape_2():
     lyr.ReorderFields([3, 2, 1, 0])
     Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.ReorderFields([0, 0, 0, 0])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([0, 0, 0, 0])
     assert ret != 0
 
     ds = None
@@ -255,14 +255,12 @@ def test_ogr_rfc35_shape_3():
 
     lyr_defn = lyr.GetLayerDefn()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
@@ -433,14 +431,12 @@ def test_ogr_rfc35_shape_5():
 
     assert lyr.DeleteField(0) == 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(-1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(-1)
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     assert ret != 0
 
     CheckFeatures(lyr, field3="baz5")
