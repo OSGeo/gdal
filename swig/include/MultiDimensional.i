@@ -483,6 +483,18 @@ public:
   }
 %clear char **;
 
+%apply (int nList, GUIntBig* pList) {(int nDimCount, GUIntBig* newDimSizes)};
+  CPLErr Resize( int nDimCount, GUIntBig* newDimSizes, char** options = NULL ) {
+    if( static_cast<size_t>(nDimCount) != GDALMDArrayGetDimensionCount(self) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "newDimSizes array not of expected size");
+        return CE_Failure;
+    }
+    return GDALMDArrayResize( self, newDimSizes, options ) ? CE_None : CE_Failure;
+  }
+%clear (int nDimCount, GUIntBig* newDimSizes);
+
 #if defined(SWIGPYTHON)
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
 %apply ( void **outPythonObject ) { (void **buf ) };

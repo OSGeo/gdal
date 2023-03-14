@@ -2494,6 +2494,34 @@ bool GDALMDArray::SetNoDataValue(uint64_t nNoData)
 }
 
 /************************************************************************/
+/*                            Resize()                                  */
+/************************************************************************/
+
+/** Resize an array to new dimensions.
+ *
+ * Not all drivers may allow this operation, and with restrictions (e.g.
+ * for netCDF, this is limited to growing of "unlimited" dimensions)
+ *
+ * Resizing a dimension used in other arrays will cause those other arrays
+ * to be resized.
+ *
+ * This is the same as the C function GDALMDArrayResize().
+ *
+ * @param anNewDimSizes Array of GetDimensionCount() values containing the
+ *                      new size of each indexing dimension.
+ * @param papszOptions Options. (Driver specific)
+ * @return true in case of success.
+ * @since GDAL 3.7
+ */
+bool GDALMDArray::Resize(CPL_UNUSED const std::vector<GUInt64> &anNewDimSizes,
+                         CPL_UNUSED CSLConstList papszOptions)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Resize() is not supported for this array");
+    return false;
+}
+
+/************************************************************************/
 /*                               SetScale()                             */
 /************************************************************************/
 
@@ -10248,6 +10276,40 @@ int GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
+/*                        GDALMDArrayResize()                           */
+/************************************************************************/
+
+/** Resize an array to new dimensions.
+ *
+ * Not all drivers may allow this operation, and with restrictions (e.g.
+ * for netCDF, this is limited to growing of "unlimited" dimensions)
+ *
+ * Resizing a dimension used in other arrays will cause those other arrays
+ * to be resized.
+ *
+ * This is the same as the C++ method GDALMDArray::Resize().
+ *
+ * @param hArray Array.
+ * @param panNewDimSizes Array of GetDimensionCount() values containing the
+ *                       new size of each indexing dimension.
+ * @param papszOptions Options. (Driver specific)
+ * @return true in case of success.
+ * @since GDAL 3.7
+ */
+bool GDALMDArrayResize(GDALMDArrayH hArray, const GUInt64 *panNewDimSizes,
+                       CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(panNewDimSizes, __func__, false);
+    std::vector<GUInt64> anNewDimSizes(hArray->m_poImpl->GetDimensionCount());
+    for (size_t i = 0; i < anNewDimSizes.size(); ++i)
+    {
+        anNewDimSizes[i] = panNewDimSizes[i];
+    }
+    return hArray->m_poImpl->Resize(anNewDimSizes, papszOptions);
+}
+
+/************************************************************************/
 /*                          GDALMDArraySetScale()                       */
 /************************************************************************/
 
@@ -11718,6 +11780,11 @@ bool GDALDimensionWeakIndexingVar::SetIndexingVariable(
 {
     m_poIndexingVariable = poIndexingVariable;
     return true;
+}
+
+void GDALDimensionWeakIndexingVar::SetSize(GUInt64 nNewSize)
+{
+    m_nSize = nNewSize;
 }
 
 /************************************************************************/

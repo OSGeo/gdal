@@ -2127,6 +2127,9 @@ GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(
     GDALMDArrayH hArray, const char *pszName, size_t nDimensions,
     const GUInt64 *panDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+bool CPL_DLL GDALMDArrayResize(GDALMDArrayH hArray,
+                               const GUInt64 *panNewDimSizes,
+                               CSLConstList papszOptions);
 const void CPL_DLL *GDALMDArrayGetRawNoDataValue(GDALMDArrayH hArray);
 double CPL_DLL GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
                                                  int *pbHasNoDataValue);
