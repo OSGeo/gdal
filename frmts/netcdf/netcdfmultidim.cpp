@@ -60,6 +60,7 @@ class netCDFSharedResources
     std::map<int, int> m_oMapDimIdToGroupId{};
     bool m_bIsInIndexingVariable = false;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
+    std::map<int, std::weak_ptr<GDALDimension>> m_oCachedDimensions{};
 
   public:
     explicit netCDFSharedResources(const std::string &osFilename);
@@ -97,6 +98,19 @@ class netCDFSharedResources
     const std::shared_ptr<GDALPamMultiDim> &GetPAM()
     {
         return m_poPAM;
+    }
+
+    void CacheDimension(int dimid, const std::shared_ptr<GDALDimension> &poDim)
+    {
+        m_oCachedDimensions[dimid] = poDim;
+    }
+
+    std::shared_ptr<GDALDimension> GetCachedDimension(int dimid) const
+    {
+        auto oIter = m_oCachedDimensions.find(dimid);
+        if (oIter == m_oCachedDimensions.end())
+            return nullptr;
+        return oIter->second.lock();
     }
 };
 
@@ -307,6 +321,16 @@ class netCDFDimension final : public GDALDimension
     {
         return m_dimid;
     }
+
+    GUInt64 GetActualSize() const
+    {
+        return retrieveSize(m_gid, m_dimid);
+    }
+
+    void SetSize(GUInt64 nNewSize)
+    {
+        m_nSize = nNewSize;
+    }
 };
 
 /************************************************************************/
@@ -468,6 +492,8 @@ class netCDFVariable final : public GDALPamMDArray
         return var;
     }
 
+    ~netCDFVariable() override;
+
     void SetUseDefaultFillAsNoData(bool b)
     {
         m_bUseDefaultFillAsNoData = b;
@@ -531,6 +557,9 @@ class netCDFVariable final : public GDALPamMDArray
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+                CSLConstList) override;
 
     int GetGroupId() const
     {
@@ -1266,8 +1295,14 @@ netCDFGroup::GetDimensions(CSLConstList) const
     std::vector<std::shared_ptr<GDALDimension>> res;
     for (int i = 0; i < nbDims; i++)
     {
-        res.emplace_back(std::make_shared<netCDFDimension>(
-            m_poShared, m_gid, dimids[i], 0, std::string()));
+        auto poCachedDim = m_poShared->GetCachedDimension(dimids[i]);
+        if (poCachedDim == nullptr)
+        {
+            poCachedDim = std::make_shared<netCDFDimension>(
+                m_poShared, m_gid, dimids[i], 0, std::string());
+            m_poShared->CacheDimension(dimids[i], poCachedDim);
+        }
+        res.emplace_back(poCachedDim);
     }
     return res;
 }
@@ -1742,6 +1777,50 @@ netCDFVariable::netCDFVariable(
 }
 
 /************************************************************************/
+/*                          ~netCDFVariable()                           */
+/************************************************************************/
+
+netCDFVariable::~netCDFVariable()
+{
+    if (!m_poShared->IsReadOnly() && !m_dims.empty())
+    {
+        bool bNeedToWriteDummy = false;
+        for (auto &poDim : m_dims)
+        {
+            auto netCDFDim = std::dynamic_pointer_cast<netCDFDimension>(poDim);
+            CPLAssert(netCDFDim);
+            if (netCDFDim->GetSize() > netCDFDim->GetActualSize())
+            {
+                bNeedToWriteDummy = true;
+                break;
+            }
+        }
+        if (bNeedToWriteDummy)
+        {
+            CPLDebug("netCDF", "Extending array %s to new dimension sizes",
+                     GetName().c_str());
+            m_bGetRawNoDataValueHasRun = false;
+            m_bUseDefaultFillAsNoData = true;
+            const void *pNoData = GetRawNoDataValue();
+            std::vector<GByte> abyDummy(GetDataType().GetSize());
+            if (pNoData == nullptr)
+                pNoData = abyDummy.data();
+            const auto nDimCount = m_dims.size();
+            std::vector<GUInt64> arrayStartIdx(nDimCount);
+            std::vector<size_t> count(nDimCount, 1);
+            std::vector<GInt64> arrayStep(nDimCount, 0);
+            std::vector<GPtrDiff_t> bufferStride(nDimCount, 0);
+            for (size_t i = 0; i < nDimCount; ++i)
+            {
+                arrayStartIdx[i] = m_dims[i]->GetSize() - 1;
+            }
+            Write(arrayStartIdx.data(), count.data(), arrayStep.data(),
+                  bufferStride.data(), GetDataType(), pNoData);
+        }
+    }
+}
+
+/************************************************************************/
 /*                             GetDimensions()                          */
 /************************************************************************/
 
@@ -1758,9 +1837,16 @@ netCDFVariable::GetDimensions() const
     m_dims.reserve(m_nDims);
     for (const auto &dimid : anDimIds)
     {
-        m_dims.emplace_back(std::make_shared<netCDFDimension>(
-            m_poShared, m_poShared->GetBelongingGroupOfDim(m_gid, dimid), dimid,
-            0, std::string()));
+        auto poCachedDim = m_poShared->GetCachedDimension(dimid);
+        if (poCachedDim == nullptr)
+        {
+            const int groupDim =
+                m_poShared->GetBelongingGroupOfDim(m_gid, dimid);
+            poCachedDim = std::make_shared<netCDFDimension>(
+                m_poShared, groupDim, dimid, 0, std::string());
+            m_poShared->CacheDimension(dimid, poCachedDim);
+        }
+        m_dims.emplace_back(poCachedDim);
     }
     return m_dims;
 }
@@ -3579,6 +3665,111 @@ netCDFVariable::GetCoordinateVariables() const
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*                            Resize()                                  */
+/************************************************************************/
+
+bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
+                            CSLConstList /* papszOptions */)
+{
+    if (!IsWritable())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Resize() not supported on read-only file");
+        return false;
+    }
+
+    const auto nDimCount = GetDimensionCount();
+    if (anNewDimSizes.size() != nDimCount)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Not expected number of values in anNewDimSizes.");
+        return false;
+    }
+
+    auto &dims = GetDimensions();
+    std::vector<size_t> anGrownDimIdx;
+    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        auto oIter = oMapDimToSize.find(dims[i].get());
+        if (oIter != oMapDimToSize.end() && oIter->second != anNewDimSizes[i])
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot resize a dimension referenced several times "
+                     "to different sizes");
+            return false;
+        }
+        if (anNewDimSizes[i] != dims[i]->GetSize())
+        {
+            if (anNewDimSizes[i] < dims[i]->GetSize())
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Resize() does not support shrinking the array.");
+                return false;
+            }
+
+            oMapDimToSize[dims[i].get()] = anNewDimSizes[i];
+            anGrownDimIdx.push_back(i);
+        }
+        else
+        {
+            oMapDimToSize[dims[i].get()] = dims[i]->GetSize();
+        }
+    }
+
+    if (!anGrownDimIdx.empty())
+    {
+        CPLMutexHolderD(&hNCMutex);
+        // Query which netCDF dimensions have unlimited size
+        int nUnlimitedDimIds = 0;
+        nc_inq_unlimdims(m_gid, &nUnlimitedDimIds, nullptr);
+        std::vector<int> anUnlimitedDimIds(nUnlimitedDimIds);
+        nc_inq_unlimdims(m_gid, &nUnlimitedDimIds, anUnlimitedDimIds.data());
+        std::set<int> oSetUnlimitedDimId;
+        for (int idx : anUnlimitedDimIds)
+            oSetUnlimitedDimId.insert(idx);
+
+        // Check that dimensions that need to grow are of unlimited size
+        for (size_t dimIdx : anGrownDimIdx)
+        {
+            auto netCDFDim =
+                std::dynamic_pointer_cast<netCDFDimension>(dims[dimIdx]);
+            if (!netCDFDim)
+            {
+                CPLAssert(false);
+            }
+            else if (oSetUnlimitedDimId.find(netCDFDim->GetId()) ==
+                     oSetUnlimitedDimId.end())
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Resize() cannot grow dimension %d (%s) "
+                         "as it is not created as UNLIMITED.",
+                         static_cast<int>(dimIdx),
+                         netCDFDim->GetName().c_str());
+                return false;
+            }
+        }
+        for (size_t i = 0; i < nDimCount; ++i)
+        {
+            if (anNewDimSizes[i] > dims[i]->GetSize())
+            {
+                auto netCDFDim =
+                    std::dynamic_pointer_cast<netCDFDimension>(dims[i]);
+                if (!netCDFDim)
+                {
+                    CPLAssert(false);
+                }
+                else
+                {
+                    netCDFDim->SetSize(anNewDimSizes[i]);
+                }
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/

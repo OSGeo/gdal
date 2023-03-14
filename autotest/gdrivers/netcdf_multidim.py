@@ -756,7 +756,7 @@ def test_netcdf_multidim_create_nc3():
         var = rg.OpenMDArray("my_var_with_unlimited")
         assert var
         assert var.GetDimensionCount() == 2
-        assert var.GetDimensions()[0].GetSize() == 0
+        assert var.GetDimensions()[0].GetSize() == 123
         assert var.GetDimensions()[1].GetSize() == 2
 
         att = rg.CreateAttribute("att_text", [], gdal.ExtendedDataType.CreateString())
@@ -2801,3 +2801,192 @@ def test_netcdf_multidim_USE_DEFAULT_FILL_AS_NODATA():
 
     var = rg.OpenMDArray("uint64_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
     assert var.GetNoDataValue() == 18446744073709551614
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_resize_fill():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_resize_fill.nc"
+
+    def create():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim_y = rg.CreateDimension("Y", None, None, 2, ["UNLIMITED=YES"])
+        dim_x = rg.CreateDimension("X", None, None, 3)
+        dims = [dim_y, dim_x]
+        var = rg.CreateMDArray(
+            "var", dims, gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+        assert var.Write(struct.pack("h" * 6, 1, 2, 3, 4, 5, 6)) == gdal.CE_None
+
+    create()
+
+    def update_read_only():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+
+        with gdaltest.error_handler():
+            assert var.Resize([4, 3]) == gdal.CE_Failure
+
+    update_read_only()
+
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+
+        with gdaltest.error_handler():
+            # 0 size
+            assert var.Resize([0, 3]) == gdal.CE_Failure
+
+            # shrink
+            assert var.Resize([1, 3]) == gdal.CE_Failure
+
+            # grow non UNLIMITED dim
+            assert var.Resize([2, 4]) == gdal.CE_Failure
+
+        assert var.Resize([4, 3]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 4
+        assert var.GetDimensions()[1].GetSize() == 3
+
+        assert (
+            var.Write(
+                struct.pack("h" * 6, 7, 8, 9, 10, 11, 12),
+                array_start_idx=[2, 0],
+                count=[2, 3],
+            )
+            == gdal.CE_None
+        )
+
+    update()
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert struct.unpack("h" * (4 * 3), var.Read()) == (
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+        )
+
+    check()
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_resize_no_fill():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_resize_no_fill.nc"
+
+    def create():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim_y = rg.CreateDimension("Y", None, None, 2, ["UNLIMITED=YES"])
+        dim_x = rg.CreateDimension("X", None, None, 3)
+        dims = [dim_y, dim_x]
+        var = rg.CreateMDArray(
+            "var", dims, gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+        assert var.Write(struct.pack("h" * 6, 1, 2, 3, 4, 5, 6)) == gdal.CE_None
+
+    create()
+
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert var.Resize([4, 3]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 4
+        assert var.GetDimensions()[1].GetSize() == 3
+
+    update()
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert struct.unpack("h" * (4 * 3), var.Read()) == (
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            -32767,
+            -32767,
+            -32767,
+            -32767,
+            -32767,
+            -32767,
+        )
+
+    check()
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_resize_dim_referenced_twice():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_resize_dim_referenced_twice.nc"
+
+    def create():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim_y = rg.CreateDimension("Y", None, None, 2, ["UNLIMITED=YES"])
+        dims = [dim_y, dim_y]
+        var = rg.CreateMDArray(
+            "var", dims, gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+        assert var.Write(struct.pack("h" * 4, 1, 2, 3, 4)) == gdal.CE_None
+
+        with gdaltest.error_handler():
+            assert var.Resize([3, 4]) == gdal.CE_Failure
+            assert var.Resize([4, 3]) == gdal.CE_Failure
+
+        assert var.Resize([3, 3]) == gdal.CE_None
+        assert var.GetDimensions()[0].GetSize() == 3
+        assert var.GetDimensions()[1].GetSize() == 3
+
+    create()
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert struct.unpack("h" * (3 * 3), var.Read()) == (
+            1,
+            2,
+            -32767,
+            3,
+            4,
+            -32767,
+            -32767,
+            -32767,
+            -32767,
+        )
+
+    check()
+
+    gdal.Unlink(filename)
