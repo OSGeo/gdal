@@ -741,6 +741,10 @@ OGRErr OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)
  * will be ignored.  On successful completion the output OGRSpatialReference
  * of the OGRCoordinateTransformation will be assigned to the geometry.
  *
+ * This method only does reprojection on a point-by-point basis. It does not
+ * include advanced logic to deal with discontinuities at poles or antimeridian.
+ * For that, use the OGRGeometryFactory::transformWithOptions() method.
+ *
  * This method is the same as the C function OGR_G_Transform().
  *
  * @param poCT the transformation to apply.
@@ -765,6 +769,11 @@ OGRErr OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)
  * OGRCoordinateTransformation object, and the actual SRS of the geometry
  * will be ignored.  On successful completion the output OGRSpatialReference
  * of the OGRCoordinateTransformation will be assigned to the geometry.
+ *
+ * This function only does reprojection on a point-by-point basis. It does not
+ * include advanced logic to deal with discontinuities at poles or antimeridian.
+ * For that, use the OGR_GeomTransformer_Create() and
+ * OGR_GeomTransformer_Transform() functions.
  *
  * This function is the same as the CPP method OGRGeometry::transform.
  *
