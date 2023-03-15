@@ -957,9 +957,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     // Parse query string, get args required for initial Open()
     CPLStringList aosTokens0(CSLTokenizeString2(osQueryString, "&", 0));
-    char **papszAllowedDrivers = nullptr;
-    int iRemoveOpt;  // not allowed to have multiple &if=drv1&if=drv2
-    iRemoveOpt = -1;
+    CPLStringList aosAllowedDrivers;
+    int iRemoveOpt = -1;  // not allowed to have multiple &if=drv1&if=drv2
     for (int i = 0; i < aosTokens0.size(); i++)
     {
         char *pszKey = nullptr;
