@@ -973,15 +973,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                              "Invalid vrt:// 'if' format, must not occur "
                              "multiple times (use comma separated list)\n");
                 }
-                CPLStringList aosInitialFormats(
-                    CSLTokenizeString2(pszValue, ",", 0));
-                for (int j = 0; j < aosInitialFormats.size(); j++)
-                {
-                    CPLDebug("VRT", "Construct papszAllowedDrivers, add: %s\n",
-                             aosInitialFormats[j]);
-                    papszAllowedDrivers =
-                        CSLAddString(papszAllowedDrivers, aosInitialFormats[j]);
-                }
+                aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
                 iRemoveOpt =
                     i;  // we must avoid finding this 'if' option again below
             }
