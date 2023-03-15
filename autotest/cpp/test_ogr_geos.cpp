@@ -285,6 +285,42 @@ TEST_F(test_ogr_geos, OGR_G_Union)
     OGR_G_DestroyGeometry(expect);
 }
 
+// Test OGR_G_UnaryUnion function
+TEST_F(test_ogr_geos, OGR_G_UnaryUnion)
+{
+    char *wkt = const_cast<char *>("GEOMETRYCOLLECTION(POINT(0.5 0.5),"
+                                   "POLYGON((0 0,0 1,1 1,1 0,0 0)),"
+                                   "POLYGON((1 0,1 1,2 1,2 0,1 0)))");
+    err_ = OGR_G_CreateFromWkt(&wkt, nullptr, &g1_);
+
+    g3_ = OGR_G_UnaryUnion(g1_);
+    ASSERT_TRUE(nullptr != g3_);
+
+    OGRGeometryH expect = nullptr;
+    char *wktExpect =
+        const_cast<char *>("POLYGON ((0 1,1 1,2 1,2 0,1 0,0 0,0 1))");
+    err_ = OGR_G_CreateFromWkt(&wktExpect, nullptr, &expect);
+    ASSERT_EQ(OGRERR_NONE, err_);
+    ASSERT_TRUE(nullptr != expect);
+
+    OGREnvelope sEnvelopeIn;
+    OGREnvelope sEnvelopeOut;
+    OGR_G_GetEnvelope(g1_, &sEnvelopeIn);
+    OGR_G_GetEnvelope(g3_, &sEnvelopeOut);
+
+    // CheckEqualGeometries() doesn't work with GEOS 3.6 with the above
+    // expected polygon, because of the order of the nodes, and for some
+    // reason OGR_G_Normalize() in CheckEqualGeometries() doesn't fix this,
+    // so just fallback to bounding box and area comparison
+    EXPECT_EQ(sEnvelopeIn.MinX, sEnvelopeOut.MinX);
+    EXPECT_EQ(sEnvelopeIn.MinY, sEnvelopeOut.MinY);
+    EXPECT_EQ(sEnvelopeIn.MaxX, sEnvelopeOut.MaxX);
+    EXPECT_EQ(sEnvelopeIn.MaxY, sEnvelopeOut.MaxY);
+    EXPECT_EQ(OGR_G_Area(g1_), OGR_G_Area(g3_));
+
+    OGR_G_DestroyGeometry(expect);
+}
+
 // Test OGR_G_Intersection function
 TEST_F(test_ogr_geos, OGR_G_Intersection)
 {

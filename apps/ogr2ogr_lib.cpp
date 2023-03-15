@@ -586,46 +586,41 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
     if (!osWhere.empty())
         poLyr->SetAttributeFilter(osWhere.c_str());
 
-    std::unique_ptr<OGRMultiPolygon> poMP;
+    OGRGeometryCollection oGC;
+
+    const auto poSRSSrc = poLyr->GetSpatialRef();
+    if (poSRSSrc)
+    {
+        auto poSRSClone = poSRSSrc->Clone();
+        oGC.assignSpatialReference(poSRSClone);
+        poSRSClone->Release();
+    }
+
     for (auto &poFeat : poLyr)
     {
-        OGRGeometry *poSrcGeom = poFeat->GetGeometryRef();
+        auto poSrcGeom = std::unique_ptr<OGRGeometry>(poFeat->StealGeometry());
         if (poSrcGeom)
         {
-            const OGRwkbGeometryType eType =
-                wkbFlatten(poSrcGeom->getGeometryType());
-
-            if (poMP == nullptr)
+            // Only take into account areal geometries.
+            if (poSrcGeom->getCoordinateDimension() == 2)
             {
-                poMP = cpl::make_unique<OGRMultiPolygon>();
-                const auto poSRSSrc = poSrcGeom->getSpatialReference();
-                if (poSRSSrc)
+                if (!poSrcGeom->IsValid())
                 {
-                    auto poSRSClone = poSRSSrc->Clone();
-                    poMP->assignSpatialReference(poSRSClone);
-                    poSRSClone->Release();
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Geometry of feature " CPL_FRMT_GIB " of %s "
+                             "is invalid. Trying to make it valid",
+                             poFeat->GetFID(), osDS.c_str());
+                    auto poValid =
+                        std::unique_ptr<OGRGeometry>(poSrcGeom->MakeValid());
+                    if (poValid)
+                    {
+                        oGC.addGeometryDirectly(poValid.release());
+                    }
                 }
-            }
-
-            if (eType == wkbPolygon)
-                poMP->addGeometry(poSrcGeom);
-            else if (eType == wkbMultiPolygon)
-            {
-                OGRMultiPolygon *poSrcMP = poSrcGeom->toMultiPolygon();
-                const int nGeomCount = poSrcMP->getNumGeometries();
-
-                for (int iGeom = 0; iGeom < nGeomCount; iGeom++)
+                else
                 {
-                    poMP->addGeometry(poSrcMP->getGeometryRef(iGeom));
+                    oGC.addGeometryDirectly(poSrcGeom.release());
                 }
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Geometry not of polygon type.");
-                if (!osSQL.empty())
-                    poDS->ReleaseResultSet(poLyr);
-                return nullptr;
             }
         }
     }
@@ -633,7 +628,10 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
     if (!osSQL.empty())
         poDS->ReleaseResultSet(poLyr);
 
-    return poMP;
+    if (oGC.IsEmpty())
+        return nullptr;
+
+    return std::unique_ptr<OGRGeometry>(oGC.UnaryUnion());
 }
 
 /************************************************************************/

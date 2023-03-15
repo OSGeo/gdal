@@ -485,7 +485,7 @@ def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
     ds = gdal.VectorTranslate(
-        tmpfilename, "../ogr/data/poly.shp", format="CSV", clipSrc=wkt
+        tmpfilename, "../ogr/data/poly.shp", format="Memory", clipSrc=wkt
     )
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
@@ -1181,6 +1181,51 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
     ds = None
+
+
+###############################################################################
+# Test -clipsrc with a clip layer with an invalid polygon
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.skipif(
+    ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))").MakeValid()
+    is None,
+    reason="GEOS < 3.8, no MakeValid",
+)
+def test_ogr2ogr_lib_clipsrc_invalid_polygon():
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0.25 0.25)"))
+    srcLayer.CreateFeature(f)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-0.5 0.5)"))
+    srcLayer.CreateFeature(f)
+
+    # Prepare the data layers to clip with
+    clip_path = "/vsimem/clip_test.gpkg"
+    clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
+    clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
+    f = ogr.Feature(clip_layer.GetLayerDefn())
+    # Invalid polygon with self crossing
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,1 1,0 1,1 0,0 0))"))
+    clip_layer.CreateFeature(f)
+    clip_ds = None
+
+    # Intersection of above geometry with clipSrc bounding box is a point
+    with gdaltest.error_handler():
+        ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    # Cleanup
+    gdal.Unlink(clip_path)
 
 
 ###############################################################################
