@@ -37,6 +37,7 @@
 
 #include <array>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <set>
 
@@ -209,28 +210,32 @@ class ZarrAttributeGroup
 /*                         ZarrSharedResource                           */
 /************************************************************************/
 
+class ZarrGroupBase;
+
 class ZarrSharedResource
+    : public std::enable_shared_from_this<ZarrSharedResource>
 {
+    bool m_bUpdatable = false;
     std::string m_osRootDirectoryName{};
     bool m_bZMetadataEnabled = false;
     CPLJSONObject m_oObj{};  // For .zmetadata
     bool m_bZMetadataModified = false;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
     CPLStringList m_aosOpenOptions{};
+    std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
+
+    explicit ZarrSharedResource(const std::string &osRootDirectoryName,
+                                bool bUpdatable);
 
   public:
-    explicit ZarrSharedResource(const std::string &osRootDirectoryName);
+    static std::shared_ptr<ZarrSharedResource>
+    Create(const std::string &osRootDirectoryName, bool bUpdatable);
 
     ~ZarrSharedResource();
 
     void EnableZMetadata()
     {
         m_bZMetadataEnabled = true;
-    }
-
-    void InitFromZMetadata(const CPLJSONObject &obj)
-    {
-        m_oObj = obj;
     }
 
     void SetZMetadataItem(const std::string &osFilename,
@@ -249,6 +254,16 @@ class ZarrSharedResource
     void SetOpenOptions(CSLConstList papszOpenOptions)
     {
         m_aosOpenOptions = papszOpenOptions;
+    }
+
+    std::shared_ptr<ZarrGroupBase> OpenRootGroup();
+
+    void
+    UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
+
+    void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
+    {
+        m_poWeakRootGroup = poRootGroup;
     }
 };
 
@@ -270,7 +285,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     std::shared_ptr<ZarrGroupBase>
         m_poParentStrongRef{};  // strong reference, used only when opening from
                                 // a subgroup
-    mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
+    mutable std::map<CPLString, std::shared_ptr<ZarrGroupBase>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
     mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>>
         m_oMapDimensions{};
@@ -282,6 +297,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     bool m_bReadFromZMetadata = false;
     mutable bool m_bDimensionsInstantiated = false;
     bool m_bUpdatable = false;
+    bool m_bDimSizeInUpdate = false;
     std::weak_ptr<ZarrGroupBase> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
@@ -323,7 +339,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
                     CSLConstList papszOptions = nullptr) override;
 
     std::vector<std::shared_ptr<GDALDimension>>
-    GetDimensions(CSLConstList papszOptions) const override;
+    GetDimensions(CSLConstList papszOptions = nullptr) const override;
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
@@ -335,6 +351,30 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     std::vector<std::string>
     GetGroupNames(CSLConstList papszOptions = nullptr) const override;
+
+    virtual std::shared_ptr<ZarrGroupBase>
+    OpenZarrGroup(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const = 0;
+
+    std::shared_ptr<GDALGroup>
+    OpenGroup(const std::string &osName,
+              CSLConstList papszOptions = nullptr) const override
+    {
+        return std::static_pointer_cast<GDALGroup>(
+            OpenZarrGroup(osName, papszOptions));
+    }
+
+    std::shared_ptr<GDALMDArray>
+    OpenMDArray(const std::string &osName,
+                CSLConstList papszOptions = nullptr) const override
+    {
+        return std::static_pointer_cast<GDALMDArray>(
+            OpenZarrArray(osName, papszOptions));
+    }
+
+    virtual std::shared_ptr<ZarrArray>
+    OpenZarrArray(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const = 0;
 
     void SetDirectoryName(const std::string &osDirectoryName)
     {
@@ -352,6 +392,8 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     {
         m_bUpdatable = bUpdatable;
     }
+
+    void UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poDim);
 };
 
 /************************************************************************/
@@ -384,13 +426,13 @@ class ZarrGroupV2 final : public ZarrGroupBase
                  const std::string &osParentName, const std::string &osName,
                  const std::string &osDirectoryName);
 
-    std::shared_ptr<GDALMDArray>
-    OpenMDArray(const std::string &osName,
-                CSLConstList papszOptions = nullptr) const override;
+    std::shared_ptr<ZarrArray>
+    OpenZarrArray(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const override;
 
-    std::shared_ptr<GDALGroup>
-    OpenGroup(const std::string &osName,
-              CSLConstList papszOptions) const override;
+    std::shared_ptr<ZarrGroupBase>
+    OpenZarrGroup(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const override;
 
     std::shared_ptr<GDALGroup>
     CreateGroup(const std::string &osName,
@@ -430,13 +472,13 @@ class ZarrGroupV3 final : public ZarrGroupBase
            const std::string &osParentName, const std::string &osName,
            const std::string &osRootDirectoryName);
 
-    std::shared_ptr<GDALMDArray>
-    OpenMDArray(const std::string &osName,
-                CSLConstList papszOptions = nullptr) const override;
+    std::shared_ptr<ZarrArray>
+    OpenZarrArray(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const override;
 
-    std::shared_ptr<GDALGroup>
-    OpenGroup(const std::string &osName,
-              CSLConstList papszOptions) const override;
+    std::shared_ptr<ZarrGroupBase>
+    OpenZarrGroup(const std::string &osName,
+                  CSLConstList papszOptions = nullptr) const override;
 
     static std::shared_ptr<ZarrGroupV3>
     CreateOnDisk(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
@@ -669,6 +711,9 @@ class ZarrArray final : public GDALPamMDArray
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+                CSLConstList) override;
 
     void RegisterOffset(double dfOffset)
     {

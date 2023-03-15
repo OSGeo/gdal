@@ -533,9 +533,12 @@ static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
 
 static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 {
-    o.Delete("num_threads");  // Blosc
-    o.Delete("typesize");     // Blosc
-    o.Delete("header");       // LZ4
+    if (o.GetType() == CPLJSONObject::Type::Object)
+    {
+        o.Delete("num_threads");  // Blosc
+        o.Delete("typesize");     // Blosc
+        o.Delete("header");       // LZ4
+    }
 }
 
 /************************************************************************/
@@ -3326,7 +3329,7 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for shape");
             return nullptr;
         }
-        aoDims.emplace_back(std::make_shared<GDALDimension>(
+        aoDims.emplace_back(std::make_shared<GDALDimensionWeakIndexingVar>(
             std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
             nSize));
     }
@@ -3396,7 +3399,8 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
         auto oIter = m_oMapDimensions.find(osDimName);
         if (oIter != m_oMapDimensions.end())
         {
-            if (oIter->second->GetSize() == poDim->GetSize())
+            if (m_bDimSizeInUpdate ||
+                oIter->second->GetSize() == poDim->GetSize())
             {
                 poDim = oIter->second;
                 return true;
@@ -4446,4 +4450,81 @@ ZarrArray::GetCoordinateVariables() const
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*                            Resize()                                  */
+/************************************************************************/
+
+bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+                       CSLConstList /* papszOptions */)
+{
+    if (!IsWritable())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Resize() not supported on read-only file");
+        return false;
+    }
+
+    const auto nDimCount = GetDimensionCount();
+    if (anNewDimSizes.size() != nDimCount)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Not expected number of values in anNewDimSizes.");
+        return false;
+    }
+
+    auto &dims = GetDimensions();
+    std::vector<size_t> anGrownDimIdx;
+    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        auto oIter = oMapDimToSize.find(dims[i].get());
+        if (oIter != oMapDimToSize.end() && oIter->second != anNewDimSizes[i])
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot resize a dimension referenced several times "
+                     "to different sizes");
+            return false;
+        }
+        if (anNewDimSizes[i] != dims[i]->GetSize())
+        {
+            if (anNewDimSizes[i] < dims[i]->GetSize())
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Resize() does not support shrinking the array.");
+                return false;
+            }
+
+            oMapDimToSize[dims[i].get()] = anNewDimSizes[i];
+            anGrownDimIdx.push_back(i);
+        }
+        else
+        {
+            oMapDimToSize[dims[i].get()] = dims[i]->GetSize();
+        }
+    }
+    if (!anGrownDimIdx.empty())
+    {
+        m_bDefinitionModified = true;
+        for (size_t dimIdx : anGrownDimIdx)
+        {
+            auto dim = std::dynamic_pointer_cast<GDALDimensionWeakIndexingVar>(
+                dims[dimIdx]);
+            if (dim)
+            {
+                dim->SetSize(anNewDimSizes[dimIdx]);
+                if (dim->GetName() != dim->GetFullName())
+                {
+                    // This is not a local dimension
+                    m_poSharedResource->UpdateDimensionSize(dim);
+                }
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+    }
+    return true;
 }

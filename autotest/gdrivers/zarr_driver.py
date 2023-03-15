@@ -3192,3 +3192,259 @@ def test_zarr_read_do_not_crash_on_invalid_byteswap_on_ascii_string():
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_resize(format, create_z_metadata):
+
+    filename = "/vsimem/test.zarr"
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                filename,
+                options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+            var = rg.CreateMDArray(
+                "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+        create()
+
+        def resize_read_only():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+
+            with gdaltest.error_handler():
+                assert var.Resize([5, 2]) == gdal.CE_Failure
+
+        resize_read_only()
+
+        def resize():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+            with gdaltest.error_handler():
+                assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
+
+            assert var.Resize([5, 2]) == gdal.CE_None
+            assert var.GetDimensions()[0].GetSize() == 5
+            assert var.GetDimensions()[1].GetSize() == 2
+            assert (
+                var.Write(
+                    struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
+                    array_start_idx=[2, 0],
+                    count=[3, 2],
+                )
+                == gdal.CE_None
+            )
+
+        resize()
+
+        if create_z_metadata == "YES":
+            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+            assert f
+            data = gdal.VSIFReadL(1, 10000, f)
+            gdal.VSIFCloseL(f)
+            j = json.loads(data)
+            assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
+
+        def check():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+            assert var.GetDimensions()[0].GetSize() == 5
+            assert var.GetDimensions()[1].GetSize() == 2
+            assert struct.unpack("B" * (5 * 2), var.Read()) == (
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+            )
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_resize_XARRAY(create_z_metadata):
+
+    filename = "/vsimem/test.zarr"
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                filename,
+                options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim0_var = rg.CreateMDArray(
+                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            dim0.SetIndexingVariable(dim0_var)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+            dim1_var = rg.CreateMDArray(
+                "dim1", [dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            dim1.SetIndexingVariable(dim1_var)
+            var = rg.CreateMDArray(
+                "test", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+            var2 = rg.CreateMDArray(
+                "test2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            assert var2 is not None
+
+        create()
+
+        def resize():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+            with gdaltest.error_handler():
+                assert var.Resize([1, 2]) == gdal.CE_Failure, "shrinking not allowed"
+
+            dim0 = rg.OpenMDArray("dim0")
+
+            assert var.Resize([5, 2]) == gdal.CE_None
+            assert var.GetDimensions()[0].GetSize() == 5
+            assert var.GetDimensions()[1].GetSize() == 2
+            assert (
+                var.Write(
+                    struct.pack("B" * (3 * 2), 5, 6, 7, 8, 9, 10),
+                    array_start_idx=[2, 0],
+                    count=[3, 2],
+                )
+                == gdal.CE_None
+            )
+
+            assert dim0.GetDimensions()[0].GetSize() == 5
+
+        resize()
+
+        if create_z_metadata:
+            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+            assert f
+            data = gdal.VSIFReadL(1, 10000, f)
+            gdal.VSIFCloseL(f)
+            j = json.loads(data)
+            assert j["metadata"]["test/.zarray"]["shape"] == [5, 2]
+            assert j["metadata"]["dim0/.zarray"]["shape"] == [5]
+
+        def check():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+            assert var.GetDimensions()[0].GetSize() == 5
+            assert var.GetDimensions()[1].GetSize() == 2
+            assert struct.unpack("B" * (5 * 2), var.Read()) == (
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+            )
+
+            dim0 = rg.OpenMDArray("dim0")
+            assert dim0.GetDimensions()[0].GetSize() == 5
+
+            var2 = rg.OpenMDArray("test")
+            assert var2.GetDimensions()[0].GetSize() == 5
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+def test_zarr_resize_dim_referenced_twice():
+
+    filename = "/vsimem/test.zarr"
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim0_var = rg.CreateMDArray(
+                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            dim0.SetIndexingVariable(dim0_var)
+
+            var = rg.CreateMDArray(
+                "test", [dim0, dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            )
+            assert var.Write(struct.pack("B" * (2 * 2), 1, 2, 3, 4)) == gdal.CE_None
+
+        create()
+
+        def resize():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+
+            with gdaltest.error_handler():
+                assert var.Resize([3, 4]) == gdal.CE_Failure
+                assert var.Resize([4, 3]) == gdal.CE_Failure
+
+            assert var.Resize([3, 3]) == gdal.CE_None
+            assert var.GetDimensions()[0].GetSize() == 3
+            assert var.GetDimensions()[1].GetSize() == 3
+
+        resize()
+
+        f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert j["metadata"]["test/.zarray"]["shape"] == [3, 3]
+        assert j["metadata"]["dim0/.zarray"]["shape"] == [3]
+
+        def check():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            var = rg.OpenMDArray("test")
+            assert var.GetDimensions()[0].GetSize() == 3
+            assert var.GetDimensions()[1].GetSize() == 3
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive(filename)
