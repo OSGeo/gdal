@@ -2658,6 +2658,21 @@ int sqlite3_extension_init(sqlite3 *hDB, char **pzErrMsg,
 
     SQLITE_EXTENSION_INIT2(pApi);
 
+    // Super hacky: this forces the malloc subsystem to be initialized.
+    // Normally we would not need to do this, but libgdal.so links against
+    // libsqlite3.so If doing SELECT load_extension('libgdal.so') from the
+    // sqlite3 console binary which statically links sqlite3, we might get 2
+    // copies of sqlite3 into memory: the static one from the sqlite3 binary,
+    // and the shared one linked by libgdal.so If the sqlite3_create_module_v2()
+    // function executed happens to be the one of the shared libsqlite3 and not
+    // the one of the sqlite3 binary, then the initialization of the malloc
+    // subsystem might not have been done. This demonstrates that our approach
+    // of having libgdal.so to link to libsqlite3 and be a sqlite3 extension is
+    // very fragile. But there aren't many other alternatives... There's no
+    // problem for applications (including the sqlite3 binary) that are built
+    // against a shared libsqlite3, since only one copy gets loaded.
+    sqlite3_free(sqlite3_malloc(1));
+
     *pzErrMsg = nullptr;
 
     /* Check if we have been already loaded. */
@@ -2682,21 +2697,6 @@ int sqlite3_extension_init(sqlite3 *hDB, char **pzErrMsg,
     }
 
     OGRRegisterAll();
-
-    // Super hacky: this forces the malloc subsystem to be initialized.
-    // Normally we would not need to do this, but libgdal.so links against
-    // libsqlite3.so If doing SELECT load_extension('libgdal.so') from the
-    // sqlite3 console binary which statically links sqlite3, we might get 2
-    // copies of sqlite3 into memory: the static one from the sqlite3 binary,
-    // and the shared one linked by libgdal.so If the sqlite3_create_module_v2()
-    // function executed happens to be the one of the shared libsqlite3 and not
-    // the one of the sqlite3 binary, then the initialization of the malloc
-    // subsystem might not have been done. This demonstrates that our approach
-    // of having libgdal.so to link to libsqlite3 and be a sqlite3 extension is
-    // very fragile. But there aren't many other alternatives... There's no
-    // problem for applications (including the sqlite3 binary) that are built
-    // against a shared libsqlite3, since only one copy gets loaded.
-    sqlite3_free(sqlite3_malloc(1));
 
     OGR2SQLITEModule *poModule = new OGR2SQLITEModule();
     if (poModule->Setup(hDB))
