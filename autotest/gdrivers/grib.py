@@ -2170,3 +2170,20 @@ def test_grib_grib1_south_polar_stereographic():
     assert ds.GetGeoTransform() == pytest.approx(
         (-3243994.6063763676, 7673.0, 0.0, 3286668.2989108698, 0.0, -7673.0)
     )
+
+
+# Test reading a LAEA GRIB2 dataset with negative longitudes (#7456)
+
+
+def test_grib_grib2_laea_negative_longitudes():
+
+    # Dataset generated with
+    # gdal_translate ukv2km.grib2 out.grib2 -srcwin 0 0 1 1 --config GRIB_ADJUST_LONGITUDE_RANGE NO
+    ds = gdal.Open("data/grib/laea_with_negative_longitudes_issue_7456.grib2")
+    assert (
+        "+proj=laea +lat_0=54.9 +lon_0=-2.5 +x_0=0 +y_0=0"
+        in ds.GetSpatialRef().ExportToProj4()
+    )
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-1158999.9595231502, 2000.0, 0.0, 903000.0029299166, 0.0, -2000.0)
+    )
