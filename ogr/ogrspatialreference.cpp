@@ -2390,7 +2390,7 @@ OGRErr OSRSetAngularUnits(OGRSpatialReferenceH hSRS, const char *pszUnits,
  *
  * @return the value to multiply by angular distances to transform them to
  * radians.
- * @deprecated GDAL 2.3.0. Use GetAngularUnits(const char**) const.
+ * @since GDAL 2.3.0
  */
 
 double OGRSpatialReference::GetAngularUnits(const char **ppszName) const
@@ -2475,7 +2475,7 @@ double OGRSpatialReference::GetAngularUnits(const char **ppszName) const
  *
  * @return the value to multiply by angular distances to transform them to
  * radians.
- * @since GDAL 2.3.0
+ * @deprecated GDAL 2.3.0. Use GetAngularUnits(const char**) const.
  */
 
 double OGRSpatialReference::GetAngularUnits(char **ppszName) const
