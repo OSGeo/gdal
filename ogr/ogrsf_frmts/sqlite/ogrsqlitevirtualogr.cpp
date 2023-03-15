@@ -2655,6 +2655,29 @@ int sqlite3_extension_init(sqlite3 *hDB, char **pzErrMsg,
                            const sqlite3_api_routines *pApi)
 {
     CPLDebug("OGR", "OGR SQLite extension loading...");
+#ifndef _WIN32
+    std::string osPath;
+    osPath.resize(1024);
+    if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
+    {
+        osPath = CPLGetBasename(osPath.c_str());
+    }
+    if (osPath == "sqlite3" &&
+        !CPLTestBool(CPLGetConfigOption(
+            "OGR_SQLITE_ALLOW_LOAD_FROM_SQLITE3_BINARY", "NO")))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Loading libgdal.so from the sqlite3 binary on Linux/Unix "
+                 "often leads to a crash, due to duplication of symbols in the "
+                 "static copy of libsqlite3 in the sqlite3 binary and the "
+                 "shared version of libsqlite3. "
+                 "Hence we disable loading of GDAL. "
+                 "If you want to override this check, set the "
+                 "OGR_SQLITE_ALLOW_LOAD_FROM_SQLITE3_BINARY environment "
+                 "variable to YES.");
+        return SQLITE_ERROR;
+    }
+#endif
 
     SQLITE_EXTENSION_INIT2(pApi);
 
