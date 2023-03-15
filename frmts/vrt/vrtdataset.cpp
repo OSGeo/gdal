@@ -994,7 +994,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     auto poSrcDS =
         GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED,
-                          papszAllowedDrivers, nullptr, nullptr);
+                          aosAllowedDrivers.List(), nullptr, nullptr);
     if (poSrcDS == nullptr)
     {
         return nullptr;
