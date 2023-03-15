@@ -1470,6 +1470,14 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
     assert ds is None
 
+    ## not compatible, or no such driver
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,doesnotexist")
+    assert ds is None
+
+    ## compatible driver included
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,GTiff")
+    assert ds is not None
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
