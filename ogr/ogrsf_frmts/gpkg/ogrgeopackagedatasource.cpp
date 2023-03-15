@@ -8562,6 +8562,71 @@ static void GPKG_gdal_get_layer_pixel_value(sqlite3_context *pContext,
 }
 
 /************************************************************************/
+/*                       GPKG_ogr_layer_Extent()                        */
+/************************************************************************/
+
+static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
+                                  sqlite3_value **argv)
+{
+    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Invalid argument type",
+                 "ogr_layer_Extent");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    const char *pszLayerName =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+    OGRLayer *poLayer = poDS->GetLayerByName(pszLayerName);
+    if (!poLayer)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: unknown layer",
+                 "ogr_layer_Extent");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    if (poLayer->GetGeomType() == wkbNone)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if (poLayer->GetExtent(&sExtent) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: Cannot fetch layer extent",
+                 "ogr_layer_Extent");
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGRPolygon oPoly;
+    OGRLinearRing *poRing = new OGRLinearRing();
+    oPoly.addRingDirectly(poRing);
+    poRing->addPoint(sExtent.MinX, sExtent.MinY);
+    poRing->addPoint(sExtent.MaxX, sExtent.MinY);
+    poRing->addPoint(sExtent.MaxX, sExtent.MaxY);
+    poRing->addPoint(sExtent.MinX, sExtent.MaxY);
+    poRing->addPoint(sExtent.MinX, sExtent.MinY);
+
+    const auto poSRS = poLayer->GetSpatialRef();
+    const int nSRID = poSRS ? poDS->GetSrsId(*poSRS) : 0;
+    size_t nBLOBDestLen = 0;
+    GByte *pabyDestBLOB = GPkgGeometryFromOGR(&oPoly, nSRID, &nBLOBDestLen);
+    if (!pabyDestBLOB)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    sqlite3_result_blob(pContext, pabyDestBLOB, static_cast<int>(nBLOBDestLen),
+                        VSIFree);
+}
+
+/************************************************************************/
 /*                      InstallSQLFunctions()                           */
 /************************************************************************/
 
@@ -8692,6 +8757,10 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     sqlite3_create_function(hDB, "gdal_get_layer_pixel_value", 5, SQLITE_UTF8,
                             this, GPKG_gdal_get_layer_pixel_value, nullptr,
                             nullptr);
+
+    // Function from VirtualOGR
+    sqlite3_create_function(hDB, "ogr_layer_Extent", 1, SQLITE_UTF8, this,
+                            GPKG_ogr_layer_Extent, nullptr, nullptr);
 
     m_pSQLFunctionData = OGRSQLiteRegisterSQLFunctionsCommon(hDB);
 }
