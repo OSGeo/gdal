@@ -156,8 +156,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
         m_osMapRelationships{};
 
     void *hSpatialiteCtxt = nullptr;
-    bool InitNewSpatialite();
-    void FinishNewSpatialite();
+    bool InitSpatialite();
+    void FinishSpatialite();
 
     int bUserTransactionActive = FALSE;
     int nSoftTransactionLevel = 0;

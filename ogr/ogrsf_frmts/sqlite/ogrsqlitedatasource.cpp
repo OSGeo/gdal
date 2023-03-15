@@ -89,10 +89,6 @@
 #undef SQLITE_STATIC
 #define SQLITE_STATIC ((sqlite3_destructor_type) nullptr)
 
-#ifndef SPATIALITE_412_OR_LATER
-static bool bSpatialiteGlobalLoaded = false;
-#endif
-
 // Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
 // ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp
 void GDALOpenInfoDeclareFileNotToOpen(const char *pszFilename,
@@ -100,60 +96,7 @@ void GDALOpenInfoDeclareFileNotToOpen(const char *pszFilename,
                                       int nHeaderBytes);
 void GDALOpenInfoUnDeclareFileNotToOpen(const char *pszFilename);
 
-/************************************************************************/
-/*                      OGRSQLiteInitOldSpatialite()                    */
-/************************************************************************/
-
-#ifndef SPATIALITE_412_OR_LATER
-
 #ifdef HAVE_SPATIALITE
-static const char *(*pfn_spatialite_version)(void) = spatialite_version;
-#endif
-
-static int OGRSQLiteInitOldSpatialite()
-{
-/* -------------------------------------------------------------------- */
-/*      Try loading SpatiaLite.                                         */
-/* -------------------------------------------------------------------- */
-#ifdef HAVE_SPATIALITE
-    if (!bSpatialiteGlobalLoaded &&
-        CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
-    {
-        bSpatialiteGlobalLoaded = true;
-        spatialite_init(CPLTestBool(
-            CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
-    }
-#endif
-    return bSpatialiteGlobalLoaded;
-}
-
-/************************************************************************/
-/*                          InitNewSpatialite()                         */
-/************************************************************************/
-
-bool OGRSQLiteBaseDataSource::InitNewSpatialite()
-{
-    (void)hSpatialiteCtxt;
-    return true;
-}
-
-/************************************************************************/
-/*                         FinishNewSpatialite()                        */
-/************************************************************************/
-
-void OGRSQLiteBaseDataSource::FinishNewSpatialite()
-{
-}
-
-/************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
-/************************************************************************/
-
-void OGRSQLiteDriverUnload(GDALDriver *)
-{
-}
-
-#else  // defined(SPATIALITE_412_OR_LATER)
 
 #ifdef SPATIALITE_DLOPEN
 static CPLMutex *hMutexLoadSpatialiteSymbols = nullptr;
@@ -226,27 +169,10 @@ static bool OGRSQLiteLoadSpatialiteSymbols()
 #endif
 
 /************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
+/*                          InitSpatialite()                            */
 /************************************************************************/
 
-void OGRSQLiteDriverUnload(GDALDriver *)
-{
-    if (pfn_spatialite_shutdown != nullptr)
-        pfn_spatialite_shutdown();
-#ifdef SPATIALITE_DLOPEN
-    if (hMutexLoadSpatialiteSymbols != nullptr)
-    {
-        CPLDestroyMutex(hMutexLoadSpatialiteSymbols);
-        hMutexLoadSpatialiteSymbols = nullptr;
-    }
-#endif
-}
-
-/************************************************************************/
-/*                          InitNewSpatialite()                         */
-/************************************************************************/
-
-bool OGRSQLiteBaseDataSource::InitNewSpatialite()
+bool OGRSQLiteBaseDataSource::InitSpatialite()
 {
     if (hSpatialiteCtxt == nullptr &&
         CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
@@ -268,10 +194,10 @@ bool OGRSQLiteBaseDataSource::InitNewSpatialite()
 }
 
 /************************************************************************/
-/*                         FinishNewSpatialite()                        */
+/*                         FinishSpatialite()                           */
 /************************************************************************/
 
-void OGRSQLiteBaseDataSource::FinishNewSpatialite()
+void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
     if (hSpatialiteCtxt != nullptr)
     {
@@ -280,18 +206,49 @@ void OGRSQLiteBaseDataSource::FinishNewSpatialite()
     }
 }
 
-#endif  // defined(SPATIALITE_412_OR_LATER)
-
 /************************************************************************/
 /*                          IsSpatialiteLoaded()                        */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::IsSpatialiteLoaded()
 {
-#ifdef SPATIALITE_412_OR_LATER
     return hSpatialiteCtxt != nullptr;
+}
+
 #else
-    return bSpatialiteGlobalLoaded;
+
+bool OGRSQLiteBaseDataSource::InitSpatialite()
+{
+    return false;
+}
+
+void OGRSQLiteBaseDataSource::FinishSpatialite()
+{
+}
+
+bool OGRSQLiteDataSource::IsSpatialiteLoaded()
+{
+    return false;
+}
+
+#endif
+
+/************************************************************************/
+/*                          OGRSQLiteDriverUnload()                     */
+/************************************************************************/
+
+void OGRSQLiteDriverUnload(GDALDriver *)
+{
+#ifdef HAVE_SPATIALITE
+    if (pfn_spatialite_shutdown != nullptr)
+        pfn_spatialite_shutdown();
+#ifdef SPATIALITE_DLOPEN
+    if (hMutexLoadSpatialiteSymbols != nullptr)
+    {
+        CPLDestroyMutex(hMutexLoadSpatialiteSymbols);
+        hMutexLoadSpatialiteSymbols = nullptr;
+    }
+#endif
 #endif
 }
 
@@ -577,7 +534,7 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 {
     CloseDB();
 
-    FinishNewSpatialite();
+    FinishSpatialite();
 
     if (m_bCallUndeclareFileNotToOpen)
     {
@@ -1717,18 +1674,7 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
 
     if (bSpatialite)
     {
-#ifdef HAVE_SPATIALITE
-#ifndef SPATIALITE_412_OR_LATER
-        OGRSQLiteInitOldSpatialite();
-        if (!IsSpatialiteLoaded())
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Creating a Spatialite database, but Spatialite "
-                     "extensions are not loaded.");
-            return false;
-        }
-#endif
-#else
+#ifndef HAVE_SPATIALITE
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "OGR was built without libspatialite support\n"
@@ -1751,7 +1697,7 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
     /* -------------------------------------------------------------------- */
     if (bSpatialite)
     {
-        if (!InitNewSpatialite())
+        if (!InitSpatialite())
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Creating a Spatialite database, but Spatialite "
@@ -2150,10 +2096,6 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (hDB == nullptr)
     {
-#ifndef SPATIALITE_412_OR_LATER
-        OGRSQLiteInitOldSpatialite();
-#endif
-
 #ifdef ENABLE_SQL_SQLITE_FORMAT
         // SQLite -wal locking appears to be extremely fragile. In particular
         // if we have a file descriptor opened on the file while sqlite3_open
@@ -2179,7 +2121,7 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
                 }
 
                 // We need it here for ST_MinX() and the like
-                InitNewSpatialite();
+                InitSpatialite();
 
                 // Ingest the lines of the dump
                 VSIFSeekL(oOpenInfo.fpL, 0, SEEK_SET);
@@ -2305,7 +2247,7 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        InitNewSpatialite();
+        InitSpatialite();
 
 #ifdef HAVE_RASTERLITE2
         InitRasterLite2();

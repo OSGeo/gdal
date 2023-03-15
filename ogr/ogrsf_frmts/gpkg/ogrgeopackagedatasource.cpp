@@ -219,7 +219,7 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 #else
     CPLAssert(m_pszFilename != NULL);
 
-    FinishNewSpatialite();
+    FinishSpatialite();
 
     /* Have to flush the file before f***ing with the header */
     CloseDB();
@@ -269,7 +269,7 @@ bool GDALGeoPackageDataset::ReOpenDB()
     CPLAssert(hDB != nullptr);
     CPLAssert(m_pszFilename != nullptr);
 
-    FinishNewSpatialite();
+    FinishSpatialite();
 
     CloseDB();
 
@@ -8571,7 +8571,7 @@ static void GPKG_gdal_get_layer_pixel_value(sqlite3_context *pContext,
 
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
-    InitNewSpatialite();
+    InitSpatialite();
 
     // Enable SpatiaLite 4.3 "amphibious" mode, i.e. that SpatiaLite functions
     // that take geometries will accept GPKG encoded geometries without
