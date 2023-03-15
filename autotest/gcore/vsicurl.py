@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import sys
 import time
 
 import gdaltest
@@ -1108,3 +1109,27 @@ def test_vsicurl_stop_webserver():
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+
+###############################################################################
+# Check that GDAL_HTTP_NETRC_FILE is taken into account
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
+@pytest.mark.skipif(not gdaltest.built_against_curl(), reason="curl not available")
+def test_vsicurl_NETRC_FILE():
+
+    python_exe = sys.executable
+    cmd = (
+        f'strace -f "{python_exe}" -c "'
+        + "from osgeo import gdal; "
+        + "gdal.SetConfigOption('GDAL_HTTP_NETRC_FILE', '/i_do/not_exist'); "
+        + "gdal.Open('/vsicurl/http://i.do.not.exist.com/foo');"
+        + '"'
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+
+    assert "/i_do/not_exist" in err
