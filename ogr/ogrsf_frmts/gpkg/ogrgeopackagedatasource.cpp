@@ -8771,8 +8771,9 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
 
 bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 {
-    const bool bSuccess =
-        CPL_TO_BOOL(OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, false));
+    const bool bSuccess = OGRSQLiteBaseDataSource::OpenOrCreateDB(
+        flags, /*bRegisterOGR2SQLiteExtensions=*/false,
+        /*bLoadExtensions=*/true);
     if (!bSuccess)
         return false;
 

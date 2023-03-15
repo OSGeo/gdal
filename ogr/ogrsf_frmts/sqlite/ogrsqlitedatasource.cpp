@@ -1269,8 +1269,9 @@ const struct sqlite3_mem_methods sDebugMemAlloc = {
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
-                                            bool bRegisterOGR2SQLiteExtensions)
+bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
+                                             bool bRegisterOGR2SQLiteExtensions,
+                                             bool bLoadExtensions)
 {
 #ifdef USE_SQLITE_DEBUG_MEMALLOC
     if (CPLTestBool(CPLGetConfigOption("USE_SQLITE_DEBUG_MEMALLOC", "NO")))
@@ -1369,7 +1370,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
                      m_pszFilename, sqlite3_errmsg(hDB));
-            return FALSE;
+            return false;
         }
 
 #ifdef SQLITE_DBCONFIG_DEFENSIVE
@@ -1418,7 +1419,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
         if (pszPreludeStatements)
         {
             if (SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE)
-                return FALSE;
+                return false;
         }
 
         if (pszSqlitePragma != nullptr)
@@ -1497,7 +1498,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
                               "SELECT 1 FROM sqlite_master "
                               "WHERE type = 'table' AND name = 'vfk_tables'",
                               nullptr))
-                return FALSE; /* DB is valid VFK datasource */
+                return false; /* DB is valid VFK datasource */
         }
 
         int nRowCount = 0, nColCount = 0;
@@ -1545,7 +1546,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
                     papszOpenOptions =
                         CSLSetNameValue(papszOpenOptions, "IMMUTABLE", "YES");
                     return OpenOrCreateDB(flagsIn,
-                                          bRegisterOGR2SQLiteExtensions);
+                                          bRegisterOGR2SQLiteExtensions,
+                                          bLoadExtensions);
                 }
 #endif
 
@@ -1569,7 +1571,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrMsg);
             }
             sqlite3_free(pszErrMsg);
-            return FALSE;
+            return false;
         }
 
         sqlite3_free_table(papszResult);
@@ -1587,7 +1589,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
                          "The database will not be opened unless the "
                          "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
                          "configuration option to YES.");
-                return FALSE;
+                return false;
             }
         }
     }
@@ -1620,9 +1622,47 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 
     SetCacheSize();
     SetSynchronous();
+    if (bLoadExtensions)
+        LoadExtensions();
+
+    return true;
+}
+
+/************************************************************************/
+/*                            OpenOrCreateDB()                          */
+/************************************************************************/
+
+bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
+                                         bool bRegisterOGR2SQLiteExtensions)
+{
+    {
+        // Make sure that OGR2SQLITE_static_register() doesn't instanciate
+        // its default OGR2SQLITEModule. Let's do it ourselves just afterwards
+        //
+        CPLConfigOptionSetter oSetter("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO",
+                                      false);
+        if (!OGRSQLiteBaseDataSource::OpenOrCreateDB(
+                flagsIn, bRegisterOGR2SQLiteExtensions,
+                /*bLoadExtensions=*/false))
+        {
+            return false;
+        }
+    }
+    if (bRegisterOGR2SQLiteExtensions &&
+        // Do not run OGR2SQLITE_Setup() if called from ogrsqlitexecute.sql
+        // that will do it with other datasets.
+        CPLTestBool(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")))
+    {
+        OGR2SQLITE_Setup(this, this);
+    }
+    // We need to do LoadExtensions() after OGR2SQLITE_Setup(), otherwise
+    // tests in ogr_virtualogr.py::test_ogr_sqlite_load_extensions_load_self()
+    // will crash when trying to load libgdal as an extension (which is an
+    // errour we catch, but only if OGR2SQLITEModule has been created by
+    // above OGR2SQLITE_Setup()
     LoadExtensions();
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -3081,6 +3121,9 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
     if (pszDialect != nullptr && EQUAL(pszDialect, "OGRSQL"))
         return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
                                        pszDialect);
+    else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       "SQLITE");
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */

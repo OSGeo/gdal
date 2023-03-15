@@ -691,6 +691,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     void CreateRL2OverviewDatasetIfNeeded(double dfXRes, double dfYRes);
 #endif
 
+    bool OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions);
+
     CPLErr Close() override;
 
   public:

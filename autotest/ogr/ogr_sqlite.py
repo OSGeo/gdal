@@ -4157,6 +4157,52 @@ def test_ogr_sqlite_create_layer_names_with_parenthesis():
 
 
 ###############################################################################
+# Test ogr_layer_Extent()
+
+
+def test_ogr_sqlite_ogr_layer_Extent():
+
+    tmpfilename = "/vsimem/test_ogr_sqlite_ogr_layer_Extent.db"
+    try:
+        ds = ogr.GetDriverByName("SQLite").CreateDataSource(tmpfilename)
+        lyr = ds.CreateLayer("my_layer", geom_type=ogr.wkbLineString)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING (0 1,2 3)"))
+        lyr.CreateFeature(feat)
+        feat = None
+
+        # Test with invalid parameter
+        with gdaltest.error_handler():
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)")
+        feat = sql_lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        ds.ReleaseResultSet(sql_lyr)
+
+        assert geom is None
+
+        # Test on non existing layer
+        with gdaltest.error_handler():
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')")
+        feat = sql_lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        ds.ReleaseResultSet(sql_lyr)
+
+        assert geom is None
+
+        # Test ogr_layer_Extent()
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('my_layer')")
+        feat = sql_lyr.GetNextFeature()
+        geom_wkt = feat.GetGeometryRef().ExportToWkt()
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+        assert geom_wkt == "POLYGON ((0 1,2 1,2 3,0 3,0 1))"
+
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 #
 
 

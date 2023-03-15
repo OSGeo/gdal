@@ -290,7 +290,11 @@ OGRLayer *OGR2SQLITEModule::GetLayerForVTable(const char *pszVTableName)
     std::map<CPLString, OGRLayer *>::iterator oIter =
         oMapVTableToOGRLayer.find(pszVTableName);
     if (oIter == oMapVTableToOGRLayer.end())
+    {
+        if (poDS == poSQLiteDS)
+            return poSQLiteDS->GetLayerByName(pszVTableName);
         return nullptr;
+    }
 
     OGRLayer *poLayer = oIter->second;
     if (poLayer == nullptr)
