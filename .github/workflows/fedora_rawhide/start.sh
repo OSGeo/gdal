@@ -19,7 +19,7 @@ dnf install -y clang make diffutils ccache cmake \
               armadillo-devel qhull-devel \
               hdf-devel hdf5-devel netcdf-devel \
               mongo-cxx-driver-devel libpq-devel \
-              python3-pip python3-devel python3-lxml \
+              python3-pip python3-devel python3-lxml swig \
               glibc-gconv-extra
 
 USER=root

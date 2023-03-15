@@ -32,7 +32,6 @@ import os
 import struct
 
 import gdaltest
-import ogrtest
 import pytest
 
 from osgeo import gdal, ogr, osr
@@ -448,10 +447,8 @@ def test_ogr_basic_10():
 # Test double call to UseExceptions() (#5704)
 
 
+@pytest.mark.require_geos
 def test_ogr_basic_11():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     used_exceptions_before = ogr.GetUseExceptions()
     for _ in range(2):
@@ -755,6 +752,24 @@ def test_ogr_basic_dataset_copy_layer_dst_srswkt():
     out_lyr = ds.CopyLayer(src_lyr, "lyr2", options=["DST_SRSWKT=" + sr.ExportToWkt()])
     assert out_lyr.GetSpatialRef() is not None
     assert out_lyr.GetSpatialRef().IsSame(sr)
+
+
+def test_ogr_basic_dataset_copy_layer_metadata():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = ds.CreateLayer("lyr1")
+    src_lyr.SetMetadataItem("foo", "bar")
+    out_lyr = ds.CopyLayer(src_lyr, "lyr2")
+    assert out_lyr.GetMetadata() == {"foo": "bar"}
+
+
+def test_ogr_basic_dataset_no_copy_layer_metadata():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = ds.CreateLayer("lyr1")
+    src_lyr.SetMetadataItem("foo", "bar")
+    out_lyr = ds.CopyLayer(src_lyr, "lyr2", options=["COPY_MD=NO"])
+    assert out_lyr.GetMetadata() == {}
 
 
 def test_ogr_basic_field_alternative_name():

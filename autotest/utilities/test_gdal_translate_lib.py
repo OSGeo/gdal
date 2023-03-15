@@ -856,10 +856,8 @@ def test_gdal_translate_lib_not_delete_shared_auxiliary_files():
 # Test preservation of IsDynamic() and support for coordinate epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_gdal_translate_lib_coord_epoch_is_dynamic():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
 
@@ -1002,6 +1000,26 @@ def test_gdal_translate_lib_overview_level():
         assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
             0, 0, 10, 10, 2, 2
         )
+
+        # Test requesting an overview level that doesn't exist when there is overview
+        out_ds = gdal.Translate(
+            "",
+            src_ds,
+            format="MEM",
+            overviewLevel=src_ds.GetRasterBand(1).GetOverviewCount(),
+        )
+        ovr_band = src_ds.GetRasterBand(1).GetOverview(
+            src_ds.GetRasterBand(1).GetOverviewCount() - 1
+        )
+        assert out_ds.RasterXSize == ovr_band.XSize
+        assert out_ds.RasterYSize == ovr_band.YSize
+
+        # Test requesting an overview level that doesn't exist when there is no overview
+        out_ds = gdal.Translate(
+            "", "../gcore/data/byte.tif", format="MEM", overviewLevel=0
+        )
+        assert out_ds.RasterXSize == 20
+        assert out_ds.RasterYSize == 20
 
     finally:
         src_ds = None

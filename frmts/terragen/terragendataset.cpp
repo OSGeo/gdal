@@ -971,7 +971,7 @@ GDALDataset *TerragenDataset::Create(const char *pszFilename, int nXSize,
     // VSIFClose( poDS->m_fp );
 
     // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-    return reinterpret_cast<GDALDataset *>(poDS);
+    return GDALDataset::FromHandle(poDS);
 }
 
 /************************************************************************/

@@ -15,8 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_polygonize.py [-8] [-nomask] [-mask filename] <raster_file> [-b band]
-                       [-q] [-f ogr_format] <out_file> [layer] [fieldname]
+    gdal_polygonize.py [-8] [-o name=value]* [-nomask] [-mask filename] <raster_file> [-b band]
+                       [-q] [-f ogr_format] [-lco name=value]* <out_file> [layer] [fieldname]
 
 Description
 -----------
@@ -64,6 +64,18 @@ details on the algorithm.
     Select the output format. Starting with
     GDAL 2.3, if not specified, the format is guessed from the extension (previously
     was GML). Use the short format name
+
+.. option:: -o NAME=VALUE
+
+    .. versionadded:: 3.7
+
+    Polygonize option. See ::cpp:func:`GDALPolygonize` documentation.
+
+.. option:: -lco NAME=VALUE
+
+    .. versionadded:: 3.7
+
+    Layer creation option (format specific)
 
 .. option:: <out_file>
 

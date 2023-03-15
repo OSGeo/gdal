@@ -3978,7 +3978,7 @@ GDALDataset *HDF4ImageDataset::Create(const char *pszFilename, int nXSize,
     SDsetattr(poDS->hSD, "Signature", DFNT_CHAR8,
               static_cast<int>(strlen(pszGDALSignature)) + 1, pszGDALSignature);
 
-    return reinterpret_cast<GDALDataset *>(poDS);
+    return GDALDataset::FromHandle(poDS);
 }
 
 /************************************************************************/

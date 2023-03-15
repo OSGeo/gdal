@@ -711,6 +711,102 @@ OGRErr OGR_L_UpsertFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 }
 
 /************************************************************************/
+/*                           UpdateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRLayer::UpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                               const int *panUpdatedFieldsIdx,
+                               int nUpdatedGeomFieldsCount,
+                               const int *panUpdatedGeomFieldsIdx,
+                               bool bUpdateStyleString)
+
+{
+    ConvertGeomsIfNecessary(poFeature);
+    const int nFieldCount = GetLayerDefn()->GetFieldCount();
+    for (int i = 0; i < nUpdatedFieldsCount; ++i)
+    {
+        if (panUpdatedFieldsIdx[i] < 0 || panUpdatedFieldsIdx[i] >= nFieldCount)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid panUpdatedFieldsIdx[%d] = %d", i,
+                     panUpdatedFieldsIdx[i]);
+            return OGRERR_FAILURE;
+        }
+    }
+    const int nGeomFieldCount = GetLayerDefn()->GetGeomFieldCount();
+    for (int i = 0; i < nUpdatedGeomFieldsCount; ++i)
+    {
+        if (panUpdatedGeomFieldsIdx[i] < 0 ||
+            panUpdatedGeomFieldsIdx[i] >= nGeomFieldCount)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid panUpdatedGeomFieldsIdx[%d] = %d", i,
+                     panUpdatedGeomFieldsIdx[i]);
+            return OGRERR_FAILURE;
+        }
+    }
+    return IUpdateFeature(poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+                          nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx,
+                          bUpdateStyleString);
+}
+
+/************************************************************************/
+/*                           IUpdateFeature()                           */
+/************************************************************************/
+
+OGRErr OGRLayer::IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                                const int *panUpdatedFieldsIdx,
+                                int nUpdatedGeomFieldsCount,
+                                const int *panUpdatedGeomFieldsIdx,
+                                bool bUpdateStyleString)
+{
+    if (!TestCapability(OLCRandomWrite))
+        return OGRERR_UNSUPPORTED_OPERATION;
+
+    auto poFeatureExisting = GetFeature(poFeature->GetFID());
+    if (!poFeatureExisting)
+        return OGRERR_NON_EXISTING_FEATURE;
+
+    for (int i = 0; i < nUpdatedFieldsCount; ++i)
+    {
+        poFeatureExisting->SetField(
+            panUpdatedFieldsIdx[i],
+            poFeature->GetRawFieldRef(panUpdatedFieldsIdx[i]));
+    }
+    for (int i = 0; i < nUpdatedGeomFieldsCount; ++i)
+    {
+        poFeatureExisting->SetGeomFieldDirectly(
+            panUpdatedGeomFieldsIdx[i],
+            poFeature->StealGeometry(panUpdatedGeomFieldsIdx[i]));
+    }
+    if (bUpdateStyleString)
+    {
+        poFeatureExisting->SetStyleString(poFeature->GetStyleString());
+    }
+    return ISetFeature(poFeatureExisting);
+}
+
+/************************************************************************/
+/*                        OGR_L_UpdateFeature()                         */
+/************************************************************************/
+
+OGRErr OGR_L_UpdateFeature(OGRLayerH hLayer, OGRFeatureH hFeat,
+                           int nUpdatedFieldsCount,
+                           const int *panUpdatedFieldsIdx,
+                           int nUpdatedGeomFieldsCount,
+                           const int *panUpdatedGeomFieldsIdx,
+                           bool bUpdateStyleString)
+
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_UpdateFeature", OGRERR_INVALID_HANDLE);
+    VALIDATE_POINTER1(hFeat, "OGR_L_UpdateFeature", OGRERR_INVALID_HANDLE);
+
+    return OGRLayer::FromHandle(hLayer)->UpdateFeature(
+        OGRFeature::FromHandle(hFeat), nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
+
+/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 

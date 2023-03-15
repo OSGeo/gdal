@@ -41,7 +41,7 @@ In your IDE set gdal-utils as the root folder,
    launch wrappers created by pip and added to PYTHONHOME/Scripts)
 
    **./osgeo_utils/samples** - working python scripts but not typically
-   available in path (run them with ``python
+   available in path (run them with ``python3
    path/to/samples/something.py``)
 
 Improve the docs by editing the RST pages in

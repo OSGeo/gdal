@@ -705,7 +705,7 @@ GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
     CPL_IGNORE_RET_VAL(VSIFPrintfL(fp, "%-40s %d\n", "FILE_LENGTH", nYSize));
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

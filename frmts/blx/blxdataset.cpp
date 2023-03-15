@@ -414,8 +414,7 @@ static GDALDataset *BLXCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     blx_free_context(ctx);
 
     if (eErr == CE_None)
-        return reinterpret_cast<GDALDataset *>(
-            GDALOpen(pszFilename, GA_ReadOnly));
+        return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_ReadOnly));
 
     return nullptr;
 }

@@ -133,6 +133,7 @@ Raster drivers
    ntv2
    nwtgrd
    ogcapi
+   openfilegdb
    ozi
    palsar
    paux
@@ -146,7 +147,6 @@ Raster drivers
    pnm
    postgisraster
    prf
-   rasdaman
    rasterlite
    rasterlite2
    r

@@ -541,3 +541,17 @@ def test_geoloc_DST_GEOLOC_ARRAY_transformer_option():
     ds = None
 
     gdal.Unlink("/vsimem/lonlat_DST_GEOLOC_ARRAY.tif")
+
+
+###############################################################################
+# Test when the geolocation array coordinates form triangles
+
+
+def test_geoloc_triangles():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 15, 15)
+    tr = gdal.Transformer(ds, None, ["GEOLOC_ARRAY=data/geoloc_triangles.tif"])
+
+    success, pnt = tr.TransformPoint(True, -108376.74703465727, -6257.884312873284)
+    assert success
+    assert pnt == pytest.approx((6.151710889520756, 7.225915929816924, 0))

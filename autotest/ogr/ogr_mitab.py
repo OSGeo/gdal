@@ -2641,7 +2641,19 @@ def test_ogr_mitab_custom_datum_export():
     sr.SetGeogCS("Custom", "Custom", "Sphere", 6370997.0, 0.0)
     sr.SetTOWGS84(1, 2, 3, 4, 5, 6, 7)
     proj = sr.ExportToMICoordSys()
-    assert proj == "Earth Projection 1, 9999, 12, 1, 2, 3, -4, -5, -6, -7, 0"
+    assert proj == "Earth Projection 1, 9999, 12, 1, 2, 3, -4, -5, -6, 7, 0"
+
+    sr = osr.SpatialReference()
+    sr.ImportFromMICoordSys(proj)
+    assert sr.GetTOWGS84() == (
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+    ), "Wrong ExportToMICoordSys / ImportFromMICoordSys pair"
 
     sr = osr.SpatialReference()
     sr.SetGeogCS("Custom", "Custom", "NWL-9D or WGS-66", 6378145.0, 298.25)
@@ -2650,7 +2662,7 @@ def test_ogr_mitab_custom_datum_export():
     proj = sr.ExportToMICoordSys()
     assert (
         proj
-        == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, -7, 0, "m", 15, 0, 0.9996, 500000, 0'
+        == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, 7, 0, "m", 15, 0, 0.9996, 500000, 0'
     )
 
 
@@ -3054,4 +3066,22 @@ def test_ogr_mitab_read_write_hotine_oblique_mercator_with_rectified_grid_angle(
     assert got_srs.ExportToProj4() == ref_srs.ExportToProj4()
     ds = None
 
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)
+
+
+###############################################################################
+# Test LABEL without text
+
+
+def test_ogr_mitab_label_without_text():
+
+    filename = "/vsimem/test_ogr_mitab_label_without_text.tab"
+    ds = gdaltest.mapinfo_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer("label")
+    lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    f.SetStyleString("LABEL(f:DejaVu Sans,s:0.705557,c:#FF0000FF,b:#000000FF)")
+    lyr.CreateFeature(f)
+    ds = None
     ogr.GetDriverByName("MapInfo File").DeleteDataSource(filename)

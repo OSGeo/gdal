@@ -50,6 +50,7 @@ def gdal_polygonize(
     quiet: bool = False,
     mask: str = "default",
     options: Optional[list] = None,
+    layer_creation_options: Optional[list] = None,
     connectedness8: bool = False,
 ):
 
@@ -128,7 +129,12 @@ def gdal_polygonize(
     if dst_layer is None:
 
         srs = src_ds.GetSpatialRef()
-        dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs=srs)
+        dst_layer = dst_ds.CreateLayer(
+            dst_layername,
+            geom_type=ogr.wkbPolygon,
+            srs=srs,
+            options=layer_creation_options if layer_creation_options else [],
+        )
 
         if dst_fieldname is None:
             dst_fieldname = "DN"
@@ -141,6 +147,11 @@ def gdal_polygonize(
         dst_layer.CreateField(fd)
         dst_field = 0
     else:
+        if layer_creation_options:
+            print(
+                "Warning: layer_creation_options will be ignored as the layer already exists"
+            )
+
         if dst_fieldname is not None:
             dst_field = dst_layer.GetLayerDefn().GetFieldIndex(dst_fieldname)
             if dst_field < 0:
@@ -158,9 +169,14 @@ def gdal_polygonize(
     else:
         prog_func = gdal.TermProgress_nocb
 
+    dst_layer.StartTransaction()
     result = gdal.Polygonize(
         srcband, maskband, dst_layer, dst_field, options, callback=prog_func
     )
+    if result == gdal.CE_None:
+        dst_layer.CommitTransaction()
+    else:
+        dst_layer.RollbackTransaction()
 
     srcband = None
     src_ds = None
@@ -209,10 +225,9 @@ class GDALPolygonize(GDALScript):
             "-o",
             dest="options",
             type=str,
-            action="extend",
-            nargs="*",
+            action="append",
             metavar="name=value",
-            help="Specify a special argument to the algorithm.",
+            help="Specify a special argument to the algorithm. This may be specified multiple times.",
         )
 
         parser.add_argument(
@@ -256,6 +271,15 @@ class GDALPolygonize(GDALScript):
             help="Select the output format. "
             "if not specified, the format is guessed from the extension. "
             "Use the short format name.",
+        )
+
+        parser.add_argument(
+            "-lco",
+            dest="layer_creation_options",
+            type=str,
+            action="append",
+            metavar="name=value",
+            help="Specify a layer creation option. This may be specified multiple times.",
         )
 
         parser.add_argument(

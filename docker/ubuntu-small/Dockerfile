@@ -56,7 +56,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
-       autoconf automake sqlite3 bash-completion
+       autoconf automake sqlite3 bash-completion swig
 
 # Build openjpeg
 ARG OPENJPEG_VERSION=

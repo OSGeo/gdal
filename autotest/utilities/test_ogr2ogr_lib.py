@@ -479,7 +479,7 @@ def test_ogr2ogr_lib_21():
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 
     tmpfilename = "/vsimem/out.csv"
@@ -834,10 +834,8 @@ def test_ogr2ogr_assign_coord_epoch():
 # Test -s_coord_epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_ogr2ogr_s_coord_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
@@ -862,10 +860,8 @@ def test_ogr2ogr_s_coord_epoch():
 # Test -t_coord_epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_ogr2ogr_t_coord_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
@@ -1027,7 +1023,7 @@ def test_ogr2ogr_lib_t_srs_ignored():
 # Test spatSRS
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_spat_srs_projected():
 
     # Check that we densify spatial filter geometry when not expressed in
@@ -1062,7 +1058,7 @@ def test_ogr2ogr_lib_spat_srs_projected():
 # Test spatSRS
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_spat_srs_geographic():
 
     # Check that we densify spatial filter geometry when not expressed in
@@ -1091,7 +1087,7 @@ def test_ogr2ogr_lib_spat_srs_geographic():
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_datasource():
 
     # Prepare the data layer to clip
@@ -1169,7 +1165,7 @@ def test_ogr2ogr_lib_clipsrc_datasource():
 # Test -clipsrc and intersection being of a lower dimensionality
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1192,7 +1188,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipdst_datasource():
 
     # Prepare the data layer to clip
@@ -1270,7 +1266,7 @@ def test_ogr2ogr_lib_clipdst_datasource():
 # Test -clipdst and intersection being of a lower dimensionality
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1291,7 +1287,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 # Test /-clipsrc-clipdst with reprojection
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+@pytest.mark.require_geos
 @pytest.mark.parametrize("clipSrc", [True, False])
 def test_ogr2ogr_lib_clip_datasource_reprojection(clipSrc):
 
@@ -1430,7 +1426,7 @@ def test_ogr2ogr_lib_options_and_args():
 # Test using simplify
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS is not available")
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_simplify():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)

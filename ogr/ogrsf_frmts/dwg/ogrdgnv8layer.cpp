@@ -1414,8 +1414,8 @@ OGRDGNV8Layer::ProcessElement(OdDgGraphicsElementPtr element, int level)
 
                 // Try to assemble into polygon geometry.
                 OGRGeometry *poGeom =
-                    reinterpret_cast<OGRGeometry *>(OGRBuildPolygonFromEdges(
-                        reinterpret_cast<OGRGeometryH>(&oGC), TRUE, TRUE,
+                    OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
+                        OGRGeometry::ToHandle(&oGC), TRUE, TRUE,
                         CONTIGUITY_TOLERANCE, nullptr));
                 poGeom->setCoordinateDimension(oGC.getCoordinateDimension());
                 poFeature->SetGeometryDirectly(poGeom);

@@ -1392,9 +1392,6 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 @pytest.fixture()
 def with_webserver():
 
-    if gdal.GetDriverByName("HTTP") is None:
-        pytest.skip("network support not available")
-
     ogrtest.webserver_process = None
     ogrtest.webserver_port = 0
 
@@ -1413,9 +1410,17 @@ def with_webserver():
 # Test ogr_geocode()
 
 
-def test_ogr_sql_sqlite_16(
-    with_webserver, service=None, template="http://127.0.0.1:%d/geocoding?q=%%s"
-):
+@pytest.mark.require_curl()
+@pytest.mark.parametrize(
+    "service,template",
+    [
+        (None, "http://127.0.0.1:%d/geocoding?q=%%s"),
+        ("YAHOO", "http://127.0.0.1:%d/yahoogeocoding?q=%%s"),
+        ("GEONAMES", "http://127.0.0.1:%d/geonamesgeocoding?q=%%s"),
+        ("BING", "http://127.0.0.1:%d/binggeocoding?q=%%s"),
+    ],
+)
+def test_ogr_sql_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
     gdal.SetConfigOption("OGR_GEOCODE_EMAIL", "foo@bar")
@@ -1535,11 +1540,20 @@ def test_ogr_sql_sqlite_16(
 # Test ogr_geocode_reverse()
 
 
-def test_ogr_sql_sqlite_17(
-    with_webserver,
-    service=None,
-    template="http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}",
-):
+@pytest.mark.require_curl()
+@pytest.mark.parametrize(
+    "service,template",
+    [
+        (None, "http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}"),
+        ("YAHOO", "http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R"),
+        (
+            "GEONAMES",
+            "http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}",
+        ),
+        ("BING", "http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}"),
+    ],
+)
+def test_ogr_sql_reverse_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
     gdal.SetConfigOption("OGR_GEOCODE_EMAIL", "foo@bar")
@@ -1643,76 +1657,6 @@ def test_ogr_sql_sqlite_17(
         gdal.Unlink(cache_filename)
 
         ds = None
-
-
-###############################################################################
-# Test ogr_geocode() with Yahoo geocoding service
-
-
-def test_ogr_sql_sqlite_18(with_webserver):
-
-    return test_ogr_sql_sqlite_16(
-        with_webserver, "YAHOO", "http://127.0.0.1:%d/yahoogeocoding?q=%%s"
-    )
-
-
-###############################################################################
-# Test ogr_geocode_reverse() with Yahoo geocoding service
-
-
-def test_ogr_sql_sqlite_19(with_webserver):
-
-    return test_ogr_sql_sqlite_17(
-        with_webserver,
-        "YAHOO",
-        "http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R",
-    )
-
-
-###############################################################################
-# Test ogr_geocode() with GeoNames.org geocoding service
-
-
-def test_ogr_sql_sqlite_20(with_webserver):
-
-    return test_ogr_sql_sqlite_16(
-        with_webserver, "GEONAMES", "http://127.0.0.1:%d/geonamesgeocoding?q=%%s"
-    )
-
-
-###############################################################################
-# Test ogr_geocode_reverse() with GeoNames.org geocoding service
-
-
-def test_ogr_sql_sqlite_21(with_webserver):
-
-    return test_ogr_sql_sqlite_17(
-        with_webserver,
-        "GEONAMES",
-        "http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}",
-    )
-
-
-###############################################################################
-# Test ogr_geocode() with Bing geocoding service
-
-
-def test_ogr_sql_sqlite_22(with_webserver):
-
-    return test_ogr_sql_sqlite_16(
-        with_webserver, "BING", "http://127.0.0.1:%d/binggeocoding?q=%%s"
-    )
-
-
-###############################################################################
-# Test ogr_geocode_reverse() with Bing geocoding service
-
-
-def test_ogr_sql_sqlite_23(with_webserver):
-
-    return test_ogr_sql_sqlite_17(
-        with_webserver, "BING", "http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}"
-    )
 
 
 ###############################################################################
@@ -1875,10 +1819,8 @@ def test_ogr_sql_sqlite_25():
     assert val2_sql is None
 
 
+@pytest.mark.require_geos
 def test_ogr_sql_sqlite_26():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     # if ogrtest.has_spatialite is True:
     #    return 'skip'

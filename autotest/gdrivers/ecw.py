@@ -2543,21 +2543,11 @@ def test_ecw_online_5():
 # and in particular the .ecw extension, to make the ECW driver happy
 
 
+@pytest.mark.require_driver("HTTP")
 def test_ecw_online_6():
-
-    drv = gdal.GetDriverByName("HTTP")
-    if drv is None:
-        pytest.skip()
-
-    dods_drv = gdal.GetDriverByName("DODS")
-    if dods_drv is not None:
-        dods_drv.Deregister()
 
     url = "http://download.osgeo.org/gdal/data/ecw/spif83.ecw"
     ds = gdal.Open(url)
-
-    if dods_drv is not None:
-        dods_drv.Register()
 
     if ds is None:
         # The ECW driver (3.3) doesn't manage to open in /vsimem, thus fallbacks

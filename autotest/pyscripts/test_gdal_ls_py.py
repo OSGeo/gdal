@@ -136,7 +136,7 @@ def test_gdal_ls_py_4(script_path):
 # List dir in /vsicurl/
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_gdal_ls_py_5(script_path):
 
     f = gdal.VSIFOpenL(
@@ -162,7 +162,7 @@ def test_gdal_ls_py_5(script_path):
 # List in a .zip in /vsicurl/
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_gdal_ls_py_6(script_path):
 
     f = gdal.VSIFOpenL(
@@ -203,7 +203,7 @@ def test_gdal_ls_py_6(script_path):
 # List dir in /vsicurl/ and recurse in zip
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_gdal_ls_py_7(script_path):
 
     # Super slow on AppVeyor since a few weeks (Apr 2016)
@@ -232,7 +232,7 @@ def test_gdal_ls_py_7(script_path):
 # List FTP dir in /vsicurl/
 
 
-@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
 def test_gdal_ls_py_8(script_path):
     if not gdaltest.run_slow_tests():
         pytest.skip()

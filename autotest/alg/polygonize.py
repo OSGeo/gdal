@@ -42,10 +42,9 @@ from osgeo import gdal, ogr
 # Test a fairly simple case, with nodata masking.
 
 
-def test_polygonize_1(is_int_polygonize=True):
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
+@pytest.mark.require_driver("AAIGRID")
+@pytest.mark.parametrize("is_int_polygonize", [True, False])
+def test_polygonize_1(is_int_polygonize):
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -71,7 +70,7 @@ def test_polygonize_1(is_int_polygonize=True):
     expected_feature_number = 13
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [107, 123, 115, 115, 140, 148, 123, 140, 156, 100, 101, 102, 103]
+    expect = [107, 123, 115, 115, 140, 148, 123, 140, 100, 101, 102, 156, 103]
 
     tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
@@ -82,7 +81,7 @@ def test_polygonize_1(is_int_polygonize=True):
         if (
             ogrtest.check_feature_geometry(
                 feat_read,
-                "POLYGON ((440720 3751200,440720 3751020,440900 3751020,440900 3751200,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
+                "POLYGON ((440720 3751200,440720 3751020,440900 3751020,440900 3751200,440720 3751200),(440780 3751140,440840 3751140,440840 3751080,440780 3751080,440780 3751140))",
             )
             != 0
         ):
@@ -92,18 +91,12 @@ def test_polygonize_1(is_int_polygonize=True):
     assert tr
 
 
-def test_polygonize_1_float():
-    return test_polygonize_1(is_int_polygonize=False)
-
-
 ###############################################################################
 # Test a simple case without masking.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_2():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -132,17 +125,17 @@ def test_polygonize_2():
         115,
         132,
         115,
-        132,
         140,
+        132,
         132,
         148,
         123,
         140,
         132,
-        156,
         100,
         101,
         102,
+        156,
         103,
     ]
 
@@ -155,10 +148,8 @@ def test_polygonize_2():
 # A more involved case with a complex looping.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_3():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_2.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -187,7 +178,7 @@ def test_polygonize_3():
     if (
         ogrtest.check_feature_geometry(
             feat_read,
-            "POLYGON ((6 -3,6 -40,19 -40,19 -39,25 -39,25 -38,27 -38,27 -37,28 -37,28 -36,29 -36,29 -35,30 -35,30 -34,31 -34,31 -25,30 -25,30 -24,29 -24,29 -23,28 -23,28 -22,27 -22,27 -21,24 -21,24 -20,23 -20,23 -19,26 -19,26 -18,27 -18,27 -17,28 -17,28 -16,29 -16,29 -8,28 -8,28 -7,27 -7,27 -6,26 -6,26 -5,24 -5,24 -4,18 -4,18 -3,6 -3),(11 -7,11 -18,23 -18,23 -17,24 -17,24 -16,25 -16,25 -9,24 -9,24 -8,23 -8,23 -7,11 -7),(11 -22,11 -36,24 -36,24 -35,26 -35,26 -33,27 -33,27 -25,26 -25,26 -23,24 -23,24 -22,11 -22))",
+            "POLYGON ((6 -3,6 -40,19 -40,19 -39,25 -39,25 -38,27 -38,27 -37,28 -37,28 -36,29 -36,29 -35,30 -35,30 -34,31 -34,31 -25,30 -25,30 -24,29 -24,29 -23,28 -23,28 -22,27 -22,27 -21,24 -21,24 -20,23 -20,23 -19,26 -19,26 -18,27 -18,27 -17,28 -17,28 -16,29 -16,29 -8,28 -8,28 -7,27 -7,27 -6,26 -6,26 -5,24 -5,24 -4,18 -4,18 -3,6 -3),(11 -7,23 -7,23 -8,24 -8,24 -9,25 -9,25 -16,24 -16,24 -17,23 -17,23 -18,11 -18,11 -7),(11 -22,24 -22,24 -23,26 -23,26 -25,27 -25,27 -33,26 -33,26 -35,24 -35,24 -36,11 -36,11 -22))",
         )
         != 0
     ):
@@ -204,10 +195,8 @@ def test_polygonize_3():
 # Test a simple case without masking but with 8-connectedness.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_4():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -233,19 +222,19 @@ def test_polygonize_4():
     expect = [
         107,
         123,
-        132,
         115,
         132,
         115,
         140,
+        132,
         148,
         123,
         140,
         132,
-        156,
         100,
         101,
         102,
+        156,
         103,
     ]
 
@@ -258,10 +247,8 @@ def test_polygonize_4():
 # Test a simple case with two inner wholes touchs at a vertex.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_5():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_3.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -284,11 +271,11 @@ def test_polygonize_5():
     expected_feature_number = 3
     assert mem_layer.GetFeatureCount() == expected_feature_number
 
-    expect = [1, 0, 0]
+    expect = [0, 0, 1]
     expect_wkt = [
-        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(1 3,1 2,2 2,2 3,1 3),(2 2,2 1,3 1,3 2,2 2))",
         "POLYGON ((1 3,1 2,2 2,2 3,1 3))",
         "POLYGON ((2 2,2 1,3 1,3 2,2 2))",
+        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(1 3,2 3,2 2,1 2,1 3),(2 2,3 2,3 1,2 1,2 2))",
     ]
 
     idx = 0
@@ -307,10 +294,8 @@ def test_polygonize_5():
 # Test a simple case with two inner wholes touchs at a vertex.
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_polygonize_6():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_4.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -337,7 +322,7 @@ def test_polygonize_6():
     expect_wkt = [
         "POLYGON ((2 3,2 2,3 2,3 3,2 3))",
         "POLYGON ((1 2,1 1,2 1,2 2,1 2))",
-        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(2 3,2 2,3 2,3 3,2 3),(1 2,1 1,2 1,2 2,1 2))",
+        "POLYGON ((0 4,0 0,4 0,4 4,0 4),(2 3,3 3,3 2,2 2,2 3),(1 2,2 2,2 1,1 1,1 2))",
     ]
 
     idx = 0
@@ -402,3 +387,81 @@ def test_polygonize_7():
         assert (
             abs(value - dn_area_vector[key]) < pixel_area
         ), "polygonized vector area not match raster area"
+
+
+###############################################################################
+# Test a none nodata mask(a user defined mask) case to make sure the polygonized area match that mask.
+
+
+@pytest.mark.require_driver("AAIGRID")
+def test_polygonize_8():
+
+    src_ds = gdal.Open("data/polygonize_in_5.grd")
+    src_band = src_ds.GetRasterBand(1)
+
+    mask_ds = gdal.Open("data/polygonize_in_5_mask.grd")
+    mask_band = mask_ds.GetRasterBand(1)
+
+    # Create a memory OGR datasource to put results in.
+    mem_drv = ogr.GetDriverByName("Memory")
+    mem_ds = mem_drv.CreateDataSource("out")
+
+    ######################################
+    # Test four connectedness conversion
+    ######################################
+
+    mem_layer = mem_ds.CreateLayer("poly_4connected", None, ogr.wkbPolygon)
+
+    fd = ogr.FieldDefn("DN", ogr.OFTInteger)
+    mem_layer.CreateField(fd)
+
+    # run the algorithm.
+    result = gdal.Polygonize(src_band, mask_band, mem_layer, 0)
+    assert result == 0, "Polygonize failed"
+
+    expected_feature_number = 4
+    assert mem_layer.GetFeatureCount() == expected_feature_number
+
+    expect = [1, 1, 1, 1]
+    expect_wkt = [
+        "POLYGON ((1 4,1 3,3 3,3 4,1 4))",
+        "POLYGON ((0 3,0 1,1 1,1 3,0 3))",
+        "POLYGON ((3 3,3 1,4 1,4 3,3 3))",
+        "POLYGON ((1 1,1 0,3 0,3 1,1 1))",
+    ]
+    idx = 0
+    for feature in mem_layer:
+        id = feature.GetField("DN")
+        assert id == expect[idx]
+
+        geom_poly = feature.GetGeometryRef()
+        wkt = geom_poly.ExportToWkt()
+        assert wkt == expect_wkt[idx]
+
+        idx += 1
+
+    ######################################
+    # Test eight connectedness conversion
+    ######################################
+
+    mem_layer = mem_ds.CreateLayer("poly_8connected", None, ogr.wkbPolygon)
+
+    fd = ogr.FieldDefn("DN", ogr.OFTInteger)
+    mem_layer.CreateField(fd)
+
+    # run the algorithm.
+    result = gdal.Polygonize(src_band, mask_band, mem_layer, 0, ["8CONNECTED=8"])
+    assert result == 0, "Polygonize failed"
+
+    expected_feature_number = 1
+    assert mem_layer.GetFeatureCount() == expected_feature_number
+
+    feature = mem_layer.GetNextFeature()
+    assert feature.GetField("DN") == 1
+
+    geom_poly = feature.GetGeometryRef()
+    wkt = geom_poly.ExportToWkt()
+    assert (
+        wkt
+        == "POLYGON ((1 4,1 3,0 3,0 1,1 1,1 0,3 0,3 1,4 1,4 3,3 3,3 4,1 4),(1 3,3 3,3 1,1 1,1 3))"
+    )

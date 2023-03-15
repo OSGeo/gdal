@@ -2550,8 +2550,8 @@ GDALDataset *KmlSingleOverlayRasterDataset::Open(const char *pszFilename,
         return nullptr;
     const char *pszImageFilename =
         CPLFormFilename(CPLGetPath(osFilename), pszHref, nullptr);
-    GDALDataset *poImageDS = reinterpret_cast<GDALDataset *>(
-        GDALOpenShared(pszImageFilename, GA_ReadOnly));
+    GDALDataset *poImageDS =
+        GDALDataset::FromHandle(GDALOpenShared(pszImageFilename, GA_ReadOnly));
     if (poImageDS == nullptr)
         return nullptr;
 

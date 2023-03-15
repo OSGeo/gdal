@@ -953,7 +953,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(const CPLString &soFileName, int x,
                                             int y, int to_buffer_band,
                                             void *buffer, int advise_read)
 {
-    GDALDataset *ds = reinterpret_cast<GDALDataset *>(GDALOpenEx(
+    GDALDataset *ds = GDALDataset::FromHandle(GDALOpenEx(
         soFileName, GDAL_OF_RASTER | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
         nullptr, m_parent_dataset->m_tileOO, nullptr));
     if (ds == nullptr)

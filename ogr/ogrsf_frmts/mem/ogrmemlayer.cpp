@@ -197,13 +197,13 @@ OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
 /*                         GetFeatureRef()                              */
 /************************************************************************/
 
-const OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
+OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
 
 {
     if (nFeatureId < 0)
         return nullptr;
 
-    const OGRFeature *poFeature = nullptr;
+    OGRFeature *poFeature = nullptr;
     if (m_papoFeatures != nullptr)
     {
         if (nFeatureId >= m_nMaxFeatureCount)
@@ -476,6 +476,44 @@ OGRErr OGRMemLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                           UpdateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRMemLayer::IUpdateFeature(OGRFeature *poFeature,
+                                   int nUpdatedFieldsCount,
+                                   const int *panUpdatedFieldsIdx,
+                                   int nUpdatedGeomFieldsCount,
+                                   const int *panUpdatedGeomFieldsIdx,
+                                   bool bUpdateStyleString)
+
+{
+    if (!TestCapability(OLCUpdateFeature))
+        return OGRERR_FAILURE;
+
+    auto poFeatureRef = GetFeatureRef(poFeature->GetFID());
+    if (!poFeatureRef)
+        return OGRERR_NON_EXISTING_FEATURE;
+
+    for (int i = 0; i < nUpdatedFieldsCount; ++i)
+    {
+        poFeatureRef->SetField(
+            panUpdatedFieldsIdx[i],
+            poFeature->GetRawFieldRef(panUpdatedFieldsIdx[i]));
+    }
+    for (int i = 0; i < nUpdatedGeomFieldsCount; ++i)
+    {
+        poFeatureRef->SetGeomFieldDirectly(
+            panUpdatedGeomFieldsIdx[i],
+            poFeature->StealGeometry(panUpdatedGeomFieldsIdx[i]));
+    }
+    if (bUpdateStyleString)
+    {
+        poFeatureRef->SetStyleString(poFeature->GetStyleString());
+    }
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
@@ -555,7 +593,8 @@ int OGRMemLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return FALSE;
 
-    else if (EQUAL(pszCap, OLCDeleteFeature) || EQUAL(pszCap, OLCUpsertFeature))
+    else if (EQUAL(pszCap, OLCDeleteFeature) ||
+             EQUAL(pszCap, OLCUpsertFeature) || EQUAL(pszCap, OLCUpdateFeature))
         return m_bUpdatable;
 
     else if (EQUAL(pszCap, OLCCreateField) ||

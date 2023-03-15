@@ -127,12 +127,6 @@ The :decl_configoption:`GML_ATTRIBUTES_TO_OGR_FIELDS`
 configuration option can be set to **YES** so that attributes of GML
 elements are also taken into account to create OGR fields.
 
-The following :ref:`configuration options <configoptions>` are
-available:
-
-:ref:`configuration options <configoptions>` can e.g. be set via
-the CPLSetConfigOption() function or as environment variables.
-
 You can use :decl_configoption:`GML_GFS_TEMPLATE` configuration option
 (or **GFS_TEMPLATE** open option) set to a **path_to_template.gfs** in
 order to unconditionally use a predefined GFS file. This option is
@@ -1003,7 +997,7 @@ to import it into PostGIS and
 
 ::
 
-   python ogr_build_junction_table.py PG:dbname=mydb
+   python3 ogr_build_junction_table.py PG:dbname=mydb
 
 , a *myfeature_otherfeature* table will be created and will contain the
 following content :

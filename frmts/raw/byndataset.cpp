@@ -792,7 +792,7 @@ GDALDataset *BYNDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     VSIFWriteL(abyBuf, BYN_HDR_SZ, 1, fp);
     VSIFCloseL(fp);
 
-    return reinterpret_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
+    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
 }
 
 /************************************************************************/

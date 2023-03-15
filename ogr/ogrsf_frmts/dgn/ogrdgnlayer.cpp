@@ -833,10 +833,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             OGRGeometry *poGeom = nullptr;
 
             if (psElement->type == DGNT_COMPLEX_SHAPE_HEADER)
-                poGeom =
-                    reinterpret_cast<OGRGeometry *>(OGRBuildPolygonFromEdges(
-                        reinterpret_cast<OGRGeometryH>(&oChildren), TRUE, TRUE,
-                        100000, nullptr));
+                poGeom = OGRGeometry::FromHandle(
+                    OGRBuildPolygonFromEdges(OGRGeometry::ToHandle(&oChildren),
+                                             TRUE, TRUE, 100000, nullptr));
             else
                 poGeom = oChildren.clone();
 

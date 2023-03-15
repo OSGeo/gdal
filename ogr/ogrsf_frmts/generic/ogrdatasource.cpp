@@ -73,7 +73,7 @@ int OGR_DS_Reference(OGRDataSourceH hDataSource)
 {
     VALIDATE_POINTER1(hDataSource, "OGR_DS_Reference", 0);
 
-    return reinterpret_cast<GDALDataset *>(hDataSource)->Reference();
+    return GDALDataset::FromHandle(hDataSource)->Reference();
 }
 
 /************************************************************************/
@@ -85,7 +85,7 @@ int OGR_DS_Dereference(OGRDataSourceH hDataSource)
 {
     VALIDATE_POINTER1(hDataSource, "OGR_DS_Dereference", 0);
 
-    return reinterpret_cast<GDALDataset *>(hDataSource)->Dereference();
+    return GDALDataset::FromHandle(hDataSource)->Dereference();
 }
 
 /************************************************************************/
@@ -97,7 +97,7 @@ int OGR_DS_GetRefCount(OGRDataSourceH hDataSource)
 {
     VALIDATE_POINTER1(hDataSource, "OGR_DS_GetRefCount", 0);
 
-    return reinterpret_cast<GDALDataset *>(hDataSource)->GetRefCount();
+    return GDALDataset::FromHandle(hDataSource)->GetRefCount();
 }
 
 /************************************************************************/
@@ -109,7 +109,7 @@ int OGR_DS_GetSummaryRefCount(OGRDataSourceH hDataSource)
 {
     VALIDATE_POINTER1(hDataSource, "OGR_DS_GetSummaryRefCount", 0);
 
-    return reinterpret_cast<GDALDataset *>(hDataSource)->GetSummaryRefCount();
+    return GDALDataset::FromHandle(hDataSource)->GetSummaryRefCount();
 }
 
 /************************************************************************/
@@ -130,7 +130,7 @@ OGRLayerH OGR_DS_CreateLayer(OGRDataSourceH hDS, const char *pszName,
         return nullptr;
     }
     OGRLayerH hLayer =
-        OGRLayer::ToHandle(reinterpret_cast<GDALDataset *>(hDS)->CreateLayer(
+        OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->CreateLayer(
             pszName, OGRSpatialReference::FromHandle(hSpatialRef), eType,
             papszOptions));
 
@@ -155,7 +155,7 @@ OGRLayerH OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer,
     VALIDATE_POINTER1(hSrcLayer, "OGR_DS_CopyLayer", nullptr);
     VALIDATE_POINTER1(pszNewName, "OGR_DS_CopyLayer", nullptr);
 
-    return OGRLayer::ToHandle(reinterpret_cast<GDALDataset *>(hDS)->CopyLayer(
+    return OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->CopyLayer(
         OGRLayer::FromHandle(hSrcLayer), pszNewName, papszOptions));
 }
 
@@ -173,7 +173,7 @@ OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
         OGRAPISpy_DS_DeleteLayer(reinterpret_cast<GDALDatasetH>(hDS), iLayer);
 #endif
 
-    OGRErr eErr = reinterpret_cast<GDALDataset *>(hDS)->DeleteLayer(iLayer);
+    OGRErr eErr = GDALDataset::FromHandle(hDS)->DeleteLayer(iLayer);
 
     return eErr;
 }
@@ -188,7 +188,7 @@ OGRLayerH OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)
     VALIDATE_POINTER1(hDS, "OGR_DS_GetLayerByName", nullptr);
 
     OGRLayerH hLayer = OGRLayer::ToHandle(
-        reinterpret_cast<GDALDataset *>(hDS)->GetLayerByName(pszLayerName));
+        GDALDataset::FromHandle(hDS)->GetLayerByName(pszLayerName));
 
 #ifdef OGRAPISPY_ENABLED
     if (bOGRAPISpyEnabled)
@@ -210,7 +210,7 @@ OGRLayerH OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,
     VALIDATE_POINTER1(hDS, "OGR_DS_ExecuteSQL", nullptr);
 
     OGRLayerH hLayer =
-        OGRLayer::ToHandle(reinterpret_cast<GDALDataset *>(hDS)->ExecuteSQL(
+        OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->ExecuteSQL(
             pszStatement, OGRGeometry::FromHandle(hSpatialFilter), pszDialect));
 
 #ifdef OGRAPISPY_ENABLED
@@ -238,7 +238,7 @@ void OGR_DS_ReleaseResultSet(OGRDataSourceH hDS, OGRLayerH hLayer)
                                       hLayer);
 #endif
 
-    reinterpret_cast<GDALDataset *>(hDS)->ReleaseResultSet(
+    GDALDataset::FromHandle(hDS)->ReleaseResultSet(
         OGRLayer::FromHandle(hLayer));
 }
 
@@ -252,7 +252,7 @@ int OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)
     VALIDATE_POINTER1(hDS, "OGR_DS_TestCapability", 0);
     VALIDATE_POINTER1(pszCapability, "OGR_DS_TestCapability", 0);
 
-    return reinterpret_cast<GDALDataset *>(hDS)->TestCapability(pszCapability);
+    return GDALDataset::FromHandle(hDS)->TestCapability(pszCapability);
 }
 
 /************************************************************************/
@@ -269,7 +269,7 @@ int OGR_DS_GetLayerCount(OGRDataSourceH hDS)
         OGRAPISpy_DS_GetLayerCount(reinterpret_cast<GDALDatasetH>(hDS));
 #endif
 
-    return reinterpret_cast<GDALDataset *>(hDS)->GetLayerCount();
+    return GDALDataset::FromHandle(hDS)->GetLayerCount();
 }
 
 /************************************************************************/
@@ -281,8 +281,8 @@ OGRLayerH OGR_DS_GetLayer(OGRDataSourceH hDS, int iLayer)
 {
     VALIDATE_POINTER1(hDS, "OGR_DS_GetLayer", nullptr);
 
-    OGRLayerH hLayer = OGRLayer::ToHandle(
-        reinterpret_cast<GDALDataset *>(hDS)->GetLayer(iLayer));
+    OGRLayerH hLayer =
+        OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->GetLayer(iLayer));
 
 #ifdef OGRAPISPY_ENABLED
     if (bOGRAPISpyEnabled)
@@ -302,7 +302,7 @@ const char *OGR_DS_GetName(OGRDataSourceH hDS)
 {
     VALIDATE_POINTER1(hDS, "OGR_DS_GetName", nullptr);
 
-    return reinterpret_cast<GDALDataset *>(hDS)->GetDescription();
+    return GDALDataset::FromHandle(hDS)->GetDescription();
 }
 
 /************************************************************************/
@@ -314,7 +314,7 @@ OGRErr OGR_DS_SyncToDisk(OGRDataSourceH hDS)
 {
     VALIDATE_POINTER1(hDS, "OGR_DS_SyncToDisk", OGRERR_INVALID_HANDLE);
 
-    reinterpret_cast<GDALDataset *>(hDS)->FlushCache(false);
+    GDALDataset::FromHandle(hDS)->FlushCache(false);
     if (CPLGetLastErrorType() != 0)
         return OGRERR_FAILURE;
     else
@@ -344,7 +344,7 @@ OGRStyleTableH OGR_DS_GetStyleTable(OGRDataSourceH hDS)
     VALIDATE_POINTER1(hDS, "OGR_DS_GetStyleTable", nullptr);
 
     return reinterpret_cast<OGRStyleTableH>(
-        reinterpret_cast<GDALDataset *>(hDS)->GetStyleTable());
+        GDALDataset::FromHandle(hDS)->GetStyleTable());
 }
 
 /************************************************************************/
@@ -357,7 +357,7 @@ void OGR_DS_SetStyleTableDirectly(OGRDataSourceH hDS,
 {
     VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTableDirectly");
 
-    reinterpret_cast<GDALDataset *>(hDS)->SetStyleTableDirectly(
+    GDALDataset::FromHandle(hDS)->SetStyleTableDirectly(
         reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
@@ -371,6 +371,6 @@ void OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)
     VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTable");
     VALIDATE_POINTER0(hStyleTable, "OGR_DS_SetStyleTable");
 
-    reinterpret_cast<GDALDataset *>(hDS)->SetStyleTable(
+    GDALDataset::FromHandle(hDS)->SetStyleTable(
         reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }

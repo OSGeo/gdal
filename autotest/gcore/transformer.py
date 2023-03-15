@@ -504,10 +504,8 @@ def test_transformer_9():
 # Test RPC DEM transform from geoid height to ellipsoidal height
 
 
+@pytest.mark.require_driver("GTX")
 def test_transformer_10():
-
-    if gdal.GetDriverByName("GTX") is None:
-        pytest.skip("GTX driver missing")
 
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName("GTX").Create(

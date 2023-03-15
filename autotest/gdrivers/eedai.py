@@ -39,16 +39,13 @@ import webserver
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("EEDAI")
+
 ###############################################################################
 # Find EEDAI driver
 
 
 def test_eedai_1():
-
-    gdaltest.eedai_drv = gdal.GetDriverByName("EEDAI")
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
@@ -67,9 +64,6 @@ def test_eedai_1():
 
 
 def test_eedai_2():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/ee/projects/earthengine-public/assets/image",
@@ -255,9 +249,6 @@ def test_eedai_2():
 
 def test_eedai_3():
 
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption("EEDA_URL", "/vsimem/ee/")
     # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
     # 'openssl pkcs8 -nocrypt -in rsa-openssl.pem -inform PEM -topk8 -outform PEM -out rsa-openssl.pkcs8.pem'
@@ -308,9 +299,6 @@ gwE6fxOLyJDxuWRf
 
 def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/my.json",
         """{
@@ -352,14 +340,8 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
 @pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
 def test_eedai_gce_credentials():
 
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -427,9 +409,6 @@ def test_eedai_gce_credentials():
 
 
 def test_eedai_4():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/ee/projects/earthengine-public/assets/image",
@@ -544,9 +523,6 @@ def test_eedai_4():
 
 def test_eedai_geotiff():
 
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/ee/projects/earthengine-public/assets/image",
         json.dumps(
@@ -604,9 +580,6 @@ def test_eedai_geotiff():
 
 def test_eedai_cleanup():
 
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
     gdal.SetConfigOption("EEDA_BEARER", gdaltest.EEDA_BEARER)
     gdal.SetConfigOption("EEDA_URL", gdaltest.EEDA_URL)
@@ -627,9 +600,6 @@ def test_eedai_cleanup():
 
 
 def test_eedai_real_service():
-
-    if gdaltest.eedai_drv is None:
-        pytest.skip()
 
     if gdal.GetConfigOption("GOOGLE_APPLICATION_CREDENTIALS") is None:
 

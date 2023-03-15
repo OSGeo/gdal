@@ -165,15 +165,21 @@ endif ()
 # ~~~
 #
 include(FeatureSummary)
-option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
-if (BUILD_PYTHON_BINDINGS)
-  if (Python_LOOKUP_VERSION)
+
+find_package(SWIG)
+set_package_properties(
+  SWIG PROPERTIES
+  DESCRIPTION
+    "Software development tool that connects programs written in C and C++ with a variety of high-level programming languages."
+  URL "http://swig.org/"
+  TYPE RECOMMENDED)
+
+if (Python_LOOKUP_VERSION)
     set(Python_FIND_STRATEGY VERSION)
     find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
-  else ()
+else ()
     set(Python_FIND_STRATEGY LOCATION)
     find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
-  endif ()
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 
@@ -194,7 +200,19 @@ if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
     set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
     set(Python_VERSION_MAJOR ${PYTHON_VERSION_MAJOR})
     set(Python_VERSION_MINOR ${PYTHON_VERSION_MINOR})
-
+  endif ()
+  if (PYTHONLIBS_FOUND)
+    set(Python_Development_FOUND TRUE)
+    set(Python_LIBRARIES ${PYTHON_LIBRARIES})
+    set(Python_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+  endif ()
+endif ()
+if (Python_Interpreter_FOUND)
+  file(
+    GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/python_executable.txt"
+    CONTENT "${Python_EXECUTABLE}")
+  if(NOT Python_NumPy_FOUND)
     # Detect numpy
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_numpy.py
          "try:\n  import numpy\n  print(numpy.get_include())\nexcept:\n  pass\n")
@@ -206,18 +224,22 @@ if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
       set(Python_NumPy_FOUND TRUE)
       set(Python_NumPy_INCLUDE_DIRS ${Python_NumPy_INCLUDE_DIRS})
     endif ()
-  endif ()
-  if (PYTHONLIBS_FOUND)
-    set(Python_Development_FOUND TRUE)
-    set(Python_LIBRARIES ${PYTHON_LIBRARIES})
-    set(Python_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
-  endif ()
-endif ()
-if (Python_Interpreter_FOUND)
-  file(
-    GENERATE
-    OUTPUT "python_executable.txt"
-    CONTENT "${Python_EXECUTABLE}")
+  endif()
+endif()
+
+if (SWIG_FOUND AND (Python_Interpreter_FOUND OR Python_FOUND))
+  option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+else()
+  option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
+endif()
+
+if (BUILD_PYTHON_BINDINGS)
+    if (NOT (Python_Interpreter_FOUND OR Python_FOUND))
+      message(FATAL_ERROR "Python is a requirement to build the Python bindings")
+    endif()
+    if (NOT SWIG_FOUND)
+        message(FATAL_ERROR "SWIG is a requirement to build the Python bindings")
+    endif()
 endif()
 
 #
@@ -226,7 +248,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)
-  add_subdirectory(autotest)
+  if(BUILD_PYTHON_BINDINGS)
+      add_subdirectory(autotest)
+  endif()
 endif ()
 # Google OSS-Fuzz project utilities
 add_subdirectory(fuzzers)

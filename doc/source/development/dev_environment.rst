@@ -11,48 +11,28 @@ Setting up a development environment
 Build requirements
 --------------------------------------------------------------------------------
 
-The minimum requirements are:
+The minimum requirements to build GDAL are:
 
 - CMake >= 3.10, and an associated build system (make, ninja, Visual Studio, etc.)
 - C99 compiler
 - C++11 compiler
 - PROJ >= 6.0
-- SWIG >= 4.0.2, for building bindings to other programming languages, such as Python
-- Python, for running the test suite
+
+Additional requirements to run the GDAL test suite are:
+
+- SWIG >= 4, for building bindings to other programming languages
+- Python >= 3.6
+- Python packages listed in `autotest/requirements.txt`
 
 A number of optional libraries are also strongly recommended for most builds:
 SQLite3, expat, libcurl, zlib, libtiff, libgeotiff, libpng, libjpeg, etc.
 Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for information
 on dependencies of optional drivers.
 
-.. note::
-
-    If SWIG 4.0.2 is not provided by system package manager, it can be built and installed from source using the following commands:
-
-    .. code-block:: bash
-
-        export SWIG_PREFIX=/path/to/install
-        export SWIG_VERSION=4.0.2
-
-        mkdir /tmp/swig/
-        cd /tmp/swig/
-        wget https://sourceforge.net/projects/swig/files/swig/swig-${SWIG_VERSION}/swig-${SWIG_VERSION}.tar.gz/download -O swig-${SWIG_VERSION}.tar.gz
-        tar xf swig-${SWIG_VERSION}.tar.gz
-        cd swig-${SWIG_VERSION}
-        ./configure --prefix=$SWIG_PREFIX
-        make
-        make install
-        export PATH=$SWIG_PREFIX/bin:$PATH
-
-    The path to the updated version of SWIG can be provided to provided to ``cmake`` using ``-DSWIG_EXECUTABLE=$SWIG_PREFIX/bin/swig``.
-
-
-If you want to do Python binding development, you also need to specify the SWIG_REGENERATE_PYTHON:BOOL=ON CMake variable to force regeneration of the Python bindings from the SWIG input .i files.
-
 Vagrant
 -------
 
-`Vagrant <https://www.vagrantup.com>`_ is a tool that works with a virtualization product such as 
+`Vagrant <https://www.vagrantup.com>`_ is a tool that works with a virtualization product such as
 VirtualBox to create a reproducible development environment. GDAL includes a Vagrant configuration
 file that sets up an Ubuntu virtual machine with a comprehensive set of dependencies.
 

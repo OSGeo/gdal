@@ -1496,7 +1496,7 @@ def test_ogr_gml_34():
 
 
 @pytest.mark.require_driver("SQLite")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr_gml_35():
 
     if not gdaltest.have_gml_reader:
@@ -1552,7 +1552,7 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE="NO"):
 
     if GML_FACE_HOLE_NEGATIVE == "NO":
         if not ogrtest.have_geos():
-            pytest.skip()
+            pytest.skip("GEOS not available")
 
     try:
         os.remove("tmp/GmlTopo-sample.gfs")
@@ -1650,7 +1650,7 @@ def internal_ogr_gml_38(resolver):
 
 
 @pytest.mark.require_driver("SQLite")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr_gml_resolver_huge():
     return internal_ogr_gml_38("HUGE")
 
@@ -1659,7 +1659,7 @@ def test_ogr_gml_resolver_huge():
 # Test new GMLTopoSurface interpretation (#3934) with standard xlink resolver
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr_gml_resolver_none():
     return internal_ogr_gml_38("NONE")
 
@@ -1806,7 +1806,7 @@ def test_ogr_gml_43():
         ):
             can_download_schema = False
         else:
-            can_download_schema = gdal.GetDriverByName("HTTP") is not None
+            can_download_schema = gdaltest.built_against_curl
 
         assert not can_download_schema, ".gfs found, but schema could be downloaded"
 

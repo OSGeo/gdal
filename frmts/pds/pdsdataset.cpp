@@ -1353,7 +1353,7 @@ int PDSDataset::ParseCompressedImage()
         CPLFormFilename(osPath, osFileName, nullptr);
 
     poCompressedDS =
-        reinterpret_cast<GDALDataset *>(GDALOpen(osFullFileName, GA_ReadOnly));
+        GDALDataset::FromHandle(GDALOpen(osFullFileName, GA_ReadOnly));
 
     if (poCompressedDS == nullptr)
         return FALSE;

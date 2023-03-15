@@ -1551,9 +1551,8 @@ bool PDS4FixedWidthTable::InitializeNewLayer(OGRSpatialReference *poSRS,
             m_poRawFeatureDefn->AddFieldDefn(&oFieldDefn);
             m_iLongField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
-            f.m_nOffset = m_aoFields.empty() ? 0
-                                             : m_aoFields.back().m_nOffset +
-                                                   m_aoFields.back().m_nLength;
+            f.m_nOffset =
+                m_aoFields.back().m_nOffset + m_aoFields.back().m_nLength;
             CreateFieldInternal(OFTReal, OFSTNone, 0, f);
             m_aoFields.push_back(f);
             m_nRecordSize += f.m_nLength;
@@ -1565,9 +1564,8 @@ bool PDS4FixedWidthTable::InitializeNewLayer(OGRSpatialReference *poSRS,
             m_poRawFeatureDefn->AddFieldDefn(&oFieldDefn);
             m_iAltField = m_poRawFeatureDefn->GetFieldCount() - 1;
             Field f;
-            f.m_nOffset = m_aoFields.empty() ? 0
-                                             : m_aoFields.back().m_nOffset +
-                                                   m_aoFields.back().m_nLength;
+            f.m_nOffset =
+                m_aoFields.back().m_nOffset + m_aoFields.back().m_nLength;
             CreateFieldInternal(OFTReal, OFSTNone, 0, f);
             m_aoFields.push_back(f);
             m_nRecordSize += f.m_nLength;

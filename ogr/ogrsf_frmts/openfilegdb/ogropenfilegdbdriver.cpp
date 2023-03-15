@@ -55,7 +55,10 @@ static GDALIdentifyEnum
 OGROpenFileGDBDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
                                      const char *&pszFilename)
 {
-    // FUSIL is a fuzzer
+    if (STARTS_WITH(pszFilename, "OpenFileGDB:"))
+        return GDAL_IDENTIFY_TRUE;
+
+        // FUSIL is a fuzzer
 #ifdef FOR_FUSIL
     CPLString osOrigFilename(pszFilename);
 #endif
@@ -229,7 +232,7 @@ static GDALDataset *OGROpenFileGDBDriverCreate(const char *pszName, int nXSize,
     if (!(nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Only vector datasets supported");
+                 "OpenFileGDB::Create(): only vector datasets supported");
         return nullptr;
     }
 
@@ -292,6 +295,7 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gdb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/vector/openfilegdb.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
@@ -350,6 +354,8 @@ void RegisterOGROpenFileGDB()
         "    <Value>YES</Value>"
         "    <Value>NO</Value>"
         "  </Option>"
+        "  <Option name='NODATA_OR_MASK' type='string' scope='raster' "
+        "description='AUTO, MASK, NONE or numeric nodata value'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

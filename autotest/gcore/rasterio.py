@@ -873,10 +873,8 @@ def test_rasterio_13():
 # Test average downsampling by a factor of 2 on exact boundaries
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_rasterio_14():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_14.asc",
@@ -953,10 +951,8 @@ cellsize     0
 # Test average downsampling by a non-integer factor
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_rasterio_average_4by4_to_3by3():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/test_rasterio_average_4by4_to_3by3.asc",
@@ -996,10 +992,8 @@ cellsize     1
 # Test average oversampling by an integer factor (should behave like nearest)
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_rasterio_15():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_15.asc",
@@ -1036,10 +1030,8 @@ cellsize     1
 # Test mode downsampling by a factor of 2 on exact boundaries
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_rasterio_16():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_16.asc",
@@ -1210,10 +1202,8 @@ def test_rasterio_lanczos_nodata():
 ###############################################################################
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_rasterio_resampled_value_is_nodata():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/in.asc",

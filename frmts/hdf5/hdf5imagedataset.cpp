@@ -184,6 +184,8 @@ HDF5ImageDataset::HDF5ImageDataset()
 /************************************************************************/
 HDF5ImageDataset::~HDF5ImageDataset()
 {
+    HDF5_GLOBAL_LOCK();
+
     FlushCache(true);
 
     if (dataset_id > 0)
@@ -319,6 +321,8 @@ double HDF5ImageRasterBand::GetNoDataValue(int *pbSuccess)
 CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pImage)
 {
+    HDF5_GLOBAL_LOCK();
+
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
     memset(pImage, 0,
@@ -417,6 +421,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:"))
         return nullptr;
+
+    HDF5_GLOBAL_LOCK();
 
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)

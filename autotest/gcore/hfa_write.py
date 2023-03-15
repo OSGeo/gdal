@@ -289,10 +289,8 @@ def test_hfa_use_rrd():
 # Test fix for #4831
 
 
+@pytest.mark.require_driver("BMP")
 def test_hfa_update_existing_aux_overviews():
-
-    if gdal.GetDriverByName("BMP") is None:
-        pytest.skip("BMP driver missing")
 
     gdal.SetConfigOption("USE_RRD", "YES")
 

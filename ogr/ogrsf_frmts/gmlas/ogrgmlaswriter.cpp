@@ -1950,7 +1950,7 @@ bool GMLASWriter::WriteFieldRegular(
                          papszValues != nullptr && papszValues[j] != nullptr;
                          ++j)
                     {
-                        OGRGeometry *poPart = reinterpret_cast<OGRGeometry *>(
+                        OGRGeometry *poPart = OGRGeometry::FromHandle(
                             OGR_G_CreateFromGML(papszValues[j]));
                         if (poPart)
                             poGC->addGeometryDirectly(poPart);
@@ -1974,8 +1974,8 @@ bool GMLASWriter::WriteFieldRegular(
             else
             {
                 const char *pszXML = poFeature->GetFieldAsString(nFieldXMLIdx);
-                OGRGeometry *poOrigGeom = reinterpret_cast<OGRGeometry *>(
-                    OGR_G_CreateFromGML(pszXML));
+                OGRGeometry *poOrigGeom =
+                    OGRGeometry::FromHandle(OGR_G_CreateFromGML(pszXML));
 
                 if (poOrigGeom != nullptr)
                 {
@@ -2049,7 +2049,7 @@ bool GMLASWriter::WriteFieldRegular(
                     if (j > 0)
                         PrintMultipleValuesSeparator(oField, aoFieldComponents);
                     char *pszGML = OGR_G_ExportToGMLEx(
-                        reinterpret_cast<OGRGeometryH>(poGC->getGeometryRef(j)),
+                        OGRGeometry::ToHandle(poGC->getGeometryRef(j)),
                         papszOptions);
                     if (pszGML)
                         VSIFPrintfL(m_fpXML, "%s", pszGML);
@@ -2067,7 +2067,7 @@ bool GMLASWriter::WriteFieldRegular(
                         CSLSetNameValue(papszOptions, "GMLID", osGMLID);
                 }
                 char *pszGML = OGR_G_ExportToGMLEx(
-                    reinterpret_cast<OGRGeometryH>(poGeom), papszOptions);
+                    OGRGeometry::ToHandle(poGeom), papszOptions);
                 if (pszGML)
                 {
                     if (bGMLSurface311 && STARTS_WITH(pszGML, "<gml:Polygon>"))

@@ -3746,7 +3746,7 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
 
     CPLErrorReset();
     poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, nullptr));
-    if (CPLGetLastErrorType() != CE_None)
+    if (CPLGetLastErrorType() == CE_Failure)
     {
         bRet = FALSE;
         printf("ERROR: ExecuteSQL() triggered an unexpected error.\n");
@@ -3755,7 +3755,7 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
     {
         CPLErrorReset();
         poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
-        if (CPLGetLastErrorType() != CE_None)
+        if (CPLGetLastErrorType() == CE_Failure)
         {
             bRet = FALSE;
             printf("ERROR: GetNextFeature() triggered an unexpected error.\n");

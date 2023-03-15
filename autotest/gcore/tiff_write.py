@@ -4541,12 +4541,55 @@ def test_tiff_write_105():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
-def test_tiff_write_106(
-    filename="../gdrivers/data/jpeg/byte_with_xmp.jpg", options=None, check_cs=True
-):
-
-    if filename.endswith(".jpg") and gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.parametrize(
+    "filename,options,check_cs",
+    [
+        ("../gdrivers/data/jpeg/byte_with_xmp.jpg", None, True),
+        (
+            "../gdrivers/data/jpeg/byte_with_xmp.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=8"],
+            True,
+        ),
+        (
+            "../gdrivers/data/jpeg/byte_with_xmp.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=20"],
+            True,
+        ),
+        (
+            "../gdrivers/data/jpeg/byte_with_xmp.jpg",
+            ["COMPRESS=JPEG", "TILED=YES", "BLOCKYSIZE=16", "BLOCKXSIZE=16"],
+            True,
+        ),
+        # Strip organization of YCbCr does *NOT* give exact pixels w.r.t. original image
+        ("../gdrivers/data/jpeg/albania.jpg", None, False),
+        # Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
+        (
+            "../gdrivers/data/jpeg/albania.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=260"],
+            False,
+        ),
+        (
+            "../gdrivers/data/jpeg/albania.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=260", "INTERLEAVE=PIXEL"],
+            True,
+        ),
+        (
+            "../gdrivers/data/jpeg/albania.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=260", "INTERLEAVE=BAND"],
+            False,
+        ),
+        # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
+        ("../gdrivers/data/jpeg/albania.jpg", ["COMPRESS=JPEG", "TILED=YES"], False),
+        # The source is a JPEG in RGB colorspace (usually it is YCbCr).
+        (
+            "../gdrivers/data/jpeg/rgbsmall_rgb.jpg",
+            ["COMPRESS=JPEG", "BLOCKYSIZE=8"],
+            True,
+        ),
+    ],
+)
+def test_tiff_write_direct_copy_jpeg(filename, options, check_cs):
 
     if options is None:
         options = ["COMPRESS=JPEG"]
@@ -4576,75 +4619,6 @@ def test_tiff_write_106(
     else:
         for i in range(nbands):
             assert cs[i] != 0, "did not get expected checksum"
-
-
-def test_tiff_write_107():
-    return test_tiff_write_106(options=["COMPRESS=JPEG", "BLOCKYSIZE=8"])
-
-
-def test_tiff_write_108():
-    return test_tiff_write_106(options=["COMPRESS=JPEG", "BLOCKYSIZE=20"])
-
-
-def test_tiff_write_109():
-    return test_tiff_write_106(
-        options=["COMPRESS=JPEG", "TILED=YES", "BLOCKYSIZE=16", "BLOCKXSIZE=16"]
-    )
-
-
-# Strip organization of YCbCr does *NOT* give exact pixels w.r.t. original image
-
-
-def test_tiff_write_110():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/albania.jpg", check_cs=False
-    )
-
-
-# Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
-
-
-def test_tiff_write_111():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/albania.jpg",
-        options=["COMPRESS=JPEG", "BLOCKYSIZE=260"],
-    )
-
-
-def test_tiff_write_111_bis():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/albania.jpg",
-        options=["COMPRESS=JPEG", "BLOCKYSIZE=260", "INTERLEAVE=PIXEL"],
-    )
-
-
-def test_tiff_write_111_ter():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/albania.jpg",
-        options=["COMPRESS=JPEG", "BLOCKYSIZE=260", "INTERLEAVE=BAND"],
-        check_cs=False,
-    )
-
-
-# Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
-
-
-def test_tiff_write_112():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/albania.jpg",
-        options=["COMPRESS=JPEG", "TILED=YES"],
-        check_cs=False,
-    )
-
-
-# The source is a JPEG in RGB colorspace (usually it is YCbCr).
-
-
-def test_tiff_write_113():
-    return test_tiff_write_106(
-        filename="../gdrivers/data/jpeg/rgbsmall_rgb.jpg",
-        options=["COMPRESS=JPEG", "BLOCKYSIZE=8"],
-    )
 
 
 ###############################################################################
@@ -5372,10 +5346,8 @@ def test_tiff_write_125():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_126():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     src_ds = gdal.Open("../gdrivers/data/small_world_400pct.vrt")
 
@@ -5664,10 +5636,8 @@ def test_tiff_write_127():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_128():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     src_ds = gdal.Open("../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg")
@@ -7155,10 +7125,8 @@ def test_tiff_write_145():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_146():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     tmp_ds = gdal.Translate("", "data/stefan_full_rgba.tif", format="MEM")
     original_stats = [
@@ -7192,10 +7160,8 @@ def test_tiff_write_146():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_147():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
@@ -7217,10 +7183,8 @@ def test_tiff_write_147():
 
 
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_148():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
     gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
     tmp_ds = gdal.Translate("", "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg", format="MEM")
@@ -10453,13 +10417,12 @@ def test_tiff_write_jpegxl_band_combinations():
 
 
 @gdaltest.require_creation_option("GTiff", "WEBP")
+@pytest.mark.require_driver("WEBP")
 def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
 
     tmpfilename = (
         "/vsimem/test_tiff_write_webp_overview_turn_on_lossy_if_webp_level.tif"
     )
-    if gdal.GetDriverByName("WEBP") is None:
-        pytest.skip()
 
     ds = gdal.Translate(
         tmpfilename,
@@ -10490,10 +10453,8 @@ def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
 
 @pytest.mark.parametrize("extra_options", ["-co PHOTOMETRIC=YCBCR", ""])
 @gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
 def test_tiff_write_lossless_extraction_of_JPEG_tile(extra_options):
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip()
 
     tmpfilename_gtiff = "/vsimem/test_tiff_write_lossless_extraction_of_JPEG_tile.tif"
     gdal.Translate(
@@ -10523,10 +10484,8 @@ def test_tiff_write_lossless_extraction_of_JPEG_tile(extra_options):
 
 
 @gdaltest.require_creation_option("GTiff", "JXL")
+@pytest.mark.require_driver("JPEGXL")
 def test_tiff_write_lossless_extraction_of_JPEGXL_tile():
-
-    if gdal.GetDriverByName("JPEGXL") is None:
-        pytest.skip()
 
     tmpfilename_gtiff = "/vsimem/test_tiff_write_lossless_extraction_of_JPEGXL_tile.tif"
     gdal.Translate(

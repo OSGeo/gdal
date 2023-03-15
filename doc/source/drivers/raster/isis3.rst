@@ -52,7 +52,7 @@ For example:
 
 ::
 
-   $ python
+   $ python 3
    from osgeo import gdal
    ds = gdal.Open('../autotest/gdrivers/data/isis3_detached.lbl')
    print(ds.GetMetadata_List('json:ISIS3')[0])

@@ -72,7 +72,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
 
-    const OGRFeature *GetFeatureRef(GIntBig nFeatureId);
+    OGRFeature *GetFeatureRef(GIntBig nFeatureId);
 
   public:
     OGRMemLayer(const char *pszName, OGRSpatialReference *poSRS,
@@ -87,6 +87,11 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
     OGRFeatureDefn *GetLayerDefn() override

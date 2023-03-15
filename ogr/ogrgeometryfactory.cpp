@@ -527,7 +527,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt(char **ppszData, OGRSpatialReferenceH hSRS,
 {
     return OGRGeometryFactory::createFromWkt(
         const_cast<const char **>(ppszData),
-        reinterpret_cast<OGRSpatialReference *>(hSRS),
+        OGRSpatialReference::FromHandle(hSRS),
         reinterpret_cast<OGRGeometry **>(phGeometry));
 }
 
@@ -631,7 +631,7 @@ OGRGeometryFactory::createGeometry(OGRwkbGeometryType eGeometryType)
 OGRGeometryH OGR_G_CreateGeometry(OGRwkbGeometryType eGeometryType)
 
 {
-    return reinterpret_cast<OGRGeometryH>(
+    return OGRGeometry::ToHandle(
         OGRGeometryFactory::createGeometry(eGeometryType));
 }
 
@@ -674,7 +674,7 @@ void OGRGeometryFactory::destroyGeometry(OGRGeometry *poGeom)
 void OGR_G_DestroyGeometry(OGRGeometryH hGeom)
 
 {
-    OGRGeometryFactory::destroyGeometry(reinterpret_cast<OGRGeometry *>(hGeom));
+    delete OGRGeometry::FromHandle(hGeom);
 }
 
 /************************************************************************/
@@ -816,8 +816,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon(OGRGeometry *poGeom)
 OGRGeometryH OGR_G_ForceToPolygon(OGRGeometryH hGeom)
 
 {
-    return reinterpret_cast<OGRGeometryH>(OGRGeometryFactory::forceToPolygon(
-        reinterpret_cast<OGRGeometry *>(hGeom)));
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::forceToPolygon(OGRGeometry::FromHandle(hGeom)));
 }
 
 /************************************************************************/
@@ -984,9 +984,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon(OGRGeometry *poGeom)
 OGRGeometryH OGR_G_ForceToMultiPolygon(OGRGeometryH hGeom)
 
 {
-    return reinterpret_cast<OGRGeometryH>(
-        OGRGeometryFactory::forceToMultiPolygon(
-            reinterpret_cast<OGRGeometry *>(hGeom)));
+    return OGRGeometry::ToHandle(OGRGeometryFactory::forceToMultiPolygon(
+        OGRGeometry::FromHandle(hGeom)));
 }
 
 /************************************************************************/
@@ -1076,8 +1075,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint(OGRGeometry *poGeom)
 OGRGeometryH OGR_G_ForceToMultiPoint(OGRGeometryH hGeom)
 
 {
-    return reinterpret_cast<OGRGeometryH>(OGRGeometryFactory::forceToMultiPoint(
-        reinterpret_cast<OGRGeometry *>(hGeom)));
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::forceToMultiPoint(OGRGeometry::FromHandle(hGeom)));
 }
 
 /************************************************************************/
@@ -1315,9 +1314,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString(OGRGeometry *poGeom)
 OGRGeometryH OGR_G_ForceToMultiLineString(OGRGeometryH hGeom)
 
 {
-    return reinterpret_cast<OGRGeometryH>(
-        OGRGeometryFactory::forceToMultiLineString(
-            reinterpret_cast<OGRGeometry *>(hGeom)));
+    return OGRGeometry::ToHandle(OGRGeometryFactory::forceToMultiLineString(
+        OGRGeometry::FromHandle(hGeom)));
 }
 
 /************************************************************************/
@@ -2803,13 +2801,12 @@ static void AddOffsetToLon(OGRGeometry *poGeom, double dfOffset)
         case wkbGeometryCollection:
         {
             const int nSubGeomCount =
-                OGR_G_GetGeometryCount(reinterpret_cast<OGRGeometryH>(poGeom));
+                OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
             for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
             {
-                AddOffsetToLon(
-                    reinterpret_cast<OGRGeometry *>(OGR_G_GetGeometryRef(
-                        reinterpret_cast<OGRGeometryH>(poGeom), iGeom)),
-                    dfOffset);
+                AddOffsetToLon(OGRGeometry::FromHandle(OGR_G_GetGeometryRef(
+                                   OGRGeometry::ToHandle(poGeom), iGeom)),
+                               dfOffset);
             }
 
             break;
@@ -2859,13 +2856,12 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection *poMulti,
         case wkbGeometryCollection:
         {
             // TODO(schwehr): Can the const_casts be removed or improved?
-            const int nSubGeomCount =
-                OGR_G_GetGeometryCount(reinterpret_cast<OGRGeometryH>(
-                    const_cast<OGRGeometry *>(poGeom)));
+            const int nSubGeomCount = OGR_G_GetGeometryCount(
+                OGRGeometry::ToHandle(const_cast<OGRGeometry *>(poGeom)));
             for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
             {
-                OGRGeometry *poSubGeom = reinterpret_cast<OGRGeometry *>(
-                    OGR_G_GetGeometryRef(reinterpret_cast<OGRGeometryH>(
+                OGRGeometry *poSubGeom = OGRGeometry::FromHandle(
+                    OGR_G_GetGeometryRef(OGRGeometry::ToHandle(
                                              const_cast<OGRGeometry *>(poGeom)),
                                          iGeom));
                 AddSimpleGeomToMulti(poMulti, poSubGeom);
@@ -3036,13 +3032,12 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
         case wkbGeometryCollection:
         {
             // TODO(schwehr): Fix the const_cast.
-            int nSubGeomCount =
-                OGR_G_GetGeometryCount(reinterpret_cast<OGRGeometryH>(
-                    const_cast<OGRGeometry *>(poGeom)));
+            int nSubGeomCount = OGR_G_GetGeometryCount(
+                OGRGeometry::ToHandle(const_cast<OGRGeometry *>(poGeom)));
             for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
             {
-                OGRGeometry *poSubGeom = reinterpret_cast<OGRGeometry *>(
-                    OGR_G_GetGeometryRef(reinterpret_cast<OGRGeometryH>(
+                OGRGeometry *poSubGeom = OGRGeometry::FromHandle(
+                    OGR_G_GetGeometryRef(OGRGeometry::ToHandle(
                                              const_cast<OGRGeometry *>(poGeom)),
                                          iGeom));
                 CutGeometryOnDateLineAndAddToMulti(poMulti, poSubGeom,
@@ -4275,10 +4270,9 @@ OGRGeometryH CPL_DLL OGR_G_ApproximateArcAngles(
     double dfEndAngle, double dfMaxAngleStepSizeDegrees)
 
 {
-    return reinterpret_cast<OGRGeometryH>(
-        OGRGeometryFactory::approximateArcAngles(
-            dfCenterX, dfCenterY, dfZ, dfPrimaryRadius, dfSecondaryRadius,
-            dfRotation, dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees));
+    return OGRGeometry::ToHandle(OGRGeometryFactory::approximateArcAngles(
+        dfCenterX, dfCenterY, dfZ, dfPrimaryRadius, dfSecondaryRadius,
+        dfRotation, dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees));
 }
 
 /************************************************************************/
@@ -4473,8 +4467,8 @@ OGRGeometry *OGRGeometryFactory::forceToLineString(OGRGeometry *poGeom,
 OGRGeometryH OGR_G_ForceToLineString(OGRGeometryH hGeom)
 
 {
-    return reinterpret_cast<OGRGeometryH>(OGRGeometryFactory::forceToLineString(
-        reinterpret_cast<OGRGeometry *>(hGeom)));
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::forceToLineString(OGRGeometry::FromHandle(hGeom)));
 }
 
 /************************************************************************/
@@ -4892,8 +4886,8 @@ OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
                            char **papszOptions)
 
 {
-    return reinterpret_cast<OGRGeometryH>(OGRGeometryFactory::forceTo(
-        reinterpret_cast<OGRGeometry *>(hGeom), eTargetType, papszOptions));
+    return OGRGeometry::ToHandle(OGRGeometryFactory::forceTo(
+        OGRGeometry::FromHandle(hGeom), eTargetType, papszOptions));
 }
 
 /************************************************************************/

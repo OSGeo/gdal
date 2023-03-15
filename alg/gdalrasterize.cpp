@@ -1180,8 +1180,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
         for (int iShape = 0; iShape < nGeomCount; iShape++)
         {
 
-            OGRGeometry *poGeometry =
-                reinterpret_cast<OGRGeometry *>(pahGeometries[iShape]);
+            const OGRGeometry *poGeometry =
+                OGRGeometry::FromHandle(pahGeometries[iShape]);
             if (poGeometry == nullptr || poGeometry->IsEmpty())
                 continue;
             /* --------------------------------------------------------------------
@@ -1391,7 +1391,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
     if (nBandCount == 0 || nLayerCount == 0)
         return CE_None;
 
-    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(hDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
 
     // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand(panBandList[0]);

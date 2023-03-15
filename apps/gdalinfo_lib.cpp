@@ -287,7 +287,12 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                GDALGetDriverShortName(hDriver), GDALGetDriverLongName(hDriver));
     }
 
-    char **papszFileList = GDALGetFileList(hDataset);
+    // The list of files of a raster FileGDB is not super useful and potentially
+    // super long, so omit it, unless the -json mode is enabled
+    char **papszFileList =
+        (!bJson && EQUAL(GDALGetDriverShortName(hDriver), "OpenFileGDB"))
+            ? nullptr
+            : GDALGetFileList(hDataset);
 
     if (papszFileList == nullptr || *papszFileList == nullptr)
     {

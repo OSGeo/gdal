@@ -106,13 +106,7 @@ SWIG
 ----
 
 The GDAL Python package is built using SWIG_. The currently supported version
-is SWIG 4.0.2.  You should not have run SWIG in your development tree to generate
-the binding code, as it is usually included with the source.
-However, if you do need to regenerate, you can do so with the following cmake
-command::
-
-  $ cmake .. -DSWIG_REGENERATE_PYTHON=ON
-  $ cmake --build .
+is SWIG >= 4
 
 Usage
 -----

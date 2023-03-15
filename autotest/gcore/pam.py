@@ -61,10 +61,8 @@ def startup_and_cleanup():
 # Check that we can read PAM metadata for existing PNM file.
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_1():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     ds = gdal.Open("data/byte.pnm")
 
@@ -90,10 +88,8 @@ def test_pam_1():
 # Verify that we can write XML to a new file.
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_2():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     driver = gdal.GetDriverByName("PNM")
     ds = driver.Create("tmp/pam.pgm", 10, 10)
@@ -116,10 +112,8 @@ def test_pam_2():
 # Check that we can read PAM metadata for existing PNM file.
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_3():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     ds = gdal.Open("tmp/pam.pgm")
 
@@ -159,10 +153,8 @@ def test_pam_3():
 #
 
 
+@pytest.mark.require_driver("MFF")
 def test_pam_4():
-
-    if gdal.GetDriverByName("MFF") is None:
-        pytest.skip("MFF driver missing")
 
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
@@ -217,10 +209,8 @@ def test_pam_6():
 #
 
 
+@pytest.mark.require_driver("PNG")
 def test_pam_7():
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver missing")
 
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
@@ -300,10 +290,8 @@ def test_pam_9():
 # Test serializing and deserializing of various band metadata
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_pam_10():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/testserialization.asc")
     ds = gdal.GetDriverByName("AAIGRID").CreateCopy("/vsimem/pam_10.asc", src_ds)
@@ -469,10 +457,8 @@ def test_pam_12():
 #
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_13():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
@@ -491,10 +477,8 @@ def test_pam_13():
 # https://github.com/OSGeo/gdal/issues/1430
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_metadata_preserved():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     tmpfilename = "/vsimem/tmp.pgm"
     ds = gdal.GetDriverByName("PNM").Create(tmpfilename, 1, 1)
@@ -590,10 +574,8 @@ def test_pam_esri_GeodataXform_gcp():
 ###############################################################################
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_metadata_coordinate_epoch():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     tmpfilename = "/vsimem/tmp.pgm"
     ds = gdal.GetDriverByName("PNM").Create(tmpfilename, 1, 1)

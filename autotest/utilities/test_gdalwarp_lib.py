@@ -1,4 +1,4 @@
-#!/usr/bin/env pytest
+# ve!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -1273,10 +1273,8 @@ def test_gdalwarp_lib_125():
 # Test cutline with invalid geometry
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_126():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
     lyr = ds.CreateLayer("cutline")
@@ -1411,9 +1409,8 @@ def test_gdalwarp_lib_128():
 # to an invalid geometry (#6375)
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_129():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1000, 2000)
     rpc = [
@@ -2463,10 +2460,8 @@ def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_no_intersection(
 # Test warping from a RPC dataset to an existing dataset, with using RPC_FOOTPRINT
 
 
+@pytest.mark.require_geos
 def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     with gdaltest.config_option("RESTRICT_OUTPUT_DATASET_UPDATE", "NO"):
         dstDS = gdal.Translate(
@@ -2767,10 +2762,8 @@ def test_gdalwarp_lib_propagating_coordinate_epoch():
 # Test support for -s_coord_epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_gdalwarp_lib_s_coord_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     src_ds.SetGeoTransform([120, 1e-7, 0, -40, 0, -1e-7])
@@ -2793,10 +2786,8 @@ def test_gdalwarp_lib_s_coord_epoch():
 # Test support for -s_coord_epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_gdalwarp_lib_t_coord_epoch():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     src_ds.SetGeoTransform([120, 1e-7, 0, -40, 0, -1e-7])
@@ -2928,11 +2919,9 @@ def test_gdalwarp_lib_src_points_outside_of_earth():
 # pole to geographic
 
 
+# Not completely sure about the minimum version to have ob_tran working fine.
+@gdaltest.require_proj_version(7)
 def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
-
-    # Not completely sure about the minimum version to have ob_tran working fine.
-    if osr.GetPROJVersionMajor() < 7:
-        pytest.skip("requires PROJ 7 or later")
 
     ds = gdal.Warp(
         "",
@@ -3056,16 +3045,9 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
 @pytest.mark.parametrize(
     "resampleAlg", ["average", "mode", "min", "max", "med", "q1", "q3", "sum", "rms"]
 )
+# 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
+@gdaltest.require_proj_version(6, 3, 1)
 def test_gdalwarp_lib_epsg_4326_to_esri_102020(resampleAlg):
-
-    # 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
-    if (
-        osr.GetPROJVersionMajor() * 10000
-        + osr.GetPROJVersionMinor() * 100
-        + osr.GetPROJVersionMicro()
-        < 60301
-    ):
-        pytest.skip("requires PROJ 6.3.1 or later")
 
     # Scenario of https://github.com/OSGeo/gdal/issues/6155
     out_ds = gdal.Warp(

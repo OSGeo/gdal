@@ -2173,9 +2173,8 @@ int NTFFileReader::FormPolygonFromCache(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Assemble into a polygon geometry.                               */
     /* -------------------------------------------------------------------- */
-    OGRGeometry *poGeom =
-        reinterpret_cast<OGRGeometry *>(OGRBuildPolygonFromEdges(
-            (OGRGeometryH)&oLines, FALSE, FALSE, 0.1, nullptr));
+    OGRGeometry *poGeom = OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
+        (OGRGeometryH)&oLines, FALSE, FALSE, 0.1, nullptr));
 
     poFeature->SetGeometryDirectly(poGeom);
 

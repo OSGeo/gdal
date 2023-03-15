@@ -34,25 +34,13 @@ import pytest
 
 from osgeo import gdal
 
-###############################################################################
-# Verify we have the driver.
-
-
-def test_fast_1():
-
-    gdaltest.fast_drv = gdal.GetDriverByName("FAST")
-    if gdaltest.fast_drv is None:
-        pytest.skip()
-
+pytestmark = pytest.mark.require_driver("FAST")
 
 ###############################################################################
 # Perform simple read test.
 
 
 def test_fast_2():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     # Actually, the band (a placeholder) is of 0 bytes size,
     # so the checksum is 0 expected.
@@ -68,9 +56,6 @@ def test_fast_2():
 
 
 def test_fast_3():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     gdaltest.fast_ds = gdal.Open("data/fast/L71118038_03820020111_HPN.FST")
     ds = gdaltest.fast_ds
@@ -105,9 +90,6 @@ def test_fast_3():
 
 def test_fast_4():
 
-    if gdaltest.fast_drv is None:
-        pytest.skip()
-
     ds = gdaltest.fast_ds
     assert ds is not None, "Missing test dataset"
 
@@ -132,9 +114,6 @@ def test_fast_4():
 
 
 def test_fast_5():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "fast", "fast/L71230079_07920021111_HTM.FST", 2, 19110, 0, 0, 7000, 1
@@ -174,9 +153,6 @@ def test_fast_5():
 
 def test_fast_6():
 
-    if gdaltest.fast_drv is None:
-        pytest.skip()
-
     tst = gdaltest.GDALTest("fast", "fast/n0o0y867.0fl", 1, 0, 0, 0, 2741, 1)
 
     # Expected parameters of the geotransform
@@ -201,9 +177,6 @@ def test_fast_6():
 
 
 def test_fast_7():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("fast", "fast/h0o0y867.1ah", 1, 0, 0, 0, 5815, 1)
 
@@ -234,9 +207,6 @@ def test_fast_7():
 
 
 def test_fast_8():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("fast", "fast/w0y13a4t.010", 1, 0, 0, 0, 4748, 1)
 
@@ -275,9 +245,6 @@ def test_fast_8():
 
 
 def test_fast_9():
-
-    if gdaltest.fast_drv is None:
-        pytest.skip()
 
     ds = gdal.Open("data/fast/HEADER.DAT")
     assert ds.GetMetadataItem("SENSOR") == "", "Did not get expected SENSOR value."

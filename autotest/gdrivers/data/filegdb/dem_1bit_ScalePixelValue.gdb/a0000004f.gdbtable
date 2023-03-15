@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<db_schemas>
+  <db_schema>
+    <table name="dem_1bit_ScalePixelValue">
+      <indices>
+        <index name="FDO_OID">
+          <field name="OID"/>
+        </index>
+      </indices>
+      <tolerance_xy>0x3E434A8A5E4E45C1</tolerance_xy>
+      <domain_minx>0xC0790000       0</domain_minx>
+      <domain_maxx>0x4078FFFFFFFFFFFC</domain_maxx>
+      <domain_miny>0xC0790000       0</domain_miny>
+      <domain_maxy>0x4078FFFFFFFFFFFC</domain_maxy>
+      <sp_ind_grid_size_0>0x       0       0</sp_ind_grid_size_0>
+      <sp_ind_grid_count>1</sp_ind_grid_count>
+    </table>
+  </db_schema>
+</db_schemas>

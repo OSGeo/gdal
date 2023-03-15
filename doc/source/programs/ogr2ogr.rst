@@ -313,15 +313,19 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent
 
-    Clip geometries to the specified bounding box (expressed in source SRS),
-    WKT geometry (POLYGON or MULTIPOLYGON), from a datasource or to the spatial
-    extent of the -spat option if you use the spat_extent keyword. When
-    specifying a datasource, you will generally want to use it in combination
-    of the -clipsrclayer, -clipsrcwhere or -clipsrcsql options
+    Clip geometries to one of the following:
+
+    * the specified bounding box (expressed in source SRS)
+    * a WKT geometry (POLYGON or MULTIPOLYGON expressed in source SRS)
+    * one or more geometries selected from a datasource
+    * the spatial extent of the -spat option if you use the spat_extent keyword.
+
+    When specifying a datasource, you will generally want to use -clipsrc in
+    combination of the -clipsrclayer, -clipsrcwhere or -clipsrcsql options.
 
 .. option:: -clipsrcsql <sql_statement>
 
-    Select desired geometries using an SQL query instead.
+    Select desired geometries from the source clip datasource using an SQL query.
 
 .. option:: -clipsrclayer <layername>
 
@@ -329,18 +333,22 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -clipsrcwhere <expression>
 
-    Restrict desired geometries based on attribute query.
+    Restrict desired geometries from the source clip layer based on an attribute query.
 
-.. option:: -clipdst <xmin> <ymin> <xmax> <ymax>
+.. option:: -clipdst [<xmin> <ymin> <xmax> <ymax>]|WKT|datasource
 
-    Clip geometries after reprojection to the specified bounding box (expressed
-    in dest SRS), WKT geometry (POLYGON or MULTIPOLYGON) or from a datasource.
-    When specifying a datasource, you will generally want to use it in
-    combination of the -clipdstlayer, -clipdstwhere or -clipdstsql options
+    Clip geometries to one of the following:
+
+    * the specified bounding box (expressed in destination SRS)
+    * a WKT geometry (POLYGON or MULTIPOLYGON expressed in destination SRS)
+    * one or more geometries selected from a datasource
+
+    When specifying a datasource, you will generally want to use -clipdst in
+    combination with the -clipdstlayer, -clipdstwhere or -clipdstsql options.
 
 .. option:: -clipdstsql <sql_statement>
 
-    Select desired geometries using an SQL query instead.
+    Select desired geometries from the destination clip datasource using an SQL query.
 
 .. option:: -clipdstlayer <layername>
 
@@ -348,7 +356,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -clipdstwhere <expression>
 
-    Restrict desired geometries based on attribute query.
+    Restrict desired geometries from the destination clip layer based on an attribute query.
 
 .. option:: -wrapdateline
 

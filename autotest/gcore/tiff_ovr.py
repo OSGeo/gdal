@@ -1007,10 +1007,8 @@ def test_tiff_ovr_28(both_endian):
 # Test cleaning external overviews (ovr) on a non-TIFF format.
 
 
+@pytest.mark.require_driver("PNG")
 def test_tiff_ovr_29(both_endian):
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver missing")
 
     src_ds = gdal.Open("data/byte.tif")
     png_ds = gdal.GetDriverByName("PNG").CreateCopy("tmp/ovr29.png", src_ds)
@@ -1369,10 +1367,8 @@ def test_tiff_ovr_36(both_endian):
 # Test PREDICTOR_OVERVIEW=2 option. (#3414)
 
 
+@pytest.mark.require_driver("DTED")
 def test_tiff_ovr_37(both_endian):
-
-    if gdal.GetDriverByName("DTED") is None:
-        pytest.skip("DTED driver missing")
 
     shutil.copy("../gdrivers/data/n43.dt0", "tmp/ovr37.dt0")
 
@@ -1401,10 +1397,8 @@ def test_tiff_ovr_37(both_endian):
 # Test that the predictor flag gets well propagated to internal overviews
 
 
+@pytest.mark.require_driver("DTED")
 def test_tiff_ovr_38(both_endian):
-
-    if gdal.GetDriverByName("DTED") is None:
-        pytest.skip("DTED driver missing")
 
     src_ds = gdal.Open("../gdrivers/data/n43.dt0")
     ds = gdaltest.tiff_drv.CreateCopy(
@@ -2022,6 +2016,7 @@ def test_tiff_ovr_50(both_endian):
 # Test average overview on a color palette with nodata values (#6371)
 
 
+@pytest.mark.require_driver("PNG")
 def test_tiff_ovr_51():
 
     src_ds = gdal.Open("data/stefan_full_rgba_pct32.png")

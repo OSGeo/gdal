@@ -38,7 +38,6 @@ import pytest
 sys.path.append("../gcore")
 
 import gdaltest
-import ogrtest
 import test_cli_utilities
 
 from osgeo import gdal, ogr
@@ -1239,7 +1238,7 @@ def test_gdal_grid_19(gdal_grid_path):
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_gdal_grid_clipsrc(gdal_grid_path):
 
     #################

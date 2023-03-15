@@ -607,10 +607,8 @@ def test_ogr2ogr_py_17(script_path):
 
 
 @pytest.mark.skip(reason="-wrapdateline not implemented")
+@pytest.mark.require_geos
 def test_ogr2ogr_py_18(script_path):
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     try:
         os.stat("tmp/wrapdateline_src.shp")
@@ -669,10 +667,8 @@ def test_ogr2ogr_py_18(script_path):
 # Test -clipsrc
 
 
+@pytest.mark.require_geos
 def test_ogr2ogr_py_19(script_path):
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     try:
         os.stat("tmp/poly.shp")
@@ -897,7 +893,7 @@ def test_ogr2ogr_py_23(script_path):
 # Test -clipsrc with WKT geometry (#3530)
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_py_24(script_path):
 
     try:
@@ -934,7 +930,7 @@ def test_ogr2ogr_py_24(script_path):
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_py_25(script_path):
 
     try:
@@ -978,7 +974,7 @@ def test_ogr2ogr_py_25(script_path):
 # Test -clipdst with WKT geometry (#3530)
 
 
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_py_26(script_path):
 
     try:
@@ -1015,7 +1011,7 @@ def test_ogr2ogr_py_26(script_path):
 
 
 @pytest.mark.require_driver("CSV")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
+@pytest.mark.require_geos
 def test_ogr2ogr_py_27(script_path):
 
     try:

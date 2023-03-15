@@ -304,9 +304,8 @@ bool OGRAVCBinLayer::FormPolygonGeometry(OGRFeature *poFeature, AVCPal *psPAL)
     }
 
     OGRErr eErr;
-    OGRGeometry *poPolygon =
-        reinterpret_cast<OGRGeometry *>(OGRBuildPolygonFromEdges(
-            (OGRGeometryH)&oArcs, TRUE, FALSE, 0.0, &eErr));
+    OGRGeometry *poPolygon = OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
+        (OGRGeometryH)&oArcs, TRUE, FALSE, 0.0, &eErr));
     if (poPolygon != nullptr)
     {
         poPolygon->assignSpatialReference(GetSpatialRef());

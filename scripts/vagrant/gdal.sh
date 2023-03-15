@@ -27,7 +27,6 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=/opt/gdal-dev \
   -DUSE_CCACHE=ON \
   -DUSE_ALTERNATE_LINKER:STRING=mold \
-  -DSWIG_REGENERATE_PYTHON=ON \
   -DCMAKE_BUILD_TYPE=Debug
 ninja -j6
 sudo ninja install

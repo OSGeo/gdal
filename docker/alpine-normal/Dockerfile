@@ -28,7 +28,7 @@ RUN apk add --no-cache \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
-    py3-numpy-dev python3-dev py3-setuptools py3-numpy \
+    py3-numpy-dev python3-dev py3-setuptools py3-numpy swig \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
@@ -63,12 +63,12 @@ RUN if test "${SZIP_VERSION}" != ""; then ( \
     ); fi
 
 # Build hdf4
-ARG HDF4_VERSION=4.2.15
+ARG HDF4_VERSION=4.2.16
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache byacc flex portablexdr-dev \
     && mkdir hdf4 \
     && wget -q https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz -O - \
-        | tar xz -C hdf4 --strip-components=1 \
+        | tar xz -C hdf4 --strip-components=2 \
     && cd hdf4 \
     && LDFLAGS=-lportablexdr ./configure --prefix=/usr --enable-shared --disable-static \
         --with-szlib=/usr --disable-fortran --disable-netcdf \

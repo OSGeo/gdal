@@ -86,38 +86,28 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
     if (bWriteFC_BBOX && sEnvelopeLayer.IsInit())
     {
         CPLString osBBOX = "[ ";
-        if (bRFC7946_)
-        {
-            char szFormat[32];
+        char szFormat[32];
+        if (nCoordPrecision_ >= 0)
             snprintf(szFormat, sizeof(szFormat), "%%.%df", nCoordPrecision_);
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinX);
-            osBBOX += ", ";
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
-            osBBOX += ", ";
-            if (bBBOX3D)
-            {
-                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
-                osBBOX += ", ";
-            }
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
-            osBBOX += ", ";
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
-            if (bBBOX3D)
-            {
-                osBBOX += ", ";
-                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
-            }
-        }
         else
+            snprintf(szFormat, sizeof(szFormat), "%s", "%.15g");
+
+        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinX);
+        osBBOX += ", ";
+        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
+        osBBOX += ", ";
+        if (bBBOX3D)
         {
-            osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinX);
-            osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinY);
-            if (bBBOX3D)
-                osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinZ);
-            osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MaxX);
-            osBBOX += CPLSPrintf("%.15g", sEnvelopeLayer.MaxY);
-            if (bBBOX3D)
-                osBBOX += CPLSPrintf(", %.15g", sEnvelopeLayer.MaxZ);
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
+            osBBOX += ", ";
+        }
+        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
+        osBBOX += ", ";
+        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
+        if (bBBOX3D)
+        {
+            osBBOX += ", ";
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
         }
         osBBOX += " ]";
 

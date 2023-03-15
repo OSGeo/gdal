@@ -84,10 +84,8 @@ def test_mask_2():
 # Verify the checksum and flags for "alpha" case.
 
 
+@pytest.mark.require_driver("PNG")
 def test_mask_3():
-
-    if gdal.GetDriverByName("PNG") is None:
-        pytest.skip("PNG driver missing")
 
     ds = gdal.Open("data/stefan_full_rgba.png")
 
@@ -132,12 +130,9 @@ def test_mask_3():
 # Copy a *real* masked dataset, and confirm masks copied properly.
 
 
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.require_driver("PNM")
 def test_mask_4():
-
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     src_ds = gdal.Open("../gdrivers/data/jpeg/masked.jpg")
 
@@ -171,13 +166,8 @@ def test_mask_4():
 # masks built for them.
 
 
-@gdaltest.require_creation_option(
-    "GTiff", "BigTIFF"
-)  # This crashes with libtiff 3.8.2, so skip it
+@pytest.mark.require_driver("PNM")
 def test_mask_5():
-
-    if gdal.GetDriverByName("PNM") is None:
-        pytest.skip("PNM driver missing")
 
     ds = gdal.Open("tmp/mask_4.ppm", gdal.GA_Update)
 

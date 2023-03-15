@@ -976,6 +976,67 @@ def test_ogr_mem_upsert_feature():
 
 
 ###############################################################################
+# Test updating a feature.
+
+
+def test_ogr_mem_update_feature():
+    # Create a memory layer
+    lyr = gdaltest.mem_ds.CreateLayer("update_feature")
+
+    # Add a string field
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
+
+    # Create a feature with some data
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("test", "original")
+    assert lyr.CreateFeature(f) == 0
+    assert f.GetFID() == 0
+
+    # Update an existing feature
+    assert lyr.TestCapability(ogr.OLCUpdateFeature) == 1
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    f.SetField("test", "updated")
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NONE
+    )
+
+    # Verify that we have set an existing feature
+    f = lyr.GetFeature(0)
+    assert f is not None
+    assert f.GetField("test") == "updated"
+
+    # Test updating a unset field
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NONE
+    )
+
+    f = lyr.GetFeature(0)
+    assert not f.IsFieldSet("test")
+
+    # Update a feature without fid
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("test", "updated")
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NON_EXISTING_FEATURE
+    )
+
+    # Update a non-existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(2)
+    f.SetField("test", "updated")
+    assert (
+        lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
+        == ogr.OGRERR_NON_EXISTING_FEATURE
+    )
+
+
+###############################################################################
 
 
 def test_ogr_mem_get_supported_srs_list():

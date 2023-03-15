@@ -34,14 +34,7 @@ import pytest
 
 from osgeo import gdal, ogr
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-
-    if not ogrtest.have_geos():
-        pytest.skip()
-
+pytestmark = pytest.mark.require_geos
 
 ###############################################################################
 # Establish whether we have GEOS support integrated, testing simple Union.

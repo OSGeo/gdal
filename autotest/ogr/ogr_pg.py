@@ -594,6 +594,68 @@ def test_ogr_pg_9():
 
 
 ###############################################################################
+# Verify inplace update of a feature with UpdateFeature().
+
+
+def test_ogr_pg_update_feature():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    try:
+        lyr = gdaltest.pg_ds.CreateLayer("test_ogr_pg_update_feature")
+        assert lyr.TestCapability(ogr.OLCUpdateFeature) == 1
+
+        lyr.CreateField(ogr.FieldDefn("test_str", ogr.OFTString))
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["test_str"] = "foo"
+        feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        fid = feat.GetFID()
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(fid)
+        feat.SetField("test_str", "bar")
+
+        assert (
+            lyr.UpdateFeature(
+                feat, [lyr.GetLayerDefn().GetFieldIndex("test_str")], [], False
+            )
+            == ogr.OGRERR_NONE
+        )
+
+        feat = lyr.GetFeature(fid)
+        assert feat is not None
+        assert feat["test_str"] == "bar"
+        assert feat.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(fid)
+
+        assert lyr.UpdateFeature(feat, [], [0], False) == ogr.OGRERR_NONE
+
+        feat = lyr.GetFeature(fid)
+        assert feat is not None
+        assert feat["test_str"] == "bar"
+        assert feat.GetGeometryRef() is None
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        with gdaltest.error_handler():
+            assert lyr.UpdateFeature(feat, [], [0], False) != ogr.OGRERR_NONE
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(12345678)
+
+        assert (
+            lyr.UpdateFeature(feat, [], [0], False) == ogr.OGRERR_NON_EXISTING_FEATURE
+        )
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_update_feature")
+
+
+###############################################################################
 # Verify that DeleteFeature() works properly.
 
 

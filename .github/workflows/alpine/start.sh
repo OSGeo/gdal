@@ -9,7 +9,7 @@ apk add \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
-    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip \
+    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip swig \
     poppler-dev postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev libaec-dev hdf5-dev freexl-dev \
@@ -57,9 +57,13 @@ ccache -M 1G
 ccache -s
 
 # install pip and use it to install test dependencies
+PYTHON_VER=$(python3 -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))")
 python3 -m venv myvenv
 . ./myvenv/bin/activate
 pip3 install -U -r autotest/requirements.txt
+
+# Make sure system numpy is accessible
+export PYTHONPATH=/usr/lib/python${PYTHON_VER}/site-packages
 
 # Configure GDAL
 mkdir -p build_ci_alpine

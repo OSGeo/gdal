@@ -148,7 +148,9 @@ struct tiff
     uint64_t tif_lastdiroff; /* file offset of last directory written so far */
     TIFFHashSet *tif_map_dir_offset_to_number;
     TIFFHashSet *tif_map_dir_number_to_offset;
-    TIFFDirectory tif_dir; /* internal rep of current directory */
+    int tif_setdirectory_force_absolute; /* switch between relative and absolute
+                                            stepping in TIFFSetDirectory() */
+    TIFFDirectory tif_dir;               /* internal rep of current directory */
     TIFFDirectory
         tif_customdir; /* custom IFDs are separated from the main ones */
     union

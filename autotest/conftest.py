@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
@@ -119,8 +119,10 @@ def pytest_collection_modifyitems(config, items):
     # skip test with @ptest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
     skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
     import gdaltest
+    import ogrtest
 
     drivers_checked = {}
+    # Note: when adding a new custom marker, document it in cmake/template/pytest.ini.in
     for item in items:
         for mark in item.iter_markers("require_driver"):
             driver_name = mark.args[0]
@@ -141,6 +143,33 @@ def pytest_collection_modifyitems(config, items):
             if not gdaltest.run_slow_tests():
                 item.add_marker(pytest.mark.skip("GDAL_RUN_SLOW_TESTS not set"))
 
+        for mark in item.iter_markers("require_geos"):
+            if not ogrtest.have_geos():
+                item.add_marker(pytest.mark.skip("GEOS not available"))
+
+            required_version = (
+                mark.args[0] if len(mark.args) > 0 else 0,
+                mark.args[1] if len(mark.args) > 1 else 0,
+                mark.args[2] if len(mark.args) > 2 else 0,
+            )
+
+            actual_version = (
+                ogr.GetGEOSVersionMajor(),
+                ogr.GetGEOSVersionMinor(),
+                ogr.GetGEOSVersionMicro(),
+            )
+
+            if actual_version < required_version:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"Requires GEOS >= {'.'.join(str(x) for x in required_version)}"
+                    )
+                )
+
+        for mark in item.iter_markers("require_curl"):
+            if not gdaltest.built_against_curl():
+                item.add_marker(pytest.mark.skip("curl support not available"))
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
@@ -156,16 +185,26 @@ def pytest_configure(config):
             f"{lib_version}. Do you need to run setdevenv.sh ?"
         )
 
+
+def pytest_report_header(config):
+    gdal_header_info = "GDAL Build Info:"
+    for item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+        gdal_header_info += "\n  " + item.replace("=", ": ")
+
     import gdaltest
 
+    gdal_download_test_data = gdal.GetConfigOption("GDAL_DOWNLOAD_TEST_DATA")
+    if gdal_download_test_data is None:
+        gdal_download_test_data = "undefined"
+    gdal_header_info += f"\nGDAL_DOWNLOAD_TEST_DATA: {gdal_download_test_data}"
     if not gdaltest.download_test_data():
-        print(
-            "As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, tests relying on downloaded data may be skipped.",
-            file=sys.stderr,
-        )
+        gdal_header_info += " (tests relying on downloaded data may be skipped)"
 
+    gdal_run_slow_tests = gdal.GetConfigOption("GDAL_RUN_SLOW_TESTS")
+    if gdal_run_slow_tests is None:
+        gdal_run_slow_tests = "undefined"
+    gdal_header_info += f"\nGDAL_RUN_SLOW_TESTS: {gdal_run_slow_tests}"
     if not gdaltest.run_slow_tests():
-        print(
-            'As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped.',
-            file=sys.stderr,
-        )
+        gdal_header_info += ' (tests marked as "slow" will be skipped)'
+
+    return gdal_header_info

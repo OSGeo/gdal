@@ -451,11 +451,11 @@ def test_tiff_grads():
 # Check Erdas Citation Parsing for coordinate system.
 
 
+@pytest.mark.skipif(
+    "ESRI_BUILD=YES" not in gdal.VersionInfo("BUILD_INFO"),
+    reason="Not a GDAL ESRI build",
+)
 def test_tiff_citation():
-
-    build_info = gdal.VersionInfo("BUILD_INFO")
-    if build_info.find("ESRI_BUILD=YES") == -1:
-        pytest.skip()
 
     ds = gdal.Open("data/citation_mixedcase.tif")
     wkt = ds.GetProjectionRef()
@@ -1168,10 +1168,8 @@ def test_tiff_read_online_1():
 # support
 
 
+@pytest.mark.require_curl()
 def test_tiff_read_vsicurl_multirange():
-
-    if gdal.GetDriverByName("HTTP") is None:
-        pytest.skip()
 
     webserver_process = None
     webserver_port = 0
@@ -1308,19 +1306,20 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
 
     ds = gdal.Open("data/irregular_tile_size_jpeg_in_tiff.tif")
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).Checksum()
     assert gdal.GetLastErrorType() != 0
 
-    # Getting (hidden) overview band requires JPEG driver availability
-    if gdal.GetDriverByName("JPEG") is None:
-        pytest.skip("JPEG driver missing")
 
+# Getting (hidden) overview band requires JPEG driver availability
+@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_driver("JPEG")
+def test_tiff_read_irregular_tile_size_jpeg_in_tiff_overview():
+
+    ds = gdal.Open("data/irregular_tile_size_jpeg_in_tiff.tif")
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds.GetRasterBand(1).GetOverview(0).Checksum()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert gdal.GetLastErrorType() != 0
     gdal.ErrorReset()
 
@@ -2603,10 +2602,9 @@ def test_tiff_read_strace_check():
         ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except Exception:
-        # strace not available
-        pytest.skip()
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
 
     lines_with_dotdot_gcore = []
     for line in err.split("\n"):
@@ -4151,13 +4149,12 @@ def test_tiff_read_cog_strile_arrays_zeroified_when_possible():
 # Check that our reading of a COG with /vsicurl is efficient
 
 
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_cog_vsicurl():
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -4286,13 +4283,12 @@ def test_tiff_read_cog_vsicurl():
 # Check that our reading of a COG with /vsicurl is efficient
 
 
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_cog_with_mask_vsicurl():
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     gdal.VSICurlClearCache()
 
@@ -4790,13 +4786,12 @@ def test_tiff_read_multi_threaded(
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
 @pytest.mark.parametrize("advise_read", [True, False])
 @pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster, advise_read):
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if gdal.GetDriverByName("HTTP") is None:
-        pytest.skip()
 
     webserver_process = None
     webserver_port = 0
@@ -4877,13 +4872,12 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster, advise_read):
 
 
 @pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
 def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
-
-    if not check_libtiff_internal_or_at_least(4, 0, 11):
-        pytest.skip()
-
-    if gdal.GetDriverByName("HTTP") is None:
-        pytest.skip()
 
     webserver_process = None
     webserver_port = 0

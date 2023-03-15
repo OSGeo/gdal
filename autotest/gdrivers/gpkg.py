@@ -4076,10 +4076,8 @@ def test_gpkg_coordinate_epoch():
 # Test preservation of IsDynamic() and support for coordinate epoch
 
 
+@gdaltest.require_proj_version(7, 2)
 def test_gpkg_coordinate_epoch_is_dynamic():
-
-    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
-        pytest.skip("requires PROJ 7.2 or later")
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 

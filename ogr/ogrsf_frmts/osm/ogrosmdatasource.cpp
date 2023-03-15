@@ -2345,7 +2345,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
         if (hPoly != nullptr && OGR_G_GetGeometryType(hPoly) == wkbPolygon)
         {
             OGRPolygon *poSuperPoly =
-                reinterpret_cast<OGRGeometry *>(hPoly)->toPolygon();
+                OGRGeometry::FromHandle(hPoly)->toPolygon();
             for (unsigned int i = 0;
                  i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings(); i++)
             {
@@ -2395,8 +2395,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                      ": Geometry has incompatible type : %s",
                      psRelation->nID,
                      poGeom != nullptr
-                         ? OGR_G_GetGeometryName(
-                               reinterpret_cast<OGRGeometryH>(poGeom))
+                         ? OGR_G_GetGeometryName(OGRGeometry::ToHandle(poGeom))
                          : "null");
             delete poGeom;
         }

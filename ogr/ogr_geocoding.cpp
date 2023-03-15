@@ -608,7 +608,7 @@ static OGRLayerH OGRGeocodeMakeRawLayer(const char *pszContent)
     poFeature->SetField("raw", pszContent);
     CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
-    return reinterpret_cast<OGRLayerH>(poLayer);
+    return OGRLayer::ToHandle(poLayer);
 }
 
 /************************************************************************/
@@ -747,7 +747,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode *psSearchResults,
         }
         psPlace = psPlace->psNext;
     }
-    return reinterpret_cast<OGRLayerH>(poLayer);
+    return OGRLayer::ToHandle(poLayer);
 }
 
 /************************************************************************/
@@ -883,7 +883,7 @@ static OGRLayerH OGRGeocodeReverseBuildLayerNominatim(
     CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
     delete poFeature;
 
-    return reinterpret_cast<OGRLayerH>(poLayer);
+    return OGRLayer::ToHandle(poLayer);
 }
 
 /************************************************************************/
@@ -1019,7 +1019,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode *psResultSet,
         }
         psPlace = psPlace->psNext;
     }
-    return reinterpret_cast<OGRLayerH>(poLayer);
+    return OGRLayer::ToHandle(poLayer);
 }
 
 /************************************************************************/
@@ -1185,7 +1185,7 @@ static OGRLayerH OGRGeocodeBuildLayerBing(CPLXMLNode *psResponse,
         psPlace = psPlace->psNext;
     }
 
-    return reinterpret_cast<OGRLayerH>(poLayer);
+    return OGRLayer::ToHandle(poLayer);
 }
 
 /************************************************************************/
@@ -1594,5 +1594,5 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
  */
 void OGRGeocodeFreeResult(OGRLayerH hLayer)
 {
-    delete reinterpret_cast<OGRLayer *>(hLayer);
+    delete OGRLayer::FromHandle(hLayer);
 }

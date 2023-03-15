@@ -2326,7 +2326,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         pszDest = GDALGetDescription(hDstDS);
 
 #ifdef DEBUG
-    GDALDataset *poDstDS = reinterpret_cast<GDALDataset *>(hDstDS);
+    GDALDataset *poDstDS = GDALDataset::FromHandle(hDstDS);
     const int nExpectedRefCountAtEnd =
         (poDstDS != nullptr) ? poDstDS->GetRefCount() : 1;
     (void)nExpectedRefCountAtEnd;
@@ -2402,7 +2402,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         }
 #ifdef DEBUG
         // Do not remove this if the #ifdef DEBUG before is still there !
-        poDstDS = reinterpret_cast<GDALDataset *>(hDstDS);
+        poDstDS = GDALDataset::FromHandle(hDstDS);
         CPL_IGNORE_RET_VAL(poDstDS);
 #endif
     }
@@ -4718,7 +4718,7 @@ static CPLErr TransformCutlineToSource(GDALDatasetH hSrcDS,
             if (eErr == OGRERR_NONE)
             {
                 const double dfMaxLengthInPixels = GetMaximumSegmentLength(
-                    reinterpret_cast<OGRGeometry *>(hMultiPolygon));
+                    OGRGeometry::FromHandle(hMultiPolygon));
                 if (bWasValidInitially)
                 {
                     // In some cases, the densification itself results in a

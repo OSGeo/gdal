@@ -191,7 +191,7 @@ OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
         if (poSrcGeom)
         {
             char *pszGeomJson =
-                OGR_G_ExportToJson(reinterpret_cast<OGRGeometryH>(poSrcGeom));
+                OGR_G_ExportToJson(OGRGeometry::ToHandle(poSrcGeom));
             CPLJSONDocument oJSonDoc;
             oJSonDoc.LoadMemory(reinterpret_cast<const GByte *>(pszGeomJson));
             CPLFree(pszGeomJson);

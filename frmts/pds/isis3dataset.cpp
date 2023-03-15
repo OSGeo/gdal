@@ -2136,8 +2136,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             delete poDS;
             return nullptr;
         }
-        poDS->m_poExternalDS = reinterpret_cast<GDALDataset *>(
-            GDALOpen(osQubeFile, poOpenInfo->eAccess));
+        poDS->m_poExternalDS =
+            GDALDataset::FromHandle(GDALOpen(osQubeFile, poOpenInfo->eAccess));
         if (poDS->m_poExternalDS == nullptr)
         {
             delete poDS;
@@ -2176,8 +2176,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         // TIFF file
         if (EQUAL(CPLGetExtension(osQubeFile), "tif"))
         {
-            GDALDataset *poTIF_DS = reinterpret_cast<GDALDataset *>(
-                GDALOpen(osQubeFile, GA_ReadOnly));
+            GDALDataset *poTIF_DS =
+                GDALDataset::FromHandle(GDALOpen(osQubeFile, GA_ReadOnly));
             if (poTIF_DS)
             {
                 bool bWarned = false;

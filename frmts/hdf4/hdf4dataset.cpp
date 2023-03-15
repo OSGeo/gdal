@@ -1275,8 +1275,8 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
         delete poDS;
         poDS = nullptr;
 
-        GDALDataset *poRetDS = reinterpret_cast<GDALDataset *>(
-            GDALOpen(pszSDSName, poOpenInfo->eAccess));
+        GDALDataset *poRetDS =
+            GDALDataset::FromHandle(GDALOpen(pszSDSName, poOpenInfo->eAccess));
         CPLFree(pszSDSName);
 
         CPLAcquireMutex(hHDF4Mutex, 1000.0);

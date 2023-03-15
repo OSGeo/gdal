@@ -247,11 +247,11 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
                     VSIFCloseL(fp);
 
                     // Only PNG can have color table.
-                    const char *apszDrivers[] = {"PNG", nullptr};
-                    GDALDataset *poDSTile = reinterpret_cast<GDALDataset *>(
-                        GDALOpenEx(osMemFileName.c_str(),
-                                   GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                   apszDrivers, nullptr, nullptr));
+                    const char *const apszDrivers[] = {"PNG", nullptr};
+                    auto poDSTile = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(osMemFileName.c_str(),
+                                          GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                          apszDrivers, nullptr, nullptr));
                     if (poDSTile != nullptr)
                     {
                         if (poDSTile->GetRasterCount() == 1)
@@ -265,7 +265,6 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
                         {
                             bRetry = true;
                         }
-                        GDALClose(poDSTile);
                     }
                     else
                         bRetry = true;
@@ -444,18 +443,18 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
     const CPLString &osMemFileName, GByte *pabyTileData, double dfTileOffset,
     double dfTileScale, bool *pbIsLossyFormat)
 {
-    const char *apszDriversByte[] = {"JPEG", "PNG", "WEBP", nullptr};
-    const char *apszDriversInt[] = {"PNG", nullptr};
-    const char *apszDriversFloat[] = {"GTiff", nullptr};
+    const char *const apszDriversByte[] = {"JPEG", "PNG", "WEBP", nullptr};
+    const char *const apszDriversInt[] = {"PNG", nullptr};
+    const char *const apszDriversFloat[] = {"GTiff", nullptr};
     int nBlockXSize, nBlockYSize;
     IGetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nBands = IGetRasterCount();
-    GDALDataset *poDSTile = reinterpret_cast<GDALDataset *>(
-        GDALOpenEx(osMemFileName.c_str(), GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                   (m_eDT == GDT_Byte)                   ? apszDriversByte
-                   : (m_eTF == GPKG_TF_TIFF_32BIT_FLOAT) ? apszDriversFloat
-                                                         : apszDriversInt,
-                   nullptr, nullptr));
+    auto poDSTile = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        osMemFileName.c_str(), GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+        (m_eDT == GDT_Byte)                   ? apszDriversByte
+        : (m_eTF == GPKG_TF_TIFF_32BIT_FLOAT) ? apszDriversFloat
+                                              : apszDriversInt,
+        nullptr, nullptr));
     if (poDSTile == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse tile data");
@@ -472,7 +471,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inconsistent tiles characteristics");
-        GDALClose(poDSTile);
         FillEmptyTile(pabyTileData);
         return CE_Failure;
     }
@@ -495,7 +493,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                            poDSTile->GetRasterCount(), nullptr, 0, 0, 0,
                            nullptr) != CE_None)
     {
-        GDALClose(poDSTile);
         FillEmptyTile(pabyTileData);
         return CE_Failure;
     }
@@ -571,8 +568,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             }
         }
 
-        GDALClose(poDSTile);
-
         return CE_None;
     }
 
@@ -633,7 +628,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                         static_cast<GByte>(oMapEntryToIndexIter->second);
             }
         }
-        GDALClose(poDSTile);
         return CE_None;
     }
 
@@ -722,8 +716,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         /* Create fully opaque alpha */
         memset(pabyTileData + 3 * nBlockPixels, 255, nBlockPixels);
     }
-
-    GDALClose(poDSTile);
 
     return CE_None;
 }

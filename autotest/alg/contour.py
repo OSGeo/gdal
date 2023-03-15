@@ -364,10 +364,8 @@ def test_contour_nodata_precision_issue_float32():
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/contour.shp")
 
 
+@pytest.mark.require_driver("AAIGRID")
 def test_contour_too_many_levels():
-
-    if gdal.GetDriverByName("AAIGRID") is None:
-        pytest.skip("AAIGRID driver missing")
 
     ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
         "/vsimem/contour.shp"

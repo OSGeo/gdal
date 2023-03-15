@@ -60,6 +60,10 @@
 
 #include "proj.h"
 
+#ifdef HAVE_CURL
+#include "cpl_curl_priv.h"
+#endif
+
 static int GetMinBitsForPair(const bool pabSigned[], const bool pabFloating[],
                              const int panBits[])
 {
@@ -2331,16 +2335,18 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
  * Available pszRequest values:
  * <ul>
  * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  i.e.
- * "1170" Note: starting with GDAL 1.10, this string will be longer than 4
- * characters. <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a
- * string. i.e. "20020416". <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME.
- * ie. "1.1.7" <li> "--version": Returns one line version message suitable for
- * use in response to --version requests.  i.e. "GDAL 1.1.7, released
- * 2002/04/16" <li> "LICENSE": Returns the content of the LICENSE.TXT file from
- * the GDAL_DATA directory. Before GDAL 1.7.0, the returned string was leaking
- * memory but this is now resolved. So the result should not been freed by the
- * caller. <li> "BUILD_INFO": List of NAME=VALUE pairs separated by newlines
- * with information on build time options.
+ * "30603000", e.g for GDAL 3.6.3.0</li>
+ * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a
+ * string. i.e. "20230312".</li>
+ * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "3.6.3"</li>
+ * <li> "--version": Returns one line version message suitable for
+ * use in response to --version requests.  i.e. "GDAL 3.6.3, released
+ * 2023/03/12"</li>
+ * <li> "LICENSE": Returns the content of the LICENSE.TXT file from
+ * the GDAL_DATA directory.
+ * </li>
+ * <li> "BUILD_INFO": List of NAME=VALUE pairs separated by newlines
+ * with information on build time options.</li>
  * </ul>
  *
  * @param pszRequest the type of version info desired, as listed above.
@@ -2368,6 +2374,10 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
         osBuildInfo += "OGR_ENABLED=YES\n";  // Deprecated.  Always yes.
+#ifdef HAVE_CURL
+        osBuildInfo += "CURL_ENABLED=YES\n";
+        osBuildInfo += "CURL_VERSION=" LIBCURL_VERSION "\n";
+#endif
 #ifdef HAVE_GEOS
         osBuildInfo += "GEOS_ENABLED=YES\n";
 #ifdef GEOS_CAPI_VERSION
@@ -2383,7 +2393,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
 #ifdef __VERSION__
 #ifdef __clang_version__
-        osBuildInfo += "COMPILER=" __clang_version__ "\n";
+        osBuildInfo += "COMPILER=clang " __clang_version__ "\n";
 #elif defined(__GNUC__)
         osBuildInfo += "COMPILER=GCC " __VERSION__ "\n";
 #elif defined(__INTEL_COMPILER)

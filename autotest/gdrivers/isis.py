@@ -2002,10 +2002,8 @@ def test_isis3_point_perspective_read():
     )
 
 
+@gdaltest.require_proj_version(7)
 def test_isis3_point_perspective_write():
-
-    if osr.GetPROJVersionMajor() < 7:
-        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)

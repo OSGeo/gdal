@@ -11229,10 +11229,6 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
         oValMap[pszParamStr] = CPLAtof(pszParamVal);
     }
 
-    const std::string *posGDALAtt;
-    std::map<std::string, std::string>::iterator oAttIter;
-    std::map<std::string, double>::iterator oValIter, oValIter2;
-
     // Results to write.
     std::vector<std::pair<std::string, double>> oOutList;
 
@@ -11267,11 +11263,11 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
         }
 
         // Specific mapping, loop over mapping values.
-        for (oAttIter = oAttMap.begin(); oAttIter != oAttMap.end(); ++oAttIter)
+        for (const auto &oAttIter : oAttMap)
         {
-            posGDALAtt = &(oAttIter->first);
-            const std::string *posNCDFAtt = &(oAttIter->second);
-            oValIter = oValMap.find(*posGDALAtt);
+            const std::string &osGDALAtt = oAttIter.first;
+            const std::string &osNCDFAtt = oAttIter.second;
+            const auto oValIter = oValMap.find(osGDALAtt);
 
             if (oValIter != oValMap.end())
             {
@@ -11280,7 +11276,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
 
                 // special case for LCC-1SP
                 //   See comments in netcdfdataset.h for this projection.
-                if (EQUAL(SRS_PP_SCALE_FACTOR, posGDALAtt->c_str()) &&
+                if (EQUAL(SRS_PP_SCALE_FACTOR, osGDALAtt.c_str()) &&
                     EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP))
                 {
                     // Default is to not write as it is not CF-1.
@@ -11305,7 +11301,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
                         // latitude_of_origin, because scale_factor=1.0.
                         else
                         {
-                            oValIter2 = oValMap.find(
+                            const auto oValIter2 = oValMap.find(
                                 std::string(SRS_PP_LATITUDE_OF_ORIGIN));
                             if (oValIter2 != oValMap.end())
                             {
@@ -11325,7 +11321,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
                     }
                 }
                 if (bWriteVal)
-                    oOutList.push_back(std::make_pair(*posNCDFAtt, dfValue));
+                    oOutList.push_back(std::make_pair(osNCDFAtt, dfValue));
             }
 #ifdef NCDF_DEBUG
             else
@@ -11338,19 +11334,19 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
     else
     {
         // Generic mapping, loop over projected values.
-        for (oValIter = oValMap.begin(); oValIter != oValMap.end(); ++oValIter)
+        for (const auto &oValIter : oValMap)
         {
-            posGDALAtt = &(oValIter->first);
-            double dfValue = oValIter->second;
+            const auto &osGDALAtt = oValIter.first;
+            const double dfValue = oValIter.second;
 
-            oAttIter = oAttMap.find(*posGDALAtt);
+            const auto &oAttIter = oAttMap.find(osGDALAtt);
 
             if (oAttIter != oAttMap.end())
             {
                 oOutList.push_back(std::make_pair(oAttIter->second, dfValue));
             }
             /* for SRS_PP_SCALE_FACTOR write 2 mappings */
-            else if (EQUAL(posGDALAtt->c_str(), SRS_PP_SCALE_FACTOR))
+            else if (EQUAL(osGDALAtt.c_str(), SRS_PP_SCALE_FACTOR))
             {
                 oOutList.push_back(std::make_pair(
                     std::string(CF_PP_SCALE_FACTOR_MERIDIAN), dfValue));
@@ -11360,7 +11356,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
             /* if not found insert the GDAL name */
             else
             {
-                oOutList.push_back(std::make_pair(*posGDALAtt, dfValue));
+                oOutList.push_back(std::make_pair(osGDALAtt, dfValue));
             }
         }
     }
@@ -13021,7 +13017,7 @@ static CPLErr NCDFResolveElem(int nStartGroupId, const char *pszVar,
                 aoQueueGroupIdsToVisit.push(nParentGroupId);
             else if (status2 != NC_ENOGRP)
                 NCDF_ERR(status2);
-            if (pszVar)
+            else if (pszVar)
                 // When resolving a variable, if there is no more
                 // parent group then we switch to width-wise search mode
                 // starting from the latest found parent group.

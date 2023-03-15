@@ -650,7 +650,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
 
             /* try opening the file that represents that band */
             GDALDataset *poBandData =
-                reinterpret_cast<GDALDataset *>(GDALOpen(pszPath, GA_ReadOnly));
+                GDALDataset::FromHandle(GDALOpen(pszPath, GA_ReadOnly));
             if (poBandData != nullptr)
             {
                 TSXRasterBand *poBand =

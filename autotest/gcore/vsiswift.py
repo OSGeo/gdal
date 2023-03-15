@@ -38,6 +38,8 @@ import webserver
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_curl()
+
 
 def open_for_read(uri):
     """
@@ -69,9 +71,6 @@ def test_vsiswift_init():
 
 
 def test_vsiswift_real_server_errors():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     # Nothing set
     gdal.ErrorReset()
@@ -115,9 +114,6 @@ def test_vsiswift_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -936,9 +932,6 @@ def test_vsiswift_stop_webserver():
 
 
 def test_vsiswift_extra_1():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
 
     swift_resource = gdal.GetConfigOption("SWIFT_RESOURCE")
     if swift_resource is None:

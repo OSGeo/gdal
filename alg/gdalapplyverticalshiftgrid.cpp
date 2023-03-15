@@ -522,7 +522,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
     poReprojectedGrid->AddBand(GDT_Float32, nullptr);
 
     GDALApplyVSGDataset *poOutDS = new GDALApplyVSGDataset(
-        reinterpret_cast<GDALDataset *>(hSrcDataset), poReprojectedGrid, eDT,
+        GDALDataset::FromHandle(hSrcDataset), poReprojectedGrid, eDT,
         CPL_TO_BOOL(bInverse), dfSrcUnitToMeter, dfDstUnitToMeter,
         // Undocumented option. For testing only
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "256")));

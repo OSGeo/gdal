@@ -457,7 +457,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     return eErr;
   }
 %clear (void **buf );
-%clean (void* inputOutputBuf);
+%clear (void* inputOutputBuf);
 %clear (int*);
 %clear (GIntBig*);
 %clear (GDALDataType *);

@@ -39,6 +39,15 @@ From the build directory you can now configure CMake, build and install the bina
     To enable specific drivers, add ``-DGDAL_ENABLE_DRIVER_<driver_name>=ON`` or ``-DOGR_ENABLE_DRIVER_<driver_name>=ON``.
     See :ref:`selection-of-drivers` for more details.
 
+.. note::
+
+    The ``--prefix /installation/prefix`` option of CMake (>= 3.14) is supported since GDAL 3.7.0,
+    but note that contrary to setting the CMAKE_INSTALL_PREFIX at configuration time,
+    it will not result in the GDAL_DATA path to be hardcoded into the libgdal binary,
+    and is thus not recommended. It is also not supported on Windows multi-configuration
+    generator (such as VisualStudio).
+
+`
 On Windows, one may need to specify generator:
 
 .. code-block:: bash
@@ -733,6 +742,15 @@ detect the HDF5 library.
 .. option:: GDAL_USE_HDF5=ON/OFF
 
     Control whether to use HDF5. Defaults to ON when HDF5 is found.
+
+.. option:: GDAL_ENABLE_HDF5_GLOBAL_LOCK=ON/OFF
+
+    Control whether to add a global lock around calls to HDF5 library. This is
+    needed if the HDF5 library is not built with thread-safety enabled and if
+    the HDF5 driver is used in a multi-threaded way. On Unix, a heuristics
+    try to detect if the HDF5 library has been built with thread-safety enabled
+    when linking against a HDF5 library. In other situations, the setting must
+    be manually set when needed.
 
 
 HDFS
@@ -1528,6 +1546,9 @@ Poppler
 The `Poppler <https://poppler.freedesktop.org/>`_ library is one
 of the possible backends for the :ref:`raster.pdf` driver.
 
+Note that GDAL requires Poppler private headers, that are only installed
+if configuring Poppler with -DENABLE_UNSTABLE_API_ABI_HEADERS.
+
 .. option:: Poppler_INCLUDE_DIR
 
     Path to an include directory with the ``poppler-config.h`` header file.
@@ -1854,6 +1875,11 @@ the lossless Deflate/Zip compression algorithm.
     ``ZLIB_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
 
+.. option:: ZLIB_IS_STATIC
+
+    Link to static external ZLIB directory.
+    Only used if GDAL_USE_ZLIB_INTERNAL=OFF and MSVC.
+
 .. option:: GDAL_USE_ZLIB=ON/OFF
 
     Control whether to use ZLIB. Defaults to ON when ZLIB is found.
@@ -2079,11 +2105,6 @@ Python bindings options
     Whether Python bindings should be built. It is ON by default, but only
     effective if a Python installation is found.
 
-.. option:: SWIG_REGENERATE_PYTHON:BOOL=ON/OFF
-
-    Whether to refresh the generated SWIG Python bindings. It is OFF by default.
-    Setting it to ON is needed if modifying the SWIG interface files.
-
 A nominal Python installation should comprise the Python runtime (>= 3.6) and
 the setuptools module.
 numpy and its header and development library are also strongly recommended.
@@ -2124,19 +2145,19 @@ the ``install`` CMake target.
 
     This option can be specified to a directory name, to override the
     ``CMAKE_INSTALL_PREFIX`` option.
-    It is used to set the value of the ``--prefix`` option of ``python setup.py install``.
+    It is used to set the value of the ``--prefix`` option of ``python3 setup.py install``.
 
 .. option:: GDAL_PYTHON_INSTALL_LAYOUT
 
     This option can be specified to set the value of the ``--install-layout``
-    option of ``python setup.py install``. The install layout is by default set to
+    option of ``python3 setup.py install``. The install layout is by default set to
     ``deb`` when it is detected that the Python installation looks for
     the ``site-packages`` subdirectory. Otherwise it is unspecified.
 
 .. option:: GDAL_PYTHON_INSTALL_LIB
 
     This option can be specified to set the value of the ``--install-lib``
-    option of ``python setup.py install``. It is only taken into account on
+    option of ``python3 setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
 Java bindings options

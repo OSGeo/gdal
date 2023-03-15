@@ -381,7 +381,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
 
                 CPLFree(pszRasterUrl);
 
-                poRasterDS = reinterpret_cast<GDALDataset *>(GDALOpenEx(
+                poRasterDS = GDALDataset::FromHandle(GDALOpenEx(
                     pszConnStr,
                     GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                     nullptr, nullptr, nullptr));

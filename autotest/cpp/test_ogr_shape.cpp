@@ -545,4 +545,14 @@ TEST_F(test_ogr_shape, spatial_filtering)
     OGR_DS_Destroy(ds);
 }
 
+TEST(test_ogr_shape_gdal, create)
+{
+    GDALDriver *shpDriver =
+        GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
+    GDALDataset *pShpDst =
+        shpDriver->Create("/vsimem/test.shp", 0, 0, 0, GDT_Unknown, nullptr);
+    EXPECT_EQ(pShpDst->GetAccess(), GA_Update);
+    GDALClose(pShpDst);
+}
+
 }  // namespace

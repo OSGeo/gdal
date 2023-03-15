@@ -1609,6 +1609,33 @@ def require_creation_option(driver, option):
 
 
 ###############################################################################
+# Decorator to skip a test if PROJ version < (major, minor, micro)
+
+
+def require_proj_version(major, minor=0, micro=0):
+
+    from osgeo import osr
+
+    def decorator(func):
+        @pytest.mark.skipif(
+            (
+                osr.GetPROJVersionMajor(),
+                osr.GetPROJVersionMinor(),
+                osr.GetPROJVersionMicro(),
+            )
+            < (major, minor, micro),
+            reason=f"PROJ version < {major}.{minor}.{micro}",
+        )
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+###############################################################################
 # Return True if the provided name is in TRAVIS_BRANCH or BUILD_NAME
 
 
@@ -1863,7 +1890,7 @@ def is_file_open(filename):
 
 
 def built_against_curl():
-    return gdal.GetDriverByName("HTTP") is not None
+    return "CURL_ENABLED=YES" in gdal.VersionInfo("BUILD_INFO")
 
 
 ###############################################################################

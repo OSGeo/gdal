@@ -1339,6 +1339,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
                     assert(poSimpleSource);
                     auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+                    assert(poSimpleSourceBand);
                     auto poSourceDataset = poSimpleSourceBand->GetDataset();
                     if (poSourceDataset == nullptr)
                     {

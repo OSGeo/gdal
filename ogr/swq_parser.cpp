@@ -115,13 +115,10 @@
 
 #define YYSTYPE swq_expr_node *
 
-/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a
- * C++ file. */
-/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that
- * suggests */
+/* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
+/* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
 /* increase YYINITDEPTH instead, but this will consume memory. */
-/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile
- * because */
+/* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
 /* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
 
@@ -425,9 +422,9 @@ typedef int yy_state_fast_t;
     } while (0)
 #ifndef YYSTACK_ALLOC_MAXIMUM
 /* The OS might guarantee only one guard page at the bottom of the stack,
-   and a page size can be as small as 4096 bytes.  So we cannot safely
-   invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
-   to allow for a few compiler-allocated temporary stack slots.  */
+       and a page size can be as small as 4096 bytes.  So we cannot safely
+       invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
+       to allow for a few compiler-allocated temporary stack slots.  */
 #define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2006 */
 #endif
 #else
@@ -668,7 +665,7 @@ static const yytype_int16 yytoknum[] = {
 #define yytable_value_is_error(Yyn) 0
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
-   STATE-NUM.  */
+     STATE-NUM.  */
 static const yytype_int16 yypact[] = {
     -19,  197,  -7,   1,    -133, -133, -133, -42,  -133, -28,  197,  207,
     197,  329,  -133, 184,  77,   11,   -133, 2,    -133, 197,  25,   197,
@@ -689,8 +686,8 @@ static const yytype_int16 yypact[] = {
     -133, -133, -133, -133, -133, -133, 131,  -133, -133};
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
-   Performed when YYTABLE does not specify something else to do.  Zero
-   means the default is an error.  */
+     Performed when YYTABLE does not specify something else to do.  Zero
+     means the default is an error.  */
 static const yytype_int8 yydefact[] = {
     2,  0,  0,  0,  36, 37, 38, 34, 41, 0,  0,  0,  0,  3,  39, 5,  0,  0,  4,
     59, 1,  0,  0,  0,  8,  42, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -715,8 +712,8 @@ static const yytype_int16 yydefgoto[] = {-1,  3,   54,  55,  14,  15, 126, 18,
                                          170, 187, 188, 180, 191, 121};
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
-   positive, shift that token.  If negative, reduce the rule whose
-   number is the opposite.  If YYTABLE_NINF, syntax error.  */
+     positive, shift that token.  If negative, reduce the rule whose
+     number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] = {
     13,  20,  56,  136, 87,  21,  153, 16,  22,  24,  88,  26,  1,   2,   88,
     47,  99,  138, 25,  23,  85,  63,  57,  86,  141, 16,  89,  60,  61,  51,
@@ -775,7 +772,7 @@ static const yytype_int16 yycheck[] = {
     38, 39};
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-   symbol of state STATE-NUM.  */
+     symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] = {
     0,  31, 32, 52, 3,  4,  5,  6,  12, 26, 33, 41, 47, 53, 55, 56, 14, 47, 58,
     59, 0,  47, 50, 47, 53, 56, 53, 7,  8,  9,  11, 13, 33, 34, 35, 36, 37, 38,
@@ -1087,7 +1084,7 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     /* Internationalized format string. */
     const char *yyformat = YY_NULLPTR;
     /* Arguments of yyformat: reported tokens (one for the "unexpected",
-       one per "expected"). */
+     one per "expected"). */
     char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
     /* Actual size of YYARG. */
     int yycount = 0;
@@ -1095,28 +1092,28 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     YYPTRDIFF_T yysize = 0;
 
     /* There are many possibilities here to consider:
-       - If this state is a consistent state with a default action, then
-         the only way this function was invoked is if the default action
-         is an error action.  In that case, don't check for expected
-         tokens because there are none.
-       - The only way there can be no lookahead present (in yychar) is if
-         this state is a consistent state with a default action.  Thus,
-         detecting the absence of a lookahead is sufficient to determine
-         that there is no unexpected or expected token to report.  In that
-         case, just report a simple "syntax error".
-       - Don't assume there isn't a lookahead just because this state is a
-         consistent state with a default action.  There might have been a
-         previous inconsistent state, consistent state with a non-default
-         action, or user semantic action that manipulated yychar.
-       - Of course, the expected token list depends on states to have
-         correct lookahead information, and it depends on the parser not
-         to perform extra reductions after fetching a lookahead from the
-         scanner and before detecting a syntax error.  Thus, state merging
-         (from LALR or IELR) and default reductions corrupt the expected
-         token list.  However, the list is correct for canonical LR with
-         one exception: it will still contain any token that will not be
-         accepted due to an error action in a later state.
-    */
+     - If this state is a consistent state with a default action, then
+       the only way this function was invoked is if the default action
+       is an error action.  In that case, don't check for expected
+       tokens because there are none.
+     - The only way there can be no lookahead present (in yychar) is if
+       this state is a consistent state with a default action.  Thus,
+       detecting the absence of a lookahead is sufficient to determine
+       that there is no unexpected or expected token to report.  In that
+       case, just report a simple "syntax error".
+     - Don't assume there isn't a lookahead just because this state is a
+       consistent state with a default action.  There might have been a
+       previous inconsistent state, consistent state with a non-default
+       action, or user semantic action that manipulated yychar.
+     - Of course, the expected token list depends on states to have
+       correct lookahead information, and it depends on the parser not
+       to perform extra reductions after fetching a lookahead from the
+       scanner and before detecting a syntax error.  Thus, state merging
+       (from LALR or IELR) and default reductions corrupt the expected
+       token list.  However, the list is correct for canonical LR with
+       one exception: it will still contain any token that will not be
+       accepted due to an error action in a later state.
+  */
     if (yytoken != YYEMPTY)
     {
         int yyn = yypact[+*yyssp];
@@ -1126,8 +1123,8 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
         if (!yypact_value_is_default(yyn))
         {
             /* Start YYX at -YYN if negative to avoid negative indexes in
-               YYCHECK.  In other words, skip the first -YYN actions for
-               this state because they are default actions.  */
+             YYCHECK.  In other words, skip the first -YYN actions for
+             this state because they are default actions.  */
             int yyxbegin = yyn < 0 ? -yyn : 0;
             /* Stay within bounds of both yycheck and yytname.  */
             int yychecklim = YYLAST - yyn + 1;
@@ -1179,7 +1176,7 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
 
     {
         /* Don't count the "%s"s in the final size, but reserve room for
-           the terminator.  */
+       the terminator.  */
         YYPTRDIFF_T yysize1 = yysize + (yystrlen(yyformat) - 2 * yycount) + 1;
         if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
             yysize = yysize1;
@@ -1196,8 +1193,8 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     }
 
     /* Avoid sprintf, as that infringes on the user's name space.
-       Don't have undefined behavior even if the translation
-       produced a string with the wrong number of "%s"s.  */
+     Don't have undefined behavior even if the translation
+     produced a string with the wrong number of "%s"s.  */
     {
         char *yyp = *yymsg;
         int yyi = 0;
@@ -1310,7 +1307,7 @@ int yyparse(swq_parse_context *context)
 
     /* The semantic value of the lookahead symbol.  */
     /* Default value used for initialization, for pacifying older GCCs
-       or non-GCC compilers.  */
+   or non-GCC compilers.  */
     YY_INITIAL_VALUE(static YYSTYPE yyval_default;)
     YYSTYPE yylval YY_INITIAL_VALUE(= yyval_default);
 
@@ -1345,7 +1342,7 @@ int yyparse(swq_parse_context *context)
     /* Lookahead token as an internal (translated) token number.  */
     int yytoken = 0;
     /* The variables used to return semantic value and location from the
-       action routines.  */
+     action routines.  */
     YYSTYPE yyval;
 
 #if YYERROR_VERBOSE
@@ -1358,7 +1355,7 @@ int yyparse(swq_parse_context *context)
 #define YYPOPSTACK(N) (yyvsp -= (N), yyssp -= (N))
 
     /* The number of symbols on the RHS of the reduced rule.
-       Keep to zero when no symbol should be popped.  */
+     Keep to zero when no symbol should be popped.  */
     int yylen = 0;
 
     yyssp = yyss = yyssa;
@@ -1378,7 +1375,7 @@ int yyparse(swq_parse_context *context)
 `------------------------------------------------------------*/
 yynewstate:
     /* In all cases, when you get here, the value and location stacks
-       have just been pushed.  So pushing a state here evens the stacks.  */
+     have just been pushed.  So pushing a state here evens the stacks.  */
     yyssp++;
 
 /*--------------------------------------------------------------------.
@@ -1402,15 +1399,15 @@ yysetstate:
 #if defined yyoverflow
         {
             /* Give user a chance to reallocate the stack.  Use copies of
-               these so that the &'s don't force the real ones into
-               memory.  */
+           these so that the &'s don't force the real ones into
+           memory.  */
             yy_state_t *yyss1 = yyss;
             YYSTYPE *yyvs1 = yyvs;
 
             /* Each stack pointer address is followed by the size of the
-               data in use in that stack, in bytes.  This used to be a
-               conditional around just the two extra args, but that might
-               be undefined if yyoverflow is a macro.  */
+           data in use in that stack, in bytes.  This used to be a
+           conditional around just the two extra args, but that might
+           be undefined if yyoverflow is a macro.  */
             yyoverflow(YY_("memory exhausted"), &yyss1,
                        yysize * YYSIZEOF(*yyssp), &yyvs1,
                        yysize * YYSIZEOF(*yyvsp), &yystacksize);
@@ -1463,7 +1460,7 @@ yysetstate:
 `-----------*/
 yybackup:
     /* Do appropriate processing given the current state.  Read a
-       lookahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
     /* First try to decide what to do without reference to lookahead token.  */
     yyn = yypact[yystate];
@@ -1491,7 +1488,7 @@ yybackup:
     }
 
     /* If the proper action on seeing token YYTOKEN is to reduce or to
-       detect an error, take that action.  */
+     detect an error, take that action.  */
     yyn += yytoken;
     if (yyn < 0 || YYLAST < yyn || yycheck[yyn] != yytoken)
         goto yydefault;
@@ -1505,7 +1502,7 @@ yybackup:
     }
 
     /* Count tokens shifted since error; after three, turn off error
-       status.  */
+     status.  */
     if (yyerrstatus)
         yyerrstatus--;
 
@@ -1537,13 +1534,13 @@ yyreduce:
     yylen = yyr2[yyn];
 
     /* If YYLEN is nonzero, implement the default value of the action:
-       '$$ = $1'.
+     '$$ = $1'.
 
-       Otherwise, the following line sets YYVAL to garbage.
-       This behavior is undocumented and Bison
-       users should not rely upon it.  Assigning to YYVAL
-       unconditionally makes the parser a bit smaller, and it avoids a
-       GCC warning that YYVAL may be used uninitialized.  */
+     Otherwise, the following line sets YYVAL to garbage.
+     This behavior is undocumented and Bison
+     users should not rely upon it.  Assigning to YYVAL
+     unconditionally makes the parser a bit smaller, and it avoids a
+     GCC warning that YYVAL may be used uninitialized.  */
     yyval = yyvsp[1 - yylen];
 
     YY_REDUCE_PRINT(yyn);
@@ -1559,7 +1556,7 @@ yyreduce:
         case 4:
         {
             context->poRoot = yyvsp[0];
-            swq_fixup(context);
+            // swq_fixup() must be done by caller
         }
         break;
 
@@ -2439,16 +2436,16 @@ yyreduce:
             break;
     }
     /* User semantic actions sometimes alter yychar, and that requires
-       that yytoken be updated with the new translation.  We take the
-       approach of translating immediately before every use of yytoken.
-       One alternative is translating here after every semantic action,
-       but that translation would be missed if the semantic action invokes
-       YYABORT, YYACCEPT, or YYERROR immediately after altering yychar or
-       if it invokes YYBACKUP.  In the case of YYABORT or YYACCEPT, an
-       incorrect destructor might then be invoked immediately.  In the
-       case of YYERROR or YYBACKUP, subsequent parser actions might lead
-       to an incorrect destructor call or verbose syntax error message
-       before the lookahead is translated.  */
+     that yytoken be updated with the new translation.  We take the
+     approach of translating immediately before every use of yytoken.
+     One alternative is translating here after every semantic action,
+     but that translation would be missed if the semantic action invokes
+     YYABORT, YYACCEPT, or YYERROR immediately after altering yychar or
+     if it invokes YYBACKUP.  In the case of YYABORT or YYACCEPT, an
+     incorrect destructor might then be invoked immediately.  In the
+     case of YYERROR or YYBACKUP, subsequent parser actions might lead
+     to an incorrect destructor call or verbose syntax error message
+     before the lookahead is translated.  */
     YY_SYMBOL_PRINT("-> $$ =", yyr1[yyn], &yyval, &yyloc);
 
     YYPOPSTACK(yylen);
@@ -2458,8 +2455,8 @@ yyreduce:
     *++yyvsp = yyval;
 
     /* Now 'shift' the result of the reduction.  Determine what state
-       that goes to, based on the state we popped back to and the rule
-       number reduced by.  */
+     that goes to, based on the state we popped back to and the rule
+     number reduced by.  */
     {
         const int yylhs = yyr1[yyn] - YYNTOKENS;
         const int yyi = yypgoto[yylhs] + *yyssp;
@@ -2475,7 +2472,7 @@ yyreduce:
 `--------------------------------------*/
 yyerrlab:
     /* Make sure we have latest lookahead translation.  See comments at
-       user semantic actions for why this is necessary.  */
+     user semantic actions for why this is necessary.  */
     yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE(yychar);
 
     /* If not already recovering from an error, report this error.  */
@@ -2522,7 +2519,7 @@ yyerrlab:
     if (yyerrstatus == 3)
     {
         /* If just tried and failed to reuse lookahead token after an
-           error, discard it.  */
+         error, discard it.  */
 
         if (yychar <= YYEOF)
         {
@@ -2538,7 +2535,7 @@ yyerrlab:
     }
 
     /* Else will try to reuse lookahead token after shifting the error
-       token.  */
+     token.  */
     goto yyerrlab1;
 
 /*---------------------------------------------------.
@@ -2546,12 +2543,12 @@ yyerrlab:
 `---------------------------------------------------*/
 yyerrorlab:
     /* Pacify compilers when the user code never invokes YYERROR and the
-       label yyerrorlab therefore never appears in user code.  */
+     label yyerrorlab therefore never appears in user code.  */
     if (0)
         YYERROR;
 
     /* Do not reclaim the symbols of the rule whose action triggered
-       this YYERROR.  */
+     this YYERROR.  */
     YYPOPSTACK(yylen);
     yylen = 0;
     YY_STACK_PRINT(yyss, yyssp);
@@ -2629,12 +2626,12 @@ yyreturn:
     if (yychar != YYEMPTY)
     {
         /* Make sure we have latest lookahead translation.  See comments at
-           user semantic actions for why this is necessary.  */
+         user semantic actions for why this is necessary.  */
         yytoken = YYTRANSLATE(yychar);
         yydestruct("Cleanup: discarding lookahead", yytoken, &yylval, context);
     }
     /* Do not reclaim the symbols of the rule whose action triggered
-       this YYABORT or YYACCEPT.  */
+     this YYABORT or YYACCEPT.  */
     YYPOPSTACK(yylen);
     YY_STACK_PRINT(yyss, yyssp);
     while (yyssp != yyss)

@@ -6940,7 +6940,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
    /* which is found in Landsat 7 files.  It is used    */
    /* for some of the loops.                            */
    /* ================================================= */
-   if (SWXRegion[regionID]->scanflag == 1)
+   if (status == 0 && SWXRegion[regionID]->scanflag == 1)
    {
       land_status = SWattrinfo(swathID, "detector_count", &numtype, &count);
       if (land_status == 0)
@@ -8230,7 +8230,7 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
    /* which is found in Landsat 7 files.  It is used    */
    /* for some of the loops.                            */
    /* ================================================= */
-   if (SWXRegion[regionID]->scanflag == 1)
+   if (status == 0 && SWXRegion[regionID]->scanflag == 1)
    {
       land_status = SWattrinfo(swathID, "detector_count", &numtype, &count);
       if (land_status == 0)

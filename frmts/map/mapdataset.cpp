@@ -264,8 +264,8 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.                                          */
     /* -------------------------------------------------------------------- */
-    poDS->poImageDS = reinterpret_cast<GDALDataset *>(
-        GDALOpen(poDS->osImgFilename, GA_ReadOnly));
+    poDS->poImageDS =
+        GDALDataset::FromHandle(GDALOpen(poDS->osImgFilename, GA_ReadOnly));
     if (poDS->poImageDS == nullptr || poDS->poImageDS->GetRasterCount() == 0)
     {
         CSLDestroy(papszLines);
