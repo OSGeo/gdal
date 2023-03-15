@@ -55,19 +55,20 @@ class HFADataset final : public GDALPamDataset
 
     HFAHandle hHFA;
 
-    bool bMetadataDirty;
+    bool bMetadataDirty = false;
 
-    bool bGeoDirty;
+    bool bGeoDirty = false;
     double adfGeoTransform[6];
     OGRSpatialReference m_oSRS{};
 
-    bool bIgnoreUTM;
+    bool bIgnoreUTM = false;
 
     CPLErr ReadProjection();
     CPLErr WriteProjection();
-    bool bForceToPEString;
+    bool bForceToPEString = false;
+    bool bDisablePEString = false;
 
-    int nGCPCount;
+    int nGCPCount = 0;
     GDAL_GCP asGCPList[36];
 
     void UseXFormStack(int nStepCount, Efga_Polynomial *pasPolyListForward,

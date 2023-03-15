@@ -266,3 +266,23 @@ def test_hfa_srs_esri_54049_pe_string_only_broken():
     srs_ref = osr.SpatialReference()
     srs_ref.SetFromUserInput("ESRI:54049")
     assert srs_got.IsSame(srs_ref), srs_got.ExportToWkt()
+
+
+def test_hfa_srs_DISABLEPESTRING():
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(7844)
+
+    filename = "/vsimem/test_hfa_srs_DISABLEPESTRING.img"
+    ds = gdal.GetDriverByName("HFA").Create(
+        filename, 1, 1, options=["DISABLEPESTRING=YES"]
+    )
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs_got = ds.GetSpatialRef()
+    # without DISABLEPESTRING, we'd get GCS_GDA2020
+    assert srs_got.GetName() == "Geocentric_Datum_of_Australia_2020"
+    ds = None
+
+    gdal.Unlink(filename)

@@ -3061,8 +3061,6 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
 /************************************************************************/
 
 HFADataset::HFADataset()
-    : hHFA(nullptr), bMetadataDirty(false), bGeoDirty(false), bIgnoreUTM(false),
-      bForceToPEString(false), nGCPCount(0)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
@@ -3219,7 +3217,8 @@ CPLErr HFADataset::WriteProjection()
         }
 
         // Verify if we need to write a ESRI PE string.
-        bPEStringStored = CPL_TO_BOOL(WritePeStringIfNeeded(&oSRS, hHFA));
+        if (!bDisablePEString)
+            bPEStringStored = CPL_TO_BOOL(WritePeStringIfNeeded(&oSRS, hHFA));
 
         sPro.proSpheroid.sphereName =
             (char *)poGeogSRS->GetAttrValue("GEOGCS|DATUM|SPHEROID");
@@ -4856,6 +4855,17 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
             return nullptr;
     }
 
+    const bool bForceToPEString =
+        CPLFetchBool(papszParamList, "FORCETOPESTRING", false);
+    const bool bDisablePEString =
+        CPLFetchBool(papszParamList, "DISABLEPESTRING", false);
+    if (bForceToPEString && bDisablePEString)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FORCETOPESTRING and DISABLEPESTRING are mutually exclusive");
+        return nullptr;
+    }
+
     // Create the new file.
     HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBandsIn,
                                eHfaDataType, papszParamList);
@@ -4884,8 +4894,8 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
     // coordinate system descriptions.
     if (poDS != nullptr)
     {
-        poDS->bForceToPEString =
-            CPLFetchBool(papszParamList, "FORCETOPESTRING", false);
+        poDS->bForceToPEString = bForceToPEString;
+        poDS->bDisablePEString = bDisablePEString;
     }
 
     return poDS;
@@ -5239,7 +5249,9 @@ void GDALRegister_HFA()
         "dependent file (must not have absolute path)'/>"
         "   <Option name='FORCETOPESTRING' type='boolean' description='Force "
         "use of ArcGIS PE String in file instead of Imagine coordinate system "
-        "format'/>"
+        "format' default='NO'/>"
+        "   <Option name='DISABLEPESTRING' type='boolean' description='Disable "
+        "use of ArcGIS PE String' default='NO'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
