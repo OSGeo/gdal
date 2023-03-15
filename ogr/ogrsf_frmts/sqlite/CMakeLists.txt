@@ -52,6 +52,7 @@ if (SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION)
 endif ()
 
 if (GDAL_USE_SPATIALITE)
+  check_sqlite3_rtree("Spatialite")
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SPATIALITE)
   gdal_target_link_libraries(ogr_SQLite PRIVATE SPATIALITE::SPATIALITE)
 endif ()
