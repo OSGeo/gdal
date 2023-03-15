@@ -1478,13 +1478,12 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?gcp=invalid")
     assert ds is None
 
-    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,COG")
-    assert ds is not None
+    ## not compatible, or no such driver
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,doesnotexist")
+    assert ds is None
 
-    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid")
-    assert ds is not None
-
-    ds = gdal.Open("vrt://data/float32.tif?if=doesnotexist")
+    ## compatible driver included
+    ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,GTiff")
     assert ds is not None
 
 

@@ -954,15 +954,61 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         osQueryString = osFilename.substr(nPosQuotationMark + 1);
         osFilename.resize(nPosQuotationMark);
     }
-    auto poSrcDS = GDALDataset::Open(
-        osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED, nullptr, nullptr, nullptr);
+
+    // Parse query string, get args required for initial Open()
+    CPLStringList aosTokens0(CSLTokenizeString2(osQueryString, "&", 0));
+    char **papszAllowedDrivers = nullptr;
+    int iRemoveOpt;  // not allowed to have multiple &if=drv1&if=drv2
+    iRemoveOpt = -1;
+    for (int i = 0; i < aosTokens0.size(); i++)
+    {
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(aosTokens0[i], &pszKey);
+        if (pszKey)
+        {
+            if (EQUAL(pszKey, "if"))
+            {
+                if (iRemoveOpt > -1)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid vrt:// 'if' format, must not occur "
+                             "multiple times (use comma separated list)\n");
+                }
+                CPLStringList aosInitialFormats(
+                    CSLTokenizeString2(pszValue, ",", 0));
+                for (int j = 0; j < aosInitialFormats.size(); j++)
+                {
+                    CPLDebug("VRT", "Construct papszAllowedDrivers, add: %s\n",
+                             aosInitialFormats[j]);
+                    papszAllowedDrivers =
+                        CSLAddString(papszAllowedDrivers, aosInitialFormats[j]);
+                }
+                iRemoveOpt =
+                    i;  // we must avoid finding this 'if' option again below
+            }
+        }
+    }
+    CPLStringList aosTokens;
+    for (int i = 0; i < aosTokens0.size(); i++)
+    {
+        if (i != iRemoveOpt)
+        {
+            aosTokens.AddString(aosTokens0[i]);
+        }
+        else
+        {
+            CPLDebug("VRT", "Removed 'if' arg at position: %i\n", iRemoveOpt);
+        }
+    }
+
+    auto poSrcDS =
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED,
+                          papszAllowedDrivers, nullptr, nullptr);
     if (poSrcDS == nullptr)
     {
         return nullptr;
     }
 
-    // Parse query string
-    CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
     std::vector<int> anBands;
 
     CPLStringList argv;
@@ -1080,16 +1126,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 for (int j = 0; j < aosGCP.size(); j++)
                 {
                     argv.AddString(aosGCP[j]);
-                }
-            }
-            else if (EQUAL(pszKey, "if"))
-            {
-                CPLStringList aosInitialFormats(
-                    CSLTokenizeString2(pszValue, ",", 0));
-                for (int j = 0; j < aosInitialFormats.size(); j++)
-                {
-                    argv.AddString("-if");
-                    argv.AddString(aosInitialFormats[j]);
                 }
             }
             else
