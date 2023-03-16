@@ -104,34 +104,77 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
 {
     CPLString osRet;
     const char *pszSQLCommand = *ppszSQLCommand;
-    char chQuoteChar = 0;
-
     if (*pszSQLCommand == '"' || *pszSQLCommand == '\'')
     {
-        chQuoteChar = *pszSQLCommand;
+        const char chQuoteChar = *pszSQLCommand;
         pszSQLCommand++;
+
+        while (*pszSQLCommand != '\0')
+        {
+            if (*pszSQLCommand == chQuoteChar &&
+                pszSQLCommand[1] == chQuoteChar)
+            {
+                pszSQLCommand++;
+                osRet += chQuoteChar;
+            }
+            else if (*pszSQLCommand == chQuoteChar)
+            {
+                pszSQLCommand++;
+                break;
+            }
+            else
+                osRet += *pszSQLCommand;
+
+            pszSQLCommand++;
+        }
     }
-
-    while (*pszSQLCommand != '\0')
+    else
     {
-        if (*pszSQLCommand == chQuoteChar && pszSQLCommand[1] == chQuoteChar)
+        bool bNotATableName = false;
+        char chQuoteChar = 0;
+        int nParenthesisLevel = 0;
+        while (*pszSQLCommand != '\0')
         {
-            pszSQLCommand++;
-            osRet += chQuoteChar;
-        }
-        else if (*pszSQLCommand == chQuoteChar)
-        {
-            pszSQLCommand++;
-            break;
-        }
-        else if (chQuoteChar == '\0' &&
-                 (isspace((int)*pszSQLCommand) || *pszSQLCommand == '.' ||
-                  *pszSQLCommand == ')' || *pszSQLCommand == ','))
-            break;
-        else
-            osRet += *pszSQLCommand;
+            if (*pszSQLCommand == chQuoteChar &&
+                pszSQLCommand[1] == chQuoteChar)
+            {
+                osRet += *pszSQLCommand;
+                pszSQLCommand++;
+            }
+            else if (*pszSQLCommand == chQuoteChar)
+            {
+                chQuoteChar = 0;
+            }
+            else if (chQuoteChar == 0)
+            {
+                if (*pszSQLCommand == '(')
+                {
+                    bNotATableName = true;
+                    nParenthesisLevel++;
+                }
+                else if (*pszSQLCommand == ')')
+                {
+                    nParenthesisLevel--;
+                    if (nParenthesisLevel < 0)
+                        break;
+                }
+                else if (*pszSQLCommand == '"' || *pszSQLCommand == '\'')
+                {
+                    chQuoteChar = *pszSQLCommand;
+                }
+                else if (nParenthesisLevel == 0 &&
+                         (isspace((int)*pszSQLCommand) ||
+                          *pszSQLCommand == '.' || *pszSQLCommand == ','))
+                {
+                    break;
+                }
+            }
 
-        pszSQLCommand++;
+            osRet += *pszSQLCommand;
+            pszSQLCommand++;
+        }
+        if (bNotATableName)
+            osRet.clear();
     }
 
     *ppszSQLCommand = pszSQLCommand;
