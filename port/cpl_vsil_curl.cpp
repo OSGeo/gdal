@@ -1635,8 +1635,7 @@ retry:
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncData,
-                               reinterpret_cast<VSILFILE *>(this), pfnReadCbk,
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, this, pfnReadCbk,
                                pReadCbkUserData);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
@@ -2235,9 +2234,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         struct curl_slist *headers =
             VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
-        VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest],
-                                   reinterpret_cast<VSILFILE *>(this),
-                                   pfnReadCbk, pReadCbkUserData);
+        VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest], this, pfnReadCbk,
+                                   pReadCbkUserData);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
                                    &asWriteFuncData[iRequest]);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
@@ -2461,8 +2459,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncData,
-                               reinterpret_cast<VSILFILE *>(this), pfnReadCbk,
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, this, pfnReadCbk,
                                pReadCbkUserData);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
@@ -3099,9 +3096,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             struct curl_slist *headers =
                 VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
-            VSICURLInitWriteFuncStruct(&asWriteFuncData[i],
-                                       reinterpret_cast<VSILFILE *>(this),
-                                       pfnReadCbk, pReadCbkUserData);
+            VSICURLInitWriteFuncStruct(&asWriteFuncData[i], this, pfnReadCbk,
+                                       pReadCbkUserData);
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
                                        &asWriteFuncData[i]);
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,

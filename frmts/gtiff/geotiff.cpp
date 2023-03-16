@@ -2662,9 +2662,7 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         HasOptimizedReadMultiRange()
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         && !(bCanUseMultiThreadedRead &&
-             reinterpret_cast<VSIVirtualHandle *>(
-                 VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF)))
-                 ->HasPRead())
+             VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF))->HasPRead())
 #endif
     )
     {
@@ -3330,8 +3328,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     const int nBlocks = nXBlocks * nYBlocks * nStrilePerBlock;
 
     GTiffDecompressContext sContext;
-    sContext.poHandle = reinterpret_cast<VSIVirtualHandle *>(
-        VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF)));
+    sContext.poHandle = VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF));
     sContext.bHasPRead =
         sContext.poHandle->HasPRead()
 #ifdef DEBUG
@@ -5971,9 +5968,7 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         if (bCanUseMultiThreadedRead &&
-            reinterpret_cast<VSIVirtualHandle *>(
-                VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF)))
-                ->HasPRead())
+            VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF))->HasPRead())
         {
             // use the multi-threaded implementation rather than the multi-range
             // one
@@ -15315,10 +15310,8 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
         return false;
     }
     CPLAssert(nDataLength == VSIFTellL(poOpenInfo->fpL));
-    poOpenInfo->fpL =
-        reinterpret_cast<VSILFILE *>(VSICreateBufferedReaderHandle(
-            reinterpret_cast<VSIVirtualHandle *>(poOpenInfo->fpL), pabyBuffer,
-            static_cast<vsi_l_offset>(INT_MAX) << 32));
+    poOpenInfo->fpL = VSICreateBufferedReaderHandle(
+        poOpenInfo->fpL, pabyBuffer, static_cast<vsi_l_offset>(INT_MAX) << 32);
     if (VSIFCloseL(fpTemp) != 0)
         return false;
     VSIUnlink(osTmpFilename);

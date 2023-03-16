@@ -983,7 +983,7 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
 
     poHandle->poFile = poFile;
     poHandle->bUpdate = true;
-    return reinterpret_cast<VSILFILE *>(poHandle);
+    return poHandle;
 }
 
 /************************************************************************/

@@ -587,8 +587,7 @@ void GDALPDFBaseWriter::StartObjWithStream(const GDALPDFObjectNum &nObjectId,
     m_fpBack = m_fp;
     if (bDeflate)
     {
-        m_fpGZip = reinterpret_cast<VSILFILE *>(VSICreateGZipWritable(
-            reinterpret_cast<VSIVirtualHandle *>(m_fp), TRUE, FALSE));
+        m_fpGZip = VSICreateGZipWritable(m_fp, TRUE, FALSE);
         m_fp = m_fpGZip;
     }
 }

@@ -133,16 +133,7 @@ class subfile_source : public kdu_compressed_source
 
         if (bCached)
         {
-            file = reinterpret_cast<VSILFILE *>(
-                VSICreateCachedFile(reinterpret_cast<VSIVirtualHandle *>(file),
-                                    IO_CHUNK_SIZE, IO_BUFFER_SIZE));
-            if (file == nullptr)
-            {
-                kdu_error e;
-                e << "Unable to open compressed data file, \"" << real_filename
-                  << "\"!";
-                return;
-            }
+            file = VSICreateCachedFile(file, IO_CHUNK_SIZE, IO_BUFFER_SIZE);
         }
 
         if (bSequential)
