@@ -48,7 +48,7 @@ count of 1 (the binary difference) should be considered acceptable.
 
 Note that the :program:`gdalcompare.py` script (like all the other scripts)
 can also be called as a library from python code: `from osgeo_utils import gdalcompare`.
-The primary entry point is `gdalcompare.compare()` which takes a golden
+The primary entry point is `gdalcompare.compare_db()` which takes a golden
 `gdal.Dataset` and a new `gdal.Dataset` as arguments and returns a
 difference count (excluding the binary comparison). The
 `gdalcompare.compare_sds()` entry point can be used to compare
