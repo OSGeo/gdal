@@ -1209,9 +1209,17 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
         if (!psOptions->bSuperQuiet)
         {
             CPLJSONArray oFeatures;
-            const int nFields = poLayer->GetLayerDefn()->GetFieldCount();
+            const bool bDisplayFields =
+                CPLTestBool(psOptions->aosOptions.FetchNameValueDef(
+                    "DISPLAY_FIELDS", "YES"));
+            const int nFields =
+                bDisplayFields ? poLayer->GetLayerDefn()->GetFieldCount() : 0;
+            const bool bDisplayGeometry =
+                CPLTestBool(psOptions->aosOptions.FetchNameValueDef(
+                    "DISPLAY_GEOMETRY", "YES"));
             const int nGeomFields =
-                poLayer->GetLayerDefn()->GetGeomFieldCount();
+                bDisplayGeometry ? poLayer->GetLayerDefn()->GetGeomFieldCount()
+                                 : 0;
             if (bJson)
                 oLayer.Add("features", oFeatures);
             for (auto &poFeature : poLayer)
@@ -1256,8 +1264,10 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                             oProperties.Add(poFDefn->GetNameRef(),
                                             poFeature->GetFieldAsDouble(i));
                         }
-                        else if (eType == OFTString || eType == OFTDate ||
-                                 eType == OFTTime || eType == OFTDateTime)
+                        else if ((eType == OFTString &&
+                                  poFDefn->GetSubType() != OFSTJSON) ||
+                                 eType == OFTDate || eType == OFTTime ||
+                                 eType == OFTDateTime)
                         {
                             oProperties.Add(poFDefn->GetNameRef(),
                                             poFeature->GetFieldAsString(i));
@@ -1268,10 +1278,26 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                                 poFeature->GetFieldAsSerializedJSon(i);
                             if (pszSerialized)
                             {
-                                CPLJSONDocument oDoc;
-                                if (oDoc.LoadMemory(pszSerialized))
+                                const auto eStrType =
+                                    CPLGetValueType(pszSerialized);
+                                if (eStrType == CPL_VALUE_INTEGER)
+                                {
+                                    oProperties.Add(
+                                        poFDefn->GetNameRef(),
+                                        CPLAtoGIntBig(pszSerialized));
+                                }
+                                else if (eStrType == CPL_VALUE_REAL)
+                                {
                                     oProperties.Add(poFDefn->GetNameRef(),
-                                                    oDoc.GetRoot());
+                                                    CPLAtof(pszSerialized));
+                                }
+                                else
+                                {
+                                    CPLJSONDocument oDoc;
+                                    if (oDoc.LoadMemory(pszSerialized))
+                                        oProperties.Add(poFDefn->GetNameRef(),
+                                                        oDoc.GetRoot());
+                                }
                                 CPLFree(pszSerialized);
                             }
                         }
