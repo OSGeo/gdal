@@ -811,7 +811,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                                       false);
         const int nRet = poSQLiteDS->Create(pszTmpDBName, papszOptions);
         CSLDestroy(papszOptions);
-        papszOptions = NULL;
+        papszOptions = nullptr;
         if (nRet)
         {
             bSpatialiteDB = true;
