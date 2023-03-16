@@ -290,7 +290,7 @@ Linux Docker images
 ................................................................................
 
 Images with nightly builds of GDAL master and tagged releases are available at
-`Docker Hub <https://hub.docker.com/r/osgeo/gdal/tags>`_
+`GitHub Container registry <https://github.com/OSGeo/gdal/pkgs/container/gdal>`_
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_

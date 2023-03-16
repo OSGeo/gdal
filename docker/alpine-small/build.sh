@@ -42,10 +42,12 @@ if test "${HAS_PLATFORM}" = "0" -a "${HAS_RELEASE}" = "0" -a "x${TARGET_IMAGE}" 
  "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@"
 
  if test "$HAS_PUSH" = "1"; then
-   docker manifest rm ${TARGET_IMAGE}-latest || /bin/true
-   docker manifest create ${TARGET_IMAGE}-latest \
-     --amend ${TARGET_IMAGE}-latest-amd64 \
-     --amend ${TARGET_IMAGE}-latest-arm64
-   docker manifest push ${TARGET_IMAGE}-latest
+   DOCKER_REPO=$(cat /tmp/gdal_docker_repo.txt)
+
+   docker manifest rm ${DOCKER_REPO}/${TARGET_IMAGE}-latest || /bin/true
+   docker manifest create ${DOCKER_REPO}/${TARGET_IMAGE}-latest \
+     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-amd64 \
+     --amend ${DOCKER_REPO}/${TARGET_IMAGE}-latest-arm64
+   docker manifest push ${DOCKER_REPO}/${TARGET_IMAGE}-latest
  fi
 fi

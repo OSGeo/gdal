@@ -13,7 +13,7 @@ Alpine version:
 * 3.16 for GDAL 3.6
 * 3.15 for GDAL 3.5
 
-## Small: `osgeo/gdal:alpine-small-latest`
+## Small: `ghcr.io/osgeo/gdal:alpine-small-latest`
 
 * Image size: ~ 59 MB
 * Raster drivers: ultrasmall + built-in + SQLite-based ones + network-based ones
@@ -26,7 +26,7 @@ Alpine version:
 
 See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
-## Normal: `osgeo/gdal:alpine-normal-latest`
+## Normal: `ghcr.io/osgeo/gdal:alpine-normal-latest`
 
 * Image size: ~ 282 MB
 * Raster drivers: small + netCDF, HDF5, BAG
@@ -46,7 +46,7 @@ Ubuntu version:
 * 22.04 for GDAL 3.6
 * 20.04 for GDAL 3.4 and 3.5
 
-## Small: `osgeo/gdal:ubuntu-small-latest`
+## Small: `ghcr.io/osgeo/gdal:ubuntu-small-latest`
 
 * Image size: ~ 385 MB
 * Raster drivers: all built-in + JPEG + PNG + JP2OpenJPEG + WEBP +SQLite-based ones + network-based ones
@@ -60,7 +60,7 @@ Ubuntu version:
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
-## Full: `osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
+## Full: `ghcr.io/osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
 
 * Image size: ~ 1.48 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
@@ -85,8 +85,8 @@ Note: you should *not* try to install GDAL (directly or indirectly through other
 ## Example:
 
 ```shell
-docker pull osgeo/gdal:alpine-small-latest
-docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
+docker pull ghcr.io/osgeo/gdal:alpine-small-latest
+docker run --rm -v /home:/home ghcr.io/osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
 ```
 
 ## Troubleshooting
@@ -95,11 +95,11 @@ If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.5.3 and PROJ 9.1.0, for linux/amd64 and linux/arm64:
-* osgeo/gdal:alpine-small-3.5.3
-* osgeo/gdal:alpine-normal-3.5.3
-* osgeo/gdal:ubuntu-small-3.5.3
-* osgeo/gdal:ubuntu-full-3.5.3
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.6.3 and PROJ 9.2.0, for linux/amd64 and linux/arm64:
+* ghcr.io/osgeo/gdal:alpine-small-3.6.3
+* ghcr.io/osgeo/gdal:alpine-normal-3.6.3
+* ghcr.io/osgeo/gdal:ubuntu-small-3.6.3
+* ghcr.io/osgeo/gdal:ubuntu-full-3.6.3
 
 ## Multi-arch Images
 
