@@ -1999,6 +1999,8 @@ def test_gpkg_21():
     out_ds.SetMetadataItem("foo", "bar")
     out_ds = None
 
+    assert gdal.VSIStatL("/vsimem/tmp.gpkg.aux.xml") is None
+
     foo_value = "bar"
     for i in range(4):
 
@@ -2244,6 +2246,43 @@ def test_gpkg_21():
     out_ds = None
 
     gdal.Unlink("/vsimem/tmp.gpkg")
+
+
+###############################################################################
+# Test metadata in PAM
+
+
+def test_gpkg_metadata_PAM():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+    if gdaltest.png_dr is None:
+        pytest.skip()
+
+    gdal.Unlink("/vsimem/tmp.gpkg")
+
+    out_ds = gdaltest.gpkg_dr.Create("/vsimem/tmp.gpkg", 1, 1)
+    out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out_ds = None
+
+    ds = gdal.Open("/vsimem/tmp.gpkg")
+    ds.SetMetadataItem("foo", "bar")
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/tmp.gpkg.aux.xml", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert (
+        data
+        == b'<PAMDataset>\n  <Metadata>\n    <MDI key="foo">bar</MDI>\n  </Metadata>\n</PAMDataset>\n'
+    )
+
+    ds = gdal.Open("/vsimem/tmp.gpkg")
+    assert ds.GetMetadata() == {"IDENTIFIER": "tmp", "ZOOM_LEVEL": "0", "foo": "bar"}
+    ds = None
+
+    gdaltest.gpkg_dr.Delete("/vsimem/tmp.gpkg")
 
 
 ###############################################################################
@@ -3066,6 +3105,8 @@ def test_gpkg_39():
     assert md == {"STATISTICS_MINIMUM": "74", "STATISTICS_MAXIMUM": "255"}
     ds = None
 
+    assert gdal.VSIStatL("/vsimem/gpkg_39.gpkg.aux.xml") is None
+
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
     mdi = ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM")
     assert mdi == "74"
@@ -3405,6 +3446,101 @@ cellsize     60
 
     gdal.Unlink("/vsimem/gpkg_39.gpkg")
     gdal.Unlink("/vsimem/gpkg_39.gpkg.aux.xml")
+
+
+###############################################################################
+# Test statistics stored in GPKG
+
+
+@pytest.mark.parametrize("source_filename", ["data/byte.tif", "data/int16.tif"])
+def test_gpkg_statistics_stored_in_gpkg(source_filename):
+
+    src_ds = gdal.Open(source_filename)
+    out_filename = "/vsimem/test_gpkg_statistics.gpkg"
+    out_ds = gdal.GetDriverByName("GPKG").CreateCopy(out_filename, src_ds)
+    assert out_ds.GetFileList() == [out_filename]
+    out_ds.GetRasterBand(1).ComputeStatistics(False)
+    assert out_ds.GetRasterBand(1).GetMetadata() == {
+        "STATISTICS_MAXIMUM": "255",
+        "STATISTICS_MEAN": "126.765",
+        "STATISTICS_MINIMUM": "74",
+        "STATISTICS_STDDEV": "22.928470838676",
+        "STATISTICS_VALID_PERCENT": "100",
+    }
+    out_ds = None
+
+    assert gdal.VSIStatL(out_filename + ".aux.xml") is None
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetFileList() == [out_filename]
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "STATISTICS_MAXIMUM": "255",
+        "STATISTICS_MEAN": "126.765",
+        "STATISTICS_MINIMUM": "74",
+        "STATISTICS_STDDEV": "22.928470838676",
+        "STATISTICS_VALID_PERCENT": "100",
+    }
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
+    )
+    ds = None
+
+    assert gdal.VSIStatL(out_filename + ".aux.xml") is None
+
+    # Invalidate statistics
+    ds = gdal.Open(out_filename, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    assert gdal.VSIStatL(out_filename + ".aux.xml") is None
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).GetMetadata() == {}
+    ds = None
+
+    gdal.GetDriverByName("GPKG").Delete(out_filename)
+
+
+###############################################################################
+# Test statistics stored in PAM
+
+
+@pytest.mark.parametrize("source_filename", ["data/byte.tif", "data/int16.tif"])
+def test_gpkg_statistics_stored_in_pam(source_filename):
+
+    src_ds = gdal.Open(source_filename)
+    out_filename = "/vsimem/test_gpkg_statistics.gpkg"
+    gdal.GetDriverByName("GPKG").CreateCopy(out_filename, src_ds)
+    ds = gdal.Open(out_filename)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    assert gdal.VSIStatL(out_filename + ".aux.xml") is not None
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetFileList() == [out_filename, out_filename + ".aux.xml"]
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "STATISTICS_MAXIMUM": "255",
+        "STATISTICS_MEAN": "126.765",
+        "STATISTICS_MINIMUM": "74",
+        "STATISTICS_STDDEV": "22.928470838676",
+        "STATISTICS_VALID_PERCENT": "100",
+    }
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
+    )
+    ds = None
+
+    # Invalidate statistics
+    ds = gdal.Open(out_filename, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).GetMetadata() == {}
+    ds = None
+
+    gdal.GetDriverByName("GPKG").Delete(out_filename)
 
 
 ###############################################################################
