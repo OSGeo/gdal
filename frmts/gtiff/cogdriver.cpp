@@ -394,14 +394,16 @@ static bool COGGetWarpingCharacteristics(
         const double dfOriY =
             bInvertAxis ? tmList[0].mTopLeftX : tmList[0].mTopLeftY;
         const double dfTileExtent = dfRes * nBlockSize;
+        constexpr double TOLERANCE_IN_PIXEL = 0.499;
+        const double dfEps = TOLERANCE_IN_PIXEL * dfRes;
         int nTLTileX = static_cast<int>(
-            std::floor((dfMinX - dfOriX) / dfTileExtent + 1e-10));
+            std::floor((dfMinX - dfOriX + dfEps) / dfTileExtent));
         int nTLTileY = static_cast<int>(
-            std::floor((dfOriY - dfMaxY) / dfTileExtent + 1e-10));
+            std::floor((dfOriY - dfMaxY + dfEps) / dfTileExtent));
         int nBRTileX = static_cast<int>(
-            std::ceil((dfMaxX - dfOriX) / dfTileExtent - 1e-10));
+            std::ceil((dfMaxX - dfOriX - dfEps) / dfTileExtent));
         int nBRTileY = static_cast<int>(
-            std::ceil((dfOriY - dfMinY) / dfTileExtent - 1e-10));
+            std::ceil((dfOriY - dfMinY - dfEps) / dfTileExtent));
 
         nAlignedLevels =
             std::min(std::min(10, atoi(CSLFetchNameValueDef(
