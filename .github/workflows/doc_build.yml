@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-    container: osgeo/proj-docs
+    container: ghcr.io/osgeo/proj-docs
 
     steps:
     - uses: actions/checkout@v3
