@@ -3,14 +3,6 @@
 set -eu
 
 if test "${COVERITY_SCAN_TOKEN:-}" = ""; then
-  if test -f /build/ccache.tar.gz; then
-      echo "Restoring ccache..."
-      (cd $HOME && tar xzf /build/ccache.tar.gz)
-  fi
-
-  ccache -M 200M
-  ccache -s
-
   export CXXFLAGS="-std=c++17 -march=native -O2 -Wodr -flto-odr-type-merging -Werror"
   export CFLAGS="-O2 -march=native -Werror"
   export OTHER_SWITCHES="-DUSE_CCACHE=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON"
@@ -21,11 +13,7 @@ else
   export OTHER_SWITCHES="-DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=OFF"
 fi
 
-cd /build
-
-mkdir build
-cd build
-cmake .. ${OTHER_SWITCHES} \
+cmake ${GDAL_SOURCE_DIR:=..} ${OTHER_SWITCHES} \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DGDAL_USE_TIFF_INTERNAL=ON \
     -DGDAL_USE_GEOTIFF_INTERNAL=ON \
@@ -49,12 +37,4 @@ fi
 unset CXXFLAGS
 unset CFLAGS
 
-make install "-j$(nproc)"
-cd ..
-ldconfig
-
-ccache -s
-
-echo "Saving ccache..."
-rm -f /build/ccache.tar.gz
-(cd $HOME && tar czf /build/ccache.tar.gz .ccache)
+make -j$(nproc)

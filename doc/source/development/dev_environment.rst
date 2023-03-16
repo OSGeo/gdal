@@ -61,6 +61,30 @@ removed if the Vagrant environment is no longer needed):
 - ``build_vagrant``: CMake build directory
 - ``ccache_vagrant``: CCache directory
 
+Docker
+------
+
+The Linux environments used for building and testing GDAL on GitHub Actions are
+defined by Docker images that can be pulled to any machine for development. The
+Docker image used for each build is specified in `linux_build.yml <https://github.com/OSGeo/gdal/blob/master/.github/workflows/linux_build.yml>`_ . As an
+example, the following commands can be run from the GDAL source root to build
+and test GDAL using the clang address sanitizer (ASAN) in the same environment
+that is used in GitHub Actions:
+
+.. code-block:: bash
+
+    docker run -it \
+        -v $(pwd):/gdal:rw \
+        ghcr.io/osgeo/gdal-deps:ubuntu_20.04-master
+    cd /gdal
+    mkdir build-asan
+    cd build-asan
+    ../.github/workflows/asan/build.sh
+    ../.github/workflows/asan/test.sh
+
+To avoid built objects being owned by root, it may be desirable to add ``-u $(id
+-u):$(id -g) -v /etc/passwd:/etc/passwd`` to the ``docker run`` command above.
+
 Building on Windows with Conda dependencies and Visual Studio
 --------------------------------------------------------------------------------
 

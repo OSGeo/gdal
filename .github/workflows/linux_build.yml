@@ -1,0 +1,258 @@
+name: Linux Builds
+
+on:
+    push:
+        paths-ignore:
+            - 'doc/**'
+        branches-ignore:
+            - 'backport**'
+    pull_request:
+        paths-ignore:
+            - 'doc/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  linux-build:
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+
+    # Store the components of the container name as environment variables:
+    # ${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER}/${CONTAINER_NAME}
+    #
+    # Additionally, CACHE_CONTAINER_NAME may be used as as source for the
+    # Docker build cache. So if the Dockerfile in a feature branch is
+    # unchanged relative to master, a full container rebuild should not
+    # be required.
+    env:
+      CONTAINER_REGISTRY: ${{ vars.gdal_container_registry || 'ghcr.io' }}
+      CONTAINER_REGISTRY_USER: ${{ vars.gdal_container_registry_user || github.repository_owner }}
+      CONTAINER_NAME: gdal-deps:${{ matrix.container}}-${{ github.base_ref || github.ref_name }}
+      CACHE_CONTAINER_NAME: gdal-deps:${{ matrix.container }}-master
+      GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        #   Matrix variables:
+        #
+        #   * name : readable summary of configuration, used for display
+        #   * id : used as a ccache key, and to create a build subdirectory
+        #   * container : build environment container and path to build script
+        #   * use_avx2 : if true, determine arch at runtime and use in ccache key
+        #   * build_script : name of custom build script, if any. Will be executed
+        #                    inside container, from build subdirectory.
+        #   * before_test_script : name of script to run before tests, if any.
+        #                          Will be executed outside container, from
+        #                          workspace root. Can be used to start docker
+        #                          containers as services for testing.
+        #   * test_script : name of custom test script, if any. Will be executed
+        #                   inside container, from build subdirectory.
+        #   * travis_branch : value of TRAVIS_BRANCH environment variable,
+        #                     used for test skipping
+        include:
+          - name: Alpine, gcc
+            id: alpine
+            container: alpine
+            build_script: build.sh
+
+          - name: Fedora Rawhide, clang++
+            id: fedora_rawhide
+            travis_branch: sanitize
+            container: fedora_rawhide
+            build_script: build.sh
+
+          - name: Ubuntu 20.04, clang ASAN
+            id: asan
+            travis_branch: sanitize
+            container: ubuntu_20.04
+            build_script: build.sh
+            test_script: test.sh
+
+          - name: Ubuntu 20.04, gcc
+            id: ubuntu_20.04
+            travis_branch: ubuntu_2004
+            container: ubuntu_20.04
+            use_avx2: true
+            build_script: build.sh
+            test_script: test.sh
+
+          - name: Ubuntu 20.04, Intel compiler
+            id: icc
+            container: icc
+            build_script: build.sh
+
+          - name: Ubuntu 18.04, gcc
+            id: ubuntu_18.04
+            container: ubuntu_18.04
+            build_script: build.sh
+            before_test_script: services.sh
+            test_script: test.sh
+
+          - name: Ubuntu 18.04, gcc 32-bit
+            id: ubuntu_18.04_32bit
+            container: ubuntu_18.04_32bit
+            build_script: build.sh
+            test_script: test.sh
+            travis_branch: ubuntu_1804_32bit
+
+    name: ${{ matrix.name }}
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        # bash is needed to use ${CONTAINER_REGISTRY_USER,,}, which forces the
+        # username to lower-case as required by docker.
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        if: env.CONTAINER_REGISTRY == 'docker.io'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GHCR
+        if: env.CONTAINER_REGISTRY == 'ghcr.io'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Pull build environment
+        shell: bash
+        run: |
+          export CONTAINER_NAME_FULL="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}"
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} || true
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} || true
+          docker pull ${CONTAINER_NAME_FULL} || true
+          echo "CONTAINER_NAME_FULL=${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+
+      - name: Prepare build context
+        run: |
+          mkdir docker-build-context
+          cp autotest/requirements.txt docker-build-context
+
+      - name: Update build environment
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} \
+            --cache-from ${CONTAINER_NAME_FULL} \
+            -t ${CONTAINER_NAME_FULL} \
+            -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
+            docker-build-context
+
+      - name: Push build environment
+        if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker push ${CONTAINER_NAME_FULL}
+
+      # Get the architecture so we can use it as part of the cache key,
+      # but only if we are going to use avx2 in the build. If we are not,
+      # including the arch will cause unnecessary cache misses.
+      - name: Get Architecture
+        id: get-arch
+        if: matrix.use_avx2
+        run: |
+            export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+            echo "Architecture: $ARCH"
+            echo "arch=$ARCH" >> $GITHUB_OUTPUT
+
+      # cache the .ccache directory
+      # key it on the runner os, build type, deps, and arch
+      # It's especially important to include arch in the key because we
+      # may get runtime errors with -mavx2 from objects built on a
+      # different architecture.
+      - name: Restore build cache
+        id: restore-cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+
+
+      - name: Prepare ccache
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            ${CONTAINER_NAME_FULL} \
+            sh -c "ccache -M 1G && ccache -sp && ccache -z"
+
+        # FIXME the default BUILD_CMD here isn't working...we get an error
+        # about the quotes not matching.
+      - name: Build
+        run: |
+          if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"; then
+            BUILD_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
+          else
+            BUILD_CMD="sh -c 'cmake .. && make -j$(nproc)'"
+          fi
+
+          mkdir -p build-${{ matrix.id }}
+          docker run --name gdal-build \
+            --rm \
+            -v $(pwd):/${GDAL_SOURCE_DIR}:rw \
+            -v ${{ github.workspace }}/.ccache:/root/.ccache:rw \
+            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            ${CONTAINER_NAME_FULL} \
+            ${BUILD_CMD}
+
+      - name: Summarize ccache
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            ${CONTAINER_NAME_FULL} \
+            ccache -s
+
+      - name: Save build cache
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+      - name: Start test services
+        if: matrix.before_test_script
+        run: |
+            .github/workflows/${{ matrix.id }}/${{ matrix.before_test_script }}
+
+        # --security-opt seccomp=unconfined, so that the userfaulfd syscall is availabledocker run \
+      - name: Run tests
+        env:
+          TRAVIS: yes
+          TRAVIS_BRANCH: ${{ matrix.travis_branch }}
+        run: |
+          if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
+            TEST_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
+          else
+            TEST_CMD="ctest -V"
+          fi
+
+          docker run \
+            -e CI \
+            -e GITHUB_WORKFLOW \
+            -e TRAVIS \
+            -e TRAVIS_BRANCH \
+            --security-opt seccomp=unconfined \
+            --add-host=host.docker.internal:host-gateway \
+            --rm \
+            -v $(pwd):${GDAL_SOURCE_DIR} \
+            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            ${CONTAINER_NAME_FULL} \
+            ${TEST_CMD}

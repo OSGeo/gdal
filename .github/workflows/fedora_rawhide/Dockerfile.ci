@@ -1,0 +1,24 @@
+FROM fedora:rawhide
+
+RUN dnf upgrade -y
+RUN dnf install -y --setopt=install_weak_deps=False proj-devel
+RUN dnf install -y clang make diffutils ccache cmake \
+      libxml2-devel libxslt-devel expat-devel xerces-c-devel \
+      zlib-devel xz-devel libzstd-devel blosc-devel libarchive-devel \
+      giflib-devel libjpeg-devel libpng-devel \
+      openjpeg2-devel cfitsio-devel libwebp-devel \
+      libkml-devel json-c-devel \
+      geos-devel \
+      sqlite-devel pcre-devel libspatialite-devel freexl-devel \
+      libtiff-devel libgeotiff-devel \
+      poppler-cpp-devel \
+      cryptopp-devel \
+      mdbtools-devel mdbtools-odbc unixODBC-devel \
+      armadillo-devel qhull-devel \
+      hdf-devel hdf5-devel netcdf-devel \
+      mongo-cxx-driver-devel libpq-devel \
+      python3-pip python3-devel python3-lxml swig \
+      glibc-gconv-extra
+
+COPY requirements.txt /tmp/
+RUN python3 -m pip install -U -r /tmp/requirements.txt
