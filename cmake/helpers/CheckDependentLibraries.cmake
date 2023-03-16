@@ -507,19 +507,6 @@ if (SQLite3_FOUND)
   if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
     message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
   endif ()
-  if (NOT DEFINED SQLite3_HAS_RTREE)
-    message(FATAL_ERROR "missing SQLite3_HAS_RTREE")
-  endif ()
-  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_RTREE)
-    if (NOT ACCEPT_MISSING_SQLITE3_RTREE)
-      message(
-        FATAL_ERROR
-          "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly. Define the ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON CMake variable if you want to build despite this limitation."
-        )
-    else ()
-      message(WARNING "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly.")
-    endif ()
-  endif ()
   if (NOT DEFINED SQLite3_HAS_MUTEX_ALLOC)
     message(FATAL_ERROR "missing SQLite3_HAS_MUTEX_ALLOC")
   endif ()
@@ -534,6 +521,24 @@ if (SQLite3_FOUND)
     endif ()
   endif ()
 endif ()
+
+# Checks that SQLite3 has RTree support
+# Called by ogr/ogrsf_frmts/sqlite/CMakeLists.txt and ogr/ogrsf_frmts/gpkg/CMakeLists.txt
+function (check_sqlite3_rtree driver_name)
+  if (NOT DEFINED SQLite3_HAS_RTREE)
+    message(FATAL_ERROR "missing SQLite3_HAS_RTREE")
+  endif ()
+  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_RTREE)
+    if (NOT ACCEPT_MISSING_SQLITE3_RTREE)
+      message(
+        FATAL_ERROR
+          "${SQLite3_LIBRARIES} lacks the RTree extension! ${driver_name} will not behave properly. Define the ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON CMake variable if you want to build despite this limitation."
+        )
+    else ()
+      message(WARNING "${SQLite3_LIBRARIES} lacks the RTree extension! ${driver_name} will not behave properly.")
+    endif ()
+  endif ()
+endfunction()
 
 gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
 gdal_check_package(RASTERLITE2 "Enable RasterLite2 support for sqlite3" CAN_DISABLE)
