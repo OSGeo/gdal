@@ -142,7 +142,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
         nullptr; /* Set by the VFS layer when it opens the DB */
                  /* Must *NOT* be closed by the datasource explicitly. */
 
-    int OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions);
+    bool OpenOrCreateDB(int flags, bool bRegisterOGR2SQLiteExtensions,
+                        bool bLoadExtensions);
     bool SetSynchronous();
     bool SetCacheSize();
     void LoadExtensions();
