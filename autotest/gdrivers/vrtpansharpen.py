@@ -29,16 +29,15 @@
 ###############################################################################
 
 import shutil
+import struct
 
 import pytest
 
 from osgeo import gdal
 
-###############################################################################
-# Error cases
 
-
-def test_vrtpansharpen_1():
+@pytest.fixture(autouse=True, scope="module")
+def startup_and_cleanup():
 
     src_ds = gdal.Open("data/small_world.tif")
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -53,6 +52,23 @@ def test_vrtpansharpen_1():
     pan_ds.SetProjection(wkt)
     pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
     pan_ds = None
+
+    yield
+
+    gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")
+    if gdal.VSIStatL("tmp/small_world.tif"):
+        gdal.GetDriverByName("GTiff").Delete("tmp/small_world.tif")
+    if gdal.VSIStatL("/vsimem/pan.tif"):
+        gdal.GetDriverByName("GTiff").Delete("/vsimem/pan.tif")
+    if gdal.VSIStatL("/vsimem/ms.tif"):
+        gdal.GetDriverByName("GTiff").Delete("/vsimem/ms.tif")
+
+
+###############################################################################
+# Error cases
+
+
+def test_vrtpansharpen_1():
 
     # Missing PansharpeningOptions
     gdal.PushErrorHandler()
@@ -1076,6 +1092,8 @@ def test_vrtpansharpen_2():
 
 def test_vrtpansharpen_3():
 
+    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
+
     ds = gdal.Open("tmp/small_world_pan.tif")
     ds.BuildOverviews("CUBIC", [2])
     ds = None
@@ -1103,27 +1121,7 @@ def test_vrtpansharpen_3():
 
     # Test when only Pan band has overviews
     vrt_ds = gdal.Open(xml)
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrt_ds.GetRasterBand(1).GetOverview(0) is not None
-    cs = [
-        vrt_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
-        for i in range(vrt_ds.RasterCount)
-    ]
-    assert cs in ([7123, 7445, 5025], [7120, 7440, 5025])
-
-    # Check VRTPansharpenedDataset::IRasterIO() in resampling case with overviews
-    data = vrt_ds.ReadRaster(0, 0, 800, 400, 400, 200)
-
-    data2 = vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 800, 400, 400, 200)
-    data2 += vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 800, 400, 400, 200)
-    data2 += vrt_ds.GetRasterBand(3).ReadRaster(0, 0, 800, 400, 400, 200)
-
-    assert data == data2
-
-    tmp_ds = gdal.GetDriverByName("MEM").Create("", 400, 200, 3)
-    tmp_ds.WriteRaster(0, 0, 400, 200, data)
-    cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(tmp_ds.RasterCount)]
-    assert cs in ([7123, 7445, 5025], [7120, 7440, 5025])
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
     vrt_ds = None
 
@@ -1143,12 +1141,50 @@ def test_vrtpansharpen_3():
 
     vrt_ds = None
 
+    # Now test when the spatial extent of the PAN and MS datasets is different
+    # and we create a in-memory VRT to make them consistent.
+    gdal.Translate(
+        "tmp/small_world_pan_cropped.vrt",
+        "tmp/small_world_pan.tif",
+        options="-srcwin 10 10 780 380",
+    )
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename relativeToVRT="1">tmp/small_world_pan_cropped.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_ds = gdal.Open(xml)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    vrt_ds = None
+
+    gdal.Unlink("tmp/small_world_pan_cropped.vrt")
+    gdal.Unlink("tmp/small_world_pan.tif.ovr")
+
 
 ###############################################################################
 # Test RasterIO() with various buffer datatypes
 
 
 def test_vrtpansharpen_4():
+
+    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
@@ -1313,6 +1349,7 @@ def test_vrtpansharpen_6():
             mem_ds = gdal.GetDriverByName("GTiff").Create(
                 "/vsimem/ms.tif", 4, 1, 1, dt, options=options
             )
+            mem_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
             ar = numpy.array([[80, 125, 125, 80]])
             if dt == gdal.GDT_UInt16:
                 ar = ar << (12 - 7)
@@ -1324,6 +1361,7 @@ def test_vrtpansharpen_6():
             mem_ds = gdal.GetDriverByName("GTiff").Create(
                 "/vsimem/pan.tif", 8, 2, 1, dt, options=options
             )
+            mem_ds.SetGeoTransform([0, 0.5, 0, 0, 0, 0.5])
             ar = numpy.array(
                 [
                     [76, 89, 115, 127, 127, 115, 89, 76],
@@ -1548,6 +1586,205 @@ def test_vrtpansharpen_7():
 
 
 ###############################################################################
+# Test bands with different extents
+
+
+def test_vrtpansharpen_band_with_different_extents():
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>tmp/small_world_pan.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_ds = gdal.Open(xml)
+
+    gdal.Translate(
+        "/vsimem/small_world_pan_extended.vrt",
+        "tmp/small_world_pan.tif",
+        options="-srcwin -100 -200 950 700",
+    )
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>/vsimem/small_world_pan_extended.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_extended_ds = gdal.Open(xml)
+    assert struct.unpack("B" * 3, vrt_extended_ds.ReadRaster(0, 0, 1, 1)) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3, vrt_extended_ds.ReadRaster(vrt_extended_ds.RasterXSize - 1, 0, 1, 1)
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3, vrt_extended_ds.ReadRaster(0, vrt_extended_ds.RasterYSize - 1, 1, 1)
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3,
+        vrt_extended_ds.ReadRaster(
+            vrt_extended_ds.RasterXSize - 1, vrt_extended_ds.RasterYSize - 1, 1, 1
+        ),
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3,
+        vrt_extended_ds.ReadRaster(
+            vrt_extended_ds.RasterXSize // 2, vrt_extended_ds.RasterYSize // 2, 1, 1
+        ),
+    ) != (0, 0, 0)
+
+    # Check that the intersecting parts of the nominal and the extended
+    # pansharpened datasets have very similar content (will be slightly
+    # due to interpolation differences near the edges)
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 800, 400, 3)
+    tmp_ds.WriteRaster(0, 0, 800, 400, vrt_extended_ds.ReadRaster(100, 200, 800, 400))
+    for i in range(3):
+        assert tmp_ds.GetRasterBand(i + 1).ComputeStatistics(
+            approx_ok=False
+        ) == pytest.approx(
+            vrt_ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=False), rel=1e-3
+        )
+    tmp_ds = None
+
+    gdal.Unlink("/vsimem/small_world_pan_extended.vrt")
+
+
+###############################################################################
+# Test bands with different extents and positive geotransform[5] coefficient
+
+
+def test_vrtpansharpen_band_with_different_extents_positive_yres():
+
+    gdal.Warp(
+        "/vsimem/small_world_pan_positive_yres.vrt",
+        "tmp/small_world_pan.tif",
+        options="-te -180 90 180 -90 -ts 800 400",
+    )
+    gdal.Warp(
+        "/vsimem/small_world_ms_positive_yres.vrt",
+        "data/small_world.tif",
+        options="-te -180 90 180 -90 -ts 400 200",
+    )
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>/vsimem/small_world_pan_positive_yres.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_ds = gdal.Open(xml)
+
+    gdal.Translate(
+        "/vsimem/small_world_pan_positive_yres_extended.vrt",
+        "/vsimem/small_world_pan_positive_yres.vrt",
+        options="-srcwin -100 -200 950 700",
+    )
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>/vsimem/small_world_pan_positive_yres_extended.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>/vsimem/small_world_ms_positive_yres.vrt</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_extended_ds = gdal.Open(xml)
+    assert struct.unpack("B" * 3, vrt_extended_ds.ReadRaster(0, 0, 1, 1)) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3, vrt_extended_ds.ReadRaster(vrt_extended_ds.RasterXSize - 1, 0, 1, 1)
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3, vrt_extended_ds.ReadRaster(0, vrt_extended_ds.RasterYSize - 1, 1, 1)
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3,
+        vrt_extended_ds.ReadRaster(
+            vrt_extended_ds.RasterXSize - 1, vrt_extended_ds.RasterYSize - 1, 1, 1
+        ),
+    ) == (0, 0, 0)
+    assert struct.unpack(
+        "B" * 3,
+        vrt_extended_ds.ReadRaster(
+            vrt_extended_ds.RasterXSize // 2, vrt_extended_ds.RasterYSize // 2, 1, 1
+        ),
+    ) != (0, 0, 0)
+
+    # Check that the intersecting parts of the nominal and the extended
+    # pansharpened datasets have very similar content (will be slightly
+    # due to interpolation differences near the edges)
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 800, 400, 3)
+    tmp_ds.WriteRaster(0, 0, 800, 400, vrt_extended_ds.ReadRaster(100, 200, 800, 400))
+    for i in range(3):
+        assert tmp_ds.GetRasterBand(i + 1).ComputeStatistics(
+            approx_ok=False
+        ) == pytest.approx(
+            vrt_ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=False), rel=1e-3
+        )
+    tmp_ds = None
+
+    gdal.Unlink("/vsimem/small_world_ms_positive_yres.vrt")
+    gdal.Unlink("/vsimem/small_world_pan_positive_yres_extended.vrt")
+    gdal.Unlink("/vsimem/small_world_pan_positive_yres.vrt")
+
+
+###############################################################################
 # Test SerializeToXML()
 
 
@@ -1638,17 +1875,21 @@ def test_vrtpansharpen_9():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/small_world_pan_nodata.tif", 800, 400
     )
+    src_ds = gdal.Open("tmp/small_world_pan.tif")
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.GetRasterBand(1).SetNoDataValue(0)
-    ds.WriteRaster(0, 0, 800, 400, gdal.Open("tmp/small_world_pan.tif").ReadRaster())
+    ds.WriteRaster(0, 0, 800, 400, src_ds.ReadRaster())
     ds = None
 
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/small_world_nodata.tif", 400, 200, 3
     )
+    src_ds = gdal.Open("data/small_world.tif")
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.GetRasterBand(1).SetNoDataValue(0)
     ds.GetRasterBand(2).SetNoDataValue(0)
     ds.GetRasterBand(3).SetNoDataValue(0)
-    ds.WriteRaster(0, 0, 400, 200, gdal.Open("data/small_world.tif").ReadRaster())
+    ds.WriteRaster(0, 0, 400, 200, src_ds.ReadRaster())
     ds = None
 
     vrt_ds = gdal.Open(
@@ -1690,11 +1931,13 @@ def test_vrtpansharpen_10():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/pan.tif", 1023, 1023, 1, gdal.GDT_UInt16
     )
+    ds.SetGeoTransform([0, 1.0 / 1023, 0, 0, 0, 1.0 / 1023])
     ds.GetRasterBand(1).Fill(1000)
     ds = None
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/ms.tif", 256, 256, 4, gdal.GDT_UInt16
     )
+    ds.SetGeoTransform([0, 1.0 / 256, 0, 0, 0, 1.0 / 256])
     for i in range(4):
         ds.GetRasterBand(i + 1).Fill(1000)
     ds = None
@@ -2085,15 +2328,3 @@ def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
     cs2 = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
 
     assert cs2 == cs[::-1]
-
-
-###############################################################################
-# Cleanup
-
-
-def test_vrtpansharpen_cleanup():
-
-    gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")
-    gdal.GetDriverByName("GTiff").Delete("tmp/small_world.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/pan.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/ms.tif")

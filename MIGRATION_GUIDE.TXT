@@ -25,6 +25,15 @@ MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
   drivers with write support are encouraged to implement it for error
   propagation.
 
+- Pansharpening now requires that panchromatic and multispectral bands have
+  valid geotransform (in early versions, it was assumed in the case of missing
+  geotransform that they covered the same geospatial extent).
+  The undocumented VRT pansharpened MSShiftX and MSShiftY options (and the
+  corresponding C++ GDALPansharpenOptions::dfMSShiftX and dfMSShiftY members)
+  have been removed, due to using the inverted convention as one would expect,
+  and being sub-par solution compared to using geotransform to correlate pixels
+  of panchromatic and multispectral bands.
+
 MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
 -----------------------------------------
 
