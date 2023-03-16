@@ -479,6 +479,10 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
     double dfMaxX = dfLRPanX;
     double dfMaxY = adfPanGT[3];
     double dfMinY = dfLRPanY;
+    if (dfMinY > dfMaxY)
+        std::swap(dfMinY, dfMaxY);
+    const double dfPanMinY = dfMinY;
+    const double dfPanMaxY = dfMaxY;
 
     CPLString osPanProjection, osPanProjectionProj4;
     if (poPanDataset->GetProjectionRef())
@@ -614,6 +618,13 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
                      "Spectral band has no associated geotransform");
             goto error;
         }
+        if (adfSpectralGeoTransform[3] * adfPanGT[3] < 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Spectral band vertical orientation is "
+                     "different from pan one");
+            goto error;
+        }
 
         int bIsThisOneNonMatching = FALSE;
         double dfPixelSize = std::max(adfSpectralGeoTransform[1],
@@ -654,20 +665,24 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             }
         }
 
+        double dfThisMinY = dfLRSpectralY;
+        double dfThisMaxY = adfSpectralGeoTransform[3];
+        if (dfThisMinY > dfThisMaxY)
+            std::swap(dfThisMinY, dfThisMaxY);
         if (bIsThisOneNonMatching && m_eGTAdjustment == GTAdjust_Union)
         {
             dfMinX = std::min(dfMinX, adfSpectralGeoTransform[0]);
-            dfMinY = std::min(dfMinY, dfLRSpectralY);
+            dfMinY = std::min(dfMinY, dfThisMinY);
             dfMaxX = std::max(dfMaxX, dfLRSpectralX);
-            dfMaxY = std::max(dfMaxY, adfSpectralGeoTransform[3]);
+            dfMaxY = std::max(dfMaxY, dfThisMaxY);
         }
         else if (bIsThisOneNonMatching &&
                  m_eGTAdjustment == GTAdjust_Intersection)
         {
             dfMinX = std::max(dfMinX, adfSpectralGeoTransform[0]);
-            dfMinY = std::max(dfMinY, dfLRSpectralY);
+            dfMinY = std::max(dfMinY, dfThisMinY);
             dfMaxX = std::min(dfMaxX, dfLRSpectralX);
-            dfMaxY = std::min(dfMaxY, adfSpectralGeoTransform[3]);
+            dfMaxY = std::min(dfMaxY, dfThisMaxY);
         }
 
         bFoundNonMatchingGT = bFoundNonMatchingGT || bIsThisOneNonMatching;
@@ -718,22 +733,34 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
         // to avoid annoying sub-pixel shifts on the panchro band.
         double dfPixelSize = std::max(adfPanGT[1], std::abs(adfPanGT[5]));
         if (std::abs(adfPanGT[0] - dfMinX) > dfPixelSize ||
-            std::abs(adfPanGT[3] - dfMaxY) > dfPixelSize ||
+            std::abs(dfPanMaxY - dfMaxY) > dfPixelSize ||
             std::abs(dfLRPanX - dfMaxX) > dfPixelSize ||
-            std::abs(dfLRPanY - dfMinY) > dfPixelSize)
+            std::abs(dfPanMinY - dfMinY) > dfPixelSize)
         {
             dfMinX = adfPanGT[0] +
                      std::floor((dfMinX - adfPanGT[0]) / adfPanGT[1] + 0.5) *
                          adfPanGT[1];
-            dfMaxY = adfPanGT[3] +
-                     std::floor((dfMaxY - adfPanGT[3]) / adfPanGT[5] + 0.5) *
-                         adfPanGT[5];
             dfMaxX =
                 dfLRPanX + std::floor((dfMaxX - dfLRPanX) / adfPanGT[1] + 0.5) *
                                adfPanGT[1];
-            dfMinY =
-                dfLRPanY + std::floor((dfMinY - dfLRPanY) / adfPanGT[5] + 0.5) *
-                               adfPanGT[5];
+            if (adfPanGT[5] > 0)
+            {
+                dfMinY = dfPanMinY +
+                         std::floor((dfMinY - dfPanMinY) / adfPanGT[5] + 0.5) *
+                             adfPanGT[5];
+                dfMaxY = dfPanMinY +
+                         std::floor((dfMaxY - dfPanMinY) / adfPanGT[5] + 0.5) *
+                             adfPanGT[5];
+            }
+            else
+            {
+                dfMinY = dfPanMaxY +
+                         std::floor((dfMinY - dfPanMaxY) / adfPanGT[5] + 0.5) *
+                             adfPanGT[5];
+                dfMaxY = dfPanMaxY +
+                         std::floor((dfMaxY - dfPanMaxY) / adfPanGT[5] + 0.5) *
+                             adfPanGT[5];
+            }
         }
 
         std::map<CPLString, GDALDataset *>::iterator oIter =
@@ -749,12 +776,16 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             dfPixelSize = std::max(adfGT[1], std::abs(adfGT[5]));
             dfPixelSize = std::max(adfPanGT[1], dfPixelSize);
             dfPixelSize = std::max(std::abs(adfPanGT[5]), dfPixelSize);
-            if (std::abs(adfGT[0] - dfMinX) <= dfPixelSize &&
-                std::abs(adfGT[3] - dfMaxY) <= dfPixelSize &&
-                std::abs(adfGT[0] + poSrcDS->GetRasterXSize() * adfGT[1] -
-                         dfMaxX) <= dfPixelSize &&
-                std::abs(adfGT[3] + poSrcDS->GetRasterYSize() * adfGT[5] -
-                         dfMinY) <= dfPixelSize)
+            double dfThisMinX = adfGT[0];
+            double dfThisMaxX = adfGT[0] + poSrcDS->GetRasterXSize() * adfGT[1];
+            double dfThisMaxY = adfGT[3];
+            double dfThisMinY = adfGT[3] + poSrcDS->GetRasterYSize() * adfGT[5];
+            if (dfThisMinY > dfThisMaxY)
+                std::swap(dfThisMinY, dfThisMaxY);
+            if (std::abs(dfThisMinX - dfMinX) <= dfPixelSize &&
+                std::abs(dfThisMaxY - dfMaxY) <= dfPixelSize &&
+                std::abs(dfThisMaxX - dfMaxX) <= dfPixelSize &&
+                std::abs(dfThisMinY - dfMinY) <= dfPixelSize)
             {
                 continue;
             }
@@ -763,13 +794,13 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             adfAdjustedGT[0] = dfMinX;
             adfAdjustedGT[1] = adfGT[1];
             adfAdjustedGT[2] = 0;
-            adfAdjustedGT[3] = dfMaxY;
+            adfAdjustedGT[3] = adfGT[5] > 0 ? dfMinY : dfMaxY;
             adfAdjustedGT[4] = 0;
             adfAdjustedGT[5] = adfGT[5];
             int nAdjustRasterXSize =
                 static_cast<int>(0.5 + (dfMaxX - dfMinX) / adfAdjustedGT[1]);
-            int nAdjustRasterYSize =
-                static_cast<int>(0.5 + (dfMaxY - dfMinY) / (-adfAdjustedGT[5]));
+            int nAdjustRasterYSize = static_cast<int>(
+                0.5 + (dfMaxY - dfMinY) / std::abs(adfAdjustedGT[5]));
 
             VRTDataset *poVDS =
                 new VRTDataset(nAdjustRasterXSize, nAdjustRasterYSize);
@@ -799,11 +830,15 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
                     poSimpleSource, poSrcBand, FALSE,
                     static_cast<int>(
                         std::floor((dfMinX - adfGT[0]) / adfGT[1] + 0.001)),
-                    static_cast<int>(
-                        std::floor((dfMaxY - adfGT[3]) / adfGT[5] + 0.001)),
+                    adfGT[5] < 0
+                        ? static_cast<int>(std::floor(
+                              (dfMaxY - dfThisMaxY) / adfGT[5] + 0.001))
+                        : static_cast<int>(std::floor(
+                              (dfMinY - dfThisMinY) / adfGT[5] + 0.001)),
                     static_cast<int>(0.5 + (dfMaxX - dfMinX) / adfGT[1]),
-                    static_cast<int>(0.5 + (dfMaxY - dfMinY) / (-adfGT[5])), 0,
-                    0, nAdjustRasterXSize, nAdjustRasterYSize);
+                    static_cast<int>(0.5 +
+                                     (dfMaxY - dfMinY) / std::abs(adfGT[5])),
+                    0, 0, nAdjustRasterXSize, nAdjustRasterYSize);
 
                 poVRTBand->AddSource(poSimpleSource);
             }
