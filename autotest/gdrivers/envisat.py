@@ -38,7 +38,7 @@ import pytest
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.require_driver("ENVISAT")
+pytestmark = pytest.mark.require_driver("ESAT")
 
 
 def _get_mds_num(filename):
