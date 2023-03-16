@@ -34,7 +34,7 @@ import pytest
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.require_driver("ROIPAC")
+pytestmark = pytest.mark.require_driver("ROI_PAC")
 
 ###############################################################################
 # Perform simple read test.
