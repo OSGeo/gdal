@@ -1140,6 +1140,40 @@ def test_vrtpansharpen_3():
 
     vrt_ds = None
 
+    # Now test when the spatial extent of the PAN and MS datasets is different
+    # and we create a in-memory VRT to make them consistent.
+    gdal.Translate(
+        "tmp/small_world_pan_cropped.vrt",
+        "tmp/small_world_pan.tif",
+        options="-srcwin 10 10 780 380",
+    )
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename relativeToVRT="1">tmp/small_world_pan_cropped.vrt</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+
+    vrt_ds = gdal.Open(xml)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    vrt_ds = None
+
+    gdal.Unlink("tmp/small_world_pan_cropped.vrt")
     gdal.Unlink("tmp/small_world_pan.tif.ovr")
 
 

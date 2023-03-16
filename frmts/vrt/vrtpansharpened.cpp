@@ -774,7 +774,9 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             VRTDataset *poVDS =
                 new VRTDataset(nAdjustRasterXSize, nAdjustRasterYSize);
             poVDS->SetWritable(FALSE);
-            poVDS->SetDescription(poSrcDS->GetDescription());
+            poVDS->SetDescription(std::string("Shifted ")
+                                      .append(poSrcDS->GetDescription())
+                                      .c_str());
             poVDS->SetGeoTransform(adfAdjustedGT);
             poVDS->SetProjection(poPanDataset->GetProjectionRef());
 
