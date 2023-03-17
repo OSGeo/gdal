@@ -218,9 +218,9 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
                                      vsi_l_offset l_nImgOffset,
                                      int l_nPixelOffset, int l_nLineOffset,
                                      GDALDataType l_eDataType,
-                                     int l_bNativeOrder)
+                                     RawRasterBand::ByteOrder eByteOrderIn)
     : RawRasterBand(l_poDS, l_nBand, l_fpRaw, l_nImgOffset, l_nPixelOffset,
-                    l_nLineOffset, l_eDataType, l_bNativeOrder,
+                    l_nLineOffset, l_eDataType, eByteOrderIn,
                     RawRasterBand::OwnFP::NO),
       m_bHasOffset(false), m_bHasScale(false), m_bHasNoData(false),
       m_dfOffset(0.0), m_dfScale(1.0), m_dfNoData(0.0)
@@ -1630,7 +1630,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
         "");
     const bool bBottomToTop = EQUAL(pszVertDir, "Bottom to Top");
 
-    PDS4Dataset *poDS = new PDS4Dataset();
+    auto poDS = cpl::make_unique<PDS4Dataset>();
     poDS->m_osXMLFilename = osXMLFilename;
     poDS->eAccess = eAccess;
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
@@ -1924,7 +1924,6 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
-                        delete poDS;
                         return nullptr;
                     }
                     nPixelOffset =
@@ -1938,7 +1937,6 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
-                        delete poDS;
                         return nullptr;
                     }
                     nLineOffset =
@@ -2047,20 +2045,18 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
             for (int i = 0; i < l_nBands; i++)
             {
-                PDS4RawRasterBand *poBand = new PDS4RawRasterBand(
-                    poDS, i + 1, poDS->m_fpImage,
+                auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+                    poDS.get(), i + 1, poDS->m_fpImage,
                     (bBottomToTop) ? nOffset + nBandOffset * i +
                                          static_cast<vsi_l_offset>(nLines - 1) *
                                              nLineOffset
                                    : nOffset + nBandOffset * i,
                     nPixelOffset, (bBottomToTop) ? -nLineOffset : nLineOffset,
                     eDT,
-#ifdef CPL_LSB
-                    bLSBOrder
-#else
-                    !bLSBOrder
-#endif
-                );
+                    bLSBOrder ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+                              : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN);
+                if (!poBand->IsValid())
+                    return nullptr;
                 if (bNoDataSet)
                 {
                     poBand->SetNoDataValue(dfNoData);
@@ -2091,7 +2087,6 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                             "STATISTICS_STDDEV", pszStdDev);
                     }
                 }
-                poDS->SetBand(i + 1, poBand);
 
                 // Only instantiate explicit mask band if we have at least one
                 // special constant (that is not the missing_constant,
@@ -2101,8 +2096,11 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                      adfConstants.size() >= 2 ||
                      (adfConstants.size() == 1 && !bNoDataSet)))
                 {
-                    poBand->SetMaskBand(new PDS4MaskBand(poBand, adfConstants));
+                    poBand->SetMaskBand(
+                        new PDS4MaskBand(poBand.get(), adfConstants));
                 }
+
+                poDS->SetBand(i + 1, std::move(poBand));
             }
         }
     }
@@ -2115,14 +2113,12 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
              (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
              (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0)
     {
-        delete poDS;
         return nullptr;
     }
     else if (poDS->m_apoLayers.empty() &&
              (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
              (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -2145,7 +2141,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
     /*--------------------------------------------------------------------------*/
     /*  Check for overviews */
     /*--------------------------------------------------------------------------*/
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
     /*--------------------------------------------------------------------------*/
     /*  Initialize any PAM information */
@@ -2153,7 +2149,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -4602,7 +4598,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
     }
 
-    PDS4Dataset *poDS = new PDS4Dataset();
+    auto poDS = cpl::make_unique<PDS4Dataset>();
     poDS->SetDescription(pszFilename);
     poDS->m_bMustInitImageFile = true;
     poDS->m_fpImage = fpImage;
@@ -4642,21 +4638,19 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
         else
         {
-            PDS4RawRasterBand *poBand =
-                new PDS4RawRasterBand(poDS, i + 1, poDS->m_fpImage,
-                                      poDS->m_nBaseOffset + nBandOffset * i,
-                                      nPixelOffset, nLineOffset, eType,
-#ifdef CPL_LSB
-                                      poDS->m_bIsLSB
-#else
-                                      !(poDS->m_bIsLSB)
-#endif
-                );
-            poDS->SetBand(i + 1, poBand);
+            auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+                poDS.get(), i + 1, poDS->m_fpImage,
+                poDS->m_nBaseOffset + nBandOffset * i, nPixelOffset,
+                nLineOffset, eType,
+                bIsLSB ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+                       : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN);
+            if (!poBand)
+                return nullptr;
+            poDS->SetBand(i + 1, std::move(poBand));
         }
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
