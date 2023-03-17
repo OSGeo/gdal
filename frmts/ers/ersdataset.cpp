@@ -1089,7 +1089,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                     bNative);
                 if (!poBand->IsValid())
                     return nullptr;
-                poDS->SetBand(iBand + 1, poBand.release());
+                poDS->SetBand(iBand + 1, std::move(poBand));
             }
         }
     }
