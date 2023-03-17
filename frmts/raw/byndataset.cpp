@@ -36,6 +36,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <limits>
 
@@ -275,11 +276,10 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
 
-    BYNDataset *poDS = new BYNDataset();
+    auto poDS = cpl::make_unique<BYNDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Read the header.                                                */
@@ -333,7 +333,6 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -360,7 +359,6 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
         eDT = GDT_Int32;
     else
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -372,11 +370,12 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int bIsLSB = poDS->hHeader.nByteOrder == 1 ? 1 : 0;
 
-    BYNRasterBand *poBand = new BYNRasterBand(
-        poDS, 1, poDS->fpImage, BYN_HDR_SZ, nDTSize,
+    auto poBand = cpl::make_unique<BYNRasterBand>(
+        poDS.get(), 1, poDS->fpImage, BYN_HDR_SZ, nDTSize,
         poDS->nRasterXSize * nDTSize, eDT, CPL_IS_LSB == bIsLSB);
-
-    poDS->SetBand(1, poBand);
+    if (!poBand->IsValid())
+        return nullptr;
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -389,9 +388,9 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
 
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
