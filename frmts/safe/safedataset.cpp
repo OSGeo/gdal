@@ -1492,7 +1492,8 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                                  osCalibrationFilePath.c_str());
                         return nullptr;
                     }
-                    poDS->SetBand(poDS->GetRasterCount() + 1, poBand.release());
+                    poDS->SetBand(poDS->GetRasterCount() + 1,
+                                  std::move(poBand));
                 }
             }
         }
