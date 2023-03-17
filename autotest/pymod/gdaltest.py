@@ -286,9 +286,11 @@ class GDALTest(object):
                         )
                     ):
                         drivers += [drv_name]
-                other_ds = gdal.OpenEx(
-                    main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
-                )
+                other_ds = None
+                with gdal.ExceptionMgr(useExceptions=False):
+                    other_ds = gdal.OpenEx(
+                        main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
+                    )
                 other_ds_is_None = other_ds is None
                 other_ds_driver_name = None
                 if not other_ds_is_None:
