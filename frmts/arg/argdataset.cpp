@@ -552,7 +552,7 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    ARGDataset *poDS = new ARGDataset();
+    auto poDS = cpl::make_unique<ARGDataset>();
 
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
     poDS->SetMetadataItem("LAYER", pszLayer, nullptr);
@@ -567,8 +567,7 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Assume ownership of the file handled from the GDALOpenInfo.     */
     /* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     poDS->adfGeoTransform[0] = dfXmin;
     poDS->adfGeoTransform[1] = dfCellwidth;
@@ -577,21 +576,17 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->adfGeoTransform[4] = dfYSkew;
     poDS->adfGeoTransform[5] = -dfCellheight;
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-#ifdef CPL_LSB
-    bool bNative = false;
-#else
-    bool bNative = true;
-#endif
-
-    RawRasterBand *poBand = new RawRasterBand(
-        poDS, 1, poDS->fpImage, 0, nPixelOffset, nPixelOffset * nCols, eType,
-        bNative, RawRasterBand::OwnFP::NO);
-    poDS->SetBand(1, poBand);
-
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
+    auto poBand = RawRasterBand::Create(
+        poDS.get(), 1, poDS->fpImage, 0, nPixelOffset, nPixelOffset * nCols,
+        eType, RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+        RawRasterBand::OwnFP::NO);
+    if (!poBand)
+        return nullptr;
     poBand->SetNoDataValue(dfNoDataValue);
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -602,9 +597,9 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -801,21 +796,20 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
     // only 1 raster band
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
 
-#ifdef CPL_LSB
-    bool bNative = false;
-#else
-    bool bNative = true;
-#endif
-
-    RawRasterBand *poDstBand = new RawRasterBand(
-        fpImage, 0, nPixelOffset, nPixelOffset * nXSize, eType, bNative, nXSize,
-        nYSize, RawRasterBand::OwnFP::NO);
+    auto poDstBand =
+        RawRasterBand::Create(fpImage, 0, nPixelOffset, nPixelOffset * nXSize,
+                              eType, RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+                              nXSize, nYSize, RawRasterBand::OwnFP::YES);
+    if (!poDstBand)
+        return nullptr;
     poDstBand->SetAccess(GA_Update);
 
     int nXBlockSize, nYBlockSize;
     poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
 
-    void *pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
+    void *pabyData = VSI_MALLOC2_VERBOSE(nXBlockSize, nPixelOffset);
+    if (!pabyData)
+        return nullptr;
 
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++)
@@ -847,8 +841,6 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
                     CPLError(CE_Failure, CPLE_AppDefined, "Error reading.");
 
                     CPLFree(pabyData);
-                    delete poDstBand;
-                    VSIFCloseL(fpImage);
 
                     return nullptr;
                 }
@@ -863,8 +855,6 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
                     CPLError(CE_Failure, CPLE_AppDefined, "Error writing.");
 
                     CPLFree(pabyData);
-                    delete poDstBand;
-                    VSIFCloseL(fpImage);
 
                     return nullptr;
                 }
@@ -873,8 +863,7 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
     }
 
     CPLFree(pabyData);
-    delete poDstBand;
-    VSIFCloseL(fpImage);
+    poDstBand.reset();
 
     return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_ReadOnly));
 }
