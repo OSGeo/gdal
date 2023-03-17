@@ -64,16 +64,11 @@ def test_osr_proj4_2():
 
     srs = osr.SpatialReference()
     srs.ImportFromProj4(
-        "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat +units=m"
+        "+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +units=m"
     )
-
-    assert srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) == pytest.approx(
-        609601.219, abs=0.0005
-    ), "Parsing exponents not supported?"
-
-    if srs.Validate() != 0:
-        print(srs.ExportToPrettyWkt())
-        pytest.fail("does not validate")
+    assert srs.ExportToProj4().startswith(
+        "+proj=lcc +lat_0=42 +lon_0=-90 +lat_1=44.0666666666667 +lat_2=42.7333333333333 +x_0=609601.219202438"
+    )
 
 
 ###############################################################################
@@ -88,18 +83,10 @@ def test_osr_proj4_4():
     srs.SetFromUserInput("+proj=utm +zone=11 +datum=WGS84")
     srs.SetAttrValue("PROJCS|PROJECTION", "FakeTransverseMercator")
 
-    try:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with pytest.raises(Exception):
         srs.ExportToProj4()
-        gdal.PopErrorHandler()
 
-    except RuntimeError:
-        gdal.PopErrorHandler()
-
-    if gdal.GetLastErrorMsg().find("Unsupported conversion method") != -1:
-        return
-
-    pytest.fail("unknown srs not handled properly")
+    assert "Unsupported conversion method" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -393,17 +380,10 @@ def test_osr_proj4_13():
         "+proj=longlat +ellps=wgs72 +towgs84=3",
     ]
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-
     for proj4str in proj4strlist:
         srs = osr.SpatialReference()
-        gdal.ErrorReset()
-        if srs.ImportFromProj4(proj4str) == 0 and gdal.GetLastErrorMsg() == "":
-            gdal.PopErrorHandler()
-            print(proj4str)
-            pytest.fail()
-
-    gdal.PopErrorHandler()
+        with pytest.raises(Exception):
+            srs.ImportFromProj4(proj4str)
 
 
 ###############################################################################
@@ -811,9 +791,8 @@ def test_osr_proj4_error_cases_export_mercator():
     srs.SetFromUserInput("WGS84")
     srs.SetMercator(30.0, 0.0, 0.99, 0.0, 0.0)
     srs.SetLinearUnits("metre", 1)
-    with gdaltest.error_handler():
-        got = srs.ExportToProj4()
-    assert got == ""
+    with pytest.raises(Exception):
+        srs.ExportToProj4()
 
     # latitude_of_origin != 0.0
 
@@ -821,9 +800,8 @@ def test_osr_proj4_error_cases_export_mercator():
     srs.SetFromUserInput("WGS84")
     srs.SetMercator2SP(0.0, 40.0, 0.0, 0.0, 0.0)
     srs.SetLinearUnits("metre", 1)
-    with gdaltest.error_handler():
-        got = srs.ExportToProj4()
-    assert got == ""
+    with pytest.raises(Exception):
+        srs.ExportToProj4()
 
 
 @gdaltest.require_proj_version(6, 2)
@@ -838,5 +816,5 @@ def test_osr_unknown_member_id_in_datum_ensemble():
     # Test that it doesn't crash on invalid datum_ensemble (test case for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=49204)
     projjson = '{"type":"GeographicCRS","name":"WGS 84","datum_ensemble":{"name":"World Geodetic System 1984 ensemble","members":[null],"ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563},"accuracy":"2.0","id":{"authority":"EPSG","code":6326}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]}}'
     sr = osr.SpatialReference()
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         sr.SetFromUserInput(projjson)

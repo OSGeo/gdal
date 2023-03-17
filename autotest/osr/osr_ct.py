@@ -186,9 +186,8 @@ def test_osr_ct_5():
 
 def test_osr_ct_6():
 
-    with gdaltest.error_handler():
-        ct = osr.CreateCoordinateTransformation(None, None)
-        assert ct is None
+    with pytest.raises(Exception):
+        osr.CreateCoordinateTransformation(None, None)
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -401,10 +400,14 @@ def test_osr_ct_options_area_of_interest():
     srs_wgs84.SetFromUserInput("WGS84")
     srs_wgs84.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     options = osr.CoordinateTransformationOptions()
-    assert not options.SetAreaOfInterest(-200, 40, -99, 41)
-    assert not options.SetAreaOfInterest(-100, -100, -99, 41)
-    assert not options.SetAreaOfInterest(-100, 40, 200, 41)
-    assert not options.SetAreaOfInterest(-100, 40, -99, 100)
+    with pytest.raises(Exception):
+        options.SetAreaOfInterest(-200, 40, -99, 41)
+    with pytest.raises(Exception):
+        options.SetAreaOfInterest(-100, -100, -99, 41)
+    with pytest.raises(Exception):
+        options.SetAreaOfInterest(-100, 40, 200, 41)
+    with pytest.raises(Exception):
+        options.SetAreaOfInterest(-100, 40, -99, 100)
     assert options.SetAreaOfInterest(-100, 40, -99, 41)
     ct = osr.CoordinateTransformation(srs_nad27, srs_wgs84, options)
     assert ct
@@ -520,7 +523,12 @@ def test_osr_ct_transformpointwitherrorcode():
     assert t == 4
     assert error_code == 0
 
-    x, y, z, t, error_code = ct.TransformPointWithErrorCode(90, 0, 0, 0)
+    with pytest.raises(Exception):
+        ct.TransformPointWithErrorCode(90, 0, 0, 0)
+
+    with osr.ExceptionMgr(useExceptions=False):
+        x, y, z, t, error_code = ct.TransformPointWithErrorCode(90, 0, 0, 0)
+
     assert math.isinf(x)
     assert error_code == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
 
@@ -538,12 +546,10 @@ def test_osr_ct_options_accuracy():
     options = osr.CoordinateTransformationOptions()
     options.SetDesiredAccuracy(0.05)
     with gdaltest.error_handler():
-        ct = osr.CoordinateTransformation(s, t, options)
-    try:
+        with osr.ExceptionMgr(useExceptions=False):
+            ct = osr.CoordinateTransformation(s, t, options)
+    with pytest.raises(Exception):
         ct.TransformPoint(49, 2, 0)
-        assert False
-    except Exception:
-        pass
 
 
 ###############################################################################
@@ -559,12 +565,10 @@ def test_osr_ct_options_ballpark_disallowed():
     options = osr.CoordinateTransformationOptions()
     options.SetBallparkAllowed(False)
     with gdaltest.error_handler():
-        ct = osr.CoordinateTransformation(s, t, options)
-    try:
+        with osr.ExceptionMgr(useExceptions=False):
+            ct = osr.CoordinateTransformation(s, t, options)
+    with pytest.raises(Exception):
         ct.TransformPoint(49, 2, 0)
-        assert False
-    except Exception:
-        pass
 
 
 ###############################################################################
@@ -623,10 +627,8 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
     assert y == pytest.approx(150, abs=1e-10)
 
     # Not properly supported currently
-    gdal.ErrorReset()
     with gdaltest.error_handler():
-        ct = osr.CoordinateTransformation(t_2020, t_2030)
-    assert gdal.GetLastErrorMsg() != ""
+        osr.CoordinateTransformation(t_2020, t_2030)
 
 
 ###############################################################################

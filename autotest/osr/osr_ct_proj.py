@@ -461,12 +461,13 @@ def test_transform_bounds_densify_out_of_bounds():
         == 0
     )
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(-120, 40, -80, 64, -1) == (
-        float("inf"),
-        float("inf"),
-        float("inf"),
-        float("inf"),
-    )
+    with osr.ExceptionMgr(useExceptions=False):
+        assert ctr.TransformBounds(-120, 40, -80, 64, -1) == (
+            float("inf"),
+            float("inf"),
+            float("inf"),
+            float("inf"),
+        )
 
 
 def test_transform_bounds_densify_out_of_bounds__geographic_output():
@@ -482,12 +483,8 @@ def test_transform_bounds_densify_out_of_bounds__geographic_output():
     dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(-120, 40, -80, 64, 1) == (
-        float("inf"),
-        float("inf"),
-        float("inf"),
-        float("inf"),
-    )
+    with pytest.raises(Exception):
+        ctr.TransformBounds(-120, 40, -80, 64, 1)
 
 
 def test_transform_bounds_antimeridian():

@@ -35,7 +35,7 @@
 import gdaltest
 import pytest
 
-from osgeo import ogr, osr
+from osgeo import osr
 
 ###############################################################################
 # This test verifies that morphToESRI() translates idiosyncratic datum names
@@ -1093,11 +1093,8 @@ def test_osr_esri_32():
     prj = ["PROJECTIONLOCA?L_CSw?(  EQUIDISTANT_CONIC", "Paramet", "55555555555555"]
 
     srs_prj = osr.SpatialReference()
-    with gdaltest.error_handler("CPLQuietErrorHandler"):
-        result = srs_prj.ImportFromESRI(prj)
-        assert (
-            result == ogr.OGRERR_CORRUPT_DATA
-        ), "Corrupt EQUIDISTANT_CONIC not marked corrupt"
+    with pytest.raises(Exception):
+        srs_prj.ImportFromESRI(prj)
 
 
 ###############################################################################
@@ -1107,10 +1104,10 @@ def test_osr_esri_32():
 def test_osr_esri_33():
 
     sr = osr.SpatialReference()
-    with gdaltest.error_handler():
+    with osr.ExceptionMgr(useExceptions=False):
         sr.ImportFromWkt("PROJCS[]")
-        sr.MorphFromESRI()
-        sr.MorphToESRI()
+    sr.MorphFromESRI()
+    sr.MorphToESRI()
 
 
 ###############################################################################
