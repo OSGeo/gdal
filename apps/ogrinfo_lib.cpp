@@ -874,21 +874,22 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                             CPLFree(pszWKT);
                         }
 
-                        char *pszProjJson = nullptr;
-                        CPLPushErrorHandler(
-                            CPLQuietErrorHandler);  // PROJJSON requires PROJ
-                                                    // >= 6.2
-                        CPL_IGNORE_RET_VAL(
-                            poSRS->exportToPROJJSON(&pszProjJson, nullptr));
-                        CPLPopErrorHandler();
-                        if (pszProjJson)
                         {
-                            CPLJSONDocument oDoc;
-                            if (oDoc.LoadMemory(pszProjJson))
+                            char *pszProjJson = nullptr;
+                            // PROJJSON requires PROJ >= 6.2
+                            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+                            CPLErrorStateBackuper oCPLErrorHandlerPusher;
+                            CPL_IGNORE_RET_VAL(
+                                poSRS->exportToPROJJSON(&pszProjJson, nullptr));
+                            if (pszProjJson)
                             {
-                                oCRS.Add("projjson", oDoc.GetRoot());
+                                CPLJSONDocument oDoc;
+                                if (oDoc.LoadMemory(pszProjJson))
+                                {
+                                    oCRS.Add("projjson", oDoc.GetRoot());
+                                }
+                                CPLFree(pszProjJson);
                             }
-                            CPLFree(pszProjJson);
                         }
 
                         const auto &anAxes =
