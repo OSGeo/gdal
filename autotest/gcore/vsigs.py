@@ -39,6 +39,12 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_curl()
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 def open_for_read(uri):
     """

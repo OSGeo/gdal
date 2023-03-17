@@ -528,7 +528,6 @@ def test_vrtmisc_rat():
     ds = None
 
     gdal.Unlink("/vsimem/vrtmisc_rat.vrt")
-    gdal.Unlink("/vsimem/vrtmisc_rat.tif")
 
 
 ###############################################################################

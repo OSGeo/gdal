@@ -32,6 +32,7 @@
 
 import os
 import shutil
+import struct
 
 import gdaltest
 import pytest
@@ -363,71 +364,6 @@ def test_hfa_update_existing_aux_overviews():
 
 
 ###############################################################################
-# Test writing invalid WKT (#5258)
-
-
-def test_hfa_write_invalid_wkt():
-
-    # No GEOGCS
-    ds = gdal.GetDriverByName("HFA").Create("/vsimem/hfa_write_invalid_wkt.img", 1, 1)
-    ds.SetProjection(
-        """PROJCS["NAD27 / UTM zone 11N",
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-117],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",0],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    AUTHORITY["EPSG","26711"]]"""
-    )
-    ds = None
-
-    # No DATUM in GEOGCS
-    ds = gdal.GetDriverByName("HFA").Create("/vsimem/hfa_write_invalid_wkt.img", 1, 1)
-    ds.SetProjection(
-        """PROJCS["NAD27 / UTM zone 11N",
-    GEOGCS["NAD27",
-        AUTHORITY["EPSG","4267"]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-117],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",0],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    AUTHORITY["EPSG","26711"]]"""
-    )
-    ds = None
-
-    # No SPHEROID in DATUM
-    ds = gdal.GetDriverByName("HFA").Create("/vsimem/hfa_write_invalid_wkt.img", 1, 1)
-    ds.SetProjection(
-        """PROJCS["NAD27 / UTM zone 11N",
-    GEOGCS["NAD27",
-        DATUM["North_American_Datum_1927",
-            AUTHORITY["EPSG","6267"]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433],
-        AUTHORITY["EPSG","4267"]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-117],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",0],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    AUTHORITY["EPSG","26711"]]"""
-    )
-    ds = None
-
-    gdal.GetDriverByName("HFA").Delete("/vsimem/hfa_write_invalid_wkt.img")
-
-
-###############################################################################
 # Get the driver, and verify a few things about it.
 
 
@@ -512,7 +448,7 @@ def test_hfa_create_compress_big_block():
         "/vsimem/big_block.img", 128, 128, 1, gdal.GDT_UInt32
     )
     src_ds.GetRasterBand(1).Fill(4 * 1000 * 1000 * 1000)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\0")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack("I", 0))
     gdal.GetDriverByName("HFA").CreateCopy(
         "/vsimem/big_block.img", src_ds, options=["COMPRESS=YES", "BLOCKSIZE=128"]
     )

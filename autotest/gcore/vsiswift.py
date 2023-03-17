@@ -772,6 +772,7 @@ def test_vsiswift_fake_write():
 # Test Unlink()
 
 
+@gdaltest.disable_exceptions()
 def test_vsiswift_fake_unlink():
 
     if gdaltest.webserver_port == 0:
@@ -805,6 +806,7 @@ def test_vsiswift_fake_unlink():
 # Test Mkdir() / Rmdir()
 
 
+@gdaltest.disable_exceptions()
 def test_vsiswift_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:

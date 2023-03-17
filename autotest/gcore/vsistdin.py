@@ -96,6 +96,7 @@ def test_vsistdin_2():
 # Test opening /vsistdin/ in write mode (failure expected)
 
 
+@gdaltest.disable_exceptions()
 def test_vsistdin_3():
 
     gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -148,6 +149,7 @@ def test_vsistdin_4():
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def test_vsistdin_5():
 
     f = open("tmp/test_vsistdin_5.bin", "wb")

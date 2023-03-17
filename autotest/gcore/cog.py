@@ -38,6 +38,14 @@ from test_py_scripts import samples_path
 
 from osgeo import gdal, osr
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 
 

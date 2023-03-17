@@ -1291,10 +1291,8 @@ def test_pixfun_missing_builtin():
     assert band_vrt.GetScale() == 1
     assert band_vrt.GetNoDataValue() == None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    data = band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
-    gdal.PopErrorHandler()
-    assert data is None
+    with pytest.raises(Exception):
+        band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
 
 
 ###############################################################################

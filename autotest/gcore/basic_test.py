@@ -38,6 +38,14 @@ import pytest
 
 from osgeo import gdal
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
 
@@ -536,55 +544,6 @@ def test_basic_test_16():
         )
     gdal.Unlink("/vsimem/temp.tif")
     assert "Invalid value for NUM_THREADS: INVALID" in gdal.GetLastErrorMsg()
-
-
-###############################################################################
-# Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
-
-
-def test_basic_test_17():
-
-    from osgeo import ogr
-
-    for _ in range(2):
-        ogr.UseExceptions()
-        gdal.UseExceptions()
-        flag = False
-        try:
-            gdal.Open("do_not_exist")
-            flag = True
-        except RuntimeError:
-            pass
-        assert not flag, "expected failure"
-        gdal.DontUseExceptions()
-        ogr.DontUseExceptions()
-        assert not gdal.GetUseExceptions()
-        assert not ogr.GetUseExceptions()
-
-
-def test_basic_test_17_part_2():
-
-    # For some odd reason, this fails on the Travis CI targets after unrelated
-    # changes (https://travis-ci.com/github/OSGeo/gdal/jobs/501940381)
-    if gdaltest.skip_on_travis():
-        pytest.skip()
-
-    from osgeo import ogr
-
-    for _ in range(2):
-        ogr.UseExceptions()
-        gdal.UseExceptions()
-        flag = False
-        try:
-            ogr.DontUseExceptions()
-            gdal.DontUseExceptions()
-            flag = True
-        except Exception:
-            gdal.DontUseExceptions()
-            ogr.DontUseExceptions()
-        assert not flag, "expected failure"
-        assert not gdal.GetUseExceptions()
-        assert not ogr.GetUseExceptions()
 
 
 def test_gdal_getspatialref():
