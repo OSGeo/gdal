@@ -804,6 +804,25 @@ void GDALDataset::SetBand(int nNewBand, GDALRasterBand *poBand)
 //! @endcond
 
 /************************************************************************/
+/*                              SetBand()                               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/**  Set a band in the band array, updating the band count, and array size
+ * appropriately.
+ *
+ * @param nNewBand new band number (indexing starts at 1)
+ * @param poBand band object.
+ */
+
+void GDALDataset::SetBand(int nNewBand,
+                          std::unique_ptr<GDALRasterBand> &&poBand)
+{
+    SetBand(nNewBand, poBand.release());
+}
+//! @endcond
+
+/************************************************************************/
 /*                           GetRasterXSize()                           */
 /************************************************************************/
 
