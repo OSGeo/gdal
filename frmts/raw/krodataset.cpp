@@ -31,6 +31,8 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 // http://www.autopano.net/wiki-en/Format_KRO
 
 /************************************************************************/
@@ -131,10 +133,9 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    KRODataset *poDS = new KRODataset();
+    auto poDS = cpl::make_unique<KRODataset>();
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Read the file header.                                           */
@@ -161,7 +162,6 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(nXSize, nYSize) ||
         !GDALCheckBandCount(nComp, FALSE))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -184,7 +184,6 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unhandled depth : %d", nDepth);
-        delete poDS;
         return nullptr;
     }
 
@@ -195,7 +194,6 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too large width / number of bands");
-        delete poDS;
         return nullptr;
     }
 
@@ -207,31 +205,27 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFTellL(poDS->fpImage) < nExpectedSize)
     {
         CPLError(CE_Failure, CPLE_FileIO, "File too short");
-        delete poDS;
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Create bands.                                                   */
     /* -------------------------------------------------------------------- */
-    CPLErrorReset();
     for (int iBand = 0; iBand < nComp; iBand++)
     {
-        RawRasterBand *poBand = new RawRasterBand(
-            poDS, iBand + 1, poDS->fpImage, 20 + nDataTypeSize * iBand,
+        auto poBand = RawRasterBand::Create(
+            poDS.get(), iBand + 1, poDS->fpImage, 20 + nDataTypeSize * iBand,
             nComp * nDataTypeSize, poDS->nRasterXSize * nComp * nDataTypeSize,
-            eDT, !CPL_IS_LSB, RawRasterBand::OwnFP::NO);
+            eDT, RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+            RawRasterBand::OwnFP::NO);
+        if (!poBand)
+            return nullptr;
         if (nComp == 3 || nComp == 4)
         {
             poBand->SetColorInterpretation(
                 static_cast<GDALColorInterp>(GCI_RedBand + iBand));
         }
-        poDS->SetBand(iBand + 1, poBand);
-        if (CPLGetLastErrorType() != CE_None)
-        {
-            delete poDS;
-            return nullptr;
-        }
+        poDS->SetBand(iBand + 1, std::move(poBand));
     }
 
     if (nComp > 1)
@@ -246,9 +240,9 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
