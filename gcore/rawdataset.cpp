@@ -111,6 +111,24 @@ RawRasterBand::RawRasterBand(GDALDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
+/*                          RawRasterBand::Create()                     */
+/************************************************************************/
+
+std::unique_ptr<RawRasterBand>
+RawRasterBand::Create(GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawLIn,
+                      vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                      int nLineOffsetIn, GDALDataType eDataTypeIn,
+                      ByteOrder eByteOrderIn, OwnFP bOwnsFPIn)
+{
+    auto poBand = cpl::make_unique<RawRasterBand>(
+        poDSIn, nBandIn, fpRawLIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+        eDataTypeIn, eByteOrderIn, bOwnsFPIn);
+    if (!poBand->IsValid())
+        return nullptr;
+    return poBand;
+}
+
+/************************************************************************/
 /*                           RawRasterBand()                            */
 /************************************************************************/
 
@@ -129,6 +147,24 @@ RawRasterBand::RawRasterBand(VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
 #endif
                     nXSize, nYSize, bOwnsFPIn)
 {
+}
+
+/************************************************************************/
+/*                          RawRasterBand::Create()                     */
+/************************************************************************/
+
+std::unique_ptr<RawRasterBand>
+RawRasterBand::Create(VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                      int nPixelOffsetIn, int nLineOffsetIn,
+                      GDALDataType eDataTypeIn, ByteOrder eByteOrderIn,
+                      int nXSizeIn, int nYSizeIn, OwnFP bOwnsFPIn)
+{
+    auto poBand = cpl::make_unique<RawRasterBand>(
+        fpRawIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
+        eByteOrderIn, nXSizeIn, nYSizeIn, bOwnsFPIn);
+    if (!poBand->IsValid())
+        return nullptr;
+    return poBand;
 }
 
 /************************************************************************/
