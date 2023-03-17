@@ -140,8 +140,7 @@ class NSIDCbinRasterBand final : public RawRasterBand
   public:
     NSIDCbinRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                        vsi_l_offset nImgOffset, int nPixelOffset,
-                       int nLineOffset, GDALDataType eDataType,
-                       int bNativeOrder);
+                       int nLineOffset, GDALDataType eDataType);
     ~NSIDCbinRasterBand() override;
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
@@ -157,16 +156,16 @@ NSIDCbinRasterBand::NSIDCbinRasterBand(GDALDataset *poDSIn, int nBandIn,
                                        VSILFILE *fpRawIn,
                                        vsi_l_offset nImgOffsetIn,
                                        int nPixelOffsetIn, int nLineOffsetIn,
-                                       GDALDataType eDataTypeIn,
-                                       int bNativeOrderIn)
+                                       GDALDataType eDataTypeIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                    nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
+                    nLineOffsetIn, eDataTypeIn,
+                    RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
                     RawRasterBand::OwnFP::NO)
 {
 }
 
 /************************************************************************/
-/*                           ~NSIDCbinRasterBand()                           */
+/*                           ~NSIDCbinRasterBand()                      */
 /************************************************************************/
 
 NSIDCbinRasterBand::~NSIDCbinRasterBand()
@@ -264,8 +263,7 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     auto poDS = cpl::make_unique<NSIDCbinDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fp, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Read the header information.                                    */
@@ -331,17 +329,12 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     int nBytesPerSample = 1;
 
-    CPLErrorReset();
-
-    NSIDCbinRasterBand *poBand =
-        new NSIDCbinRasterBand(poDS.get(), 1, poDS->fp, 300, nBytesPerSample,
-                               poDS->nRasterXSize, GDT_Byte, CPL_IS_LSB);
-    poDS->SetBand(1, poBand);
-
-    if (CPLGetLastErrorType() != CE_None)
-    {
+    auto poBand = cpl::make_unique<NSIDCbinRasterBand>(
+        poDS.get(), 1, poDS->fp, 300, nBytesPerSample, poDS->nRasterXSize,
+        GDT_Byte);
+    if (!poBand->IsValid())
         return nullptr;
-    }
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Geotransform, we simply know this from the documentation.       */
