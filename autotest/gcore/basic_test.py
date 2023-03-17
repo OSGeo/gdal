@@ -159,22 +159,6 @@ def basic_test_7_internal():
     assert gdal.GetLastErrorType() == 0, "got unexpected error type"
 
 
-def test_basic_test_7():
-    old_val = gdal.GetUseExceptions()
-    try:
-        with gdal.enable_exceptions():
-            basic_test_7_internal()
-    finally:
-        assert old_val == gdal.GetUseExceptions()
-
-    try:
-        with gdal.enable_exceptions():
-            with gdal.enable_exceptions():
-                basic_test_7_internal()
-    finally:
-        assert old_val == gdal.GetUseExceptions()
-
-
 ###############################################################################
 # Test gdal.VersionInfo('RELEASE_DATE') and gdal.VersionInfo('LICENSE')
 

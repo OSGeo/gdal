@@ -237,7 +237,7 @@ static void StoreLastException()
 
           >>> print(gdal.GetUseExceptions())
           0
-          >>> with gdal.ExceptionMgr(useExceptions=True):
+          >>> with gdal.ExceptionMgr():
           ...     # Exceptions are now in use
           ...     print(gdal.GetUseExceptions())
           1
@@ -247,7 +247,7 @@ static void StoreLastException()
           0
 
       """
-      def __init__(self, useExceptions):
+      def __init__(self, useExceptions=True):
           """
           Save whether or not this context will be using exceptions
           """

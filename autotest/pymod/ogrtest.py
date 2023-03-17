@@ -24,7 +24,6 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import contextlib
 import sys
 
 import pytest
@@ -218,26 +217,6 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
     if f is not None:
         f.DumpReadable()
         pytest.fail()
-
-
-###############################################################################
-# Temporarily enable exceptions
-
-
-@contextlib.contextmanager
-def enable_exceptions():
-    if ogr.GetUseExceptions():
-        try:
-            yield
-        finally:
-            pass
-        return
-
-    ogr.UseExceptions()
-    try:
-        yield
-    finally:
-        ogr.DontUseExceptions()
 
 
 ###############################################################################

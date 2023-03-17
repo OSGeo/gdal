@@ -5825,7 +5825,7 @@ def test_ogr_pg_copy_error(with_and_without_postgis):
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON(((0 0,0 1,1 1,0 0)))"))
     src_lyr.CreateFeature(f)
-    with gdaltest.enable_exceptions():
+    with gdal.ExceptionMgr():
         with pytest.raises(RuntimeError):
             gdal.VectorTranslate("PG:" + gdaltest.pg_connection_string, src_ds)
 

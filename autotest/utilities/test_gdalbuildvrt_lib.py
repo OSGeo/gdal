@@ -539,7 +539,7 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
 
     err_handler = GdalErrorHandler()
     with gdaltest.error_handler(err_handler.handler):
-        with gdaltest.enable_exceptions():
+        with gdal.ExceptionMgr():
             vrt_ds = gdal.BuildVRT("", [ds_one_band, ds_two_band])
     assert vrt_ds
     assert not err_handler.got_failure
@@ -547,7 +547,7 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
 
     err_handler = GdalErrorHandler()
     with gdaltest.error_handler(err_handler.handler):
-        with gdaltest.enable_exceptions():
+        with gdal.ExceptionMgr():
             vrt_ds = gdal.BuildVRT("", [ds_two_band, ds_one_band])
     assert vrt_ds
     assert not err_handler.got_failure
@@ -557,7 +557,7 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
 ###############################################################################
 def test_gdalbuildvrt_lib_strict_mode():
 
-    with gdaltest.enable_exceptions():
+    with gdal.ExceptionMgr():
         with gdaltest.error_handler():
             assert (
                 gdal.BuildVRT(
@@ -566,7 +566,7 @@ def test_gdalbuildvrt_lib_strict_mode():
                 is not None
             )
 
-    with gdaltest.enable_exceptions():
+    with gdal.ExceptionMgr():
         with pytest.raises(Exception):
             gdal.BuildVRT(
                 "", ["../gcore/data/byte.tif", "i_dont_exist.tif"], strict=True
