@@ -58,14 +58,6 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
-    char* pszNewValue = CPLStrdup(CPLSPrintf("%s %s",
-                   MODULE_NAME,
-                   CPLGetConfigOption("__chain_python_error_handlers", "")));
-    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
-    CPLFree(pszNewValue);
-    // if the previous logger was custom, we need the user data available
-    pfnPreviousHandler =
-        CPLSetErrorHandlerEx( (CPLErrorHandler) PythonBindingErrorHandler, CPLGetErrorHandlerUserData() );
   }
 }
 
@@ -74,26 +66,7 @@ void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )
   {
-    const char* pszValue = CPLGetConfigOption("__chain_python_error_handlers", "");
-    if( strncmp(pszValue, MODULE_NAME, strlen(MODULE_NAME)) != 0 ||
-        pszValue[strlen(MODULE_NAME)] != ' ')
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Cannot call %s.DontUseExceptions() at that point since the "
-                 "stack of error handlers is: %s", MODULE_NAME, pszValue);
-        return;
-    }
-    char* pszNewValue = CPLStrdup(pszValue + strlen(MODULE_NAME) + 1);
-    if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
-    {
-        CPLFree(pszNewValue);
-        pszNewValue = NULL;
-    }
-    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
-    CPLFree(pszNewValue);
     bUseExceptions = 0;
-    // if the previous logger was custom, we need the user data available. Preserve it.
-    CPLSetErrorHandlerEx( pfnPreviousHandler, CPLGetErrorHandlerUserData());
   }
 }
 %}
@@ -124,7 +97,6 @@ static void ClearErrorState()
 
 static void StoreLastException() CPL_UNUSED;
 
-// Note: this is also copy&pasted in gdal_array.i
 static void StoreLastException()
 {
     const char* pszLastErrorMessage =
@@ -139,18 +111,41 @@ static void StoreLastException()
     }
 }
 
+static void pushErrorHandler()
+{
+    ClearErrorState();
+    void* pPreviousHandlerUserData = NULL;
+    CPLErrorHandler previousHandler = CPLGetErrorHandler(&pPreviousHandlerUserData);
+    if(previousHandler != PythonBindingErrorHandler)
+    {
+        // Store the previous handler only if it is not ourselves (which might
+        // happen in situations where a GDAL function will end up calling python
+        // again), to avoid infinite recursion.
+        pfnPreviousHandler = previousHandler;
+    }
+    CPLPushErrorHandlerEx(PythonBindingErrorHandler, pPreviousHandlerUserData);
+}
+
+static void popErrorHandler()
+{
+    CPLPopErrorHandler();
+}
+
 %}
 
 %include exception.i
 
 %exception {
-
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = bUseExceptions;
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if ( bUseExceptions ) {
+    if ( bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -160,19 +155,23 @@ static void StoreLastException()
 }
 
 %feature("except") Open {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = bUseExceptions;
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
@@ -181,19 +180,23 @@ static void StoreLastException()
 }
 
 %feature("except") OpenShared {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = bUseExceptions;
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
@@ -202,19 +205,23 @@ static void StoreLastException()
 }
 
 %feature("except") OpenEx {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = bUseExceptions;
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
