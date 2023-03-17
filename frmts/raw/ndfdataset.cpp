@@ -264,7 +264,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    NDFDataset *poDS = new NDFDataset();
+    auto poDS = cpl::make_unique<NDFDataset>();
     poDS->papszHeader = papszHeader;
 
     poDS->nRasterXSize = atoi(poDS->Get("PIXELS_PER_LINE", ""));
@@ -278,7 +278,6 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszBand == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find band count");
-        delete poDS;
         return nullptr;
     }
     const int nBands = atoi(pszBand);
@@ -286,7 +285,6 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, FALSE))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -316,14 +314,16 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to open band file: %s", osFilename.c_str());
-            delete poDS;
             return nullptr;
         }
         poDS->papszExtraFiles = CSLAddString(poDS->papszExtraFiles, osFilename);
 
-        RawRasterBand *poBand =
-            new RawRasterBand(poDS, iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize,
-                              GDT_Byte, TRUE, RawRasterBand::OwnFP::YES);
+        auto poBand = RawRasterBand::Create(
+            poDS.get(), iBand + 1, fpRaw, 0, 1, poDS->nRasterXSize, GDT_Byte,
+            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+            RawRasterBand::OwnFP::YES);
+        if (!poBand)
+            return nullptr;
 
         snprintf(szKey, sizeof(szKey), "BAND%d_NAME", iBand + 1);
         poBand->SetDescription(poDS->Get(szKey, ""));
@@ -335,23 +335,21 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
                  iBand + 1);
         poBand->SetMetadataItem("RADIOMETRIC_GAINS_BIAS", poDS->Get(szKey, ""));
 
-        poDS->SetBand(iBand + 1, poBand);
+        poDS->SetBand(iBand + 1, std::move(poBand));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Fetch and parse USGS projection parameters.                     */
     /* -------------------------------------------------------------------- */
     double adfUSGSParams[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    char **papszParamTokens = CSLTokenizeStringComplex(
-        poDS->Get("USGS_PROJECTION_NUMBER", ""), ",", FALSE, TRUE);
+    const CPLStringList aosParamTokens(CSLTokenizeStringComplex(
+        poDS->Get("USGS_PROJECTION_NUMBER", ""), ",", FALSE, TRUE));
 
-    if (CSLCount(papszParamTokens) >= 15)
+    if (aosParamTokens.size() >= 15)
     {
         for (int i = 0; i < 15; i++)
-            adfUSGSParams[i] = CPLAtof(papszParamTokens[i]);
+            adfUSGSParams[i] = CPLAtof(aosParamTokens[i]);
     }
-    CSLDestroy(papszParamTokens);
-    papszParamTokens = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Minimal georef support ... should add full USGS style           */
@@ -433,9 +431,9 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
