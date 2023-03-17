@@ -727,7 +727,7 @@ def test_numpy_rw_failure_in_readasarray():
     assert ds is not None
 
     exception_raised = False
-    with gdaltest.enable_exceptions():
+    with gdal.ExceptionMgr():
         try:
             ds.ReadAsArray()
         except RuntimeError:
@@ -735,7 +735,7 @@ def test_numpy_rw_failure_in_readasarray():
     assert exception_raised
 
     exception_raised = False
-    with gdaltest.enable_exceptions():
+    with gdal.ExceptionMgr():
         try:
             ds.GetRasterBand(1).ReadAsArray()
         except RuntimeError:

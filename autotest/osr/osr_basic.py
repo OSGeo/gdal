@@ -2246,13 +2246,13 @@ def test_osr_basic_eqearth_central_meridian():
 
 
 ###############################################################################
-# Test osr.enable_exceptions()
+# Test osr.ExceptionMgr()
 
 
 def test_osr_exceptions():
 
     with pytest.raises(Exception):
-        with osr.enable_exceptions():
+        with osr.ExceptionMgr():
             srs = osr.SpatialReference()
             srs.ImportFromEPSG(0)
 

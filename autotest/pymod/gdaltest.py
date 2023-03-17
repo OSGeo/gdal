@@ -1972,13 +1972,6 @@ def tempfile(filename, content):
 
 
 ###############################################################################
-# Temporarily enable exceptions
-
-
-enable_exceptions = gdal.enable_exceptions
-
-
-###############################################################################
 
 
 def gdalurlopen(url, timeout=10):
