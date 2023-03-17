@@ -1923,6 +1923,20 @@ def SetCacheMax(val):
 
 
 ###############################################################################
+# Temporarily disable exceptions for gdal, ogr and osr modules
+
+
+@contextlib.contextmanager
+def disable_exceptions():
+    from osgeo import ogr, osr
+
+    with gdal.ExceptionMgr(useExceptions=False), osr.ExceptionMgr(
+        useExceptions=False
+    ), ogr.ExceptionMgr(useExceptions=False):
+        yield
+
+
+###############################################################################
 # Temporarily define a configuration option
 
 
