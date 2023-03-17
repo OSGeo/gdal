@@ -181,6 +181,52 @@ void *CPL_STDCALL CPLGetErrorHandlerUserData(void)
                                         : pErrorHandlerUserData);
 }
 
+/************************************************************************/
+/*                         CPLGetErrorHandler()                         */
+/************************************************************************/
+
+/**
+ * Fetch the current error handler for the current error context.
+ *
+ * This will be the last error handler pushed in the thread-local error stack
+ * with CPLPushErrorHandler()/CPLPushErrorHandlerEx(), or if the stack is
+ * empty, the global error handler set with
+ * CPLSetErrorHandler()/CPLSetErrorHandlerEx(), or the default global error
+ * handler.
+ *
+ * @param[out] ppUserData Pointer to store the user data pointer. May be NULL
+ * @since GDAL 3.7
+ */
+
+CPLErrorHandler CPLGetErrorHandler(void **ppUserData)
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
+    {
+        fprintf(stderr, "CPLGetErrorHandler() failed.\n");
+        if (ppUserData)
+            *ppUserData = nullptr;
+        return CPLDefaultErrorHandler;
+    }
+
+    if (psCtx->psHandlerStack != nullptr)
+    {
+        if (ppUserData)
+            *ppUserData = psCtx->psHandlerStack->pUserData;
+        return psCtx->psHandlerStack->pfnHandler;
+    }
+
+    CPLMutexHolderD(&hErrorMutex);
+    if (ppUserData)
+        *ppUserData = pErrorHandlerUserData;
+    return pfnErrorHandler;
+}
+
+/************************************************************************/
+/*                          ApplyErrorHandler()                         */
+/************************************************************************/
+
 static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
                               CPLErrorNum err_no, const char *pszMessage)
 {
