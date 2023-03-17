@@ -950,9 +950,17 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /*     Get the HeaderOffset if it exists in the header                  */
     /* -------------------------------------------------------------------- */
     GIntBig nHeaderOffset = 0;
-    if (poHeader->Find("HeaderOffset") != nullptr)
+    const char *pszHeaderOffset = poHeader->Find("HeaderOffset");
+    if (pszHeaderOffset != nullptr)
     {
-        nHeaderOffset = atoi(poHeader->Find("HeaderOffset"));
+        nHeaderOffset = CPLAtoGIntBig(pszHeaderOffset);
+        if (nHeaderOffset < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Illegal value for HeaderOffset: %s", pszHeaderOffset);
+            delete poDS;
+            return nullptr;
+        }
     }
 
     /* -------------------------------------------------------------------- */
