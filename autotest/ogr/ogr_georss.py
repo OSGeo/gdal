@@ -430,12 +430,11 @@ def test_ogr_georss_10():
     srs.ImportFromEPSG(32631)
 
     ds = ogr.GetDriverByName("GeoRSS").CreateDataSource("tmp/test32631.rss")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    try:
-        lyr = ds.CreateLayer("georss", srs=srs)
-    except Exception:
-        lyr = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        try:
+            lyr = ds.CreateLayer("georss", srs=srs)
+        except Exception:
+            lyr = None
     assert lyr is None, "should not have accepted EPSG:32631 with GEOM_DIALECT != GML"
 
     ds = None
@@ -517,27 +516,24 @@ def test_ogr_georss_12():
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><item><a></item></rss>'
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.Open("tmp/broken.rss")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("tmp/broken.rss")
     assert ds is None
 
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:box>49 2 49.5</georss:box></item></channel></rss>'
     )
     ds = ogr.Open("tmp/broken.rss")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = ds.GetLayer(0).GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = ds.GetLayer(0).GetNextFeature()
     assert feat.GetGeometryRef() is None
 
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:where><gml:LineString><gml:posList>48 2 48.1 2.1 48</gml:posList></gml:LineString></georss:where></item></channel></rss>'
     )
     ds = ogr.Open("tmp/broken.rss")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    feat = ds.GetLayer(0).GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        feat = ds.GetLayer(0).GetNextFeature()
     assert feat.GetGeometryRef() is None
 
 

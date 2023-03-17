@@ -777,9 +777,8 @@ def test_ogr_mitab_21():
     lyr = ds.CreateLayer("test")
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(feat)
     ds = None
 
     ds = ogr.Open("/vsimem/ogr_mitab_21.tab")
@@ -1076,17 +1075,15 @@ def test_ogr_mitab_27():
 
     # Invalid call : feature without FID
     f = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.SetFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(f)
     assert ret != 0
 
     # Invalid call : feature with FID <= 0
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(0)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.SetFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(f)
     assert ret != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1100,9 +1097,8 @@ def test_ogr_mitab_27():
     # Invalid call : feature with FID > feature_count
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(2)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.SetFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(f)
     assert ret != 0
 
     # Update previously created object with blank feature

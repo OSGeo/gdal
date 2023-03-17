@@ -123,9 +123,8 @@ def test_ogr_jml_1():
 def test_ogr_jml_2():
 
     # Invalid filename
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.GetDriverByName("JML").CreateDataSource("/foo/ogr_jml.jml")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("JML").CreateDataSource("/foo/ogr_jml.jml")
     ds = None
 
     # Empty layer
@@ -455,9 +454,8 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
@@ -480,9 +478,8 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
@@ -511,9 +508,8 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn().GetFieldCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn().GetFieldCount()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
@@ -543,9 +539,8 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn().GetFieldCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn().GetFieldCount()
     assert gdal.GetLastErrorType() != 0
     del ds
 

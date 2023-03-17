@@ -104,9 +104,8 @@ def test_ogr_pg_1():
     # gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
     try:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
     except Exception:
         gdaltest.pg_ds = None
         gdal.PopErrorHandler()
@@ -136,21 +135,20 @@ def test_ogr_pg_1():
         if gdaltest.pg_version >= (8, 2):
             gdaltest.pg_retrieve_fid = True
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SHOW standard_conforming_strings")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SHOW standard_conforming_strings")
     gdaltest.pg_quote_with_E = sql_lyr is not None
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT postgis_version()")
-    gdaltest.pg_has_postgis = sql_lyr is not None
-    gdaltest.pg_has_postgis_2 = False
-    if gdaltest.pg_has_postgis:
-        feat = sql_lyr.GetNextFeature()
-        version_str = feat.GetFieldAsString("postgis_version")
-        gdaltest.pg_has_postgis_2 = float(version_str[0:3]) >= 2.0
-    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT postgis_version()")
+        gdaltest.pg_has_postgis = sql_lyr is not None
+        gdaltest.pg_has_postgis_2 = False
+        if gdaltest.pg_has_postgis:
+            feat = sql_lyr.GetNextFeature()
+            version_str = feat.GetFieldAsString("postgis_version")
+            gdaltest.pg_has_postgis_2 = float(version_str[0:3]) >= 2.0
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
     gdal.PopErrorHandler()
 
     if gdaltest.pg_has_postgis:
@@ -176,9 +174,8 @@ def test_ogr_pg_2():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
 
     ######################################################
     # Create Layer
@@ -696,9 +693,8 @@ def test_ogr_pg_11():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
 
     gdal.SetConfigOption("PG_USE_COPY", "NO")
 
@@ -786,9 +782,8 @@ def test_ogr_pg_13():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:datetest")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:datetest")
 
     ######################################################
     # Create Table
@@ -1288,9 +1283,8 @@ def test_ogr_pg_23():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest")
 
     ######################################################
     # Create Table
@@ -1612,9 +1606,8 @@ def test_ogr_pg_28():
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds.ExecuteSQL("DELLAYER:datatypetest2")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds.ExecuteSQL("DELLAYER:datatypetest2")
 
     ds.ExecuteSQL('set timezone to "UTC"')
 
@@ -1687,9 +1680,8 @@ def test_ogr_pg_30():
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds.ExecuteSQL("DELLAYER:datatypetest2")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds.ExecuteSQL("DELLAYER:datatypetest2")
 
     ds.ExecuteSQL('set timezone to "UTC"')
 
@@ -2288,9 +2280,8 @@ def test_ogr_pg_41():
     layer = ds.GetLayerByName("public.tpoly")
     assert layer.GetFeatureCount() == 19, "wrong feature count"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test41")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test41")
 
     ds.CreateLayer("test41")
 
@@ -2934,9 +2925,8 @@ def test_ogr_pg_53():
     feat = lyr.GetNextFeature()
     assert feat.GetField(0) == "bar"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("no_geometry_table", geom_type=ogr.wkbNone)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("no_geometry_table", geom_type=ogr.wkbNone)
     assert lyr is None, "layer creation should have failed"
 
     lyr = ds.CreateLayer(
@@ -6249,81 +6239,80 @@ def _test_ogr_pg_table_cleanup():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_for_tables_equal_param")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:datetest")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testgeom")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest")
-    # gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest_withouttimestamptz' )
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext3")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext4")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext5")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:testoverflows")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_inherited2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_inherited")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_base")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:table37_inherited")
-    gdaltest.pg_ds.ExecuteSQL("DROP TABLE table37_base CASCADE")
-    gdaltest.pg_ds.ExecuteSQL("DROP VIEW testview")
-    gdaltest.pg_ds.ExecuteSQL(
-        "DELETE FROM geometry_columns WHERE f_table_name='testview'"
-    )
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:select")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:bigtable")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_geog")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:no_pk_table")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:no_geometry_table")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_55")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_56")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_57")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_58")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_60")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_61")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_63")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_65")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_65_copied")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_67")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_68")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_70")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_72")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_73")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_74")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_75")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_76_lyr1")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_76_lyr2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_curve")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_curve_3d")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_77_1")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_77_2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_78")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_78_2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_81_1")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_81_2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_82")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_83")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_84")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_85_1")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_85_2")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_86")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_87")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_json")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_uuid")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:layer_polygon_with_multipolygon")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_vector_translate_geography")
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_for_tables_equal_param")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:datetest")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testgeom")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest")
+        # gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest_withouttimestamptz' )
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext3")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext4")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testsrtext5")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:testoverflows")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_inherited2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_inherited")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:table36_base")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:table37_inherited")
+        gdaltest.pg_ds.ExecuteSQL("DROP TABLE table37_base CASCADE")
+        gdaltest.pg_ds.ExecuteSQL("DROP VIEW testview")
+        gdaltest.pg_ds.ExecuteSQL(
+            "DELETE FROM geometry_columns WHERE f_table_name='testview'"
+        )
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:select")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:bigtable")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_geog")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:no_pk_table")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:no_geometry_table")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_55")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_56")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_57")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_58")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_60")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_61")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_63")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_65")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_65_copied")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_67")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_68")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_70")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_72")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_73")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_74")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_75")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_76_lyr1")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_76_lyr2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_curve")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_curve_3d")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_77_1")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_77_2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_78")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_78_2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_81_1")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_81_2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_82")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_83")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_84")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_85_1")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_85_2")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_86")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_87")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_json")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_uuid")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:layer_polygon_with_multipolygon")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_vector_translate_geography")
 
-    # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.tpoly")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.test41")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.table36_base")
-    gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.table36_inherited")
-    # Drop 'AutoTest-schema' (here, double quotes are required)
-    gdaltest.pg_ds.ExecuteSQL('DROP SCHEMA "AutoTest-schema" CASCADE')
-    gdal.PopErrorHandler()
+        # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.tpoly")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.test41")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.table36_base")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:AutoTest-schema.table36_inherited")
+        # Drop 'AutoTest-schema' (here, double quotes are required)
+        gdaltest.pg_ds.ExecuteSQL('DROP SCHEMA "AutoTest-schema" CASCADE')
 
 
 def test_ogr_pg_cleanup():

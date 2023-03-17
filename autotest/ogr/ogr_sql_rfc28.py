@@ -844,9 +844,8 @@ def test_ogr_rfc28_union_all_three_branch_and():
 
 def test_ogr_rfc28_33():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("select * from idlink where name='foo")
 
     assert lyr is None
 
@@ -857,9 +856,8 @@ def test_ogr_rfc28_33():
 
 def test_ogr_rfc28_34():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select foo.* from idlink")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("select foo.* from idlink")
     assert (
         gdal.GetLastErrorMsg().find("Table foo not recognised from foo.* definition")
         == 0
@@ -874,9 +872,10 @@ def test_ogr_rfc28_34():
 
 def test_ogr_rfc28_35():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, distinct name from idlink")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL(
+            "select distinct eas_id, distinct name from idlink"
+        )
     assert gdal.GetLastErrorMsg().find("SQL Expression Parsing Error") == 0
 
     assert lyr is None
@@ -888,9 +887,8 @@ def test_ogr_rfc28_35():
 
 def test_ogr_rfc28_35_bis():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, name from idlink")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id, name from idlink")
     assert (
         gdal.GetLastErrorMsg().find("SELECT DISTINCT not supported on multiple columns")
         == 0
@@ -905,9 +903,8 @@ def test_ogr_rfc28_35_bis():
 
 def test_ogr_rfc28_35_ter():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select distinct * from idlink")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("select distinct * from idlink")
     assert (
         gdal.GetLastErrorMsg().find("SELECT DISTINCT not supported on multiple columns")
         == 0
@@ -923,13 +920,12 @@ def test_ogr_rfc28_35_ter():
 def test_ogr_rfc28_36():
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL(
-        "select distinct eas_id from idlink order by eas_id, name"
-    )
-    if lyr is not None:
-        lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL(
+            "select distinct eas_id from idlink order by eas_id, name"
+        )
+        if lyr is not None:
+            lyr.GetNextFeature()
     assert (
         gdal.GetLastErrorMsg().find(
             "Can't ORDER BY a DISTINCT list by more than one key"
@@ -946,11 +942,10 @@ def test_ogr_rfc28_36():
 def test_ogr_rfc28_37():
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id from idlink order by name")
-    if lyr is not None:
-        lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id from idlink order by name")
+        if lyr is not None:
+            lyr.GetNextFeature()
     assert (
         gdal.GetLastErrorMsg().find(
             "Only selected DISTINCT field can be used for ORDER BY"
@@ -967,9 +962,8 @@ def test_ogr_rfc28_37():
 def test_ogr_rfc28_38():
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA) from poly")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA) from poly")
     assert (
         gdal.GetLastErrorMsg().find("Expected 2 or 3 arguments to SUBSTR(), but got 1")
         == 0
@@ -977,9 +971,8 @@ def test_ogr_rfc28_38():
     assert lyr is None
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(1,2) from poly")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = gdaltest.ds.ExecuteSQL("SELECT SUBSTR(1,2) from poly")
     assert gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") == 0
     assert lyr is None
 

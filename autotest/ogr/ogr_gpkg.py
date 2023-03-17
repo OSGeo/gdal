@@ -211,9 +211,8 @@ def test_ogr_gpkg_4():
 
     assert validate("tmp/gpkg_test.gpkg"), "validation failed"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gpkg_ds = ogr.Open("tmp/gpkg_test.gpkg", update=1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gpkg_ds = ogr.Open("tmp/gpkg_test.gpkg", update=1)
 
     assert gpkg_ds is not None
 
@@ -298,9 +297,8 @@ def test_ogr_gpkg_6():
 
     assert validate("tmp/gpkg_test.gpkg"), "validation failed"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gpkg_ds = ogr.Open("tmp/gpkg_test.gpkg", update=1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gpkg_ds = ogr.Open("tmp/gpkg_test.gpkg", update=1)
 
     assert gpkg_ds is not None
 
@@ -1336,9 +1334,8 @@ def test_ogr_gpkg_16():
     ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
 
     ds.ExecuteSQL(
@@ -1350,18 +1347,16 @@ def test_ogr_gpkg_16():
     ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg")
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
 
     # and also as read-write
     ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
     ds = None
 
@@ -1379,9 +1374,8 @@ def test_ogr_gpkg_16():
     ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg")
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.GetLayerDefn()
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
 
     gdal.Unlink("/vsimem/ogr_gpk_16.gpkg")
@@ -1404,9 +1398,8 @@ def test_ogr_gpkg_16():
 
     # Warning since we open as read-write
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
 
     ds.ExecuteSQL(
@@ -1416,16 +1409,14 @@ def test_ogr_gpkg_16():
 
     # Warning since we open as read-only
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg")
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
 
     # and also as read-write
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("/vsimem/ogr_gpk_16.gpkg", update=1)
     assert gdal.GetLastErrorMsg() != "", "fail : warning expected"
     ds = None
 

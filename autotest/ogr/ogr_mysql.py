@@ -65,7 +65,14 @@ def test_ogr_mysql_1():
 
     gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
     if gdaltest.mysql_ds is None:
-        pytest.skip()
+        if val:
+            pytest.skip(
+                f"MySQL database is not available using supplied connection string {gdaltest.mysql_connection_string}"
+            )
+        else:
+            pytest.skip(
+                f"OGR_MYSQL_CONNECTION_STRING not specified; database is not available using default connection string {gdaltest.mysql_connection_string}"
+            )
 
     sql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT VERSION()")
     f = sql_lyr.GetNextFeature()
@@ -613,9 +620,8 @@ def test_ogr_mysql_21():
     dst_feat.SetField("name", "name")
 
     # The insertion MUST fail
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    layer.CreateFeature(dst_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        layer.CreateFeature(dst_feat)
 
     dst_feat.Destroy()
 

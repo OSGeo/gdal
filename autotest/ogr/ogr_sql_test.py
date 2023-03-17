@@ -494,9 +494,8 @@ def test_ogr_sql_17():
 
 def test_ogr_sql_19():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = gdaltest.ds.ExecuteSQL("")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.ds.ExecuteSQL("")
 
     assert sql_lyr is None
 
@@ -858,9 +857,8 @@ def test_ogr_sql_28():
     for query in queries:
         gdal.ErrorReset()
         # print query
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        sql_lyr = ds.ExecuteSQL(query)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            sql_lyr = ds.ExecuteSQL(query)
         if sql_lyr is not None:
             ds.ReleaseResultSet(sql_lyr)
             pytest.fail('expected None result on "%s"' % query)
@@ -1048,11 +1046,10 @@ def test_ogr_sql_34():
 
     assert val == 1
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    sql_lyr = gdaltest.ds.ExecuteSQL(
-        "select count(*) from poly where eas_id in ('a165')"
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.ds.ExecuteSQL(
+            "select count(*) from poly where eas_id in ('a165')"
+        )
     assert sql_lyr is None
 
 
@@ -1331,9 +1328,8 @@ def test_ogr_sql_44():
         "SELECT hstore_get_value('a') FROM poly",
         "SELECT hstore_get_value(1, 1) FROM poly",
     ]:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        sql_lyr = gdaltest.ds.ExecuteSQL(sql)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            sql_lyr = gdaltest.ds.ExecuteSQL(sql)
         assert sql_lyr is None, sql
 
     # Invalid hstore syntax or empty result

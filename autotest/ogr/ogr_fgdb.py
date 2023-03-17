@@ -638,32 +638,33 @@ def test_ogr_fgdb_8(fgdb_drv):
 
     ds = fgdb_drv.CreateDataSource("tmp/test.gdb")
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbPoint)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr.CreateField(ogr.FieldDefn("FROM", ogr.OFTInteger))  # reserved keyword
-    lyr.CreateField(ogr.FieldDefn("1NUMBER", ogr.OFTInteger))  # starting with a number
-    lyr.CreateField(
-        ogr.FieldDefn("WITH SPACE AND !$*!- special characters", ogr.OFTInteger)
-    )  # unallowed characters
-    lyr.CreateField(ogr.FieldDefn("é" * 64, ogr.OFTInteger))  # OK
-    lyr.CreateField(
-        ogr.FieldDefn(
-            "A123456789012345678901234567890123456789012345678901234567890123",
-            ogr.OFTInteger,
-        )
-    )  # 64 characters : ok
-    lyr.CreateField(
-        ogr.FieldDefn(
-            "A1234567890123456789012345678901234567890123456789012345678901234",
-            ogr.OFTInteger,
-        )
-    )  # 65 characters : nok
-    lyr.CreateField(
-        ogr.FieldDefn(
-            "A12345678901234567890123456789012345678901234567890123456789012345",
-            ogr.OFTInteger,
-        )
-    )  # 66 characters : nok
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateField(ogr.FieldDefn("FROM", ogr.OFTInteger))  # reserved keyword
+        lyr.CreateField(
+            ogr.FieldDefn("1NUMBER", ogr.OFTInteger)
+        )  # starting with a number
+        lyr.CreateField(
+            ogr.FieldDefn("WITH SPACE AND !$*!- special characters", ogr.OFTInteger)
+        )  # unallowed characters
+        lyr.CreateField(ogr.FieldDefn("é" * 64, ogr.OFTInteger))  # OK
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A123456789012345678901234567890123456789012345678901234567890123",
+                ogr.OFTInteger,
+            )
+        )  # 64 characters : ok
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A1234567890123456789012345678901234567890123456789012345678901234",
+                ogr.OFTInteger,
+            )
+        )  # 65 characters : nok
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A12345678901234567890123456789012345678901234567890123456789012345",
+                ogr.OFTInteger,
+            )
+        )  # 66 characters : nok
 
     lyr_defn = lyr.GetLayerDefn()
     expected_names = [
@@ -708,10 +709,9 @@ def test_ogr_fgdb_9(fgdb_drv):
     ]
 
     ds = fgdb_drv.CreateDataSource("tmp/test.gdb")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    for in_name in in_names:
-        lyr = ds.CreateLayer(in_name, srs=srs, geom_type=ogr.wkbPoint)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        for in_name in in_names:
+            lyr = ds.CreateLayer(in_name, srs=srs, geom_type=ogr.wkbPoint)
 
     lyr.GetLayerDefn()
     expected_names = [
@@ -789,19 +789,20 @@ def test_ogr_fgdb_10(fgdb_drv):
     lyr = ds.CreateLayer("srs_approx_4230", srs=srs_approx_4230, geom_type=ogr.wkbPoint)
 
     # will fail
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("srs_approx_intl", srs=srs_approx_intl, geom_type=ogr.wkbPoint)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer(
+            "srs_approx_intl", srs=srs_approx_intl, geom_type=ogr.wkbPoint
+        )
 
     # will fail: 4233 doesn't exist in DB
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("srs_exact_4233", srs=srs_exact_4233, geom_type=ogr.wkbPoint)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer(
+            "srs_exact_4233", srs=srs_exact_4233, geom_type=ogr.wkbPoint
+        )
 
     # will fail
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    lyr = ds.CreateLayer("srs_not_in_db", srs=srs_not_in_db, geom_type=ogr.wkbPoint)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer("srs_not_in_db", srs=srs_not_in_db, geom_type=ogr.wkbPoint)
 
     ds = None
 
@@ -925,9 +926,8 @@ def test_ogr_fgdb_12():
 
     os.mkdir("tmp/dummy.gdb")
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.Open("tmp/dummy.gdb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("tmp/dummy.gdb")
     assert ds is None
 
     shutil.rmtree("tmp/dummy.gdb")
@@ -939,17 +939,15 @@ def test_ogr_fgdb_12():
 
 def test_ogr_fgdb_13(fgdb_drv):
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = fgdb_drv.CreateDataSource("tmp/foo")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = fgdb_drv.CreateDataSource("tmp/foo")
     assert ds is None
 
     f = open("tmp/dummy.gdb", "wb")
     f.close()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = fgdb_drv.CreateDataSource("tmp/dummy.gdb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = fgdb_drv.CreateDataSource("tmp/dummy.gdb")
     assert ds is None
 
     os.unlink("tmp/dummy.gdb")
@@ -964,14 +962,12 @@ def test_ogr_fgdb_13(fgdb_drv):
     else:
         name = "/proc/dummy.gdb"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = fgdb_drv.CreateDataSource(name)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = fgdb_drv.CreateDataSource(name)
     assert ds is None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = fgdb_drv.DeleteDataSource(name)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = fgdb_drv.DeleteDataSource(name)
     assert ret != 0
 
 

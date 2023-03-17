@@ -574,9 +574,8 @@ def test_ogr_geojson_20():
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ds = ogr.Open("/vsimem/testgj")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds = ogr.Open("/vsimem/testgj")
         if ds is None:
             print(gj)
             print(data.decode("LATIN1"))
@@ -843,20 +842,19 @@ def test_ogr_geojson_26():
 
 def test_ogr_geojson_27():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # Warning 1: Integer values probably ranging out of 64bit integer range
-    # have been found. Will be clamped to INT64_MIN/INT64_MAX
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
-{"type": "Feature",
- "geometry": {"type":"Point","coordinates":[1,2]},
- "properties": { "intvalue" : 1 }},
-{"type": "Feature",
- "geometry": {"type":"Point","coordinates":[3,4]},
- "properties": { "intvalue" : 12345678901231234567890123 }},
- ]}"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Warning 1: Integer values probably ranging out of 64bit integer range
+        # have been found. Will be clamped to INT64_MIN/INT64_MAX
+        ds = ogr.Open(
+            """{"type": "FeatureCollection", "features":[
+    {"type": "Feature",
+     "geometry": {"type":"Point","coordinates":[1,2]},
+     "properties": { "intvalue" : 1 }},
+    {"type": "Feature",
+     "geometry": {"type":"Point","coordinates":[3,4]},
+     "properties": { "intvalue" : 12345678901231234567890123 }},
+     ]}"""
+        )
     assert ds is not None, "Failed to open datasource"
 
     lyr = ds.GetLayerByName("OGRGeoJSON")
@@ -890,71 +888,68 @@ def test_ogr_geojson_35():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(2)
+        geom = ogr.Geometry(ogr.wkbPoint)
+        geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(2)
-    geom = ogr.Geometry(ogr.wkbPoint)
-    geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(3)
+        geom = ogr.Geometry(ogr.wkbLineString)
+        geom.AddPoint_2D(0, 0)
+        geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(3)
-    geom = ogr.Geometry(ogr.wkbLineString)
-    geom.AddPoint_2D(0, 0)
-    geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(4)
+        geom = ogr.Geometry(ogr.wkbPolygon)
+        geom2 = ogr.Geometry(ogr.wkbLinearRing)
+        geom2.AddPoint_2D(0, 0)
+        geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        geom.AddGeometry(geom2)
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(4)
-    geom = ogr.Geometry(ogr.wkbPolygon)
-    geom2 = ogr.Geometry(ogr.wkbLinearRing)
-    geom2.AddPoint_2D(0, 0)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    geom.AddGeometry(geom2)
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(5)
+        geom = ogr.Geometry(ogr.wkbMultiPoint)
+        geom2 = ogr.Geometry(ogr.wkbPoint)
+        geom2.AddPoint_2D(0, 0)
+        geom2 = ogr.Geometry(ogr.wkbPoint)
+        geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        geom.AddGeometry(geom2)
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(5)
-    geom = ogr.Geometry(ogr.wkbMultiPoint)
-    geom2 = ogr.Geometry(ogr.wkbPoint)
-    geom2.AddPoint_2D(0, 0)
-    geom2 = ogr.Geometry(ogr.wkbPoint)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    geom.AddGeometry(geom2)
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(6)
+        geom = ogr.Geometry(ogr.wkbMultiLineString)
+        geom2 = ogr.Geometry(ogr.wkbLineString)
+        geom2.AddPoint_2D(0, 0)
+        geom2 = ogr.Geometry(ogr.wkbLineString)
+        geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        geom.AddGeometry(geom2)
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(6)
-    geom = ogr.Geometry(ogr.wkbMultiLineString)
-    geom2 = ogr.Geometry(ogr.wkbLineString)
-    geom2.AddPoint_2D(0, 0)
-    geom2 = ogr.Geometry(ogr.wkbLineString)
-    geom2.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    geom.AddGeometry(geom2)
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
-
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(7)
-    geom = ogr.Geometry(ogr.wkbMultiPolygon)
-    geom2 = ogr.Geometry(ogr.wkbPolygon)
-    geom3 = ogr.Geometry(ogr.wkbLinearRing)
-    geom3.AddPoint_2D(0, 0)
-    geom2.AddGeometry(geom3)
-    geom2 = ogr.Geometry(ogr.wkbPolygon)
-    geom3 = ogr.Geometry(ogr.wkbLinearRing)
-    geom3.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
-    geom2.AddGeometry(geom3)
-    geom.AddGeometry(geom2)
-    feat.SetGeometry(geom)
-    lyr.CreateFeature(feat)
-
-    gdal.PopErrorHandler()
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(7)
+        geom = ogr.Geometry(ogr.wkbMultiPolygon)
+        geom2 = ogr.Geometry(ogr.wkbPolygon)
+        geom3 = ogr.Geometry(ogr.wkbLinearRing)
+        geom3.AddPoint_2D(0, 0)
+        geom2.AddGeometry(geom3)
+        geom2 = ogr.Geometry(ogr.wkbPolygon)
+        geom3 = ogr.Geometry(ogr.wkbLinearRing)
+        geom3.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2)  # evaluates to -inf, inf
+        geom2.AddGeometry(geom3)
+        geom.AddGeometry(geom2)
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
 
     ds = None
 
