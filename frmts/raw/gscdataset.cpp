@@ -31,6 +31,8 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              GSCDataset                              */
@@ -168,12 +170,11 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GSCDataset *poDS = new GSCDataset();
+    auto poDS = cpl::make_unique<GSCDataset>();
 
     poDS->nRasterXSize = nPixels;
     poDS->nRasterYSize = nLines;
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Read the header information in the second record.               */
@@ -187,7 +188,6 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
             CE_Failure, CPLE_FileIO,
             "Failure reading second record of GSC file with %d record length.",
             nRecordLen);
-        delete poDS;
         return nullptr;
     }
 
@@ -203,21 +203,17 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = -afHeaderInfo[1];
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-#ifdef CPL_LSB
-    const bool bNative = true;
-#else
-    const bool bNative = false;
-#endif
-
-    RawRasterBand *poBand = new RawRasterBand(
-        poDS, 1, poDS->fpImage, nRecordLen * 2 + 4, sizeof(float), nRecordLen,
-        GDT_Float32, bNative, RawRasterBand::OwnFP::NO);
-    poDS->SetBand(1, poBand);
-
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
+    auto poBand = RawRasterBand::Create(
+        poDS.get(), 1, poDS->fpImage, nRecordLen * 2 + 4, sizeof(float),
+        nRecordLen, GDT_Float32, RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+        RawRasterBand::OwnFP::NO);
+    if (!poBand)
+        return nullptr;
     poBand->SetNoDataValue(-1.0000000150474662199e+30);
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -228,9 +224,9 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
