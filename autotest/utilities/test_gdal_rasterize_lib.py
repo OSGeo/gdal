@@ -120,9 +120,8 @@ def test_gdal_rasterize_lib_3():
         + " ../gdrivers/data/n43.tif tmp/n43dt0.shp -i 10 -3d"
     )
 
-    with gdaltest.error_handler():
-        ds = gdal.Rasterize("/vsimem/bogus.tif", "tmp/n43dt0.shp")
-    assert ds is None, "did not expected success"
+    with pytest.raises(Exception):
+        gdal.Rasterize("/vsimem/bogus.tif", "tmp/n43dt0.shp")
 
     ds = gdal.Rasterize(
         "",

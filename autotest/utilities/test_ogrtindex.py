@@ -255,7 +255,8 @@ def test_ogrtindex_3(ogrtindex_path):
 def test_ogrtindex_cleanup():
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    shape_drv.DeleteDataSource("tmp/tileindex.shp")
+    if os.path.exists("tmp/tileindex.shp"):
+        shape_drv.DeleteDataSource("tmp/tileindex.shp")
     shape_drv.DeleteDataSource("tmp/point1.shp")
     shape_drv.DeleteDataSource("tmp/point2.shp")
     if os.path.exists("tmp/point3.shp"):

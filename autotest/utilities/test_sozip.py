@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -88,7 +90,8 @@ def test_sozip_create(sozip_path):
 
 def test_sozip_append(sozip_path):
 
-    gdal.Unlink("tmp/sozip.zip")
+    if os.path.exists("tmp/sozip.zip"):
+        gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
         sozip_path
@@ -117,7 +120,8 @@ def test_sozip_append(sozip_path):
 
 def test_sozip_validate(sozip_path):
 
-    gdal.Unlink("tmp/sozip.zip")
+    if os.path.exists("tmp/sozip.zip"):
+        gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
         sozip_path
@@ -143,7 +147,8 @@ def test_sozip_validate(sozip_path):
 
 def test_sozip_optimize_from(sozip_path):
 
-    gdal.Unlink("tmp/sozip.zip")
+    if os.path.exists("tmp/sozip.zip"):
+        gdal.Unlink("tmp/sozip.zip")
 
     (out, err) = gdaltest.runexternal_out_and_err(
         sozip_path

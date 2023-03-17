@@ -1148,9 +1148,10 @@ def test_ogr2ogr_29(ogr2ogr_path):
 
 def test_ogr2ogr_30(ogr2ogr_path):
 
-    ds = ogr.Open("../ogr/data/gml/testlistfields.gml")
+    with gdaltest.disable_exceptions():
+        ds = ogr.Open("../ogr/data/gml/testlistfields.gml")
     if ds is None:
-        pytest.skip()
+        pytest.skip("GML reader not available")
     ds = None
 
     gdaltest.runexternal(
@@ -1696,8 +1697,11 @@ def test_ogr2ogr_44(ogr2ogr_path):
     except (OSError, AttributeError):
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_44.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_44.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_44.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_44.gml")
+
+    if os.path.exists("tmp/test_ogr2ogr_44.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_44.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
         "tmp/test_ogr2ogr_44_src.shp"
@@ -1757,8 +1761,11 @@ def test_ogr2ogr_45(ogr2ogr_path):
     except (OSError, AttributeError):
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_45.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_45.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_45.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_45.gml")
+
+    if os.path.exists("tmp/test_ogr2ogr_45.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_45.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
         "tmp/test_ogr2ogr_45_src.shp"
@@ -1818,8 +1825,11 @@ def test_ogr2ogr_46(ogr2ogr_path):
     except (OSError, AttributeError):
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_46.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_46.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_46.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_46.gml")
+
+    if os.path.exists("tmp/test_ogr2ogr_46.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_46.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
         "tmp/test_ogr2ogr_46_src.shp"
@@ -1870,6 +1880,7 @@ def test_ogr2ogr_46(ogr2ogr_path):
 # Test reprojection with features with different SRS
 
 
+@pytest.mark.require_driver("GML")
 def test_ogr2ogr_47(ogr2ogr_path):
 
     f = open("tmp/test_ogr2ogr_47_src.gml", "wt")
@@ -1897,14 +1908,14 @@ def test_ogr2ogr_47(ogr2ogr_path):
     )
     f.close()
 
-    gdal.Unlink("tmp/test_ogr2ogr_47_src.gfs")
+    if os.path.exists("tmp/test_ogr2ogr_47_src.gfs"):
+        gdal.Unlink("tmp/test_ogr2ogr_47_src.gfs")
 
-    ds = ogr.Open("tmp/test_ogr2ogr_47_src.gml")
-
-    if ds is None:
+    try:
+        ogr.Open("tmp/test_ogr2ogr_47_src.gml")
+    except Exception:
         os.unlink("tmp/test_ogr2ogr_47_src.gml")
-        pytest.skip()
-    ds = None
+        pytest.skip("GML reader not available")
 
     gdaltest.runexternal(
         ogr2ogr_path

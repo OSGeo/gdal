@@ -220,7 +220,8 @@ def test_gdal_rasterize_4(gdal_rasterize_path):
     if test_cli_utilities.get_gdal_contour_path() is None:
         pytest.skip("gdal_contour missing")
 
-    gdal.GetDriverByName("GTiff").Delete("tmp/n43dt0.tif")
+    with gdaltest.disable_exceptions():
+        gdal.GetDriverByName("GTiff").Delete("tmp/n43dt0.tif")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
@@ -384,13 +385,12 @@ def test_gdal_rasterize_7(gdal_rasterize_path, sql_in_file):
 
     pytest.importorskip("numpy")
 
-    with gdaltest.error_handler():
+    try:
         drv = ogr.GetDriverByName("SQLITE")
-        ds = drv.CreateDataSource("/vsimem/foo.db", options=["SPATIALITE=YES"])
-        if ds is None:
-            pytest.skip("Spatialite not available")
-        ds = None
+        drv.CreateDataSource("/vsimem/foo.db", options=["SPATIALITE=YES"])
         gdal.Unlink("/vsimem/foo.db")
+    except Exception:
+        pytest.skip("Spatialite not available")
 
     f = open("tmp/test_gdal_rasterize_7.csv", "wb")
     x = (0, 0, 50, 50, 25)

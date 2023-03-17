@@ -1312,4 +1312,5 @@ def test_gdal_grid_cleanup():
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43.shp")
     drv = gdal.GetDriverByName("GTiff")
     for outfile in outfiles:
-        drv.Delete(outfile)
+        with gdaltest.disable_exceptions():
+            drv.Delete(outfile)

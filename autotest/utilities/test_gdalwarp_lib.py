@@ -405,13 +405,12 @@ def test_gdalwarp_lib_16():
     gdal.Unlink("/vsimem/test_gdalwarp_lib_16.vrt")
 
     # Cannot write file
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "/i_dont/exist/test_gdalwarp_lib_16.vrt",
             "tmp/testgdalwarp_gcp.tif",
             format="VRT",
         )
-    assert ds is None
 
 
 ###############################################################################
@@ -845,11 +844,10 @@ def test_gdalwarp_lib_101():
 def test_gdalwarp_lib_102():
 
     no_band_ds = gdal.GetDriverByName("MEM").Create("no band", 1, 1, 0)
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "", ["../gdrivers/data/small_world_pct.tif", no_band_ds], format="MEM"
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -858,8 +856,8 @@ def test_gdalwarp_lib_102():
 
 def test_gdalwarp_lib_103():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             [
                 "../gdrivers/data/small_world_pct.tif",
@@ -867,7 +865,6 @@ def test_gdalwarp_lib_103():
             ],
             format="MEM",
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -876,29 +873,24 @@ def test_gdalwarp_lib_103():
 
 def test_gdalwarp_lib_104():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp("", [], format="MEM")
-    assert ds is None, "Did not expected dataset"
+    with pytest.raises(Exception):
+        gdal.Warp("", [], format="MEM")
 
 
 ###############################################################################
-# Test failure in GDALSuggestedWarpOutput2
+# Used to be a failure in GDALSuggestedWarpOutput2 with proj 4.9.3
 
 
 def test_gdalwarp_lib_105():
 
-    # with proj 4.9.3 this will success. We limit the width and height
-    # otherwise a very big raster will be created with 4.9.3 which may cause
-    # hangups in Travis MacOSX
-    with gdaltest.error_handler():
-        gdal.Warp(
-            "",
-            ["../gdrivers/data/small_world_pct.tif", "../gcore/data/byte.tif"],
-            format="MEM",
-            dstSRS="EPSG:32645",
-            width=100,
-            height=100,
-        )
+    gdal.Warp(
+        "",
+        ["../gdrivers/data/small_world_pct.tif", "../gcore/data/byte.tif"],
+        format="MEM",
+        dstSRS="EPSG:32645",
+        width=100,
+        height=100,
+    )
 
 
 ###############################################################################
@@ -907,12 +899,11 @@ def test_gdalwarp_lib_105():
 
 def test_gdalwarp_lib_106():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "/not_existing_dir/not_existing_file",
             ["../gdrivers/data/small_world_pct.tif", "../gcore/data/byte.tif"],
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -941,11 +932,10 @@ def test_gdalwarp_lib_108():
 
 def test_gdalwarp_lib_109():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "", "../gcore/data/byte.tif", format="MEM", cutlineDSName="/does/not/exist"
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -954,15 +944,14 @@ def test_gdalwarp_lib_109():
 
 def test_gdalwarp_lib_110():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/byte.tif",
             format="MEM",
             cutlineDSName="data/cutline.vrt",
             cutlineLayer="wrong_name",
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -999,15 +988,14 @@ def test_gdalwarp_lib_112():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
             cutlineDSName="/vsimem/cutline.shp",
             cutlineSQL="SELECT * FROM cutline",
         )
-    assert ds is None, "Did not expected dataset"
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
@@ -1024,14 +1012,13 @@ def test_gdalwarp_lib_113():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
             cutlineDSName="/vsimem/cutline.shp",
         )
-    assert ds is None, "Did not expected dataset"
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
@@ -1044,14 +1031,13 @@ def test_gdalwarp_lib_114():
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
     ds.CreateLayer("cutline")
     ds = None
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
             cutlineDSName="/vsimem/cutline.shp",
         )
-    assert ds is None, "Did not expected dataset"
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
@@ -1064,11 +1050,10 @@ def test_gdalwarp_lib_115():
     no_band_ds = gdal.GetDriverByName("MEM").Create("no band", 1, 1, 0)
     out_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
 
-    with gdaltest.error_handler():
-        ret = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             out_ds, no_band_ds, cutlineDSName="data/cutline.vrt", cutlineLayer="cutline"
         )
-    assert ret == 0, "Expected failure"
 
 
 ###############################################################################
@@ -1077,8 +1062,8 @@ def test_gdalwarp_lib_115():
 
 def test_gdalwarp_lib_116():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
@@ -1087,7 +1072,6 @@ def test_gdalwarp_lib_116():
             cropToCutline=True,
             transformerOptions=["SRC_SRS=invalid"],
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -1096,8 +1080,8 @@ def test_gdalwarp_lib_116():
 
 def test_gdalwarp_lib_117():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
@@ -1106,7 +1090,6 @@ def test_gdalwarp_lib_117():
             cropToCutline=True,
             transformerOptions=["DST_SRS=invalid"],
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -1115,8 +1098,8 @@ def test_gdalwarp_lib_117():
 
 def test_gdalwarp_lib_118():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             [],
             format="MEM",
@@ -1124,7 +1107,6 @@ def test_gdalwarp_lib_118():
             cutlineLayer="cutline",
             cropToCutline=True,
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -1134,8 +1116,8 @@ def test_gdalwarp_lib_118():
 def test_gdalwarp_lib_119():
 
     no_proj_ds = gdal.GetDriverByName("MEM").Create("no_proj_ds", 1, 1)
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             no_proj_ds,
             format="MEM",
@@ -1143,7 +1125,6 @@ def test_gdalwarp_lib_119():
             cutlineLayer="cutline",
             cropToCutline=True,
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -1154,8 +1135,8 @@ def test_gdalwarp_lib_120():
 
     dummy_proj_ds = gdal.GetDriverByName("MEM").Create("no_proj_ds", 1, 1)
     dummy_proj_ds.SetProjection("dummy")
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             dummy_proj_ds,
             format="MEM",
@@ -1163,7 +1144,6 @@ def test_gdalwarp_lib_120():
             cutlineLayer="cutline",
             cropToCutline=True,
         )
-    assert ds is None, "Did not expected dataset"
 
 
 ###############################################################################
@@ -1173,33 +1153,28 @@ def test_gdalwarp_lib_120():
 def test_gdalwarp_lib_121():
 
     # No option
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.wrapper_GDALWarpDestName("", [], None)
 
     # Will create an implicit options structure
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.wrapper_GDALWarpDestName("", [], None, gdal.TermProgress_nocb)
 
     # Null dest name
-    try:
-        gdal.wrapper_GDALWarpDestName(None, [], None)
-    except Exception:
-        pass
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            gdal.wrapper_GDALWarpDestName(None, [], None)
 
     # No option
-    with gdaltest.error_handler():
-        gdal.wrapper_GDALWarpDestDS(
-            gdal.GetDriverByName("MEM").Create("", 1, 1), [], None
-        )
+    gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName("MEM").Create("", 1, 1), [], None)
 
     # Will create an implicit options structure
-    with gdaltest.error_handler():
-        gdal.wrapper_GDALWarpDestDS(
-            gdal.GetDriverByName("MEM").Create("", 1, 1),
-            [],
-            None,
-            gdal.TermProgress_nocb,
-        )
+    gdal.wrapper_GDALWarpDestDS(
+        gdal.GetDriverByName("MEM").Create("", 1, 1),
+        [],
+        None,
+        gdal.TermProgress_nocb,
+    )
 
 
 ###############################################################################
@@ -1218,9 +1193,8 @@ def test_gdalwarp_lib_122():
 
 def test_gdalwarp_lib_123():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp("", "../gcore/data/byte_truncated.tif", format="MEM")
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.Warp("", "../gcore/data/byte_truncated.tif", format="MEM")
 
 
 ###############################################################################
@@ -1285,14 +1259,13 @@ def test_gdalwarp_lib_126():
     lyr.CreateFeature(f)
     f = None
     ds = None
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
             cutlineDSName="/vsimem/cutline.shp",
         )
-    assert ds is None, "Did not expected dataset"
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
@@ -1386,8 +1359,8 @@ def test_gdalwarp_lib_128():
     assert cs == 4248, "bad checksum"
 
     gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", "NO")
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             mem_ds,
             format="MEM",
@@ -1399,7 +1372,6 @@ def test_gdalwarp_lib_128():
             transformerOptions=["RPC_DEM=data/test_gdalwarp_lib_128_dem.tif"],
         )
     gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", None)
-    assert ds is None, "expected none return"
 
     gdal.Unlink(cutlineDSName)
 
@@ -1539,7 +1511,8 @@ def test_gdalwarp_lib_131():
     ds = None
     gdal.Unlink("/vsimem/test_gdalwarp_lib_131.tif")
     gdal.Unlink("/vsimem/test_gdalwarp_lib_131_dst.tif")
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml")
+    if gdal.VSIStatL("/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml") is not None:
+        gdal.Unlink("/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml")
 
 
 ###############################################################################
@@ -1592,7 +1565,8 @@ def test_gdalwarp_lib_132():
 
         gdal.Unlink("/vsimem/test_gdalwarp_lib_132.tif")
         gdal.Unlink("/vsimem/test_gdalwarp_lib_132_dst.tif")
-        gdal.Unlink("/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml")
+        if gdal.VSIStatL("/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml") is not None:
+            gdal.Unlink("/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml")
 
 
 ###############################################################################
@@ -1968,15 +1942,14 @@ def test_gdalwarp_lib_135():
 
     if osr.GetPROJVersionMajor() >= 8:
         # Test missing shift values in area of interest
-        with gdaltest.error_handler():
-            ds = gdal.Warp(
+        with pytest.raises(Exception):
+            gdal.Warp(
                 "",
                 src_ds,
                 format="MEM",
                 srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/empty_grid.gtx +vunits=m +no_defs",
                 dstSRS="EPSG:4979",
             )
-        assert ds is None
 
     gdal.GetDriverByName("GTiff").Delete("tmp/grid.gtx")
     gdal.GetDriverByName("GTiff").Delete("tmp/grid2.gtx")
@@ -1989,23 +1962,21 @@ def test_gdalwarp_lib_135():
 
 def test_gdalwarp_lib_136():
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
             warpOptions=["CUTLINE=invalid"],
         )
-    assert ds is None
 
-    with gdaltest.error_handler():
-        ds = gdal.Warp(
+    with pytest.raises(Exception):
+        gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
             format="VRT",
             warpOptions=["CUTLINE=invalid"],
         )
-    assert ds is None
 
 
 ###############################################################################
@@ -2100,7 +2071,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
         "-wo INIT_DEST=NO_DATA",
         "-dstnodata 0",
     ]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             src_ds,
@@ -2111,7 +2083,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
 
     # Same with MEM
     for options in ["", "-wo INIT_DEST=0", "-dstnodata 0"]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             src_ds,
@@ -2126,7 +2099,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
         "-dstnodata 1 -wo INIT_DEST=NO_DATA",
         "-dstnodata 1 -wo INIT_DEST=1",
     ]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             src_ds,
@@ -2141,7 +2115,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
         "-dstnodata 1 -wo INIT_DEST=NO_DATA",
         "-dstnodata 1 -wo INIT_DEST=1",
     ]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             src_ds,
@@ -2154,7 +2129,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
     for options in [  # '-wo SKIP_NOSOURCE=NO -dstnodata 1 -wo INIT_DEST=0',
         "-dstnodata 127 -wo INIT_DEST=0"
     ]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             src_ds,
@@ -2175,7 +2151,8 @@ def test_gdalwarp_lib_auto_skip_nosource():
     src_ds2.SetProjection(sr.ExportToWkt())
 
     for options in [""]:
-        gdal.Unlink(tmpfilename)
+        if gdal.VSIStatL(tmpfilename) is not None:
+            gdal.Unlink(tmpfilename)
         out_ds = gdal.Warp(
             tmpfilename,
             [src_ds1, src_ds2],
@@ -2218,8 +2195,8 @@ def test_gdalwarp_lib_insufficient_dst_band_count():
 
     src_ds = gdal.Translate("", "../gcore/data/byte.tif", options="-of MEM -b 1 -b 1")
     dst_ds = gdal.Translate("", "../gcore/data/byte.tif", options="-of MEM")
-    with gdaltest.error_handler():
-        assert gdal.Warp(dst_ds, src_ds) == 0
+    with pytest.raises(Exception):
+        gdal.Warp(dst_ds, src_ds)
 
 
 ###############################################################################
@@ -3196,18 +3173,13 @@ def test_gdalwarp_lib_srcBands():
             )
 
     # Invalid srcBands[0] value
-    with gdaltest.error_handler():
-        assert (
-            gdal.Warp("", "../gcore/data/byte.tif", format="MEM", srcBands=[2]) is None
-        )
+    with pytest.raises(Exception):
+        gdal.Warp("", "../gcore/data/byte.tif", format="MEM", srcBands=[2])
 
     # Invalid dstBands[0] value
-    with gdaltest.error_handler():
-        assert (
-            gdal.Warp(
-                "", "../gcore/data/byte.tif", format="MEM", srcBands=[1], dstBands=[2]
-            )
-            is None
+    with pytest.raises(Exception):
+        gdal.Warp(
+            "", "../gcore/data/byte.tif", format="MEM", srcBands=[1], dstBands=[2]
         )
 
     # Test with RGB input dataset
