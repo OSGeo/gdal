@@ -30,6 +30,8 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "rawdataset.h"
+
+#include <algorithm>
 #include <cctype>
 
 /************************************************************************/
@@ -228,7 +230,7 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    PNMDataset *poDS = new PNMDataset();
+    auto poDS = cpl::make_unique<PNMDataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file that is of interest.     */
@@ -237,19 +239,13 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = nHeight;
 
     // Borrow file pointer
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     poDS->eAccess = poOpenInfo->eAccess;
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-#ifdef CPL_LSB
-    const bool bMSBFirst = false;
-#else
-    const bool bMSBFirst = true;
-#endif
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
 
     GDALDataType eDataType = GDT_Unknown;
     if (nMaxValue < 256)
@@ -264,39 +260,37 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
         if (nWidth > INT_MAX / iPixelSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
-            delete poDS;
             return nullptr;
         }
-        poDS->SetBand(1,
-                      new RawRasterBand(poDS, 1, poDS->fpImage, iIn, iPixelSize,
-                                        nWidth * iPixelSize, eDataType,
-                                        bMSBFirst, RawRasterBand::OwnFP::NO));
-        poDS->GetRasterBand(1)->SetColorInterpretation(GCI_GrayIndex);
+        auto poBand = RawRasterBand::Create(
+            poDS.get(), 1, poDS->fpImage, iIn, iPixelSize, nWidth * iPixelSize,
+            eDataType, RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+            RawRasterBand::OwnFP::NO);
+        if (!poBand)
+            return nullptr;
+        poBand->SetColorInterpretation(GCI_GrayIndex);
+        poDS->SetBand(1, std::move(poBand));
     }
     else
     {
         if (nWidth > INT_MAX / (3 * iPixelSize))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
-            delete poDS;
             return nullptr;
         }
-        poDS->SetBand(
-            1, new RawRasterBand(poDS, 1, poDS->fpImage, iIn, 3 * iPixelSize,
-                                 nWidth * 3 * iPixelSize, eDataType, bMSBFirst,
-                                 RawRasterBand::OwnFP::NO));
-        poDS->SetBand(2, new RawRasterBand(
-                             poDS, 2, poDS->fpImage, iIn + iPixelSize,
-                             3 * iPixelSize, nWidth * 3 * iPixelSize, eDataType,
-                             bMSBFirst, RawRasterBand::OwnFP::NO));
-        poDS->SetBand(3, new RawRasterBand(
-                             poDS, 3, poDS->fpImage, iIn + 2 * iPixelSize,
-                             3 * iPixelSize, nWidth * 3 * iPixelSize, eDataType,
-                             bMSBFirst, RawRasterBand::OwnFP::NO));
-
-        poDS->GetRasterBand(1)->SetColorInterpretation(GCI_RedBand);
-        poDS->GetRasterBand(2)->SetColorInterpretation(GCI_GreenBand);
-        poDS->GetRasterBand(3)->SetColorInterpretation(GCI_BlueBand);
+        for (int i = 0; i < 3; ++i)
+        {
+            auto poBand = RawRasterBand::Create(
+                poDS.get(), i + 1, poDS->fpImage, iIn + i * iPixelSize,
+                3 * iPixelSize, nWidth * 3 * iPixelSize, eDataType,
+                RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+                RawRasterBand::OwnFP::NO);
+            if (!poBand)
+                return nullptr;
+            poBand->SetColorInterpretation(
+                static_cast<GDALColorInterp>(GCI_RedBand + i));
+            poDS->SetBand(i + 1, std::move(poBand));
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -314,9 +308,9 @@ GDALDataset *PNMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
