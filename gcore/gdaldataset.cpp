@@ -815,8 +815,7 @@ void GDALDataset::SetBand(int nNewBand, GDALRasterBand *poBand)
  * @param poBand band object.
  */
 
-void GDALDataset::SetBand(int nNewBand,
-                          std::unique_ptr<GDALRasterBand> &&poBand)
+void GDALDataset::SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand)
 {
     SetBand(nNewBand, poBand.release());
 }
