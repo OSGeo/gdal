@@ -928,7 +928,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    ERSDataset *poDS = new ERSDataset();
+    auto poDS = cpl::make_unique<ERSDataset>();
     poDS->poHeader = poHeader;
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -942,7 +942,6 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, FALSE))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -958,7 +957,6 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Illegal value for HeaderOffset: %s", pszHeaderOffset);
-            delete poDS;
             return nullptr;
         }
     }
@@ -1069,7 +1067,6 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->nRasterXSize > knIntMax / (nBands * iWordSize))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "int overflow");
-                delete poDS;
                 return nullptr;
             }
 
@@ -1079,20 +1076,20 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                     nHeaderOffset, iWordSize * poDS->nRasterXSize,
                     poDS->fpImage))
             {
-                delete poDS;
                 return nullptr;
             }
 
             for (int iBand = 0; iBand < nBands; iBand++)
             {
                 // Assume pixel interleaved.
-                poDS->SetBand(
-                    iBand + 1,
-                    new ERSRasterBand(
-                        poDS, iBand + 1, poDS->fpImage,
-                        nHeaderOffset + iWordSize * iBand * poDS->nRasterXSize,
-                        iWordSize, iWordSize * nBands * poDS->nRasterXSize,
-                        eType, bNative));
+                auto poBand = cpl::make_unique<ERSRasterBand>(
+                    poDS.get(), iBand + 1, poDS->fpImage,
+                    nHeaderOffset + iWordSize * iBand * poDS->nRasterXSize,
+                    iWordSize, iWordSize * nBands * poDS->nRasterXSize, eType,
+                    bNative);
+                if (!poBand->IsValid())
+                    return nullptr;
+                poDS->SetBand(iBand + 1, poBand.release());
             }
         }
     }
@@ -1102,7 +1099,6 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poDS->nBands == 0)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -1303,8 +1299,8 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poSRS == nullptr)
     {
         // try aux
-        GDALDataset *poAuxDS = GDALFindAssociatedAuxFile(
-            poOpenInfo->pszFilename, GA_ReadOnly, poDS);
+        auto poAuxDS = std::unique_ptr<GDALDataset>(GDALFindAssociatedAuxFile(
+            poOpenInfo->pszFilename, GA_ReadOnly, poDS.get()));
         if (poAuxDS)
         {
             poSRS = poAuxDS->GetSpatialRef();
@@ -1312,16 +1308,14 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 poDS->m_oSRS = *poSRS;
             }
-
-            GDALClose(poAuxDS);
         }
     }
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
