@@ -99,6 +99,14 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 }
 %}
 
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception PushErrorHandler
+{
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    $action
+}
+
 %inline %{
   CPLErr PushErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
   {
@@ -109,6 +117,12 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     return CE_None;
   }
 %}
+
+%exception PopErrorHandler
+{
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    $action
+}
 
 %inline %{
   void PopErrorHandler()
