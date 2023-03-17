@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 /* ==================================================================== */
@@ -556,7 +557,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    GenBinDataset *poDS = new GenBinDataset();
+    auto poDS = cpl::make_unique<GenBinDataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file that is of interest.     */
@@ -570,12 +571,10 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, FALSE))
     {
-        delete poDS;
         return nullptr;
     }
 
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
     poDS->eAccess = poOpenInfo->eAccess;
 
     /* -------------------------------------------------------------------- */
@@ -609,7 +608,6 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Only one band is supported for U1/U2/U4 data type");
-            delete poDS;
             return nullptr;
         }
     }
@@ -622,16 +620,15 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Do we need byte swapping?                                       */
     /* -------------------------------------------------------------------- */
-    const char *pszBYTE_ORDER = CSLFetchNameValue(papszHdr, "BYTE_ORDER");
-    bool bNative = true;
 
-    if (pszBYTE_ORDER != nullptr)
+    RawRasterBand::ByteOrder eByteOrder = RawRasterBand::NATIVE_BYTE_ORDER;
+
+    const char *pszByteOrder = CSLFetchNameValue(papszHdr, "BYTE_ORDER");
+    if (pszByteOrder)
     {
-#ifdef CPL_LSB
-        bNative = STARTS_WITH_CI(pszBYTE_ORDER, "LSB");
-#else
-        bNative = !STARTS_WITH_CI(pszBYTE_ORDER, "LSB");
-#endif
+        eByteOrder = EQUAL(pszByteOrder, "LSB")
+                         ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+                         : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN;
     }
 
     /* -------------------------------------------------------------------- */
@@ -691,7 +688,6 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (bIntOverflow)
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
         return nullptr;
     }
@@ -701,7 +697,6 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
                                     nBands, nItemSize, nPixelOffset,
                                     nLineOffset, 0, nBandOffset, poDS->fpImage))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -711,20 +706,20 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
-    poDS->nBands = nBands;
-    for (int i = 0; i < poDS->nBands; i++)
+    for (int i = 0; i < nBands; i++)
     {
         if (nBits != -1)
         {
-            poDS->SetBand(i + 1, new GenBinBitRasterBand(poDS, nBits));
+            poDS->SetBand(i + 1, new GenBinBitRasterBand(poDS.get(), nBits));
         }
         else
         {
-            poDS->SetBand(i + 1,
-                          new RawRasterBand(poDS, i + 1, poDS->fpImage,
-                                            nBandOffset * i, nPixelOffset,
-                                            nLineOffset, eDataType, bNative,
-                                            RawRasterBand::OwnFP::NO));
+            auto poBand = RawRasterBand::Create(
+                poDS.get(), i + 1, poDS->fpImage, nBandOffset * i, nPixelOffset,
+                nLineOffset, eDataType, eByteOrder, RawRasterBand::OwnFP::NO);
+            if (!poBand)
+                return nullptr;
+            poDS->SetBand(i + 1, std::move(poBand));
         }
     }
 
@@ -770,9 +765,9 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
