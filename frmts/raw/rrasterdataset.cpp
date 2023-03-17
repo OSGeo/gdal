@@ -1229,7 +1229,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    RRASTERDataset *poDS = new RRASTERDataset;
+    auto poDS = cpl::make_unique<RRASTERDataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
@@ -1370,10 +1370,13 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLStringList aosLayerNames(CSLTokenizeString2(osLayerName, ":", 0));
     for (int i = 1; i <= l_nBands; i++)
     {
-        RRASTERRasterBand *poBand =
-            new RRASTERRasterBand(poDS, i, fpImage, nBandOffset * (i - 1),
-                                  nPixelOffset, nLineOffset, eDT, bNativeOrder);
-        poDS->SetBand(i, poBand);
+        auto poBand = cpl::make_unique<RRASTERRasterBand>(
+            poDS.get(), i, fpImage, nBandOffset * (i - 1), nPixelOffset,
+            nLineOffset, eDT, bNativeOrder);
+        if (!poBand->IsValid())
+        {
+            return nullptr;
+        }
         if (!osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA"))
         {
             double dfNoDataValue = CPLAtof(osNoDataValue);
@@ -1405,9 +1408,10 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         poBand->m_poCT = poDS->m_poCT;
         if (poBand->m_poCT)
             poBand->SetColorInterpretation(GCI_PaletteIndex);
+        poDS->SetBand(i, std::move(poBand));
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
