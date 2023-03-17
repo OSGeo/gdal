@@ -12,6 +12,7 @@
   if ( GDALGetDriverCount() == 0 ) {
     GDALAllRegister();
   }
+  UseExceptions();
 %}
 
 %{

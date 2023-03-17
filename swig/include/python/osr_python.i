@@ -6,6 +6,10 @@
 
 %feature("autodoc");
 
+%init %{
+  UseExceptions();
+%}
+
 #ifndef FROM_GDAL_I
 %{
 #define MODULE_NAME           "osr"

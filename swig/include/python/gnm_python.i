@@ -12,6 +12,7 @@
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
+  UseExceptions();
 
 %}
 #endif
