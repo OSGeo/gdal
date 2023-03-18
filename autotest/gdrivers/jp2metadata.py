@@ -35,6 +35,19 @@ import pytest
 
 from osgeo import gdal
 
+
+def have_jpeg2000_capable_driver():
+    # JP2MrSID doesn't manage to open data/jpeg2000/IMG_md_ple_R1C1.jp2
+    for drv_name in ["JP2KAK", "JP2LURA", "JP2ECW", "JP2OpenJPEG"]:
+        if gdal.GetDriverByName(drv_name):
+            return True
+    return False
+
+
+pytestmark = pytest.mark.skipif(
+    not have_jpeg2000_capable_driver(), reason="No JPEG2000 capable driver"
+)
+
 ###############################################################################
 # Test bugfix for #5249 (Irrelevant ERDAS GeoTIFF JP2Box read)
 
@@ -42,9 +55,6 @@ from osgeo import gdal
 def test_jp2metadata_1():
 
     ds = gdal.Open("data/jpeg2000/erdas_foo.jp2")
-    if ds is None:
-        pytest.skip()
-
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
     assert wkt.startswith('PROJCS["ETRS89')
@@ -64,8 +74,6 @@ def _test_jp2metadata(file_path, rpc_values_to_check=None):
         pass
 
     ds = gdal.Open(file_path, gdal.GA_ReadOnly)
-    if ds is None:
-        pytest.skip()
 
     filelist = ds.GetFileList()
 
@@ -177,15 +185,11 @@ def test_jp2metadata_2b():
 
 def test_jp2metadata_3():
 
-    gdal.SetConfigOption("GDAL_IGNORE_AXIS_ORIENTATION", "YES")
-
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
-    ds = gdal.Open("data/jpeg2000/ll.jp2")
-    if ds is None:
-        gdal.SetConfigOption("GDAL_IGNORE_AXIS_ORIENTATION", "NO")
-        pytest.skip()
-    wkt = ds.GetProjection()
+    with gdal.config_option("GDAL_IGNORE_AXIS_ORIENTATION", "YES"):
+        ds = gdal.Open("data/jpeg2000/ll.jp2")
+        wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
         print("got: ", wkt)
@@ -219,8 +223,6 @@ def test_jp2metadata_4():
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
     ds = gdal.Open("data/jpeg2000/gmljp2_dtedsm_epsg_4326_axes.jp2")
-    if ds is None:
-        pytest.skip()
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
@@ -260,9 +262,6 @@ def test_jp2metadata_4():
 def test_jp2metadata_5():
 
     ds = gdal.Open("data/jpeg2000/gmljp2_epsg3035_easting_northing.jp2")
-    if ds is None:
-        pytest.skip()
-
     sr = ds.GetSpatialRef()
     assert sr.GetAuthorityCode(None) == "3035"
 
