@@ -180,8 +180,11 @@ def test_gdal_viewshed_api():
         heightMode=gdal.GVOT_MIN_TARGET_HEIGHT_FROM_GROUND,
         options=["UNUSED=YES"],
     )
-    gdal.Unlink(viewshed_in)
-    assert ds.GetRasterBand(1).Checksum() == 8381
+    try:
+        assert ds.GetRasterBand(1).Checksum() == 8381
+    finally:
+        src_ds = None
+        gdal.Unlink(viewshed_in)
 
 
 ###############################################################################
