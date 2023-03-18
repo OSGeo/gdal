@@ -1188,12 +1188,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-@pytest.mark.skipif(
-    ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))").MakeValid()
-    is None,
-    reason="GEOS < 3.8, no MakeValid",
-)
+@pytest.mark.require_geos(3, 8)
 def test_ogr2ogr_lib_clipsrc_invalid_polygon():
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
