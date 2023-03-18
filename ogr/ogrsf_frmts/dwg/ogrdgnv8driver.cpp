@@ -144,6 +144,9 @@ void RegisterOGRDGNV8()
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_WRITE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,

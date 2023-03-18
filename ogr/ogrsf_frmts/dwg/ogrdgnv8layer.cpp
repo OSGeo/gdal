@@ -1666,7 +1666,7 @@ int OGRDGNV8Layer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCSequentialWrite) ||
              EQUAL(pszCap, OLCDeleteFeature))
         return m_poDS->GetUpdate();
-    else if (EQUAL(pszCap, OLCCurveGeometries))
+    else if (EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))
         return TRUE;
 
     return FALSE;
