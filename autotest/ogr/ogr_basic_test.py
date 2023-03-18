@@ -445,25 +445,6 @@ def test_ogr_basic_10():
 
 
 ###############################################################################
-# Test double call to UseExceptions() (#5704)
-
-
-@pytest.mark.require_geos
-def test_ogr_basic_11():
-
-    used_exceptions_before = ogr.GetUseExceptions()
-    for _ in range(2):
-        ogr.UseExceptions()
-        geom = ogr.CreateGeometryFromWkt(
-            "POLYGON ((-65 0, -30 -30, -30 0, -65 -30, -65 0))"
-        )
-        with gdaltest.error_handler():
-            geom.IsValid()
-    if used_exceptions_before == 0:
-        ogr.DontUseExceptions()
-
-
-###############################################################################
 # Test OFSTBoolean, OFSTInt16 and OFSTFloat32
 
 
@@ -644,24 +625,12 @@ def test_ogr_basic_15():
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayer(0)
 
-    used_exceptions_before = ogr.GetUseExceptions()
-    ogr.UseExceptions()
-    try:
-        lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-    except RuntimeError as e:
-        ok = (
-            str(e).find(
-                "CreateFeature : unsupported operation on a read-only datasource"
-            )
-            >= 0
-        )
-        assert ok, "Got: %s" + str(e)
-        return
-    finally:
-        if used_exceptions_before == 0:
-            ogr.DontUseExceptions()
-
-    pytest.fail("Expected exception")
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(
+            Exception,
+            match=r".*CreateFeature : unsupported operation on a read-only datasource.*",
+        ):
+            lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
 
 
 ###############################################################################

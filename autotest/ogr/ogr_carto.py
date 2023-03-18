@@ -567,6 +567,7 @@ Error""",
     f = ogr.Feature(lyr.GetLayerDefn())
     with pytest.raises(Exception):
         lyr.CreateFeature(f)
+    f = None
 
     fld_defn = ogr.FieldDefn("INTFIELD", ogr.OFTInteger)
     # No server answer
@@ -723,6 +724,7 @@ Error""",
     if ret != 0 or f.GetFID() != 12:
         f.DumpReadable()
         pytest.fail()
+    f = None
 
     ds = gdal.OpenEx(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
@@ -741,6 +743,7 @@ Error""",
     if ret != 0 or f.GetFID() != 11:
         f.DumpReadable()
         pytest.fail()
+    f = None
 
     # Now remove default value to strfield
     gdal.FileFromMemBuffer(
@@ -793,6 +796,7 @@ Error""",
     f.SetField("strfield", "baz")
     ret = lyr.CreateFeature(f)
     assert ret == 0 and f.GetFID() == 13
+    f = None
 
     gdal.ErrorReset()
     with gdaltest.tempfile(
@@ -821,6 +825,7 @@ Error""",
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 0,0 0))"))
         assert lyr.CreateFeature(f) == 0
+        f = None
 
     with gdaltest.tempfile(
         """/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("the_geom") VALUES ('0106000020E61000000100000001030000000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000');COMMIT;&api_key=foo""",
@@ -853,6 +858,7 @@ Error""",
             assert lyr.CreateFeature(f) == 0
             assert f.GetFID() == 100
             ds = None
+        f = None
 
     ds = ogr.Open("CARTO:foo", update=1)
 
@@ -886,6 +892,7 @@ Error""",
             f.SetField("intfield", 12)
             f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(100 100)"))
             assert lyr.CreateFeature(f) == 0
+            f = None
 
             # FIXME? a "RunCopyFrom Error Message:HTTP error code : 404" error is thrown
             with gdaltest.disable_exceptions():
