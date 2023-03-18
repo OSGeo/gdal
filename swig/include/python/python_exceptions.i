@@ -5,7 +5,8 @@
  */
 %{
 static int bUseExceptions=0;
-static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
+static thread_local int bUseExceptionsLocal = -1;
+static thread_local CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
 static void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
@@ -45,11 +46,37 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
     result = GetUseExceptions();
 }
 
+%exception _GetExceptionsLocal
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
+%exception _SetExceptionsLocal
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
 %inline %{
 
 static
 int GetUseExceptions() {
-  return bUseExceptions;
+  return bUseExceptionsLocal >= 0 ? bUseExceptionsLocal : bUseExceptions;
+}
+
+static int _GetExceptionsLocal()
+{
+  return bUseExceptionsLocal;
+}
+
+static void _SetExceptionsLocal(int bVal)
+{
+  bUseExceptionsLocal = bVal;
 }
 
 static
@@ -136,7 +163,7 @@ static void popErrorHandler()
 %include exception.i
 
 %exception {
-    const int bLocalUseExceptions = bUseExceptions;
+    const int bLocalUseExceptions = GetUseExceptions();
     if ( bLocalUseExceptions ) {
         pushErrorHandler();
     }
@@ -155,7 +182,7 @@ static void popErrorHandler()
 }
 
 %feature("except") Open {
-    const int bLocalUseExceptions = bUseExceptions;
+    const int bLocalUseExceptions = GetUseExceptions();
     if ( bLocalUseExceptions ) {
         pushErrorHandler();
     }
@@ -180,7 +207,7 @@ static void popErrorHandler()
 }
 
 %feature("except") OpenShared {
-    const int bLocalUseExceptions = bUseExceptions;
+    const int bLocalUseExceptions = GetUseExceptions();
     if ( bLocalUseExceptions ) {
         pushErrorHandler();
     }
@@ -205,7 +232,7 @@ static void popErrorHandler()
 }
 
 %feature("except") OpenEx {
-    const int bLocalUseExceptions = bUseExceptions;
+    const int bLocalUseExceptions = GetUseExceptions();
     if ( bLocalUseExceptions ) {
         pushErrorHandler();
     }
@@ -266,20 +293,13 @@ static void popErrorHandler()
           set it to the state requested for the context
 
           """
-          self.currentUseExceptions = (GetUseExceptions() != 0)
-
-          if self.requestedUseExceptions:
-              UseExceptions()
-          else:
-              DontUseExceptions()
+          self.currentUseExceptions = _GetExceptionsLocal()
+          _SetExceptionsLocal(self.requestedUseExceptions)
 
       def __exit__(self, exc_type, exc_val, exc_tb):
           """
           On exit, restore the GDAL/OGR/OSR/GNM exception state which was
           current on entry to the context
           """
-          if self.currentUseExceptions:
-              UseExceptions()
-          else:
-              DontUseExceptions()
+          _SetExceptionsLocal(self.currentUseExceptions)
 %}
