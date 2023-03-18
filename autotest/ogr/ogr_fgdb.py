@@ -54,6 +54,13 @@ def startup_and_cleanup():
 
     yield
 
+    # The SDK messes somehow with the locale, which cause issues in
+    # other test files, such as gcore/basic_test.py, which assumes English
+    # error messages
+    import locale
+
+    locale.setlocale(locale.LC_ALL, "C")
+
     try:
         shutil.rmtree("tmp/test.gdb")
     except OSError:
