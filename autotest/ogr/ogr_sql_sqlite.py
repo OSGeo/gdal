@@ -1419,6 +1419,7 @@ def with_webserver():
         ("BING", "http://127.0.0.1:%d/binggeocoding?q=%%s"),
     ],
 )
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
@@ -1552,6 +1553,7 @@ def test_ogr_sql_geocode(with_webserver, service, template):
         ("BING", "http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}"),
     ],
 )
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_reverse_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
