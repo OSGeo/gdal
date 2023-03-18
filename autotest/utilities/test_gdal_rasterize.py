@@ -205,6 +205,7 @@ def test_gdal_rasterize_3(gdal_rasterize_path):
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, "did not get expected SRS"
+    ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43dt0.shp")
     gdal.GetDriverByName("GTiff").Delete("tmp/n43dt0.tif")
@@ -257,6 +258,7 @@ def test_gdal_rasterize_4(gdal_rasterize_path):
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS_1984") != -1, "did not get expected SRS"
+    ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43dt0.shp")
     gdal.GetDriverByName("GTiff").Delete("tmp/n43dt0.tif")
