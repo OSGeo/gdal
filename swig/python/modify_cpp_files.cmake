@@ -44,7 +44,7 @@ endif()
 
 if(NOT "${FILE}" MATCHES "gdal_array_wrap.cpp")
     string(REPLACE "PyObject *resultobj = 0;"
-                   "PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;"
+                   "PyObject *resultobj = 0; int bLocalUseExceptionsCode = GetUseExceptions();"
            _CONTENTS "${_CONTENTS}")
 
     string(REPLACE "#define SWIGPYTHON"

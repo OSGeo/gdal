@@ -103,7 +103,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 /* call */
 %exception PushErrorHandler
 {
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
     $action
 }
 
@@ -120,7 +120,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 
 %exception PopErrorHandler
 {
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
     $action
 }
 
@@ -305,7 +305,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 {
 #ifdef SWIGPYTHON
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
 %#endif
 #endif
     result = CPLGetLastErrorNo();
@@ -320,7 +320,7 @@ int CPLGetLastErrorNo();
 {
 #ifdef SWIGPYTHON
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
 %#endif
 #endif
     result = CPLGetLastErrorType();
@@ -337,7 +337,7 @@ CPLErr CPLGetLastErrorType();
 {
 #ifdef SWIGPYTHON
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
 %#endif
 #endif
     result = (char*)CPLGetLastErrorMsg();
@@ -353,7 +353,7 @@ const char *CPLGetLastErrorMsg();
 {
 #ifdef SWIGPYTHON
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( GetUseExceptions() ) bLocalUseExceptionsCode = FALSE;
 %#endif
 #endif
     result = CPLGetErrorCounter();

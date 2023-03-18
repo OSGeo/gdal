@@ -74,7 +74,7 @@ public:
 #endif
     GDALMDArrayH hRet = GDALGroupOpenMDArray(self, name, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
 #endif
     return hRet;
@@ -87,7 +87,7 @@ public:
 #endif
     GDALMDArrayH hRet = GDALGroupOpenMDArrayFromFullname(self, name, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
 #endif
     return hRet;
@@ -100,7 +100,7 @@ public:
 #endif
     GDALMDArrayH hRet = GDALGroupResolveMDArray(self, name, starting_point, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
 #endif
     return hRet;
@@ -119,7 +119,7 @@ public:
 #endif
     GDALGroupH hRet = GDALGroupOpenGroup(self, name, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
 #endif
     return hRet;
@@ -132,7 +132,7 @@ public:
 #endif
     GDALGroupH hRet = GDALGroupOpenGroupFromFullname(self, name, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
 #endif
     return hRet;
@@ -150,7 +150,7 @@ public:
 #endif
     OGRLayerH hRet = GDALGroupOpenVectorLayer(self, name, options);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Vector layer %s does not exist", name);
 #endif
     return (OGRLayerShadow*) hRet;
@@ -169,7 +169,7 @@ public:
 #endif
     GDALAttributeH hRet = GDALGroupGetAttribute(self, name);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
 #endif
     return hRet;
@@ -623,7 +623,7 @@ public:
     if (*buf == NULL)
     {
         *buf = Py_None;
-        if( !bUseExceptions )
+        if( !GetUseExceptions() )
         {
             PyErr_Clear();
         }
@@ -822,7 +822,7 @@ public:
 #endif
     GDALAttributeH hRet = GDALMDArrayGetAttribute(self, name);
 #if defined(SWIGPYTHON)
-    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+    if( GetUseExceptions() && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
         CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
 #endif
     return hRet;
@@ -865,7 +865,7 @@ public:
     if (*buf == NULL)
     {
         *buf = Py_None;
-        if( !bUseExceptions )
+        if( !GetUseExceptions() )
         {
             PyErr_Clear();
         }
@@ -1205,7 +1205,7 @@ public:
     if (*buf == NULL)
     {
         *buf = Py_None;
-        if( !bUseExceptions )
+        if( !GetUseExceptions() )
         {
             PyErr_Clear();
         }

@@ -54,7 +54,7 @@ static bool readraster_acquirebuffer(void** buf,
                                      void*& inputOutputBuf,
                                      size_t buf_size,
                                      GDALDataType ntype,
-                                     int bUseExceptions,
+                                     int l_bUseExceptions,
                                      char*& data,
                                      Py_buffer& view)
 {
@@ -104,7 +104,7 @@ static bool readraster_acquirebuffer(void** buf,
         if (*buf == NULL)
         {
             *buf = Py_None;
-            if( !bUseExceptions )
+            if( !l_bUseExceptions )
             {
                 PyErr_Clear();
             }
@@ -273,7 +273,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     if (*buf == NULL)
     {
         *buf = Py_None;
-        if( !bUseExceptions )
+        if( !GetUseExceptions() )
         {
             PyErr_Clear();
         }
@@ -311,7 +311,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
 %typemap(argout) (GByte **out, vsi_l_offset *length) {
     if (*$1 == NULL) {
-        if( bUseExceptions ) {
+        if( GetUseExceptions() ) {
             PyErr_SetString(PyExc_RuntimeError, "Could not find path");
             $result = NULL;
         } else {
@@ -323,7 +323,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
       do {
         $result = PyMemoryView_FromMemory(reinterpret_cast<char *>(*$1), *$2, PyBUF_READ);
         if ($result == NULL) {
-            if( bUseExceptions ) {
+            if( GetUseExceptions() ) {
                 PyErr_SetString(PyExc_RuntimeError, "Could not allocate result buffer");
                 $result = NULL;
             } else {
@@ -417,7 +417,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     char *data;
     Py_buffer view;
     if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
-                                  bUseExceptions, data, view) )
+                                  GetUseExceptions(), data, view) )
     {
         return CE_Failure;
     }
@@ -480,7 +480,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     Py_buffer view;
 
     if( !readraster_acquirebuffer(buf, buf_obj, buf_size, ntype,
-                                  bUseExceptions, data, view) )
+                                  GetUseExceptions(), data, view) )
     {
         return CE_Failure;
     }
@@ -764,7 +764,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     Py_buffer view;
 
     if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
-                                  bUseExceptions, data, view) )
+                                  GetUseExceptions(), data, view) )
     {
         return CE_Failure;
     }
