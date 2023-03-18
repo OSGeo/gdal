@@ -972,12 +972,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     CPLError(CE_Failure, CPLE_IllegalArg,
                              "Invalid vrt:// 'if' format, must not occur "
                              "multiple times (use comma separated list)\n");
+                    CPLFree(pszKey);
                     return nullptr;
                 }
                 aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
                 iRemoveOpt =
                     i;  // we must avoid finding this 'if' option again below
             }
+            CPLFree(pszKey);
         }
     }
     CPLStringList aosTokens;
