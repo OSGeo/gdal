@@ -951,40 +951,31 @@ def test_warp_30():
     cbk = warp_30_progress_callback
     cbk_user_data = None  # value for last parameter of above warp_27_progress_callback
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = gdal.ReprojectImage(
-        src_ds,
-        dst_ds,
-        None,  # src_wkt : left to default value --> will use the one from source \
-        None,  # dst_wkt : left to default value --> will use the one from destination \
-        resampling,
-        0,  # WarpMemoryLimit : left to default value \
-        error_threshold,
-        cbk,  # Progress callback : could be left to None or unspecified for silent progress
-        cbk_user_data,
-    )  # Progress callback user data
-    gdal.PopErrorHandler()
+    with pytest.raises(Exception):
+        gdal.ReprojectImage(
+            src_ds,
+            dst_ds,
+            None,  # src_wkt : left to default value --> will use the one from source \
+            None,  # dst_wkt : left to default value --> will use the one from destination \
+            resampling,
+            0,  # WarpMemoryLimit : left to default value \
+            error_threshold,
+            cbk,  # Progress callback : could be left to None or unspecified for silent progress
+            cbk_user_data,
+        )  # Progress callback user data
 
-    assert ret != 0
-
-    old_val = gdal.GetConfigOption("GDAL_NUM_THREADS")
-    gdal.SetConfigOption("GDAL_NUM_THREADS", "2")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = gdal.ReprojectImage(
-        src_ds,
-        dst_ds,
-        None,  # src_wkt : left to default value --> will use the one from source \
-        None,  # dst_wkt : left to default value --> will use the one from destination \
-        resampling,
-        0,  # WarpMemoryLimit : left to default value \
-        error_threshold,
-        cbk,  # Progress callback : could be left to None or unspecified for silent progress
-        cbk_user_data,
-    )  # Progress callback user data
-    gdal.PopErrorHandler()
-    gdal.SetConfigOption("GDAL_NUM_THREADS", old_val)
-
-    assert ret != 0
+    with gdal.config_option("GDAL_NUM_THREADS", "2"), pytest.raises(Exception):
+        gdal.ReprojectImage(
+            src_ds,
+            dst_ds,
+            None,  # src_wkt : left to default value --> will use the one from source \
+            None,  # dst_wkt : left to default value --> will use the one from destination \
+            resampling,
+            0,  # WarpMemoryLimit : left to default value \
+            error_threshold,
+            cbk,  # Progress callback : could be left to None or unspecified for silent progress
+            cbk_user_data,
+        )  # Progress callback user data
 
     gdal.Unlink("/vsimem/warp_30.tif")
 
@@ -1097,11 +1088,8 @@ def test_warp_37():
     )
     dst_wkt = sr.ExportToWkt()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    tmp_ds = gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
-    gdal.PopErrorHandler()
-    gdal.ErrorReset()
-    assert tmp_ds is None
+    with pytest.raises(Exception):
+        gdal.AutoCreateWarpedVRT(src_ds, None, dst_wkt)
 
 
 ###############################################################################

@@ -82,6 +82,7 @@ def test_applyverticalshiftgrid_1():
 # Error cases
 
 
+@gdaltest.disable_exceptions()
 def test_applyverticalshiftgrid_2():
 
     sr = osr.SpatialReference()
@@ -246,9 +247,8 @@ def test_applyverticalshiftgrid_4():
     out_ds = gdal.ApplyVerticalShiftGrid(
         src_ds, grid_ds, options=["ERROR_ON_MISSING_VERT_SHIFT=YES"]
     )
-    with gdaltest.error_handler():
-        data = out_ds.GetRasterBand(1).ReadRaster()
-    assert data is None
+    with pytest.raises(Exception):
+        out_ds.GetRasterBand(1).ReadRaster()
 
     # ERROR_ON_MISSING_VERT_SHIFT due to nodata in grid
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -262,9 +262,8 @@ def test_applyverticalshiftgrid_4():
     out_ds = gdal.ApplyVerticalShiftGrid(
         src_ds, grid_ds, options=["ERROR_ON_MISSING_VERT_SHIFT=YES"]
     )
-    with gdaltest.error_handler():
-        data = out_ds.GetRasterBand(1).ReadRaster()
-    assert data is None
+    with pytest.raises(Exception):
+        out_ds.GetRasterBand(1).ReadRaster()
 
 
 ###############################################################################
