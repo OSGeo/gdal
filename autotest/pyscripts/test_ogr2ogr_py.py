@@ -1554,8 +1554,10 @@ def test_ogr2ogr_py_44(script_path):
     except OSError:
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_44.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_44.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_44.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_44.gml")
+    if os.path.exists("tmp/test_ogr2ogr_44.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_44.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
         "tmp/test_ogr2ogr_44_src.shp"
@@ -1611,20 +1613,22 @@ def test_ogr2ogr_py_44(script_path):
 def test_ogr2ogr_py_45(script_path):
 
     try:
-        os.stat("tmp/test_ogr2ogr_44_src.shp")
+        os.stat("tmp/test_ogr2ogr_45_src.shp")
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "tmp/test_ogr2ogr_44_src.shp"
+            "tmp/test_ogr2ogr_45_src.shp"
         )
     except OSError:
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_44.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_44.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_45.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_45.gml")
+    if os.path.exists("tmp/test_ogr2ogr_45.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_45.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "tmp/test_ogr2ogr_44_src.shp"
+        "tmp/test_ogr2ogr_45_src.shp"
     )
-    lyr = ds.CreateLayer("test_ogr2ogr_44_src", geom_type=ogr.wkbPolygon)
+    lyr = ds.CreateLayer("test_ogr2ogr_45_src", geom_type=ogr.wkbPolygon)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))"))
     lyr.CreateFeature(feat)
@@ -1640,16 +1644,16 @@ def test_ogr2ogr_py_45(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
-        " -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI",
+        " -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI",
     )
 
-    f = open("tmp/test_ogr2ogr_44.xsd")
+    f = open("tmp/test_ogr2ogr_45.xsd")
     data = f.read()
     f.close()
 
     assert data.find('type="gml:MultiPolygonPropertyType"') != -1
 
-    f = open("tmp/test_ogr2ogr_44.gml")
+    f = open("tmp/test_ogr2ogr_45.gml")
     data = f.read()
     f.close()
 
@@ -1661,10 +1665,10 @@ def test_ogr2ogr_py_45(script_path):
     )
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-        "tmp/test_ogr2ogr_44_src.shp"
+        "tmp/test_ogr2ogr_45_src.shp"
     )
-    os.unlink("tmp/test_ogr2ogr_44.gml")
-    os.unlink("tmp/test_ogr2ogr_44.xsd")
+    os.unlink("tmp/test_ogr2ogr_45.gml")
+    os.unlink("tmp/test_ogr2ogr_45.xsd")
 
 
 ###############################################################################
@@ -1682,13 +1686,15 @@ def test_ogr2ogr_py_46(script_path):
     except OSError:
         pass
 
-    gdal.Unlink("tmp/test_ogr2ogr_45.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_45.xsd")
+    if os.path.exists("tmp/test_ogr2ogr_46.gml"):
+        gdal.Unlink("tmp/test_ogr2ogr_46.gml")
+    if os.path.exists("tmp/test_ogr2ogr_46.xsd"):
+        gdal.Unlink("tmp/test_ogr2ogr_46.xsd")
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "tmp/test_ogr2ogr_45_src.shp"
+        "tmp/test_ogr2ogr_46_src.shp"
     )
-    lyr = ds.CreateLayer("test_ogr2ogr_45_src", geom_type=ogr.wkbLineString)
+    lyr = ds.CreateLayer("test_ogr2ogr_46_src", geom_type=ogr.wkbLineString)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,0 1,1 1,0 0)"))
     lyr.CreateFeature(feat)
@@ -1704,16 +1710,16 @@ def test_ogr2ogr_py_46(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
-        " -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI",
+        " -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -nlt PROMOTE_TO_MULTI",
     )
 
-    f = open("tmp/test_ogr2ogr_45.xsd")
+    f = open("tmp/test_ogr2ogr_46.xsd")
     data = f.read()
     f.close()
 
     assert data.find('type="gml:MultiLineStringPropertyType"') != -1
 
-    f = open("tmp/test_ogr2ogr_45.gml")
+    f = open("tmp/test_ogr2ogr_46.gml")
     data = f.read()
     f.close()
 
@@ -1725,7 +1731,7 @@ def test_ogr2ogr_py_46(script_path):
     )
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-        "tmp/test_ogr2ogr_45_src.shp"
+        "tmp/test_ogr2ogr_46_src.shp"
     )
-    gdal.Unlink("tmp/test_ogr2ogr_45.gml")
-    gdal.Unlink("tmp/test_ogr2ogr_45.xsd")
+    gdal.Unlink("tmp/test_ogr2ogr_46.gml")
+    gdal.Unlink("tmp/test_ogr2ogr_46.xsd")

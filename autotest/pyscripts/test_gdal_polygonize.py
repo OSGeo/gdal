@@ -119,7 +119,8 @@ def test_gdal_polygonize_1(script_path):
 def test_gdal_polygonize_2(script_path):
 
     outfilename = "tmp/out.geojson"
-    gdal.Unlink(outfilename)
+    if gdal.VSIStatL(outfilename) is not None:
+        gdal.Unlink(outfilename)
 
     # run the algorithm.
     test_py_scripts.run_py_script(
