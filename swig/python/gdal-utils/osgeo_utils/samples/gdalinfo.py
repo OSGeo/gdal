@@ -181,12 +181,13 @@ def main(argv=None):
     if pszProjection is not None:
 
         hSRS = osr.SpatialReference()
-        if hSRS.ImportFromWkt(pszProjection) == gdal.CE_None:
-            pszPrettyWkt = hSRS.ExportToPrettyWkt(False)
+        with gdal.quiet_errors(), osr.ExceptionMgr(useExceptions=False):
+            if hSRS.ImportFromWkt(pszProjection) == gdal.CE_None:
+                pszPrettyWkt = hSRS.ExportToPrettyWkt(False)
 
-            print("Coordinate System is:\n%s" % pszPrettyWkt)
-        else:
-            print("Coordinate System is `%s'" % pszProjection)
+                print("Coordinate System is:\n%s" % pszPrettyWkt)
+            else:
+                print("Coordinate System is `%s'" % pszProjection)
 
     # --------------------------------------------------------------------
     #      Report Geotransform.
