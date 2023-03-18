@@ -3928,7 +3928,15 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %inline %{
   OGRDataSourceShadow* Open( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(utf8_path,update,NULL);
+    int nOpenFlags = GDAL_OF_VECTOR;
+    if( update )
+      nOpenFlags |= GDAL_OF_UPDATE;
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+      nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
+#endif
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_path, nOpenFlags, NULL,
+                                      NULL, NULL );
 #ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
@@ -3956,7 +3964,15 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(utf8_path,update,NULL);
+    int nOpenFlags = GDAL_OF_VECTOR | GDAL_OF_SHARED;
+    if( update )
+      nOpenFlags |= GDAL_OF_UPDATE;
+#ifdef SWIGPYTHON
+    if( GetUseExceptions() )
+      nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
+#endif
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_path, nOpenFlags, NULL,
+                                      NULL, NULL );
 #ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
