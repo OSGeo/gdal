@@ -74,13 +74,13 @@ def test_basic_test_strace_non_existing_file():
 
     python_exe = sys.executable
     cmd = 'strace -f %s -c "from osgeo import gdal; ' % python_exe + (
-        "gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
+        "gdal.DontUseExceptions(); gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except Exception:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
         # strace not available
-        pytest.skip()
+        pytest.skip(str(e))
 
     interesting_lines = []
     for line in err.split("\n"):
