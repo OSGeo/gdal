@@ -1907,6 +1907,7 @@ def test_osr_SpatialReference_invalid_wkt_in_constructor():
 # Check GetUTMZone() on a Projected 3D CRS
 
 
+@gdaltest.require_proj_version(6, 3)
 def test_osr_GetUTMZone_Projected3D():
 
     utm_srs = osr.SpatialReference()
@@ -1925,6 +1926,7 @@ def test_osr_GetUTMZone_Projected3D():
 # Check GetProjParm() on a Projected 3D CRS
 
 
+@gdaltest.require_proj_version(6, 3)
 def test_osr_GetProjParm_Projected3D():
 
     utm_srs = osr.SpatialReference()
