@@ -4196,6 +4196,7 @@ def test_tiff_read_cog_vsicurl():
                 "COMPRESS=LZW",
             ],
         )
+        src_ds = None
 
         filesize = gdal.VSIStatL(cog_filename).size
 
@@ -4334,6 +4335,7 @@ def test_tiff_read_cog_with_mask_vsicurl():
                     "COMPRESS=LZW",
                 ],
             )
+        src_ds = None
 
         filesize = gdal.VSIStatL(cog_filename).size
 
