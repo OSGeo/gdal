@@ -29,8 +29,11 @@
 ###############################################################################
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("BT")
 
 ###############################################################################
 # Test CreateCopy() of int16.tif
