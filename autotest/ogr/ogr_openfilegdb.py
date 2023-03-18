@@ -400,6 +400,7 @@ def ogr_openfilegdb_make_test_data():
 # Basic tests
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_1(gdb_source):
     filename = gdb_source["src"]
     version10 = gdb_source["version_10"]
@@ -407,7 +408,8 @@ def test_ogr_openfilegdb_1(gdb_source):
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    assert gdal.OpenEx(filename, gdal.OF_RASTER) is None
+    with pytest.raises(Exception):
+        assert gdal.OpenEx(filename, gdal.OF_RASTER)
 
     assert gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
 
@@ -907,6 +909,7 @@ def test_ogr_openfilegdb_6():
 # Test special SQL processing for ORDER BY
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_7():
 
     ds = ogr.Open("data/filegdb/testopenfilegdb.gdb.zip")
@@ -1084,6 +1087,7 @@ def unfuzz(backup):
         f.write(chr(v).encode("ISO-8859-1"))
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_10():
 
     try:
@@ -1316,6 +1320,7 @@ def get_spi_state(ds, lyr):
     return value
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_in_memory_spatial_filter():
 
     with gdaltest.config_option("OPENFILEGDB_USE_SPATIAL_INDEX", "NO"):
@@ -1548,6 +1553,7 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 # which advertises nIndexDepth == 1 whereas it seems to be it should be 2.
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
 
     dirname = "/vsimem/test_ogr_openfilegdb_read_broken_spx_wrong_index_depth.gdb"
@@ -2048,6 +2054,7 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb():
 # Test reading layer hierarchy
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_openfilegdb_read_layer_hierarchy():
 
     if False:

@@ -411,7 +411,8 @@ def test_ogr_geojson_10():
             if dstname:
                 dstname = dstname[len("/vsigzip/") :]
                 gdal.Unlink(dstname)
-                gdal.Unlink(dstname + ".properties")
+                if gdal.VSIStatL(dstname + ".properties") is not None:
+                    gdal.Unlink(dstname + ".properties")
 
 
 ###############################################################################
@@ -483,6 +484,7 @@ def test_ogr_geojson_13():
 # Test reading & writing various degenerated geometries
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojson_14():
 
     with gdaltest.error_handler():
@@ -1138,6 +1140,7 @@ def test_ogr_geojson_38():
 # Test id top-object level
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojson_39():
 
     ds = ogr.Open(
@@ -1456,7 +1459,7 @@ def test_ogr_geojson_43():
 
 def test_ogr_geojson_44():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         ogr.Open("""{"type": "FeatureCollection", "features":[ null ]}""")
 
 
@@ -1638,6 +1641,7 @@ def test_ogr_geojson_46():
 # Test update support
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojson_47():
 
     # ERROR 6: Update from inline definition not supported
@@ -2903,15 +2907,13 @@ def test_ogr_geojson_61():
         "/vsimem/ogr_geojson_61.json",
         """{ "type": "FeatureCollection", "features": [""",
     )
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         ds = gdal.OpenEx("/vsimem/ogr_geojson_61.json")
-    assert ds is None
     gdal.Unlink("/vsimem/ogr_geojson_61.json")
 
     # Invalid single geometry
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         ds = gdal.OpenEx("""{ "type": "Point", "x" : { "coordinates" : null } } """)
-    assert ds is None
 
     # Empty property name
     gdal.FileFromMemBuffer(
@@ -3391,6 +3393,7 @@ def test_ogr_geojson_id_field_and_id_type():
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojson_geom_export_failure():
 
     g = ogr.CreateGeometryFromWkt("POINT EMPTY")
@@ -4050,6 +4053,7 @@ def test_ogr_geojson_write_rfc7946_from_3D_crs():
 # Test effect of OGR_GEOJSON_MAX_OBJ_SIZE
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojson_feature_large():
 
     filename = "/vsimem/test_ogr_geojson_feature_large.json"
@@ -4167,6 +4171,7 @@ def test_ogr_geojson_ids_0_1_null_unset(read_from_file):
 # and others none, and a conflicting id
 
 
+@gdaltest.disable_exceptions()
 @pytest.mark.parametrize("read_from_file", [True, False])
 def test_ogr_geojson_ids_0_1_null_1_null(read_from_file):
 

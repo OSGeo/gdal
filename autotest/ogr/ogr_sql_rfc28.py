@@ -37,6 +37,14 @@ import pytest
 
 from osgeo import gdal, ogr
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 # Test an expression with a left side value and right side column and an \
 # expression for the value.

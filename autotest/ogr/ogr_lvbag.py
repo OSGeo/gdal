@@ -456,8 +456,9 @@ def test_ogr_lvbag_read_errors():
     assert ds.GetLayerCount() == 1, "bad layer count"
 
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert lyr.GetName() == ""
+    with pytest.raises(Exception):
         assert lyr.GetFeatureCount() == 0
 
 
@@ -569,8 +570,6 @@ def test_ogr_lvbag_test_ogrsf_wpl():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    import gdaltest
-
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro data/lvbag/wpl.xml"
     )
@@ -585,8 +584,6 @@ def test_ogr_lvbag_test_ogrsf_pnd():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    import gdaltest
-
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro data/lvbag/pnd.xml"
     )
@@ -600,8 +597,6 @@ def test_ogr_lvbag_test_ogrsf_num():
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
-
-    import gdaltest
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro data/lvbag/num.xml"

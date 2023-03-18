@@ -34,6 +34,14 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 # E. Rouault : this is almost a copy & paste from ogr_pg.py
 
 #

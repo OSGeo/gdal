@@ -43,6 +43,13 @@ pytestmark = pytest.mark.require_driver("GML")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
     gdaltest.have_gml_reader = ogr.Open("data/gml/ionic_wfs.gml") is not None

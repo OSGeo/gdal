@@ -163,10 +163,11 @@ def test_ogr_basic_5():
 # Test opening a dataset with an empty string and a non existing dataset
 def test_ogr_basic_6():
 
-    # Put inside try/except for OG python bindings
-    assert ogr.Open("") is None
+    with pytest.raises(Exception):
+        assert ogr.Open("") is None
 
-    assert ogr.Open("non_existing") is None
+    with pytest.raises(Exception):
+        assert ogr.Open("non_existing") is None
 
 
 ###############################################################################
@@ -622,12 +623,14 @@ def test_ogr_basic_13():
 
 def test_ogr_basic_14():
 
-    os.mkdir("tmp/ogr_basic_14")
+    if not os.path.exists("tmp/ogr_basic_14"):
+        os.mkdir("tmp/ogr_basic_14")
     os.chdir("tmp/ogr_basic_14")
-    ds = ogr.Open(".")
-    os.chdir("../..")
-
-    assert ds is None
+    try:
+        with pytest.raises(Exception):
+            ogr.Open(".")
+    finally:
+        os.chdir("../..")
 
     os.rmdir("tmp/ogr_basic_14")
 

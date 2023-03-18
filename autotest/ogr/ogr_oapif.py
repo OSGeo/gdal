@@ -64,25 +64,22 @@ def test_ogr_opaif_errors():
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 404)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # No Content-Type
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 200, {}, "foo")
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # Unexpected Content-Type
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 200, {"Content-Type": "text/html"}, "foo")
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # Invalid JSON
     handler = webserver.SequentialHandler()
@@ -94,9 +91,8 @@ def test_ogr_opaif_errors():
         "foo bar",
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # Valid JSON but not collections array
     handler = webserver.SequentialHandler()
@@ -104,9 +100,8 @@ def test_ogr_opaif_errors():
         "GET", "/oapif/collections", 200, {"Content-Type": "application/json"}, "{}"
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # Valid JSON but collections is not an array
     handler = webserver.SequentialHandler()
@@ -118,9 +113,8 @@ def test_ogr_opaif_errors():
         '{ "collections" : null }',
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -131,8 +125,8 @@ def test_ogr_opaif_errors():
         '{ "collections" : [ null, {} ] }',
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
-    assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
 
 ###############################################################################
@@ -1571,13 +1565,10 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
         return handler
 
     with webserver.install_http_handler(get_collections_handler()):
-        with gdaltest.error_handler():
-            assert (
-                gdal.OpenEx(
-                    "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
-                    open_options=["CRS=EPSG:32632"],
-                )
-                is None
+        with pytest.raises(Exception):
+            gdal.OpenEx(
+                "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+                open_options=["CRS=EPSG:32632"],
             )
 
     with webserver.install_http_handler(get_collections_handler()):
@@ -1637,10 +1628,12 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
 
     # Test changing active SRS
     assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
-    assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
+    with pytest.raises(Exception):
+        assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
     srs_other = osr.SpatialReference()
     srs_other.ImportFromEPSG(32632)
-    assert lyr.SetActiveSRS(0, srs_other) != ogr.OGRERR_NONE
+    with pytest.raises(Exception):
+        assert lyr.SetActiveSRS(0, srs_other) != ogr.OGRERR_NONE
     assert lyr.GetSpatialRef().IsGeographic()
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(

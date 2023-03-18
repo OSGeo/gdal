@@ -92,7 +92,7 @@ def test_ogr_fielddomain_range():
         with gdaltest.error_handler():
             domain.GetEnumeration()
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert domain.GetGlob() is None
 
 

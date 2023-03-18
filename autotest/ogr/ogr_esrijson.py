@@ -699,7 +699,7 @@ def test_ogr_esrijson_read_starting_with_features_geometry():
 
 def test_ogr_esrijson_create_geometry_from_esri_json():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert not ogr.CreateGeometryFromEsriJson("error")
 
     g = ogr.CreateGeometryFromEsriJson('{ "x": 2, "y": 49 }')

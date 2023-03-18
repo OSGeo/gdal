@@ -48,9 +48,8 @@ def test_ogr_gtfs_open():
     assert ds.GetLayer(-1) is None
     assert ds.GetLayer(ds.GetLayerCount()) is None
 
-    with gdaltest.error_handler():
-        ds = ogr.Open("GTFS:i_do/not/exist")
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("GTFS:i_do/not/exist")
 
     ds = ogr.Open("GTFS:data/gtfs/gtfs_extract.zip")
     assert ds

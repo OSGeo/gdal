@@ -42,6 +42,13 @@ from osgeo import gdal, ogr
 pytestmark = pytest.mark.require_driver("S57")
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # Verify we can open the test file.
 
 

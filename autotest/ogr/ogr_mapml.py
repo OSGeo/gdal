@@ -368,14 +368,14 @@ def test_ogr_mapml_no_class():
 
 def test_ogr_mapml_errors():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert (
             ogr.GetDriverByName("MapML").CreateDataSource("/i_do/not/exists.mapml")
             is None
         )
 
     filename = "/vsimem/out.mapml"
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert (
             ogr.GetDriverByName("MapML").CreateDataSource(
                 filename, options=["EXTENT_UNITS=unsupported"]
@@ -385,17 +385,17 @@ def test_ogr_mapml_errors():
 
     # Invalid XML
     gdal.FileFromMemBuffer(filename, "<mapml>")
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ogr.Open(filename) is None
 
     # Missing <body>
     gdal.FileFromMemBuffer(filename, "<mapml></mapml>")
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ogr.Open(filename) is None
 
     # No <feature>
     gdal.FileFromMemBuffer(filename, "<mapml><body></body></mapml>")
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ogr.Open(filename) is None
 
     gdal.Unlink(filename)

@@ -39,6 +39,13 @@ import pytest
 from osgeo import gdal, ogr
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.fixture(scope="module", autouse=True)
 def setup_driver():
     driver = ogr.GetDriverByName("PGeo")
@@ -52,7 +59,8 @@ def setup_driver():
 
     # we may have the PGeo GDAL driver, but be missing an ODBC driver for MS Access on the test environment
     # so open a test dataset and check to see if it's supported
-    pgeo_ds = ogr.Open("data/pgeo/sample.mdb")
+    with gdaltest.disable_exceptions():
+        pgeo_ds = ogr.Open("data/pgeo/sample.mdb")
     if "MDB_ODBC_DRIVER_INSTALLED" in os.environ:
         # if environment variable is set, then we know that the ODBC driver is installed and something
         # unexpected has happened (i.e. GDAL driver is broken!)

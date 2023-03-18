@@ -168,14 +168,17 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     ogr.GetDriverByName("GeoJSONSeq").DeleteDataSource(filename)
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_lf():
     return _ogr_geojsonseq_create("/vsimem/test", [], False)
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_rs():
     return _ogr_geojsonseq_create("/vsimem/test", ["RS=YES"], True)
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_rs_auto():
     return _ogr_geojsonseq_create("/vsimem/test.geojsons", [], True)
 
@@ -212,6 +215,7 @@ def test_ogr_geojsonseq_seq_geometries():
             pytest.fail()
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_seq_geometries_with_errors():
 
     with gdaltest.error_handler():
@@ -297,6 +301,7 @@ def test_ogr_geojsonseq_test_ogrsf():
 # Test effect of OGR_GEOJSON_MAX_OBJ_SIZE
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_feature_large():
 
     filename = "/vsimem/test_ogr_geojson_feature_large.geojsonl"

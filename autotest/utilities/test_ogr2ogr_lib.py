@@ -632,7 +632,7 @@ def test_ogr2ogr_lib_makevalid():
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler():
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
         make_valid_available = g.MakeValid() is not None
 
     tmpfilename = "/vsimem/tmp.csv"
@@ -647,12 +647,9 @@ def test_ogr2ogr_lib_makevalid():
         if make_valid_available:
             ds = gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
         else:
-            with gdaltest.error_handler():
-                with pytest.raises(Exception):
-                    gdal.VectorTranslate(
-                        "", tmpfilename, format="Memory", makeValid=True
-                    )
-                return
+            with pytest.raises(Exception):
+                gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
+            return
 
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()

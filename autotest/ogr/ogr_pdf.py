@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 
 import gdaltest
 import ogrtest
@@ -483,5 +484,7 @@ def test_ogr_pdf_no_attributes():
 
 def test_ogr_pdf_cleanup():
 
-    ogr.GetDriverByName("PDF").DeleteDataSource("tmp/ogr_pdf_1.pdf")
-    ogr.GetDriverByName("PDF").DeleteDataSource("tmp/ogr_pdf_2.pdf")
+    if os.path.exists("tmp/ogr_pdf_1.pdf"):
+        os.unlink("tmp/ogr_pdf_1.pdf")
+    if os.path.exists("tmp/ogr_pdf_2.pdf"):
+        os.unlink("tmp/ogr_pdf_2.pdf")

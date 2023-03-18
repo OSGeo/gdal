@@ -78,6 +78,7 @@ def check_features_against_list(layer, field_name, value_list):
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def check_feature_geometry(feat, geom, max_error=0.0001):
     """Returns 0 in case of success"""
     try:

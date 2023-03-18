@@ -39,6 +39,13 @@ from osgeo import gdal, ogr, osr
 pytestmark = pytest.mark.require_driver("PGDump")
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # Create table from data/poly.shp
 
 

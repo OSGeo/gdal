@@ -322,12 +322,12 @@ def test_ogr_arrow_write_from_another_dataset(
 
         if open_as_stream:
 
-            with gdaltest.error_handler():
+            with pytest.raises(Exception):
                 assert lyr.GetFeatureCount(force=0) == -1
 
             assert lyr.GetFeatureCount() == 5
 
-            with gdaltest.error_handler():
+            with pytest.raises(Exception):
                 gdal.ErrorReset()
                 assert lyr.GetNextFeature() is None
                 assert (
@@ -388,7 +388,7 @@ def test_ogr_arrow_write_compression(compression):
 
 def test_ogr_arrow_invalid_arrow():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ogr.Open("data/arrow/invalid.arrow") is None
 
 
@@ -398,10 +398,10 @@ def test_ogr_arrow_invalid_arrow():
 
 def test_ogr_arrow_invalid_arrows():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ogr.Open("data/arrow/invalid.arrows") is None
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         ogr.Open("ARROW_IPC_STREAM:/vsimem/i_dont_exist.bin") is None
 
 

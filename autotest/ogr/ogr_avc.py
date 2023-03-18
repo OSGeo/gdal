@@ -32,7 +32,7 @@
 import ogrtest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import ogr
 
 pytestmark = [
     pytest.mark.require_driver("AVCE00"),
@@ -99,14 +99,8 @@ def test_ogr_avc_2():
 
 def test_ogr_avc_3():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    avc_ds = ogr.Open("data/avc/compressed.e00")
-    gdal.PopErrorHandler()
-    last_error_msg = gdal.GetLastErrorMsg()
-
-    assert avc_ds is None, "expected failure"
-
-    assert last_error_msg != "", "expected error message"
+    with pytest.raises(Exception):
+        ogr.Open("data/avc/compressed.e00")
 
 
 ###############################################################################

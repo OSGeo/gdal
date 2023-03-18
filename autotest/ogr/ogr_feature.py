@@ -681,10 +681,8 @@ def test_ogr_feature_nullable_validate():
     assert field_def.IsNullable() == 0
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
-    gdal.PushErrorHandler()
-    ret = f.Validate()
-    gdal.PopErrorHandler()
-    assert ret == 0
+    with pytest.raises(Exception):
+        f.Validate()
 
     # Field with not NULL constraint and non-empty feature
     feat_def = ogr.FeatureDefn("test")
@@ -711,10 +709,8 @@ def test_ogr_feature_nullable_validate():
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
     f.SetField(0, "foo")
-    gdal.PushErrorHandler()
-    ret = f.Validate()
-    gdal.PopErrorHandler()
-    assert ret == 0
+    with pytest.raises(Exception):
+        f.Validate()
 
     # Geometry field with not-null geometry constraint that is met
     feat_def = ogr.FeatureDefn("test")
@@ -734,10 +730,8 @@ def test_ogr_feature_nullable_validate():
     gfield_def.SetNullable(0)
     feat_def.AddGeomFieldDefn(gfield_def)
     f = ogr.Feature(feat_def)
-    gdal.PushErrorHandler()
-    ret = f.Validate()
-    gdal.PopErrorHandler()
-    assert ret == 0
+    with pytest.raises(Exception):
+        f.Validate()
 
     # Geometry field with Point geometry type that is met
     feat_def = ogr.FeatureDefn("test")
@@ -751,10 +745,8 @@ def test_ogr_feature_nullable_validate():
     feat_def.SetGeomType(ogr.wkbLineString)
     f = ogr.Feature(feat_def)
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
-    gdal.PushErrorHandler()
-    ret = f.Validate()
-    gdal.PopErrorHandler()
-    assert ret == 0
+    with pytest.raises(Exception):
+        f.Validate()
 
 
 ###############################################################################
@@ -776,14 +768,12 @@ def test_ogr_feature_default():
     field_def.SetDefault("'a")
     assert field_def.GetDefault() == "'a"
 
-    gdal.PushErrorHandler()
-    field_def.SetDefault("'a''")
-    gdal.PopErrorHandler()
+    with pytest.raises(Exception):
+        field_def.SetDefault("'a''")
     assert field_def.GetDefault() is None
 
-    gdal.PushErrorHandler()
-    field_def.SetDefault("'a'b'")
-    gdal.PopErrorHandler()
+    with pytest.raises(Exception):
+        field_def.SetDefault("'a'b'")
     assert field_def.GetDefault() is None
 
     field_def.SetDefault("'a''b'''")

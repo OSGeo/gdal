@@ -41,6 +41,12 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("FileGDB")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 
@@ -408,14 +414,15 @@ def test_ogr_fgdb_DeleteField():
 
     # Test updating non-existing feature
     feat.SetFID(-10)
-    assert (
-        lyr.SetFeature(feat) == ogr.OGRERR_NON_EXISTING_FEATURE
-    ), "Expected failure of SetFeature()."
+    with gdaltest.disable_exceptions():
+        assert (
+            lyr.SetFeature(feat) == ogr.OGRERR_NON_EXISTING_FEATURE
+        ), "Expected failure of SetFeature()."
 
-    # Test deleting non-existing feature
-    assert (
-        lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE
-    ), "Expected failure of DeleteFeature()."
+        # Test deleting non-existing feature
+        assert (
+            lyr.DeleteFeature(-10) == ogr.OGRERR_NON_EXISTING_FEATURE
+        ), "Expected failure of DeleteFeature()."
 
     sql_lyr = ds.ExecuteSQL("REPACK")
     assert sql_lyr
@@ -912,6 +919,7 @@ def test_ogr_fgdb_11(fgdb_drv):
 # Test failed Open()
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_fgdb_12():
 
     ds = ogr.Open("tmp/non_existing.gdb")
@@ -2709,8 +2717,9 @@ def test_ogr_fgdb_write_domains(fgdb_drv):
     assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
     assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
 
-    with gdaltest.error_handler():
-        assert not ds.DeleteFieldDomain("not_existing")
+    with pytest.raises(Exception):
+        with gdal.ExceptionMgr():
+            ds.DeleteFieldDomain("not_existing")
 
     domain = ogr.CreateCodedFieldDomain(
         "unused_domain", "desc", ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}
@@ -2742,6 +2751,7 @@ def test_ogr_fgdb_write_domains(fgdb_drv):
 # Test reading layer hierarchy
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_fgdb_read_layer_hierarchy():
 
     if False:

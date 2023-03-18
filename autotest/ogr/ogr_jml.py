@@ -120,6 +120,7 @@ def test_ogr_jml_1():
 # Test creating a file
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_jml_2():
 
     # Invalid filename
@@ -430,6 +431,7 @@ def test_ogr_jml_3():
 # Test a few error cases
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_jml_4():
 
     if not gdaltest.jml_read_support:

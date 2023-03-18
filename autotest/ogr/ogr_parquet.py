@@ -63,8 +63,8 @@ def _validate_json_output(instance):
 
 def test_ogr_parquet_invalid():
 
-    with gdaltest.error_handler():
-        assert ogr.Open("data/parquet/invalid.parquet") is None
+    with pytest.raises(Exception):
+        ogr.Open("data/parquet/invalid.parquet")
 
 
 ###############################################################################
@@ -190,8 +190,9 @@ def _check_test_parquet(
     assert lyr.GetFeatureCount() == 5
     assert lyr.GetExtent() == (0.0, 4.0, 2.0, 2.0)
     assert lyr.GetExtent(geom_field=0) == (0.0, 4.0, 2.0, 2.0)
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         lyr.GetExtent(geom_field=-1)
+    with pytest.raises(Exception):
         lyr.GetExtent(geom_field=1)
 
     assert ds.GetFieldDomainNames() == ["dictDomain"]
@@ -576,13 +577,11 @@ def test_ogr_parquet_write_edge_cases():
     assert ds is not None
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    with gdaltest.error_handler():
-        assert ds.CreateLayer("out", srs=srs, geom_type=ogr.wkbPointM) is None
-        assert (
-            ds.CreateLayer(
-                "out", srs=srs, geom_type=ogr.wkbPoint, options=["COMPRESSION=invalid"]
-            )
-            is None
+    with pytest.raises(Exception):
+        ds.CreateLayer("out", srs=srs, geom_type=ogr.wkbPointM)
+    with pytest.raises(Exception):
+        ds.CreateLayer(
+            "out", srs=srs, geom_type=ogr.wkbPoint, options=["COMPRESSION=invalid"]
         )
     lyr = ds.CreateLayer("out", srs=srs, geom_type=ogr.wkbPoint)
     assert lyr is not None
@@ -591,8 +590,8 @@ def test_ogr_parquet_write_edge_cases():
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
     assert ds.TestCapability(ogr.ODsCAddFieldDomain) == 1
     # Test creating a second layer
-    with gdaltest.error_handler():
-        assert ds.CreateLayer("out2", srs=srs, geom_type=ogr.wkbPoint) is None
+    with pytest.raises(Exception):
+        ds.CreateLayer("out2", srs=srs, geom_type=ogr.wkbPoint)
     ds = None
     ds = gdal.OpenEx(outfilename)
     assert ds is not None
@@ -615,7 +614,7 @@ def test_ogr_parquet_write_edge_cases():
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
     assert lyr is not None
     f = ogr.Feature(lyr.GetLayerDefn())
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         # violation of not-null constraint
         assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
     f["foo"] = "bar"
@@ -623,8 +622,9 @@ def test_ogr_parquet_write_edge_cases():
     assert lyr.GetFeatureCount() == 1
     assert lyr.TestCapability(ogr.OLCCreateField) == 0
     assert lyr.TestCapability(ogr.OLCCreateGeomField) == 0
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert lyr.CreateField(ogr.FieldDefn("bar")) != ogr.OGRERR_NONE
+    with pytest.raises(Exception):
         assert (
             lyr.CreateGeomField(ogr.GeomFieldDefn("baz", ogr.wkbPoint))
             != ogr.OGRERR_NONE
@@ -1150,27 +1150,24 @@ def test_ogr_parquet_statistics():
         ds.ReleaseResultSet(sql_lyr)
 
     # Errors
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ds.ExecuteSQL("SELECT MIN(int32) FROM i_dont_exist") is None
+    with pytest.raises(Exception):
         assert ds.ExecuteSQL("SELECT MIN(i_dont_exist) FROM test") is None
 
     # File without statistics
     outfilename = "/vsimem/out.parquet"
     try:
-        with gdaltest.error_handler():
-            gdal.VectorTranslate(
-                outfilename, "data/parquet/test.parquet", options="-lco STATISTICS=NO"
-            )
+        gdal.VectorTranslate(
+            outfilename, "data/parquet/test.parquet", options="-lco STATISTICS=NO"
+        )
         ds = ogr.Open(outfilename)
-        with gdaltest.error_handler():
-            gdal.ErrorReset()
+        with pytest.raises(
+            Exception,
+            match=r".*Use of field function MIN\(\) on string field string illegal.*",
+        ):
             # Generic OGR SQL doesn't support MIN() on string field
-            sql_lyr = ds.ExecuteSQL("SELECT MIN(string) FROM out")
-            assert sql_lyr is None
-            assert (
-                gdal.GetLastErrorMsg()
-                == "Use of field function MIN() on string field string illegal."
-            )
+            ds.ExecuteSQL("SELECT MIN(string) FROM out")
         ds = None
 
     finally:
