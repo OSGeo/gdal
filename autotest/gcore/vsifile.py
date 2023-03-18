@@ -666,14 +666,9 @@ def test_vsifile_15():
 
 def test_vsifile_16():
 
-    old_val = gdal.GetUseExceptions()
-    gdal.UseExceptions()
-    try:
+    with gdal.ExceptionMgr(useExceptions=True):
         with pytest.raises(Exception):
             gdal.Rename("/tmp/i_do_not_exist_vsifile_16.tif", "/tmp/me_neither.tif")
-    finally:
-        if not old_val:
-            gdal.DontUseExceptions()
 
 
 ###############################################################################

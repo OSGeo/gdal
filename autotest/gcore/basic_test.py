@@ -329,16 +329,10 @@ def test_basic_test_11():
     gdal.PopErrorHandler()
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
-    old_use_exceptions_status = gdal.GetUseExceptions()
-    gdal.UseExceptions()
-    got_exception = False
-    try:
-        ds = gdal.OpenEx("non existing")
-    except RuntimeError:
-        got_exception = True
-    if old_use_exceptions_status == 0:
-        gdal.DontUseExceptions()
-    assert got_exception
+    with gdal.ExceptionMgr(useExceptions=True):
+        assert gdal.GetUseExceptions()
+        with pytest.raises(Exception):
+            gdal.OpenEx("non existing")
 
 
 ###############################################################################
