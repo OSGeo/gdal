@@ -61,6 +61,7 @@ def test_vsistdin_1():
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
     assert ds is not None
     assert ds.GetRasterBand(1).Checksum() == cs
+    ds = None
 
     gdal.Unlink("tmp/vsistdin_1_out.tif")
 
