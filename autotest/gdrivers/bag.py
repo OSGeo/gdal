@@ -43,6 +43,13 @@ from osgeo import gdal, ogr
 pytestmark = pytest.mark.require_driver("BAG")
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.fixture(autouse=True, scope="module")
 def check_no_file_leaks():
     num_files = len(gdaltest.get_opened_files())

@@ -31,6 +31,7 @@
 import struct
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
 
@@ -174,7 +175,7 @@ def test_vrtovr_errors():
 
     assert not ds.GetRasterBand(1).GetOverview(1)
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert not ds.GetRasterBand(1).GetOverview(0)
 
 

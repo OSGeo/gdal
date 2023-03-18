@@ -147,7 +147,8 @@ def test_ers_8():
     ds = drv.CreateCopy("/vsimem/ers_8.ers", src_ds)
     ds = None
 
-    gdal.Unlink("/vsimem/ers_8.ers.aux.xml")
+    if gdal.VSIStatL("/vsimem/ers_8.ers.aux.xml") is not None:
+        gdal.Unlink("/vsimem/ers_8.ers.aux.xml")
 
     ds = gdal.Open("/vsimem/ers_8.ers")
     expected_gcps = src_ds.GetGCPs()
@@ -314,7 +315,8 @@ def test_ers_10():
 
 def test_ers_recursive_opening():
     ds = gdal.Open("/vsitar/data/ers/test_ers_recursive.tar/test.ers")
-    ds.GetFileList()
+    with pytest.raises(Exception):
+        ds.GetFileList()
 
 
 ###############################################################################

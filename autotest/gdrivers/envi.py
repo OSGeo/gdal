@@ -32,6 +32,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import struct
 
 import gdaltest
@@ -300,7 +301,8 @@ def test_envi_14():
 
     gdal.GetDriverByName("ENVI").Create("/vsimem/envi_14.dat", 3, 4, 5, gdal.GDT_Int16)
 
-    gdal.Unlink("/vsimem/envi_14.dat.aux.xml")
+    if os.path.exists("/vsimem/envi_14.dat.aux.xml"):
+        gdal.Unlink("/vsimem/envi_14.dat.aux.xml")
 
     assert gdal.VSIStatL("/vsimem/envi_14.dat").size == 3 * 4 * 5 * 2
 
@@ -473,7 +475,8 @@ def test_envi_rotation_180():
     ds.SetGeoTransform([0, 10, 0, 0, 0, 10])
     ds = None
 
-    gdal.Unlink(filename + ".aux.xml")
+    if os.path.exists(filename + ".aux.xml"):
+        gdal.Unlink(filename + ".aux.xml")
 
     ds = gdal.Open(filename)
     got_gt = ds.GetGeoTransform()

@@ -31,6 +31,7 @@
 import shutil
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -68,6 +69,7 @@ def startup_and_cleanup():
 # Error cases
 
 
+@gdaltest.disable_exceptions()
 def test_vrtpansharpen_1():
 
     # Missing PansharpeningOptions
@@ -1426,6 +1428,7 @@ def test_vrtpansharpen_6():
 # Test bands with different extents
 
 
+@gdaltest.disable_exceptions()
 def test_vrtpansharpen_7():
 
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/vrtpansharpen_7_pan.tif", 20, 40)
@@ -2069,6 +2072,7 @@ def test_vrtpansharpen_10():
 # Test gdal.CreatePansharpenedVRT()
 
 
+@gdaltest.disable_exceptions()
 def test_vrtpansharpen_11():
 
     pan_ds = gdal.Open("tmp/small_world_pan.tif")

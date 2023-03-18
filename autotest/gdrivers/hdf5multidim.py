@@ -45,12 +45,15 @@ def test_hdf5_multidim_basic():
     rg = ds.GetRootGroup()
     assert rg
     assert not rg.GetGroupNames()
-    assert not rg.OpenGroup("non_existing")
+    with pytest.raises(Exception):
+        assert not rg.OpenGroup("non_existing")
     assert rg.GetMDArrayNames() == ["TestArray"]
-    assert not rg.OpenMDArray("non_existing")
+    with pytest.raises(Exception):
+        assert not rg.OpenMDArray("non_existing")
     ar = rg.OpenMDArray("TestArray")
     assert ar
-    assert not ar.GetAttribute("non_existing")
+    with pytest.raises(Exception):
+        assert not ar.GetAttribute("non_existing")
     dims = ar.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetSize() == 6
@@ -409,7 +412,7 @@ def test_hdf5_multidim_attr_alldatatypes():
     assert map_attrs["attr_char"].GetDimensionCount() == 0
     assert map_attrs["attr_char"].Read() == "x"
     assert map_attrs["attr_char"].ReadAsStringArray() == ["x"]
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert not map_attrs["attr_char"].ReadAsRaw()
 
     assert (
@@ -475,7 +478,7 @@ def test_hdf5_multidim_attr_alldatatypes():
     assert len(map_attrs["attr_custom_type_2_elts"].ReadAsRaw()) == 8
 
     # Compound type contains a string
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert not map_attrs["attr_custom_with_string"].ReadAsRaw()
 
 

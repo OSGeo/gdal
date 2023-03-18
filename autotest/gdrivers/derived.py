@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -147,23 +146,18 @@ def test_derived_test2():
 
 def test_derived_test3():
 
-    with gdaltest.error_handler():
-        # Missing filename
-        ds = gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE")
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE")
 
-    with gdaltest.error_handler():
-        ds = gdal.Open("DERIVED_SUBDATASET:invalid_alg:../gcore/data/byte.tif")
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.Open("DERIVED_SUBDATASET:invalid_alg:../gcore/data/byte.tif")
 
-    with gdaltest.error_handler():
-        ds = gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist")
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist")
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         # Raster with zero band
-        ds = gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:data/hdf5/CSK_DGM.h5")
-    assert ds is None
+        gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:data/hdf5/CSK_DGM.h5")
 
     for function in [
         "real",
@@ -188,7 +182,7 @@ def test_derived_test3():
             '<VRTDataset rasterXSize="1" rasterYSize="1"><VRTRasterBand subClass="VRTDerivedRasterBand"><PixelFunctionType>%s</PixelFunctionType></VRTRasterBand></VRTDataset>'
             % function
         )
-        with gdaltest.error_handler():
+        with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
 
 

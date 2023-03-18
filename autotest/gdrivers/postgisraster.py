@@ -40,6 +40,12 @@ from osgeo import gdal, ogr, osr
 # To initialize the required PostGISRaster DB instance, run data/load_postgisraster_test_data.sh
 #
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 #

@@ -114,11 +114,8 @@ def test_bsb_5():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated.kap", 1, -1)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = tst.testOpen()
-    gdal.PopErrorHandler()
-
-    return ret
+    with pytest.raises(Exception):
+        tst.testOpen()
 
 
 ###############################################################################
@@ -131,11 +128,8 @@ def test_bsb_6():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated2.kap", 1, -1)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = tst.testOpen()
-    gdal.PopErrorHandler()
-
-    return ret
+    with pytest.raises(Exception):
+        tst.testOpen()
 
 
 ###############################################################################

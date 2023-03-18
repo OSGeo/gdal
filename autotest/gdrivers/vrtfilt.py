@@ -219,7 +219,7 @@ def test_vrtfilt_invalid_kernel_size():
     md = {}
     md["source_0"] = filterSourceXML
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
 
     filterSourceXML = """ <KernelFilteredSource>
@@ -236,13 +236,5 @@ def test_vrtfilt_invalid_kernel_size():
     md = {}
     md["source_0"] = filterSourceXML
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_vrtfilt_cleanup():
-    pass

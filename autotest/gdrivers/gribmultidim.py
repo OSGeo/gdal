@@ -46,9 +46,11 @@ def test_grib_multidim_grib2_3d_same_ref_time_different_forecast_time():
     rg = ds.GetRootGroup()
     assert rg
     assert not rg.GetGroupNames()
-    assert not rg.OpenGroup("non_existing")
+    with pytest.raises(Exception):
+        assert not rg.OpenGroup("non_existing")
     assert rg.GetMDArrayNames() == ["Y", "X", "TIME", "MinT_0-SFC"]
-    assert not rg.OpenMDArray("non_existing")
+    with pytest.raises(Exception):
+        assert not rg.OpenMDArray("non_existing")
     dims = rg.GetDimensions()
     assert len(dims) == 3
     ar = rg.OpenMDArray("MinT_0-SFC")
@@ -145,7 +147,8 @@ def test_grib_multidim_grib1_2d():
     rg = ds.GetRootGroup()
     assert rg
     assert not rg.GetGroupNames()
-    assert not rg.OpenGroup("non_existing")
+    with pytest.raises(Exception):
+        assert not rg.OpenGroup("non_existing")
     assert rg.GetMDArrayNames() == [
         "Y",
         "X",

@@ -43,6 +43,13 @@ pytestmark = pytest.mark.require_driver("JP2OpenJPEG")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
     gdaltest.jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")

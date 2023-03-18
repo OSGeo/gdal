@@ -42,6 +42,12 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("Sentinel2")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 def _zip_a_dir(tfile, sdir):
     zf = zipfile.ZipFile(tfile, "w", zipfile.ZIP_DEFLATED)

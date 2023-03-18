@@ -56,8 +56,8 @@ def test_openfilegb_raster_subdatasets():
     )
     assert ds
 
-    ds = gdal.OpenEx("data/filegdb/gdal_test_data.gdb.zip", gdal.OF_VECTOR)
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.OpenEx("data/filegdb/gdal_test_data.gdb.zip", gdal.OF_VECTOR)
 
 
 ###############################################################################
@@ -355,7 +355,7 @@ def test_openfilegb_raster_rat():
     assert rat.GetTypeOfCol(3) == gdal.GFT_Integer  # just testing it doesn't crash
 
     assert rat.GetValueAsString(-1, 0) == ""
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert rat.GetValueAsString(0, -1) == ""
     assert rat.GetValueAsString(0, 0) == "-124"
     assert rat.GetValueAsString(1, 0) == "-116"
@@ -364,7 +364,7 @@ def test_openfilegb_raster_rat():
     assert rat.GetValueAsString(0, 3) == ""
 
     assert rat.GetValueAsInt(-1, 0) == 0
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert rat.GetValueAsInt(0, -1) == 0
     assert rat.GetValueAsInt(0, 0) == -124
     assert rat.GetValueAsInt(1, 0) == -116
@@ -373,7 +373,7 @@ def test_openfilegb_raster_rat():
     assert rat.GetValueAsInt(0, 3) == 0
 
     assert rat.GetValueAsDouble(-1, 0) == 0
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert rat.GetValueAsDouble(0, -1) == 0
     assert rat.GetValueAsDouble(0, 0) == -124
     assert rat.GetValueAsDouble(1, 0) == -116
@@ -381,8 +381,11 @@ def test_openfilegb_raster_rat():
     assert rat.GetValueAsDouble(0, 2) == 0
     assert rat.GetValueAsDouble(0, 3) == 0
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         rat.SetValueAsString(0, 0, "foo")
+    with pytest.raises(Exception):
         rat.SetValueAsInt(0, 1, 1)
+    with pytest.raises(Exception):
         rat.SetValueAsDouble(0, 2, 1.5)
+    with pytest.raises(Exception):
         rat.SetTableType(gdal.GRTT_THEMATIC)

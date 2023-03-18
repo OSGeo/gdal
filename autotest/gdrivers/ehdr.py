@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import struct
 
 import gdaltest
@@ -240,7 +241,8 @@ def test_ehdr_12():
 
 def test_ehdr_13():
 
-    gdal.Unlink("data/byte.tif.aux.xml")
+    if os.path.exists("data/byte.tif.aux.xml"):
+        gdal.Unlink("data/byte.tif.aux.xml")
 
     src_ds = gdal.Open("data/byte.tif")
     ds = gdal.GetDriverByName("EHDR").CreateCopy("/vsimem/byte.bil", src_ds)

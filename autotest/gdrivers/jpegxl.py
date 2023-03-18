@@ -39,6 +39,12 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("JPEGXL")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 def test_jpegxl_read():
     tst = gdaltest.GDALTest("JPEGXL", "jpegxl/byte.jxl", 1, 4672)

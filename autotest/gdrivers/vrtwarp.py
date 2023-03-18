@@ -494,14 +494,11 @@ def test_vrtwarp_read_blocks_in_space():
 )
 def test_vrtwarp_read_inconsistent_blocksize(filename):
 
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        ds = gdal.Open(filename)
-    assert ds is None
-    assert (
-        gdal.GetLastErrorMsg()
-        == "Block size specified on band 1 not consistent with dataset block size"
-    )
+    with pytest.raises(
+        Exception,
+        match=r".*Block size specified on band 1 not consistent with dataset block size.*",
+    ):
+        gdal.Open(filename)
 
 
 ###############################################################################

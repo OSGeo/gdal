@@ -40,6 +40,13 @@ from osgeo import gdal, ogr
 pytestmark = pytest.mark.require_driver("PCIDSK")
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # Read test of floating point reference data.
 
 

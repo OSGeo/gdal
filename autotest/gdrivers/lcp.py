@@ -453,6 +453,7 @@ def test_lcp_7():
 #  Test create copy with invalid bands
 
 
+@gdaltest.disable_exceptions()
 def test_lcp_8():
 
     mem_drv = gdal.GetDriverByName("MEM")
@@ -892,6 +893,7 @@ def test_lcp_22():
 #  Test create copy and make sure invalid creation options are caught.
 
 
+@gdaltest.disable_exceptions()
 def test_lcp_23():
 
     mem_drv = gdal.GetDriverByName("MEM")

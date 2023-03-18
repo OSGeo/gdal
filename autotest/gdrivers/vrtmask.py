@@ -364,32 +364,21 @@ def test_vrtmask_11():
     # Cannot create mask band at raster band level when a dataset mask band already exists
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    with gdaltest.error_handler():
-        ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    assert ret != 0, "expected an error, but got success"
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).CreateMaskBand(0)
 
     # This VRT dataset has already a mask band
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    with gdaltest.error_handler():
-        ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    assert ret != 0, "expected an error, but got success"
+    with pytest.raises(Exception):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     # This VRT band has already a mask band
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.GetRasterBand(1).CreateMaskBand(0)
-    with gdaltest.error_handler():
-        ret = ds.GetRasterBand(1).CreateMaskBand(0)
-    assert ret != 0, "expected an error, but got success"
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).CreateMaskBand(0)
 
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret == 0
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_vrtmask_cleanup():
-    pass

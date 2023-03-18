@@ -42,6 +42,13 @@ from osgeo import gdal, osr
 pytestmark = pytest.mark.require_driver("GRIB")
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 def has_jp2kdrv():
     for i in range(gdal.GetDriverCount()):
         if gdal.GetDriver(i).ShortName.startswith("JP2"):

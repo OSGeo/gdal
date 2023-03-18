@@ -302,19 +302,9 @@ def test_jp2metadata_getjpeg2000structure():
     assert ret is not None
 
     with gdaltest.config_option("GDAL_JPEG2000_STRUCTURE_MAX_LINES", "15"):
-        gdal.ErrorReset()
-        with gdaltest.error_handler():
-            ret = gdal.GetJPEG2000StructureAsString(
-                "data/jpeg2000/byte.jp2", ["ALL=YES"]
-            )
-        assert ret is not None
-        assert gdal.GetLastErrorMsg() != ""
+        with pytest.raises(Exception):
+            gdal.GetJPEG2000StructureAsString("data/jpeg2000/byte.jp2", ["ALL=YES"])
 
     with gdaltest.config_option("GDAL_JPEG2000_STRUCTURE_MAX_LINES", "150"):
-        gdal.ErrorReset()
-        with gdaltest.error_handler():
-            ret = gdal.GetJPEG2000StructureAsString(
-                "data/jpeg2000/byte.jp2", ["ALL=YES"]
-            )
-        assert ret is not None
-        assert gdal.GetLastErrorMsg() != ""
+        with pytest.raises(Exception):
+            gdal.GetJPEG2000StructureAsString("data/jpeg2000/byte.jp2", ["ALL=YES"])

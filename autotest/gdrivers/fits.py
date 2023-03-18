@@ -38,6 +38,13 @@ from osgeo import gdal, ogr
 pytestmark = pytest.mark.require_driver("FITS")
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.mark.parametrize(
     "filename", ["byte", "int16", "uint16", "int32", "uint32", "float32", "float64"]
 )

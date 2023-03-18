@@ -190,23 +190,15 @@ def test_dted_7():
 
 def test_dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
-    gdal.SetConfigOption("DTED_VERIFY_CHECKSUM", "YES")
+    with gdal.config_option("DTED_VERIFY_CHECKSUM", "YES"):
+        ds = gdal.Open("data/dted/n43_bad_crc.dt0")
+        band = ds.GetRasterBand(1)
 
-    ds = gdal.Open("data/dted/n43_bad_crc.dt0")
-    band = ds.GetRasterBand(1)
+        # numerous errors would be reported
+        with pytest.raises(Exception):
+            band.Checksum()
 
-    # numerous errors would be reported
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    chksum = band.Checksum()
-    gdal.PopErrorHandler()
-
-    gdal.SetConfigOption("DTED_VERIFY_CHECKSUM", "NO")
-
-    assert gdal.GetLastErrorMsg() is not None, "An expected warning was not emitted"
-
-    # 49187 is the checksum of data is the DTED is read without checking its checksum
-    # so we should not get this value
-    assert chksum != 49187, "DTED_VERIFY_CHECKSUM=YES has had no effect!"
+        assert gdal.GetLastErrorMsg() is not None, "An expected warning was not emitted"
 
 
 ###############################################################################

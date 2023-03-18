@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -147,10 +146,15 @@ def test_heif_subdatasets():
     assert ds
     assert ds.RasterXSize == 162
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:0:data/heif/subdatasets.heic") is None
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:3:data/heif/subdatasets.heic") is None
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:1:non_existing.heic") is None
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:") is None
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:1") is None
+    with pytest.raises(Exception):
         assert gdal.Open("HEIF:1:") is None

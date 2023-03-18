@@ -90,48 +90,36 @@ def test_cals_4():
 
     # 0 band
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("CALS").CreateCopy("/vsimem/cals_4.cal", src_ds)
-    gdal.PopErrorHandler()
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("CALS").CreateCopy("/vsimem/cals_4.cal", src_ds)
 
     # 2 bands
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("CALS").CreateCopy(
-        "/vsimem/cals_4.cal", src_ds, strict=True
-    )
-    gdal.PopErrorHandler()
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("CALS").CreateCopy(
+            "/vsimem/cals_4.cal", src_ds, strict=True
+        )
 
     # 1 band but not 1-bit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("CALS").CreateCopy(
-        "/vsimem/cals_4.cal", src_ds, strict=True
-    )
-    gdal.PopErrorHandler()
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("CALS").CreateCopy(
+            "/vsimem/cals_4.cal", src_ds, strict=True
+        )
 
     # Dimension > 999999
     src_ds = gdal.GetDriverByName("MEM").Create("", 1000000, 1, 1)
     src_ds.GetRasterBand(1).SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE")
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("CALS").CreateCopy(
-        "/vsimem/cals_4.cal", src_ds, strict=True
-    )
-    gdal.PopErrorHandler()
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("CALS").CreateCopy(
+            "/vsimem/cals_4.cal", src_ds, strict=True
+        )
 
     # Invalid output filename
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
     src_ds.GetRasterBand(1).SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE")
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("CALS").CreateCopy(
-        "/not_existing_dir/cals_4.cal", src_ds
-    )
-    gdal.PopErrorHandler()
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("CALS").CreateCopy("/not_existing_dir/cals_4.cal", src_ds)
 
 
 ###############################################################################

@@ -33,11 +33,19 @@ import os
 import shutil
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("PLMosaic")
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 # Error: no API_KEY

@@ -80,6 +80,7 @@ def test_pnm_4():
 
 
 @pytest.mark.parametrize("nbands", [1, 3])
+@gdaltest.disable_exceptions()
 def test_pnm_write_non_standard_extension(nbands):
     gdal.ErrorReset()
     with gdaltest.error_handler():
