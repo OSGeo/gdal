@@ -334,6 +334,13 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
         nPixelOffset = 4;
         dfNoDataValue = -2e31;
     }
+    else if (EQUAL(pszJSONStr, "int64"))
+    {
+        eType = GDT_Int64;
+        nPixelOffset = 8;
+        dfNoDataValue = static_cast<double>(static_cast<int64_t>(
+            static_cast<double>(std::numeric_limits<int64_t>::min())));
+    }
     else if (EQUAL(pszJSONStr, "uint8"))
     {
         eType = GDT_Byte;
@@ -350,7 +357,14 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         eType = GDT_UInt32;
         nPixelOffset = 4;
-        dfNoDataValue = -2e31;
+        dfNoDataValue = 2e31;
+    }
+    else if (EQUAL(pszJSONStr, "uint64"))
+    {
+        eType = GDT_UInt64;
+        nPixelOffset = 8;
+        dfNoDataValue = static_cast<double>(static_cast<int64_t>(
+            static_cast<double>(std::numeric_limits<uint64_t>::max())));
     }
     else if (EQUAL(pszJSONStr, "float32"))
     {
@@ -366,17 +380,8 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        if (EQUAL(pszJSONStr, "int64") || EQUAL(pszJSONStr, "uint64"))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "The ARG 'datatype' is unsupported in GDAL: '%s'.",
-                     pszJSONStr);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "The ARG 'datatype' is unknown: '%s'.", pszJSONStr);
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The ARG 'datatype' is unknown: '%s'.", pszJSONStr);
         json_object_put(pJSONObject);
         pJSONObject = nullptr;
         return nullptr;
@@ -642,6 +647,11 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
         pszDataType = "int32";
         nPixelOffset = 4;
     }
+    else if (eType == GDT_Int64)
+    {
+        pszDataType = "int64";
+        nPixelOffset = 8;
+    }
     else if (eType == GDT_Byte)
     {
         pszDataType = "uint8";
@@ -656,6 +666,11 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
     {
         pszDataType = "uint32";
         nPixelOffset = 4;
+    }
+    else if (eType == GDT_UInt64)
+    {
+        pszDataType = "uint64";
+        nPixelOffset = 8;
     }
     else if (eType == GDT_Float32)
     {
