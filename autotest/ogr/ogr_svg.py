@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("SVG")
+
 
 def test_ogr_svg_init():
     gdaltest.svg_ds = None
