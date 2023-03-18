@@ -346,6 +346,7 @@ def test_ogr_arrow_write_from_another_dataset(
         )
 
     finally:
+        ds = None
         gdal.Unlink(outfilename)
 
 
