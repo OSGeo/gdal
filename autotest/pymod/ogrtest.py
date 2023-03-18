@@ -338,14 +338,7 @@ def quick_create_feature(layer, field_values, wkt_geometry):
 
 
 def have_geos():
-    global geos_flag
-
-    if geos_flag is None:
-        pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20)")
-        pnt2 = ogr.CreateGeometryFromWkt("POINT(30 20)")
-        geos_flag = pnt1.Union(pnt2) is not None
-
-    return geos_flag
+    return ogr.GetGEOSVersionMajor() > 0
 
 
 ###############################################################################
