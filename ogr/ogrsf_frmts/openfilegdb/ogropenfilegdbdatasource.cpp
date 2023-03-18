@@ -491,12 +491,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
         else if (m_aosSubdatasets.size() == 2)
         {
             // If there is a single raster dataset, open it right away.
-            GDALOpenInfo oOpenInfo(
-                m_aosSubdatasets.FetchNameValue("SUBDATASET_1_NAME"),
-                poOpenInfo->nOpenFlags);
-            bool bRet = Open(&oOpenInfo);
-            SetDescription(poOpenInfo->pszFilename);
-            return bRet;
+            return true;
         }
     }
     // If opening in vector-only mode, return false if there are no vector
@@ -2032,7 +2027,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
     int nLatestWKID =
         atoi(CPLGetXMLValue(psInfo, "SpatialReference.LatestWKID", "0"));
 
-    std::unique_ptr<OGRSpatialReference> poSRS;
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
     if (nWKID > 0 || nLatestWKID > 0)
     {
         const auto ImportFromCode =
@@ -2086,7 +2081,9 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
             return bSuccess;
         };
 
-        poSRS = cpl::make_unique<OGRSpatialReference>();
+        poSRS =
+            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
+                new OGRSpatialReference());
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (!ImportFromCode(*poSRS.get(), nLatestWKID, nWKID))
         {
@@ -2101,11 +2098,15 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
                 atoi(CPLGetXMLValue(psInfo, "SpatialReference.VCSWKID", "0"));
             if (nVCSWKID > 0 || nLatestVCSWKID > 0)
             {
-                auto poVertSRS = cpl::make_unique<OGRSpatialReference>();
+                auto poVertSRS = std::unique_ptr<OGRSpatialReference,
+                                                 OGRSpatialReferenceReleaser>(
+                    new OGRSpatialReference());
                 if (ImportFromCode(*poVertSRS.get(), nLatestVCSWKID, nVCSWKID))
                 {
                     auto poCompoundSRS =
-                        cpl::make_unique<OGRSpatialReference>();
+                        std::unique_ptr<OGRSpatialReference,
+                                        OGRSpatialReferenceReleaser>(
+                            new OGRSpatialReference());
                     if (poCompoundSRS->SetCompoundCS(
                             std::string(poSRS->GetName())
                                 .append(" + ")

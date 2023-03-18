@@ -483,7 +483,10 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 {
                     auto poSRS = BuildSRS(psSRTEXT->String);
                     if (poSRS)
+                    {
                         m_oRasterSRS = *poSRS;
+                        poSRS->Release();
+                    }
                 }
                 else
                 {

@@ -546,6 +546,11 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
+    const CPLStringList &GetSubdatasets() const
+    {
+        return m_aosSubdatasets;
+    }
+
     CPLErr GetGeoTransform(double *padfGeoTransform) override;
     const OGRSpatialReference *GetSpatialRef() const override;
 

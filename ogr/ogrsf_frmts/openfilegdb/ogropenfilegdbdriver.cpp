@@ -209,13 +209,28 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    OGROpenFileGDBDataSource *poDS = new OGROpenFileGDBDataSource();
+    auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
     if (poDS->Open(poOpenInfo))
     {
-        return poDS;
+        if (poDS->GetSubdatasets().size() == 2)
+        {
+            // If there is a single raster dataset, open it right away.
+            GDALOpenInfo oOpenInfo(
+                poDS->GetSubdatasets().FetchNameValue("SUBDATASET_1_NAME"),
+                poOpenInfo->nOpenFlags);
+            poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+            if (poDS->Open(&oOpenInfo))
+            {
+                poDS->SetDescription(poOpenInfo->pszFilename);
+            }
+            else
+            {
+                poDS.reset();
+            }
+        }
+        return poDS.release();
     }
 
-    delete poDS;
     return nullptr;
 }
 
