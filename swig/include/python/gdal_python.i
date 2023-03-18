@@ -3333,4 +3333,24 @@ def config_option(key, value, thread_local=True):
     """
     return config_options({key: value}, thread_local=thread_local)
 
+
+@contextlib.contextmanager
+def quiet_errors():
+    """Temporarily install an error handler that silents all warnings and errors.
+
+       Returns
+       -------
+            A context manager
+
+       Example
+       -------
+
+           with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+               gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
+    """
+    PushErrorHandler("CPLQuietErrorHandler")
+    try:
+        yield
+    finally:
+        PopErrorHandler()
 %}

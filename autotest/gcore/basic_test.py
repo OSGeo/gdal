@@ -759,3 +759,8 @@ def test_exceptionmanager():
 
     # Check we are back to original state
     assert gdal.GetUseExceptions() == currentExceptionsFlag
+
+
+def test_quiet_errors():
+    with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+        gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
