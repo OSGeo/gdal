@@ -735,6 +735,7 @@ def test_vrtmisc_sourcefilename_all_relatives():
         ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
         ds.SetDescription(os.path.join("tmp", "byte.vrt"))
         ds = None
+        src_ds = None
         assert (
             '<SourceFilename relativeToVRT="1">byte.tif<'
             in open("tmp/byte.vrt", "rt").read()
@@ -760,6 +761,7 @@ def test_vrtmisc_sourcefilename_source_relative_dest_absolute():
             path = path.replace("/", "\\")
         ds.SetDescription(path)
         ds = None
+        src_ds = None
         assert (
             '<SourceFilename relativeToVRT="1">byte.tif<'
             in open("tmp/byte.vrt", "rt").read()
@@ -782,6 +784,7 @@ def test_vrtmisc_sourcefilename_source_absolute_dest_absolute():
         ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
         ds.SetDescription(os.path.join(os.getcwd(), "tmp", "byte.vrt"))
         ds = None
+        src_ds = None
         assert (
             '<SourceFilename relativeToVRT="1">byte.tif<'
             in open("tmp/byte.vrt", "rt").read()
@@ -807,6 +810,7 @@ def test_vrtmisc_sourcefilename_source_absolute_dest_relative():
         ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
         ds.SetDescription(os.path.join("tmp", "byte.vrt"))
         ds = None
+        src_ds = None
         assert (
             '<SourceFilename relativeToVRT="1">byte.tif<'
             in open("tmp/byte.vrt", "rt").read()
