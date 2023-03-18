@@ -364,16 +364,14 @@ def test_vsicurl_test_redirect():
     )
 
     with webserver.install_http_handler(handler):
-        content = gdal.VSIFReadL(1, 16383, f).decode("ascii")
-        if len(content) != 16383 or content[0] != "x":
+        try:
+            content = gdal.VSIFReadL(1, 16383, f).decode("ascii")
+            assert len(content) == 16383
+            assert content[0] == "x"
+            content = gdal.VSIFReadL(1, 2, f).decode("ascii")
+            assert content == "xy"
+        finally:
             gdal.VSIFCloseL(f)
-            pytest.fail(content)
-        content = gdal.VSIFReadL(1, 2, f).decode("ascii")
-        if content != "xy":
-            gdal.VSIFCloseL(f)
-            pytest.fail(content)
-
-    gdal.VSIFCloseL(f)
 
 
 ###############################################################################
@@ -540,16 +538,14 @@ def test_vsicurl_test_redirect_x_amz():
     )
 
     with webserver.install_http_handler(handler):
-        content = gdal.VSIFReadL(1, 16383, f).decode("ascii")
-        if len(content) != 16383 or content[0] != "x":
+        try:
+            content = gdal.VSIFReadL(1, 16383, f).decode("ascii")
+            assert len(content) == 16383
+            assert content[0] == "x"
+            content = gdal.VSIFReadL(1, 2, f).decode("ascii")
+            assert content == "xy"
+        finally:
             gdal.VSIFCloseL(f)
-            pytest.fail(content)
-        content = gdal.VSIFReadL(1, 2, f).decode("ascii")
-        if content != "xy":
-            gdal.VSIFCloseL(f)
-            pytest.fail(content)
-
-    gdal.VSIFCloseL(f)
 
 
 ###############################################################################
