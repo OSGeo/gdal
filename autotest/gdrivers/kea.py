@@ -34,6 +34,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("KEA")
+
 ###############################################################################
 
 
