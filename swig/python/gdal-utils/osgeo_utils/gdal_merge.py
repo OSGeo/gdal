@@ -526,9 +526,8 @@ def gdal_merge(argv=None):
         band_type = file_infos[0].band_type
 
     # Try opening as an existing file.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    t_fh = gdal.Open(out_file, gdal.GA_Update)
-    gdal.PopErrorHandler()
+    with gdal.quiet_errors(), gdal.ExceptionMgr(useExceptions=False):
+        t_fh = gdal.Open(out_file, gdal.GA_Update)
 
     # Create output file if it does not already exist.
     if t_fh is None:
