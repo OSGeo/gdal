@@ -2089,8 +2089,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
         {
             poSRS.reset();
         }
-
-        if (poSRS)
+        else
         {
             const int nLatestVCSWKID = atoi(
                 CPLGetXMLValue(psInfo, "SpatialReference.LatestVCSWKID", "0"));
