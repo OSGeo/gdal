@@ -540,25 +540,8 @@ function (check_sqlite3_rtree driver_name)
   endif ()
 endfunction()
 
-gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" CAN_DISABLE)
-gdal_check_package(RASTERLITE2 "Enable RasterLite2 support for sqlite3" CAN_DISABLE)
-
-set(HAVE_RASTERLITE2 ${RASTERLITE2_FOUND})
-if (RASTERLITE2_FOUND AND NOT RASTERLITE2_VERSION_STRING STREQUAL "unknown")
-  if (NOT RASTERLITE2_VERSION_STRING VERSION_GREATER_EQUAL 1.1.0)
-    message(STATUS "Rasterlite2 requires version 1.1.0 and later, detected: ${RASTERLITE2_VERSION_STRING}")
-    message(STATUS "Turn off rasterlite2 support")
-    set(HAVE_RASTERLITE2
-        OFF
-        CACHE INTERNAL "HAVE_RASTERLITE2")
-  endif ()
-endif ()
-if (GDAL_USE_RASTERLITE2)
-  if (NOT HAVE_RASTERLITE2)
-    message(FATAL_ERROR "Configured to use GDAL_USE_RASTERLITE2, but not found")
-  endif ()
-endif ()
-cmake_dependent_option(GDAL_USE_RASTERLITE2 "Set ON to use Rasterlite2" ON HAVE_RASTERLITE2 OFF)
+gdal_check_package(SPATIALITE "Enable spatialite support for sqlite3" VERSION 4.1.2 CAN_DISABLE)
+gdal_check_package(RASTERLITE2 "Enable RasterLite2 support for sqlite3" VERSION 1.1.0 CAN_DISABLE)
 
 find_package(LibKML COMPONENTS DOM ENGINE)
 if (GDAL_USE_LIBKML)
