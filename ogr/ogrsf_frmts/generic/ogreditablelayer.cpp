@@ -430,7 +430,9 @@ OGRErr OGREditableLayer::ICreateFeature(OGRFeature *poFeature)
 
 OGRErr OGREditableLayer::IUpsertFeature(OGRFeature *poFeature)
 {
-    if (GetFeature(poFeature->GetFID()))
+    auto poFeatureExisting =
+        std::unique_ptr<OGRFeature>(GetFeature(poFeature->GetFID()));
+    if (poFeatureExisting)
     {
         return ISetFeature(poFeature);
     }
