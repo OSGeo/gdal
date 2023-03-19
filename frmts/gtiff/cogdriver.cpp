@@ -629,13 +629,6 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         papszArg = CSLAddString(papszArg, "-wo");
         papszArg = CSLAddString(
             papszArg, (CPLString("NUM_THREADS=") + pszNumThreads).c_str());
-
-        const char *pszWarpThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (!pszWarpThreads)
-        {
-            CPLSetConfigOption("GDAL_NUM_THREADS", pszNumThreads);
-        }
     }
 
     const auto poFirstBand = poSrcDS->GetRasterBand(1);
@@ -669,6 +662,14 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                   pScaledProgress);
     CPLString osTmpFile(GetTmpFilename(pszDstFilename, "warped.tif.tmp"));
     auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
+
+    std::unique_ptr<CPLConfigOptionSetter> poWarpThreadSetter;
+    if (pszNumThreads)
+    {
+        poWarpThreadSetter.reset(new CPLConfigOptionSetter(
+            "GDAL_NUM_THREADS", pszNumThreads, false));
+    }
+
     auto hRet = GDALWarp(osTmpFile, nullptr, 1, &hSrcDS, psOptions, nullptr);
     GDALWarpAppOptionsFree(psOptions);
     CPLDebug("COG", "Reprojecting source dataset: end");
