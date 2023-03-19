@@ -1590,14 +1590,12 @@ union ReadFunc
     intn (*pReadData)(int32, int32[], int32[], int32[], VOIDP);
 };
 
-// The overflow is a bit technical here and not a real one. This comes from
-// the fact that GPtrDiff_t is signed, but size_t is not. So from C/C++
-// standards, GPtrDiff_t is converted to a unsigned integer, and
-// complement-to-2 arithmetic does things right.
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
 {
-    ptr += nInc * nIncSize;
+    if (nInc < 0)
+        ptr -= (-nInc) * nIncSize;
+    else
+        ptr += nInc * nIncSize;
 }
 
 static bool ReadPixels(const GUInt64 *arrayStartIdx, const size_t *count,

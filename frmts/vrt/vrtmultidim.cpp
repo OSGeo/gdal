@@ -1329,16 +1329,20 @@ VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
 /************************************************************************/
 /*                                   Read()                             */
 /************************************************************************/
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static inline void IncrPointer(const GByte *&ptr, GInt64 nInc, size_t nIncSize)
 {
-    ptr += nInc * nIncSize;
+    if (nInc < 0)
+        ptr -= (-nInc) * nIncSize;
+    else
+        ptr += nInc * nIncSize;
 }
 
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
 {
-    ptr += nInc * nIncSize;
+    if (nInc < 0)
+        ptr -= (-nInc) * nIncSize;
+    else
+        ptr += nInc * nIncSize;
 }
 
 bool VRTMDArraySourceInlinedValues::Read(
