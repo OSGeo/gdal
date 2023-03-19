@@ -1048,6 +1048,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     // output buffer.
     if (nBufferCount == 0 && m_poPrivate->m_bSkipNonContributingSources)
     {
+        CPLFree(pBuffers);
         return CE_None;
     }
 
