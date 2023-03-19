@@ -630,8 +630,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
         papszArg = CSLAddString(
             papszArg, (CPLString("NUM_THREADS=") + pszNumThreads).c_str());
 
-        const char* pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (!pszWarpThreads) {
+        const char *pszWarpThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        if (!pszWarpThreads)
+        {
             CPLSetConfigOption("GDAL_NUM_THREADS", pszNumThreads);
         }
     }
