@@ -271,7 +271,7 @@ OGRErr OGRLinearRing::_importFromWkb(OGRwkbByteOrder eByteOrder, int _flags,
             memcpy(padfZ + i, pabyData + 4 + 24 * i + 16, 8);
         }
     }
-    else
+    else if (nPointCount != 0)
     {
         memcpy(paoPoints, pabyData + 4, 16 * static_cast<size_t>(nPointCount));
     }
