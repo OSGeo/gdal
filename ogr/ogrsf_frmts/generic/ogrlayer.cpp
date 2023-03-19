@@ -763,7 +763,8 @@ OGRErr OGRLayer::IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
     if (!TestCapability(OLCRandomWrite))
         return OGRERR_UNSUPPORTED_OPERATION;
 
-    auto poFeatureExisting = GetFeature(poFeature->GetFID());
+    auto poFeatureExisting =
+        std::unique_ptr<OGRFeature>(GetFeature(poFeature->GetFID()));
     if (!poFeatureExisting)
         return OGRERR_NON_EXISTING_FEATURE;
 
@@ -783,7 +784,7 @@ OGRErr OGRLayer::IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
     {
         poFeatureExisting->SetStyleString(poFeature->GetStyleString());
     }
-    return ISetFeature(poFeatureExisting);
+    return ISetFeature(poFeatureExisting.get());
 }
 
 /************************************************************************/
