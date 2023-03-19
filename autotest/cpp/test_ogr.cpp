@@ -1098,6 +1098,25 @@ TEST_F(test_ogr, OGRGeometry_visitor)
         delete poGeom;
     }
 
+    {
+        OGRLineString ls;
+        ls.setNumPoints(2);
+        auto oIter1 = ls.begin();
+        EXPECT_TRUE(oIter1 != ls.end());
+        EXPECT_TRUE(!(oIter1 != ls.begin()));
+        auto oIter2 = ls.begin();
+        EXPECT_TRUE(!(oIter1 != oIter2));
+        ++oIter2;
+        EXPECT_TRUE(oIter1 != oIter2);
+        ++oIter2;
+        EXPECT_TRUE(oIter1 != oIter2);
+    }
+
+    {
+        OGRLineString ls;
+        EXPECT_TRUE(!(ls.begin() != ls.end()));
+    }
+
     TestIterator<OGRLineString>();
     TestIterator<OGRLineString>("LINESTRING(0 0)", 1);
     TestIterator<OGRLineString, OGRCurve>("LINESTRING(0 0)", 1);

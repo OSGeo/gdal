@@ -614,17 +614,27 @@ struct OGRCurve::ConstIterator::Private
     Private &operator=(Private &&) = default;
 
     OGRPoint m_oPoint{};
+    const OGRCurve *m_poCurve{};
+    int m_nStep = 0;
     std::unique_ptr<OGRPointIterator> m_poIterator{};
 };
 
 OGRCurve::ConstIterator::ConstIterator(const OGRCurve *poSelf, bool bStart)
     : m_poPrivate(new Private())
 {
+    m_poPrivate->m_poCurve = poSelf;
     if (bStart)
     {
         m_poPrivate->m_poIterator.reset(poSelf->getPointIterator());
         if (!m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint))
+        {
+            m_poPrivate->m_nStep = -1;
             m_poPrivate->m_poIterator.reset();
+        }
+    }
+    else
+    {
+        m_poPrivate->m_nStep = -1;
     }
 }
 
@@ -649,15 +659,20 @@ const OGRPoint &OGRCurve::ConstIterator::operator*() const
 
 OGRCurve::ConstIterator &OGRCurve::ConstIterator::operator++()
 {
+    CPLAssert(m_poPrivate->m_nStep >= 0);
+    ++m_poPrivate->m_nStep;
     if (!m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint))
+    {
+        m_poPrivate->m_nStep = -1;
         m_poPrivate->m_poIterator.reset();
+    }
     return *this;
 }
 
 bool OGRCurve::ConstIterator::operator!=(const ConstIterator &it) const
 {
-    return m_poPrivate->m_poIterator.get() !=
-           it.m_poPrivate->m_poIterator.get();
+    return m_poPrivate->m_poCurve != it.m_poPrivate->m_poCurve ||
+           m_poPrivate->m_nStep != it.m_poPrivate->m_nStep;
 }
 
 OGRCurve::ConstIterator OGRCurve::begin() const
