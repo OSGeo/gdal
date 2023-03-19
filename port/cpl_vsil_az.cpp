@@ -434,10 +434,7 @@ bool VSIDIRAz::IssueListDir()
     bool ret = false;
     if (response_code != 200)
     {
-        CPLDebug("AZURE", "%s",
-                 requestHelper.sWriteFuncData.pBuffer
-                     ? requestHelper.sWriteFuncData.pBuffer
-                     : "(null)");
+        CPLDebug("AZURE", "%s", requestHelper.sWriteFuncData.pBuffer);
     }
     else
     {

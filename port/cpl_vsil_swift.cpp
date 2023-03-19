@@ -695,9 +695,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
                 }
                 else
                 {
-                    CPLDebug(GetDebugKey(), "%s",
-                             sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer
-                                                    : "(null)");
+                    CPLDebug(GetDebugKey(), "%s", sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncHeaderData.pBuffer);
                     delete poS3HandleHelper;

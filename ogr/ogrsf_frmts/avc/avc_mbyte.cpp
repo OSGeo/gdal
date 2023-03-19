@@ -313,8 +313,7 @@ static int _AVCDetectJapaneseEncoding(const GByte *pszLine)
             break;
         }
         else if (IS_JAP_KANA(*pszLine) && *(pszLine + 1) &&
-                 (IS_ASCII(*(pszLine + 1)) ||
-                  (*(pszLine + 1) >= 0x80 && *(pszLine + 1) <= 0xA0)))
+                 *(pszLine + 1) <= 0xA0)
         {
             nEncoding = AVC_CODE_JAP_SHIFTJIS; /* SHIFT-JIS + Kana */
             break;
