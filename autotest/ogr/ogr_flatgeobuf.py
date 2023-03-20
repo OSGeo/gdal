@@ -1133,3 +1133,29 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
     ds = None
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
+
+
+def test_ogr_flatgeobuf_issue_7401():
+    ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb", options=["SPATIAL_INDEX=NO"])
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    #ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=NO"])
+    ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f is not None
+    f = lyr.GetNextFeature()
+    assert f is not None
+    ds = None
+
+    ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
+    assert not gdal.VSIStatL("/vsimem/test.fgb")
