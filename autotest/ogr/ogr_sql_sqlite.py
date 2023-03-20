@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 from http.server import BaseHTTPRequestHandler
 
 import gdaltest
@@ -37,6 +38,10 @@ import pytest
 import webserver
 
 from osgeo import gdal, ogr, osr
+
+pytestmark = [
+    pytest.mark.require_driver("SQLite"),
+]
 
 
 @pytest.fixture(autouse=True)
@@ -2241,3 +2246,73 @@ def test_ogr_sql_sqlite_attribute_and_geom_field_name_same():
     ds.ReleaseResultSet(sql_lyr)
     assert f["foo"] == "bar"
     assert f.GetGeomFieldRef(0).ExportToWkt() == "POINT (0 0)"
+
+
+###############################################################################
+# Test bug fix for #7464
+
+
+def sqlite_has_function(function_name):
+    ds = ogr.Open(":memory:")
+    if ds is None:
+        return False
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            f"SELECT 1 FROM pragma_function_list WHERE name='{function_name}'"
+        )
+    if sql_lyr is None:
+        return False
+    has_func = sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    return has_func
+
+
+def sqlite_has_json_each():
+    ds = ogr.Open(":memory:")
+    if ds is None:
+        return False
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("""select * from json_each('{"foo":"bar"}')""")
+    if sql_lyr is None:
+        return False
+    has_func = sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    return has_func
+
+
+@pytest.mark.skipif(
+    not sqlite_has_json_each(), reason="sqlite3 build has not json_each() function"
+)
+@pytest.mark.skipif(
+    not sqlite_has_function("json_extract"),
+    reason="sqlite3 build has not json_extract() function",
+)
+def test_ogr_sql_sqlite_json_each():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("jsonprop"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["jsonprop"] = json.dumps(
+        [
+            {"description": "Obj1 jsonprop in group a", "group": "a"},
+            {"description": "Obj1 jsonprop in group b", "group": "b"},
+        ]
+    )
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM test, json_each(jsonprop) WHERE json_extract(value, '$.group')='a'",
+        dialect="SQLite",
+    )
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    assert fc == 1
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM test, json_each(jsonprop) WHERE json_extract(value, '$.group')='not_existing'",
+        dialect="SQLite",
+    )
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    assert fc == 0
