@@ -589,14 +589,20 @@ bool GRIB2Section3Writer::WriteLAEA()
     if (!TransformToGeo(dfLLX, dfLLY) || !TransformToGeo(dfURX, dfURY))
         return false;
 
+    const bool bNormalizeLongitude =
+        CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES"));
+
     const double dfAngUnit = 1e-6;
     WriteScaled(dfLLY, dfAngUnit);
+    if (!bNormalizeLongitude && dfLLX > 360)
+        dfLLX -= 360;
     WriteScaled(dfLLX, dfAngUnit);
     WriteScaled(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0),
                 dfAngUnit);
-    WriteScaled(
-        Lon180to360(oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0)),
-        dfAngUnit);
+    const double dfLonCenter =
+        oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+    WriteScaled(bNormalizeLongitude ? Lon180to360(dfLonCenter) : dfLonCenter,
+                dfAngUnit);
     WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
     const double dfLinearUnit = 1e-3;
     WriteScaled(adfGeoTransform[1], dfLinearUnit);
