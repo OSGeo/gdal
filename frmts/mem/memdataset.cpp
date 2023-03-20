@@ -1491,6 +1491,14 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
     }
     if (!newArray->Init(pabyData, anStrides))
         return nullptr;
+
+    for (auto &poDim : newArray->GetDimensions())
+    {
+        const auto dim = std::dynamic_pointer_cast<MEMDimension>(poDim);
+        if (dim)
+            dim->RegisterUsingArray(newArray.get());
+    }
+
     newArray->RegisterGroup(m_pSelf);
     m_oMapMDArrays[osName] = newArray;
     return newArray;
@@ -1619,6 +1627,15 @@ MEMAbstractMDArray::MEMAbstractMDArray(
 
 MEMAbstractMDArray::~MEMAbstractMDArray()
 {
+    FreeArray();
+}
+
+/************************************************************************/
+/*                              FreeArray()                             */
+/************************************************************************/
+
+void MEMAbstractMDArray::FreeArray()
+{
     if (m_bOwnArray)
     {
         if (m_oType.NeedsFreeDynamicMemory())
@@ -1633,6 +1650,9 @@ MEMAbstractMDArray::~MEMAbstractMDArray()
             }
         }
         VSIFree(m_pabyArray);
+        m_pabyArray = nullptr;
+        m_nTotalSize = 0;
+        m_bOwnArray = false;
     }
 }
 
@@ -1663,8 +1683,13 @@ bool MEMAbstractMDArray::Init(GByte *pData,
             --i;
             const auto &poDim = m_aoDims[i];
             auto nDimSize = poDim->GetSize();
-            if (nDimSize != 0 &&
-                nTotalSize > std::numeric_limits<GUInt64>::max() / nDimSize)
+            if (nDimSize == 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Illegal dimension size 0");
+                return false;
+            }
+            if (nTotalSize > std::numeric_limits<GUInt64>::max() / nDimSize)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
                 return false;
@@ -1694,6 +1719,7 @@ bool MEMAbstractMDArray::Init(GByte *pData,
         m_pabyArray = static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, m_nTotalSize));
         m_bOwnArray = true;
     }
+
     return m_pabyArray != nullptr;
 }
 
@@ -1939,6 +1965,9 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
 {
+    if (!m_bValid)
+        return false;
+
     const auto nDims = m_aoDims.size();
     if (nDims == 0)
     {
@@ -1980,6 +2009,10 @@ bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
         CPLError(CE_Failure, CPLE_AppDefined, "Non updatable object");
         return false;
     }
+
+    if (!m_bValid)
+        return false;
+
     m_bModified = true;
 
     const auto nDims = m_aoDims.size();
@@ -2034,6 +2067,13 @@ MEMMDArray::~MEMMDArray()
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
         CPLFree(m_pabyNoData);
+    }
+
+    for (auto &poDim : GetDimensions())
+    {
+        const auto dim = std::dynamic_pointer_cast<MEMDimension>(poDim);
+        if (dim)
+            dim->UnRegisterUsingArray(this);
     }
 }
 
@@ -2184,6 +2224,318 @@ MEMMDArray::GetCoordinateVariables() const
 }
 
 /************************************************************************/
+/*                            Resize()                                  */
+/************************************************************************/
+
+bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+                        CSLConstList /* papszOptions */)
+{
+    return Resize(anNewDimSizes, /*bResizeOtherArrays=*/true);
+}
+
+bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+                        bool bResizeOtherArrays)
+{
+    if (!IsWritable())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Resize() not supported on read-only file");
+        return false;
+    }
+    if (!m_bOwnArray)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Resize() not supported on an array that does not own its memory");
+        return false;
+    }
+    if (!m_bValid)
+        return false;
+
+    const auto nDimCount = GetDimensionCount();
+    if (anNewDimSizes.size() != nDimCount)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Not expected number of values in anNewDimSizes.");
+        return false;
+    }
+
+    auto &dims = GetDimensions();
+    std::vector<size_t> anDecreasedDimIdx;
+    std::vector<size_t> anGrownDimIdx;
+    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        auto oIter = oMapDimToSize.find(dims[i].get());
+        if (oIter != oMapDimToSize.end() && oIter->second != anNewDimSizes[i])
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot resize a dimension referenced several times "
+                     "to different sizes");
+            return false;
+        }
+        if (anNewDimSizes[i] != dims[i]->GetSize())
+        {
+            if (anNewDimSizes[i] == 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Illegal dimension size 0");
+                return false;
+            }
+            auto dim = std::dynamic_pointer_cast<MEMDimension>(dims[i]);
+            if (!dim)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot resize a dimension that is not a MEMDimension");
+                return false;
+            }
+            oMapDimToSize[dim.get()] = anNewDimSizes[i];
+            if (anNewDimSizes[i] < dims[i]->GetSize())
+            {
+                anDecreasedDimIdx.push_back(i);
+            }
+            else
+            {
+                anGrownDimIdx.push_back(i);
+            }
+        }
+        else
+        {
+            oMapDimToSize[dims[i].get()] = dims[i]->GetSize();
+        }
+    }
+
+    const auto ResizeOtherArrays = [this, &anNewDimSizes, nDimCount, &dims]()
+    {
+        std::set<MEMMDArray *> oSetArrays;
+        std::map<GDALDimension *, GUInt64> oMapNewSize;
+        for (size_t i = 0; i < nDimCount; ++i)
+        {
+            if (anNewDimSizes[i] != dims[i]->GetSize())
+            {
+                auto dim = std::dynamic_pointer_cast<MEMDimension>(dims[i]);
+                if (!dim)
+                {
+                    CPLAssert(false);
+                }
+                else
+                {
+                    oMapNewSize[dims[i].get()] = anNewDimSizes[i];
+                    for (const auto &poArray : dim->GetUsingArrays())
+                    {
+                        if (poArray != this)
+                            oSetArrays.insert(poArray);
+                    }
+                }
+            }
+        }
+
+        bool bOK = true;
+        for (auto *poArray : oSetArrays)
+        {
+            const auto &apoOtherDims = poArray->GetDimensions();
+            std::vector<GUInt64> anOtherArrayNewDimSizes(
+                poArray->GetDimensionCount());
+            for (size_t i = 0; i < anOtherArrayNewDimSizes.size(); ++i)
+            {
+                auto oIter = oMapNewSize.find(apoOtherDims[i].get());
+                if (oIter != oMapNewSize.end())
+                    anOtherArrayNewDimSizes[i] = oIter->second;
+                else
+                    anOtherArrayNewDimSizes[i] = apoOtherDims[i]->GetSize();
+            }
+            if (!poArray->Resize(anOtherArrayNewDimSizes,
+                                 /*bResizeOtherArrays=*/false))
+            {
+                bOK = false;
+                break;
+            }
+        }
+        if (!bOK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Resizing of another array referencing the same dimension "
+                     "as one modified on the current array failed. All arrays "
+                     "referencing that dimension will be invalidated.");
+            Invalidate();
+            for (auto *poArray : oSetArrays)
+            {
+                poArray->Invalidate();
+            }
+        }
+
+        return bOK;
+    };
+
+    // Decrease slowest varying dimension
+    if (anGrownDimIdx.empty() && anDecreasedDimIdx.size() == 1 &&
+        anDecreasedDimIdx[0] == 0)
+    {
+        CPLAssert(m_nTotalSize % dims[0]->GetSize() == 0);
+        const size_t nNewTotalSize = static_cast<size_t>(
+            (m_nTotalSize / dims[0]->GetSize()) * anNewDimSizes[0]);
+        if (m_oType.NeedsFreeDynamicMemory())
+        {
+            GByte *pabyPtr = m_pabyArray + nNewTotalSize;
+            GByte *pabyEnd = m_pabyArray + m_nTotalSize;
+            const auto nDTSize(m_oType.GetSize());
+            while (pabyPtr < pabyEnd)
+            {
+                m_oType.FreeDynamicMemory(pabyPtr);
+                pabyPtr += nDTSize;
+            }
+        }
+        // shrinking... cannot fail, and even if it does, that's ok
+        GByte *pabyArray = static_cast<GByte *>(
+            VSI_REALLOC_VERBOSE(m_pabyArray, nNewTotalSize));
+        if (pabyArray)
+            m_pabyArray = pabyArray;
+        m_nTotalSize = nNewTotalSize;
+
+        if (bResizeOtherArrays)
+        {
+            if (!ResizeOtherArrays())
+                return false;
+
+            auto dim = std::dynamic_pointer_cast<MEMDimension>(dims[0]);
+            if (dim)
+            {
+                dim->SetSize(anNewDimSizes[0]);
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+        return true;
+    }
+
+    // Increase slowest varying dimension
+    if (anDecreasedDimIdx.empty() && anGrownDimIdx.size() == 1 &&
+        anGrownDimIdx[0] == 0)
+    {
+        CPLAssert(m_nTotalSize % dims[0]->GetSize() == 0);
+        GUInt64 nNewTotalSize64 = m_nTotalSize / dims[0]->GetSize();
+        if (nNewTotalSize64 >
+            std::numeric_limits<GUInt64>::max() / anNewDimSizes[0])
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
+            return false;
+        }
+        nNewTotalSize64 *= anNewDimSizes[0];
+        // We restrict the size of the allocation so that all elements can be
+        // indexed by GPtrDiff_t
+        if (nNewTotalSize64 >
+            static_cast<size_t>(std::numeric_limits<GPtrDiff_t>::max()))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
+            return false;
+        }
+        const size_t nNewTotalSize = static_cast<size_t>(nNewTotalSize64);
+        GByte *pabyArray = static_cast<GByte *>(
+            VSI_REALLOC_VERBOSE(m_pabyArray, nNewTotalSize));
+        if (!pabyArray)
+            return false;
+        memset(pabyArray + m_nTotalSize, 0, nNewTotalSize - m_nTotalSize);
+        m_pabyArray = pabyArray;
+        m_nTotalSize = nNewTotalSize;
+
+        if (bResizeOtherArrays)
+        {
+            if (!ResizeOtherArrays())
+                return false;
+
+            auto dim = std::dynamic_pointer_cast<MEMDimension>(dims[0]);
+            if (dim)
+            {
+                dim->SetSize(anNewDimSizes[0]);
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+        return true;
+    }
+
+    // General case where we modify other dimensions that the first one.
+
+    // Create dummy dimensions at the new sizes
+    std::vector<std::shared_ptr<GDALDimension>> aoNewDims;
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        aoNewDims.emplace_back(std::make_shared<MEMDimension>(
+            std::string(), dims[i]->GetName(), std::string(), std::string(),
+            anNewDimSizes[i]));
+    }
+
+    // Create a temporary array
+    auto poTempMDArray =
+        Create(std::string(), std::string(), aoNewDims, GetDataType());
+    if (!poTempMDArray->Init())
+        return false;
+    std::vector<GUInt64> arrayStartIdx(nDimCount);
+    std::vector<size_t> count(nDimCount);
+    std::vector<GInt64> arrayStep(nDimCount, 1);
+    std::vector<GPtrDiff_t> bufferStride(nDimCount);
+    for (size_t i = nDimCount; i > 0;)
+    {
+        --i;
+        if (i == nDimCount - 1)
+            bufferStride[i] = 1;
+        else
+        {
+            bufferStride[i] = static_cast<GPtrDiff_t>(bufferStride[i + 1] *
+                                                      dims[i + 1]->GetSize());
+        }
+        const auto nCount = std::min(anNewDimSizes[i], dims[i]->GetSize());
+        count[i] = static_cast<size_t>(nCount);
+    }
+    // Copy the current content into the array with the new layout
+    if (!poTempMDArray->Write(arrayStartIdx.data(), count.data(),
+                              arrayStep.data(), bufferStride.data(),
+                              GetDataType(), m_pabyArray))
+    {
+        return false;
+    }
+
+    // Move content of the temporary array into the current array, and
+    // invalidate the temporary array
+    FreeArray();
+    m_bOwnArray = true;
+    m_pabyArray = poTempMDArray->m_pabyArray;
+    m_nTotalSize = poTempMDArray->m_nTotalSize;
+    m_anStrides = poTempMDArray->m_anStrides;
+
+    poTempMDArray->m_bOwnArray = false;
+    poTempMDArray->m_pabyArray = nullptr;
+    poTempMDArray->m_nTotalSize = 0;
+
+    if (bResizeOtherArrays && !ResizeOtherArrays())
+        return false;
+
+    // Update dimension size
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        if (anNewDimSizes[i] != dims[i]->GetSize())
+        {
+            auto dim = std::dynamic_pointer_cast<MEMDimension>(dims[i]);
+            if (dim)
+            {
+                dim->SetSize(anNewDimSizes[i]);
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                            BuildDimensions()                         */
 /************************************************************************/
 
@@ -2193,7 +2545,7 @@ BuildDimensions(const std::vector<GUInt64> &anDimensions)
     std::vector<std::shared_ptr<GDALDimension>> res;
     for (size_t i = 0; i < anDimensions.size(); i++)
     {
-        res.emplace_back(std::make_shared<MEMDimension>(
+        res.emplace_back(std::make_shared<GDALDimensionWeakIndexingVar>(
             std::string(), CPLSPrintf("dim%u", static_cast<unsigned>(i)),
             std::string(), std::string(), anDimensions[i]));
     }
@@ -2239,20 +2591,27 @@ MEMAttribute::Create(const std::string &osParentName, const std::string &osName,
 MEMDimension::MEMDimension(const std::string &osParentName,
                            const std::string &osName, const std::string &osType,
                            const std::string &osDirection, GUInt64 nSize)
-    : GDALDimension(osParentName, osName, osType, osDirection, nSize)
+    : GDALDimensionWeakIndexingVar(osParentName, osName, osType, osDirection,
+                                   nSize)
 {
 }
 
 /************************************************************************/
-/*                           SetIndexingVariable()                      */
+/*                        RegisterUsingArray()                          */
 /************************************************************************/
 
-// cppcheck-suppress passedByValue
-bool MEMDimension::SetIndexingVariable(
-    std::shared_ptr<GDALMDArray> poIndexingVariable)
+void MEMDimension::RegisterUsingArray(MEMMDArray *poArray)
 {
-    m_poIndexingVariable = poIndexingVariable;
-    return true;
+    m_oSetArrays.insert(poArray);
+}
+
+/************************************************************************/
+/*                        UnRegisterUsingArray()                        */
+/************************************************************************/
+
+void MEMDimension::UnRegisterUsingArray(MEMMDArray *poArray)
+{
+    m_oSetArrays.erase(poArray);
 }
 
 /************************************************************************/
