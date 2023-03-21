@@ -151,6 +151,8 @@ Dataset open options
    separated).
 -  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
    including non-spatial ones, to be listed.
+-  **SKIP_VIEWS**\ =YES/NO: (GDAL >= 3.7) This may be "YES" to prevent
+   views from being listed.
 -  **PRELUDE_STATEMENTS**\ =string (GDAL >= 2.1). SQL statement(s) to
    send on the PostgreSQL client connection before any other ones. In
    case of several statements, they must be separated with the
