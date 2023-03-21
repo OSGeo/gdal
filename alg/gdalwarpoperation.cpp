@@ -982,7 +982,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(int nDstXOff, int nDstYOff,
 
     WipeChunkList();
 
-    psOptions->pfnProgress(1.00001, "", psOptions->pProgressArg);
+    psOptions->pfnProgress(1.0, "", psOptions->pProgressArg);
 
     return CE_None;
 }
@@ -1223,6 +1223,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(int nDstXOff, int nDstYOff,
     CPLDestroyMutex(hCondMutex);
 
     WipeChunkList();
+
+    psOptions->pfnProgress(1.0, "", psOptions->pProgressArg);
 
     return eErr;
 }
