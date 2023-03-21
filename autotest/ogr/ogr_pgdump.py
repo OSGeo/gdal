@@ -89,44 +89,41 @@ def test_ogr_pgdump_1():
     dst_feat.Destroy()
     ds.Destroy()
 
-    f = open("tmp/tpoly.sql")
-    sql = f.read()
-    f.close()
+    with open("tmp/tpoly.sql") as f:
+        sql = f.read()
 
-    assert not (
-        sql.find("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""") == -1
-        or sql.find(
-            """DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'public';"""
-        )
-        == -1
-        or sql.find("""BEGIN;""") == -1
-        or sql.find(
-            """CREATE TABLE "public"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );"""
-        )
-        == -1
-        or sql.find(
-            """SELECT AddGeometryColumn('public','tpoly','wkb_geometry',-1,'GEOMETRY',3);"""
-        )
-        == -1
-        or sql.find(
-            """CREATE INDEX "tpoly_wkb_geometry_geom_idx" ON "public"."tpoly" USING GIST ("wkb_geometry");"""
-        )
-        == -1
-        or sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "area" FLOAT8;""") == -1
-        or sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "eas_id" INTEGER;""")
-        == -1
-        or sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "prfedea" VARCHAR;""")
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
-        )
-        == -1
-        or sql.find(
-            """INSERT INTO "public"."tpoly" ("wkb_geometry" , "area", "eas_id", "prfedea") VALUES ('01030000800100000005000000000000C01A481D4100000080072D5241000000000000000000000060AA461D4100000080FF2C524100000000000000000000006060461D41000000400C2D52410000000000000000000000A0DF471D4100000000142D52410000000000000000000000C01A481D4100000080072D52410000000000000000', 5268.813, 170, '35043413');"""
-        )
-        == -1
-        or sql.find("""COMMIT;""") == -1
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""DROP TABLE IF EXISTS "public"."tpoly" CASCADE;""")
+    check_and_remove(
+        """DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'public';"""
     )
+    check_and_remove("""BEGIN;""")
+    check_and_remove("""CREATE TABLE "public"."tpoly"();""")
+    check_and_remove(
+        """ALTER TABLE "public"."tpoly" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "tpoly_pk" PRIMARY KEY;"""
+    )
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','tpoly','wkb_geometry',-1,'GEOMETRY',3);"""
+    )
+    check_and_remove("""ALTER TABLE "public"."tpoly" ADD COLUMN "area" FLOAT8;""")
+    check_and_remove("""ALTER TABLE "public"."tpoly" ADD COLUMN "eas_id" INTEGER;""")
+    check_and_remove("""ALTER TABLE "public"."tpoly" ADD COLUMN "prfedea" VARCHAR;""")
+    check_and_remove(
+        """ALTER TABLE "public"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
+    )
+    check_and_remove(
+        """INSERT INTO "public"."tpoly" ("wkb_geometry", "area", "eas_id", "prfedea") VALUES ('01030000800100000014000000000000602F491D41000000207F2D52410000000000000000000000C028471D41000000E0922D52410000000000000000000000007C461D4100000060AE2D5241000000000000000000000080C9471D4100000020B62D52410000000000000000000000209C4C1D41000000E0D82D52410000000000000000000000608D4C1D41000000A0DD2D52410000000000000000000000207F4E1D41000000A0EA2D5241000000000000000000000020294F1D4100000080CA2D5241000000000000000000000000B4511D41000000E0552D52410000000000000000000000C016521D4100000080452D52410000000000000000000000E0174E1D41000000202E2D5241000000000000000000000020414D1D41000000E04C2D52410000000000000000000000E04B4D1D41000000605E2D5241000000000000000000000040634D1D41000000E0742D52410000000000000000000000A0EF4C1D41000000E08D2D52410000000000000000000000E04E4C1D41000000E0A12D52410000000000000000000000E0B04B1D4100000060B82D5241000000000000000000000080974A1D4100000080AE2D5241000000000000000000000080CF491D4100000080952D52410000000000000000000000602F491D41000000207F2D52410000000000000000', 215229.266, 168, '35043411');"""
+    )
+    check_and_remove(
+        """CREATE INDEX "tpoly_wkb_geometry_geom_idx" ON "public"."tpoly" USING GIST ("wkb_geometry");"""
+    )
+    check_and_remove("""COMMIT;""")
 
 
 ###############################################################################
@@ -140,102 +137,99 @@ def test_ogr_pgdump_2():
     except OSError:
         pass
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "tmp/tpoly.sql", options=["LINEFORMAT=CRLF"]
-    )
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            "tmp/tpoly.sql", options=["LINEFORMAT=CRLF"]
+        )
 
-    ######################################################
-    # Create Layer
-    lyr = ds.CreateLayer(
-        "tpoly",
-        geom_type=ogr.wkbPolygon,
-        options=["SCHEMA=another_schema", "SRID=4326", "GEOMETRY_NAME=the_geom"],
-    )
+        ######################################################
+        # Create Layer
+        lyr = ds.CreateLayer(
+            "tpoly",
+            geom_type=ogr.wkbPolygon,
+            options=["SCHEMA=another_schema", "SRID=4326", "GEOMETRY_NAME=the_geom"],
+        )
 
-    ######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def(
-        lyr,
-        [
-            ("AREA", ogr.OFTReal),
-            ("EAS_ID", ogr.OFTInteger),
-            ("PRFEDEA", ogr.OFTString),
-            ("SHORTNAME", ogr.OFTString, 8),
-        ],
-    )
+        ######################################################
+        # Setup Schema
+        ogrtest.quick_create_layer_def(
+            lyr,
+            [
+                ("AREA", ogr.OFTReal),
+                ("EAS_ID", ogr.OFTInteger),
+                ("PRFEDEA", ogr.OFTString),
+                ("SHORTNAME", ogr.OFTString, 8),
+            ],
+        )
 
-    ######################################################
-    # Copy in poly.shp
+        ######################################################
+        # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open("data/poly.shp")
-    shp_lyr = shp_ds.GetLayer(0)
-    feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
-
-    while feat is not None:
-
-        gdaltest.poly_feat.append(feat)
-
-        dst_feat.SetFrom(feat)
-        lyr.CreateFeature(dst_feat)
-
+        shp_ds = ogr.Open("data/poly.shp")
+        shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
+        gdaltest.poly_feat = []
 
-    dst_feat.Destroy()
-    ds.Destroy()
+        while feat is not None:
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
+            gdaltest.poly_feat.append(feat)
 
-    f = open("tmp/tpoly.sql")
-    sql = f.read()
-    f.close()
+            dst_feat.SetFrom(feat)
+            lyr.CreateFeature(dst_feat)
 
-    assert not (
-        sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1
-        or sql.find("""BEGIN;""") == -1
-        or sql.find(
-            """CREATE TABLE "another_schema"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );"""
-        )
-        == -1
-        or sql.find(
-            """SELECT AddGeometryColumn('another_schema','tpoly','the_geom',4326,'POLYGON',2);"""
-        )
-        == -1
-        or sql.find(
-            """CREATE INDEX "tpoly_the_geom_geom_idx" ON "another_schema"."tpoly" USING GIST ("the_geom");"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
-        )
-        == -1
-        or sql.find(
-            """COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
-        )
-        == -1
-        or sql.find(
-            "0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N"
-        )
-        == -1
-        or sql.find(r"""\.""") == -1
-        or sql.find("""COMMIT;""") == -1
+            feat = shp_lyr.GetNextFeature()
+
+        dst_feat.Destroy()
+        ds.Destroy()
+
+    with open("tmp/tpoly.sql") as f:
+        sql = f.read()
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""CREATE SCHEMA "another_schema";""")
+    check_and_remove("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""")
+    check_and_remove("""BEGIN;""")
+    check_and_remove("""CREATE TABLE "another_schema"."tpoly"();""")
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "tpoly_pk" PRIMARY KEY;"""
     )
+    check_and_remove(
+        """SELECT AddGeometryColumn('another_schema','tpoly','the_geom',4326,'POLYGON',2);"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
+    )
+    check_and_remove(
+        """COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
+    )
+    check_and_remove(
+        """0103000020E61000000100000014000000000000602F491D41000000207F2D5241000000C028471D41000000E0922D5241000000007C461D4100000060AE2D524100000080C9471D4100000020B62D5241000000209C4C1D41000000E0D82D5241000000608D4C1D41000000A0DD2D5241000000207F4E1D41000000A0EA2D524100000020294F1D4100000080CA2D524100000000B4511D41000000E0552D5241000000C016521D4100000080452D5241000000E0174E1D41000000202E2D524100000020414D1D41000000E04C2D5241000000E04B4D1D41000000605E2D524100000040634D1D41000000E0742D5241000000A0EF4C1D41000000E08D2D5241000000E04E4C1D41000000E0A12D5241000000E0B04B1D4100000060B82D524100000080974A1D4100000080AE2D524100000080CF491D4100000080952D5241000000602F491D41000000207F2D5241\t215229.266\t168\t35043411\t\\N"""
+    )
+    check_and_remove("""\\.""")
+    # Check that there's no semi-column after above command
+    assert sql.startswith("\n") or sql.startswith("\r\n")
+    check_and_remove(
+        """CREATE INDEX "tpoly_the_geom_geom_idx" ON "another_schema"."tpoly" USING GIST ("the_geom");"""
+    )
+    check_and_remove("""COMMIT;""")
 
 
 ###############################################################################
@@ -249,104 +243,104 @@ def test_ogr_pgdump_3():
     except OSError:
         pass
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "tmp/tpoly.sql", options=["LINEFORMAT=LF"]
-    )
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            "tmp/tpoly.sql", options=["LINEFORMAT=LF"]
+        )
 
-    ######################################################
-    # Create Layer
-    lyr = ds.CreateLayer(
-        "tpoly", geom_type=ogr.wkbNone, options=["SCHEMA=another_schema"]
-    )
+        ######################################################
+        # Create Layer
+        lyr = ds.CreateLayer(
+            "tpoly", geom_type=ogr.wkbNone, options=["SCHEMA=another_schema"]
+        )
 
-    ######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def(
-        lyr,
-        [
-            ("EMPTYCHAR", ogr.OFTString),
-            ("AREA", ogr.OFTReal),
-            ("EAS_ID", ogr.OFTInteger),
-            ("PRFEDEA", ogr.OFTString),
-            ("SHORTNAME", ogr.OFTString, 8),
-        ],
-    )
+        ######################################################
+        # Setup Schema
+        ogrtest.quick_create_layer_def(
+            lyr,
+            [
+                ("EMPTYCHAR", ogr.OFTString),
+                ("AREA", ogr.OFTReal),
+                ("EAS_ID", ogr.OFTInteger),
+                ("PRFEDEA", ogr.OFTString),
+                ("SHORTNAME", ogr.OFTString, 8),
+            ],
+        )
 
-    ######################################################
-    # Copy in poly.shp
+        ######################################################
+        # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open("data/poly.shp")
-    shp_lyr = shp_ds.GetLayer(0)
-    feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
-
-    i = 0
-
-    while feat is not None:
-
-        gdaltest.poly_feat.append(feat)
-
-        dst_feat.SetFrom(feat)
-        if i == 0:
-            # Be perverse and test the case where a feature has a geometry
-            # even if it's a wkbNone layer ! (#4040)
-            dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
-        elif i == 1:
-            # Field with 0 character (not empty!) (#4040)
-            dst_feat.SetField(0, "")
-        i = i + 1
-        lyr.CreateFeature(dst_feat)
-
+        shp_ds = ogr.Open("data/poly.shp")
+        shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
+        gdaltest.poly_feat = []
 
-    dst_feat.Destroy()
-    ds.Destroy()
+        i = 0
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
+        while feat is not None:
 
-    f = open("tmp/tpoly.sql")
-    sql = f.read()
-    f.close()
+            gdaltest.poly_feat.append(feat)
 
-    assert not (
-        sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1
-        or sql.find("""DELETE FROM geometry_columns""") != -1
-        or sql.find("""BEGIN;""") == -1
-        or sql.find(
-            """CREATE TABLE "another_schema"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );"""
-        )
-        == -1
-        or sql.find("""SELECT AddGeometryColumn""") != -1
-        or sql.find("""CREATE INDEX "tpoly_wkb_geometry_geom_idx""") != -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
-        )
-        == -1
-        or sql.find(
-            """COPY "another_schema"."tpoly" ("emptychar", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
-        )
-        == -1
-        or sql.find("""\\N	215229.266	168	35043411	\\N""") == -1
-        or sql.find("""	5268.813	170	35043413	\\N""") == -1
-        or sql.find("""\\.""") == -1
-        or sql.find("""COMMIT;""") == -1
+            dst_feat.SetFrom(feat)
+            if i == 0:
+                # Be perverse and test the case where a feature has a geometry
+                # even if it's a wkbNone layer ! (#4040)
+                dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+            elif i == 1:
+                # Field with 0 character (not empty!) (#4040)
+                dst_feat.SetField(0, "")
+            i = i + 1
+            lyr.CreateFeature(dst_feat)
+
+            feat = shp_lyr.GetNextFeature()
+
+        dst_feat.Destroy()
+        ds.Destroy()
+
+    with open("tmp/tpoly.sql") as f:
+        sql = f.read()
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    assert "SELECT AddGeometryColumn" not in sql
+    assert "CREATE INDEX" not in sql
+
+    check_and_remove("""CREATE SCHEMA "another_schema";""")
+    check_and_remove("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""")
+    check_and_remove("""BEGIN;""")
+    check_and_remove("""CREATE TABLE "another_schema"."tpoly"();""")
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "tpoly_pk" PRIMARY KEY;"""
     )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
+    )
+    check_and_remove(
+        """COPY "another_schema"."tpoly" ("emptychar", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
+    )
+    check_and_remove("""\\N\t215229.266\t168\t35043411\t\\N""")
+    check_and_remove("""\t5268.813\t170\t35043413\t\\N""")
+    check_and_remove("""\\.""")
+    # Check that there's no semi-column after above command
+    assert sql.startswith("\n") or sql.startswith("\r\n")
+    check_and_remove("""COMMIT;""")
 
 
 ###############################################################################
@@ -356,7 +350,7 @@ def test_ogr_pgdump_3():
 def test_ogr_pgdump_4():
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "tmp/ogr_pgdump_4.sql", options=["LINEFORMAT=LF"]
+        "/vsimem/ogr_pgdump_4.sql", options=["LINEFORMAT=LF"]
     )
     assert ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 0
 
@@ -387,36 +381,38 @@ def test_ogr_pgdump_4():
 
     ds = None
 
-    f = open("tmp/ogr_pgdump_4.sql")
-    sql = f.read()
-    f.close()
+    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_4.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("ascii")
+    gdal.VSIFCloseL(f)
 
-    assert not (
-        sql.find(
-            """CREATE TABLE "public"."test" ( "ogc_fid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )"""
-        )
-        == -1
-        or sql.find(
-            """SELECT AddGeometryColumn('public','test','point_nosrs',0,'POINT',2)"""
-        )
-        == -1
-        or sql.find(
-            """CREATE INDEX "test_point_nosrs_geom_idx" ON "public"."test" USING GIST ("point_nosrs")"""
-        )
-        == -1
-        or sql.find(
-            """SELECT AddGeometryColumn('public','test','poly',4326,'POLYGON',3)"""
-        )
-        == -1
-        or sql.find(
-            """CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly")"""
-        )
-        == -1
-        or sql.find("""INSERT INTO "public"."test" DEFAULT VALUES""") == -1
-        or sql.find(
-            """INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=0;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )"""
-        )
-        == -1
+    gdal.Unlink("/vsimem/ogr_pgdump_4.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""CREATE TABLE "public"."test"();""")
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
+    )
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','point_nosrs',0,'POINT',2);"""
+    )
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','poly',4326,'POLYGON',3);"""
+    )
+    check_and_remove("""INSERT INTO "public"."test" DEFAULT VALUES;""")
+    check_and_remove(
+        """INSERT INTO "public"."test" ("point_nosrs", "poly") VALUES (GeomFromEWKT('SRID=0;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) );"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_point_nosrs_geom_idx" ON "public"."test" USING GIST ("point_nosrs");"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly");"""
     )
 
 
@@ -475,19 +471,27 @@ def test_ogr_pgdump_5():
 
     gdal.Unlink("/vsimem/ogr_pgdump_5.sql")
 
-    assert not (
-        sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR UNIQUE;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;"""
-        )
-        == -1
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR UNIQUE;"""
+    )
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','geomfield_not_nullable',0,'POINT',2);"""
+    )
+    check_and_remove(
+        """ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;"""
+    )
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','geomfield_nullable',0,'POINT',2);"""
     )
 
 
@@ -573,39 +577,39 @@ def test_ogr_pgdump_6():
 
     gdal.Unlink("/vsimem/ogr_pgdump_6.sql")
 
-    assert not (
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_string" VARCHAR DEFAULT 'a''b';"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_int" INTEGER DEFAULT 123;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_real" FLOAT8 DEFAULT 1.23;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_datetime" timestamp with time zone DEFAULT CURRENT_TIMESTAMP;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_datetime2" timestamp with time zone DEFAULT '2015/06/30 12:34:56+00'::timestamp with time zone;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_date" date DEFAULT CURRENT_DATE;"""
+    )
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "field_time" time DEFAULT CURRENT_TIME;"""
+    )
+    check_and_remove(
         """a\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56"""
-        not in sql
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_string" VARCHAR DEFAULT 'a''b';"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_int" INTEGER DEFAULT 123;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_real" FLOAT8 DEFAULT 1.23;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_datetime" timestamp with time zone DEFAULT CURRENT_TIMESTAMP;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_datetime2" timestamp with time zone DEFAULT '2015/06/30 12:34:56+00'::timestamp with time zone;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_date" date DEFAULT CURRENT_DATE;"""
-        )
-        == -1
-        or sql.find(
-            """ALTER TABLE "public"."test" ADD COLUMN "field_time" time DEFAULT CURRENT_TIME;"""
-        )
-        == -1
-        or """b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56"""
-        not in sql
+    )
+    check_and_remove(
+        """b\t456\t4.56\t\\N\t2015/06/30 12:34:56\t2015/06/30 12:34:56\t2015/06/30\t12:34:56"""
     )
 
 
@@ -694,27 +698,34 @@ def test_ogr_pgdump_7():
 
     gdal.Unlink("/vsimem/ogr_pgdump_7.sql")
 
-    assert not (
-        """CREATE TABLE "public"."test" ( "myfid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
-        not in sql
-        or """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql
-        or sql.find(
-            """INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (10, 'first string', 'second string');"""
-        )
-        == -1
-        or sql.find(
-            """INSERT INTO "public"."test" ("str2") VALUES ('second string');"""
-        )
-        == -1
-        or sql.find(
-            """INSERT INTO "public"."test" ("myfid" , "str", "str2") VALUES (12, 'first string', 'second string');"""
-        )
-        == -1
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    assert """ALTER TABLE "public"."test" ADD COLUMN "myfid" VARCHAR""" not in sql
+    assert """ALTER TABLE "public"."test" ADD COLUMN "myfid" INT""" not in sql
+
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "myfid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
+    )
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str" VARCHAR;""")
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str2" VARCHAR;""")
+    check_and_remove(
+        """INSERT INTO "public"."test" ("myfid", "str", "str2") VALUES (10, 'first string', 'second string');"""
+    )
+    check_and_remove(
+        """SELECT setval(pg_get_serial_sequence('"public"."test"', 'myfid'), MAX("myfid")) FROM "public"."test";"""
+    )
+    check_and_remove(
+        """INSERT INTO "public"."test" ("myfid", "str", "str2") VALUES (12, 'first string', 'second string');"""
     )
 
 
 ###############################################################################
-# Test creating a field with the fid name (PG_USE_COPY=NO)
+# Test creating a field with the fid name (PG_USE_COPY=YES)
 
 
 def test_ogr_pgdump_8():
@@ -806,61 +817,75 @@ def test_ogr_pgdump_8():
 
     gdal.Unlink("/vsimem/ogr_pgdump_8.sql")
 
-    assert not (
-        """CREATE TABLE "public"."test" ( "myfid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
-        not in sql
-        or """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql
-        or sql.find("""10\tfirst string\tsecond string""") == -1
-        or sql.find(
-            """INSERT INTO "public"."test" ("str2") VALUES ('second string');"""
-        )
-        == -1
-        or sql.find("""12\tfirst string\tsecond string""") == -1
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    assert """ALTER TABLE "public"."test" ADD COLUMN "myfid" VARCHAR""" not in sql
+    assert """ALTER TABLE "public"."test" ADD COLUMN "myfid" INT""" not in sql
+
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "myfid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
     )
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str" VARCHAR;""")
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str2" VARCHAR;""")
+    check_and_remove("""COPY "public"."test" ("myfid", "str", "str2") FROM STDIN;""")
+    check_and_remove("""10\tfirst string\tsecond string""")
+    check_and_remove("""\\.""")
+    check_and_remove(
+        """SELECT setval(pg_get_serial_sequence('"public"."test"', 'myfid'), MAX("myfid")) FROM "public"."test";"""
+    )
+    check_and_remove(
+        """INSERT INTO "public"."test" ("str2") VALUES ('second string');"""
+    )
+    check_and_remove("""COPY "public"."test" ("myfid", "str", "str2") FROM STDIN;""")
+    check_and_remove("""12\tfirst string\tsecond string""")
+    check_and_remove("""\\.""")
 
 
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
 
-def test_ogr_pgdump_9(pg_use_copy="YES"):
+@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
+def test_ogr_pgdump_9(pg_use_copy):
 
-    gdal.SetConfigOption("PG_USE_COPY", pg_use_copy)
+    with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            "/vsimem/ogr_pgdump_9.sql", options=["LINEFORMAT=LF"]
+        )
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
 
-    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_9.sql", options=["LINEFORMAT=LF"]
-    )
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        fld = ogr.FieldDefn("str", ogr.OFTString)
+        fld.SetWidth(5)
+        lyr.CreateField(fld)
+        fld = ogr.FieldDefn("str2", ogr.OFTString)
+        lyr.CreateField(fld)
 
-    fld = ogr.FieldDefn("str", ogr.OFTString)
-    fld.SetWidth(5)
-    lyr.CreateField(fld)
-    fld = ogr.FieldDefn("str2", ogr.OFTString)
-    lyr.CreateField(fld)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField("str", "01234")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("str", "01234")
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField("str", "ABCDEF")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("str", "ABCDEF")
-    lyr.CreateFeature(feat)
+        val4 = "\u00e9\u00e9\u00e9\u00e9"
+        val5 = val4 + "\u00e9"
+        val6 = val5 + "\u00e9"
 
-    val4 = "\u00e9\u00e9\u00e9\u00e9"
-    val5 = val4 + "\u00e9"
-    val6 = val5 + "\u00e9"
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField("str", val6)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("str", val6)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField("str", "a" + val5)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("str", "a" + val5)
-    lyr.CreateFeature(feat)
-
-    gdal.SetConfigOption("PG_USE_COPY", None)
-
-    ds = None
+        ds = None
 
     f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_9.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
@@ -878,10 +903,6 @@ def test_ogr_pgdump_9(pg_use_copy="YES"):
         and """%s%s""" % (val5, eofield) in sql
         and """%s%s""" % ("a" + val4, eofield) in sql
     )
-
-
-def test_ogr_pgdump_10():
-    return test_ogr_pgdump_9("NO")
 
 
 ###############################################################################
@@ -1273,25 +1294,249 @@ def test_ogr_pgdump_17():
 
     gdal.Unlink("/vsimem/ogr_pgdump_17.sql")
 
-    assert not (
-        sql.find("""DROP TABLE IF EXISTS "pg_temp"."test" CASCADE;""") == -1
-        or sql.find(
-            """CREATE TEMPORARY TABLE "test" ( "ogc_fid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )"""
-        )
-        == -1
-        or sql.find(
-            """SELECT AddGeometryColumn('','test','wkb_geometry',0,'POINT',2)"""
-        )
-        == -1
-        or sql.find(
-            """CREATE INDEX "test_wkb_geometry_geom_idx" ON "pg_temp"."test" USING GIST ("wkb_geometry")"""
-        )
-        == -1
-        or sql.find(
-            """INSERT INTO "pg_temp"."test" ("wkb_geometry" ) VALUES ('01010000000000000000000000000000000000F03F')"""
-        )
-        == -1
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""DROP TABLE IF EXISTS "pg_temp"."test" CASCADE;""")
+    check_and_remove("""CREATE TEMPORARY TABLE "test"();""")
+    check_and_remove(
+        """ALTER TABLE "pg_temp"."test" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
     )
+    check_and_remove(
+        """SELECT AddGeometryColumn('','test','wkb_geometry',0,'POINT',2);"""
+    )
+    check_and_remove(
+        """INSERT INTO "pg_temp"."test" ("wkb_geometry") VALUES ('01010000000000000000000000000000000000F03F');"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_wkb_geometry_geom_idx" ON "pg_temp"."test" USING GIST ("wkb_geometry");"""
+    )
+
+
+###############################################################################
+# Test GEOM_COLUMN_POSITION=END
+
+
+@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
+def test_ogr_pgdump_GEOM_COLUMN_POSITION_END(pg_use_copy):
+
+    with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql",
+            options=["LINEFORMAT=LF"],
+        )
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPoint, options=["GEOM_COLUMN_POSITION=END"]
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(10)
+        f["str"] = "bar"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""CREATE TABLE "public"."test"();""")
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
+    )
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str" VARCHAR;""")
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','wkb_geometry',0,'POINT',2);"""
+    )
+    if pg_use_copy == "YES":
+        check_and_remove("""COPY "public"."test" ("str", "wkb_geometry") FROM STDIN;""")
+        check_and_remove("""foo\t01010000000000000000000000000000000000F03F""")
+    else:
+        check_and_remove(
+            """INSERT INTO "public"."test" ("str", "wkb_geometry") VALUES ('foo', '01010000000000000000000000000000000000F03F');"""
+        )
+    check_and_remove(
+        """INSERT INTO "public"."test" ("ogc_fid", "str", "wkb_geometry") VALUES (10, 'bar', '0101000000000000000000F03F0000000000000040');"""
+    )
+    check_and_remove(
+        """SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_wkb_geometry_geom_idx" ON "public"."test" USING GIST ("wkb_geometry");"""
+    )
+
+
+###############################################################################
+# Test GEOM_COLUMN_POSITION=END and FID=
+
+
+@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
+def test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty(pg_use_copy):
+
+    with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql",
+            options=["LINEFORMAT=LF"],
+        )
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPoint, options=["GEOM_COLUMN_POSITION=END", "FID="]
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(10)
+        f["str"] = "bar"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+    f = gdal.VSIFOpenL(
+        "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql", "rb"
+    )
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    assert (
+        """ALTER TABLE "public"."test" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
+        not in sql
+    )
+    assert """SELECT setval(""" not in sql
+
+    check_and_remove("""CREATE TABLE "public"."test"();""")
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str" VARCHAR;""")
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','wkb_geometry',0,'POINT',2);"""
+    )
+    if pg_use_copy == "YES":
+        check_and_remove("""COPY "public"."test" ("str", "wkb_geometry") FROM STDIN;""")
+        check_and_remove("""foo\t01010000000000000000000000000000000000F03F""")
+    else:
+        check_and_remove(
+            """INSERT INTO "public"."test" ("str", "wkb_geometry") VALUES ('foo', '01010000000000000000000000000000000000F03F');"""
+        )
+    check_and_remove(
+        """INSERT INTO "public"."test" ("str", "wkb_geometry") VALUES ('bar', '0101000000000000000000F03F0000000000000040');"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_wkb_geometry_geom_idx" ON "public"."test" USING GIST ("wkb_geometry");"""
+    )
+
+
+###############################################################################
+# Test creating a layer without feature
+
+
+def test_ogr_pgdump_no_feature():
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        "/vsimem/test_ogr_pgdump_no_feature.sql", options=["LINEFORMAT=LF"]
+    )
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbPoint, options=["GEOM_COLUMN_POSITION=END"]
+    )
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_no_feature.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/test_ogr_pgdump_no_feature.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove("""CREATE TABLE "public"."test"();""")
+    check_and_remove(
+        """ALTER TABLE "public"."test" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_pk" PRIMARY KEY;"""
+    )
+    check_and_remove("""ALTER TABLE "public"."test" ADD COLUMN "str" VARCHAR;""")
+    check_and_remove(
+        """SELECT AddGeometryColumn('public','test','wkb_geometry',0,'POINT',2);"""
+    )
+    check_and_remove(
+        """CREATE INDEX "test_wkb_geometry_geom_idx" ON "public"."test" USING GIST ("wkb_geometry");"""
+    )
+    check_and_remove("""COMMIT;""")
+
+
+###############################################################################
+# Test CREATE_TABLE=NO
+
+
+def test_ogr_pgdump_CREATE_TABLE_NO():
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        "/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql", options=["LINEFORMAT=LF"]
+    )
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["CREATE_TABLE=NO", "GEOM_COLUMN_POSITION=END"],
+    )
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "foo"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    assert "CREATE " not in sql
+    assert "DROP " not in sql
+    assert "ALTER " not in sql
+    check_and_remove("""BEGIN;""")
+    check_and_remove(
+        """INSERT INTO "public"."test" ("str", "wkb_geometry") VALUES ('foo', '01010000000000000000000000000000000000F03F');"""
+    )
+    check_and_remove("""COMMIT;""")
 
 
 ###############################################################################
@@ -1302,9 +1547,5 @@ def test_ogr_pgdump_cleanup():
 
     try:
         os.remove("tmp/tpoly.sql")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/ogr_pgdump_4.sql")
     except OSError:
         pass

@@ -47,14 +47,17 @@ void CPL_DLL OGRPGCommonLayerNormalizeDefault(OGRFieldDefn *poFieldDefn,
                                               const char *pszDefault);
 CPLString CPL_DLL OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn);
 
+void CPL_DLL OGRPGCommonAppendCopyFID(CPLString &osCommand,
+                                      OGRFeature *poFeature);
+
 typedef CPLString (*OGRPGCommonEscapeStringCbk)(void *userdata,
                                                 const char *pszValue,
                                                 int nWidth,
                                                 const char *pszLayerName,
                                                 const char *pszFieldRef);
-void CPL_DLL OGRPGCommonAppendCopyFieldsExceptGeom(
+void CPL_DLL OGRPGCommonAppendCopyRegularFields(
     CPLString &osCommand, OGRFeature *poFeature, const char *pszFIDColumn,
-    bool bFIDColumnInCopyFields, const std::vector<bool> &abFieldsToInclude,
+    const std::vector<bool> &abFieldsToInclude,
     OGRPGCommonEscapeStringCbk pfnEscapeString, void *userdata);
 
 void CPL_DLL OGRPGCommonAppendFieldValue(
@@ -122,6 +125,10 @@ class OGRPGDumpLayer final : public OGRLayer
     bool bAutoFIDOnCreateViaCopy = true;
     bool bCopyStatementWithFID = true;
     bool bNeedToUpdateSequence = false;
+    bool m_bGeomColumnPositionImmediate = true;
+    std::vector<std::string> m_aosDeferredGeomFieldCreationCommands{};
+    std::vector<std::string> m_aosDeferrentNonGeomFieldCreationCommands{};
+    std::vector<std::string> m_aosSpatialIndexCreationCommands{};
 
     char **papszOverrideColumnTypes = nullptr;
 
@@ -131,6 +138,8 @@ class OGRPGDumpLayer final : public OGRLayer
     CPLString BuildCopyFields(int bSetFID);
 
     void UpdateSequenceIfNeeded();
+
+    void LogDeferredFieldCreationIfNeeded();
 
   public:
     OGRPGDumpLayer(OGRPGDumpDataSource *poDS, const char *pszSchemaName,
@@ -144,7 +153,7 @@ class OGRPGDumpLayer final : public OGRLayer
     }
     virtual const char *GetFIDColumn() override
     {
-        return pszFIDColumn;
+        return pszFIDColumn ? pszFIDColumn : "";
     }
 
     virtual void ResetReading() override
@@ -206,6 +215,21 @@ class OGRPGDumpLayer final : public OGRLayer
         m_osFirstGeometryFieldName = pszGeomFieldName;
     }
     void SetForcedDescription(const char *pszDescriptionIn);
+    void SetGeomColumnPositionImmediate(bool bGeomColumnPositionImmediate)
+    {
+        m_bGeomColumnPositionImmediate = bGeomColumnPositionImmediate;
+    }
+    void SetDeferredGeomFieldCreationCommands(
+        const std::vector<std::string> &aosDeferredGeomFieldCreationCommands)
+    {
+        m_aosDeferredGeomFieldCreationCommands =
+            aosDeferredGeomFieldCreationCommands;
+    }
+    void SetSpatialIndexCreationCommands(
+        const std::vector<std::string> &aosSpatialIndexCreationCommands)
+    {
+        m_aosSpatialIndexCreationCommands = aosSpatialIndexCreationCommands;
+    }
     OGRErr EndCopy();
 
     static char *GByteArrayToBYTEA(const GByte *pabyData, int nLen);

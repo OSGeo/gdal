@@ -77,6 +77,12 @@ Layer Creation Options
    FALSE for earlier versions) to disable. BRIN is only available with
    PostgreSQL >= 9.4 and PostGIS >= 2.3. SPGIST is only available with
    PostgreSQL >= 11 and PostGIS >= 2.5
+-  ***GEOM_COLUMN_POSITION***\ =IMMEDIATE/END (starting with GDAL 3.7).
+   If set to IMMEDIATE (the default), geometry columns are created in the
+   table structure as soon as OGR is instructed to create them (which typically
+   means that the default geometry column is created just after the FID column
+   and before the non-spatial columns). If set to END, the geometry columns are
+   created in the table structure after non-spatial columns.
 -  **TEMPORARY**: Set to OFF by default. Creates a temporary table
    instead of a permanent one.
 -  **UNLOGGED**: Set to OFF by default. Whether to
@@ -103,7 +109,8 @@ Layer Creation Options
    Defaults to NO, in which case a regular table is created and not
    recorded in the PostGIS geometry_columns table.
 -  **FID**: Name of the FID column to create. Defaults
-   to 'ogc_fid'.
+   to 'ogc_fid'. Starting with GDAL 3.7, if set explicitly to the empty string,
+   disables the creation of a FID column.
 -  **FID64**: This may be "TRUE" to create a FID column
    that can support 64 bit identifiers. The default value is "FALSE".
 -  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: Can be set to

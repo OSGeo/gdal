@@ -2466,8 +2466,11 @@ def test_ogr2ogr_56(ogr2ogr_path):
     f.close()
 
     assert (
-        """ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """ not in content
-        and """INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');"""
+        """ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid" INT"""
+        not in content
+    )
+    assert (
+        """INSERT INTO "public"."test_ogr2ogr_56" ("myid", "wkb_geometry", "str", "wkt") VALUES (10, '010100000000000000000000000000000000000000', 'aaa', 'POINT(0 0)');"""
         in content
     )
 
@@ -2518,9 +2521,11 @@ def test_ogr2ogr_57(ogr2ogr_path):
     f.close()
 
     assert (
-        """CREATE TABLE "public"."test_ogr2ogr_57" ( "id" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )"""
+        """ALTER TABLE "public"."test_ogr2ogr_57" ADD COLUMN "id" SERIAL CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY;"""
         in content
-        and """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')"""
+    )
+    assert (
+        """INSERT INTO "public"."test_ogr2ogr_57" ("id", "wkt", "str") VALUES (10, '010100000000000000000000000000000000000000', 'a');"""
         in content
     )
 
@@ -2537,9 +2542,11 @@ def test_ogr2ogr_57(ogr2ogr_path):
     f.close()
 
     assert (
-        """CREATE TABLE "public"."test_ogr2ogr_57" ( "ogc_fid" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )"""
+        """ALTER TABLE "public"."test_ogr2ogr_57" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY;"""
         in content
-        and """INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')"""
+    )
+    assert (
+        """INSERT INTO "public"."test_ogr2ogr_57" ("wkt", "str") VALUES ('010100000000000000000000000000000000000000', 'a');"""
         in content
     )
 
