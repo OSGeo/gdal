@@ -6231,6 +6231,42 @@ def test_ogr_pg_temp():
 
 
 ###############################################################################
+
+
+def test_ogr_pg_skip_views():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    view_name = "test_ogr_pg_skip_views"
+
+    try:
+        rs = gdaltest.pg_ds.ExecuteSQL(
+            f"CREATE VIEW {view_name} AS SELECT 55 AS fid, 'POINT EMPTY'::geometry AS geom"
+        )
+        gdaltest.pg_ds.ReleaseResultSet(rs)
+
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+
+        assert ogr_pg_check_layer_in_list(ds, view_name)
+
+        ds = gdal.OpenEx(
+            "PG:" + gdaltest.pg_connection_string,
+            gdal.OF_VECTOR,
+            open_options=["SKIP_VIEWS=YES"],
+        )
+
+        assert not ogr_pg_check_layer_in_list(ds, view_name)
+
+        with gdaltest.config_option("PG_SKIP_VIEWS", "YES"):
+            ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+            assert not ogr_pg_check_layer_in_list(ds, view_name)
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:{view_name}")
+
+
+###############################################################################
 #
 
 

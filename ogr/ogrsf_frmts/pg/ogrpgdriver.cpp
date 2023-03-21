@@ -143,6 +143,9 @@ void RegisterOGRPG()
         "  <Option name='CLOSING_STATEMENTS' type='string' description='SQL "
         "statements() to send on the PostgreSQL client connection after any "
         "other ones'/>"
+        "  <Option name='SKIP_VIEWS' type='boolean' description='Whether "
+        "views should be omitted from the list' "
+        "default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,

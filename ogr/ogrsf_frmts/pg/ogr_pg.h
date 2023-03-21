@@ -600,6 +600,8 @@ class OGRPGDataSource final : public OGRDataSource
     int bHasLoadTables = false;
     CPLString osActiveSchema{};
     int bListAllTables = false;
+    bool m_bSkipViews = false;
+
     void LoadTables();
 
     CPLString osDebugLastTransactionCommand{};
