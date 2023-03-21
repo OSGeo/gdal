@@ -2343,3 +2343,19 @@ def test_osr_basic_SetProjCS_Bound():
     srs.SetProjCS("Projected CRS name")
     assert srs.GetName() == "Projected CRS name"
     assert srs.ExportToProj4() == proj4str
+
+
+###############################################################################
+
+
+def test_osr_basic_warning_exceptions():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import osr; ' % python_exe + (
+        "osr.SpatialReference();" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "FutureWarning: Neither osr.UseExceptions()" in err

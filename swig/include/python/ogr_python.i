@@ -12,7 +12,8 @@
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
-  UseExceptions();
+  // Will be turned on for GDAL 4.0
+  // UseExceptions();
 
 %}
 #endif
@@ -48,6 +49,32 @@
 
 %include "python_exceptions.i"
 %include "python_strings.i"
+
+// Start: to be removed in GDAL 4.0
+
+// Issue a FutureWarning in a number of functions and methods that will
+// be impacted when exceptions are enabled by default
+
+%pythoncode %{
+
+hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = False
+
+def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
+    global hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions
+    if not hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions and not _UserHasSpecifiedIfUsingExceptions():
+        hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
+        import warnings
+        warnings.warn(
+            "Neither ogr.UseExceptions() nor ogr.DontUseExceptions() has been explicitly called. " +
+            "In GDAL 4.0, exceptions will be enabled by default. " +
+            "You may also call gdal.UseExceptionsAllModules() to enable exceptions in all GDAL related modules.", FutureWarning)
+%}
+
+%pythonprepend Open %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+// End: to be removed in GDAL 4.0
 
 %extend OGRDataSourceShadow {
   %pythoncode {
@@ -98,6 +125,9 @@
 
     def GetLayer(self, iLayer=0):
         """Return the layer given an index or a name"""
+
+        _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
         elif isinstance(iLayer, int):

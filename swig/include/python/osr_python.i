@@ -7,7 +7,8 @@
 %feature("autodoc");
 
 %init %{
-  UseExceptions();
+  // Will be turned on for GDAL 4.0
+  // UseExceptions();
 %}
 
 #ifndef FROM_GDAL_I
@@ -21,11 +22,35 @@
 
 %include typemaps_python.i
 
+// Start: to be removed in GDAL 4.0
+
+// Issue a FutureWarning in a number of functions and methods that will
+// be impacted when exceptions are enabled by default
+
+%pythoncode %{
+hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = False
+
+def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
+    global hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions
+    if not hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions and not _UserHasSpecifiedIfUsingExceptions():
+        hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
+        import warnings
+        warnings.warn(
+            "Neither osr.UseExceptions() nor osr.DontUseExceptions() has been explicitly called. " +
+            "In GDAL 4.0, exceptions will be enabled by default. " +
+            "You may also call gdal.UseExceptionsAllModules() to enable exceptions in all GDAL related modules.", FutureWarning)
+%}
+
+// End: to be removed in GDAL 4.0
+
 %extend OSRSpatialReferenceShadow {
   %pythoncode %{
 
     def __init__(self, *args, **kwargs):
         """__init__(OSRSpatialReferenceShadow self, char const * wkt) -> SpatialReference"""
+
+        _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
         try:
             with ExceptionMgr(useExceptions=True):
                 this = _osr.new_SpatialReference(*args, **kwargs)

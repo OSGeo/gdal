@@ -12,7 +12,8 @@
   if ( GDALGetDriverCount() == 0 ) {
     GDALAllRegister();
   }
-  UseExceptions();
+  // Will be turned on for GDAL 4.0
+  // UseExceptions();
 %}
 
 %{
@@ -1023,6 +1024,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
     def GetLayer(self, iLayer=0):
         """Return the layer given an index or a name"""
+
+        _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
+
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
         elif isinstance(iLayer, int):
@@ -1369,6 +1373,80 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
 %include "callback.i"
 
+// Start: to be removed in GDAL 4.0
+
+// Issue a FutureWarning in a number of functions and methods that will
+// be impacted when exceptions are enabled by default
+
+%pythoncode %{
+hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = False
+
+def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
+    global hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions
+    if not hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions and not _UserHasSpecifiedIfUsingExceptions():
+        hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
+        import warnings
+        warnings.warn(
+            "Neither gdal.UseExceptions() nor gdal.DontUseExceptions() has been explicitly called. " +
+            "In GDAL 4.0, exceptions will be enabled by default. " +
+            "You may also call gdal.UseExceptionsAllModules() to enable exceptions in all GDAL related modules.", FutureWarning)
+
+def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
+    from . import ogr
+    ogr._WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+
+%pythonprepend Open %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend OpenEx %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend OpenShared %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend Unlink %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%extend GDALDatasetShadow {
+
+%pythonprepend GetLayerByName %{
+    _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
+%}
+
+%pythonprepend ExecuteSQL %{
+    _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
+%}
+
+}
+
+%extend GDALDriverShadow {
+
+%pythonprepend Create %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend CreateMultiDimensional %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend CreateCopy %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythonprepend Delete %{
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+}
+
+// End: to be removed in GDAL 4.0
+
 
 %pythoncode %{
 
@@ -1473,6 +1551,9 @@ def Info(ds, **kwargs):
         other keywords arguments of gdal.InfoOptions().
         If options is provided as a gdal.InfoOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
@@ -1580,6 +1661,9 @@ def VectorInfo(ds, **kwargs):
         other keywords arguments of gdal.VectorInfoOptions().
         If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, format, deserialize) = VectorInfoOptions(**kwargs)
     else:
@@ -1627,6 +1711,9 @@ def MultiDimInfo(ds, **kwargs):
         other keywords arguments of gdal.MultiDimInfoOptions().
         If options is provided as a gdal.MultiDimInfoOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         opts, as_text = MultiDimInfoOptions(**kwargs)
     else:
@@ -1853,6 +1940,8 @@ def Translate(destName, srcDS, **kwargs):
         other keywords arguments of gdal.TranslateOptions().
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
@@ -2123,6 +2212,8 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         other keywords arguments of gdal.WarpOptions().
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
@@ -2464,6 +2555,8 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         other keywords are ignored.
     """
 
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
@@ -2598,6 +2691,8 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
         other keywords are ignored.
     """
 
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
@@ -2685,6 +2780,8 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         other keywords arguments of gdal.NearblackOptions().
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
@@ -2820,6 +2917,8 @@ def Grid(destName, srcDS, **kwargs):
         other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = GridOptions(**kwargs)
@@ -2999,6 +3098,8 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored.
     """
 
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
@@ -3136,6 +3237,9 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         If options is provided as a gdal.BuildVRTOptions() object,
         other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = BuildVRTOptions(**kwargs)
     else:
@@ -3233,6 +3337,8 @@ def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
         If options is provided as a gdal.MultiDimTranslateOptions() object,
         other keywords are ignored.
     """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = MultiDimTranslateOptions(**kwargs)

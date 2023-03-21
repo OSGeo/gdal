@@ -30,6 +30,7 @@
 import math
 import os
 import struct
+import sys
 
 import gdaltest
 import pytest
@@ -874,6 +875,19 @@ def test_ogr_exceptions():
     with pytest.raises(Exception):
         with ogr.ExceptionMgr():
             ogr.CreateGeometryFromWkt("invalid")
+
+
+def test_ogr_basic_test_future_warning_exceptions():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import ogr; ' % python_exe + (
+        "ogr.Open('data/poly.shp');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "FutureWarning: Neither ogr.UseExceptions()" in err
 
 
 ###############################################################################

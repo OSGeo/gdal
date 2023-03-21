@@ -5,6 +5,7 @@
  */
 %{
 static int bUseExceptions=0;
+static int bUserHasSpecifiedIfUsingExceptions = FALSE;
 static thread_local int bUseExceptionsLocal = -1;
 static thread_local CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
@@ -62,6 +63,14 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
     $action
 }
 
+%exception _UserHasSpecifiedIfUsingExceptions
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
 %inline %{
 
 static
@@ -82,6 +91,7 @@ static void _SetExceptionsLocal(int bVal)
 static
 void UseExceptions() {
   CPLErrorReset();
+  bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
@@ -91,11 +101,18 @@ void UseExceptions() {
 static
 void DontUseExceptions() {
   CPLErrorReset();
+  bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( bUseExceptions )
   {
     bUseExceptions = 0;
   }
 }
+
+static int _UserHasSpecifiedIfUsingExceptions()
+{
+    return bUserHasSpecifiedIfUsingExceptions;
+}
+
 %}
 
 %{
