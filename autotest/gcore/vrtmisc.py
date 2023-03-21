@@ -31,6 +31,7 @@
 
 import os
 import shutil
+import struct
 import sys
 
 import gdaltest
@@ -910,3 +911,36 @@ def test_vrtmisc_serialize_complexsource_with_NODATA():
 
     print(content)
     assert "<NODATA>1</NODATA>" in content
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/7486
+
+
+def test_vrtmisc_nodata_float32():
+
+    tif_filename = "/vsimem/test_vrtmisc_nodata_float32.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(tif_filename, 1, 1, 1, gdal.GDT_Float32)
+    nodata = -0.1
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
+    ds.GetRasterBand(1).Fill(nodata)
+    ds = None
+
+    # When re-opening the TIF file, the -0.1 double value will be exposed
+    # with the float32 precision (~ -0.10000000149011612)
+    vrt_filename = "/vsimem/test_vrtmisc_nodata_float32.vrt"
+    ds = gdal.Translate(vrt_filename, tif_filename)
+    nodata_vrt = ds.GetRasterBand(1).GetNoDataValue()
+    assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]
+    ds = None
+
+    # Check that this is still the case after above serialization to .vrt
+    # and re-opening. That is check that we serialize the rounded value with
+    # full double precision (%.18g)
+    ds = gdal.Open(vrt_filename)
+    nodata_vrt = ds.GetRasterBand(1).GetNoDataValue()
+    assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]
+    ds = None
+
+    gdal.Unlink(tif_filename)
+    gdal.Unlink(vrt_filename)
