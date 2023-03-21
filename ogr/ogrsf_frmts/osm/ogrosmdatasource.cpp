@@ -3428,7 +3428,7 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                 m_nMinSizeKeysInSetClosedWaysArePolygons = std::min(
                     m_nMinSizeKeysInSetClosedWaysArePolygons, nTokenSize);
                 m_nMaxSizeKeysInSetClosedWaysArePolygons = std::max(
-                    m_nMinSizeKeysInSetClosedWaysArePolygons, nTokenSize);
+                    m_nMaxSizeKeysInSetClosedWaysArePolygons, nTokenSize);
             }
             CSLDestroy(papszTokens2);
         }
