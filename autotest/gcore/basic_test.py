@@ -717,3 +717,29 @@ def test_exceptionmanager():
 def test_quiet_errors():
     with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
         gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
+
+
+def test_basic_test_UseExceptionsAllModules():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal;' % python_exe + (
+        "gdal.UseExceptionsAllModules();" "gdal.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "RuntimeError: " in err
+
+
+def test_basic_test_DontUseExceptionsAllModules():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal;' % python_exe + (
+        "gdal.DontUseExceptionsAllModules();" "gdal.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "ERROR " in err

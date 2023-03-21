@@ -1372,6 +1372,37 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
 %pythoncode %{
 
+def UseExceptionsAllModules():
+    """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+
+        Equivalent to calling UseExceptions() on all those modules"""
+
+    from . import gdal, ogr, osr
+    gdal.UseExceptions()
+    ogr.UseExceptions()
+    osr.UseExceptions()
+    try:
+        from . import gnm
+        gnm.UseExceptions()
+    except ImportError:
+        pass
+
+def DontUseExceptionsAllModules():
+    """ Disable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+
+        Equivalent to calling DontUseExceptions() on all those modules"""
+
+    from . import gdal, ogr, osr
+    gdal.DontUseExceptions()
+    ogr.DontUseExceptions()
+    osr.DontUseExceptions()
+    try:
+        from . import gnm
+        gnm.DontUseExceptions()
+    except ImportError:
+        pass
+
+
 def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,
          stats=False, approxStats=False, computeChecksum=False,
