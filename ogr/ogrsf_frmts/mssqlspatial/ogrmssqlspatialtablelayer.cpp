@@ -1818,7 +1818,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
                 // Use the SRID specified by the provided feature's geometry, if
                 // its spatial-reference system is known; otherwise, use the
                 // SRID associated with the table
-                OGRSpatialReference *poFeatureSRS =
+                const OGRSpatialReference *poFeatureSRS =
                     poGeom->getSpatialReference();
                 if (poFeatureSRS)
                     nOutgoingSRSId = poDS->FetchSRSId(poFeatureSRS);
@@ -2402,7 +2402,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature(OGRFeature *poFeature)
             // Use the SRID specified by the provided feature's geometry, if
             // its spatial-reference system is known; otherwise, use the SRID
             // associated with the table
-            OGRSpatialReference *poFeatureSRS = poGeom->getSpatialReference();
+            const OGRSpatialReference *poFeatureSRS =
+                poGeom->getSpatialReference();
             if (poFeatureSRS)
                 nOutgoingSRSId = poDS->FetchSRSId(poFeatureSRS);
             if (nOutgoingSRSId <= 0)

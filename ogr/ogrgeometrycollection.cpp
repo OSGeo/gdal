@@ -1127,7 +1127,8 @@ OGRBoolean OGRGeometryCollection::IsEmpty() const
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 
-void OGRGeometryCollection::assignSpatialReference(OGRSpatialReference *poSR)
+void OGRGeometryCollection::assignSpatialReference(
+    const OGRSpatialReference *poSR)
 {
     OGRGeometry::assignSpatialReference(poSR);
     for (auto &&poSubGeom : *this)

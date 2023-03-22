@@ -155,7 +155,7 @@ static OGRFeature *JSONToFeature(const CPLJSONObject &featureJson,
                                           nullptr, &poGeometry);
         if (poGeometry != nullptr)
         {
-            OGRSpatialReference *poSpatialRef =
+            const OGRSpatialReference *poSpatialRef =
                 poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef();
             if (poSpatialRef != nullptr)
             {

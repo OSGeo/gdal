@@ -543,8 +543,8 @@ class LayerTranslator
                   void *pProgressArg, GDALVectorTranslateOptions *psOptions);
 
   private:
-    const OGRGeometry *GetDstClipGeom(OGRSpatialReference *poGeomSRS);
-    const OGRGeometry *GetSrcClipGeom(OGRSpatialReference *poGeomSRS);
+    const OGRGeometry *GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
+    const OGRGeometry *GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -1083,11 +1083,11 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
             poSRS->Dereference();
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return poSRS;
     }
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return poSRS;
     }
@@ -1148,14 +1148,14 @@ class CompositeCT : public OGRCoordinateTransformation
         return new CompositeCT(*this);
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return poCT1   ? poCT1->GetSourceCS()
                : poCT2 ? poCT2->GetSourceCS()
                        : nullptr;
     }
 
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return poCT2   ? poCT2->GetTargetCS()
                : poCT1 ? poCT1->GetTargetCS()
@@ -1235,12 +1235,12 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return new AxisMappingCoordinateTransformation(*this);
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
@@ -1269,9 +1269,9 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
 /************************************************************************/
 
 static void ApplySpatialFilter(OGRLayer *poLayer, OGRGeometry *poSpatialFilter,
-                               OGRSpatialReference *poSpatSRS,
+                               const OGRSpatialReference *poSpatSRS,
                                const char *pszGeomField,
-                               OGRSpatialReference *poSourceSRS)
+                               const OGRSpatialReference *poSourceSRS)
 {
     if (poSpatialFilter == nullptr)
         return;
@@ -1281,7 +1281,7 @@ static void ApplySpatialFilter(OGRLayer *poLayer, OGRGeometry *poSpatialFilter,
     {
         poSpatialFilterReprojected = poSpatialFilter->clone();
         poSpatialFilterReprojected->assignSpatialReference(poSpatSRS);
-        OGRSpatialReference *poSpatialFilterTargetSRS =
+        const OGRSpatialReference *poSpatialFilterTargetSRS =
             poSourceSRS ? poSourceSRS : poLayer->GetSpatialRef();
         if (poSpatialFilterTargetSRS)
         {
@@ -1477,9 +1477,9 @@ GDALVectorTranslateWrappedLayer::New(OGRLayer *poBaseLayer, bool bOwnBaseLayer,
     {
         if (bTransform)
         {
-            OGRSpatialReference *poSourceSRS = poBaseLayer->GetLayerDefn()
-                                                   ->GetGeomFieldDefn(i)
-                                                   ->GetSpatialRef();
+            const OGRSpatialReference *poSourceSRS = poBaseLayer->GetLayerDefn()
+                                                         ->GetGeomFieldDefn(i)
+                                                         ->GetSpatialRef();
             if (poSourceSRS == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -3835,7 +3835,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
     }
 
-    OGRSpatialReference *poOutputSRS = m_poOutputSRS;
+    const OGRSpatialReference *poOutputSRS = m_poOutputSRS;
     if (poOutputSRS == nullptr && !m_bNullifyOutputSRS)
     {
         if (nSrcGeomFieldCount == 1 || anRequestedGeomFields.empty())
@@ -4838,13 +4838,12 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 /*                               SetupCT()                              */
 /************************************************************************/
 
-static bool SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer,
-                    bool bTransform, bool bWrapDateline,
-                    const CPLString &osDateLineOffset,
-                    OGRSpatialReference *poUserSourceSRS, OGRFeature *poFeature,
-                    OGRSpatialReference *poOutputSRS,
-                    OGRCoordinateTransformation *poGCPCoordTrans,
-                    bool bVerboseError)
+static bool
+SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
+        bool bWrapDateline, const CPLString &osDateLineOffset,
+        const OGRSpatialReference *poUserSourceSRS, OGRFeature *poFeature,
+        const OGRSpatialReference *poOutputSRS,
+        OGRCoordinateTransformation *poGCPCoordTrans, bool bVerboseError)
 {
     OGRLayer *poDstLayer = psInfo->m_poDstLayer;
     const int nDstGeomFieldCount =
@@ -4856,7 +4855,7 @@ static bool SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer,
         /*      Setup coordinate transformation if we need it. */
         /* --------------------------------------------------------------------
          */
-        OGRSpatialReference *poSourceSRS = nullptr;
+        const OGRSpatialReference *poSourceSRS = nullptr;
         OGRCoordinateTransformation *poCT = nullptr;
         char **papszTransformOptions = nullptr;
 
@@ -5122,7 +5121,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                                GDALVectorTranslateOptions *psOptions)
 {
     const int eGType = m_eGType;
-    OGRSpatialReference *poOutputSRS = m_poOutputSRS;
+    const OGRSpatialReference *poOutputSRS = m_poOutputSRS;
 
     OGRLayer *poSrcLayer = psInfo->m_poSrcLayer;
     OGRLayer *poDstLayer = psInfo->m_poDstLayer;
@@ -5818,7 +5817,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
 /************************************************************************/
 
 const OGRGeometry *
-LayerTranslator::GetDstClipGeom(OGRSpatialReference *poGeomSRS)
+LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
     {
@@ -5858,7 +5857,7 @@ LayerTranslator::GetDstClipGeom(OGRSpatialReference *poGeomSRS)
 /************************************************************************/
 
 const OGRGeometry *
-LayerTranslator::GetSrcClipGeom(OGRSpatialReference *poGeomSRS)
+LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
     {

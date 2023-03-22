@@ -558,7 +558,7 @@ static int OGR2SQLITEDealWithSpatialColumn(
     CPLString osIdxNameEscaped(SQLEscapeName(osIdxNameRaw));
 
     /* Make sure that the SRS is injected in spatial_ref_sys */
-    OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
+    const OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
     if (iGeomCol == 0 && poSRS == nullptr)
         poSRS = poLayer->GetSpatialRef();
     int nSRSId = poSQLiteDS->GetUndefinedSRID();

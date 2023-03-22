@@ -1676,7 +1676,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         CPLFree(pszSafeName);
     }
 
-    OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
+    const OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
     int nSRSId = nUnknownSRSId;
     if (nForcedSRSId != -2)
         nSRSId = nForcedSRSId;

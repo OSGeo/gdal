@@ -285,7 +285,7 @@ static void ReportOnLayer(OGRLayer *poLayer, int bVerbose)
             {
                 OGRGeomFieldDefn *poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                OGRSpatialReference *poSRS = poGFldDefn->GetSpatialRef();
+                const OGRSpatialReference *poSRS = poGFldDefn->GetSpatialRef();
                 if (poSRS == nullptr)
                     pszWKT = CPLStrdup("(unknown)");
                 else

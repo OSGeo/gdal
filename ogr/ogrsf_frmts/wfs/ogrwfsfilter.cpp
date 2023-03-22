@@ -37,7 +37,7 @@ typedef struct
     OGRDataSource *poDS;
     OGRFeatureDefn *poFDefn;
     int nUniqueGeomGMLId;
-    OGRSpatialReference *poSRS;
+    const OGRSpatialReference *poSRS;
     const char *pszNSPrefix;
 } ExprDumpFilterOptions;
 

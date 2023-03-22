@@ -40,7 +40,8 @@ OGRWarpedLayer::OGRWarpedLayer(OGRLayer *poDecoratedLayer, int iGeomField,
                                OGRCoordinateTransformation *poReversedCT)
     : OGRLayerDecorator(poDecoratedLayer, bTakeOwnership),
       m_poFeatureDefn(nullptr), m_iGeomField(iGeomField), m_poCT(poCT),
-      m_poReversedCT(poReversedCT), m_poSRS(m_poCT->GetTargetCS())
+      m_poReversedCT(poReversedCT),
+      m_poSRS(const_cast<OGRSpatialReference *>(m_poCT->GetTargetCS()))
 {
     CPLAssert(poCT != nullptr);
     SetDescription(poDecoratedLayer->GetDescription());

@@ -78,10 +78,10 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
 
 {
     Initialize(poPrototype->GetNameRef(), poPrototype->GetType());
-    auto l_poSRS = poPrototype->GetSpatialRef();
-    if (l_poSRS)
+    const OGRSpatialReference *poSRSSrc = poPrototype->GetSpatialRef();
+    if (poSRSSrc)
     {
-        l_poSRS = l_poSRS->Clone();
+        OGRSpatialReference *l_poSRS = poSRSSrc->Clone();
         SetSpatialRef(l_poSRS);
         l_poSRS->Release();
     }
@@ -134,7 +134,7 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
     CPLFree(pszName);
 
     if (nullptr != poSRS)
-        poSRS->Release();
+        const_cast<OGRSpatialReference *>(poSRS)->Release();
 }
 
 /************************************************************************/
@@ -430,7 +430,7 @@ void OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int ignore)
  * @since GDAL 1.11
  */
 
-OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
+const OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
 {
     return poSRS;
 }
@@ -447,7 +447,8 @@ OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
  *
  * @param hDefn handle to the geometry field definition
  *
- * @return field spatial reference system.
+ * @return a reference to the field spatial reference system.
+ * It should not be modified.
  *
  * @since GDAL 1.11
  */
@@ -461,8 +462,8 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetSpatialRef");
 #endif
 
-    return reinterpret_cast<OGRSpatialReferenceH>(
-        OGRGeomFieldDefn::FromHandle(hDefn)->GetSpatialRef());
+    return OGRSpatialReference::ToHandle(const_cast<OGRSpatialReference *>(
+        OGRGeomFieldDefn::FromHandle(hDefn)->GetSpatialRef()));
 }
 
 /************************************************************************/
@@ -481,13 +482,13 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  *
  * @since GDAL 1.11
  */
-void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference *poSRSIn)
+void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
     if (poSRS != nullptr)
-        poSRS->Release();
+        const_cast<OGRSpatialReference *>(poSRS)->Release();
     poSRS = poSRSIn;
     if (poSRS != nullptr)
-        poSRS->Reference();
+        const_cast<OGRSpatialReference *>(poSRS)->Reference();
 }
 
 /************************************************************************/
@@ -536,8 +537,8 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
           GetType() == poOtherFieldDefn->GetType() &&
           IsNullable() == poOtherFieldDefn->IsNullable()))
         return FALSE;
-    OGRSpatialReference *poMySRS = GetSpatialRef();
-    OGRSpatialReference *poOtherSRS = poOtherFieldDefn->GetSpatialRef();
+    const OGRSpatialReference *poMySRS = GetSpatialRef();
+    const OGRSpatialReference *poOtherSRS = poOtherFieldDefn->GetSpatialRef();
     return ((poMySRS == poOtherSRS) ||
             (poMySRS != nullptr && poOtherSRS != nullptr &&
              poMySRS->IsSame(poOtherSRS)));

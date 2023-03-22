@@ -568,7 +568,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             poGeom = poOGRFeature->GetGeomFieldRef(i);
             if (poGeom != nullptr)
             {
-                OGRSpatialReference *poSRS =
+                const OGRSpatialReference *poSRS =
                     poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
                 if (poSRS != nullptr)
                     poGeom->assignSpatialReference(poSRS);
@@ -717,8 +717,8 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
             OGRGeomFieldDefn *poFieldDefn =
                 poFeatureDefn->GetGeomFieldDefn(iGeomField);
-            OGRSpatialReference *poSRS0 = poFieldDefn0->GetSpatialRef();
-            OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
+            const OGRSpatialReference *poSRS0 = poFieldDefn0->GetSpatialRef();
+            const OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
             if (poSRS0 != nullptr && poSRS == nullptr)
             {
                 bSameSRS = false;
@@ -1202,10 +1202,13 @@ OGRErr OGRGMLLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
     /*      Enforce XML naming semantics on element name.                   */
     /* -------------------------------------------------------------------- */
     OGRGeomFieldDefn oCleanCopy(poField);
-    if (oCleanCopy.GetSpatialRef())
+    auto poSRSOri = poField->GetSpatialRef();
+    if (poSRSOri)
     {
-        oCleanCopy.GetSpatialRef()->SetAxisMappingStrategy(
-            OAMS_TRADITIONAL_GIS_ORDER);
+        auto poSRS = poSRSOri->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oCleanCopy.SetSpatialRef(poSRS);
+        poSRS->Release();
     }
     char *pszName = CPLStrdup(poField->GetNameRef());
     CPLCleanXMLElementName(pszName);

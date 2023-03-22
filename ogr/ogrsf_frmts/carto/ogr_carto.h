@@ -333,7 +333,7 @@ class OGRCARTODataSource final : public OGRDataSource
     {
         return osCurrentSchema;
     }
-    static int FetchSRSId(OGRSpatialReference *poSRS);
+    static int FetchSRSId(const OGRSpatialReference *poSRS);
 
     int IsAuthenticatedConnection()
     {

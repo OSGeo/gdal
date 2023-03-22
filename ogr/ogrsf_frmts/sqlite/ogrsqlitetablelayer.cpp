@@ -1662,10 +1662,10 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
             poGeomField->SetName(CPLSPrintf(
                 "GEOMETRY%d", m_poFeatureDefn->GetGeomFieldCount() + 1));
     }
-    auto l_poSRS = poGeomFieldIn->GetSpatialRef();
-    if (l_poSRS)
+    auto poSRSIn = poGeomFieldIn->GetSpatialRef();
+    if (poSRSIn)
     {
-        l_poSRS = l_poSRS->Clone();
+        auto l_poSRS = poSRSIn->Clone();
         l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poGeomField->SetSpatialRef(l_poSRS);
         l_poSRS->Release();
@@ -1683,7 +1683,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         CPLFree(pszSafeName);
     }
 
-    OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
+    const OGRSpatialReference *poSRS = poGeomField->GetSpatialRef();
     int nSRSId = -1;
     if (poSRS != nullptr)
         nSRSId = m_poDS->FetchSRSId(poSRS);

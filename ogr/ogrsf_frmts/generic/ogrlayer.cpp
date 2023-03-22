@@ -1225,7 +1225,8 @@ int OGRLayer::FindFieldIndex(const char *pszFieldName,
 OGRSpatialReference *OGRLayer::GetSpatialRef()
 {
     if (GetLayerDefn()->GetGeomFieldCount() > 0)
-        return GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
+        return const_cast<OGRSpatialReference *>(
+            GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef());
     else
         return nullptr;
 }

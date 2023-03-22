@@ -639,12 +639,12 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
     {
     }
 
-    virtual OGRSpatialReference *GetSourceCS() override
+    virtual const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
 
-    virtual OGRSpatialReference *GetTargetCS() override
+    virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }

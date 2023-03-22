@@ -1741,17 +1741,20 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     OGRGeomFieldDefn oGeomField(poGeomFieldIn);
-    if (oGeomField.GetSpatialRef())
+    auto poSRSOri = poGeomFieldIn->GetSpatialRef();
+    if (poSRSOri)
     {
-        oGeomField.GetSpatialRef()->SetAxisMappingStrategy(
-            OAMS_TRADITIONAL_GIS_ORDER);
+        auto poSRS = poSRSOri->Clone();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oGeomField.SetSpatialRef(poSRS);
+        poSRS->Release();
     }
     if (EQUAL(oGeomField.GetNameRef(), ""))
     {
         oGeomField.SetName("geom");
     }
 
-    OGRSpatialReference *poSRS = oGeomField.GetSpatialRef();
+    const OGRSpatialReference *poSRS = oGeomField.GetSpatialRef();
     if (poSRS != nullptr)
         m_iSrs = m_poDS->GetSrsId(*poSRS);
 

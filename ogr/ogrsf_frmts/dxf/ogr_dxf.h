@@ -170,11 +170,11 @@ class OGRDXFInsertTransformer final : public OGRCoordinateTransformation
         return new OGRDXFInsertTransformer(*this);
     }
 
-    OGRSpatialReference *GetSourceCS() override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
-    OGRSpatialReference *GetTargetCS() override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }
@@ -287,11 +287,11 @@ class OGRDXFOCSTransformer final : public OGRCoordinateTransformation
   public:
     explicit OGRDXFOCSTransformer(double adfNIn[3], bool bInverse = false);
 
-    OGRSpatialReference *GetSourceCS() override
+    const OGRSpatialReference *GetSourceCS() const override
     {
         return nullptr;
     }
-    OGRSpatialReference *GetTargetCS() override
+    const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
     }

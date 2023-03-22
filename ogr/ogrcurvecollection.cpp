@@ -552,7 +552,7 @@ void OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
 /************************************************************************/
 
 void OGRCurveCollection::assignSpatialReference(OGRGeometry *poGeom,
-                                                OGRSpatialReference *poSR)
+                                                const OGRSpatialReference *poSR)
 {
     for (auto &&poSubGeom : *this)
     {

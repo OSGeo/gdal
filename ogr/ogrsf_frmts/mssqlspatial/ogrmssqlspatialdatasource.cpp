@@ -1533,7 +1533,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::FetchSRSId(OGRSpatialReference *poSRS)
+int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
 {
     char *pszWKT = nullptr;

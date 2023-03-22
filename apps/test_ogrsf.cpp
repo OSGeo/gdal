@@ -1585,7 +1585,7 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
                        "OLCZGeometries capability!\n");
             }
 
-            OGRSpatialReference *poGFldSRS =
+            const OGRSpatialReference *poGFldSRS =
                 poLayerDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef();
 
             // Compatibility with old drivers anterior to RFC 41
@@ -3634,9 +3634,9 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
                     else if (poLayerFeatGeom != nullptr &&
                              poSQLFeatGeom != nullptr)
                     {
-                        OGRSpatialReference *poLayerFeatSRS =
+                        const OGRSpatialReference *poLayerFeatSRS =
                             poLayerFeatGeom->getSpatialReference();
-                        OGRSpatialReference *poSQLFeatSRS =
+                        const OGRSpatialReference *poSQLFeatSRS =
                             poSQLFeatGeom->getSpatialReference();
                         if (poLayerFeatSRS == nullptr &&
                             poSQLFeatSRS != nullptr)

@@ -357,7 +357,7 @@ class OGRHanaDataSource final : public GDALDataset
     void ExecuteSQL(const CPLString &sql);
 
     OGRSpatialReference *GetSrsById(int srid);
-    int GetSrsId(OGRSpatialReference *srs);
+    int GetSrsId(const OGRSpatialReference *srs);
     bool IsSrsRoundEarth(int srid);
     bool HasSrsPlanarEquivalent(int srid);
     OGRErr GetQueryColumns(

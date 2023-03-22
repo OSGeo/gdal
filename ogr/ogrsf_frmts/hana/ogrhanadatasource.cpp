@@ -955,7 +955,7 @@ OGRSpatialReference *OGRHanaDataSource::GetSrsById(int srid)
 /*                               GetSrsId()                             */
 /************************************************************************/
 
-int OGRHanaDataSource::GetSrsId(OGRSpatialReference *srs)
+int OGRHanaDataSource::GetSrsId(const OGRSpatialReference *srs)
 {
     if (srs == nullptr)
         return UNDETERMINED_SRID;

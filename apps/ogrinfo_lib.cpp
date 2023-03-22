@@ -861,7 +861,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                         oBbox.Add(oExt.MaxY);
                         oGeometryField.Add("extent", oBbox);
                     }
-                    OGRSpatialReference *poSRS = poGFldDefn->GetSpatialRef();
+                    const OGRSpatialReference *poSRS =
+                        poGFldDefn->GetSpatialRef();
                     if (poSRS)
                     {
                         CPLJSONObject oCRS;
@@ -1064,7 +1065,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
             {
                 OGRGeomFieldDefn *poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                OGRSpatialReference *poSRS = poGFldDefn->GetSpatialRef();
+                const OGRSpatialReference *poSRS = poGFldDefn->GetSpatialRef();
                 char *pszWKT = nullptr;
                 if (poSRS == nullptr)
                 {

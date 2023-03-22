@@ -770,10 +770,10 @@ class CPL_DLL OGRCoordinateTransformation
     // From CT_CoordinateTransformation
 
     /** Fetch internal source coordinate system. */
-    virtual OGRSpatialReference *GetSourceCS() = 0;
+    virtual const OGRSpatialReference *GetSourceCS() const = 0;
 
     /** Fetch internal target coordinate system. */
-    virtual OGRSpatialReference *GetTargetCS() = 0;
+    virtual const OGRSpatialReference *GetTargetCS() const = 0;
 
     /** Whether the transformer will emit CPLError */
     virtual bool GetEmitErrors() const
