@@ -8,4 +8,4 @@ sphinx_rtd_theme
 recommonmark
 sphinx-markdown-tables
 sphinxcontrib-spelling
-sphinxcontrib.jquery
+sphinxcontrib-jquery
