@@ -463,11 +463,6 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
                 poGeometry->setMeasured(poGFldDefn->GeometryTypeFlags &
                                         OGRGeometry::OGR_G_MEASURED);
 
-                // CheckGeomTypeCompatibility(poGeometry);
-
-                /*if (bHasWkb)
-                    pszGeom = GeometryToBYTEA( poGeometry );
-                else*/
                 pszGeom = OGRGeometryToHexEWKB(poGeometry, poGFldDefn->nSRSId,
                                                nPostGISMajor, nPostGISMinor);
             }
