@@ -117,7 +117,14 @@ def test_ogr_pg_1():
         gdal.PopErrorHandler()
 
     if gdaltest.pg_ds is None:
-        pytest.skip()
+        if val is None:
+            pytest.skip(
+                f"OGR_PG_CONNECTION_STRING not specified; Postgres is not available using default connection string {gdaltest.pg_connection_string}"
+            )
+        else:
+            pytest.skip(
+                f"Postgres is not available using supplied OGR_PG_CONNECTION_STRING {gdaltest.pg_connection_string}"
+            )
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT version()")
     feat = sql_lyr.GetNextFeature()
