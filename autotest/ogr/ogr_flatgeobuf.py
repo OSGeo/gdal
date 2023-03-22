@@ -1136,25 +1136,57 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
 
 
 def test_ogr_flatgeobuf_issue_7401():
-    ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb", options=["SPATIAL_INDEX=NO"])
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    # Verify null geom handling without spatial index
+    ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb")
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["SPATIAL_INDEX=NO"])
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
-
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
 
     ds = None
 
-    #ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=NO"])
     ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
     assert f is not None
+    assert g is not None
     f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
     assert f is not None
+    assert g is None
+
+    ds = None
+
+    ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
+    assert not gdal.VSIStatL("/vsimem/test.fgb")
+
+    # Verify null geom handling with spatial index
+    ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb")
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["SPATIAL_INDEX=YES"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert f is not None
+    assert g is not None
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert f is not None
+    assert g is None
+
     ds = None
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
