@@ -671,7 +671,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath)
     {
         CPLSetXMLValue(
             psTree, "NoDataValue",
-            VRTSerializeNoData(m_dfNoDataValue, eDataType, 16).c_str());
+            VRTSerializeNoData(m_dfNoDataValue, eDataType, 18).c_str());
     }
     else if (m_bNoDataSetAsInt64)
     {

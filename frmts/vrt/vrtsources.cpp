@@ -2083,7 +2083,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
             }
             CPLSetXMLValue(
                 psSrc, "NODATA",
-                VRTSerializeNoData(dfNoDataValue, eBandDT, 16).c_str());
+                VRTSerializeNoData(dfNoDataValue, eBandDT, 18).c_str());
         }
     }
 
