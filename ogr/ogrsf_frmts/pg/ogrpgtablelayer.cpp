@@ -2080,9 +2080,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
     for (size_t i = 0; i < abFieldsToInclude.size(); i++)
         abFieldsToInclude[i] = !m_abGeneratedColumns[i];
 
-    OGRPGCommonAppendCopyFieldsExceptGeom(
-        osCommand, poFeature, pszFIDColumn, CPL_TO_BOOL(bFIDColumnInCopyFields),
-        abFieldsToInclude, OGRPGEscapeString, hPGConn);
+    if (bFIDColumnInCopyFields)
+    {
+        OGRPGCommonAppendCopyFID(osCommand, poFeature);
+    }
+    OGRPGCommonAppendCopyRegularFields(osCommand, poFeature, pszFIDColumn,
+                                       abFieldsToInclude, OGRPGEscapeString,
+                                       hPGConn);
 
     /* Add end of line marker */
     osCommand += "\n";
