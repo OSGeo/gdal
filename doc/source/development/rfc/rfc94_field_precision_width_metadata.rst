@@ -92,11 +92,28 @@ Notes about specific drivers
 Technical details
 -----------------
 
+The change will be done at the driver metadata level with a couple of flags
+that report the capabilities.
+
+
 The vector drivers will expose a metadata entry to define if the width
 of the fields includes the decimal separator and/or the sign.
 
 If the metadata entry is undefined the feature is not supported (there is no
 client-accessible width or precision constraint for numeric fields).
+
+The feature will be exposed to the `ogr2ogr` application with a switch to enable/disable
+the width reduction when converting from a format where width includes the minus sign to a format
+where it doesn't. This is useful when the user knows that the input data are all negative values
+because in that that case it won't be necessary to add the extra width to store it.
+
+To clarify, when converting from DBF to SQL:
+
+"-1.23" for .DBF needs width=5 and precision=2. In SQL, it needs precision=3 and scale=2
+"12.34" for DBF needs width=5 and precision=2. In SQL, it needs precision=4 and scale=2
+
+This means that when converting from DBF to SQL we can safely reduce the width by 1 but
+we cannot safely reduce it by 2 unless we are sure all values are negative.
 
 Example API:
 
