@@ -34,7 +34,7 @@ extensions = [
     "redirects",
     "driverproperties",
     "sphinx.ext.napoleon",
-    "sphinxcontrib.jquery"
+    "sphinxcontrib.jquery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
