@@ -88,39 +88,6 @@ class NOAA_B_Dataset final : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                        NOAA_B_RasterBand                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class NOAA_B_RasterBand final : public RawRasterBand
-{
-    CPL_DISALLOW_COPY_ASSIGN(NOAA_B_RasterBand)
-
-  public:
-    NOAA_B_RasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                      vsi_l_offset nImgOffset, int nPixelOffset,
-                      int nLineOffset, GDALDataType eDataType,
-                      int bNativeOrder);
-};
-
-/************************************************************************/
-/*                         NOAA_B_RasterBand()                          */
-/************************************************************************/
-
-NOAA_B_RasterBand::NOAA_B_RasterBand(GDALDataset *poDSIn, int nBandIn,
-                                     VSILFILE *fpRawIn,
-                                     vsi_l_offset nImgOffsetIn,
-                                     int nPixelOffsetIn, int nLineOffsetIn,
-                                     GDALDataType eDataTypeIn,
-                                     int bNativeOrderIn)
-    : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                    nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
-                    RawRasterBand::OwnFP::YES)
-{
-}
-
-/************************************************************************/
-/* ==================================================================== */
 /*                          NOAA_B_Dataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -330,14 +297,19 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
     poOpenInfo->fpL = nullptr;
 
     // Records are presented from the southern-most to the northern-most
-    NOAA_B_RasterBand *poBand = new NOAA_B_RasterBand(
+    auto poBand = RawRasterBand::Create(
         poDS.get(), 1, fpImage,
         // skip to beginning of northern-most line
         HEADER_SIZE +
             static_cast<vsi_l_offset>(poDS->nRasterYSize - 1) * nLineSize +
             FORTRAN_HEADER_SIZE,
-        nDTSize, -nLineSize, eDT, bBigEndian ? !CPL_IS_LSB : CPL_IS_LSB);
-    poDS->SetBand(1, poBand);
+        nDTSize, -nLineSize, eDT,
+        bBigEndian ? RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN
+                   : RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+        RawRasterBand::OwnFP::YES);
+    if (!poBand)
+        return nullptr;
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Guess CRS from filename.                                        */

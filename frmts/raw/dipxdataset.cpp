@@ -251,17 +251,14 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLErrorReset();
     for (int iBand = 0; iBand < nBands; iBand++)
     {
-        poDS->SetBand(iBand + 1,
-                      new RawRasterBand(poDS, iBand + 1, poDS->fp,
-                                        1024 + iBand * nLineOffset,
-                                        nBytesPerSample, nLineOffset * nBands,
-                                        poDS->eRasterDataType, CPL_IS_LSB,
-                                        RawRasterBand::OwnFP::NO));
-        if (CPLGetLastErrorType() != CE_None)
-        {
-            delete poDS;
+        auto poBand = RawRasterBand::Create(
+            poDS, iBand + 1, poDS->fp, 1024 + iBand * nLineOffset,
+            nBytesPerSample, nLineOffset * nBands, poDS->eRasterDataType,
+            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+            RawRasterBand::OwnFP::NO);
+        if (!poBand)
             return nullptr;
-        }
+        poDS->SetBand(iBand + 1, std::move(poBand));
     }
 
     /* -------------------------------------------------------------------- */

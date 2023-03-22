@@ -34,6 +34,8 @@
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
 
+#include <algorithm>
+
 static GInt16 CastToGInt16(float val)
 {
     if (val < -32768.0)
@@ -1807,14 +1809,13 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    VSILFILE *fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
-
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
 
-    SAR_CEOSDataset *poDS = new SAR_CEOSDataset();
+    auto poDS = cpl::make_unique<SAR_CEOSDataset>();
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
+
     CeosSARVolume_t *psVolume = &(poDS->sVolume);
     InitCeosSARVolume(psVolume, 0);
 
@@ -1823,11 +1824,9 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     psVolume->ImagryOptionsFile = TRUE;
-    if (ProcessData(fp, CEOS_IMAGRY_OPT_FILE, psVolume, 4, VSI_L_OFFSET_MAX) !=
-        CE_None)
+    if (ProcessData(poDS->fpImage, CEOS_IMAGRY_OPT_FILE, psVolume, 4,
+                    VSI_L_OFFSET_MAX) != CE_None)
     {
-        delete poDS;
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
 
@@ -1965,14 +1964,10 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     struct CeosSARImageDesc *psImageDesc = &(psVolume->ImageDesc);
     if (!psImageDesc->ImageDescValid)
     {
-        delete poDS;
-
         CPLDebug("CEOS",
                  "Unable to extract CEOS image description\n"
                  "from %s.",
                  poOpenInfo->pszFilename);
-
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
         return nullptr;
     }
@@ -2027,7 +2022,6 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unsupported CEOS image data type %d.\n",
                      psImageDesc->DataType);
-            delete poDS;
             return nullptr;
     }
 
@@ -2039,14 +2033,6 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
                          psImageDesc->RightBorderPixels;
     poDS->nRasterYSize = psImageDesc->Lines;
 
-    const int bNative =
-#ifdef CPL_LSB
-        FALSE
-#else
-        TRUE
-#endif
-        ;
-
     /* -------------------------------------------------------------------- */
     /*      Special case for compressed cross products.                     */
     /* -------------------------------------------------------------------- */
@@ -2054,8 +2040,9 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         for (int iBand = 0; iBand < psImageDesc->NumChannels; iBand++)
         {
-            poDS->SetBand(poDS->nBands + 1,
-                          new CCPRasterBand(poDS, poDS->nBands + 1, eType));
+            poDS->SetBand(
+                poDS->nBands + 1,
+                new CCPRasterBand(poDS.get(), poDS->nBands + 1, eType));
         }
 
         /* mark this as a Scattering Matrix product */
@@ -2073,7 +2060,7 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
         for (int iBand = 0; iBand < psImageDesc->NumChannels; iBand++)
         {
             poDS->SetBand(poDS->nBands + 1,
-                          new PALSARRasterBand(poDS, poDS->nBands + 1));
+                          new PALSARRasterBand(poDS.get(), poDS->nBands + 1));
         }
 
         /* mark this as a Symmetrized Covariance product if appropriate */
@@ -2095,8 +2082,9 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         for (int iBand = 0; iBand < psImageDesc->NumChannels; iBand++)
         {
-            poDS->SetBand(poDS->nBands + 1, new SAR_CEOSRasterBand(
-                                                poDS, poDS->nBands + 1, eType));
+            poDS->SetBand(
+                poDS->nBands + 1,
+                new SAR_CEOSRasterBand(poDS.get(), poDS->nBands + 1, eType));
         }
     }
 
@@ -2156,18 +2144,16 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
 
-            poDS->SetBand(poDS->nBands + 1,
-                          new RawRasterBand(poDS, poDS->nBands + 1, fp,
-                                            nStartData, nPixelOffset,
-                                            nLineOffset, eType, bNative,
-                                            RawRasterBand::OwnFP::NO));
+            auto poBand = RawRasterBand::Create(
+                poDS.get(), poDS->nBands + 1, poDS->fpImage, nStartData,
+                nPixelOffset, nLineOffset, eType,
+                RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+                RawRasterBand::OwnFP::NO);
+            if (!poBand)
+                return nullptr;
+            poDS->SetBand(poDS->nBands + 1, std::move(poBand));
         }
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      Adopt the file pointer.                                         */
-    /* -------------------------------------------------------------------- */
-    poDS->fpImage = fp;
 
     /* -------------------------------------------------------------------- */
     /*      Collect metadata.                                               */
@@ -2188,9 +2174,9 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open overviews.                                                 */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

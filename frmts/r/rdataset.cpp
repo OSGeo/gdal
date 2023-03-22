@@ -371,12 +371,11 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         std::string(bCompressed ? "/vsigzip/" : "") + poOpenInfo->pszFilename;
 
     // Establish this as a dataset and open the file using VSI*L.
-    RDataset *poDS = new RDataset();
+    auto poDS = cpl::make_unique<RDataset>();
 
     poDS->fp = VSIFOpenL(osAdjustedFilename, "r");
     if (poDS->fp == nullptr)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -387,7 +386,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIFSeekL(poDS->fp, 7, SEEK_SET);
     if (poDS->ReadInteger() != R_LISTSXP)
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "It appears %s is not a version 2 R object file after all!",
                  poOpenInfo->pszFilename);
@@ -404,13 +402,11 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!poDS->ReadPair(osObjName, nObjCode))
     {
-        delete poDS;
         return nullptr;
     }
 
     if (nObjCode % 256 != R_REALSXP)
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to find expected numeric vector object.");
         return nullptr;
@@ -424,7 +420,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nValueCount < 0: %d",
                  nValueCount);
-        delete poDS;
         return nullptr;
     }
 
@@ -442,7 +437,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
                  "Object claims to be larger than available bytes. "
                  "%d > " CPL_FRMT_GUIB,
                  nValueCount, stat.st_size - poDS->nStartOfData);
-        delete poDS;
         return nullptr;
     }
 
@@ -455,7 +449,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d doubles",
                      nValueCount);
-            delete poDS;
             return nullptr;
         }
         for (int iValue = 0; iValue < nValueCount; iValue++)
@@ -493,7 +486,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "R 'dim' dimension wrong.");
-                delete poDS;
                 return nullptr;
             }
         }
@@ -532,7 +524,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->nRasterXSize == 0)
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find dim dimension information for R dataset.");
         return nullptr;
@@ -541,7 +532,6 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandCount, TRUE))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -552,29 +542,32 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!ok || nValueCount < result)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Not enough pixel data.");
-        delete poDS;
         return nullptr;
     }
 
     // Create the raster band object(s).
     for (int iBand = 0; iBand < nBandCount; iBand++)
     {
-        GDALRasterBand *poBand = nullptr;
+        std::unique_ptr<GDALRasterBand> poBand;
 
         if (poDS->bASCII)
-            poBand = new RRasterBand(poDS, iBand + 1,
-                                     poDS->padfMatrixValues +
-                                         iBand * poDS->nRasterXSize *
-                                             poDS->nRasterYSize);
+            poBand = cpl::make_unique<RRasterBand>(
+                poDS.get(), iBand + 1,
+                poDS->padfMatrixValues +
+                    iBand * poDS->nRasterXSize * poDS->nRasterYSize);
         else
-            poBand = new RawRasterBand(poDS, iBand + 1, poDS->fp,
-                                       poDS->nStartOfData +
-                                           poDS->nRasterXSize *
-                                               poDS->nRasterYSize * 8 * iBand,
-                                       8, poDS->nRasterXSize * 8, GDT_Float64,
-                                       !CPL_IS_LSB, RawRasterBand::OwnFP::NO);
-
-        poDS->SetBand(iBand + 1, poBand);
+        {
+            poBand = RawRasterBand::Create(
+                poDS.get(), iBand + 1, poDS->fp,
+                poDS->nStartOfData +
+                    poDS->nRasterXSize * poDS->nRasterYSize * 8 * iBand,
+                8, poDS->nRasterXSize * 8, GDT_Float64,
+                RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+                RawRasterBand::OwnFP::NO);
+            if (!poBand)
+                return nullptr;
+        }
+        poDS->SetBand(iBand + 1, std::move(poBand));
     }
 
     // Initialize any PAM information.
@@ -582,9 +575,9 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->TryLoadXML();
 
     // Check for overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

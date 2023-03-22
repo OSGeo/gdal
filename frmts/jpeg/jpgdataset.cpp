@@ -2832,13 +2832,13 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
             }
             ~JPEGRawDataset() = default;
 
-            void SetBand(int nBand, GDALRasterBand *poBand)
+            void SetBand(int nBand, std::unique_ptr<GDALRasterBand> &&poBand)
             {
-                RawDataset::SetBand(nBand, poBand);
+                RawDataset::SetBand(nBand, std::move(poBand));
             }
         };
 
-        auto poBand = new RawRasterBand(
+        auto poBand = RawRasterBand::Create(
             fpRaw,
             0,                            // image offset
             2,                            // pixel offset
@@ -2849,11 +2849,13 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
                 : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
             m_nRawThermalImageWidth, m_nRawThermalImageHeight,
             RawRasterBand::OwnFP::YES);
+        if (!poBand)
+            return nullptr;
 
         auto poRawDS = new JPEGRawDataset(m_nRawThermalImageWidth,
                                           m_nRawThermalImageHeight);
         poRawDS->SetDescription(osTmpFilename.c_str());
-        poRawDS->SetBand(1, poBand);
+        poRawDS->SetBand(1, std::move(poBand));
         poRawDS->MarkSuppressOnClose();
         return poRawDS;
     }

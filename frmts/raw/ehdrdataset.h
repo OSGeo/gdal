@@ -140,6 +140,7 @@ class EHdrRasterBand final : public RawRasterBand
     std::shared_ptr<GDALColorTable> m_poColorTable{};
     std::shared_ptr<GDALRasterAttributeTable> m_poRAT{};
 
+    bool m_bValid = false;
     int nBits{};
     vsi_l_offset nStartBit{};
     int nPixelOffsetBits{};
@@ -163,8 +164,13 @@ class EHdrRasterBand final : public RawRasterBand
   public:
     EHdrRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
                    vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
-                   GDALDataType eDataType, int bNativeOrder, int nBits);
-    ~EHdrRasterBand() override;
+                   GDALDataType eDataType,
+                   RawRasterBand::ByteOrder eByteOrderIn, int nBits);
+
+    bool IsValid() const
+    {
+        return m_bValid;
+    }
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;

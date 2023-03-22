@@ -30,18 +30,16 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                             ROIPACDataset                            */
 /* ==================================================================== */
 /************************************************************************/
 
-class ROIPACRasterBand;
-
 class ROIPACDataset final : public RawDataset
 {
-    friend class ROIPACRasterBand;
-
     VSILFILE *fpImage;
     VSILFILE *fpRsc;
 
@@ -77,22 +75,6 @@ class ROIPACDataset final : public RawDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetFileList() override;
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                           ROIPACRasterBand                           */
-/* ==================================================================== */
-/************************************************************************/
-
-class ROIPACRasterBand final : public RawRasterBand
-{
-    CPL_DISALLOW_COPY_ASSIGN(ROIPACRasterBand)
-
-  public:
-    ROIPACRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                     vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
-                     GDALDataType eDataType, int bNativeOrder);
 };
 
 /************************************************************************/
@@ -226,7 +208,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Load the .rsc information.                                      */
     /* -------------------------------------------------------------------- */
-    char **papszRsc = nullptr;
+    CPLStringList aosRSC;
     while (true)
     {
         const char *pszLine = CPLReadLineL(fpRsc);
@@ -245,7 +227,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
             CSLDestroy(papszTokens);
             break;
         }
-        papszRsc = CSLSetNameValue(papszRsc, papszTokens[0], papszTokens[1]);
+        aosRSC.SetNameValue(papszTokens[0], papszTokens[1]);
 
         CSLDestroy(papszTokens);
     }
@@ -253,19 +235,17 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Fetch required fields.                                          */
     /* -------------------------------------------------------------------- */
-    if (CSLFetchNameValue(papszRsc, "WIDTH") == nullptr ||
-        CSLFetchNameValue(papszRsc, "FILE_LENGTH") == nullptr)
+    if (aosRSC.FetchNameValue("WIDTH") == nullptr ||
+        aosRSC.FetchNameValue("FILE_LENGTH") == nullptr)
     {
-        CSLDestroy(papszRsc);
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpRsc));
         return nullptr;
     }
-    const int nWidth = atoi(CSLFetchNameValue(papszRsc, "WIDTH"));
-    const int nFileLength = atoi(CSLFetchNameValue(papszRsc, "FILE_LENGTH"));
+    const int nWidth = atoi(aosRSC.FetchNameValue("WIDTH"));
+    const int nFileLength = atoi(aosRSC.FetchNameValue("FILE_LENGTH"));
 
     if (!GDALCheckDatasetDimensions(nWidth, nFileLength))
     {
-        CSLDestroy(papszRsc);
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpRsc));
         return nullptr;
     }
@@ -273,14 +253,13 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    ROIPACDataset *poDS = new ROIPACDataset();
+    auto poDS = cpl::make_unique<ROIPACDataset>();
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nFileLength;
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fpRsc = fpRsc;
     poDS->pszRscFilename = CPLStrdup(osRscFilename.c_str());
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
@@ -309,8 +288,6 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
 #else
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Reading ROI_PAC raw files is not supported yet.");
-        delete poDS;
-        CSLDestroy(papszRsc);
         return nullptr;
 #endif
     }
@@ -351,8 +328,6 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     { /* Eeek */
-        delete poDS;
-        CSLDestroy(papszRsc);
         return nullptr;
     }
 
@@ -408,46 +383,38 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bIntOverflow)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
-        delete poDS;
-        CSLDestroy(papszRsc);
         return nullptr;
     }
 
-#ifdef CPL_LSB
-    const bool bNativeOrder = true;
-#else
-    const bool bNativeOrder = false;
-#endif
-    poDS->nBands = nBands;
     for (int b = 0; b < nBands; b++)
     {
-        poDS->SetBand(b + 1, new ROIPACRasterBand(poDS, b + 1, poDS->fpImage,
-                                                  nBandOffset * b, nPixelOffset,
-                                                  nLineOffset, eDataType,
-                                                  bNativeOrder));
+        auto poBand = RawRasterBand::Create(
+            poDS.get(), b + 1, poDS->fpImage, nBandOffset * b, nPixelOffset,
+            nLineOffset, eDataType,
+            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+            RawRasterBand::OwnFP::NO);
+        if (!poBand)
+            return nullptr;
+        poDS->SetBand(b + 1, std::move(poBand));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Interpret georeferencing, if present.                           */
     /* -------------------------------------------------------------------- */
-    if (CSLFetchNameValue(papszRsc, "X_FIRST") != nullptr &&
-        CSLFetchNameValue(papszRsc, "X_STEP") != nullptr &&
-        CSLFetchNameValue(papszRsc, "Y_FIRST") != nullptr &&
-        CSLFetchNameValue(papszRsc, "Y_STEP") != nullptr)
+    if (aosRSC.FetchNameValue("X_FIRST") != nullptr &&
+        aosRSC.FetchNameValue("X_STEP") != nullptr &&
+        aosRSC.FetchNameValue("Y_FIRST") != nullptr &&
+        aosRSC.FetchNameValue("Y_STEP") != nullptr)
     {
-        poDS->adfGeoTransform[0] =
-            CPLAtof(CSLFetchNameValue(papszRsc, "X_FIRST"));
-        poDS->adfGeoTransform[1] =
-            CPLAtof(CSLFetchNameValue(papszRsc, "X_STEP"));
+        poDS->adfGeoTransform[0] = CPLAtof(aosRSC.FetchNameValue("X_FIRST"));
+        poDS->adfGeoTransform[1] = CPLAtof(aosRSC.FetchNameValue("X_STEP"));
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] =
-            CPLAtof(CSLFetchNameValue(papszRsc, "Y_FIRST"));
+        poDS->adfGeoTransform[3] = CPLAtof(aosRSC.FetchNameValue("Y_FIRST"));
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] =
-            CPLAtof(CSLFetchNameValue(papszRsc, "Y_STEP"));
+        poDS->adfGeoTransform[5] = CPLAtof(aosRSC.FetchNameValue("Y_STEP"));
         poDS->bValidGeoTransform = true;
     }
-    if (CSLFetchNameValue(papszRsc, "PROJECTION") != nullptr)
+    if (aosRSC.FetchNameValue("PROJECTION") != nullptr)
     {
         /* ------------------------------------------------------------ */
         /* In ROI_PAC, images are georeferenced either with lat/long or */
@@ -456,24 +423,24 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         /* bands!                                                       */
         /* ------------------------------------------------------------ */
         OGRSpatialReference oSRS;
-        if (strcmp(CSLFetchNameValue(papszRsc, "PROJECTION"), "LL") == 0)
+        if (strcmp(aosRSC.FetchNameValue("PROJECTION"), "LL") == 0)
         {
-            if (CSLFetchNameValue(papszRsc, "DATUM") != nullptr)
+            if (aosRSC.FetchNameValue("DATUM") != nullptr)
             {
-                oSRS.SetWellKnownGeogCS(CSLFetchNameValue(papszRsc, "DATUM"));
+                oSRS.SetWellKnownGeogCS(aosRSC.FetchNameValue("DATUM"));
             }
             else
             {
                 oSRS.SetWellKnownGeogCS("WGS84");
             }
         }
-        else if (STARTS_WITH(CSLFetchNameValue(papszRsc, "PROJECTION"), "UTM"))
+        else if (STARTS_WITH(aosRSC.FetchNameValue("PROJECTION"), "UTM"))
         {
-            const char *pszZone = CSLFetchNameValue(papszRsc, "PROJECTION") + 3;
+            const char *pszZone = aosRSC.FetchNameValue("PROJECTION") + 3;
             oSRS.SetUTM(atoi(pszZone), TRUE); /* FIXME: north/south? */
-            if (CSLFetchNameValue(papszRsc, "DATUM") != nullptr)
+            if (aosRSC.FetchNameValue("DATUM") != nullptr)
             {
-                oSRS.SetWellKnownGeogCS(CSLFetchNameValue(papszRsc, "DATUM"));
+                oSRS.SetWellKnownGeogCS(aosRSC.FetchNameValue("DATUM"));
             }
             else
             {
@@ -483,20 +450,20 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->m_oSRS = oSRS;
         poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    if (CSLFetchNameValue(papszRsc, "Z_OFFSET") != nullptr)
+    if (aosRSC.FetchNameValue("Z_OFFSET") != nullptr)
     {
         const double dfOffset =
-            strtod(CSLFetchNameValue(papszRsc, "Z_OFFSET"), nullptr);
+            strtod(aosRSC.FetchNameValue("Z_OFFSET"), nullptr);
         for (int b = 1; b <= nBands; b++)
         {
             GDALRasterBand *poBand = poDS->GetRasterBand(b);
             poBand->SetOffset(dfOffset);
         }
     }
-    if (CSLFetchNameValue(papszRsc, "Z_SCALE") != nullptr)
+    if (aosRSC.FetchNameValue("Z_SCALE") != nullptr)
     {
         const double dfScale =
-            strtod(CSLFetchNameValue(papszRsc, "Z_SCALE"), nullptr);
+            strtod(aosRSC.FetchNameValue("Z_SCALE"), nullptr);
         for (int b = 1; b <= nBands; b++)
         {
             GDALRasterBand *poBand = poDS->GetRasterBand(b);
@@ -507,10 +474,10 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Set all the other header metadata into the ROI_PAC domain       */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; papszRsc != nullptr && papszRsc[i] != nullptr; i++)
+    for (int i = 0; i < aosRSC.size(); ++i)
     {
         char **papszTokens = CSLTokenizeString2(
-            papszRsc[i], "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+            aosRSC[i], "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
         if (CSLCount(papszTokens) < 2 || strcmp(papszTokens[0], "WIDTH") == 0 ||
             strcmp(papszTokens[0], "FILE_LENGTH") == 0 ||
             strcmp(papszTokens[0], "X_FIRST") == 0 ||
@@ -528,12 +495,6 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->SetMetadataItem(papszTokens[0], papszTokens[1], "ROI_PAC");
         CSLDestroy(papszTokens);
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      Free papszRsc                                                   */
-    /* -------------------------------------------------------------------- */
-    CSLDestroy(papszRsc);
-
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
@@ -543,9 +504,9 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -893,20 +854,6 @@ char **ROIPACDataset::GetFileList()
     papszFileList = CSLAddString(papszFileList, pszRscFilename);
 
     return papszFileList;
-}
-
-/************************************************************************/
-/*                         ROIPACRasterBand()                           */
-/************************************************************************/
-
-ROIPACRasterBand::ROIPACRasterBand(GDALDataset *poDSIn, int nBandIn,
-                                   VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
-                                   int nPixelOffsetIn, int nLineOffsetIn,
-                                   GDALDataType eDataTypeIn, int bNativeOrderIn)
-    : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                    nLineOffsetIn, eDataTypeIn, bNativeOrderIn,
-                    RawRasterBand::OwnFP::NO)
-{
 }
 
 /************************************************************************/

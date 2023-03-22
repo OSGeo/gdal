@@ -393,6 +393,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void RasterInitialize(int, int);
     void SetBand(int, GDALRasterBand *);
+    void SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand);
 
     GDALDefaultOverviews oOvManager{};
 

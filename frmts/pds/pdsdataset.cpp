@@ -1264,16 +1264,16 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < l_nBands; i++)
     {
-        RawRasterBand *poBand = new RawRasterBand(
+        auto poBand = RawRasterBand::Create(
             this, i + 1, fpImage,
             nSkipBytes + static_cast<vsi_l_offset>(nBandOffset) * i,
             nPixelOffset, nLineOffset, eDataType,
-#ifdef CPL_LSB
-            chByteOrder == 'I' || chByteOrder == 'L',
-#else
-            chByteOrder == 'M',
-#endif
+            chByteOrder == 'I' || chByteOrder == 'L'
+                ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
+                : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
             RawRasterBand::OwnFP::NO);
+        if (!poBand)
+            return FALSE;
 
         if (l_nBands == 1)
         {
@@ -1294,8 +1294,6 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 
         poBand->SetNoDataValue(dfNoData);
 
-        SetBand(i + 1, poBand);
-
         // Set offset/scale values at the PAM level.
         poBand->SetOffset(dfOffset);
         poBand->SetScale(dfScale);
@@ -1303,6 +1301,8 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
             poBand->SetUnitType(pszUnit);
         if (pszDesc)
             poBand->SetDescription(pszDesc);
+
+        SetBand(i + 1, std::move(poBand));
     }
 
     return TRUE;

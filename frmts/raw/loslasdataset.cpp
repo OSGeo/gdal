@@ -32,6 +32,8 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 /**
 
 NOAA .LOS/.LAS Datum Grid Shift Format
@@ -202,9 +204,8 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    LOSLASDataset *poDS = new LOSLASDataset();
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    auto poDS = cpl::make_unique<LOSLASDataset>();
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Read the header.                                                */
@@ -220,7 +221,6 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         poDS->nRasterXSize > (INT_MAX - 4) / 4)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -247,13 +247,15 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      the first since the data comes with the southern most record    */
     /*      first, not the northernmost like we would want.                 */
     /* -------------------------------------------------------------------- */
-    poDS->SetBand(
-        1, new RawRasterBand(poDS, 1, poDS->fpImage,
-                             static_cast<vsi_l_offset>(poDS->nRasterYSize) *
-                                     poDS->nRecordLength +
-                                 4,
-                             4, -1 * poDS->nRecordLength, GDT_Float32,
-                             CPL_IS_LSB, RawRasterBand::OwnFP::NO));
+    auto poBand = RawRasterBand::Create(
+        poDS.get(), 1, poDS->fpImage,
+        static_cast<vsi_l_offset>(poDS->nRasterYSize) * poDS->nRecordLength + 4,
+        4, -1 * poDS->nRecordLength, GDT_Float32,
+        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+        RawRasterBand::OwnFP::NO);
+    if (!poBand)
+        return nullptr;
+    poDS->SetBand(1, std::move(poBand));
 
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "las"))
     {
@@ -289,9 +291,9 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 static const char UTM_FORMAT[] =
     "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],"
     "UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],"
@@ -260,7 +262,7 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    DOQ1Dataset *poDS = new DOQ1Dataset();
+    auto poDS = cpl::make_unique<DOQ1Dataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file that is of interest.     */
@@ -268,8 +270,7 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
 
-    poDS->fpImage = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
     /*      Compute layout of data.                                         */
@@ -287,19 +288,22 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
-    poDS->nBands = nBytesPerPixel;
-    for (int i = 0; i < poDS->nBands; i++)
+    for (int i = 0; i < nBytesPerPixel; i++)
     {
-        poDS->SetBand(i + 1, new RawRasterBand(poDS, i + 1, poDS->fpImage,
-                                               nSkipBytes + i, nBytesPerPixel,
-                                               nBytesPerLine, GDT_Byte, TRUE,
-                                               RawRasterBand::OwnFP::NO));
+        auto poBand = RawRasterBand::Create(
+            poDS.get(), i + 1, poDS->fpImage, nSkipBytes + i, nBytesPerPixel,
+            nBytesPerLine, GDT_Byte,
+            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+            RawRasterBand::OwnFP::NO);
+        if (!poBand)
+            return nullptr;
+        poDS->SetBand(i + 1, std::move(poBand));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Set the description.                                            */
     /* -------------------------------------------------------------------- */
-    DOQGetDescription(poDS, poOpenInfo->pabyHeader);
+    DOQGetDescription(poDS.get(), poOpenInfo->pabyHeader);
 
     /* -------------------------------------------------------------------- */
     /*      Establish the projection string.                                */
@@ -362,7 +366,6 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Header read error on %s.",
                  poOpenInfo->pszFilename);
-        delete poDS;
         return nullptr;
     }
 
@@ -374,7 +377,6 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Header read error on %s.",
                  poOpenInfo->pszFilename);
-        delete poDS;
         return nullptr;
     }
 
@@ -390,9 +392,9 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

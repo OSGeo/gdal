@@ -164,10 +164,7 @@ class ENVIRasterBand final : public RawRasterBand
     ENVIRasterBand(GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
                    vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
                    int nLineOffsetIn, GDALDataType eDataTypeIn,
-                   int bNativeOrderIn);
-    ~ENVIRasterBand() override
-    {
-    }
+                   RawRasterBand::ByteOrder eByteOrderIn);
 
     void SetDescription(const char *) override;
     CPLErr SetNoDataValue(double) override;

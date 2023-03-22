@@ -330,7 +330,7 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    ACE2Dataset *poDS = new ACE2Dataset();
+    auto poDS = cpl::make_unique<ACE2Dataset>();
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -345,7 +345,11 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information objects                                 */
     /* -------------------------------------------------------------------- */
-    poDS->SetBand(1, new ACE2RasterBand(fpImage, eDT, nXSize, nYSize));
+    auto poBand =
+        cpl::make_unique<ACE2RasterBand>(fpImage, eDT, nXSize, nYSize);
+    if (!poBand->IsValid())
+        return nullptr;
+    poDS->SetBand(1, std::move(poBand));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -356,9 +360,9 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

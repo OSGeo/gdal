@@ -464,7 +464,7 @@ class PDS4RawRasterBand final : public RawRasterBand
     PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
                       vsi_l_offset l_nImgOffset, int l_nPixelOffset,
                       int l_nLineOffset, GDALDataType l_eDataType,
-                      int l_bNativeOrder);
+                      RawRasterBand::ByteOrder eByteOrderIn);
     virtual ~PDS4RawRasterBand()
     {
     }
