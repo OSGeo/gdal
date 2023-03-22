@@ -5,9 +5,9 @@ import sys
 # Running main() must be protected that way due to use of multiprocessing on Windows:
 # https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods
 if __name__ == "__main__":
-    from osgeo.gdal import UseExceptionsAllModules, deprecation_warn
+    from osgeo.gdal import UseExceptions, deprecation_warn
 
-    UseExceptionsAllModules()
+    UseExceptions()
 
     # import osgeo_utils.gdal2tiles as a convenience to use as a script
     from osgeo_utils.gdal2tiles import *  # noqa

@@ -1379,17 +1379,15 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 // be impacted when exceptions are enabled by default
 
 %pythoncode %{
-hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = False
 
 def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
-    global hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions
-    if not hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions and not _UserHasSpecifiedIfUsingExceptions():
-        hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
+    from . import gdal
+    if not hasattr(gdal, "hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions") and not _UserHasSpecifiedIfUsingExceptions():
+        gdal.hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
         import warnings
         warnings.warn(
             "Neither gdal.UseExceptions() nor gdal.DontUseExceptions() has been explicitly called. " +
-            "In GDAL 4.0, exceptions will be enabled by default. " +
-            "You may also call gdal.UseExceptionsAllModules() to enable exceptions in all GDAL related modules.", FutureWarning)
+            "In GDAL 4.0, exceptions will be enabled by default.", FutureWarning)
 
 def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
     from . import ogr
@@ -1449,37 +1447,6 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 
 
 %pythoncode %{
-
-def UseExceptionsAllModules():
-    """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
-
-        Equivalent to calling UseExceptions() on all those modules"""
-
-    from . import gdal, ogr, osr
-    gdal.UseExceptions()
-    ogr.UseExceptions()
-    osr.UseExceptions()
-    try:
-        from . import gnm
-        gnm.UseExceptions()
-    except ImportError:
-        pass
-
-def DontUseExceptionsAllModules():
-    """ Disable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
-
-        Equivalent to calling DontUseExceptions() on all those modules"""
-
-    from . import gdal, ogr, osr
-    gdal.DontUseExceptions()
-    ogr.DontUseExceptions()
-    osr.DontUseExceptions()
-    try:
-        from . import gnm
-        gnm.DontUseExceptions()
-    except ImportError:
-        pass
-
 
 def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,

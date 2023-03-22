@@ -719,27 +719,46 @@ def test_quiet_errors():
         gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
 
 
-def test_basic_test_UseExceptionsAllModules():
+def test_basic_test_UseExceptions():
 
     python_exe = sys.executable
     cmd = '%s -c "from osgeo import gdal;' % python_exe + (
-        "gdal.UseExceptionsAllModules();" "gdal.Open('non_existing.tif');" ' " '
+        "gdal.UseExceptions();" "gdal.Open('non_existing.tif');" ' " '
     )
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "RuntimeError: " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err
 
 
-def test_basic_test_DontUseExceptionsAllModules():
+def test_basic_test_UseExceptions_ogr_open():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal, ogr;' % python_exe + (
+        "gdal.UseExceptions();" "ogr.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "RuntimeError: " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err
+
+
+def test_basic_test_DontUseExceptions():
 
     python_exe = sys.executable
     cmd = '%s -c "from osgeo import gdal;' % python_exe + (
-        "gdal.DontUseExceptionsAllModules();" "gdal.Open('non_existing.tif');" ' " '
+        "gdal.DontUseExceptions();" "gdal.Open('non_existing.tif');" ' " '
     )
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "ERROR " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err

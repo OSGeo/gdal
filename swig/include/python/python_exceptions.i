@@ -89,7 +89,7 @@ static void _SetExceptionsLocal(int bVal)
 }
 
 static
-void UseExceptions() {
+void _UseExceptions() {
   CPLErrorReset();
   bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( !bUseExceptions )
@@ -99,7 +99,7 @@ void UseExceptions() {
 }
 
 static
-void DontUseExceptions() {
+void _DontUseExceptions() {
   CPLErrorReset();
   bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( bUseExceptions )
@@ -319,4 +319,59 @@ static void popErrorHandler()
           current on entry to the context
           """
           _SetExceptionsLocal(self.currentUseExceptions)
+%}
+
+
+%pythoncode %{
+
+def UseExceptions():
+    """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+        Note: prior to GDAL 3.7, this only affected the calling modue"""
+
+    try:
+        from . import gdal
+        gdal._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import ogr
+        ogr._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import osr
+        osr._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gnm
+        gnm._UseExceptions()
+    except ImportError:
+        pass
+
+def DontUseExceptions():
+    """ Disable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+        Note: prior to GDAL 3.7, this only affected the calling modue"""
+
+    try:
+        from . import gdal
+        gdal._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import ogr
+        ogr._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import osr
+        osr._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gnm
+        gnm._DontUseExceptions()
+    except ImportError:
+        pass
+
 %}

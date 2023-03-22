@@ -40,14 +40,13 @@
 hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = False
 
 def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
-    global hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions
-    if not hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions and not _UserHasSpecifiedIfUsingExceptions():
-        hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
+    from . import gdal
+    if not hasattr(gdal, "hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions") and not _UserHasSpecifiedIfUsingExceptions():
+        gdal.hasWarnedAboutUserHasNotSpecifiedIfUsingExceptions = True
         import warnings
         warnings.warn(
             "Neither gnm.UseExceptions() nor gnm.DontUseExceptions() has been explicitly called. " +
-            "In GDAL 4.0, exceptions will be enabled by default. " +
-            "You may also call gdal.UseExceptionsAllModules() to enable exceptions in all GDAL related modules.", FutureWarning)
+            "In GDAL 4.0, exceptions will be enabled by default.", FutureWarning)
 %}
 
 %pythonprepend CastToNetwork %{

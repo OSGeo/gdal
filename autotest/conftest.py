@@ -10,7 +10,7 @@ from osgeo import gdal, ogr
 
 # Explicitly enable exceptions since autotest/ now assumes them to be
 # enabled
-gdal.UseExceptionsAllModules()
+gdal.UseExceptions()
 
 # Put the pymod dir on the path, so modules can `import gdaltest`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))

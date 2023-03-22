@@ -2,13 +2,13 @@
 
 import sys
 
-from osgeo.gdal import UseExceptionsAllModules, deprecation_warn
+from osgeo.gdal import UseExceptions, deprecation_warn
 
 # import osgeo_utils.gdal_edit as a convenience to use as a script
 from osgeo_utils.gdal_edit import *  # noqa
 from osgeo_utils.gdal_edit import main
 
-UseExceptionsAllModules()
+UseExceptions()
 
 deprecation_warn("gdal_edit")
 sys.exit(main(sys.argv))

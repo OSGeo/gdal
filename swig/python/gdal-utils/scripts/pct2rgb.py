@@ -2,13 +2,13 @@
 
 import sys
 
-from osgeo.gdal import UseExceptionsAllModules, deprecation_warn
+from osgeo.gdal import UseExceptions, deprecation_warn
 
 # import osgeo_utils.pct2rgb as a convenience to use as a script
 from osgeo_utils.pct2rgb import *  # noqa
 from osgeo_utils.pct2rgb import main
 
-UseExceptionsAllModules()
+UseExceptions()
 
 deprecation_warn("pct2rgb")
 sys.exit(main(sys.argv))
