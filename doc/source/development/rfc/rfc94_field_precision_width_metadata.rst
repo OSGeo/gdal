@@ -95,7 +95,6 @@ Technical details
 The change will be done at the driver metadata level with a couple of flags
 that report the capabilities.
 
-
 The vector drivers will expose a metadata entry to define if the width
 of the fields includes the decimal separator and/or the sign.
 
@@ -107,7 +106,8 @@ the width reduction when converting from a format where width includes the minus
 where it doesn't. This is useful when the user knows that the input data are all negative values
 because in that that case it won't be necessary to add the extra width to store it.
 
-To clarify, when converting from DBF to SQL:
+To clarify, when converting from DBF to SQL the width is decreased by 1, when converting
+from SQL to DBF the width is increased by 2.
 
 "-1.23" for .DBF needs width=5 and precision=2. In SQL, it needs precision=3 and scale=2
 "12.34" for DBF needs width=5 and precision=2. In SQL, it needs precision=4 and scale=2
@@ -131,7 +131,7 @@ Example API:
 
     /** Capability set by a vector driver that supports field width and precision.
     *
-    * This capability reflects that a vector driver includes the sign
+    * This capability reflects that a vector driver includes the (minus) sign
     * in the field width.
     *
     * See GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES__DECIMAL_SEPARATOR for a related capability flag.
