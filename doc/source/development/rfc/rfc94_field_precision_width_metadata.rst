@@ -63,7 +63,7 @@ Here is a list of the drivers and how they behave with respect to the width and 
  OCI                NO                                 NO
  GPKG               N/A                                N/A
  CSV (from .csvt)   YES                                YES
- HANA               ?                                  ?
+ HANA               YES                                YES
  FlatGeoBuf         NO                                 NO
  FileGDB            N/A                                N/A
  GML                NO                                 NO
