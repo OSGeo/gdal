@@ -15459,12 +15459,9 @@ void GTiffDataset::ApplyPamInfo()
                 psGeodataXform = CPLGetXMLNode(psValueAsXML, "=GeodataXform");
         }
 
-        const char *pszTIFFTagResUnit =
-            GetMetadataItem("TIFFTAG_RESOLUTIONUNIT");
         const char *pszTIFFTagXRes = GetMetadataItem("TIFFTAG_XRESOLUTION");
         const char *pszTIFFTagYRes = GetMetadataItem("TIFFTAG_YRESOLUTION");
-        if (psGeodataXform && pszTIFFTagResUnit && pszTIFFTagXRes &&
-            pszTIFFTagYRes && atoi(pszTIFFTagResUnit) == 2)
+        if (psGeodataXform && pszTIFFTagXRes && pszTIFFTagYRes)
         {
             CPLXMLNode *psSourceGCPs =
                 CPLGetXMLNode(psGeodataXform, "SourceGCPs");
@@ -15512,7 +15509,8 @@ void GTiffDataset::ApplyPamInfo()
                         m_pasGCPList[i].pszId = CPLStrdup("");
                         m_pasGCPList[i].pszInfo = CPLStrdup("");
                         // The origin used is the bottom left corner,
-                        // and raw values are in inches!
+                        // and raw values to be multiplied by the
+                        // TIFFTAG_XRESOLUTION/TIFFTAG_YRESOLUTION
                         m_pasGCPList[i].dfGCPPixel =
                             adfSourceGCPs[2 * i] * CPLAtof(pszTIFFTagXRes);
                         m_pasGCPList[i].dfGCPLine =
