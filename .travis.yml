@@ -46,6 +46,7 @@ matrix:
         - DETAILS=
 
 before_install:
+  - if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(.rst)$'; then travis_terminate 0; fi
   - ./ci/travis/${BUILD_NAME}/before_install.sh
 
 install:
