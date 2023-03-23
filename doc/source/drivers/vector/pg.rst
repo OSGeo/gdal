@@ -268,8 +268,6 @@ available:
    1.333 N, where N is the size of EWKB data. However, it might be a bit
    slower than fetching in canonical form when the client and the server
    are on the same machine, so the default is NO.
--  :decl_configoption:`PG_USE_TEXT`. If set to "YES", geometries will be
-   fetched/written using WKT instead of HEX-encoded EWKB.
 -  :decl_configoption:`OGR_PG_CURSOR_PAGE`. Set the cursor page size, or
    number of features that are fetched from the database and held in memory
    at a single time.
