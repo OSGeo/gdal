@@ -124,15 +124,6 @@ struct GDALNearblackOptionsForBinary
     int bQuiet;
 };
 
-struct GDALRasterizeOptionsForBinary
-{
-    char *pszSource;
-    char *pszDest;
-    int bQuiet;
-    char *pszFormat;
-    int bCreateOutput;
-};
-
 struct GDALBuildVRTOptionsForBinary
 {
     int nSrcFiles;
@@ -198,6 +189,17 @@ struct GDALGridOptionsForBinary
     std::string osDest{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
+};
+
+struct GDALRasterizeOptionsForBinary
+{
+    std::string osSource{};
+    bool bDestSpecified = false;
+    std::string osDest{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
+    bool bCreateOutput = false;
+    std::string osFormat{};
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
