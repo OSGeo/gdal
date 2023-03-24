@@ -195,11 +195,13 @@ def netcdf_cf_get_command(ifile, version="auto"):
 ###############################################################################
 # Check a file for CF compliance
 def netcdf_cf_check_file(ifile, version="auto", silent=True):
+    __tracebackhide__ = True
+
     # pylint: disable=unused-argument
     gdaltest.netcdf_cf_check_error = ""
 
     if not os.path.exists(ifile):
-        pytest.skip()
+        pytest.skip(f"File does not exist: {ifile}")
 
     output_all = ""
 
