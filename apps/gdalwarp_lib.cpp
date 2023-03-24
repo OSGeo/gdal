@@ -3195,8 +3195,6 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
                           const std::string &osCSQL, OGRGeometryH *phCutlineRet)
 
 {
-    OGRRegisterAll();
-
     /* -------------------------------------------------------------------- */
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */

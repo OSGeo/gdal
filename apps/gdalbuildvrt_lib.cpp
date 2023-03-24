@@ -1625,8 +1625,6 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
 
     if (EQUAL(CPLGetExtension(filename), "SHP"))
     {
-        OGRRegisterAll();
-
         /* Handle gdaltindex Shapefile as a special case */
         OGRDataSourceH hDS = OGROpen(filename, FALSE, nullptr);
         if (hDS == nullptr)
