@@ -58,6 +58,7 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 #include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 #include "vrtdataset.h"
 
 #define GEOTRSFRM_TOPLEFT_X 0
@@ -1626,36 +1627,26 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
     if (EQUAL(CPLGetExtension(filename), "SHP"))
     {
         /* Handle gdaltindex Shapefile as a special case */
-        OGRDataSourceH hDS = OGROpen(filename, FALSE, nullptr);
-        if (hDS == nullptr)
+        auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(filename));
+        if (poDS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to open shapefile `%s'.", filename);
             return false;
         }
 
-        OGRLayerH hLayer = OGR_DS_GetLayer(hDS, 0);
+        auto poLayer = poDS->GetLayer(0);
+        const auto poFDefn = poLayer->GetLayerDefn();
 
-        OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hLayer);
-
-        int ti_field;
-        for (ti_field = 0; ti_field < OGR_FD_GetFieldCount(hFDefn); ti_field++)
+        if (poFDefn->GetFieldIndex("LOCATION") >= 0 &&
+            strcmp("LOCATION", tile_index) != 0)
         {
-            OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hFDefn, ti_field);
-            const char *pszName = OGR_Fld_GetNameRef(hFieldDefn);
-
-            if (strcmp(pszName, "LOCATION") == 0 &&
-                strcmp("LOCATION", tile_index) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "This shapefile seems to be a tile index of "
-                         "OGR features and not GDAL products.");
-            }
-            if (strcmp(pszName, tile_index) == 0)
-                break;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "This shapefile seems to be a tile index of "
+                     "OGR features and not GDAL products.");
         }
-
-        if (ti_field == OGR_FD_GetFieldCount(hFDefn))
+        const int ti_field = poFDefn->GetFieldIndex(tile_index);
+        if (ti_field < 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to find field `%s' in DBF file `%s'.", tile_index,
@@ -1664,28 +1655,30 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
         }
 
         /* Load in memory existing file names in SHP */
-        const int nTileIndexFiles =
-            static_cast<int>(OGR_L_GetFeatureCount(hLayer, TRUE));
+        const auto nTileIndexFiles = poLayer->GetFeatureCount(TRUE);
         if (nTileIndexFiles == 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Tile index %s is empty. Skipping it.\n", filename);
+                     "Tile index %s is empty. Skipping it.", filename);
             return true;
         }
-
-        ppszInputFilenames = static_cast<char **>(
-            CPLRealloc(ppszInputFilenames,
-                       sizeof(char *) * (nInputFiles + nTileIndexFiles + 1)));
-        for (int j = 0; j < nTileIndexFiles; j++)
+        if (nTileIndexFiles > 100 * 1024 * 1024)
         {
-            OGRFeatureH hFeat = OGR_L_GetNextFeature(hLayer);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large feature count in tile index");
+            return false;
+        }
+
+        ppszInputFilenames = static_cast<char **>(CPLRealloc(
+            ppszInputFilenames,
+            sizeof(char *) *
+                (nInputFiles + static_cast<int>(nTileIndexFiles) + 1)));
+        for (auto &&poFeature : poLayer)
+        {
             ppszInputFilenames[nInputFiles++] =
-                CPLStrdup(OGR_F_GetFieldAsString(hFeat, ti_field));
-            OGR_F_Destroy(hFeat);
+                CPLStrdup(poFeature->GetFieldAsString(ti_field));
         }
         ppszInputFilenames[nInputFiles] = nullptr;
-
-        OGR_DS_Destroy(hDS);
     }
     else
     {
