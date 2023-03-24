@@ -67,6 +67,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "ogr_proj_p.h"
+#include "ogrsf_frmts.h"
 #include "vrtdataset.h"
 #include "../frmts/gtiff/cogdriver.h"
 
@@ -3198,10 +3199,9 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /* -------------------------------------------------------------------- */
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */
-    OGRDataSourceH hSrcDS;
-
-    hSrcDS = OGROpen(osCutlineDSName.c_str(), FALSE, nullptr);
-    if (hSrcDS == nullptr)
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open(osCutlineDSName.c_str()));
+    if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
                  osCutlineDSName.c_str());
@@ -3211,20 +3211,19 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /* -------------------------------------------------------------------- */
     /*      Get the source layer                                            */
     /* -------------------------------------------------------------------- */
-    OGRLayerH hLayer = nullptr;
+    OGRLayer *poLayer = nullptr;
 
     if (!osCSQL.empty())
-        hLayer = OGR_DS_ExecuteSQL(hSrcDS, osCSQL.c_str(), nullptr, nullptr);
+        poLayer = poDS->ExecuteSQL(osCSQL.c_str(), nullptr, nullptr);
     else if (!osCLayer.empty())
-        hLayer = OGR_DS_GetLayerByName(hSrcDS, osCLayer.c_str());
+        poLayer = poDS->GetLayerByName(osCLayer.c_str());
     else
-        hLayer = OGR_DS_GetLayer(hSrcDS, 0);
+        poLayer = poDS->GetLayer(0);
 
-    if (hLayer == nullptr)
+    if (poLayer == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to identify source layer from datasource.");
-        OGR_DS_Destroy(hSrcDS);
         return CE_Failure;
     }
 
@@ -3232,54 +3231,43 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /*      Apply WHERE clause if there is one.                             */
     /* -------------------------------------------------------------------- */
     if (!osCWHERE.empty())
-        OGR_L_SetAttributeFilter(hLayer, osCWHERE.c_str());
+        poLayer->SetAttributeFilter(osCWHERE.c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Collect the geometries from this layer, and build list of       */
     /*      burn values.                                                    */
     /* -------------------------------------------------------------------- */
-    OGRFeatureH hFeat;
-    OGRGeometryH hMultiPolygon = OGR_G_CreateGeometry(wkbMultiPolygon);
+    auto poMultiPolygon = cpl::make_unique<OGRMultiPolygon>();
 
-    OGR_L_ResetReading(hLayer);
-
-    while ((hFeat = OGR_L_GetNextFeature(hLayer)) != nullptr)
+    for (auto &&poFeature : poLayer)
     {
-        OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
-
-        if (hGeom == nullptr)
+        auto poGeom = std::unique_ptr<OGRGeometry>(poFeature->StealGeometry());
+        if (poGeom == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cutline feature without a geometry.");
-            OGR_F_Destroy(hFeat);
             goto error;
         }
 
-        if (!ValidateCutline(OGRGeometry::FromHandle(hGeom), true))
+        if (!ValidateCutline(poGeom.get(), true))
         {
-            OGR_F_Destroy(hFeat);
             goto error;
         }
 
-        OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType(hGeom));
+        OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
 
         if (eType == wkbPolygon)
-            OGR_G_AddGeometry(hMultiPolygon, hGeom);
+            poMultiPolygon->addGeometryDirectly(poGeom.release());
         else if (eType == wkbMultiPolygon)
         {
-            int iGeom;
-
-            for (iGeom = 0; iGeom < OGR_G_GetGeometryCount(hGeom); iGeom++)
+            for (const auto *poSubGeom : poGeom->toMultiPolygon())
             {
-                OGR_G_AddGeometry(hMultiPolygon,
-                                  OGR_G_GetGeometryRef(hGeom, iGeom));
+                poMultiPolygon->addGeometry(poSubGeom);
             }
         }
-
-        OGR_F_Destroy(hFeat);
     }
 
-    if (OGR_G_GetGeometryCount(hMultiPolygon) == 0)
+    if (poMultiPolygon->IsEmpty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Did not get any cutline features.");
@@ -3289,25 +3277,22 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /* -------------------------------------------------------------------- */
     /*      Ensure the coordinate system gets set on the geometry.          */
     /* -------------------------------------------------------------------- */
-    OGR_G_AssignSpatialReference(hMultiPolygon, OGR_L_GetSpatialRef(hLayer));
+    poMultiPolygon->assignSpatialReference(poLayer->GetSpatialRef());
 
-    *phCutlineRet = hMultiPolygon;
+    *phCutlineRet = OGRGeometry::ToHandle(poMultiPolygon.release());
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup                                                         */
     /* -------------------------------------------------------------------- */
     if (!osCSQL.empty())
-        OGR_DS_ReleaseResultSet(hSrcDS, hLayer);
-
-    OGR_DS_Destroy(hSrcDS);
+        poDS->ReleaseResultSet(poLayer);
 
     return CE_None;
 
 error:
-    OGR_G_DestroyGeometry(hMultiPolygon);
     if (!osCSQL.empty())
-        OGR_DS_ReleaseResultSet(hSrcDS, hLayer);
-    OGR_DS_Destroy(hSrcDS);
+        poDS->ReleaseResultSet(poLayer);
+
     return CE_Failure;
 }
 
