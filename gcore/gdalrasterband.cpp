@@ -4228,10 +4228,19 @@ CPLErr CPL_STDCALL GDALRasterAdviseRead(GDALRasterBandH hBand, int nXOff,
  * subset of image tiles may be used in computing the statistics.
  *
  * If bForce is FALSE results will only be returned if it can be done
- * quickly (i.e. without scanning the data).  If bForce is FALSE and
- * results cannot be returned efficiently, the method will return CE_Warning
- * but no warning will have been issued.   This is a non-standard use of
- * the CE_Warning return value to indicate "nothing done".
+ * quickly (i.e. without scanning the image, typically by using pre-existing
+ * STATISTICS_xxx metadata items). If bForce is FALSE and results cannot be
+ * returned efficiently, the method will return CE_Warning but no warning will
+ * have been issued. This is a non-standard use of the CE_Warning return value
+ * to indicate "nothing done".
+ *
+ * If bForce is TRUE, and results are quickly available without scanning the
+ * image, they will be used. If bForce is TRUE and results are not quickly
+ * available, GetStatistics() forwards the computation to ComputeStatistics(),
+ * which will scan the image.
+ *
+ * To always force recomputation of statistics, use ComputeStatistics() instead
+ * of this method.
  *
  * Note that file formats using PAM (Persistent Auxiliary Metadata) services
  * will generally cache statistics in the .pam file allowing fast fetch
@@ -4243,7 +4252,8 @@ CPLErr CPL_STDCALL GDALRasterAdviseRead(GDALRasterBandH hBand, int nXOff,
  * or a subset of all tiles.
  *
  * @param bForce If FALSE statistics will only be returned if it can
- * be done without rescanning the image.
+ * be done without rescanning the image. If TRUE, statistics computation will
+ * be forced if pre-existing values are not quickly available.
  *
  * @param pdfMin Location into which to load image minimum (may be NULL).
  *
