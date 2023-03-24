@@ -153,9 +153,9 @@ def test_ogr_pgdump_2():
         ######################################################
         # Create Layer
         lyr = ds.CreateLayer(
-            "tpoly",
+            'tp"oly',
             geom_type=ogr.wkbPolygon,
-            options=["SCHEMA=another_schema", "SRID=4326", "GEOMETRY_NAME=the_geom"],
+            options=['SCHEMA=ano"ther_schema', "SRID=4326", 'GEOMETRY_NAME=the_"geom'],
         )
 
         ######################################################
@@ -202,30 +202,30 @@ def test_ogr_pgdump_2():
         assert needle in sql, sql
         sql = sql[sql.find(needle) + len(needle) :]
 
-    check_and_remove("""CREATE SCHEMA "another_schema";""")
-    check_and_remove("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""")
+    check_and_remove("""CREATE SCHEMA "ano""ther_schema";""")
+    check_and_remove("""DROP TABLE IF EXISTS "ano""ther_schema"."tp""oly" CASCADE;""")
     check_and_remove("""BEGIN;""")
-    check_and_remove("""CREATE TABLE "another_schema"."tpoly"();""")
+    check_and_remove("""CREATE TABLE "ano""ther_schema"."tp""oly"();""")
     check_and_remove(
-        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "tpoly_pk" PRIMARY KEY;"""
+        """ALTER TABLE "ano""ther_schema"."tp""oly" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "tp""oly_pk" PRIMARY KEY;"""
     )
     check_and_remove(
-        """SELECT AddGeometryColumn('another_schema','tpoly','the_geom',4326,'POLYGON',2);"""
+        """SELECT AddGeometryColumn('ano"ther_schema','tp"oly','the_"geom',4326,'POLYGON',2);"""
     )
     check_and_remove(
-        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;"""
+        """ALTER TABLE "ano""ther_schema"."tp""oly" ADD COLUMN "area" FLOAT8;"""
     )
     check_and_remove(
-        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;"""
+        """ALTER TABLE "ano""ther_schema"."tp""oly" ADD COLUMN "eas_id" INTEGER;"""
     )
     check_and_remove(
-        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;"""
+        """ALTER TABLE "ano""ther_schema"."tp""oly" ADD COLUMN "prfedea" VARCHAR;"""
     )
     check_and_remove(
-        """ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);"""
+        """ALTER TABLE "ano""ther_schema"."tp""oly" ADD COLUMN "shortname" VARCHAR(8);"""
     )
     check_and_remove(
-        """COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
+        """COPY "ano""ther_schema"."tp""oly" ("the_""geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;"""
     )
     check_and_remove(
         """0103000020E61000000100000014000000000000602F491D41000000207F2D5241000000C028471D41000000E0922D5241000000007C461D4100000060AE2D524100000080C9471D4100000020B62D5241000000209C4C1D41000000E0D82D5241000000608D4C1D41000000A0DD2D5241000000207F4E1D41000000A0EA2D524100000020294F1D4100000080CA2D524100000000B4511D41000000E0552D5241000000C016521D4100000080452D5241000000E0174E1D41000000202E2D524100000020414D1D41000000E04C2D5241000000E04B4D1D41000000605E2D524100000040634D1D41000000E0742D5241000000A0EF4C1D41000000E08D2D5241000000E04E4C1D41000000E0A12D5241000000E0B04B1D4100000060B82D524100000080974A1D4100000080AE2D524100000080CF491D4100000080952D5241000000602F491D41000000207F2D5241\t215229.266\t168\t35043411\t\\N"""
@@ -234,7 +234,7 @@ def test_ogr_pgdump_2():
     # Check that there's no semi-column after above command
     assert sql.startswith("\n") or sql.startswith("\r\n")
     check_and_remove(
-        """CREATE INDEX "tpoly_the_geom_geom_idx" ON "another_schema"."tpoly" USING GIST ("the_geom");"""
+        """CREATE INDEX "tp""oly_the_""geom_geom_idx" ON "ano""ther_schema"."tp""oly" USING GIST ("the_""geom");"""
     )
     check_and_remove("""COMMIT;""")
 
