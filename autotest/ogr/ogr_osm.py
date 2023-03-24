@@ -601,6 +601,7 @@ def test_ogr_osm_9():
 # Some error conditions
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_osm_10():
 
     if ogrtest.osm_drv is None:

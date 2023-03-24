@@ -168,7 +168,8 @@ def test_tiledb_write_attributes(mode):
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
 
-    new_ds = None
+    with gdaltest.disable_exceptions():
+        new_ds = None
 
     # check we can open the attributes with the band as well as the pixel values
     att1_ds = gdal.OpenEx(
@@ -224,8 +225,8 @@ def test_tiledb_write_subdatasets():
     assert src_ds.GetRasterBand(1).Checksum() == 42472
     src_ds = None
 
-    src_ds = gdal.Open('TILEDB:"tmp/test_sds_array":i_dont_exist')
-    assert not src_ds
+    with pytest.raises(Exception):
+        gdal.Open('TILEDB:"tmp/test_sds_array":i_dont_exist')
 
     gdaltest.tiledb_drv.Delete("tmp/test_sds_array")
 

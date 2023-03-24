@@ -759,6 +759,7 @@ def test_netcdf_cf_3():
 # test support for various CF projections
 
 
+@gdaltest.disable_exceptions()
 def test_netcdf_cf_4():
 
     result = netcdf_cfproj_testcopy(

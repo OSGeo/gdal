@@ -286,9 +286,11 @@ class GDALTest(object):
                         )
                     ):
                         drivers += [drv_name]
-                other_ds = gdal.OpenEx(
-                    main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
-                )
+                other_ds = None
+                with gdal.ExceptionMgr(useExceptions=False):
+                    other_ds = gdal.OpenEx(
+                        main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
+                    )
                 other_ds_is_None = other_ds is None
                 other_ds_driver_name = None
                 if not other_ds_is_None:
@@ -1920,6 +1922,20 @@ def SetCacheMax(val):
         yield
     finally:
         gdal.SetCacheMax(oldval)
+
+
+###############################################################################
+# Temporarily disable exceptions for gdal, ogr and osr modules
+
+
+@contextlib.contextmanager
+def disable_exceptions():
+    from osgeo import ogr, osr
+
+    with gdal.ExceptionMgr(useExceptions=False), osr.ExceptionMgr(
+        useExceptions=False
+    ), ogr.ExceptionMgr(useExceptions=False):
+        yield
 
 
 ###############################################################################

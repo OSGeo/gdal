@@ -39,6 +39,7 @@ from osgeo import gdal
 
 
 @pytest.fixture
+@gdaltest.disable_exceptions()
 def mem_native_memory():
 
     gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -297,6 +298,7 @@ def test_mem_5():
 # Test out-of-memory situations
 
 
+@gdaltest.disable_exceptions()
 def test_mem_6():
 
     if gdal.GetConfigOption("SKIP_MEM_INTENSIVE_TEST") is not None:
@@ -516,6 +518,7 @@ def test_mem_9():
 # Test BuildOverviews()
 
 
+@gdaltest.disable_exceptions()
 def test_mem_10():
 
     # Error case: building overview on a 0 band dataset

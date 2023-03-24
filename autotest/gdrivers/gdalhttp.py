@@ -50,6 +50,13 @@ except ImportError:
 pytestmark = pytest.mark.require_driver("HTTP")
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.fixture(autouse=True)
 def set_http_timeout():
     with gdaltest.config_option("GDAL_HTTP_TIMEOUT", "5"):
@@ -193,7 +200,9 @@ def test_http_use_capi_store():
 
 def test_http_use_capi_store_sub():
 
-    with gdaltest.config_option("GDAL_HTTP_USE_CAPI_STORE", "YES"):
+    with gdaltest.disable_exceptions(), gdaltest.config_option(
+        "GDAL_HTTP_USE_CAPI_STORE", "YES"
+    ):
         gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
 
 

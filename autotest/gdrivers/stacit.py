@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -140,17 +139,13 @@ def test_stacit_multiple_assets():
         [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
     )
 
-    with gdaltest.error_handler():
-        ds = gdal.Open(
+    with pytest.raises(Exception):
+        gdal.Open(
             'STACIT:"data/stacit/test_multiple_assets.json":collection=i_dont_exist'
         )
-    assert ds is None
 
-    with gdaltest.error_handler():
-        ds = gdal.Open(
-            'STACIT:"data/stacit/test_multiple_assets.json":asset=i_dont_exist'
-        )
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":asset=i_dont_exist')
 
 
 @pytest.mark.require_geos

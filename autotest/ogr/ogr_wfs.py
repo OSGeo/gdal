@@ -46,6 +46,12 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("WFS")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 @pytest.fixture(autouse=True, scope="module")
 def ogr_wfs_init():

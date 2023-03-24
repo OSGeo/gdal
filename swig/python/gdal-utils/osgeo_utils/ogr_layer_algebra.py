@@ -412,9 +412,11 @@ def main(argv=sys.argv):
             )
 
     # Result layer
-    output_ds = ogr.Open(output_ds_name, update=1)
+    with ogr.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+        output_ds = ogr.Open(output_ds_name, update=1)
     if output_ds is None:
-        output_ds = ogr.Open(output_ds_name)
+        with ogr.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+            output_ds = ogr.Open(output_ds_name)
         if output_ds is not None:
             print(
                 'Output datasource "%s" exists, but cannot be opened in update mode'

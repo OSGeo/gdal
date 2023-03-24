@@ -44,6 +44,13 @@ pytestmark = [
 ]
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.fixture(autouse=True)
 def clear_config_options():
     gdal.SetConfigOption("OGR_GEOCODE_CACHE_FILE", None)
@@ -1419,6 +1426,7 @@ def with_webserver():
         ("BING", "http://127.0.0.1:%d/binggeocoding?q=%%s"),
     ],
 )
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
@@ -1552,6 +1560,7 @@ def test_ogr_sql_geocode(with_webserver, service, template):
         ("BING", "http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}"),
     ],
 )
+@pytest.mark.require_driver("CSV")
 def test_ogr_sql_reverse_geocode(with_webserver, service, template):
 
     gdal.SetConfigOption("OGR_GEOCODE_APPLICATION", "GDAL/OGR autotest suite")
@@ -2253,10 +2262,11 @@ def test_ogr_sql_sqlite_attribute_and_geom_field_name_same():
 
 
 def sqlite_has_function(function_name):
-    ds = ogr.Open(":memory:")
+    with gdaltest.disable_exceptions():
+        ds = ogr.Open(":memory:")
     if ds is None:
         return False
-    with gdaltest.error_handler():
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         sql_lyr = ds.ExecuteSQL(
             f"SELECT 1 FROM pragma_function_list WHERE name='{function_name}'"
         )
@@ -2268,10 +2278,11 @@ def sqlite_has_function(function_name):
 
 
 def sqlite_has_json_each():
-    ds = ogr.Open(":memory:")
+    with gdaltest.disable_exceptions():
+        ds = ogr.Open(":memory:")
     if ds is None:
         return False
-    with gdaltest.error_handler():
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         sql_lyr = ds.ExecuteSQL("""select * from json_each('{"foo":"bar"}')""")
     if sql_lyr is None:
         return False

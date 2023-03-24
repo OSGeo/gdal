@@ -465,16 +465,15 @@ def test_hfa_corrupt_aux():
     # NOTE: we depend on being able to open .aux files as a weak sort of
     # dataset.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/hfa/F0116231.aux")
-    gdal.PopErrorHandler()
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ds = gdal.Open("data/hfa/F0116231.aux")
 
-    assert ds.RasterXSize == 1104, "did not get expected dataset characteristics"
+        assert ds.RasterXSize == 1104, "did not get expected dataset characteristics"
 
-    assert (
-        gdal.GetLastErrorType() == 2
-        and gdal.GetLastErrorMsg().find("Corrupt (looping)") != -1
-    ), "Did not get expected warning."
+        assert (
+            gdal.GetLastErrorType() == 2
+            and gdal.GetLastErrorMsg().find("Corrupt (looping)") != -1
+        ), "Did not get expected warning."
 
     ds = None
 

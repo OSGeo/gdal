@@ -40,6 +40,13 @@ require_ogr_sql_sqlite
 # to make pyflakes happy
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # Test OGRGeomFieldDefn class
 
 

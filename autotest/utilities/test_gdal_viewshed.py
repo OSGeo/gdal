@@ -180,8 +180,11 @@ def test_gdal_viewshed_api():
         heightMode=gdal.GVOT_MIN_TARGET_HEIGHT_FROM_GROUND,
         options=["UNUSED=YES"],
     )
-    gdal.Unlink(viewshed_in)
-    assert ds.GetRasterBand(1).Checksum() == 8381
+    try:
+        assert ds.GetRasterBand(1).Checksum() == 8381
+    finally:
+        src_ds = None
+        gdal.Unlink(viewshed_in)
 
 
 ###############################################################################
@@ -277,7 +280,6 @@ def test_gdal_viewshed_invalid_observer_point(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " -ox 0 -oy 0 ../gdrivers/data/n43.tif tmp/tmp.tif"
     )
-    gdal.Unlink("tmp/tmp.tif")
     assert "The observer location falls outside of the DEM area" in err
 
 

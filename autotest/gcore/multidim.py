@@ -37,6 +37,13 @@ import pytest
 from osgeo import gdal, osr
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 def test_multidim_asarray_epsg_4326():
 
     ds = gdal.Open("../gdrivers/data/small_world.tif")

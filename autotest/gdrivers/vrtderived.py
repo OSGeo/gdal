@@ -38,6 +38,13 @@ import pytest
 from osgeo import gdal
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 def _xmlsearch(root, nodetype, name):
     for node in root[2:]:
         if node[0] == nodetype and node[1] == name:

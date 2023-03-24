@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 
 import pytest
@@ -487,7 +488,8 @@ def test_ogrmerge_gpkg(
         layerCreationOptions=lco,
     )
 
-    gdal.Unlink("tmp/out.gpkg")
+    if os.path.exists("tmp/out.gpkg"):
+        gdal.Unlink("tmp/out.gpkg")
     ogrmerge_opts = "-f GPKG -o tmp/out.gpkg tmp/in.gpkg -nln poly"
     if not dst_has_spatial_index:
         ogrmerge_opts += " -lco SPATIAL_INDEX=NO"
@@ -561,7 +563,8 @@ def test_ogrmerge_gpkg_non_spatial(script_path, has_progress):
     src_ds.GetLayer(0).SetMetadataItem("foo", "bar")
     src_ds = None
 
-    gdal.Unlink("tmp/out.gpkg")
+    if os.path.exists("tmp/out.gpkg"):
+        gdal.Unlink("tmp/out.gpkg")
     ogrmerge_opts = "-f GPKG -o tmp/out.gpkg tmp/in.gpkg -nln idlink"
     if has_progress:
         ogrmerge_opts += " -progress"
@@ -598,8 +601,10 @@ def test_ogrmerge_gpkg_non_spatial(script_path, has_progress):
 @pytest.mark.require_driver("GPKG")
 def test_ogrmerge_gpkg_curve_geom_in_generic_layer(script_path):
 
-    gdal.Unlink("tmp/out.gpkg")
-    gdal.Unlink("tmp/in.gpkg")
+    if os.path.exists("tmp/out.gpkg"):
+        gdal.Unlink("tmp/out.gpkg")
+    if os.path.exists("tmp/in.gpkg"):
+        gdal.Unlink("tmp/in.gpkg")
 
     src_ds = ogr.GetDriverByName("GPKG").CreateDataSource("tmp/in.gpkg")
     src_lyr = src_ds.CreateLayer("test")

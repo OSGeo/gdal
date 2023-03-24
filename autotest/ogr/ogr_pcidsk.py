@@ -45,6 +45,13 @@ wkts = [
 pytestmark = pytest.mark.require_driver("PCIDSK")
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # Test creation
 
 

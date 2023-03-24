@@ -39,6 +39,13 @@ import pytest
 from osgeo import gdal, osr
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 def test_mem_md_basic():
 
     drv = gdal.GetDriverByName("MEM")

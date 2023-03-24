@@ -42,6 +42,13 @@ import pytest
 from osgeo import gdal, osr
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 @pytest.fixture(params=["invert", "dont-invert"])
 def both_endian(request):
     """

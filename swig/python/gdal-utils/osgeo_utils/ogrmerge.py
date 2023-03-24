@@ -889,10 +889,14 @@ def ogrmerge(
         else:
             layer_name_template = "{AUTO_NAME}"
 
+    def get_vector_file_in_update_no_exception(filename):
+        with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+            return gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+
     if (
         not single_layer
         and EQUAL(driver_name, "GPKG")
-        and gdal.OpenEx(dst_filename, gdal.OF_VECTOR | gdal.OF_UPDATE) is None
+        and get_vector_file_in_update_no_exception(dst_filename) is None
         and EQUAL(gdal.GetConfigOption("OGR_MERGE_ENABLE_GPKG_OPTIM", "YES"), "YES")
     ):
 
@@ -938,7 +942,7 @@ def ogrmerge(
 
     vrt_filename = None
     if not EQUAL(driver_name, "VRT"):
-        dst_ds = gdal.OpenEx(dst_filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        dst_ds = get_vector_file_in_update_no_exception(dst_filename)
         if dst_ds is not None:
             if not update and not overwrite_ds:
                 print(

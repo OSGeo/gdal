@@ -37,6 +37,13 @@ from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("MRF")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 mrf_tests = (
     ("byte.tif", 4672, [4672], []),
     ("byte.tif", 4672, [4672], ["COMPRESS=ZSTD"]),

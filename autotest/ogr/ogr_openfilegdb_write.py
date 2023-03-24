@@ -40,6 +40,12 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("OpenFileGDB")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_driver():
@@ -4081,7 +4087,8 @@ def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
 def test_ogr_openfilegdb_write_delete():
 
     dirname = "tmp/test_ogr_openfilegdb_write_delete.gdb"
-    gdal.RmdirRecursive(dirname)
+    if gdal.VSIStatL(dirname) is not None:
+        gdal.RmdirRecursive(dirname)
     drv = ogr.GetDriverByName("OpenFileGDB")
     ds = drv.CreateDataSource(dirname)
     ds.CreateLayer("test", geom_type=ogr.wkbPoint)

@@ -812,10 +812,10 @@ def test_isis_22():
     ds = gdal.GetDriverByName("ISIS3").Create("/vsimem/isis_tmp.lbl", 1, 1)
     # Invalid Json
     js = """invalid"""
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert ds.SetMetadata([js], "json:ISIS3") != 0
     ds = None
-    gdal.GetDriverByName("ISIS3").Delete("/vsimem/isis_tmp.lbl")
+    gdal.Unlink("/vsimem/isis_tmp.lbl")
 
     ds = gdal.GetDriverByName("ISIS3").Create("/vsimem/isis_tmp.lbl", 1, 1)
     # Invalid type for IsisCube
@@ -952,6 +952,7 @@ def cancel_cbk(pct, msg, user_data):
 # Test error cases
 
 
+@gdaltest.disable_exceptions()
 def test_isis_24():
 
     # For DATA_LOCATION=EXTERNAL, the main filename should have a .lbl extension

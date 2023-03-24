@@ -32,6 +32,7 @@
 import struct
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
 
@@ -68,8 +69,8 @@ def test_gdalmdimtranslate_multidim_to_classic():
 
     tmpfile = "/vsimem/out.tif"
 
-    with gdaltest.error_handler():
-        assert not gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimTranslate(
         tmpfile, "data/mdim.vrt", arraySpecs=["/my_subgroup/array_in_subgroup"]
@@ -173,11 +174,10 @@ def test_gdalmdimtranslate_classic_to_multidim():
 def test_gdalmdimtranslate_array():
 
     tmpfile = "/vsimem/out.vrt"
-    with gdaltest.error_handler():
-        assert not gdal.MultiDimTranslate(
-            tmpfile, "data/mdim.vrt", arraySpecs=["not_existing"]
-        )
-        assert not gdal.MultiDimTranslate(
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", arraySpecs=["not_existing"])
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(
             tmpfile,
             "data/mdim.vrt",
             arraySpecs=["name=my_variable_with_time_increasing,unknown_opt=foo"],
@@ -330,11 +330,10 @@ def test_gdalmdimtranslate_array_with_transpose_and_view():
 def test_gdalmdimtranslate_group():
 
     tmpfile = "/vsimem/out.vrt"
-    with gdaltest.error_handler():
-        assert not gdal.MultiDimTranslate(
-            tmpfile, "data/mdim.vrt", groupSpecs=["not_existing"]
-        )
-        assert not gdal.MultiDimTranslate(
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", groupSpecs=["not_existing"])
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(
             tmpfile, "data/mdim.vrt", groupSpecs=["name=my_subgroup,unknown_opt=foo"]
         )
 
@@ -466,14 +465,12 @@ def test_gdalmdimtranslate_two_groups():
 def test_gdalmdimtranslate_subset():
 
     tmpfile = "/vsimem/out.vrt"
-    with gdaltest.error_handler():
-        assert not gdal.MultiDimTranslate(
-            tmpfile, "data/mdim.vrt", subsetSpecs=["latitude("]
-        )
-        assert not gdal.MultiDimTranslate(
-            tmpfile, "data/mdim.vrt", subsetSpecs=["latitude(1"]
-        )
-        assert not gdal.MultiDimTranslate(
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", subsetSpecs=["latitude("])
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", subsetSpecs=["latitude(1"])
+    with pytest.raises(Exception):
+        gdal.MultiDimTranslate(
             tmpfile, "data/mdim.vrt", subsetSpecs=["latitude(1,2,3)"]
         )
 
@@ -567,7 +564,7 @@ def test_gdalmdimtranslate_subset():
         ('time_decreasing("2013-01-01","2013-01-01")', True, "[0:1:1]"),
         ('time_decreasing("2013-01-01","2013-01-02")', True, "[0:1:1]"),
     ]:
-        with gdaltest.error_handler():
+        with gdaltest.disable_exceptions(), gdaltest.error_handler():
             res = (
                 gdal.MultiDimTranslate(
                     tmpfile,

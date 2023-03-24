@@ -132,14 +132,13 @@ def test_ntv2_6():
 
 def test_ntv2_7():
 
-    with gdaltest.error_handler():
-        ds = gdal.GetDriverByName("NTv2").Create(
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("NTv2").Create(
             "/does/not/exist.gsb", 1, 1, 4, gdal.GDT_Float32
         )
-    assert ds is None
 
-    with gdaltest.error_handler():
-        ds = gdal.GetDriverByName("NTv2").Create(
+    with pytest.raises(Exception):
+        gdal.GetDriverByName("NTv2").Create(
             "/does/not/exist.gsb",
             1,
             1,
@@ -147,7 +146,6 @@ def test_ntv2_7():
             gdal.GDT_Float32,
             options=["APPEND_SUBDATASET=YES"],
         )
-    assert ds is None
 
 
 ###############################################################################

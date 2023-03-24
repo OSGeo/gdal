@@ -68,7 +68,7 @@ def test_gdalmdiminfo_lib_non_multidim_dataset():
     with pytest.raises(TypeError):
         gdal.MultiDimInfo(ds)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(Exception):
         gdal.MultiDimInfo("../gcore/data/byte.tif")
 
 

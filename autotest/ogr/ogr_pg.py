@@ -41,6 +41,12 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PostgreSQL")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 # Return true if 'layer_name' is one of the reported layers of pg_ds
@@ -2390,6 +2396,8 @@ def test_ogr_pg_44():
     feat.Destroy()
 
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE "select" RENAME COLUMN "ogc_fid" to "AND"')
+    with gdaltest.error_handler():
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:from")
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
     layer = ds.GetLayerByName("select")

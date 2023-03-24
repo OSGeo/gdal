@@ -302,8 +302,8 @@ def test_usgsdem_with_header_of_918_bytes():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD83")
     srs.SetUTM(15)
-    with gdaltest.error_handler():
-        return tst.testOpen(
+    with pytest.raises(Exception):
+        tst.testOpen(
             check_prj=srs.ExportToWkt(),
             check_gt=(248500.0, 1.4, 0.0, 3252508.7, 0.0, -1.4),
         )

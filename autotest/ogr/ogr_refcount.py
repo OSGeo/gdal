@@ -28,8 +28,17 @@
 
 
 import gdaltest
+import pytest
 
 from osgeo import ogr
+
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 # Open two datasets in shared mode.

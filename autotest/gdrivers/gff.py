@@ -29,8 +29,7 @@
 ###############################################################################
 
 import gdaltest
-
-from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test an extract from a real dataset
@@ -51,7 +50,5 @@ def test_gff_1():
         -1,
         filename_absolute=1,
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = tst.testOpen()
-    gdal.PopErrorHandler()
-    return ret
+    with pytest.raises(Exception):
+        tst.testOpen()

@@ -33,7 +33,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import gdal, gdalconst, ogr, osr
+from osgeo import gdal, ogr, osr
 
 ###############################################################################
 # Simple test
@@ -285,14 +285,13 @@ def mycallback_with_failure(pct, msg, user_data):
 
 def test_ogr2ogr_lib_13():
 
-    with gdaltest.error_handler():
-        ds = gdal.VectorTranslate(
+    with pytest.raises(Exception):
+        gdal.VectorTranslate(
             "",
             "../ogr/data/poly.shp",
             format="Memory",
             callback=mycallback_with_failure,
         )
-    assert ds is None
 
 
 ###############################################################################
@@ -302,12 +301,10 @@ def test_ogr2ogr_lib_13():
 def test_ogr2ogr_lib_14():
 
     # Null dest name and no option
-    try:
+    with pytest.raises(Exception):
         gdal.wrapper_GDALVectorTranslateDestName(
             None, gdal.OpenEx("../ogr/data/poly.shp"), None
         )
-    except RuntimeError:
-        pass
 
 
 ###############################################################################
@@ -463,36 +460,26 @@ def test_ogr2ogr_lib_21():
     lyr.CreateFeature(f)
 
     ds = gdal.VectorTranslate("", src_ds, format="Memory")
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.VectorTranslate(ds, src_ds, accessMode="append", selectFields=["foo"])
 
     ds = None
     f.Destroy()
     src_ds = None
 
-    assert (
-        gdal.GetLastErrorNo() == gdalconst.CPLE_IllegalArg
-    ), "expected use of -select and -append together to be invalid"
-
 
 ###############################################################################
 
 
-@pytest.mark.require_driver("CSV")
 @pytest.mark.require_geos
 def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 
-    tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
-    ds = gdal.VectorTranslate(
-        tmpfilename, "../ogr/data/poly.shp", format="Memory", clipSrc=wkt
-    )
+    ds = gdal.VectorTranslate("", "../ogr/data/poly.shp", format="Memory", clipSrc=wkt)
     lyr = ds.GetLayer(0)
     fc = lyr.GetFeatureCount()
     assert fc == 1
     ds = None
-
-    gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
@@ -528,14 +515,15 @@ def test_ogr2ogr_axis_mapping_swap():
 </GMLFeatureClassList>""",
     )
 
-    ds = gdal.OpenEx(
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
-        open_options=["INVERT_AXIS_ORDER_IF_LAT_LONG=NO"],
-    )
+    with gdaltest.disable_exceptions():
+        ds = gdal.OpenEx(
+            "/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
+            open_options=["INVERT_AXIS_ORDER_IF_LAT_LONG=NO"],
+        )
     if ds is None:
         gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gml")
         gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs")
-        pytest.skip()
+        pytest.skip("GML reader not available")
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1, 2]
     ds = None
@@ -644,7 +632,7 @@ def test_ogr2ogr_lib_makevalid():
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler():
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
         make_valid_available = g.MakeValid() is not None
 
     tmpfilename = "/vsimem/tmp.csv"
@@ -659,12 +647,9 @@ def test_ogr2ogr_lib_makevalid():
         if make_valid_available:
             ds = gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
         else:
-            with gdaltest.error_handler():
-                with pytest.raises(Exception):
-                    gdal.VectorTranslate(
-                        "", tmpfilename, format="Memory", makeValid=True
-                    )
-                return
+            with pytest.raises(Exception):
+                gdal.VectorTranslate("", tmpfilename, format="Memory", makeValid=True)
+            return
 
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1188,12 +1173,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.skipif(not ogrtest.have_geos(), reason="GEOS missing")
-@pytest.mark.skipif(
-    ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))").MakeValid()
-    is None,
-    reason="GEOS < 3.8, no MakeValid",
-)
+@pytest.mark.require_geos(3, 8)
 def test_ogr2ogr_lib_clipsrc_invalid_polygon():
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1494,6 +1474,7 @@ def test_ogr2ogr_lib_simplify():
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("transaction_size", [0, 10, "unlimited"])
+@gdaltest.disable_exceptions()
 def test_ogr2ogr_lib_transaction_size(transaction_size):
 
     ds = gdal.VectorTranslate(

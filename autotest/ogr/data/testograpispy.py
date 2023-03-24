@@ -6,6 +6,8 @@ from osgeo import ogr
 from osgeo import osr
 os.access
 shutil.copy
+gdal.DontUseExceptions()
+ogr.DontUseExceptions()
 
 gdal.SetConfigOption('FOO', 'BAR')
 gdal.OpenEx('non_existing', gdal.OF_VECTOR)

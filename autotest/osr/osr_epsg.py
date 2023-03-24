@@ -34,7 +34,7 @@
 import gdaltest
 import pytest
 
-from osgeo import ogr, osr
+from osgeo import osr
 
 ###############################################################################
 # Verify that deprecated EPSG:26591 ends up picking non-deprecated EPSG:3003
@@ -504,7 +504,8 @@ def test_osr_epsg_auto_identify_epsg_projcrs_with_geogcrs_without_axis_roder():
         )
         == 0
     )
-    assert srs.AutoIdentifyEPSG() != ogr.OGRERR_NONE
+    with pytest.raises(Exception):
+        assert srs.AutoIdentifyEPSG()
     assert srs.CloneGeogCS().GetAuthorityCode(None) is None
 
 

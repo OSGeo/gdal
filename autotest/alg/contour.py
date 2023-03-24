@@ -393,30 +393,24 @@ cellsize     1
 
         with gdaltest.tempfile("/vsimem/test.asc", content):
             ds = gdal.Open("/vsimem/test.asc")
-            with gdaltest.error_handler():
-                assert (
-                    gdal.ContourGenerateEx(
-                        ds.GetRasterBand(1),
-                        ogr_lyr,
-                        options=["LEVEL_INTERVAL=1", "ID_FIELD=0"],
-                    )
-                    != 0
+            with pytest.raises(Exception):
+                gdal.ContourGenerateEx(
+                    ds.GetRasterBand(1),
+                    ogr_lyr,
+                    options=["LEVEL_INTERVAL=1", "ID_FIELD=0"],
                 )
 
         with gdaltest.tempfile("/vsimem/test.asc", content):
             ds = gdal.Open("/vsimem/test.asc")
-            with gdaltest.error_handler():
-                assert (
-                    gdal.ContourGenerateEx(
-                        ds.GetRasterBand(1),
-                        ogr_lyr,
-                        options=[
-                            "LEVEL_INTERVAL=1",
-                            "LEVEL_EXP_BASE=1.0001",
-                            "ID_FIELD=0",
-                        ],
-                    )
-                    != 0
+            with pytest.raises(Exception):
+                gdal.ContourGenerateEx(
+                    ds.GetRasterBand(1),
+                    ogr_lyr,
+                    options=[
+                        "LEVEL_INTERVAL=1",
+                        "LEVEL_EXP_BASE=1.0001",
+                        "ID_FIELD=0",
+                    ],
                 )
 
     ogr_ds = None
@@ -434,12 +428,9 @@ def test_contour_raster_acquisition_error():
     ogr_lyr.CreateField(field_defn)
     ds = gdal.Open("../gcore/data/byte_truncated.tif")
 
-    with gdaltest.error_handler():
-        assert (
-            gdal.ContourGenerateEx(
-                ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=1", "ID_FIELD=0"]
-            )
-            != 0
+    with pytest.raises(Exception):
+        gdal.ContourGenerateEx(
+            ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=1", "ID_FIELD=0"]
         )
 
 

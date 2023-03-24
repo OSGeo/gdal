@@ -167,6 +167,8 @@ void CPL_DLL CPL_STDCALL CPLQuietErrorHandler(CPLErr, CPLErrorNum,
                                               const char *);
 void CPLTurnFailureIntoWarning(int bOn);
 
+CPLErrorHandler CPL_DLL CPLGetErrorHandler(void **ppUserData);
+
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx(CPLErrorHandler,
                                                          void *);

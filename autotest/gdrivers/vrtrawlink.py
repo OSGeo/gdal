@@ -33,6 +33,7 @@
 import os
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
 
@@ -274,8 +275,8 @@ def test_vrtrawlink_7():
 def test_vrtrawlink_8():
 
     for _ in range(2):
-        with gdaltest.error_handler():
-            ds = gdal.Open(
+        with pytest.raises(Exception, match=r".*Image file is too small.*"):
+            gdal.Open(
                 """<VRTDataset rasterXSize="200000" rasterYSize="1">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
             <SourceFilename relativetoVRT="0">data/small.raw</SourceFilename>
@@ -286,7 +287,6 @@ def test_vrtrawlink_8():
         </VRTRasterBand>
         </VRTDataset>"""
             )
-        assert not (ds or gdal.GetLastErrorMsg().find("Image file is too small") < 0)
 
 
 ###############################################################################
@@ -295,15 +295,14 @@ def test_vrtrawlink_8():
 
 def test_vrtrawlink_9():
 
-    with gdaltest.error_handler():
-        ds = gdal.Open(
+    with pytest.raises(Exception, match=r".*Unable to open.*"):
+        gdal.Open(
             """<VRTDataset rasterXSize="1" rasterYSize="1">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
         <SourceFilename relativetoVRT="0">i/do/not/exist</SourceFilename>
     </VRTRasterBand>
     </VRTDataset>"""
         )
-    assert not (ds or gdal.GetLastErrorMsg().find("Unable to open") < 0)
 
 
 ###############################################################################
@@ -312,8 +311,8 @@ def test_vrtrawlink_9():
 
 def test_vrtrawlink_10():
 
-    with gdaltest.error_handler():
-        ds = gdal.Open(
+    with pytest.raises(Exception, match=r".*ByteOrder.*"):
+        gdal.Open(
             """<VRTDataset rasterXSize="1" rasterYSize="1">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
         <SourceFilename relativetoVRT="0">data/small.raw</SourceFilename>
@@ -321,7 +320,6 @@ def test_vrtrawlink_10():
     </VRTRasterBand>
     </VRTDataset>"""
         )
-    assert not (ds or gdal.GetLastErrorMsg().find("ByteOrder") < 0)
 
 
 ###############################################################################

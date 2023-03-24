@@ -39,6 +39,13 @@ numpy = pytest.importorskip("numpy")
 gdal_array = pytest.importorskip("osgeo.gdal_array")
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
 # verify that we can load the deprecated gdalnumeric module
 
 

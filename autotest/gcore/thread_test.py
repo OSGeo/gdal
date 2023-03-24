@@ -31,6 +31,7 @@
 
 import threading
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -50,9 +51,8 @@ def thread_test_1_worker(args_dict):
         else:
             ds.GetRasterBand(1).ReadAsArray()
     for i in range(1000):
-        gdal.PushErrorHandler(my_error_handler)
-        ds = gdal.Open("i_dont_exist")
-        gdal.PopErrorHandler()
+        with gdaltest.disable_exceptions(), gdaltest.error_handler():
+            gdal.Open("i_dont_exist")
 
 
 def test_thread_test_1():

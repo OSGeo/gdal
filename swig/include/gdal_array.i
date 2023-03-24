@@ -67,27 +67,6 @@ typedef int GDALRIOResampleAlg;
 %include "python_strings.i"
 
 %{
-#include "cpl_conv.h"
-%}
-
-%inline %{
-// Note: copied&pasted from python_exceptions.i
-static void _StoreLastException()
-{
-    const char* pszLastErrorMessage =
-        CPLGetThreadLocalConfigOption("__last_error_message", NULL);
-    const char* pszLastErrorCode =
-        CPLGetThreadLocalConfigOption("__last_error_code", NULL);
-    if( pszLastErrorMessage != NULL && pszLastErrorCode != NULL )
-    {
-        CPLErrorSetState( CE_Failure,
-            static_cast<CPLErrorNum>(atoi(pszLastErrorCode)),
-            pszLastErrorMessage);
-    }
-}
-%}
-
-%{
 #include <vector>
 #include "gdal_priv.h"
 #include "ogr_recordbatch.h"
@@ -2087,7 +2066,6 @@ def GDALTypeCodeToNumericTypeCode(gdal_code):
 
 def _RaiseException():
     if gdal.GetUseExceptions():
-        _StoreLastException()
         raise RuntimeError(gdal.GetLastErrorMsg())
 
 def LoadFile(filename, xoff=0, yoff=0, xsize=None, ysize=None,

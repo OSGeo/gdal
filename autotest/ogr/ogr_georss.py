@@ -516,25 +516,22 @@ def test_ogr_georss_12():
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><item><a></item></rss>'
     )
-    with gdaltest.error_handler():
-        ds = ogr.Open("tmp/broken.rss")
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("tmp/broken.rss")
 
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:box>49 2 49.5</georss:box></item></channel></rss>'
     )
     ds = ogr.Open("tmp/broken.rss")
-    with gdaltest.error_handler():
-        feat = ds.GetLayer(0).GetNextFeature()
-    assert feat.GetGeometryRef() is None
+    with pytest.raises(Exception):
+        ds.GetLayer(0).GetNextFeature()
 
     open("tmp/broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:where><gml:LineString><gml:posList>48 2 48.1 2.1 48</gml:posList></gml:LineString></georss:where></item></channel></rss>'
     )
     ds = ogr.Open("tmp/broken.rss")
-    with gdaltest.error_handler():
-        feat = ds.GetLayer(0).GetNextFeature()
-    assert feat.GetGeometryRef() is None
+    with pytest.raises(Exception):
+        ds.GetLayer(0).GetNextFeature()
 
 
 ###############################################################################

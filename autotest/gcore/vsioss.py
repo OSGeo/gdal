@@ -170,6 +170,7 @@ def get_oss_fake_bucket_resource_method(request):
 # Test with a fake OSS server
 
 
+@gdaltest.disable_exceptions()
 def test_visoss_2():
 
     if gdaltest.webserver_port == 0:
@@ -627,6 +628,7 @@ def test_visoss_3():
 # Test simple PUT support with a fake OSS server
 
 
+@gdaltest.disable_exceptions()
 def test_visoss_4():
 
     if gdaltest.webserver_port == 0:
@@ -755,6 +757,7 @@ def test_visoss_4():
 # Test simple DELETE support with a fake OSS server
 
 
+@gdaltest.disable_exceptions()
 def test_visoss_5():
 
     if gdaltest.webserver_port == 0:
@@ -808,6 +811,7 @@ def test_visoss_5():
 # Test multipart upload with a fake OSS server
 
 
+@gdaltest.disable_exceptions()
 def test_visoss_6():
 
     if gdaltest.webserver_port == 0:
@@ -1089,6 +1093,7 @@ def test_visoss_6():
 # Test Mkdir() / Rmdir()
 
 
+@gdaltest.disable_exceptions()
 def test_visoss_7():
 
     if gdaltest.webserver_port == 0:

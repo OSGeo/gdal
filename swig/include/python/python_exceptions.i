@@ -5,7 +5,9 @@
  */
 %{
 static int bUseExceptions=0;
-static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
+static int bUserHasSpecifiedIfUsingExceptions = FALSE;
+static thread_local int bUseExceptionsLocal = -1;
+static thread_local CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
 static void CPL_STDCALL
 PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
@@ -45,57 +47,72 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
     result = GetUseExceptions();
 }
 
+%exception _GetExceptionsLocal
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
+%exception _SetExceptionsLocal
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
+%exception _UserHasSpecifiedIfUsingExceptions
+{
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+    $action
+}
+
 %inline %{
 
 static
 int GetUseExceptions() {
-  return bUseExceptions;
+  return bUseExceptionsLocal >= 0 ? bUseExceptionsLocal : bUseExceptions;
+}
+
+static int _GetExceptionsLocal()
+{
+  return bUseExceptionsLocal;
+}
+
+static void _SetExceptionsLocal(int bVal)
+{
+  bUseExceptionsLocal = bVal;
 }
 
 static
-void UseExceptions() {
+void _UseExceptions() {
   CPLErrorReset();
+  bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
-    char* pszNewValue = CPLStrdup(CPLSPrintf("%s %s",
-                   MODULE_NAME,
-                   CPLGetConfigOption("__chain_python_error_handlers", "")));
-    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
-    CPLFree(pszNewValue);
-    // if the previous logger was custom, we need the user data available
-    pfnPreviousHandler =
-        CPLSetErrorHandlerEx( (CPLErrorHandler) PythonBindingErrorHandler, CPLGetErrorHandlerUserData() );
   }
 }
 
 static
-void DontUseExceptions() {
+void _DontUseExceptions() {
   CPLErrorReset();
+  bUserHasSpecifiedIfUsingExceptions = TRUE;
   if( bUseExceptions )
   {
-    const char* pszValue = CPLGetConfigOption("__chain_python_error_handlers", "");
-    if( strncmp(pszValue, MODULE_NAME, strlen(MODULE_NAME)) != 0 ||
-        pszValue[strlen(MODULE_NAME)] != ' ')
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Cannot call %s.DontUseExceptions() at that point since the "
-                 "stack of error handlers is: %s", MODULE_NAME, pszValue);
-        return;
-    }
-    char* pszNewValue = CPLStrdup(pszValue + strlen(MODULE_NAME) + 1);
-    if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
-    {
-        CPLFree(pszNewValue);
-        pszNewValue = NULL;
-    }
-    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
-    CPLFree(pszNewValue);
     bUseExceptions = 0;
-    // if the previous logger was custom, we need the user data available. Preserve it.
-    CPLSetErrorHandlerEx( pfnPreviousHandler, CPLGetErrorHandlerUserData());
   }
 }
+
+static int _UserHasSpecifiedIfUsingExceptions()
+{
+    return bUserHasSpecifiedIfUsingExceptions;
+}
+
 %}
 
 %{
@@ -124,7 +141,6 @@ static void ClearErrorState()
 
 static void StoreLastException() CPL_UNUSED;
 
-// Note: this is also copy&pasted in gdal_array.i
 static void StoreLastException()
 {
     const char* pszLastErrorMessage =
@@ -139,18 +155,41 @@ static void StoreLastException()
     }
 }
 
+static void pushErrorHandler()
+{
+    ClearErrorState();
+    void* pPreviousHandlerUserData = NULL;
+    CPLErrorHandler previousHandler = CPLGetErrorHandler(&pPreviousHandlerUserData);
+    if(previousHandler != PythonBindingErrorHandler)
+    {
+        // Store the previous handler only if it is not ourselves (which might
+        // happen in situations where a GDAL function will end up calling python
+        // again), to avoid infinite recursion.
+        pfnPreviousHandler = previousHandler;
+    }
+    CPLPushErrorHandlerEx(PythonBindingErrorHandler, pPreviousHandlerUserData);
+}
+
+static void popErrorHandler()
+{
+    CPLPopErrorHandler();
+}
+
 %}
 
 %include exception.i
 
 %exception {
-
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if ( bUseExceptions ) {
+    if ( bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -160,19 +199,23 @@ static void StoreLastException()
 }
 
 %feature("except") Open {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
@@ -181,19 +224,23 @@ static void StoreLastException()
 }
 
 %feature("except") OpenShared {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
@@ -202,19 +249,23 @@ static void StoreLastException()
 }
 
 %feature("except") OpenEx {
-    if ( bUseExceptions ) {
-        ClearErrorState();
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
     }
     $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
 %#ifndef SED_HACKS
-    if( result == NULL && bUseExceptions ) {
+    if( result == NULL && bLocalUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
       }
     }
 %#endif
-    if( result != NULL && bUseExceptions ) {
+    if( result != NULL && bLocalUseExceptions ) {
         StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
@@ -259,20 +310,68 @@ static void StoreLastException()
           set it to the state requested for the context
 
           """
-          self.currentUseExceptions = (GetUseExceptions() != 0)
-
-          if self.requestedUseExceptions:
-              UseExceptions()
-          else:
-              DontUseExceptions()
+          self.currentUseExceptions = _GetExceptionsLocal()
+          _SetExceptionsLocal(self.requestedUseExceptions)
 
       def __exit__(self, exc_type, exc_val, exc_tb):
           """
           On exit, restore the GDAL/OGR/OSR/GNM exception state which was
           current on entry to the context
           """
-          if self.currentUseExceptions:
-              UseExceptions()
-          else:
-              DontUseExceptions()
+          _SetExceptionsLocal(self.currentUseExceptions)
+%}
+
+
+%pythoncode %{
+
+def UseExceptions():
+    """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+        Note: prior to GDAL 3.7, this only affected the calling modue"""
+
+    try:
+        from . import gdal
+        gdal._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import ogr
+        ogr._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import osr
+        osr._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gnm
+        gnm._UseExceptions()
+    except ImportError:
+        pass
+
+def DontUseExceptions():
+    """ Disable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
+        Note: prior to GDAL 3.7, this only affected the calling modue"""
+
+    try:
+        from . import gdal
+        gdal._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import ogr
+        ogr._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import osr
+        osr._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gnm
+        gnm._DontUseExceptions()
+    except ImportError:
+        pass
+
 %}

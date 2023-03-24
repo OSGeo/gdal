@@ -161,10 +161,10 @@ def test_aigrid_broken():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open("tmp/broken_aigrid")
-    with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == -1
-    with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == -1
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).Checksum()
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).Checksum()
     ds = None
 
     shutil.rmtree("tmp/broken_aigrid")

@@ -1227,7 +1227,7 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1236,7 +1236,7 @@ GDALDatasetShadow* wrapper_GDALTranslate( const char* dest,
     if( bFreeOptions )
         GDALTranslateOptionsFree(translateOptions);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1291,7 +1291,7 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1300,7 +1300,7 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
     if( bFreeOptions )
         GDALWarpAppOptionsFree(warpAppOptions);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, bRet);
     }
@@ -1335,7 +1335,7 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1344,7 +1344,7 @@ GDALDatasetShadow* wrapper_GDALWarpDestName( const char* dest,
     if( bFreeOptions )
         GDALWarpAppOptionsFree(warpAppOptions);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1398,7 +1398,7 @@ int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1407,7 +1407,7 @@ int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
     if( bFreeOptions )
         GDALVectorTranslateOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, bRet);
     }
@@ -1441,7 +1441,7 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1450,7 +1450,7 @@ GDALDatasetShadow* wrapper_GDALVectorTranslateDestName( const char* dest,
     if( bFreeOptions )
         GDALVectorTranslateOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1508,7 +1508,7 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1517,7 +1517,7 @@ GDALDatasetShadow* wrapper_GDALDEMProcessing( const char* dest,
     if( bFreeOptions )
         GDALDEMProcessingOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1570,7 +1570,7 @@ int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1579,7 +1579,7 @@ int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
     if( bFreeOptions )
         GDALNearblackOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, bRet);
     }
@@ -1613,7 +1613,7 @@ GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1622,7 +1622,7 @@ GDALDatasetShadow* wrapper_GDALNearblackDestName( const char* dest,
     if( bFreeOptions )
         GDALNearblackOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1677,7 +1677,7 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1686,7 +1686,7 @@ GDALDatasetShadow* wrapper_GDALGrid( const char* dest,
     if( bFreeOptions )
         GDALGridOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1739,7 +1739,7 @@ int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1748,7 +1748,7 @@ int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
     if( bFreeOptions )
         GDALRasterizeOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, bRet);
     }
@@ -1782,7 +1782,7 @@ GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1791,7 +1791,7 @@ GDALDatasetShadow* wrapper_GDALRasterizeDestName( const char* dest,
     if( bFreeOptions )
         GDALRasterizeOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1847,7 +1847,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1856,7 +1856,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
     if( bFreeOptions )
         GDALBuildVRTOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1894,7 +1894,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1903,7 +1903,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_names( const char* dest,
     if( bFreeOptions )
         GDALBuildVRTOptionsFree(options);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }
@@ -1958,7 +1958,7 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
     }
 #ifdef SWIGPYTHON
     std::vector<ErrorStruct> aoErrors;
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PushStackingErrorHandler(&aoErrors);
     }
@@ -1967,7 +1967,7 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
     if( bFreeOptions )
         GDALMultiDimTranslateOptionsFree(multiDimTranslateOptions);
 #ifdef SWIGPYTHON
-    if( bUseExceptions )
+    if( GetUseExceptions() )
     {
         PopStackingErrorHandler(&aoErrors, hDSRet != NULL);
     }

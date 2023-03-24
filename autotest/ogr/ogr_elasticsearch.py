@@ -39,6 +39,12 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("Elasticsearch")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 # Cleanup

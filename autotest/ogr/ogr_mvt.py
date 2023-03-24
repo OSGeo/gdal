@@ -159,7 +159,7 @@ def test_ogr_mvt_limit_cases():
     f = lyr.GetFeature(1)
     assert f["mvt_id"] == 1
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         f = lyr.GetFeature(6)
         assert f["b"] == 1
 
@@ -632,8 +632,8 @@ def test_ogr_mvt_mbtiles_test_ogrsf():
 @pytest.mark.require_driver("MBTILES")
 def test_ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
-    ds = gdal.OpenEx("data/mvt/datatypes.mbtiles", gdal.OF_RASTER)
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.OpenEx("data/mvt/datatypes.mbtiles", gdal.OF_RASTER)
 
 
 ###############################################################################
@@ -679,15 +679,18 @@ def test_ogr_mvt_polygon_larger_than_header():
 
 def test_ogr_mvt_errors():
 
-    assert ogr.Open("MVT:/i_do_not/exist") is None
+    with pytest.raises(Exception):
+        assert ogr.Open("MVT:/i_do_not/exist") is None
 
     # Cannot detect Z in directory name
-    assert ogr.Open("MVT:data") is None
+    with pytest.raises(Exception):
+        assert ogr.Open("MVT:data") is None
 
     # Invalid Z
     gdal.Mkdir("/vsimem/33", 0)
 
-    assert ogr.Open("MVT:/vsimem/33") is None
+    with pytest.raises(Exception):
+        assert ogr.Open("MVT:/vsimem/33") is None
 
     gdal.Rmdir("/vsimem/33")
 
@@ -744,9 +747,9 @@ def test_ogr_mvt_errors():
     gdal.VSIFSeekL(f, 20 * 1024 * 1024, 0)
     gdal.VSIFWriteL(" ", 1, 1, f)
     gdal.VSIFCloseL(f)
-    ds = ogr.Open(tmpfilename)
+    with pytest.raises(Exception):
+        ogr.Open(tmpfilename)
     gdal.Unlink(tmpfilename)
-    assert ds is None
 
 
 ###############################################################################
@@ -808,11 +811,8 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring.json", 404, {})
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ds = ogr.Open(
-                "MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port
-            )
-        assert ds is None
+        with pytest.raises(Exception):
+            ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
 
     # No metadata file, but tiles
     handler = webserver.SequentialHandler()
@@ -852,8 +852,8 @@ def test_ogr_mvt_http():
     with webserver.install_http_handler(handler):
         ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
         lyr = ds.GetLayer(0)
-        f = lyr.GetNextFeature()
-        assert f is None
+        with pytest.raises(Exception):
+            lyr.GetNextFeature()
 
     # No metadata.json file, but a linestring.json and no tiles
     handler = webserver.SequentialHandler()
@@ -870,8 +870,8 @@ def test_ogr_mvt_http():
     with webserver.install_http_handler(handler):
         ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
         lyr = ds.GetLayer(0)
-        f = lyr.GetNextFeature()
-        assert f is None
+        with pytest.raises(Exception):
+            lyr.GetNextFeature()
 
     # Open pbf file
     handler = webserver.SequentialHandler()
@@ -928,14 +928,12 @@ def test_ogr_mvt_write_one_layer():
     assert out_ds is not None
 
     # Cannot create directory
-    with gdaltest.error_handler():
-        out_ds = gdal.VectorTranslate("/i_dont/exist/outmvt", src_ds, format="MVT")
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.VectorTranslate("/i_dont/exist/outmvt", src_ds, format="MVT")
 
     # Directory already exists
-    with gdaltest.error_handler():
-        out_ds = gdal.VectorTranslate("/vsimem/outmvt", src_ds, format="MVT")
-    assert out_ds is None
+    with pytest.raises(Exception):
+        gdal.VectorTranslate("/vsimem/outmvt", src_ds, format="MVT")
 
     gdal.RmdirRecursive("/vsimem/outmvt")
 
@@ -1746,10 +1744,12 @@ def test_ogr_mvt_write_custom_tiling_scheme():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
+@gdaltest.disable_exceptions()
 def test_ogr_mvt_write_errors():
 
     # Raster creation attempt
-    gdal.RmdirRecursive("/vsimem/foo")
+    if gdal.VSIStatL("/vsimem/foo") is not None:
+        gdal.RmdirRecursive("/vsimem/foo")
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName("MVT").Create("/vsimem/foo", 1, 1)
     assert ds is None

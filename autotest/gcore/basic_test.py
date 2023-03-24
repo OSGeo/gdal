@@ -38,6 +38,14 @@ import pytest
 
 from osgeo import gdal
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
 
@@ -66,13 +74,13 @@ def test_basic_test_strace_non_existing_file():
 
     python_exe = sys.executable
     cmd = 'strace -f %s -c "from osgeo import gdal; ' % python_exe + (
-        "gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
+        "gdal.DontUseExceptions(); gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except Exception:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
         # strace not available
-        pytest.skip()
+        pytest.skip(str(e))
 
     interesting_lines = []
     for line in err.split("\n"):
@@ -321,16 +329,10 @@ def test_basic_test_11():
     gdal.PopErrorHandler()
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
-    old_use_exceptions_status = gdal.GetUseExceptions()
-    gdal.UseExceptions()
-    got_exception = False
-    try:
-        ds = gdal.OpenEx("non existing")
-    except RuntimeError:
-        got_exception = True
-    if old_use_exceptions_status == 0:
-        gdal.DontUseExceptions()
-    assert got_exception
+    with gdal.ExceptionMgr(useExceptions=True):
+        assert gdal.GetUseExceptions()
+        with pytest.raises(Exception):
+            gdal.OpenEx("non existing")
 
 
 ###############################################################################
@@ -538,55 +540,6 @@ def test_basic_test_16():
     assert "Invalid value for NUM_THREADS: INVALID" in gdal.GetLastErrorMsg()
 
 
-###############################################################################
-# Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
-
-
-def test_basic_test_17():
-
-    from osgeo import ogr
-
-    for _ in range(2):
-        ogr.UseExceptions()
-        gdal.UseExceptions()
-        flag = False
-        try:
-            gdal.Open("do_not_exist")
-            flag = True
-        except RuntimeError:
-            pass
-        assert not flag, "expected failure"
-        gdal.DontUseExceptions()
-        ogr.DontUseExceptions()
-        assert not gdal.GetUseExceptions()
-        assert not ogr.GetUseExceptions()
-
-
-def test_basic_test_17_part_2():
-
-    # For some odd reason, this fails on the Travis CI targets after unrelated
-    # changes (https://travis-ci.com/github/OSGeo/gdal/jobs/501940381)
-    if gdaltest.skip_on_travis():
-        pytest.skip()
-
-    from osgeo import ogr
-
-    for _ in range(2):
-        ogr.UseExceptions()
-        gdal.UseExceptions()
-        flag = False
-        try:
-            ogr.DontUseExceptions()
-            gdal.DontUseExceptions()
-            flag = True
-        except Exception:
-            gdal.DontUseExceptions()
-            ogr.DontUseExceptions()
-        assert not flag, "expected failure"
-        assert not gdal.GetUseExceptions()
-        assert not ogr.GetUseExceptions()
-
-
 def test_gdal_getspatialref():
 
     ds = gdal.Open("data/byte.tif")
@@ -759,3 +712,53 @@ def test_exceptionmanager():
 
     # Check we are back to original state
     assert gdal.GetUseExceptions() == currentExceptionsFlag
+
+
+def test_quiet_errors():
+    with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+        gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
+
+
+def test_basic_test_UseExceptions():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal;' % python_exe + (
+        "gdal.UseExceptions();" "gdal.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "RuntimeError: " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err
+
+
+def test_basic_test_UseExceptions_ogr_open():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal, ogr;' % python_exe + (
+        "gdal.UseExceptions();" "ogr.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "RuntimeError: " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err
+
+
+def test_basic_test_DontUseExceptions():
+
+    python_exe = sys.executable
+    cmd = '%s -c "from osgeo import gdal;' % python_exe + (
+        "gdal.DontUseExceptions();" "gdal.Open('non_existing.tif');" ' " '
+    )
+    try:
+        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+    except Exception as e:
+        pytest.skip("got exception %s" % str(e))
+    assert "ERROR " in err
+    assert "FutureWarning: Neither gdal.UseExceptions()" not in err
+    assert "FutureWarning: Neither ogr.UseExceptions()" not in err

@@ -220,7 +220,8 @@ def test_ogr_xlsx_6():
 
 def test_ogr_xlsx_7():
 
-    gdal.Unlink("tmp/ogr_xlsx_7.xlsx")
+    if os.path.exists("tmp/ogr_xlsx_7.xlsx"):
+        gdal.Unlink("tmp/ogr_xlsx_7.xlsx")
     shutil.copy("data/xlsx/test.xlsx", "tmp/ogr_xlsx_7.xlsx")
 
     ds = gdal.OpenEx("tmp/ogr_xlsx_7.xlsx", gdal.OF_VECTOR | gdal.OF_UPDATE)

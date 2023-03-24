@@ -49,7 +49,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
         assert ar
         transpose = ar.Transpose([1, 0])
         assert transpose.Cache()
-        with gdaltest.error_handler():
+        with gdaltest.disable_exceptions():
             # Cannot cache twice the same array
             assert transpose.Cache() is False
 
@@ -59,7 +59,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
         return transpose.Read()
 
-    transposed_data = get_transposed_and_cache()
+    with gdaltest.disable_exceptions():
+        transposed_data = get_transposed_and_cache()
 
     def check_cache_exists():
         cache_ds = gdal.OpenEx(
@@ -108,8 +109,9 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
     check_cache_really_working()
 
-    gdal.Unlink(tmpfilename)
-    gdal.Unlink("tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac")
+    with gdaltest.disable_exceptions():
+        gdal.Unlink(tmpfilename)
+        gdal.Unlink("tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac")
 
     print("success")
     sys.exit(0)

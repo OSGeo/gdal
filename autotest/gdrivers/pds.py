@@ -323,7 +323,7 @@ END
 """,
     )
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.Open("/vsimem/pds_10")
 
     gdal.FileFromMemBuffer(
@@ -335,7 +335,7 @@ END
 """,
     )
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.Open("/vsimem/pds_10")
 
     gdal.Unlink("/vsimem/pds_10")

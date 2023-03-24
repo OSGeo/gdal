@@ -34,6 +34,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("KEA")
+
 ###############################################################################
 
 
@@ -117,6 +119,7 @@ def test_kea_3(src_file):
 # Test Create()/CreateCopy() error cases or limit cases
 
 
+@gdaltest.disable_exceptions()
 def test_kea_4():
     if gdaltest.kea_driver is None:
         pytest.skip()
@@ -570,17 +573,26 @@ def test_kea_12():
     rat.GetTypeOfCol(rat.GetColumnCount())
     rat.GetUsageOfCol(rat.GetColumnCount())
 
-    rat.GetValueAsDouble(-1, 0)
-    rat.GetValueAsInt(-1, 0)
-    rat.GetValueAsString(-1, 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsDouble(-1, 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsInt(-1, 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsString(-1, 0)
 
-    rat.GetValueAsDouble(rat.GetColumnCount(), 0)
-    rat.GetValueAsInt(rat.GetColumnCount(), 0)
-    rat.GetValueAsString(rat.GetColumnCount(), 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsDouble(rat.GetColumnCount(), 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsInt(rat.GetColumnCount(), 0)
+    with pytest.raises(Exception):
+        rat.GetValueAsString(rat.GetColumnCount(), 0)
 
-    rat.GetValueAsDouble(0, -1)
-    rat.GetValueAsInt(0, -1)
-    rat.GetValueAsString(0, -1)
+    with pytest.raises(Exception):
+        rat.GetValueAsDouble(0, -1)
+    with pytest.raises(Exception):
+        rat.GetValueAsInt(0, -1)
+    with pytest.raises(Exception):
+        rat.GetValueAsString(0, -1)
 
     rat.GetValueAsDouble(0, rat.GetRowCount())
     rat.GetValueAsInt(0, rat.GetRowCount())

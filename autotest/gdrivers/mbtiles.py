@@ -122,6 +122,7 @@ def test_mbtiles_2():
     sys.platform == "darwin" and gdal.GetConfigOption("TRAVIS", None) is not None,
     reason="Hangs on MacOSX Travis sometimes. Not sure why.",
 )
+@gdaltest.disable_exceptions()
 def test_mbtiles_3():
 
     # Check that we have SQLite VFS support
@@ -555,13 +556,14 @@ def test_mbtiles_11():
 
 def test_mbtiles_raster_open_in_vector_mode():
 
-    ds = ogr.Open("data/mbtiles/byte.mbtiles")
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("data/mbtiles/byte.mbtiles")
 
 
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def test_mbtiles_create():
 
     filename = "/vsimem/mbtiles_create.mbtiles"

@@ -29,8 +29,7 @@
 ###############################################################################
 
 import gdaltest
-
-from osgeo import gdal
+import pytest
 
 ###############################################################################
 # Test a fake DOQ1 dataset
@@ -39,7 +38,5 @@ from osgeo import gdal
 def test_doq1_1():
 
     tst = gdaltest.GDALTest("DOQ1", "doq1/fakedoq1.doq", 1, -1)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = tst.testOpen()
-    gdal.PopErrorHandler()
-    return ret
+    with pytest.raises(Exception):
+        tst.testOpen()

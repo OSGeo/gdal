@@ -374,11 +374,11 @@ def test_gdal_translate_lib_14():
 def test_gdal_translate_lib_100():
 
     # No option
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.TranslateInternal("", gdal.Open("../gcore/data/byte.tif"), None)
 
     # Will create an implicit options structure
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.TranslateInternal(
             "", gdal.Open("../gcore/data/byte.tif"), None, gdal.TermProgress_nocb
         )
@@ -1033,9 +1033,9 @@ def test_gdal_translate_lib_overview_level():
 def test_gdal_translate_lib_no_input_band():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.Translate("", src_ds, format="MEM")
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
 
 

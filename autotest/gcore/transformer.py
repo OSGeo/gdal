@@ -687,9 +687,9 @@ def test_transformer_12():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
-    assert gdal.GetLastErrorMsg() != ""
+        assert gdal.GetLastErrorMsg() != ""
 
     ds = gdal.Open(
         """
@@ -711,9 +711,9 @@ def test_transformer_12():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
-    assert gdal.GetLastErrorMsg() != ""
+        assert gdal.GetLastErrorMsg() != ""
 
 
 ###############################################################################
@@ -911,7 +911,6 @@ def test_transformer_15():
 
     gdal.Unlink("/vsimem/demE179.tif")
     gdal.Unlink("/vsimem/demW180.tif")
-    gdal.Unlink("/vsimem/transformer_15_dem.tif")
     gdal.Unlink("/vsimem/transformer_15_dem.vrt")
 
 
@@ -956,11 +955,10 @@ def test_transformer_16():
 def test_transformer_17():
 
     ds = gdal.Open("data/rpc.vrt")
-    with gdaltest.error_handler():
-        tr = gdal.Transformer(
+    with pytest.raises(Exception):
+        gdal.Transformer(
             ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/i/donot/exist/dem.tif"]
         )
-    assert tr is None
 
 
 def test_transformer_longlat_wrap_outside_180():

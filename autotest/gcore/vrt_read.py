@@ -42,6 +42,14 @@ import test_cli_utilities
 
 from osgeo import gdal
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 # When imported build a list of units based on the files available.
 

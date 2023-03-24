@@ -213,10 +213,8 @@ def test_ecrgtoc_3():
         "ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml",
     ]:
 
-        gdal.PushErrorHandler()
-        ds = gdal.Open(name)
-        gdal.PopErrorHandler()
-        assert ds is None, name
+        with pytest.raises(Exception):
+            gdal.Open(name)
 
     # Legacy syntax
     ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml")
@@ -334,10 +332,8 @@ def test_ecrgtoc_4():
     assert ds is not None, "did not get subdataset"
     ds = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml")
-    gdal.PopErrorHandler()
-    assert ds is None, "should not have got subdataset"
+    with pytest.raises(Exception):
+        gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml")
 
     gdal.Unlink("/vsimem/TOC.xml")
 

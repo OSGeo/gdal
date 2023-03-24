@@ -368,8 +368,5 @@ def test_ogr_cad_8():
 
 def test_ogr_cad_9():
 
-    with gdaltest.error_handler():
-        ds = gdal.OpenEx("data/cad/AC1018_signature.dwg", allowed_drivers=["CAD"])
-    assert ds is None
-    msg = gdal.GetLastErrorMsg()
-    assert "does not support this version" in msg
+    with pytest.raises(Exception, match=r".*does not support this version.*"):
+        gdal.OpenEx("data/cad/AC1018_signature.dwg", allowed_drivers=["CAD"])

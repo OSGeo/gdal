@@ -444,12 +444,11 @@ def test_gdalbuildvrt_lib_bandList():
 
     # If no explicit band list, we require all sources to have the same
     # number of bands
-    with gdaltest.error_handler():
-        gdal.ErrorReset()
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         assert gdal.BuildVRT("", [src_ds, src2_ds]) is not None
         assert gdal.GetLastErrorType() != 0
 
-    with gdaltest.error_handler():
+    with gdaltest.disable_exceptions(), gdaltest.error_handler():
         gdal.ErrorReset()
         assert gdal.BuildVRT("", [src2_ds, src_ds]) is not None
         assert gdal.GetLastErrorType() != 0
@@ -635,5 +634,7 @@ def test_gdalbuildvrt_lib_addAlpha(num_bands_1, num_bands_2, drv_name):
             b"\xff" if num_bands_1 == 3 else b"\x04"
         ) + (b"\xff" if num_bands_2 == 3 else b"\x04")
     finally:
-        gdal.Unlink(fname1)
-        gdal.Unlink(fname2)
+        if gdal.VSIStatL(fname1) is not None:
+            gdal.Unlink(fname1)
+        if gdal.VSIStatL(fname2) is not None:
+            gdal.Unlink(fname2)

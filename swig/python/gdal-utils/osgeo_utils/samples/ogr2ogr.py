@@ -593,11 +593,13 @@ def main(args=None, progress_func=TermProgress, progress_data=None):
     poDriver = None
 
     if bUpdate:
-        poODS = ogr.Open(pszDestDataSource, True)
+        with ogr.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+            poODS = ogr.Open(pszDestDataSource, True)
         if poODS is None:
 
             if bOverwrite or bAppend:
-                poODS = ogr.Open(pszDestDataSource, False)
+                with ogr.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+                    poODS = ogr.Open(pszDestDataSource, False)
                 if poODS is None:
                     # the datasource doesn't exist at all
                     bUpdate = False

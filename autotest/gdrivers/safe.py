@@ -120,5 +120,5 @@ def test_safe_WV():
     assert len(ds.GetSubDatasets()) == 0
     assert len(ds.GetGCPs()) == 2
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert gdal.Open(subds[0][0] + "xxxx") is None

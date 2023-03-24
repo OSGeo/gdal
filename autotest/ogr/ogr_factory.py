@@ -31,6 +31,7 @@
 ###############################################################################
 
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -199,6 +200,7 @@ def test_ogr_factory_5():
 # Test robustness of forceToXXX() primitives with various inputs (#3504)
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_factory_6():
 
     src_wkt_list = [

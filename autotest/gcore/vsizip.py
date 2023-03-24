@@ -40,6 +40,7 @@ from osgeo import gdal
 # Test writing a ZIP with multiple files and directories
 
 
+@gdaltest.disable_exceptions()
 def test_vsizip_1():
 
     # We can keep the handle open during all the ZIP writing
@@ -173,6 +174,7 @@ def test_vsizip_1():
 # Test writing 2 files in the ZIP by closing it completely between the 2
 
 
+@gdaltest.disable_exceptions()
 def test_vsizip_2():
 
     zip_name = "/vsimem/test2.zip"
@@ -300,6 +302,7 @@ def test_vsizip_5():
 # Test writing 2 files with same name in a ZIP (#4785)
 
 
+@gdaltest.disable_exceptions()
 def test_vsizip_6():
 
     # Maintain ZIP file opened
@@ -605,6 +608,7 @@ def test_vsizip_multi_thread():
 # Test multithreaded compression, with I/O error
 
 
+@gdaltest.disable_exceptions()
 def test_vsizip_multi_thread_error():
 
     with gdaltest.error_handler():
@@ -760,6 +764,7 @@ def test_vsizip_deflate64():
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def test_vsizip_byte_copyfile_regular():
 
     zipfilename = "/vsimem/test_vsizip_byte_copyfile_regular.zip"

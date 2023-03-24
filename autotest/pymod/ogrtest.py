@@ -78,6 +78,7 @@ def check_features_against_list(layer, field_name, value_list):
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def check_feature_geometry(feat, geom, max_error=0.0001):
     """Returns 0 in case of success"""
     try:
@@ -338,14 +339,7 @@ def quick_create_feature(layer, field_values, wkt_geometry):
 
 
 def have_geos():
-    global geos_flag
-
-    if geos_flag is None:
-        pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20)")
-        pnt2 = ogr.CreateGeometryFromWkt("POINT(30 20)")
-        geos_flag = pnt1.Union(pnt2) is not None
-
-    return geos_flag
+    return ogr.GetGEOSVersionMajor() > 0
 
 
 ###############################################################################
@@ -355,8 +349,9 @@ def have_sfcgal():
     global sfcgal_flag
 
     if sfcgal_flag is None:
-        pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20 30)")
-        pnt2 = ogr.CreateGeometryFromWkt("POINT(40 50 60)")
-        sfcgal_flag = pnt1.Distance3D(pnt2) >= 0
+        with gdaltest.disable_exceptions():
+            pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20 30)")
+            pnt2 = ogr.CreateGeometryFromWkt("POINT(40 50 60)")
+            sfcgal_flag = pnt1.Distance3D(pnt2) >= 0
 
     return sfcgal_flag

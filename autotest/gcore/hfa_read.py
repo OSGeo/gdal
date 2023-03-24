@@ -64,5 +64,5 @@ def test_hfa_open(filename, checksum):
 
 def test_hfa_read_completedefn_recursion():
 
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         gdal.Open("data/hfa_completedefn_recursion.img")

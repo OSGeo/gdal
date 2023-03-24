@@ -398,6 +398,7 @@ def test_ogr_geos_convexhull():
 ###############################################################################
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geos_concavehull():
 
     g1 = ogr.CreateGeometryFromWkt("MULTIPOINT(0 0,0.4 0.5,0 1,1 1,0.6 0.5,1 0)")

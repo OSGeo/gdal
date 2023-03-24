@@ -33,12 +33,20 @@ import os
 import shutil
 from difflib import unified_diff
 
+import gdaltest
 import pytest
 import test_py_scripts
 
 from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("CSV")
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 ###############################################################################
 # Basic test without snapshoting
@@ -54,6 +62,8 @@ def test_ograpispy_1():
         pytest.skip("OGR API spy not enabled")
 
     ref_data = open("data/testograpispy.py", "rt").read()
+    ref_data = ref_data.replace("gdal.DontUseExceptions()\n", "")
+    ref_data = ref_data.replace("ogr.DontUseExceptions()\n", "")
     got_data = open("tmp/ograpispy_1.py", "rt").read()
 
     if ref_data != got_data:

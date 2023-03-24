@@ -47,6 +47,13 @@ pytestmark = pytest.mark.require_driver("GPKG")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
     gdaltest.gpkg_dr = ogr.GetDriverByName("GPKG")
@@ -80,7 +87,8 @@ def startup_and_cleanup():
 
 
 def get_sqlite_version():
-    ds = ogr.Open(":memory:")
+    with gdaltest.disable_exceptions():
+        ds = ogr.Open(":memory:")
     if ds is None:
         return (0, 0, 0)
     sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")

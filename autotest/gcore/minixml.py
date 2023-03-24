@@ -31,6 +31,7 @@
 
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
 
@@ -198,17 +199,8 @@ def test_minixml_6():
     )
 
     for xml_str, expect in test_pairs:
-        with gdaltest.error_handler():
-            tree = gdal.ParseXMLString(xml_str)
-
-        found = gdal.GetLastErrorMsg()
-        assert expect in found, (
-            'Did not find expected error message: "%s"  '
-            'Found: "%s"  '
-            'For test string: "%s""' % (expect, found, xml_str)
-        )
-
-        assert tree is None, 'Tree is not None: "%s"' % tree
+        with pytest.raises(Exception):
+            gdal.ParseXMLString(xml_str)
 
 
 ###############################################################################
@@ -244,10 +236,8 @@ def test_minixml_8():
     xml_str += "</a>" * 10001
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        tree = gdal.ParseXMLString(xml_str)
-    assert tree is None, "expected None tree"
-    assert gdal.GetLastErrorMsg() != "", "expected error message"
+    with pytest.raises(Exception):
+        gdal.ParseXMLString(xml_str)
 
 
 ###############################################################################

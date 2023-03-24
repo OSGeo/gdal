@@ -25,7 +25,7 @@
 %typemap(out) VSI_RETVAL
 {
   /* %typemap(out) VSI_RETVAL */
-  if ( result != 0 && bUseExceptions) {
+  if ( result != 0 && GetUseExceptions()) {
     const char* pszMessage = CPLGetLastErrorMsg();
     if( pszMessage[0] != '\0' )
         PyErr_SetString( PyExc_RuntimeError, pszMessage );
@@ -218,7 +218,7 @@ TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(6)
 %typemap(out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
-  if ( result != 0 && bUseExceptions) {
+  if ( result != 0 && GetUseExceptions()) {
     const char* pszMessage = CPLGetLastErrorMsg();
     if( pszMessage[0] != '\0' )
         PyErr_SetString( PyExc_RuntimeError, pszMessage );

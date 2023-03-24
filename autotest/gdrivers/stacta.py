@@ -169,8 +169,8 @@ def test_stacta_missing_metatile():
     )
 
     ds = gdal.Open("/vsimem/stacta/test.json")
-    with gdaltest.error_handler():
-        assert ds.ReadRaster() is None
+    with pytest.raises(Exception):
+        ds.ReadRaster()
 
     # Missing right tile
     with gdaltest.config_option("GDAL_STACTA_SKIP_MISSING_METATILE", "YES"):
@@ -200,5 +200,5 @@ def test_stacta_missing_metatile():
             assert got_data[i * 2048 * 1024 + 2048 * 1000 + 1500] != 0
 
     gdal.Unlink("/vsimem/stacta/test.json")
-    gdal.Unlink("/vsimem/stacta/WorldCRS84Quad/1/0/0.tif")
+    assert gdal.VSIStatL("/vsimem/stacta/WorldCRS84Quad/1/0/0.tif") is None
     gdal.Unlink("/vsimem/stacta/WorldCRS84Quad/2/0/1.tif")

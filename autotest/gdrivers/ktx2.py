@@ -35,6 +35,12 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("KTX2")
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 def test_ktx2_read_etc1s():
     ds = gdal.Open("data/ktx2/byte_etc1s.ktx2")

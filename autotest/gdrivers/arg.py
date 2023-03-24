@@ -140,16 +140,10 @@ def test_arg_unsupported():
     if gdaltest.argDriver is None:
         pytest.skip()
 
-    # int8 is unsupported
     for d in gdaltest.argTests:
         for (name, _, _) in d["formats"]:
-            if name == "int64" or name == "uint64":
-                with gdaltest.error_handler("CPLQuietErrorHandler"):
-                    ds = gdal.Open("data/arg-" + name + ".arg")
-                assert ds is None
-            else:
-                ds = gdal.Open("data/arg-" + name + ".arg")
-                assert ds is not None
+            ds = gdal.Open("data/arg-" + name + ".arg")
+            assert ds is not None
 
 
 def test_arg_getrastercount():

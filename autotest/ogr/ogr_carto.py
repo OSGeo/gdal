@@ -54,10 +54,8 @@ def test_ogr_carto_vsimem():
         """{"rows":[{"postgis_version":"2.1 USE_GEOS=1 USE_PROJ=1 USE_STATS=1"}],"time":0.001,"fields":{"postgis_version":{"type":"string"}},"total_rows":1}""",
     )
 
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
@@ -65,124 +63,111 @@ def test_ogr_carto_vsimem():
 
 Error""",
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert ds is None and gdal.GetLastErrorMsg().find("HTML error page") >= 0
+    with pytest.raises(Exception, match=r".*HTML error page.*"):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0", """"""
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0", """{"""
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert ds is None and gdal.GetLastErrorMsg().find("JSON parsing error") >= 0
+    with pytest.raises(Exception, match=r".*JSON parsing error.*"):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """ "not_expected_json" """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "error" : [ "bla"] }""",
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert (
-        ds is None
-        and gdal.GetLastErrorMsg().find("Error returned by server : bla") >= 0
-    )
+    with pytest.raises(Exception, match=".*Error returned by server : bla.*"):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : null } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : "invalid" } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : {} } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : { "foo": "invalid" } } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : { "foo": {} } } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : { "foo": { "type" : null } } } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : { "foo": { "type" : {} } } } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{ "fields" : { "foo": { "type" : "string" } } } """,
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{"rows":[ {"field1": "foo", "field2": "bar"} ],"fields":{"field1":{"type":"string"}, "field2":{"type":"string"}}}""",
     )
-    ds = ogr.Open("CARTO:foo")
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{"rows":[],"fields":{"current_schema":{"type":"string"}}}""",
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT current_schema() LIMIT 500 OFFSET 0",
         """{"rows":[{"current_schema":"public"}],"fields":{"current_schema":{"type":"unknown(19)"}}}""",
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CARTO:foo")
-    gdal.PopErrorHandler()
-    assert ds is None, gdal.GetLastErrorMsg()
+    with pytest.raises(Exception):
+        ogr.Open("CARTO:foo")
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT CDB_UserTables() LIMIT 500 OFFSET 0",
@@ -191,11 +176,8 @@ Error""",
     ds = ogr.Open("CARTO:foo")
     assert ds is not None and ds.GetLayerCount() == 1, gdal.GetLastErrorMsg()
 
-    gdal.PushErrorHandler()
-    lyr_defn = ds.GetLayer(0).GetLayerDefn()
-    gdal.PopErrorHandler()
-
-    assert lyr_defn.GetFieldCount() == 0
+    with pytest.raises(Exception):
+        ds.GetLayer(0).GetLayerDefn()
 
     # Empty layer
     gdal.FileFromMemBuffer(
@@ -267,18 +249,15 @@ Error""",
         """{"rows":[{"cdb_usertables":"table1"}],"fields":{"cdb_usertables":{"type":"string"}}}""",
     )
     ds = ogr.Open("CARTO:foo")
-    gdal.PushErrorHandler()
-    lyr_defn = ds.GetLayer(0).GetLayerDefn()
-    gdal.PopErrorHandler()
-    assert lyr_defn.GetFieldCount() == 0
+    with pytest.raises(Exception):
+        ds.GetLayer(0).GetLayerDefn()
 
     get_full_details_fields_url = """/vsimem/carto&POSTFIELDS=q=SELECT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, i.indisprimary, pg_get_expr(def.adbin, c.oid) AS defaultexpr, postgis_typmod_dims(a.atttypmod) dim, postgis_typmod_srid(a.atttypmod) srid, postgis_typmod_type(a.atttypmod)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = 'table1' JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= 'public' LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
     gdal.FileFromMemBuffer(get_full_details_fields_url, "")
     ds = ogr.Open("CARTO:foo")
-    gdal.PushErrorHandler()
-    lyr_defn = ds.GetLayer(0).GetLayerDefn()
-    gdal.PopErrorHandler()
-    assert lyr_defn.GetFieldCount() == 0
+    lyr = ds.GetLayer(0)
+    with pytest.raises(Exception):
+        lyr.GetLayerDefn()
 
     gdal.FileFromMemBuffer(
         get_full_details_fields_url,
@@ -286,15 +265,11 @@ Error""",
     )
     ds = ogr.Open("CARTO:foo")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler()
-    lyr_defn = lyr.GetLayerDefn()
-    gdal.PopErrorHandler()
-    assert lyr_defn.GetFieldCount() == 1
+    with pytest.raises(Exception):
+        lyr.GetLayerDefn()
 
-    gdal.PushErrorHandler()
-    f = lyr.GetFeature(0)
-    gdal.PopErrorHandler()
-    assert f is None
+    with pytest.raises(Exception):
+        lyr.GetFeature(0)
 
     gdal.FileFromMemBuffer(
         get_full_details_fields_url,
@@ -338,29 +313,23 @@ Error""",
     assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint25D
     assert lyr_defn.GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find("4326") >= 0
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 0
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{}""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 0
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
         """{"rows":[{"foo":1}],
             "fields":{"foo":{"type":"number"}}}""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 0
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1"&api_key=foo""",
@@ -369,10 +338,8 @@ Error""",
     )
     assert lyr.GetFeatureCount() == 9876543210
 
-    gdal.PushErrorHandler()
-    extent = lyr.GetExtent()
-    gdal.PopErrorHandler()
-    assert extent == (0, 0, 0, 0)
+    with pytest.raises(Exception):
+        lyr.GetExtent()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
@@ -380,43 +347,32 @@ Error""",
             "fields":{"foo":{"type":"number"}}}""",
     )
 
-    gdal.PushErrorHandler()
-    extent = lyr.GetExtent()
-    gdal.PopErrorHandler()
-    assert extent == (0, 0, 0, 0)
+    with pytest.raises(Exception):
+        lyr.GetExtent()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":""}],
             "fields":{"st_extent":{"type":"string"}}}""",
     )
-    gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.GetExtent()
-    gdal.PopErrorHandler()
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception):
+        lyr.GetExtent()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":"("}],
             "fields":{"st_extent":{"type":"string"}}}""",
     )
-    gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.GetExtent()
-    gdal.PopErrorHandler()
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception):
+        lyr.GetExtent()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
         """{"rows":[{"st_extent":"BOX()"}],
             "fields":{"st_extent":{"type":"string"}}}""",
     )
-    gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.GetExtent()
-    gdal.PopErrorHandler()
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception):
+        lyr.GetExtent()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT ST_Extent("my_geom") FROM "table1"&api_key=foo""",
@@ -425,20 +381,16 @@ Error""",
     )
     assert lyr.GetExtent() == (0.0, 2.0, 1.0, 3.0)
 
-    gdal.PushErrorHandler()
-    f = lyr.GetFeature(0)
-    gdal.PopErrorHandler()
-    assert f is None
+    with pytest.raises(Exception):
+        lyr.GetFeature(0)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
         """""",
     )
 
-    gdal.PushErrorHandler()
-    f = lyr.GetFeature(0)
-    gdal.PopErrorHandler()
-    assert f is None
+    with pytest.raises(Exception):
+        lyr.GetFeature(0)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" = 0&api_key=foo""",
@@ -459,10 +411,8 @@ Error""",
     assert f.GetFID() == 0
 
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
-    assert f is None
+    with pytest.raises(Exception):
+        lyr.GetNextFeature()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 500&api_key=foo""",
@@ -502,10 +452,8 @@ Error""",
 
     lyr.SetAttributeFilter("strfield is NULL")
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 0
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
@@ -533,10 +481,8 @@ Error""",
 
     lyr.SetSpatialFilterRect(-180, -90, 180, 90)
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 0
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
@@ -548,10 +494,8 @@ Error""",
     f = lyr.GetNextFeature()
     assert f is not None and f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
-    assert fc == 1
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL)&api_key=foo""",
@@ -562,15 +506,20 @@ Error""",
 
     # Not permitted in read-only mode
     f = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler()
-    ds.CreateLayer("foo")
-    ds.DeleteLayer(0)
-    lyr.CreateFeature(f)
-    lyr.SetFeature(f)
-    lyr.DeleteFeature(0)
-    lyr.CreateField(ogr.FieldDefn("foo"))
-    lyr.DeleteField(0)
-    gdal.PopErrorHandler()
+    with pytest.raises(Exception):
+        ds.CreateLayer("foo")
+    with pytest.raises(Exception):
+        ds.DeleteLayer(0)
+    with pytest.raises(Exception):
+        lyr.CreateFeature(f)
+    with pytest.raises(Exception):
+        lyr.SetFeature(f)
+    with pytest.raises(Exception):
+        lyr.DeleteFeature(0)
+    with pytest.raises(Exception):
+        lyr.CreateField(ogr.FieldDefn("foo"))
+    with pytest.raises(Exception):
+        lyr.DeleteField(0)
 
     ds = None
 
@@ -583,10 +532,8 @@ Error""",
     lyr = ds.CreateLayer("MY_LAYER")
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.GetNextFeature()
-    gdal.PopErrorHandler()
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception):
+        lyr.GetNextFeature()
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
@@ -618,17 +565,14 @@ Error""",
     )
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.CreateFeature(f)
     f = None
 
     fld_defn = ogr.FieldDefn("INTFIELD", ogr.OFTInteger)
     # No server answer
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         ret = lyr.CreateField(fld_defn)
-    assert ret != 0
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" ADD COLUMN "intfield" INTEGER&api_key=foo""",
@@ -648,11 +592,11 @@ Error""",
     assert lyr.CreateField(fld_defn) == 0
 
     # Invalid field
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert lyr.DeleteField(-1) != 0
 
     # No server answer
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert lyr.DeleteField(0) != 0
 
     gdal.FileFromMemBuffer(
@@ -671,10 +615,8 @@ Error""",
     assert lyr.CreateField(fld_defn) == 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.CreateFeature(f)
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("strfield", "foo")
@@ -690,23 +632,20 @@ Error""",
     assert ret == 0 and f.GetFID() == 1
 
     f.SetFID(-1)
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.SetFeature(f)
 
     f.SetFID(3)
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.SetFeature(f)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
         """{"total_rows": 0}""",
     )
-    ret = lyr.SetFeature(f)
-    assert ret == ogr.OGRERR_NON_EXISTING_FEATURE
+    with gdaltest.disable_exceptions():
+        ret = lyr.SetFeature(f)
+        assert ret == ogr.OGRERR_NON_EXISTING_FEATURE
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=UPDATE "my_layer" SET "strfield" = 'foo', "intfield" = 1, "boolfield" = 't', "the_geom" = '0101000020E610000000000000000000400000000000804840' WHERE "cartodb_id" = 3&api_key=foo""",
@@ -716,10 +655,8 @@ Error""",
     assert ret == 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.CreateFeature(f)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=INSERT INTO "my_layer" DEFAULT VALUES RETURNING "cartodb_id"&api_key=foo""",
@@ -729,17 +666,16 @@ Error""",
     ret = lyr.CreateFeature(f)
     assert ret == 0 and f.GetFID() == 4
 
-    gdal.PushErrorHandler()
-    ret = lyr.DeleteFeature(0)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        lyr.DeleteFeature(0)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
         """{"total_rows": 0}""",
     )
-    ret = lyr.DeleteFeature(0)
-    assert ret == ogr.OGRERR_NON_EXISTING_FEATURE
+    with gdaltest.disable_exceptions():
+        ret = lyr.DeleteFeature(0)
+        assert ret == ogr.OGRERR_NON_EXISTING_FEATURE
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=DELETE FROM "my_layer" WHERE "cartodb_id" = 0&api_key=foo""",
@@ -788,6 +724,7 @@ Error""",
     if ret != 0 or f.GetFID() != 12:
         f.DumpReadable()
         pytest.fail()
+    f = None
 
     ds = gdal.OpenEx(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
@@ -806,6 +743,7 @@ Error""",
     if ret != 0 or f.GetFID() != 11:
         f.DumpReadable()
         pytest.fail()
+    f = None
 
     # Now remove default value to strfield
     gdal.FileFromMemBuffer(
@@ -858,6 +796,7 @@ Error""",
     f.SetField("strfield", "baz")
     ret = lyr.CreateFeature(f)
     assert ret == 0 and f.GetFID() == 13
+    f = None
 
     gdal.ErrorReset()
     with gdaltest.tempfile(
@@ -871,10 +810,8 @@ Error""",
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
 
-    gdal.PushErrorHandler()
-    lyr = ds.CreateLayer("table1")
-    gdal.PopErrorHandler()
-    assert lyr is None
+    with pytest.raises(Exception):
+        ds.CreateLayer("table1")
 
     with gdaltest.tempfile(
         """/vsimem/carto&POSTFIELDS=q=BEGIN; DROP TABLE IF EXISTS "table1";CREATE TABLE "table1" ( cartodb_id SERIAL,the_geom Geometry(MULTIPOLYGON,0),PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "table1_cartodb_id_seq" CASCADE;CREATE SEQUENCE "table1_cartodb_id_seq" START 1;ALTER SEQUENCE "table1_cartodb_id_seq" OWNED BY "table1".cartodb_id;ALTER TABLE "table1" ALTER COLUMN cartodb_id SET DEFAULT nextval('"table1_cartodb_id_seq"'); COMMIT;&api_key=foo""",
@@ -888,8 +825,8 @@ Error""",
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 0,0 0))"))
         assert lyr.CreateFeature(f) == 0
+        f = None
 
-    gdal.ErrorReset()
     with gdaltest.tempfile(
         """/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("the_geom") VALUES ('0106000020E61000000100000001030000000100000004000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000');COMMIT;&api_key=foo""",
         """{"rows":[],
@@ -921,13 +858,12 @@ Error""",
             assert lyr.CreateFeature(f) == 0
             assert f.GetFID() == 100
             ds = None
+        f = None
 
     ds = ogr.Open("CARTO:foo", update=1)
 
-    gdal.PushErrorHandler()
-    ret = ds.DeleteLayer(0)
-    gdal.PopErrorHandler()
-    assert ret != 0
+    with pytest.raises(Exception):
+        ds.DeleteLayer(0)
 
     gdal.ErrorReset()
     ds = gdal.OpenEx(
@@ -956,8 +892,11 @@ Error""",
             f.SetField("intfield", 12)
             f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(100 100)"))
             assert lyr.CreateFeature(f) == 0
+            f = None
 
-            ds = None  # force flush
+            # FIXME? a "RunCopyFrom Error Message:HTTP error code : 404" error is thrown
+            with gdaltest.disable_exceptions():
+                ds = None  # force flush
 
     ds = ogr.Open("CARTO:foo", update=1)
 

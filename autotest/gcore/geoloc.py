@@ -247,13 +247,11 @@ def test_geoloc_error_cases():
     ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
     ds.SetMetadata({"invalid": "content"}, "GEOLOCATION")
 
-    with gdaltest.error_handler():
-        transformer = gdal.Transformer(ds, None, [])
-    assert transformer is None
+    with pytest.raises(Exception):
+        gdal.Transformer(ds, None, [])
 
-    with gdaltest.error_handler():
-        transformer = gdal.Transformer(None, ds, [])
-    assert transformer is None
+    with pytest.raises(Exception):
+        gdal.Transformer(None, ds, [])
 
 
 ###############################################################################
@@ -423,11 +421,11 @@ def test_geoloc_GEOLOC_ARRAY_transformer_option():
     ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
 
     # Non-existing GEOLOC_ARRAY
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert gdal.Transformer(ds, None, ["GEOLOC_ARRAY=/vsimem/invalid.tif"]) is None
 
     # Existing GEOLOC_ARRAY but single band
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert gdal.Transformer(ds, None, ["GEOLOC_ARRAY=data/byte.tif"]) is None
 
     # Test SRC_GEOLOC_ARRAY transformer option
@@ -524,7 +522,7 @@ def test_geoloc_DST_GEOLOC_ARRAY_transformer_option():
     input_ds.SetSpatialRef(srs)
 
     # Non-existing DST_GEOLOC_ARRAY
-    with gdaltest.error_handler():
+    with pytest.raises(Exception):
         assert (
             gdal.Transformer(input_ds, ds, ["DST_GEOLOC_ARRAY=/vsimem/invalid.tif"])
             is None

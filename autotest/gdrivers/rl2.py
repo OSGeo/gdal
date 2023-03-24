@@ -43,6 +43,12 @@ pytestmark = [
     ),
 ]
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
 
 @pytest.fixture(autouse=True, scope="module")
 def rl2_setup():

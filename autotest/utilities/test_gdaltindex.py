@@ -257,11 +257,10 @@ def test_gdaltindex_5(gdaltindex_path):
         "-src_srs_format PROJ",
         "-src_srs_format WKT",
     ]:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "tmp/test_gdaltindex_5.shp"
-        )
-        gdal.PopErrorHandler()
+        if os.path.exists("tmp/test_gdaltindex_5.shp"):
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                "tmp/test_gdaltindex_5.shp"
+            )
         gdaltest.runexternal_out_and_err(
             gdaltindex_path
             + " -src_srs_name src_srs %s -t_srs EPSG:4326 tmp/test_gdaltindex_5.shp tmp/gdaltindex1.tif tmp/gdaltindex6.tif"
@@ -299,11 +298,10 @@ def test_gdaltindex_5(gdaltindex_path):
 def test_gdaltindex_6(gdaltindex_path):
 
     for option in ["", "-lyr_name tileindex"]:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "tmp/test_gdaltindex_6.mif"
-        )
-        gdal.PopErrorHandler()
+        if os.path.exists("tmp/test_gdaltindex_6.mif"):
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                "tmp/test_gdaltindex_6.mif"
+            )
         gdaltest.runexternal_out_and_err(
             gdaltindex_path
             + ' -f "MapInfo File" %s tmp/test_gdaltindex_6.mif tmp/gdaltindex1.tif'

@@ -52,7 +52,8 @@ def startup_and_cleanup():
         print("Unregister LIBKML driver")
         libkml_drv.Deregister()
 
-    ogrtest.have_read_kml = ogr.Open("data/kml/samples.kml") is not None
+    with gdaltest.disable_exceptions():
+        ogrtest.have_read_kml = ogr.Open("data/kml/samples.kml") is not None
 
     yield
 
@@ -504,14 +505,11 @@ def test_ogr_kml_interleaved_writing():
     lyr1 = ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     feat = ogr.Feature(lyr1.GetLayerDefn())
-    with gdaltest.error_handler():
-        ret = lyr1.CreateFeature(feat)
+    with pytest.raises(Exception):
+        lyr1.CreateFeature(feat)
     ds = None
 
     gdal.Unlink("/vsimem/ogr_kml_interleaved_writing.kml")
-
-    # CreateFeature() should fail
-    assert ret != 0
 
 
 ###############################################################################
@@ -709,9 +707,8 @@ def test_ogr_kml_read_truncated():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    with gdaltest.error_handler():
-        ds = ogr.Open("data/kml/truncated.kml")
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("data/kml/truncated.kml")
 
 
 ###############################################################################
@@ -738,9 +735,8 @@ def test_ogr_kml_read_junk_content_after_valid_doc():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    with gdaltest.error_handler():
-        ds = ogr.Open("data/kml/junk_content_after_valid_doc.kml")
-    assert ds is None
+    with pytest.raises(Exception):
+        ogr.Open("data/kml/junk_content_after_valid_doc.kml")
 
 
 ###############################################################################

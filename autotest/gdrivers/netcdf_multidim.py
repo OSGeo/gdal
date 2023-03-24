@@ -56,6 +56,13 @@ pytestmark = [
 ]
 
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 def test_netcdf_multidim_invalid_file():
 
     ds = gdal.OpenEx("data/netcdf/byte_truncated.nc", gdal.OF_MULTIDIM_RASTER)

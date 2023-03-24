@@ -235,6 +235,7 @@ def test_vrtwarp_6():
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
+    vrtwarp_ds = None
 
     gdal.Unlink("tmp/vrtwarp_6.vrt")
     gdal.Unlink("tmp/vrtwarp_6.tif")
@@ -493,14 +494,11 @@ def test_vrtwarp_read_blocks_in_space():
 )
 def test_vrtwarp_read_inconsistent_blocksize(filename):
 
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        ds = gdal.Open(filename)
-    assert ds is None
-    assert (
-        gdal.GetLastErrorMsg()
-        == "Block size specified on band 1 not consistent with dataset block size"
-    )
+    with pytest.raises(
+        Exception,
+        match=r".*Block size specified on band 1 not consistent with dataset block size.*",
+    ):
+        gdal.Open(filename)
 
 
 ###############################################################################
@@ -548,6 +546,7 @@ def test_vrtwarp_sourcedataset_all_relatives():
         src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
         ds = gdal.AutoCreateWarpedVRT(src_ds)
         ds.SetDescription(os.path.join("tmp", "byte.vrt"))
+        src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
@@ -573,6 +572,7 @@ def test_vrtwarp_sourcedataset_source_relative_dest_absolute():
         if sys.platform == "win32":
             path = path.replace("/", "\\")
         ds.SetDescription(path)
+        src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
@@ -595,6 +595,7 @@ def test_vrtwarp_sourcedataset_source_absolute_dest_absolute():
         src_ds = gdal.Open(os.path.join(os.getcwd(), "tmp", "byte.tif"))
         ds = gdal.AutoCreateWarpedVRT(src_ds)
         ds.SetDescription(os.path.join(os.getcwd(), "tmp", "byte.vrt"))
+        src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
@@ -620,6 +621,7 @@ def test_vrtwarp_sourcedataset_source_absolute_dest_relative():
         src_ds = gdal.Open(path)
         ds = gdal.AutoCreateWarpedVRT(src_ds)
         ds.SetDescription(os.path.join("tmp", "byte.vrt"))
+        src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'

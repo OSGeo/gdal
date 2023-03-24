@@ -43,8 +43,8 @@ from osgeo import gdal
 
 
 def test_overviewds_1():
-    ds = gdal.OpenEx("data/byte.tif", open_options=["OVERVIEW_LEVEL=0"])
-    assert ds is None
+    with pytest.raises(Exception):
+        gdal.OpenEx("data/byte.tif", open_options=["OVERVIEW_LEVEL=0"])
 
 
 ###############################################################################

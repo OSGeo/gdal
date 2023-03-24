@@ -40,6 +40,14 @@ import pytest
 
 from osgeo import gdal
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 # Fetch simple histogram.
 

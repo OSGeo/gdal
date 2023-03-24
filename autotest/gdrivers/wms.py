@@ -595,6 +595,7 @@ def test_wms_12():
 # Test reading WMS through VRT (test effect of r21866)
 
 
+@gdaltest.disable_exceptions()
 def test_wms_13():
 
     ds = gdal.Open("data/wms/DNEC_250K.vrt")

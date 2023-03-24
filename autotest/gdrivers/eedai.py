@@ -592,7 +592,8 @@ def test_eedai_cleanup():
     )
 
     gdal.Unlink("/vsimem/ee/projects/earthengine-public/assets/image")
-    gdal.RmdirRecursive("/vsimem/ee/")
+    with gdaltest.disable_exceptions():
+        gdal.RmdirRecursive("/vsimem/ee/")
 
 
 ###############################################################################

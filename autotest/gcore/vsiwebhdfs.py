@@ -250,6 +250,7 @@ def test_vsiwebhdfs_readdir():
 # Test write
 
 
+@gdaltest.disable_exceptions()
 def test_vsiwebhdfs_write():
 
     if gdaltest.webserver_port == 0:
@@ -435,6 +436,7 @@ def test_vsiwebhdfs_write():
 # Test Unlink()
 
 
+@gdaltest.disable_exceptions()
 def test_vsiwebhdfs_unlink():
 
     if gdaltest.webserver_port == 0:
@@ -493,6 +495,7 @@ def test_vsiwebhdfs_unlink():
 # Test Mkdir() / Rmdir()
 
 
+@gdaltest.disable_exceptions()
 def test_vsiwebhdfs_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:

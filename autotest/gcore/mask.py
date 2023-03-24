@@ -37,6 +37,14 @@ import pytest
 
 from osgeo import gdal
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
 

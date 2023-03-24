@@ -311,9 +311,8 @@ def test_mrsid_8():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27700)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdal.GetDriverByName("MrSID").Delete("tmp/mercator.sid")
-    gdal.PopErrorHandler()
+    if os.path.exists("tmp/mercator.sid"):
+        gdal.Unlink("tmp/mercator.sid")
 
     shutil.copyfile("data/sid/mercator.sid", "tmp/mercator.sid")
 

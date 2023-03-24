@@ -1176,6 +1176,7 @@ def gml_out_precision():
 # Test various error cases of gml2ogrgeometry.cpp
 
 
+@gdaltest.disable_exceptions()
 def test_gml_invalid_geoms():
 
     gml_expected_wkt_list = [
@@ -1711,10 +1712,8 @@ def test_gml_nested():
     gml += "<gml:MultiPolygon></gml:MultiPolygon>"
     gml += "</gml:geometryMember></gml:MultiGeometry>" * 32
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    geom = ogr.CreateGeometryFromGML(gml)
-    gdal.PopErrorHandler()
-    assert geom is None, "expected None"
+    with pytest.raises(Exception):
+        ogr.CreateGeometryFromGML(gml)
 
 
 ###############################################################################

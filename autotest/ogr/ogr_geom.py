@@ -38,6 +38,14 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.disable_exceptions():
+        yield
+
+
 ###############################################################################
 # Test Area calculation for a MultiPolygon (which exercises lower level
 # get_Area() methods as well).

@@ -286,7 +286,8 @@ def test_virtualmem_3():
 def test_virtualmem_4():
     tmpfile = "tmp/virtualmem_4.tif"
     for option in ["INTERLEAVE=PIXEL", "INTERLEAVE=BAND"]:
-        gdal.Unlink(tmpfile)
+        if gdal.VSIStatL(tmpfile) is not None:
+            gdal.Unlink(tmpfile)
         ds = gdal.GetDriverByName("GTiff").Create(
             tmpfile, 400, 301, 2, options=[option]
         )
