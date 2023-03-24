@@ -259,7 +259,7 @@ def test_hdf4_read_online_5():
 
     # 13 MB
     gdaltest.download_or_skip(
-        "ftp://data.nodc.noaa.gov/pub/data.nodc/pathfinder/Version5.0/Monthly/1991/199101.s04m1pfv50-sst-16b.hdf",
+        "https://www.ncei.noaa.gov/data/oceans/pathfinder/Version5.0/Monthly/1991/199101.s04m1pfv50-sst-16b.hdf",
         "199101.s04m1pfv50-sst-16b.hdf",
     )
 
