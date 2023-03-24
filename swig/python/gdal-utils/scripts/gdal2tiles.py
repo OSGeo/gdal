@@ -14,4 +14,4 @@ if __name__ == "__main__":
     from osgeo_utils.gdal2tiles import main
 
     deprecation_warn("gdal2tiles")
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv, called_from_main=True))
