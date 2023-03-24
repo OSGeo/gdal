@@ -57,6 +57,20 @@ def gdal_grid_path():
 outfiles = []
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def auto_cleanup():
+
+    yield
+
+    if os.path.exists("tmp/n43.shp"):
+        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43.shp")
+    drv = gdal.GetDriverByName("GTiff")
+    for outfile in outfiles:
+        if os.path.exists(outfile):
+            drv.Delete(outfile)
+
+
+###############################################################################
 #
 
 
@@ -1286,7 +1300,9 @@ def test_gdal_grid_tr(gdal_grid_path):
     # Create a GDAL dataset from the values of "grid.csv".
     gdaltest.runexternal(
         gdal_grid_path
-        + " -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -tr 60 60 -ot Byte -l grid -a count:radius1=70.0:radius2=70.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt "
+        + " -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -tr 60 60 -ot Byte -l grid -a count:radius1=70.0:radius2=70.0:angle=0.0:min_points=0:nodata=0.0 "
+        + " -oo X_POSSIBLE_NAMES=field_1 -oo Y_POSSIBLE_NAMES=field_2 -oo Z_POSSIBLE_NAMES=field_3"
+        + " data/grid.csv "
         + outfiles[-1]
     )
 
@@ -1301,16 +1317,3 @@ def test_gdal_grid_tr(gdal_grid_path):
     )
     ds_ref = None
     ds = None
-
-
-###############################################################################
-# Cleanup
-
-
-def test_gdal_grid_cleanup():
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43.shp")
-    drv = gdal.GetDriverByName("GTiff")
-    for outfile in outfiles:
-        with gdaltest.disable_exceptions():
-            drv.Delete(outfile)

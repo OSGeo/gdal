@@ -124,14 +124,6 @@ struct GDALNearblackOptionsForBinary
     int bQuiet;
 };
 
-struct GDALGridOptionsForBinary
-{
-    char *pszSource;
-    char *pszDest;
-    int bQuiet;
-    char *pszFormat;
-};
-
 struct GDALRasterizeOptionsForBinary
 {
     char *pszSource;
@@ -197,6 +189,15 @@ struct GDALVectorInfoOptionsForBinary
 
     /* Allowed input drivers. */
     CPLStringList aosAllowInputDrivers{};
+};
+
+struct GDALGridOptionsForBinary
+{
+    std::string osSource{};
+    bool bDestSpecified = false;
+    std::string osDest{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

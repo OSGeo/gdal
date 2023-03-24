@@ -17,6 +17,7 @@ Synopsis
 
     gdal_grid [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
               CInt16/CInt32/CFloat32/CFloat64}]
+              [-oo NAME=VALUE]*
               [-of format] [-co "NAME=VALUE"]
               [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]
               [-a_srs srs_def] [-spat xmin ymin xmax ymax]
@@ -144,6 +145,12 @@ computer.
 
     An SQL statement to be evaluated against the datasource to produce a
     virtual layer of features to be processed.
+
+.. option:: -oo <NAME=VALUE>
+
+    .. versionadded:: 3.7
+
+    Source dataset open option (format specific)
 
 .. include:: options/co.rst
 
