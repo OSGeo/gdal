@@ -870,7 +870,7 @@ def test_netcdf_21():
 def test_netcdf_22():
 
     if not gdaltest.netcdf_drv_has_hdf4:
-        pytest.skip()
+        pytest.skip("netCDF driver does not have HDF4 support")
 
     ifile = "data/hdf4/hdifftst2.hdf"
 
