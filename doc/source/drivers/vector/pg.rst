@@ -253,7 +253,7 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
 -  :decl_configoption:`PG_USE_COPY`: This may be "YES" for using COPY for inserting data
@@ -268,6 +268,14 @@ available:
    1.333 N, where N is the size of EWKB data. However, it might be a bit
    slower than fetching in canonical form when the client and the server
    are on the same machine, so the default is NO.
+-  :decl_configoption:`OGR_PG_CURSOR_PAGE`. Set the cursor page size, or
+   number of features that are fetched from the database and held in memory
+   at a single time.
+-  :decl_configoption:`OGR_PG_RETRIEVE_FID`: If set to "YES" (the default),
+   writing an OGRFeature will cause its FID to be set to the value assigned by
+   the database. If a single feature is to be inserted multiple times,
+   this option can be set to "NO" to allow the database to assign a new FID
+   for each insertion.
 -  :decl_configoption:`OGR_TRUNCATE`: If set to "YES", the content of the
    table will be first erased with the SQL TRUNCATE command before
    inserting the first feature. This is an alternative to using the
