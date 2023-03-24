@@ -1505,9 +1505,14 @@ int FileGDBTable::SelectRow(int iRow)
                         m_nFileSize = VSIFTellL(m_fpTable);
                         VSIFSeekL(m_fpTable, nOffsetTable + 4, SEEK_SET);
                     }
-                    returnErrorAndCleanupIf(
-                        nOffsetTable + 4 + m_nRowBlobLength > m_nFileSize,
-                        m_nCurRow = -1);
+                    if (nOffsetTable + 4 + m_nRowBlobLength > m_nFileSize)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid row length (%u) on feature %u",
+                                 m_nRowBlobLength, iRow + 1);
+                        m_nCurRow = -1;
+                        return errorRetValue;
+                    }
                 }
                 m_nRowBufferMaxSize = m_nRowBlobLength;
             }
