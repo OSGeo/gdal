@@ -340,6 +340,10 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/vector/shapefile.html");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN,
+                              "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

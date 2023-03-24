@@ -353,6 +353,15 @@ struct GDALVectorTranslateOptions
        option. */
     CPLStringList aosFieldMap{};
 
+    /*! the list of numeric field names that have been explicitly set by the user
+        as containing only  negative values. This can be used to optimize field
+        width calculation, see
+        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR and
+        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN
+       .
+    */
+    CPLStringList aosAllNegativeNumericFields{};
+
     /*! force the coordinate dimension to nCoordDim (valid values are 2 or 3).
        This affects both the layer geometry type, and feature geometries. */
     int nCoordDim = COORD_DIM_UNCHANGED;
@@ -3860,6 +3869,22 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
     }
 
+    if (!psOptions->aosAllNegativeNumericFields.empty())
+    {
+        for (const auto &allNegativeField :
+             psOptions->aosAllNegativeNumericFields)
+        {
+            const int iSrcAllNegativeField =
+                poSrcFDefn->GetFieldIndex(allNegativeField);
+            if (iSrcAllNegativeField < 0)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "all_negative field '%s' does not exist in layer %s",
+                         m_pszZField, poSrcLayer->GetName());
+            }
+        }
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
@@ -4297,6 +4322,51 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     std::map<int, TargetLayerInfo::ResolvedInfo> oMapResolved;
 
+    /* Determine if NUMERIC field width narrowing is allowed */
+    const char *pszSrcWidthIncludesDecimalSeparator{
+        m_poSrcDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")};
+    const bool bSrcWidthIncludesDecimalSeparator{
+        pszSrcWidthIncludesDecimalSeparator &&
+        EQUAL(pszSrcWidthIncludesDecimalSeparator, "YES")};
+    const char *pszDstWidthIncludesDecimalSeparator{
+        m_poDstDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")};
+    const bool bDstWidthIncludesDecimalSeparator{
+        pszDstWidthIncludesDecimalSeparator &&
+        EQUAL(pszDstWidthIncludesDecimalSeparator, "YES")};
+    const char *pszSrcWidthIncludesMinusSign{
+        m_poSrcDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")};
+    const bool bSrcWidthIncludesMinusSign{
+        pszSrcWidthIncludesMinusSign &&
+        EQUAL(pszSrcWidthIncludesMinusSign, "YES")};
+    const char *pszDstWidthIncludesMinusSign{
+        m_poDstDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")};
+    const bool bDstWidthIncludesMinusSign{
+        pszDstWidthIncludesMinusSign &&
+        EQUAL(pszDstWidthIncludesMinusSign, "YES")};
+
+    int iChangeWidthBy{0};
+
+    if (bSrcWidthIncludesDecimalSeparator && !bDstWidthIncludesDecimalSeparator)
+    {
+        iChangeWidthBy--;
+    }
+    else if (!bSrcWidthIncludesDecimalSeparator &&
+             bDstWidthIncludesDecimalSeparator)
+    {
+        iChangeWidthBy++;
+    }
+
+    // We cannot assume there is no minus sign unless the option all_negative is set
+    // for a specific field, we deal with increasing only at this point
+    if (!bSrcWidthIncludesMinusSign && bDstWidthIncludesMinusSign)
+    {
+        iChangeWidthBy++;
+    }
+
     /* Caution : at the time of writing, the MapInfo driver */
     /* returns NULL until a field has been added */
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
@@ -4339,6 +4409,23 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 OGRFieldDefn *poSrcFieldDefn =
                     poSrcFDefn->GetFieldDefn(iSrcField);
                 OGRFieldDefn oFieldDefn(poSrcFieldDefn);
+
+                int iChangeFieldWidthBy{iChangeWidthBy};
+
+                // If this field is set as all_negative, we can safely reduce the width
+                if (bSrcWidthIncludesMinusSign && !bDstWidthIncludesMinusSign &&
+                    psOptions->aosAllNegativeNumericFields.FindString(
+                        poSrcFieldDefn->GetNameRef()) >= 0)
+                {
+                    iChangeFieldWidthBy--;
+                }
+
+                if (iChangeFieldWidthBy != 0 &&
+                    oFieldDefn.GetType() == OFTReal &&
+                    oFieldDefn.GetWidth() != 0)
+                {
+                    //oFieldDefn.SetWidth( oFieldDefn.GetWidth() + iChangeFieldWidthBy );
+                }
 
                 DoFieldTypeConversion(
                     m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
@@ -4528,6 +4615,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             const OGRFieldDefn *poSrcFieldDefn =
                 poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn(poSrcFieldDefn);
+
+            // TODOOOOOOOOOOOOOOOOOOOO
 
             // Avoid creating a field with the same name as the FID column
             if (pszFIDColumn != nullptr &&
@@ -6670,6 +6759,12 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                          "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
                 return nullptr;
             }
+        }
+        else if (EQUAL(papszArgv[i], "-all_negative"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->aosAllNegativeNumericFields =
+                CSLTokenizeStringComplex(papszArgv[++i], " ,", FALSE, FALSE);
         }
         else if (papszArgv[i][0] == '-')
         {
