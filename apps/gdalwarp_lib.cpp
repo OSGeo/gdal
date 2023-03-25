@@ -2560,13 +2560,25 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
         const char *pszMethod =
             psOptions->aosTransformerOptions.FetchNameValue("METHOD");
-        if (iSrc == 0 &&
-            psOptions->aosWarpOptions.FetchNameValue("SOURCE_EXTRA") ==
-                nullptr &&
-            (GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
-             (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))))
+        if (iSrc == 0 && (GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
+                          (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))))
         {
-            psOptions->aosWarpOptions.SetNameValue("SOURCE_EXTRA", "5");
+            if (!psOptions->aosWarpOptions.FetchNameValue("SOURCE_EXTRA"))
+            {
+                CPLDebug(
+                    "WARP",
+                    "Set SOURCE_EXTRA=5 warping options due to RPC warping");
+                psOptions->aosWarpOptions.SetNameValue("SOURCE_EXTRA", "5");
+            }
+
+            if (!psOptions->aosWarpOptions.FetchNameValue("SAMPLE_STEPS") &&
+                !psOptions->aosWarpOptions.FetchNameValue("SAMPLE_GRID") &&
+                psOptions->aosTransformerOptions.FetchNameValue("RPC_DEM"))
+            {
+                CPLDebug("WARP", "Set SAMPLE_STEPS=ALL warping options due to "
+                                 "RPC DEM warping");
+                psOptions->aosWarpOptions.SetNameValue("SAMPLE_STEPS", "ALL");
+            }
         }
 
         /* --------------------------------------------------------------------

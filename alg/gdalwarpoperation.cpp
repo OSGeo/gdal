@@ -391,11 +391,11 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
-    if (CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS") !=
-        nullptr)
+    const char *pszSampleSteps =
+        CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
+    if (pszSampleSteps)
     {
-        if (atoi(CSLFetchNameValue(psOptions->papszWarpOptions,
-                                   "SAMPLE_STEPS")) < 2)
+        if (!EQUAL(pszSampleSteps, "ALL") && atoi(pszSampleSteps) < 2)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "GDALWarpOptions.Validate(): "
@@ -2426,6 +2426,8 @@ CPLErr GDALWarpOperation::CreateKernelMask(GDALWarpKernel *poKernel, int iBand,
 /*               ComputeSourceWindowStartingFromSource()                */
 /************************************************************************/
 
+constexpr int DEFAULT_STEP_COUNT = 21;
+
 void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
     int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize,
     double *padfSrcMinX, double *padfSrcMinY, double *padfSrcMaxX,
@@ -2439,11 +2441,13 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
     GDALWarpPrivateData *privateData = GetWarpPrivateData(this);
     if (privateData->nStepCount == 0)
     {
-        int nStepCount = 21;
+        int nStepCount = DEFAULT_STEP_COUNT;
         std::vector<double> adfDstZ{};
 
-        if (CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS") !=
-            nullptr)
+        const char *pszSampleSteps =
+            CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
+        constexpr int knIntMax = std::numeric_limits<int>::max();
+        if (pszSampleSteps && !EQUAL(pszSampleSteps, "ALL"))
         {
             nStepCount = atoi(
                 CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS"));
@@ -2451,7 +2455,13 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
         }
 
         const double dfStepSize = 1.0 / (nStepCount - 1);
-        // Already checked for int overflow by calling method
+        if (nStepCount > knIntMax - 2 ||
+            (nStepCount + 2) > knIntMax / (nStepCount + 2))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d",
+                     nStepCount);
+            return;
+        }
         const int nSampleMax = (nStepCount + 2) * (nStepCount + 2);
 
         try
@@ -2490,6 +2500,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
                 iPoint++;
             }
         }
+        CPLAssert(iPoint == nSampleMax);
 
         /* --------------------------------------------------------------------
          */
@@ -2568,22 +2579,28 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     /*      sampling rate.                                                  */
     /* -------------------------------------------------------------------- */
     int nSampleMax = 0;
-    int nStepCount = 21;
+    int nStepCount = DEFAULT_STEP_COUNT;
     int *pabSuccess = nullptr;
     double *padfX = nullptr;
     double *padfY = nullptr;
     double *padfZ = nullptr;
     int nSamplePoints = 0;
+    bool bAll = false;
 
-    if (CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS") !=
-        nullptr)
+    const char *pszSampleSteps =
+        CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
+    if (pszSampleSteps)
     {
-        nStepCount = atoi(
-            CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS"));
-        nStepCount = std::max(2, nStepCount);
+        if (EQUAL(pszSampleSteps, "ALL"))
+        {
+            bAll = true;
+        }
+        else
+        {
+            nStepCount = atoi(pszSampleSteps);
+            nStepCount = std::max(2, nStepCount);
+        }
     }
-
-    const double dfStepSize = 1.0 / (nStepCount - 1);
 
     bool bUseGrid =
         CPLFetchBool(psOptions->papszWarpOptions, "SAMPLE_GRID", false);
@@ -2599,6 +2616,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
                 0 <= xy.second &&
                 GDALGetRasterYSize(psOptions->hDstDS) >= xy.second)
             {
+                bAll = false;
                 bUseGrid = true;
                 break;
             }
@@ -2608,29 +2626,54 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     bool bTryWithCheckWithInvertProj = false;
 
 TryAgain:
+    const double dfStepSize = bAll ? 0 : 1.0 / (nStepCount - 1);
     nSamplePoints = 0;
+    constexpr int knIntMax = std::numeric_limits<int>::max();
     if (bUseGrid)
     {
-        const int knIntMax = std::numeric_limits<int>::max();
-        if (nStepCount > knIntMax - 2 ||
-            (nStepCount + 2) > knIntMax / (nStepCount + 2))
+        if (bAll)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d",
-                     nStepCount);
-            return CE_Failure;
+            if (nDstYSize > knIntMax / (nDstXSize + 1) - 1)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
+                return CE_Failure;
+            }
+            nSampleMax = (nDstXSize + 1) * (nDstYSize + 1);
         }
-        nSampleMax = (nStepCount + 2) * (nStepCount + 2);
+        else
+        {
+            if (nStepCount > knIntMax - 2 ||
+                (nStepCount + 2) > knIntMax / (nStepCount + 2))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d",
+                         nStepCount);
+                return CE_Failure;
+            }
+            nSampleMax = (nStepCount + 2) * (nStepCount + 2);
+        }
     }
     else
     {
-        const int knIntMax = std::numeric_limits<int>::max();
-        if (nStepCount > knIntMax / 4)
+        if (bAll)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d",
-                     nStepCount);
-            return CE_Failure;
+            if (nDstXSize > (knIntMax - 2 * nDstYSize) / 2)
+            {
+                // Extremely unlikely !
+                CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
+                return CE_Failure;
+            }
+            nSampleMax = 2 * (nDstXSize + nDstYSize);
         }
-        nSampleMax = nStepCount * 4;
+        else
+        {
+            if (nStepCount > knIntMax / 4)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d * 4",
+                         nStepCount);
+                return CE_Failure;
+            }
+            nSampleMax = nStepCount * 4;
+        }
     }
 
     pabSuccess =
@@ -2651,20 +2694,36 @@ TryAgain:
     /* -------------------------------------------------------------------- */
     if (bUseGrid)
     {
-        for (int iY = 0; iY < nStepCount + 2; iY++)
+        if (bAll)
         {
-            const double dfRatioY = (iY == 0)            ? 0.5 / nDstXSize
-                                    : (iY <= nStepCount) ? (iY - 1) * dfStepSize
-                                                         : 1 - 0.5 / nDstXSize;
-            for (int iX = 0; iX < nStepCount + 2; iX++)
+            for (int iY = 0; iY <= nDstYSize; ++iY)
             {
-                const double dfRatioX = (iX == 0) ? 0.5 / nDstXSize
-                                        : (iX <= nStepCount)
-                                            ? (iX - 1) * dfStepSize
+                for (int iX = 0; iX <= nDstXSize; ++iX)
+                {
+                    padfX[nSamplePoints] = nDstXOff + iX;
+                    padfY[nSamplePoints] = nDstYOff + iY;
+                    padfZ[nSamplePoints++] = 0.0;
+                }
+            }
+        }
+        else
+        {
+            for (int iY = 0; iY < nStepCount + 2; iY++)
+            {
+                const double dfRatioY = (iY == 0) ? 0.5 / nDstXSize
+                                        : (iY <= nStepCount)
+                                            ? (iY - 1) * dfStepSize
                                             : 1 - 0.5 / nDstXSize;
-                padfX[nSamplePoints] = dfRatioX * nDstXSize + nDstXOff;
-                padfY[nSamplePoints] = dfRatioY * nDstYSize + nDstYOff;
-                padfZ[nSamplePoints++] = 0.0;
+                for (int iX = 0; iX < nStepCount + 2; iX++)
+                {
+                    const double dfRatioX = (iX == 0) ? 0.5 / nDstXSize
+                                            : (iX <= nStepCount)
+                                                ? (iX - 1) * dfStepSize
+                                                : 1 - 0.5 / nDstXSize;
+                    padfX[nSamplePoints] = dfRatioX * nDstXSize + nDstXOff;
+                    padfY[nSamplePoints] = dfRatioY * nDstYSize + nDstYOff;
+                    padfZ[nSamplePoints++] = 0.0;
+                }
             }
         }
     }
@@ -2673,28 +2732,59 @@ TryAgain:
     /* -------------------------------------------------------------------- */
     else
     {
-        for (double dfRatio = 0.0; dfRatio <= 1.0 + dfStepSize * 0.5;
-             dfRatio += dfStepSize)
+        if (bAll)
         {
-            // Along top
-            padfX[nSamplePoints] = dfRatio * nDstXSize + nDstXOff;
-            padfY[nSamplePoints] = nDstYOff;
-            padfZ[nSamplePoints++] = 0.0;
+            for (int iX = 0; iX <= nDstXSize; ++iX)
+            {
+                // Along top
+                padfX[nSamplePoints] = nDstXOff + iX;
+                padfY[nSamplePoints] = nDstYOff;
+                padfZ[nSamplePoints++] = 0.0;
 
-            // Along bottom
-            padfX[nSamplePoints] = dfRatio * nDstXSize + nDstXOff;
-            padfY[nSamplePoints] = nDstYOff + nDstYSize;
-            padfZ[nSamplePoints++] = 0.0;
+                // Along bottom
+                padfX[nSamplePoints] = nDstXOff + iX;
+                padfY[nSamplePoints] = nDstYOff + nDstYSize;
+                padfZ[nSamplePoints++] = 0.0;
+            }
 
-            // Along left
-            padfX[nSamplePoints] = nDstXOff;
-            padfY[nSamplePoints] = dfRatio * nDstYSize + nDstYOff;
-            padfZ[nSamplePoints++] = 0.0;
+            for (int iY = 1; iY < nDstYSize; ++iY)
+            {
+                // Along left
+                padfX[nSamplePoints] = nDstXOff;
+                padfY[nSamplePoints] = nDstYOff + iY;
+                padfZ[nSamplePoints++] = 0.0;
 
-            // Along right
-            padfX[nSamplePoints] = nDstXSize + nDstXOff;
-            padfY[nSamplePoints] = dfRatio * nDstYSize + nDstYOff;
-            padfZ[nSamplePoints++] = 0.0;
+                // Along right
+                padfX[nSamplePoints] = nDstXOff + nDstXSize;
+                padfY[nSamplePoints] = nDstYOff + iY;
+                padfZ[nSamplePoints++] = 0.0;
+            }
+        }
+        else
+        {
+            for (double dfRatio = 0.0; dfRatio <= 1.0 + dfStepSize * 0.5;
+                 dfRatio += dfStepSize)
+            {
+                // Along top
+                padfX[nSamplePoints] = dfRatio * nDstXSize + nDstXOff;
+                padfY[nSamplePoints] = nDstYOff;
+                padfZ[nSamplePoints++] = 0.0;
+
+                // Along bottom
+                padfX[nSamplePoints] = dfRatio * nDstXSize + nDstXOff;
+                padfY[nSamplePoints] = nDstYOff + nDstYSize;
+                padfZ[nSamplePoints++] = 0.0;
+
+                // Along left
+                padfX[nSamplePoints] = nDstXOff;
+                padfY[nSamplePoints] = dfRatio * nDstYSize + nDstYOff;
+                padfZ[nSamplePoints++] = 0.0;
+
+                // Along right
+                padfX[nSamplePoints] = nDstXSize + nDstXOff;
+                padfY[nSamplePoints] = dfRatio * nDstYSize + nDstYOff;
+                padfZ[nSamplePoints++] = 0.0;
+            }
         }
     }
 
@@ -2816,6 +2906,7 @@ TryAgain:
     if (!bUseGrid && nFailedCount > 0)
     {
         bUseGrid = true;
+        bAll = false;
         goto TryAgain;
     }
 

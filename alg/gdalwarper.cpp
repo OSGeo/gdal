@@ -1234,7 +1234,10 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * <li>SAMPLE_STEPS: Modifies the density of the sampling grid.  The default
  * number of steps is 21.   Increasing this can increase the computational
  * cost, but improves the accuracy with which the source region is
- * computed.</li>
+ * computed.
+ * Starting with GDAL 3.7, this can be set to ALL to mean to sample
+ * along all edge points of the destination region (if SAMPLE_GRID=NO or not
+ * specified), or all points of the destination region if SAMPLE_GRID=YES.</li>
  *
  * <li>SOURCE_EXTRA: This is a number of extra pixels added around the source
  * window for a given request, and by default it is 1 to take care of rounding
