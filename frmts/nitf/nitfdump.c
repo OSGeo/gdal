@@ -33,6 +33,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
+#include "gdal.h"
 #include "ogr_api.h"
 
 static void DumpRPC(NITFImage *psImage, NITFRPC00BInfo *psRPC);
@@ -139,6 +140,8 @@ int main(int nArgc, char **papszArgv)
             bExtractSHPInMem = TRUE;
         }
     }
+
+    GDALAllRegister();
 
     /* ==================================================================== */
     /*      Loop over all files.                                            */
@@ -637,7 +640,6 @@ int main(int nArgc, char **papszArgv)
                 if (NITFDESExtractShapefile(psDES, szRadix))
                 {
                     OGRDataSourceH hDS;
-                    OGRRegisterAll();
                     snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
                     hDS = OGROpen(szFilename, FALSE, NULL);
                     if (hDS)
