@@ -236,6 +236,7 @@ class VRTBuilder
     int nSelectedBands = 0;
     int *panSelectedBandList = nullptr;
     ResolutionStrategy resolutionStrategy = AVERAGE_RESOLUTION;
+    int nCountValid = 0;
     double we_res = 0;
     double ns_res = 0;
     int bTargetAlignedPixels = 0;
@@ -937,8 +938,15 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 
     if (resolutionStrategy == AVERAGE_RESOLUTION)
     {
-        we_res += padfGeoTransform[GEOTRSFRM_WE_RES];
-        ns_res += padfGeoTransform[GEOTRSFRM_NS_RES];
+        ++nCountValid;
+        {
+            const double dfDelta = padfGeoTransform[GEOTRSFRM_WE_RES] - we_res;
+            we_res += dfDelta / nCountValid;
+        }
+        {
+            const double dfDelta = padfGeoTransform[GEOTRSFRM_NS_RES] - ns_res;
+            ns_res += dfDelta / nCountValid;
+        }
     }
     else if (resolutionStrategy != USER_RESOLUTION)
     {
@@ -1487,7 +1495,7 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         }
     }
 
-    int nCountValid = 0;
+    bool bFoundValid = false;
     for (int i = 0; ppszInputFilenames != nullptr && i < nInputFiles; i++)
     {
         const char *dsFileName = ppszInputFilenames[i];
@@ -1509,7 +1517,7 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
             if (osErrorMsg.empty())
             {
                 asDatasetProperties[i].isFileOK = TRUE;
-                nCountValid++;
+                bFoundValid = true;
                 bFirst = FALSE;
             }
             if (pahSrcDS == nullptr)
@@ -1545,17 +1553,11 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         }
     }
 
-    if (nCountValid == 0)
+    if (!bFoundValid)
         return nullptr;
 
     if (bHasGeoTransform)
     {
-        if (resolutionStrategy == AVERAGE_RESOLUTION)
-        {
-            we_res /= nCountValid;
-            ns_res /= nCountValid;
-        }
-
         if (bTargetAlignedPixels)
         {
             minX = floor(minX / we_res) * we_res;
