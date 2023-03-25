@@ -1114,9 +1114,6 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
         CSLDestroy(papszTokens);
     }
 
-    if (OGRGetDriverCount() == 0)
-        OGRRegisterAll();
-
     /* -------------------------------------------------------------------- */
     /*      Open underlying OGR DB                                          */
     /* -------------------------------------------------------------------- */

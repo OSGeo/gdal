@@ -2613,9 +2613,6 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (OGRGetDriverCount() == 0)
-        OGRRegisterAll();
-
     /* -------------------------------------------------------------------- */
     /*      Open underlying OGR DB                                          */
     /* -------------------------------------------------------------------- */

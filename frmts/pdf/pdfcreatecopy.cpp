@@ -2170,9 +2170,6 @@ bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
                                        const char *pszOGRLinkField,
                                        int bWriteOGRAttributes)
 {
-    if (OGRGetDriverCount() == 0)
-        OGRRegisterAll();
-
     OGRDataSourceH hDS = OGROpen(pszOGRDataSource, 0, nullptr);
     if (hDS == nullptr)
         return false;

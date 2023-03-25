@@ -468,9 +468,6 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Create or open the SQLite DB                                    */
     /* -------------------------------------------------------------------- */
 
-    if (OGRGetDriverCount() == 0)
-        OGRRegisterAll();
-
     OGRSFDriverH hSQLiteDriver = OGRGetDriverByName("SQLite");
     if (hSQLiteDriver == nullptr)
     {
