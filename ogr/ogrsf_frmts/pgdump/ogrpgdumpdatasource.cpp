@@ -37,8 +37,9 @@
 
 OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
                                          char **papszOptions)
-    : m_pszName(CPLStrdup(pszNameIn))
 {
+    SetDescription(pszNameIn);
+
     const char *pszCRLFFormat = CSLFetchNameValue(papszOptions, "LINEFORMAT");
 
     bool bUseCRLF = false;
@@ -68,6 +69,13 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
 
     if (bUseCRLF)
         m_pszEOL = "\r\n";
+
+    m_fp = VSIFOpenL(pszNameIn, "wb");
+    if (m_fp == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszNameIn);
+        return;
+    }
 }
 
 /************************************************************************/
@@ -86,7 +94,6 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
         VSIFCloseL(m_fp);
         m_fp = nullptr;
     }
-    CPLFree(m_pszName);
 }
 
 /************************************************************************/
@@ -672,15 +679,7 @@ bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)
 {
     if (m_fp == nullptr)
     {
-        if (m_bTriedOpen)
-            return false;
-        m_bTriedOpen = true;
-        m_fp = VSIFOpenL(m_pszName, "wb");
-        if (m_fp == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", m_pszName);
-            return false;
-        }
+        return false;
     }
 
     if (bAddSemiColumn)

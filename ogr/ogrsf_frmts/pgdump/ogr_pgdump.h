@@ -238,14 +238,12 @@ class OGRPGDumpLayer final : public OGRLayer
 /************************************************************************/
 /*                       OGRPGDumpDataSource                            */
 /************************************************************************/
-class OGRPGDumpDataSource final : public OGRDataSource
+class OGRPGDumpDataSource final : public GDALDataset
 {
     OGRPGDumpDataSource(const OGRPGDumpDataSource &) = delete;
     OGRPGDumpDataSource &operator=(const OGRPGDumpDataSource &) = delete;
 
     std::vector<std::unique_ptr<OGRPGDumpLayer>> m_apoLayers{};
-    char *m_pszName = nullptr;
-    bool m_bTriedOpen = false;
     VSILFILE *m_fp = nullptr;
     bool m_bInTransaction = false;
     OGRPGDumpLayer *m_poLayerInCopyMode = nullptr;
@@ -257,10 +255,6 @@ class OGRPGDumpDataSource final : public OGRDataSource
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);
 
-    virtual const char *GetName() override
-    {
-        return m_pszName;
-    }
     virtual int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
