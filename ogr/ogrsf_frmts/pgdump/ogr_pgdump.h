@@ -120,7 +120,7 @@ class OGRPGDumpLayer final : public OGRLayer
     int m_nPostGISMajor = 0;
     int m_nPostGISMinor = 0;
 
-    int m_iNextShapeId = 0;
+    GIntBig m_iNextShapeId = 0;
     int m_iFIDAsRegularColumnIndex = -1;
     bool m_bAutoFIDOnCreateViaCopy = true;
     bool m_bCopyStatementWithFID = true;
