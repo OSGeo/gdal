@@ -16,6 +16,7 @@ Synopsis
 .. code-block::
 
     gdal_rasterize [-b band]* [-i] [-at]
+        [-oo NAME=VALUE]*
         {[-burn value]* | [-a attribute_name] | [-3d]} [-add]
         [-l layername]* [-where expression] [-sql select_statement|@filename]
         [-dialect dialect] [-of format] [-a_srs srs_def] [-to NAME=VALUE]*
@@ -173,6 +174,12 @@ raster data is only supported since GDAL 2.1.0.
     properties.
 
     .. versionadded:: 2.3
+
+.. option:: -oo <NAME=VALUE>
+
+    .. versionadded:: 3.7
+
+    Source dataset open option (format specific)
 
 .. option:: -q
 

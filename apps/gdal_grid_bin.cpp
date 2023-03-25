@@ -40,6 +40,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
 {
     printf(
         "Usage: gdal_grid [--help-general]\n"
+        "    [-oo NAME=VALUE]*\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
@@ -89,31 +90,6 @@ static void Usage(const char *pszErrorMsg = nullptr)
     GDALDestroyDriverManager();
     exit(1);
 }
-/************************************************************************/
-/*                         GDALGridOptionsForBinaryNew()                */
-/************************************************************************/
-
-static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
-{
-    return static_cast<GDALGridOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALGridOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                         GDALGridOptionsForBinaryFree()               */
-/************************************************************************/
-
-static void
-GDALGridOptionsForBinaryFree(GDALGridOptionsForBinary *psOptionsForBinary)
-{
-    if (psOptionsForBinary == nullptr)
-        return;
-
-    CPLFree(psOptionsForBinary->pszSource);
-    CPLFree(psOptionsForBinary->pszDest);
-    CPLFree(psOptionsForBinary->pszFormat);
-    CPLFree(psOptionsForBinary);
-}
 
 /************************************************************************/
 /*                                main()                                */
@@ -151,11 +127,10 @@ MAIN_START(argc, argv)
         }
     }
 
-    GDALGridOptionsForBinary *psOptionsForBinary =
-        GDALGridOptionsForBinaryNew();
+    GDALGridOptionsForBinary sOptionsForBinary;
     /* coverity[tainted_data] */
     GDALGridOptions *psOptions =
-        GDALGridOptionsNew(argv + 1, psOptionsForBinary);
+        GDALGridOptionsNew(argv + 1, &sOptionsForBinary);
     CSLDestroy(argv);
 
     if (psOptions == nullptr)
@@ -163,28 +138,30 @@ MAIN_START(argc, argv)
         Usage();
     }
 
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
         GDALGridOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if (psOptionsForBinary->pszSource == nullptr)
+    if (sOptionsForBinary.osSource.empty())
         Usage("No input file specified.");
-    if (psOptionsForBinary->pszDest == nullptr)
+    if (!sOptionsForBinary.bDestSpecified)
         Usage("No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hInDS = GDALOpenEx(psOptionsForBinary->pszSource,
+    GDALDatasetH hInDS = GDALOpenEx(sOptionsForBinary.osSource.c_str(),
                                     GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                                    nullptr, nullptr, nullptr);
+                                    /*papszAllowedDrivers=*/nullptr,
+                                    sOptionsForBinary.aosOpenOptions.List(),
+                                    /*papszSiblingFiles=*/nullptr);
     if (hInDS == nullptr)
         exit(1);
 
     int bUsageError = FALSE;
-    GDALDatasetH hOutDS =
-        GDALGrid(psOptionsForBinary->pszDest, hInDS, psOptions, &bUsageError);
+    GDALDatasetH hOutDS = GDALGrid(sOptionsForBinary.osDest.c_str(), hInDS,
+                                   psOptions, &bUsageError);
     if (bUsageError == TRUE)
         Usage();
     int nRetCode = hOutDS ? 0 : 1;
@@ -192,7 +169,6 @@ MAIN_START(argc, argv)
     GDALClose(hInDS);
     GDALClose(hOutDS);
     GDALGridOptionsFree(psOptions);
-    GDALGridOptionsForBinaryFree(psOptionsForBinary);
 
     OGRCleanupAll();
     GDALDestroyDriverManager();

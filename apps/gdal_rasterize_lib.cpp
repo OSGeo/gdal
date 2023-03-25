@@ -992,6 +992,8 @@ GDALRasterizeOptionsNew(char **papszArgv,
     psOptions->hSRS = nullptr;
     psOptions->bTargetAlignedPixels = false;
 
+    bool bGotSourceFilename = false;
+    bool bGotDestFilename = false;
     /* -------------------------------------------------------------------- */
     /*      Handle command line arguments.                                  */
     /* -------------------------------------------------------------------- */
@@ -1010,7 +1012,15 @@ GDALRasterizeOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
         {
             if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = TRUE;
+            {
+                psOptionsForBinary->bQuiet = true;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "%s switch only supported from gdal_grid binary.",
+                         papszArgv[i]);
+            }
         }
 
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-a"))
@@ -1263,7 +1273,19 @@ GDALRasterizeOptionsNew(char **papszArgv,
             psOptions->papszTO =
                 CSLAddString(psOptions->papszTO, papszArgv[++i]);
         }
-
+        else if (i < argc - 1 && EQUAL(papszArgv[i], "-oo"))
+        {
+            i++;
+            if (psOptionsForBinary)
+            {
+                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "-oo switch only supported from gdal_grid binary.");
+            }
+        }
         else if (papszArgv[i][0] == '-')
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
@@ -1271,13 +1293,34 @@ GDALRasterizeOptionsNew(char **papszArgv,
             GDALRasterizeOptionsFree(psOptions);
             return nullptr;
         }
-        else if (psOptionsForBinary && psOptionsForBinary->pszSource == nullptr)
+        else if (!bGotSourceFilename)
         {
-            psOptionsForBinary->pszSource = CPLStrdup(papszArgv[i]);
+            bGotSourceFilename = true;
+            if (psOptionsForBinary)
+            {
+                psOptionsForBinary->osSource = papszArgv[i];
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "{source_filename} only supported from gdal_grid binary.");
+            }
         }
-        else if (psOptionsForBinary && psOptionsForBinary->pszDest == nullptr)
+        else if (!bGotDestFilename)
         {
-            psOptionsForBinary->pszDest = CPLStrdup(papszArgv[i]);
+            bGotDestFilename = true;
+            if (psOptionsForBinary)
+            {
+                psOptionsForBinary->bDestSpecified = true;
+                psOptionsForBinary->osDest = papszArgv[i];
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "{dest_filename} only supported from gdal_grid binary.");
+            }
         }
         else
         {
@@ -1369,7 +1412,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
     {
         psOptionsForBinary->bCreateOutput = psOptions->bCreateOutput;
         if (psOptions->pszFormat)
-            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+            psOptionsForBinary->osFormat = psOptions->pszFormat;
     }
 
     return psOptions;

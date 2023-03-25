@@ -285,24 +285,11 @@ def test_gdal_rasterize_5(gdal_rasterize_path):
     )
     f.close()
 
-    f = open("tmp/test_gdal_rasterize_5.vrt", "wb")
-    f.write(
-        """<OGRVRTDataSource>
-    <OGRVRTLayer name="test">
-        <SrcDataSource relativetoVRT="1">test_gdal_rasterize_5.csv</SrcDataSource>
-        <SrcLayer>test_gdal_rasterize_5</SrcLayer>
-        <GeometryType>wkbPoint</GeometryType>
-        <GeometryField encoding="PointFromColumns" x="x" y="y"/>
-    </OGRVRTLayer>
-</OGRVRTDataSource>""".encode(
-            "ascii"
-        )
-    )
-    f.close()
-
     gdaltest.runexternal(
         gdal_rasterize_path
-        + " -l test tmp/test_gdal_rasterize_5.vrt tmp/test_gdal_rasterize_5.tif -a Value -tr 1 1 -ot Byte"
+        + " -l test_gdal_rasterize_5 -oo X_POSSIBLE_NAMES=x -oo Y_POSSIBLE_NAMES=y "
+        + " tmp/test_gdal_rasterize_5.csv tmp/test_gdal_rasterize_5.tif "
+        + " -a Value -tr 1 1 -ot Byte"
     )
 
     ds = gdal.Open("tmp/test_gdal_rasterize_5.tif")
@@ -326,7 +313,6 @@ def test_gdal_rasterize_5(gdal_rasterize_path):
 
     gdal.GetDriverByName("GTiff").Delete("tmp/test_gdal_rasterize_5.tif")
     os.unlink("tmp/test_gdal_rasterize_5.csv")
-    os.unlink("tmp/test_gdal_rasterize_5.vrt")
 
 
 ###############################################################################
