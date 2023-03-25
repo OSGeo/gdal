@@ -1355,9 +1355,9 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
 
                     if (pszBytea != nullptr)
                     {
-                        if (poDS->bUseEscapeStringSyntax)
-                            osCommand += "E";
-                        osCommand = osCommand + "'" + pszBytea + "'";
+                        osCommand += "E'";
+                        osCommand += pszBytea;
+                        osCommand += '\'';
                         CPLFree(pszBytea);
                     }
                     else
@@ -1847,9 +1847,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
 
             if (pszBytea != nullptr)
             {
-                if (poDS->bUseEscapeStringSyntax)
-                    osCommand += "E";
-                osCommand = osCommand + "'" + pszBytea + "'";
+                osCommand += "E'";
+                osCommand += pszBytea;
+                osCommand += '\'';
                 CPLFree(pszBytea);
             }
             else

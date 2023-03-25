@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
+#include <limits>
+
 //
 static CPLString
 OGRPGDumpEscapeStringList(char **papszItems, bool bForInsertOrUpdate,
@@ -653,7 +655,7 @@ void OGRPGCommonAppendCopyRegularFields(
         {
             int nLen = 0;
             GByte *pabyData = poFeature->GetFieldAsBinary(i, &nLen);
-            char *pszBytea = OGRPGDumpLayer::GByteArrayToBYTEA(pabyData, nLen);
+            char *pszBytea = OGRPGCommonGByteArrayToBYTEA(pabyData, nLen);
 
             pszStrValue = pszNeedToFree = pszBytea;
         }
@@ -863,7 +865,7 @@ CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
     CPLString osCommand;
 
     /* We need to quote and escape string fields. */
-    osCommand += "'";
+    osCommand += '\'';
 
     int nSrcLen = static_cast<int>(strlen(pszStrValue));
     const int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
@@ -888,57 +890,20 @@ CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
         }
     }
 
-    char *pszDestStr = (char *)CPLMalloc(2 * nSrcLen + 1);
-
-    /* -------------------------------------------------------------------- */
-    /*  PQescapeStringConn was introduced in PostgreSQL security releases   */
-    /*  8.1.4, 8.0.8, 7.4.13, 7.3.15                                        */
-    /*  PG_HAS_PQESCAPESTRINGCONN is added by a test in 'configure'         */
-    /*  so it is not set by default when building OGR for Win32             */
-    /* -------------------------------------------------------------------- */
-#if defined(PG_HAS_PQESCAPESTRINGCONN)
-    int nError = 0;
-    PQescapeStringConn(hPGConn, pszDestStr, pszStrValue, nSrcLen, &nError);
-    if (nError == 0)
-        osCommand += pszDestStr;
-    else
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "PQescapeString(): %s\n"
-                 "  input: '%s'\n"
-                 "    got: '%s'\n",
-                 PQerrorMessage(hPGConn), pszStrValue, pszDestStr);
-#else
-    // PQescapeString(pszDestStr, pszStrValue, nSrcLen);
-
-    int j = 0;  // Used after for.
     for (int i = 0; i < nSrcLen; i++)
     {
         if (pszStrValue[i] == '\'')
         {
-            pszDestStr[j++] = '\'';
-            pszDestStr[j++] = '\'';
-        }
-        // FIXME: at some point (when we drop PostgreSQL < 9.1 support, remove
-        // the escaping of backslash and remove
-        //   'SET standard_conforming_strings = OFF'
-        //  in ICreateLayer().
-        else if (pszStrValue[i] == '\\')
-        {
-            pszDestStr[j++] = '\\';
-            pszDestStr[j++] = '\\';
+            osCommand += '\'';
+            osCommand += '\'';
         }
         else
         {
-            pszDestStr[j++] = pszStrValue[i];
+            osCommand += pszStrValue[i];
         }
     }
-    pszDestStr[j] = 0;
 
-    osCommand += pszDestStr;
-#endif
-    CPLFree(pszDestStr);
-
-    osCommand += "'";
+    osCommand += '\'';
 
     return osCommand;
 }
@@ -1128,7 +1093,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
 
         int nLen = 0;
         GByte *pabyData = poFeature->GetFieldAsBinary(i, &nLen);
-        char *pszBytea = OGRPGDumpLayer::GByteArrayToBYTEA(pabyData, nLen);
+        char *pszBytea = OGRPGCommonGByteArrayToBYTEA(pabyData, nLen);
 
         osCommand += pszBytea;
 
@@ -1182,18 +1147,24 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                        GByteArrayToBYTEA()                           */
+/*                      OGRPGCommonGByteArrayToBYTEA()                  */
 /************************************************************************/
 
-char *OGRPGDumpLayer::GByteArrayToBYTEA(const GByte *pabyData, int nLen)
+char *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen)
 {
+    if (nLen > (std::numeric_limits<size_t>::max() - 1) / 5)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big byte array");
+        return CPLStrdup("");
+    }
     const size_t nTextBufLen = nLen * 5 + 1;
-    char *pszTextBuf;
-    pszTextBuf = (char *)CPLMalloc(nTextBufLen);
+    char *pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextBufLen));
+    if (pszTextBuf == nullptr)
+        return CPLStrdup("");
 
-    int iDst = 0;
+    size_t iDst = 0;
 
-    for (int iSrc = 0; iSrc < nLen; iSrc++)
+    for (size_t iSrc = 0; iSrc < nLen; iSrc++)
     {
         if (pabyData[iSrc] < 40 || pabyData[iSrc] > 126 ||
             pabyData[iSrc] == '\\')

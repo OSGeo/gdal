@@ -42,7 +42,7 @@ OGRPGDumpDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
         pszName = "/vsistdout/";
 
     OGRPGDumpDataSource *poDS = new OGRPGDumpDataSource(pszName, papszOptions);
-    if (!poDS->Log("SET standard_conforming_strings = OFF"))
+    if (!poDS->Log("SET standard_conforming_strings = ON"))
     {
         delete poDS;
         return nullptr;

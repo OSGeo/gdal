@@ -38,6 +38,7 @@
 CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName);
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength = -1,
                                 const char *pszFieldName = "");
+char CPL_DLL *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen);
 CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn &oField,
                                           bool bPreservePrecision,
                                           bool bApproxOK);
@@ -231,8 +232,6 @@ class OGRPGDumpLayer final : public OGRLayer
         m_aosSpatialIndexCreationCommands = aosSpatialIndexCreationCommands;
     }
     OGRErr EndCopy();
-
-    static char *GByteArrayToBYTEA(const GByte *pabyData, int nLen);
 };
 
 /************************************************************************/
