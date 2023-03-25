@@ -351,4 +351,76 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
+   public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buidVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      Dataset retval = null;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (BuildVRT)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALBuildVRT_names(dstDS, poObjects, nativeArray, buidVrtAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
+   public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buidVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      Dataset retval = null;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (BuildVRT)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALBuildVRT_objects(dest, poObjects.Length, nativeArray, buidVrtAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
+    public static int GDALMultiDimTranslate(Dataset dstDS, Dataset[] poObjects, MultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      int retval = 0;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestDS)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALMultiDimTranslateDestDS(dstDS, poObjects.Length, nativeArray, multiDimAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
+   public static Dataset GDALMultiDimTranslate(string dest, Dataset[] poObjects, MultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      Dataset retval = null;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestName)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALMultiDimTranslateDestName(dest, poObjects.Length, nativeArray, multiDimAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
 %}
