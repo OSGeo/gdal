@@ -84,7 +84,6 @@ OGRPGDumpLayer::~OGRPGDumpLayer()
     CPLFree(m_pszSchemaName);
     CPLFree(m_pszSqlTableName);
     CPLFree(m_pszFIDColumn);
-    CSLDestroy(m_papszOverrideColumnTypes);
 }
 
 /************************************************************************/
@@ -1640,7 +1639,7 @@ OGRErr OGRPGDumpLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
     }
 
     const char *pszOverrideType =
-        CSLFetchNameValue(m_papszOverrideColumnTypes, oField.GetNameRef());
+        m_apszOverrideColumnTypes.FetchNameValue(oField.GetNameRef());
     if (pszOverrideType != nullptr)
     {
         osFieldType = pszOverrideType;
@@ -1858,7 +1857,7 @@ void OGRPGDumpLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
         return;
 
     const char *pszIter = pszOverrideColumnTypes;
-    CPLString osCur;
+    std::string osCur;
     while (*pszIter != '\0')
     {
         if (*pszIter == '(')
@@ -1881,17 +1880,15 @@ void OGRPGDumpLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
 
         if (*pszIter == ',')
         {
-            m_papszOverrideColumnTypes =
-                CSLAddString(m_papszOverrideColumnTypes, osCur);
-            osCur = "";
+            m_apszOverrideColumnTypes.AddString(osCur.c_str());
+            osCur.clear();
         }
         else
             osCur += *pszIter;
         pszIter++;
     }
     if (!osCur.empty())
-        m_papszOverrideColumnTypes =
-            CSLAddString(m_papszOverrideColumnTypes, osCur);
+        m_apszOverrideColumnTypes.AddString(osCur.c_str());
 }
 
 /************************************************************************/

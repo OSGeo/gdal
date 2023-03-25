@@ -78,8 +78,7 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 {
     EndCopy();
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
+    m_apoLayers.clear();
 
     if (m_fp)
     {
@@ -87,7 +86,6 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
         VSIFCloseL(m_fp);
         m_fp = nullptr;
     }
-    CPLFree(m_papoLayers);
     CPLFree(m_pszName);
 }
 
@@ -298,10 +296,9 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Do we already have this layer?                                  */
     /* -------------------------------------------------------------------- */
-    for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
+    for (const auto &poLayer : m_apoLayers)
     {
-        if (EQUAL(pszLayerName,
-                  m_papoLayers[iLayer]->GetLayerDefn()->GetName()))
+        if (EQUAL(pszLayerName, poLayer->GetDescription()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Layer %s already exists, CreateLayer failed.\n",
@@ -575,7 +572,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     const bool bWriteAsHex =
         !CPLFetchBool(papszOptions, "WRITE_EWKT_GEOM", false);
 
-    OGRPGDumpLayer *poLayer = new OGRPGDumpLayer(
+    auto poLayer = cpl::make_unique<OGRPGDumpLayer>(
         this, osSchema.c_str(), osTable.c_str(),
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
         bWriteAsHex, bCreateTable);
@@ -626,12 +623,9 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
     /* -------------------------------------------------------------------- */
-    m_papoLayers = (OGRPGDumpLayer **)CPLRealloc(
-        m_papoLayers, sizeof(OGRPGDumpLayer *) * (m_nLayers + 1));
+    m_apoLayers.emplace_back(std::move(poLayer));
 
-    m_papoLayers[m_nLayers++] = poLayer;
-
-    return poLayer;
+    return m_apoLayers.back().get();
 }
 
 /************************************************************************/
@@ -664,10 +658,10 @@ int OGRPGDumpDataSource::TestCapability(const char *pszCap)
 OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer)
 
 {
-    if (iLayer < 0 || iLayer >= m_nLayers)
+    if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
     else
-        return m_papoLayers[iLayer];
+        return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/

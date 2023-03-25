@@ -130,7 +130,7 @@ class OGRPGDumpLayer final : public OGRLayer
     std::vector<std::string> m_aosDeferrentNonGeomFieldCreationCommands{};
     std::vector<std::string> m_aosSpatialIndexCreationCommands{};
 
-    char **m_papszOverrideColumnTypes = nullptr;
+    CPLStringList m_apszOverrideColumnTypes{};
 
     CPLString m_osFirstGeometryFieldName{};
 
@@ -243,8 +243,7 @@ class OGRPGDumpDataSource final : public OGRDataSource
     OGRPGDumpDataSource(const OGRPGDumpDataSource &) = delete;
     OGRPGDumpDataSource &operator=(const OGRPGDumpDataSource &) = delete;
 
-    int m_nLayers = 0;
-    OGRPGDumpLayer **m_papoLayers = nullptr;
+    std::vector<std::unique_ptr<OGRPGDumpLayer>> m_apoLayers{};
     char *m_pszName = nullptr;
     bool m_bTriedOpen = false;
     VSILFILE *m_fp = nullptr;
@@ -264,7 +263,7 @@ class OGRPGDumpDataSource final : public OGRDataSource
     }
     virtual int GetLayerCount() override
     {
-        return m_nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
     virtual OGRLayer *GetLayer(int) override;
 
