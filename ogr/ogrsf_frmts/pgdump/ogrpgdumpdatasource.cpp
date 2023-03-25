@@ -37,7 +37,7 @@
 
 OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
                                          char **papszOptions)
-    : pszName(CPLStrdup(pszNameIn))
+    : m_pszName(CPLStrdup(pszNameIn))
 {
     const char *pszCRLFFormat = CSLFetchNameValue(papszOptions, "LINEFORMAT");
 
@@ -67,7 +67,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
     }
 
     if (bUseCRLF)
-        pszEOL = "\r\n";
+        m_pszEOL = "\r\n";
 }
 
 /************************************************************************/
@@ -78,17 +78,17 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 {
     EndCopy();
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
+    for (int i = 0; i < m_nLayers; i++)
+        delete m_papoLayers[i];
 
-    if (fp)
+    if (m_fp)
     {
         LogCommit();
-        VSIFCloseL(fp);
-        fp = nullptr;
+        VSIFCloseL(m_fp);
+        m_fp = nullptr;
     }
-    CPLFree(papoLayers);
-    CPLFree(pszName);
+    CPLFree(m_papoLayers);
+    CPLFree(m_pszName);
 }
 
 /************************************************************************/
@@ -97,9 +97,9 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 void OGRPGDumpDataSource::LogStartTransaction()
 {
-    if (bInTransaction)
+    if (m_bInTransaction)
         return;
-    bInTransaction = true;
+    m_bInTransaction = true;
     Log("BEGIN");
 }
 
@@ -111,9 +111,9 @@ void OGRPGDumpDataSource::LogCommit()
 {
     EndCopy();
 
-    if (!bInTransaction)
+    if (!m_bInTransaction)
         return;
-    bInTransaction = false;
+    m_bInTransaction = false;
     Log("COMMIT");
 }
 
@@ -165,37 +165,37 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
         CPLFetchBool(papszOptions, "CREATE_SCHEMA", true);
     const char *pszDropTable =
         CSLFetchNameValueDef(papszOptions, "DROP_TABLE", "IF_EXISTS");
-    int GeometryTypeFlags = 0;
+    int nGeometryTypeFlags = 0;
 
     if (OGR_GT_HasZ((OGRwkbGeometryType)eType))
-        GeometryTypeFlags |= OGRGeometry::OGR_G_3D;
+        nGeometryTypeFlags |= OGRGeometry::OGR_G_3D;
     if (OGR_GT_HasM((OGRwkbGeometryType)eType))
-        GeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
+        nGeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
 
-    int ForcedGeometryTypeFlags = -1;
+    int nForcedGeometryTypeFlags = -1;
     const char *pszDim = CSLFetchNameValue(papszOptions, "DIM");
     if (pszDim != nullptr)
     {
         if (EQUAL(pszDim, "XY") || EQUAL(pszDim, "2"))
         {
-            GeometryTypeFlags = 0;
-            ForcedGeometryTypeFlags = GeometryTypeFlags;
+            nGeometryTypeFlags = 0;
+            nForcedGeometryTypeFlags = nGeometryTypeFlags;
         }
         else if (EQUAL(pszDim, "XYZ") || EQUAL(pszDim, "3"))
         {
-            GeometryTypeFlags = OGRGeometry::OGR_G_3D;
-            ForcedGeometryTypeFlags = GeometryTypeFlags;
+            nGeometryTypeFlags = OGRGeometry::OGR_G_3D;
+            nForcedGeometryTypeFlags = nGeometryTypeFlags;
         }
         else if (EQUAL(pszDim, "XYM"))
         {
-            GeometryTypeFlags = OGRGeometry::OGR_G_MEASURED;
-            ForcedGeometryTypeFlags = GeometryTypeFlags;
+            nGeometryTypeFlags = OGRGeometry::OGR_G_MEASURED;
+            nForcedGeometryTypeFlags = nGeometryTypeFlags;
         }
         else if (EQUAL(pszDim, "XYZM") || EQUAL(pszDim, "4"))
         {
-            GeometryTypeFlags =
+            nGeometryTypeFlags =
                 OGRGeometry::OGR_G_3D | OGRGeometry::OGR_G_MEASURED;
-            ForcedGeometryTypeFlags = GeometryTypeFlags;
+            nForcedGeometryTypeFlags = nGeometryTypeFlags;
         }
         else
         {
@@ -204,8 +204,8 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     const int nDimension =
-        2 + ((GeometryTypeFlags & OGRGeometry::OGR_G_3D) ? 1 : 0) +
-        ((GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) ? 1 : 0);
+        2 + ((nGeometryTypeFlags & OGRGeometry::OGR_G_3D) ? 1 : 0) +
+        ((nGeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) ? 1 : 0);
 
     /* Should we turn layers with None geometry type as Unknown/GEOMETRY */
     /* so they are still recorded in geometry_columns table ? (#4012) */
@@ -298,9 +298,10 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Do we already have this layer?                                  */
     /* -------------------------------------------------------------------- */
-    for (int iLayer = 0; iLayer < nLayers; iLayer++)
+    for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
     {
-        if (EQUAL(pszLayerName, papoLayers[iLayer]->GetLayerDefn()->GetName()))
+        if (EQUAL(pszLayerName,
+                  m_papoLayers[iLayer]->GetLayerDefn()->GetName()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Layer %s already exists, CreateLayer failed.\n",
@@ -487,16 +488,16 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
             pszGFldName = "the_geog";
 
         const char *suffix = "";
-        if ((GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) &&
-            (GeometryTypeFlags & OGRGeometry::OGR_G_3D))
+        if ((nGeometryTypeFlags & OGRGeometry::OGR_G_MEASURED) &&
+            (nGeometryTypeFlags & OGRGeometry::OGR_G_3D))
         {
             suffix = "ZM";
         }
-        else if ((GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED))
+        else if ((nGeometryTypeFlags & OGRGeometry::OGR_G_MEASURED))
         {
             suffix = "M";
         }
-        else if ((GeometryTypeFlags & OGRGeometry::OGR_G_3D))
+        else if ((nGeometryTypeFlags & OGRGeometry::OGR_G_3D))
         {
             suffix = "Z";
         }
@@ -518,7 +519,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     else if (bCreateTable && eType != wkbNone)
     {
         const char *suffix = "";
-        if (GeometryTypeFlags ==
+        if (nGeometryTypeFlags ==
                 static_cast<int>(OGRGeometry::OGR_G_MEASURED) &&
             wkbFlatten(eType) != wkbUnknown)
         {
@@ -588,7 +589,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetCreateSpatialIndex(bCreateSpatialIndex, pszSpatialIndexType);
     poLayer->SetPostGISVersion(nPostGISMajor, nPostGISMinor);
-    poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
+    poLayer->SetForcedGeometryTypeFlags(nForcedGeometryTypeFlags);
 
     // Log geometry field creation immediately or defer it, according to
     // GEOM_COLUMN_POSITION
@@ -615,8 +616,8 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     {
         OGRGeomFieldDefn oTmp(pszGFldName, eType);
         auto poGeomField = cpl::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
-        poGeomField->nSRSId = nSRSId;
-        poGeomField->GeometryTypeFlags = GeometryTypeFlags;
+        poGeomField->m_nSRSId = nSRSId;
+        poGeomField->m_nGeometryTypeFlags = nGeometryTypeFlags;
         poLayer->GetLayerDefn()->AddGeomFieldDefn(std::move(poGeomField));
     }
     else if (pszGFldName)
@@ -625,10 +626,10 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
     /* -------------------------------------------------------------------- */
-    papoLayers = (OGRPGDumpLayer **)CPLRealloc(
-        papoLayers, sizeof(OGRPGDumpLayer *) * (nLayers + 1));
+    m_papoLayers = (OGRPGDumpLayer **)CPLRealloc(
+        m_papoLayers, sizeof(OGRPGDumpLayer *) * (m_nLayers + 1));
 
-    papoLayers[nLayers++] = poLayer;
+    m_papoLayers[m_nLayers++] = poLayer;
 
     return poLayer;
 }
@@ -663,10 +664,10 @@ int OGRPGDumpDataSource::TestCapability(const char *pszCap)
 OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer)
 
 {
-    if (iLayer < 0 || iLayer >= nLayers)
+    if (iLayer < 0 || iLayer >= m_nLayers)
         return nullptr;
     else
-        return papoLayers[iLayer];
+        return m_papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -675,23 +676,23 @@ OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer)
 
 bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)
 {
-    if (fp == nullptr)
+    if (m_fp == nullptr)
     {
-        if (bTriedOpen)
+        if (m_bTriedOpen)
             return false;
-        bTriedOpen = true;
-        fp = VSIFOpenL(pszName, "wb");
-        if (fp == nullptr)
+        m_bTriedOpen = true;
+        m_fp = VSIFOpenL(m_pszName, "wb");
+        if (m_fp == nullptr)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszName);
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", m_pszName);
             return false;
         }
     }
 
     if (bAddSemiColumn)
-        VSIFPrintfL(fp, "%s;%s", pszStr, pszEOL);
+        VSIFPrintfL(m_fp, "%s;%s", pszStr, m_pszEOL);
     else
-        VSIFPrintfL(fp, "%s%s", pszStr, pszEOL);
+        VSIFPrintfL(m_fp, "%s%s", pszStr, m_pszEOL);
     return true;
 }
 
@@ -701,7 +702,7 @@ bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)
 void OGRPGDumpDataSource::StartCopy(OGRPGDumpLayer *poPGLayer)
 {
     EndCopy();
-    poLayerInCopyMode = poPGLayer;
+    m_poLayerInCopyMode = poPGLayer;
 }
 
 /************************************************************************/
@@ -709,10 +710,10 @@ void OGRPGDumpDataSource::StartCopy(OGRPGDumpLayer *poPGLayer)
 /************************************************************************/
 OGRErr OGRPGDumpDataSource::EndCopy()
 {
-    if (poLayerInCopyMode != nullptr)
+    if (m_poLayerInCopyMode != nullptr)
     {
-        OGRErr result = poLayerInCopyMode->EndCopy();
-        poLayerInCopyMode = nullptr;
+        OGRErr result = m_poLayerInCopyMode->EndCopy();
+        m_poLayerInCopyMode = nullptr;
 
         return result;
     }
