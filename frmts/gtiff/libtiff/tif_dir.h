@@ -329,6 +329,10 @@ extern "C"
                                             uint64_t diroff);
     extern int _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff,
                                            tdir_t *dirn);
+    extern int _TIFFGetOffsetFromDirNumber(TIFF *tif, tdir_t dirn,
+                                           uint64_t *diroff);
+    extern int _TIFFRemoveEntryFromDirectoryListByOffset(TIFF *tif,
+                                                         uint64_t diroff);
 
 #if defined(__cplusplus)
 }

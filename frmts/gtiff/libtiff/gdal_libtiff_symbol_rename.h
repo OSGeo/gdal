@@ -426,6 +426,7 @@
 #define _TIFFGetMaxColorChannels gdal__TIFFGetMaxColorChannels
 #define _TIFFgetMode gdal__TIFFgetMode
 #define TIFFGetMode gdal_TIFFGetMode
+#define _TIFFGetOffsetFromDirNumber gdal__TIFFGetOffsetFromDirNumber
 #define TIFFGetReadProc gdal_TIFFGetReadProc
 #define TIFFGetSeekProc gdal_TIFFGetSeekProc
 #define TIFFGetSizeProc gdal_TIFFGetSizeProc
@@ -624,6 +625,7 @@
 #define _TIFFrealloc gdal__TIFFrealloc
 #define _TIFFreallocExt gdal__TIFFreallocExt
 #define TIFFRegisterCODEC gdal_TIFFRegisterCODEC
+#define _TIFFRemoveEntryFromDirectoryListByOffset gdal__TIFFRemoveEntryFromDirectoryListByOffset
 #define _TIFFReserveLargeEnoughWriteBuffer gdal__TIFFReserveLargeEnoughWriteBuffer
 #define TIFFReverseBits gdal_TIFFReverseBits
 #define TIFFRewriteDirectory gdal_TIFFRewriteDirectory
