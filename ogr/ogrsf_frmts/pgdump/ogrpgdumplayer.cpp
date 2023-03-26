@@ -277,8 +277,6 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     if (poFeature->GetFID() != OGRNullFID && m_pszFIDColumn != nullptr)
     {
         m_bNeedToUpdateSequence = true;
-        if (bNeedComma)
-            osCommand += ", ";
 
         osCommand += OGRPGDumpEscapeColumnName(m_pszFIDColumn);
         bNeedComma = true;
