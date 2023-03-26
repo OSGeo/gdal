@@ -38,6 +38,7 @@
 CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName);
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength = -1,
                                 const char *pszFieldName = "");
+char CPL_DLL *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen);
 CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn &oField,
                                           bool bPreservePrecision,
                                           bool bApproxOK);
@@ -78,12 +79,12 @@ class OGRPGDumpGeomFieldDefn final : public OGRGeomFieldDefn
 
   public:
     explicit OGRPGDumpGeomFieldDefn(OGRGeomFieldDefn *poGeomField)
-        : OGRGeomFieldDefn(poGeomField), nSRSId(-1), GeometryTypeFlags(0)
+        : OGRGeomFieldDefn(poGeomField), m_nSRSId(-1), m_nGeometryTypeFlags(0)
     {
     }
 
-    int nSRSId;
-    int GeometryTypeFlags;
+    int m_nSRSId;
+    int m_nGeometryTypeFlags;
 };
 
 /************************************************************************/
@@ -99,38 +100,38 @@ class OGRPGDumpLayer final : public OGRLayer
 
     static constexpr int USE_COPY_UNSET = -1;
 
-    char *pszSchemaName = nullptr;
-    char *pszSqlTableName = nullptr;
-    CPLString osForcedDescription{};
-    char *pszFIDColumn = nullptr;
-    OGRFeatureDefn *poFeatureDefn = nullptr;
-    OGRPGDumpDataSource *poDS = nullptr;
-    bool bLaunderColumnNames = true;
-    bool bPreservePrecision = true;
-    int bUseCopy = USE_COPY_UNSET;
-    bool bWriteAsHex = false;
-    bool bCopyActive = false;
-    bool bFIDColumnInCopyFields = false;
-    int bCreateTable = false;
-    int nUnknownSRSId = -1;
-    int nForcedSRSId = -1;
-    int nForcedGeometryTypeFlags = -2;
-    bool bCreateSpatialIndexFlag = false;
-    CPLString osSpatialIndexType{};
-    int nPostGISMajor = 0;
-    int nPostGISMinor = 0;
+    char *m_pszSchemaName = nullptr;
+    char *m_pszSqlTableName = nullptr;
+    CPLString m_osForcedDescription{};
+    char *m_pszFIDColumn = nullptr;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    OGRPGDumpDataSource *m_poDS = nullptr;
+    bool m_bLaunderColumnNames = true;
+    bool m_bPreservePrecision = true;
+    int m_bUseCopy = USE_COPY_UNSET;
+    bool m_bWriteAsHex = false;
+    bool m_bCopyActive = false;
+    bool m_bFIDColumnInCopyFields = false;
+    int m_bCreateTable = false;
+    int m_nUnknownSRSId = -1;
+    int m_nForcedSRSId = -1;
+    int m_nForcedGeometryTypeFlags = -2;
+    bool m_bCreateSpatialIndexFlag = false;
+    CPLString m_osSpatialIndexType{};
+    int m_nPostGISMajor = 0;
+    int m_nPostGISMinor = 0;
 
-    int iNextShapeId = 0;
-    int iFIDAsRegularColumnIndex = -1;
-    bool bAutoFIDOnCreateViaCopy = true;
-    bool bCopyStatementWithFID = true;
-    bool bNeedToUpdateSequence = false;
+    GIntBig m_iNextShapeId = 0;
+    int m_iFIDAsRegularColumnIndex = -1;
+    bool m_bAutoFIDOnCreateViaCopy = true;
+    bool m_bCopyStatementWithFID = true;
+    bool m_bNeedToUpdateSequence = false;
     bool m_bGeomColumnPositionImmediate = true;
     std::vector<std::string> m_aosDeferredGeomFieldCreationCommands{};
     std::vector<std::string> m_aosDeferrentNonGeomFieldCreationCommands{};
     std::vector<std::string> m_aosSpatialIndexCreationCommands{};
 
-    char **papszOverrideColumnTypes = nullptr;
+    CPLStringList m_apszOverrideColumnTypes{};
 
     CPLString m_osFirstGeometryFieldName{};
 
@@ -149,11 +150,11 @@ class OGRPGDumpLayer final : public OGRLayer
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
-        return poFeatureDefn;
+        return m_poFeatureDefn;
     }
     virtual const char *GetFIDColumn() override
     {
-        return pszFIDColumn ? pszFIDColumn : "";
+        return m_pszFIDColumn ? m_pszFIDColumn : "";
     }
 
     virtual void ResetReading() override
@@ -180,35 +181,35 @@ class OGRPGDumpLayer final : public OGRLayer
     // follow methods are not base class overrides
     void SetLaunderFlag(bool bFlag)
     {
-        bLaunderColumnNames = bFlag;
+        m_bLaunderColumnNames = bFlag;
     }
     void SetPrecisionFlag(bool bFlag)
     {
-        bPreservePrecision = bFlag;
+        m_bPreservePrecision = bFlag;
     }
 
     void SetOverrideColumnTypes(const char *pszOverrideColumnTypes);
     void SetUnknownSRSId(int nUnknownSRSIdIn)
     {
-        nUnknownSRSId = nUnknownSRSIdIn;
+        m_nUnknownSRSId = nUnknownSRSIdIn;
     }
     void SetForcedSRSId(int nForcedSRSIdIn)
     {
-        nForcedSRSId = nForcedSRSIdIn;
+        m_nForcedSRSId = nForcedSRSIdIn;
     }
     void SetForcedGeometryTypeFlags(int GeometryTypeFlagsIn)
     {
-        nForcedGeometryTypeFlags = GeometryTypeFlagsIn;
+        m_nForcedGeometryTypeFlags = GeometryTypeFlagsIn;
     }
     void SetCreateSpatialIndex(bool bFlag, const char *pszSpatialIndexType)
     {
-        bCreateSpatialIndexFlag = bFlag;
-        osSpatialIndexType = pszSpatialIndexType;
+        m_bCreateSpatialIndexFlag = bFlag;
+        m_osSpatialIndexType = pszSpatialIndexType;
     }
     void SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
     {
-        nPostGISMajor = nPostGISMajorIn;
-        nPostGISMinor = nPostGISMinorIn;
+        m_nPostGISMajor = nPostGISMajorIn;
+        m_nPostGISMinor = nPostGISMinorIn;
     }
     void SetGeometryFieldName(const char *pszGeomFieldName)
     {
@@ -231,26 +232,21 @@ class OGRPGDumpLayer final : public OGRLayer
         m_aosSpatialIndexCreationCommands = aosSpatialIndexCreationCommands;
     }
     OGRErr EndCopy();
-
-    static char *GByteArrayToBYTEA(const GByte *pabyData, int nLen);
 };
 
 /************************************************************************/
 /*                       OGRPGDumpDataSource                            */
 /************************************************************************/
-class OGRPGDumpDataSource final : public OGRDataSource
+class OGRPGDumpDataSource final : public GDALDataset
 {
     OGRPGDumpDataSource(const OGRPGDumpDataSource &) = delete;
     OGRPGDumpDataSource &operator=(const OGRPGDumpDataSource &) = delete;
 
-    int nLayers = 0;
-    OGRPGDumpLayer **papoLayers = nullptr;
-    char *pszName = nullptr;
-    bool bTriedOpen = false;
-    VSILFILE *fp = nullptr;
-    bool bInTransaction = false;
-    OGRPGDumpLayer *poLayerInCopyMode = nullptr;
-    const char *pszEOL = "\n";
+    std::vector<std::unique_ptr<OGRPGDumpLayer>> m_apoLayers{};
+    VSILFILE *m_fp = nullptr;
+    bool m_bInTransaction = false;
+    OGRPGDumpLayer *m_poLayerInCopyMode = nullptr;
+    const char *m_pszEOL = "\n";
 
   public:
     OGRPGDumpDataSource(const char *pszName, char **papszOptions);
@@ -258,13 +254,9 @@ class OGRPGDumpDataSource final : public OGRDataSource
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
     virtual int GetLayerCount() override
     {
-        return nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
     virtual OGRLayer *GetLayer(int) override;
 

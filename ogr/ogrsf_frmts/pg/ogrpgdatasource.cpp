@@ -779,16 +779,15 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
               hResult); /* Test if safe PQclear has not been broken */
 
     /* -------------------------------------------------------------------- */
-    /*      Test if standard_conforming_strings is recognized               */
+    /*      Set standard_conforming_strings=ON                              */
     /* -------------------------------------------------------------------- */
 
-    hResult = OGRPG_PQexec(hPGConn, "SHOW standard_conforming_strings");
-    if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
-        PQntuples(hResult) == 1)
+    hResult = OGRPG_PQexec(hPGConn, "SET standard_conforming_strings = ON");
+    if (!(hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK))
     {
-        /* Whatever the value is, it means that we can use the E'' */
-        /* syntax */
-        bUseEscapeStringSyntax = TRUE;
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn));
+        OGRPGClearResult(hResult);
+        return FALSE;
     }
     OGRPGClearResult(hResult);
 
