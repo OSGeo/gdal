@@ -1041,7 +1041,7 @@ It can be detected with pkg-config.
 
 .. option:: LIBKML_URIPARSER_LIBRARY
 
-    Path to a shared or static library file for ``urlparser``
+    Path to a shared or static library file for ``uriparser``
 
 .. option:: GDAL_USE_LIBKML=ON/OFF
 
