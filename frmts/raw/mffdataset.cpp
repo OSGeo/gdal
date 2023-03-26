@@ -932,7 +932,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         const int nBand = poDS->GetRasterCount() + 1;
 
-        const int nPixelOffset = GDALGetDataTypeSize(eDataType) / 8;
+        const int nPixelOffset = GDALGetDataTypeSizeBytes(eDataType);
         std::unique_ptr<GDALRasterBand> poBand;
 
         if (bTiled)
@@ -943,7 +943,8 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            if (poDS->GetRasterXSize() > INT_MAX / nPixelOffset)
+            if (nPixelOffset != 0 &&
+                poDS->GetRasterXSize() > INT_MAX / nPixelOffset)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Int overflow occurred... skipping");
