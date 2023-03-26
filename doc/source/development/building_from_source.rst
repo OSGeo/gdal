@@ -1039,6 +1039,13 @@ It can be detected with pkg-config.
 
     Control whether to use LibKML. Defaults to ON when LibKML is found.
 
+.. option:: LIBKML_MINIZIP_LIBRARY
+
+    Path to a shared or static library file for ``minizip``
+
+.. option:: LIBKML_URIPARSER_LIBRARY
+
+    Path to a shared or static library file for ``urlparser``
 
 LibLZMA
 *******
