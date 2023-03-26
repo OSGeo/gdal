@@ -326,10 +326,6 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    // TODO(schwehr): Explain the 2048.
-    char *pszList = static_cast<char *>(CPLMalloc(2048));
-    pszList[0] = '\0';
-
     for (int iBand = 1; iBand <= nBands; iBand++)
     {
         auto poBand =
@@ -473,9 +469,9 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
                 snprintf(szTemp, sizeof(szTemp), "%d", nTemp);
                 poBand->SetMetadataItem("FUEL_MODEL_NUM_CLASSES", szTemp);
 
+                std::string osValues;
                 if (nTemp > 0 && nTemp <= 100)
                 {
-                    strcpy(pszList, "");
                     for (int i = 0; i <= nTemp; i++)
                     {
                         const int nTemp2 = CPL_LSBSINT32PTR(poDS->pachHeader +
@@ -483,13 +479,13 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
                         if (nTemp2 >= nMinFM && nTemp2 <= nMaxFM)
                         {
                             snprintf(szTemp, sizeof(szTemp), "%d", nTemp2);
-                            strcat(pszList, szTemp);
-                            if (i < nTemp)
-                                strcat(pszList, ",");
+                            if (!osValues.empty())
+                                osValues += ',';
+                            osValues += szTemp;
                         }
                     }
                 }
-                poBand->SetMetadataItem("FUEL_MODEL_VALUES", pszList);
+                poBand->SetMetadataItem("FUEL_MODEL_VALUES", osValues.c_str());
 
                 *(poDS->pachHeader + 5012 + 255) = '\0';
                 poBand->SetMetadataItem("FUEL_MODEL_FILE",
@@ -802,8 +798,6 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename,
                                 poOpenInfo->GetSiblingFiles());
-
-    CPLFree(pszList);
 
     return poDS.release();
 }
