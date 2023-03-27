@@ -1164,7 +1164,7 @@ def test_ogr_flatgeobuf_issue_7401():
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")
 
-    # Verify null geom handling with spatial index
+    # Verify null geom handling with spatial index (not supported should error)
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["SPATIAL_INDEX=YES"])
 
@@ -1173,21 +1173,8 @@ def test_ogr_flatgeobuf_issue_7401():
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
-
     ds = None
-
-    ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    g = f.GetGeometryRef()
-    assert f is not None
-    assert g is not None
-    f = lyr.GetNextFeature()
-    g = f.GetGeometryRef()
-    assert f is not None
-    assert g is None
-
-    ds = None
+    assert gdal.GetLastErrorMsg() == "ICreateFeature: NULL geometry not supported with spatial index"
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")

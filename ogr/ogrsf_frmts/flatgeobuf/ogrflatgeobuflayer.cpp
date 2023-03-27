@@ -2111,12 +2111,13 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     // ogrGeometry->exportToWkt(&wkt);
     // CPLDebugOnly("FlatGeobuf", "poNewFeature as wkt: %s", wkt);
 #endif
-    if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
+    if (m_bCreateSpatialIndexAtClose && (ogrGeometry == nullptr || ogrGeometry->IsEmpty()))
     {
-        CPLDebugOnly("FlatGeobuf", "Skip writing feature without geometry");
-        return OGRERR_NONE;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                        "ICreateFeature: NULL geometry not supported with spatial index");
+        return OGRERR_FAILURE;
     }
-    if (m_geometryType != GeometryType::Unknown &&
+    if (ogrGeometry != nullptr && m_geometryType != GeometryType::Unknown &&
         ogrGeometry->getGeometryType() != m_eGType)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2130,20 +2131,24 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         // beyond FLATBUFFERS_MAX_BUFFER_SIZE. We cannot easily anticipate
         // the size of the FlatBuffer, but WKB might be a good approximation.
         // Takes an extra security margin of 10%
-        const auto nWKBSize = ogrGeometry->WkbSize();
-        if (nWKBSize > feature_max_buffer_size - nWKBSize / 10)
+        flatbuffers::Offset<FlatGeobuf::Geometry> geometryOffset = 0;
+        if (ogrGeometry != nullptr)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "ICreateFeature: Too big geometry");
-            return OGRERR_FAILURE;
+            const auto nWKBSize = ogrGeometry->WkbSize();
+            if (nWKBSize > feature_max_buffer_size - nWKBSize / 10)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                        "ICreateFeature: Too big geometry");
+                return OGRERR_FAILURE;
+            }
+            GeometryWriter writer{fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM};
+            geometryOffset = writer.write(0);
         }
-        GeometryWriter writer{fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM};
-        const auto geometryOffset = writer.write(0);
         const auto pProperties = properties.empty() ? nullptr : &properties;
         if (properties.size() > feature_max_buffer_size - geometryOffset.o)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "ICreateFeature: Too big feature");
+                    "ICreateFeature: Too big feature");
             return OGRERR_FAILURE;
         }
         // TODO: write columns if mixed schema in collection
@@ -2152,12 +2157,14 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         fbb.FinishSizePrefixed(feature);
 
         OGREnvelope psEnvelope;
-        ogrGeometry->getEnvelope(&psEnvelope);
-
-        if (m_sExtent.IsInit())
-            m_sExtent.Merge(psEnvelope);
-        else
-            m_sExtent = psEnvelope;
+        if (ogrGeometry != nullptr)
+        {
+            ogrGeometry->getEnvelope(&psEnvelope);
+            if (m_sExtent.IsInit())
+                m_sExtent.Merge(psEnvelope);
+            else
+                m_sExtent = psEnvelope;
+        }
 
         if (m_featuresCount == 0)
         {
