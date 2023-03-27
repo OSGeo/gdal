@@ -41,9 +41,9 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
-# pytestmark = pytest.mark.skipif(
-#    test_cli_utilities.get_ogr2ogr_path() is None, reason="ogr2ogr not available"
-# )
+pytestmark = pytest.mark.skipif(
+    test_cli_utilities.get_ogr2ogr_path() is None, reason="ogr2ogr not available"
+)
 
 
 @pytest.fixture()
