@@ -113,8 +113,7 @@ static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
         "[elevation]]* [-order n | -tps]\n"
         "               [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | "
         "[-a_coord_epoch epoch]]\n"
-        "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n"
-        "               [-all_negative field_name[,field_name]*]\n");
+        "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
 
     if (bShort)
     {
@@ -214,12 +213,7 @@ static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
            "\n"
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
            " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
-           " definition.\n"
-           " -all_negative fieldName1,fieldName2,...: specify the name of the\n"
-           "     numeric fields that contain only negative values. This"
-           "     information can be used to optimize the field width when"
-           "     converting from a format where width includes the minus"
-           "     sign to a format which doesn't.");
+           " definition.\n");
 
     if (pszAdditionalMsg)
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);

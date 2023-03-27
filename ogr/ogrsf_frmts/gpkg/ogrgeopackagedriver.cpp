@@ -510,9 +510,6 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/gpkg.html");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte Int16 UInt16 Float32");
-    poDriver->SetMetadataItem(GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN, "NO");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR, "NO");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

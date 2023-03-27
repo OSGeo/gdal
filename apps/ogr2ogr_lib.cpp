@@ -353,15 +353,6 @@ struct GDALVectorTranslateOptions
        option. */
     CPLStringList aosFieldMap{};
 
-    /*! the list of numeric field names that have been explicitly set by the user
-        as containing only  negative values. This can be used to optimize field
-        width calculation, see
-        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR and
-        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN
-       .
-    */
-    CPLStringList aosAllNegativeNumericFields{};
-
     /*! force the coordinate dimension to nCoordDim (valid values are 2 or 3).
        This affects both the layer geometry type, and feature geometries. */
     int nCoordDim = COORD_DIM_UNCHANGED;
@@ -3869,22 +3860,6 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
     }
 
-    if (!psOptions->aosAllNegativeNumericFields.empty())
-    {
-        for (const auto &allNegativeField :
-             psOptions->aosAllNegativeNumericFields)
-        {
-            const int iSrcAllNegativeField =
-                poSrcFDefn->GetFieldIndex(allNegativeField);
-            if (iSrcAllNegativeField < 0)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "all_negative field '%s' does not exist in layer %s",
-                         m_pszZField, poSrcLayer->GetName());
-            }
-        }
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
@@ -4348,6 +4323,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         pszDstWidthIncludesMinusSign &&
         EQUAL(pszDstWidthIncludesMinusSign, "YES")};
 
+    // Calculate width delta
     int iChangeWidthBy{0};
 
     if (bSrcWidthIncludesDecimalSeparator && !bDstWidthIncludesDecimalSeparator)
@@ -4360,8 +4336,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         iChangeWidthBy++;
     }
 
-    // We cannot assume there is no minus sign unless the option all_negative is set
-    // for a specific field, we deal with increasing only at this point
+    // We cannot assume there is no minus sign, we can only inflate here
     if (!bSrcWidthIncludesMinusSign && bDstWidthIncludesMinusSign)
     {
         iChangeWidthBy++;
@@ -4410,21 +4385,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     poSrcFDefn->GetFieldDefn(iSrcField);
                 OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
-                int iChangeFieldWidthBy{iChangeWidthBy};
-
-                // If this field is set as all_negative, we can safely reduce the width
-                if (bSrcWidthIncludesMinusSign && !bDstWidthIncludesMinusSign &&
-                    psOptions->aosAllNegativeNumericFields.FindString(
-                        poSrcFieldDefn->GetNameRef()) >= 0)
-                {
-                    iChangeFieldWidthBy--;
-                }
-
-                if (iChangeFieldWidthBy != 0 &&
-                    oFieldDefn.GetType() == OFTReal &&
+                if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
                     oFieldDefn.GetWidth() != 0)
                 {
-                    //oFieldDefn.SetWidth( oFieldDefn.GetWidth() + iChangeFieldWidthBy );
+                    oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
                 }
 
                 DoFieldTypeConversion(
@@ -4616,7 +4580,11 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
-            // TODOOOOOOOOOOOOOOOOOOOO
+            if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
+                oFieldDefn.GetWidth() != 0)
+            {
+                oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
+            }
 
             // Avoid creating a field with the same name as the FID column
             if (pszFIDColumn != nullptr &&
@@ -6759,12 +6727,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                          "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
                 return nullptr;
             }
-        }
-        else if (EQUAL(papszArgv[i], "-all_negative"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosAllNegativeNumericFields =
-                CSLTokenizeStringComplex(papszArgv[++i], " ,", FALSE, FALSE);
         }
         else if (papszArgv[i][0] == '-')
         {

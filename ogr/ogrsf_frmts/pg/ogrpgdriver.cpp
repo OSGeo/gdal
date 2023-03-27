@@ -118,9 +118,6 @@ void RegisterOGRPG()
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "PG:");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
                               "NATIVE OGRSQL SQLITE");
-    poDriver->SetMetadataItem(GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN, "NO");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR, "NO");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
