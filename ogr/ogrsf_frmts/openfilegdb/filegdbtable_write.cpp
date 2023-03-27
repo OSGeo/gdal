@@ -1875,9 +1875,11 @@ bool FileGDBTable::UpdateFeature(int nFID,
     }
     else
     {
-        // Updated feature is larger than older one: append at end of .gdbtable
+        // Updated feature is larger than older one: check if there's a chunk
+        // we can reuse by examining the .freelist, and if not, append at end
+        // of .gdbtable
         const uint64_t nFreeOffset = GetOffsetOfFreeAreaFromFreeList(
-            static_cast<uint32_t>(m_abyBuffer.size()));
+            static_cast<uint32_t>(sizeof(uint32_t) + m_abyBuffer.size()));
 
         if (nFreeOffset == OFFSET_MINUS_ONE)
         {
