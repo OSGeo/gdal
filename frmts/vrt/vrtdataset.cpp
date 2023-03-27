@@ -1122,6 +1122,36 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     argv.AddString(aosGCP[j]);
                 }
             }
+            else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
+            {
+                argv.AddString(CPLSPrintf("-%s", pszKey));
+                CPLStringList aosScaleParams(
+                    CSLTokenizeString2(pszValue, ",", 0));
+                if (!(aosScaleParams.size() == 2) &&
+                    !(aosScaleParams.size() == 4))
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid value for explicit scale or scale_bn: "
+                             "%s\n  need 2, or 4 "
+                             "numbers, comma separated: "
+                             "'scale=src_min,src_max[,dst_min,dst_max]'"
+                             "'scale_bn=src_min,src_max[,dst_min,dst_max]'",
+                             pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                for (int j = 0; j < aosScaleParams.size(); j++)
+                {
+                    argv.AddString(aosScaleParams[j]);
+                }
+            }
+            else if (EQUAL(pszKey, "exponent") ||
+                     STARTS_WITH_CI(pszKey, "exponent_"))
+            {
+                argv.AddString(CPLSPrintf("-%s", pszKey));
+                argv.AddString(pszValue);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",

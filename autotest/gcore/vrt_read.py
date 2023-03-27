@@ -1486,6 +1486,25 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,GTiff")
     assert ds is not None
 
+    ## check exponent and scale
+    ds = gdal.Open("vrt://data/float32.tif?scale=0,255,255,255")
+    assert ds.GetRasterBand(1).Checksum() == 4873
+
+    ds = gdal.Open("vrt://data/uint16_3band.vrt?scale_2=0,255,255,255")
+    assert ds.GetRasterBand(2).Checksum() == 5047
+
+    ds = gdal.Open("vrt://data/float32.tif?scale_1=0,10")
+    assert ds.GetRasterBand(1).Checksum() == 4867
+
+    ds = gdal.Open("vrt://data/float32.tif?exponent=2.2")
+    assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?exponent=2.2&scale=0,100")
+    assert ds.GetRasterBand(1).Checksum() == 5294
+
+    ds = gdal.Open("vrt://data/uint16_3band.vrt?exponent_2=2.2&scale_2=0,10,0,100")
+    assert ds.GetRasterBand(2).Checksum() == 4455
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
