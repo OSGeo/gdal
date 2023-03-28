@@ -3069,6 +3069,7 @@ def test_width_precision_flags(
             assert f.GetFieldAsDouble(field_idx) == -12.34
         else:
             assert f.GetFieldAsDouble(field_idx) == -12.3
+        ds = None
 
     # Cleanup
     gdal.Unlink(src_file_name)
