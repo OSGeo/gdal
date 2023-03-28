@@ -4385,16 +4385,16 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     poSrcFDefn->GetFieldDefn(iSrcField);
                 OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
+                DoFieldTypeConversion(
+                    m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
+                    m_papszMapFieldType, m_bUnsetFieldWidth, psOptions->bQuiet,
+                    m_bForceNullable, m_bUnsetDefault);
+
                 if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
                     oFieldDefn.GetWidth() != 0)
                 {
                     oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
                 }
-
-                DoFieldTypeConversion(
-                    m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
-                    m_papszMapFieldType, m_bUnsetFieldWidth, psOptions->bQuiet,
-                    m_bForceNullable, m_bUnsetDefault);
 
                 /* The field may have been already created at layer creation */
                 const int iDstField =
@@ -4580,12 +4580,6 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
-            if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
-                oFieldDefn.GetWidth() != 0)
-            {
-                oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
-            }
-
             // Avoid creating a field with the same name as the FID column
             if (pszFIDColumn != nullptr &&
                 EQUAL(pszFIDColumn, oFieldDefn.GetNameRef()) &&
@@ -4600,6 +4594,12 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
                 m_papszMapFieldType, m_bUnsetFieldWidth, psOptions->bQuiet,
                 m_bForceNullable, m_bUnsetDefault);
+
+            if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
+                oFieldDefn.GetWidth() != 0)
+            {
+                oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
+            }
 
             /* The field may have been already created at layer creation */
             {
