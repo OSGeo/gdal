@@ -376,6 +376,12 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                                 bool bIntersectOnly)
 
 {
+    // This is an epsilon to detect geometries that are aligned with pixel
+    // coordinates. Hard to find the right value. We put it to that value
+    // to satisfy the scenarios of https://github.com/OSGeo/gdal/issues/7523
+    // and https://github.com/OSGeo/gdal/issues/6414
+    constexpr double EPSILON_INTERSECT_ONLY = 1e-4;
+
     if (!nPartCount)
         return;
 
@@ -425,8 +431,10 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             {
                 if (bIntersectOnly)
                 {
-                    if (std::abs(dfX - std::round(dfX)) < 0.01 &&
-                        std::abs(dfXEnd - std::round(dfXEnd)) < 0.01)
+                    if (std::abs(dfX - std::round(dfX)) <
+                            EPSILON_INTERSECT_ONLY &&
+                        std::abs(dfXEnd - std::round(dfXEnd)) <
+                            EPSILON_INTERSECT_ONLY)
                         continue;
                 }
 
@@ -502,8 +510,10 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             {
                 if (bIntersectOnly)
                 {
-                    if (std::abs(dfY - std::round(dfY)) < 0.01 &&
-                        std::abs(dfYEnd - std::round(dfYEnd)) < 0.01)
+                    if (std::abs(dfY - std::round(dfY)) <
+                            EPSILON_INTERSECT_ONLY &&
+                        std::abs(dfYEnd - std::round(dfYEnd)) <
+                            EPSILON_INTERSECT_ONLY)
                         continue;
                 }
 

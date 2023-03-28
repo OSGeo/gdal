@@ -490,6 +490,61 @@ def test_rasterize_7():
 
 
 ###############################################################################
+# Test rasterization with ALL_TOUCHED, and geometry close to a vertical line,
+# but not exactly on it
+
+
+def test_rasterize_all_touched_issue_7523():
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    # Create a memory raster to rasterize into.
+    target_ds = gdal.GetDriverByName("MEM").Create("", 3, 5, 1, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((475435, 5, 0, 424145, 0, -5))
+    target_ds.SetProjection(sr_wkt)
+
+    vect_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = vect_ds.CreateLayer("test", sr)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((475439.996613325 424122.228740036,475439.996613325 424142.201761073,475446.914301362 424124.133743847,475439.996613325 424122.228740036))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    # Run the algorithm.
+    gdal.RasterizeLayer(
+        target_ds,
+        [1],
+        lyr,
+        burn_values=[1],
+        options=["ALL_TOUCHED=TRUE"],
+    )
+
+    # Check results.
+    assert struct.unpack("B" * (3 * 5), target_ds.GetRasterBand(1).ReadRaster()) == (
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+    )
+
+
+###############################################################################
 # Test rasterizing linestring with multiple segments and MERGE_ALG=ADD
 # Tests https://github.com/OSGeo/gdal/issues/1307
 
