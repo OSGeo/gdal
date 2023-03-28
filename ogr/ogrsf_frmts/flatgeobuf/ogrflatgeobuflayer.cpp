@@ -2111,10 +2111,12 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     // ogrGeometry->exportToWkt(&wkt);
     // CPLDebugOnly("FlatGeobuf", "poNewFeature as wkt: %s", wkt);
 #endif
-    if (m_bCreateSpatialIndexAtClose && (ogrGeometry == nullptr || ogrGeometry->IsEmpty()))
+    if (m_bCreateSpatialIndexAtClose &&
+        (ogrGeometry == nullptr || ogrGeometry->IsEmpty()))
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                        "ICreateFeature: NULL geometry not supported with spatial index");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "ICreateFeature: NULL geometry not supported with spatial index");
         return OGRERR_FAILURE;
     }
     if (ogrGeometry != nullptr && m_geometryType != GeometryType::Unknown &&
@@ -2138,17 +2140,18 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             if (nWKBSize > feature_max_buffer_size - nWKBSize / 10)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
-                        "ICreateFeature: Too big geometry");
+                         "ICreateFeature: Too big geometry");
                 return OGRERR_FAILURE;
             }
-            GeometryWriter writer{fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM};
+            GeometryWriter writer{fbb, ogrGeometry, m_geometryType, m_hasZ,
+                                  m_hasM};
             geometryOffset = writer.write(0);
         }
         const auto pProperties = properties.empty() ? nullptr : &properties;
         if (properties.size() > feature_max_buffer_size - geometryOffset.o)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "ICreateFeature: Too big feature");
+                     "ICreateFeature: Too big feature");
             return OGRERR_FAILURE;
         }
         // TODO: write columns if mixed schema in collection
