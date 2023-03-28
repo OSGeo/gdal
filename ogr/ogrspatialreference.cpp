@@ -11225,7 +11225,7 @@ OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "CRS EPSG:%d is deprecated. "
                                  "Its non-deprecated replacement %s:%s "
-                                 "will be used instead.\n"
+                                 "will be used instead. "
                                  "To use the original CRS, set the "
                                  "OSR_USE_NON_DEPRECATED "
                                  "configuration option to NO.",
