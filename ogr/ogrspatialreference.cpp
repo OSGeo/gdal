@@ -11176,8 +11176,10 @@ OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
 {
     Clear();
 
+    const char *pszUseNonDeprecated =
+        CPLGetConfigOption("OSR_USE_NON_DEPRECATED", nullptr);
     const bool bUseNonDeprecated =
-        CPLTestBool(CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES"));
+        CPLTestBool(pszUseNonDeprecated ? pszUseNonDeprecated : "YES");
     const bool bAddTOWGS84 = CPLTestBool(
         CPLGetConfigOption("OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG", "NO"));
     auto tlsCache = OSRGetProjTLSCache();
@@ -11214,6 +11216,22 @@ OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
                     proj_list_get(d->getPROJContext(), list, 0);
                 if (nonDeprecated)
                 {
+                    if (pszUseNonDeprecated == nullptr)
+                    {
+                        const char *pszNewAuth =
+                            proj_get_id_auth_name(nonDeprecated, 0);
+                        const char *pszNewCode =
+                            proj_get_id_code(nonDeprecated, 0);
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "CRS EPSG:%d is deprecated. "
+                                 "Its non-deprecated replacement %s:%s "
+                                 "will be used instead.\n"
+                                 "To use the original CRS, set the "
+                                 "OSR_USE_NON_DEPRECATED "
+                                 "configuration option to NO.",
+                                 nCode, pszNewAuth ? pszNewAuth : "(null)",
+                                 pszNewCode ? pszNewCode : "(null)");
+                    }
                     proj_destroy(obj);
                     obj = nonDeprecated;
                 }

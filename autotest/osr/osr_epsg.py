@@ -34,7 +34,7 @@
 import gdaltest
 import pytest
 
-from osgeo import osr
+from osgeo import gdal, osr
 
 ###############################################################################
 # Verify that deprecated EPSG:26591 ends up picking non-deprecated EPSG:3003
@@ -43,7 +43,9 @@ from osgeo import osr
 def test_osr_epsg_1():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(26591)
+    with gdaltest.error_handler():
+        srs.ImportFromEPSG(26591)
+        assert "OSR_USE_NON_DEPRECATED" in gdal.GetLastErrorMsg()
     assert srs.GetAuthorityCode(None) == "3003"
 
 
