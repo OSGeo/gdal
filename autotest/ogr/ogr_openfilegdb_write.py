@@ -2126,6 +2126,62 @@ def test_ogr_openfilegdb_write_freelist_scenario_random():
 ###############################################################################
 
 
+def test_ogr_openfilegdb_write_freelist_scenario_issue_7504():
+
+    dirname = "/vsimem/out.gdb"
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+
+        N = 173
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "a" * N
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "b"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "c"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        # Length is > N: feature is rewritten at end of file
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(1)
+        f["str"] = "d" * (N + 1)
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+
+        # Before bugfix #7504, the space initially taken by feature 1 before
+        # its edition would have been reused for feature 3, consequently
+        # overwriting the first few bytes of feature 2...
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(3)
+        f["str"] = "e" * (N + 3)  # must not be greather than N+3 to test the bug
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+
+        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+        f = lyr.GetFeature(1)
+        assert f["str"] == "d" * (N + 1)
+
+        f = lyr.GetFeature(2)
+        assert f["str"] == "b"
+
+        f = lyr.GetFeature(3)
+        assert f["str"] == "e" * (N + 3)
+
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+
+
 def test_ogr_openfilegdb_write_repack():
 
     dirname = "/vsimem/out.gdb"
