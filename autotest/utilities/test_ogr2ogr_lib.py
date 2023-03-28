@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import tempfile
+
 import gdaltest
 import ogrtest
 import pytest
@@ -1624,3 +1626,198 @@ def test_ogr2ogr_lib_convert_list_type_to_JSON():
     assert f["reallist"] == "[ 1.5, 2.5 ]"
     dst_ds = None
     gdal.Unlink(out_filename)
+
+
+@pytest.mark.parametrize(
+    "src_driver, src_ext, dest_driver, dest_ext, expected_dest_width, expected_dest_precision, exp_src_decimal_flag, exp_src_minus_flag",
+    [
+        (
+            "ESRI Shapefile",
+            ".shp",
+            "ESRI Shapefile",
+            ".shp",
+            5,
+            2,
+            True,
+            True,
+        ),  # round trip
+        ("ESRI Shapefile", ".shp", "GML", ".gml", 4, 2, True, True),
+        ("ESRI Shapefile", ".shp", "CSV", ".csv", 5, 2, True, True),
+        ("ESRI Shapefile", ".shp", "PGDump", ".sql", 4, 2, True, True),
+        ("GML", ".gml", "GML", ".gml", 4, 2, False, False),  # round trip
+        ("GML", ".gml", "ESRI Shapefile", ".shp", 6, 2, False, False),
+        ("GML", ".gml", "PGDump", ".sql", 4, 2, False, False),
+        ("GML", ".gml", "CSV", ".csv", 6, 2, False, False),
+        ("CSV", ".csv", "CSV", ".csv", 5, 2, True, True),  # round trip
+        ("CSV", ".csv", "ESRI Shapefile", ".shp", 5, 2, True, True),
+        ("CSV", ".csv", "GML", ".gml", 4, 2, True, True),
+        ("CSV", ".shp", "PGDump", ".sql", 4, 2, True, True),
+        # Note: MapInfo test does not pass because the driver aborts
+        #       writing on overflow error while other drivers keep writing
+        # ("ESRI Shapefile", ".shp", "MapInfo File", ".tab", 4, 2, True, True),
+        # ("MapInfo File", ".tab", "ESRI Shapefile", ".shp", 4, 2, True, True),
+        # ("GML", ".gml", "MapInfo File", ".tab", 4, 2, False, False),
+    ],
+)
+def test_width_precision_flags(
+    src_driver,
+    src_ext,
+    dest_driver,
+    dest_ext,
+    expected_dest_width,
+    expected_dest_precision,
+    exp_src_decimal_flag,
+    exp_src_minus_flag,
+):
+    """Test precision/width (scale) conversions for numeric type"""
+
+    if not gdal.GetDriverByName(src_driver):
+        pytest.skip(reason=f"Source driver {src_driver} not available.")
+
+    if not gdal.GetDriverByName(dest_driver):
+        pytest.skip(reason=f"Destination driver {dest_driver} not available.")
+
+    # Here is a list of drivers unreliable on precision: they respect precision in their "schema"
+    # but they can actually store values with higher precision, with or without warning depending
+    # on the driver.
+    # For instance: GML correctly sets width to 4 and precision to 2 in the XSD
+    # but it writes the full precision value in the GML without warning
+    PRECISION_UNRELIABLE_DRIVERS = ("GML", "CSV")
+
+    src_file_base_name = "ogr_precision_flags_test"
+    src_file_name = tempfile.mktemp(src_ext, src_file_base_name)
+
+    dest_file_base_name = "ogr_precision_flags_test"
+    dest_file_name = tempfile.mktemp(dest_ext, dest_file_base_name)
+
+    dr = ogr.GetDriverByName(src_driver)
+    src_width_includes_sign = (
+        dr.GetMetadata_Dict().get("DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN", "NO")
+        == "YES"
+    )
+    src_width_includes_point = (
+        dr.GetMetadata_Dict().get(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR", "NO"
+        )
+        == "YES"
+    )
+
+    assert src_width_includes_sign == exp_src_minus_flag
+    assert src_width_includes_point == exp_src_decimal_flag
+
+    # Assume width=5 includes sign and point to store 12.34 or -1.23 (but not -12.34)
+    # For SQL it would be precision=4, scale=2
+    width = 5
+    precision = 2
+
+    # If the source does not include decimal separator, we can reduce width by one
+    if not src_width_includes_point:
+        width -= 1
+
+    ds = dr.CreateDataSource(src_file_name)
+
+    # For CSV we want csvt to support width and precision
+    options = []
+    if src_driver == "CSV":
+        options.append("CREATE_CSVT=YES")
+        options.append("GEOMETRY=AS_WKT")
+
+    lyr = ds.CreateLayer(src_file_base_name, geom_type=ogr.wkbPoint, options=options)
+    field_def = ogr.FieldDefn("num_5_2", ogr.OFTReal)
+    field_def.SetWidth(width)
+    field_def.SetPrecision(precision)
+    lyr.CreateField(field_def)
+
+    lyr_def = lyr.GetLayerDefn()
+    field_idx = lyr_def.GetFieldIndex("num_5_2")
+    f = ogr.Feature(lyr_def)
+    f.SetField(field_idx, 12.34)
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr_def)
+    f.SetField(field_idx, -1.23)
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+
+    # This does not fit if minus sign is included in width
+    f = ogr.Feature(lyr_def)
+    f.SetField(field_idx, -12.34)
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    f = None
+    lyr = None
+    ds = None
+
+    # Verify source
+    ds = ogr.Open(src_file_name)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    lyr_def = lyr.GetLayerDefn()
+    field_idx = lyr_def.GetFieldIndex("num_5_2")
+    field_def = lyr_def.GetFieldDefn(field_idx)
+    assert field_def.GetWidth() == width
+    assert field_def.GetPrecision() == precision
+
+    features = [f for f in lyr]
+    f = features[0]
+    assert f.GetFieldAsDouble(field_idx) == 12.34
+    f = features[1]
+    assert f.GetFieldAsDouble(field_idx) == -1.23
+    f = features[2]
+
+    if src_driver in PRECISION_UNRELIABLE_DRIVERS:
+        assert f.GetFieldAsDouble(field_idx) == -12.34
+    else:
+        assert f.GetFieldAsDouble(field_idx) == -12.3
+
+    ds = None
+
+    options = gdal.VectorTranslateOptions()
+
+    # For CSV we want csvt to support width and precision
+    layerCreationOptions = []
+
+    if dest_driver == "CSV":
+        layerCreationOptions.append("CREATE_CSVT=YES")
+
+    options = gdal.VectorTranslateOptions(
+        format=dest_driver, layerCreationOptions=layerCreationOptions
+    )
+
+    # Source is ok, convert with default options
+    dst_ds = gdal.VectorTranslate(dest_file_name, src_file_name, options=options)
+
+    dst_ds = None
+
+    # Verify destination
+
+    # PGDump has no read capabilities, test for SQL
+    if dest_driver == "PGDump":
+        sql = ""
+        with open(dest_file_name, "r") as f:
+            sql = f.read()
+        assert "NUMERIC(4,2)" in sql
+    else:
+        dst_ds = ogr.Open(dest_file_name)
+        lyr = dst_ds.GetLayer(0)
+        assert lyr is not None
+        lyr_def = lyr.GetLayerDefn()
+        field_idx = lyr_def.GetFieldIndex("num_5_2")
+        field_def = lyr_def.GetFieldDefn(field_idx)
+        assert field_def.GetWidth() == expected_dest_width
+        assert field_def.GetPrecision() == expected_dest_precision
+
+        features = [f for f in lyr]
+        f = features[0]
+        assert f.GetFieldAsDouble(field_idx) == 12.34
+        f = features[1]
+        assert f.GetFieldAsDouble(field_idx) == -1.23
+        f = features[2]
+        if expected_dest_width == 6 or (
+            src_driver in PRECISION_UNRELIABLE_DRIVERS
+            and dest_driver in PRECISION_UNRELIABLE_DRIVERS
+        ):
+            assert f.GetFieldAsDouble(field_idx) == -12.34
+        else:
+            assert f.GetFieldAsDouble(field_idx) == -12.3
