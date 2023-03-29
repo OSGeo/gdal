@@ -4231,7 +4231,7 @@ CPLErr CPL_STDCALL GDALRasterAdviseRead(GDALRasterBandH hBand, int nXOff,
  * quickly (i.e. without scanning the image, typically by using pre-existing
  * STATISTICS_xxx metadata items). If bForce is FALSE and results cannot be
  * returned efficiently, the method will return CE_Warning but no warning will
- * have been issued. This is a non-standard use of the CE_Warning return value
+ * be issued. This is a non-standard use of the CE_Warning return value
  * to indicate "nothing done".
  *
  * If bForce is TRUE, and results are quickly available without scanning the
