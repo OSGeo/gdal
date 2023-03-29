@@ -92,9 +92,8 @@ int OGRNASDataSource::Open(const char *pszNewName)
     VSIStatBufL sGFSStatBuf;
 
     // Is some NAS Feature Schema (.gfs) TEMPLATE required?
-    const char *pszNASTemplateName =
-        CPLGetConfigOption("NAS_GFS_TEMPLATE", nullptr);
-    if (pszNASTemplateName != nullptr)
+    const char *pszNASTemplateName = CPLGetConfigOption("NAS_GFS_TEMPLATE", "");
+    if (!EQUAL(pszNASTemplateName, ""))
     {
         // Load the TEMPLATE.
         if (!poReader->LoadClasses(pszNASTemplateName))

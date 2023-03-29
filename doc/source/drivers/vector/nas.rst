@@ -15,17 +15,18 @@ This driver depends on GDAL/OGR being built with the Xerces XML parsing
 library.
 
 The driver looks for "opengis.net/gml" and one of the strings semicolon
-separated strings listed in the option **NAS_INDICATOR** (which defaults
+separated strings listed in the configuration option **NAS_INDICATOR** (which defaults
 to "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite") to determine if a
 input is a NAS file and ignores all files without any matches.
 
-In GDAL 2.3 a bunch of workarounds were removed, that caused the driver
-to remap or ignore some elements and attributes internally to avoid
-attribute conflicts (e.g. *zeigtAufExternes*). Instead it now takes the
-**NAS_GFS_TEMPLATE** option, that makes it possible to cleanly map
+The configuration option **NAS_GFS_TEMPLATE** makes it possible to cleanly map
 element paths to feature attributes using a GFS file like in the GML
 driver. Multiple geometries per layer are also possible (eg.
 ax_flurstueck.objektkoordinaten next to the regular wkb_geometry).
+Starting with GDAL 3.7, defining the NAS_GFS_TEMPLATE configuration option is
+required for the NAS driver to open a file. It may be set to the empty string
+to mean that the driver should try to establish the schema of the file from its
+content, but using the below mentioned template is recommended.
 
 A `GFS
 template <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.gfs>`__
@@ -38,7 +39,7 @@ generated using `xmi2db <https://github.com/norBIT/xmi2db/>`__ (fork of
 `xmi2db <https://github.com/pkorduan/xmi2db>`__) from the official
 application schema.
 
-New in 2.3 is also the option **NAS_NO_RELATION_LAYER** that allows
+The configuration option **NAS_NO_RELATION_LAYER** allows
 disabling populating the table *alkis_beziehungen*. The information found
 there is redundant to the relation fields also contained in original
 elements/tables. Enabling the option also makes progress reporting

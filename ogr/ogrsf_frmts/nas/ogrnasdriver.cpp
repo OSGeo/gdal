@@ -84,6 +84,16 @@ static int OGRNASDriverIdentify(GDALOpenInfo *poOpenInfo)
 
     CSLDestroy(papszIndicators);
 
+    // Require NAS_GFS_TEMPLATE to be defined
+    if (bFound && !CPLGetConfigOption("NAS_GFS_TEMPLATE", nullptr))
+    {
+        CPLDebug("NAS",
+                 "This file could be recognized by the NAS driver. "
+                 "If this is desired, you need to define the NAS_GFS_TEMPLATE "
+                 "configuration option.");
+        return FALSE;
+    }
+
     return bFound;
 }
 
