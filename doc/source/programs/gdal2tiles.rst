@@ -75,9 +75,9 @@ can publish a picture without proper georeferencing too.
   in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
 
   .. versionadded:: 3.1
-  
+
 .. option:: -d, --tmscompatible
-  
+
   When using the geodetic profile, specifies the base resolution as 0.703125
   or 2 tiles at zoom level 0.
 
@@ -97,6 +97,9 @@ can publish a picture without proper georeferencing too.
 .. option:: -v, --verbose
 
   Generate verbose output of tile generation.
+
+  Starting with GDAL 3.7, that verbose output is emitted through the
+  ``logging.getLogger("gdal2tiles")`` object.
 
 .. option:: -x, --exclude
 
