@@ -596,13 +596,48 @@ def test_hdf5_eos_sinu_projection():
         import numpy as np
 
         # Minimum version of https://github.com/OSGeo/gdal/issues/7117
-        f = h5py.File("dummy_HDFEOS_with_sinu_projection.h5", "w")
+        f = h5py.File("data/hdf5/dummy_HDFEOS_with_sinu_projection.h5", "w")
         HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
-        HDFEOS_INFORMATION.attrs["HDFEOSVersion"] = "HDFEOS_5.1.15"
-        HDFEOS = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"VIIRS_Grid_BRDF\"\n\t\tXDim=4\n\t\tYDim=5\n\t\tUpperLeftPointMtrs=(-1111950.519667,5559752.598333)\n\t\tLowerRightMtrs=(0.000000,4447802.078667)\n\t\tProjection=HE5_GCTP_SNSOID\n\t\tProjParams=(6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)\n\t\tSphereCode=-1\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=5\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=4\n\t\t\tEND_OBJECT=Dimension_2\n\t\t\tOBJECT=Dimension_3\n\t\t\t\tDimensionName=\"Num_Parameters\"\n\t\t\t\tSize=3\n\t\t\tEND_OBJECT=Dimension_3\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
-        HDFEOS_INFORMATION.create_dataset(
-            "StructMetadata.0", None, data=HDFEOS, dtype="S%d" % len(HDFEOS)
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
         )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"VIIRS_Grid_BRDF\"\n\t\tXDim=4\n\t\tYDim=5\n\t\tUpperLeftPointMtrs=(-1111950.519667,5559752.598333)\n\t\tLowerRightMtrs=(0.000000,4447802.078667)\n\t\tProjection=HE5_GCTP_SNSOID\n\t\tProjParams=(6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)\n\t\tSphereCode=-1\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=5\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=4\n\t\t\tEND_OBJECT=Dimension_2\n\t\t\tOBJECT=Dimension_3\n\t\t\t\tDimensionName=\"Num_Parameters\"\n\t\t\t\tSize=3\n\t\t\tEND_OBJECT=Dimension_3\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
         HDFEOS = f.create_group("HDFEOS")
         ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
         ADDITIONAL.create_group("FILE_ATTRIBUTES")
@@ -611,6 +646,7 @@ def test_hdf5_eos_sinu_projection():
         DataFields = VIIRS_Grid_BRDF.create_group("Data Fields")
         ds = DataFields.create_dataset("test", (5, 4, 3), dtype="B")
         ds[...] = np.array([i for i in range(5 * 4 * 3)]).reshape(ds.shape)
+        f.close()
 
     ds = gdal.Open("data/hdf5/dummy_HDFEOS_with_sinu_projection.h5")
     assert ds
