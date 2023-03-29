@@ -123,6 +123,44 @@ MYATT1
   0
 ATTDEF
   5
+BEA1
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+1
+ 20
+2
+ 30
+0.0
+ 40
+8.0
+  1
+Constant attribute
+ 50
+8.0
+ 72
+     1
+ 11
+0.0
+ 21
+10.0
+ 31
+0.0
+100
+AcDbAttributeDefinition
+  3
+whatever
+  2
+MYATTCONSTANT
+ 70
+     2
+  0
+ATTDEF
+  5
 BEF
 100
 AcDbEntity

@@ -752,9 +752,16 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT(const bool bIsAttribOrAttdef)
                 break;
 
             case 70:
-                // When the LSB is set, this ATTRIB is "invisible"
-                if (bIsAttribOrAttdef && atoi(szLineBuf) & 1)
-                    poFeature->oStyleProperties["Hidden"] = "1";
+                if (bIsAttribOrAttdef)
+                {
+                    // When the LSB is set, this ATTRIB is "invisible"
+                    if (atoi(szLineBuf) & 1)
+                        poFeature->oStyleProperties["Hidden"] = "1";
+                    // If the next bit is set, this ATTDEF is to be preserved
+                    // and treated as constant TEXT
+                    else if (atoi(szLineBuf) & 2)
+                        poFeature->osAttributeTag.Clear();
+                }
                 break;
 
             default:
