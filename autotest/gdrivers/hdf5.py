@@ -604,6 +604,8 @@ def test_hdf5_eos_sinu_projection():
             "StructMetadata.0", None, data=HDFEOS, dtype="S%d" % len(HDFEOS)
         )
         HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
         GRIDS = HDFEOS.create_group("GRIDS")
         VIIRS_Grid_BRDF = GRIDS.create_group("VIIRS_Grid_BRDF")
         DataFields = VIIRS_Grid_BRDF.create_group("Data Fields")
