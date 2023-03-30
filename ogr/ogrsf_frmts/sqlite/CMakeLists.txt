@@ -3,7 +3,6 @@ add_gdal_driver(
   TARGET ogr_SQLite
   BUILTIN
   SOURCES ogr_sqlite.h
-          ogrsqlite3ext.h
           ogrsqliteexecutesql.h
           ogrsqlitesqlfunctions.h
           ogrsqlitevirtualogr.h
@@ -27,6 +26,19 @@ gdal_standard_includes(ogr_SQLite)
 target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
 gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite::SQLite3)
 gdal_target_link_libraries(ogr_SQLite PRIVATE PROJ::proj)
+
+include(CMakePushCheckState)
+include(CheckIncludeFile)
+cmake_push_check_state(RESET)
+set(CMAKE_REQUIRED_INCLUDES "${SQLite3_INCLUDE_DIRS}")
+check_include_file("sqlite3ext.h" HAVE_SQLITE3EXT_H)
+cmake_pop_check_state()
+
+if (HAVE_SQLITE3EXT_H)
+  target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE3EXT_H)
+else()
+  message(WARNING "sqlite3ext.h is missing. SQLite VirtualOGR and SQLite SQL dialect will be missing")
+endif()
 
 if (SQLite3_HAS_LOAD_EXTENSION)
   option(OGR_SQLITE_ALLOW_LOAD_EXTENSIONS "Whether SQLite extension loading is enabled through the OGR_SQLITE_LOAD_EXTENSIONS configuration option" ON)

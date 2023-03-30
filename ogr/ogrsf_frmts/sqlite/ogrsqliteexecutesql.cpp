@@ -50,53 +50,6 @@
 #include "sqlite3.h"
 
 /************************************************************************/
-/*                       OGRSQLiteExecuteSQLLayer                       */
-/************************************************************************/
-
-class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
-{
-    char *pszTmpDBName;
-
-  public:
-    OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
-                             const CPLString &osSQL, sqlite3_stmt *hStmt,
-                             bool bUseStatementForGetNextFeature,
-                             bool bEmptyLayer);
-    virtual ~OGRSQLiteExecuteSQLLayer();
-};
-
-/************************************************************************/
-/*                         OGRSQLiteExecuteSQLLayer()                   */
-/************************************************************************/
-
-OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
-    char *pszTmpDBNameIn, OGRSQLiteDataSource *poDSIn, const CPLString &osSQL,
-    sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
-    bool bEmptyLayer)
-    : OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
-                           bUseStatementForGetNextFeature, bEmptyLayer, true),
-      pszTmpDBName(pszTmpDBNameIn)
-{
-}
-
-/************************************************************************/
-/*                        ~OGRSQLiteExecuteSQLLayer()                   */
-/************************************************************************/
-
-OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
-{
-    // This is a bit peculiar: we must "finalize" the OGRLayer, since
-    // it has objects that depend on the datasource, that we are just
-    // going to destroy afterwards. The issue here is that we destroy
-    // our own datasource,
-    Finalize();
-
-    delete m_poDS;
-    VSIUnlink(pszTmpDBName);
-    CPLFree(pszTmpDBName);
-}
-
-/************************************************************************/
 /*                       OGR2SQLITEExtractUnquotedString()              */
 /************************************************************************/
 
@@ -501,6 +454,83 @@ static void OGR2SQLITEGetPotentialLayerNames(
     int nNum = 1;
     OGR2SQLITEGetPotentialLayerNamesInternal(
         &pszSQLCommand, oSetLayers, oSetSpatialIndex, osModifiedSQL, nNum);
+}
+
+/************************************************************************/
+/*                   OGRSQLiteGetReferencedLayers()                     */
+/************************************************************************/
+
+std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char *pszStatement)
+{
+    /* -------------------------------------------------------------------- */
+    /*      Analyze the statement to determine which tables will be used.   */
+    /* -------------------------------------------------------------------- */
+    std::set<LayerDesc> oSetLayers;
+    std::set<CPLString> oSetSpatialIndex;
+    CPLString osModifiedSQL;
+    OGR2SQLITEGetPotentialLayerNames(pszStatement, oSetLayers, oSetSpatialIndex,
+                                     osModifiedSQL);
+
+    return oSetLayers;
+}
+
+#ifndef HAVE_SQLITE3EXT_H
+OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *, const char *, OGRGeometry *,
+                              const char *)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "SQL SQLite dialect not supported due to GDAL being built "
+             "without sqlite3ext.h header");
+    return nullptr;
+}
+
+#else
+
+/************************************************************************/
+/*                       OGRSQLiteExecuteSQLLayer                       */
+/************************************************************************/
+
+class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
+{
+    char *pszTmpDBName;
+
+  public:
+    OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
+                             const CPLString &osSQL, sqlite3_stmt *hStmt,
+                             bool bUseStatementForGetNextFeature,
+                             bool bEmptyLayer);
+    virtual ~OGRSQLiteExecuteSQLLayer();
+};
+
+/************************************************************************/
+/*                         OGRSQLiteExecuteSQLLayer()                   */
+/************************************************************************/
+
+OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
+    char *pszTmpDBNameIn, OGRSQLiteDataSource *poDSIn, const CPLString &osSQL,
+    sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
+    bool bEmptyLayer)
+    : OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
+                           bUseStatementForGetNextFeature, bEmptyLayer, true),
+      pszTmpDBName(pszTmpDBNameIn)
+{
+}
+
+/************************************************************************/
+/*                        ~OGRSQLiteExecuteSQLLayer()                   */
+/************************************************************************/
+
+OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
+{
+    // This is a bit peculiar: we must "finalize" the OGRLayer, since
+    // it has objects that depend on the datasource, that we are just
+    // going to destroy afterwards. The issue here is that we destroy
+    // our own datasource,
+    Finalize();
+
+    delete m_poDS;
+    VSIUnlink(pszTmpDBName);
+    CPLFree(pszTmpDBName);
 }
 
 /************************************************************************/
@@ -1085,20 +1115,4 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     return poLayer;
 }
 
-/************************************************************************/
-/*                   OGRSQLiteGetReferencedLayers()                     */
-/************************************************************************/
-
-std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char *pszStatement)
-{
-    /* -------------------------------------------------------------------- */
-    /*      Analysze the statement to determine which tables will be used.  */
-    /* -------------------------------------------------------------------- */
-    std::set<LayerDesc> oSetLayers;
-    std::set<CPLString> oSetSpatialIndex;
-    CPLString osModifiedSQL;
-    OGR2SQLITEGetPotentialLayerNames(pszStatement, oSetLayers, oSetSpatialIndex,
-                                     osModifiedSQL);
-
-    return oSetLayers;
-}
+#endif  // HAVE_SQLITE3EXT_H
