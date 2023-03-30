@@ -1,0 +1,244 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -y \
+ && apt-get install -y --fix-missing --no-install-recommends \
+    ant \
+    autoconf \
+    automake \
+    bash-completion \
+    build-essential \
+    ca-certificates \
+    ccache \
+    clang \
+    cmake \
+    curl \
+    git \
+    gnupg \
+    libarmadillo-dev \
+    libblosc-dev \
+    libboost-dev \
+    libbrotli-dev \
+    libcairo2-dev \
+    libcfitsio-dev \
+    libcrypto++-dev \
+    libcurl4-gnutls-dev \
+    libdeflate-dev \
+    libepsilon-dev \
+    libexpat-dev \
+    libfreexl-dev \
+    libfyba-dev \
+    libgeos-dev \
+    libgif-dev \
+    libhdf4-alt-dev \
+    libhdf5-serial-dev \
+    libheif-dev \
+    libjpeg-dev \
+    libkml-dev \
+    liblcms2-2 \
+    liblcms2-dev \
+    liblz4-dev \
+    liblzma-dev \
+    libmono-system-drawing4.0-cil \
+    libmysqlclient-dev \
+    libnetcdf-dev \
+    libogdi-dev \
+    libopenexr-dev \
+    libopenjp2-7-dev \
+    libpcre2-dev \
+    libpng-dev \
+    libpoppler-dev \
+    libpoppler-private-dev \
+    libpq-dev \
+    libproj-dev \
+    libspatialite-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libtiff5-dev \
+    libtool \
+    libwebp-dev \
+    libxerces-c-dev \
+    libxml2-dev \
+    libzstd-dev \
+    llvm-10 \
+    lsb-release \
+    make \
+    mono-mcs \
+    numactl \
+    ocl-icd-opencl-dev \
+    opencl-c-headers \
+    openjdk-8-jdk \
+    pkg-config \
+    python3-dev \
+    python3-numpy \
+    python3-pip \
+    software-properties-common \
+    swig \
+    unixodbc-dev \
+    unzip \
+    wget \
+    wget \
+    zip \
+    zlib1g-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Build likbkea
+ENV KEA_VERSION=1.4.13
+RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && unzip -q kealib-${KEA_VERSION}.zip \
+    && rm -f kealib-${KEA_VERSION}.zip \
+    && cd kealib-kealib-${KEA_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
+        -DHDF5_LIB_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cd .. \
+    && rm -rf kealib-kealib-${KEA_VERSION}
+
+ENV CMAKE_VERSION=3.25.2
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -O - \
+  | tar xz -C /usr/local --strip-components=1
+
+# Build tiledb (requires CMake 3.21)
+ENV TILEDB_VERSION=2.9.4
+RUN mkdir tiledb \
+    && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
+        | tar xz -C tiledb --strip-components=1 \
+    && cd tiledb \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && ../bootstrap --prefix=/usr \
+    && make -j$(nproc) \
+    && make install-tiledb \
+    && cd ../.. \
+    && rm -rf tiledeb
+
+# Workaround bug in ogdi packaging
+RUN ln -s /usr/lib/ogdi/libvrf.so /usr/lib
+
+# Build libjxl
+# libjxl being still unstable, if the main branch fails to compile/test
+# you can replace JXL_TREEISH=main by JXL_TREEISH=sha1_of_known_working_commit
+ENV JXL_TREEISH=main
+# Mention commit 9066c91546e6bda3623fa14b83613d90cbfddfd3 to force rebuild of dep
+RUN git clone https://github.com/libjxl/libjxl.git --recursive \
+    && cd libjxl \
+    && git checkout ${JXL_TREEISH} \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && cd ../.. \
+    && rm -rf libjxl
+
+# Install MrSID SDK
+RUN mkdir mrsid \
+    && wget -q https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531.tar.gz -O - \
+      | tar xz -C mrsid --strip-components=1 \
+    && cp -r mrsid/Raster_DSDK/include/* /usr/local/include \
+    && cp -r mrsid/Raster_DSDK/lib/* /usr/local/lib \
+    && cp -r mrsid/Lidar_DSDK/include/* /usr/local/include \
+    && cp -r mrsid/Lidar_DSDK/lib/* /usr/local/lib \
+    && sed -i "s/__GNUC__ <= 5/__GNUC__ <= 99/" /usr/local/include/lt_platform.h \
+    && cd .. \
+    && rm -rf mrsid
+
+# Install ECW SDK
+RUN cd / && wget -q https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  && echo "/opt/libecwj2-3.3/lib" > /etc/ld.so.conf.d/libecwj2-3.3.conf
+
+# Install FileGDB API SDK
+RUN wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz --no-same-owner \
+  && chown -R root:root FileGDB_API-64gcc51 \
+  && mv FileGDB_API-64gcc51 /usr/local/FileGDB_API \
+  && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
+  && cp /usr/local/FileGDB_API/include/* /usr/include \
+  && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
+
+# Build and install GEOS (3.11dev)
+ENV GEOS_SHA1=c8bba596e9cdcf8ad55d804bfa9ba6e4394722a1
+RUN mkdir geos \
+    && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
+        | tar xz -C geos --strip-components=1 \
+    && cd geos \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf geos
+
+# Install pdfium
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-ubuntu2004-rev5461.tar.gz \
+  && tar -xzf install-ubuntu2004-rev5461.tar.gz \
+  && chown -R root:root install \
+  && mv install/lib/* /usr/lib/ \
+  && mv install/include/* /usr/include/ \
+  && rm -rf install-ubuntu2004-rev5461.tar.gz install
+
+# HANA: client side
+# Install hdbsql tool
+RUN curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+  && tar -xvf hanaclient-latest-linux-x64.tar.gz \
+  && mkdir /usr/sap \
+  && ./client/hdbinst -a client --sapmnt=/usr/sap \
+  && rm -rf client \
+  && rm hanaclient*
+ENV PATH=/usr/sap/hdbclient:$PATH
+
+RUN python3 -m pip install hdbcli
+
+# Download and compile odbc-cpp-wrapper
+ENV ODBCCPP_VERSION=1.1
+RUN mkdir odbc-cpp-wrapper \
+  && wget -q https://github.com/SAP/odbc-cpp-wrapper/archive/refs/tags/v${ODBCCPP_VERSION}.tar.gz -O - \
+      | tar xz -C odbc-cpp-wrapper --strip-components=1 \
+  && mkdir odbc-cpp-wrapper/build \
+  && cd odbc-cpp-wrapper/build \
+  && cmake .. \
+  && make -j 2 \
+  && make install \
+  && cd ../.. \
+  && rm -rf odbc-cpp-wrapper
+
+# Arrow
+RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+ && dpkg --install apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+ && apt-get update \
+ && apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev \
+ && rm ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+ && rm -rf /var/lib/apt/lists/*
+
+# Build libQB3
+# Used by the MRF driver
+RUN git clone https://github.com/lucianpls/QB3.git \
+    && mkdir QB3/QB3lib/build \
+    && cd QB3/QB3lib/build \
+    && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && cd ../../.. \
+    && rm -rf QB3
+
+# Build libbasisu
+# Used by the BASISU and KTX2 drivers
+RUN git clone -b cmake https://github.com/rouault/basis_universal.git \
+    && mkdir basis_universal/build \
+    && cd basis_universal/build \
+    && /usr/bin/cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && cd ../..\
+    && rm -rf basis_universal
+
+
+RUN ldconfig
+
+COPY requirements.txt /tmp/
+RUN python3 -m pip install -U -r /tmp/requirements.txt
