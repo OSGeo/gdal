@@ -1764,8 +1764,9 @@ def test_SetPROJSearchPath():
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
     # starting with PROJ >= 6.1
 
-    # Do the test in a new thread, so that SetPROJSearchPath() is taken
-    # into account
+    # Do the test in a new thread, so that the EPSG code cache which is thread
+    # locale is not used, and we can effectively test that the new search path
+    # is used
     def threaded_function(arg):
         sr = osr.SpatialReference()
         try:
@@ -1794,6 +1795,87 @@ def test_SetPROJSearchPath():
 
     sr = osr.SpatialReference()
     assert sr.ImportFromEPSG(32631) == 0
+
+
+@gdaltest.require_proj_version(6, 1)
+def test_Set_PROJ_DATA_config_option():
+
+    # OSRSetPROJSearchPaths() is only taken into priority over other methods
+    # starting with PROJ >= 6.1
+
+    # Do the test in a new thread, so that the EPSG code cache which is thread
+    # locale is not used, and we can effectively test that the new search path
+    # is used
+    def threaded_function(arg):
+        sr = osr.SpatialReference()
+        try:
+            sr.ImportFromEPSG(32631)
+            arg[0] = True
+        except Exception:
+            arg[0] = False
+
+    backup_search_paths = osr.GetPROJSearchPaths()
+    # conftest.py set 2 paths: autotest/gcore/tmp/proj_db_tmpdir and autotest/proj_grids
+    assert len(backup_search_paths) == 2
+    try:
+        gdal.SetConfigOption("PROJ_DATA", "/i_do/not/exist")
+        arg = [-1]
+        thread = Thread(target=threaded_function, args=(arg,))
+        thread.start()
+        thread.join()
+        assert arg[0] == False
+
+        gdal.SetConfigOption("PROJ_DATA", backup_search_paths[0])
+        arg = [-1]
+        thread = Thread(target=threaded_function, args=(arg,))
+        thread.start()
+        thread.join()
+        assert arg[0] == True
+
+        gdal.SetConfigOption("PROJ_DATA", None)
+    finally:
+        osr.SetPROJSearchPaths(backup_search_paths)
+
+    sr = osr.SpatialReference()
+    assert sr.ImportFromEPSG(32631) == 0
+
+
+###############################################################################
+
+
+@gdaltest.require_proj_version(6, 1)
+def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ok():
+
+    backup_search_paths = osr.GetPROJSearchPaths()
+    # conftest.py set 2 paths: autotest/gcore/tmp/proj_db_tmpdir and autotest/proj_grids
+    assert len(backup_search_paths) == 2
+    subprocess.check_call(
+        [
+            sys.executable,
+            "osr_basic_subprocess.py",
+            "config_option_ok",
+            backup_search_paths[0],
+        ]
+    )
+
+
+###############################################################################
+
+
+@gdaltest.require_proj_version(6, 1)
+def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ko():
+
+    backup_search_paths = osr.GetPROJSearchPaths()
+    # conftest.py set 2 paths: autotest/gcore/tmp/proj_db_tmpdir and autotest/proj_grids
+    assert len(backup_search_paths) == 2
+    subprocess.check_call(
+        [
+            sys.executable,
+            "osr_basic_subprocess.py",
+            "config_option_ko",
+            "/i_do/not/exist",
+        ]
+    )
 
 
 # Test for PROJ < 6.2
@@ -1961,7 +2043,8 @@ def test_SetPROJAuxDbPaths():
     #
     # See PR https://github.com/OSGeo/gdal/pull/3590
     subprocess.check_call(
-        [sys.executable, "osr_basic_subprocess.py"], env=os.environ.copy()
+        [sys.executable, "osr_basic_subprocess.py", "aux_db_test"],
+        env=os.environ.copy(),
     )
 
 

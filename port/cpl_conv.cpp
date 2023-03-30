@@ -1870,12 +1870,12 @@ void CPLUnsubscribeToSetConfigOption(int nId)
 }
 
 /************************************************************************/
-/*                  NotifyOtherComponentsSetConfigOptiond()          */
+/*                  NotifyOtherComponentsConfigOptionChanged()          */
 /************************************************************************/
 
-static void NotifyOtherComponentsSetConfigOptiond(const char *pszKey,
-                                                  const char *pszValue,
-                                                  bool bThreadLocal)
+static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
+                                                     const char *pszValue,
+                                                     bool bThreadLocal)
 {
     // Hack
     if (STARTS_WITH_CI(pszKey, "AWS_"))
@@ -1936,8 +1936,8 @@ void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
     g_papszConfigOptions = const_cast<volatile char **>(CSLSetNameValue(
         const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
 
-    NotifyOtherComponentsSetConfigOptiond(pszKey, pszValue,
-                                          /*bTheadLocal=*/false);
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue,
+                                             /*bTheadLocal=*/false);
 }
 
 /************************************************************************/
@@ -1999,8 +1999,8 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
     CPLSetTLSWithFreeFunc(CTLS_CONFIGOPTIONS, papszTLConfigOptions,
                           CPLSetThreadLocalTLSFreeFunc);
 
-    NotifyOtherComponentsSetConfigOptiond(pszKey, pszValue,
-                                          /*bTheadLocal=*/true);
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue,
+                                             /*bTheadLocal=*/true);
 }
 
 /************************************************************************/

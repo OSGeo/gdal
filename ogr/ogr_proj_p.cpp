@@ -133,10 +133,61 @@ struct OSRPJContextHolder
     OSRPJContextHolder &operator=(const OSRPJContextHolder &) = delete;
 };
 
+static void OSRSetConfigOption(const char *pszKey, const char *pszValue,
+                               bool bThreadLocal, void *)
+{
+    if (!bThreadLocal && pszValue &&
+        (EQUAL(pszKey, "PROJ_LIB") || EQUAL(pszKey, "PROJ_DATA")))
+    {
+        const char *const apszSearchPaths[] = {pszValue, nullptr};
+        OSRSetPROJSearchPaths(apszSearchPaths);
+    }
+}
+
+static void OSRInstallSetConfigOptionCallback()
+{
+    static std::once_flag flag;
+    std::call_once(
+        flag,
+        []() { CPLSubscribeToSetConfigOption(OSRSetConfigOption, nullptr); });
+}
+
 PJ_CONTEXT *OSRPJContextHolder::init()
 {
     if (!context)
     {
+        static std::once_flag flag;
+        std::call_once(
+            flag,
+            []()
+            {
+                // Initialize g_aosSearchpaths from PROJ_DATA/PROJ_LIB configuration
+                // option.
+                std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+                if (g_searchPathGenerationCounter == 0)
+                {
+                    const char *pszProjData =
+                        CPLGetConfigOption("PROJ_DATA", nullptr);
+                    if (pszProjData == nullptr)
+                        pszProjData = CPLGetConfigOption("PROJ_LIB", nullptr);
+                    if (pszProjData)
+                    {
+                        const char *pszSep =
+#ifdef _WIN32
+                            ";"
+#else
+                            ":"
+#endif
+                            ;
+                        g_aosSearchpaths =
+                            CSLTokenizeString2(pszProjData, pszSep, 0);
+                        g_searchPathGenerationCounter = 1;
+                    }
+                }
+
+                OSRInstallSetConfigOptionCallback();
+            });
+
         context = proj_context_create();
         proj_log_func(context, nullptr, osr_proj_logger);
     }
@@ -360,6 +411,9 @@ void OSRCleanupTLSContext()
 
 /** \brief Set the search path(s) for PROJ resource files.
  *
+ * Note: starting with GDAL 3.7, CPLSetConfigOption("PROJ_DATA", ...) can
+ * also been used for the same effect.
+ *
  * @param papszPaths NULL terminated list of directory paths.
  * @since GDAL 3.0
  */
@@ -368,6 +422,7 @@ void OSRSetPROJSearchPaths(const char *const *papszPaths)
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
     g_searchPathGenerationCounter++;
     g_aosSearchpaths.Assign(CSLDuplicate(papszPaths), true);
+    OSRInstallSetConfigOptionCallback();
 }
 
 /************************************************************************/
