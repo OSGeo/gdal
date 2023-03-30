@@ -221,6 +221,11 @@ GDALBuildVRTOptions CPL_DLL *
 GDALBuildVRTOptionsNew(char **papszArgv,
                        GDALBuildVRTOptionsForBinary *psOptionsForBinary);
 
+GDALBuildVRTOptionsForBinary CPL_DLL *GDALBuildVRTOptionsForBinaryNew(void);
+
+void CPL_DLL GDALBuildVRTOptionsForBinaryFree(
+    GDALBuildVRTOptionsForBinary *psOptionsForBinary);
+
 void CPL_DLL GDALBuildVRTOptionsFree(GDALBuildVRTOptions *psOptions);
 
 void CPL_DLL GDALBuildVRTOptionsSetProgress(GDALBuildVRTOptions *psOptions,

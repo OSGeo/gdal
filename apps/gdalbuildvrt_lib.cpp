@@ -1943,6 +1943,31 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
+/*                       GDALBuildVRTOptionsForBinaryNew()              */
+/************************************************************************/
+
+GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
+{
+    return static_cast<GDALBuildVRTOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
+}
+
+/************************************************************************/
+/*                       GDALBuildVRTOptionsForBinaryFree()            */
+/************************************************************************/
+
+void GDALBuildVRTOptionsForBinaryFree(
+    GDALBuildVRTOptionsForBinary *psOptionsForBinary)
+{
+    if (psOptionsForBinary)
+    {
+        CSLDestroy(psOptionsForBinary->papszSrcFiles);
+        CPLFree(psOptionsForBinary->pszDstFilename);
+        CPLFree(psOptionsForBinary);
+    }
+}
+
+/************************************************************************/
 /*                             GDALBuildVRTOptionsNew()                  */
 /************************************************************************/
 
