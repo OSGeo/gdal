@@ -32,6 +32,8 @@
 
 #include "hdf5_api.h"
 
+#include "cpl_json.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -45,11 +47,22 @@ class HDF5EOSParser
   public:
     HDF5EOSParser() = default;
 
+    enum class DataModel
+    {
+        INVALID,
+        GRID,
+        SWATH,
+    };
+
     struct Dimension
     {
-        std::string osName;
-        int nDimIndex;
-        int nSize;
+        std::string osName{};
+        int nSize = 0;
+
+        inline bool operator==(const Dimension &otherDim) const
+        {
+            return osName == otherDim.osName;
+        }
     };
 
     struct GridMetadata
@@ -59,20 +72,48 @@ class HDF5EOSParser
         std::string osGridOrigin{};  // e.g HE5_HDFE_GD_UL
         std::vector<double>
             adfProjParams{};  // e.g (6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)
+        int nZone = 0;        // for HE5_GCTP_UTM and HE5_GCTP_SPCS
+        int nSphereCode = 0;
         std::vector<double>
             adfUpperLeftPointMeters{};  // e.g (-1111950.519667,5559752.598333)
         std::vector<double>
             adfLowerRightPointMeters{};  // e.g (0.000000,4447802.078667)
     };
 
+    struct SwathMetadata
+    {
+        std::vector<Dimension> aoSwathDimensions;
+        int iXDim = -1;
+        int iYDim = -1;
+        int iOtherDim = -1;
+
+        std::string osLongitudeSubdataset;
+        std::string osLatitudeSubdataset;
+        int nLineOffset = 0;
+        int nLineStep = 0;
+        int nPixelOffset = 0;
+        int nPixelStep = 0;
+    };
+
     static bool HasHDFEOS(hid_t hRoot);
     bool Parse(hid_t hRoot);
 
-    bool GetMetadata(const char *pszSubdatasetName,
-                     GridMetadata &gridMetadataOut) const;
+    DataModel GetDataModel() const
+    {
+        return m_eDataModel;
+    }
+    bool GetGridMetadata(const char *pszSubdatasetName,
+                         GridMetadata &gridMetadataOut) const;
+    bool GetSwathMetadata(const char *pszSubdatasetName,
+                          SwathMetadata &swathMetadataOut) const;
 
   private:
-    std::map<std::string, GridMetadata> m_oMapSubdatasetNameToMetadata{};
+    DataModel m_eDataModel = DataModel::INVALID;
+    std::map<std::string, GridMetadata> m_oMapSubdatasetNameToGridMetadata{};
+    std::map<std::string, SwathMetadata> m_oMapSubdatasetNameToSwathMetadata{};
+
+    void ParseGridStructure(const CPLJSONObject &oGridStructure);
+    void ParseSwathStructure(const CPLJSONObject &oSwathStructure);
 };
 
 #endif  // HDF5EOSPARSER_H_INCLUDED

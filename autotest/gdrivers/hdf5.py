@@ -585,10 +585,10 @@ def test_hdf5_signature_not_at_beginning():
 
 
 ###############################################################################
-# Test opening a HDF5EOS file
+# Test opening a HDF5EOS grid file
 
 
-def test_hdf5_eos_sinu_projection():
+def test_hdf5_eos_grid_sinu_projection():
 
     if False:
 
@@ -620,7 +620,7 @@ def test_hdf5_eos_sinu_projection():
         StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
         StructMetadata_0_type.set_size(32000)
         StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
-        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"VIIRS_Grid_BRDF\"\n\t\tXDim=4\n\t\tYDim=5\n\t\tUpperLeftPointMtrs=(-1111950.519667,5559752.598333)\n\t\tLowerRightMtrs=(0.000000,4447802.078667)\n\t\tProjection=HE5_GCTP_SNSOID\n\t\tProjParams=(6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)\n\t\tSphereCode=-1\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=5\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=4\n\t\t\tEND_OBJECT=Dimension_2\n\t\t\tOBJECT=Dimension_3\n\t\t\t\tDimensionName=\"Num_Parameters\"\n\t\t\t\tSize=3\n\t\t\tEND_OBJECT=Dimension_3\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"test\"\n\t\tXDim=4\n\t\tYDim=5\n\t\tUpperLeftPointMtrs=(-1111950.519667,5559752.598333)\n\t\tLowerRightMtrs=(0.000000,4447802.078667)\n\t\tProjection=HE5_GCTP_SNSOID\n\t\tProjParams=(6371007.181000,0,0,0,0,0,0,0,0,0,0,0,0)\n\t\tSphereCode=-1\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=5\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=4\n\t\t\tEND_OBJECT=Dimension_2\n\t\t\tOBJECT=Dimension_3\n\t\t\t\tDimensionName=\"Num_Parameters\"\n\t\t\t\tSize=3\n\t\t\tEND_OBJECT=Dimension_3\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\",\"Num_Parameters\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
         # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
         StructMetadata_0_dataset = h5py.h5d.create(
             HDFEOS_INFORMATION.id,
@@ -642,8 +642,8 @@ def test_hdf5_eos_sinu_projection():
         ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
         ADDITIONAL.create_group("FILE_ATTRIBUTES")
         GRIDS = HDFEOS.create_group("GRIDS")
-        VIIRS_Grid_BRDF = GRIDS.create_group("VIIRS_Grid_BRDF")
-        DataFields = VIIRS_Grid_BRDF.create_group("Data Fields")
+        test = GRIDS.create_group("test")
+        DataFields = test.create_group("Data Fields")
         ds = DataFields.create_dataset("test", (5, 4, 3), dtype="B")
         ds[...] = np.array([i for i in range(5 * 4 * 3)]).reshape(ds.shape)
         f.close()
@@ -674,4 +674,375 @@ def test_hdf5_eos_sinu_projection():
             "B" * (5 * 4 * 3), ds.ReadRaster(buf_pixel_space=3, buf_band_space=1)
         )
     ) == [i for i in range(5 * 4 * 3)]
+    ds = None
+
+
+###############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_eos_grid_utm_projection():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/dummy_HDFEOS_with_utm_projection.h5", "w")
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"test\"\n\t\tXDim=20\n\t\tYDim=20\n\t\tUpperLeftPointMtrs=(440720.000, 3751320.000)\n\t\tLowerRightMtrs=(441920.000, 3750120.000)\n\t\tProjection=HE5_GCTP_UTM\n\t\tZoneCode=11\n\t\tSphereCode=12\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=20\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=20\n\t\t\tEND_OBJECT=Dimension_2\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        GRIDS = HDFEOS.create_group("GRIDS")
+        test = GRIDS.create_group("test")
+        DataFields = test.create_group("Data Fields")
+        ds = DataFields.create_dataset("test", (20, 20), dtype="B")
+        ds[...] = np.array([i for i in range(20 * 20)]).reshape(ds.shape)
+        f.close()
+
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_with_utm_projection.h5")
+    assert ds
+    assert ds.RasterXSize == 20
+    assert ds.RasterYSize == 20
+    assert ds.RasterCount == 1
+    assert ds.GetGeoTransform() == pytest.approx((440720, 60, 0, 3751320, 0, -60))
+    assert ds.GetSpatialRef().GetUTMZone() == 11
+    # WGS 84
+    assert ds.GetSpatialRef().GetSemiMajor() == 6378137
+    assert ds.GetSpatialRef().GetInvFlattening() == 298.257223563
+    ds = None
+
+
+###############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_eos_grid_geo_projection():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/dummy_HDFEOS_with_geo_projection.h5", "w")
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"test\"\n\t\tXDim=20\n\t\tYDim=20\n\t\tUpperLeftPointMtrs=(-117038028.21, 33054002.17)\n\t\tLowerRightMtrs=(-117037041.20, 33053023.45)\n\t\tProjection=HE5_GCTP_GEO\n\t\tSphereCode=12\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\t\tOBJECT=Dimension_1\n\t\t\t\tDimensionName=\"YDim\"\n\t\t\t\tSize=20\n\t\t\tEND_OBJECT=Dimension_1\n\t\t\tOBJECT=Dimension_2\n\t\t\t\tDimensionName=\"XDim\"\n\t\t\t\tSize=20\n\t\t\tEND_OBJECT=Dimension_2\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        GRIDS = HDFEOS.create_group("GRIDS")
+        test = GRIDS.create_group("test")
+        DataFields = test.create_group("Data Fields")
+        ds = DataFields.create_dataset("test", (20, 20), dtype="B")
+        ds[...] = np.array([i for i in range(20 * 20)]).reshape(ds.shape)
+        f.close()
+
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_with_geo_projection.h5")
+    assert ds
+    assert ds.RasterXSize == 20
+    assert ds.RasterYSize == 20
+    assert ds.RasterCount == 1
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -117.64116944444262,
+            0.0006529166665345087,
+            0.0,
+            33.900602777778275,
+            0.0,
+            -0.00053777777781292,
+        )
+    )
+    assert ds.GetSpatialRef().IsGeographic()
+    # WGS 84
+    assert ds.GetSpatialRef().GetSemiMajor() == 6378137
+    assert ds.GetSpatialRef().GetInvFlattening() == 298.257223563
+    ds = None
+
+
+###############################################################################
+# Test opening a HDF5EOS swatch file (the Swath.h5 file generated by
+# 'make check' on the hdfeos5 library)
+
+
+def test_hdf5_eos_swath_with_explicit_dimension_map():
+
+    # Using the DimensionMap (the data field has more samples than the geo fields)
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Data_Fields/Spectra'
+    )
+    assert ds.RasterXSize == 20
+    assert ds.RasterYSize == 40
+    assert ds.RasterCount == 15
+    assert ds.GetMetadata("GEOLOCATION") == {
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "2",
+        "PIXEL_OFFSET": "1",
+        "PIXEL_STEP": "2",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Geolocation_Fields/Longitude',
+        "Y_BAND": "1",
+        "Y_DATASET": 'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Geolocation_Fields/Latitude',
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+    }
+    assert gdal.Open(ds.GetMetadataItem("X_DATASET", "GEOLOCATION")) is not None
+    assert gdal.Open(ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")) is not None
+
+    # Not using the DimensionMap (the data field uses the same dimensions as the geo fields)
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Data_Fields/Temperature'
+    )
+    assert ds.RasterXSize == 10
+    assert ds.RasterYSize == 20
+    assert ds.RasterCount == 1
+    assert ds.GetMetadata("GEOLOCATION") == {
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Geolocation_Fields/Longitude',
+        "Y_BAND": "1",
+        "Y_DATASET": 'HDF5:"data/hdf5/hdfeos_sample_swath.h5"://HDFEOS/SWATHS/Swath1/Geolocation_Fields/Latitude',
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+    }
+    assert gdal.Open(ds.GetMetadataItem("X_DATASET", "GEOLOCATION")) is not None
+    assert gdal.Open(ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")) is not None
+    ds = None
+
+
+###############################################################################
+# Test opening a HDF5EOS swath file
+
+
+def test_hdf5_eos_swath_no_explicit_dimension_map():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/dummy_HDFEOS_swath.h5", "w")
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure
+    GROUP=SWATH_1
+        SwathName="MySwath"
+        GROUP=Dimension
+            OBJECT=Dimension_1
+                DimensionName="Band"
+                Size=2
+            END_OBJECT=Dimension_1
+            OBJECT=Dimension_2
+                DimensionName="AlongTrack"
+                Size=3
+            END_OBJECT=Dimension_2
+            OBJECT=Dimension_3
+                DimensionName="CrossTrack"
+                Size=4
+            END_OBJECT=Dimension_3
+        END_GROUP=Dimension
+        GROUP=DimensionMap
+        END_GROUP=DimensionMap
+        GROUP=IndexDimensionMap
+        END_GROUP=IndexDimensionMap
+        GROUP=GeoField
+            OBJECT=GeoField_1
+                GeoFieldName="Latitude"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack","CrossTrack")
+                MaxdimList=("AlongTrack","CrossTrack")
+            END_OBJECT=GeoField_1
+            OBJECT=GeoField_2
+                GeoFieldName="Longitude"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack","CrossTrack")
+                MaxdimList=("AlongTrack","CrossTrack")
+            END_OBJECT=GeoField_2
+            OBJECT=GeoField_3
+                GeoFieldName="Time"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack")
+                MaxdimList=("AlongTrack")
+            END_OBJECT=GeoField_3
+        END_GROUP=GeoField
+        GROUP=DataField
+            OBJECT=DataField_1
+                DataFieldName="MyDataField"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("Band","AlongTrack","CrossTrack")
+                MaxdimList=("Band","AlongTrack","CrossTrack")
+            END_OBJECT=DataField_1
+        END_GROUP=DataField
+        GROUP=ProfileField
+        END_GROUP=ProfileField
+        GROUP=MergedFields
+        END_GROUP=MergedFields
+    END_GROUP=SWATH_1
+END_GROUP=SwathStructure
+GROUP=GridStructure
+END_GROUP=GridStructure
+END
+"""
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        SWATHS = HDFEOS.create_group("SWATHS")
+        MySwath = SWATHS.create_group("MySwath")
+        DataFields = MySwath.create_group("Data Fields")
+        ds = DataFields.create_dataset("MyDataField", (2, 3, 4), dtype="B")
+        ds[...] = np.array([i for i in range(2 * 3 * 4)]).reshape(ds.shape)
+        GeoLocationFields = MySwath.create_group("Geolocation Fields")
+        ds = GeoLocationFields.create_dataset("Longitude", (3, 4), dtype="f")
+        ds[...] = np.array([i for i in range(3 * 4)]).reshape(ds.shape)
+        ds = GeoLocationFields.create_dataset("Latitude", (3, 4), dtype="f")
+        ds[...] = np.array([i for i in range(3 * 4)]).reshape(ds.shape)
+        f.close()
+
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_swath.h5")
+    subds = ds.GetSubDatasets()
+    assert (
+        subds[0][0]
+        == 'HDF5:"data/hdf5/dummy_HDFEOS_swath.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    assert subds[0][1].startswith(
+        "[(Band=2)x(AlongTrack=3)x(CrossTrack=4)] //HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField (8-bit"
+    )
+
+    ds = gdal.Open(subds[0][0])
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 2
+    assert len(ds.GetGCPs()) == 0
+    assert ds.GetMetadata("GEOLOCATION") == {
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'HDF5:"data/hdf5/dummy_HDFEOS_swath.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Longitude',
+        "Y_BAND": "1",
+        "Y_DATASET": 'HDF5:"data/hdf5/dummy_HDFEOS_swath.h5"://HDFEOS/SWATHS/MySwath/Geolocation_Fields/Latitude',
+    }
+    assert gdal.Open(ds.GetMetadataItem("X_DATASET", "GEOLOCATION")) is not None
+    assert gdal.Open(ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")) is not None
     ds = None

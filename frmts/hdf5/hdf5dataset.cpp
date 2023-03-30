@@ -1345,33 +1345,99 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
                 return CE_None;
         }
 
-        HDF5EOSParser::GridMetadata oMetadata;
-        if (m_oHDFEOSParser.GetMetadata(poRootGroup->pszUnderscorePath,
-                                        oMetadata) &&
-            static_cast<int>(oMetadata.aoDimensions.size()) ==
+        HDF5EOSParser::GridMetadata oGridMetadata;
+        HDF5EOSParser::SwathMetadata oSwathMetadata;
+        if (m_oHDFEOSParser.GetDataModel() == HDF5EOSParser::DataModel::GRID &&
+            m_oHDFEOSParser.GetGridMetadata(poRootGroup->pszUnderscorePath,
+                                            oGridMetadata) &&
+            static_cast<int>(oGridMetadata.aoDimensions.size()) ==
                 poRootGroup->nRank)
         {
             int nXDimSize = 0;
             int nYDimSize = 0;
             int nOtherDimSize = 0;
-            for (auto &oDim : oMetadata.aoDimensions)
+            std::string osOtherDimName;
+            for (auto &oDim : oGridMetadata.aoDimensions)
             {
                 if (oDim.osName == "XDim")
                     nXDimSize = oDim.nSize;
                 else if (oDim.osName == "YDim")
                     nYDimSize = oDim.nSize;
                 else
+                {
+                    osOtherDimName = oDim.osName;
                     nOtherDimSize = oDim.nSize;
+                }
             }
             switch (poRootGroup->nRank)
             {
                 case 2:
-                    osStr.Printf("%dx%d", nXDimSize, nYDimSize);
+                    osStr.Printf("(y=%d)x(x=%d)", nYDimSize, nXDimSize);
                     break;
                 case 3:
-                    osStr.Printf("%dx%dx%d", nXDimSize, nYDimSize,
-                                 nOtherDimSize);
+                {
+                    if (osOtherDimName == oGridMetadata.aoDimensions[0].osName)
+                        osStr.Printf("(%s=%d)x(y=%d)x(x=%d)",
+                                     osOtherDimName.c_str(), nOtherDimSize,
+                                     nYDimSize, nXDimSize);
+                    else
+                        osStr.Printf("(y=%d)x(x=%d)x(%s=%d)", nYDimSize,
+                                     nXDimSize, osOtherDimName.c_str(),
+                                     nOtherDimSize);
                     break;
+                }
+                default:
+                    break;
+            }
+        }
+        else if (m_oHDFEOSParser.GetDataModel() ==
+                     HDF5EOSParser::DataModel::SWATH &&
+                 m_oHDFEOSParser.GetSwathMetadata(
+                     poRootGroup->pszUnderscorePath, oSwathMetadata) &&
+                 static_cast<int>(oSwathMetadata.aoSwathDimensions.size()) ==
+                     poRootGroup->nRank &&
+                 oSwathMetadata.iXDim >= 0 && oSwathMetadata.iYDim >= 0)
+        {
+            const std::string &osXDimName =
+                oSwathMetadata.aoSwathDimensions[oSwathMetadata.iXDim].osName;
+            const int nXDimSize =
+                oSwathMetadata.aoSwathDimensions[oSwathMetadata.iXDim].nSize;
+            const std::string &osYDimName =
+                oSwathMetadata.aoSwathDimensions[oSwathMetadata.iYDim].osName;
+            const int nYDimSize =
+                oSwathMetadata.aoSwathDimensions[oSwathMetadata.iYDim].nSize;
+            switch (poRootGroup->nRank)
+            {
+                case 2:
+                    osStr.Printf("(%s=%d)x(%s=%d)", osYDimName.c_str(),
+                                 nYDimSize, osXDimName.c_str(), nXDimSize);
+                    break;
+                case 3:
+                {
+                    const std::string &osOtherDimName =
+                        oSwathMetadata
+                            .aoSwathDimensions[oSwathMetadata.iOtherDim]
+                            .osName;
+                    const int nOtherDimSize =
+                        oSwathMetadata
+                            .aoSwathDimensions[oSwathMetadata.iOtherDim]
+                            .nSize;
+                    if (oSwathMetadata.iOtherDim == 0)
+                    {
+                        osStr.Printf("(%s=%d)x(%s=%d)x(%s=%d)",
+                                     osOtherDimName.c_str(), nOtherDimSize,
+                                     osYDimName.c_str(), nYDimSize,
+                                     osXDimName.c_str(), nXDimSize);
+                    }
+                    else
+                    {
+                        osStr.Printf("(%s=%d)x(%s=%d)x(%s=%d)",
+                                     osYDimName.c_str(), nYDimSize,
+                                     osXDimName.c_str(), nXDimSize,
+                                     osOtherDimName.c_str(), nOtherDimSize);
+                    }
+                    break;
+                }
                 default:
                     break;
             }
