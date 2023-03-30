@@ -58,6 +58,13 @@ Layer Creation Options
    the :cpp:func:`CPLGenerateTempFilename` function.
    "/vsimem/" can be used for in-memory temporary files.
 
+Creation Issues
+---------------
+
+Currently, NULL geometries are not supported with SPATIAL_INDEX=YES.
+
+`More background and dicussion on this issue at <https://github.com/flatgeobuf/flatgeobuf/discussions/260>`__
+
 Examples
 --------
 
