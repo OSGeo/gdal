@@ -187,7 +187,7 @@ void netCDFVID::nc_vmap()
 
         if (!var.isValid())
         {
-            continue;  // don't do anywork if variable is invalid
+            continue;  // don't do any work if variable is invalid
         }
 
         // Convert each virtual dimID to a physical dimID:

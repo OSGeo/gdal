@@ -506,7 +506,7 @@ Configuration Options
 -  **GDAL_NETCDF_BOTTOMUP=[YES/NO]** : Set the y-axis order for import,
    overriding the order detected by the driver. This option is usually
    not needed unless a specific dataset is causing problems (which
-   should be reported in GDAL trac).
+   should be reported on `GitHub <https://github.com/osgeo/GDAL/issues>`_).
 
 -  **GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT]** : Try to guess which dimensions
    represent the latitude and longitude only by their attributes (STRICT)

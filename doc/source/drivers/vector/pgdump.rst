@@ -140,7 +140,7 @@ Environment variables
 VSI Virtual File System API support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The driver supports rwriting to files managed by VSI Virtual File System
+The driver supports writing to files managed by VSI Virtual File System
 API, which include "regular" files, as well as files in the /vsizip/,
 /vsigzip/ domains.
 
