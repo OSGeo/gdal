@@ -113,6 +113,12 @@ General creation options
    or TARGET_SRS creation options. (Overview generation is also multithreaded since
    GDAL 3.2)
 
+-  **NBITS=n**: (GDAL >= 3.7) Create a file with less than 8 bits per sample by
+   passing a value from 1 to 7. The apparent pixel type should be Byte.
+   Values of n=9...15 (UInt16 type) and n=17...31
+   (UInt32 type) are also accepted. From GDAL 2.2, n=16 is accepted for
+   Float32 type to generate half-precision floating point values.
+
 -  **PREDICTOR=[YES/NO/STANDARD/FLOATING_POINT]**: Set the predictor for LZW,
    DEFLATE and ZSTD compression. The default is NO. If YES is specified, then
    standard predictor (Predictor=2) is used for integer data type,
