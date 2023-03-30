@@ -1174,7 +1174,10 @@ def test_ogr_flatgeobuf_issue_7401():
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     ds = None
-    assert gdal.GetLastErrorMsg() == "ICreateFeature: NULL geometry not supported with spatial index"
+    assert (
+        gdal.GetLastErrorMsg()
+        == "ICreateFeature: NULL geometry not supported with spatial index"
+    )
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")
