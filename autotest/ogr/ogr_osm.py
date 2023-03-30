@@ -37,32 +37,32 @@ import pytest
 
 from osgeo import gdal, ogr
 
+pytestmark = pytest.mark.require_driver("OSM")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        ds = ogr.Open("data/osm/test.osm")
+        ogrtest.osm_drv_parse_osm = ds is not None
+        if (
+            ogrtest.osm_drv_parse_osm is None
+            and "OSM XML detected, but Expat parser not available"
+            not in gdal.GetLastErrorMsg()
+        ):
+            pytest.fail(
+                "Did not get 'OSM XML detected, but Expat parser not available'"
+            )
+    yield
+
+
 ###############################################################################
 # Test .pbf
 
 
 def test_ogr_osm_1(filename="data/osm/test.pbf"):
 
-    ogrtest.osm_drv = ogr.GetDriverByName("OSM")
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     ds = ogr.Open(filename)
-    if ds is None:
-        if filename == "data/osm/test.osm":
-            ogrtest.osm_drv_parse_osm = False
-            if (
-                gdal.GetLastErrorMsg().find(
-                    "OSM XML detected, but Expat parser not available"
-                )
-                == 0
-            ):
-                pytest.skip()
-
-        pytest.fail()
-    else:
-        if filename == "data/osm/test.osm":
-            ogrtest.osm_drv_parse_osm = True
 
     # Test points
     lyr = ds.GetLayer("points")
@@ -298,6 +298,10 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
 
 
 def test_ogr_osm_2():
+
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
+
     return test_ogr_osm_1("data/osm/test.osm")
 
 
@@ -306,6 +310,10 @@ def test_ogr_osm_2():
 
 
 def test_ogr_osm_limit_keys():
+
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
+
     with gdaltest.config_option("OSM_MAX_INDEXED_KEYS", "0"):
         return test_ogr_osm_1("data/osm/test.osm")
 
@@ -315,6 +323,10 @@ def test_ogr_osm_limit_keys():
 
 
 def test_ogr_osm_limit_values_per_key():
+
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
+
     with gdaltest.config_option("OSM_MAX_INDEXED_VALUES_PER_KEY", "0"):
         return test_ogr_osm_1("data/osm/test.osm")
 
@@ -324,9 +336,6 @@ def test_ogr_osm_limit_values_per_key():
 
 
 def test_ogr_osm_3(options=None, all_layers=False):
-
-    if ogrtest.osm_drv is None:
-        pytest.skip()
 
     filepath = "tmp/ogr_osm_3"
     if os.path.exists(filepath):
@@ -388,9 +397,6 @@ def test_ogr_osm_3_all_layers():
 
 def test_ogr_osm_4():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("data/osm/test.pbf")
     assert ds is not None
 
@@ -441,9 +447,6 @@ def test_ogr_osm_4():
 
 def test_ogr_osm_5():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("data/osm/test.pbf")
     assert ds is not None
 
@@ -484,9 +487,6 @@ def test_ogr_osm_5():
 
 def test_ogr_osm_6():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -520,9 +520,6 @@ def test_ogr_osm_6():
 
 def test_ogr_osm_7():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("data/osm/test.pbf")
     assert ds is not None
 
@@ -543,9 +540,6 @@ def test_ogr_osm_7():
 
 
 def test_ogr_osm_8():
-
-    if ogrtest.osm_drv is None:
-        pytest.skip()
 
     ds = ogr.Open("data/osm/base-64.osm.pbf")
     assert ds is not None
@@ -586,9 +580,6 @@ def test_ogr_osm_8():
 
 def test_ogr_osm_9():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     old_val = gdal.GetConfigOption("OSM_USE_CUSTOM_INDEXING")
     gdal.SetConfigOption("OSM_USE_CUSTOM_INDEXING", "NO")
     ret = test_ogr_osm_8()
@@ -604,8 +595,8 @@ def test_ogr_osm_9():
 @gdaltest.disable_exceptions()
 def test_ogr_osm_10():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
 
     # A file that does not exist.
     ds = ogr.Open("/nonexistent/foo.osm")
@@ -678,9 +669,6 @@ def test_ogr_osm_10():
 
 def test_ogr_osm_11():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption("OSM_CONFIG_FILE", "data/osm/osmconf_alltags.ini")
     ds = ogr.Open("data/osm/test.pbf")
     gdal.SetConfigOption("OSM_CONFIG_FILE", None)
@@ -708,9 +696,6 @@ def test_ogr_osm_11():
 
 
 def test_ogr_osm_12():
-
-    if ogrtest.osm_drv is None:
-        pytest.skip()
 
     ds = ogr.Open("data/osm/test.pbf")
     for i in range(2):
@@ -749,8 +734,8 @@ def test_ogr_osm_test_uncompressed_dense_false_pbf():
 
 def test_ogr_osm_13():
 
-    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        pytest.skip()
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_osm_13.osm",
@@ -778,8 +763,8 @@ def test_ogr_osm_13():
 
 def test_ogr_osm_14():
 
-    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        pytest.skip()
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_osm_14.osm",
@@ -837,9 +822,6 @@ def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
 
 
 def test_ogr_osm_15():
-
-    if ogrtest.osm_drv is None:
-        pytest.skip()
 
     ds = gdal.OpenEx("data/osm/test.pbf")
 
@@ -901,8 +883,8 @@ def test_ogr_osm_15():
 
 def test_ogr_osm_16():
 
-    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        pytest.skip()
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_osm_16.osm",
@@ -946,8 +928,8 @@ attributes=foo:baar,foo:bar
 
 def test_ogr_osm_17():
 
-    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
-        pytest.skip()
+    if not ogrtest.osm_drv_parse_osm:
+        pytest.skip("Expat support missing")
 
     with gdaltest.error_handler():
         gdal.VectorTranslate(
@@ -970,9 +952,6 @@ def test_ogr_osm_17():
 
 def test_ogr_osm_18():
 
-    if ogrtest.osm_drv is None:
-        pytest.skip()
-
     ds = ogr.Open("data/osm/two_points.pbf")
     lyr = ds.GetLayerByName("points")
     count = 0
@@ -981,3 +960,30 @@ def test_ogr_osm_18():
     ds = None
 
     assert count == 2
+
+
+###############################################################################
+# Test TAGS_FORMAT=JSON
+
+
+def test_ogr_osm_tags_json():
+
+    ds = gdal.OpenEx("data/osm/test.pbf", open_options=["TAGS_FORMAT=JSON"])
+
+    lyr = ds.GetLayerByName("points")
+    lyr_defn = lyr.GetLayerDefn()
+    other_tags_idx = lyr_defn.GetFieldIndex("other_tags")
+    assert other_tags_idx >= 0
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetType() == ogr.OFTString
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["other_tags"] == '{"foo":"bar","bar":"baz"}'
+
+    lyr = ds.GetLayerByName("lines")
+    lyr_defn = lyr.GetLayerDefn()
+    other_tags_idx = lyr_defn.GetFieldIndex("other_tags")
+    assert other_tags_idx >= 0
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetType() == ogr.OFTString
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["other_tags"] == '{"foo":"bar"}'

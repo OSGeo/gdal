@@ -130,6 +130,11 @@ void RegisterOGROSM()
         "will go to disk' default='100'/>"
         "  <Option name='INTERLEAVED_READING' type='boolean' "
         "description='Whether to enable interleaved reading.' default='NO'/>"
+        "  <Option name='TAGS_FORMAT' type='string-select' "
+        "description='Format for all_tags/other_tags fields.' default='HSTORE'>"
+        "    <Value>HSTORE</Value>"
+        "    <Value>JSON</Value>"
+        "  </Option>"
         "</OpenOptionList>");
 
     poDriver->pfnOpen = OGROSMDriverOpen;

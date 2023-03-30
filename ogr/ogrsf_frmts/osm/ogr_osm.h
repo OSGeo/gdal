@@ -179,7 +179,8 @@ class OGROSMLayer final : public OGRLayer
                    int bCheckFeatureThreshold = TRUE);
     void ForceResetReading();
 
-    void AddField(const char *pszName, OGRFieldType eFieldType);
+    void AddField(const char *pszName, OGRFieldType eFieldType,
+                  OGRFieldSubType eSubType = OFSTNone);
     int GetFieldIndex(const char *pszName);
 
     bool HasOSMId() const
@@ -420,6 +421,7 @@ class OGROSMDataSource final : public OGRDataSource
 
     bool m_bReportAllNodes = false;
     bool m_bReportAllWays = false;
+    bool m_bTagsAsHSTORE = true;  // if false, as JSON
 
     bool m_bFeatureAdded = false;
 
