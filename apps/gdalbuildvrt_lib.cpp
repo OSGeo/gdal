@@ -1946,9 +1946,9 @@ static char *SanitizeSRS(const char *pszUserInput)
  * filename and open options too), or NULL. The accepted options are the ones of
  * the <a href="/programs/gdalbuildvrt.html">gdalbuildvrt</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be
- * NULL), otherwise (gdal_translate_bin.cpp use case) must be allocated with
- *                           GDALBuildVRTOptionsForBinaryNew() prior to this
- * function. Will be filled with potentially present filename, open options,...
+ * NULL), otherwise (gdalbuildvrt_bin.cpp use case) must be allocated with
+ * GDALBuildVRTOptionsForBinaryNew() prior to this function. Will be filled
+ * with potentially present filename, open options,...
  * @return pointer to the allocated GDALBuildVRTOptions struct. Must be freed
  * with GDALBuildVRTOptionsFree().
  *
