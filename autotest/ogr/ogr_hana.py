@@ -1265,7 +1265,11 @@ def get_connection_str():
 
 def create_connection():
     conn_str = get_connection_str()
-    conn_params = dict(item.split("=") for item in conn_str.split(";"))
+
+    try:
+        conn_params = dict(item.split("=") for item in conn_str.split(";"))
+    except ValueError as e:
+        raise ValueError(f"Failed to parse connection params {conn_str} ({e})")
 
     with gdaltest.error_handler():
         conn = dbapi.connect(

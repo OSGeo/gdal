@@ -94,7 +94,6 @@ def with_and_without_postgis(request):
 
 def test_ogr_pg_1():
     gdaltest.pg_ds = None
-    gdaltest.pg_use_copy = gdal.GetConfigOption("PG_USE_COPY", None)
     val = gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None)
     if val is not None:
         gdaltest.pg_connection_string = val
@@ -117,7 +116,14 @@ def test_ogr_pg_1():
         gdal.PopErrorHandler()
 
     if gdaltest.pg_ds is None:
-        pytest.skip()
+        if val is None:
+            pytest.skip(
+                f"OGR_PG_CONNECTION_STRING not specified; Postgres is not available using default connection string {gdaltest.pg_connection_string}"
+            )
+        else:
+            pytest.skip(
+                f"Postgres is not available using supplied OGR_PG_CONNECTION_STRING {gdaltest.pg_connection_string}"
+            )
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT version()")
     feat = sql_lyr.GetNextFeature()
@@ -702,47 +708,45 @@ def test_ogr_pg_11():
     with gdaltest.error_handler():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
+    with gdal.config_option("PG_USE_COPY", "NO"):
 
-    ######################################################
-    # Create Layer
-    gdaltest.pgc_lyr = gdaltest.pg_ds.CreateLayer("tpolycopy", options=["DIM=3"])
+        ######################################################
+        # Create Layer
+        gdaltest.pgc_lyr = gdaltest.pg_ds.CreateLayer("tpolycopy", options=["DIM=3"])
 
-    ######################################################
-    # Setup Schema
-    ogrtest.quick_create_layer_def(
-        gdaltest.pgc_lyr,
-        [
-            ("AREA", ogr.OFTReal),
-            ("EAS_ID", ogr.OFTInteger),
-            ("PRFEDEA", ogr.OFTString),
-            ("SHORTNAME", ogr.OFTString, 8),
-        ],
-    )
+        ######################################################
+        # Setup Schema
+        ogrtest.quick_create_layer_def(
+            gdaltest.pgc_lyr,
+            [
+                ("AREA", ogr.OFTReal),
+                ("EAS_ID", ogr.OFTInteger),
+                ("PRFEDEA", ogr.OFTString),
+                ("SHORTNAME", ogr.OFTString, 8),
+            ],
+        )
 
-    ######################################################
-    # Copy in poly.shp
+        ######################################################
+        # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def=gdaltest.pgc_lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=gdaltest.pgc_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open("data/poly.shp")
-    shp_lyr = shp_ds.GetLayer(0)
-
-    feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
-
-    while feat is not None:
-
-        gdaltest.poly_feat.append(feat)
-
-        dst_feat.SetFrom(feat)
-        gdaltest.pgc_lyr.CreateFeature(dst_feat)
+        shp_ds = ogr.Open("data/poly.shp")
+        shp_lyr = shp_ds.GetLayer(0)
 
         feat = shp_lyr.GetNextFeature()
+        gdaltest.poly_feat = []
 
-    dst_feat.Destroy()
+        while feat is not None:
 
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+            gdaltest.poly_feat.append(feat)
+
+            dst_feat.SetFrom(feat)
+            gdaltest.pgc_lyr.CreateFeature(dst_feat)
+
+            feat = shp_lyr.GetNextFeature()
+
+        dst_feat.Destroy()
 
 
 ###############################################################################
@@ -1608,41 +1612,39 @@ def test_ogr_pg_28():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
+    with gdal.config_option("PG_USE_COPY", "NO"):
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-    with gdaltest.error_handler():
-        ds.ExecuteSQL("DELLAYER:datatypetest2")
+        with gdaltest.error_handler():
+            ds.ExecuteSQL("DELLAYER:datatypetest2")
 
-    ds.ExecuteSQL('set timezone to "UTC"')
+        ds.ExecuteSQL('set timezone to "UTC"')
 
-    src_lyr = ds.GetLayerByName("datatypetest")
+        src_lyr = ds.GetLayerByName("datatypetest")
 
-    dst_lyr = ds.CreateLayer("datatypetest2")
+        dst_lyr = ds.CreateLayer("datatypetest2")
 
-    src_lyr.ResetReading()
+        src_lyr.ResetReading()
 
-    for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
-        field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
-        dst_lyr.CreateField(field_defn)
+        for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
+            field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
+            dst_lyr.CreateField(field_defn)
 
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
 
-    feat = src_lyr.GetNextFeature()
-    assert feat is not None
+        feat = src_lyr.GetNextFeature()
+        assert feat is not None
 
-    dst_feat.SetFrom(feat)
-    assert dst_lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
+        dst_feat.SetFrom(feat)
+        assert dst_lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
 
-    dst_feat.Destroy()
+        dst_feat.Destroy()
 
-    src_lyr = None
-    dst_lyr = None
+        src_lyr = None
+        dst_lyr = None
 
-    ds.Destroy()
-
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+        ds.Destroy()
 
 
 ###############################################################################
@@ -1682,38 +1684,36 @@ def test_ogr_pg_30():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-    with gdaltest.error_handler():
-        ds.ExecuteSQL("DELLAYER:datatypetest2")
+        with gdaltest.error_handler():
+            ds.ExecuteSQL("DELLAYER:datatypetest2")
 
-    ds.ExecuteSQL('set timezone to "UTC"')
+        ds.ExecuteSQL('set timezone to "UTC"')
 
-    src_lyr = ds.GetLayerByName("datatypetest")
+        src_lyr = ds.GetLayerByName("datatypetest")
 
-    dst_lyr = ds.CreateLayer("datatypetest2")
+        dst_lyr = ds.CreateLayer("datatypetest2")
 
-    src_lyr.ResetReading()
+        src_lyr.ResetReading()
 
-    for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
-        field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
-        dst_lyr.CreateField(field_defn)
+        for i in range(src_lyr.GetLayerDefn().GetFieldCount()):
+            field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
+            dst_lyr.CreateField(field_defn)
 
-    dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
+        dst_feat = ogr.Feature(feature_def=dst_lyr.GetLayerDefn())
 
-    feat = src_lyr.GetNextFeature()
-    assert feat is not None
+        feat = src_lyr.GetNextFeature()
+        assert feat is not None
 
-    dst_feat.SetFrom(feat)
-    assert dst_lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
+        dst_feat.SetFrom(feat)
+        assert dst_lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
 
-    dst_feat.Destroy()
+        dst_feat.Destroy()
 
-    ds.Destroy()
-
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+        ds.Destroy()
 
 
 ###############################################################################
@@ -2789,20 +2789,20 @@ def test_ogr_pg_50():
         bHasSetFieldDoubleList = False
 
     for option in ["NO", "YES"]:
-        gdal.SetConfigOption("PG_USE_COPY", option)
-        gdaltest.pg_lyr.ResetReading()
-        for value in ["NaN", "Inf", "-Inf"]:
-            dst_feat.SetField("AREA", float(value))
-            dst_feat.SetField("PRFEDEA", value)
-            dst_feat.SetField("SHORTNAME", option)
-            if bHasSetFieldDoubleList:
-                dst_feat.SetFieldDoubleList(
-                    feature_def.GetFieldIndex("REALLIST"), [float(value), float(value)]
-                )
-            dst_feat.SetFID(-1)
-            gdaltest.pg_lyr.CreateFeature(dst_feat)
+        with gdal.config_option("PG_USE_COPY", option):
+            gdaltest.pg_lyr.ResetReading()
+            for value in ["NaN", "Inf", "-Inf"]:
+                dst_feat.SetField("AREA", float(value))
+                dst_feat.SetField("PRFEDEA", value)
+                dst_feat.SetField("SHORTNAME", option)
+                if bHasSetFieldDoubleList:
+                    dst_feat.SetFieldDoubleList(
+                        feature_def.GetFieldIndex("REALLIST"),
+                        [float(value), float(value)],
+                    )
+                dst_feat.SetFID(-1)
+                gdaltest.pg_lyr.CreateFeature(dst_feat)
 
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
     dst_feat.Destroy()
 
     for option in ["NO", "YES"]:
@@ -3063,38 +3063,36 @@ def test_ogr_pg_56():
         "CREATE TABLE ogr_pg_56 ( bar varchar, baz varchar ) WITH (OIDS=FALSE)"
     )
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    lyr = ds.GetLayerByName("ogr_pg_56")
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = ds.GetLayerByName("ogr_pg_56")
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, "")
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, "")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(1, "")
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(1, "")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, "")
-    feat.SetField(1, "")
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, "")
+        feat.SetField(1, "")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, "bar")
-    feat.SetField(1, "")
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, "bar")
+        feat.SetField(1, "")
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField(0, "")
-    feat.SetField(1, "baz")
-    lyr.CreateFeature(feat)
-
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, "")
+        feat.SetField(1, "baz")
+        lyr.CreateFeature(feat)
 
     ds = None
 
@@ -3280,21 +3278,19 @@ def test_ogr_pg_61():
         "CREATE TABLE ogr_pg_61 ( id integer NOT NULL PRIMARY KEY, bar varchar )"
     )
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    lyr = ds.GetLayerByName("ogr_pg_61")
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = ds.GetLayerByName("ogr_pg_61")
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(10)
-    lyr.CreateFeature(feat)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(10)
+        lyr.CreateFeature(feat)
 
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetFID(20)
-    feat.SetField(0, "baz")
-    lyr.CreateFeature(feat)
-
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFID(20)
+        feat.SetField(0, "baz")
+        lyr.CreateFeature(feat)
 
     ds = None
 
@@ -3544,20 +3540,19 @@ def test_ogr_pg_65():
         if i == 1:
             ds.ReleaseResultSet(lyr)
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    lyr = ds.GetLayerByName("ogr_pg_65")
-    lyr.DeleteFeature(1)
-    lyr.DeleteFeature(2)
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetGeomFieldDirectly("geom1", ogr.CreateGeometryFromWkt("POINT (3 4)"))
-    feat.SetGeomFieldDirectly(
-        "geom2", ogr.CreateGeometryFromWkt("LINESTRING (4 5 6,7 8 9)")
-    )
-    assert lyr.CreateFeature(feat) == 0
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    assert lyr.CreateFeature(feat) == 0
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+    with gdal.config_option("PG_USE_COPY", "YES"):
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = ds.GetLayerByName("ogr_pg_65")
+        lyr.DeleteFeature(1)
+        lyr.DeleteFeature(2)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeomFieldDirectly("geom1", ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        feat.SetGeomFieldDirectly(
+            "geom2", ogr.CreateGeometryFromWkt("LINESTRING (4 5 6,7 8 9)")
+        )
+        assert lyr.CreateFeature(feat) == 0
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        assert lyr.CreateFeature(feat) == 0
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName("ogr_pg_65")
@@ -4027,46 +4022,44 @@ def test_ogr_pg_73():
     if not gdaltest.pg_has_postgis:
         pytest.skip()
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
+    with gdal.config_option("PG_USE_COPY", "NO"):
 
-    lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_73", geom_type=ogr.wkbNone)
-    field_defn = ogr.FieldDefn("field_not_nullable", ogr.OFTString)
-    field_defn.SetNullable(0)
-    lyr.CreateField(field_defn)
-    field_defn = ogr.FieldDefn("field_nullable", ogr.OFTString)
-    lyr.CreateField(field_defn)
-    field_defn = ogr.GeomFieldDefn("geomfield_not_nullable", ogr.wkbPoint)
-    field_defn.SetNullable(0)
-    lyr.CreateGeomField(field_defn)
-    field_defn = ogr.GeomFieldDefn("geomfield_nullable", ogr.wkbPoint)
-    lyr.CreateGeomField(field_defn)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField("field_not_nullable", "not_null")
-    f.SetGeomFieldDirectly(
-        "geomfield_not_nullable", ogr.CreateGeometryFromWkt("POINT(0 0)")
-    )
-    lyr.CreateFeature(f)
-    f = None
+        lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_73", geom_type=ogr.wkbNone)
+        field_defn = ogr.FieldDefn("field_not_nullable", ogr.OFTString)
+        field_defn.SetNullable(0)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn("field_nullable", ogr.OFTString)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.GeomFieldDefn("geomfield_not_nullable", ogr.wkbPoint)
+        field_defn.SetNullable(0)
+        lyr.CreateGeomField(field_defn)
+        field_defn = ogr.GeomFieldDefn("geomfield_nullable", ogr.wkbPoint)
+        lyr.CreateGeomField(field_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("field_not_nullable", "not_null")
+        f.SetGeomFieldDirectly(
+            "geomfield_not_nullable", ogr.CreateGeometryFromWkt("POINT(0 0)")
+        )
+        lyr.CreateFeature(f)
+        f = None
 
-    # Error case: missing geometry
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
-    f = None
+        # Error case: missing geometry
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("field_not_nullable", "not_null")
+        gdal.PushErrorHandler()
+        ret = lyr.CreateFeature(f)
+        gdal.PopErrorHandler()
+        assert ret != 0
+        f = None
 
-    # Error case: missing non-nullable field
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
-    f = None
-
-    gdal.SetConfigOption("PG_USE_COPY", gdaltest.pg_use_copy)
+        # Error case: missing non-nullable field
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+        gdal.PushErrorHandler()
+        ret = lyr.CreateFeature(f)
+        gdal.PopErrorHandler()
+        assert ret != 0
+        f = None
 
     lyr.ResetReading()  # force above feature to be committed
 
@@ -5364,46 +5357,45 @@ def test_ogr_pg_85(with_and_without_postgis):
         gdaltest.pg_ds.ExecuteSQL("SELECT 1")
     )  # make sure the layers are well created
 
-    old_val = gdal.GetConfigOption("PG_USE_COPY")
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    ds.GetLayerCount()
-    ds.StartTransaction()
-    lyr = ds.GetLayerByName("ogr_pg_85_1")
-    f = ogr.Feature(lyr.GetLayerDefn())
-    lyr.CreateFeature(f)
-    lyr = ds.GetLayerByName("ogr_pg_85_2")
-    feat_defn = lyr.GetLayerDefn()
-    assert feat_defn.GetFieldCount() == 1
-    f = ogr.Feature(feat_defn)
-    assert lyr.CreateFeature(f) == 0
-    ds.CommitTransaction()
-    ds = None
+    with gdal.config_option("PG_USE_COPY", "YES"):
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        ds.GetLayerCount()
+        ds.StartTransaction()
+        lyr = ds.GetLayerByName("ogr_pg_85_1")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        lyr = ds.GetLayerByName("ogr_pg_85_2")
+        feat_defn = lyr.GetLayerDefn()
+        assert feat_defn.GetFieldCount() == 1
+        f = ogr.Feature(feat_defn)
+        assert lyr.CreateFeature(f) == 0
+        ds.CommitTransaction()
+        ds = None
 
-    # Although test real ogr2ogr scenario
-    # 0755 = 493
-    gdal.Mkdir("/vsimem/ogr_pg_85", 493)
-    gdal.FileFromMemBuffer(
-        "/vsimem/ogr_pg_85/ogr_pg_85_1.csv",
-        """id,foo
-1,1""",
-    )
+        # Although test real ogr2ogr scenario
+        # 0755 = 493
+        gdal.Mkdir("/vsimem/ogr_pg_85", 493)
+        gdal.FileFromMemBuffer(
+            "/vsimem/ogr_pg_85/ogr_pg_85_1.csv",
+            """id,foo
+    1,1""",
+        )
 
-    gdal.FileFromMemBuffer(
-        "/vsimem/ogr_pg_85/ogr_pg_85_2.csv",
-        """id,foo
-1,1""",
-    )
+        gdal.FileFromMemBuffer(
+            "/vsimem/ogr_pg_85/ogr_pg_85_2.csv",
+            """id,foo
+    1,1""",
+        )
 
-    gdal.VectorTranslate(
-        "PG:" + gdaltest.pg_connection_string, "/vsimem/ogr_pg_85", accessMode="append"
-    )
+        gdal.VectorTranslate(
+            "PG:" + gdaltest.pg_connection_string,
+            "/vsimem/ogr_pg_85",
+            accessMode="append",
+        )
 
-    gdal.Unlink("/vsimem/ogr_pg_85/ogr_pg_85_1.csv")
-    gdal.Unlink("/vsimem/ogr_pg_85/ogr_pg_85_2.csv")
-    gdal.Unlink("/vsimem/ogr_pg_85")
-
-    gdal.SetConfigOption("PG_USE_COPY", old_val)
+        gdal.Unlink("/vsimem/ogr_pg_85/ogr_pg_85_1.csv")
+        gdal.Unlink("/vsimem/ogr_pg_85/ogr_pg_85_2.csv")
+        gdal.Unlink("/vsimem/ogr_pg_85")
 
     lyr = gdaltest.pg_ds.GetLayerByName("ogr_pg_85_2")
     assert lyr.GetFeatureCount() == 2
@@ -5418,35 +5410,29 @@ def test_ogr_pg_86(with_and_without_postgis):
     if gdaltest.pg_ds is None or not with_and_without_postgis:
         pytest.skip()
 
-    old_val = gdal.GetConfigOption("PG_USE_COPY")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+        lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86")
+        lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFieldBinaryFromHexString("test", "3020")
+        lyr.CreateFeature(f)
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        if f.GetField(0) != "3020":
+            pytest.fail()
 
-    lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86")
-    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFieldBinaryFromHexString("test", "3020")
-    lyr.CreateFeature(f)
-    lyr.ResetReading()
-    f = lyr.GetNextFeature()
-    if f.GetField(0) != "3020":
-        gdal.SetConfigOption("PG_USE_COPY", old_val)
-        pytest.fail()
+    with gdal.config_option("PG_USE_COPY", "NO"):
 
-    gdal.SetConfigOption("PG_USE_COPY", "NO")
-
-    lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86", options=["OVERWRITE=YES"])
-    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFieldBinaryFromHexString("test", "3020")
-    lyr.CreateFeature(f)
-    lyr.ResetReading()
-    f = lyr.GetNextFeature()
-    if f.GetField(0) != "3020":
-        gdal.SetConfigOption("PG_USE_COPY", old_val)
-        pytest.fail()
-
-    gdal.SetConfigOption("PG_USE_COPY", old_val)
+        lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86", options=["OVERWRITE=YES"])
+        lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFieldBinaryFromHexString("test", "3020")
+        lyr.CreateFeature(f)
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        if f.GetField(0) != "3020":
+            pytest.fail()
 
 
 ###############################################################################

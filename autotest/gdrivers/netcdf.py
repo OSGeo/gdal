@@ -108,6 +108,8 @@ def netcdf_setup():
 
 @pytest.fixture(autouse=True, scope="module")
 def netcdf_teardown():
+    gdaltest.clean_tmp()
+
     diff = len(gdaltest.get_opened_files()) - gdaltest.count_opened_files
     assert diff == 0, "Leak of file handles: %d leaked" % diff
 
@@ -868,7 +870,7 @@ def test_netcdf_21():
 def test_netcdf_22():
 
     if not gdaltest.netcdf_drv_has_hdf4:
-        pytest.skip()
+        pytest.skip("netCDF driver does not have HDF4 support")
 
     ifile = "data/hdf4/hdifftst2.hdf"
 
@@ -6271,14 +6273,6 @@ def test_netcdf_read_invalid_valid_min_valid_max():
         ds = gdal.Open("data/netcdf/invalid_valid_min_valid_max.nc")
     assert gdal.GetLastErrorType() == gdal.CE_Warning
     assert struct.unpack("i" * 4, ds.ReadRaster()) == (-9999, 0, 1, 2)
-
-
-def test_clean_tmp():
-    # [KEEP THIS AS THE LAST TEST]
-    # i.e. please do not add any tests after this one. Put new ones above.
-    # Not actually a test, just cleans up tmp...
-    gdaltest.clean_tmp()
-    pytest.skip()
 
 
 ###############################################################################

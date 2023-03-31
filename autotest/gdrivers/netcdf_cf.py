@@ -195,11 +195,13 @@ def netcdf_cf_get_command(ifile, version="auto"):
 ###############################################################################
 # Check a file for CF compliance
 def netcdf_cf_check_file(ifile, version="auto", silent=True):
+    __tracebackhide__ = True
+
     # pylint: disable=unused-argument
     gdaltest.netcdf_cf_check_error = ""
 
     if not os.path.exists(ifile):
-        pytest.skip()
+        pytest.skip(f"File does not exist: {ifile}")
 
     output_all = ""
 
@@ -780,33 +782,32 @@ def test_netcdf_cf_4():
 # test CF support for dims and variables in different groups
 
 
-def test_netcdf_cf_6():
-
-    ifiles = (
+@pytest.mark.parametrize(
+    "ifile",
+    (
         "data/netcdf/cf_dimsindiff_4326.nc",
         "NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/data/temp",
         "NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle",
-    )
-    for ifile in ifiles:
-        ds = gdal.Open(ifile)
-        prj = ds.GetProjection()
-        sr = osr.SpatialReference()
-        sr.ImportFromWkt(prj)
-        proj_out = sr.ExportToProj4()
+    ),
+)
+def test_netcdf_cf_6(ifile):
+    ds = gdal.Open(ifile)
+    prj = ds.GetProjection()
+    sr = osr.SpatialReference()
+    sr.ImportFromWkt(prj)
+    proj_out = sr.ExportToProj4()
 
-        assert proj_out in (
-            "+proj=longlat +ellps=WGS84 +no_defs",
-            "+proj=longlat +datum=WGS84 +no_defs",
-        )
+    assert proj_out in (
+        "+proj=longlat +ellps=WGS84 +no_defs",
+        "+proj=longlat +datum=WGS84 +no_defs",
+    )
 
 
 ###############################################################################
 # test check sums
-def test_netcdf_cf_7(netcdf_setup):  # noqa
-    # setup netcdf and netcdf_cf environment
-    netcdf_cf_setup()
-
-    checks = (
+@pytest.mark.parametrize(
+    "infile,band,checksum",
+    (
         ("data/netcdf/cf_dimsindiff_4326.nc", 1, 2041),
         ("NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/data/temp", 1, 2041),
         (
@@ -819,8 +820,11 @@ def test_netcdf_cf_7(netcdf_setup):  # noqa
             4,
             476,
         ),
-    )
+    ),
+)
+def test_netcdf_cf_7(netcdf_setup, infile, band, checksum):  # noqa
+    # setup netcdf and netcdf_cf environment
+    netcdf_cf_setup()
 
-    for infile, band, checksum in checks:
-        ds = gdal.Open(infile, gdal.GA_ReadOnly)
-        assert ds.GetRasterBand(band).Checksum() == checksum
+    ds = gdal.Open(infile, gdal.GA_ReadOnly)
+    assert ds.GetRasterBand(band).Checksum() == checksum
