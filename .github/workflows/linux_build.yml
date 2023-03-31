@@ -148,6 +148,7 @@ jobs:
           docker build \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} \
+            --cache-from ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} \
             --cache-from ${CONTAINER_NAME_FULL} \
             -t ${CONTAINER_NAME_FULL} \
             -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
