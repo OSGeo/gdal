@@ -34,12 +34,14 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 # Other test data :
 # http://www.lv-bw.de/alkis.info/nas-bsp.html
 # http://www.lv-bw.de/lvshop2/Produktinfo/AAA/AAA.html
 # http://www.gll.niedersachsen.de/live/live.php?navigation_id=10640&article_id=51644&_psmand=34
+
+pytestmark = pytest.mark.require_driver("NAS")
 
 ###############################################################################
 # Test reading a NAS file
@@ -47,10 +49,6 @@ from osgeo import ogr
 
 
 def test_ogr_nas_1():
-
-    drv = ogr.GetDriverByName("NAS")
-    if drv is None:
-        pytest.skip()
 
     gdaltest.download_or_skip(
         "http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip",
@@ -74,7 +72,8 @@ def test_ogr_nas_1():
     except OSError:
         pass
 
-    ds = ogr.Open("tmp/cache/BKG_NAS_Peine.xml")
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = ogr.Open("tmp/cache/BKG_NAS_Peine.xml")
     assert ds is not None, "could not open dataset"
 
     assert ds.GetLayerCount() == 41, "did not get expected layer count"
@@ -110,10 +109,6 @@ def test_ogr_nas_1():
 
 def test_ogr_nas_2():
 
-    drv = ogr.GetDriverByName("NAS")
-    if drv is None:
-        pytest.skip()
-
     gdaltest.download_or_skip(
         "http://trac.wheregroup.com/PostNAS/browser/trunk/demodaten/lverm_geo_rlp/gid-6.0/gm2566-testdaten-gid60-2008-11-11.xml.zip?format=raw",
         "gm2566-testdaten-gid60-2008-11-11.xml.zip",
@@ -138,8 +133,8 @@ def test_ogr_nas_2():
     except OSError:
         pass
 
-    ds = ogr.Open("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
-    assert ds is not None, "could not open dataset"
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = ogr.Open("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
 
     assert ds.GetLayerCount() == 85, "did not get expected layer count"
 
@@ -170,12 +165,8 @@ def test_ogr_nas_2():
 
 def test_ogr_nas_3():
 
-    drv = ogr.GetDriverByName("NAS")
-    if drv is None:
-        pytest.skip()
-
-    ds = ogr.Open("data/nas/empty_nas.xml")
-    assert ds is not None, "could not open dataset"
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = ogr.Open("data/nas/empty_nas.xml")
 
     assert ds.GetLayerCount() == 1, "did not get expected layer count"
 
@@ -189,17 +180,13 @@ def test_ogr_nas_3():
 
 def test_ogr_nas_4():
 
-    drv = ogr.GetDriverByName("NAS")
-    if drv is None:
-        pytest.skip()
-
     try:
         os.remove("data/nas/delete_nas.gfs")
     except OSError:
         pass
 
-    ds = ogr.Open("data/nas/delete_nas.xml")
-    assert ds is not None, "could not open dataset"
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = ogr.Open("data/nas/delete_nas.xml")
 
     assert ds.GetLayerCount() == 2, "did not get expected layer count"
 
@@ -236,17 +223,13 @@ def test_ogr_nas_4():
 
 def test_ogr_nas_5():
 
-    drv = ogr.GetDriverByName("NAS")
-    if drv is None:
-        pytest.skip()
-
     try:
         os.remove("data/nas/replace_nas.gfs")
     except OSError:
         pass
 
-    ds = ogr.Open("data/nas/replace_nas.xml")
-    assert ds is not None, "could not open dataset"
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = ogr.Open("data/nas/replace_nas.xml")
 
     assert ds.GetLayerCount() == 3, "did not get expected layer count"
 
