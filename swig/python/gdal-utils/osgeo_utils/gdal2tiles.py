@@ -3916,8 +3916,8 @@ function ExtDraggableObject(src, opt_drag) {
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css" type="text/css">
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
-    <script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
-    <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
+    <script src="https://unpkg.com/ol-layerswitcher@4.1.1"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@4.1.1/src/ol-layerswitcher.css" />
 </head>
 <body>
     <div id="header"><h1>%(xml_escaped_title)s</h1></div>
