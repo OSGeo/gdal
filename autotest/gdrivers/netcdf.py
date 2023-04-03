@@ -1938,6 +1938,23 @@ def test_netcdf_49():
 
 
 ###############################################################################
+# Test reading a vector NetCDF file with featureType=trajectory and
+# Conventions="CF-1.8" (fix for https://github.com/OSGeo/gdal/issues/7550)
+
+
+def test_netcdf_read_trajectory():
+
+    ds = gdal.OpenEx("data/netcdf/trajectory.nc", gdal.OF_VECTOR)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["TEMP"] == 8399
+    assert f["TIME"] == pytest.approx(21877.1309026852)
+    assert f.GetGeometryRef().GetX() == pytest.approx(-0.001000000047497)
+    assert f.GetGeometryRef().GetY() == pytest.approx(64.665657043457)
+    assert f.GetGeometryRef().GetZ() == pytest.approx(4)
+
+
+###############################################################################
 # Test creating a vector NetCDF 3 file with WKT geometry field
 
 

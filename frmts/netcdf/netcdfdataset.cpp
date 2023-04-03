@@ -8869,10 +8869,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // Figure out whether or not the listed dataset has support for simple
     // geometries (CF-1.8)
     poDS->nCFVersion = nccfdriver::getCFVersion(cdfid);
+    bool bHasSimpleGeometries = false;  // but not necessarily valid
     if (poDS->nCFVersion >= 1.8)
     {
         poDS->bSGSupport = true;
-        poDS->DetectAndFillSGLayers(cdfid);
+        bHasSimpleGeometries = poDS->DetectAndFillSGLayers(cdfid);
         poDS->vcdf.enableFullVirtualMode();
     }
     else
@@ -8948,7 +8949,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
     {
         poDS->FilterVars(cdfid, (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0,
-                         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0,
+                         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+                             !bHasSimpleGeometries,
                          papszIgnoreVars, &nRasterVars, &nGroupID, &nVarID,
                          &nIgnoredVars, oMap2DDimsToGroupAndVar);
     }
@@ -13037,6 +13039,8 @@ CPLErr netCDFDataset::FilterVars(
     int nVarXId = -1;
     int nVarYId = -1;
     int nVarZId = -1;
+    int nVarTimeId = -1;
+    int nVarTimeDimId = -1;
     bool bIsVectorOnly = true;
     int nProfileDimId = -1;
     int nParentIndexVarID = -1;
@@ -13085,9 +13089,17 @@ CPLErr netCDFDataset::FilterVars(
             CPLFree(pszVarFullName);
             if (bIgnoreVar)
             {
-                (*pnIgnoredVars)++;
-                CPLDebug("GDAL_netCDF", "variable #%d [%s] was ignored", v,
-                         szTemp);
+                if (nVarDims == 1 && NCDFIsVarTimeCoord(nCdfId, -1, szTemp))
+                {
+                    nVarTimeId = v;
+                    nc_inq_vardimid(nCdfId, v, &nVarTimeDimId);
+                }
+                else if (nVarDims > 1)
+                {
+                    (*pnIgnoredVars)++;
+                    CPLDebug("GDAL_netCDF", "variable #%d [%s] was ignored", v,
+                             szTemp);
+                }
             }
             // Only accept 2+D vars.
             else if (nVarDims >= 2)
@@ -13208,8 +13220,7 @@ CPLErr netCDFDataset::FilterVars(
         *pnRasterVars += nRasterVars;
     }
 
-    if (!anPotentialVectorVarID.empty() && bKeepVectors &&
-        nccfdriver::getCFVersion(nCdfId) <= 1.6)
+    if (!anPotentialVectorVarID.empty() && bKeepVectors)
     {
         // Take the dimension that is referenced the most times.
         if (!(oMapDimIdToCount.size() == 1 ||
@@ -13223,6 +13234,11 @@ CPLErr netCDFDataset::FilterVars(
         }
         else
         {
+            if (nVarTimeId >= 0 &&
+                oMapDimIdToCount.find(nVarTimeDimId) != oMapDimIdToCount.end())
+            {
+                anPotentialVectorVarID.push_back(nVarTimeId);
+            }
             CreateGrpVectorLayers(nCdfId, osFeatureType, anPotentialVectorVarID,
                                   oMapDimIdToCount, nVarXId, nVarYId, nVarZId,
                                   nProfileDimId, nParentIndexVarID,

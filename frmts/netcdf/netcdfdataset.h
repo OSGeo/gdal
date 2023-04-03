@@ -918,7 +918,7 @@ class netCDFDataset final : public GDALPamDataset
                                  int nProfileDimId, int nParentIndexVarID,
                                  bool bKeepRasters);
 
-    CPLErr DetectAndFillSGLayers(int ncid);
+    bool DetectAndFillSGLayers(int ncid);
     CPLErr LoadSGVarIntoLayer(int ncid, int nc_basevarId);
 
 #ifdef NETCDF_HAS_NC4
