@@ -1152,6 +1152,24 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString(CPLSPrintf("-%s", pszKey));
                 argv.AddString(pszValue);
             }
+            else if (EQUAL(pszKey, "outsize"))
+            {
+                CPLStringList aosOutSize(CSLTokenizeString2(pszValue, ",", 0));
+                if (aosOutSize.size() != 2)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid outsize option: %s, must be two"
+                             "values separated by comma pixel,line or two "
+                             "fraction values with percent symbol",
+                             pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                argv.AddString("-outsize");
+                argv.AddString(aosOutSize[0]);
+                argv.AddString(aosOutSize[1]);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",

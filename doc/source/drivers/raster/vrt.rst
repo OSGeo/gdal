@@ -1657,7 +1657,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``, 
-``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, and ``exponent``. 
+``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, and ``outsize``. 
 
 Other options may be added in the future.
 
@@ -1707,6 +1707,8 @@ with (:ref:`gdal_translate`).
 The effect of the ``exponent`` option (added in GDAL 3.7) is to apply non-linear scaling with a power function, 
 a single value to be used with the ``scale`` option. The same ``exponent_bn`` syntax may be used in combination with ``scale_bn`` to 
 target specific band/s as per (:ref:`gdal_translate`). 
+
+The effect of the ``outsize`` option (added in GDAL 3.7) is to set the size of the output, in numbers `pixel,line` or in fraction `pixel%,line%` as per (:ref:`gdal_translate`). 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
