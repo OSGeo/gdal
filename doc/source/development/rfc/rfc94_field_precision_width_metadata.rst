@@ -8,7 +8,7 @@ RFC 94: Numeric fields width/precision metadata
 Author:        Alessandro Pasotti
 Contact:       elpaso @ itopen.it
 Started:       2023-Feb-17
-Status:        Development
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
@@ -166,4 +166,4 @@ A C++ test will be added to the test suite.
 Voting history
 --------------
 
-
++1 from PSC members EvenR and JukkaR
