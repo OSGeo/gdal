@@ -132,7 +132,7 @@ bool OGRHasZandSupported(OGRwkbGeometryType type)
 
 }  // namespace nccfdriver
 
-CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
+bool netCDFDataset::DetectAndFillSGLayers(int ncid)
 {
     // Discover simple geometry variables
     int var_count;
@@ -160,7 +160,7 @@ CPLErr netCDFDataset::DetectAndFillSGLayers(int ncid)
         }
     }
 
-    return CE_None;
+    return !vidList.empty();
 }
 
 CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
