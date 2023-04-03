@@ -448,6 +448,28 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
+/** Capability set by a vector driver that supports field width and precision.
+ *
+ * This capability reflects that a vector driver includes the decimal separator
+ * in the field width of fields of type OFTReal.
+ *
+ * See GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN for a related capability flag.
+ * @since GDAL 3.7
+ */
+#define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR                \
+    "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR"
+
+/** Capability set by a vector driver that supports field width and precision.
+ *
+ * This capability reflects that a vector driver includes the sign
+ * in the field width of fields of type OFTReal.
+ *
+ * See GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR for a related capability flag.
+ * @since GDAL 3.7
+ */
+#define GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN                             \
+    "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN"
+
 /** Capability set by a driver that implements the Open() API. */
 #define GDAL_DCAP_OPEN "DCAP_OPEN"
 

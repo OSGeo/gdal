@@ -4297,6 +4297,51 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     std::map<int, TargetLayerInfo::ResolvedInfo> oMapResolved;
 
+    /* Determine if NUMERIC field width narrowing is allowed */
+    const char *pszSrcWidthIncludesDecimalSeparator{
+        m_poSrcDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")};
+    const bool bSrcWidthIncludesDecimalSeparator{
+        pszSrcWidthIncludesDecimalSeparator &&
+        EQUAL(pszSrcWidthIncludesDecimalSeparator, "YES")};
+    const char *pszDstWidthIncludesDecimalSeparator{
+        m_poDstDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")};
+    const bool bDstWidthIncludesDecimalSeparator{
+        pszDstWidthIncludesDecimalSeparator &&
+        EQUAL(pszDstWidthIncludesDecimalSeparator, "YES")};
+    const char *pszSrcWidthIncludesMinusSign{
+        m_poSrcDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")};
+    const bool bSrcWidthIncludesMinusSign{
+        pszSrcWidthIncludesMinusSign &&
+        EQUAL(pszSrcWidthIncludesMinusSign, "YES")};
+    const char *pszDstWidthIncludesMinusSign{
+        m_poDstDS->GetDriver()->GetMetadataItem(
+            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")};
+    const bool bDstWidthIncludesMinusSign{
+        pszDstWidthIncludesMinusSign &&
+        EQUAL(pszDstWidthIncludesMinusSign, "YES")};
+
+    // Calculate width delta
+    int iChangeWidthBy{0};
+
+    if (bSrcWidthIncludesDecimalSeparator && !bDstWidthIncludesDecimalSeparator)
+    {
+        iChangeWidthBy--;
+    }
+    else if (!bSrcWidthIncludesDecimalSeparator &&
+             bDstWidthIncludesDecimalSeparator)
+    {
+        iChangeWidthBy++;
+    }
+
+    // We cannot assume there is no minus sign, we can only inflate here
+    if (!bSrcWidthIncludesMinusSign && bDstWidthIncludesMinusSign)
+    {
+        iChangeWidthBy++;
+    }
+
     /* Caution : at the time of writing, the MapInfo driver */
     /* returns NULL until a field has been added */
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
@@ -4344,6 +4389,12 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
                     m_papszMapFieldType, m_bUnsetFieldWidth, psOptions->bQuiet,
                     m_bForceNullable, m_bUnsetDefault);
+
+                if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
+                    oFieldDefn.GetWidth() != 0)
+                {
+                    oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
+                }
 
                 /* The field may have been already created at layer creation */
                 const int iDstField =
@@ -4543,6 +4594,12 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 m_poDstDS, oFieldDefn, m_papszFieldTypesToString,
                 m_papszMapFieldType, m_bUnsetFieldWidth, psOptions->bQuiet,
                 m_bForceNullable, m_bUnsetDefault);
+
+            if (iChangeWidthBy != 0 && oFieldDefn.GetType() == OFTReal &&
+                oFieldDefn.GetWidth() != 0)
+            {
+                oFieldDefn.SetWidth(oFieldDefn.GetWidth() + iChangeWidthBy);
+            }
 
             /* The field may have been already created at layer creation */
             {

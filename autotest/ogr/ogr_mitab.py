@@ -416,7 +416,7 @@ def test_ogr_mitab_13():
     defn = lyr.GetLayerDefn()
 
     data = [
-        ["AREA", ogr.OFTReal, 7, 4],
+        ["AREA", ogr.OFTReal, 9, 4],
         ["VOLUME", ogr.OFTReal, 0, 0],
         ["LENGTH", ogr.OFTInteger, 10, 0],
         ["WIDTH", ogr.OFTInteger, 4, 0],
@@ -468,7 +468,7 @@ def test_ogr_mitab_14():
     defn = lyr.GetLayerDefn()
 
     data = [
-        ["AREA", ogr.OFTReal, 7, 4],
+        ["AREA", ogr.OFTReal, 9, 4],
         ["VOLUME", ogr.OFTReal, 0, 0],
         ["LENGTH", ogr.OFTInteger, 254, 0],
         ["WIDTH", ogr.OFTInteger, 254, 0],

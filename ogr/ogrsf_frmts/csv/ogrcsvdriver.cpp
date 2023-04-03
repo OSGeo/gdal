@@ -314,6 +314,10 @@ void RegisterOGRCSV()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "csv tsv psv");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/csv.html");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN,
+                              "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR, "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
                               "<CreationOptionList>"
