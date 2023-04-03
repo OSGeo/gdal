@@ -100,3 +100,4 @@ RFC list
     rfc91_dataset_close
     rfc92_wkb_only_geometries
     rfc93_update_feature
+    rfc94_field_precision_width_metadata
