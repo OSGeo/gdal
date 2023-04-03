@@ -1159,7 +1159,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
                              "Invalid outsize option: %s, must be two"
-                             "values >=1 separated by comma pixel,line or two "
+                             "values separated by comma pixel,line or two "
                              "fraction values with percent symbol",
                              pszValue);
                     poSrcDS->ReleaseRef();
