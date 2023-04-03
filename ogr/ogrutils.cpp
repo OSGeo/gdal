@@ -959,7 +959,7 @@ int OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
  *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
  *   or YYYY-MM-DDZ
  *
- * The seconds may also have a decimal portion (which is ignored).  And
+ * The seconds may also have a decimal portion (parsed as milliseconds).  And
  * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
  * The date may also be in YYYY/MM/DD format.  If the year is less than 100
  * and greater than 30 a "1900" century value will be set.  If it is less than
