@@ -1505,6 +1505,17 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/uint16_3band.vrt?exponent_2=2.2&scale_2=0,10,0,100")
     assert ds.GetRasterBand(2).Checksum() == 4455
 
+    ds = gdal.Open("vrt://data/float32.tif?outsize=10")
+    assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?outsize=10,5")
+    assert ds.GetRasterBand(1).XSize == 10
+    assert ds.GetRasterBand(1).YSize == 5
+
+    ds = gdal.Open("vrt://data/float32.tif?outsize=50%,25%")
+    assert ds.GetRasterBand(1).XSize == 10
+    assert ds.GetRasterBand(1).YSize == 5
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
