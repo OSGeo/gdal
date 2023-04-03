@@ -7234,12 +7234,12 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
                     osStandardName = pszStandardName;
             }
             if (osName == "lon" || osName == "longitude" ||
-                osStandardName == "longitude")
+                osName == "Longitude" || osStandardName == "longitude")
             {
                 poLongVar = poCoordVar;
             }
             else if (osName == "lat" || osName == "latitude" ||
-                     osStandardName == "latitude")
+                     osName == "Latitude" || osStandardName == "latitude")
             {
                 poLatVar = poCoordVar;
             }
