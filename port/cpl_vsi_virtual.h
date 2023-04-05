@@ -117,6 +117,29 @@ struct CPL_DLL VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                        VSIVirtualHandleCloser                        */
+/************************************************************************/
+
+/** Helper close to use with a std:unique_ptr<VSIVirtualHandle>,
+ *  such as VSIVirtualHandleUniquePtr. */
+struct VSIVirtualHandleCloser
+{
+    /** Operator () that closes and deletes the file handle. */
+    void operator()(VSIVirtualHandle *poHandle)
+    {
+        if (poHandle)
+        {
+            poHandle->Close();
+            delete poHandle;
+        }
+    }
+};
+
+/** Unique pointer of VSIVirtualHandle that calls the Close() method */
+typedef std::unique_ptr<VSIVirtualHandle, VSIVirtualHandleCloser>
+    VSIVirtualHandleUniquePtr;
+
+/************************************************************************/
 /*                         VSIFilesystemHandler                         */
 /************************************************************************/
 
