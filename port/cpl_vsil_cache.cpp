@@ -72,7 +72,7 @@ class VSICachedFile final : public VSIVirtualHandle
     bool LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount, void *pBuffer,
                     size_t nBufferSize);
 
-    std::unique_ptr<VSIVirtualHandle> m_poBase{};
+    VSIVirtualHandleUniquePtr m_poBase{};
 
     vsi_l_offset m_nOffset = 0;
     vsi_l_offset m_nFileSize = 0;
@@ -161,12 +161,7 @@ int VSICachedFile::Close()
 
 {
     m_oCache.clear();
-
-    if (m_poBase)
-    {
-        m_poBase->Close();
-        m_poBase.reset();
-    }
+    m_poBase.reset();
 
     return 0;
 }

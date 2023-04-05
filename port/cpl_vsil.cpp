@@ -1243,20 +1243,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
                                    GDALProgressFunc pProgressFunc,
                                    void *pProgressData)
 {
-    struct VirtualHandleCloser
-    {
-        void operator()(VSIVirtualHandle *poHandle)
-        {
-            if (poHandle)
-            {
-                poHandle->Close();
-                delete poHandle;
-            }
-        }
-    };
-
-    std::unique_ptr<VSIVirtualHandle, VirtualHandleCloser>
-        poFileHandleAutoClose;
+    VSIVirtualHandleUniquePtr poFileHandleAutoClose;
     if (!fpSource)
     {
         fpSource = VSIFOpenExL(pszSource, "rb", TRUE);

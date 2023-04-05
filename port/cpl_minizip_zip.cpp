@@ -2329,14 +2329,13 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
     CPLZip *psZip = static_cast<CPLZip *>(hZip);
     zip64_internal *zi = reinterpret_cast<zip64_internal *>(psZip->hZip);
 
-    std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
+    VSIVirtualHandleUniquePtr poFileHandleAutoClose;
     if (!fpInput)
     {
         fpInput = VSIFOpenL(pszInputFilename, "rb");
         if (!fpInput)
             return CE_Failure;
-        poFileHandleAutoClose.reset(
-            reinterpret_cast<VSIVirtualHandle *>(fpInput));
+        poFileHandleAutoClose.reset(fpInput);
     }
 
     VSIFSeekL(fpInput, 0, SEEK_END);
