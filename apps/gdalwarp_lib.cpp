@@ -3892,9 +3892,8 @@ static GDALDatasetH GDALWarpCreateOutput(
         const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
         double adfThisGeoTransformTmp[6];
         if (!psOptions->bSquarePixels && bNeedsSuggestedWarpOutput &&
-            osThisSourceSRS == osThisTargetSRS && psOptions->dfXRes == 0 &&
-            psOptions->dfYRes == 0 && psOptions->nForcePixels == 0 &&
-            psOptions->nForceLines == 0 &&
+            psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
+            psOptions->nForcePixels == 0 && psOptions->nForceLines == 0 &&
             (pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM")) &&
             CSLFetchNameValue(papszTO, "COORDINATE_OPERATION") == nullptr &&
             CSLFetchNameValue(papszTO, "SRC_METHOD") == nullptr &&
@@ -3905,16 +3904,41 @@ static GDALDatasetH GDALWarpCreateOutput(
             GDALGetMetadata(hSrcDS, "GEOLOC_ARRAY") == nullptr &&
             GDALGetMetadata(hSrcDS, "RPC") == nullptr)
         {
-            memcpy(adfThisGeoTransform, adfThisGeoTransformTmp,
-                   6 * sizeof(double));
-            adfExtent[0] = adfThisGeoTransform[0];
-            adfExtent[1] = adfThisGeoTransform[3] +
-                           GDALGetRasterYSize(hSrcDS) * adfThisGeoTransform[5];
-            adfExtent[2] = adfThisGeoTransform[0] +
-                           GDALGetRasterXSize(hSrcDS) * adfThisGeoTransform[1];
-            adfExtent[3] = adfThisGeoTransform[3];
-            dfResFromSourceAndTargetExtent =
-                std::numeric_limits<double>::infinity();
+            bool bIsSameHorizontal = osThisSourceSRS == osThisTargetSRS;
+            if (!bIsSameHorizontal)
+            {
+                OGRSpatialReference oSrcSRS;
+                OGRSpatialReference oDstSRS;
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                // DemoteTo2D requires PROJ >= 6.3
+                if (oSrcSRS.SetFromUserInput(osThisSourceSRS.c_str()) ==
+                        OGRERR_NONE &&
+                    oDstSRS.SetFromUserInput(osThisTargetSRS.c_str()) ==
+                        OGRERR_NONE &&
+                    (oSrcSRS.GetAxesCount() == 3 ||
+                     oDstSRS.GetAxesCount() == 3) &&
+                    oSrcSRS.DemoteTo2D(nullptr) == OGRERR_NONE &&
+                    oDstSRS.DemoteTo2D(nullptr) == OGRERR_NONE)
+                {
+                    bIsSameHorizontal = oSrcSRS.IsSame(&oDstSRS);
+                }
+            }
+            if (bIsSameHorizontal)
+            {
+                memcpy(adfThisGeoTransform, adfThisGeoTransformTmp,
+                       6 * sizeof(double));
+                adfExtent[0] = adfThisGeoTransform[0];
+                adfExtent[1] =
+                    adfThisGeoTransform[3] +
+                    GDALGetRasterYSize(hSrcDS) * adfThisGeoTransform[5];
+                adfExtent[2] =
+                    adfThisGeoTransform[0] +
+                    GDALGetRasterXSize(hSrcDS) * adfThisGeoTransform[1];
+                adfExtent[3] = adfThisGeoTransform[3];
+                dfResFromSourceAndTargetExtent =
+                    std::numeric_limits<double>::infinity();
+            }
         }
 
         if (bNeedsSuggestedWarpOutput)
