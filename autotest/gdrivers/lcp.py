@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import os
 import random
 import struct
@@ -489,6 +490,12 @@ def test_lcp_9():
     assert lcp_drv is not None
     src_ds = mem_drv.Create("", 10, 20, 10, gdal.GDT_Int16)
     assert src_ds is not None
+    # Test negative values
+    src_ds.GetRasterBand(1).Fill(-10000)
+    # More than 100 values
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 10, 20, array.array("H", [i for i in range(200)])
+    )
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     lcp_ds = lcp_drv.CreateCopy("tmp/lcp_9.lcp", src_ds, False, co)
     assert lcp_ds is not None
