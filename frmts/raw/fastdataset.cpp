@@ -94,6 +94,8 @@ enum FASTSatellite  // Satellites:
     FAST_UNKNOWN
 };
 
+constexpr int MAX_FILES = 7;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              FASTDataset                             */
@@ -106,8 +108,8 @@ class FASTDataset final : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
 
     VSILFILE *fpHeader;
-    CPLString apoChannelFilenames[7];
-    VSILFILE *fpChannels[7];
+    CPLString apoChannelFilenames[MAX_FILES];
+    VSILFILE *fpChannels[MAX_FILES];
     const char *pszFilename;
     char *pszDirname;
     GDALDataType eDataType;
@@ -157,7 +159,7 @@ FASTDataset::FASTDataset()
     adfGeoTransform[5] = 1.0;
     // TODO: Why does this not work?
     //   fill( fpChannels, fpChannels + CPL_ARRAYSIZE(fpChannels), NULL );
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < MAX_FILES; ++i)
         fpChannels[i] = nullptr;
 }
 
@@ -171,7 +173,7 @@ FASTDataset::~FASTDataset()
     FlushCache(true);
 
     CPLFree(pszDirname);
-    for (int i = 0; i < nBands; i++)
+    for (int i = 0; i < MAX_FILES; i++)
         if (fpChannels[i])
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpChannels[i]));
     if (fpHeader != nullptr)
@@ -213,6 +215,7 @@ char **FASTDataset::GetFileList()
 
 int FASTDataset::OpenChannel(const char *pszFilenameIn, int iBand)
 {
+    CPLAssert(fpChannels[iBand] == nullptr);
     fpChannels[iBand] = VSIFOpenL(pszFilenameIn, "rb");
     if (fpChannels[iBand])
         apoChannelFilenames[iBand] = pszFilenameIn;
