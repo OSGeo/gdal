@@ -34,6 +34,8 @@ The coordinate system returned by :cpp:func:`GDALDataset::GetProjectionRef` desc
 
 Note that a returned coordinate system strings of "" indicates nothing is known about the georeferencing coordinate system.
 
+.. _raster_data_model_geotransform:
+
 Affine GeoTransform
 -------------------
 
