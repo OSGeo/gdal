@@ -1,3 +1,7 @@
+# NOTE: this Docker image is also used by the coverity_scan job
+# so any change in dependencies locations might have to be reflected in
+# coverity_scan/build/sh as well
+
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
