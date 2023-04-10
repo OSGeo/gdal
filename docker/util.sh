@@ -126,6 +126,13 @@ if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabl
   DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
 fi
 
+# Docker 23 uses BuildKit by default on Linux, but BuildKit prevents
+# custom networks using docker build --network, so disable BuildKit for now.
+# https://github.com/moby/buildkit/issues/978
+if test -z "${DOCKER_BUILDKIT}"; then
+  export DOCKER_BUILDKIT=0
+fi
+
 if test "${RELEASE}" = "yes"; then
     if test "${GDAL_VERSION}" = ""; then
         echo "--gdal tag must be specified when --release is used."
