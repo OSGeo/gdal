@@ -32,7 +32,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-11-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-11 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++ \
+    && rm -rf /var/lib/apt/lists/*; \
     fi
 
 # Setup build env for PROJ
@@ -43,7 +44,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
             build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
-            libtiff5-dev${APT_ARCH_SUFFIX}
+            libtiff5-dev${APT_ARCH_SUFFIX} \
+    && rm -rf /var/lib/apt/lists/*
 
 # Setup build env for GDAL
 RUN . /buildscripts/bh-set-envvars.sh \
@@ -56,7 +58,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
-       autoconf automake sqlite3 bash-completion swig
+       autoconf automake sqlite3 bash-completion swig \
+    && rm -rf /var/lib/apt/lists/*
 
 # Build openjpeg
 ARG OPENJPEG_VERSION=
@@ -86,7 +89,8 @@ RUN \
     && rm -f *.zip
 
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
+    && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
+    && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
 
 # Build PROJ
@@ -207,17 +211,19 @@ USER root
 RUN date
 
 # Update distro
-RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get update -y && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update \
 # PROJ dependencies
-RUN apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         libsqlite3-0 libtiff5 libcurl4 \
-        curl unzip ca-certificates
+        curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # GDAL dependencies
-RUN apt-get update -y; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         python3-numpy libpython3.10 \
         libjpeg-turbo8 libgeos3.10.2 libgeos-c1v5 \
         libexpat1 \
@@ -225,10 +231,13 @@ RUN apt-get update -y; \
         libwebp7 libpng16-16 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite7 \
         # pil for antialias option of gdal2tiles
-        python3-pil
+        python3-pil \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        python-is-python3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Order layers starting with less frequently varying ones
 # Only used for custom libopenjp2

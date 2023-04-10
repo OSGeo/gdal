@@ -31,7 +31,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-11-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-11 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++ \
+    && rm -rf /var/lib/apt/lists/*; \
     fi
 
 # Setup build env for PROJ
@@ -277,7 +278,8 @@ RUN date
 ARG JAVA_VERSION=11
 
 # Update distro
-RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get update -y && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update \
 # PROJ dependencies
