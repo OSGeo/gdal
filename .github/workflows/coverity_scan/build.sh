@@ -2,6 +2,8 @@
 
 set -eu
 
+git config --global --add safe.directory ${GDAL_SOURCE_DIR:=..}
+
 wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$COVERITY_SCAN_TOKEN&project=GDAL" -O cov-analysis-linux64.tar.gz
 mkdir /tmp/cov-analysis-linux64
 tar xzf cov-analysis-linux64.tar.gz --strip 1 -C /tmp/cov-analysis-linux64
