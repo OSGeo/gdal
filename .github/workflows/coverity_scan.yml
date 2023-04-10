@@ -17,31 +17,56 @@ jobs:
   coverity_scan:
     runs-on: ubuntu-latest
     if: github.repository == 'OSGeo/gdal'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: coverity_scan
+            container: ubuntu_20.04
+            build_script: build.sh
+
+    # Store the components of the container name as environment variables:
+    # ${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER}/${CONTAINER_NAME}
+    env:
+      CONTAINER_REGISTRY: ${{ vars.gdal_container_registry || 'ghcr.io' }}
+      CONTAINER_REGISTRY_USER: ${{ vars.gdal_container_registry_user || github.repository_owner }}
+      CONTAINER_NAME: gdal-deps:${{ matrix.container}}-${{ github.base_ref || github.ref_name }}
+      GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
+
+    defaults:
+      run:
+        # bash is needed to use ${CONTAINER_REGISTRY_USER,,}, which forces the
+        # username to lower-case as required by docker.
+        shell: bash
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Cache deps
-        uses: actions/cache@v3
-        id: cache-deps
-        with:
-          path: /tmp/docker
-          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
+      - name: Login to GHCR
+        if: env.CONTAINER_REGISTRY == 'ghcr.io'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
-      - name: Build or restore dependencies
+      - name: Pull build environment
+        shell: bash
         run: |
-            if test -f /tmp/docker/gdal-deps-ubuntu-20.04.tar; then
-                docker image load -i /tmp/docker/gdal-deps-ubuntu-20.04.tar
-                docker images
-            else
-                docker build -f .github/workflows/ubuntu_20.04/Dockerfile.deps -t gdal-deps-ubuntu-20.04 .github/workflows/ubuntu_20.04
-                mkdir -p /tmp/docker
-                docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
-            fi
+          export CONTAINER_NAME_FULL="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}"
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} || true
+          docker pull ${CONTAINER_NAME_FULL} || true
+          echo "CONTAINER_NAME_FULL=${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
 
       - name: Build
-        run: docker run -e COVERITY_SCAN_TOKEN -e COVERITY_SCAN_EMAIL -v $PWD:/build gdal-deps-ubuntu-20.04 /build/.github/workflows/ubuntu_20.04/build.sh
+        run: |
+          mkdir -p build-${{ matrix.id }}
+          docker run --name gdal-build \
+            --rm \
+            -e COVERITY_SCAN_TOKEN -e COVERITY_SCAN_EMAIL \
+            -v $(pwd):/${GDAL_SOURCE_DIR}:rw \
+            -v ${{ github.workspace }}/.ccache:/root/.ccache:rw \
+            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            ${CONTAINER_NAME_FULL} \
+            "${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
         env:
           COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
           COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
