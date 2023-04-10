@@ -106,6 +106,9 @@ static bool gbIgnoreEnvVariables =
             // configuration file or
             // CPLSetConfigOption()/CPLSetThreadLocalConfigOption()
 
+static std::vector<std::pair<CPLSetConfigOptionSubscriber, void *>>
+    gSetConfigOptionSubscribers{};
+
 // Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = nullptr;
 static int nSharedFileCount = 0;
@@ -1806,15 +1809,86 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
 }
 
 /************************************************************************/
+/*                    CPLSubscribeToSetConfigOption()                   */
+/************************************************************************/
+
+/**
+ * Install a callback that will be notified of calls to CPLSetConfigOption()/
+ * CPLSetThreadLocalConfigOption()
+ *
+ * @param pfnCallback Callback. Must not be NULL
+ * @param pUserData Callback user data. May be NULL.
+ * @return subscriber ID that can be used with CPLUnsubscribeToSetConfigOption()
+ * @since GDAL 3.7
+ */
+
+int CPLSubscribeToSetConfigOption(CPLSetConfigOptionSubscriber pfnCallback,
+                                  void *pUserData)
+{
+    CPLMutexHolderD(&hConfigMutex);
+    for (int nId = 0;
+         nId < static_cast<int>(gSetConfigOptionSubscribers.size()); ++nId)
+    {
+        if (!gSetConfigOptionSubscribers[nId].first)
+        {
+            gSetConfigOptionSubscribers[nId].first = pfnCallback;
+            gSetConfigOptionSubscribers[nId].second = pUserData;
+            return nId;
+        }
+    }
+    int nId = static_cast<int>(gSetConfigOptionSubscribers.size());
+    gSetConfigOptionSubscribers.push_back(
+        std::pair<CPLSetConfigOptionSubscriber, void *>(pfnCallback,
+                                                        pUserData));
+    return nId;
+}
+
+/************************************************************************/
+/*                  CPLUnsubscribeToSetConfigOption()                   */
+/************************************************************************/
+
+/**
+ * Remove a subscriber installed with CPLSubscribeToSetConfigOption()
+ *
+ * @param nId Subscriber id returned by CPLSubscribeToSetConfigOption()
+ * @since GDAL 3.7
+ */
+
+void CPLUnsubscribeToSetConfigOption(int nId)
+{
+    CPLMutexHolderD(&hConfigMutex);
+    if (nId == static_cast<int>(gSetConfigOptionSubscribers.size()) - 1)
+    {
+        gSetConfigOptionSubscribers.resize(gSetConfigOptionSubscribers.size() -
+                                           1);
+    }
+    else if (nId >= 0 &&
+             nId < static_cast<int>(gSetConfigOptionSubscribers.size()))
+    {
+        gSetConfigOptionSubscribers[nId].first = nullptr;
+    }
+}
+
+/************************************************************************/
 /*                  NotifyOtherComponentsConfigOptionChanged()          */
 /************************************************************************/
 
 static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
-                                                     const char * /*pszValue*/)
+                                                     const char *pszValue,
+                                                     bool bThreadLocal)
 {
     // Hack
     if (STARTS_WITH_CI(pszKey, "AWS_"))
         VSICurlAuthParametersChanged();
+
+    if (!gSetConfigOptionSubscribers.empty())
+    {
+        for (const auto &iter : gSetConfigOptionSubscribers)
+        {
+            if (iter.first)
+                iter.first(pszKey, pszValue, bThreadLocal, iter.second);
+        }
+    }
 }
 
 /************************************************************************/
@@ -1850,8 +1924,6 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
 void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 
 {
-    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue);
-
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
@@ -1863,6 +1935,9 @@ void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 
     g_papszConfigOptions = const_cast<volatile char **>(CSLSetNameValue(
         const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
+
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue,
+                                             /*bTheadLocal=*/false);
 }
 
 /************************************************************************/
@@ -1904,8 +1979,6 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                const char *pszValue)
 
 {
-    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue);
-
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
@@ -1925,6 +1998,9 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
 
     CPLSetTLSWithFreeFunc(CTLS_CONFIGOPTIONS, papszTLConfigOptions,
                           CPLSetThreadLocalTLSFreeFunc);
+
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue,
+                                             /*bTheadLocal=*/true);
 }
 
 /************************************************************************/

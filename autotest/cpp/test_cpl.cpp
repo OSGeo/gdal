@@ -4578,4 +4578,59 @@ TEST_F(test_cpl, CPLAtoGIntBigEx)
     }
 }
 
+TEST_F(test_cpl, CPLSubscribeToSetConfigOption)
+{
+    struct Event
+    {
+        std::string osKey;
+        std::string osValue;
+        bool bThreadLocal;
+    };
+    std::vector<Event> events;
+    const auto cbk = +[](const char *pszKey, const char *pszValue,
+                         bool bThreadLocal, void *pUserData)
+    {
+        std::vector<Event> *pEvents =
+            static_cast<std::vector<Event> *>(pUserData);
+        Event ev;
+        ev.osKey = pszKey;
+        ev.osValue = pszValue ? pszValue : "";
+        ev.bThreadLocal = bThreadLocal;
+        pEvents->emplace_back(ev);
+    };
+
+    // Subscribe and unsubscribe immediately
+    {
+        int nId = CPLSubscribeToSetConfigOption(cbk, &events);
+        CPLSetConfigOption("CPLSubscribeToSetConfigOption", "bar");
+        EXPECT_EQ(events.size(), 1U);
+        if (!events.empty())
+        {
+            EXPECT_STREQ(events[0].osKey.c_str(),
+                         "CPLSubscribeToSetConfigOption");
+            EXPECT_STREQ(events[0].osValue.c_str(), "bar");
+            EXPECT_FALSE(events[0].bThreadLocal);
+        }
+        CPLUnsubscribeToSetConfigOption(nId);
+    }
+    events.clear();
+
+    // Subscribe and unsubscribe in non-nested order
+    {
+        int nId1 = CPLSubscribeToSetConfigOption(cbk, &events);
+        int nId2 = CPLSubscribeToSetConfigOption(cbk, &events);
+        CPLUnsubscribeToSetConfigOption(nId1);
+        int nId3 = CPLSubscribeToSetConfigOption(cbk, &events);
+
+        CPLSetConfigOption("CPLSubscribeToSetConfigOption", nullptr);
+        EXPECT_EQ(events.size(), 2U);
+
+        CPLUnsubscribeToSetConfigOption(nId2);
+        CPLUnsubscribeToSetConfigOption(nId3);
+
+        CPLSetConfigOption("CPLSubscribeToSetConfigOption", nullptr);
+        EXPECT_EQ(events.size(), 2U);
+    }
+}
+
 }  // namespace
