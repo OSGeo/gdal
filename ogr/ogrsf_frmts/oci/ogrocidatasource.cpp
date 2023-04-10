@@ -839,6 +839,28 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     }
 
     /* -------------------------------------------------------------------- */
+    /*      If the WKTEXT definition is equivalent to the EPSG SRS of code  */
+    /*      nId, return that EPSG SRS.                                      */
+    /* -------------------------------------------------------------------- */
+    constexpr int LARGEST_EPSG_CRS_CODE = 32767;
+    if (nId < LARGEST_EPSG_CRS_CODE && papszResult[1] != nullptr &&
+        atoi(papszResult[1]) == nId)
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper;
+        OGRSpatialReference oSRS_EPSG;
+        oSRS_EPSG.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        const char *const apszOptions[] = {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
+        if (oSRS_EPSG.importFromEPSG(nId) == OGRERR_NONE &&
+            oSRS_EPSG.IsSame(poSRS, apszOptions))
+        {
+            *poSRS = oSRS_EPSG;
+            return poSRS;
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      If we have a corresponding EPSG code for this SRID, use that    */
     /*      authority.                                                      */
     /* -------------------------------------------------------------------- */
@@ -900,33 +922,56 @@ int OGROCIDataSource::FetchSRSId(OGRSpatialReference *poSRS)
 
     /* ==================================================================== */
     /*      The first strategy is to see if we can identify it by           */
-    /*      authority information within the SRS.  Either using ORACLE      */
-    /*      authority values directly, or check if there is a known         */
-    /*      translation for an EPSG authority code.                         */
+    /*      authority information within the SRS.                           */
     /* ==================================================================== */
     const char *pszAuthName = nullptr, *pszAuthCode = nullptr;
 
-    if (poSRS->IsGeographic())
+    if (poSRS->IsGeographic() || poSRS->IsProjected())
     {
-        pszAuthName = poSRS->GetAuthorityName("GEOGCS");
-        pszAuthCode = poSRS->GetAuthorityCode("GEOGCS");
+        pszAuthName = poSRS->GetAuthorityName(nullptr);
+        pszAuthCode = poSRS->GetAuthorityCode(nullptr);
     }
-    else if (poSRS->IsProjected())
-    {
-        pszAuthName = poSRS->GetAuthorityName("PROJCS");
-        pszAuthCode = poSRS->GetAuthorityCode("PROJCS");
-    }
+
+    OGROCIStatement oCmdStatement(GetSession());
 
     if (pszAuthName != nullptr && pszAuthCode != nullptr)
     {
+        // If the authority is Oracle, use the code as the SRID
         if (EQUAL(pszAuthName, "Oracle") && atoi(pszAuthCode) != 0)
             return atoi(pszAuthCode);
 
+        // If the authority is EPSG, try to retrieve the record of CS_SRS
+        // whose SRID is the EPSG code. And if the WKT definition from the
+        // CS_SRS record is equivalent to the one of poSRS, use the EPSG code
+        // as the SRID. This works for a number of EPSG CRS (4326, 3857, etc.)
         if (EQUAL(pszAuthName, "EPSG"))
         {
-            int i, nEPSGCode = atoi(pszAuthCode);
+            const int nEPSGCode = atoi(pszAuthCode);
+            char szSelect[100];
+            snprintf(szSelect, sizeof(szSelect),
+                     "SELECT WKTEXT FROM MDSYS.CS_SRS WHERE SRID = %d "
+                     "AND WKTEXT IS NOT NULL AND SRID = AUTH_SRID",
+                     nEPSGCode);
+            if (oCmdStatement.Execute(szSelect) == CE_None)
+            {
+                CSLConstList papszResult = oCmdStatement.SimpleFetchRow();
+                if (papszResult != nullptr && papszResult[0] != nullptr &&
+                    papszResult[1] == nullptr)
+                {
+                    OGRSpatialReference oSRS;
+                    const char *const apszOptions[] = {
+                        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
+                    if (oSRS.importFromWkt(papszResult[0]) == OGRERR_NONE &&
+                        oSRS.IsSame(poSRS, apszOptions))
+                    {
+                        return nEPSGCode;
+                    }
+                }
+            }
 
-            for (i = 0; anEPSGOracleMapping[i] != 0; i += 2)
+            // Otherwise try to fallback to a hard-coded table that maps
+            // EPSG code to Oracle SRID. This is probably somewhat be legacy.
+            for (int i = 0; anEPSGOracleMapping[i] != 0; i += 2)
             {
                 if (nEPSGCode == anEPSGOracleMapping[i + 1])
                     return anEPSGOracleMapping[i];
@@ -968,7 +1013,6 @@ int OGROCIDataSource::FetchSRSId(OGRSpatialReference *poSRS)
     /*      Try to find in the existing table.                              */
     /* -------------------------------------------------------------------- */
     OGROCIStringBuf oCmdText;
-    OGROCIStatement oCmdStatement(GetSession());
     char **papszResult = nullptr;
 
     oCmdText.Append("SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '");
@@ -1015,7 +1059,7 @@ int OGROCIDataSource::FetchSRSId(OGRSpatialReference *poSRS)
     oCmdText.Appendf(100, " VALUES (%d,'", nSRSId);
     oCmdText.Append(pszWKT);
     oCmdText.Append("', '");
-    oCmdText.Append(poSRS->GetRoot()->GetChild(0)->GetValue());
+    oCmdText.Append(poSRS->GetName());
     oCmdText.Append("' )");
 
     CPLFree(pszWKT);

@@ -41,19 +41,38 @@ pytestmark = [
     pytest.mark.require_driver("OCI"),
 ]
 
-###############################################################################
-# Open ORACLE.
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_tests():
+    with gdaltest.disable_exceptions():
+        gdaltest.oci_ds = ogr.Open(os.environ["OCI_DSNAME"])
+    if gdaltest.oci_ds is None:
+        pytest.skip("Cannot open %s" % os.environ["OCI_DSNAME"])
+    yield
 
-def test_ogr_oci_1():
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:xpoly")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
+    gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT3")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_LINESTRING")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_LINESTRING3")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POLYGON")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POLYGON3")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTIPOINT")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTILINESTRING")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTIPOLYGON")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_GEOMETRYCOLLECTION")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_NONE")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testdate")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20bis")
+    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_21")
 
     gdaltest.oci_ds = None
-
-    gdaltest.oci_ds = ogr.Open(os.environ["OCI_DSNAME"])
-
-    if gdaltest.oci_ds is not None:
-        return
-    pytest.fail()
+    gdaltest.shp_ds = None
 
 
 ###############################################################################
@@ -61,9 +80,6 @@ def test_ogr_oci_1():
 
 
 def test_ogr_oci_2():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
@@ -140,8 +156,6 @@ def reverse_rings(poly):
 
 
 def test_ogr_oci_3():
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -178,9 +192,6 @@ def test_ogr_oci_3():
 
 def test_ogr_oci_4():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     wkt_list = ["10", "2", "1", "3d_1", "4", "5", "6"]
 
     for item in wkt_list:
@@ -216,9 +227,6 @@ def test_ogr_oci_4():
 
 def test_ogr_oci_5():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     expect = [None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL(
@@ -238,9 +246,6 @@ def test_ogr_oci_5():
 
 
 def test_ogr_oci_6():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
     assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
@@ -265,9 +270,6 @@ def test_ogr_oci_6():
 
 def test_ogr_oci_7():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     gdaltest.oci_lyr.SetAttributeFilter(None)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
@@ -287,9 +289,6 @@ def test_ogr_oci_7():
 
 
 def test_ogr_oci_8():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -334,13 +333,10 @@ def test_ogr_oci_8():
 
 ###############################################################################
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
-# the coordinate system gets properly remapped to the Oracle WGS84.
+# the CRS is properly round-tripped.
 
 
 def test_ogr_oci_9():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     #######################################################
     # Preclean.
@@ -353,6 +349,7 @@ def test_ogr_oci_9():
     # Prepare an SRS with an EPSG authority code.
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     #######################################################
     # Create Oracle Layer
@@ -371,9 +368,7 @@ def test_ogr_oci_9():
         srs2.GetAuthorityName("GEOGCS") == "EPSG"
     ), "Did not get expected authority name"
 
-    assert (
-        srs2.GetAttrValue("GEOGCS|DATUM") == "WGS 84"
-    ), "Did not get expected datum name"
+    assert srs2.IsSame(srs)
 
 
 ###############################################################################
@@ -381,9 +376,6 @@ def test_ogr_oci_9():
 
 
 def test_ogr_oci_10():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     # Create a test table.
     gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -431,9 +423,6 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
 
 def test_ogr_oci_11():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL(
         """
@@ -468,9 +457,6 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
 
 
 def test_ogr_oci_12():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL(
@@ -507,9 +493,6 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 
 def test_ogr_oci_13():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL(
         """
@@ -544,9 +527,6 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 
 
 def test_ogr_oci_14():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL(
@@ -583,9 +563,6 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
 
 def test_ogr_oci_15():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     # insert a rectangle geometry.
     gdaltest.oci_ds.ExecuteSQL(
         """
@@ -621,9 +598,6 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
 
 def test_ogr_oci_16():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     target_index = -1
     lc = gdaltest.oci_ds.GetLayerCount()
 
@@ -649,9 +623,6 @@ def test_ogr_oci_16():
 
 
 def test_ogr_oci_17():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     gdaltest.oci_ds.ExecuteSQL("DELLAYER:xpoly")
 
@@ -721,9 +692,6 @@ def test_ogr_oci_17():
 
 def test_ogr_oci_18():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     wkts = [
         "POINT (0 1)",
         "LINESTRING (0 1,2 3)",
@@ -790,9 +758,6 @@ def test_ogr_oci_18():
 
 def test_ogr_oci_19():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
     lyr = gdaltest.oci_ds.CreateLayer("testdate", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("MYDATE", ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn("MYDATETIME", ogr.OFTDateTime))
@@ -818,8 +783,6 @@ def test_ogr_oci_19():
 
 def test_ogr_oci_20():
 
-    if gdaltest.oci_ds is None:
-        pytest.skip()
     lyr = gdaltest.oci_ds.CreateLayer(
         "ogr_oci_20", geom_type=ogr.wkbPoint, options=["GEOMETRY_NULLABLE=NO", "DIM=2"]
     )
@@ -903,9 +866,6 @@ def test_ogr_oci_20():
 
 
 def test_ogr_oci_21():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
 
     lyr = gdaltest.oci_ds.CreateLayer(
         "ogr_oci_21", geom_type=ogr.wkbPoint, options=["DIM=2"]
@@ -1017,38 +977,3 @@ def test_ogr_oci_21():
     assert f.IsFieldNull("field_nodefault")
     assert f.IsFieldSet("field_datetime")
     assert f.GetField("field_datetime2") == "2015/06/30 12:34:56"
-
-
-###############################################################################
-#
-
-
-def test_ogr_oci_cleanup():
-
-    if gdaltest.oci_ds is None:
-        pytest.skip()
-
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:xpoly")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
-    gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POINT3")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_LINESTRING")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_LINESTRING3")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POLYGON")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_POLYGON3")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTIPOINT")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTILINESTRING")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_MULTIPOLYGON")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_GEOMETRYCOLLECTION")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:test_NONE")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testdate")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_20bis")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:ogr_oci_21")
-
-    gdaltest.oci_ds.Destroy()
-    gdaltest.oci_ds = None
-    gdaltest.shp_ds = None
