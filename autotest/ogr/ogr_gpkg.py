@@ -8454,10 +8454,10 @@ def test_ogr_gpkg_ogr_layer_Extent():
 
 
 ###############################################################################
-# Test field alternative names
+# Test field alternative names and comments
 
 
-def test_ogr_gpkg_field_alternative_names():
+def test_ogr_gpkg_field_alternative_names_comment():
 
     dbname = "/vsimem/ogr_gpkg_alternative_names.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
@@ -8470,8 +8470,10 @@ def test_ogr_gpkg_field_alternative_names():
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
     ds.ExecuteSQL(
         """CREATE TABLE gpkg_data_columns (
@@ -8488,7 +8490,7 @@ def test_ogr_gpkg_field_alternative_names():
     )
     # name same as column name, won't be used as alternative name
     ds.ExecuteSQL(
-        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name') VALUES ('test', 'foo', 'foo')"
+        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name', 'description') VALUES ('test', 'foo', 'foo', 'my description')"
     )
 
     ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
@@ -8496,8 +8498,10 @@ def test_ogr_gpkg_field_alternative_names():
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "my description"
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
     # name different from column name, should be used as alternative names
     ds.ExecuteSQL("DELETE FROM gpkg_data_columns")

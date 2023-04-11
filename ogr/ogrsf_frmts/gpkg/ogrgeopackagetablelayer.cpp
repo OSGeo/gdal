@@ -1284,10 +1284,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     // Look for sub-types such as JSON
     if (m_poDS->HasDataColumnsTable())
     {
-        pszSQL = sqlite3_mprintf("SELECT column_name, name, mime_type, "
-                                 "constraint_name FROM gpkg_data_columns "
-                                 "WHERE table_name = '%q'",
-                                 m_pszTableName);
+        pszSQL = sqlite3_mprintf(
+            "SELECT column_name, name, mime_type, "
+            "constraint_name, description FROM gpkg_data_columns "
+            "WHERE table_name = '%q'",
+            m_pszTableName);
         oResultTable = SQLQuery(poDb, pszSQL);
         sqlite3_free(pszSQL);
         if (oResultTable)
@@ -1308,11 +1309,22 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
                 if (pszAlias)
                 {
-                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    const int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
                     if (iIdx >= 0)
                     {
                         m_poFeatureDefn->GetFieldDefn(iIdx)->SetAlternativeName(
                             pszAlias);
+                    }
+                }
+
+                if (const char *pszDescription =
+                        oResultTable->GetValue(4, iRecord))
+                {
+                    const int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    if (iIdx >= 0)
+                    {
+                        m_poFeatureDefn->GetFieldDefn(iIdx)->SetComment(
+                            pszDescription);
                     }
                 }
 
@@ -1321,7 +1333,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     oResultTable->GetValue(3, iRecord);
                 if (pszMimeType && EQUAL(pszMimeType, "application/json"))
                 {
-                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    const int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
                     if (iIdx >= 0 &&
                         m_poFeatureDefn->GetFieldDefn(iIdx)->GetType() ==
                             OFTString)
@@ -1332,7 +1344,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 }
                 else if (pszConstraintName)
                 {
-                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    const int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
                     if (iIdx >= 0)
                     {
                         m_poFeatureDefn->GetFieldDefn(iIdx)->SetDomainName(
