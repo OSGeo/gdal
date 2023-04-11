@@ -49,22 +49,21 @@ def osr_url_test(url, expected_wkt):
     srs = osr.SpatialReference()
     from osgeo import gdal
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    try:
-        srs.ImportFromUrl(url)
-    except AttributeError:  # old-gen bindings don't have this method yet
-        pytest.skip()
-    except Exception:
-        gdal.PopErrorHandler()
-        if (
-            gdal.GetLastErrorMsg()
-            == "GDAL/OGR not compiled with libcurl support, remote requests not supported."
-            or gdal.GetLastErrorMsg().find("timed out") != -1
-        ):
+    with gdaltest.error_handler():
+        try:
+            srs.ImportFromUrl(url)
+        except AttributeError:  # old-gen bindings don't have this method yet
             pytest.skip()
-        pytest.fail("exception: " + gdal.GetLastErrorMsg())
+        except Exception:
+            gdal.PopErrorHandler()
+            if (
+                gdal.GetLastErrorMsg()
+                == "GDAL/OGR not compiled with libcurl support, remote requests not supported."
+                or gdal.GetLastErrorMsg().find("timed out") != -1
+            ):
+                pytest.skip()
+            pytest.fail("exception: " + gdal.GetLastErrorMsg())
 
-    gdal.PopErrorHandler()
     if (
         gdal.GetLastErrorMsg()
         == "GDAL/OGR not compiled with libcurl support, remote requests not supported."

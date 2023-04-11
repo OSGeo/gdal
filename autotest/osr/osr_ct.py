@@ -52,9 +52,8 @@ def test_osr_ct_1():
     ll_srs.SetWellKnownGeogCS("WGS84")
 
     try:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ct = osr.CoordinateTransformation(ll_srs, utm_srs)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ct = osr.CoordinateTransformation(ll_srs, utm_srs)
         if gdal.GetLastErrorMsg().find("Unable to load PROJ.4") != -1:
             pytest.skip("PROJ.4 missing, transforms not available.")
     except ValueError:
