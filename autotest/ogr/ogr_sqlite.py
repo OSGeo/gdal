@@ -2630,18 +2630,16 @@ def test_ogr_sqlite_37():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
@@ -3030,9 +3028,8 @@ def test_ogr_sqlite_39():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTInteger))
@@ -3065,20 +3062,17 @@ def test_ogr_sqlite_39():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat.UnsetField("myfid")
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     lyr.ResetReading()
@@ -3119,18 +3113,16 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
 
     ret = ds.StartTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction()
     assert ret != 0
 
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.RollbackTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     assert ret != 0
     ds = None
 
@@ -3138,18 +3130,16 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
     assert ds.GetLayerCount() == 0
     ret = ds.StartTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction()
     assert ret != 0
 
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.CommitTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.CommitTransaction()
     assert ret != 0
     ds = None
 

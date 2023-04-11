@@ -1955,31 +1955,27 @@ def test_ogr_pg_35():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.PushErrorHandler()
-    try:
-        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer("testoverflows")
-        ogrtest.quick_create_layer_def(
-            gdaltest.pg_lyr, [("0123456789" * 1000, ogr.OFTReal)]
-        )
-        # To trigger actual layer creation
-        gdaltest.pg_lyr.ResetReading()
-    except Exception:
-        pass
-    finally:
-        gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        try:
+            gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer("testoverflows")
+            ogrtest.quick_create_layer_def(
+                gdaltest.pg_lyr, [("0123456789" * 1000, ogr.OFTReal)]
+            )
+            # To trigger actual layer creation
+            gdaltest.pg_lyr.ResetReading()
+        except Exception:
+            pass
 
-    gdal.PushErrorHandler()
-    try:
-        gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer(
-            "testoverflows",
-            options=["OVERWRITE=YES", "GEOMETRY_NAME=" + ("0123456789" * 1000)],
-        )
-        # To trigger actual layer creation
-        gdaltest.pg_lyr.ResetReading()
-    except Exception:
-        pass
-    finally:
-        gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        try:
+            gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer(
+                "testoverflows",
+                options=["OVERWRITE=YES", "GEOMETRY_NAME=" + ("0123456789" * 1000)],
+            )
+            # To trigger actual layer creation
+            gdaltest.pg_lyr.ResetReading()
+        except Exception:
+            pass
 
 
 ###############################################################################
@@ -4046,18 +4042,16 @@ def test_ogr_pg_73():
         # Error case: missing geometry
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetField("field_not_nullable", "not_null")
-        gdal.PushErrorHandler()
-        ret = lyr.CreateFeature(f)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = lyr.CreateFeature(f)
         assert ret != 0
         f = None
 
         # Error case: missing non-nullable field
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-        gdal.PushErrorHandler()
-        ret = lyr.CreateFeature(f)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = lyr.CreateFeature(f)
         assert ret != 0
         f = None
 
@@ -4393,9 +4387,8 @@ def test_ogr_pg_75():
     )
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTInteger))
@@ -4428,20 +4421,17 @@ def test_ogr_pg_75():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat.UnsetField("myfid")
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -4628,9 +4618,8 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to re-enter a transaction
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ret = gdaltest.pg_ds.StartTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = gdaltest.pg_ds.StartTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
         gdaltest.pg_ds
@@ -4692,9 +4681,8 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to re-commit a transaction
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ret = gdaltest.pg_ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = gdaltest.pg_ds.CommitTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
         gdaltest.pg_ds
@@ -4703,9 +4691,8 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to rollback a non-transaction
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ret = gdaltest.pg_ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = gdaltest.pg_ds.RollbackTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
         gdaltest.pg_ds
@@ -4738,9 +4725,8 @@ def ogr_pg_76_scenario3(lyr1, lyr2):
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    f = lyr1.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr1.GetNextFeature()
     assert gdal.GetLastErrorMsg() != "" and f is None
 
     # Must re-issue an explicit ResetReading()

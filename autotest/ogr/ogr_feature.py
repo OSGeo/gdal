@@ -145,9 +145,8 @@ def test_ogr_feature_cp_integer():
     src_feature.field_reallist = [17.5]
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger)
-    gdal.PushErrorHandler()
-    dst_feature.SetFrom(src_feature)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        dst_feature.SetFrom(src_feature)
 
     assert check(dst_feature, "field_integer", 17)
 
@@ -208,9 +207,8 @@ def test_ogr_feature_cp_integer64():
 
     assert check(dst_feature, "field_integer64", 9876543210)
 
-    gdal.PushErrorHandler()
-    int32_ovflw = dst_feature.GetFieldAsInteger("field_integer64")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        int32_ovflw = dst_feature.GetFieldAsInteger("field_integer64")
     assert int32_ovflw == 2147483647
 
     assert check(dst_feature, "field_real", 18)
@@ -460,9 +458,8 @@ def test_ogr_feature_cp_integerlist():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTIntegerList)
-    gdal.PushErrorHandler()
-    dst_feature.SetFrom(src_feature)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        dst_feature.SetFrom(src_feature)
 
     assert check(dst_feature, "field_integer", [17])
 
@@ -641,15 +638,13 @@ def test_ogr_feature_overflow_64bit_integer():
     feat_def = ogr.FeatureDefn("test")
     feat_def.AddFieldDefn(ogr.FieldDefn("test", ogr.OFTInteger64))
     f = ogr.Feature(feat_def)
-    gdal.PushErrorHandler()
-    f.SetField(0, "9999999999999999999")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f.SetField(0, "9999999999999999999")
     if f.GetField(0) != 9223372036854775807:
         f.DumpReadable()
         pytest.fail()
-    gdal.PushErrorHandler()
-    f.SetField(0, "-9999999999999999999")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f.SetField(0, "-9999999999999999999")
     if f.GetField(0) != -9223372036854775808:
         f.DumpReadable()
         pytest.fail()

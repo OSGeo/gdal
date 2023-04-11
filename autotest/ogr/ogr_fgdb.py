@@ -1089,18 +1089,16 @@ def test_ogr_fgdb_17(fgdb_drv):
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
@@ -1281,9 +1279,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     # Error case: try in read-only
     ds = fgdb_drv.Open("tmp/test.gdb")
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=True)
     assert ret != 0
     ds = None
 
@@ -1294,36 +1291,31 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 1
 
     # Error case: try in non-forced mode
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=False)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=False)
     assert ret != 0
 
     # Error case: try StartTransaction() with a ExecuteSQL layer still active
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=True)
     assert ret != 0
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case: call CommitTransaction() while there is no transaction
-    gdal.PushErrorHandler()
-    ret = ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.CommitTransaction()
     assert ret != 0
 
     # Error case: call RollbackTransaction() while there is no transaction
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     assert ret != 0
 
     # Error case: try StartTransaction() with another active connection
     ds2 = fgdb_drv.Open("tmp/test.gdb", update=1)
-    gdal.PushErrorHandler()
-    ret = ds2.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds2.StartTransaction(force=True)
     assert ret != 0
     ds2 = None
 
@@ -1350,19 +1342,16 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("foobar"))
     assert ret == 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.CreateGeomField(ogr.GeomFieldDefn("foobar", ogr.wkbPoint))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateGeomField(ogr.GeomFieldDefn("foobar", ogr.wkbPoint))
     assert ret != 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.ReorderFields([i for i in range(lyr.GetLayerDefn().GetFieldCount())])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.ReorderFields([i for i in range(lyr.GetLayerDefn().GetFieldCount())])
     assert ret != 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.AlterFieldDefn(0, ogr.FieldDefn("foo", ogr.OFTString), 0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.AlterFieldDefn(0, ogr.FieldDefn("foo", ogr.OFTString), 0)
     assert ret != 0
 
     f = ogr.Feature(lyr_defn)
@@ -1382,24 +1371,21 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     layer_created_before_transaction.CreateFeature(f)
 
     # Error case: call StartTransaction() while there is an active transaction
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=True)
     assert ret != 0
 
     # Error case: try CommitTransaction() with a ExecuteSQL layer still active
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
-    gdal.PushErrorHandler()
-    ret = ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.CommitTransaction()
     assert ret != 0
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case: try RollbackTransaction() with a ExecuteSQL layer still active
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test")
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     assert ret != 0
     ds.ReleaseResultSet(sql_lyr)
 
@@ -1465,9 +1451,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     # Simulate an error case where StartTransaction() cannot copy backup files
     lyr_count = ds.GetLayerCount()
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=True)
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
@@ -1475,9 +1460,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     # Simulate an error case where StartTransaction() cannot reopen database
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction(force=True)
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
@@ -1560,9 +1544,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         ds.DeleteLayer(ds.GetLayerCount() - 1)
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
@@ -1593,9 +1576,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         f = None
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
@@ -1621,9 +1603,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         f = None
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE3")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
@@ -1651,9 +1632,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
             f = None
 
             gdal.SetConfigOption("FGDB_SIMUL_FAIL", case)
-            gdal.PushErrorHandler()
-            ret = ds.CommitTransaction()
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                ret = ds.CommitTransaction()
             gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
             assert ret == 0, case
 
@@ -1681,9 +1661,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         assert ds.StartTransaction(force=True) == 0
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
@@ -1699,9 +1678,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         assert ds.StartTransaction(force=True) == 0
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
@@ -1718,9 +1696,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         assert ds.StartTransaction(force=True) == 0
 
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE3")
-        gdal.PushErrorHandler()
-        ret = ds.CommitTransaction()
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.CommitTransaction()
         gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret == 0
 
@@ -1737,9 +1714,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ds.StartTransaction(force=True) == 0
 
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE_REOPEN")
-    gdal.PushErrorHandler()
-    ret = ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.CommitTransaction()
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
@@ -1757,9 +1733,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ds.StartTransaction(force=True) == 0
 
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
@@ -1776,9 +1751,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ds.StartTransaction(force=True) == 0
 
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
@@ -1889,17 +1863,15 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     )
 
     # Existing FID
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
 
     for invalid_fid in [-2, 0, 9876543210]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(invalid_fid)
-        gdal.PushErrorHandler()
-        ret = lyr.CreateFeature(f)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = lyr.CreateFeature(f)
         assert ret != 0, invalid_fid
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1921,9 +1893,8 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
     # Cannot call CreateFeature() with a set FID when a dataset is opened more than once
     ds2 = fgdb_drv.Open("tmp/test.gdb", update=1)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     ds2 = None
 
@@ -1937,16 +1908,14 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
         pytest.fail(lyr.GetMetadataItem("4", "MAP_OGR_FID_TO_FGDB_FID"))
 
     #  Cannot open geodatabase at the moment since it is in 'FID hack mode'
-    gdal.PushErrorHandler()
-    ds2 = fgdb_drv.Open("tmp/test.gdb", update=1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds2 = fgdb_drv.Open("tmp/test.gdb", update=1)
     assert ds2 is None
     ds2 = None
 
     # Existing FID, but only in OGR space
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
 
     # This FID exists as a FGDB ID, but should not be user visible.
@@ -2112,9 +2081,8 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(3)
     f.SetField("id", 3)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
 
     ds.ReleaseResultSet(sql_lyr)
@@ -2289,11 +2257,10 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
         f.SetField("id", 2)
         lyr.CreateFeature(f)
 
-        gdal.PushErrorHandler()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", case)
-        sql_lyr = ds.ExecuteSQL("SELECT * FROM foo")
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", None)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", case)
+            sql_lyr = ds.ExecuteSQL("SELECT * FROM foo")
+            gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", None)
         if case == "CASE3":
             assert sql_lyr is not None, case
             ds.ReleaseResultSet(sql_lyr)

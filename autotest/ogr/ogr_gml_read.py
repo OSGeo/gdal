@@ -417,9 +417,8 @@ def test_ogr_gml_9():
     dst_feat.SetFieldBinaryFromHexString("test", "80626164")  # \x80bad'
 
     # Avoid the warning
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = lyr.CreateFeature(dst_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(dst_feat)
 
     assert ret == 0, "CreateFeature failed."
 
@@ -3579,18 +3578,16 @@ def test_ogr_gml_69():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 

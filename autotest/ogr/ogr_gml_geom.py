@@ -1570,10 +1570,9 @@ def test_gml_invalid_geoms():
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        # print gml
-        geom = ogr.CreateGeometryFromGML(gml)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            # print gml
+            geom = ogr.CreateGeometryFromGML(gml)
         if geom is None:
             assert (
                 expected_wkt is None

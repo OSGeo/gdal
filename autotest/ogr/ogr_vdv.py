@@ -385,11 +385,11 @@ def test_ogr_vdv_7():
 
         ds = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
         gdal.ErrorReset()
-        gdal.PushErrorHandler()
-        lyr = ds.CreateLayer(
-            "UNKNOWN", options=["PROFILE=" + profile, "PROFILE_STRICT=" + str(strict)]
-        )
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            lyr = ds.CreateLayer(
+                "UNKNOWN",
+                options=["PROFILE=" + profile, "PROFILE_STRICT=" + str(strict)],
+            )
         assert gdal.GetLastErrorMsg() != ""
         if strict and lyr is not None:
             pytest.fail()
@@ -404,9 +404,8 @@ def test_ogr_vdv_7():
             lyr_name, options=["PROFILE=" + profile, "PROFILE_STRICT=" + str(strict)]
         )
         gdal.ErrorReset()
-        gdal.PushErrorHandler()
-        ret = lyr.CreateField(ogr.FieldDefn("UNKNOWN"))
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = lyr.CreateField(ogr.FieldDefn("UNKNOWN"))
         assert gdal.GetLastErrorMsg() != ""
         if strict and ret == 0:
             pytest.fail()
@@ -424,16 +423,14 @@ def test_ogr_vdv_7():
 
 def test_ogr_vdv_8():
 
-    gdal.PushErrorHandler()
-    ds = ogr.GetDriverByName("VDV").CreateDataSource("/does/not_exist")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("VDV").CreateDataSource("/does/not_exist")
     assert ds is None
 
-    gdal.PushErrorHandler()
-    ds = ogr.GetDriverByName("VDV").CreateDataSource(
-        "/does/not_exist", options=["SINGLE_FILE=FALSE"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("VDV").CreateDataSource(
+            "/does/not_exist", options=["SINGLE_FILE=FALSE"]
+        )
     assert ds is None
 
     # Add layer in non writable directory
@@ -452,9 +449,8 @@ def test_ogr_vdv_8():
             do_test = True
         if do_test:
             ds = ogr.Open("tmp/ogr_vdv_8", update=1)
-            gdal.PushErrorHandler()
-            lyr = ds.CreateLayer("another_layer")
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                lyr = ds.CreateLayer("another_layer")
             # 0755 = 493
             os.chmod("tmp/ogr_vdv_8", 493)
             ds = None
@@ -465,9 +461,8 @@ def test_ogr_vdv_8():
     ds = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
 
     # File already exists
-    gdal.PushErrorHandler()
-    ds2 = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds2 = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
     assert ds2 is None
 
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 1
@@ -478,18 +473,16 @@ def test_ogr_vdv_8():
 
     lyr1.ResetReading()
 
-    gdal.PushErrorHandler()
-    lyr1.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr1.GetNextFeature()
 
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
 
     # Layer structure is now frozen
     assert lyr1.TestCapability(ogr.OLCCreateField) == 0
 
-    gdal.PushErrorHandler()
-    ret = lyr1.CreateField(ogr.FieldDefn("not_allowed"))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr1.CreateField(ogr.FieldDefn("not_allowed"))
     assert ret != 0
 
     lyr2 = ds.CreateLayer("lyr2")
@@ -499,9 +492,8 @@ def test_ogr_vdv_8():
 
     assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 0
 
-    gdal.PushErrorHandler()
-    ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     assert ret != 0
 
     assert lyr1.GetFeatureCount() == 1
