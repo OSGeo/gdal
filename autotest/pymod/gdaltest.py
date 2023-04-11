@@ -472,9 +472,8 @@ class GDALTest(object):
 
         if interrupt_during_copy:
             if new_ds is None:
-                gdal.PushErrorHandler("CPLQuietErrorHandler")
-                self.driver.Delete(new_filename)
-                gdal.PopErrorHandler()
+                with error_handler():
+                    self.driver.Delete(new_filename)
                 return
             new_ds = None
             self.driver.Delete(new_filename)
