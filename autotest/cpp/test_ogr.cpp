@@ -2192,6 +2192,22 @@ TEST_F(test_ogr, field_domain_cloning)
     ASSERT_EQ(poClonedCoded->GetMergePolicy(), oCoded.GetMergePolicy());
 }
 
+// Test field comments
+TEST_F(test_ogr, field_comments)
+{
+    OGRFieldDefn oFieldDefn("field1", OFTString);
+    ASSERT_EQ(oFieldDefn.GetComment(), "");
+    oFieldDefn.SetComment("my comment");
+    ASSERT_EQ(oFieldDefn.GetComment(), "my comment");
+
+    OGRFieldDefn oFieldDefn2(&oFieldDefn);
+    ASSERT_EQ(oFieldDefn2.GetComment(), "my comment");
+    ASSERT_TRUE(oFieldDefn.IsSame(&oFieldDefn2));
+
+    oFieldDefn2.SetComment("my comment 2");
+    ASSERT_FALSE(oFieldDefn.IsSame(&oFieldDefn2));
+}
+
 // Test OGRFeatureDefn C++ GetFields() iterator
 TEST_F(test_ogr, feature_defn_fields_iterator)
 {
