@@ -3011,13 +3011,13 @@ def test_ogr_gpkg_34():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3178,13 +3178,13 @@ def test_ogr_gpkg_35():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3299,13 +3299,13 @@ def test_ogr_gpkg_36():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3500,13 +3500,13 @@ def test_ogr_gpkg_37():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(

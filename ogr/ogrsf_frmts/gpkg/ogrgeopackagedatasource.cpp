@@ -3632,7 +3632,7 @@ bool GDALGeoPackageDataset::
                 "CREATE TABLE gpkg_data_columns ("
                 "table_name TEXT NOT NULL,"
                 "column_name TEXT NOT NULL,"
-                "name TEXT UNIQUE,"
+                "name TEXT,"
                 "title TEXT,"
                 "description TEXT,"
                 "mime_type TEXT,"
