@@ -2883,36 +2883,40 @@ int IVSIS3LikeFSHandler::MkdirInternal(const char *pszDirname, long /*nMode*/,
         }
     }
 
-    VSILFILE *fp = VSIFOpenL(osDirname, "wb");
-    if (fp != nullptr)
+    int ret = 0;
+    if (CPLTestBool(CPLGetConfigOption("CPL_VSIS3_CREATE_DIR_OBJECT", "YES")))
     {
-        CPLErrorReset();
-        VSIFCloseL(fp);
-        int ret = CPLGetLastErrorType() == CPLE_None ? 0 : -1;
-        if (ret == 0)
+        VSILFILE *fp = VSIFOpenL(osDirname, "wb");
+        if (fp != nullptr)
         {
-            CPLString osDirnameWithoutEndSlash(osDirname);
-            osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() -
-                                            1);
-
-            InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash));
-
-            FileProp cachedFileProp;
-            GetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
-            cachedFileProp.eExists = EXIST_YES;
-            cachedFileProp.bIsDirectory = true;
-            cachedFileProp.bHasComputedFileSize = true;
-            SetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
-
-            RegisterEmptyDir(osDirnameWithoutEndSlash);
-            RegisterEmptyDir(osDirname);
+            CPLErrorReset();
+            VSIFCloseL(fp);
+            ret = CPLGetLastErrorType() == CPLE_None ? 0 : -1;
         }
-        return ret;
+        else
+        {
+            ret = -1;
+        }
     }
-    else
+
+    if (ret == 0)
     {
-        return -1;
+        CPLString osDirnameWithoutEndSlash(osDirname);
+        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+
+        InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash));
+
+        FileProp cachedFileProp;
+        GetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
+        cachedFileProp.eExists = EXIST_YES;
+        cachedFileProp.bIsDirectory = true;
+        cachedFileProp.bHasComputedFileSize = true;
+        SetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp);
+
+        RegisterEmptyDir(osDirnameWithoutEndSlash);
+        RegisterEmptyDir(osDirname);
     }
+    return ret;
 }
 
 int IVSIS3LikeFSHandler::Mkdir(const char *pszDirname, long nMode)
