@@ -1359,7 +1359,6 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
 
             oField.SetName(poNewFieldDefn->GetNameRef());
         }
-        oField.SetAlternativeName(poNewFieldDefn->GetAlternativeNameRef());
     }
     if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
@@ -1384,6 +1383,10 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
     if (nFlagsIn & ALTER_DOMAIN_FLAG)
     {
         oField.SetDomainName(poNewFieldDefn->GetDomainName());
+    }
+    if (nFlagsIn & ALTER_ALTERNATIVE_NAME_FLAG)
+    {
+        oField.SetAlternativeName(poNewFieldDefn->GetAlternativeNameRef());
     }
 
     const auto eType = GetGDBFieldType(&oField);
