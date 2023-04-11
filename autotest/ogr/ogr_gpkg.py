@@ -3044,13 +3044,13 @@ def test_ogr_gpkg_34():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3211,13 +3211,13 @@ def test_ogr_gpkg_35():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3332,13 +3332,13 @@ def test_ogr_gpkg_36():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -3533,13 +3533,13 @@ def test_ogr_gpkg_37():
         """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
-  name TEXT UNIQUE,
+  name TEXT,
   title TEXT,
   description TEXT,
   mime_type TEXT,
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
     )
     ds.ExecuteSQL(
@@ -8451,3 +8451,64 @@ def test_ogr_gpkg_ogr_layer_Extent():
 
     finally:
         gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test field alternative names
+
+
+def test_ogr_gpkg_field_alternative_names():
+
+    dbname = "/vsimem/ogr_gpkg_alternative_names.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
+
+    # with no gpkg_data_columns table
+    lyr = ds.GetLayer("test")
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+
+    ds.ExecuteSQL(
+        """CREATE TABLE gpkg_data_columns (
+  table_name TEXT NOT NULL,
+  column_name TEXT NOT NULL,
+  name TEXT,
+  title TEXT,
+  description TEXT,
+  mime_type TEXT,
+  constraint_name TEXT,
+  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
+  CONSTRAINT gdc_tn UNIQUE (table_name, name)
+)"""
+    )
+    # name same as column name, won't be used as alternative name
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name') VALUES ('test', 'foo', 'foo')"
+    )
+
+    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    lyr = ds.GetLayer("test")
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+
+    # name different from column name, should be used as alternative names
+    ds.ExecuteSQL("DELETE FROM gpkg_data_columns")
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name') VALUES ('test', 'foo', 'Foo field')"
+    )
+
+    ds = gdaltest.gpkg_dr.Open(dbname)
+    lyr = ds.GetLayer("test")
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "Foo field"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
