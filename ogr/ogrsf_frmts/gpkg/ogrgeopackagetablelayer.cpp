@@ -1284,7 +1284,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     // Look for sub-types such as JSON
     if (m_poDS->HasDataColumnsTable())
     {
-        pszSQL = sqlite3_mprintf("SELECT column_name, mime_type, "
+        pszSQL = sqlite3_mprintf("SELECT column_name, name, mime_type, "
                                  "constraint_name FROM gpkg_data_columns "
                                  "WHERE table_name = '%q'",
                                  m_pszTableName);
@@ -1297,9 +1297,28 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 const char *pszColumn = oResultTable->GetValue(0, iRecord);
                 if (pszColumn == nullptr)
                     continue;
-                const char *pszMimeType = oResultTable->GetValue(1, iRecord);
+                const char *pszName = oResultTable->GetValue(1, iRecord);
+
+                // We use the "name" attribute from gpkg_data_columns as the
+                // field alternative name, so long as it isn't just a copy
+                // of the column name
+                const char *pszAlias = nullptr;
+                if (pszName && !EQUAL(pszName, pszColumn))
+                    pszAlias = pszName;
+
+                if (pszAlias)
+                {
+                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    if (iIdx >= 0)
+                    {
+                        m_poFeatureDefn->GetFieldDefn(iIdx)->SetAlternativeName(
+                            pszAlias);
+                    }
+                }
+
+                const char *pszMimeType = oResultTable->GetValue(2, iRecord);
                 const char *pszConstraintName =
-                    oResultTable->GetValue(2, iRecord);
+                    oResultTable->GetValue(3, iRecord);
                 if (pszMimeType && EQUAL(pszMimeType, "application/json"))
                 {
                     int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
