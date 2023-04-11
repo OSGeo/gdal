@@ -124,9 +124,8 @@ def test_kea_4():
     if gdaltest.kea_driver is None:
         pytest.skip()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     assert ds is None
 
     src_ds = gdaltest.kea_driver.Create("tmp/src.kea", 1, 1, 0)
@@ -143,42 +142,35 @@ def test_kea_4():
     ds = None
     ds = gdal.Open("tmp/out.kea")
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.SetProjection("a")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.SetProjection("a")
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     assert ret != 0
 
     # Disabled for now since some of them cause memory leaks or
     # crash in the HDF5 library finalizer
     if False:  # pylint: disable=using-constant-test
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = ds.SetMetadataItem("foo", "bar")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.SetMetadataItem("foo", "bar")
         assert ret != 0
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = ds.SetMetadata({"foo": "bar"})
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.SetMetadata({"foo": "bar"})
         assert ret != 0
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
         assert ret != 0
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = ds.GetRasterBand(1).SetMetadata({"foo": "bar"})
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.GetRasterBand(1).SetMetadata({"foo": "bar"})
         assert ret != 0
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = ds.SetGCPs([], "")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ret = ds.SetGCPs([], "")
         assert ret != 0
 
     with gdaltest.error_handler():
@@ -563,42 +555,40 @@ def test_kea_12():
         assert rat.GetTypeOfCol(i) == cloned_rat.GetTypeOfCol(i)
         assert rat.GetUsageOfCol(i) == cloned_rat.GetUsageOfCol(i)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    rat.GetNameOfCol(-1)
-    rat.GetTypeOfCol(-1)
-    rat.GetUsageOfCol(-1)
+        rat.GetNameOfCol(-1)
+        rat.GetTypeOfCol(-1)
+        rat.GetUsageOfCol(-1)
 
-    rat.GetNameOfCol(rat.GetColumnCount())
-    rat.GetTypeOfCol(rat.GetColumnCount())
-    rat.GetUsageOfCol(rat.GetColumnCount())
+        rat.GetNameOfCol(rat.GetColumnCount())
+        rat.GetTypeOfCol(rat.GetColumnCount())
+        rat.GetUsageOfCol(rat.GetColumnCount())
 
-    with pytest.raises(Exception):
-        rat.GetValueAsDouble(-1, 0)
-    with pytest.raises(Exception):
-        rat.GetValueAsInt(-1, 0)
-    with pytest.raises(Exception):
-        rat.GetValueAsString(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsDouble(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsInt(-1, 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsString(-1, 0)
 
-    with pytest.raises(Exception):
-        rat.GetValueAsDouble(rat.GetColumnCount(), 0)
-    with pytest.raises(Exception):
-        rat.GetValueAsInt(rat.GetColumnCount(), 0)
-    with pytest.raises(Exception):
-        rat.GetValueAsString(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsDouble(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsInt(rat.GetColumnCount(), 0)
+        with pytest.raises(Exception):
+            rat.GetValueAsString(rat.GetColumnCount(), 0)
 
-    with pytest.raises(Exception):
-        rat.GetValueAsDouble(0, -1)
-    with pytest.raises(Exception):
-        rat.GetValueAsInt(0, -1)
-    with pytest.raises(Exception):
-        rat.GetValueAsString(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsDouble(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsInt(0, -1)
+        with pytest.raises(Exception):
+            rat.GetValueAsString(0, -1)
 
-    rat.GetValueAsDouble(0, rat.GetRowCount())
-    rat.GetValueAsInt(0, rat.GetRowCount())
-    rat.GetValueAsString(0, rat.GetRowCount())
-
-    gdal.PopErrorHandler()
+        rat.GetValueAsDouble(0, rat.GetRowCount())
+        rat.GetValueAsInt(0, rat.GetRowCount())
+        rat.GetValueAsString(0, rat.GetRowCount())
 
     assert rat.GetValueAsDouble(0, 0) == 1.23
     assert rat.GetValueAsInt(0, 0) == 1

@@ -270,9 +270,8 @@ def test_netcdf_1():
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    tst.testOpen()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        tst.testOpen()
 
 
 ###############################################################################
@@ -355,10 +354,9 @@ def test_netcdf_4():
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # don't test for checksum (see bug #4284)
-    result = tst.testOpen(skip_checksum=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # don't test for checksum (see bug #4284)
+        result = tst.testOpen(skip_checksum=True)
 
     return result
 
@@ -380,10 +378,9 @@ def test_netcdf_5():
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # don't test for checksum (see bug #4284)
-    result = tst.testOpen(skip_checksum=True)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # don't test for checksum (see bug #4284)
+        result = tst.testOpen(skip_checksum=True)
 
     return result
 
@@ -875,9 +872,8 @@ def test_netcdf_22():
     ifile = "data/hdf4/hdifftst2.hdf"
 
     # suppress warning
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("NETCDF:" + ifile)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("NETCDF:" + ifile)
 
     if ds is None:
         pytest.fail("netcdf driver did not open hdf4 file")
@@ -1072,9 +1068,8 @@ def test_netcdf_26():
 
     # test default config
     test = gdaltest.GDALTest("NETCDF", "netcdf/int16-nogeo.nc", 1, 4672)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
 
     # test WRITE_BOTTOMUP=NO
     test = gdaltest.GDALTest(
@@ -1250,9 +1245,8 @@ def test_netcdf_30():
 
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    result = tst.testOpen()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        result = tst.testOpen()
 
     return result
 
@@ -1340,11 +1334,10 @@ def test_netcdf_34():
     tst = gdaltest.GDALTest("NetCDF", "../tmp/cache/" + filename, 1, 31621)
     # tst.testOpen()
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    proc = Process(target=tst.testOpen)
-    proc.start()
-    proc.join(timeout)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        proc = Process(target=tst.testOpen)
+        proc.start()
+        proc.join(timeout)
 
     # if proc is alive after timeout we must terminate it, and return fail
     # valgrind detects memory leaks when this occurs (although it should never happen)
@@ -1438,9 +1431,8 @@ def test_netcdf_37():
 
     ifile = "data/netcdf/reduce-cgcms.nc"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open(ifile)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open(ifile)
     assert ds is not None, "open failed"
 
     gt = ds.GetGeoTransform()
@@ -1469,9 +1461,8 @@ def test_netcdf_38():
 
     ifile = "data/netcdf/bug5118.nc"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open(ifile)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open(ifile)
     assert ds is not None, "open failed"
 
     gt = ds.GetGeoTransform()

@@ -113,11 +113,10 @@ def wms_4():
         pytest.skip()
 
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
 
-    cs = gdaltest.wms_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
+    with gdaltest.error_handler():
+        cs = gdaltest.wms_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
 
-    gdal.PopErrorHandler()
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     msg = gdal.GetLastErrorMsg()
     gdal.ErrorReset()

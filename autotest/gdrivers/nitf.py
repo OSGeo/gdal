@@ -580,10 +580,9 @@ def test_nitf_17():
 def test_nitf_18():
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
-    ds = gdal.Open("data/nitf/U_0006A.NTF")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
+        ds = gdal.Open("data/nitf/U_0006A.NTF")
 
     assert ds.RasterCount == 0
 
@@ -607,10 +606,9 @@ def test_nitf_19():
 def test_nitf_20():
 
     # Shut up the warning about file either corrupt or empty
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
-    ds = gdal.Open("data/nitf/U_0002A.NTF")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
+        ds = gdal.Open("data/nitf/U_0002A.NTF")
 
     assert ds is None
 
@@ -624,9 +622,8 @@ def test_nitf_20():
 def test_nitf_21():
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/nitf/ns3114a.nsf")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/nitf/ns3114a.nsf")
 
     mdTEXT = ds.GetMetadata("TEXT")
 
@@ -1635,11 +1632,10 @@ def nitf_43(driver_to_test, options):
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
     try:
         ds = gdal.Open("data/byte.tif")
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        out_ds = gdal.GetDriverByName("NITF").CreateCopy(
-            "tmp/nitf_43.ntf", ds, options=options, strict=0
-        )
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            out_ds = gdal.GetDriverByName("NITF").CreateCopy(
+                "tmp/nitf_43.ntf", ds, options=options, strict=0
+            )
         out_ds = None
         out_ds = gdal.Open("tmp/nitf_43.ntf")
         assert out_ds.GetRasterBand(1).Checksum() == 4672
@@ -2279,9 +2275,8 @@ def test_nitf_59():
 def test_nitf_60():
 
     # Shut down errors because the file is truncated
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/nitf/testtest.on9")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/nitf/testtest.on9")
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
     ds = None
@@ -2530,14 +2525,13 @@ def test_nitf_66():
 def test_nitf_67():
 
     src_ds = gdal.Open("data/byte.tif")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "/vsimem/nitf_67.ntf",
-        src_ds,
-        options=["BLOCKYSIZE=1", "BLOCKXSIZE=10"],
-        strict=0,
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName("NITF").CreateCopy(
+            "/vsimem/nitf_67.ntf",
+            src_ds,
+            options=["BLOCKYSIZE=1", "BLOCKXSIZE=10"],
+            strict=0,
+        )
     ds = None
     src_ds = None
 
@@ -5539,9 +5533,8 @@ def test_nitf_online_1():
     )
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = tst.testOpen()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = tst.testOpen()
 
     return ret
 
@@ -5727,9 +5720,8 @@ def test_nitf_online_10():
     )
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("tmp/cache/ns3119b.nsf")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("tmp/cache/ns3119b.nsf")
 
     mdCGM = ds.GetMetadata("CGM")
 

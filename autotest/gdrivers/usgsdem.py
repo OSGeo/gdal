@@ -193,19 +193,18 @@ def test_usgsdem_7():
     ds = gdal.Open("data/n43.dt0")
 
     # To avoid warning about 'Unable to find NTS mapsheet lookup file: NTS-50kindex.csv'
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds2 = gdal.GetDriverByName("USGSDEM").CreateCopy(
-        "tmp/000a00DEMz",
-        ds,
-        options=[
-            "PRODUCT=CDED50K",
-            "TOPLEFT=80w,44n",
-            "RESAMPLE=Nearest",
-            "ZRESOLUTION=1.1",
-            "INTERNALNAME=GDAL",
-        ],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds2 = gdal.GetDriverByName("USGSDEM").CreateCopy(
+            "tmp/000a00DEMz",
+            ds,
+            options=[
+                "PRODUCT=CDED50K",
+                "TOPLEFT=80w,44n",
+                "RESAMPLE=Nearest",
+                "ZRESOLUTION=1.1",
+                "INTERNALNAME=GDAL",
+            ],
+        )
 
     assert ds2.RasterXSize == 1201 and ds2.RasterYSize == 1201, "Bad image dimensions."
 

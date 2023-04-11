@@ -211,9 +211,8 @@ def test_vrtderived_4():
         "PixelFunctionType=dummy",
         "SourceTransferType=Invalid",
     ]
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
     assert ret != 0, "invalid SourceTransferType value not detected"
 
 

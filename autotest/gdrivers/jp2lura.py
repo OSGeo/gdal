@@ -1063,11 +1063,10 @@ def test_jp2lura_28():
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
-        gdal.PushErrorHandler()
-        out_ds = gdaltest.jp2lura_drv.CreateCopy(
-            "/vsimem/jp2lura_28.jp2", src_ds, options=options
-        )
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            out_ds = gdaltest.jp2lura_drv.CreateCopy(
+                "/vsimem/jp2lura_28.jp2", src_ds, options=options
+            )
         if warning_expected and gdal.GetLastErrorMsg() == "":
             print(options)
             pytest.fail("warning expected")
@@ -1096,9 +1095,8 @@ def test_jp2lura_30():
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_30.jp2", src_ds)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_30.jp2", src_ds)
     assert out_ds is None
 
 
@@ -1152,13 +1150,12 @@ def DISABLED_jp2lura_33():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy(
-        "/vsimem/jp2lura_33.jp2",
-        src_ds,
-        options=["BLOCKXSIZE=100000", "BLOCKYSIZE=100000"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2lura_drv.CreateCopy(
+            "/vsimem/jp2lura_33.jp2",
+            src_ds,
+            options=["BLOCKXSIZE=100000", "BLOCKYSIZE=100000"],
+        )
     assert out_ds is None
     out_ds = None
     gdal.Unlink("/vsimem/jp2lura_33.jp2")
@@ -1170,9 +1167,8 @@ def DISABLED_jp2lura_33():
 
 def test_jp2lura_34():
 
-    gdal.PushErrorHandler()
-    ds = gdal.Open("data/jpeg2000/dimensions_above_31bit.jp2")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/jpeg2000/dimensions_above_31bit.jp2")
     assert ds is None
 
 
@@ -1182,9 +1178,8 @@ def test_jp2lura_34():
 
 def test_jp2lura_35():
 
-    gdal.PushErrorHandler()
-    ds = gdal.Open("data/jpeg2000/truncated.jp2")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/jpeg2000/truncated.jp2")
     assert ds is None
 
 
@@ -1195,9 +1190,8 @@ def test_jp2lura_35():
 def test_jp2lura_36():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 16385)
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_36.jp2", src_ds)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_36.jp2", src_ds)
     assert out_ds is None and gdal.VSIStatL("/vsimem/jp2lura_36.jp2") is None
 
 
@@ -1518,13 +1512,12 @@ def test_jp2lura_41():
 
     # Warning if ignored option
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy(
-        "/vsimem/jp2lura_41.jp2",
-        src_ds,
-        options=["USE_SRC_CODESTREAM=YES", "QUALITY=1"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2lura_drv.CreateCopy(
+            "/vsimem/jp2lura_41.jp2",
+            src_ds,
+            options=["USE_SRC_CODESTREAM=YES", "QUALITY=1"],
+        )
     del out_ds
     # if gdal.GetLastErrorMsg() == '':
     #    gdaltest.post_reason('fail')
@@ -1535,11 +1528,10 @@ def test_jp2lura_41():
     # Warning if source is not JPEG2000
     src_ds = gdal.Open("data/byte.tif")
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2lura_drv.CreateCopy(
-        "/vsimem/jp2lura_41.jp2", src_ds, options=["USE_SRC_CODESTREAM=YES"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2lura_drv.CreateCopy(
+            "/vsimem/jp2lura_41.jp2", src_ds, options=["USE_SRC_CODESTREAM=YES"]
+        )
     del out_ds
     assert gdal.GetLastErrorMsg() != ""
     gdal.Unlink("/vsimem/jp2lura_41.jp2")
