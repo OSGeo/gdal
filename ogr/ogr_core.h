@@ -671,13 +671,19 @@ typedef enum
  */
 #define ALTER_DOMAIN_FLAG 0x40
 
+/** Alter field alternative name.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.7
+ */
+#define ALTER_ALTERNATIVE_NAME_FLAG 0x80
+
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
 #define ALTER_ALL_FLAG                                                         \
     (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG |          \
      ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG |            \
-     ALTER_DOMAIN_FLAG)
+     ALTER_DOMAIN_FLAG | ALTER_ALTERNATIVE_NAME_FLAG)
 
 /** Alter geometry field name.
  * Used by OGR_L_AlterGeomFieldDefn().
