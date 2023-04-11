@@ -99,9 +99,8 @@ def test_vsistdin_2():
 @gdaltest.disable_exceptions()
 def test_vsistdin_3():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    f = gdal.VSIFOpenL("/vsistdin/", "wb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL("/vsistdin/", "wb")
     assert f is None
 
 

@@ -716,18 +716,17 @@ def test_tiff_12bitjpeg():
     old_accum = gdal.GetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    if os.path.exists("data/mandrilmini_12bitjpeg.tif.aux.xml"):
-        os.unlink("data/mandrilmini_12bitjpeg.tif.aux.xml")
+        if os.path.exists("data/mandrilmini_12bitjpeg.tif.aux.xml"):
+            os.unlink("data/mandrilmini_12bitjpeg.tif.aux.xml")
 
-    try:
-        ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
-        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-    except Exception:
-        ds = None
+        try:
+            ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
+            ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+        except Exception:
+            ds = None
 
-    gdal.PopErrorHandler()
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", old_accum)
 
     if gdal.GetLastErrorMsg().find("Unsupported JPEG data precision 12") != -1:
@@ -1052,9 +1051,8 @@ def test_tiff_small():
 
 def test_tiff_dos_strip_chop():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/tiff_dos_strip_chop.tif")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/tiff_dos_strip_chop.tif")
     del ds
 
 
@@ -2821,9 +2819,8 @@ def test_tiff_read_wrong_number_extrasamples():
 
 def test_tiff_read_one_strip_no_bytecount():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/one_strip_nobytecount.tif")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/one_strip_nobytecount.tif")
     assert ds.GetRasterBand(1).Checksum() == 1
 
 

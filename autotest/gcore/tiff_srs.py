@@ -136,9 +136,8 @@ def test_srs_read_compd_cs():
 def test_tiff_srs_weird_mercator_2sp():
 
     ds = gdal.Open("data/weird_mercator_2sp.tif")
-    gdal.PushErrorHandler()
-    wkt = ds.GetProjectionRef()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        wkt = ds.GetProjectionRef()
     assert gdal.GetLastErrorMsg() != "", "warning expected"
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt)

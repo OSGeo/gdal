@@ -243,9 +243,8 @@ def test_rasterio_5():
 
     for band_number in [-1, 0, 2]:
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        res = ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            res = ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
         assert (
@@ -257,9 +256,8 @@ def test_rasterio_5():
 
     for obj in [ds, ds.GetRasterBand(1)]:
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        res = obj.ReadRaster(0, 0, 21, 21)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            res = obj.ReadRaster(0, 0, 21, 21)
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
         assert (
@@ -278,9 +276,8 @@ def test_rasterio_5():
         # to detect win64 better.
         if maxsize == 2147483647 and sys.platform != "win32":
             gdal.ErrorReset()
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-            res = obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                res = obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
             error_msg = gdal.GetLastErrorMsg()
             assert res is None, "expected None"
             assert (
@@ -288,9 +285,8 @@ def test_rasterio_5():
             ), "did not get expected error msg (2)"
 
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        res = obj.ReadRaster(0, 0, 0, 1)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            res = obj.ReadRaster(0, 0, 0, 1)
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
         assert (
@@ -313,27 +309,24 @@ def test_rasterio_6():
             obj.WriteRaster(0, 0, 2, 2, None)
 
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        obj.WriteRaster(0, 0, 2, 2, " ")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            obj.WriteRaster(0, 0, 2, 2, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
             error_msg.find("Buffer too small") != -1
         ), "did not get expected error msg (1)"
 
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        obj.WriteRaster(-1, 0, 1, 1, " ")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            obj.WriteRaster(-1, 0, 1, 1, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
             error_msg.find("Access window out of range in RasterIO()") != -1
         ), "did not get expected error msg (2)"
 
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        obj.WriteRaster(0, 0, 0, 1, " ")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            obj.WriteRaster(0, 0, 0, 1, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
             error_msg.find("Illegal values for buffer size") != -1
@@ -610,15 +603,14 @@ def test_rasterio_9():
 
     # Test interruption
     tab = [0, 0.5]
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    data = ds.GetRasterBand(1).ReadRaster(
-        buf_xsize=10,
-        buf_ysize=10,
-        resample_alg=gdal.GRIORA_Bilinear,
-        callback=rasterio_9_progress_callback,
-        callback_data=tab,
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        data = ds.GetRasterBand(1).ReadRaster(
+            buf_xsize=10,
+            buf_ysize=10,
+            resample_alg=gdal.GRIORA_Bilinear,
+            callback=rasterio_9_progress_callback,
+            callback_data=tab,
+        )
     assert data is None
     assert tab[0] >= 0.50
 
@@ -741,21 +733,18 @@ def test_rasterio_9():
 def test_rasterio_10():
     ds = gdal.Open("data/byte_truncated.tif")
 
-    gdal.PushErrorHandler()
-    data = ds.GetRasterBand(1).ReadRaster()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        data = ds.GetRasterBand(1).ReadRaster()
     assert data is None
 
     # Change buffer type
-    gdal.PushErrorHandler()
-    data = ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        data = ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
     assert data is None
 
     # Resampling case
-    gdal.PushErrorHandler()
-    data = ds.GetRasterBand(1).ReadRaster(buf_xsize=10, buf_ysize=10)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        data = ds.GetRasterBand(1).ReadRaster(buf_xsize=10, buf_ysize=10)
     assert data is None
 
 

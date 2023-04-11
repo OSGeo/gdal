@@ -61,9 +61,8 @@ def matches_non_existing_error_msg(msg):
 
 
 def test_basic_test_1():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("non_existing_ds", gdal.GA_ReadOnly)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("non_existing_ds", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
@@ -91,36 +90,32 @@ def test_basic_test_strace_non_existing_file():
 
 
 def test_basic_test_2():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("non_existing_ds", gdal.GA_Update)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("non_existing_ds", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_3():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("", gdal.GA_ReadOnly)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_4():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("", gdal.GA_Update)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
 def test_basic_test_5():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
     last_error = gdal.GetLastErrorMsg()
     expected = "`data/doctype.xml' not recognized as a supported file format"
     if ds is None and expected in last_error:
@@ -324,9 +319,8 @@ def test_basic_test_11():
     ds = gdal.OpenEx("non existing")
     assert ds is None and gdal.GetLastErrorMsg() == ""
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.OpenEx("non existing", gdal.OF_VERBOSE_ERROR)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("non existing", gdal.OF_VERBOSE_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
     with gdal.ExceptionMgr(useExceptions=True):

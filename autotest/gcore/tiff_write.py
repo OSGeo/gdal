@@ -2227,11 +2227,10 @@ def test_tiff_write_62():
 
 def test_tiff_write_63():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.tiff_drv.Create(
-        "tmp/bigtiff.tif", 150000, 150000, 1, options=["BIGTIFF=NO"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.Create(
+            "tmp/bigtiff.tif", 150000, 150000, 1, options=["BIGTIFF=NO"]
+        )
 
     if ds is None:
         return
@@ -2571,15 +2570,14 @@ def test_tiff_write_74():
     old_accum = gdal.GetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    try:
-        ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
-        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-    except Exception:
-        ds = None
+        try:
+            ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
+            ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+        except Exception:
+            ds = None
 
-    gdal.PopErrorHandler()
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", old_accum)
 
     if gdal.GetLastErrorMsg().find("Unsupported JPEG data precision 12") != -1:
@@ -3384,13 +3382,12 @@ def test_tiff_write_88():
     gdal.SetConfigOption(
         "CHECK_DISK_FREE_SPACE", "NO"
     )  # we don't want free space to be an issue here
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/tiff_write_88_dst.tif",
-        src_ds,
-        options=["TILED=YES", "COPY_SRC_OVERVIEWS=YES", "ENDIANNESS=LITTLE"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "tmp/tiff_write_88_dst.tif",
+            src_ds,
+            options=["TILED=YES", "COPY_SRC_OVERVIEWS=YES", "ENDIANNESS=LITTLE"],
+        )
     gdal.SetConfigOption("GTIFF_DELETE_ON_ERROR", None)
     gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", None)
     del ds
@@ -4927,11 +4924,10 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
+        )
     assert ds is None
     src_ds = None
 
@@ -4956,11 +4952,10 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
+        )
     assert ds is None
     src_ds = None
 
@@ -4989,11 +4984,10 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
+        )
     assert ds is None
     src_ds = None
 
@@ -5259,16 +5253,14 @@ def test_tiff_write_124():
 
     ds = gdaltest.tiff_drv.Create("/vsimem/tiff_write_124.tif", 1, 1, 3, gdal.GDT_Byte)
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # Test "SetColorTable() can only be called on band 1"
-    ret = ds.GetRasterBand(2).SetColorTable(gdal.ColorTable())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Test "SetColorTable() can only be called on band 1"
+        ret = ds.GetRasterBand(2).SetColorTable(gdal.ColorTable())
     assert ret != 0
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # Test "SetColorTable() not supported for multi-sample TIFF files"
-    ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Test "SetColorTable() not supported for multi-sample TIFF files"
+        ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
     assert ret != 0
 
     ds = None
@@ -5276,24 +5268,22 @@ def test_tiff_write_124():
     ds = gdaltest.tiff_drv.Create(
         "/vsimem/tiff_write_124.tif", 1, 1, 1, gdal.GDT_UInt32
     )
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
-    ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
+        ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
     assert ret != 0
     ds = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
-    ds = gdaltest.tiff_drv.Create(
-        "/vsimem/tiff_write_124.tif",
-        1,
-        1,
-        1,
-        gdal.GDT_UInt32,
-        options=["PHOTOMETRIC=PALETTE"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
+        ds = gdaltest.tiff_drv.Create(
+            "/vsimem/tiff_write_124.tif",
+            1,
+            1,
+            1,
+            gdal.GDT_UInt32,
+            options=["PHOTOMETRIC=PALETTE"],
+        )
     ds = None
 
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_124.tif")
@@ -5320,9 +5310,8 @@ def test_tiff_write_125():
     ds = gdal.Open("/vsimem/tiff_write_125.tif")
     # Will not open on 32-bit due to overflow
     if ds is not None:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ds.GetRasterBand(1).ReadBlock(0, 0)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds.GetRasterBand(1).ReadBlock(0, 0)
 
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_write_125.tif",
@@ -5342,9 +5331,8 @@ def test_tiff_write_125():
     ds = gdal.Open("/vsimem/tiff_write_125.tif")
     # Will not open on 32-bit due to overflow
     if ds is not None:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ds.GetRasterBand(1).ReadBlock(0, 0)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds.GetRasterBand(1).ReadBlock(0, 0)
 
     gdal.Unlink("/vsimem/tiff_write_125.tif")
 
@@ -5908,33 +5896,26 @@ def test_tiff_write_133():
     src_ds.GetRasterBand(3).Fill(184)
 
     src_ds.FlushCache()
-    gdal.PushErrorHandler()
-    ret = src_ds.SetProjection(srs.ExportToWkt())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.SetProjection(srs.ExportToWkt())
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.SetGeoTransform([1, 2, 0, 3, 0, -4])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.SetGeoTransform([1, 2, 0, 3, 0, -4])
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.SetMetadataItem("FOO", "BAZ")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.SetMetadataItem("FOO", "BAZ")
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.SetMetadata({})
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.SetMetadata({})
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.GetRasterBand(1).SetMetadataItem("FOO", "BAZ")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.GetRasterBand(1).SetMetadataItem("FOO", "BAZ")
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.GetRasterBand(1).SetMetadata({})
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.GetRasterBand(1).SetMetadata({})
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = src_ds.GetRasterBand(1).SetNoDataValue(0)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = src_ds.GetRasterBand(1).SetNoDataValue(0)
     assert ret != 0
 
     # Pixel interleaved
@@ -5960,9 +5941,8 @@ def test_tiff_write_133():
 
     ds.FlushCache()
     for y in range(1000):
-        gdal.PushErrorHandler()
-        got_data = ds.ReadRaster(0, y, 1024, 1)
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            got_data = ds.ReadRaster(0, y, 1024, 1)
         assert got_data is None
     ds = None
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_133_dst.tif")
@@ -6045,13 +6025,12 @@ def test_tiff_write_133():
         gdaltest.tiff_drv.Delete("/vsimem/tiff_write_133_dst.tif")
 
     # Compression not supported
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_133_dst.tif",
-        src_ds,
-        options=["STREAMABLE_OUTPUT=YES", "COMPRESS=DEFLATE"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_133_dst.tif",
+            src_ds,
+            options=["STREAMABLE_OUTPUT=YES", "COMPRESS=DEFLATE"],
+        )
     assert out_ds is None
 
     # Test writing into a non authorized file
@@ -6060,20 +6039,18 @@ def test_tiff_write_133():
     )
     assert ds is None
 
-    gdal.PushErrorHandler()
-    out_ds = gdaltest.tiff_drv.CreateCopy(
-        "/foo/bar", src_ds, options=["STREAMABLE_OUTPUT=YES"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdaltest.tiff_drv.CreateCopy(
+            "/foo/bar", src_ds, options=["STREAMABLE_OUTPUT=YES"]
+        )
     assert out_ds is None
 
     src_ds = None
 
     # Classical TIFF with IFD not at offset 8
     gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    gdal.PushErrorHandler()
-    ds = gdal.Open("data/byte.tif")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/byte.tif")
     gdal.SetConfigOption("TIFF_READ_STREAMING", None)
     assert ds is None
 
@@ -6088,9 +6065,8 @@ def test_tiff_write_133():
         ds = None
 
         gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-        gdal.PushErrorHandler()
-        ds = gdal.Open("/vsimem/tiff_write_133.tif")
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds = gdal.Open("/vsimem/tiff_write_133.tif")
         gdal.SetConfigOption("TIFF_READ_STREAMING", None)
         assert ds is None
 
@@ -6104,9 +6080,8 @@ def test_tiff_write_133():
     ds = None
 
     gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    gdal.PushErrorHandler()
-    ds = gdal.Open("/vsimem/tiff_write_133.tif")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("/vsimem/tiff_write_133.tif")
     gdal.SetConfigOption("TIFF_READ_STREAMING", None)
     assert ds.GetMetadataItem("UNORDERED_BLOCKS", "TIFF") == "YES"
 
@@ -6124,10 +6099,9 @@ def test_tiff_write_133():
         options=["STREAMABLE_OUTPUT=YES", "BLOCKYSIZE=1"],
     )
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ret = ds.WriteRaster(0, 999, 1024, 1, "a" * (3 * 1024))
-    ds.FlushCache()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.WriteRaster(0, 999, 1024, 1, "a" * (3 * 1024))
+        ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
 
@@ -6140,10 +6114,9 @@ def test_tiff_write_133():
         options=["STREAMABLE_OUTPUT=YES", "TILED=YES"],
     )
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ret = ds.WriteRaster(256, 256, 256, 256, "a" * (3 * 256 * 256))
-    ds.FlushCache()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.WriteRaster(256, 256, 256, 256, "a" * (3 * 256 * 256))
+        ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
 
