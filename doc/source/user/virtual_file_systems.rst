@@ -39,7 +39,7 @@ Drivers supporting virtual file systems
 
 Virtual file systems can only be used with GDAL or OGR drivers supporting the "large file API", which is now the vast majority of file based drivers. The full list of these formats can be obtained by looking at the driver marked with 'v' when running either ``gdalinfo --formats`` or ``ogrinfo --formats``.
 
-Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
+A notable exception is the HDF4 driver.
 
 .. _vsizip:
 
