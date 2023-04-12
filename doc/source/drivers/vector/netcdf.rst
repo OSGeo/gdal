@@ -16,7 +16,7 @@ can find documentation for the :ref:`raster side <raster.netcdf>`)
 NetCDF is an interface for array-oriented data access and is used for
 representing scientific data.
 
-The driver handles the "point" and "profile" `feature
+The driver handles the "point", "profile" and "trajectory" (single trajectory) `feature
 types <http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_features_and_feature_types>`__
 of the CF 1.6 convention. For CF-1.7 and below (as well as non-CF files), it also supports a more custom approach for
 non-point geometries.
@@ -41,9 +41,9 @@ and by writing non-point geometry items as WKT.
 
 Distinguishing the Two Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If it's value is *CF-1.8* or higher (in this exact
-format, as specified in the CF convention) then the driver will treat the netCDF file as one that has *CF-1.8* geometries contained within
-it. If the *Conventions* attribute has a value of CF-1.6, the file will be treated as following the CF-1.6 convention.
+Upon reading a netCDF file, the driver will attempt to read the global *Conventions* attribute. If i's value is *CF-1.8* or higher (in this exact
+format, as specified in the CF convention), then the driver will check if the netCDF file has *CF-1.8* geometries contained within
+it. If the *Conventions* attribute has a value lower than CF-1.8 or no CF-1.8 geometries, the driver will try to detect "point", "profile" and "trajectory" (single trajectory) feature types.
 
 CF-1.8 Writing Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
