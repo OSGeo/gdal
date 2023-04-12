@@ -91,7 +91,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         poTMS->mBbox.mUpperCornerY = HALF_CIRCUMFERENCE;
         poTMS->mWellKnownScaleSet =
             "http://www.opengis.net/def/wkss/OGC/1.0/GoogleMapsCompatible";
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i <= 30; i++)
         {
             TileMatrix tm;
             tm.mId = CPLSPrintf("%d", i);
