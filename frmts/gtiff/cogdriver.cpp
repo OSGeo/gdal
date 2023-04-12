@@ -1136,6 +1136,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                             CSLFetchNameValue(papszOptions, "GEOTIFF_VERSION"));
     aosOptions.SetNameValue("SPARSE_OK",
                             CSLFetchNameValue(papszOptions, "SPARSE_OK"));
+    aosOptions.SetNameValue("NBITS", CSLFetchNameValue(papszOptions, "NBITS"));
 
     if (EQUAL(osOverviews, "NONE"))
     {
@@ -1390,6 +1391,9 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   <Option name='NUM_THREADS' type='string' "
         "description='Number of worker threads for compression. "
         "Can be set to ALL_CPUS' default='1'/>"
+        "   <Option name='NBITS' type='int' description='BITS for sub-byte "
+        "files (1-7), sub-uint16_t (9-15), sub-uint32_t (17-31), or float32 "
+        "(16)'/>"
         "   <Option name='BLOCKSIZE' type='int' "
         "description='Tile size in pixels' min='128' default='512'/>"
         "   <Option name='BIGTIFF' type='string-select' description='"

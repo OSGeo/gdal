@@ -1702,3 +1702,24 @@ def test_cog_write_jpegxl_alpha_distance_zero():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test NBITS creation option
+
+
+def test_cog_NBITS():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    drv = gdal.GetDriverByName("COG")
+    filename = "/vsimem/test_cog_NBITS.tif"
+    drv.CreateCopy(
+        filename,
+        src_ds,
+        options=["NBITS=7"],
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "7"
+    ds = None
+
+    gdal.Unlink(filename)
