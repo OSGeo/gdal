@@ -387,7 +387,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
-    public static int GDALMultiDimTranslate(Dataset dstDS, Dataset[] poObjects, MultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+    public static int GDALMultiDimTranslate(Dataset dstDS, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
       int retval = 0;
       if (poObjects.Length <= 0)
         throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestDS)");
@@ -405,7 +405,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
-   public static Dataset GDALMultiDimTranslate(string dest, Dataset[] poObjects, MultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+   public static Dataset GDALMultiDimTranslate(string dest, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
       Dataset retval = null;
       if (poObjects.Length <= 0)
         throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestName)");
