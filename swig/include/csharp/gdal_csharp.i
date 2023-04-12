@@ -373,7 +373,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
-   public static Dataset GDALMultiDimTranslate(string dest, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+   public static Dataset MultiDimTranslate(string dest, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
       Dataset retval = null;
       if (poObjects.Length <= 0)
         throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestName)");
