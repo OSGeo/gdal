@@ -113,13 +113,19 @@ class swq_custom_func_registrar;
 
 class CPL_UNSTABLE_API swq_expr_node
 {
-
-    CPL_DISALLOW_COPY_ASSIGN(swq_expr_node)
     swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
                             int nRecLevel);
+    void reset();
 
   public:
     swq_expr_node();
+    swq_expr_node(const swq_expr_node &);
+    swq_expr_node(swq_expr_node &&);
+
+    swq_expr_node &operator=(const swq_expr_node &);
+    swq_expr_node &operator=(swq_expr_node &&);
+
+    bool operator==(const swq_expr_node &) const;
 
     explicit swq_expr_node(const char *);
     explicit swq_expr_node(int);
@@ -142,6 +148,7 @@ class CPL_UNSTABLE_API swq_expr_node
     swq_expr_node *Clone();
 
     void ReplaceBetweenByGEAndLERecurse();
+    void PushNotOperationDownToStack();
 
     swq_node_type eNodeType = SNT_CONSTANT;
     swq_field_type field_type = SWQ_INTEGER;

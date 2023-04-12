@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "ogr_swq.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstring>
@@ -113,13 +114,163 @@ swq_expr_node::swq_expr_node(swq_op eOp)
 swq_expr_node::~swq_expr_node()
 
 {
+    reset();
+}
+
+/************************************************************************/
+/*                              reset()                                 */
+/************************************************************************/
+
+void swq_expr_node::reset()
+{
     CPLFree(table_name);
+    table_name = nullptr;
     CPLFree(string_value);
+    string_value = nullptr;
 
     for (int i = 0; i < nSubExprCount; i++)
         delete papoSubExpr[i];
     CPLFree(papoSubExpr);
+    nSubExprCount = 0;
+    papoSubExpr = nullptr;
     delete geometry_value;
+    geometry_value = nullptr;
+}
+
+/************************************************************************/
+/*                           operator==()                               */
+/************************************************************************/
+
+bool swq_expr_node::operator==(const swq_expr_node &other) const
+{
+    if (eNodeType != other.eNodeType || field_type != other.field_type ||
+        nOperation != other.nOperation || field_index != other.field_index ||
+        table_index != other.table_index ||
+        nSubExprCount != other.nSubExprCount || is_null != other.is_null ||
+        int_value != other.int_value || float_value != other.float_value)
+    {
+        return false;
+    }
+    for (int i = 0; i < nSubExprCount; ++i)
+    {
+        if (!(*(papoSubExpr[i]) == *(other.papoSubExpr[i])))
+        {
+            return false;
+        }
+    }
+    if (table_name && !other.table_name)
+    {
+        return false;
+    }
+    if (!table_name && other.table_name)
+    {
+        return false;
+    }
+    if (table_name && other.table_name &&
+        strcmp(table_name, other.table_name) != 0)
+    {
+        return false;
+    }
+    if (string_value && !other.string_value)
+    {
+        return false;
+    }
+    if (!string_value && other.string_value)
+    {
+        return false;
+    }
+    if (string_value && other.string_value &&
+        strcmp(string_value, other.string_value) != 0)
+    {
+        return false;
+    }
+    if (geometry_value && !other.geometry_value)
+    {
+        return false;
+    }
+    if (!geometry_value && other.geometry_value)
+    {
+        return false;
+    }
+    if (geometry_value && other.geometry_value &&
+        !geometry_value->Equals(other.geometry_value))
+    {
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*             swq_expr_node(const swq_expr_node& other)                */
+/************************************************************************/
+
+swq_expr_node::swq_expr_node(const swq_expr_node &other)
+{
+    *this = other;
+}
+
+/************************************************************************/
+/*                 operator= (const swq_expr_node& other)               */
+/************************************************************************/
+
+swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
+{
+    if (this != &other)
+    {
+        reset();
+        eNodeType = other.eNodeType;
+        field_type = other.field_type;
+        nOperation = other.nOperation;
+        field_index = other.field_index;
+        table_index = other.table_index;
+        if (other.table_name)
+            table_name = CPLStrdup(other.table_name);
+        for (int i = 0; i < other.nSubExprCount; ++i)
+            PushSubExpression(new swq_expr_node(*(other.papoSubExpr[i])));
+        is_null = other.is_null;
+        int_value = other.int_value;
+        float_value = other.float_value;
+        if (other.geometry_value)
+            geometry_value = other.geometry_value->clone();
+        if (other.string_value)
+            string_value = CPLStrdup(other.string_value);
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*             swq_expr_node(swq_expr_node&& other)                     */
+/************************************************************************/
+
+swq_expr_node::swq_expr_node(swq_expr_node &&other)
+{
+    *this = std::move(other);
+}
+
+/************************************************************************/
+/*                 operator= (swq_expr_node&& other)                    */
+/************************************************************************/
+
+swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
+{
+    if (this != &other)
+    {
+        reset();
+        eNodeType = other.eNodeType;
+        field_type = other.field_type;
+        nOperation = other.nOperation;
+        field_index = other.field_index;
+        table_index = other.table_index;
+        std::swap(table_name, other.table_name);
+        std::swap(nSubExprCount, other.nSubExprCount);
+        std::swap(papoSubExpr, other.papoSubExpr);
+        is_null = other.is_null;
+        int_value = other.int_value;
+        float_value = other.float_value;
+        std::swap(geometry_value, other.geometry_value);
+        std::swap(string_value, other.string_value);
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -657,37 +808,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
 
 swq_expr_node *swq_expr_node::Clone()
 {
-    swq_expr_node *poRetNode = new swq_expr_node();
-
-    poRetNode->eNodeType = eNodeType;
-    poRetNode->field_type = field_type;
-    if (eNodeType == SNT_OPERATION)
-    {
-        poRetNode->nOperation = nOperation;
-        poRetNode->nSubExprCount = nSubExprCount;
-        poRetNode->papoSubExpr = static_cast<swq_expr_node **>(
-            CPLMalloc(sizeof(void *) * nSubExprCount));
-        for (int i = 0; i < nSubExprCount; i++)
-            poRetNode->papoSubExpr[i] = papoSubExpr[i]->Clone();
-    }
-    else if (eNodeType == SNT_COLUMN)
-    {
-        poRetNode->field_index = field_index;
-        poRetNode->table_index = table_index;
-        poRetNode->table_name = table_name ? CPLStrdup(table_name) : nullptr;
-    }
-    else if (eNodeType == SNT_CONSTANT)
-    {
-        poRetNode->is_null = is_null;
-        poRetNode->int_value = int_value;
-        poRetNode->float_value = float_value;
-        if (geometry_value)
-            poRetNode->geometry_value = geometry_value->clone();
-        else
-            poRetNode->geometry_value = nullptr;
-    }
-    poRetNode->string_value = string_value ? CPLStrdup(string_value) : nullptr;
-    return poRetNode;
+    return new swq_expr_node(*this);
 }
 
 /************************************************************************/
@@ -827,6 +948,131 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     papoSubExpr[1] = new swq_expr_node(SWQ_LE);
     papoSubExpr[1]->PushSubExpression(poExpr0->Clone());
     papoSubExpr[1]->PushSubExpression(poExpr2);
+}
+
+/************************************************************************/
+/*                   PushNotOperationDownToStack()                      */
+/************************************************************************/
+
+// Do things like:
+// NOT(A AND B) ==> (NOT A) OR (NOT B)
+// NOT(A OR B)  ==> (NOT A) AND (NOT B)
+// NOT(NOT A)   ==> A
+// NOT(A == B)  ==> A <> B
+// NOT(A != B)  ==> A == B
+// NOT(A >= B)  ==> A < B
+// NOT(A >  B)  ==> A <= B
+// NOT(A <= B)  ==> A > B
+// NOT(A <  B)  ==> A >= B
+void swq_expr_node::PushNotOperationDownToStack()
+{
+    if (eNodeType != SNT_OPERATION)
+        return;
+
+    if (nOperation == SWQ_NOT && papoSubExpr[0]->eNodeType == SNT_OPERATION)
+    {
+        if (papoSubExpr[0]->nOperation == SWQ_NOT)
+        {
+            auto poChild = papoSubExpr[0]->papoSubExpr[0];
+            poChild->PushNotOperationDownToStack();
+            papoSubExpr[0]->papoSubExpr[0] = nullptr;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+
+        else if (papoSubExpr[0]->nOperation == SWQ_AND)
+        {
+            for (int i = 0; i < papoSubExpr[0]->nSubExprCount; i++)
+            {
+                auto notOp = new swq_expr_node(SWQ_NOT);
+                notOp->PushSubExpression(papoSubExpr[0]->papoSubExpr[i]);
+                notOp->PushNotOperationDownToStack();
+                papoSubExpr[0]->papoSubExpr[i] = notOp;
+            }
+            papoSubExpr[0]->nOperation = SWQ_OR;
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+
+        else if (papoSubExpr[0]->nOperation == SWQ_OR)
+        {
+            for (int i = 0; i < papoSubExpr[0]->nSubExprCount; i++)
+            {
+                auto notOp = new swq_expr_node(SWQ_NOT);
+                notOp->PushSubExpression(papoSubExpr[0]->papoSubExpr[i]);
+                notOp->PushNotOperationDownToStack();
+                papoSubExpr[0]->papoSubExpr[i] = notOp;
+            }
+            papoSubExpr[0]->nOperation = SWQ_AND;
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+
+        else if (papoSubExpr[0]->nOperation == SWQ_EQ)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_NE;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+        else if (papoSubExpr[0]->nOperation == SWQ_NE)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_EQ;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+        else if (papoSubExpr[0]->nOperation == SWQ_GT)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_LE;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+        else if (papoSubExpr[0]->nOperation == SWQ_GE)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_LT;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+        else if (papoSubExpr[0]->nOperation == SWQ_LT)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_GE;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+        else if (papoSubExpr[0]->nOperation == SWQ_LE)
+        {
+            auto poChild = papoSubExpr[0];
+            papoSubExpr[0] = nullptr;
+            poChild->nOperation = SWQ_GT;
+            *this = std::move(*poChild);
+            delete poChild;
+            return;
+        }
+    }
+
+    for (int i = 0; i < nSubExprCount; i++)
+        papoSubExpr[i]->PushNotOperationDownToStack();
 }
 
 #endif  // #ifndef DOXYGEN_SKIP
