@@ -452,10 +452,12 @@ const char *OGROSMLayer::GetLaunderedFieldName(const char *pszName)
 /*                              AddField()                              */
 /************************************************************************/
 
-void OGROSMLayer::AddField(const char *pszName, OGRFieldType eFieldType)
+void OGROSMLayer::AddField(const char *pszName, OGRFieldType eFieldType,
+                           OGRFieldSubType eSubType)
 {
     const char *pszLaunderedName = GetLaunderedFieldName(pszName);
     OGRFieldDefn oField(pszLaunderedName, eFieldType);
+    oField.SetSubType(eSubType);
     m_poFeatureDefn->AddFieldDefn(&oField);
 
     int nIndex = m_poFeatureDefn->GetFieldCount() - 1;
@@ -518,10 +520,10 @@ int OGROSMLayer::AddInOtherOrAllTags(const char *pszK)
 }
 
 /************************************************************************/
-/*                        OGROSMFormatForHSTORE()                       */
+/*                        OGROSMEscapeString()                          */
 /************************************************************************/
 
-static int OGROSMFormatForHSTORE(const char *pszV, char *pszAllTags)
+static int OGROSMEscapeString(const char *pszV, char *pszAllTags)
 {
     int nAllTagsOff = 0;
 
@@ -641,10 +643,14 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         {
             if (AddInOtherOrAllTags(pszK))
             {
-                int nLenK = (int)strlen(pszK);
-                int nLenV = (int)strlen(pszV);
-                if (nAllTagsOff + 1 + 2 * nLenK + 1 + 2 + 1 + 2 * nLenV + 1 +
-                        1 >=
+                const int nLenK = static_cast<int>(strlen(pszK));
+                const int nLenV = static_cast<int>(strlen(pszV));
+                const int nLenKEscaped = 1 + 2 * nLenK + 1;
+                const int nLenVEscaped = 1 + 2 * nLenV + 1;
+                // 3 is either for
+                // - HSTORE: ',' separator and '=>'
+                // - JSON: leading '{' or ',', ':' and closing '}'
+                if (nAllTagsOff + nLenKEscaped + nLenVEscaped + 3 >=
                     ALLTAGS_LENGTH - 1)
                 {
                     if (!m_bHasWarnedAllTagsTruncated)
@@ -656,17 +662,30 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
                     continue;
                 }
 
-                if (nAllTagsOff)
-                    m_pszAllTags[nAllTagsOff++] = ',';
+                if (m_poDS->m_bTagsAsHSTORE)
+                {
+                    if (nAllTagsOff)
+                        m_pszAllTags[nAllTagsOff++] = ',';
 
-                nAllTagsOff +=
-                    OGROSMFormatForHSTORE(pszK, m_pszAllTags + nAllTagsOff);
+                    nAllTagsOff +=
+                        OGROSMEscapeString(pszK, m_pszAllTags + nAllTagsOff);
 
-                m_pszAllTags[nAllTagsOff++] = '=';
-                m_pszAllTags[nAllTagsOff++] = '>';
+                    m_pszAllTags[nAllTagsOff++] = '=';
+                    m_pszAllTags[nAllTagsOff++] = '>';
 
-                nAllTagsOff +=
-                    OGROSMFormatForHSTORE(pszV, m_pszAllTags + nAllTagsOff);
+                    nAllTagsOff +=
+                        OGROSMEscapeString(pszV, m_pszAllTags + nAllTagsOff);
+                }
+                else
+                {
+                    m_pszAllTags[nAllTagsOff] = nAllTagsOff ? ',' : '{';
+                    nAllTagsOff++;
+                    nAllTagsOff +=
+                        OGROSMEscapeString(pszK, m_pszAllTags + nAllTagsOff);
+                    m_pszAllTags[nAllTagsOff++] = ':';
+                    nAllTagsOff +=
+                        OGROSMEscapeString(pszV, m_pszAllTags + nAllTagsOff);
+                }
             }
 
 #ifdef notdef
@@ -681,6 +700,10 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
 
     if (nAllTagsOff)
     {
+        if (!m_poDS->m_bTagsAsHSTORE)
+        {
+            m_pszAllTags[nAllTagsOff++] = '}';
+        }
         m_pszAllTags[nAllTagsOff] = '\0';
         if (m_nIndexAllTags >= 0)
             poFeature->SetField(m_nIndexAllTags, m_pszAllTags);

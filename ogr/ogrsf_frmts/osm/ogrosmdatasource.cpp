@@ -2810,6 +2810,37 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
         return FALSE;
     }
 
+    const char *pszTagsFormat =
+        CSLFetchNameValue(papszOpenOptionsIn, "TAGS_FORMAT");
+    if (pszTagsFormat)
+    {
+        if (EQUAL(pszTagsFormat, "JSON"))
+            m_bTagsAsHSTORE = false;
+        else if (EQUAL(pszTagsFormat, "HSTORE"))
+            m_bTagsAsHSTORE = true;
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Invalid value for TAGS_FORMAT open option: %s",
+                     pszTagsFormat);
+        }
+    }
+
+    const auto eTagsSubType = m_bTagsAsHSTORE ? OFSTNone : OFSTJSON;
+    for (int i = 0; i < m_nLayers; i++)
+    {
+        if (m_papoLayers[i]->HasAllTags())
+        {
+            m_papoLayers[i]->AddField("all_tags", OFTString, eTagsSubType);
+            if (m_papoLayers[i]->HasOtherTags())
+            {
+                m_papoLayers[i]->SetHasOtherTags(false);
+            }
+        }
+        else if (m_papoLayers[i]->HasOtherTags())
+            m_papoLayers[i]->AddField("other_tags", OFTString, eTagsSubType);
+    }
+
     m_bNeedsToSaveWayInfo =
         (m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasTimestamp() ||
          m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasChangeset() ||
@@ -3479,6 +3510,24 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
             }
         }
 
+        else if (STARTS_WITH(pszLine, "tags_format="))
+        {
+            if (EQUAL(pszLine + strlen("tags_format="), "json"))
+            {
+                m_bTagsAsHSTORE = false;
+            }
+            else if (EQUAL(pszLine + strlen("tags_format="), "hstore"))
+            {
+                m_bTagsAsHSTORE = true;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported value for tags_format: %s",
+                         pszLine + strlen("tags_format="));
+            }
+        }
+
         else if (iCurLayer >= 0)
         {
             char **papszTokens = CSLTokenizeString2(pszLine, "=", 0);
@@ -3720,20 +3769,6 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
 
     if (iCurLayer >= 0)
         AddComputedAttributes(iCurLayer, oAttributes);
-
-    for (int i = 0; i < m_nLayers; i++)
-    {
-        if (m_papoLayers[i]->HasAllTags())
-        {
-            m_papoLayers[i]->AddField("all_tags", OFTString);
-            if (m_papoLayers[i]->HasOtherTags())
-            {
-                m_papoLayers[i]->SetHasOtherTags(false);
-            }
-        }
-        else if (m_papoLayers[i]->HasOtherTags())
-            m_papoLayers[i]->AddField("other_tags", OFTString);
-    }
 
     VSIFCloseL(fpConf);
 

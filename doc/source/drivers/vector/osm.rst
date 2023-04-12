@@ -56,12 +56,19 @@ When keys are not strictly identified in the *osmconf.ini* file, the
 key/value pair is appended in a "other_tags" field, with a syntax
 compatible with the PostgreSQL HSTORE type. See the *COLUMN_TYPES* layer
 creation option of the :ref:`PG driver <vector.pg>`.
+The ``hstore_get_value()`` function can be used with the :ref:`OGRSQL <ogr_sql_dialect>`
+or :ref:`SQLite <sql_sqlite_dialect>` SQL dialects to extract the value of a
+given key.
 
 For example :
 
 ::
 
    ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf -lco COLUMN_TYPES=other_tags=hstore
+
+Starting with GDAL 3.7, it is possible to ask the format of this field to
+be JSON encoded, by using the TAGS_FORMAT=JSON open option, or the
+``tags_format=json`` setting in the *osmconf.ini* file.
 
 "all_tags" field
 ~~~~~~~~~~~~~~~~
@@ -139,7 +146,7 @@ reading mode where the following reading pattern must be used:
        while( bHasLayersNonEmpty );
 
 Note : the ogr2ogr application has been modified to use that
-:decl_configoption:`OGR_INTERLEAVED_READING` mode without any 
+:decl_configoption:`OGR_INTERLEAVED_READING` mode without any
 particular user action.
 
 Spatial filtering
@@ -197,6 +204,8 @@ Open options
    disk. Defaults to 100.
 -  **INTERLEAVED_READING=YES/NO**: Whether to enable
    interleaved reading. Defaults to NO.
+-  **TAGS_FORMAT=HSTORE/JSON**: (GDAL >=3.7) Format for all_tags/other_tags fields.
+   Defaults to HSTORE.
 
 See Also
 --------
