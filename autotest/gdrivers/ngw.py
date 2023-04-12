@@ -124,19 +124,18 @@ def get_new_name():
 def test_ngw_2():
 
     create_url = "NGW:" + gdaltest.ngw_test_server + "/resource/0/" + get_new_name()
-    gdal.PushErrorHandler()
-    description = "GDAL Raster test group"
-    gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
-        create_url,
-        0,
-        0,
-        0,
-        gdal.GDT_Unknown,
-        options=[
-            "DESCRIPTION=" + description,
-        ],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        description = "GDAL Raster test group"
+        gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
+            create_url,
+            0,
+            0,
+            0,
+            gdal.GDT_Unknown,
+            options=[
+                "DESCRIPTION=" + description,
+            ],
+        )
 
     assert gdaltest.ngw_ds is not None, "Create datasource failed."
     assert (
@@ -273,13 +272,12 @@ def test_ngw_7():
 
     gdal.ErrorReset()
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
-    assert ovr_band is not None
-    ovr_band.Checksum()
+        ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
+        assert ovr_band is not None
+        ovr_band.Checksum()
 
-    gdal.PopErrorHandler()
     gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     msg = gdal.GetLastErrorMsg()
 

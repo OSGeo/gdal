@@ -104,16 +104,14 @@ def test_misc_3():
 
 def test_misc_4():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    # Test a few invalid argument
-    drv = gdal.GetDriverByName("GTiff")
-    drv.Create("tmp/foo", 0, 100, 1)
-    drv.Create("tmp/foo", 100, 1, 1)
-    drv.Create("tmp/foo", 100, 100, -1)
-    drv.Delete("tmp/foo")
-
-    gdal.PopErrorHandler()
+        # Test a few invalid argument
+        drv = gdal.GetDriverByName("GTiff")
+        drv.Create("tmp/foo", 0, 100, 1)
+        drv.Create("tmp/foo", 100, 1, 1)
+        drv.Create("tmp/foo", 100, 100, -1)
+        drv.Delete("tmp/foo")
 
 
 ###############################################################################
@@ -207,58 +205,56 @@ def _misc_5_internal(drv, datatype, nBands):
 
 def test_misc_5():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    try:
-        shutil.rmtree("tmp/tmp")
-    except OSError:
-        pass
-
-    try:
-        os.mkdir("tmp/tmp")
-    except OSError:
         try:
-            os.stat("tmp/tmp")
-            # Hum the directory already exists... Not expected, but let's try to go on
+            shutil.rmtree("tmp/tmp")
         except OSError:
-            pytest.fail("Cannot create tmp/tmp")
+            pass
 
-    # This is to speed-up the runtime of tests on EXT4 filesystems
-    # Do not use this for production environment if you care about data safety
-    # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
+        try:
+            os.mkdir("tmp/tmp")
+        except OSError:
+            try:
+                os.stat("tmp/tmp")
+                # Hum the directory already exists... Not expected, but let's try to go on
+            except OSError:
+                pytest.fail("Cannot create tmp/tmp")
 
-    # Test Create() with various band numbers, including 0
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        md = drv.GetMetadata()
-        if drv.ShortName == "PDF":
-            # PDF Create() is vector-only
-            continue
-        if drv.ShortName == "MBTiles":
-            # MBTiles only support some precise resolutions
-            continue
-        if "DCAP_CREATE" in md and "DCAP_RASTER" in md:
-            datatype = gdal.GDT_Byte
-            for nBands in range(6):
-                _misc_5_internal(drv, datatype, nBands)
+        # This is to speed-up the runtime of tests on EXT4 filesystems
+        # Do not use this for production environment if you care about data safety
+        # w.r.t system/OS crashes, unless you know what you are doing.
+        gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
 
-            for nBands in [1, 3]:
-                for datatype in (
-                    gdal.GDT_UInt16,
-                    gdal.GDT_Int16,
-                    gdal.GDT_UInt32,
-                    gdal.GDT_Int32,
-                    gdal.GDT_Float32,
-                    gdal.GDT_Float64,
-                    gdal.GDT_CInt16,
-                    gdal.GDT_CInt32,
-                    gdal.GDT_CFloat32,
-                    gdal.GDT_CFloat64,
-                ):
+        # Test Create() with various band numbers, including 0
+        for i in range(gdal.GetDriverCount()):
+            drv = gdal.GetDriver(i)
+            md = drv.GetMetadata()
+            if drv.ShortName == "PDF":
+                # PDF Create() is vector-only
+                continue
+            if drv.ShortName == "MBTiles":
+                # MBTiles only support some precise resolutions
+                continue
+            if "DCAP_CREATE" in md and "DCAP_RASTER" in md:
+                datatype = gdal.GDT_Byte
+                for nBands in range(6):
                     _misc_5_internal(drv, datatype, nBands)
 
-    gdal.PopErrorHandler()
+                for nBands in [1, 3]:
+                    for datatype in (
+                        gdal.GDT_UInt16,
+                        gdal.GDT_Int16,
+                        gdal.GDT_UInt32,
+                        gdal.GDT_Int32,
+                        gdal.GDT_Float32,
+                        gdal.GDT_Float64,
+                        gdal.GDT_CInt16,
+                        gdal.GDT_CInt32,
+                        gdal.GDT_CFloat32,
+                        gdal.GDT_CFloat64,
+                    ):
+                        _misc_5_internal(drv, datatype, nBands)
 
 
 ###############################################################################
@@ -462,54 +458,52 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
 def test_misc_6():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    try:
-        shutil.rmtree("tmp/tmp")
-    except OSError:
-        pass
-
-    try:
-        os.mkdir("tmp/tmp")
-    except OSError:
         try:
-            os.stat("tmp/tmp")
-            # Hum the directory already exists... Not expected, but let's try to go on
+            shutil.rmtree("tmp/tmp")
         except OSError:
-            pytest.fail("Cannot create tmp/tmp")
+            pass
 
-    # This is to speed-up the runtime of tests on EXT4 filesystems
-    # Do not use this for production environment if you care about data safety
-    # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
+        try:
+            os.mkdir("tmp/tmp")
+        except OSError:
+            try:
+                os.stat("tmp/tmp")
+                # Hum the directory already exists... Not expected, but let's try to go on
+            except OSError:
+                pytest.fail("Cannot create tmp/tmp")
 
-    datatype = gdal.GDT_Byte
-    setDriversDone = set()
-    for nBands in range(6):
-        ret = misc_6_internal(datatype, nBands, setDriversDone)
-        if ret != "success":
-            gdal.PopErrorHandler()
-            return ret
+        # This is to speed-up the runtime of tests on EXT4 filesystems
+        # Do not use this for production environment if you care about data safety
+        # w.r.t system/OS crashes, unless you know what you are doing.
+        gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
 
-    nBands = 1
-    for datatype in (
-        gdal.GDT_UInt16,
-        gdal.GDT_Int16,
-        gdal.GDT_UInt32,
-        gdal.GDT_Int32,
-        gdal.GDT_Float32,
-        gdal.GDT_Float64,
-        gdal.GDT_CInt16,
-        gdal.GDT_CInt32,
-        gdal.GDT_CFloat32,
-        gdal.GDT_CFloat64,
-    ):
-        ret = misc_6_internal(datatype, nBands, setDriversDone)
-        if ret != "success":
-            gdal.PopErrorHandler()
-            return ret
+        datatype = gdal.GDT_Byte
+        setDriversDone = set()
+        for nBands in range(6):
+            ret = misc_6_internal(datatype, nBands, setDriversDone)
+            if ret != "success":
+                gdal.PopErrorHandler()
+                return ret
 
-    gdal.PopErrorHandler()
+        nBands = 1
+        for datatype in (
+            gdal.GDT_UInt16,
+            gdal.GDT_Int16,
+            gdal.GDT_UInt32,
+            gdal.GDT_Int32,
+            gdal.GDT_Float32,
+            gdal.GDT_Float64,
+            gdal.GDT_CInt16,
+            gdal.GDT_CInt32,
+            gdal.GDT_CFloat32,
+            gdal.GDT_CFloat64,
+        ):
+            ret = misc_6_internal(datatype, nBands, setDriversDone)
+            if ret != "success":
+                gdal.PopErrorHandler()
+                return ret
 
 
 ###############################################################################
@@ -682,9 +676,8 @@ def test_misc_12():
             )
 
             # Test to detect crashes
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-            ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
             if ds is None and gdal.GetLastErrorMsg() == "":
                 gdal.Unlink("/vsimem/misc_12_src.tif")
                 pytest.fail(
@@ -734,16 +727,16 @@ def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.Open("data/byte.tif")
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("ESRI Shapefile").CreateCopy("/vsimem/out.shp", ds)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdal.GetDriverByName("ESRI Shapefile").CreateCopy(
+            "/vsimem/out.shp", ds
+        )
     assert out_ds is None
 
     # Raster-only -> vector-only
     ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
-    gdal.PushErrorHandler()
-    out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None
 
 

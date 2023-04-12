@@ -1228,9 +1228,8 @@ def test_ogr_rfc28_44():
 
     # Test our tolerance against lack of necessary quoting
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr = ds.ExecuteSQL('SELECT * FROM "lyr.withpoint" WHERE field.withpoint = 1')
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.ExecuteSQL('SELECT * FROM "lyr.withpoint" WHERE field.withpoint = 1')
     assert (
         gdal.GetLastErrorMsg()
         == "Passed field name field.withpoint should have been surrounded by double quotes. Accepted since there is no ambiguity..."
@@ -1245,11 +1244,10 @@ def test_ogr_rfc28_44():
     lyr.CreateField(fld_defn)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr = ds.ExecuteSQL(
-        'SELECT * FROM "lyr.withpoint" JOIN field ON "lyr.withpoint".foo = field.id WHERE field.withpoint = 1'
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.ExecuteSQL(
+            'SELECT * FROM "lyr.withpoint" JOIN field ON "lyr.withpoint".foo = field.id WHERE field.withpoint = 1'
+        )
     assert (
         gdal.GetLastErrorMsg()
         == '"field"."withpoint" not recognised as an available field.'
@@ -1258,9 +1256,8 @@ def test_ogr_rfc28_44():
 
     # Test our tolerance against unnecessary quoting
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr = ds.ExecuteSQL('SELECT * FROM "lyr.withpoint" f WHERE "f.foo" = 2')
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr = ds.ExecuteSQL('SELECT * FROM "lyr.withpoint" f WHERE "f.foo" = 2')
     assert (
         gdal.GetLastErrorMsg()
         == "Passed field name f.foo should NOT have been surrounded by double quotes. Accepted since there is no ambiguity..."

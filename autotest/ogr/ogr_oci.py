@@ -307,9 +307,8 @@ def test_ogr_oci_8():
     #######################################################
     # Preclean.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
 
     #######################################################
     # Prepare an SRS with an ORACLE authority code.
@@ -358,9 +357,8 @@ def test_ogr_oci_9():
     #######################################################
     # Preclean.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
 
     #######################################################
     # Prepare an SRS with an EPSG authority code.
@@ -399,9 +397,8 @@ def test_ogr_oci_10():
         pytest.skip()
 
     # Create a test table.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
 
     gdaltest.oci_ds.ExecuteSQL(
         "CREATE TABLE geom_test(ora_fid number primary key, shape sdo_geometry)"
@@ -876,18 +873,16 @@ def test_ogr_oci_20():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
     lyr.SyncToDisk()

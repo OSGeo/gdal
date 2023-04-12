@@ -366,9 +366,8 @@ def test_vsifile_7():
     fp = gdal.VSIFOpenL("/vsimem/vsifile_7.bin", "wb")
     assert gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0
     assert gdal.VSIStatL("/vsimem/vsifile_7.bin").size == 0
-    gdal.PushErrorHandler()
-    ret = gdal.VSIFWriteL("a", 1, 1, fp)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = gdal.VSIFWriteL("a", 1, 1, fp)
     assert ret == 0
     assert gdal.VSIStatL("/vsimem/vsifile_7.bin").size == 0
     gdal.VSIFCloseL(fp)

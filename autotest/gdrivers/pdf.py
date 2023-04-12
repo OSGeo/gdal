@@ -1814,9 +1814,8 @@ def test_pdf_write_huge(poppler_or_pdfium):
         ds = None
 
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=["DPI=72"])
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=["DPI=72"])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
         ds = None
@@ -1829,9 +1828,8 @@ def test_pdf_write_huge(poppler_or_pdfium):
     for option in ["LEFT_MARGIN=14400", "TOP_MARGIN=14400"]:
         src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
         gdal.ErrorReset()
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
-        gdal.PopErrorHandler()
+        with gdaltest.error_handler():
+            ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
         ds = None

@@ -258,9 +258,8 @@ def test_ogr_factory_6():
         ogr.ForceToMultiLineString(src_geom)
         ogr.ForceToLineString(src_geom)
         for target_type in range(ogr.wkbMultiSurface):
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-            ogr.ForceTo(src_geom, 1 + target_type)
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                ogr.ForceTo(src_geom, 1 + target_type)
         # print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 
 

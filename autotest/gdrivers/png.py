@@ -176,17 +176,15 @@ def test_png_8():
     assert b is not None, "band 1 is missing"
 
     # We're not interested in returned value but internal state of GDAL.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    b.ComputeBandStats()
-    err = gdal.GetLastErrorNo()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        b.ComputeBandStats()
+        err = gdal.GetLastErrorNo()
 
     assert err != 0, "error condition expected"
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds_dst = drv.CreateCopy("tmp/idat_broken.png", ds_src)
-    err = gdal.GetLastErrorNo()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds_dst = drv.CreateCopy("tmp/idat_broken.png", ds_src)
+        err = gdal.GetLastErrorNo()
     ds_src = None
 
     assert err != 0, "error condition expected"

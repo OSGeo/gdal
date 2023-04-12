@@ -1218,28 +1218,27 @@ def test_ogr_openfilegdb_10():
         ]:
             for offset in offsets:
                 backup = fuzz(filename, offset)
-                gdal.PushErrorHandler("CPLQuietErrorHandler")
-                gdal.ErrorReset()
-                ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
-                error_msg = gdal.GetLastErrorMsg()
-                feat = None
-                if ds is not None:
+                with gdaltest.error_handler():
                     gdal.ErrorReset()
-                    lyr = ds.GetLayerByName("GDB_SystemCatalog")
-                    if error_msg == "":
-                        error_msg = gdal.GetLastErrorMsg()
-                    if lyr is not None:
+                    ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                    error_msg = gdal.GetLastErrorMsg()
+                    feat = None
+                    if ds is not None:
                         gdal.ErrorReset()
-                        feat = lyr.GetNextFeature()
+                        lyr = ds.GetLayerByName("GDB_SystemCatalog")
                         if error_msg == "":
                             error_msg = gdal.GetLastErrorMsg()
-                if feat is not None and error_msg == "":
-                    print(
-                        "%s: expected problem at offset %d, but did not find"
-                        % (filename, offset)
-                    )
-                ds = None
-                gdal.PopErrorHandler()
+                        if lyr is not None:
+                            gdal.ErrorReset()
+                            feat = lyr.GetNextFeature()
+                            if error_msg == "":
+                                error_msg = gdal.GetLastErrorMsg()
+                    if feat is not None and error_msg == "":
+                        print(
+                            "%s: expected problem at offset %d, but did not find"
+                            % (filename, offset)
+                        )
+                    ds = None
                 unfuzz(backup)
 
         for (filename, offsets) in [
@@ -1278,29 +1277,28 @@ def test_ogr_openfilegdb_10():
             for offset in offsets:
                 # print(offset)
                 backup = fuzz(filename, offset)
-                gdal.PushErrorHandler("CPLQuietErrorHandler")
-                gdal.ErrorReset()
-                ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
-                error_msg = gdal.GetLastErrorMsg()
-                feat = None
-                if ds is not None:
+                with gdaltest.error_handler():
                     gdal.ErrorReset()
-                    lyr = ds.GetLayerByName("GDB_Items")
-                    lyr.SetAttributeFilter("PhysicalName = 'NO_FIELD'")
-                    if error_msg == "":
-                        error_msg = gdal.GetLastErrorMsg()
-                    if lyr is not None:
+                    ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                    error_msg = gdal.GetLastErrorMsg()
+                    feat = None
+                    if ds is not None:
                         gdal.ErrorReset()
-                        feat = lyr.GetNextFeature()
+                        lyr = ds.GetLayerByName("GDB_Items")
+                        lyr.SetAttributeFilter("PhysicalName = 'NO_FIELD'")
                         if error_msg == "":
                             error_msg = gdal.GetLastErrorMsg()
-                if feat is not None and error_msg == "":
-                    print(
-                        "%s: expected problem at offset %d, but did not find"
-                        % (filename, offset)
-                    )
-                ds = None
-                gdal.PopErrorHandler()
+                        if lyr is not None:
+                            gdal.ErrorReset()
+                            feat = lyr.GetNextFeature()
+                            if error_msg == "":
+                                error_msg = gdal.GetLastErrorMsg()
+                    if feat is not None and error_msg == "":
+                        print(
+                            "%s: expected problem at offset %d, but did not find"
+                            % (filename, offset)
+                        )
+                    ds = None
                 unfuzz(backup)
 
 

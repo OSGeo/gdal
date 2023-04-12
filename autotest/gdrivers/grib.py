@@ -90,9 +90,8 @@ def test_grib_2():
 def test_grib_read_different_sizes_messages():
 
     tst = gdaltest.GDALTest("GRIB", "grib/bug3246.grb", 4, 4081)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    result = tst.testOpen()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        result = tst.testOpen()
 
     msg = gdal.GetLastErrorMsg()
     if msg.find("data access may be incomplete") == -1 or gdal.GetLastErrorType() != 2:

@@ -529,9 +529,8 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             gdal.FileFromMemBuffer(
                 "/vsimem/esrijson/test.json?resultRecordCount=10", resultOffset0
             )
-            gdal.PushErrorHandler()
-            ds = ogr.Open("/vsimem/esrijson/test.json?resultRecordCount=10")
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                ds = ogr.Open("/vsimem/esrijson/test.json?resultRecordCount=10")
             lyr = ds.GetLayer(0)
             f = lyr.GetNextFeature()
             assert f is not None and f.GetFID() == 1
@@ -580,9 +579,8 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             f = lyr.GetNextFeature()
             assert f is None
 
-            gdal.PushErrorHandler()
-            fc = lyr.GetFeatureCount()
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                fc = lyr.GetFeatureCount()
             assert fc == 2
 
             gdal.FileFromMemBuffer(
@@ -592,9 +590,8 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             fc = lyr.GetFeatureCount()
             assert fc == 123456
 
-            gdal.PushErrorHandler()
-            extent = lyr.GetExtent()
-            gdal.PopErrorHandler()
+            with gdaltest.error_handler():
+                extent = lyr.GetExtent()
             assert extent == (2, 2, 49, 49)
 
             gdal.FileFromMemBuffer(

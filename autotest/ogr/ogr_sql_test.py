@@ -1473,27 +1473,23 @@ def test_ogr_sql_46():
     ds.ReleaseResultSet(sql_lyr)
 
     # Not accepted
-    gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("select * from 'test'")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("select * from 'test'")
     assert sql_lyr is None
 
     # Not accepted
-    gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("select distinct 'id' from 'test'")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("select distinct 'id' from 'test'")
     assert sql_lyr is None
 
     # Not accepted
-    gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("select max('id') from 'test'")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("select max('id') from 'test'")
     assert sql_lyr is None
 
     # Not accepted
-    gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("select id as 'id2' from 'test'")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("select id as 'id2' from 'test'")
     assert sql_lyr is None
 
 

@@ -73,746 +73,727 @@ def startup_and_cleanup():
 def test_vrtpansharpen_1():
 
     # Missing PansharpeningOptions
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # PanchroBand missing
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # PanchroBand.SourceFilename missing
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Invalid dataset name
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="0">/does/not/exist</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="0">/does/not/exist</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Inconsistent declared VRT dimensions with panchro dataset.
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="1800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="1800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # VRTRasterBand of unrecognized subclass 'blabla'
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="blabla">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="blabla">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Algorithm unsupported_alg unsupported
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>unsupported_alg</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>unsupported_alg</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # 10 invalid band of tmp/small_world_pan.tif
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>10</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>10</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # SpectralBand.dstBand = '-1' invalid
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="-1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="-1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # SpectralBand.SourceFilename missing
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Invalid dataset name
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">/does/not/exist</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/does/not/exist</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # 10 invalid band of data/small_world.tif
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>10</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>10</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Another spectral band is already mapped to output band 1
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # No spectral band defined
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Hole in SpectralBand.dstBand numbering
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="4">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="4">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Band 4 of type VRTPansharpenedRasterBand, but no corresponding SpectralBand
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="4" subClass="VRTPansharpenedRasterBand">
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="4" subClass="VRTPansharpenedRasterBand">
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # SpectralBand.dstBand = '3' invalid
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # 2 weights defined, but 3 input spectral bands
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Red</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Green</ColorInterp>
-    </VRTRasterBand>
-    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
-        <ColorInterp>Blue</ColorInterp>
-    </VRTRasterBand>
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Red</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Green</ColorInterp>
+        </VRTRasterBand>
+        <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+            <ColorInterp>Blue</ColorInterp>
+        </VRTRasterBand>
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Dimensions of input spectral band 1 different from first spectral band
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
-    <PansharpeningOptions>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is None
 
     # Just warnings
@@ -820,23 +801,22 @@ def test_vrtpansharpen_1():
     # Georeferencing of top-left corner of pan dataset and data/byte.tif do not match
     # Georeferencing of bottom-right corner of pan dataset and data/byte.tif do not match
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
-    <PansharpeningOptions>
-        <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is not None
     assert gdal.GetLastErrorMsg() != ""
 
@@ -844,44 +824,42 @@ def test_vrtpansharpen_1():
     # No spectral band is mapped to an output band
     # No output pansharpened band defined
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
-    <PansharpeningOptions>
-        <Algorithm>WeightedBrovey</Algorithm>
-        <AlgorithmOptions>
-            <Weights>0.33333,0.333333,0.333333</Weights>
-        </AlgorithmOptions>
-        <Resampling>Cubic</Resampling>
-        <NumThreads>ALL_CPUS</NumThreads>
-        <BitDepth>8</BitDepth>
-        <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </PanchroBand>
-        <SpectralBand>
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>1</SourceBand>
-        </SpectralBand>
-        <SpectralBand>
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>2</SourceBand>
-        </SpectralBand>
-        <SpectralBand>
-                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
-                <SourceBand>3</SourceBand>
-        </SpectralBand>
-    </PansharpeningOptions>
-</VRTDataset>"""
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.Open(
+            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <Algorithm>WeightedBrovey</Algorithm>
+            <AlgorithmOptions>
+                <Weights>0.33333,0.333333,0.333333</Weights>
+            </AlgorithmOptions>
+            <Resampling>Cubic</Resampling>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <BitDepth>8</BitDepth>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand>
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand>
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand>
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
     assert vrt_ds is not None
     assert gdal.GetLastErrorMsg() != ""
 
     # Unsupported
-    gdal.PushErrorHandler()
-    ret = vrt_ds.AddBand(gdal.GDT_Byte)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = vrt_ds.AddBand(gdal.GDT_Byte)
     assert ret != 0
 
 
@@ -1488,9 +1466,8 @@ def test_vrtpansharpen_7():
     </PansharpeningOptions>
 </VRTDataset>"""
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ds = gdal.Open(xml)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open(xml)
     assert (
         ds.GetGeoTransform() == (100.0, 1.0, 0.0, 100.0, 0.0, -1.0)
         and ds.RasterXSize == 40
@@ -1530,9 +1507,8 @@ def test_vrtpansharpen_7():
     </PansharpeningOptions>
 </VRTDataset>"""
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    ds = gdal.Open(xml)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open(xml)
     assert (
         ds.GetGeoTransform() == (120.0, 1.0, 0.0, 80.0, 0.0, -1.0)
         and ds.RasterXSize == 20
@@ -1578,9 +1554,8 @@ def test_vrtpansharpen_7():
         </SpectralBand>
     </PansharpeningOptions>
 </VRTDataset>"""
-    gdal.PushErrorHandler()
-    ds = gdal.Open(xml)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open(xml)
     assert ds is None
     ds = None
 
@@ -2149,51 +2124,48 @@ def test_vrtpansharpen_11():
     vrt_ds = None
 
     # Test error cases as well
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.CreatePansharpenedVRT(
-        """<invalid_xml""",
-        pan_mem_ds.GetRasterBand(1),
-        [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.CreatePansharpenedVRT(
+            """<invalid_xml""",
+            pan_mem_ds.GetRasterBand(1),
+            [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
+        )
     assert vrt_ds is None
 
     # Not enough bands
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.CreatePansharpenedVRT(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
-        <PansharpeningOptions>
-            <SpectralBand dstBand="1">
-            </SpectralBand>
-            <SpectralBand dstBand="2">
-            </SpectralBand>
-        </PansharpeningOptions>
-    </VRTDataset>""",
-        pan_mem_ds.GetRasterBand(1),
-        [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.CreatePansharpenedVRT(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+            <PansharpeningOptions>
+                <SpectralBand dstBand="1">
+                </SpectralBand>
+                <SpectralBand dstBand="2">
+                </SpectralBand>
+            </PansharpeningOptions>
+        </VRTDataset>""",
+            pan_mem_ds.GetRasterBand(1),
+            [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
+        )
     assert vrt_ds is None
 
     # Too many bands
-    gdal.PushErrorHandler()
-    vrt_ds = gdal.CreatePansharpenedVRT(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
-        <PansharpeningOptions>
-            <SpectralBand dstBand="1">
-            </SpectralBand>
-            <SpectralBand dstBand="2">
-            </SpectralBand>
-            <SpectralBand dstBand="3">
-            </SpectralBand>
-            <SpectralBand dstBand="4">
-            </SpectralBand>
-        </PansharpeningOptions>
-    </VRTDataset>""",
-        pan_mem_ds.GetRasterBand(1),
-        [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        vrt_ds = gdal.CreatePansharpenedVRT(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+            <PansharpeningOptions>
+                <SpectralBand dstBand="1">
+                </SpectralBand>
+                <SpectralBand dstBand="2">
+                </SpectralBand>
+                <SpectralBand dstBand="3">
+                </SpectralBand>
+                <SpectralBand dstBand="4">
+                </SpectralBand>
+            </PansharpeningOptions>
+        </VRTDataset>""",
+            pan_mem_ds.GetRasterBand(1),
+            [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)],
+        )
     assert vrt_ds is None
 
 

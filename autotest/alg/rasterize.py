@@ -30,6 +30,7 @@
 
 import struct
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -120,15 +121,14 @@ def test_rasterize_2():
 
     # Run the algorithm.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    err = gdal.RasterizeLayer(
-        target_ds,
-        [3, 2, 1],
-        cutline_ds.GetLayer(0),
-        burn_values=[200, 220, 240],
-        options=["ALL_TOUCHED=TRUE"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        err = gdal.RasterizeLayer(
+            target_ds,
+            [3, 2, 1],
+            cutline_ds.GetLayer(0),
+            burn_values=[200, 220, 240],
+            options=["ALL_TOUCHED=TRUE"],
+        )
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 
@@ -467,15 +467,14 @@ def test_rasterize_7():
 
     # Run the algorithm.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    err = gdal.RasterizeLayer(
-        target_ds,
-        [1],
-        snapped_square_ds.GetLayer(0),
-        burn_values=[1],
-        options=["ALL_TOUCHED=TRUE"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        err = gdal.RasterizeLayer(
+            target_ds,
+            [1],
+            snapped_square_ds.GetLayer(0),
+            burn_values=[1],
+            options=["ALL_TOUCHED=TRUE"],
+        )
 
     assert err == 0, "got non-zero result code from RasterizeLayer"
 

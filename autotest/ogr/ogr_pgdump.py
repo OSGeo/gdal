@@ -455,18 +455,16 @@ def test_ogr_pgdump_5():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
@@ -632,9 +630,8 @@ def test_ogr_pgdump_7():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTInteger))
@@ -669,9 +666,8 @@ def test_ogr_pgdump_7():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
 
     # gdal.PushErrorHandler()
@@ -743,9 +739,8 @@ def test_ogr_pgdump_8():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTInteger))
@@ -784,11 +779,10 @@ def test_ogr_pgdump_8():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    gdal.PushErrorHandler()
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ret = lyr.CreateFeature(feat)
-    gdal.SetConfigOption("PG_USE_COPY", None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdal.SetConfigOption("PG_USE_COPY", "YES")
+        ret = lyr.CreateFeature(feat)
+        gdal.SetConfigOption("PG_USE_COPY", None)
     assert ret != 0
 
     # gdal.PushErrorHandler()

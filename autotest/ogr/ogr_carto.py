@@ -422,9 +422,8 @@ Error""",
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f.GetFID() == 0
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None
 
     gdal.SetConfigOption("CARTO_PAGE_SIZE", "2")

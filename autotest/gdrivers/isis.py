@@ -586,10 +586,9 @@ def test_isis_18():
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName("ISIS3").Create("/vsimem/isis_tmp.lbl", 1, 1)
     ds.SetProjection(sr.ExportToWkt())
-    gdal.PushErrorHandler()
-    # Will warn that latitude_of_origin, false_easting and false_northing are ignored
-    ds = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        # Will warn that latitude_of_origin, false_easting and false_northing are ignored
+        ds = None
     ds = gdal.Open("/vsimem/isis_tmp.lbl")
     wkt = ds.GetProjectionRef()
     ds = None

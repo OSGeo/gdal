@@ -110,17 +110,15 @@ def test_pds_2():
 def test_pds_3():
 
     # Shut down warning about missing projection
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    with gdaltest.error_handler():
 
-    tst = gdaltest.GDALTest("PDS", "pds/EN0001426030M_truncated.IMG", 1, 1367)
+        tst = gdaltest.GDALTest("PDS", "pds/EN0001426030M_truncated.IMG", 1, 1367)
 
-    gt_expected = (0, 1, 0, 0, 0, 1)
-    tst.testOpen(check_gt=gt_expected)
+        gt_expected = (0, 1, 0, 0, 0, 1)
+        tst.testOpen(check_gt=gt_expected)
 
-    ds = gdal.Open("data/pds/EN0001426030M_truncated.IMG")
-    assert ds.GetRasterBand(1).GetNoDataValue() == 0
-
-    gdal.PopErrorHandler()
+        ds = gdal.Open("data/pds/EN0001426030M_truncated.IMG")
+        assert ds.GetRasterBand(1).GetNoDataValue() == 0
 
 
 ###############################################################################

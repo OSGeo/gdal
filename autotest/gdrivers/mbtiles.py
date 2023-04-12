@@ -126,9 +126,8 @@ def test_mbtiles_2():
 def test_mbtiles_3():
 
     # Check that we have SQLite VFS support
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/mbtiles_3.db")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/mbtiles_3.db")
     if ds is None:
         pytest.skip()
     ds = None

@@ -63,9 +63,8 @@ def test_vsizip_1():
 
     # Test that we cannot read a zip file being written
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "rb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "rb")
     assert (
         gdal.GetLastErrorMsg() == "Cannot read a zip file being written"
     ), "expected error"
@@ -78,9 +77,8 @@ def test_vsizip_1():
 
     # Try creating a 3d file
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    f4 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/that_wont_work", "wb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f4 = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/that_wont_work", "wb")
     assert (
         gdal.GetLastErrorMsg()
         == "Cannot create that_wont_work while another file is being written in the .zip"
@@ -193,9 +191,8 @@ def test_vsizip_2():
     gdal.VSIFWriteL("67890", 1, 5, fmain)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    content = gdal.ReadDir("/vsizip/" + zip_name)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        content = gdal.ReadDir("/vsizip/" + zip_name)
     assert (
         gdal.GetLastErrorMsg() == "Cannot read a zip file being written"
     ), "expected error"
@@ -313,9 +310,8 @@ def test_vsizip_6():
     gdal.VSIFCloseL(f)
     f = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
     if f is not None:
         gdal.VSIFCloseL(f)
         pytest.fail()
@@ -331,9 +327,8 @@ def test_vsizip_6():
     gdal.VSIFCloseL(f)
     f = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
     if f is not None:
         gdal.VSIFCloseL(f)
         pytest.fail()

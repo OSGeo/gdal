@@ -1568,10 +1568,9 @@ def test_ogr_gpkg_19():
     ds.SetMetadataItem("foo", "bar")
 
     # GEOPACKAGE metadata domain is not allowed in a non-raster context
-    gdal.PushErrorHandler()
-    ds.SetMetadata(ds.GetMetadata("GEOPACKAGE"), "GEOPACKAGE")
-    ds.SetMetadataItem("foo", ds.GetMetadataItem("foo", "GEOPACKAGE"), "GEOPACKAGE")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds.SetMetadata(ds.GetMetadata("GEOPACKAGE"), "GEOPACKAGE")
+        ds.SetMetadataItem("foo", ds.GetMetadataItem("foo", "GEOPACKAGE"), "GEOPACKAGE")
 
     ds = None
 
@@ -2043,17 +2042,15 @@ def test_ogr_gpkg_21():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldBinaryFromHexString(0, "41E9")
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != ""
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, "abc")
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != ""
 
     f = lyr.GetFeature(f.GetFID())
@@ -2070,9 +2067,8 @@ def test_ogr_gpkg_21():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFieldBinaryFromHexString(0, "41E9")
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != ""
 
     f = lyr.GetFeature(f.GetFID())
@@ -2081,9 +2077,8 @@ def test_ogr_gpkg_21():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, "abc")
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
     assert gdal.GetLastErrorMsg() != ""
 
     f = lyr.GetFeature(f.GetFID())
@@ -2170,18 +2165,16 @@ def test_ogr_gpkg_23():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
 
@@ -2189,9 +2182,8 @@ def test_ogr_gpkg_23():
     lyr = ds.CreateLayer("test2", geom_type=ogr.wkbPoint, options=["SPATIAL_INDEX=NO"])
 
     # Cannot add more than one geometry field
-    gdal.PushErrorHandler()
-    ret = lyr.CreateGeomField(ogr.GeomFieldDefn("foo", ogr.wkbPoint))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateGeomField(ogr.GeomFieldDefn("foo", ogr.wkbPoint))
     assert ret != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -2599,9 +2591,8 @@ def test_ogr_gpkg_25():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    gdal.PushErrorHandler()
-    ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTInteger))
@@ -2634,20 +2625,17 @@ def test_ogr_gpkg_25():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(feat)
     assert ret != 0
 
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat.UnsetField("myfid")
-    gdal.PushErrorHandler()
-    ret = lyr.SetFeature(feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = lyr.SetFeature(feat)
     assert ret != 0
 
     lyr.ResetReading()
@@ -2688,18 +2676,16 @@ def test_ogr_gpkg_26():
 
     ret = ds.StartTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction()
     assert ret != 0
 
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.RollbackTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.RollbackTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.RollbackTransaction()
     assert ret != 0
     ds = None
 
@@ -2707,18 +2693,16 @@ def test_ogr_gpkg_26():
     assert ds.GetLayerCount() == 0
     ret = ds.StartTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.StartTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.StartTransaction()
     assert ret != 0
 
     lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.CommitTransaction()
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = ds.CommitTransaction()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.CommitTransaction()
     assert ret != 0
     ds = None
 
@@ -2800,9 +2784,8 @@ def test_ogr_gpkg_26():
 def test_ogr_gpkg_27():
 
     ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_27.gpkg")
-    gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("SELECT GeomFromGPB(null)")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT GeomFromGPB(null)")
     if sql_lyr is None:
         ds = None
         gdaltest.gpkg_dr.DeleteDataSource("/vsimem/ogr_gpkg_27.gpkg")

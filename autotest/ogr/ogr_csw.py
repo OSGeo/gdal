@@ -80,9 +80,8 @@ def test_ogr_csw_pycsw():
 
 
 def test_ogr_csw_vsimem_fail_because_not_enabled():
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
 
 
@@ -90,9 +89,8 @@ def test_ogr_csw_vsimem_fail_because_not_enabled():
 def test_ogr_csw_vsimem_fail_because_no_get_capabilities():
     gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
 
 
@@ -105,9 +103,8 @@ def test_ogr_csw_vsimem_fail_because_empty_response():
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", ""
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
     assert gdal.GetLastErrorMsg().find("Empty content returned by server") >= 0
 
@@ -121,9 +118,8 @@ def test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", "<foo/>"
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
     assert gdal.GetLastErrorMsg().find("Cannot find Capabilities.version") >= 0
 
@@ -138,9 +134,8 @@ def test_ogr_csw_vsimem_fail_because_exception():
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities",
         "<ServiceExceptionReport/>",
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
     assert (
         gdal.GetLastErrorMsg().find(
@@ -159,9 +154,8 @@ def test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", "<invalid_xml"
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
     assert gdal.GetLastErrorMsg().find("Invalid XML content : <invalid_xml") >= 0
 
@@ -178,9 +172,8 @@ def test_ogr_csw_vsimem_fail_because_missing_version():
 </Capabilities>
 """,
     )
-    gdal.PushErrorHandler()
-    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
     assert gdal.GetLastErrorMsg().find("Cannot find Capabilities.version") >= 0
 
@@ -206,14 +199,12 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
 
     lyr = ds.GetLayer(0)
     lyr.TestCapability("foo")
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 0
 
     gdal.FileFromMemBuffer(
@@ -221,9 +212,8 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         """""",
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert (
         f is None
         and gdal.GetLastErrorMsg().find("Empty content returned by server") >= 0
@@ -234,9 +224,8 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         """<invalid_xml""",
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None and gdal.GetLastErrorMsg().find("Error: cannot parse") >= 0
 
     gdal.FileFromMemBuffer(
@@ -244,9 +233,8 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         """<dummy_xml/>""",
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None and gdal.GetLastErrorMsg().find("Error: cannot parse") >= 0
 
     gdal.FileFromMemBuffer(
@@ -254,9 +242,8 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         """<ServiceExceptionReport/>""",
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None and gdal.GetLastErrorMsg().find("Error returned by server") >= 0
 
     gdal.FileFromMemBuffer(
@@ -317,14 +304,12 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         pytest.fail()
     f = lyr.GetNextFeature()
     assert f is not None
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None
 
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 2
 
     lyr.ResetReading()
@@ -378,36 +363,32 @@ def test_ogr_csw_vsimem_csw_minimal_instance():
         """/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="hits" service="CSW" version="2.0.2" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
         """""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 3, gdal.GetLastErrorMsg()
 
     gdal.FileFromMemBuffer(
         """/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="hits" service="CSW" version="2.0.2" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
         """<dummy_xml/>""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 3, gdal.GetLastErrorMsg()
 
     gdal.FileFromMemBuffer(
         """/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="hits" service="CSW" version="2.0.2" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
         """<invalid_xml>""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 3, gdal.GetLastErrorMsg()
 
     gdal.FileFromMemBuffer(
         """/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="hits" service="CSW" version="2.0.2" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
         """<ServiceExceptionReport/>""",
     )
-    gdal.PushErrorHandler()
-    fc = lyr.GetFeatureCount()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fc = lyr.GetFeatureCount()
     assert fc == 3, gdal.GetLastErrorMsg()
 
     gdal.FileFromMemBuffer(
@@ -501,9 +482,8 @@ def test_ogr_csw_vsimem_csw_output_schema_csw():
 """,
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None
 
     gdal.FileFromMemBuffer(
@@ -511,9 +491,8 @@ def test_ogr_csw_vsimem_csw_output_schema_csw():
         """<csw:GetRecordsResponse/>""",
     )
     lyr.ResetReading()
-    gdal.PushErrorHandler()
-    f = lyr.GetNextFeature()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     assert f is None
 
     gdal.FileFromMemBuffer(

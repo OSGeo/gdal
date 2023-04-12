@@ -413,9 +413,8 @@ def test_gpkg_2():
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
     # Should give warning at pixel reading time
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    out_ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.GetRasterBand(1).Checksum()
     assert gdal.GetLastErrorMsg() != ""
     out_ds = None
 
@@ -426,9 +425,8 @@ def test_gpkg_2():
         "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=JPEG"]
     )
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    out_ds.FlushCache()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     out_ds = None
 
@@ -515,18 +513,16 @@ def test_gpkg_3():
 
     # Should give warning at open time since the webp extension is declared
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    out_ds = gdal.Open("/vsimem/tmp.gpkg")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = gdal.Open("/vsimem/tmp.gpkg")
     if gdal.GetLastErrorMsg() == "":
         gdaltest.webp_dr.Register()
         pytest.fail()
 
     # And at pixel reading time as well
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    out_ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.GetRasterBand(1).Checksum()
     if gdal.GetLastErrorMsg() == "":
         gdaltest.webp_dr.Register()
         pytest.fail()
@@ -849,9 +845,8 @@ def test_gpkg_10():
 
     # SetColorTable() on a non single-band dataset
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds.GetRasterBand(1).SetColorTable(None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.GetRasterBand(1).SetColorTable(None)
     assert gdal.GetLastErrorMsg() != ""
 
     out_ds = None
@@ -866,9 +861,8 @@ def test_gpkg_10():
 
     # SetColorTable() on a re-opened dataset
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds.GetRasterBand(1).SetColorTable(None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.GetRasterBand(1).SetColorTable(None)
     assert gdal.GetLastErrorMsg() != ""
 
     out_ds = None
@@ -880,14 +874,12 @@ def test_gpkg_10():
     out_ds.GetRasterBand(1).SetColorTable(None)
 
     gdal.ErrorReset()
-    gdal.PushErrorHandler()
-    out_ds.GetRasterBand(1).SetColorTable(None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds.GetRasterBand(1).SetColorTable(None)
     assert gdal.GetLastErrorMsg() != ""
 
-    gdal.PushErrorHandler()
-    out_ds = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        out_ds = None
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1066,9 +1058,8 @@ def test_gpkg_14():
     )
     ds = None
 
-    gdal.PushErrorHandler()
-    ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["TABLE=non_existing"])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["TABLE=non_existing"])
     assert ds is None
 
     ds = gdal.Open("/vsimem/tmp.gpkg")
@@ -1425,16 +1416,14 @@ def test_gpkg_15():
     out_ds = gdaltest.gpkg_dr.Create("/vsimem/tmp.gpkg", 0, 0, 0)
     assert out_ds.GetGeoTransform(can_return_null=True) is None
     assert out_ds.GetProjectionRef() == ""
-    gdal.PushErrorHandler()
-    ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret != 0
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    gdal.PushErrorHandler()
-    ret = out_ds.SetProjection(srs.ExportToWkt())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.SetProjection(srs.ExportToWkt())
     assert ret != 0
     out_ds = None
 
@@ -1444,9 +1433,8 @@ def test_gpkg_15():
     out_ds = gdaltest.gpkg_dr.Create("/vsimem/tmp.gpkg", 1, 1)
     ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret != 0
     out_ds = None
 
@@ -1470,13 +1458,11 @@ def test_gpkg_15():
     assert out_ds.GetSpatialRef().IsLocal()
     assert out_ds.GetProjectionRef().find("Undefined Cartesian SRS") >= 0
     # Test setting on read-only dataset
-    gdal.PushErrorHandler()
-    ret = out_ds.SetProjection("")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.SetProjection("")
     assert ret != 0
-    gdal.PushErrorHandler()
-    ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret != 0
     out_ds = None
 
@@ -1491,9 +1477,8 @@ def test_gpkg_15():
     assert ret == 0
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PaletteIndex)
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     assert ret != 0
     out_ds = None
 
@@ -1503,9 +1488,8 @@ def test_gpkg_15():
     out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
     assert ret != 0
     out_ds = None
 
@@ -1515,15 +1499,13 @@ def test_gpkg_15():
     out_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     assert ret != 0
     ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     assert ret == 0
-    gdal.PushErrorHandler()
-    ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
     assert ret != 0
     out_ds = None
 
@@ -1661,45 +1643,45 @@ def test_gpkg_17():
 
     # Test building on an overview dataset --> error
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.PushErrorHandler()
-    ret = out_ds.GetRasterBand(1).GetOverview(0).GetDataset().BuildOverviews("NONE", [])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = (
+            out_ds.GetRasterBand(1)
+            .GetOverview(0)
+            .GetDataset()
+            .BuildOverviews("NONE", [])
+        )
     assert ret != 0
     out_ds = None
 
     # Test building overview factor 1 --> error
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.PushErrorHandler()
-    ret = out_ds.BuildOverviews("NEAR", [1])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.BuildOverviews("NEAR", [1])
     assert ret != 0
     out_ds = None
 
     # Test building non-supported overview levels
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.PushErrorHandler()
-    gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
-    ret = out_ds.BuildOverviews("NEAR", [3])
-    gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
+        ret = out_ds.BuildOverviews("NEAR", [3])
+        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
     assert ret != 0
     out_ds = None
 
     # Test building non-supported overview levels
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    gdal.PushErrorHandler()
-    gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
-    ret = out_ds.BuildOverviews("NEAR", [2, 4])
-    gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
+        ret = out_ds.BuildOverviews("NEAR", [2, 4])
+        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
     assert ret != 0
     out_ds = None
 
     # Test building overviews on read-only dataset
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER)
-    gdal.PushErrorHandler()
-    ret = out_ds.BuildOverviews("NEAR", [2])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.BuildOverviews("NEAR", [2])
     assert ret != 0
     out_ds = None
 
@@ -1755,9 +1737,8 @@ def test_gpkg_18():
     # Test gpkg_zoom_other extension
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
     # We expect a warning
-    gdal.PushErrorHandler()
-    ret = out_ds.BuildOverviews("NEAR", [3])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = out_ds.BuildOverviews("NEAR", [3])
     assert ret == 0
     assert out_ds.GetRasterBand(1).GetOverviewCount() == 3
     got_cs = [out_ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(3)]
@@ -2505,15 +2486,14 @@ def test_gpkg_26():
         gdal.Unlink("/vsimem/tmp.gpkg")
 
     # Test a few error cases
-    gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.Create(
-        "/vsimem/tmp.gpkg",
-        1,
-        1,
-        1,
-        options=["TILING_SCHEME=GoogleCRS84Quad", "BLOCKSIZE=128"],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.Create(
+            "/vsimem/tmp.gpkg",
+            1,
+            1,
+            1,
+            options=["TILING_SCHEME=GoogleCRS84Quad", "BLOCKSIZE=128"],
+        )
     assert ds is None
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2522,19 +2502,16 @@ def test_gpkg_26():
     )
     # Test that implicit SRS registration works.
     assert ds.GetProjectionRef().find("4326") >= 0
-    gdal.PushErrorHandler()
-    ret = ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
     assert ret != 0
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32630)
-    gdal.PushErrorHandler()
-    ret = ds.SetProjection(srs.ExportToWkt())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = ds.SetProjection(srs.ExportToWkt())
     assert ret != 0
-    gdal.PushErrorHandler()
-    ds = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = None
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2575,20 +2552,18 @@ def test_gpkg_26():
 
     # Invalid target filename
     src_ds = gdal.Open("data/byte.tif")
-    gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.CreateCopy(
-        "/foo/tmp.gpkg", src_ds, options=["TILING_SCHEME=GoogleCRS84Quad"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.CreateCopy(
+            "/foo/tmp.gpkg", src_ds, options=["TILING_SCHEME=GoogleCRS84Quad"]
+        )
     assert ds is None
 
     # Source is not georeferenced
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
-    gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.CreateCopy(
-        "/vsimem/tmp.gpkg", src_ds, options=["TILING_SCHEME=GoogleCRS84Quad"]
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.CreateCopy(
+            "/vsimem/tmp.gpkg", src_ds, options=["TILING_SCHEME=GoogleCRS84Quad"]
+        )
     assert ds is None
 
 

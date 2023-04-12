@@ -487,9 +487,8 @@ def test_hfa_mapinformation_units():
     # NOTE: we depend on being able to open .aux files as a weak sort of
     # dataset.
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("data/hfa/fg118-91.aux")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("data/hfa/fg118-91.aux")
 
     wkt = ds.GetProjectionRef()
     expected_wkt = """PROJCS["NAD_1983_StatePlane_Virginia_North_FIPS_4501_Feet",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199432955],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["False_Easting",11482916.66666666],PARAMETER["False_Northing",6561666.666666666],PARAMETER["Central_Meridian",-78.5],PARAMETER["Standard_Parallel_1",38.03333333333333],PARAMETER["Standard_Parallel_2",39.2],PARAMETER["Latitude_Of_Origin",37.66666666666666],UNIT["Foot_US",0.304800609601219241]]"""
@@ -940,12 +939,11 @@ def test_hfa_ov_nodata():
     assert ovb.GetMaskFlags() == gdal.GMF_NODATA, "mask flag not as expected."
 
     # Confirm that a .ovr file was *not* produced.
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    try:
-        wrk3_ds = gdal.Open("/vsimem/ov_nodata.img.ovr")
-    except Exception:
-        wrk3_ds = None
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        try:
+            wrk3_ds = gdal.Open("/vsimem/ov_nodata.img.ovr")
+        except Exception:
+            wrk3_ds = None
 
     assert (
         wrk3_ds is None

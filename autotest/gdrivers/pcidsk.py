@@ -258,9 +258,8 @@ def pcidsk_9():
     ds.CreateLayer("foo")
     ds = None
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("/vsimem/pcidsk_9.pix")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("/vsimem/pcidsk_9.pix")
     assert ds is None
     ds = None
 

@@ -42,9 +42,8 @@ from osgeo import gdal
 @gdaltest.disable_exceptions()
 def mem_native_memory():
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ds = gdal.Open("MEM:::")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = gdal.Open("MEM:::")
     assert ds is None, "opening MEM dataset should have failed."
     for libname in ["msvcrt", "libc.so.6"]:
         try:

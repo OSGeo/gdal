@@ -261,9 +261,8 @@ def test_ogr_mem_8():
     # Test expected failed case of SetFeature()
     new_feat = ogr.Feature(gdaltest.mem_lyr.GetLayerDefn())
     new_feat.SetFID(-2)
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    ret = gdaltest.mem_lyr.SetFeature(new_feat)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ret = gdaltest.mem_lyr.SetFeature(new_feat)
     assert ret != 0
     new_feat = None
 

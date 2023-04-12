@@ -120,18 +120,17 @@ def startup_and_cleanup():
 def test_ogr_ngw_2():
 
     create_url = "NGW:" + gdaltest.ngw_test_server + "/resource/0/" + get_new_name()
-    gdal.PushErrorHandler()
-    gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
-        create_url,
-        0,
-        0,
-        0,
-        gdal.GDT_Unknown,
-        options=[
-            "DESCRIPTION=GDAL Test group",
-        ],
-    )
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
+            create_url,
+            0,
+            0,
+            0,
+            gdal.GDT_Unknown,
+            options=[
+                "DESCRIPTION=GDAL Test group",
+            ],
+        )
 
     assert gdaltest.ngw_ds is not None, "Create datasource failed."
     assert (
@@ -287,10 +286,9 @@ def test_ogr_ngw_5():
 
     # Test forbidden field names.
     gdal.ErrorReset()
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
-    lyr.CreateField(fld_defn)
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
+        lyr.CreateField(fld_defn)
     assert gdal.GetLastErrorMsg() != "", "Expecting a warning"
 
     add_metadata(lyr)
@@ -476,9 +474,8 @@ def test_ogr_ngw_7():
     lyr.DeleteFeature(f.GetFID())
 
     # Expected fail to get feature
-    gdal.PushErrorHandler()
-    f = lyr.GetFeature(f.GetFID())
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        f = lyr.GetFeature(f.GetFID())
     assert f is None, "Failed to delete feature #{}.".format(f.GetFID())
 
 
