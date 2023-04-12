@@ -119,6 +119,8 @@ class CPL_DLL OGRFieldDefn
 
     std::string m_osDomainName{};  // field domain name. Might be empty
 
+    std::string m_osComment{};  // field comment. Might be empty
+
   public:
     OGRFieldDefn(const char *, OGRFieldType);
     explicit OGRFieldDefn(const OGRFieldDefn *);
@@ -218,6 +220,15 @@ class CPL_DLL OGRFieldDefn
     void SetDomainName(const std::string &osDomainName)
     {
         m_osDomainName = osDomainName;
+    }
+
+    const std::string &GetComment() const
+    {
+        return m_osComment;
+    }
+    void SetComment(const std::string &osComment)
+    {
+        m_osComment = osComment;
     }
 
     int IsSame(const OGRFieldDefn *) const;

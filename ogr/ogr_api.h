@@ -402,6 +402,8 @@ void CPL_DLL OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *);
 int CPL_DLL OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn);
 const char CPL_DLL *OGR_Fld_GetDomainName(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char *);
+const char CPL_DLL *OGR_Fld_GetComment(OGRFieldDefnH hDefn);
+void CPL_DLL OGR_Fld_SetComment(OGRFieldDefnH hDefn, const char *);
 
 const char CPL_DLL *OGR_GetFieldTypeName(OGRFieldType);
 const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);

@@ -683,6 +683,7 @@ OGRErr OGRLayerWithTransaction::AlterFieldDefn(int iField,
         poDstFieldDefn->SetNullable(poSrcFieldDefn->IsNullable());
         poDstFieldDefn->SetUnique(poSrcFieldDefn->IsUnique());
         poDstFieldDefn->SetDomainName(poSrcFieldDefn->GetDomainName());
+        poDstFieldDefn->SetComment(poSrcFieldDefn->GetComment());
     }
     return eErr;
 }

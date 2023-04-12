@@ -2566,6 +2566,13 @@ public:
     OGR_Fld_SetDomainName( self, name );
   }
 
+  const char* GetComment() {
+    return OGR_Fld_GetComment(self);
+  }
+
+  void SetComment(const char* comment ) {
+    OGR_Fld_SetComment( self, comment );
+  }
 } /* %extend */
 
 

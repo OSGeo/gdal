@@ -806,6 +806,7 @@ OGRErr OGREditableLayer::AlterFieldDefn(int iField,
         poFieldDefn->SetNullable(poMemFieldDefn->IsNullable());
         poFieldDefn->SetUnique(poMemFieldDefn->IsUnique());
         poFieldDefn->SetDomainName(poMemFieldDefn->GetDomainName());
+        poFieldDefn->SetComment(poMemFieldDefn->GetComment());
         m_bStructureModified = true;
     }
     return eErr;

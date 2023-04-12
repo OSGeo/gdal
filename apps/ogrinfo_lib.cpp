@@ -1146,6 +1146,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
             const OGRFieldDefn *poField = poDefn->GetFieldDefn(iAttr);
             const char *pszAlias = poField->GetAlternativeNameRef();
             const std::string &osDomain = poField->GetDomainName();
+            const std::string &osComment = poField->GetComment();
             if (bJson)
             {
                 CPLJSONObject oField;
@@ -1169,6 +1170,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                     oField.Set("alias", pszAlias);
                 if (!osDomain.empty())
                     oField.Set("domainName", osDomain);
+                if (!osComment.empty())
+                    oField.Set("comment", osComment);
             }
             else
             {
@@ -1196,6 +1199,9 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                 if (!osDomain.empty())
                     Concat(osRet, psOptions->bStdoutOutput, ", domain name=%s",
                            osDomain.c_str());
+                if (!osComment.empty())
+                    Concat(osRet, psOptions->bStdoutOutput, ", comment=%s",
+                           osComment.c_str());
                 Concat(osRet, psOptions->bStdoutOutput, "\n");
             }
         }
