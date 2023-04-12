@@ -7519,7 +7519,9 @@ def test_tiff_write_154():
 
 def test_tiff_write_155():
 
-    ds = gdaltest.tiff_drv.Create("/vsimem/tiff_write_155.tif", 1, 1)
+    tiff_drv = gdal.GetDriverByName("GTiff")
+
+    ds = tiff_drv.Create("/vsimem/tiff_write_155.tif", 1, 1)
     ds.GetRasterBand(1).SetDescription("foo")
     ds = None
 
@@ -7528,9 +7530,22 @@ def test_tiff_write_155():
     ds = gdal.Open("/vsimem/tiff_write_155.tif")
     assert ds.GetRasterBand(1).GetDescription() == "foo"
     ds = None
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_write_155.tif")
 
-    ds = gdaltest.tiff_drv.Create(
+    # Override in PAM
+    ds = gdal.Open("/vsimem/tiff_write_155.tif")
+    ds.GetRasterBand(1).SetDescription("bar")
+    ds = None
+
+    assert gdal.VSIStatL("/vsimem/tiff_write_155.tif.aux.xml") is not None
+
+    ds = gdal.Open("/vsimem/tiff_write_155.tif")
+    assert ds.GetRasterBand(1).GetDescription() == "bar"
+    ds = None
+
+    tiff_drv.Delete("/vsimem/tiff_write_155.tif")
+    assert gdal.VSIStatL("/vsimem/tiff_write_155.tif.aux.xml") is None
+
+    ds = tiff_drv.Create(
         "/vsimem/tiff_write_155.tif", 1, 1, options=["PROFILE=GeoTIFF"]
     )
     ds.GetRasterBand(1).SetDescription("foo")
@@ -7541,7 +7556,7 @@ def test_tiff_write_155():
     ds = gdal.Open("/vsimem/tiff_write_155.tif")
     assert ds.GetRasterBand(1).GetDescription() == "foo"
     ds = None
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_write_155.tif")
+    tiff_drv.Delete("/vsimem/tiff_write_155.tif")
 
 
 ###############################################################################

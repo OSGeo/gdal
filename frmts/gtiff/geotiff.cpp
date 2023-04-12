@@ -16101,6 +16101,46 @@ void GTiffDataset::ApplyPamInfo()
             CSLDestroy(papszGT_MD);
         }
     }
+
+    for (int i = 1; i <= nBands; ++i)
+    {
+        GTiffRasterBand *poBand =
+            cpl::down_cast<GTiffRasterBand *>(GetRasterBand(i));
+
+        /* Load scale, offset and unittype from PAM if available */
+        int nHaveOffsetScale = false;
+        double dfScale = poBand->GDALPamRasterBand::GetScale(&nHaveOffsetScale);
+        if (nHaveOffsetScale)
+        {
+            poBand->m_bHaveOffsetScale = true;
+            poBand->m_dfScale = dfScale;
+            poBand->m_dfOffset = poBand->GDALPamRasterBand::GetOffset();
+        }
+
+        const char *pszUnitType = poBand->GDALPamRasterBand::GetUnitType();
+        if (pszUnitType && pszUnitType[0])
+            poBand->m_osUnitType = pszUnitType;
+
+        const char *pszDescription =
+            poBand->GDALPamRasterBand::GetDescription();
+        if (pszDescription && pszDescription[0])
+            poBand->m_osDescription = pszDescription;
+
+        GDALColorInterp ePAMColorInterp =
+            poBand->GDALPamRasterBand::GetColorInterpretation();
+        if (ePAMColorInterp != GCI_Undefined)
+            poBand->m_eBandInterp = ePAMColorInterp;
+
+        if (i == 1)
+        {
+            auto poCT = poBand->GDALPamRasterBand::GetColorTable();
+            if (poCT)
+            {
+                delete m_poColorTable;
+                m_poColorTable = poCT->Clone();
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -18000,47 +18040,6 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         m_bMetadataChanged = false;
         m_bGeoTIFFInfoChanged = false;
         m_bNoDataChanged = false;
-
-        for (int i = 1; i <= nBands; ++i)
-        {
-            GTiffRasterBand *poBand =
-                cpl::down_cast<GTiffRasterBand *>(GetRasterBand(i));
-
-            /* Load scale, offset and unittype from PAM if available */
-            if (!poBand->m_bHaveOffsetScale)
-            {
-                int nHaveOffsetScale = FALSE;
-                poBand->m_dfScale =
-                    poBand->GDALPamRasterBand::GetScale(&nHaveOffsetScale);
-                poBand->m_bHaveOffsetScale = CPL_TO_BOOL(nHaveOffsetScale);
-                poBand->m_dfOffset = poBand->GDALPamRasterBand::GetOffset();
-            }
-            if (poBand->m_osUnitType.empty())
-            {
-                const char *pszUnitType =
-                    poBand->GDALPamRasterBand::GetUnitType();
-                if (pszUnitType)
-                    poBand->m_osUnitType = pszUnitType;
-            }
-            if (poBand->m_osDescription.empty())
-                poBand->m_osDescription =
-                    poBand->GDALPamRasterBand::GetDescription();
-
-            GDALColorInterp ePAMColorInterp =
-                poBand->GDALPamRasterBand::GetColorInterpretation();
-            if (ePAMColorInterp != GCI_Undefined)
-                poBand->m_eBandInterp = ePAMColorInterp;
-
-            if (i == 1)
-            {
-                auto poCT = poBand->GDALPamRasterBand::GetColorTable();
-                if (poCT)
-                {
-                    delete m_poColorTable;
-                    m_poColorTable = poCT->Clone();
-                }
-            }
-        }
     }
     m_bLoadPam = false;
 }
