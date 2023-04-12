@@ -1321,7 +1321,7 @@ def test_cog_zoom_level():
             gdal.GetDriverByName("COG").CreateCopy(
                 filename,
                 src_ds,
-                options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=25"],
+                options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=31"],
             )
             is None
         )
