@@ -1500,12 +1500,9 @@ def test_ogr_geom_circularstring():
     assert in_wkt == out_wkt
 
     # Test stroking
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    in_wkt = "CIRCULARSTRING (0 0,1 1,1 -1)"
-    g1 = ogr.CreateGeometryFromWkt(in_wkt)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        in_wkt = "CIRCULARSTRING (0 0,1 1,1 -1)"
+        g1 = ogr.CreateGeometryFromWkt(in_wkt)
 
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
@@ -1516,11 +1513,8 @@ def test_ogr_geom_circularstring():
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     in_wkb = g1.ExportToWkb()
 
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.CreateGeometryFromWkb(in_wkb)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        g2 = ogr.CreateGeometryFromWkb(in_wkb)
 
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
@@ -1533,18 +1527,16 @@ def test_ogr_geom_circularstring():
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToMultiLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    expected_g2 = ogr.CreateGeometryFromWkt(
-        "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
-    )
-    g2 = ogr.ForceToMultiLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        expected_g2 = ogr.CreateGeometryFromWkt(
+            "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
+        )
+        g2 = ogr.ForceToMultiLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
 
     # Test GEOS operations
@@ -1562,15 +1554,13 @@ def test_ogr_geom_circularstring():
         assert g2 is not None
 
     # Test ForceToLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToMultiLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToMultiLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToMultiLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
 
     # Test stroking of full circle with 3 points. ISO draft
@@ -1954,12 +1944,9 @@ def test_ogr_geom_compoundcurve():
     assert in_wkt == out_wkt
 
     # Test stroking
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    in_wkt = "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1))"
-    g1 = ogr.CreateGeometryFromWkt(in_wkt)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        in_wkt = "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1))"
+        g1 = ogr.CreateGeometryFromWkt(in_wkt)
 
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
@@ -1970,11 +1957,8 @@ def test_ogr_geom_compoundcurve():
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     in_wkb = g1.ExportToWkb()
 
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.CreateGeometryFromWkb(in_wkb)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        g2 = ogr.CreateGeometryFromWkb(in_wkb)
 
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
@@ -1991,17 +1975,15 @@ def test_ogr_geom_compoundcurve():
     g2 = g1.GetLinearGeometry(45)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    expected_g = ogr.CreateGeometryFromWkt(
-        "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
-    )
-    g2 = ogr.ForceToMultiLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        expected_g = ogr.CreateGeometryFromWkt(
+            "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
+        )
+        g2 = ogr.ForceToMultiLineString(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Check segmentize
@@ -2167,12 +2149,9 @@ def test_ogr_geom_curvepolygon():
     assert in_wkt == out_wkt
 
     # Test stroking
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    in_wkt = "CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))"
-    g1 = ogr.CreateGeometryFromWkt(in_wkt)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        in_wkt = "CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))"
+        g1 = ogr.CreateGeometryFromWkt(in_wkt)
 
     expected_g = ogr.CreateGeometryFromWkt(
         "POLYGON ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0))"
@@ -2183,11 +2162,8 @@ def test_ogr_geom_curvepolygon():
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     in_wkb = g1.ExportToWkb()
 
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.CreateGeometryFromWkb(in_wkb)
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "FALSE")
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
+        g2 = ogr.CreateGeometryFromWkb(in_wkb)
 
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
@@ -2200,24 +2176,21 @@ def test_ogr_geom_curvepolygon():
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToPolygon
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToPolygon(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToPolygon(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToMultiPolygon
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    expected_g2 = ogr.CreateGeometryFromWkt(
-        "MULTIPOLYGON (((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))"
-    )
-    g2 = ogr.ForceToMultiPolygon(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        expected_g2 = ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON (((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))"
+        )
+        g2 = ogr.ForceToMultiPolygon(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
 
     # Test ForceToMultiLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToMultiLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToMultiLineString(g1)
     expected_g3 = ogr.CreateGeometryFromWkt(
         "MULTILINESTRING ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0))"
     )
@@ -2246,15 +2219,13 @@ def test_ogr_geom_curvepolygon():
         assert g2 is not None
 
     # Test ForceToPolygon
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToPolygon(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToPolygon(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
     # Test ForceToMultiPolygon
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToMultiPolygon(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToMultiPolygon(g1)
     assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
 
     # Error case : not enough points
@@ -2313,12 +2284,11 @@ def test_ogr_geom_curvepolygon():
         % (1 + math.cos(math.pi / 6) - 1e-4, math.sin(math.pi / 6))
     )
     # To prove that we don't use discretization
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    res = g1.Intersects(p1)
-    res = res & p1.Intersects(g1)
-    res = res & g1.Contains(p1)
-    res = res & p1.Within(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        res = g1.Intersects(p1)
+        res = res & p1.Intersects(g1)
+        res = res & g1.Contains(p1)
+        res = res & p1.Within(g1)
     assert res
 
     # Test point slightly outside circle
@@ -2464,9 +2434,8 @@ def test_ogr_geom_multicurve():
     assert in_wkt == out_wkt
 
     # Test ForceToMultiLineString
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToMultiLineString(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToMultiLineString(g1)
     expected_g = "MULTILINESTRING ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0),(0 0,1 1),(0 0,1 1,2 2,3 3))"
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
@@ -2540,9 +2509,8 @@ def test_ogr_geom_multisurface():
     assert in_wkt == out_wkt
 
     # Test ForceToMultiPolygon
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    g2 = ogr.ForceToMultiPolygon(g1)
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        g2 = ogr.ForceToMultiPolygon(g1)
     expected_g = "MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)),((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))"
     assert ogrtest.check_feature_geometry(g2, expected_g) == 0
 
