@@ -3630,7 +3630,7 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
         return bRet ? 0 : -1;
     }
 
-    std::unique_ptr<VSIVirtualHandle> poFileHandleAutoClose;
+    VSIVirtualHandleUniquePtr poFileHandleAutoClose;
     if (!fpSource)
     {
         if (STARTS_WITH(pszSource, osPrefix))
@@ -3658,8 +3658,7 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
             return false;
         }
 
-        poFileHandleAutoClose.reset(
-            reinterpret_cast<VSIVirtualHandle *>(fpSource));
+        poFileHandleAutoClose.reset(fpSource);
     }
 
     return VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,

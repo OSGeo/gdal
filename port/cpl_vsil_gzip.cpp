@@ -3463,22 +3463,9 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     VSIVirtualHandle *OpenForWrite_unlocked(const char *pszFilename,
                                             const char *pszAccess);
 
-    struct VirtualHandleCloser
-    {
-        void operator()(VSIVirtualHandle *poHandle)
-        {
-            if (poHandle)
-            {
-                poHandle->Close();
-                delete poHandle;
-            }
-        }
-    };
-
     struct VSIFileInZipInfo
     {
-        std::unique_ptr<VSIVirtualHandle, VirtualHandleCloser>
-            poVirtualHandle{};
+        VSIVirtualHandleUniquePtr poVirtualHandle{};
         std::map<std::string, std::string> oMapProperties{};
         int nCompressionMethod = 0;
         uint64_t nUncompressedSize = 0;
