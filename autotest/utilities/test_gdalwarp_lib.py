@@ -3340,6 +3340,23 @@ def test_gdalwarp_lib_preserve_non_square_pixels_if_no_reprojection():
 ###############################################################################
 
 
+@gdaltest.require_proj_version(6, 3)
+def test_gdalwarp_lib_preserve_non_square_pixels_same_horizontal_crs():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 20, 10)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:4326+3855")
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.2])
+    out_ds = gdal.Warp("", src_ds, options="-f MEM -t_srs EPSG:4979")
+    assert out_ds.RasterXSize == src_ds.RasterXSize
+    assert out_ds.RasterYSize == src_ds.RasterYSize
+    assert out_ds.GetGeoTransform() == src_ds.GetGeoTransform()
+
+
+###############################################################################
+
+
 def test_gdalwarp_lib_preserve_non_square_pixels_if_no_reprojection_multi_sources():
 
     src_ds = gdal.Translate("", "../gcore/data/byte.tif", options="-f MEM -tr 60 30")
