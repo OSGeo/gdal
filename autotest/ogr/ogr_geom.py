@@ -1401,7 +1401,7 @@ def test_ogr_geom_triangle_invalid_wkt():
 def test_ogr_geom_triangle_sfcgal():
 
     if not ogrtest.have_sfcgal():
-        pytest.skip()
+        pytest.skip("SFCGAL is not available")
 
     g1 = ogr.CreateGeometryFromWkt("TRIANGLE ((0 0,100 0 100,0 100 100,0 0))")
     g2 = ogr.CreateGeometryFromWkt("TRIANGLE ((-1 -1,100 0 100,0 100 100,-1 -1))")
@@ -3816,7 +3816,7 @@ def test_ogr_geom_remove_geometry():
 def test_ogr_geom_sfcgal():
 
     if not ogrtest.have_sfcgal():
-        pytest.skip()
+        pytest.skip("SFCGAL is not available")
 
     g1 = ogr.CreateGeometryFromWkt("TIN EMPTY")
 
