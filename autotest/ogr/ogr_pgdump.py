@@ -542,37 +542,35 @@ def test_ogr_pgdump_6():
     field_defn.SetDefault("CURRENT_TIME")
     lyr.CreateField(field_defn)
 
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdal.config_option("PG_USE_COPY", "YES"):
 
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField("field_string", "a")
-    f.SetField("field_int", 456)
-    f.SetField("field_real", 4.56)
-    f.SetField("field_datetime", "2015/06/30 12:34:56")
-    f.SetField("field_datetime2", "2015/06/30 12:34:56")
-    f.SetField("field_date", "2015/06/30")
-    f.SetField("field_time", "12:34:56")
-    lyr.CreateFeature(f)
-    f = None
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("field_string", "a")
+        f.SetField("field_int", 456)
+        f.SetField("field_real", 4.56)
+        f.SetField("field_datetime", "2015/06/30 12:34:56")
+        f.SetField("field_datetime2", "2015/06/30 12:34:56")
+        f.SetField("field_date", "2015/06/30")
+        f.SetField("field_time", "12:34:56")
+        lyr.CreateFeature(f)
+        f = None
 
-    # Transition from COPY to INSERT
-    f = ogr.Feature(lyr.GetLayerDefn())
-    lyr.CreateFeature(f)
-    f = None
+        # Transition from COPY to INSERT
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        f = None
 
-    # Transition from INSERT to COPY
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField("field_string", "b")
-    f.SetField("field_int", 456)
-    f.SetField("field_real", 4.56)
-    f.SetField("field_datetime", "2015/06/30 12:34:56")
-    f.SetField("field_datetime2", "2015/06/30 12:34:56")
-    f.SetField("field_date", "2015/06/30")
-    f.SetField("field_time", "12:34:56")
-    lyr.CreateFeature(f)
-    f = None
-
-    gdal.SetConfigOption("PG_USE_COPY", None)
+        # Transition from INSERT to COPY
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("field_string", "b")
+        f.SetField("field_int", 456)
+        f.SetField("field_real", 4.56)
+        f.SetField("field_datetime", "2015/06/30 12:34:56")
+        f.SetField("field_datetime2", "2015/06/30 12:34:56")
+        f.SetField("field_date", "2015/06/30")
+        f.SetField("field_time", "12:34:56")
+        lyr.CreateFeature(f)
+        f = None
 
     ds = None
 
@@ -751,17 +749,15 @@ def test_ogr_pgdump_8():
     feat.SetField("str", "first string")
     feat.SetField("myfid", 10)
     feat.SetField("str2", "second string")
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ret = lyr.CreateFeature(feat)
-    gdal.SetConfigOption("PG_USE_COPY", None)
+    with gdal.config_option("PG_USE_COPY", "YES"):
+        ret = lyr.CreateFeature(feat)
     assert ret == 0
     assert feat.GetFID() == 10
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField("str2", "second string")
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ret = lyr.CreateFeature(feat)
-    gdal.SetConfigOption("PG_USE_COPY", None)
+    with gdal.config_option("PG_USE_COPY", "YES"):
+        ret = lyr.CreateFeature(feat)
     assert ret == 0
     if feat.GetFID() < 0:
         feat.DumpReadable()
@@ -779,10 +775,8 @@ def test_ogr_pgdump_8():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    with gdaltest.error_handler():
-        gdal.SetConfigOption("PG_USE_COPY", "YES")
+    with gdaltest.error_handler(), gdal.config_option("PG_USE_COPY", "YES"):
         ret = lyr.CreateFeature(feat)
-        gdal.SetConfigOption("PG_USE_COPY", None)
     assert ret != 0
 
     # gdal.PushErrorHandler()
@@ -804,9 +798,8 @@ def test_ogr_pgdump_8():
     feat.SetField("str", "first string")
     feat.SetField("myfid", 12)
     feat.SetField("str2", "second string")
-    gdal.SetConfigOption("PG_USE_COPY", "YES")
-    ret = lyr.CreateFeature(feat)
-    gdal.SetConfigOption("PG_USE_COPY", None)
+    with gdal.config_option("PG_USE_COPY", "YES"):
+        ret = lyr.CreateFeature(feat)
     assert ret == 0
     assert feat.GetFID() == 12
 
@@ -1243,11 +1236,10 @@ def test_ogr_pgdump_15():
 # Test sequence updating
 
 
-def test_ogr_pgdump_16():
+@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
+def test_ogr_pgdump_16(pg_use_copy):
 
-    for pg_use_copy in ("YES", "NO"):
-
-        gdal.SetConfigOption("PG_USE_COPY", pg_use_copy)
+    with gdal.config_option("PG_USE_COPY", pg_use_copy):
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
             "/vsimem/ogr_pgdump_16.sql", options=["LINEFORMAT=LF"]
         )
@@ -1269,8 +1261,6 @@ def test_ogr_pgdump_16():
             """SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";"""
             in sql
         )
-
-    gdal.SetConfigOption("PG_USE_COPY", None)
 
 
 ###############################################################################
