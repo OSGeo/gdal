@@ -893,7 +893,8 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
 /************************************************************************/
 
 static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
-                       OGRField &sDefault, std::string &osDefaultVal)
+                       OGRField &sDefault, std::string &osDefaultVal,
+                       bool bApproxOK)
 {
     sDefault = FileGDBField::UNSET_FIELD;
     const char *pszDefault = poField->GetDefault();
@@ -920,6 +921,16 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
         else if (eType == FGFT_DATETIME)
         {
             osDefaultVal = pszDefault;
+            if (osDefaultVal == "CURRENT_TIMESTAMP" ||
+                osDefaultVal == "CURRENT_TIME" ||
+                osDefaultVal == "CURRENT_DATE")
+            {
+                CPLError(bApproxOK ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                         "%s is not supported as a default value in File "
+                         "Geodatabase",
+                         osDefaultVal.c_str());
+                return bApproxOK;
+            }
             if (osDefaultVal[0] == '\'' && osDefaultVal.back() == '\'')
             {
                 osDefaultVal = osDefaultVal.substr(1);
@@ -930,7 +941,12 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
                 CPLFree(pszTmp);
             }
             if (!OGRParseDate(osDefaultVal.c_str(), &sDefault, 0))
-                return false;
+            {
+                CPLError(bApproxOK ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                         "Cannot parse %s as a date time",
+                         osDefaultVal.c_str());
+                return bApproxOK;
+            }
         }
     }
     return true;
@@ -1187,7 +1203,8 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 
     OGRField sDefault = FileGDBField::UNSET_FIELD;
     std::string osDefaultVal;
-    if (!GetDefault(poField, eType, sDefault, osDefaultVal))
+    if (!GetDefault(poField, eType, sDefault, osDefaultVal,
+                    CPL_TO_BOOL(bApproxOK)))
         return OGRERR_FAILURE;
 
     if (!poField->GetDomainName().empty() &&
@@ -1376,7 +1393,8 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
 
     OGRField sDefault = FileGDBField::UNSET_FIELD;
     std::string osDefaultVal;
-    if (!GetDefault(&oField, eType, sDefault, osDefaultVal))
+    if (!GetDefault(&oField, eType, sDefault, osDefaultVal,
+                    /*bApproxOK=*/false))
         return OGRERR_FAILURE;
 
     const char *pszAlias = oField.GetAlternativeNameRef();
