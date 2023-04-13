@@ -120,14 +120,12 @@ def test_ogr_xlsx_1():
 
 def test_ogr_xlsx_2():
 
-    gdal.SetConfigOption("OGR_XLSX_HEADERS", "DISABLE")
-    ds = ogr.Open("data/xlsx/test.xlsx")
+    with gdal.config_option("OGR_XLSX_HEADERS", "DISABLE"):
+        ds = ogr.Open("data/xlsx/test.xlsx")
 
-    lyr = ds.GetLayerByName("Feuille7")
+        lyr = ds.GetLayerByName("Feuille7")
 
-    assert lyr.GetFeatureCount() == 3
-
-    gdal.SetConfigOption("OGR_XLSX_HEADERS", None)
+        assert lyr.GetFeatureCount() == 3
 
 
 ###############################################################################
@@ -136,14 +134,12 @@ def test_ogr_xlsx_2():
 
 def test_ogr_xlsx_3():
 
-    gdal.SetConfigOption("OGR_XLSX_FIELD_TYPES", "STRING")
-    ds = ogr.Open("data/xlsx/test.xlsx")
+    with gdal.config_option("OGR_XLSX_FIELD_TYPES", "STRING"):
+        ds = ogr.Open("data/xlsx/test.xlsx")
 
-    lyr = ds.GetLayerByName("Feuille7")
+        lyr = ds.GetLayerByName("Feuille7")
 
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
-
-    gdal.SetConfigOption("OGR_XLSX_FIELD_TYPES", None)
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
 
 ###############################################################################
@@ -196,22 +192,20 @@ def test_ogr_xlsx_5():
 def test_ogr_xlsx_6():
 
     # In this dataset the column titles are not recognised by default.
-    gdal.SetConfigOption("OGR_XLSX_HEADERS", "FORCE")
-    ds = ogr.Open("data/xlsx/inlineStr.xlsx")
+    with gdal.config_option("OGR_XLSX_HEADERS", "FORCE"):
+        ds = ogr.Open("data/xlsx/inlineStr.xlsx")
 
-    lyr = ds.GetLayerByName("inlineStr")
+        lyr = ds.GetLayerByName("inlineStr")
 
-    assert lyr.GetFeatureCount() == 1
+        assert lyr.GetFeatureCount() == 1
 
-    lyr.ResetReading()
-    feat = lyr.GetNextFeature()
-    assert feat.Bl_District_t == "text6", "Did not get expected value(1)"
+        lyr.ResetReading()
+        feat = lyr.GetNextFeature()
+        assert feat.Bl_District_t == "text6", "Did not get expected value(1)"
 
-    assert float(feat.GetField("Lat")) == pytest.approx(
-        23.6247122, abs=0.00001
-    ), "Did not get expected value(2)"
-
-    gdal.SetConfigOption("OGR_XLSX_HEADERS", None)
+        assert float(feat.GetField("Lat")) == pytest.approx(
+            23.6247122, abs=0.00001
+        ), "Did not get expected value(2)"
 
 
 ###############################################################################
@@ -383,7 +377,6 @@ def test_ogr_xlsx_12():
 
 def test_ogr_xlsx_13():
 
-    gdal.SetConfigOption("OGR_XLSX_FIELD_TYPES", None)
     ds = ogr.Open("data/xlsx/test_missing_row1_data.xlsx")
 
     lyr = ds.GetLayer(0)
@@ -430,7 +423,6 @@ def test_ogr_xlsx_13():
 
 def test_ogr_xlsx_14():
 
-    gdal.SetConfigOption("OGR_XLSX_FIELD_TYPES", None)
     ds = ogr.Open("data/xlsx/test_empty_last_field.xlsx")
 
     lyr = ds.GetLayer(0)
