@@ -32,7 +32,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import gdal, ogr, osr
+from osgeo import ogr, osr
 
 pytestmark = [
     pytest.mark.skipif(
