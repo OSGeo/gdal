@@ -66,11 +66,9 @@ def startup_and_cleanup():
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
     # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
+    with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
 
-    yield
-
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", None)
+        yield
 
     if gdal.ReadDir("/vsimem") is not None:
         print(gdal.ReadDir("/vsimem"))
@@ -1735,11 +1733,11 @@ def test_ogr_gpkg_20():
 
     ds.ExecuteSQL("DELETE FROM gpkg_spatial_ref_sys WHERE srs_id = 4326")
     ds = None
-    gdal.SetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "NO")
-    # Warning 1: unable to read srs_id '4326' from gpkg_spatial_ref_sys
-    with gdaltest.error_handler():
+    with gdal.config_option(
+        "OGR_GPKG_FOREIGN_KEY_CHECK", "NO"
+    ), gdaltest.error_handler():
+        # Warning 1: unable to read srs_id '4326' from gpkg_spatial_ref_sys
         ds = ogr.Open("/vsimem/ogr_gpkg_20.gpkg", update=1)
-    gdal.SetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", None)
     ds = None
 
     gdal.Unlink("/vsimem/ogr_gpkg_20.gpkg")
@@ -1762,9 +1760,10 @@ def test_ogr_gpkg_20():
     )
     ds = None
 
-    gdal.SetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "NO")
     # Warning 1: null definition for srs_id '4326' in gpkg_spatial_ref_sys
-    with gdaltest.error_handler():
+    with gdal.config_option(
+        "OGR_GPKG_FOREIGN_KEY_CHECK", "NO"
+    ), gdaltest.error_handler():
         ds = ogr.Open("/vsimem/ogr_gpkg_20.gpkg", update=1)
     ds = None
 
@@ -2990,11 +2989,10 @@ def test_ogr_gpkg_32():
 
 def test_ogr_gpkg_33():
 
-    gdal.SetConfigOption("OGR_CURRENT_DATE", "2000-01-01T:00:00:00.000Z")
-    ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_33.gpkg")
-    ds.CreateLayer("test", geom_type=ogr.wkbNone)
-    ds = None
-    gdal.SetConfigOption("OGR_CURRENT_DATE", None)
+    with gdal.config_option("OGR_CURRENT_DATE", "2000-01-01T:00:00:00.000Z"):
+        ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_33.gpkg")
+        ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        ds = None
 
     ds = ogr.Open("/vsimem/ogr_gpkg_33.gpkg")
     sql_lyr = ds.ExecuteSQL(
@@ -3999,11 +3997,10 @@ def test_ogr_gpkg_43():
 
 def test_ogr_gpkg_44():
 
-    gdal.SetConfigOption("CREATE_METADATA_TABLES", "NO")
-    ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_44.gpkg")
-    ds.CreateLayer("foo")
-    ds = None
-    gdal.SetConfigOption("CREATE_METADATA_TABLES", None)
+    with gdal.config_option("CREATE_METADATA_TABLES", "NO"):
+        ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_44.gpkg")
+        ds.CreateLayer("foo")
+        ds = None
 
     assert validate("/vsimem/ogr_gpkg_44.gpkg"), "validation failed"
 
@@ -4180,9 +4177,8 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO")
-    ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", None)
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
     assert gdal.GetLastErrorMsg() == ""
 
     gdaltest.gpkg_dr.CreateDataSource(
@@ -4202,9 +4198,8 @@ def test_ogr_gpkg_47():
     ds = None
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO")
-    ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", None)
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
     assert gdal.GetLastErrorMsg() == ""
 
     # Set GPKG 1.2.1
@@ -4226,9 +4221,8 @@ def test_ogr_gpkg_47():
     ds = None
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO")
-    ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", None)
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
     assert gdal.GetLastErrorMsg() == ""
 
     # Set GPKG 1.3.0
@@ -4248,9 +4242,8 @@ def test_ogr_gpkg_47():
     ds = None
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO")
-    ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", None)
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
     assert gdal.GetLastErrorMsg() == ""
 
     # Set GPKG 1.99.0
@@ -4270,9 +4263,8 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO")
-    ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
-    gdal.SetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", None)
+    with gdal.config_option("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "NO"):
+        ogr.Open("/vsimem/ogr_gpkg_47.gpkg")
     assert gdal.GetLastErrorMsg() == ""
 
     # Just for the sake of coverage testing in DEBUG mode
@@ -4398,9 +4390,8 @@ def test_ogr_gpkg_49():
 
 def test_ogr_gpkg_50():
 
-    gdal.SetConfigOption("GPKG_ADD_DEFINITION_12_063", "YES")
-    gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_50.gpkg")
-    gdal.SetConfigOption("GPKG_ADD_DEFINITION_12_063", None)
+    with gdal.config_option("GPKG_ADD_DEFINITION_12_063", "YES"):
+        gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_50.gpkg")
 
     ds = ogr.Open("/vsimem/ogr_gpkg_50.gpkg", update=1)
     srs32631 = osr.SpatialReference()
