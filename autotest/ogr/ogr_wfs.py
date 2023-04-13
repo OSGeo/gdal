@@ -77,6 +77,12 @@ def with_and_without_streaming(request):
         yield
 
 
+@pytest.fixture(autouse=True, scope="module")
+def curl_enable_vsimem():
+    with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
+        yield
+
+
 ###############################################################################
 # Test reading a MapServer WFS server
 
@@ -1102,8 +1108,6 @@ def test_ogr_wfs_vsimem_fail_because_not_enabled(with_and_without_streaming):
 ###############################################################################
 def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     with gdaltest.error_handler():
         ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     assert ds is None
@@ -1113,8 +1117,6 @@ def test_ogr_wfs_vsimem_fail_because_no_get_capabilities(with_and_without_stream
 
 
 def test_ogr_wfs_vsimem_fail_because_empty_response(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities", ""
@@ -1130,8 +1132,6 @@ def test_ogr_wfs_vsimem_fail_because_empty_response(with_and_without_streaming):
 
 def test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities", "<foo/>"
     )
@@ -1145,8 +1145,6 @@ def test_ogr_wfs_vsimem_fail_because_no_WFS_Capabilities(with_and_without_stream
 
 
 def test_ogr_wfs_vsimem_fail_because_exception(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -1170,8 +1168,6 @@ def test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities", "<invalid_xml"
     )
@@ -1187,8 +1183,6 @@ def test_ogr_wfs_vsimem_fail_because_invalid_xml_capabilities(
 def test_ogr_wfs_vsimem_fail_because_missing_featuretypelist(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -1283,8 +1277,6 @@ def test_ogr_wfs_vsimem_wfs110_open_getcapabilities_file(with_and_without_stream
 
 def test_ogr_wfs_vsimem_wfs110_minimal_instance(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -1316,8 +1308,6 @@ def test_ogr_wfs_vsimem_wfs110_minimal_instance(with_and_without_streaming):
 def test_ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer(
@@ -1355,8 +1345,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1380,8 +1368,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1404,8 +1390,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema(
 def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1470,8 +1454,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(
 def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml",
@@ -1593,8 +1575,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1611,8 +1591,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits(
 def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -1656,8 +1634,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1679,8 +1655,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits(
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1704,8 +1678,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1728,8 +1700,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExcept
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1749,8 +1719,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_ServiceExcept
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1773,8 +1741,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numbe
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1805,8 +1771,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1821,8 +1785,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature(with_and_without_str
 
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1847,8 +1809,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -1869,8 +1829,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature(
 
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeature(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -1953,8 +1911,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_getextent(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
     assert lyr.GetExtent() == (2, 2, 49, 49)
@@ -1966,8 +1922,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent(with_and_without_streaming):
 def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -1990,8 +1944,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature(
 def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -2083,8 +2035,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(
 def test_ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -2186,8 +2136,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -2224,8 +2172,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 def test_ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success(
     with_and_without_streaming,
 ):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -2274,8 +2220,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_filter(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -2326,8 +2270,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
@@ -2557,8 +2499,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 def test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter(with_and_without_streaming):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -2622,8 +2562,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter(
     with_and_without_streaming,
 ):
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
 
@@ -2674,8 +2612,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 def test_ogr_wfs_vsimem_wfs110_insertfeature(with_and_without_streaming):
 
     wfs_insert_url = None
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     gdal.FileFromMemBuffer(
         "/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -3095,8 +3031,6 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(with_and_without_streaming):
 
     wfs_update_url = None
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint", update=1)
     lyr = ds.GetLayer(0)
 
@@ -3261,8 +3195,6 @@ def test_ogr_wfs_vsimem_wfs110_deletefeature(with_and_without_streaming):
 
     wfs_delete_url = None
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs_endpoint", update=1)
     lyr = ds.GetLayer(0)
 
@@ -3398,8 +3330,6 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
 
 def test_ogr_wfs_vsimem_wfs110_schema_not_understood(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer(
@@ -3538,8 +3468,6 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers(with_and_without_streaming):
 </WFS_Capabilities>
 """,
     )
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs110_multiple_layers")
     lyr = ds.GetLayer(0)
@@ -3696,8 +3624,6 @@ def test_ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns(
 """,
     )
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs110_multiple_layers_different_ns")
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer(
@@ -3852,8 +3778,6 @@ def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
 </WFS_Capabilities>
 """,
     )
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_paging")
     lyr = ds.GetLayer(0)
@@ -4062,8 +3986,6 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
 """,
     )
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json")
     lyr = ds.GetLayer(0)
 
@@ -4135,8 +4057,6 @@ def test_ogr_wfs_vsimem_wfs200_multipart(with_and_without_streaming):
 </WFS_Capabilities>
 """,
     )
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart")
     lyr = ds.GetLayer(0)
@@ -4322,8 +4242,6 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
 </xsd:schema>
 """,
     )
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
     sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2")
@@ -4832,8 +4750,6 @@ def test_ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix(
 """,
     )
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
     sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2")
 
@@ -4961,8 +4877,6 @@ def test_ogr_wfs_vsimem_wfs200_join_distinct(with_and_without_streaming):
 </xsd:schema>
 """,
     )
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
 
     ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
     sql_lyr = ds.ExecuteSQL(
@@ -5104,8 +5018,6 @@ def test_ogr_wfs_vsimem_wfs200_supported_crs():
 """,
     )
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     with gdaltest.config_option("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "YES"):
         ds = ogr.Open("WFS:/vsimem/test_ogr_wfs_vsimem_wfs200_supported_crs")
     lyr = ds.GetLayer(0)
@@ -5178,8 +5090,6 @@ def test_ogr_wfs_vsimem_wfs200_supported_crs():
 
 
 def test_ogr_wfs_vsimem_cleanup(with_and_without_streaming):
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
 
     for f in gdal.ReadDir("/vsimem/"):
         gdal.Unlink("/vsimem/" + f)
