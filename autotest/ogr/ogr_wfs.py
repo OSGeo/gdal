@@ -345,13 +345,12 @@ def test_ogr_wfs_geoserver_paging():
     ds = None
 
     # Test with WFS 1.0.0
-    gdal.SetConfigOption("OGR_WFS_PAGING_ALLOWED", "ON")
-    gdal.SetConfigOption("OGR_WFS_PAGE_SIZE", "%d" % page_size)
-    ds = ogr.Open(
-        "WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.0.0"
-    )
-    gdal.SetConfigOption("OGR_WFS_PAGING_ALLOWED", None)
-    gdal.SetConfigOption("OGR_WFS_PAGE_SIZE", None)
+    with gdal.config_options(
+        {"OGR_WFS_PAGING_ALLOWED": "ON", "OGR_WFS_PAGE_SIZE": "%d" % page_size}
+    ):
+        ds = ogr.Open(
+            "WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.0.0"
+        )
     assert ds is not None, "did not managed to open WFS datastore"
 
     lyr = ds.GetLayer(0)
@@ -361,13 +360,12 @@ def test_ogr_wfs_geoserver_paging():
     assert feature_count_wfs100 == feature_count_ref
 
     # Test with WFS 1.1.0
-    gdal.SetConfigOption("OGR_WFS_PAGING_ALLOWED", "ON")
-    gdal.SetConfigOption("OGR_WFS_PAGE_SIZE", "%d" % page_size)
-    ds = ogr.Open(
-        "WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0"
-    )
-    gdal.SetConfigOption("OGR_WFS_PAGING_ALLOWED", None)
-    gdal.SetConfigOption("OGR_WFS_PAGE_SIZE", None)
+    with gdal.config_options(
+        {"OGR_WFS_PAGING_ALLOWED": "ON", "OGR_WFS_PAGE_SIZE": "%d" % page_size}
+    ):
+        ds = ogr.Open(
+            "WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0"
+        )
     assert ds is not None, "did not managed to open WFS datastore"
 
     lyr = ds.GetLayer(0)
@@ -556,9 +554,8 @@ def test_ogr_wfs_fake_wfs_server():
     if port == 0:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO")
-    ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
-    gdal.SetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", None)
+    with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
+        ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
     if ds is None:
         webserver.server_stop(process, port)
         pytest.fail("did not managed to open WFS datastore")
@@ -1428,23 +1425,20 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 7
 
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", "YES")
-    ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", None)
+    with gdal.config_option("GML_EXPOSE_GML_ID", "YES"):
+        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 7
 
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", "NO")
-    ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", None)
+    with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
+        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 8
 
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", "NO")
-    ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint")
-    gdal.SetConfigOption("GML_EXPOSE_GML_ID", None)
+    with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
+        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 7
@@ -2013,9 +2007,8 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(
     lyr = ds.GetLayer(1)
     assert lyr.GetExtent() == (-170.0, 170.0, -80.0, 80.0)
 
-    gdal.SetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "YES")
-    ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
-    gdal.SetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", None)
+    with gdal.config_option("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "YES"):
+        ds = ogr.Open("WFS:/vsimem/wfs_endpoint")
 
     lyr = ds.GetLayer(2)
     expected_extent = (
