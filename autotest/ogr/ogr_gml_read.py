@@ -356,9 +356,8 @@ def test_ogr_gml_7():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    gdal.SetConfigOption("GML_EXPOSE_FID", "FALSE")
-    gml_ds = ogr.Open("data/gml/test_point.gml")
-    gdal.SetConfigOption("GML_EXPOSE_FID", None)
+    with gdal.config_option("GML_EXPOSE_FID", "FALSE"):
+        gml_ds = ogr.Open("data/gml/test_point.gml")
     lyr = gml_ds.GetLayer()
     ldefn = lyr.GetLayerDefn()
 
@@ -676,17 +675,24 @@ def test_ogr_gml_14():
     for f in files:
         gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/gml/" + f, f)
 
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", "NONE")
-    gdal.SetConfigOption("GML_SAVE_RESOLVED_TO", "tmp/cache/xlink1resolved.gml")
-    with gdaltest.error_handler():
-        gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+    with gdal.config_options(
+        {
+            "GML_SKIP_RESOLVE_ELEMS": "NONE",
+            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink1resolved.gml",
+        }
+    ):
+        with gdaltest.error_handler():
+            gml_ds = ogr.Open("tmp/cache/xlink1.gml")
     gml_ds = None
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", "gml:directedNode")
-    gdal.SetConfigOption("GML_SAVE_RESOLVED_TO", "tmp/cache/xlink2resolved.gml")
-    gml_ds = ogr.Open("tmp/cache/xlink1.gml")
-    del gml_ds
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", None)
-    gdal.SetConfigOption("GML_SAVE_RESOLVED_TO", None)
+
+    with gdal.config_options(
+        {
+            "GML_SKIP_RESOLVE_ELEMS": "gml:directedNode",
+            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink2resolved.gml",
+        }
+    ):
+        gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+        del gml_ds
 
     try:
         fp = open("tmp/cache/xlink1resolved.gml", "r")
@@ -883,9 +889,8 @@ def test_ogr_gml_19():
     except OSError:
         pass
 
-    gdal.SetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "NO")
-    ds = ogr.Open("data/gml/gnis_pop_110.gml")
-    gdal.SetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", None)
+    with gdal.config_option("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "NO"):
+        ds = ogr.Open("data/gml/gnis_pop_110.gml")
 
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
@@ -1151,9 +1156,8 @@ def test_ogr_gml_25():
     except OSError:
         pass
 
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", "YES")
-    ds = ogr.Open("data/gml/curveProperty.xml")
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", None)
+    with gdal.config_option("GML_FACE_HOLE_NEGATIVE", "YES"):
+        ds = ogr.Open("data/gml/curveProperty.xml")
 
     lyr = ds.GetLayer(0)
 
@@ -1366,14 +1370,12 @@ def test_ogr_gml_31():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    gdal.SetConfigOption("GML_READ_MODE", "SEQUENTIAL_LAYERS")
-    test_ogr_gml_29()
-    gdal.SetConfigOption("GML_READ_MODE", None)
+    with gdal.config_option("GML_READ_MODE", "SEQUENTIAL_LAYERS"):
+        test_ogr_gml_29()
 
     # Test reading second layer and then first layer
-    gdal.SetConfigOption("GML_READ_MODE", "SEQUENTIAL_LAYERS")
-    ds = ogr.Open("data/gml/testfmegml.gml")
-    gdal.SetConfigOption("GML_READ_MODE", None)
+    with gdal.config_option("GML_READ_MODE", "SEQUENTIAL_LAYERS"):
+        ds = ogr.Open("data/gml/testfmegml.gml")
 
     lyr = ds.GetLayer(1)
     feat = lyr.GetNextFeature()
@@ -1437,9 +1439,8 @@ def test_ogr_gml_33():
         pytest.skip()
 
     # Test reading second layer and then first layer
-    gdal.SetConfigOption("GML_READ_MODE", "INTERLEAVED_LAYERS")
-    ds = ogr.Open("data/gml/testfmegml_interleaved.gml")
-    gdal.SetConfigOption("GML_READ_MODE", None)
+    with gdal.config_option("GML_READ_MODE", "INTERLEAVED_LAYERS"):
+        ds = ogr.Open("data/gml/testfmegml_interleaved.gml")
 
     read_sequence = [
         [0, 1],
@@ -1523,9 +1524,8 @@ def test_ogr_gml_35():
 
     shutil.copy("data/gml/GmlTopo-sample.xml", "tmp/GmlTopo-sample.xml")
 
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", "HUGE")
-    ds = ogr.Open("tmp/GmlTopo-sample.xml")
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", None)
+    with gdal.config_option("GML_SKIP_RESOLVE_ELEMS", "HUGE"):
+        ds = ogr.Open("tmp/GmlTopo-sample.xml")
 
     assert not os.path.exists("tmp/GmlTopo-sample.sqlite")
 
@@ -1571,11 +1571,13 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE="NO"):
 
     shutil.copy("data/gml/GmlTopo-sample.xml", "tmp/GmlTopo-sample.xml")
 
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", "NONE")
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", GML_FACE_HOLE_NEGATIVE)
-    ds = ogr.Open("tmp/GmlTopo-sample.xml")
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", None)
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", None)
+    with gdal.config_options(
+        {
+            "GML_SKIP_RESOLVE_ELEMS": "NONE",
+            "GML_FACE_HOLE_NEGATIVE": GML_FACE_HOLE_NEGATIVE,
+        }
+    ):
+        ds = ogr.Open("tmp/GmlTopo-sample.xml")
     assert gdal.GetLastErrorMsg() == "", "did not expect error"
 
     lyr = ds.GetLayerByName("Suolo")
@@ -1588,9 +1590,8 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE="NO"):
 
     ds = None
 
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", GML_FACE_HOLE_NEGATIVE)
-    ds = ogr.Open("tmp/GmlTopo-sample.xml")
-    gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", None)
+    with gdal.config_option("GML_FACE_HOLE_NEGATIVE", GML_FACE_HOLE_NEGATIVE):
+        ds = ogr.Open("tmp/GmlTopo-sample.xml")
     lyr = ds.GetLayerByName("Suolo")
     feat = lyr.GetNextFeature()
     assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
@@ -1633,9 +1634,8 @@ def internal_ogr_gml_38(resolver):
         "tmp/sample_gml_face_hole_negative_no.xml",
     )
 
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", resolver)
-    ds = ogr.Open("tmp/sample_gml_face_hole_negative_no.xml")
-    gdal.SetConfigOption("GML_SKIP_RESOLVE_ELEMS", None)
+    with gdal.config_option("GML_SKIP_RESOLVE_ELEMS", resolver):
+        ds = ogr.Open("tmp/sample_gml_face_hole_negative_no.xml")
     gdal.SetConfigOption("GML_FACE_HOLE_NEGATIVE", None)
 
     if resolver == "HUGE":
@@ -1708,11 +1708,10 @@ def test_ogr_gml_41():
 
     ds = ogr.Open("data/gml/expected_gml_gml3.gml")
 
-    gdal.SetConfigOption(
+    with gdal.config_option(
         "GDAL_OPENGIS_SCHEMAS", "/vsizip/./tmp/cache/SCHEMAS_OPENGIS_NET.zip"
-    )
-    lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
-    gdal.SetConfigOption("GDAL_OPENGIS_SCHEMAS", None)
+    ):
+        lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
 
     feat = lyr.GetNextFeature()
     val = feat.GetFieldAsInteger(0)
@@ -1758,9 +1757,8 @@ def validate(filename):
 
     ds = ogr.Open(filename)
 
-    gdal.SetConfigOption("GDAL_OPENGIS_SCHEMAS", "./tmp/cache/SCHEMAS_OPENGIS_NET")
-    lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
-    gdal.SetConfigOption("GDAL_OPENGIS_SCHEMAS", None)
+    with gdal.config_option("GDAL_OPENGIS_SCHEMAS", "./tmp/cache/SCHEMAS_OPENGIS_NET"):
+        lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
 
     feat = lyr.GetNextFeature()
     val = feat.GetFieldAsInteger(0)
@@ -1787,7 +1785,7 @@ def test_ogr_gml_42():
 def test_ogr_gml_43():
 
     # The service times out
-    pytest.skip()
+    pytest.skip("Test disabled because service regularly times out")
 
     # pylint: disable=unreachable
     if not gdaltest.have_gml_reader:
@@ -2376,9 +2374,8 @@ def test_ogr_gml_56():
 
     gdal.Unlink("data/gml/ogr_gml_56.gfs")
 
-    gdal.SetConfigOption("GML_REGISTRY", "data/gml/ogr_gml_56_registry.xml")
-    ds = ogr.Open("data/gml/ogr_gml_56.gml")
-    gdal.SetConfigOption("GML_REGISTRY", None)
+    with gdal.config_option("GML_REGISTRY", "data/gml/ogr_gml_56_registry.xml"):
+        ds = ogr.Open("data/gml/ogr_gml_56.gml")
     lyr = ds.GetLayerByName("mainFeature")
     assert lyr.GetSpatialRef() is not None
     feat = lyr.GetNextFeature()
@@ -2955,19 +2952,17 @@ def test_ogr_gml_63():
 # Test multiple instances of parsers (#5571)
 
 
-def test_ogr_gml_64():
+@pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
+def test_ogr_gml_64(parser):
 
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    for parser in ["XERCES", "EXPAT"]:
-        for _ in range(2):
-            gdal.SetConfigOption("GML_PARSER", parser)
-            ds = ogr.Open("data/gml/rnf_eg.gml")
-            gdal.SetConfigOption("GML_PARSER", None)
-            lyr = ds.GetLayer(0)
-            feat = lyr.GetNextFeature()
-            assert feat is not None, parser
+    with gdal.config_option("GML_PARSER", parser):
+        ds = ogr.Open("data/gml/rnf_eg.gml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    assert feat is not None, parser
 
 
 ###############################################################################
