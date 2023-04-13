@@ -101,8 +101,8 @@ typedef struct TigerFieldInfo
     unsigned char nEnd;  // ending column number for field
     unsigned char nLen;  // length of field
 
-    int bDefine : 1;  // whether to add this field to the FeatureDefn
-    int bSet : 1;     // whether to set this field in GetFeature()
+    unsigned int bDefine : 1;  // whether to add this field to the FeatureDefn
+    unsigned int bSet : 1;     // whether to set this field in GetFeature()
 } TigerFieldInfo;
 
 typedef struct TigerRecordInfo
