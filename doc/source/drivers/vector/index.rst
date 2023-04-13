@@ -98,6 +98,7 @@ Vector drivers
    svg
    sxf
    tiger
+   tiledb
    topojson
    vdv
    vfk

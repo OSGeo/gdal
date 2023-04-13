@@ -5783,7 +5783,8 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     poDstFeature->GetFID() != nDesiredFID)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Feature id not preserved");
+                             "Feature id " CPL_FRMT_GIB " not preserved",
+                             nDesiredFID);
                 }
             }
             else if (!psOptions->bSkipFailures)

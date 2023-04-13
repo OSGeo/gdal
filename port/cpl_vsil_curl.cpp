@@ -3885,8 +3885,11 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
 
     if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only read-only mode is supported for /vsicurl");
+        if (bSetError)
+        {
+            VSIError(VSIE_FileError,
+                     "Only read-only mode is supported for /vsicurl");
+        }
         return nullptr;
     }
     if (!IsAllowedFilename(pszFilename))
