@@ -48,10 +48,8 @@ def test_ogr_vfk_1():
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_VFK_DB_OVERWRITE", "YES")
-
-    gdaltest.vfk_ds = ogr.Open("data/vfk/bylany.vfk")
-    gdal.SetConfigOption("OGR_VFK_DB_OVERWRITE", None)
+    with gdal.config_option("OGR_VFK_DB_OVERWRITE", "YES"):
+        gdaltest.vfk_ds = ogr.Open("data/vfk/bylany.vfk")
 
     assert gdaltest.vfk_ds is not None
 

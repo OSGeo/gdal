@@ -273,13 +273,12 @@ def ogr_openfilegdb_make_test_data():
     if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer("big_layer", geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
-        gdal.SetConfigOption("FGDB_BULK_LOAD", "YES")
-        # for i in range(340*341+1):
-        for i in range(340 + 1):
-            feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetField(0, i % 4)
-            lyr.CreateFeature(feat)
-        gdal.SetConfigOption("FGDB_BULK_LOAD", None)
+        with gdal.config_option("FGDB_BULK_LOAD", "YES"):
+            # for i in range(340*341+1):
+            for i in range(340 + 1):
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetField(0, i % 4)
+                lyr.CreateFeature(feat)
 
     if True:  # pylint: disable=using-constant-test
         lyr = ds.CreateLayer("hole", geom_type=ogr.wkbPoint, srs=None)
@@ -1011,12 +1010,11 @@ def test_ogr_openfilegdb_8():
     ds = None
 
     dict_feat_count2 = {}
-    gdal.SetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "YES")
-    ds = ogr.Open("data/filegdb/testopenfilegdb.gdb.zip")
-    for i in range(ds.GetLayerCount()):
-        lyr = ds.GetLayer(i)
-        dict_feat_count2[lyr.GetName()] = lyr.GetFeatureCount()
-    gdal.SetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", None)
+    with gdal.config_option("OPENFILEGDB_IGNORE_GDBTABLX", "YES"):
+        ds = ogr.Open("data/filegdb/testopenfilegdb.gdb.zip")
+        for i in range(ds.GetLayerCount()):
+            lyr = ds.GetLayer(i)
+            dict_feat_count2[lyr.GetName()] = lyr.GetFeatureCount()
 
     assert dict_feat_count == dict_feat_count2
 

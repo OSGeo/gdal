@@ -604,13 +604,12 @@ def test_ogr_mongodbv3_2():
     ogrtest.mongodbv3_layer_name_with_2d_index = (
         ogrtest.mongodbv3_layer_name + "_with_2d_index"
     )
-    gdal.SetConfigOption("OGR_MONGODB_SPAT_INDEX_TYPE", "2d")
-    lyr = ogrtest.mongodbv3_ds.CreateLayer(
-        ogrtest.mongodbv3_layer_name_with_2d_index,
-        geom_type=ogr.wkbPoint,
-        options=["FID=", "WRITE_OGR_METADATA=NO"],
-    )
-    gdal.SetConfigOption("OGR_MONGODB_SPAT_INDEX_TYPE", None)
+    with gdal.config_option("OGR_MONGODB_SPAT_INDEX_TYPE", "2d"):
+        lyr = ogrtest.mongodbv3_ds.CreateLayer(
+            ogrtest.mongodbv3_layer_name_with_2d_index,
+            geom_type=ogr.wkbPoint,
+            options=["FID=", "WRITE_OGR_METADATA=NO"],
+        )
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 49)"))
     assert lyr.CreateFeature(f) == 0

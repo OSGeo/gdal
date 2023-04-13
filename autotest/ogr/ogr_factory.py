@@ -887,9 +887,8 @@ def test_ogr_factory_8():
     for (src_wkt, exp_wkt, target_type) in tests:
 
         src_geom = ogr.CreateGeometryFromWkt(src_wkt)
-        gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-        dst_geom = ogr.ForceTo(src_geom, target_type)
-        gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+        with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+            dst_geom = ogr.ForceTo(src_geom, target_type)
 
         if exp_wkt is None:
             exp_wkt = src_wkt

@@ -177,9 +177,8 @@ def test_ogr_gmt_5():
         )
     )
     dst_feat.SetField("ID", 15)
-    gdal.SetConfigOption("GMT_USE_TAB", "TRUE")  # Ticket #6453
-    gmt_lyr.CreateFeature(dst_feat)
-    gdal.SetConfigOption("GMT_USE_TAB", None)
+    with gdal.config_option("GMT_USE_TAB", "TRUE"):  # Ticket #6453
+        gmt_lyr.CreateFeature(dst_feat)
 
     dst_feat = ogr.Feature(feature_def=gmt_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(

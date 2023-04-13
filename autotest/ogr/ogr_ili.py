@@ -40,7 +40,6 @@ pytestmark = pytest.mark.require_driver("Interlis 1")
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
     yield
-    gdal.SetConfigOption("OGR_STROKE_CURVE", None)
 
     gdaltest.clean_tmp()
 
@@ -687,153 +686,157 @@ def test_ogr_interlis1_13():
 
 def test_ogr_interlis1_13_linear():
 
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "YES")
+    with gdal.config_option("OGR_STROKE_CURVE", "YES"):
 
-    ds = ogr.Open("data/ili/surface.itf,data/ili/surface.imd")
+        ds = ogr.Open("data/ili/surface.itf,data/ili/surface.imd")
 
-    layers = [
-        "SURFC_TOP__SURFC_TBL",
-        "SURFC_TOP__SURFC_TBL_SHAPE",
-        "SURFC_TOP__SURFC_TBL_TEXT_ID",
-        "SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE",
-        "SURFC_TOP__LineAttrib1",
-        "SURFC_TOP__Flaechenelement",
-        "SURFC_TOP__Flaechenelement_Geometrie",
-    ]
+        layers = [
+            "SURFC_TOP__SURFC_TBL",
+            "SURFC_TOP__SURFC_TBL_SHAPE",
+            "SURFC_TOP__SURFC_TBL_TEXT_ID",
+            "SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE",
+            "SURFC_TOP__LineAttrib1",
+            "SURFC_TOP__Flaechenelement",
+            "SURFC_TOP__Flaechenelement_Geometrie",
+        ]
 
-    assert ds.GetLayerCount() == len(layers), "layer count wrong."
+        assert ds.GetLayerCount() == len(layers), "layer count wrong."
 
-    for i in range(ds.GetLayerCount()):
-        assert ds.GetLayer(i).GetName() in layers, "Did not get right layers"
+        for i in range(ds.GetLayerCount()):
+            assert ds.GetLayer(i).GetName() in layers, "Did not get right layers"
 
-    lyr = ds.GetLayerByName("SURFC_TOP__SURFC_TBL_SHAPE")
+        lyr = ds.GetLayerByName("SURFC_TOP__SURFC_TBL_SHAPE")
 
-    assert lyr.GetFeatureCount() == 5, "feature count wrong."
+        assert lyr.GetFeatureCount() == 5, "feature count wrong."
 
-    lyr = ds.GetLayerByName("SURFC_TOP__SURFC_TBL")
+        lyr = ds.GetLayerByName("SURFC_TOP__SURFC_TBL")
 
-    assert lyr.GetFeatureCount() == 4, "feature count wrong."
+        assert lyr.GetFeatureCount() == 4, "feature count wrong."
 
-    feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
-    field_values = ["103", 1, 3, 1, 23, 25000, 20060111]
+        field_values = ["103", 1, 3, 1, 23, 25000, 20060111]
 
-    assert feat.GetFieldCount() == len(field_values), "field count wrong."
+        assert feat.GetFieldCount() == len(field_values), "field count wrong."
 
-    for i in range(feat.GetFieldCount()):
-        if feat.GetFieldAsString(i) != str(field_values[i]):
-            feat.DumpReadable()
-            print(feat.GetFieldAsString(i))
-            pytest.fail("field value wrong.")
+        for i in range(feat.GetFieldCount()):
+            if feat.GetFieldAsString(i) != str(field_values[i]):
+                feat.DumpReadable()
+                print(feat.GetFieldAsString(i))
+                pytest.fail("field value wrong.")
 
-    geom_field_values = [
-        "POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))"
-    ]
+        geom_field_values = [
+            "POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))"
+        ]
 
-    assert feat.GetGeomFieldCount() == len(geom_field_values), "geom field count wrong."
+        assert feat.GetGeomFieldCount() == len(
+            geom_field_values
+        ), "geom field count wrong."
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    # --- test curved polygon
+        # --- test curved polygon
 
-    geom_field_values = [
-        "POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))"
-    ]
+        geom_field_values = [
+            "POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))"
+        ]
 
-    assert feat.GetGeomFieldCount() == len(geom_field_values), "geom field count wrong."
+        assert feat.GetGeomFieldCount() == len(
+            geom_field_values
+        ), "geom field count wrong."
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    # --- test multi-ring polygon
+        # --- test multi-ring polygon
 
-    feat = lyr.GetNextFeature()
-    feat = lyr.GetNextFeature()
-    # field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
-    field_values = ["105", 3, 3, 1, 23, 25000, 20060111]
+        feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
+        # field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
+        field_values = ["105", 3, 3, 1, 23, 25000, 20060111]
 
-    assert feat.GetFieldCount() == len(field_values), "field count wrong."
+        assert feat.GetFieldCount() == len(field_values), "field count wrong."
 
-    for i in range(feat.GetFieldCount()):
-        if feat.GetFieldAsString(i) != str(field_values[i]):
-            feat.DumpReadable()
-            print(feat.GetFieldAsString(i))
-            pytest.fail("field value wrong.")
+        for i in range(feat.GetFieldCount()):
+            if feat.GetFieldAsString(i) != str(field_values[i]):
+                feat.DumpReadable()
+                print(feat.GetFieldAsString(i))
+                pytest.fail("field value wrong.")
 
-    geom_field_values = [
-        "POLYGON ((598330.204 249028.397,598344.756 249057.501,598390.838 249074.479,598422.367 249081.755,598459.96 249093.882,598493.915 249101.158,598523.019 249106.008,598563.038 249084.18,598589.716 249042.949,598603.056 249011.42,598607.907 248966.551,598577.59 248960.487,598493.915 248983.528,598424.793 248996.868,598359.308 249010.207,598330.204 249028.397))"
-    ]
+        geom_field_values = [
+            "POLYGON ((598330.204 249028.397,598344.756 249057.501,598390.838 249074.479,598422.367 249081.755,598459.96 249093.882,598493.915 249101.158,598523.019 249106.008,598563.038 249084.18,598589.716 249042.949,598603.056 249011.42,598607.907 248966.551,598577.59 248960.487,598493.915 248983.528,598424.793 248996.868,598359.308 249010.207,598330.204 249028.397))"
+        ]
 
-    assert feat.GetGeomFieldCount() == len(geom_field_values), "geom field count wrong."
+        assert feat.GetGeomFieldCount() == len(
+            geom_field_values
+        ), "geom field count wrong."
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    lyr = ds.GetLayerByName("SURFC_TOP__Flaechenelement_Geometrie")
-    assert lyr.GetFeatureCount() == 3, "feature count wrong."
+        lyr = ds.GetLayerByName("SURFC_TOP__Flaechenelement_Geometrie")
+        assert lyr.GetFeatureCount() == 3, "feature count wrong."
 
-    feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
-    geom_field_values = [
-        "MULTICURVE (COMPOUNDCURVE ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751)))"
-    ]
+        geom_field_values = [
+            "MULTICURVE (COMPOUNDCURVE ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751)))"
+        ]
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
-    geom_field_values = [
-        "MULTICURVE (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648)))"
-    ]
+        geom_field_values = [
+            "MULTICURVE (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648)))"
+        ]
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    lyr = ds.GetLayerByName("SURFC_TOP__Flaechenelement")
-    assert lyr.GetFeatureCount() == 2, "feature count wrong."
+        lyr = ds.GetLayerByName("SURFC_TOP__Flaechenelement")
+        assert lyr.GetFeatureCount() == 2, "feature count wrong."
 
-    feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
-    geom_field_values = [
-        "POLYGON ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751))"
-    ]
+        geom_field_values = [
+            "POLYGON ((697064.616 245051.751,697064.773 245052.007,697067.63 245050.258,697067.473 245050.002,697064.616 245051.751))"
+        ]
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
-    feat = lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
-    geom_field_values = [
-        "POLYGON ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648,698298.028 246754.897))"
-    ]
+        geom_field_values = [
+            "POLYGON ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648,698298.028 246754.897))"
+        ]
 
-    for i in range(feat.GetGeomFieldCount()):
-        geom = feat.GetGeomFieldRef(i)
-        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
-            feat.DumpReadable()
-            pytest.fail()
-
-    gdal.SetConfigOption("OGR_STROKE_CURVE", None)
+        for i in range(feat.GetGeomFieldCount()):
+            geom = feat.GetGeomFieldRef(i)
+            if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+                feat.DumpReadable()
+                pytest.fail()
 
 
 ###############################################################################
@@ -1174,11 +1177,9 @@ def test_ogr_interlis2_4():
 
 def test_ogr_interlis_arc1():
 
-    gdal.SetConfigOption("OGR_STROKE_CURVE", "TRUE")
-    # gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
-    ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
-
-    gdal.SetConfigOption("OGR_STROKE_CURVE", None)
+    with gdal.config_option("OGR_STROKE_CURVE", "TRUE"):
+        # gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
+        ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
 
     length_0_1_deg = 72.7181992353  # Line length with 0.1 degree segments
 
