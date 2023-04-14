@@ -8443,23 +8443,24 @@ def test_ogr_gpkg_ogr_layer_Extent():
 def test_ogr_gpkg_field_alternative_names_comment():
 
     dbname = "/vsimem/ogr_gpkg_alternative_names.gpkg"
-    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
-    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
+    try:
+        ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+        lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
 
-    # with no gpkg_data_columns table
-    lyr = ds.GetLayer("test")
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
+        # with no gpkg_data_columns table
+        lyr = ds.GetLayer("test")
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
+        ds.ExecuteSQL(
+            """CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
   name TEXT,
@@ -8470,35 +8471,41 @@ def test_ogr_gpkg_field_alternative_names_comment():
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT gdc_tn UNIQUE (table_name, name)
 )"""
-    )
-    # name same as column name, won't be used as alternative name
-    ds.ExecuteSQL(
-        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name', 'description') VALUES ('test', 'foo', 'foo', 'my description')"
-    )
+        )
+        # name same as column name, won't be used as alternative name
+        ds.ExecuteSQL(
+            "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name', 'description') VALUES ('test', 'foo', 'foo', 'my description')"
+        )
+        ds = None
 
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
-    lyr = ds.GetLayer("test")
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "my description"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
+        ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        lyr = ds.GetLayer("test")
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "my description"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
-    # name different from column name, should be used as alternative names
-    ds.ExecuteSQL("DELETE FROM gpkg_data_columns")
-    ds.ExecuteSQL(
-        "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name') VALUES ('test', 'foo', 'Foo field')"
-    )
+        # name different from column name, should be used as alternative names
+        ds.ExecuteSQL("DELETE FROM gpkg_data_columns")
+        ds.ExecuteSQL(
+            "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name') VALUES ('test', 'foo', 'Foo field')"
+        )
+        ds = None
 
-    ds = gdaltest.gpkg_dr.Open(dbname)
-    lyr = ds.GetLayer("test")
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "Foo field"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        ds = gdaltest.gpkg_dr.Open(dbname)
+        lyr = ds.GetLayer("test")
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "Foo field"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        ds = None
+
+    finally:
+        gdal.Unlink(dbname)
 
 
 ###############################################################################
@@ -8508,70 +8515,78 @@ def test_ogr_gpkg_field_alternative_names_comment():
 def test_ogr_gpkg_field_alter_field_defn_alternative_names_comment():
 
     dbname = "/vsimem/ogr_gpkg_alternative_names_alter_defn.gpkg"
-    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
-    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
+    try:
+        ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+        lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
 
-    # with no gpkg_data_columns table
-    lyr = ds.GetLayer("test")
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
+        # with no gpkg_data_columns table
+        lyr = ds.GetLayer("test")
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
-    foo_with_alternative_name = ogr.FieldDefn("foo")
-    foo_with_alternative_name.SetAlternativeName("alt foo name")
+        foo_with_alternative_name = ogr.FieldDefn("foo")
+        foo_with_alternative_name.SetAlternativeName("alt foo name")
 
-    ret = lyr.AlterFieldDefn(0, foo_with_alternative_name, ogr.ALTER_ALL_FLAG)
-    assert ret == 0
+        ret = lyr.AlterFieldDefn(0, foo_with_alternative_name, ogr.ALTER_ALL_FLAG)
+        assert ret == 0
 
-    baz_with_comment = ogr.FieldDefn("baz")
-    baz_with_comment.SetComment("baz comment")
+        baz_with_comment = ogr.FieldDefn("baz")
+        baz_with_comment.SetComment("baz comment")
 
-    ret = lyr.AlterFieldDefn(1, baz_with_comment, ogr.ALTER_ALL_FLAG)
-    assert ret == 0
+        ret = lyr.AlterFieldDefn(1, baz_with_comment, ogr.ALTER_ALL_FLAG)
+        assert ret == 0
 
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
 
-    del lyr
+        del lyr
+        ds = None
 
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
-    lyr = ds.GetLayer("test")
-    assert lyr.GetLayerDefn().GetFieldCount() == 2
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+        ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        lyr = ds.GetLayer("test")
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
 
-    # create field
-    field_defn = ogr.FieldDefn("third", ogr.OFTString)
-    field_defn.SetAlternativeName("third alias")
-    field_defn.SetComment("third comment")
-    assert lyr.CreateField(field_defn) == 0
+        # create field
+        field_defn = ogr.FieldDefn("third", ogr.OFTString)
+        field_defn.SetAlternativeName("third alias")
+        field_defn.SetComment("third comment")
+        assert lyr.CreateField(field_defn) == 0
 
-    del lyr
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR)
-    lyr = ds.GetLayer("test")
+        del lyr
+        ds = None
 
-    assert lyr.GetLayerDefn().GetFieldCount() == 3
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
-    assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "third"
-    assert lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "third alias"
-    assert lyr.GetLayerDefn().GetFieldDefn(2).GetComment() == "third comment"
+        ds = gdal.OpenEx(dbname, gdal.OF_VECTOR)
+        lyr = ds.GetLayer("test")
+
+        assert lyr.GetLayerDefn().GetFieldCount() == 3
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "third"
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "third alias"
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetComment() == "third comment"
+        ds = None
+
+    finally:
+        gdal.Unlink(dbname)
