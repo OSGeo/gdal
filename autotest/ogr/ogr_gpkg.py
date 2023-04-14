@@ -8499,3 +8499,79 @@ def test_ogr_gpkg_field_alternative_names_comment():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "Foo field"
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+
+
+###############################################################################
+# Test altering field definition to add alternative names and comments
+
+
+def test_ogr_gpkg_field_alter_field_defn_alternative_names_comment():
+
+    dbname = "/vsimem/ogr_gpkg_alternative_names_alter_defn.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
+
+    # with no gpkg_data_columns table
+    lyr = ds.GetLayer("test")
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
+
+    foo_with_alternative_name = ogr.FieldDefn("foo")
+    foo_with_alternative_name.SetAlternativeName("alt foo name")
+
+    ret = lyr.AlterFieldDefn(0, foo_with_alternative_name, ogr.ALTER_ALL_FLAG)
+    assert ret == 0
+
+    baz_with_comment = ogr.FieldDefn("baz")
+    baz_with_comment.SetComment("baz comment")
+
+    ret = lyr.AlterFieldDefn(1, baz_with_comment, ogr.ALTER_ALL_FLAG)
+    assert ret == 0
+
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+
+    del lyr
+
+    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    lyr = ds.GetLayer("test")
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+
+    # create field
+    field_defn = ogr.FieldDefn("third", ogr.OFTString)
+    field_defn.SetAlternativeName("third alias")
+    field_defn.SetComment("third comment")
+    assert lyr.CreateField(field_defn) == 0
+
+    del lyr
+    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR)
+    lyr = ds.GetLayer("test")
+
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt foo name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "baz"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "baz comment"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "third"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "third alias"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetComment() == "third comment"
