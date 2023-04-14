@@ -562,10 +562,10 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  * API.
  *
  * Supported values are "Name", "Type", "WidthPrecision", "Nullable", "Default",
- * "Unique", "Domain" and "AlternativeName", corresponding respectively to the ALTER_NAME_FLAG,
- * ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG,
+ * "Unique", "Domain", "AlternativeName" and "Comment", corresponding respectively
+ * to the ALTER_NAME_FLAG, ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG,
  * ALTER_DEFAULT_FLAG, ALTER_UNIQUE_FLAG, ALTER_DOMAIN_FLAG,
- * and ALTER_ALTERNATIVE_NAME_FLAG flags.
+ * ALTER_ALTERNATIVE_NAME_FLAG and ALTER_COMMENT_FLAG flags.
  *
  * Note that advertizing one of these flags doesn't necessarily mean that
  * all modifications of the corresponding property can be made. For example,

@@ -451,7 +451,8 @@ typedef void retGetPoints;
 %constant ALTER_UNIQUE_FLAG = 32;
 %constant ALTER_DOMAIN_FLAG = 64;
 %constant ALTER_ALTERNATIVE_NAME_FLAG = 128;
-%constant ALTER_ALL_FLAG = 1 + 2 + 4 + 8 + 16 + 32 + 64 + 128;
+%constant ALTER_COMMENT_FLAG = 256;
+%constant ALTER_ALL_FLAG = 1 + 2 + 4 + 8 + 16 + 32 + 64 + 128 + 256;
 
 %constant ALTER_GEOM_FIELD_DEFN_NAME_FLAG = 4096;
 %constant ALTER_GEOM_FIELD_DEFN_TYPE_FLAG = 8192;
