@@ -1070,6 +1070,30 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable(
             fld_defn.SetDefault("'2022-11-04T12:34:56+02:00'")
             assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
+            fld_defn = ogr.FieldDefn("dt_invalid_default", ogr.OFTDateTime)
+            fld_defn.SetDefault("'foo'")
+            with gdaltest.error_handler():
+                assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
+                assert gdal.GetLastErrorMsg() == "Cannot parse foo as a date time"
+
+            fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP", ogr.OFTDateTime)
+            fld_defn.SetDefault("CURRENT_TIMESTAMP")
+            with gdaltest.error_handler():
+                assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
+                assert (
+                    gdal.GetLastErrorMsg()
+                    == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
+                )
+
+            fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP_2", ogr.OFTDateTime)
+            fld_defn.SetDefault("CURRENT_TIMESTAMP")
+            with gdaltest.error_handler():
+                assert lyr.CreateField(fld_defn, True) == ogr.OGRERR_NONE
+                assert (
+                    gdal.GetLastErrorMsg()
+                    == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
+                )
+
             assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
             ds = None
@@ -1089,6 +1113,7 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable(
             assert f["float32"] == 1.25
             assert f["float64"] == 1.23456789
             assert f["dt"] == "2022/11/04 10:34:56+00"
+            assert f.IsFieldNull("dt_CURRENT_TIMESTAMP_2")
             f = lyr.GetNextFeature()
             assert f["str"] == "two"
             assert f["str2"] == "default val"
