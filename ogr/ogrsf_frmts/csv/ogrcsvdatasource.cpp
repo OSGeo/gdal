@@ -780,7 +780,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         nMaxLineSizeAsSize_t = static_cast<size_t>(-1);
     }
 
-    // Read and parse a line.  Did we get multiple fields?
+    // Read and parse a line to detect separator.
 
     std::string osLine;
     {
@@ -864,27 +864,6 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
     if (pszGeonamesGeomFieldPrefix != nullptr &&
         osLine.find('|') != std::string::npos)
         chDelimiter = '|';
-
-    char szDelimiter[2];
-    szDelimiter[0] = chDelimiter;
-    szDelimiter[1] = 0;
-    char **papszFields =
-        CSVReadParseLine3L(fp, nMaxLineSizeAsSize_t, szDelimiter,
-                           true,   // bHonourStrings,
-                           false,  // bKeepLeadingAndClosingQuotes
-                           false,  // bMergeDelimiter
-                           true    // bSkipBOM
-        );
-
-    if (CSLCount(papszFields) < 2)
-    {
-        VSIFCloseL(fp);
-        CSLDestroy(papszFields);
-        return false;
-    }
-
-    VSIRewindL(fp);
-    CSLDestroy(papszFields);
 
     // Create a layer.
     nLayers++;
