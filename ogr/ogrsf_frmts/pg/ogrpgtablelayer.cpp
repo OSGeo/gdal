@@ -158,7 +158,8 @@ OGRPGTableLayer::OGRPGTableLayer(OGRPGDataSource *poDSIn,
     : bUpdateAccess(bUpdate), pszTableName(CPLStrdup(pszTableNameIn)),
       pszSchemaName(CPLStrdup(pszSchemaNameIn ? pszSchemaNameIn
                                               : osCurrentSchema.c_str())),
-      pszDescription(pszDescriptionIn ? CPLStrdup(pszDescriptionIn) : nullptr),
+      m_pszTableDescription(pszDescriptionIn ? CPLStrdup(pszDescriptionIn)
+                                             : nullptr),
       osPrimaryKey(CPLGetConfigOption("PGSQL_OGR_FID", "ogc_fid")),
       pszGeomColForced(pszGeomColForcedIn ? CPLStrdup(pszGeomColForcedIn)
                                           : nullptr),
@@ -222,7 +223,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
     CPLFree(pszTableName);
     CPLFree(pszSqlGeomParentTableName);
     CPLFree(pszSchemaName);
-    CPLFree(pszDescription);
+    CPLFree(m_pszTableDescription);
     CPLFree(pszGeomColForced);
     CSLDestroy(papszOverrideColumnTypes);
 }
@@ -233,9 +234,9 @@ OGRPGTableLayer::~OGRPGTableLayer()
 
 char **OGRPGTableLayer::GetMetadataDomainList()
 {
-    if (pszDescription == nullptr)
+    if (m_pszTableDescription == nullptr)
         GetMetadata();
-    if (pszDescription != nullptr && pszDescription[0] != '\0')
+    if (m_pszTableDescription != nullptr && m_pszTableDescription[0] != '\0')
         return CSLAddString(nullptr, "");
     return nullptr;
 }
@@ -247,7 +248,7 @@ char **OGRPGTableLayer::GetMetadataDomainList()
 char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
 {
     if ((pszDomain == nullptr || EQUAL(pszDomain, "")) &&
-        pszDescription == nullptr)
+        m_pszTableDescription == nullptr)
     {
         PGconn *hPGConn = poDS->GetPGConn();
         CPLString osCommand;
@@ -270,7 +271,7 @@ char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
             if (pszDesc)
                 OGRLayer::SetMetadataItem("DESCRIPTION", pszDesc);
         }
-        pszDescription = CPLStrdup(pszDesc ? pszDesc : "");
+        m_pszTableDescription = CPLStrdup(pszDesc ? pszDesc : "");
 
         OGRPGClearResult(hResult);
     }
@@ -304,22 +305,22 @@ CPLErr OGRPGTableLayer::SetMetadata(char **papszMD, const char *pszDomain)
 
     if (!bDeferredCreation && (pszDomain == nullptr || EQUAL(pszDomain, "")))
     {
-        const char *l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
-        if (l_pszDescription == nullptr)
-            l_pszDescription = "";
+        const char *pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
+        if (pszDescription == nullptr)
+            pszDescription = "";
         PGconn *hPGConn = poDS->GetPGConn();
         CPLString osCommand;
 
         osCommand.Printf(
             "COMMENT ON TABLE %s IS %s", pszSqlTableName,
-            l_pszDescription[0] != '\0'
-                ? OGRPGEscapeString(hPGConn, l_pszDescription).c_str()
+            pszDescription[0] != '\0'
+                ? OGRPGEscapeString(hPGConn, pszDescription).c_str()
                 : "NULL");
         PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult(hResult);
 
-        CPLFree(pszDescription);
-        pszDescription = CPLStrdup(l_pszDescription);
+        CPLFree(m_pszTableDescription);
+        m_pszTableDescription = CPLStrdup(pszDescription);
     }
 
     return CE_None;
@@ -354,8 +355,8 @@ CPLErr OGRPGTableLayer::SetMetadataItem(const char *pszName,
 void OGRPGTableLayer::SetForcedDescription(const char *pszDescriptionIn)
 {
     osForcedDescription = pszDescriptionIn;
-    CPLFree(pszDescription);
-    pszDescription = CPLStrdup(pszDescriptionIn);
+    CPLFree(m_pszTableDescription);
+    m_pszTableDescription = CPLStrdup(pszDescriptionIn);
     SetMetadataItem("DESCRIPTION", osForcedDescription);
 }
 
@@ -524,7 +525,7 @@ int OGRPGTableLayer::ReadTableDefinition()
     osCommand.Printf(
         "SELECT a.attname, t.typname, a.attlen,"
         "       format_type(a.atttypid,a.atttypmod), a.attnotnull, def.def, "
-        "i.indisunique%s "
+        "i.indisunique, descr.description%s "
         "FROM pg_attribute a "
         "JOIN pg_type t ON t.oid = a.atttypid "
         "LEFT JOIN "
@@ -537,6 +538,10 @@ int OGRPGTableLayer::ReadTableDefinition()
         "indisunique) i "
         "ON i.indrelid = a.attrelid AND i.indkey[0] = a.attnum AND i.indkey[1] "
         "IS NULL "
+        "LEFT JOIN pg_description descr "
+        "ON descr.objoid = a.attrelid "
+        "AND descr.classoid = 'pg_class'::regclass::oid "
+        "AND descr.objsubid = a.attnum "
         "WHERE a.attnum > 0 AND a.attrelid = %u "
         "ORDER BY a.attnum",
         (poDS->sPostgreSQLVersion.nMajor >= 12 ? ", a.attgenerated" : ""),
@@ -576,8 +581,9 @@ int OGRPGTableLayer::ReadTableDefinition()
                                      ? nullptr
                                      : PQgetvalue(hResult, iRecord, 5);
         const char *pszIsUnique = PQgetvalue(hResult, iRecord, 6);
+        const char *pszDescription = PQgetvalue(hResult, iRecord, 7);
         const char *pszGenerated = poDS->sPostgreSQLVersion.nMajor >= 12
-                                       ? PQgetvalue(hResult, iRecord, 7)
+                                       ? PQgetvalue(hResult, iRecord, 8)
                                        : "";
 
         if (pszNotNull && EQUAL(pszNotNull, "t"))
@@ -651,6 +657,8 @@ int OGRPGTableLayer::ReadTableDefinition()
         {
             OGRPGCommonLayerNormalizeDefault(&oField, pszDefault);
         }
+        if (pszDescription)
+            oField.SetComment(pszDescription);
 
         // CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
         poFeatureDefn->AddFieldDefn(&oField);
@@ -2224,6 +2232,17 @@ OGRErr OGRPGTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
         osConstraints += OGRPGCommonLayerGetPGDefault(&oField);
     }
 
+    std::string osCommentON;
+    if (!oField.GetComment().empty())
+    {
+        osCommentON = "COMMENT ON COLUMN ";
+        osCommentON += pszSqlTableName;
+        osCommentON += '.';
+        osCommentON += OGRPGEscapeColumnName(oField.GetNameRef());
+        osCommentON += " IS ";
+        osCommentON += OGRPGEscapeString(hPGConn, oField.GetComment().c_str());
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Create the new field.                                           */
     /* -------------------------------------------------------------------- */
@@ -2237,6 +2256,9 @@ OGRErr OGRPGTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
             osCreateTable += " ";
             osCreateTable += osFieldType;
             osCreateTable += osConstraints;
+
+            if (!osCommentON.empty())
+                m_aosDeferredCommentOnColumns.push_back(osCommentON);
         }
     }
     else
@@ -2260,6 +2282,12 @@ OGRErr OGRPGTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
         }
 
         OGRPGClearResult(hResult);
+
+        if (!osCommentON.empty())
+        {
+            hResult = OGRPG_PQexec(hPGConn, osCommentON.c_str());
+            OGRPGClearResult(hResult);
+        }
     }
 
     poFeatureDefn->AddFieldDefn(&oField);
@@ -2702,6 +2730,41 @@ OGRErr OGRPGTableLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         OGRPGClearResult(hResult);
     }
 
+    if ((nFlagsIn & ALTER_COMMENT_FLAG) &&
+        poFieldDefn->GetComment() != poNewFieldDefn->GetComment())
+    {
+        oField.SetComment(poNewFieldDefn->GetComment());
+
+        if (!poNewFieldDefn->GetComment().empty())
+        {
+            osCommand.Printf(
+                "COMMENT ON COLUMN %s.%s IS %s", pszSqlTableName,
+                OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str(),
+                OGRPGEscapeString(hPGConn, poNewFieldDefn->GetComment().c_str())
+                    .c_str());
+        }
+        else
+        {
+            osCommand.Printf(
+                "COMMENT ON COLUMN %s.%s IS NULL", pszSqlTableName,
+                OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str());
+        }
+
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if (PQresultStatus(hResult) != PGRES_COMMAND_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s\n%s", osCommand.c_str(),
+                     PQerrorMessage(hPGConn));
+
+            OGRPGClearResult(hResult);
+
+            poDS->SoftRollbackTransaction();
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult(hResult);
+    }
+
     if ((nFlagsIn & ALTER_NAME_FLAG))
     {
         if (bLaunderColumnNames)
@@ -2763,6 +2826,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         poFieldDefn->SetDefault(oField.GetDefault());
     if (nFlagsIn & ALTER_UNIQUE_FLAG)
         poFieldDefn->SetUnique(oField.IsUnique());
+    if (nFlagsIn & ALTER_COMMENT_FLAG)
+        poFieldDefn->SetComment(oField.GetComment());
 
     return OGRERR_NONE;
 }
@@ -3612,6 +3677,13 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
     }
 
     OGRPGClearResult(hResult);
+
+    for (const auto &osSQL : m_aosDeferredCommentOnColumns)
+    {
+        hResult = OGRPG_PQexec(hPGConn, osSQL.c_str());
+        OGRPGClearResult(hResult);
+    }
+    m_aosDeferredCommentOnColumns.clear();
 
     // For PostGIS 1.X, use AddGeometryColumn() to create geometry columns
     if (poDS->sPostGISVersion.nMajor < 2)

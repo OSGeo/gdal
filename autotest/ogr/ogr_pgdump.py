@@ -424,10 +424,10 @@ def test_ogr_pgdump_4():
 
 
 ###############################################################################
-# Test non nullable and unique field support
+# Test non nullable, unique and comment field support
 
 
-def test_ogr_pgdump_5():
+def test_ogr_pgdump_non_nullable_unique_comment():
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
         "/vsimem/ogr_pgdump_5.sql", options=["LINEFORMAT=LF"]
@@ -435,6 +435,7 @@ def test_ogr_pgdump_5():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     field_defn = ogr.FieldDefn("field_not_nullable", ogr.OFTString)
     field_defn.SetNullable(0)
+    field_defn.SetComment("this field is not nullable")
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn("field_nullable", ogr.OFTString)
     field_defn.SetUnique(True)
@@ -486,6 +487,10 @@ def test_ogr_pgdump_5():
     check_and_remove(
         """ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;"""
     )
+    check_and_remove(
+        """COMMENT ON COLUMN "public"."test"."field_not_nullable" IS 'this field is not nullable';"""
+    )
+    assert "COMMENT ON" not in sql
     check_and_remove(
         """ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR UNIQUE;"""
     )

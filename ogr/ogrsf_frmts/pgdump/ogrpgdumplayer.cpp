@@ -1645,14 +1645,28 @@ OGRErr OGRPGDumpLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
     {
         m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount() - 1;
     }
-    else
+    else if (m_bCreateTable)
     {
-        if (m_bCreateTable)
+        const auto Log = [this](const std::string &osSQL)
         {
             if (m_bGeomColumnPositionImmediate)
-                m_poDS->Log(osCommand);
+                m_poDS->Log(osSQL.c_str());
             else
-                m_aosDeferrentNonGeomFieldCreationCommands.push_back(osCommand);
+                m_aosDeferrentNonGeomFieldCreationCommands.push_back(osSQL);
+        };
+
+        Log(osCommand);
+
+        if (!oField.GetComment().empty())
+        {
+            std::string osCommentON;
+            osCommentON = "COMMENT ON COLUMN ";
+            osCommentON += m_pszSqlTableName;
+            osCommentON += '.';
+            osCommentON += OGRPGDumpEscapeColumnName(oField.GetNameRef());
+            osCommentON += " IS ";
+            osCommentON += OGRPGDumpEscapeString(oField.GetComment().c_str());
+            Log(osCommentON);
         }
     }
 
