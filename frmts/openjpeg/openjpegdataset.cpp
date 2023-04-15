@@ -2301,6 +2301,19 @@ GDALDataset *JP2OpenJPEGDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         VSIFSeekL(poDS->fp, nCurOffset, SEEK_SET);
+
+        if (poDS->eColorSpace == OPJ_CLRSPC_GRAY && poDS->nBands == 4 &&
+            poDS->nRedIndex == 0 && poDS->nGreenIndex == 1 &&
+            poDS->nBlueIndex == 2 &&
+            poDS->m_osFilename.find("dop10rgbi") != std::string::npos)
+        {
+            CPLDebug("OPENJPEG",
+                     "Autofix wrong colorspace from Greyscale to sRGB");
+            // Workaround https://github.com/uclouvain/openjpeg/issues/1464
+            // dop10rgbi products from https://www.opengeodata.nrw.de/produkte/geobasis/lusat/dop/dop_jp2_f10/
+            // have a wrong color space.
+            poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+        }
     }
 
     /* -------------------------------------------------------------------- */
