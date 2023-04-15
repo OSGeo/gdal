@@ -494,8 +494,8 @@ static void DumpCOLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             nMeth = *pabyIter;
             AddField(psDecodedContent, psLastChild, psDumpContext, "METH",
                      nMeth,
-                     (nMeth == 0)   ? "Enumerated Colourspace"
-                     : (nMeth == 1) ? "Restricted ICC profile"
+                     (nMeth == 1)   ? "Enumerated Colourspace"
+                     : (nMeth == 2) ? "Restricted ICC profile"
                                     : nullptr);
             pabyIter += 1;
             nRemainingLength -= 1;
