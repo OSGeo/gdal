@@ -212,7 +212,7 @@ void RegisterOGRPG()
                               "Boolean Int16 Float32");
     poDriver->SetMetadataItem(
         GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
-        "Name Type WidthPrecision Nullable Default Unique");
+        "Name Type WidthPrecision Nullable Default Unique Comment");
     poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_UNIQUE_FIELDS, "YES");

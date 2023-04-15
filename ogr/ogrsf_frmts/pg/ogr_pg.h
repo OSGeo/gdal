@@ -292,7 +292,7 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     char *pszTableName = nullptr;
     char *pszSchemaName = nullptr;
-    char *pszDescription = nullptr;
+    char *m_pszTableDescription = nullptr;
     CPLString osForcedDescription{};
     char *pszSqlTableName = nullptr;
     int bTableDefinitionValid = -1;
@@ -340,6 +340,7 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     int bDeferredCreation = false;
     CPLString osCreateTable{};
+    std::vector<std::string> m_aosDeferredCommentOnColumns{};
 
     int iFIDAsRegularColumnIndex = -1;
 

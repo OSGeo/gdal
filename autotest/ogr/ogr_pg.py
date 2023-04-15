@@ -6247,6 +6247,111 @@ def test_ogr_pg_skip_views():
 
 
 ###############################################################################
+# Test setting / getting / altering field comments
+
+
+def test_ogr_pg_field_comment():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    try:
+        lyr = gdaltest.pg_ds.CreateLayer("test_ogr_pg_field_comment")
+        lyr.CreateField(ogr.FieldDefn("without_comment", ogr.OFTString))
+        # Test field comment in deferred table creation
+        fld_defn = ogr.FieldDefn("with_comment", ogr.OFTString)
+        fld_defn.SetComment("field with comment")
+        lyr.CreateField(fld_defn)
+
+        # Force table creation
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        feat = None
+
+        # Test field comment after table creation
+        fld_defn = ogr.FieldDefn("with_comment2", ogr.OFTString)
+        fld_defn.SetComment("field with comment 2")
+        lyr.CreateField(fld_defn)
+
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = ds.GetLayer("test_ogr_pg_field_comment")
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("without_comment")
+        )
+        assert fld_defn.GetComment() == ""
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment")
+        )
+        assert fld_defn.GetComment() == "field with comment"
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment2")
+        )
+        assert fld_defn.GetComment() == "field with comment 2"
+
+        fld_defn = ogr.FieldDefn("with_comment_now", ogr.OFTString)
+        fld_defn.SetComment("comment added")
+        assert (
+            lyr.AlterFieldDefn(
+                lyr.GetLayerDefn().GetFieldIndex("without_comment"),
+                fld_defn,
+                ogr.ALTER_ALL_FLAG,
+            )
+            == ogr.OGRERR_NONE
+        )
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment_now")
+        )
+        assert fld_defn.GetComment() == "comment added"
+
+        fld_defn = ogr.FieldDefn("with_comment", ogr.OFTString)
+        fld_defn.SetComment("comment changed")
+        assert (
+            lyr.AlterFieldDefn(
+                lyr.GetLayerDefn().GetFieldIndex("with_comment"),
+                fld_defn,
+                ogr.ALTER_COMMENT_FLAG,
+            )
+            == ogr.OGRERR_NONE
+        )
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment")
+        )
+        assert fld_defn.GetComment() == "comment changed"
+
+        fld_defn = ogr.FieldDefn("with_comment2", ogr.OFTString)
+        assert (
+            lyr.AlterFieldDefn(
+                lyr.GetLayerDefn().GetFieldIndex("with_comment2"),
+                fld_defn,
+                ogr.ALTER_COMMENT_FLAG,
+            )
+            == ogr.OGRERR_NONE
+        )
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment2")
+        )
+        assert fld_defn.GetComment() == ""
+
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = ds.GetLayer("test_ogr_pg_field_comment")
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment_now")
+        )
+        assert fld_defn.GetComment() == "comment added"
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment")
+        )
+        assert fld_defn.GetComment() == "comment changed"
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("with_comment")
+        )
+        assert fld_defn.GetComment() == "comment changed"
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_field_comment")
+
+
+###############################################################################
 #
 
 
