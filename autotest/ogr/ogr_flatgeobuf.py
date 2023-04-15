@@ -714,6 +714,7 @@ def test_ogr_flatgeobuf_column_metadata():
     lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("str1", ogr.OFTString)
+    fld_defn.SetComment("a comment")
     lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
@@ -749,6 +750,7 @@ def test_ogr_flatgeobuf_column_metadata():
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetWidth() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsUnique() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == "a comment"
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetWidth() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(2).IsNullable() == 0

@@ -301,7 +301,9 @@ OGRFlatGeobufLayer::writeColumns(FlatBufferBuilder &fbb)
         auto title = field->GetAlternativeNameRef();
         if (EQUAL(title, ""))
             title = nullptr;
-        const char *description = nullptr;
+        const std::string &osComment = field->GetComment();
+        const char *description =
+            !osComment.empty() ? osComment.c_str() : nullptr;
         auto width = -1;
         auto precision = -1;
         auto scale = field->GetPrecision();
@@ -349,6 +351,8 @@ void OGRFlatGeobufLayer::readColumns()
         OGRFieldDefn field(name, ogrType);
         field.SetSubType(eSubType);
         field.SetAlternativeName(title);
+        if (column->description())
+            field.SetComment(column->description()->str());
         if (width != -1 && type != ColumnType::Float &&
             type != ColumnType::Double)
             field.SetWidth(width);
