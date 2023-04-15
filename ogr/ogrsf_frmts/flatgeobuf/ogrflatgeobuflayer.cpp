@@ -301,7 +301,7 @@ OGRFlatGeobufLayer::writeColumns(FlatBufferBuilder &fbb)
         auto title = field->GetAlternativeNameRef();
         if (EQUAL(title, ""))
             title = nullptr;
-        const std::string osComment = field->GetComment();
+        const std::string& osComment = field->GetComment();
         const char *description =
             !osComment.empty() ? osComment.c_str() : nullptr;
         auto width = -1;
