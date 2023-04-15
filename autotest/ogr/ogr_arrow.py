@@ -490,3 +490,34 @@ def test_ogr_arrow_read_with_geoarrow_extension_registered():
         assert lyr.GetGeometryColumn() == "geometry"
     finally:
         pa.unregister_extension_type(point_type.extension_name)
+
+
+###############################################################################
+# Test storing OGR field alternative name and comment in gdal:schema extension
+
+
+def test_ogr_arrow_field_alternative_name_comment():
+
+    outfilename = "/vsimem/out.feather"
+    try:
+        ds = ogr.GetDriverByName("Arrow").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("fld", ogr.OFTInteger)
+        fld_defn.SetAlternativeName("long_field_name")
+        fld_defn.SetComment("this is a field")
+        lyr.CreateField(fld_defn)
+        ds = None
+
+        ds = ogr.Open(outfilename)
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr is not None
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "fld"
+        assert (
+            lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "long_field_name"
+        )
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "this is a field"
+        lyr = None
+        ds = None
+    finally:
+        gdal.Unlink(outfilename)

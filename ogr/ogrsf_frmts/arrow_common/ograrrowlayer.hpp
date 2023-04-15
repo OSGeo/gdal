@@ -133,6 +133,17 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
                         poFieldDefn->SetWidth(oColumn.GetInteger("width"));
                         poFieldDefn->SetPrecision(
                             oColumn.GetInteger("precision"));
+
+                        const auto osAlternativeName =
+                            oColumn.GetString("alternative_name");
+                        if (!osAlternativeName.empty())
+                            poFieldDefn->SetAlternativeName(
+                                osAlternativeName.c_str());
+
+                        const auto osComment = oColumn.GetString("comment");
+                        if (!osComment.empty())
+                            poFieldDefn->SetComment(osComment);
+
                         oMapFieldNameToGDALSchemaFieldDefn[osName] =
                             std::move(poFieldDefn);
                     }
@@ -388,6 +399,11 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
                 oField.SetWidth(poGDALFieldDefn->GetWidth());
             if (poGDALFieldDefn->GetPrecision() > 0)
                 oField.SetPrecision(poGDALFieldDefn->GetPrecision());
+            if (poGDALFieldDefn->GetAlternativeNameRef()[0])
+                oField.SetAlternativeName(
+                    poGDALFieldDefn->GetAlternativeNameRef());
+            if (!poGDALFieldDefn->GetComment().empty())
+                oField.SetComment(poGDALFieldDefn->GetComment());
         }
         oField.SetSubType(eSubType);
         oField.SetNullable(field->nullable());
