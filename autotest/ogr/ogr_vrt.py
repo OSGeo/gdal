@@ -3181,6 +3181,54 @@ def test_ogr_vrt_35():
 
 
 ###############################################################################
+# Test field alternative name and comment
+
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_alternative_name_comment():
+    if gdaltest.vrt_ds is None:
+        pytest.skip()
+
+    f = open("tmp/test.csv", "wb")
+    f.write("c1,c2\n".encode("ascii"))
+    f.write('1,,"\n'.encode("ascii"))
+    f.close()
+
+    try:
+        os.remove("tmp/test.csvt")
+    except OSError:
+        pass
+
+    f = open("tmp/test.vrt", "wb")
+    f.write(
+        """<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="1">test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <Field name="c1" type="Integer" alternativeName="alternative_name" comment="this is a comment"/>
+        <Field name="c2" type="Integer"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""".encode(
+            "ascii"
+        )
+    )
+    f.close()
+
+    ds = ogr.Open("tmp/test.vrt")
+    lyr = ds.GetLayerByName("test")
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "c1"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alternative_name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "this is a comment"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "c2"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
+    ds = None
+
+    os.unlink("tmp/test.csv")
+    os.unlink("tmp/test.vrt")
+
+
+###############################################################################
 # Test editing direct geometries
 
 

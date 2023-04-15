@@ -324,6 +324,10 @@ def main(argv=sys.argv):
                 vrt += ' precision="%d"' % src_fd.GetPrecision()
             if src_fd.IsNullable() == 0:
                 vrt += ' nullable="false"'
+            if src_fd.GetAlternativeName():
+                vrt += ' alternativeName="%s"' % Esc(src_fd.GetAlternativeName())
+            if src_fd.GetComment():
+                vrt += ' comment="%s"' % Esc(src_fd.GetComment())
             try:
                 if src_fd.IsUnique():
                     vrt += ' unique="true"'
