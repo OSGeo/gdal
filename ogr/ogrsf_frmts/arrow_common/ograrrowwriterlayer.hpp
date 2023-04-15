@@ -236,6 +236,10 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         }
         fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(), dt,
                                          poFieldDefn->IsNullable()));
+        if (poFieldDefn->GetAlternativeNameRef()[0])
+            bNeedGDALSchema = true;
+        if (!poFieldDefn->GetComment().empty())
+            bNeedGDALSchema = true;
     }
 
     for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
@@ -350,6 +354,11 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             const int nPrecision = poFieldDefn->GetPrecision();
             if (nPrecision > 0)
                 oColumn.Add("precision", nPrecision);
+            if (poFieldDefn->GetAlternativeNameRef()[0])
+                oColumn.Add("alternative_name",
+                            poFieldDefn->GetAlternativeNameRef());
+            if (!poFieldDefn->GetComment().empty())
+                oColumn.Add("comment", poFieldDefn->GetComment());
         }
 
         auto kvMetadata = m_poSchema->metadata()
