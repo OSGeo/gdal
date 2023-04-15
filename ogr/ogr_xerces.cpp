@@ -271,7 +271,15 @@ void OGRXercesInstrumentedMemoryManager::deallocate(void *p)
         }
         if (pLimitation && pLimitation->maxMemAlloc > 0)
         {
-            pLimitation->totalAllocSize -= size;
+            // Memory allocations aren't necessarily paired within
+            // a OGRStartXercesLimitsForThisThread() /
+            // OGRStopXercesLimitsForThisThread() session. Probably due to
+            // some caching with Xerces. So handle this gracefully to avoid
+            // unsigned integer underflow.
+            if (pLimitation->totalAllocSize >= size)
+                pLimitation->totalAllocSize -= size;
+            else
+                pLimitation->totalAllocSize = 0;
         }
     }
 }
