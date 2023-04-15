@@ -2404,6 +2404,22 @@ bool netCDFLayer::AddField(int nVarID)
     oFieldDefn.SetWidth(nWidth);
     oFieldDefn.SetPrecision(nPrecision);
 
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, CF_LNG_NAME, &pszValue) == CE_None &&
+        pszValue != std::string("Field ") + szName)
+    {
+        oFieldDefn.SetComment(pszValue);
+    }
+    CPLFree(pszValue);
+    pszValue = nullptr;
+
+    if (NCDFGetAttr(m_nLayerCDFId, nVarID, CF_STD_NAME, &pszValue) == CE_None &&
+        strcmp(pszValue, szName) != 0)
+    {
+        oFieldDefn.SetAlternativeName(pszValue);
+    }
+    CPLFree(pszValue);
+    pszValue = nullptr;
+
     FieldDesc fieldDesc;
     fieldDesc.uNoData = nodata;
     fieldDesc.nType = vartype;
@@ -2712,13 +2728,56 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
         fieldDesc.bIsDays = (eType == OFTDate);
         m_aoFieldDesc.push_back(fieldDesc);
 
-        const char *pszLongName =
-            CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
+        // If we have an alternative name that is compatible of the
+        // standard_name attribute, then put it in it.
+        // http://cfconventions.org/Data/cf-standard-names/docs/guidelines.html:
+        // "Standard names consist of lower-letters, digits and underscores,
+        // and begin with a letter. Upper case is not used."
+        // Otherwise use it as the long_name, unless we have a comment
+        bool bAlternativeNameCompatibleOfStandardName = false;
+        const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
+        if (pszAlternativeName[0] >= 'a' && pszAlternativeName[0] <= 'z')
+        {
+            bAlternativeNameCompatibleOfStandardName = true;
+            for (const char *chPtr = pszAlternativeName; *chPtr; ++chPtr)
+            {
+                if (!((*chPtr >= 'a' && *chPtr <= 'z') || *chPtr == '_' ||
+                      (*chPtr >= '0' && *chPtr <= '9')))
+                {
+                    bAlternativeNameCompatibleOfStandardName = false;
+                    break;
+                }
+            }
+        }
 
-        layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszLongName);
+        if (!poFieldDefn->GetComment().empty())
+        {
+            layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME,
+                                      poFieldDefn->GetComment().c_str());
+        }
+        else if (pszAlternativeName[0] &&
+                 !bAlternativeNameCompatibleOfStandardName)
+        {
+            layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszAlternativeName);
+        }
+        else
+        {
+            const char *pszLongName =
+                CPLSPrintf("Field %s", poFieldDefn->GetNameRef());
 
-        std::string ct_name(m_layerSGDefn.get_containerName());
-        layerVID.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
+            layerVID.nc_put_vatt_text(nVarID, CF_LNG_NAME, pszLongName);
+        }
+
+        if (bAlternativeNameCompatibleOfStandardName)
+        {
+            layerVID.nc_put_vatt_text(nVarID, CF_STD_NAME, pszAlternativeName);
+        }
+
+        if (!m_bLegacyCreateMode)
+        {
+            std::string ct_name(m_layerSGDefn.get_containerName());
+            layerVID.nc_put_vatt_text(nVarID, CF_SG_GEOMETRY, ct_name.c_str());
+        }
 
         if (m_bWriteGDALTags)
         {
