@@ -672,3 +672,97 @@ def test_hdf5_multidim_read_transposed():
         for y in range(y_size):
             manually_transposed_data.append(data[y * x_size + x])
     assert transposed_data == manually_transposed_data
+
+
+##############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_multimdim_eos_grid_geo_projection():
+
+    ds = gdal.OpenEx(
+        "data/hdf5/dummy_HDFEOS_with_geo_projection.h5", gdal.OF_MULTIDIM_RASTER
+    )
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/GRIDS/test/Data Fields/test"
+    )
+    dims = ar.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetName() == "YDim"
+    assert dims[0].GetFullName() == "/HDFEOS/GRIDS/test/YDim"
+    assert dims[0].GetType() == "HORIZONTAL_Y"
+    assert dims[0].GetSize() == 20
+    assert dims[1].GetName() == "XDim"
+    assert dims[1].GetFullName() == "/HDFEOS/GRIDS/test/XDim"
+    assert dims[1].GetType() == "HORIZONTAL_X"
+    assert dims[1].GetSize() == 20
+    ydim_var = dims[0].GetIndexingVariable()
+    assert ydim_var
+    assert struct.unpack("d" * 20, ydim_var.Read())[0:2] == pytest.approx(
+        (33.90033388888937, 33.899796111111556)
+    )
+    xdim_var = dims[1].GetIndexingVariable()
+    assert xdim_var
+    assert struct.unpack("d" * 20, xdim_var.Read())[0:2] == pytest.approx(
+        (-117.64084298610936, -117.64019006944282)
+    )
+    srs = ar.GetSpatialRef()
+    assert srs is not None
+    assert srs.IsGeographic()
+    # WGS 84
+    assert srs.GetSemiMajor() == 6378137
+    assert srs.GetInvFlattening() == 298.257223563
+    assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+    assert len(ar.GetCoordinateVariables()) == 0
+
+
+##############################################################################
+# Test opening a HDF5EOS grid file
+
+
+def test_hdf5_multimdim_eos_grid_utm_projection():
+
+    ds = gdal.OpenEx(
+        "data/hdf5/dummy_HDFEOS_with_utm_projection.h5", gdal.OF_MULTIDIM_RASTER
+    )
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/GRIDS/test/Data Fields/test"
+    )
+    srs = ar.GetSpatialRef()
+    assert srs is not None
+    assert srs.IsProjected()
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert len(ar.GetCoordinateVariables()) == 0
+
+
+###############################################################################
+# Test opening a HDF5EOS swath file
+
+
+def test_hdf5_multidim_eos_swath_no_explicit_dimension_map():
+
+    ds = gdal.OpenEx("data/hdf5/dummy_HDFEOS_swath.h5", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/SWATHS/MySwath/Data Fields/MyDataField"
+    )
+    dims = ar.GetDimensions()
+    assert len(dims) == 3
+    assert dims[0].GetName() == "Band"
+    assert dims[0].GetFullName() == "/HDFEOS/SWATHS/MySwath/Band"
+    assert dims[0].GetSize() == 2
+    assert dims[1].GetName() == "AlongTrack"
+    assert dims[1].GetFullName() == "/HDFEOS/SWATHS/MySwath/AlongTrack"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "CrossTrack"
+    assert dims[2].GetFullName() == "/HDFEOS/SWATHS/MySwath/CrossTrack"
+    assert dims[2].GetSize() == 4
+    coordinates = ar.GetCoordinateVariables()
+    assert len(coordinates) == 2
+    assert (
+        coordinates[0].GetFullName()
+        == "/HDFEOS/SWATHS/MySwath/Geolocation Fields/Longitude"
+    )
+    assert (
+        coordinates[1].GetFullName()
+        == "/HDFEOS/SWATHS/MySwath/Geolocation Fields/Latitude"
+    )

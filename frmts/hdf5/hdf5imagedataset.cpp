@@ -545,53 +545,86 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         if (oHDFEOSParser.Parse(poDS->hGroupID))
         {
             CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");
-            HDF5EOSParser::GridMetadata oMetadata;
-            if (oHDFEOSParser.GetMetadata(osSubdatasetName.c_str(),
-                                          oMetadata) &&
-                static_cast<int>(oMetadata.aoDimensions.size()) == poDS->ndims)
+            HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
+            HDF5EOSParser::SwathDataFieldMetadata oSwathDataFieldMetadata;
+            if (oHDFEOSParser.GetDataModel() ==
+                    HDF5EOSParser::DataModel::GRID &&
+                oHDFEOSParser.GetGridDataFieldMetadata(
+                    osSubdatasetName.c_str(), oGridDataFieldMetadata) &&
+                static_cast<int>(oGridDataFieldMetadata.aoDimensions.size()) ==
+                    poDS->ndims)
             {
-                for (auto &oDim : oMetadata.aoDimensions)
+                int iDim = 0;
+                for (auto &oDim : oGridDataFieldMetadata.aoDimensions)
                 {
                     if (oDim.osName == "XDim")
-                        poDS->m_nXIndex = oDim.nDimIndex;
+                        poDS->m_nXIndex = iDim;
                     else if (oDim.osName == "YDim")
-                        poDS->m_nYIndex = oDim.nDimIndex;
+                        poDS->m_nYIndex = iDim;
                     else
-                        poDS->m_nOtherDimIndex = oDim.nDimIndex;
+                        poDS->m_nOtherDimIndex = iDim;
+                    ++iDim;
                 }
 
-                // Special case for https://github.com/OSGeo/gdal/issues/7117
-                if (oMetadata.osProjection == "HE5_GCTP_SNSOID" &&
-                    oMetadata.osGridOrigin == "HE5_HDFE_GD_UL" &&
-                    oMetadata.adfUpperLeftPointMeters.size() == 2 &&
-                    oMetadata.adfLowerRightPointMeters.size() == 2 &&
-                    oMetadata.adfProjParams.size() == 13 &&
-                    std::all_of(oMetadata.adfProjParams.begin() + 1,
-                                oMetadata.adfProjParams.end(),
-                                [](double v) { return v == 0.0; }))
-                {
-                    poDS->nRasterYSize =
-                        static_cast<int>(poDS->dims[poDS->GetYIndex()]);
-                    poDS->nRasterXSize =
-                        static_cast<int>(poDS->dims[poDS->GetXIndex()]);
+                if (oGridDataFieldMetadata.poGridMetadata->GetGeoTransform(
+                        poDS->adfGeoTransform))
                     poDS->bHasGeoTransform = true;
-                    poDS->adfGeoTransform[0] =
-                        oMetadata.adfUpperLeftPointMeters[0];
-                    poDS->adfGeoTransform[1] =
-                        (oMetadata.adfLowerRightPointMeters[0] -
-                         oMetadata.adfUpperLeftPointMeters[0]) /
-                        poDS->nRasterXSize;
-                    poDS->adfGeoTransform[2] = 0;
-                    poDS->adfGeoTransform[3] =
-                        oMetadata.adfUpperLeftPointMeters[1];
-                    poDS->adfGeoTransform[4] = 0;
-                    poDS->adfGeoTransform[5] =
-                        (oMetadata.adfLowerRightPointMeters[1] -
-                         oMetadata.adfUpperLeftPointMeters[1]) /
-                        poDS->nRasterYSize;
-                    poDS->m_oSRS.SetGeogCS("unknown", "unknown", "unknown",
-                                           oMetadata.adfProjParams[0], 0);
-                    poDS->m_oSRS.SetSinusoidal(0.0, 0.0, 0.0);
+
+                auto poSRS = oGridDataFieldMetadata.poGridMetadata->GetSRS();
+                if (poSRS)
+                    poDS->m_oSRS = *(poSRS.get());
+            }
+            else if (oHDFEOSParser.GetDataModel() ==
+                         HDF5EOSParser::DataModel::SWATH &&
+                     oHDFEOSParser.GetSwathDataFieldMetadata(
+                         osSubdatasetName.c_str(), oSwathDataFieldMetadata) &&
+                     static_cast<int>(
+                         oSwathDataFieldMetadata.aoDimensions.size()) ==
+                         poDS->ndims &&
+                     oSwathDataFieldMetadata.iXDim >= 0 &&
+                     oSwathDataFieldMetadata.iYDim >= 0)
+            {
+                poDS->m_nXIndex = oSwathDataFieldMetadata.iXDim;
+                poDS->m_nYIndex = oSwathDataFieldMetadata.iYDim;
+                poDS->m_nOtherDimIndex = oSwathDataFieldMetadata.iOtherDim;
+                if (!oSwathDataFieldMetadata.osLongitudeSubdataset.empty())
+                {
+                    // Arbitrary
+                    poDS->SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+                                          "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "X_DATASET",
+                        ("HDF5:\"" + osFilename +
+                         "\":" + oSwathDataFieldMetadata.osLongitudeSubdataset)
+                            .c_str(),
+                        "GEOLOCATION");
+                    poDS->SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "Y_DATASET",
+                        ("HDF5:\"" + osFilename +
+                         "\":" + oSwathDataFieldMetadata.osLatitudeSubdataset)
+                            .c_str(),
+                        "GEOLOCATION");
+                    poDS->SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "PIXEL_OFFSET",
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelOffset),
+                        "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "PIXEL_STEP",
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nPixelStep),
+                        "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "LINE_OFFSET",
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineOffset),
+                        "GEOLOCATION");
+                    poDS->SetMetadataItem(
+                        "LINE_STEP",
+                        CPLSPrintf("%d", oSwathDataFieldMetadata.nLineStep),
+                        "GEOLOCATION");
+                    // Not totally sure about that
+                    poDS->SetMetadataItem("GEOREFERENCING_CONVENTION",
+                                          "PIXEL_CENTER", "GEOLOCATION");
                 }
             }
         }
@@ -619,7 +652,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->SetBand(i, poBand);
     }
 
-    poDS->CreateProjections();
+    if (!poDS->GetMetadata("GEOLOCATION"))
+        poDS->CreateProjections();
 
     // Setup/check for pam .aux.xml.
     poDS->TryLoadXML();
