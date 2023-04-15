@@ -276,6 +276,8 @@
         <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>  <!-- new in GDAL 2.0 -->
         <xs:attribute name="default" type="xs:string"/>  <!-- new in GDAL 2.0 -->
         <xs:attribute name="unique" type="OGRBooleanType" default="false"/>  <!-- new in GDAL 3.2 -->
+        <xs:attribute name="alternativeName" type="xs:string"/>  <!-- new in GDAL 3.7 -->
+        <xs:attribute name="comment" type="xs:string"/>  <!-- new in GDAL 3.7 -->
     </xs:complexType>
 
     <xs:complexType name="FieldType">

@@ -981,6 +981,16 @@ try_again:
             // Default attribute.
             oFieldDefn.SetDefault(CPLGetXMLValue(psChild, "default", nullptr));
 
+            const char *pszAlternativeName =
+                CPLGetXMLValue(psChild, "alternativeName", nullptr);
+            if (pszAlternativeName)
+                oFieldDefn.SetAlternativeName(pszAlternativeName);
+
+            const char *pszComment =
+                CPLGetXMLValue(psChild, "comment", nullptr);
+            if (pszComment)
+                oFieldDefn.SetComment(pszComment);
+
             // Create the field.
             poFeatureDefn->AddFieldDefn(&oFieldDefn);
 

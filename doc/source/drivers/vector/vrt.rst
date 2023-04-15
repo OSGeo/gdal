@@ -244,6 +244,8 @@ layer name, and may have the following subelements:
      is nullable. It defaults to "true".
   *  **unique** can be used to specify whether the field
      has a unique constraint. It defaults to "false". (GDAL >= 3.2)
+  *  **alternativeName**: the field alternative name. (GDAL >= 3.7)
+  *  **comment**: the field comment. (GDAL >= 3.7)
 
 - **FeatureCount** (optional) : This element is used to
   define the feature count of the layer (when no spatial or attribute
