@@ -103,6 +103,11 @@ netCDF variables.
    except for strings
 -  *ogr_field_precision*: OGR field precision. Only set if it is
    non-zero
+-  *standard_name*": (GDAL >= 3.7) OGR field alternative name, if it is
+   compatible of the convention for the value of standard_name.
+-  *long_name*: (GDAL >= 3.7) OGR field comment, or if not set, OGR field
+   alternative name if it is not compatible of standard_name, or
+   "Field {ogr_field_name}" otherwise.
 
 They are written by default (unless the
 `WRITE_GDAL_TAGS <#WRITE_GDAL_TAGS>`__ dataset creation option is set to

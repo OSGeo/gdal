@@ -1798,6 +1798,10 @@ def test_netcdf_45():
     assert ds is None
 
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "int32"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == ""
 
     with gdaltest.error_handler():
         gdal.VectorTranslate(
@@ -2385,6 +2389,69 @@ def test_netcdf_56():
     ds = None
 
     gdal.Unlink("tmp/netcdf_56.nc")
+
+
+###############################################################################
+# Test OGR field alternative name and comment
+
+
+def test_netcdf_ogr_field_alternative_name_comment():
+
+    filename = "tmp/test_netcdf_ogr_field_alternative_name_comment.nc"
+    try:
+
+        ds = ogr.GetDriverByName("netCDF").CreateDataSource(
+            filename, options=["GEOMETRY_ENCODING=WKT"]
+        )
+        lyr = ds.CreateLayer("test")
+
+        fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
+        fld_defn.SetAlternativeName("identifier")
+        fld_defn.SetComment("this is an identifier")
+        lyr.CreateField(fld_defn)
+
+        fld_defn = ogr.FieldDefn("fld2", ogr.OFTInteger)
+        fld_defn.SetAlternativeName(
+            "not compatible of standard_name. will be put in long_name, and read back as comment"
+        )
+        lyr.CreateField(fld_defn)
+
+        fld_defn = ogr.FieldDefn("fld3", ogr.OFTInteger)
+        fld_defn.SetComment("comment of field 3")
+        lyr.CreateField(fld_defn)
+
+        fld_defn = ogr.FieldDefn("fld4", ogr.OFTInteger)
+        lyr.CreateField(fld_defn)
+
+        ds = None
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "id"
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "identifier"
+        assert (
+            lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "this is an identifier"
+        )
+
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "fld2"
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
+        assert (
+            lyr.GetLayerDefn().GetFieldDefn(1).GetComment()
+            == "not compatible of standard_name. will be put in long_name, and read back as comment"
+        )
+
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "fld3"
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(2).GetComment() == "comment of field 3"
+
+        assert lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "fld4"
+        assert lyr.GetLayerDefn().GetFieldDefn(3).GetAlternativeName() == ""
+        assert lyr.GetLayerDefn().GetFieldDefn(3).GetComment() == ""
+
+        ds = None
+
+    finally:
+        os.unlink(filename)
 
 
 ###############################################################################
