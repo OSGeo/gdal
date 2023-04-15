@@ -146,6 +146,9 @@
         },
         "domainName": {
           "type": "string"
+        },
+        "comment": {
+          "type": "string"
         }
       },
       "required": [
