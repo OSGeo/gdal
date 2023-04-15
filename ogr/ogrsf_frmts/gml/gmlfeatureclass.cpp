@@ -675,6 +675,7 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
                 CPLTestBool(CPLGetXMLValue(psThis, "Nullable", "true"));
             const bool bUnique =
                 CPLTestBool(CPLGetXMLValue(psThis, "Unique", "false"));
+            const char *pszComment = CPLGetXMLValue(psThis, "Comment", nullptr);
 
             if (pszName == nullptr)
             {
@@ -790,6 +791,8 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
             }
             if (pszCondition != nullptr)
                 poPDefn->SetCondition(pszCondition);
+            if (pszComment != nullptr)
+                poPDefn->SetDocumentation(pszComment);
 
             if (AddProperty(poPDefn) < 0)
                 delete poPDefn;
@@ -1061,6 +1064,11 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             snprintf(szPrecision, sizeof(szPrecision), "%d",
                      poPDefn->GetPrecision());
             CPLCreateXMLElementAndValue(psPDefnNode, "Precision", szPrecision);
+        }
+        if (!poPDefn->GetDocumentation().empty())
+        {
+            CPLCreateXMLElementAndValue(psPDefnNode, "Comment",
+                                        poPDefn->GetDocumentation().c_str());
         }
     }
 

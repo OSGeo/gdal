@@ -1727,6 +1727,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
         if (!bEmptyAsNull)
             oField.SetNullable(poProperty->IsNullable());
         oField.SetUnique(poProperty->IsUnique());
+        oField.SetComment(poProperty->GetDocumentation());
         poLayer->GetLayerDefn()->AddFieldDefn(&oField);
     }
 
@@ -2612,6 +2613,21 @@ void OGRGMLDataSource::InsertHeader()
                      strcmp(poFieldDefn->GetNameRef(), "fid") == 0)
                 continue;
 
+            const auto AddComment = [fpSchema, poFieldDefn]()
+            {
+                if (!poFieldDefn->GetComment().empty())
+                {
+                    char *pszComment = CPLEscapeString(
+                        poFieldDefn->GetComment().c_str(), -1, CPLES_XML);
+                    PrintLine(fpSchema,
+                              "          "
+                              "<xs:annotation><xs:documentation>%s</"
+                              "xs:documentation></xs:annotation>",
+                              pszComment);
+                    CPLFree(pszComment);
+                }
+            };
+
             int nMinOccurs = poFieldDefn->IsNullable() ? 0 : 1;
             const OGRFieldType eType = poFieldDefn->GetType();
             if (eType == OFTInteger || eType == OFTIntegerList)
@@ -2624,6 +2640,7 @@ void OGRGMLDataSource::InsertHeader()
                           "minOccurs=\"%d\" maxOccurs=\"%s\">",
                           poFieldDefn->GetNameRef(), nMinOccurs,
                           eType == OFTIntegerList ? "unbounded" : "1");
+                AddComment();
                 PrintLine(fpSchema, "          <xs:simpleType>");
                 if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
@@ -2659,6 +2676,7 @@ void OGRGMLDataSource::InsertHeader()
                           "minOccurs=\"%d\" maxOccurs=\"%s\">",
                           poFieldDefn->GetNameRef(), nMinOccurs,
                           eType == OFTInteger64List ? "unbounded" : "1");
+                AddComment();
                 PrintLine(fpSchema, "          <xs:simpleType>");
                 if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
@@ -2695,6 +2713,7 @@ void OGRGMLDataSource::InsertHeader()
                           "minOccurs=\"%d\" maxOccurs=\"%s\">",
                           poFieldDefn->GetNameRef(), nMinOccurs,
                           eType == OFTRealList ? "unbounded" : "1");
+                AddComment();
                 PrintLine(fpSchema, "          <xs:simpleType>");
                 if (poFieldDefn->GetSubType() == OFSTFloat32)
                     PrintLine(fpSchema,
@@ -2723,6 +2742,7 @@ void OGRGMLDataSource::InsertHeader()
                           "minOccurs=\"%d\" maxOccurs=\"%s\">",
                           poFieldDefn->GetNameRef(), nMinOccurs,
                           eType == OFTStringList ? "unbounded" : "1");
+                AddComment();
                 PrintLine(fpSchema, "          <xs:simpleType>");
                 PrintLine(fpSchema,
                           "            <xs:restriction base=\"xs:string\">");
@@ -2742,6 +2762,7 @@ void OGRGMLDataSource::InsertHeader()
                           "        <xs:element name=\"%s\" nillable=\"true\" "
                           "minOccurs=\"%d\" maxOccurs=\"1\" type=\"xs:date\">",
                           poFieldDefn->GetNameRef(), nMinOccurs);
+                AddComment();
                 PrintLine(fpSchema, "        </xs:element>");
             }
             else if (eType == OFTTime)
@@ -2750,6 +2771,7 @@ void OGRGMLDataSource::InsertHeader()
                           "        <xs:element name=\"%s\" nillable=\"true\" "
                           "minOccurs=\"%d\" maxOccurs=\"1\" type=\"xs:time\">",
                           poFieldDefn->GetNameRef(), nMinOccurs);
+                AddComment();
                 PrintLine(fpSchema, "        </xs:element>");
             }
             else if (eType == OFTDateTime)
@@ -2759,6 +2781,7 @@ void OGRGMLDataSource::InsertHeader()
                     "        <xs:element name=\"%s\" nillable=\"true\" "
                     "minOccurs=\"%d\" maxOccurs=\"1\" type=\"xs:dateTime\">",
                     poFieldDefn->GetNameRef(), nMinOccurs);
+                AddComment();
                 PrintLine(fpSchema, "        </xs:element>");
             }
             else

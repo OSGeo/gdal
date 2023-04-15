@@ -1,0 +1,13 @@
+<GMLFeatureClassList>
+  <GMLFeatureClass>
+    <Name>testcomment</Name>
+    <ElementPath>testcomment</ElementPath>
+    <GeometryType>100</GeometryType>
+    <PropertyDefn>
+      <Name>name</Name>
+      <ElementPath>name</ElementPath>
+      <Type>String</Type>
+      <Comment>my comment</Comment>
+    </PropertyDefn>
+  </GMLFeatureClass>
+</GMLFeatureClassList>
