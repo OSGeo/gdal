@@ -647,6 +647,16 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             poProp->SetPrecision(nPrecision);
             poProp->SetNullable(bNullable);
 
+            const CPLXMLNode *psAnnotation =
+                CPLGetXMLNode(psAttrDef, "annotation");
+            if (psAnnotation)
+            {
+                const char *pszDocumentation =
+                    CPLGetXMLValue(psAnnotation, "documentation", nullptr);
+                if (pszDocumentation)
+                    poProp->SetDocumentation(pszDocumentation);
+            }
+
             if (poClass->AddProperty(poProp) < 0)
                 delete poProp;
             else
@@ -788,6 +798,15 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         poProp->SetWidth(nWidth);
         poProp->SetPrecision(nPrecision);
         poProp->SetNullable(bNullable);
+
+        const CPLXMLNode *psAnnotation = CPLGetXMLNode(psAttrDef, "annotation");
+        if (psAnnotation)
+        {
+            const char *pszDocumentation =
+                CPLGetXMLValue(psAnnotation, "documentation", nullptr);
+            if (pszDocumentation)
+                poProp->SetDocumentation(pszDocumentation);
+        }
 
         if (poClass->AddProperty(poProp) < 0)
             delete poProp;

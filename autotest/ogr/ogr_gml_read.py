@@ -4708,3 +4708,64 @@ def test_ogr_gml_read_boundedby_repeated():
     ds = gdal.OpenEx("data/gml/only_boundedby_repeated.gml")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test field comments
+
+
+def test_ogr_gml_field_comment():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip("GML reading capabilities missing")
+
+    ds = ogr.GetDriverByName("GML").CreateDataSource(
+        "/vsimem/test_ogr_gml_field_comment.gml"
+    )
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    for t in (
+        ogr.OFTInteger,
+        ogr.OFTInteger64,
+        ogr.OFTReal,
+        ogr.OFTString,
+        ogr.OFTIntegerList,
+        ogr.OFTInteger64List,
+        ogr.OFTRealList,
+        ogr.OFTStringList,
+        ogr.OFTDateTime,
+        ogr.OFTDate,
+        ogr.OFTTime,
+    ):
+        field_defn = ogr.FieldDefn("field%d" % lyr.GetLayerDefn().GetFieldCount(), t)
+        field_defn.SetComment("comment <>")
+        lyr.CreateField(field_defn)
+    ds = None
+
+    ds = gdal.OpenEx("/vsimem/test_ogr_gml_field_comment.gml")
+    lyr = ds.GetLayer(0)
+    for i in range(1, lyr.GetLayerDefn().GetFieldCount()):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetComment() == "comment <>"
+    ds = None
+
+    gdal.Unlink("/vsimem/test_ogr_gml_field_comment.gml")
+    gdal.Unlink("/vsimem/test_ogr_gml_field_comment.xsd")
+
+
+###############################################################################
+# Test field comments
+
+
+def test_ogr_gml_field_comment_from_gfs():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip("GML reading capabilities missing")
+
+    ds = gdal.OpenEx("data/gml/testcomment.gml")
+    lyr = ds.GetLayer(0)
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("name"))
+        .GetComment()
+        == "my comment"
+    )
+    ds = None

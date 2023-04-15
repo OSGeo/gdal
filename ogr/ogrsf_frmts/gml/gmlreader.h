@@ -89,6 +89,7 @@ class CPL_DLL GMLPropertyDefn
     char *m_pszCondition;
     bool m_bNullable;
     bool m_bUnique = false;
+    std::string m_osDocumentation{};
 
   public:
     explicit GMLPropertyDefn(const char *pszName,
@@ -156,6 +157,15 @@ class CPL_DLL GMLPropertyDefn
     bool IsUnique() const
     {
         return m_bUnique;
+    }
+
+    void SetDocumentation(const std::string &osDocumentation)
+    {
+        m_osDocumentation = osDocumentation;
+    }
+    const std::string &GetDocumentation() const
+    {
+        return m_osDocumentation;
     }
 
     void AnalysePropertyValue(const GMLProperty *psGMLProperty,

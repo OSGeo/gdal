@@ -235,6 +235,11 @@ Examples: case can change, a prefix can be added to the name, and the name can b
             <xs:documentation>Only applies to Real. Maximum decimal precision (i.e. number of digits after the decimal point) of the values of the field.</xs:documentation>
           </xs:annotation>
         </xs:element>
+        <xs:element default="false" minOccurs="0" name="Comment" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Description of the field (added in GDAL 3.7)</xs:documentation>
+          </xs:annotation>
+        </xs:element>
       </xs:all>
     </xs:complexType>
   </xs:element>
