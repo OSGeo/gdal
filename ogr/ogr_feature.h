@@ -1031,6 +1031,8 @@ class CPL_DLL OGRFeature
     GIntBig GetFieldAsInteger64(int i) const;
     double GetFieldAsDouble(int i) const;
     const char *GetFieldAsString(int i) const;
+    const char *GetFieldAsISO8601DateTime(int i,
+                                          CSLConstList papszOptions) const;
     const int *GetFieldAsIntegerList(int i, int *pnCount) const;
     const GIntBig *GetFieldAsInteger64List(int i, int *pnCount) const;
     const double *GetFieldAsDoubleList(int i, int *pnCount) const;
@@ -1096,6 +1098,11 @@ class CPL_DLL OGRFeature
     const char *GetFieldAsString(const char *pszFName) const
     {
         return GetFieldAsString(GetFieldIndex(pszFName));
+    }
+    const char *GetFieldAsISO8601DateTime(const char *pszFName,
+                                          CSLConstList papszOptions) const
+    {
+        return GetFieldAsISO8601DateTime(GetFieldIndex(pszFName), papszOptions);
     }
     const int *GetFieldAsIntegerList(const char *pszFName, int *pnCount) const
     {

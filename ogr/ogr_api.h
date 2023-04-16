@@ -503,6 +503,8 @@ int CPL_DLL OGR_F_GetFieldAsInteger(OGRFeatureH, int);
 GIntBig CPL_DLL OGR_F_GetFieldAsInteger64(OGRFeatureH, int);
 double CPL_DLL OGR_F_GetFieldAsDouble(OGRFeatureH, int);
 const char CPL_DLL *OGR_F_GetFieldAsString(OGRFeatureH, int);
+const char CPL_DLL *OGR_F_GetFieldAsISO8601DateTime(OGRFeatureH, int,
+                                                    CSLConstList);
 const int CPL_DLL *OGR_F_GetFieldAsIntegerList(OGRFeatureH, int, int *);
 const GIntBig CPL_DLL *OGR_F_GetFieldAsInteger64List(OGRFeatureH, int, int *);
 const double CPL_DLL *OGR_F_GetFieldAsDoubleList(OGRFeatureH, int, int *);
