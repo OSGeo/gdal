@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -4995,6 +4996,144 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
                          nullptr);
 }
 
+#ifdef NETCDF_HAS_NC4
+bool netCDFDataset::ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId)
+{
+    // Cf https://oceancolor.gsfc.nasa.gov/docs/format/l2nc/
+    // and https://github.com/OSGeo/gdal/issues/7605
+
+    // Check for a structure like:
+    /* netcdf SNPP_VIIRS.20230406T024200.L2.OC.NRT {
+        dimensions:
+            number_of_lines = 3248 ;
+            pixels_per_line = 3200 ;
+            [...]
+            pixel_control_points = 3200 ;
+        [...]
+        group: geophysical_data {
+          variables:
+            short aot_862(number_of_lines, pixels_per_line) ;  <-- nVarId
+                [...]
+        }
+        group: navigation_data {
+          variables:
+            float longitude(number_of_lines, pixel_control_points) ;
+                [...]
+            float latitude(number_of_lines, pixel_control_points) ;
+                [...]
+        }
+    }
+    */
+    // Note that the longitude and latitude arrays are not indexed by the
+    // same dimensions. Handle only the case where
+    // pixel_control_points == pixels_per_line
+    // If there was a subsampling of the geolocation arrays, we'd need to
+    // add more logic.
+
+    std::string osGroupName;
+    osGroupName.resize(NC_MAX_NAME);
+    NCDF_ERR(nc_inq_grpname(nGroupId, &osGroupName[0]));
+    osGroupName.resize(strlen(osGroupName.data()));
+    if (osGroupName != "geophysical_data")
+        return false;
+
+    int nVarDims = 0;
+    NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
+    if (nVarDims != 2)
+        return false;
+
+    int nNavigationDataGrpId = 0;
+    if (nc_inq_grp_ncid(cdfid, "navigation_data", &nNavigationDataGrpId) !=
+        NC_NOERR)
+        return false;
+
+    std::array<int, 2> anVarDimIds;
+    NCDF_ERR(nc_inq_vardimid(nGroupId, nVarId, anVarDimIds.data()));
+
+    int nLongitudeId = 0;
+    int nLatitudeId = 0;
+    if (nc_inq_varid(nNavigationDataGrpId, "longitude", &nLongitudeId) !=
+            NC_NOERR ||
+        nc_inq_varid(nNavigationDataGrpId, "latitude", &nLatitudeId) !=
+            NC_NOERR)
+    {
+        return false;
+    }
+
+    int nDimsLongitude = 0;
+    NCDF_ERR(
+        nc_inq_varndims(nNavigationDataGrpId, nLongitudeId, &nDimsLongitude));
+    int nDimsLatitude = 0;
+    NCDF_ERR(
+        nc_inq_varndims(nNavigationDataGrpId, nLatitudeId, &nDimsLatitude));
+    if (!(nDimsLongitude == 2 && nDimsLatitude == 2))
+    {
+        return false;
+    }
+
+    std::array<int, 2> anDimLongitudeIds;
+    NCDF_ERR(nc_inq_vardimid(nNavigationDataGrpId, nLongitudeId,
+                             anDimLongitudeIds.data()));
+    std::array<int, 2> anDimLatitudeIds;
+    NCDF_ERR(nc_inq_vardimid(nNavigationDataGrpId, nLatitudeId,
+                             anDimLatitudeIds.data()));
+    if (anDimLongitudeIds != anDimLatitudeIds)
+    {
+        return false;
+    }
+
+    std::array<size_t, 2> anSizeVarDimIds;
+    std::array<size_t, 2> anSizeLongLatIds;
+    if (!(nc_inq_dimlen(cdfid, anVarDimIds[0], &anSizeVarDimIds[0]) ==
+              NC_NOERR &&
+          nc_inq_dimlen(cdfid, anVarDimIds[1], &anSizeVarDimIds[1]) ==
+              NC_NOERR &&
+          nc_inq_dimlen(cdfid, anDimLongitudeIds[0], &anSizeLongLatIds[0]) ==
+              NC_NOERR &&
+          nc_inq_dimlen(cdfid, anDimLongitudeIds[1], &anSizeLongLatIds[1]) ==
+              NC_NOERR &&
+          anSizeVarDimIds == anSizeLongLatIds))
+    {
+        return false;
+    }
+
+    const char *pszGeolocXFullName = "/navigation_data/longitude";
+    const char *pszGeolocYFullName = "/navigation_data/latitude";
+
+    if (bSwitchedXY)
+    {
+        std::swap(pszGeolocXFullName, pszGeolocYFullName);
+        GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
+    }
+
+    CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
+             pszGeolocXFullName, pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+                                    "GEOLOCATION");
+
+    CPLString osTMP;
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocXFullName);
+
+    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER",
+                                    "GEOLOCATION");
+    return true;
+}
+#endif
+
 int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                                         std::string &osGeolocXNameOut,
                                         std::string &osGeolocYNameOut)
@@ -5128,6 +5267,13 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
         if (papszTokens)
             CSLDestroy(papszTokens);
     }
+
+#ifdef NETCDF_HAS_NC4
+    else
+    {
+        bAddGeoloc = ProcessNASAL2OceanGeoLocation(nGroupId, nVarId);
+    }
+#endif
 
     CPLFree(pszTemp);
 

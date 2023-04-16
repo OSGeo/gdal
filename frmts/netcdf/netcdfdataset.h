@@ -897,6 +897,10 @@ class netCDFDataset final : public GDALPamDataset
                               nccfdriver::SGeometry_Reader *);
     void SetProjectionFromVar(int nGroupId, int nVarId, bool bReadSRSOnly);
 
+#ifdef NETCDF_HAS_NC4
+    bool ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId);
+#endif
+
     int ProcessCFGeolocation(int nGroupId, int nVarId,
                              std::string &osGeolocXNameOut,
                              std::string &osGeolocYNameOut);

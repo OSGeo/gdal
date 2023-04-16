@@ -6369,3 +6369,31 @@ def test_netcdf_resolve_var_name():
         sr.ExportToProj4()
         == "+proj=geos +lon_0=0 +h=35786400 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
     )
+
+
+###############################################################################
+# test opening a L2 NASA ocean colour variable and check we get a geolocation
+# array
+
+
+def test_netcdf_NASA_L2_Ocean():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip("Requires NC4 support")
+
+    ds = gdal.Open(
+        'NETCDF:"data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/geophysical_data/aot_862'
+    )
+    md = ds.GetMetadata("GEOLOCATION")
+    assert md == {
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'NETCDF:"data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+        "Y_BAND": "1",
+        "Y_DATASET": 'NETCDF:"data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/latitude',
+    }
