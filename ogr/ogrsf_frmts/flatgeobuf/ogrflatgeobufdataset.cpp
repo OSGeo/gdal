@@ -145,6 +145,9 @@ void RegisterOGRFlatGeobuf()
         "Integer Integer64 Real String Date DateTime Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Boolean Int16 Float32");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "Comment AlternativeName");
+
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"

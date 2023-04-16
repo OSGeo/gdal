@@ -327,6 +327,8 @@ void RegisterOGROpenFileGDB()
                               "Integer Real String Date DateTime Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Int16 Float32");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "AlternativeName Domain");
     poDriver->SetMetadataItem(
         GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
         "Name Type WidthPrecision Nullable Default Domain AlternativeName");
