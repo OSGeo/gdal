@@ -1,3 +1,105 @@
+# GDAL/OGR 3.6.4 Release Notes
+
+GDAL 3.6.4 is a bugfix release.
+
+## GDAL 3.6.4
+
+### Port
+
+* userfaultfd: avoid it to stall on 32bit and test real working of syscall in
+  CPLIsUserFaultMappingSupported()
+
+### Core
+
+* RawRasterBand::FlushCache(): avoid crash in some situations
+* RawRasterBand::IRasterIO(): fix wrong byte swapping in Direct IO multiline
+  writing code path
+* RawRasterBand::IRasterIO(): fix optimized code path that wrongly triggered
+  on BIL layout
+* RawRasterBand::IRasterIO(): avoid reading and writing too many bytes
+* RawRasterBand::IRasterIO(): fix floating-point issues with ICC that could
+  result in wrong lines/cols being read/written
+
+### Algorithms
+
+* Rasterize all touched: tighten(decrease) the tolerance to consider that edge
+  of geometries match pixel obundaries (#7523)
+
+### Utilities
+
+* gdal_translate: fix crash when specifying -ovr on a dataset that has no
+  overviews (#7376)
+* gdalcompare.py: correctly take into account NaN nodata value (#7394)
+* gdal2xyz.py: fix -srcnodata and -dstnodata options (#7410)
+* gdal2tiles: update 'ol-layerswitcher' widget to v4.1.1 (#7544)
+
+### Raster drivers
+
+GTiff driver:
+ * correctly read GCPs from ArcGIS 9 .aux.xml when TIFFTAG_RESOLUTIONUNIT=3
+  (pixels/cm) (#7484)
+
+HDF5 driver:
+ * fix detecting if HDF5 library is thread-safe (refs #7340)
+
+LCP driver:
+ * CreateCopy(): fix crash on negative pixel values (#7561)
+
+MRF driver:
+ * restore SetSpatialRef() that was wrongly deleted in 3.6.0
+
+netCDF driver:
+ * restore capability of reading CF-1.6-featureType vector layers even if the
+   conventions >= CF 1.8, and improve featureType=trajectory by adding the
+   time attribute (fixes #7550)
+
+## OGR 3.6.4
+
+### Core
+
+* OGRSQL: fix 'SELECT ... WHERE ... AND ... AND ... AND ... UNION ALL ...'
+  (#3395)
+* OGRUnionLayer::GetExtent(): do not emit error on no-geometry layer
+* OGREditableLayer::IUpsertFeature(): fix memleak
+
+### OGRSpatialReference
+
+* Fix OGRSpatialReference::SetProjCS() on an existing BoundCRS;
+  affects GeoTIFF SRS reader (fixes gdal-dev/2023-March/057011.html)
+
+### Utilities
+
+* ogr2ogr: fix and automate conversion from list types to String(JSON) when the
+  output driver doesn't support list types but String(JSON) (#7397)
+
+### Vector drivers
+
+CSV driver:
+ * CSVSplitLine(): do not treat in a special way double quotes that appear in
+   the middle of a field
+
+FlatGeobuf driver:
+ * improve handling of null geoms (#7483)
+
+GeoPackage driver:
+ * Update definition of gpkg_data_columns to remove unique constraint on "name"
+
+OpenFileGDB driver:
+ * fix write corruption when re-using freespace slots in some editing scenarios
+   (#7504)
+ * relax test to detect broken .spx
+ * CreateField(): in approxOK mode, do not error out if default value of a
+   DateTime field is CURRENT_TIMESTAMP, just ignore it with a warning (#7589)
+
+OSM driver:
+ * Fix handling of closed_ways_are_polygons setting in osmconf.ini (#7488)
+
+S57 driver:
+ * s57objectclasses.csv: apply S-57 Edition 3.1 Supplement No. 2
+
+SQLite driver:
+ * GDAL as a SQLite3 loadable extension: avoid crash on Linux
+
 # GDAL/OGR 3.6.3 Release Notes
 
 GDAL 3.6.3 is a bugfix release.
