@@ -2209,7 +2209,7 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
 
     // Detect broken .spx file such as SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
     // from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
-    // which advertizes nIndexDepth == 1 whereas it seems to be it should be 2.
+    // which advertises nIndexDepth == 1 whereas it seems to be it should be 2.
     if (nIndexDepth == 1)
     {
         iLastPageIdx[0] = 0;
