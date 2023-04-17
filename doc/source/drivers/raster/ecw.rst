@@ -224,11 +224,11 @@ See Also
 --------
 
 -  Implemented as ``gdal/frmts/ecw/ecwdataset.cpp``.
--  ECW/JP2 SDK available at
-   `www.hexagongeospatial.com <http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk>`__
+-  ERDAS ECW/JP2 SDK Read-Only Redistributable available at
+   `www.hexagongeospatial.com <https://supportsi.hexagon.com/help/s/article/ERDAS-ECW-JP2-SDK-Read-Only-Redistributable-download>`__
 -  Further product information available in the `User
-   Guide <http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk/literature>`__
+   Guide <https://bynder.hexagon.com/m/5af86a8895f6696f/original/Hexagon_GSP_ERDAS_ECW_JP2_SDK_5_5_User_Guide.pdf?_gl=1*1tynrwd*_ga*MTI4MzE2MDQyNC4xNjY0NTU4NzUx*_ga_8GP55DHNB6*MTY3NTk1OTE0NS41Ni4wLjE2NzU5NTkxNDUuNjAuMC4w>`__
 -  Support for non-GDAL specific issues should be directed to the
    `Hexagon Geospatial public
-   forum <https://sgisupport.intergraph.com/infocenter/index?page=forums&forum=507301383c17ef4e013d8dfa30c2007ef1>`__
+   forum <https://supportsi.hexagon.com/help/s/erdas-apollo>`__
 -  `GDAL ECW Build Hints <http://trac.osgeo.org/gdal/wiki/ECW>`__
