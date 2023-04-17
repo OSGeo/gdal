@@ -227,7 +227,7 @@ See Also
 -  ERDAS ECW/JP2 SDK Read-Only Redistributable available at
    `www.hexagongeospatial.com <https://supportsi.hexagon.com/help/s/article/ERDAS-ECW-JP2-SDK-Read-Only-Redistributable-download>`__
 -  Further product information available in the `User
-   Guide <https://bynder.hexagon.com/m/5af86a8895f6696f/original/Hexagon_GSP_ERDAS_ECW_JP2_SDK_5_5_User_Guide.pdf?_gl=1*1tynrwd*_ga*MTI4MzE2MDQyNC4xNjY0NTU4NzUx*_ga_8GP55DHNB6*MTY3NTk1OTE0NS41Ni4wLjE2NzU5NTkxNDUuNjAuMC4w>`__
+   Guide <https://bynder.hexagon.com/m/5af86a8895f6696f/original/Hexagon_GSP_ERDAS_ECW_JP2_SDK_5_5_User_Guide.pdf>`__
 -  Support for non-GDAL specific issues should be directed to the
    `Hexagon Geospatial public
    forum <https://supportsi.hexagon.com/help/s/erdas-apollo>`__
